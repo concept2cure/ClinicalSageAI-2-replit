@@ -68,15 +68,28 @@ async function panel<T extends QueryResultRow>(
   name: string,
   sql: string,
   params: unknown[],
+  unavailable: string[],
 ): Promise<T[]> {
   try {
     const { rows } = await pool.query<T>(sql, params);
     return rows;
   } catch (err) {
-    /* 42P01 = undefined_table. Anything else is a real fault worth
-       knowing about, but still must not blank the other panels. */
+    /* 42P01 = undefined_table: the table has not been migrated in this
+       tenant yet. That is a deployment state, not a fault, and an empty
+       panel is a true statement about it.
+       Anything ELSE is a fault — a permission denial, an RLS fail-closed, a
+       broken query — and returning [] for those published the fault as a
+       FINDING: "this tenant has recorded no hazards", "dhfCompletion 0%",
+       with nothing but a server-side log line to say otherwise. The whole
+       point of the MDX DataState primitive
+       (client/src/concept2cure/mdx/lib/dataState.ts) is that an error and an
+       empty result are not the same render, and this route was the one place
+       that collapsed them again on its way out.
+       The panel still degrades independently — the other six render — but it
+       now says which one could not be read, in `meta.unavailable`. */
     const code = (err as { code?: string })?.code;
     if (code !== '42P01') {
+      unavailable.push(name);
       log.warn(`engineering panel ${name} failed`, {
         err: err instanceof Error ? err.message : String(err),
       });
@@ -149,6 +162,10 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
     /* ── Risks — ISO 14971, program-scoped ───────────────────────────
        Controls are aggregated per risk so the surface can show the
        control text without an N+1 round trip. */
+    /* Per-REQUEST, never module-level: two tenants' requests are in flight
+       concurrently and must not see each other's failures. */
+    const unavailable: string[] = [];
+
     const riskRows = await panel<{
       id: number;
       ref_code: string | null;
@@ -180,6 +197,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
         GROUP BY r.id, u.username
         ORDER BY r.severity DESC, r.probability DESC, r.id`,
       [orgId, programId],
+      unavailable,
     );
 
     const risks = riskRows.map((r) => {
@@ -223,6 +241,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
         WHERE organization_id = $1
         ORDER BY id`,
       [orgId],
+      unavailable,
     );
 
     const trace = traceRows.map((t) => {
@@ -278,6 +297,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
         WHERE organization_id = $1 AND category = 'device'
         ORDER BY display_order NULLS LAST, section_number`,
       [orgId],
+      unavailable,
     );
 
     const dhf = dhfRows.map((d) => {
@@ -320,6 +340,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
         ORDER BY created_at DESC NULLS LAST
         LIMIT 50`,
       [orgId],
+      unavailable,
     );
 
     const ecrs = ecrRows.map((e) => ({
@@ -350,6 +371,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
         ORDER BY detected_at DESC NULLS LAST
         LIMIT 50`,
       [orgId],
+      unavailable,
     );
 
     const issues = ncRows.map((n) => ({
@@ -388,6 +410,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
         ORDER BY updated_at DESC NULLS LAST
         LIMIT 50`,
       [orgId],
+      unavailable,
     );
 
     const softwareRows = await panel<{
@@ -406,6 +429,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
         ORDER BY updated_at DESC NULLS LAST
         LIMIT 50`,
       [orgId, programId],
+      unavailable,
     );
 
     /** Artifact/software status → the DocumentsPanel status vocabulary. */
@@ -470,8 +494,21 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       `SELECT MAX(updated_at) AS updated_at FROM risk_items
         WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
       [orgId, programId],
+      unavailable,
     );
     summary.riskLastUpdated = lastRisk[0]?.updated_at?.toISOString() ?? null;
+
+    /* Derived fields inherit their inputs' failures.
+       `summary` counts open risks, ECRs and issues, and DHF completion, over
+       the very arrays above — so a contributor that failed and returned []
+       becomes `openRisks: 0`, a confident zero about a regulated record that
+       was never read. `documents` is the artifact rows plus the IEC 62304
+       software rows, so a failed software panel silently shortens it.
+       Naming the query in the log and the payload field it feeds in `meta` is
+       deliberate: the operator needs the former, the surface needs the latter. */
+    const SUMMARY_INPUTS = ['dhf', 'ecrs', 'risks', 'issues', 'riskLastUpdated'];
+    if (unavailable.some((n) => SUMMARY_INPUTS.includes(n))) unavailable.push('summary');
+    if (unavailable.includes('software')) unavailable.push('documents');
 
     const scopes: Record<string, Scope> = {
       risks: 'program',
@@ -485,7 +522,11 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
     return ok(
       res,
       { summary, dhf, trace, risks, ecrs, issues, documents },
-      { scopes },
+      /* `unavailable` names the panels whose read FAILED, so the surface can
+         render an error for those and a true empty for the rest, instead of
+         one indistinguishable "nothing here". Always present, so a consumer
+         never has to tell an absent key from an empty list. */
+      { scopes, unavailable: [...new Set(unavailable)] },
     );
   } catch (err) {
     return serverError(res, log, 'engineering', err);
