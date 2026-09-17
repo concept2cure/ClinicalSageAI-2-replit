@@ -13,6 +13,7 @@ import { useAgentActivity } from '../useAgentActivity';
 import { useWorkDockVisible } from '../workDock';
 import { shellProgramName } from '../shellProject';
 import { RBM_VOCAB, rbmBand, kriStatusOf, type RbmNavItem } from '../fixtures/rbm-data';
+import { useDialog } from '../useDialog';
 import '../styles/rbm-v2.css';
 
 /* Re-export surfaces so Rbm.tsx imports from one place */
@@ -176,9 +177,20 @@ export function RbmFormModal({ title, intro, fields, initial, submitLabel, busy,
   const set = (k: string, val: string) => setV(s => ({ ...s, [k]: val }));
   const missing = fields.some(f => !f.optional && (v[f.key] === '' || v[f.key] == null));
   const inputType = (t: string) => (t === 'number' ? 'number' : t === 'date' ? 'date' : 'text');
+  /* Escape + focus-on-open + focus-return, and the dialog semantics moved from
+     the scrim onto the panel they describe. */
+  const dialogRef = useDialog(onCancel);
+
   return (
-    <div className="rbm-modal-scrim" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="rbm-modal">
+    <div className="rbm-modal-scrim">
+      <div
+        className="rbm-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
+        ref={dialogRef}
+      >
         <div className="rbm-modal-h">{I.penLine}<span>{title}</span></div>
         {intro && <div className="rbm-modal-what">{intro}</div>}
         {fields.map(f => (
@@ -223,9 +235,20 @@ export function GovernedApprovalDialog({ what, meaning, onCancel, onSigned }: {
     const e = await onSigned({ reason: reason.trim(), password: pw, mfaToken: otp });
     if (e) { setErr(e); setBusy(false); }
   };
+  /* The e-signature panel: it had the role but no Escape and no focus hand-off,
+     so a keyboard user could reach the approval ceremony and not leave it. */
+  const dialogRef = useDialog(onCancel);
+
   return (
-    <div className="rbm-modal-scrim" role="dialog" aria-modal="true" aria-label={`Approve ${what}`}>
-      <div className="rbm-modal">
+    <div className="rbm-modal-scrim">
+      <div
+        className="rbm-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Approve ${what}`}
+        tabIndex={-1}
+        ref={dialogRef}
+      >
         <div className="rbm-modal-h">{I.lock}<span>Approval requires e-signature</span></div>
         <div className="rbm-modal-what"><b>{what}</b> — status will move to <b>active</b>. {meaning}</div>
         <label className="rbm-field"><span>Reason for change</span>

@@ -70,7 +70,9 @@ describe('assembleSequence multi-source resolution', () => {
     expect(result.unresolvedLeaves).toHaveLength(1);
     expect(result.unresolvedLeaves[0].documentTable).toBe('vault_documents');
     expect(result.unresolvedLeaves[0].documentId).toBe(900);
-    expect(result.unresolvedLeaves[0].reason).toMatch(/external|S3|not stored locally/i);
+    // See the sibling assertion in leaf-source-resolver.test.ts: the old /S3/
+    // match pinned an inaccuracy (vault bytes are local, s3_bucket='local').
+    expect(result.unresolvedLeaves[0].reason).toMatch(/storage provider|document_id/i);
 
     // A real bundle was produced.
     expect(result.bundle).toBeDefined();

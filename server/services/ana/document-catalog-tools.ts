@@ -124,54 +124,6 @@ function listMessage(docs: Array<{ catalogStatus: string }>): string {
   );
 }
 
-/** A chat-uploaded file from the evidence spine, with the file_id that reopens it. */
-interface ChatUploadDigest {
-  sourceId: number;
-  fileId: string | null;
-  fileName: string;
-  version: string | null;
-  extractionStatus: string;
-  dossier: unknown;
-  programId: string | null;
-  uploadedAt: string;
-}
-
-/**
- * Current (non-superseded) chat uploads via the canonical evidence-spine
- * listing. `fileId` comes from the source's recorded provenance — it is what
- * inspect_uploaded_document / read_uploaded_document take, so a file attached
- * in a past conversation is reachable again.
- */
-async function listChatUploadDigests(
-  orgId: number,
-  programId: string | null,
-  limit: number,
-): Promise<ChatUploadDigest[]> {
-  const { listClientDocuments } = await import(
-    '../clinical-regulatory-evidence/evidence-spine.service.js'
-  );
-  const sources = await listClientDocuments(orgId, {
-    programId: programId ?? undefined,
-    includeUnscoped: true,
-    currentOnly: true,
-    limit,
-  });
-  return sources.map(s => {
-    const prov = (s.provenance ?? {}) as Record<string, unknown>;
-    const meta = (s.metadata ?? {}) as Record<string, unknown>;
-    return {
-      sourceId: s.id,
-      fileId: typeof prov.fileUploadId === 'string' ? prov.fileUploadId : null,
-      fileName: typeof meta.originalName === 'string' ? meta.originalName : (s.title ?? 'document'),
-      version: s.version ?? null,
-      extractionStatus: s.extractionStatus,
-      dossier: meta.dossier ?? null,
-      programId: s.clientProgramId ?? null,
-      uploadedAt: String(s.createdAt),
-    };
-  });
-}
-
 async function handleListProjectDocuments(
   input: Record<string, unknown>,
   ctx?: ToolContext,
@@ -189,10 +141,10 @@ async function handleListProjectDocuments(
 
   // Chat uploads ride along; a failure to list them is SAID, never rendered
   // as "no chat uploads" (some installs have no evidence-spine tables).
-  let chatUploads: ChatUploadDigest[] | null = null;
+  let chatUploads: Awaited<ReturnType<CatalogService['listChatUploads']>> | null = null;
   let chatUploadsError: string | null = null;
   try {
-    chatUploads = await listChatUploadDigests(orgId, programId, Math.min(200, limit ?? 100));
+    chatUploads = await svc.listChatUploads(orgId, programId, Math.min(200, limit ?? 100));
   } catch (err) {
     chatUploadsError = err instanceof Error ? err.message : String(err);
   }

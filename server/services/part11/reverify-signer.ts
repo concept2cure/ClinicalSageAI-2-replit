@@ -160,7 +160,10 @@ export async function reverifySigner(
     };
   }
 
-  let secondFactorVerified = false;
+  /* No initializer: both arms below assign it, and a default of `false` here
+     would be a value no statement can read — the kind of dead default that
+     hides a missing arm rather than guarding against one. */
+  let secondFactorVerified: boolean;
   try {
     secondFactorVerified = await deps.verifyMfaToken(userId, mfaToken);
   } catch (err: unknown) {

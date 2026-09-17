@@ -228,11 +228,23 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
   // can be recorded in the catalog as a failure rather than surfacing later
   // as a document that merely looks empty).
   let extractedText: string | null = null;
-  const pageCount: number | null = null;
+  /* The page count was declared here and never assigned, so vault.documents and
+     every catalog row reported page_count NULL for a PDF whose pages are
+     perfectly countable — a column that reads as "unknown" when the answer was
+     one call away. Read from the document itself, cheaply (no text-layer
+     census), and left null for a format that has no pages or a file that would
+     not parse: null then means "not applicable or not readable", which is true,
+     rather than "nobody looked". */
+  let pageCount: number | null = null;
   let wordCount: number | null = null;
   let extractionMethod = 'none';
   let extractionConfidence: number | undefined;
   let extractionError: string | null = null;
+  const isPdf = mimeType === 'application/pdf' || /\.pdf$/i.test(fileName);
+  if (isPdf) {
+    const { pdfPageCount } = await import('../ocr/pdfInspector.js');
+    pageCount = await pdfPageCount(args.fileBuffer);
+  }
   try {
     const { extractDocumentText } = await import('../ocr/index.js');
     const extracted = await extractDocumentText(args.fileBuffer, mimeType, fileName);

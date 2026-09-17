@@ -1,12 +1,12 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import { parseDraftEnvelope } from './authoring-draft-envelope.js';
 import bcrypt from 'bcryptjs';
 import fs from 'fs';
 import path from 'path';
 // spawn — reserved for future PDF generation pipeline
 import crypto from 'crypto';
 // Lazy load docx to prevent startup failures
-import { PDFDocument } from 'pdf-lib';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { enforceOrgMembership } from '../middleware/orgMembership';
@@ -150,33 +150,11 @@ router.use((req: Request, res: Response, next: any) => {
   // ~60s cache as authenticateToken.
   return enforceOrgMembership(req, res, next);
 });
-const ALLOWED_UPLOAD_MIME_TYPES = new Set([
-  'application/pdf',
-  'text/plain',
-  'application/json',
-  'application/xml',
-  'text/xml',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-]);
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: '/tmp',
-    filename: (_req, file, cb) => {
-      const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-      cb(null, `${Date.now()}-${safeName}`);
-    },
-  }),
-  limits: {
-    fileSize: 25 * 1024 * 1024,
-    files: 5,
-  },
-  fileFilter: (_req, file, cb) => {
-    if (!ALLOWED_UPLOAD_MIME_TYPES.has(file.mimetype)) {
-      return cb(new Error('Unsupported file type'));
-    }
-    cb(null, true);
-  },
-});
+/* A disk-backed multer instance and its MIME allowlist stood here, attached
+   to no route. The two upload routes this file does serve build their own
+   memory-storage instances further down (imageUpload, docxImport); an unused
+   /tmp writer with a 25MB limit was a configuration nobody could reach and
+   nobody was maintaining. */
 
 // Use centralized database pool
 const pool = getPool();
@@ -3636,35 +3614,14 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
           callerModule: 'authoring-router/generate-draft',
         });
 
-        // Parse the structured envelope tolerantly. On ANY shortfall, fall back to
-        // treating the whole response as the draft with no attributions — the draft
-        // still lands and is attributed by verified quotes + author lineage
-        // (Phase 3). Structured paraphrase is additive; it must never break drafting.
-        let generatedContent = '';
-        let modelAttributions: Array<{ quote: string; src: number }> = [];
-        {
-          const rawResponse = gwResponse.content?.trim() || '';
-          let parsed: any = null;
-          try {
-            const fenced = rawResponse.replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
-            const start = fenced.indexOf('{');
-            const end = fenced.lastIndexOf('}');
-            if (start !== -1 && end > start) parsed = JSON.parse(fenced.slice(start, end + 1));
-          } catch {
-            parsed = null;
-          }
-          if (parsed && typeof parsed.content === 'string' && parsed.content.trim()) {
-            generatedContent = parsed.content.trim();
-            if (Array.isArray(parsed.attributions)) {
-              modelAttributions = parsed.attributions
-                .filter((a: any) => a && typeof a.quote === 'string' && Number.isInteger(Number(a.src)))
-                .map((a: any) => ({ quote: String(a.quote), src: Number(a.src) }));
-            }
-          } else {
-            // No usable structured content — treat the response as plain prose.
-            generatedContent = rawResponse;
-          }
-        }
+        // Parse the structured envelope tolerantly. On ANY shortfall the whole
+        // response becomes the draft with no attributions — the draft still lands
+        // and is attributed by verified quotes + author lineage (Phase 3).
+        // Structured paraphrase is additive; it must never break drafting. The
+        // parser is pure and lives in authoring-draft-envelope.ts so the malformed
+        // shapes it has to survive are unit-testable without the route.
+        const { content: generatedContent, attributions: modelAttributions } =
+          parseDraftEnvelope(gwResponse.content);
         if (generatedContent) {
           // Park the draft + the sources it came from so the accept endpoint can
           // record verified span-level source lineage (Phase 3). Best-effort:
@@ -4403,41 +4360,15 @@ router.get('/stats', async (req: Request, res: Response) => {
   }
 });
 
-// ============= Helper Functions for Step 5 =============
-
-function sha256(obj: any): string {
-  return crypto
-    .createHash('sha256')
-    .update(typeof obj === 'string' ? obj : JSON.stringify(obj))
-    .digest('hex');
-}
-
-// Build DOCX from sections with full 21 CFR Part 11 compliance
-
-function extractPlainText(contentJson: any): string {
-  // Minimal safe extractor; UI remains rich. Improve as needed.
-  try {
-    const walk = (node: any): string => {
-      if (!node) return '';
-      if (Array.isArray(node)) return node.map(walk).join(' ');
-      if (node.type === 'text') return node.text || '';
-      const kids = node.content ? walk(node.content) : '';
-      return kids;
-    };
-    return walk(contentJson) || '';
-  } catch {
-    return '';
-  }
-}
-
-// Build trivial PDF (wrapper) – optional; DOCX is primary
-async function buildPdfFromDocx(docxBuffer: Buffer): Promise<Buffer> {
-  // If you already have a proper PDF renderer, use it instead.
-  // This creates an empty PDF with the DOCX attached as a file (placeholder).
-  const pdf = await PDFDocument.create();
-  const bytes = await pdf.save();
-  return Buffer.from(bytes);
-}
+/* The three "Step 5 helpers" that stood here — sha256(), extractPlainText()
+   and buildPdfFromDocx() — were called by nothing. buildPdfFromDocx was the
+   one worth naming: it took a DOCX buffer, ignored it, and returned an EMPTY
+   PDF, with a comment calling that a placeholder. A helper that answers a
+   request for a rendered document with a blank one is the fabrication this
+   repo refuses; leaving it in place meant the next caller would ship empty
+   exports and see nothing wrong. Hashing goes through sha256Hex / crypto
+   directly at each site, which is where the rest of the file already does it.
+*/
 
 // ============= Step 5 Export, Submit, Sign, Freeze Endpoints =============
 
@@ -5067,7 +4998,10 @@ router.get('/sections/:sectionId/tokens', async (req: Request, res: Response) =>
 // POST /api/authoring/sections/:sectionId/refresh-token - Refresh a specific token
 router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Response) => {
   try {
-    const { sectionId } = req.params;
+    /* :sectionId is addressing only. A citation is identified by cite_id within
+       the caller's tenant, and refreshSourceCitation scopes on the tenant — the
+       section in the path is not a second scope and was never read as one, so
+       it is not bound here rather than bound and ignored. */
     const { cite_id } = req.body;
     const tenantId = getTenantId(req);
 
