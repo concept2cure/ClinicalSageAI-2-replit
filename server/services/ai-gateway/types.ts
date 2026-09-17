@@ -154,6 +154,16 @@ export interface AnaToolUse {
   id: string;
   name: string;
   input: Record<string, unknown>;
+  /**
+   * Set when the model's tool input arrived but could not be reconstructed —
+   * the streamed `input_json_delta` fragments did not parse, or the stream
+   * ended before the block closed. `input` is `{}` in that case, which is
+   * indistinguishable from a tool that legitimately takes no arguments, so the
+   * caller needs this to tell "asked for nothing" from "we lost what was
+   * asked for". A tool use carrying this must NOT be dispatched: report it as
+   * a failed step instead of running the handler on arguments we do not have.
+   */
+  inputParseError?: string;
 }
 
 /** Tool result to send back to Claude */

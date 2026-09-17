@@ -79,6 +79,7 @@ import {
   buildAdaptationNote,
   mapWithConcurrency,
   describeToolPlan,
+  lostToolInputResult,
   type ToolCall,
   type ToolResultEntry,
   type ModelTurn,
@@ -1062,10 +1063,15 @@ export function mountStreamRoute(router: Router): void {
           id: string;
           name: string;
           input?: Record<string, unknown>;
+          inputParseError?: string;
         }): ToolCall => ({
           id: c.id,
           name: c.name,
           input: (c.input ?? {}) as Record<string, unknown>,
+          // Carried, not dropped: `input` is `{}` either way, and executeTools
+          // needs to tell a zero-argument call from one whose arguments the
+          // stream lost.
+          ...(c.inputParseError ? { inputParseError: c.inputParseError } : {}),
         });
 
         // Execute one round: announce the step, stream tool_use/result events, run
@@ -1133,7 +1139,15 @@ export function mountStreamRoute(router: Router): void {
               let resultStr: string;
               let toolStatus: 'success' | 'error' | 'not_found' = 'success';
               let toolErrorMessage: string | undefined;
-              if (handler) {
+              const lostInput = lostToolInputResult(toolUse);
+              if (lostInput) {
+                // The model chose arguments and the stream lost them; never
+                // dispatch on `{}`. See lostToolInputResult for why the
+                // message blames the transport rather than the request.
+                resultStr = JSON.stringify(lostInput);
+                toolStatus = 'error';
+                toolErrorMessage = toolUse.inputParseError;
+              } else if (handler) {
                 try {
                   resultStr = await handler(toolUse.input, {
                     organizationId: orgId,
