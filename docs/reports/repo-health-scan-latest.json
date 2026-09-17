@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-17T06:48:34.612Z",
+  "generatedAt": "2026-09-17T07:29:26.149Z",
   "git": {
-    "sha": "e10efe380c3a58f27a2de42b65d08bc9c10ecac1",
+    "sha": "7e2f6313a6f50a2b1f3b6c8501670723f38e4fb8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2374,6 +2374,10 @@
         "lines": 1888
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1887
+      },
+      {
         "file": "client/src/concept2cure/v2/Shell.tsx",
         "lines": 1884
       },
@@ -2396,10 +2400,6 @@
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
         "lines": 1849
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1841
       },
       {
         "file": "server/services/vaccine/vaccine-knowledge.ts",
