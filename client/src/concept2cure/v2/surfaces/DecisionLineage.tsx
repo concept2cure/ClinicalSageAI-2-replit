@@ -445,16 +445,31 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                             }
                             title={
                               n.regulatory.part11RecordCheck.status === 'COMPLETE'
-                                ? 'This record carries what 21 CFR Part 11 requires an entry to carry: an attributed actor, a recorded timestamp, and any required signature. Not a compliance verdict.'
-                                : 'This record is missing: ' +
-                                  n.regulatory.part11RecordCheck.missing
-                                    .map((m) => m.replace(/-/g, ' '))
-                                    .join(', ')
+                                ? 'This record carries what 21 CFR Part 11 requires an entry to carry: an attributed actor and a recorded timestamp. Not a compliance verdict.'
+                                : [
+                                    n.regulatory.part11RecordCheck.missing.length
+                                      ? 'This record is missing: ' +
+                                        n.regulatory.part11RecordCheck.missing
+                                          .map((m) => m.replace(/-/g, ' '))
+                                          .join(', ')
+                                      : '',
+                                    n.regulatory.part11RecordCheck.notAssessed.length
+                                      ? 'Not checked here: ' +
+                                        n.regulatory.part11RecordCheck.notAssessed
+                                          .map((m) => m.replace(/-/g, ' '))
+                                          .join(', ') +
+                                        '. This surface reads no signature store, so an approval status is not taken as a signature.'
+                                      : '',
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' ')
                             }
                           >
                             {n.regulatory.part11RecordCheck.status === 'COMPLETE'
                               ? 'Part 11 record complete'
-                              : 'Part 11 record incomplete'}
+                              : n.regulatory.part11RecordCheck.status === 'PARTIAL'
+                                ? 'Part 11 record partly checked'
+                                : 'Part 11 record incomplete'}
                           </span>
                         )}
                         {n.regulatory && n.regulatory.requiresSignature && (
