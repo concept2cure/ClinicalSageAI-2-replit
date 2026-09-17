@@ -24,9 +24,16 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
 | WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | WO-15 — `KNOWN_UNLISTED`: 14 of 16 entries fail the list's stated reason | — | **unclaimed**, new, see finding 5 |
+| AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
+
+**Note for the vault-storage lane:** `server/services/vault/storage-migration.service.ts`
+(`c029711ae`) landed `migrateVaultStorage` at complexity 17 / 102 lines, which put
+`ci:eslint-warning-ratchet` one over its baseline. It was paid down elsewhere rather than
+in your file, so the gate is green and the function is untouched — but it is still two
+warnings you own. Splitting the per-document body out of the loop clears both.
 
 ---
 
