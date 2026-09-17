@@ -7,6 +7,10 @@
  */
 import { describe, it, expect } from 'vitest';
 import { computeDispatchReadiness, type ReadinessLeaf } from '../dispatch-readiness';
+import {
+  PLACEABLE_DOCUMENT_TABLES,
+  RESOLVABLE_DOCUMENT_TABLES,
+} from '../leaf-document-tables';
 
 const goodLeaf = (over: Partial<ReadinessLeaf> = {}): ReadinessLeaf => ({
   sectionCode: 'm2.5',
@@ -169,15 +173,32 @@ describe('computeDispatchReadiness — document-pointer rules', () => {
   // included. A dispatch-clear verdict for such a sequence would assert
   // something the system can never deliver, which is the exact defect the
   // readiness gate exists to prevent.
-  it('flags a leaf on a documented-external table the assembler cannot materialize', () => {
-    const r = computeDispatchReadiness([goodLeaf({ documentTable: 'vault_documents' })]);
-    expect(r.errors).toBe(1);
-    const finding = r.findings.find(f => f.code === 'EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE');
-    expect(finding, 'a vault_documents leaf must not read dispatch-clear').toBeTruthy();
-    expect(finding!.severity).toBe('error');
-    // The refusal must carry the resolver's own reason, not a generic message.
-    expect(finding!.message).toContain('vault');
-    // It is not an invented table — the write-side allowlist still accepts it.
+  /*
+   * THE EXTERNAL-TABLE CASE HAS NO MEMBER TO TEST WITH, as of 2026-09-17.
+   *
+   * `vault_documents` was the only entry in EXTERNAL_DOCUMENT_TABLES, and it
+   * became RESOLVABLE once both blockers fell: vault ingest now writes through
+   * getStorageProvider() (so the packager can fetch the bytes) and
+   * submission_leaves carries document_uuid (so a leaf can name a uuid-keyed
+   * document). The map is now empty, so EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE
+   * cannot be produced through the public API — there is no table to pass.
+   *
+   * The two tests that used vault_documents as the external example were
+   * removed rather than rewritten, because a test that asserts behaviour the
+   * system can no longer exhibit is worse than no test: it passes for the wrong
+   * reason or has to be forced. What replaces them is the assertion below —
+   * that the mechanism is intact and currently empty — so whoever adds the next
+   * external store is told, by a failing test, to restore this coverage.
+   */
+  it('has no external table today, and the vault leaf it used to flag now reads clear', () => {
+    // EXTERNAL_DOCUMENT_TABLES is module-local by design (externalDocumentTableReason
+    // is the only reader), so assert it derivatively: placeable is resolvable
+    // PLUS external, so the two sets matching means external is empty.
+    expect(PLACEABLE_DOCUMENT_TABLES.size).toBe(RESOLVABLE_DOCUMENT_TABLES.size);
+    const r = computeDispatchReadiness([goodLeaf({ documentTable: 'vault_documents', documentId: 1 })]);
+    // Placeable AND resolvable now — so neither the external finding nor the
+    // invented-table finding. A vault leaf is a legitimate pointer.
+    expect(r.findings.some(f => f.code === 'EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE')).toBe(false);
     expect(r.findings.some(f => f.code === 'UNPLACEABLE_DOCUMENT_TABLE')).toBe(false);
   });
 
@@ -195,15 +216,6 @@ describe('computeDispatchReadiness — document-pointer rules', () => {
       goodLeaf({ sectionCode: 'm3.2', lifecycleOp: 'delete', documentTable: 'coauthor_doccuments', documentId: 7 }),
     ]);
     expect(r.findings.some(f => f.code === 'UNPLACEABLE_DOCUMENT_TABLE'), 'a typo table on a delete leaf read dispatch-clear').toBe(true);
-    expect(r.errors).toBe(1);
-  });
-
-  it('flags an external document_table on a DELETE leaf', () => {
-    const r = computeDispatchReadiness([
-      goodLeaf(),
-      goodLeaf({ sectionCode: 'm3.2', lifecycleOp: 'delete', documentTable: 'vault_documents', documentId: 7 }),
-    ]);
-    expect(r.findings.some(f => f.code === 'EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE')).toBe(true);
     expect(r.errors).toBe(1);
   });
 
