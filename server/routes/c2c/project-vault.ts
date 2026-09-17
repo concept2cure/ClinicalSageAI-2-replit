@@ -451,6 +451,36 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
   };
 }
 
+/**
+ * How a LIVE section row renders — status, completion, owner, version, time.
+ *
+ * Separated from leafDoc because every field here is the same question asked of
+ * one optional row ("what does the live section say, and what do we show when
+ * there is no live section"), while the rest of leafDoc is about the rule-pack
+ * spec. Reading them interleaved hid that, and the mix put leafDoc over the
+ * complexity limit.
+ */
+function liveSectionPresentation(
+  live: LiveSection | undefined,
+  hasContent: boolean,
+): Pick<VaultDoc, 'status' | 'pct' | 'owner' | 'ver' | 'updated'> {
+  const status = live?.status ?? null;
+  return {
+    status: normalizeStatus(status, hasContent),
+    // Completion, on the SAME definition the document row beside this one uses
+    // (c2c_documents.readiness = % of sections approved/locked). This used to be
+    // `hasContent ? 100 : 0`, so one typed sentence reported a finished section
+    // next to a document reporting 0%. Drafting progress is still carried by
+    // `status` and by the mandatory-without-content blocker in leafDoc.
+    pct: sectionCompletionPct(status),
+    // Owner is resolved ONLY from a real user (section owner_id); unattributed
+    // sections stay '—' rather than borrowing the target agency's name.
+    owner: live?.owner_name ?? '—',
+    ver: live?.version != null ? `v${live.version}` : '—',
+    updated: live ? relativeTime(live.updated_at) : '—',
+  };
+}
+
 /** A rule-pack section spec merged with its live row → a VaultDoc leaf. */
 function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined): VaultDoc {
   const hasContent = live?.has_content ?? false;
@@ -462,18 +492,7 @@ function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined):
     num: spec.key,
     title: label,
     type: mandatory ? 'Required' : 'Optional',
-    status: normalizeStatus(live?.status ?? null, hasContent),
-    // Completion, on the SAME definition the document row beside this one uses
-    // (c2c_documents.readiness = % of sections approved/locked). This used to be
-    // `hasContent ? 100 : 0`, so one typed sentence reported a finished section
-    // next to a document reporting 0%. Drafting progress is still carried by
-    // `status` and by the mandatory-without-content blocker below.
-    pct: sectionCompletionPct(live?.status ?? null),
-    // Owner is resolved ONLY from a real user (section owner_id); unattributed
-    // sections stay '—' rather than borrowing the target agency's name.
-    owner: live?.owner_name ?? '—',
-    ver: live?.version != null ? `v${live.version}` : '—',
-    updated: live ? relativeTime(live.updated_at) : '—',
+    ...liveSectionPresentation(live, hasContent),
     preview: `${docTitle} · ${spec.key} · ${label}${mandatory ? ' · mandatory section' : ''}`,
   };
   if (mandatory && !hasContent) {
