@@ -142,6 +142,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
     supportsInlineSystem: true,
+    supportsStructuredOutputs: true,
     // 1M window. It read 200000 for every Claude entry, which is the Claude 3
     // figure. Under-declaring it is the harmful direction for the admission
     // gate (see context-budget.ts): the gate refuses a request the model would
@@ -181,6 +182,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
     supportsInlineSystem: true,
+    supportsStructuredOutputs: true,
     contextWindow: 1000000,
     qualityScore: 98,
     costPer1kInput: 0.005,
@@ -203,6 +205,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4',
     provider: 'anthropic',
     model: 'claude-sonnet-5',
+    supportsStructuredOutputs: true,
     // Sonnet 5 shares the flagship's reasoning-only surface: adaptive
     // thinking, and temperature/top_p/top_k rejected. Note this differs from
     // Sonnet 4.6 below, which keeps the legacy budget_tokens surface — the
@@ -263,6 +266,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // stale-prior artifact. Haiku keeps the 200K window — unlike the Opus and
     // Sonnet entries above, that figure is correct here.
     model: 'claude-haiku-4-5',
+    supportsStructuredOutputs: true,
     thinkingMode: 'budget',
     supportsSamplingParams: true,
     contextWindow: 200000,
@@ -505,6 +509,47 @@ function partitionSystemMessages(
   }
 
   return { systemMessages, bodyMessages };
+}
+
+/**
+ * Resolve the Anthropic structured-output format for a request.
+ *
+ * Returns the `output_config.format` value when the caller supplied a schema AND
+ * the resolved model can enforce it, plus whether that guarantee was applied.
+ *
+ * Three rules worth stating:
+ *
+ *   - **No schema, no format.** Anthropic has no `json_object` mode, so the
+ *     OpenAI path's schema-less fallback has no counterpart. `jsonMode` alone is
+ *     a prompt instruction, not a wire parameter; fabricating an empty schema
+ *     would constrain the model to nothing.
+ *   - **Unsupported model answers anyway.** Around fifteen services call
+ *     `ai.structured()` and the router reaches a model without the capability on
+ *     every fallback. Refusing there trades a silent gap for an outage. The gap
+ *     is reported instead — see `structuredOutputEnforced`.
+ *   - **Citations are mutually exclusive with it.** The API returns a 400 for the
+ *     pair. Refusing here, with a message naming both, is better than finding it
+ *     as a provider error on a governed path.
+ */
+function resolveStructuredOutputFormat(
+  request: GatewayRequest,
+  modelConfig: ModelConfig
+): { format?: { type: 'json_schema'; schema: Record<string, unknown> }; enforced: boolean } {
+  if (!request.jsonSchema) return { enforced: false };
+
+  const usesCitations = (request.messages || []).some(m =>
+    m.contentBlocks?.some(b => b.type === 'document' && b.citations?.enabled)
+  );
+  if (usesCitations) {
+    throw new GatewayPolicyError(
+      'A JSON schema and document citations cannot be requested together — the ' +
+        'Anthropic API refuses the pair. Ask for one or the other: a constrained ' +
+        'shape, or an answer that cites the page it came from.'
+    );
+  }
+
+  if (modelConfig.supportsStructuredOutputs !== true) return { enforced: false };
+  return { format: { type: 'json_schema', schema: request.jsonSchema }, enforced: true };
 }
 
 /** One buffer per open tool_use block, keyed by the stream event's `index`. */
@@ -1474,9 +1519,20 @@ export class AIGateway {
       }
     }
 
-    // Sampling + extended thinking (model-aware: Opus 4.7+ rejects temperature
-    // and manual budget_tokens thinking; older models keep the legacy surface).
+    // Sampling + extended thinking (model-aware: reasoning-only models reject
+    // temperature and manual budget_tokens thinking; older models keep the
+    // legacy surface).
     this.applyAnthropicSamplingParams(params, modelConfig, request);
+
+    // Structured output. Throws on the citations conflict before anything is
+    // sent, rather than letting the provider 400 it.
+    const structured = resolveStructuredOutputFormat(request, modelConfig);
+    if (structured.format) {
+      params.output_config = { ...(params.output_config ?? {}), format: structured.format };
+    }
+    if (request.apiEffort) {
+      params.output_config = { ...(params.output_config ?? {}), effort: request.apiEffort };
+    }
 
     // Tool use
     if (request.tools && request.tools.length > 0) {
@@ -1564,6 +1620,9 @@ export class AIGateway {
       cacheStats,
       deterministic: false,
       finishReason: response.stop_reason || 'unknown',
+      // Says whether the caller's schema was actually enforced. Without it a
+      // constrained answer and a fortunate one look identical.
+      structuredOutputEnforced: structured.enforced,
     };
   }
 
@@ -1671,6 +1730,16 @@ export class AIGateway {
     const streamUsesFilesApiDoc = (request.messages || []).some(m =>
       m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
     );
+    // Same structured-output contract as the non-streaming path — including the
+    // citations conflict, which must refuse before a token is streamed.
+    const structured = resolveStructuredOutputFormat(request, modelConfig);
+    if (structured.format) {
+      params.output_config = { ...(params.output_config ?? {}), format: structured.format };
+    }
+    if (request.apiEffort) {
+      params.output_config = { ...(params.output_config ?? {}), effort: request.apiEffort };
+    }
+
     const streamOptions: Record<string, unknown> = {};
     if (streamUsesFilesApiDoc) {
       streamOptions.headers = { 'anthropic-beta': 'files-api-2025-04-14' };
@@ -1844,6 +1913,7 @@ export class AIGateway {
       finishReason: stopReason,
       cacheHit: streamCacheStats ? cacheReadInputTokens > 0 : undefined,
       cacheStats: streamCacheStats,
+      structuredOutputEnforced: structured.enforced,
     } as AnaGatewayResponse;
   }
 

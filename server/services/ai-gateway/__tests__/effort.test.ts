@@ -25,6 +25,9 @@ import {
   projectModelsForPicker,
   deriveModelLabel,
   deriveRecommendedEffort,
+  resolveApiEffort,
+  claudeModelLabel,
+  EFFORT_TO_API_EFFORT,
 } from '../effort';
 
 function model(overrides: Partial<ModelConfig>): ModelConfig {
@@ -185,5 +188,75 @@ describe('projectModelsForPicker — projection', () => {
 
   it('humanizes unknown registry ids for the label', () => {
     expect(deriveModelLabel(model({ id: 'some-new-model' }))).toBe('Some New Model');
+  });
+});
+
+// ── The API's own effort, distinct from which model to pick ────────────────
+//
+// The Composer's Fast/Balanced/Thorough control has always meant two things,
+// and only the first was ever sent: a user asking for Thorough got a better
+// model that then reasoned at the same depth as Fast.
+
+describe('resolveApiEffort', () => {
+  it('maps the three levels onto API effort, in order', () => {
+    expect(resolveApiEffort('fast')).toBe('low');
+    expect(resolveApiEffort('balanced')).toBe('medium');
+    expect(resolveApiEffort('thorough')).toBe('high');
+  });
+
+  it('is a different question from which model to route to', () => {
+    // Same input, two independent answers. Collapsing them would make a
+    // cost-optimised route imply shallow reasoning, which is not the same claim.
+    expect(Object.keys(EFFORT_TO_API_EFFORT)).toEqual(Object.keys(EFFORT_TO_STRATEGY));
+    expect(resolveApiEffort('balanced')).not.toBe(resolveEffortStrategy('balanced'));
+  });
+
+  it('sends no value the pinned SDK does not know', () => {
+    // @anthropic-ai/sdk 0.82.0 types effort as low|medium|high|max — no xhigh.
+    // Sending one anyway would be a guess dressed as a setting.
+    const known = new Set(['low', 'medium', 'high', 'max']);
+    for (const level of EFFORT_LEVELS) {
+      expect(known.has(resolveApiEffort(level)), level).toBe(true);
+    }
+  });
+});
+
+// ── A model label is a claim about what will run ───────────────────────────
+
+describe('claudeModelLabel', () => {
+  it('reads the version out of the wire model', () => {
+    expect(claudeModelLabel('claude-opus-5')).toBe('Claude Opus 5');
+    expect(claudeModelLabel('claude-sonnet-5')).toBe('Claude Sonnet 5');
+    expect(claudeModelLabel('claude-haiku-4-5')).toBe('Claude Haiku 4.5');
+    expect(claudeModelLabel('claude-opus-4-8')).toBe('Claude Opus 4.8');
+  });
+
+  it('strips a provider prefix', () => {
+    expect(claudeModelLabel('anthropic.claude-opus-4-7')).toBe('Claude Opus 4.7');
+  });
+
+  it('declines anything that is not a Claude model', () => {
+    expect(claudeModelLabel('gpt-4o')).toBeNull();
+    expect(claudeModelLabel('local-default')).toBeNull();
+  });
+});
+
+describe('deriveModelLabel', () => {
+  it('names the model that will run, not the alias that points at it', () => {
+    // This is the regression the hand-mapped labels caused: the table was keyed
+    // on the stable alias id, so moving 'claude-opus-4' to Opus 5 left the
+    // picker offering "Claude Opus 4" for a request that ran on Opus 5.
+    expect(deriveModelLabel(model({ id: 'claude-opus-4', model: 'claude-opus-5' })))
+      .toBe('Claude Opus 5');
+  });
+
+  it('marks a fallback rung as one', () => {
+    expect(deriveModelLabel(model({ id: 'claude-opus-4-legacy', model: 'claude-opus-4-8' })))
+      .toBe('Claude Opus 4.8 (fallback)');
+  });
+
+  it('still hand-labels the non-Claude entries', () => {
+    expect(deriveModelLabel(model({ id: 'gpt-4o', model: 'gpt-4o', provider: 'openai' })))
+      .toBe('GPT-4o');
   });
 });
