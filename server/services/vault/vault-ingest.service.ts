@@ -291,6 +291,13 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
   let extractionMethod = 'none';
   let extractionConfidence: number | undefined;
   let extractionError: string | null = null;
+  /* Where each page begins in the extracted text, when the extractor could
+     prove it (see ocr/page-offsets.ts). Carried to the chunker so a passage can
+     cite a page a reviewer can turn to, rather than a character offset nobody
+     can check against the file. Undefined for a format with no pages, and for a
+     PDF whose pages could not be located in the combined text — in which case
+     the chunks carry no page at all, which is the honest outcome. */
+  let pageSpans: import('../ocr/page-offsets.js').PageSpan[] | undefined;
   const isPdf = mimeType === 'application/pdf' || /\.pdf$/i.test(fileName);
   if (isPdf) {
     const { pdfPageCount } = await import('../ocr/pdfInspector.js');
@@ -304,7 +311,12 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
     if (extracted.text && extracted.text.trim().length > 0) {
       extractedText = extracted.text;
       wordCount = extracted.text.trim().split(/\s+/).length;
-      logger.info('Vault ingest text extracted', { chars: extracted.text.length, wordCount });
+      pageSpans = extracted.pageSpans;
+      logger.info('Vault ingest text extracted', {
+        chars: extracted.text.length,
+        wordCount,
+        pagesMapped: pageSpans?.length ?? 0,
+      });
     }
   } catch (extractErr: any) {
     extractionError = extractErr?.message ?? 'unknown extraction error';
@@ -602,7 +614,7 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
        recorded as chunk_failed with its reason, never thrown. */
     if (chunkingEnabled && extractedText) {
       const textForChunks: string = extractedText;
-      await chunkDocumentForIngest(String(doc.id), orgId, textForChunks);
+      await chunkDocumentForIngest(String(doc.id), orgId, textForChunks, pageSpans);
     }
 
     logger.info('Vault document ingested', {
