@@ -50,15 +50,40 @@ export const RESOLVABLE_DOCUMENT_TABLES: ReadonlySet<string> = new Set([
  */
 const EXTERNAL_DOCUMENT_TABLES: Record<string, string> = {
   // vault_documents CANNOT be materialized from a leaf today and is intentionally
-  // left unresolved (a guard-stop, not a silent drop): submission_leaves.document_id
-  // is INTEGER but vault.documents.id is a UUID (an integer cannot address the row),
-  // and vault.documents has no organization_id (it is program-scoped), so there is
-  // no tenant-safe lookup. Materializing it would require a reference/schema change;
-  // forcing it would risk shipping wrong or cross-tenant bytes to the agency.
+  // left unresolved (a guard-stop, not a silent drop). TWO blockers, and both
+  // must fall before this entry can be removed:
+  //
+  //   1. ID SPACE. submission_leaves.document_id is INTEGER; vault.documents.id
+  //      is a UUID, so an integer cannot address the row. The sanctioned bridge
+  //      is the alias map, NOT widening the column:
+  //      docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md weighed widening (its
+  //      Option A) and rejected it, and says in terms that submission_leaves
+  //      keeps its integer document_id.
+  //
+  //   2. BYTES. The resolver fetches non-local content through
+  //      getStorageProvider().get(vaultVersionId, organizationId) — a lookup by
+  //      a PROVIDER-MINTED version uuid under storage/vault/{orgId}/{projectId}/
+  //      versions/. A vault document is not there: vault ingest writes to
+  //      uploads/vault/{programId}/{contentHash}, stores that relative PATH in
+  //      s3_key with s3_bucket='local', and mints no provider sidecar. Different
+  //      root, different key space — the provider cannot find it even given a
+  //      correct id. rendered_leaf_files resolves only because
+  //      storeRenderedLeafFile() called the provider's put() and persisted the
+  //      version id it handed back; vault.documents has no such column. Closing
+  //      this means moving vault ingest onto the storage provider, which is an
+  //      infrastructure decision rather than a resolver change.
+  //
+  // CORRECTED 2026-09-17: this entry used to also cite "vault.documents has no
+  // organization_id (it is program-scoped)". That is no longer true —
+  // migrations/20260905_vault_documents_organization_id.sql adds the column and
+  // is on the deploy path. It is nullable and carries no RLS policy, so it is
+  // attribution rather than isolation; either way it is not what stops a vault
+  // leaf, and a stale blocker invites someone to unblock this by fixing
+  // something already fixed.
   vault_documents:
-    'vault_documents is an external S3-backed binary in the separate `vault` schema ' +
-    '(UUID-keyed, program-scoped); it cannot be addressed from an integer leaf ' +
-    'document_id and has no org scope, so it is not materializable here',
+    'vault_documents is a binary in the separate `vault` schema (UUID-keyed); a leaf ' +
+    'cannot address it from an integer document_id, and its bytes are not in the ' +
+    'storage provider this resolver fetches through, so it is not materializable here',
 };
 
 /**
