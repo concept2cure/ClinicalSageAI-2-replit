@@ -506,7 +506,14 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
        software rows, so a failed software panel silently shortens it.
        Naming the query in the log and the payload field it feeds in `meta` is
        deliberate: the operator needs the former, the surface needs the latter. */
-    const SUMMARY_INPUTS = ['dhf', 'ecrs', 'risks', 'issues', 'riskLastUpdated'];
+    /* riskLastUpdated is deliberately NOT here. It is the one summary field no
+       consumer renders — grep the mdx client and it appears only in the hook's
+       type — so escalating its failure would withhold three numbers that DID
+       read cleanly (DHF completion, open risks, open change requests) to
+       protect a value nobody sees. That is over-correction in the opposite
+       direction to the defect. It still names itself in meta.unavailable, so
+       whoever starts rendering it can gate on it then. */
+    const SUMMARY_INPUTS = ['dhf', 'ecrs', 'risks', 'issues'];
     if (unavailable.some((n) => SUMMARY_INPUTS.includes(n))) unavailable.push('summary');
     if (unavailable.includes('software')) unavailable.push('documents');
 

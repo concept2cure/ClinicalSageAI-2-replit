@@ -59,7 +59,7 @@ describe('useEngineering — an unreadable panel', () => {
 
     expect(result.current.risks.status).toBe('error');
     expect(result.current.risks.status === 'error' && result.current.risks.message)
-      .toMatch(/not a finding that there are none/i);
+      .toMatch(/not a count of zero/i);
   });
 
   it('leaves the panels that DID read as honest empties', async () => {
@@ -90,6 +90,30 @@ describe('useEngineering — an unreadable panel', () => {
     const { result } = renderHook(() => useEngineering(PROGRAM));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
+    expect(result.current.risks.status).toBe('empty');
+  });
+
+  it('does not carry a stale failure into the next program', async () => {
+    /* useFetchJson keeps `data` and clears `error` when a new fetch starts, so
+       meta.unavailable is the PREVIOUS program's while the next one loads —
+       and toDataState puts error ahead of loading. Left unguarded, program B's
+       panel claimed a failed read before its answer arrived, and Retry looked
+       inert because the error survived the refetch meant to clear it. */
+    respond({ unavailable: ['risks'] });
+    const { result, rerender } = renderHook(({ p }) => useEngineering(p), {
+      initialProps: { p: PROGRAM },
+    });
+    await waitFor(() => expect(result.current.risks.status).toBe('error'));
+
+    let release: (v: unknown) => void = () => {};
+    fetchMock.mockReturnValue(new Promise((r) => { release = r; }));
+    rerender({ p: 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff' });
+
+    await waitFor(() => expect(result.current.loading).toBe(true));
+    expect(result.current.risks.status).toBe('loading');   // not the old error
+
+    release({ ok: true, status: 200, json: async () => ({ data: EMPTY_DATA, meta: { unavailable: [] } }), text: async () => '' });
+    await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.risks.status).toBe('empty');
   });
 

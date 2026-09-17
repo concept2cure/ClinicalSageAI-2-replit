@@ -93,7 +93,8 @@ const IDLE = 'The engineering record is held per program.';
    to someone reading a regulated record — that a zero is not being claimed.
    ErrorState redacts server strings, so the detail stays server-side in the
    log line panel() writes. */
-const UNREADABLE = 'The read failed. This is not a finding that there are none.';
+const UNREADABLE =
+  'The read failed. No figures are reported for it — this is not a count of zero.';
 
 export function useEngineering(programId: string | null): UseEngineeringResult {
   const url = programId
@@ -101,7 +102,15 @@ export function useEngineering(programId: string | null): UseEngineeringResult {
     : null;
   const { data, loading, error, refresh } = useFetchJson<EngineeringPayload>(url);
 
-  const unavailable = data?.meta?.unavailable ?? [];
+  /* `data` is the PREVIOUS payload while a new fetch is in flight: useFetchJson
+     clears `error` and keeps `data` on refetch, which is what lets a surface
+     hold its rows instead of flashing. So `unavailable` is stale during a load,
+     and toDataState puts error ahead of loading — meaning a stale failure would
+     outrank the in-flight request and claim the NEW program's panel had failed
+     before any answer arrived. It also made Retry look inert: the error stayed
+     on screen through the refetch that was supposed to clear it. Suppress it
+     while loading; the fresh payload decides. */
+  const unavailable = loading ? [] : data?.meta?.unavailable ?? [];
 
   /* A whole-request error still wins — it is the more serious fact, and
      toDataState's precedence puts error first for the same reason. */
