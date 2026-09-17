@@ -225,11 +225,19 @@ regardless; (c) only then `FORCE`.
 > vault copy is the governed record, and re-rendering would file something the
 > vault has never seen.
 >
-> **Still required before a customer sees it:** rows uploaded before the storage
-> move must be backfilled (`npm run db:backfill-vault-storage -- --org N`); until
-> then such a leaf resolves as unresolved and names that script. And there is no
-> UI affordance yet — no "file into submission" control on the Vault surface. The
-> capability is complete end to end; the button is not built.
+> **The control exists too.** "Place into submission…" on an uploaded document in
+> the Vault: choose the submission and sequence (frozen and dispatched ones are
+> excluded, with the reason), give a section code, file. The vault copy is filed
+> as itself — no snapshot, so there is no second artifact to keep in step. The
+> picker and the section-code rule are shared with the authoring dialog rather
+> than copied, which already paid for itself: the copy written separately for the
+> Vault would have accepted a bare module and filed a document at a container.
+>
+> **Still required before a customer sees it:** rows uploaded BEFORE the storage
+> move must be backfilled — `npm run db:backfill-vault-storage -- --org N`, dry-run
+> by default. Until that runs for a tenant, filing one of their older documents
+> produces a leaf that resolves as unresolved and names that script as the fix.
+> Nothing is lost and nothing is silent; it simply will not assemble yet.
 
 The original assessment follows, for the record.
 
