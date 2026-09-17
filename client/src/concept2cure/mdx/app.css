@@ -565,8 +565,11 @@
    ════════════════════════════════════════════════════════════ */
 .mdx-shell .tbl th.cb,
 .mdx-shell .tbl td.cb { width: 36px; padding-left: 14px; padding-right: 4px; }
+/* A <button role="checkbox"> now, not a <span> — reset the UA's padding and
+   font so the 16px box is unchanged. */
 .mdx-shell .cbox {
   width: 16px; height: 16px; border: 1.5px solid var(--border-strong);
+  padding: 0; font: inherit; cursor: pointer;
   border-radius: 3px; background: var(--bg-000);
   display: inline-flex; align-items: center; justify-content: center;
   color: var(--text-000); transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);

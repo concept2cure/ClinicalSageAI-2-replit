@@ -471,7 +471,24 @@ function DrafterDefCard({ def, draftDef, isActive, onActivate, onPatch, showCita
   onOpenSection: (t: SectionTarget) => void;
 }) {
   return (
-    <div className={`dr-def-card ${isActive ? 'is-active' : ''}`} data-def={def.id} onClick={onActivate}>
+    /* Activating a reviewer deficiency was mouse-only. The card holds its own
+       buttons (Attach more, Remove) so it cannot be a native <button>; the
+       explicit role matches TaskBoard's .tb-card, and the keydown guard lets
+       those inner controls act on their own keys. is-active was carried by a
+       class alone, so assistive technology had no way to know which deficiency
+       was open — aria-current states it. */
+    <div
+      className={`dr-def-card ${isActive ? 'is-active' : ''}`}
+      data-def={def.id}
+      role="button"
+      tabIndex={0}
+      aria-current={isActive || undefined}
+      onClick={onActivate}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onActivate(); }
+      }}
+    >
       <div className="dr-def-hdr">
         <div className={`dr-def-num sev-${def.severity}`}>D{def.n}</div>
         <div className="dr-def-titles">
