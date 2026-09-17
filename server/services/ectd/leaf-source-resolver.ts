@@ -19,9 +19,11 @@
  *                                write); plain text rendered via renderLeafPdf,
  *                                tenant-scoped through the parent
  *                                c2c_documents.org_id (renderable)
- *   - vault_documents          — an S3-backed binary (UUID-keyed, separate
- *                                `vault` schema); not addressable from an integer
- *                                leaf id and has no org scope → unresolved
+ *   - vault_documents          — a binary in the separate `vault` schema
+ *                                (UUID-keyed); not addressable from an integer
+ *                                leaf id, AND its bytes live outside the storage
+ *                                provider this module fetches through → unresolved
+ *                                (both reasons in leaf-document-tables.ts)
  *
  * Both assemblers (eCTD `assemble-from-core` and device
  * `assemble-technical-file-from-core`) previously resolved ONLY

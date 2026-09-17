@@ -40,7 +40,6 @@ export const DOCUMENT_ALIAS_STORES = [
   'concept2cure_artifacts',
   'submission_leaves',
   'unified_documents',
-  'vault_documents',
 ] as const;
 export type DocumentAliasStore = (typeof DOCUMENT_ALIAS_STORES)[number];
 

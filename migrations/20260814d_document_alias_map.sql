@@ -149,8 +149,7 @@ BEGIN
         'c2c_documents',
         'concept2cure_artifacts',
         'submission_leaves',
-        'unified_documents',
-        'vault_documents'
+        'unified_documents'
       ))
   $q$;
 
