@@ -231,3 +231,93 @@ describe("a source's filed stage is answered by the database, not by the page", 
     expect(query.mock.calls.filter(([sql]) => /content_hash = ANY/.test(String(sql)))).toHaveLength(0);
   });
 });
+
+/**
+ * The sections read is ONE query, not one per document.
+ *
+ * It used to sit inside `for (const doc of docsRes.rows)` — a round trip per
+ * authored document, on the surface whose whole job is to show a programme's
+ * documents. Thirty documents meant thirty sequential queries before the tree
+ * could render.
+ *
+ * Collapsing it is only safe if two things survive, and both are asserted here:
+ * every document still gets exactly its own sections (a grouping bug would show
+ * one document another's), and the tenant re-assertion is still in the SQL.
+ */
+describe('the authored-document sections are read in one query', () => {
+  const DOC_A = 'doc_aaaa';
+  const DOC_B = 'doc_bbbb';
+
+  function wireWithDocs(sections: Array<Record<string, unknown>>) {
+    query.mockImplementation(async (sql: string) => {
+      const q = String(sql);
+      if (/content_hash = ANY/.test(q)) return { rows: [] };
+      if (/COUNT\(\*\)::int AS total/.test(q)) return { rows: [{ total: 0, unfiled: 0 }] };
+      if (/d\.document_code/.test(q)) return { rows: [] };
+      if (/FROM c2c_document_sections/.test(q)) return { rows: sections };
+      if (/FROM c2c_documents d/.test(q)) {
+        // BOTH documents declare the SAME two required sections. That is what
+        // makes the grouping assertion below a real trap: if the live maps were
+        // merged, each document would render both sections as complete.
+        const specs = [
+          { key: 'a-only', parent_key: null, label: 'A only', mandatory: true, path_order: 1 },
+          { key: 'b-only', parent_key: null, label: 'B only', mandatory: true, path_order: 2 },
+        ];
+        return {
+          rows: [
+            { id: DOC_A, doc_type: 'ind', agency: 'fda', title: 'Doc A', status: 'draft', updated_at: new Date(), required_sections: specs },
+            { id: DOC_B, doc_type: 'ind', agency: 'fda', title: 'Doc B', status: 'draft', updated_at: new Date(), required_sections: specs },
+          ],
+        };
+      }
+      if (/SELECT id, name, product_type/.test(q)) {
+        return { rows: [{ id: PROGRAM, name: 'Test Program', product_type: null }] };
+      }
+      return { rows: [] };
+    });
+  }
+
+  it('issues exactly one sections query for two documents', async () => {
+    wireWithDocs([]);
+    await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
+    const secQueries = query.mock.calls.filter(([sql]) => /FROM c2c_document_sections/.test(String(sql)));
+    expect(secQueries).toHaveLength(1);
+  });
+
+  it('asks for both document ids at once, and keeps the tenant re-assertion', async () => {
+    wireWithDocs([]);
+    await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
+    const sec = query.mock.calls.find(([sql]) => /FROM c2c_document_sections/.test(String(sql)));
+    expect(sec).toBeDefined();
+    expect(String(sec![0])).toMatch(/ds\.document_id = ANY/);
+    // The org predicate is what stops the section read widening past the
+    // caller's tenant; collapsing the loop must not have dropped it.
+    expect(String(sec![0])).toMatch(/d\.org_id = \$2/);
+    expect((sec![1] as unknown[])[0]).toEqual([DOC_A, DOC_B]);
+  });
+
+  it('gives each document its OWN sections, never another document’s', async () => {
+    // The grouping is the part a single query can get wrong: rows come back
+    // interleaved and must be keyed by document_id, not merged into one map.
+    // Each document has exactly ONE complete section, and they are different
+    // ones. A shared map would give each document two.
+    wireWithDocs([
+      { document_id: DOC_A, section_key: 'a-only', status: 'approved', version: 1, updated_at: new Date(), has_content: true, owner_name: 'X' },
+      { document_id: DOC_B, section_key: 'b-only', status: 'approved', version: 1, updated_at: new Date(), has_content: true, owner_name: 'Y' },
+    ]);
+    const res = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
+    expect(res.status).toBe(200);
+
+    const complete: string[] = [];
+    const walk = (nodes: Array<Record<string, unknown>>) => {
+      for (const n of nodes) {
+        if (Array.isArray(n.children)) walk(n.children as Array<Record<string, unknown>>);
+        else if (n.pct === 100) complete.push(String(n.num ?? n.title));
+      }
+    };
+    walk(res.body.data.tree as Array<Record<string, unknown>>);
+    // Two documents, one complete section each. Four would mean the maps were
+    // shared — precisely the bug collapsing the loop can introduce.
+    expect(complete).toHaveLength(2);
+  });
+});

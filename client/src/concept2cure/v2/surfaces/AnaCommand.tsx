@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
+import { useDialog } from '../useDialog';
 import { EmptyState, useLiveData, type DataState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -201,6 +202,31 @@ interface ActionResp {
   updatedObjects?: { type: string; id: string | number; title?: string }[];
   warnings?: string[];
   errors?: { code: string; message: string }[];
+}
+
+/* Both overlays on this surface — the pre-submission go/no-go and the action
+   runner — shipped as a bare `.ac-gate-bd` / `.ac-gate` pair: no role, no
+   accessible name, no way out but the mouse, and focus abandoned behind the
+   backdrop. Both announce that what they do is audited to 21 CFR Part 11, which
+   is precisely the kind of decision a keyboard or screen-reader user must be
+   able to read and dismiss unaided.
+
+   One wrapper rather than two conversions: the markup was already identical, and
+   a second copy of it is the duplication the working agreement forbids. */
+function GateDialog({ onClose, labelledBy, children }: {
+  onClose: () => void;
+  labelledBy: string;
+  children: React.ReactNode;
+}) {
+  const panel = useDialog(onClose);
+  return (
+    <div className="ac-gate-bd" onClick={onClose}>
+      <div className="ac-gate" role="dialog" aria-modal="true" aria-labelledby={labelledBy}
+        tabIndex={-1} ref={panel} onClick={e => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 /* Normalized display shape both executors fold into, so one modal renders
@@ -704,11 +730,10 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
 
       {/* Pre-submission gate -- the unified go/no-go */}
       {gateOpen && prog && (
-        <div className="ac-gate-bd" onClick={() => setGateOpen(false)}>
-          <div className="ac-gate" onClick={e => e.stopPropagation()}>
+        <GateDialog onClose={() => setGateOpen(false)} labelledBy="ac-gate-title">
             <div className="ac-gate-top">
               <div>
-                <div className="ac-gate-crumb">{progLabel}{gate ? ' · ' + gate.submissionType : ''} · pre-submission quality gate</div>
+                <div className="ac-gate-crumb" id="ac-gate-title">{progLabel}{gate ? ' · ' + gate.submissionType : ''} · pre-submission quality gate</div>
                 <div className="ac-gate-sub">readiness + CMC contradictions + CRL + RTF + ICH — one verdict, audited to Part 11</div>
               </div>
               <button className="ac-gate-x" aria-label="Close" onClick={() => setGateOpen(false)}>{I.close}</button>
@@ -764,18 +789,16 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 </div>
               </>
             )}
-          </div>
-        </div>
+        </GateDialog>
       )}
 
       {/* Action runner — confirm → run → honest result, for both a workflow Run
           and a recommendation Dispatch. Renders only real executor output. */}
       {runOpen && (
-        <div className="ac-gate-bd" onClick={closeRun}>
-          <div className="ac-gate" onClick={e => e.stopPropagation()}>
+        <GateDialog onClose={closeRun} labelledBy="ac-run-title">
             <div className="ac-gate-top">
               <div>
-                <div className="ac-gate-crumb">{outcome ? outcome.title : pending ? pending.title : 'Running…'}</div>
+                <div className="ac-gate-crumb" id="ac-run-title">{outcome ? outcome.title : pending ? pending.title : 'Running…'}</div>
                 <div className="ac-gate-sub">
                   {running ? 'Executing against the real orchestration backend — every step runs server-side.'
                     : outcome ? (outcome.kind === 'workflow' ? 'Workflow execution · recorded to the audit trail' : 'AI action dispatch · recorded to the audit trail')
@@ -861,8 +884,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 </div>
               </>
             ) : null}
-          </div>
-        </div>
+        </GateDialog>
       )}
     </div>
   );

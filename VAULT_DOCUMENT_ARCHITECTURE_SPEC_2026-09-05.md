@@ -319,6 +319,10 @@ Step 0, then step 1. **Both are now done** — step 0 as `RULE 1` in `CLAUDE.md`
 belongs there, and has moved.
 
 **Step 1b is WITHDRAWN (2026-09-17). Do not widen `submission_leaves.document_id`.**
+**Its GOAL is DONE** — a vault document can be filed into a submission as of the same day,
+by the additive route described at the end of this section: bytes onto `getStorageProvider()`,
+plus one nullable `document_uuid` column beside the untouched integer. The reasoning below is
+kept because it is why the obvious approach was the wrong one.
 
 The original reasoning below was about how to land the widening safely. It was answering the
 wrong question, for two independent reasons found when the step came up for implementation:

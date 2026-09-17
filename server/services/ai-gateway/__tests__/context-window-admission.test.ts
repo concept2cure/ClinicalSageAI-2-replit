@@ -30,7 +30,7 @@
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { AIGateway, resetGateway } from '../gateway';
+import { AIGateway, resetGateway, DEFAULT_MODELS } from '../gateway';
 import { classifyGatewayError } from '../gateway-error-map';
 import type { GatewayConfig, GatewayResponse, ModelConfig } from '../types';
 
@@ -85,9 +85,16 @@ describe('context-window admission', () => {
     const gw = liveGateway();
     const dispatch = spyDispatch(gw);
 
-    // 1.2M characters is ≈240k tokens even at a lenient 5 chars/token — past
-    // the 200k window of the largest model in the registry.
-    const oversized = 'x'.repeat(1_200_000);
+    // Derived from the registry, not hardcoded. This was `'x'.repeat(1_200_000)`
+    // with a comment pinning it to "the 200k window of the largest model" —
+    // true when every Claude entry declared 200000, and silently false the
+    // moment a window grew, at which point the request fit and the test
+    // asserted a refusal that could not happen. Size it past the real ceiling
+    // so it keeps measuring the gate rather than a number from 2024.
+    const largestWindow = Math.max(...DEFAULT_MODELS.filter(m => m.enabled).map(m => m.contextWindow));
+    // The gate estimates at 5 chars/token (lenient, erring toward admitting),
+    // so 6 chars per token of headroom clears it under any tokenizer variance.
+    const oversized = 'x'.repeat(largestWindow * 6);
     const outcome = await gw
       .route({ taskType: 'chat', messages: [{ role: 'user', content: oversized }] })
       .then(() => null, (e: unknown) => e);

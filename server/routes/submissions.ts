@@ -194,6 +194,14 @@ const upsertLeafSchema = z.object({
     .refine(isPlaceableDocumentTable, (v) => ({ message: unplaceableDocumentTableMessage(v) }))
     .optional(),
   documentId: z.coerce.number().int().positive().optional(),
+  /* The uuid half of the polymorphic reference, for uuid-keyed stores
+     (vault.documents). Validated as a uuid HERE so a malformed value is a 400
+     naming the field, rather than reaching the ::uuid cast in the verifier and
+     surfacing as a generic refusal. Which of the two a given table requires —
+     and that a leaf carries one, not both — is enforced once, in upsertLeaf,
+     against the table vocabulary; duplicating that rule here is how the two
+     would drift. */
+  documentUuid: z.string().uuid().optional(),
   documentType: z.string().max(64).optional(),
   parentLeafId: z.coerce.number().int().positive().optional(),
 });

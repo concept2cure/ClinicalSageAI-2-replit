@@ -57,13 +57,12 @@ import {
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
 import {
-  resolveVaultView,
   resolveOrgVaultView,
-  isFolderInView,
   folderLabel,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
+import { getStorageProvider } from '../../services/storage/index.js';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -212,6 +211,70 @@ interface LiveSection {
 interface SpecNode {
   spec: SectionSpec;
   children: SpecNode[];
+}
+
+/**
+ * Record a governed download BEFORE the bytes leave — 21 CFR 11.10(e).
+ *
+ * This handler served a governed document with no audit row of any kind:
+ * nothing recorded who read what, or when, while the sibling filing route
+ * already wrote a hash-chained row for a MOVE — so a document's placement
+ * changes were attributable and its disclosures were not.
+ *
+ * Returns false rather than throwing, and the caller refuses the download on
+ * false. A read that cannot be recorded is refused rather than served
+ * unrecorded: an inspector asking "who has had this document" must not be
+ * answered with a gap, and an audit trail that drops writes under load is not
+ * one. The filing path takes the same position by writing inside its
+ * transaction.
+ */
+async function recordVaultDownload(
+  req: Request,
+  d: {
+    orgId: number;
+    programId: string;
+    documentId: string;
+    documentTitle: string | null;
+    fileName: string | null;
+    fileSize: string | number | null;
+    contentHash: string | null;
+  },
+): Promise<boolean> {
+  try {
+    await writeChainedAuditRow(pool, {
+      tenantId: d.orgId,
+      userId: (req as any).user?.id ?? undefined,
+      action: 'vault.document.download',
+      resourceType: 'vault_document',
+      resourceId: d.documentId,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      details: {
+        programId: d.programId,
+        documentTitle: d.documentTitle,
+        fileName: d.fileName,
+        fileSize: d.fileSize,
+        // The hash of the bytes actually served, already verified by the
+        // caller, so the trail records WHICH edition left rather than only
+        // that one did.
+        contentHash: d.contentHash,
+      },
+    });
+    return true;
+  } catch (auditErr) {
+    logger.error('vault download refused: audit write failed', {
+      documentId: d.documentId,
+      err: auditErr instanceof Error ? auditErr.message : String(auditErr),
+    });
+    return false;
+  }
+}
+
+/** The four shapes a `folderId` can arrive in, mapped to what the service reads. */
+function normalizeFolderId(raw: unknown): string | null | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === null) return null;
+  return typeof raw === 'string' ? raw : '';
 }
 
 const UUID_RE =
@@ -388,6 +451,36 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
   };
 }
 
+/**
+ * How a LIVE section row renders — status, completion, owner, version, time.
+ *
+ * Separated from leafDoc because every field here is the same question asked of
+ * one optional row ("what does the live section say, and what do we show when
+ * there is no live section"), while the rest of leafDoc is about the rule-pack
+ * spec. Reading them interleaved hid that, and the mix put leafDoc over the
+ * complexity limit.
+ */
+function liveSectionPresentation(
+  live: LiveSection | undefined,
+  hasContent: boolean,
+): Pick<VaultDoc, 'status' | 'pct' | 'owner' | 'ver' | 'updated'> {
+  const status = live?.status ?? null;
+  return {
+    status: normalizeStatus(status, hasContent),
+    // Completion, on the SAME definition the document row beside this one uses
+    // (c2c_documents.readiness = % of sections approved/locked). This used to be
+    // `hasContent ? 100 : 0`, so one typed sentence reported a finished section
+    // next to a document reporting 0%. Drafting progress is still carried by
+    // `status` and by the mandatory-without-content blocker in leafDoc.
+    pct: sectionCompletionPct(status),
+    // Owner is resolved ONLY from a real user (section owner_id); unattributed
+    // sections stay '—' rather than borrowing the target agency's name.
+    owner: live?.owner_name ?? '—',
+    ver: live?.version != null ? `v${live.version}` : '—',
+    updated: live ? relativeTime(live.updated_at) : '—',
+  };
+}
+
 /** A rule-pack section spec merged with its live row → a VaultDoc leaf. */
 function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined): VaultDoc {
   const hasContent = live?.has_content ?? false;
@@ -399,18 +492,7 @@ function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined):
     num: spec.key,
     title: label,
     type: mandatory ? 'Required' : 'Optional',
-    status: normalizeStatus(live?.status ?? null, hasContent),
-    // Completion, on the SAME definition the document row beside this one uses
-    // (c2c_documents.readiness = % of sections approved/locked). This used to be
-    // `hasContent ? 100 : 0`, so one typed sentence reported a finished section
-    // next to a document reporting 0%. Drafting progress is still carried by
-    // `status` and by the mandatory-without-content blocker below.
-    pct: sectionCompletionPct(live?.status ?? null),
-    // Owner is resolved ONLY from a real user (section owner_id); unattributed
-    // sections stay '—' rather than borrowing the target agency's name.
-    owner: live?.owner_name ?? '—',
-    ver: live?.version != null ? `v${live.version}` : '—',
-    updated: live ? relativeTime(live.updated_at) : '—',
+    ...liveSectionPresentation(live, hasContent),
     preview: `${docTitle} · ${spec.key} · ${label}${mandatory ? ' · mandatory section' : ''}`,
   };
   if (mandatory && !hasContent) {
@@ -536,35 +618,105 @@ export type VerifiedVaultBytes =
   | { ok: true; bytes: Buffer }
   | { ok: false; status: number; error: string; message?: string };
 
+/**
+ * Where a vault document's bytes live. A row has ONE of these, never neither:
+ *   - `storageVersionId` — written through `getStorageProvider()`, the canonical
+ *     seam. This is the shape every new upload takes.
+ *   - `storageKey` — the legacy relative path in `s3_key`, for every row written
+ *     before the vault moved onto the provider.
+ * Both are carried because this is a DUAL-READ, not a cutover: no bytes were
+ * moved when the write path changed, so old documents must keep working
+ * unchanged until a deliberate backfill says otherwise.
+ */
+export interface VaultByteSource {
+  /** `vault.documents.storage_version_id` — NULL on rows predating the provider. */
+  storageVersionId: string | null;
+  /** `vault.documents.s3_key` — NULL on rows written through the provider. */
+  storageKey: string | null;
+  /** The caller's organization. Required: object storage sits outside Postgres
+   *  RLS, so for provider-backed bytes this argument IS the tenant boundary. */
+  organizationId: number;
+}
+
 export async function readVerifiedVaultBytes(
-  storageKey: string,
+  source: VaultByteSource,
   recordedHash: string | null,
   documentId: string,
 ): Promise<VerifiedVaultBytes> {
-  const resolved = path.resolve(process.cwd(), storageKey);
-  // Refuse a key that escapes the storage root. `s3_key` is written by this
-  // codebase today, but a path-traversal read is not a risk worth carrying on
-  // the assumption that it always will be.
-  const root = path.resolve(process.cwd(), 'uploads');
-  if (!resolved.startsWith(root + path.sep)) {
-    logger.error('vault download refused: storage key escapes the uploads root', { documentId });
+  let bytes: Buffer;
+
+  if (source.storageVersionId) {
+    // Provider-backed. `get()` returns null both for "no such version" and for
+    // "belongs to another organization" — the interface refuses to distinguish
+    // them, because a 403 on a foreign id confirms the id exists. Either way
+    // there are no bytes to serve, and that is what we report.
+    let got: Awaited<ReturnType<ReturnType<typeof getStorageProvider>['get']>>;
+    try {
+      got = await getStorageProvider().get(source.storageVersionId, source.organizationId);
+    } catch (err) {
+      logger.error('vault download: storage provider read failed', {
+        documentId,
+        reason: err instanceof Error ? err.message : 'unknown',
+      });
+      return {
+        ok: false,
+        status: 409,
+        error: 'STORED_FILE_MISSING',
+        message:
+          'The vault record exists but its stored file could not be read. Nothing was downloaded.',
+      };
+    }
+    if (!got) {
+      logger.error('vault download: stored version not readable for this organization', {
+        documentId,
+      });
+      return {
+        ok: false,
+        status: 409,
+        error: 'STORED_FILE_MISSING',
+        message:
+          'The vault record exists but its stored file could not be read. Nothing was downloaded.',
+      };
+    }
+    bytes = got.bytes;
+  } else if (source.storageKey) {
+    const resolved = path.resolve(process.cwd(), source.storageKey);
+    // Refuse a key that escapes the storage root. `s3_key` is written by this
+    // codebase today, but a path-traversal read is not a risk worth carrying on
+    // the assumption that it always will be.
+    const root = path.resolve(process.cwd(), 'uploads');
+    if (!resolved.startsWith(root + path.sep)) {
+      logger.error('vault download refused: storage key escapes the uploads root', { documentId });
+      return { ok: false, status: 409, error: 'NO_STORED_FILE' };
+    }
+
+    try {
+      bytes = await fs.readFile(resolved);
+    } catch {
+      logger.error('vault download: stored file missing on disk', {
+        documentId,
+        key: source.storageKey,
+      });
+      return {
+        ok: false,
+        status: 409,
+        error: 'STORED_FILE_MISSING',
+        message:
+          'The vault record exists but its stored file could not be read. Nothing was downloaded.',
+      };
+    }
+  } else {
+    // Neither address. The row was recorded without bytes reaching storage,
+    // which the ingest path refuses to do — so this is a corrupt record, and
+    // serving nothing with an explanation beats serving a zero-byte file.
+    logger.error('vault download refused: record carries no storage address', { documentId });
     return { ok: false, status: 409, error: 'NO_STORED_FILE' };
   }
 
-  let bytes: Buffer;
-  try {
-    bytes = await fs.readFile(resolved);
-  } catch {
-    logger.error('vault download: stored file missing on disk', { documentId, key: storageKey });
-    return {
-      ok: false,
-      status: 409,
-      error: 'STORED_FILE_MISSING',
-      message:
-        'The vault record exists but its stored file could not be read. Nothing was downloaded.',
-    };
-  }
-
+  // Verified the same way whichever address served the bytes. `content_hash` in
+  // the database is authoritative; the provider reports a hash of its own, but
+  // checking the bytes against the RECORD is what catches a store that returned
+  // the wrong object as well as one that returned altered bytes.
   if (recordedHash) {
     const actual = createHash('sha256').update(bytes).digest('hex');
     if (actual !== recordedHash) {
@@ -687,26 +839,43 @@ export default function createProjectVaultRoutes(): Router {
 
       // 4) Per-document live section status (+ owner + timestamp) → display tree.
       const tree: VaultFolder[] = [];
-      for (const doc of docsRes.rows as DocRow[]) {
+      // ONE query for every document's sections, not one per document. This
+      // was a round trip per authored document inside a loop — the tree read
+      // cost grew with the programme, on the surface whose whole job is to show
+      // a programme's documents. The predicate is the only thing that changed
+      // shape (`= $1` became `= ANY($1::text[])`); the EXISTS org re-assertion
+      // is carried over verbatim, because it is what keeps the section read
+      // from widening past the caller's tenant.
+      const docIds = (docsRes.rows as DocRow[]).map((d) => d.id);
+      const liveByDoc = new Map<string, Map<string, LiveSection>>();
+      if (docIds.length > 0) {
         const secRes = await pool.query(
-          // The document_id was already resolved from the org-filtered
+          // The document ids were already resolved from the org-filtered
           // c2c_documents query above; the EXISTS re-asserts that ownership
-          // inline (defense in depth + explicit org_id scoping so the section
-          // read never widens past the caller's tenant).
-          `SELECT ds.section_key, ds.status, ds.version, ds.updated_at,
+          // inline (defense in depth + explicit org_id scoping).
+          `SELECT ds.document_id, ds.section_key, ds.status, ds.version, ds.updated_at,
                   ${sectionHasContentSql('ds.content')} AS has_content,
                   COALESCE(u.name, u.email) AS owner_name
              FROM c2c_document_sections ds
              LEFT JOIN users u ON u.id = ds.owner_id
-            WHERE ds.document_id = $1
+            WHERE ds.document_id = ANY($1::text[])
               AND EXISTS (SELECT 1 FROM c2c_documents d
                            WHERE d.id = ds.document_id AND d.org_id = $2)`,
-          [doc.id, orgId],
+          [docIds, orgId],
         );
-        const live = new Map<string, LiveSection>(
-          (secRes.rows as LiveSection[]).map((r): [string, LiveSection] => [r.section_key, r]),
-        );
-        tree.push(documentFolder(doc, live));
+        for (const r of secRes.rows as Array<LiveSection & { document_id: string }>) {
+          let forDoc = liveByDoc.get(r.document_id);
+          if (!forDoc) {
+            forDoc = new Map<string, LiveSection>();
+            liveByDoc.set(r.document_id, forDoc);
+          }
+          forDoc.set(r.section_key, r);
+        }
+      }
+      for (const doc of docsRes.rows as DocRow[]) {
+        // A document with no rows in the result has no live sections — the same
+        // empty map the per-document query produced for it.
+        tree.push(documentFolder(doc, liveByDoc.get(doc.id) ?? new Map<string, LiveSection>()));
       }
 
       // 5) Derived branches: what the pipelines file for this program. ONE
@@ -1111,7 +1280,8 @@ export default function createProjectVaultRoutes(): Router {
       if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
       const docRes = await pool.query(
-        `SELECT id, file_name, document_title, mime_type, file_size, s3_key, content_hash
+        `SELECT id, file_name, document_title, mime_type, file_size, s3_key,
+                storage_version_id, content_hash
            FROM vault.documents
           WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
             AND EXISTS (
@@ -1127,12 +1297,16 @@ export default function createProjectVaultRoutes(): Router {
       const doc = docRes.rows[0] as {
         id: string; file_name: string | null; document_title: string | null;
         mime_type: string | null; file_size: string | number | null;
-        s3_key: string | null; content_hash: string | null;
+        s3_key: string | null; storage_version_id: string | null; content_hash: string | null;
       };
 
-      if (!doc.s3_key) {
-        // A row with no storage key describes a document whose bytes were never
+      if (!doc.storage_version_id && !doc.s3_key) {
+        // A row with NEITHER address describes a document whose bytes were never
         // kept. Say that rather than 404 — the record exists, the file does not.
+        // Both are checked because this is a dual-read: new uploads carry a
+        // provider version id and no s3_key, rows written before the vault moved
+        // onto the storage provider carry the reverse, and testing only the old
+        // one would refuse every new upload as "catalogued without content".
         return res.status(409).json({
           success: false,
           error: 'NO_STORED_FILE',
@@ -1140,7 +1314,15 @@ export default function createProjectVaultRoutes(): Router {
         });
       }
 
-      const read = await readVerifiedVaultBytes(doc.s3_key, doc.content_hash, documentId);
+      const read = await readVerifiedVaultBytes(
+        {
+          storageVersionId: doc.storage_version_id,
+          storageKey: doc.s3_key,
+          organizationId: orgId,
+        },
+        doc.content_hash,
+        documentId,
+      );
       if (!read.ok) {
         return res.status(read.status).json({
           success: false,
@@ -1150,41 +1332,16 @@ export default function createProjectVaultRoutes(): Router {
       }
       const bytes = read.bytes;
 
-      /* AUDIT BEFORE THE BYTES LEAVE — 21 CFR 11.10(e).
-         This handler served a governed document with no audit row of any kind:
-         nothing recorded who read what, or when. The sibling filing route below
-         (:1069) already writes a hash-chained row for a MOVE, so a document's
-         placement changes were attributable and its disclosures were not.
-         Ordered before the response deliberately. A read that cannot be recorded
-         is refused rather than served unrecorded — an inspector asking "who has
-         had this document" must not be answered with a gap, and an audit trail
-         that drops writes under load is not one. The filing route takes the same
-         position by writing inside its transaction. */
-      const actorId: number | null = (req as any).user?.id ?? null;
-      try {
-        await writeChainedAuditRow(pool, {
-          tenantId: orgId,
-          userId: actorId ?? undefined,
-          action: 'vault.document.download',
-          resourceType: 'vault_document',
-          resourceId: documentId,
-          ipAddress: req.ip,
-          userAgent: req.headers['user-agent'],
-          details: {
-            programId: id,
-            documentTitle: doc.document_title,
-            fileName: doc.file_name,
-            fileSize: doc.file_size,
-            // The hash of the bytes actually served, already verified above, so
-            // the trail records WHICH edition left rather than only that one did.
-            contentHash: doc.content_hash,
-          },
-        });
-      } catch (auditErr) {
-        logger.error('vault download refused: audit write failed', {
-          documentId,
-          err: auditErr instanceof Error ? auditErr.message : String(auditErr),
-        });
+      const recorded = await recordVaultDownload(req, {
+        orgId,
+        programId: id,
+        documentId,
+        documentTitle: doc.document_title,
+        fileName: doc.file_name,
+        fileSize: doc.file_size,
+        contentHash: doc.content_hash,
+      });
+      if (!recorded) {
         return res.status(500).json({
           success: false,
           error: 'AUDIT_WRITE_FAILED',
@@ -1210,196 +1367,52 @@ export default function createProjectVaultRoutes(): Router {
     }
   });
 
+  /* Filing decision. The write itself — ownership guards, the FOR UPDATE, the
+     taxonomy check, the UPDATE and its §11 audit row in one transaction — lives
+     in vault-placement.service.ts, because AnA now files documents too and a
+     second copy of a governed write is how the two drift apart. This handler
+     parses the request and renders the outcome. */
   router.post('/:id/file', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
     const userId: number | null = (req as any).user?.id ?? null;
 
     const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
-    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
-
     const body = (req.body ?? {}) as {
       documentId?: unknown; confirm?: unknown; folderId?: unknown;
       evidenceKind?: unknown; ctdSection?: unknown; note?: unknown;
     };
-    const documentId = typeof body.documentId === 'string' ? body.documentId.trim() : '';
-    if (!UUID_RE.test(documentId)) {
-      return res.status(400).json({ success: false, error: 'documentId (uuid) is required' });
-    }
-    const confirm = body.confirm === true;
-    const folderIdRaw = body.folderId;
-    const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null;
-    const evidenceKind =
-      typeof body.evidenceKind === 'string' && body.evidenceKind.trim() ? body.evidenceKind.trim() : null;
-    const ctdSection =
-      typeof body.ctdSection === 'string' && body.ctdSection.trim() ? body.ctdSection.trim() : null;
+    const str = (v: unknown): string | null =>
+      typeof v === 'string' && v.trim() ? v.trim() : null;
 
     try {
-      // Program ownership — same guard as the read.
-      const projRes = await pool.query(
-        `SELECT id FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-        [id, orgId],
-      );
-      if (projRes.rows.length === 0) {
-        return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      const { placeVaultDocument } = await import('../../services/vault/vault-placement.service.js');
+      const outcome = await placeVaultDocument({
+        programId: id,
+        documentId: typeof body.documentId === 'string' ? body.documentId.trim() : '',
+        organizationId: orgId,
+        userId,
+        confirm: body.confirm === true,
+        /* Four inputs, four meanings, all of which the inline handler
+           distinguished and none of which may collapse into another: absent
+           (confirm in place), null (unfile), a string (file there, blank
+           included so it still reaches NO_TARGET), and anything else — which
+           is not a folder, and is normalized to a blank string so it is
+           refused rather than read as an unfile. */
+        folderId: normalizeFolderId(body.folderId),
+        evidenceKind: str(body.evidenceKind),
+        ctdSection: str(body.ctdSection),
+        note: str(body.note),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      if (!outcome.ok) {
+        return res
+          .status(outcome.status)
+          .json({ success: false, error: outcome.code, message: outcome.message });
       }
-      const view = await resolveVaultView(id, orgId);
-
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-        const docRes = await client.query(
-          `SELECT id, document_title, folder_id, evidence_kind, ctd_section,
-                  placement_status, placement_rationale
-             FROM vault.documents
-            WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
-              AND EXISTS (
-                SELECT 1 FROM regulatory_programs rp
-                 WHERE rp.id = vault.documents.program_id
-                   AND rp.organization_id = $3
-                   AND rp.deleted_at IS NULL
-              )
-            FOR UPDATE`,
-          [documentId, id, orgId],
-        );
-        if (docRes.rows.length === 0) {
-          await client.query('ROLLBACK');
-          return res.status(404).json({ success: false, error: 'DOCUMENT_NOT_FOUND' });
-        }
-        const before = docRes.rows[0] as {
-          id: string; document_title: string | null; folder_id: string | null;
-          evidence_kind: string | null; ctd_section: string | null;
-          placement_status: string | null; placement_rationale: string | null;
-        };
-
-        // Resolve the target placement.
-        let targetFolder: string | null;
-        if (confirm && folderIdRaw === undefined) {
-          if (!before.folder_id) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({
-              success: false,
-              error: 'NOTHING_TO_CONFIRM',
-              message: 'This document has no suggested folder — choose one to file it.',
-            });
-          }
-          targetFolder = before.folder_id;
-        } else if (folderIdRaw === null) {
-          targetFolder = null; // explicit unfile
-        } else if (typeof folderIdRaw === 'string' && folderIdRaw.trim()) {
-          targetFolder = folderIdRaw.trim();
-          if (!isFolderInView(view, targetFolder)) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({
-              success: false,
-              error: 'INVALID_FOLDER',
-              message: `Folder '${targetFolder}' does not exist in this program's ${view} vault taxonomy.`,
-            });
-          }
-        } else {
-          await client.query('ROLLBACK');
-          return res.status(400).json({
-            success: false,
-            error: 'NO_TARGET',
-            message: 'Pass confirm:true, a folderId, or folderId:null to unfile.',
-          });
-        }
-
-        const newStatus = targetFolder ? 'confirmed' : 'unfiled';
-        const rationale =
-          note ??
-          (targetFolder
-            ? confirm
-              ? `Suggested filing confirmed${before.placement_rationale ? ` (${before.placement_rationale})` : ''}.`
-              : 'Filed by user.'
-            : 'Unfiled by user — awaiting a filing decision.');
-
-        const upd = await client.query(
-          `UPDATE vault.documents SET
-             folder_id = $1,
-             evidence_kind = COALESCE($2, evidence_kind),
-             ctd_section = $3,
-             placement_status = $4,
-             placement_confidence = NULL,
-             placement_rationale = $5,
-             placed_by = $6,
-             placed_at = NOW(),
-             updated_at = NOW()
-           WHERE id = $7 AND program_id = $8
-             AND EXISTS (
-               SELECT 1 FROM regulatory_programs rp
-                WHERE rp.id = vault.documents.program_id
-                  AND rp.organization_id = $9
-                  AND rp.deleted_at IS NULL
-             )
-           RETURNING folder_id, evidence_kind, ctd_section, placement_status,
-                     placement_confidence, placement_rationale`,
-          [
-            targetFolder,
-            evidenceKind,
-            // An explicit move to a non-CTD folder clears a stale CTD section;
-            // confirming keeps what the classifier read.
-            ctdSection ?? (confirm ? before.ctd_section : null),
-            newStatus,
-            rationale,
-            userId,
-            documentId,
-            id,
-            orgId,
-          ],
-        );
-        const after = upd.rows[0] as {
-          folder_id: string | null; evidence_kind: string | null; ctd_section: string | null;
-          placement_status: string; placement_rationale: string | null;
-        };
-
-        await writeChainedAuditRow(client, {
-          tenantId: orgId,
-          userId: userId ?? undefined,
-          action: 'vault.document.file',
-          resourceType: 'vault_document',
-          resourceId: documentId,
-          ipAddress: req.ip,
-          userAgent: req.headers['user-agent'],
-          details: {
-            programId: id,
-            documentTitle: before.document_title,
-            view,
-            from: {
-              folderId: before.folder_id,
-              placementStatus: before.placement_status,
-              ctdSection: before.ctd_section,
-            },
-            to: {
-              folderId: after.folder_id,
-              placementStatus: after.placement_status,
-              ctdSection: after.ctd_section,
-            },
-            rationale,
-          },
-        });
-        await client.query('COMMIT');
-
-        return res.json({
-          success: true,
-          filing: {
-            folderId: after.folder_id,
-            folderLabel: folderLabel(view, after.folder_id),
-            evidenceKind: after.evidence_kind,
-            ctdSection: after.ctd_section,
-            placementStatus: after.placement_status,
-            confidence: null,
-            rationale: after.placement_rationale,
-            needsReview: after.placement_status === 'unfiled',
-          },
-        });
-      } catch (txErr) {
-        await client.query('ROLLBACK').catch(() => undefined);
-        throw txErr;
-      } finally {
-        client.release();
-      }
+      return res.json({ success: true, filing: outcome.filing });
     } catch (err: unknown) {
       if ((err as { code?: string })?.code === '42P01' || (err as { code?: string })?.code === '42703') {
         return res.status(409).json({

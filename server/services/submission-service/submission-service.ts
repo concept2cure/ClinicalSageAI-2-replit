@@ -850,6 +850,9 @@ export interface UpsertLeafInput {
   lifecycleOp?: string;
   documentTable?: string | null;
   documentId?: number | null;
+  /** The uuid half of the polymorphic reference, for uuid-keyed stores
+   *  (vault.documents). A leaf carries this OR documentId, never both. */
+  documentUuid?: string | null;
   documentType?: string | null;
   parentLeafId?: number | null;
   /** MD5 (or other) checksum of the leaf's rendered bytes, for the eCTD index-md5. */
@@ -1006,7 +1009,60 @@ const LEAF_SOURCE_VERIFIERS: Record<string, LeafSourceVerifier> = {
  * branches on — a new resolver source with no verifier here would be storable
  * unchecked and unpinned, which is the defect this dispatch closes.
  */
-export const LEAF_SOURCE_TENANCY_TABLES: ReadonlySet<string> = new Set(Object.keys(LEAF_SOURCE_VERIFIERS));
+/**
+ * Verifiers for UUID-KEYED stores. Same contract as LEAF_SOURCE_VERIFIERS —
+ * prove the document resolves in the caller's organization, return the digest
+ * to pin, take both from one org-scoped read — but keyed by uuid rather than by
+ * integer, because `submission_leaves` addresses two key spaces
+ * (migrations/20260917b_submission_leaf_document_uuid.sql).
+ *
+ * Kept as a SECOND map rather than widening every existing verifier's
+ * signature: the integer verifiers are correct and their predicates mirror the
+ * resolver's branch for their table exactly, and rewriting five of them to
+ * carry a parameter four will never use is churn on the code path that decides
+ * what reaches a regulator.
+ */
+type LeafSourceUuidVerifier = (documentUuid: string, organizationId: number) => Promise<string | null>;
+
+/** Guards the ::uuid cast; a malformed value would raise 22P02 rather than a refusal. */
+const LEAF_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const LEAF_SOURCE_UUID_VERIFIERS: Record<string, LeafSourceUuidVerifier> = {
+  /* The vault. Scoped THROUGH THE PROGRAMME, which is the authoritative owner
+     of a vault document — vault.documents carries organization_id too, but it
+     is nullable by design (unattributable rows are quarantined) and so is
+     attribution rather than a scope to filter on. Pin = content_hash, which is
+     exactly what the resolver re-verifies before staging the bytes, so a source
+     altered after filing is detectable at assembly. */
+  vault_documents: async (documentUuid, organizationId) => {
+    if (!LEAF_UUID_RE.test(documentUuid)) throw forbidRef();
+    const res = await pool.query(
+      `SELECT d.content_hash
+         FROM vault.documents d
+        WHERE d.id = $1::uuid
+          AND d.deleted_at IS NULL
+          AND EXISTS (
+            SELECT 1 FROM regulatory_programs rp
+             WHERE rp.id = d.program_id
+               AND rp.organization_id = $2
+               AND rp.deleted_at IS NULL
+          )
+        LIMIT 1`,
+      [documentUuid, organizationId],
+    );
+    const row = res.rows[0] as { content_hash: string | null } | undefined;
+    if (!row) throw forbidRef();
+    return row.content_hash ?? null;
+  },
+};
+
+/** The document tables that name their document by UUID rather than by integer. */
+export const LEAF_UUID_KEYED_TABLES: ReadonlySet<string> = new Set(Object.keys(LEAF_SOURCE_UUID_VERIFIERS));
+
+export const LEAF_SOURCE_TENANCY_TABLES: ReadonlySet<string> = new Set([
+  ...Object.keys(LEAF_SOURCE_VERIFIERS),
+  ...Object.keys(LEAF_SOURCE_UUID_VERIFIERS),
+]);
 
 /**
  * Prove the referenced document belongs to `organizationId` and return the
@@ -1020,11 +1076,18 @@ export const LEAF_SOURCE_TENANCY_TABLES: ReadonlySet<string> = new Set(Object.ke
  */
 async function verifyLeafSource(
   documentTable: string,
-  documentId: number,
+  ref: { documentId: number | null; documentUuid: string | null },
   organizationId: number,
 ): Promise<string | null> {
-  const verify = LEAF_SOURCE_VERIFIERS[documentTable];
-  return verify ? verify(documentId, organizationId) : null;
+  if (ref.documentUuid) {
+    const verifyUuid = LEAF_SOURCE_UUID_VERIFIERS[documentTable];
+    return verifyUuid ? verifyUuid(ref.documentUuid, organizationId) : null;
+  }
+  if (ref.documentId) {
+    const verify = LEAF_SOURCE_VERIFIERS[documentTable];
+    return verify ? verify(ref.documentId, organizationId) : null;
+  }
+  return null;
 }
 
 /** Create or update a leaf placement. Refuses if the parent sequence is locked. */
@@ -1081,6 +1144,40 @@ export async function upsertLeaf(
     throw new SubmissionError('VALIDATION', unplaceableDocumentTableMessage(input.documentTable));
   }
 
+  /* THE KEY SPACE MUST MATCH THE TABLE. `submission_leaves` addresses two of
+     them — integer `document_id` for most stores, uuid `document_uuid` for
+     vault.documents — and this is the one place that rule is enforced.
+     Deliberately here and not as a CHECK constraint: the constraint would have
+     to name tables, which is exactly the vocabulary leaf-document-tables.ts
+     owns and keeps in step with the resolver's real branches, and splitting one
+     rule across a migration and a module is how the two drift.
+
+     Both directions are refused, because both produce a leaf that looks placed
+     and resolves to nothing: a vault leaf with only an integer cannot address
+     its document, and an integer-keyed leaf carrying a uuid names a document in
+     a store that has no uuids. */
+  if (input.documentTable != null) {
+    const uuidKeyed = LEAF_UUID_KEYED_TABLES.has(input.documentTable);
+    if (uuidKeyed && input.documentId != null) {
+      throw new SubmissionError(
+        'VALIDATION',
+        `"${input.documentTable}" is addressed by document_uuid, not document_id. Its documents are uuid-keyed; an integer cannot name one.`,
+      );
+    }
+    if (!uuidKeyed && input.documentUuid != null) {
+      throw new SubmissionError(
+        'VALIDATION',
+        `"${input.documentTable}" is addressed by document_id, not document_uuid. Only ${[...LEAF_UUID_KEYED_TABLES].sort().join(', ')} name a document by uuid.`,
+      );
+    }
+    if (uuidKeyed && input.documentUuid == null) {
+      throw new SubmissionError(
+        'VALIDATION',
+        `A leaf on "${input.documentTable}" must carry document_uuid — without it the leaf names no document and would be filed as unresolvable.`,
+      );
+    }
+  }
+
   /* Tenancy + source pin for the document this leaf points at. One table-keyed
      step (LEAF_SOURCE_VERIFIERS above) covers every source the resolver can
      materialize: it proves the target belongs to the caller's org — no dangling
@@ -1092,8 +1189,12 @@ export async function upsertLeaf(
      what went?" had no answer: `document_id` resolves to the document as it is
      now, and editing it after filing changes nothing on the leaf. */
   const documentContentSha256: string | null =
-    input.documentTable && input.documentId
-      ? await verifyLeafSource(input.documentTable, input.documentId, ctx.organizationId)
+    input.documentTable && (input.documentId || input.documentUuid)
+      ? await verifyLeafSource(
+          input.documentTable,
+          { documentId: input.documentId ?? null, documentUuid: input.documentUuid ?? null },
+          ctx.organizationId,
+        )
       : null;
 
   // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
@@ -1133,6 +1234,7 @@ export async function upsertLeaf(
         ...(input.lifecycleOp ? { lifecycleOp: input.lifecycleOp } : {}),
         documentTable: input.documentTable ?? null,
         documentId: input.documentId ?? null,
+        documentUuid: input.documentUuid ?? null,
         documentType: input.documentType ?? null,
         parentLeafId: input.parentLeafId ?? null,
         ...(input.checksum !== undefined ? { checksum: input.checksum } : {}),
@@ -1174,6 +1276,7 @@ export async function upsertLeaf(
       lifecycleOp: input.lifecycleOp ?? 'new',
       documentTable: input.documentTable ?? null,
       documentId: input.documentId ?? null,
+      documentUuid: input.documentUuid ?? null,
       documentType: input.documentType ?? null,
       parentLeafId: input.parentLeafId ?? null,
       checksum: input.checksum ?? null,

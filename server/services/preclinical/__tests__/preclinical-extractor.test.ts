@@ -24,7 +24,7 @@ vi.mock('../../../lib/unified-ai-client', () => ({
   },
 }));
 
-import { extractFromPdf } from '../preclinical-extractor';
+import { extractFromPdf, DEFAULT_MODEL } from '../preclinical-extractor';
 
 const VALID_RESPONSE = {
   studyType: 'repeat_dose_tox',
@@ -63,7 +63,11 @@ describe('extractFromPdf', () => {
     expect(result.data.species).toBe('rat');
     expect(result.data.glpCompliant).toBe(true);
     expect(result.data.extractionConfidence).toBeCloseTo(0.92);
-    expect(result.model).toBe('claude-opus-4-7');
+    // The registry alias the extractor asks for, not a wire version — the
+    // point of the assertion is that the model reaches the provenance record,
+    // and repeating a version string here just made a model bump fail twice
+    // for one reason.
+    expect(result.model).toBe(DEFAULT_MODEL);
     expect(structuredMock).toHaveBeenCalledTimes(1);
   });
 

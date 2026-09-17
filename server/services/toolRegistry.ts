@@ -86,7 +86,13 @@ export async function logToolRun(params: {
   toolName: string;
   arguments: Record<string, unknown>;
   result: Record<string, unknown>;
-  status: 'success' | 'error' | 'not_found';
+  /**
+   * 'cancelled' is a real outcome, not a failure: the person stopped the run
+   * before this step finished. The column is free-text TEXT with no CHECK, so
+   * this widening needs no migration — but the ledger exists for replay and
+   * audit, and a stopped step recorded as an error would misreport why.
+   */
+  status: 'success' | 'error' | 'not_found' | 'cancelled';
   errorMessage?: string;
   latencyMs: number;
 }): Promise<void> {

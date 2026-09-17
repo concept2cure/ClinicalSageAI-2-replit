@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveRows, liveGetOrNull } from '../dataConnect';
+import { useDialog } from '../useDialog';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import {
   SURFACE_CTX, CL_MOD, CL_TYPE, CL_PRI,
@@ -845,6 +846,60 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
   );
 }
 
+/* The modal panel, extracted only so `useDialog` can run — a hook cannot be
+   conditional and this renders solely while open.
+
+   It shipped as a bare pair of <div>s: no role, no accessible name, no keyboard
+   exit, and focus left behind on the FAB that opened it. This layer is mounted
+   once and lives on every screen, so that was the same gap on every screen in
+   the product. The two mode buttons were likewise plain buttons whose selected
+   state was carried by a class, visible to sighted users only. */
+function CollabModal({ tab, setTab, onClose, ctx, onCreated, onGoToBoard }: {
+  tab: string;
+  setTab: (t: string) => void;
+  onClose: () => void;
+  ctx: C2CContext;
+  onCreated: (t?: C2CTask) => void;
+  onGoToBoard: () => void;
+}) {
+  const panel = useDialog(onClose);
+  const tabId = tab === 'task' ? 'cl-tab-task' : 'cl-tab-collab';
+  return (
+    <div className="cl-bd" onClick={onClose}>
+      <div
+        className="cl-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add a task or collaborate"
+        tabIndex={-1}
+        ref={panel}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="cl-head">
+          <div className="cl-tabs" role="tablist" aria-label="Launcher mode">
+            <button type="button" id="cl-tab-task" role="tab" aria-selected={tab === 'task'}
+              aria-controls="cl-panel" className={`cl-tab${tab === 'task' ? ' on' : ''}`}
+              onClick={() => setTab('task')}>
+              <span className="ico">{I.checkSquare || I.check}</span>New task
+            </button>
+            <button type="button" id="cl-tab-collab" role="tab" aria-selected={tab === 'collab'}
+              aria-controls="cl-panel" className={`cl-tab${tab === 'collab' ? ' on' : ''}`}
+              onClick={() => setTab('collab')}>
+              <span className="ico">{I.messageSquare}</span>Collaborate
+            </button>
+          </div>
+          <button type="button" className="cl-x" onClick={onClose} aria-label="Close">{I.close}</button>
+        </div>
+        <div className="cl-body" id="cl-panel" role="tabpanel" aria-labelledby={tabId}>
+          {tab === 'task'
+            ? <QuickTask ctx={ctx} onClose={onClose} onCreated={onCreated} onGoToBoard={onGoToBoard} />
+            : <CollabDiscuss ctx={ctx} onClose={onClose} onCreated={onCreated} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── The layer: launcher (FAB) + modal. Mounted once, lives on every screen. ── */
 
 export function CollabLayer({ onNav }: CollabLayerProps) {
@@ -931,27 +986,14 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
 
       {/* the modal */}
       {open && (
-        <div className="cl-bd" onClick={() => setOpen(false)}>
-          <div className="cl-modal" onClick={e => e.stopPropagation()}>
-            <div className="cl-head">
-              <div className="cl-tabs">
-                <button className={`cl-tab${tab === 'task' ? ' on' : ''}`} onClick={() => setTab('task')}>
-                  <span className="ico">{I.checkSquare || I.check}</span>New task
-                </button>
-                <button className={`cl-tab${tab === 'collab' ? ' on' : ''}`} onClick={() => setTab('collab')}>
-                  <span className="ico">{I.messageSquare}</span>Collaborate
-                </button>
-              </div>
-              <button className="cl-x" onClick={() => setOpen(false)} aria-label="Close">{I.close}</button>
-            </div>
-            <div className="cl-body">
-              {tab === 'task'
-                ? <QuickTask ctx={currentCtx} onClose={() => setOpen(false)} onCreated={created}
-                    onGoToBoard={() => { onNav?.('tasks'); setOpen(false); }} />
-                : <CollabDiscuss ctx={currentCtx} onClose={() => setOpen(false)} onCreated={created} />}
-            </div>
-          </div>
-        </div>
+        <CollabModal
+          tab={tab}
+          setTab={setTab}
+          onClose={() => setOpen(false)}
+          ctx={currentCtx}
+          onCreated={created}
+          onGoToBoard={() => { onNav?.('tasks'); setOpen(false); }}
+        />
       )}
 
       {/* toast -- confirms the draft task was captured in the in-session store,

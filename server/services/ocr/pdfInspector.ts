@@ -80,6 +80,30 @@ async function loadPdf(data: Buffer | Uint8Array): Promise<PdfDocument> {
   return (await task.promise) as unknown as PdfDocument;
 }
 
+/**
+ * The page count alone, without the text-layer census inspectPdf runs.
+ *
+ * Vault ingest needs this one number to record an honest page_count on the
+ * document and its catalog row (the column existed, declared and never
+ * assigned, so every row reported null). Censusing pages to learn how many
+ * there are would be paying for the expensive half of an inspection to get the
+ * cheap half. Returns null rather than throwing: a page count is metadata, and
+ * failing an upload because a PDF would not parse for it is the wrong trade —
+ * the extraction path already reports unreadable content as its own failure.
+ */
+export async function pdfPageCount(data: Buffer | Uint8Array): Promise<number | null> {
+  try {
+    const pdf = await loadPdf(data);
+    try {
+      return typeof pdf.numPages === 'number' ? pdf.numPages : null;
+    } finally {
+      await pdf.destroy?.();
+    }
+  } catch {
+    return null;
+  }
+}
+
 async function resolveOutlinePage(pdf: PdfDocument, dest: string | unknown[] | null): Promise<number | null> {
   try {
     const explicit = typeof dest === 'string' ? await pdf.getDestination(dest) : dest;

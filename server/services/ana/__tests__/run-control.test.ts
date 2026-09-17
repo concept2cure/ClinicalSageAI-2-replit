@@ -32,6 +32,60 @@ describe('runControlRegistry', () => {
     expect(runControlRegistry.getStatus('run_1')).toBe('running');
   });
 
+  // ── The cancel signal: what makes a stop land mid-round ─────────────────
+  //
+  // Registry status alone is read at the round boundary, so a stop pressed
+  // during a 40-second tool call did nothing until that call finished. The
+  // signal is what the gateway and the tool dispatcher can be told to watch.
+
+  it('hands out a cancel signal that is not yet aborted', () => {
+    runControlRegistry.register('run_1');
+    const signal = runControlRegistry.cancelSignal('run_1');
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(signal!.aborted).toBe(false);
+  });
+
+  it('aborts the signal the moment cancel is requested', () => {
+    runControlRegistry.register('run_1');
+    const signal = runControlRegistry.cancelSignal('run_1')!;
+    runControlRegistry.requestCancel('run_1');
+    expect(signal.aborted).toBe(true);
+  });
+
+  it('a pause does NOT abort the signal', () => {
+    // Deliberate: killing an in-flight tool to pause throws the work away and
+    // then has to redo it. Pause holds at the boundary; stop is what cuts.
+    runControlRegistry.register('run_1');
+    const signal = runControlRegistry.cancelSignal('run_1')!;
+    runControlRegistry.requestPause('run_1');
+    expect(signal.aborted).toBe(false);
+    runControlRegistry.requestResume('run_1');
+    expect(signal.aborted).toBe(false);
+  });
+
+  it('a steer does NOT abort the signal', () => {
+    runControlRegistry.register('run_1');
+    const signal = runControlRegistry.cancelSignal('run_1')!;
+    runControlRegistry.requestInterject('run_1', 'narrow to Class III');
+    expect(signal.aborted).toBe(false);
+  });
+
+  it('gives each run its own signal', () => {
+    // One shared controller would make any stop cancel every concurrent turn
+    // in the process.
+    runControlRegistry.register('run_1');
+    runControlRegistry.register('run_2');
+    const a = runControlRegistry.cancelSignal('run_1')!;
+    const b = runControlRegistry.cancelSignal('run_2')!;
+    runControlRegistry.requestCancel('run_1');
+    expect(a.aborted).toBe(true);
+    expect(b.aborted, 'cancelling one run stopped another').toBe(false);
+  });
+
+  it('has no signal for a run it does not know', () => {
+    expect(runControlRegistry.cancelSignal('missing')).toBeNull();
+  });
+
   it('cancel is terminal — pause/resume/interject are refused afterward', () => {
     runControlRegistry.register('run_1');
     expect(runControlRegistry.requestCancel('run_1')).toBe(true);
