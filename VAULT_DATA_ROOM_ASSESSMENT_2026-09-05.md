@@ -203,13 +203,55 @@ regardless; (c) only then `FORCE`.
 
 ### 4.5 A vault document can never become a submission
 
-`server/services/ectd/leaf-source-resolver.ts:77-88` declares `vault_documents`
-non-materializable, and gives two honest reasons: `submission_leaves.document_id` is `INTEGER`
-while `vault.documents.id` is a `UUID`, and `vault.documents` has no `organization_id`, so there
-is no tenant-safe lookup.
+`server/services/ectd/leaf-document-tables.ts` declares `vault_documents` non-materializable.
+The leaf is surfaced as **unresolved**, never dropped, and transmit fails closed on any
+unresolved leaf — so this is a guard-stop, not a silent hole.
 
 This is the single most important parity gap on the list. It means the Vault is not a RIM vault.
 A customer can upload a CSR and then cannot put it in the NDA.
+
+> **Corrected 2026-09-17 — the stated reasons were half wrong, and the real blocker was not
+> written down anywhere.** This section originally gave two reasons, taken from the resolver's
+> own comment. Investigating what it would take to close them produced a different answer:
+>
+> 1. **"`vault.documents` has no `organization_id`" — no longer true.**
+>    `migrations/20260905_vault_documents_organization_id.sql` adds it and is on the deploy
+>    path. It is nullable and carries no RLS policy, so it is attribution rather than
+>    isolation — but it is not what stops a vault leaf. The comment was stale, and a stale
+>    blocker invites the next person to unblock this by fixing something already fixed.
+>    (Corrected in the resolver too, so the two agree.)
+>
+> 2. **The id space is real, but widening the column is the wrong fix — and is already
+>    adjudicated against.** `docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md` (APPROVED 2026-08-13)
+>    weighed exactly that as its Option A and rejected it, because it rewrites the two tables
+>    "where a migration error is least recoverable", for a benefit its Option C delivers
+>    additively. It says in terms: *"`submission_leaves` keeps integer `document_id`."* The
+>    sanctioned bridge is the alias map (`c2c_document_aliases`), which is already built,
+>    already has `submission_leaves` in its store vocabulary, and already resolves lineage for
+>    coauthor leaves.
+>
+> 3. **The blocker nobody had recorded: the bytes.** Even with the identity solved, the
+>    packager could not fetch a vault document. It fetches non-local content through
+>    `getStorageProvider().get(vaultVersionId, organizationId)` — a lookup by a
+>    *provider-minted version uuid* under `storage/vault/{orgId}/{projectId}/versions/`. Vault
+>    ingest writes to `uploads/vault/{programId}/{contentHash}`, stores that relative **path**
+>    in `s3_key` with `s3_bucket='local'`, and mints no provider sidecar. Different root,
+>    different key space. `rendered_leaf_files` resolves only because `storeRenderedLeafFile()`
+>    called the provider's `put()` and kept the version id it returned; `vault.documents` has
+>    no such column.
+>
+> **So the ordering in §6 was wrong.** "Move bytes onto the existing storage seam" was filed
+> under weeks 2–4 as a tidy-up. It is in fact the *precondition* for the leaf bridge, and the
+> alias map — the part that was thought to be the work — is largely already built. The storage
+> migration is the real item, and it is an infrastructure decision (which provider, what
+> happens to bytes already written under the old layout), not a resolver change.
+>
+> Also worth recording, because it changes how urgent this reads: **nothing writes a
+> `vault_documents` leaf today**, in any code path, seed or UI. Both leaf-creating surfaces
+> hard-code `coauthor_documents`. The refusal is the intended state rather than an oversight,
+> and `document_table` *is* whitelisted at both the route and the service
+> (`isPlaceableDocumentTable`) — an earlier draft of this correction claimed it was not, and
+> that claim was wrong.
 
 ---
 
@@ -328,9 +370,15 @@ at `shared/regulatory/canonical-document.ts:56,124`).
    (`WHERE content_hash = EXCLUDED.content_hash`), returning `409 VERSION_CONTENT_CONFLICT` on
    a genuine conflict — **plus** an explicit `23505` branch distinguishing the two unique
    constraints (see §4.2), or the refusal story is incomplete in the direction users hit first.
-4. `submission_leaves.document_id` widened `INTEGER → TEXT` plus a `document_version_id`, so
-   the resolver can address a vault document. ~56 files, ~105 call sites; mechanical, and the
-   risk is a surviving `Number()` coercion, not logic.
+4. ~~`submission_leaves.document_id` widened `INTEGER → TEXT` plus a `document_version_id`.~~
+   **Withdrawn 2026-09-17 — do not do this.** It is Option A of
+   `docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md`, which was weighed and rejected on 2026-08-13;
+   that contract states `submission_leaves` keeps its integer `document_id`, and the alias map
+   is how a uuid-native document finds its integer-addressable representation. Widening would
+   also not have worked: the packager still could not fetch the bytes (§4.5, correction 3).
+   Replace with: **move vault ingest onto `getStorageProvider()`** — persist the provider's
+   version id on `vault.documents`, and migrate bytes already written under
+   `uploads/vault/{programId}/`. That is the item this list actually needed.
 5. A lifecycle vocabulary parameterised by document class, so a controlled SOP does not travel
    the submission graph.
 
@@ -488,8 +536,11 @@ ALL SEVEN SHIPPED**, each verified by making the check fail first.
   neither touched it: the purge used `public.vault_documents`, the export swept
   `public` only.
 
-Still open from §4: the leaf id-space (§4.5) — a vault document has a tenant now but
-still cannot become a submission leaf until `submission_leaves.document_id` widens.
+Still open from §4: a vault document has a tenant now but still cannot become a submission
+leaf (§4.5). **Corrected 2026-09-17:** not "until `submission_leaves.document_id` widens" —
+that is rejected by the approved identity contract and would not have sufficed anyway. The
+binding constraint is the storage seam: the packager cannot reach bytes that vault ingest
+wrote outside the storage provider. See §4.5.
 
 **Weeks 2–4 — make the vault usable**
 Server-side vault search with a GIN index and pagination; a search box in `Vault.tsx`; wire the
@@ -497,7 +548,9 @@ retrieval stack to the chunks table or delete it; move bytes onto the existing s
 
 **Quarter 1 — the spine (§6).** 18–20 engineer-weeks. Ordered: prove the tenant GUC → add
 `organization_id` + backfill + quarantine → dual predicate → `FORCE` → version table →
-non-destructive ingest → canonical binding → leaf id-space → consolidation and deletions.
+non-destructive ingest → canonical binding → **vault bytes onto the storage provider** →
+leaf bridge via the alias map → consolidation and deletions. (Reordered 2026-09-17: the
+storage move is the precondition for the leaf bridge, not a later tidy-up — §4.5.)
 
 **Quarter 2 — the data room (§7).** ~21 engineer-weeks. Phase 0 can ship in week 1 of Q1.
 

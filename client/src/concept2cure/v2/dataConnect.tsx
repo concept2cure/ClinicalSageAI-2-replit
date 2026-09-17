@@ -85,9 +85,30 @@ function unwrapEnvelope(body: unknown): unknown {
   return body;
 }
 
+/**
+ * The envelope's `meta`, kept rather than discarded with the wrapper.
+ *
+ * `ok(res, rows, meta)` is how a route says something about the READ that is
+ * not a row — and the one thing it says most often is `pendingStore: true`:
+ * "this environment has no table behind me, so the empty list you are holding
+ * is not a finding of zero." Nineteen routes emit it. `unwrapEnvelope` threw it
+ * away, so every list surface in the shell rendered "nothing here yet" over an
+ * absent store, which is the error CLAUDE.md names outright — an absence of
+ * infrastructure rendered as a fact about the org's record.
+ */
+function envelopeMeta(body: unknown): Record<string, unknown> | undefined {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return undefined;
+  const meta = (body as { meta?: unknown }).meta;
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return undefined;
+  return meta as Record<string, unknown>;
+}
+
 export interface DataResult<T> {
   data: T | null;
   error?: string;
+  /** The success envelope's `meta`, where the route sent one. Never synthesized:
+   *  absent means the route said nothing, which is not the same as `{}`. */
+  meta?: Record<string, unknown>;
   /** HTTP status; 0 on a network/parse failure before a response arrived. */
   status: number;
 }
@@ -167,6 +188,19 @@ function failureFrom(e: unknown, path: string): DataResult<never> {
  * callers and false for others. Only the call site knows.
  */
 
+/**
+ * Did the route answer "there is no store behind me"?
+ *
+ * The flag is `meta.pendingStore`, set by nineteen routes on SQLSTATE 42P01 —
+ * e.g. design-controls.routes.ts:59, which fails closed to `{ data: [], meta:
+ * { count: 0, pendingStore: true } }` so an unprovisioned environment never
+ * 500s. Failing closed is right; rendering the result as "nothing recorded" is
+ * not. One predicate so the check is spelled the same everywhere.
+ */
+export function isPendingStore(read: { meta?: Record<string, unknown> }): boolean {
+  return read.meta?.pendingStore === true;
+}
+
 /** A runtime check that a 200 body is the shape the caller asked for. */
 export type ShapeGuard<T> = (value: unknown) => value is T;
 
@@ -228,10 +262,11 @@ export async function liveGetOrNull<T>(
     }
     const body = (await res.json()) as unknown;
     const payload = unwrapEnvelope(body);
+    const meta = envelopeMeta(body);
     if (guard && payload != null && !guard(payload)) {
-      return { data: null, error: shapeMismatch(path), status: res.status };
+      return { data: null, error: shapeMismatch(path), meta, status: res.status };
     }
-    return { data: payload as T, status: res.status };
+    return { data: payload as T, meta, status: res.status };
   } catch (e) {
     return failureFrom(e, path);
   }
@@ -285,6 +320,10 @@ export interface DataState<T> {
   data: T | null;
   loading: boolean;
   error?: string;
+  /** The route's envelope `meta` — `pendingStore` above all. A surface that
+   *  renders an empty state MUST consult it: `empty` cannot tell "the store
+   *  holds nothing" from "there is no store". */
+  meta?: Record<string, unknown>;
   /** Loaded successfully, but the backend genuinely has nothing to show. */
   empty: boolean;
 }
@@ -322,7 +361,7 @@ export function useLiveData<T>(
       const isEmpty =
         !r.error &&
         (r.data == null || (Array.isArray(r.data) && r.data.length === 0));
-      setState({ data: r.data, loading: false, error: r.error, empty: isEmpty });
+      setState({ data: r.data, loading: false, error: r.error, meta: r.meta, empty: isEmpty });
     });
     return () => {
       cancelled = true;
@@ -336,6 +375,9 @@ export interface ListState<T> {
   rows: T[];
   loading: boolean;
   error?: string;
+  /** The route's envelope `meta`. See {@link DataState.meta} — `empty` alone
+   *  cannot distinguish an empty store from an absent one. */
+  meta?: Record<string, unknown>;
   /** Loaded successfully with zero rows — the honest empty state. */
   empty: boolean;
 }
@@ -383,6 +425,7 @@ export function useLiveRows<T>(
     rows,
     loading: st.loading,
     error: st.error,
+    meta: st.meta,
     empty: !st.loading && !st.error && rows.length === 0,
   };
 }
