@@ -72,12 +72,12 @@ server/
 │   ├── chat.ts            # Lumen Cortex chat API
 │   ├── users.ts           # User management API
 │   ├── auth.ts            # Authentication API
-│   ├── cortexRoutes.ts    # Cortex intelligence API
 │   └── tenants.ts         # Multi-tenant API
 └── services/
-    ├── cognitiveAdvisoryService.ts
-    └── cortexPrimeService.ts
+    └── cognitiveAdvisoryService.ts
 ```
+
+> `cortexRoutes.ts` and `cortexPrimeService.ts` were retired 2026-09-10 (WO-14, Route B): every write path failed on every applier-produced schema and nothing called them. See `docs/work-orders/WO-14-cortex-prime-is-broken-and-mounted.md`.
 
 ### Lumen Cortex Enterprise (Python)
 

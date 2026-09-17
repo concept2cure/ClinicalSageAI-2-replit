@@ -1118,11 +1118,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             } else if (event.type === 'intelligence_question') {
               const question = event.question;
               const flowState = event.flowState;
+              /* The durable interview session id, when the server persisted
+                 one. An answer that carries it back as session_id is recorded
+                 server-side; flow_state alone is the stateless fallback. */
+              const sessionId = typeof event.sessionId === 'string' ? event.sessionId : null;
               if (question && flowState) {
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
-                      ? { ...m, intelligenceQuestion: question, intelligenceFlowState: flowState }
+                      ? { ...m, intelligenceQuestion: question, intelligenceFlowState: flowState, intelligenceSessionId: sessionId }
                       : m
                   )
                 );
@@ -1130,11 +1134,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             } else if (event.type === 'intelligence_flow_complete') {
               const completion = event.completion;
               const flowState = event.flowState;
+              const sessionId = typeof event.sessionId === 'string' ? event.sessionId : null;
               if (completion) {
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
-                      ? { ...m, intelligenceFlowComplete: completion, intelligenceFlowState: flowState, intelligenceQuestion: undefined }
+                      ? { ...m, intelligenceFlowComplete: completion, intelligenceFlowState: flowState, intelligenceSessionId: sessionId, intelligenceQuestion: undefined }
                       : m
                   )
                 );

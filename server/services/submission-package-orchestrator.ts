@@ -32,6 +32,7 @@
  */
 
 import { pool } from '../db.js';
+import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome.js';
 import crypto from 'crypto';
 import {
   composeFullModule3,
@@ -797,7 +798,7 @@ export function computeBoundPayloadDigest(params: {
  * runbook. For deterministically-rendered leaves the bytes can be reproduced;
  * for useAI leaves the rendered PDFs must be persisted before transmit lands.
  */
-interface SignedPackageSnapshot {
+export interface SignedPackageSnapshot {
   leaves: ECTDLeaf[];
   backboneXml: string;
   validatorOutcome: BoundDigestValidatorOutcome;
@@ -914,6 +915,14 @@ function tryParseSignPayload(raw: string | undefined): PackageSignStepPayload | 
  *
  * Returns the signature id on hit, null on miss-or-cross-org (collapsed
  * semantics — caller cannot distinguish).
+ *
+ * THROWS `VerificationUnavailableError` when the lookup could not run (WO-16B
+ * finding 14). This used to catch every error, log it as "non-fatal" and
+ * return null — the same value as a genuine miss — so a database missing the
+ * column (the 42703 in the comment below) was reported to the operator as
+ * "the signature was superseded or rolled back": a §11.70 verdict about a
+ * check that never ran. A caller that needs the verdict must now decide what
+ * "could not check" means; none of them may read it as "revoked".
  */
 export async function findActiveReleaseSignature(params: {
   organizationId: number;
@@ -925,11 +934,24 @@ export async function findActiveReleaseSignature(params: {
   if (!params.boundPayloadDigest) return null;
   try {
     const result = await pool.query(
+      /* ORDER BY id, not created_at. `created_at` is declared on the
+         electronicSignatures Drizzle model but NO migration ever adds it to
+         electronic_signatures — the drizzle journal ships `signed_at` only, and
+         nothing in migrations/ or db/migrations/ creates it. On a database
+         provisioned from the migration set this query therefore raised 42703,
+         was swallowed by the catch below as "non-fatal", and returned null —
+         which resolveSignedPackageForExport maps to 'signature-revoked'. So on
+         such a database the §11.70 release gate could never clear for ANY
+         IND/NDA/BLA/MAA, and told the operator the signature "was superseded or
+         rolled back" when nothing of the sort had happened.
+         `id` is the serial primary key, so newest-first is identical, and it
+         exists on every provisioning path. This is the only consumer of that
+         column anywhere in the server. */
       `SELECT id FROM electronic_signatures
         WHERE organization_id = $1
           AND bound_payload_digest = $2
           AND superseded_by IS NULL
-        ORDER BY created_at DESC
+        ORDER BY id DESC
         LIMIT 1`,
       [params.organizationId, params.boundPayloadDigest],
     );
@@ -939,11 +961,11 @@ export async function findActiveReleaseSignature(params: {
     if (!Number.isFinite(id) || id <= 0) return null;
     return { id };
   } catch (err) {
-    console.warn(
-      '[Orchestrator] findActiveReleaseSignature failed (non-fatal):',
-      err instanceof Error ? err.message : err,
+    console.error(
+      '[Orchestrator] findActiveReleaseSignature could not run — not treating this as "no active signature":',
+      describeFailure(err),
     );
-    return null;
+    throw new VerificationUnavailableError('release-signature lookup', describeFailure(err));
   }
 }
 
@@ -1720,6 +1742,8 @@ export async function runOrchestrator(
       await runStep('package.validate', hashOutput(assembly), async () => {
         const context: HardenedValidationContext = {
           submissionId: inputs.submissionId,
+          // Tenant scope for the sequence-history read — required, never inferred.
+          organizationId: inputs.organizationId,
           // RegionCode ⊂ RegulatoryRegion (US/EU/JP/CA are members of both).
           // Cast is safe because OrchestratorInputs.region is the narrower
           // union; the validator accepts the wider union.
@@ -2386,6 +2410,8 @@ async function resumeOrchestratorRun(
       await runStep('package.validate', hashOutput(assembly), async () => {
         const context: HardenedValidationContext = {
           submissionId: inputs.submissionId,
+          // Tenant scope for the sequence-history read — required, never inferred.
+          organizationId: inputs.organizationId,
           region: assembly.region as HardenedValidationContext['region'],
           applicationNumber: assembly.applicationNumber,
           sequenceNumber: assembly.sequenceNumber,
@@ -2678,6 +2704,8 @@ async function resumeAwaitingSignature(
     if (!inputs.skipValidation) {
       const context: HardenedValidationContext = {
         submissionId: inputs.submissionId,
+        // Tenant scope for the sequence-history read — required, never inferred.
+        organizationId: inputs.organizationId,
         region: outputs.assembly.region as HardenedValidationContext['region'],
         applicationNumber: outputs.assembly.applicationNumber,
         sequenceNumber: outputs.assembly.sequenceNumber,

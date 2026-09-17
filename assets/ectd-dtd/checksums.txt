@@ -1,4 +1,4 @@
-# eCTD DTD checksum manifest (SHA-256)
+# eCTD DTD + stylesheet checksum manifest (SHA-256)
 #
 # Format (one entry per line, two-space separator, matches `sha256sum` output):
 #
@@ -12,6 +12,8 @@
 #
 #   <sha256>  ich-ectd-3-2.dtd
 #   <sha256>  us-regional-v3-3.dtd
+#   <sha256>  ectd-2-0.xsl
+#   <sha256>  us-regional.xsl
 #   <sha256>  eu-regional.dtd
 #   <sha256>  jp-regional.dtd
 #   <sha256>  ca-regional.dtd
@@ -24,11 +26,12 @@
 # this manifest.
 #
 # Updating procedure (see docs/runbooks/ectd-dtd-vendoring.md):
-#   1. After dropping the DTD files into assets/ectd-dtd/ (or $ECTD_DTD_DIR),
-#      run:  cd assets/ectd-dtd && sha256sum *.dtd
+#   1. After dropping the DTD and stylesheet files into assets/ectd-dtd/ (or
+#      $ECTD_DTD_DIR), run:  cd assets/ectd-dtd && sha256sum *.dtd *.xsl
 #   2. Replace every '<sha256>' placeholder below with the real digest from
 #      that command's output, preserving the two-space separator.
-#   3. Commit this file (the .dtd files themselves are NOT committed).
+#   3. Commit this file together with the .dtd/.xsl files — they ARE committed,
+#      verbatim, with their agency headers (see README.md "Vendoring policy").
 #   4. Re-run the integration test suite to confirm the manifest verifier
 #      accepts the new manifest.
 #
@@ -40,6 +43,8 @@
 
 # <sha256>  ich-ectd-3-2.dtd
 # <sha256>  us-regional-v3-3.dtd
+# <sha256>  ectd-2-0.xsl
+# <sha256>  us-regional.xsl
 # <sha256>  eu-regional.dtd
 # <sha256>  jp-regional.dtd
 # <sha256>  ca-regional.dtd

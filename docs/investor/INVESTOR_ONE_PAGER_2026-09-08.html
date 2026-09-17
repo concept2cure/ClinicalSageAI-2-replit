@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Concept2Cure.RI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* Fonts resolve from docs/investor/fonts/, sibling to the rendered HTML. They are
+   gitignored; run with --fetch-fonts to populate them. Absent, every face falls
+   back to the system serif/sans declared in the stacks below. */
+@font-face { font-family: 'Lora'; font-weight: 400; font-style: normal; src: url('fonts/Lora-400.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 500; font-style: normal; src: url('fonts/Lora-500.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 600; font-style: normal; src: url('fonts/Lora-600.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 400; font-style: italic; src: url('fonts/Lora-400i.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; src: url('fonts/Inter-400.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; src: url('fonts/Inter-500.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; src: url('fonts/Inter-600.ttf') format('truetype'); }
+
+:root {
+  --canvas:          #faf9f5;
+  --canvas-muted:    #f4f3ee;
+  --canvas-elevated: #ffffff;
+  --ink:             #141413;
+  --ink-muted:       #565550;
+  --ink-faint:       #8a887f;
+  --border:          #e8e6dc;
+  --border-faint:    #f0eee6;
+  --accent:          #d97757;
+  --accent-subtle:   #f7e9e2;
+  --ai:              #6a9bcc;
+  --olive:           #788c5d;
+  --amber:           #d97706;
+  --sans: 'Inter', -apple-system, 'Helvetica Neue', sans-serif;
+  --serif: 'Lora', Georgia, serif;
+  --mono: 'Liberation Mono', 'DejaVu Sans Mono', monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 11pt;
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 48px 56px 96px;
+}
+
+.cover {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 32px;
+  margin-bottom: 40px;
+}
+
+.cover .kicker {
+  font-family: var(--sans);
+  font-size: 9pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cover h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 30pt;
+  line-height: 1.15;
+  margin: 12px 0 20px;
+  letter-spacing: -0.01em;
+}
+
+.cover .meta {
+  font-family: var(--sans);
+  font-size: 9.5pt;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+.cover .meta strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.cover .confidential {
+  font-family: var(--sans);
+  font-size: 8.5pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 24px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  page-break-after: avoid;
+  break-after: avoid-page;
+}
+
+h1 {
+  font-size: 22pt;
+  line-height: 1.22;
+  margin: 44px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent);
+}
+
+h2 {
+  font-size: 15.5pt;
+  line-height: 1.28;
+  margin: 36px 0 12px;
+  color: var(--ink);
+}
+
+h3 {
+  font-size: 12.5pt;
+  line-height: 1.32;
+  margin: 26px 0 8px;
+  color: var(--ink-muted);
+}
+
+p {
+  margin: 0 0 12px;
+  hyphens: auto;
+}
+
+strong { font-weight: 600; color: var(--ink); }
+em { font-style: italic; color: var(--ink); }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--canvas-muted);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--ink);
+  border: 1px solid var(--border-faint);
+}
+
+ul, ol {
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+
+li {
+  margin-bottom: 4px;
+}
+
+li::marker {
+  color: var(--accent);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 40px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 22px;
+  font-family: var(--sans);
+  font-size: 9.5pt;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border);
+}
+
+thead {
+  background: var(--canvas-muted);
+}
+
+th, td {
+  padding: 7px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-faint);
+  line-height: 1.4;
+}
+
+th {
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  font-size: 8.6pt;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:nth-child(even) {
+  background: var(--canvas-muted);
+}
+
+td code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.92em;
+}
+
+.toc {
+  background: var(--canvas-muted);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  padding: 20px 26px;
+  margin: 24px 0 40px;
+  font-family: var(--sans);
+  font-size: 10pt;
+  line-height: 1.7;
+}
+
+.toc h2 { margin-top: 0; font-family: var(--sans); font-size: 10pt; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); border: none; padding: 0; }
+
+.footer {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-family: var(--sans);
+  font-size: 8.5pt;
+  color: var(--ink-faint);
+  text-align: center;
+  font-style: italic;
+}
+
+@media print {
+  @page { size: letter; margin: 14mm 16mm; }
+  body { background: white; font-size: 10.3pt; line-height: 1.5; }
+  main { max-width: none; padding: 0; }
+  /* Sections flow rather than each claiming a fresh sheet: at 20 sections a
+     forced break per h1 padded the document by roughly half again its length. */
+  .cover { page-break-after: always; break-after: page; }
+  h1 { font-size: 15pt; margin: 20px 0 9px; }
+  h2 { font-size: 11.5pt; margin: 15px 0 7px; }
+  h3 { font-size: 10pt; margin: 12px 0 5px; }
+  p { margin: 0 0 7px; }
+  hr { margin: 16px 0; }
+  table { font-size: 8.2pt; margin: 8px 0 14px; }
+  th, td { padding: 4px 8px; }
+  ul, ol { margin-bottom: 9px; }
+  table, tr, td, th { page-break-inside: avoid; break-inside: avoid; }
+  h1, h2, h3 { page-break-after: avoid; break-after: avoid-page; }
+}
+
+main.one-page { padding-top: 40px; }
+main.one-page > h1:first-child {
+  font-size: 25pt;
+  margin: 0 0 4px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--accent);
+}
+main.one-page h2 {
+  font-family: var(--sans);
+  font-size: 10pt;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 18px 0 7px;
+}
+main.one-page hr { display: none; }
+
+@media print {
+  @page { size: letter; margin: 12mm 14mm; }
+  main.one-page { padding: 0; font-size: 8.6pt; line-height: 1.42; }
+  main.one-page > h1:first-child { font-size: 17pt; padding-bottom: 6px; margin-bottom: 3px; }
+  main.one-page h2 { font-size: 8pt; margin: 10px 0 4px; }
+  main.one-page p { margin: 0 0 5px; }
+  main.one-page table { font-size: 7.4pt; margin: 6px 0 9px; }
+  main.one-page th, main.one-page td { padding: 3px 7px; }
+  main.one-page .footer { margin-top: 14px; padding-top: 8px; font-size: 7pt; }
+}
+</style>
+</head>
+<body>
+<main class="one-page">
+
+  <h1 id="concept2cure-ri">Concept2Cure.RI</h1>
+<p><strong>A regulated-industry operating system for life-sciences submission work — drug, device, and diagnostic.</strong></p>
+<h2 id="the-question-that-stops-every-ai-pilot">The question that stops every AI pilot</h2>
+<p>A sponsor's quality organization asks three things before an AI system goes near a regulatory submission: what did the AI do, what authority permitted it, and what will prove that in an inspection. Those are not procurement preferences. They are 21 CFR Part 11, and a chat transcript does not answer them. A transcript is not attributable, not tamper-evident, and cannot be re-derived six months later when a reviewer asks why a claim was worded that way.</p>
+<p>So the work stays where it is: authoring in Veeva Vault, eCTD lifecycle in Certara or Lorenz, intelligence lookups in Cortellis — and the work that actually decides the outcome, the gap register, the pre-IND strategy, the CRL response, in a spreadsheet on a shared drive. What is offered to change that is a chat wrapper over a document store. It produces text nobody can defend, so the sponsor does the work twice.</p>
+<h2 id="we-built-the-kernel-instead">We built the kernel instead</h2>
+<p>Every consequential action is evaluated by a governance kernel — seven services, three domains: governance, security, observability. Each returns allow, review, or deny with a rationale, a timestamp, a regulatory reference such as 21 CFR §11.10(e), and an evidence payload. Decisions are written to immutably hash-chained records. Every model call routes through one AI gateway with provider fallback across Claude, GPT-4, and Kimi and full request and response audit; a bypass would fail lint, fail our design-CI gates, and fail its own kernel decision. The sponsor's evidence lives in our schema, not a vendor's chat history.</p>
+<h2 id="what-an-inspector-can-pull">What an inspector can pull</h2>
+<table><thead><tr><th style="text-align:left">Inspection question</th><th style="text-align:left">What the system produces</th></tr></thead><tbody><tr><td style="text-align:left">What did the AI do?</td><td style="text-align:left">Immutable kernel decision record: allow / review / deny, rationale, regulatory reference, evidence hash</td></tr><tr><td style="text-align:left">Who authorized it?</td><td style="text-align:left">TOTP re-authenticated e-signature, reason-for-change, verified signing authority</td></tr><tr><td style="text-align:left">Where did this sentence come from?</td><td style="text-align:left">Span-level lineage: model, retrieval set, reviewer, timestamp, cited sources</td></tr><tr><td style="text-align:left">Has the record been altered?</td><td style="text-align:left">HMAC-sealed, hash-chained audit tables with a scheduled chain-integrity sweep</td></tr></tbody></table>
+<h2 id="what-runs-on-it">What runs on it</h2>
+<p>Nine end-to-end workstreams — IND/NDA/BLA, 510(k)/De Novo, EU MDR and IVDR clinical evaluation, CMC Module 3, CSR, deficiency and CRL response, regulatory intelligence, post-market, RIM operations — share one kernel, one memory, one audit chain. Four committed golden-journey suites drive the signed end-to-end path today: CER EU-MDR, 510(k) eSTAR, NDA eCTD, IND authoring.</p>
+<p>Two layers above the kernel matter most. Client- and project-scoped memory carries locked facts, decisions, and open questions across users and sessions, with entries superseded through successor pointers rather than deleted. The Submission Twin maps every claim to its evidence and catches drift between the CMC and clinical sections before the regulator does. The twin is trustworthy only because the kernel governs every write into it, and useful only because memory carries what the team decided last quarter.</p>
+<p>Underneath: 4,180 server TypeScript files, 439 client React files, 554 versioned migrations, roughly 694 table declarations, fail-closed row-level tenancy on every governed table — <code>organizationId</code> appears 736 times in the schema monolith alone — and 2,348 automated test files.</p>
+<h2 id="what-we-are-not-claiming">What we are not claiming</h2>
+<p>Part 11 features do not confer Part 11 compliance. Validation for intended use stays the sponsor's work; ours is wired so §11.10(a–k) has an answer at every point, which makes that validation an exercise rather than a rewrite. The first production sponsor running all nine workstreams is a near-term milestone, not a fact today. We hold the line by making gates fail on purpose: the CI check that blocks the unsafe way to remove schema ships with a self-test proving it catches the case it exists to catch.</p>
+<p>Competitors reach the inspection question and stop. We start there. Every claim above has a file path as its answer.</p>
+  <div class="footer">Concept2Cure.RI &middot; confidential &middot; every claim traceable to source.</div>
+</main>
+</body>
+</html>

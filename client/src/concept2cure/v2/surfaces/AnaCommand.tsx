@@ -121,14 +121,32 @@ interface Rec {
   evidence: string[];
   suggestedAction: string;
   actionPayload?: { actionType: string; payload?: Record<string, unknown> };
-  confidence: number;
+  /* null whenever nothing computed a score — which is EVERY recommendation the
+     orchestration engine emits, because every one of its rules is a
+     deterministic filter (sourceType 'rules_based'). It used to send a per-rule
+     literal (0.95 / 0.9 / 0.7) that this surface painted as a confidence chip;
+     WO-16C finding 124. Read it null-safely: `confidence || 0` renders "0%",
+     which is a fabricated score rather than an absent one. */
+  sourceType?: 'rules_based' | 'ai_inferred';
+  confidence: number | null;
 }
 interface RecommendationSet { recommendations: Rec[] }
 
 /* POST /api/orchestration/pre-submission-gate response. `ich` is null whenever
    no cmcProjectId is supplied — this surface supplies none, so it is always
    null here (rendered honestly as "not evaluated"). */
-interface GateReadiness { overallScore: number; status: string; scores: Record<string, number> }
+/* `scores.compliance` and `scores.consistency` are `number | null` — null when
+   the readiness engine had no input to measure that dimension from (no
+   validations and no CMC signals; no routed or promoted object to cross-check).
+   `unassessedDimensions` carries the reason for each null. A null is rendered
+   as "not assessed", never as a number and never as a blank chip. */
+interface GateUnassessed { dimension: string; reason: string }
+interface GateReadiness {
+  overallScore: number;
+  status: string;
+  scores: Record<string, number | null>;
+  unassessedDimensions?: GateUnassessed[];
+}
 interface GateRisk { overallRisk: string; riskScore: number }
 interface GateIch { overallStatus: string; counts: Record<string, number> }
 interface Gate {
@@ -625,7 +643,13 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                         <span className={'ac-chip ' + (SEV_MAP[r.severity] || 'idle')}>{r.severity}</span>
                         <span className="ac-rec-tt">{r.targetObjectTitle || r.targetObjectType}</span>
                         <span className="ac-rec-mod">{r.module}</span>
-                        <span className="ac-rec-conf">{Math.round((r.confidence || 0) * 100)}%</span>
+                        {/* Only a recommendation that carries a real computed score shows
+                            one. A rules-based recommendation has none, so the row ends
+                            after the module — no chip, rather than a "0%" nothing
+                            measured. */}
+                        {typeof r.confidence === 'number' ? (
+                          <span className="ac-rec-conf" title="Model confidence">{Math.round(r.confidence * 100)}%</span>
+                        ) : null}
                       </div>
                       <div className="ac-rec-reason">{r.reason}</div>
                       <div className="ac-rec-ev">{(r.evidence || []).map((e, i) => (<span key={i} className="ac-rec-evi">{I.dot || null} {e}</span>))}</div>
@@ -710,7 +734,12 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   <div className="ac-gate-cell">
                     <div className="ac-gate-ck">Readiness</div>
                     <div className="ac-gate-cv">{gate.readiness?.overallScore ?? '--'}<span>/100 · {gate.readiness?.status ?? '--'}</span></div>
-                    <div className="ac-gate-sub2">{gate.readiness?.scores && Object.entries(gate.readiness.scores).map(([k, v]) => (<span key={k} className="ac-gate-ss">{k} {v}</span>))}</div>
+                    <div className="ac-gate-sub2">{gate.readiness?.scores && Object.entries(gate.readiness.scores).map(([k, v]) => {
+                      const why = (gate.readiness?.unassessedDimensions || []).find((u) => u.dimension === k)?.reason;
+                      return v === null || v === undefined
+                        ? (<span key={k} className="ac-gate-ss" title={why || 'This dimension was not assessed.'}>{k} not assessed</span>)
+                        : (<span key={k} className="ac-gate-ss">{k} {v}</span>);
+                    })}</div>
                   </div>
                   <div className="ac-gate-cell">
                     <div className="ac-gate-ck">CMC contradictions</div>

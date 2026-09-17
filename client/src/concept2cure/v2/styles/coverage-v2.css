@@ -943,12 +943,7 @@
 }
 .c2c-v2 .vd-search input::placeholder{ color:var(--text-400); }
 .c2c-v2 .vd-search input:hover{ border-color:var(--border-strong, var(--border)); }
-/* --border-focus is the declared token. This ring previously reached for a
-   --focus name with an --accent fallback; neither is declared anywhere, so the
-   var() was decoration and the ring rendered the fallback every time
-   (ci:check-phantom-tokens). Naming them without the var() syntax here on
-   purpose: that gate reads raw text, comments included. */
-.c2c-v2 .vd-search input:focus-visible{ outline:2px solid var(--border-focus); outline-offset:1px; border-color:transparent; }
+.c2c-v2 .vd-search input:focus-visible{ outline:2px solid var(--accent-200); outline-offset:1px; border-color:transparent; }
 @media (prefers-reduced-motion: reduce){ .c2c-v2 .vd-search input{ transition:none; } }
 .c2c-v2 .vd-crumb.cur{ color:var(--text-100); font-weight:600; cursor:default; }
 .c2c-v2 .vd-crumb svg{ width:13px; height:13px; }

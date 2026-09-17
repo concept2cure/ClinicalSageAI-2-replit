@@ -65,6 +65,8 @@ import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/l
 import { coauthorDocuments } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger.js';
 
+import { acceptedMachineText } from '../services/authoring/revision-ledger';
+
 const logger = createScopedLogger('batch-draft-routes');
 
 // Defensive upper bound on spine size (a spine is the whole document
@@ -459,9 +461,16 @@ export default function createBatchDraftRoutes(): Router {
          WHERE id = ${documentId} AND organization_id = ${organizationId}
       `);
 
-      /* Lineage in the same transaction as the content (ledger L160): the
-         batch drafts carry no parked sources, so every clause is recorded as
-         the accepting person's assertion, and a gap rolls the accept back. */
+      /* Lineage in the same transaction as the content (ledger L160); a gap
+         rolls the accept back.
+         The batch drafts carry no parked Data Room sources, but they ARE AnA's
+         prose: recording every clause as the accepting person's own assertion
+         named them as the author of words a model wrote. The surface sends the
+         draft as AnA returned it alongside the (possibly edited) content, so a
+         clause still verbatim in the draft is recorded as AnA's, accepted by
+         this person, and a clause they rewrote in the card is recorded as
+         theirs. Validated here against the server's own machine-author
+         vocabulary — an id it does not name is discarded. */
       const client = queryableFromDrizzle(rdb);
       await enforceAuthorLineage(
         client,
@@ -469,6 +478,7 @@ export default function createBatchDraftRoutes(): Router {
         { documentTable: 'coauthor_documents', documentId: String(documentId) },
         content,
         String(actor.userId),
+        { acceptedMachineText: acceptedMachineText(body.acceptedMachineText) },
       );
 
       // 21 CFR Part 11 §11.10(e) — same transaction as the change it describes,

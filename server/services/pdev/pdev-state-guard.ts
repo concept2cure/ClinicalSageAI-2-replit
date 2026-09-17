@@ -24,7 +24,7 @@
  * @module server/services/pdev/pdev-state-guard
  */
 
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { pdevProgramActivities } from '../../../shared/schema/pdev-workflow';
 import {

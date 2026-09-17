@@ -40,6 +40,10 @@ import {
   evaluateExportGovernance,
 } from '../services/export/exportReviewGate';
 import auditService from '../services/auditService';
+import {
+  resolveSignedPackageForExport,
+  refusalHttpStatus,
+} from '../services/ectd/signed-package-export';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('ectd-export');
@@ -185,11 +189,17 @@ async function auditEctdAccess(
     | 'ectd_export_generated'
     | 'ectd_export_previewed'
     | 'ectd_export_validated'
-    | 'ectd_export_preflight_validated',
+    | 'ectd_export_preflight_validated'
+    // Signed-package seam: resolving the record a run's signature binds is
+    // itself regulated-content access, and a REFUSAL is the more important
+    // audit row of the two — a digest-drift or seal-failure refusal is the
+    // tamper-evidence signal an inspector would look for.
+    | 'ectd_signed_package_resolved'
+    | 'ectd_signed_package_refused',
   details: Record<string, unknown> = {},
   // Allow preflight to use a distinct resourceType so dashboards can group
   // by resourceType without colliding with real submissions.
-  resourceType: 'ectd_submission' | 'ectd_preflight' = 'ectd_submission',
+  resourceType: 'ectd_submission' | 'ectd_preflight' | 'ectd_signed_package' = 'ectd_submission',
 ): Promise<void> {
   const user = (req as any).user;
 
@@ -213,6 +223,112 @@ async function auditEctdAccess(
 }
 
 const router = Router();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Signed-package seam — GET /api/ectd/export/by-run/:runId/signed
+//
+// Closes the orchestrator → export gap. The canonical POST /:submissionId path
+// assembles from the submissions spine; it does not know whether an
+// orchestrator run signed a DIFFERENT package for that submission. This route
+// answers the narrower, verifiable question: "what record does run R's
+// signature actually bind, and does that record still verify?"
+//
+// It returns the signed leaf MANIFEST + backbone, not ZIP bytes — the snapshot
+// stores checksums, not payloads (see signed-package-export.ts). A byte-level
+// transmit hop must re-render and check each leaf via verifyLeafBytes() before
+// shipping. Registered ahead of POST /:submissionId; no collision (two path
+// segments vs one), but ordering makes the intent explicit.
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/by-run/:runId/signed', async (req: Request, res: Response) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
+  const runId = String(req.params.runId || '').trim();
+  if (!runId) {
+    return res.status(400).json({ error: 'runId is required' });
+  }
+
+  let result;
+  try {
+    result = await resolveSignedPackageForExport({ runId, organizationId });
+  } catch (err) {
+    log.error('signed-package resolution threw', {
+      err: err instanceof Error ? err.message : String(err),
+      runId,
+      organizationId,
+    });
+    return res.status(500).json({ error: 'signed_package_resolution_failed' });
+  }
+
+  if (!result.ok) {
+    // Audit the refusal. Integrity refusals (seal-failed / digest-drift) are
+    // the rows that matter most here — log them at warn so they surface in
+    // alerting, not just in the audit table.
+    const isIntegrityFailure = result.refusal === 'seal-failed' || result.refusal === 'digest-drift';
+    if (isIntegrityFailure) {
+      log.warn('signed-package integrity refusal', {
+        runId,
+        organizationId,
+        refusal: result.refusal,
+        detail: result.detail,
+      });
+    }
+    await auditEctdAccess(
+      req,
+      organizationId,
+      runId,
+      'ectd_signed_package_refused',
+      { runId, refusal: result.refusal, detail: result.detail, integrityFailure: isIntegrityFailure },
+      'ectd_signed_package',
+    );
+    return res.status(refusalHttpStatus(result.refusal)).json({
+      error: result.refusal,
+      message: result.detail,
+      runId,
+    });
+  }
+
+  const d = result.descriptor;
+  await auditEctdAccess(
+    req,
+    organizationId,
+    runId,
+    'ectd_signed_package_resolved',
+    {
+      runId,
+      submissionId: d.submissionId,
+      applicationNumber: d.applicationNumber,
+      sequenceNumber: d.sequenceNumber,
+      payloadDigest: d.payloadDigest,
+      signatureId: d.signatureId,
+      sealVerdict: d.sealVerdict,
+      leafCount: d.leaves.length,
+    },
+    'ectd_signed_package',
+  );
+
+  return res.json({
+    runId: d.runId,
+    submissionId: d.submissionId,
+    applicationNumber: d.applicationNumber,
+    sequenceNumber: d.sequenceNumber,
+    region: d.region,
+    submissionType: d.submissionType,
+    totalSizeBytes: d.totalSizeBytes,
+    gatewayReady: d.gatewayReady,
+    hardenedScore: d.hardenedScore,
+    signature: {
+      payloadDigest: d.payloadDigest,
+      signatureId: d.signatureId,
+      sealVerdict: d.sealVerdict,
+    },
+    // The signed manifest. Checksums are the content fingerprint a transmit
+    // hop must re-verify rendered bytes against.
+    leaves: d.leaves,
+    backboneXml: d.backboneXml || null,
+  });
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Leaf-level validator request schemas (Phase 1 ectd4-validator surface)

@@ -200,6 +200,20 @@ vi.mock('../../server/middleware/tenantContext', () => ({
   requireOrganizationContext: (_req: any, _res: any, next: any) => next(),
 }));
 
+/* §11.200 re-verification at the moment of signing: the route now checks the
+   signer's password (and TOTP when enrolled) through injected deps. The policy
+   itself is pinned in services/part11 tests; here the deps are stubbed so the
+   ROUTE is exercised — a wrong password is refused by the same policy. */
+vi.mock('../../server/services/part11/reverify-signer-deps', () => ({
+  signerReverificationDeps: () => ({
+    loadPasswordHash: async () => 'stored-hash',
+    comparePassword: async (plain: string, hash: string) => plain === 'correct-horse-battery' && hash === 'stored-hash',
+    isMfaEnabled: async () => false,
+    verifyMfaToken: async () => false,
+    warn: () => {},
+  }),
+}));
+
 vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));
@@ -453,7 +467,7 @@ describe('Concept2Cure API', () => {
       params: { projectId: 'proj_1', artifactId: 'artifact_test' },
       body: {
         signaturePurpose: 'Approved for submission',
-        authenticationMethod: 'password',
+        password: 'correct-horse-battery',
       },
     }) as any;
     req.headers = { 'x-forwarded-for': '127.0.0.1' };
@@ -474,7 +488,32 @@ describe('Concept2Cure API', () => {
       success: true,
       data: expect.objectContaining({
         signaturePurpose: 'Approved for submission',
+        signerId: 1,
       }),
     });
+    // What is persisted about HOW identity was established is derived from the
+    // re-verification, never taken from the request body.
+    const { db } = await import('../../server/db');
+    const inserted = (db.insert as any).mock.results
+      .flatMap((r: any) => r.value.values.mock.calls.map((c: any[]) => c[0]))
+      .find((payload: any) => payload?.signatureId);
+    expect(inserted).toBeTruthy();
+    expect(inserted.authenticationMethod).toBe('password');
+    expect(inserted.secondFactorVerified).toBe(false);
+  });
+
+  it('refuses a signature whose password does not verify — identity is checked at the moment of signing', async () => {
+    const req = createMockRequest({
+      params: { projectId: 'proj_1', artifactId: 'artifact_test' },
+      body: { signaturePurpose: 'Approved for submission', password: 'wrong' },
+    }) as any;
+    req.headers = { 'x-forwarded-for': '127.0.0.1' };
+    req.userId = 1;
+    req.userRole = 'admin';
+    req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
+    const res = createMockResponse();
+    const layer = artifactRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts/:artifactId/signatures' && l.route?.methods?.post);
+    await layer.route.stack[layer.route.stack.length - 1].handle(req, res);
+    expectStatus(res, 401);
   });
 });

@@ -103,7 +103,11 @@ beforeAll(async () => {
       -- written, by the change that made a new vault upload attributable).
       -- Omitting it made every statement here fail 42703 rather than exercise
       -- the ON CONFLICT clause — which is the fixture drifting from the route,
-      -- exactly what extracting the real SQL is meant to surface.
+      -- exactly what extracting the real SQL is meant to surface. It is also
+      -- the tenant key the real table carries (its own migration): the
+      -- retrieval path filters on it, so a row left NULL is an orphan no tenant
+      -- can retrieve. Declared once — two changes each added it, and 42701
+      -- (duplicate column) then failed the whole fixture.
       organization_id INTEGER,
       document_code TEXT NOT NULL,
       document_title TEXT, document_type TEXT,
@@ -118,10 +122,6 @@ beforeAll(async () => {
       placement_confidence TEXT, placement_rationale TEXT,
       placed_by INT, placed_at TIMESTAMPTZ,
       processing_status TEXT, created_by INT,
-      -- The tenant key the real table carries (its own migration) and the
-      -- ingest writes; the retrieval path filters on it, so a row left NULL is
-      -- an orphan no tenant can retrieve.
-      organization_id INT,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW(),
       CONSTRAINT vault_documents_program_doc_version UNIQUE (program_id, document_code, version)

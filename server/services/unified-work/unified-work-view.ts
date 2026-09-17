@@ -31,6 +31,10 @@ import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { projectTasks, c2cProjectWorkItems, unifiedTasks } from '../../../shared/schema';
 import { estarSubmissions } from '../../../shared/schema/estar-submission';
+import { describeFailure, type VerificationOutcome } from '../../lib/verification-outcome';
+import { createScopedLogger } from '../../utils/logger';
+
+const logger = createScopedLogger('unified-work-view');
 
 /**
  * True for rows NOT mirrored from project_tasks (AnA's create_task mirrors
@@ -129,6 +133,23 @@ export function compareUnifiedWork(a: UnifiedWorkItem, b: UnifiedWorkItem): numb
   return a.title.localeCompare(b.title);
 }
 
+/** The four tables this view reads, by their real names. */
+export type UnifiedWorkSourceTable =
+  | 'project_tasks'
+  | 'c2c_project_work_items'
+  | 'estar_submissions'
+  | 'unified_tasks';
+
+/**
+ * Whether one source's SELECT actually ran — the third state this view used to
+ * collapse. `ran: true` carries the number of rows it contributed; `ran: false`
+ * means the query failed and the counts exclude it, so they are a floor and not
+ * a total. Same `{ ran }` vocabulary as server/lib/verification-outcome.
+ */
+export type UnifiedWorkSourceRead = VerificationOutcome<{ rowCount: number }>;
+
+export type UnifiedWorkSources = Record<UnifiedWorkSourceTable, UnifiedWorkSourceRead>;
+
 /** Roll-up counts for a surface header. */
 export interface UnifiedWorkSummary {
   total: number;
@@ -137,9 +158,24 @@ export interface UnifiedWorkSummary {
   inProgress: number;
   done: number;
   bySource: Record<UnifiedWorkSource, number>;
+  /**
+   * True when at least one source could not be read, so every count above is a
+   * floor rather than a total. It travels ON the summary because the summary is
+   * what reaches a header by itself — a count that has lost its caveat reads as
+   * a complete answer.
+   */
+  partial: boolean;
 }
 
-export function summarizeUnifiedWork(items: UnifiedWorkItem[]): UnifiedWorkSummary {
+/**
+ * @param sources per-table read outcome from `loadUnifiedWork`. Omitted by the
+ *   pure callers that merge rows they already hold: nothing failed there by
+ *   construction, so the roll-up is complete.
+ */
+export function summarizeUnifiedWork(
+  items: UnifiedWorkItem[],
+  sources?: UnifiedWorkSources,
+): UnifiedWorkSummary {
   const bySource: Record<UnifiedWorkSource, number> = {
     schedule: 0, review: 0, correspondence: 0, filing: 0, board: 0,
   };
@@ -151,7 +187,8 @@ export function summarizeUnifiedWork(items: UnifiedWorkItem[]): UnifiedWorkSumma
     else if (i.status === 'in_progress') inProgress += 1;
     else if (i.status === 'done') done += 1;
   }
-  return { total: items.length, blocking, open, inProgress, done, bySource };
+  const partial = sources ? Object.values(sources).some(s => !s.ran) : false;
+  return { total: items.length, blocking, open, inProgress, done, bySource, partial };
 }
 
 // ── Row → unified adapters (pure; shapes mirror each table) ──────────────────
@@ -316,46 +353,102 @@ export interface LoadUnifiedWorkInput {
 export interface UnifiedWorkResult {
   items: UnifiedWorkItem[];
   summary: UnifiedWorkSummary;
+  /** Per-source read outcome. A source that is absent from the items because
+   *  its query FAILED is named here; nothing else distinguishes it from a
+   *  source that genuinely has no outstanding work. */
+  sources: UnifiedWorkSources;
+}
+
+/**
+ * The client-facing reason on a failed read. The driver's own text — relation
+ * name, GRANT, host from ECONNREFUSED — is the internal shape of a governed
+ * store and goes to the LOG only, the same containment `serverError` and
+ * `respondVerificationUnavailable` apply, because both routes hand this result
+ * straight to a browser.
+ */
+const SOURCE_UNREAD_REASON =
+  'This source could not be read; the reason has been logged. The counts exclude it.';
+
+/**
+ * The reason an operator can act on. Drizzle wraps a driver rejection in
+ * `DrizzleQueryError`, whose message is the whole SQL text plus the bound
+ * params; the Postgres code and message are on `.cause`. Unwrapped, the log
+ * reads `42501: permission denied for table estar_submissions` instead of the
+ * statement that failed — and the tenant id in `params` stays out of the log.
+ */
+function driverReason(err: unknown): string {
+  const cause = (err as { cause?: unknown } | null | undefined)?.cause;
+  return cause ? describeFailure(cause) : describeFailure(err);
+}
+
+/**
+ * Run one source's query. The query is BUILT by the caller (outside this try),
+ * so a missing pool still throws out of `loadUnifiedWork` and answers 500 —
+ * "the database is down" is not a partial view. Only a query that reached the
+ * database and came back rejected degrades to an unread source.
+ */
+async function readSource<T>(
+  table: UnifiedWorkSourceTable,
+  rows: PromiseLike<unknown[]>,
+): Promise<{ rows: T[]; read: UnifiedWorkSourceRead }> {
+  try {
+    const r = await rows;
+    return { rows: r as T[], read: { ran: true, rowCount: r.length } };
+  } catch (err) {
+    logger.error('unified work source could not be read', {
+      table,
+      reason: driverReason(err),
+    });
+    return { rows: [], read: { ran: false, reason: SOURCE_UNREAD_REASON } };
+  }
 }
 
 /**
  * Load the unified work view for an org (optionally one project). Every query is
  * tenant-scoped from ctx, never request input. A failing source degrades to an
  * empty contribution rather than failing the whole view — an incomplete view is
- * more useful than none, and the summary counts make the shortfall visible.
+ * more useful than none — but the shortfall is NAMED rather than left to be read
+ * as zero: `sources` records per table whether its SELECT ran, `summary.partial`
+ * is true when any did not, and the driver's reason is logged.
  */
 export async function loadUnifiedWork(input: LoadUnifiedWorkInput): Promise<UnifiedWorkResult> {
   const { organizationId, projectId } = input;
 
-  const tasks = await db
-    .select()
-    .from(projectTasks)
-    .where(
-      projectId !== undefined
-        ? and(eq(projectTasks.organizationId, organizationId), eq(projectTasks.projectId, projectId))
-        : eq(projectTasks.organizationId, organizationId),
-    )
-    .catch(() => [] as TaskRowLike[]);
+  const tasks = await readSource<TaskRowLike>(
+    'project_tasks',
+    db
+      .select()
+      .from(projectTasks)
+      .where(
+        projectId !== undefined
+          ? and(eq(projectTasks.organizationId, organizationId), eq(projectTasks.projectId, projectId))
+          : eq(projectTasks.organizationId, organizationId),
+      ),
+  );
 
-  const workItems = await db
-    .select()
-    .from(c2cProjectWorkItems)
-    .where(
-      projectId !== undefined
-        ? and(eq(c2cProjectWorkItems.orgId, organizationId), eq(c2cProjectWorkItems.projectId, projectId))
-        : eq(c2cProjectWorkItems.orgId, organizationId),
-    )
-    .catch(() => [] as WorkItemRowLike[]);
+  const workItems = await readSource<WorkItemRowLike>(
+    'c2c_project_work_items',
+    db
+      .select()
+      .from(c2cProjectWorkItems)
+      .where(
+        projectId !== undefined
+          ? and(eq(c2cProjectWorkItems.orgId, organizationId), eq(c2cProjectWorkItems.projectId, projectId))
+          : eq(c2cProjectWorkItems.orgId, organizationId),
+      ),
+  );
 
-  const filings = await db
-    .select()
-    .from(estarSubmissions)
-    .where(
-      projectId !== undefined
-        ? and(eq(estarSubmissions.organizationId, organizationId), eq(estarSubmissions.projectId, projectId))
-        : eq(estarSubmissions.organizationId, organizationId),
-    )
-    .catch(() => [] as FilingRowLike[]);
+  const filings = await readSource<FilingRowLike>(
+    'estar_submissions',
+    db
+      .select()
+      .from(estarSubmissions)
+      .where(
+        projectId !== undefined
+          ? and(eq(estarSubmissions.organizationId, organizationId), eq(estarSubmissions.projectId, projectId))
+          : eq(estarSubmissions.organizationId, organizationId),
+      ),
+  );
 
   // The canonical org board. Terminal rows are excluded here (not in the
   // adapter) so an org's full history doesn't drown the outstanding view, and
@@ -363,34 +456,42 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput): Promise<Unif
   // carries them — the same task must not appear twice.
   const openStatuses = ['pending', 'in-progress', 'review', 'blocked'];
   const notAMirror = sqlDistinctFromProjectTask();
-  const boardTasks = await db
-    .select()
-    .from(unifiedTasks)
-    .where(
-      projectId !== undefined
-        ? and(
-            eq(unifiedTasks.organizationId, organizationId),
-            eq(unifiedTasks.projectId, projectId),
-            inArray(unifiedTasks.status, openStatuses),
-            isNull(unifiedTasks.deletedAt),
-            notAMirror,
-          )
-        : and(
-            eq(unifiedTasks.organizationId, organizationId),
-            inArray(unifiedTasks.status, openStatuses),
-            isNull(unifiedTasks.deletedAt),
-            notAMirror,
-          ),
-    )
-    .catch(() => [] as UnifiedTaskRowLike[]);
+  const boardTasks = await readSource<UnifiedTaskRowLike>(
+    'unified_tasks',
+    db
+      .select()
+      .from(unifiedTasks)
+      .where(
+        projectId !== undefined
+          ? and(
+              eq(unifiedTasks.organizationId, organizationId),
+              eq(unifiedTasks.projectId, projectId),
+              inArray(unifiedTasks.status, openStatuses),
+              isNull(unifiedTasks.deletedAt),
+              notAMirror,
+            )
+          : and(
+              eq(unifiedTasks.organizationId, organizationId),
+              inArray(unifiedTasks.status, openStatuses),
+              isNull(unifiedTasks.deletedAt),
+              notAMirror,
+            ),
+      ),
+  );
 
+  const sources: UnifiedWorkSources = {
+    project_tasks: tasks.read,
+    c2c_project_work_items: workItems.read,
+    estar_submissions: filings.read,
+    unified_tasks: boardTasks.read,
+  };
   const items = mergeUnifiedWork({
-    tasks: tasks as TaskRowLike[],
-    workItems: workItems as WorkItemRowLike[],
-    filings: filings as FilingRowLike[],
-    boardTasks: boardTasks as UnifiedTaskRowLike[],
+    tasks: tasks.rows,
+    workItems: workItems.rows,
+    filings: filings.rows,
+    boardTasks: boardTasks.rows,
   });
-  return { items, summary: summarizeUnifiedWork(items) };
+  return { items, summary: summarizeUnifiedWork(items, sources), sources };
 }
 
 export default {

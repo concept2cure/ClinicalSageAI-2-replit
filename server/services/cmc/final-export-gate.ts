@@ -8,11 +8,26 @@
  *
  * Fail-closed convergence, unchanged: export (and therefore placement) is
  * refused if the compiler gate refuses, the governed document fabric blocks,
- * governed decisions are unresolved, or any section went stale after approval.
+ * governed decisions are unresolved, any section went stale after approval,
+ * the provenance chain has a gap, OR an approved section is not actually
+ * complete.
+ *
+ * That last clause was missing until it was found live: a project with every
+ * section's `approval_state` at 'approved' passed this gate while three of
+ * those sections had compiled at 0% completeness, every required input
+ * missing — the compiler itself stores `completeness` and `missingInputs` in
+ * the same row's `deterministic_json` at compile time
+ * (module3OperatingSystemRoutes.ts), and this gate never read either. A
+ * signer's "approved" is a claim about content they reviewed, not a claim the
+ * content exists; the gate must not let the first stand in for the second.
  */
 import { getPool } from '../../db';
 import { canFinalizeExport } from '../cmc-module3-compiler';
 import { buildCanonicalGovernedState } from '../governed-ana-execution.js';
+/* One definition of "complete" — shared with the section-approve route, the
+   section listing and the board, so an approval can never accept what this
+   gate will refuse. */
+import { compiledRecordIsComplete, parsedDeterministicJson, readSectionTables } from './compiled-record';
 
 export interface Module3GovernedState {
   totalSections: number;
@@ -21,6 +36,23 @@ export interface Module3GovernedState {
   openCriticalContradictions: number;
   /** Sections with no `cmc_section_lineage` row — no traceable source. */
   sectionsWithoutProvenance: number;
+  /**
+   * Approved sections the compiler did not actually establish, by key:
+   * `completeness` under 100 or a required input still named in
+   * `missingInputs`, both read from the section's own compiled record.
+   */
+  incompleteApprovedSections: string[];
+  /**
+   * Approved sections whose stored record carries no `tables` key at all —
+   * compiled before the composer's tables were persisted. Placement refuses
+   * these (it cannot tell a section that composes none from one compiled
+   * before they were carried, and will not file a narrative that says "see the
+   * table" over a document that may be missing it), and that refusal used to
+   * live ONLY in placement: readiness answered exportReady:true and the gate
+   * answered 200 for a project whose placement then filed nothing at all. One
+   * gate, so the preview and the operation agree.
+   */
+  unplaceableApprovedSections: string[];
   canonicalGovernedState: Record<string, unknown> | null;
   /**
    * Did the governed-decision fabric actually produce a verdict? False when the
@@ -71,7 +103,7 @@ export async function evaluateModule3GovernedState(params: {
 
   const [sectionsRes, contradictionsRes, lineageRes] = await Promise.all([
     pool.query(
-      `SELECT approval_state, stale FROM cmc_module3_sections WHERE organization_id = $1 AND project_id = $2`,
+      `SELECT section_key, approval_state, stale, deterministic_json FROM cmc_module3_sections WHERE organization_id = $1 AND project_id = $2`,
       [orgId, projectId]
     ),
     pool.query(
@@ -104,6 +136,18 @@ export async function evaluateModule3GovernedState(params: {
   ).length;
   const unresolvedCount = contradictions.filter((c: any) => c.status !== 'resolved').length;
   const sectionsWithoutProvenance = Number(lineageRes.rows[0]?.n ?? 0);
+  const incompleteApprovedSections = sections
+    .filter((s: any) => s.approval_state === 'approved')
+    .filter((s: any) => !compiledRecordIsComplete(parsedDeterministicJson(s)))
+    .map((s: any) => String(s.section_key ?? s.sectionKey ?? 'unknown section'));
+  /* The same read placement makes, made here so the gate refuses what
+     placement would refuse. Deliberately NOT `tables.length === 0`: an empty
+     array is a real "this section composes no tables" and places normally; the
+     absent key is the legacy record. */
+  const unplaceableApprovedSections = sections
+    .filter((s: any) => s.approval_state === 'approved')
+    .filter((s: any) => readSectionTables(parsedDeterministicJson(s)) === undefined)
+    .map((s: any) => String(s.section_key ?? s.sectionKey ?? 'unknown section'));
   // Derived, never asserted: with no sections there is no provenance chain to
   // be complete, and a section with no lineage row breaks it.
   const provenanceComplete = totalSections > 0 && sectionsWithoutProvenance === 0;
@@ -166,6 +210,8 @@ export async function evaluateModule3GovernedState(params: {
       staleSections,
       openCriticalContradictions: openCritical,
       sectionsWithoutProvenance,
+      incompleteApprovedSections,
+      unplaceableApprovedSections,
       canonicalGovernedState,
       governedStateEvaluated,
       fabricBlocks,
@@ -192,17 +238,28 @@ export async function evaluateFinalExportGate(params: {
 
   // Fail-closed convergence: block if the existing check OR the fabric blocks OR
   // governed decisions are unresolved OR any section went stale after approval
-  // OR the provenance chain has a gap.
+  // OR the provenance chain has a gap OR an approved section is not what the
+  // compiler established.
   if (
     !allowed ||
     data.fabricBlocks ||
     data.governedDecisionsBlock ||
     data.staleSections > 0 ||
-    data.sectionsWithoutProvenance > 0
+    data.sectionsWithoutProvenance > 0 ||
+    data.incompleteApprovedSections.length > 0 ||
+    data.unplaceableApprovedSections.length > 0
   ) {
     const state = data.canonicalGovernedState as any;
+    const incomplete = data.incompleteApprovedSections;
     const errorMsg =
-      data.staleSections > 0
+      incomplete.length > 0
+        ? `${incomplete.length} approved section(s) are not complete and cannot be exported: ` +
+          `${incomplete.join(', ')}. An approval is a claim about content that was reviewed; ` +
+          `the compiler records these as missing required inputs. Record the inputs, recompile and re-approve.`
+        : data.unplaceableApprovedSections.length > 0
+        ? `${data.unplaceableApprovedSections.length} approved section(s) were compiled before section tables were carried ` +
+          `and cannot be filed: ${data.unplaceableApprovedSections.join(', ')}. Recompile them, then re-approve.`
+        : data.staleSections > 0
         ? `${data.staleSections} section(s) went stale after approval and must be re-approved before final export`
         : data.sectionsWithoutProvenance > 0
           ? `${data.sectionsWithoutProvenance} section(s) have no recorded source lineage, so the audit trail required for export is incomplete`

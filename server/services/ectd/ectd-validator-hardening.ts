@@ -41,6 +41,13 @@ const log = createScopedLogger('ectd-validator-hardening');
 export interface HardenedValidationContext {
   /** Submission's tracking ID in c2c_ectd_submissions / ectdCompilations */
   submissionId: string;
+  /**
+   * Authenticated tenant. REQUIRED: the sequence-history read is tenant-scoped
+   * and refuses rather than falling back to a cross-tenant query, so a caller
+   * that cannot supply this gets a blocking SEQ_TENANT_SCOPE_MISSING finding
+   * rather than a silently unscoped answer.
+   */
+  organizationId: number;
   /** ICH region this package targets */
   region: RegulatoryRegion;
   /** Application number (IND123456, NDA215789, EMEA/H/C/12345, ...) */
@@ -175,7 +182,8 @@ export async function validateEctdPackageHardened(
   // 5) Sequence-gap detection
   const sequenceFindings = await detectSequenceGaps(
     context.applicationNumber,
-    context.sequenceNumber
+    context.sequenceNumber,
+    context.organizationId
   );
 
   // 6) Regional rules
@@ -489,12 +497,52 @@ export function auditStudyIdTagging(leaves: ECTDLeaf[]): ValidationFinding[] {
  * Detect missing or out-of-order sequence numbers for an application.
  * Queries the submission tracking table (ectdCompilations or fallback) for
  * historical sequences and verifies the new sequence is the expected next.
+ *
+ * ── Tenant scope (required, not optional) ────────────────────────────────────
+ *
+ * This read WAS keyed on `application_number` alone, with no organization
+ * filter — a cross-tenant read of another org's submission history, in a
+ * codebase that tenant-scopes every other regulated query. It is also wrong in
+ * both directions functionally: a collision on application number lets one
+ * org's history report a DUPLICATE against another org's legitimate 0000, or
+ * manufacture a GAP from history the caller never filed. FDA-assigned numbers
+ * are unique in production, but nothing here enforces that, and the CRO
+ * multi-sponsor model makes a shared-number environment ordinary rather than
+ * hypothetical.
+ *
+ * `organizationId` is therefore a REQUIRED parameter. Making it optional would
+ * leave the unscoped path reachable by omission, which is how the defect
+ * existed in the first place; a caller that cannot supply one has no business
+ * reading submission history.
  */
 export async function detectSequenceGaps(
   applicationNumber: string,
-  newSequenceNumber: string
+  newSequenceNumber: string,
+  organizationId: number
 ): Promise<SequenceFinding[]> {
   const findings: SequenceFinding[] = [];
+
+  // A tenant gate that cannot be evaluated is not a tenant gate. Refuse rather
+  // than fall back to an unscoped read — and BLOCK, because "we could not
+  // determine the history" must never read as "there is no history" (the same
+  // invariant the outage branch below preserves).
+  if (!Number.isFinite(organizationId) || organizationId <= 0) {
+    log.error('SEQ_TENANT_SCOPE_MISSING — sequence history requested without an organization', {
+      applicationNumber,
+      attemptedSequence: newSequenceNumber,
+      organizationId,
+    });
+    findings.push({
+      severity: 'error',
+      code: 'SEQ_TENANT_SCOPE_MISSING',
+      message:
+        `Sequence history for application ${applicationNumber} could not be verified: no organization ` +
+        `context was supplied, and submission history is never read across tenants.`,
+      fix: 'Supply the authenticated organization id to the validator. Submission cannot be marked gateway-ready until sequence history is confirmed within its own tenant.',
+      attemptedSequence: newSequenceNumber,
+    });
+    return findings;
+  }
 
   // Query existing sequence numbers for this application across the
   // various tables that track sequence history. A DB outage must surface
@@ -516,6 +564,7 @@ export async function detectSequenceGaps(
   // primary) still blocks — the "an outage must never be swallowed as no-history"
   // invariant (RECONCILIATION_AUDIT_2026-06-29 §A.3 / §D.1) is preserved.
   const UNDEFINED_TABLE = '42P01';
+  const UNDEFINED_COLUMN = '42703';
   const sqlState = (err: unknown): string | undefined =>
     err && typeof err === 'object' && 'code' in err
       ? String((err as { code: unknown }).code)
@@ -523,9 +572,13 @@ export async function detectSequenceGaps(
 
   let result: { rows: Array<{ sequence_number: string }> };
   try {
+    // PRIMARY, always-present source. `ectd_compilations.organization_id` is
+    // declared in the canonical schema, so an absent column here is a genuine
+    // schema mismatch and rightly reaches the outer catch and blocks.
     const primary = await pool.query(
-      `SELECT sequence_number FROM ectd_compilations WHERE application_number = $1`,
-      [applicationNumber]
+      `SELECT sequence_number FROM ectd_compilations
+        WHERE application_number = $1 AND organization_id = $2`,
+      [applicationNumber, organizationId]
     );
     const rows = [...(primary.rows || [])];
 
@@ -535,15 +588,32 @@ export async function detectSequenceGaps(
     // catch and blocks the gate.
     try {
       const secondary = await pool.query(
-        `SELECT sequence_number FROM ectd_submissions WHERE application_number = $1`,
-        [applicationNumber]
+        `SELECT sequence_number FROM ectd_submissions
+          WHERE application_number = $1 AND organization_id = $2`,
+        [applicationNumber, organizationId]
       );
       rows.push(...(secondary.rows || []));
     } catch (subErr) {
-      if (sqlState(subErr) === UNDEFINED_TABLE) {
+      const state = sqlState(subErr);
+      if (state === UNDEFINED_TABLE) {
         log.warn('SEQ_SUBMISSIONS_ABSENT — ectd_submissions not provisioned; using ectd_compilations only', {
           applicationNumber,
         });
+      } else if (state === UNDEFINED_COLUMN) {
+        /* The table exists but carries no organization_id. Its own migration
+           notes the tenant column lands "only on the install-fresh path", so
+           this is a real deploy shape rather than a defect here. An
+           un-scopable source cannot be read: folding it in would restore
+           exactly the cross-tenant read this parameter exists to close. Drop
+           it and say so.
+
+           Safe in the blocking direction: losing history can only shrink the
+           known set, and an empty history with a non-0000 sequence raises
+           SEQ_FIRST_NOT_0000 below — a block, not a pass. */
+        log.warn(
+          'SEQ_SUBMISSIONS_UNSCOPABLE — ectd_submissions has no organization_id; excluded from history rather than read across tenants',
+          { applicationNumber, attemptedSequence: newSequenceNumber },
+        );
       } else {
         throw subErr;
       }

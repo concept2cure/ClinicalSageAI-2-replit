@@ -1,5 +1,8 @@
+import { createHash } from 'node:crypto';
+
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { promises as fs } from 'fs';
+import fsSync from 'fs';
 import path from 'path';
 import os from 'os';
 import { PDFDocument } from 'pdf-lib';
@@ -82,15 +85,48 @@ vi.mock('../../server/services/pathway-engines/estar/estar-administrative-data',
   loadEstarAdministrativeInputs: mockLoadInputs,
 }));
 
+/* The REAL logAction resolves an AuditWriteResult and never rejects; a fake
+   that resolves `undefined` is a shape the service cannot produce, and the
+   unplaced delivery path now (correctly) refuses to hand over an export whose
+   audit row did not persist. */
 vi.mock('../../server/services/auditService', () => ({
-  default: { logAction: vi.fn(async () => undefined) },
+  default: { logAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })) },
 }));
 
+/* Retention goes through the canonical vault ingest; the route's contract with
+   it is what these tests observe. The ingest's own behaviour is pinned in
+   server/services/vault/__tests__. */
+const { mockIngest } = vi.hoisted(() => ({ mockIngest: vi.fn() }));
+vi.mock('../../server/services/vault/vault-ingest.service', () => ({
+  ingestVaultDocument: mockIngest,
+}));
+
+/* Only the RESOLVER is stubbed — the seam where an attachment's bytes come out
+   of the governed section store or the vault. The planner behind it stays real,
+   so the route's attachment tests exercise the actual slot lookup, chapter
+   resolution and acceptance rules against the actual template, and only the two
+   database reads are replaced. Stubbing the planner would leave the route's
+   wiring pinned to nothing. */
+const { mockResolverFactory, resolverStub } = vi.hoisted(() => {
+  const resolverStub = vi.fn(async () => ({
+    ok: true as const,
+    bytes: Buffer.from('%PDF-1.7 attachment bytes'),
+    fileName: 'Cover Letter.pdf',
+    mimeType: 'application/pdf',
+  }));
+  return { resolverStub, mockResolverFactory: vi.fn(() => resolverStub) };
+});
+vi.mock('../../server/services/pathway-engines/estar/estar-attachment-plan', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  createDeviceAttachmentResolver: mockResolverFactory,
+}));
+
+import auditService from '../../server/services/auditService';
 import estarRoutes from '../../server/routes/510k-estar-routes';
 // The field map is a mutable singleton; tests populate then restore it to
 // exercise the "template + verified map present → real official PDF" path
 // without committing a real FDA asset.
-import { ESTAR_FIELD_MAPS } from '../../server/services/pathway-engines/estar/estar-field-map';
+import { ESTAR_FIELD_MAPS, ESTAR_TEMPLATE_RECOMPUTED_FIELDS } from '../../server/services/pathway-engines/estar/estar-field-map';
 
 function getHandler(routePath: string) {
   const layer = estarRoutes.stack.find(
@@ -136,6 +172,17 @@ function useTemplateFixture(opts: { prefix: string; template?: () => Promise<Uin
   let dir: string;
   let priorEnv: string | undefined;
   let priorMap: unknown;
+  /* Records this fixture ADDED, to take back out in afterAll. A substituted map
+     stands in for a REGISTERED one, and `fillEstarSubmission` now refuses a
+     registered map with a key it has no measured rebuild outcome for — an
+     unmeasured key is reported as "nothing erased" and clears the wrong-entity
+     refusal without either having been checked. So a fixture that installs a
+     map must install its measurements too, or it is standing in for a state the
+     engine correctly rejects. `reproduces` ("the form keeps this cell") is the
+     neutral outcome and is only filled in for keys that have no real record —
+     `deviceCommonName`, whose measured 'blanks' outcome the erasure suites
+     depend on, keeps its own. */
+  const addedRecords: string[] = [];
   beforeAll(async () => {
     dir = await fs.mkdtemp(path.join(os.tmpdir(), opts.prefix));
     priorEnv = process.env.ESTAR_TEMPLATE_DIR;
@@ -144,12 +191,23 @@ function useTemplateFixture(opts: { prefix: string; template?: () => Promise<Uin
       await fs.writeFile(path.join(dir, 'eSTAR-510k-non-ivd.pdf'), Buffer.from(await opts.template()));
     }
     priorMap = ESTAR_FIELD_MAPS['510k-device'];
-    if (opts.map) ESTAR_FIELD_MAPS['510k-device'] = { ...opts.map } as any;
+    if (opts.map) {
+      ESTAR_FIELD_MAPS['510k-device'] = { ...opts.map } as any;
+      for (const key of Object.keys(opts.map)) {
+        if (key in ESTAR_TEMPLATE_RECOMPUTED_FIELDS) continue;
+        (ESTAR_TEMPLATE_RECOMPUTED_FIELDS as Record<string, unknown>)[key] = {
+          writtenBy: [], rebuiltFrom: null, clearedByPathwayClick: false, rebuildOutcome: 'reproduces',
+        };
+        addedRecords.push(key);
+      }
+    }
   });
   afterAll(async () => {
     if (priorEnv === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
     else process.env.ESTAR_TEMPLATE_DIR = priorEnv;
     ESTAR_FIELD_MAPS['510k-device'] = priorMap as any;
+    for (const key of addedRecords) delete (ESTAR_TEMPLATE_RECOMPUTED_FIELDS as Record<string, unknown>)[key];
+    addedRecords.length = 0;
     await fs.rm(dir, { recursive: true, force: true });
   });
 }
@@ -410,7 +468,19 @@ describe('POST /api/510k/estar/official with useProgramData:true', () => {
         { key: 'deviceCommonName', caption: 'Common Name', filled: true, source: 'request', declaredSource: 'regulatory_programs.common_name' },
         { key: 'regulationNumber', caption: 'Regulation Number', filled: false, source: null, declaredSource: 'regulatory_programs.regulation_number' },
       ],
-      advisories: [],
+      /*
+       * The governed records project three facts this three-key stand-in map has
+       * no box for. Each is REPORTED, never dropped: a payload that said
+       * "2 of 3 filled" and nothing else would hide a value the operator holds.
+       * Measured through the route on 2026-09-07; the real-template case (the IVD
+       * form's missing Indications for Use citation) is pinned in
+       * server/services/pathway-engines/estar/__tests__/estar-administrative-data.test.ts.
+       */
+      advisories: [
+        'applicantCompanyName is on file (organizations.name) as "Acme Org", but this form has no field for it and it was not written.',
+        'declarationCompanyName is on file (organizations.name) as "Acme Org", but this form has no field for it and it was not written.',
+        'declarationDeviceTradeName is on file (regulatory_programs.product_name) as "Governed Monitor", but this form has no field for it and it was not written.',
+      ],
       ignoredRequestKeys: ['deviceTradeName', 'bogus'],
       /*
        * deviceCommonName WAS written — it is in filledCount — and the form's own
@@ -616,7 +686,7 @@ describe('resolveProjectAnchor — a failed read is an error, never "not found"'
     {
       route: 'POST /official',
       error: 'GOVERNED_EXPORT_FAILED',
-      message: 'Official eSTAR export failed before consequence persistence. The problem has been logged.',
+      message: 'Official eSTAR export failed and was not delivered. The problem has been logged.',
       call: async (ident: string) => {
         const meta = /^\d+$/.test(ident) ? { id: 'k123', projectId: Number(ident) } : { id: 'k123', ident };
         const res = createMockResponse() as any;
@@ -658,3 +728,502 @@ describe('resolveProjectAnchor — a failed read is an error, never "not found"'
     expect(mockGovernedConsequence).not.toHaveBeenCalled();
   });
 });
+
+// ── Roadmap item 3: the delivered eSTAR is retained before it is delivered ───
+
+/**
+ * The bytes CDRH ingests used to be produced, hashed, base64'd into the
+ * response and forgotten. Now they are admitted into the program's governed
+ * vault first, and a retention that should have happened and did not withholds
+ * the file rather than being reported beside it.
+ */
+describe('POST /api/510k/estar/official — retention of the delivered artifact', () => {
+  useTemplateFixture({ prefix: 'estar-official-retain-', template: makeAdministrativeEstar, map: ADMIN_MAP });
+
+  const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
+  const priorRows = [{ id: 33, deviceName: 'Test Device' }];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLoadInputs.mockResolvedValue(GOVERNED_RECORDS);
+    fakeDbState.rows = [{ id: PROGRAM, name: 'BX-204 CGM' }];
+    mockIngest.mockImplementation(async (args: any) => ({
+      ok: true,
+      document: {
+        id: 'vault-doc-1',
+        contentHash: createHash('sha256').update(args.fileBuffer).digest('hex'),
+      },
+      filing: { folderId: 'k510/administrative', placementStatus: 'suggested' },
+    }));
+  });
+  afterAll(() => {
+    fakeDbState.rows = priorRows;
+  });
+
+  function officialReq(extra: Record<string, unknown> = {}) {
+    return makeReq({
+      meta: { id: 'k123', ident: PROGRAM, title: 'Official eSTAR' },
+      type: '510k',
+      variant: 'device',
+      data: { deviceTradeName: 'BX-204' },
+      ...extra,
+    });
+  }
+
+  it('retains the delivered bytes and reports where they went', async () => {
+    const req = officialReq();
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.retention).toMatchObject({
+      retained: true,
+      documentId: 'vault-doc-1',
+      documentCode: 'eSTAR-510k-device',
+      placementStatus: 'suggested',
+    });
+    /* The retained hash is the hash of the file the caller was handed. */
+    const delivered = Buffer.from(payload.downloadable_output_ref.data, 'base64');
+    expect(payload.retention.contentHash).toBe(createHash('sha256').update(delivered).digest('hex'));
+    expect(payload.retention.version).toBe(`sha256-${payload.retention.contentHash.slice(0, 16)}`);
+    /* Into THIS program's vault, as platform-generated bytes. */
+    expect(mockIngest.mock.calls[0][0]).toMatchObject({
+      organizationId: 2,
+      programId: PROGRAM,
+      mimeType: 'application/pdf',
+      origin: 'platform-generated',
+    });
+  });
+
+  it('withholds the file when the vault could not retain it', async () => {
+    mockIngest.mockResolvedValue({
+      ok: false,
+      status: 500,
+      code: 'STORAGE_WRITE_FAILED',
+      message: 'The document could not be stored.',
+    });
+    const req = officialReq();
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    const body = res.json.mock.calls[0][0];
+    expect(body.error).toBe('ESTAR_NOT_RETAINED');
+    expect(body).not.toHaveProperty('downloadable_output_ref');
+    /* The reason is stated without leaking the vault's internals. */
+    expect(body.message).not.toContain('STORAGE_WRITE_FAILED');
+  });
+
+  it('says plainly when a legacy project has no vault, and still delivers', async () => {
+    fakeDbState.rows = priorRows;
+    const req = makeReq({
+      meta: { id: 'k123', projectId: 33, title: 'Official eSTAR' },
+      type: '510k',
+      variant: 'device',
+      data: { deviceTradeName: 'BX-204' },
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.retention.retained).toBe(false);
+    expect(payload.retention.reason).toMatch(/no program vault/);
+    expect(payload.downloadable_output_ref.data.length).toBeGreaterThan(0);
+    expect(mockIngest).not.toHaveBeenCalled();
+  });
+});
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * WHAT THE ROUTE TELLS THE CALLER ABOUT VALUES THE FORM WILL NOT KEEP.
+ *
+ * `fillEstarSubmission` names them on `erasedFields`, and NO production caller
+ * read it: on the verbatim path `describeOfficialFill` returns `fieldReport:
+ * null`, so the 200 body said nothing, and `officialMetadata` carried
+ * filledFields/skippedFields but never erasedFields, so the registered artifact
+ * record was silent too. These pin it through the route, on both paths.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+describe('POST /api/510k/estar/official — erased values reach the caller (verbatim path)', () => {
+  // The REAL vendored template and the REAL field map — no fixture. This is the
+  // artifact CDRH ingests, filled by the code that ships.
+  const haveTemplate = fsSync.existsSync(
+    path.resolve(process.cwd(), 'assets/estar-templates/eSTAR-510k-non-ivd.pdf'),
+  );
+
+  beforeEach(() => vi.clearAllMocks());
+
+  function officialReq(data: Record<string, unknown>) {
+    return makeReq({
+      meta: { id: 'k123', projectId: 33, title: 'Official eSTAR' },
+      type: '510k',
+      variant: 'device',
+      data,
+    });
+  }
+
+  it.skipIf(!haveTemplate)('names the erased keys in the 200 body AND in the registered metadata', async () => {
+    const req = officialReq({ deviceTradeName: 'BX-204 CGM', deviceCommonName: 'Continuous glucose monitor' });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    // No governed resolution ran, so there is no fieldReport — which is exactly
+    // why the erasure has to be said here, on its own.
+    expect(payload.fieldReport).toBeUndefined();
+    expect(payload.erasedFields).toEqual(['deviceCommonName']);
+
+    const arg = mockGovernedConsequence.mock.calls[0][0] as any;
+    expect(arg.metadata.filledFields.sort()).toEqual(['deviceCommonName', 'deviceTradeName']);
+    expect(arg.metadata.erasedFields).toEqual(['deviceCommonName']);
+  });
+
+  it.skipIf(!haveTemplate)('reports an EMPTY erased list rather than omitting it (assessed ≠ unassessed)', async () => {
+    const req = officialReq({ deviceTradeName: 'BX-204 CGM' });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].erasedFields).toEqual([]);
+    expect((mockGovernedConsequence.mock.calls[0][0] as any).metadata.erasedFields).toEqual([]);
+  });
+
+  it.skipIf(!haveTemplate)('REFUSES 422 when every written value is one the form erases (P3)', async () => {
+    const req = officialReq({ deviceCommonName: 'Continuous glucose monitor' });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(422);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.error).toBe('ESTAR_NOT_PRODUCIBLE');
+    expect(payload.officialEstarPdf).toBe(false);
+    expect(payload.blockers.join(' ')).toContain('deviceCommonName');
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+    expect(mockIngest).not.toHaveBeenCalled();
+  });
+
+  it.skipIf(!haveTemplate)('REFUSES 422 on the reviewer\'s non-string declaring entity (P1, over HTTP)', async () => {
+    // `data: z.record(z.unknown())` accepts this from a plain JSON body, and the
+    // writer's toText() ends `return String(value)` — so the DoC cell really did
+    // come back reading "Declaring Entity GmbH" with filled:true, blockers:[].
+    const req = officialReq({
+      deviceTradeName: 'BX-204 CGM',
+      applicantCompanyName: 'Acme Devices, Inc.',
+      declarationCompanyName: ['Declaring Entity GmbH'],
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(422);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.error).toBe('ESTAR_NOT_PRODUCIBLE');
+    expect(payload.blockers.join(' ')).toContain('Declaring Entity GmbH');
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+    expect(mockIngest).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/510k/estar/official — erased values reach the caller (governed path)', () => {
+  useTemplateFixture({ prefix: 'estar-official-erased-', template: makeAdministrativeEstar, map: ADMIN_MAP });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLoadInputs.mockResolvedValue({
+      ...GOVERNED_RECORDS,
+      program: { ...GOVERNED_RECORDS.program, commonName: 'Continuous glucose monitor' },
+    });
+  });
+
+  it('says the same thing beside the fieldReport, and in the metadata', async () => {
+    const req = makeReq({
+      meta: { id: 'k123', projectId: 33, title: 'Official eSTAR' },
+      type: '510k',
+      variant: 'device',
+      useProgramData: true,
+      data: {},
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    // The report already said it under its own heading; the top-level list is
+    // what the verbatim path has instead, and the two must never disagree.
+    expect(payload.fieldReport.clearedByTemplateKeys).toEqual(['deviceCommonName']);
+    expect(payload.erasedFields).toEqual(['deviceCommonName']);
+    expect((mockGovernedConsequence.mock.calls[0][0] as any).metadata.erasedFields).toEqual([
+      'deviceCommonName',
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// POST /official with attachments — roadmap item 4, slice 5
+// ---------------------------------------------------------------------------
+//
+// The eSTAR this route produced populated 0 of the template's 113 attachment
+// slots. These are the route half of the join: what it accepts, what reaches
+// the governed record, and — the larger half — what it refuses rather than
+// omitting quietly from a 200.
+
+const REAL_TEMPLATE_DIR = path.resolve(process.cwd(), 'assets/estar-templates');
+const REAL_NIVD = path.join(REAL_TEMPLATE_DIR, 'eSTAR-510k-non-ivd.pdf');
+const COVER_LETTER_SLOT = 'root.CoverLetter.CLAddAttachment110';
+
+describe.skipIf(!fsSync.existsSync(REAL_NIVD))(
+  'POST /api/510k/estar/official with attachments — the real vendored eSTAR',
+  () => {
+    const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
+    const priorRows = [{ id: 33, deviceName: 'Test Device' }];
+    let priorEnv: string | undefined;
+
+    beforeAll(() => {
+      priorEnv = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = REAL_TEMPLATE_DIR;
+    });
+    afterAll(() => {
+      if (priorEnv === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+      else process.env.ESTAR_TEMPLATE_DIR = priorEnv;
+      fakeDbState.rows = priorRows;
+    });
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockResolverFactory.mockReturnValue(resolverStub);
+      resolverStub.mockResolvedValue({
+        ok: true,
+        bytes: Buffer.from('%PDF-1.7 attachment bytes'),
+        fileName: 'Cover Letter.pdf',
+        mimeType: 'application/pdf',
+      });
+      fakeDbState.rows = [{ id: PROGRAM, name: 'BX-204 CGM' }];
+      mockIngest.mockImplementation(async (args: any) => ({
+        ok: true,
+        document: {
+          id: 'vault-doc-1',
+          contentHash: createHash('sha256').update(args.fileBuffer).digest('hex'),
+        },
+        filing: { folderId: 'k510/administrative', placementStatus: 'suggested' },
+      }));
+    });
+
+    function attachReq(attachments: unknown[]) {
+      return makeReq({
+        meta: { id: 'k123', ident: PROGRAM, title: 'Official eSTAR' },
+        type: '510k',
+        variant: 'device',
+        data: { deviceTradeName: 'BX-204' },
+        attachments,
+      });
+    }
+
+    it('files the document and says where it went', async () => {
+      const req = attachReq([
+        { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
+      ]);
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const payload = res.json.mock.calls[0][0];
+      expect(payload.attachmentReport.requested).toBe(1);
+      expect(payload.attachmentReport.refused).toEqual([]);
+      expect(payload.attachmentReport.manifest).toBe(
+        '***Start***<<Cover Letter.pdf|/CHAPTER 1/CH1.01/>>',
+      );
+      expect(payload.attachmentReport.attached[0]).toMatchObject({
+        slot: COVER_LETTER_SLOT,
+        chapter: '/CHAPTER 1/CH1.01/',
+        fileName: 'Cover Letter.pdf',
+        description: 'Administrative Documentation | Cover Letter',
+      });
+    });
+
+    it('the governed record names what was filed, not only the form', async () => {
+      /* The delivered-bytes hash proves the FORM was not altered and says
+         nothing about which documents it routes. "What did we file into
+         section 5" has to be answerable from the record, not from a response
+         body nobody keeps.
+
+         A program-uuid anchor has no PM-spine `projects` row, so this export
+         goes down the audited-unplaced path and its record IS the audit row —
+         which is exactly why the check reads the row rather than the response. */
+      const req = attachReq([
+        { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
+      ]);
+      await getHandler('/official')(req, createMockResponse() as any);
+
+      const details = (auditService.logAction as any).mock.calls.at(-1)[0].details;
+      expect(details.attachments).toHaveLength(1);
+      expect(details.attachments[0]).toMatchObject({
+        slot: COVER_LETTER_SLOT,
+        chapter: '/CHAPTER 1/CH1.01/',
+        fileName: 'Cover Letter.pdf',
+        sha256: createHash('sha256').update(Buffer.from('%PDF-1.7 attachment bytes')).digest('hex'),
+      });
+      // The bytes themselves are deliberately NOT in the record.
+      expect(details.attachments[0]).not.toHaveProperty('bytes');
+    });
+
+    it('reads the tenant and the program from the REQUEST, never from the body', async () => {
+      const req = attachReq([
+        { slot: COVER_LETTER_SLOT, source: { kind: 'vault_document', documentId: PROGRAM } },
+      ]);
+      await getHandler('/official')(req, createMockResponse() as any);
+
+      expect(mockResolverFactory).toHaveBeenCalledTimes(1);
+      expect(mockResolverFactory.mock.calls[0][0]).toMatchObject({
+        organizationId: 2,
+        programUuid: PROGRAM,
+        /* THIS export's document class, not "the newest device document". The
+           loader's default spans k510, denovo, pma AND cer, and the rule-pack
+           keys an attachment is filed by collide across packs — D5 is "Shelf
+           life and packaging" in k510 and "Cybersecurity" in denovo. A CER
+           generated for the same program would otherwise change which document
+           a named CDRH slot is filled from, with a clean 200. */
+        docTypes: ['k510'],
+      });
+    });
+
+    it('hands the resolver a client it can actually query with', async () => {
+      /* `DeviceContentClient` is the raw `query(text, params)` surface, and
+         `loadAuthoredDeviceSections` calls `client.query(...)` on it directly.
+         This route once passed `requestDb(req)` — a Drizzle instance, whose
+         `.query` is the relational-query namespace OBJECT — which satisfied the
+         structural type and threw "client.query is not a function" on the first
+         `authored_section` attachment. Every other test in this describe mocks
+         the resolver factory away, so this is the only place the contract is
+         checked.
+
+         The invariant is the shape, not the identity: omitting `client` is
+         valid and is what ships (the resolver then defaults to the shared pool,
+         as the three other loadAuthoredDeviceSections callers in this file do,
+         and every one of its queries re-asserts org_id in SQL). Anything passed
+         explicitly must expose the raw-query FUNCTION. Either is fine; a
+         Drizzle instance is not. */
+      const req = attachReq([
+        { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
+      ]);
+      await getHandler('/official')(req, createMockResponse() as any);
+
+      const { client } = mockResolverFactory.mock.calls[0][0] as { client?: { query?: unknown } };
+      expect(
+        client === undefined || typeof client.query === 'function',
+        client === undefined
+          ? 'unreachable'
+          : `the attachment resolver was handed a client whose .query is a ${typeof client.query}, ` +
+            'not a function — loadAuthoredDeviceSections calls client.query(text, params) directly',
+      ).toBe(true);
+    });
+
+    it('refuses the export, with the reason, when a section is not fileable', async () => {
+      resolverStub.mockResolvedValue({
+        ok: false,
+        reason: 'Section "A.1" (Cover Letter) is authored but not finalized.',
+      });
+      const req = attachReq([
+        { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
+      ]);
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(422);
+      const payload = res.json.mock.calls[0][0];
+      expect(payload.error).toBe('ESTAR_NOT_PRODUCIBLE');
+      expect(payload.blockers.join(' ')).toContain('authored but not finalized');
+      // The report travels on the refusal, so the operator sees WHICH one.
+      expect(payload.attachmentReport.refused[0].slot).toBe(COVER_LETTER_SLOT);
+      // And nothing was delivered, registered, audited or retained.
+      expect(mockGovernedConsequence).not.toHaveBeenCalled();
+      expect(auditService.logAction).not.toHaveBeenCalled();
+      expect(mockIngest).not.toHaveBeenCalled();
+    });
+
+    it('refuses a slot the template does not declare', async () => {
+      const req = attachReq([
+        { slot: 'root.Invented.XXAddAttachment999', source: { kind: 'authored_section', sectionCode: 'A.1' } },
+      ]);
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(422);
+      expect(res.json.mock.calls[0][0].blockers.join(' ')).toMatch(/declares no attachment slot/);
+    });
+
+    it('rejects a malformed attachment request at the schema, before any work', async () => {
+      const req = attachReq([{ slot: COVER_LETTER_SLOT, source: { kind: 'nonsense' } }]);
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(mockResolverFactory).not.toHaveBeenCalled();
+    });
+
+    it('does not inflate the administrative field report by one', async () => {
+      /* The user-facing count. `fieldReportClause` renders "N of M
+         administrative fields filled", and a filer reads it to decide whether
+         the form is done. The attachment manifest IS a field the fill writes,
+         so counting it would make that line read 2 of 20 when one
+         administrative value was written — or, with every governed record
+         present, 21 of 20.
+
+         It does not, and the reason is structural rather than a subtraction
+         somewhere: ESTAR_ATTACHMENT_MANIFEST_KEY is deliberately not a member
+         of any map in ESTAR_FIELD_MAPS, and reportOfficialEstarFill only walks
+         the resolved map's own fields. That was asserted in a docblock and by
+         nothing else. */
+      const req = makeReq({
+        meta: { id: 'k123', ident: PROGRAM, title: 'Official eSTAR' },
+        type: '510k',
+        variant: 'device',
+        useProgramData: true,
+        data: { deviceTradeName: 'BX-204' },
+        attachments: [
+          { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
+        ],
+      });
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const report = res.json.mock.calls[0][0].fieldReport;
+      expect(report.mappedCount).toBe(Object.keys(ESTAR_FIELD_MAPS['510k-device']).length);
+      expect(report.blankKeys).not.toContain('attachmentManifest');
+      expect(report.fields.map((f: any) => f.key)).not.toContain('attachmentManifest');
+      expect(report.filledCount + report.blankCount).toBe(report.mappedCount);
+      // And the attachment really was filed — the report is not empty by accident.
+      expect(res.json.mock.calls[0][0].attachmentReport.attached).toHaveLength(1);
+    });
+
+    it('never builds a resolver when no attachment was asked for', async () => {
+      const req = makeReq({
+        meta: { id: 'k123', ident: PROGRAM, title: 'Official eSTAR' },
+        type: '510k',
+        variant: 'device',
+        data: { deviceTradeName: 'BX-204' },
+      });
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(mockResolverFactory).not.toHaveBeenCalled();
+      expect(res.json.mock.calls[0][0]).not.toHaveProperty('attachmentReport');
+    });
+  },
+);

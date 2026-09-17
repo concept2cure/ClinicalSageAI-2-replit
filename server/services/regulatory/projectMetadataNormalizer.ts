@@ -10,7 +10,7 @@
 
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 import { getRegionProfile } from '../../../shared/regulatory/region-profiles.js';
-import { resolveRegistryId, mapToNormalizedMetadata } from './registry/legacySubmissionTypeMapper.js';
+import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
 import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

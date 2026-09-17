@@ -21,16 +21,42 @@ export function createContainerClosureStabilityNodes(): QuestionNode[] {
       guidance:
         'Per ICH Q8(R2) and FDA Guidance on Container Closure Systems, the container closure system must protect the drug product throughout its shelf life, be compatible with the dosage form, and (for parenteral products) maintain sterility. Include extractables and leachables (E&L) assessment.',
       fields: [
+        /* The register this node commits to (cmc_container_closures, via
+           interview-commit.ts) records one system per row under a name, with
+           the container and the closure described separately. The interview
+           asks for exactly those three so the commit can record what was
+           said and never fill a required column with a placeholder. */
+        {
+          id: 'container_system_name',
+          label: 'Container Closure System Name',
+          type: 'text',
+          placeholder: 'e.g., 10 mL Type I glass vial / 20 mm bromobutyl stopper',
+          helpText:
+            'The name this system is recorded under in the container closure register (§3.2.P.7).',
+          required: true,
+          validation: { minLength: 3, maxLength: 200 },
+        },
         {
           id: 'primary_packaging',
-          label: 'Primary Container Closure System',
+          label: 'Primary Container Description',
           type: 'textarea',
           placeholder:
-            'e.g., 10 mL Type I borosilicate glass vial with 20 mm bromobutyl rubber stopper and aluminum flip-off seal',
+            'e.g., 10 mL Type I borosilicate glass vial (Schott), 20 mm neck finish',
           helpText:
-            'Describe the primary container closure system including materials of construction (glass type, rubber formulation, plastic type), dimensions, and suppliers.',
+            'Describe the container component of the primary system — vial, bottle, blister, syringe barrel — including materials of construction (glass type, plastic type), dimensions, and supplier.',
           required: true,
           validation: { minLength: 10, maxLength: 3000 },
+        },
+        {
+          id: 'closure_description',
+          label: 'Closure Description',
+          type: 'textarea',
+          placeholder:
+            'e.g., 20 mm bromobutyl rubber stopper (West 4432/50, FluroTec-coated) with aluminum flip-off seal',
+          helpText:
+            'Describe the closure component(s) of the primary system — stopper, cap, seal, plunger — including rubber formulation or plastic type, coating, and supplier.',
+          required: true,
+          validation: { minLength: 10, maxLength: 2000 },
         },
         {
           id: 'secondary_packaging',

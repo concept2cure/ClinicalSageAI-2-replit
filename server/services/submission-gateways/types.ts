@@ -142,6 +142,16 @@ export interface SubmissionBundle {
     required: string[];
     present: string[];
     missing: string[];
+    /**
+     * The util/style/*.xsl stylesheets the region's backbones reference and the
+     * package does NOT contain. `selfContained` has always accounted for these
+     * (assessDtdReadiness ORs both gaps), but only the DTD half was carried
+     * here — so the pre-transmit gate refused a stylesheet-only gap with an
+     * empty file list, naming nothing the operator could act on. Optional
+     * because bundles assembled before this field existed carry no value; the
+     * gate must read its absence as "not itemised", never as "none missing".
+     */
+    missingStylesheets?: string[];
     selfContained: boolean;
   };
   /**

@@ -120,14 +120,39 @@ export async function registerClinicalIntelRoutes({
     console.error('Failed to mount CSR builder routes:', error);
   }
 
-  // ── Leaves (Enhanced Document Editor) ──
-  try {
-    const leavesRoutes = await import('../routes/leaves.js');
-    app.use('/api/leaves', leavesRoutes.default);
-    console.log('✅ Leaves routes mounted successfully');
-  } catch (error) {
-    console.error('Failed to mount leaves routes:', error);
-  }
+  // ── Leaves (Enhanced Document Editor) — RETIRED 2026-09-10, do not re-add ──
+  //
+  // server/routes/leaves.js was deleted, not unmounted, because every one of its
+  // eight handlers fabricated its response and seven of them had no auth at all
+  // (this file gates /api/citations and /api/source-tracer with authenticateToken
+  // and there is no global auth middleware, so "unmounted but present" would have
+  // been one line away from live again).
+  //
+  // What it returned, none of it read from anywhere:
+  //   GET  /:leafId                 hardcoded CTD prose — "The drug substance is
+  //                                 manufactured according to cGMP guidelines with
+  //                                 validated analytical methods" — served as the
+  //                                 caller's own Module 2/3/4/5 content.
+  //   GET  /:leafId/facts           invented analytical results with invented
+  //                                 citations: "99.5% purity by HPLC", confidence
+  //                                 0.95, "Analytical Report AR-2025-001".
+  //   POST /:leafId/save            {saved: true} while persisting nothing.
+  //   POST /:leafId/patches/apply   {status: 'applied'} plus a fixed 15/3/7 change
+  //                                 count, persisting nothing.
+  //   POST /:leafId/patches/accept-all
+  //                                 a 21 CFR Part 11-shaped e-signature record —
+  //                                 always 5 patches, signer defaulting to
+  //                                 'demo_user', "hash" built from Date.now() and
+  //                                 Math.random() — persisting nothing.
+  //
+  // Nothing called it: no client/src reference, no test, and its SSE stream had no
+  // production data source. The only producer, cmcEvents.saveLeafPatch, is reached
+  // solely from POST /api/cmc/test-event, which returns 404 when NODE_ENV is
+  // production. The two halves never met in any case — the GET handler served the
+  // templates above and never read the global Map cmcEvents wrote to.
+  //
+  // A real leaf editor belongs on the submission_leaves table and the governed
+  // document paths, not here.
 
   // ── Docs routes ──
   try {

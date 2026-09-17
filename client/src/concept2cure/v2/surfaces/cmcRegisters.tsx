@@ -929,6 +929,7 @@ export interface DrugProductApiRow {
   strength: string;
   routeOfAdministration: string | null;
   composition?: { description?: string } | null;
+  batchFormula?: { description?: string } | null;
   manufacturingProcess?: { description?: string; site?: string } | null;
   packagingMaterials?: { containerClosure?: string } | null;
   status?: string | null;
@@ -942,6 +943,7 @@ function dpDefaults(r: DrugProductApiRow) {
     strength: r.strength ?? '',
     routeOfAdministration: r.routeOfAdministration ?? '',
     composition: { description: r.composition?.description },
+    batchFormula: { description: r.batchFormula?.description },
     manufacturingProcess: {
       description: r.manufacturingProcess?.description,
       site: r.manufacturingProcess?.site,
@@ -1225,6 +1227,11 @@ export interface ImpurityProfileApiRow {
   materialName: string;
   impurityName: string;
   impurityType: string;
+  amesResult?: string | null;
+  structuralAlert?: string | null;
+  carcinogenicityData?: string | null;
+  treatmentDuration?: string | null;
+  cohortOfConcern?: string | null;
   origin?: string | null;
   casNumber?: string | null;
   molecularFormula?: string | null;
@@ -1338,6 +1345,21 @@ export function CmImpurityProfiles() {
           },
         },
         { header: 'Structure', render: (r) => (r.structure || r.molecularFormula ? 'recorded' : <span className="rd-chip tone-warn">none</span>) },
+        {
+          /* ICH M7 decides the class from the Ames result and structural-alert
+             status; a mutagenic impurity with neither recorded cannot be
+             assessed at all, and the assessment says so rather than defaulting. */
+          header: 'M7 inputs',
+          render: (r) => {
+            const ames = String(r.amesResult || '').trim();
+            const alert = String(r.structuralAlert || '').trim();
+            if (ames && alert) return `Ames ${ames} · alert ${alert}`;
+            const isMutagenic = /mutagen|genotox/i.test(String(r.impurityType || ''));
+            return isMutagenic
+              ? <span className="rd-chip tone-warn">required for M7</span>
+              : ames || alert ? `Ames ${ames || '--'} · alert ${alert || '--'}` : '--';
+          },
+        },
         { header: 'Qualification basis', render: (r) => (r.qualificationBasis ? <span className="rd-chip tone-ok">recorded</span> : <span className="rd-chip tone-warn">none</span>) },
         { header: 'Status', render: (r) => chip(r.status, 'draft') },
       ]}

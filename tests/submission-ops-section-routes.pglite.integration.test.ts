@@ -49,7 +49,13 @@ const OTHER_ORG = 7;
 function makeApp(orgId = ORG) {
   const app = express();
   app.use(express.json());
-  app.use((req, _res, next) => { (req as any).user = { id: 777, organizationId: orgId }; next(); });
+  app.use((req, _res, next) => {
+    /* A role: every write on this router is role-gated. This harness attached
+       none and still passed. */
+    (req as any).user = { id: 777, organizationId: orgId, role: 'admin' };
+    (req as any).userRole = 'admin';
+    next();
+  });
   app.use('/api/submission-ops', submissionOpsRouter);
   return app;
 }

@@ -1,24 +1,44 @@
 /**
  * =============================================================================
- * LayoutLMv3 Multi-Modal Document Understanding Service
+ * Rule-based Document Structure Extraction
  * =============================================================================
- * Advanced PDF structure preservation using LayoutLMv3-inspired processing:
- * - Document layout analysis (headers, paragraphs, tables, figures, lists)
- * - Table structure recognition with row/column/span detection
- * - Form field extraction with label-value pairing
- * - Spatial-aware text extraction preserving reading order
- * - Cross-page element linking (split tables, continued sections)
- * - Document type classification (regulatory submission, guidance, CSR, protocol)
+ * Extracts structure from the TEXT of a document using regular expressions and
+ * line-shape heuristics:
+ * - Element classification (headers, paragraphs, tables, figures, lists)
+ * - Table detection from delimiter and alignment patterns
+ * - Form field extraction from label-value line shapes
+ * - Reading order as encountered in the text stream
+ * - Document type classification from regulatory phrase patterns
  *
- * Architecture:
- *   PDF → Layout Analysis → Element Classification → Structure Assembly → Output
- *        (spatial features)   (LayoutLMv3 model)     (DOM reconstruction)
+ * ── NO MACHINE-LEARNING MODEL RUNS HERE. Corrected 2026-09-10 ────────────────
+ * This header previously read "LayoutLMv3 Multi-Modal Document Understanding
+ * Service", described the pipeline as "(LayoutLMv3 model)", and listed four
+ * named third-party models as the ones in use:
  *
- * Models:
- *   - LayoutLMv3 (Microsoft) — multimodal transformer for document understanding
- *   - Donut (NAVER) — OCR-free document understanding
- *   - Table Transformer (Microsoft) — DETR-based table detection
- *   - DiT (Microsoft) — Document Image Transformer for classification
+ *   LayoutLMv3 (Microsoft), Donut (NAVER), Table Transformer (Microsoft),
+ *   DiT (Microsoft)
+ *
+ * None is loaded. There is no `transformers`, `onnx`, `torch` or
+ * `@huggingface` import in this file or its dependencies, no model weights, and
+ * no inference call of any kind — GET /models nonetheless returned all four
+ * plus a "Bayesian ensemble" with `status: 'active'` and a `pretrainedOn` field
+ * naming real corpora (IIT-CDIP, PubLayNet, DocBank, PubTables-1M).
+ *
+ * The EXTRACTION is real: it reads the caller's actual document and reports what
+ * it found there. Only the provenance was false, and that is what changed — the
+ * service now says what it is. It is genuinely useful on machine-generated,
+ * text-layer PDFs, and genuinely weaker than a layout transformer on scanned or
+ * complex ones. A reader has to be able to tell which they are getting.
+ *
+ * A NOTE ON `confidence`: no score in this file is a calibrated probability.
+ * The document-type score is `matched / total` regular expressions plus a flat
+ * 0.3, capped at 1.0, and it is now called `documentTypePatternScore` rather
+ * than `documentTypeConfidence` for that reason. The per-element, per-cell and
+ * per-field `confidence` numbers are STILL CALLED `confidence` and are still
+ * hand-assigned constants (0.8 for a detected table, and so on) — renaming
+ * those is a wider change across four interfaces and is not done here. Treat
+ * every one of them as a ranking hint, and see GET /health `scoring.basis`,
+ * which reports `regex_hit_rate` for the whole service.
  * =============================================================================
  */
 
@@ -116,7 +136,13 @@ export interface DocumentStructure {
   filename: string;
   pageCount: number;
   documentType: string; // e.g., 'clinical_study_report', 'fda_guidance', 'ind_form'
-  documentTypeConfidence: number;
+  /**
+   * Share of that type's regular expressions that matched, plus a flat 0.3,
+   * capped at 1.0. Renamed from `documentTypeConfidence` on 2026-09-10: it is a
+   * hit rate over a hand-written pattern list, and calling it a confidence
+   * invited it to be read as a probability that the classification is right.
+   */
+  documentTypePatternScore: number;
   elements: DocumentElement[];
   tables: TableStructure[];
   formFields: FormField[];
@@ -172,7 +198,14 @@ export interface AnalysisRequest {
     extractFigures?: boolean;
     preserveReadingOrder?: boolean;
     ocrFallback?: boolean;
-    model?: 'layoutlmv3' | 'donut' | 'dit' | 'table-transformer' | 'ensemble';
+    /**
+     * The only implemented extractor. The union used to be
+     * 'layoutlmv3' | 'donut' | 'dit' | 'table-transformer' | 'ensemble', and
+     * whichever the caller named was echoed straight back as
+     * processingInfo.modelUsed — so asking for Donut produced a response
+     * asserting Donut had run.
+     */
+    model?: 'rule-based';
     pages?: number[]; // Specific pages to process
     outputFormat?: 'json' | 'html' | 'markdown' | 'xml';
   };
@@ -195,16 +228,24 @@ const DOCUMENT_TYPE_PATTERNS: Record<string, RegExp[]> = {
   cmc_document: [/chemistry.*manufacturing/i, /CMC/i, /drug\s+substance/i, /drug\s+product/i],
 };
 
-function classifyDocumentType(text: string): { type: string; confidence: number } {
-  let bestMatch = { type: 'unknown', confidence: 0.3 };
+/**
+ * Best-matching document type by regex hit rate.
+ *
+ * The returned number is `matched / total` for the winning type, plus a flat
+ * 0.3, capped at 1.0. It was called `confidence`; it is a pattern score, and the
+ * +0.3 in particular has no probabilistic meaning — it exists so a single match
+ * clears the 0.3 floor assigned to 'unknown'.
+ */
+function classifyDocumentType(text: string): { type: string; patternScore: number } {
+  let bestMatch = { type: 'unknown', patternScore: 0.3 };
   for (const [docType, patterns] of Object.entries(DOCUMENT_TYPE_PATTERNS)) {
     let matchCount = 0;
     for (const pattern of patterns) {
       if (pattern.test(text)) matchCount++;
     }
-    const confidence = matchCount / patterns.length;
-    if (confidence > bestMatch.confidence) {
-      bestMatch = { type: docType, confidence: Math.min(confidence + 0.3, 1.0) };
+    const hitRate = matchCount / patterns.length;
+    if (hitRate > bestMatch.patternScore) {
+      bestMatch = { type: docType, patternScore: Math.min(hitRate + 0.3, 1.0) };
     }
   }
   return bestMatch;
@@ -440,7 +481,23 @@ router.post('/analyze', async (req: Request, res: Response) => {
   }
 
   const options = body.options || {};
-  const model = options.model || 'layoutlmv3';
+  // Anything other than the one implemented extractor is refused rather than
+  // echoed back. Silently substituting would put the caller's chosen model name
+  // into modelUsed on a response no model produced.
+  if (options.model !== undefined && options.model !== 'rule-based') {
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'MODEL_NOT_IMPLEMENTED',
+        requested: options.model,
+        available: ['rule-based'],
+        message:
+          `No model named "${options.model}" runs in this service. Rule-based text-structure ` +
+          `extraction is the only implementation — see GET /api/document-understanding/models.`,
+      },
+    });
+  }
+  const model = 'rule-based';
 
   try {
     // Get text content from source
@@ -520,7 +577,7 @@ router.post('/analyze', async (req: Request, res: Response) => {
       filename: body.filePath || 'uploaded-document',
       pageCount,
       documentType: classification.type,
-      documentTypeConfidence: classification.confidence,
+      documentTypePatternScore: classification.patternScore,
       elements: allElements,
       tables: allTables,
       formFields: allFormFields,
@@ -622,7 +679,7 @@ router.post('/extract-form-fields', async (req: Request, res: Response) => {
     data: {
       fieldsDetected: fields.length,
       fields,
-      model: 'layoutlmv3',
+      model: 'rule-based',
     },
   });
 });
@@ -642,7 +699,7 @@ router.post('/classify', (req: Request, res: Response) => {
     success: true,
     data: {
       documentType: classification.type,
-      confidence: classification.confidence,
+      documentTypePatternScore: classification.patternScore,
       allScores: Object.entries(DOCUMENT_TYPE_PATTERNS)
         .map(([type, patterns]) => {
           let matchCount = 0;
@@ -662,59 +719,48 @@ router.post('/classify', (req: Request, res: Response) => {
  * List available document understanding models
  */
 router.get('/models', (_req: Request, res: Response) => {
+  /* ── 2026-09-10: this endpoint used to list five models ───────────────────
+     layoutlmv3, donut, table-transformer, dit and an "ensemble" described as a
+     "Bayesian ensemble of all models with regulatory-domain calibration" —
+     each `status: 'active'`, each with a `pretrainedOn` field naming real
+     corpora (IIT-CDIP 11M documents, PubLayNet, DocBank, PubTables-1M,
+     FinTabNet, SciTSR, RVL-CDIP), and each with a maxPages figure.
+
+     Not one is loaded. A capability-discovery endpoint is exactly where an
+     integrator or a procurement questionnaire looks, so an unearned entry here
+     travels further than one in a response body. It now describes the single
+     extractor that actually runs. */
   res.json({
     success: true,
     data: [
       {
-        id: 'layoutlmv3',
-        name: 'LayoutLMv3 (Microsoft)',
+        id: 'rule-based',
+        name: 'Rule-based text-structure extraction',
+        implementation: 'server/routes/document-understanding.ts (regular expressions and line-shape heuristics)',
         capabilities: [
           'layout_analysis',
-          'form_understanding',
-          'text_classification',
-          'spatial_reasoning',
+          'table_detection',
+          'form_field_extraction',
+          'reading_order',
+          'document_type_classification',
         ],
-        inputTypes: ['image', 'text+bbox', 'pdf'],
-        pretrainedOn: 'IIT-CDIP (11M documents), PubLayNet, DocBank',
-        maxPages: 50,
+        inputTypes: ['text'],
         status: 'active',
-      },
-      {
-        id: 'donut',
-        name: 'Donut (NAVER)',
-        capabilities: ['ocr_free_understanding', 'visual_qa', 'document_parsing'],
-        inputTypes: ['image'],
-        pretrainedOn: 'SynthDoG, IIT-CDIP',
-        maxPages: 20,
-        status: 'active',
-      },
-      {
-        id: 'table-transformer',
-        name: 'Table Transformer (Microsoft)',
-        capabilities: ['table_detection', 'table_structure_recognition', 'cell_extraction'],
-        inputTypes: ['image', 'pdf_page'],
-        pretrainedOn: 'PubTables-1M, FinTabNet, SciTSR',
-        maxPages: 100,
-        status: 'active',
-      },
-      {
-        id: 'dit',
-        name: 'Document Image Transformer (Microsoft)',
-        capabilities: ['document_classification', 'layout_analysis'],
-        inputTypes: ['image'],
-        pretrainedOn: 'IIT-CDIP (42M pages), RVL-CDIP',
-        maxPages: 10,
-        status: 'active',
-      },
-      {
-        id: 'ensemble',
-        name: 'Regulatory Document Ensemble',
-        capabilities: ['all'],
-        description: 'Bayesian ensemble of all models with regulatory-domain calibration',
-        inputTypes: ['pdf', 'image', 'text'],
-        status: 'active',
+        limitations: [
+          'Operates on the TEXT of a document; it does not read images and performs no OCR.',
+          'A scanned PDF with no text layer yields nothing — that is an absent text layer, not an empty document.',
+          'Scores are regex hit rates, not calibrated probabilities.',
+          'Table detection relies on delimiter and alignment patterns; irregular or spanning tables are missed.',
+        ],
       },
     ],
+    notImplemented: {
+      note:
+        'These were previously reported as active models. None is loaded — there is no ML ' +
+        'inference in this service. They are listed so an integrator who read the old ' +
+        'response knows what changed, and so nobody re-adds them without an implementation.',
+      models: ['layoutlmv3', 'donut', 'table-transformer', 'dit', 'ensemble'],
+    },
   });
 });
 
@@ -726,7 +772,9 @@ router.get('/health', (_req: Request, res: Response) => {
   res.json({
     status: 'healthy',
     service: 'document-understanding',
-    primaryModel: 'LayoutLMv3',
+    // `primaryModel: 'LayoutLMv3'` was here. No model runs; this is the honest
+    // name for the mechanism.
+    extractor: 'rule-based text-structure extraction (regex + line-shape heuristics)',
     capabilities: {
       layoutAnalysis: true,
       tableExtraction: true,
@@ -734,8 +782,16 @@ router.get('/health', (_req: Request, res: Response) => {
       documentClassification: true,
       readingOrderPreservation: true,
       crossPageLinking: true,
-      ocrFallback: true,
+      // `ocrFallback: true` was here while the analyzer sets ocrApplied: false
+      // unconditionally — there is no OCR path in this service at all.
+      ocrFallback: false,
       regulatoryPatterns: Object.keys(DOCUMENT_TYPE_PATTERNS).length,
+    },
+    scoring: {
+      basis: 'regex_hit_rate',
+      note:
+        'Scores in this service are the share of regular expressions that matched, not ' +
+        'calibrated probabilities. They rank candidates; they do not estimate correctness.',
     },
   });
 });
@@ -767,7 +823,9 @@ function extractRegulatoryIdentifiers(text: string): string[] {
 
 function convertToMarkdown(doc: DocumentStructure): string {
   let md = `# ${doc.metadata.title || doc.filename}\n\n`;
-  md += `> Document type: ${doc.documentType} (${(doc.documentTypeConfidence * 100).toFixed(0)}% confidence)\n\n`;
+  // Was "(N% confidence)". It is a regex hit rate, and the rendered markdown is
+  // what a reader actually sees, so the label has to be right here too.
+  md += `> Document type: ${doc.documentType} (pattern score ${(doc.documentTypePatternScore * 100).toFixed(0)}%, regex hit rate — not a probability)\n\n`;
 
   for (const el of doc.elements) {
     switch (el.elementType) {

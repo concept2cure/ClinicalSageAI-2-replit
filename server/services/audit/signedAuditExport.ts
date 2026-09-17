@@ -19,6 +19,11 @@ import crypto from 'crypto';
 import { Pool } from 'pg';
 
 import { stableStringify } from '../../../shared/canonical-json.js';
+import {
+  VerificationUnavailableError,
+  describeFailure,
+  isVerificationUnavailable,
+} from '../../lib/verification-outcome.js';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -68,12 +73,34 @@ export interface ExportManifest {
    * than a version bump.
    */
   manifestVersion?: 1 | 2;
+  /**
+   * Linkage verification at export time. Four states (WO-16B finding 25):
+   *   intact       every hashed row's previous_hash matched its predecessor
+   *   broken       at least one link did not match
+   *   unverified   the query RAN but nothing could be verified — no rows, or no
+   *                row carries a record_hash — so no verdict exists
+   *   unavailable  the query did not run
+   * `intact` used to be returned for both `unverified` cases; a manifest then
+   * HMAC-signed a verdict nothing had earned.
+   */
   chainIntegrity: {
-    status: 'intact' | 'broken' | 'unavailable';
+    status: 'intact' | 'broken' | 'unverified' | 'unavailable';
     totalEntries: number;
+    /** Rows carrying a record_hash — the only rows a link can be checked on. */
+    hashedEntries?: number;
+    /** Rows carrying no record_hash. Absent on exports sealed before WO-16B. */
+    unhashedEntries?: number;
     brokenLinks: number;
     verifiedAt: string;
+    /** Why the status is not a verdict, when it is not one. */
+    reason?: string;
   };
+  /**
+   * The audit_events row that records this export — written BEFORE the
+   * manifest is sealed so the signature covers it (WO-16B finding 26). Absent
+   * on exports sealed before that change.
+   */
+  exportRecord?: { auditEventId: number };
   compliance: {
     standard: string;
     section: string;
@@ -163,31 +190,81 @@ async function snapshotChainIntegrity(
       params
     );
 
+    const verifiedAt = new Date().toISOString();
     if (rows.length === 0) {
-      return { status: 'intact', totalEntries: 0, brokenLinks: 0, verifiedAt: new Date().toISOString() };
+      // Nothing to verify is not "verified".
+      return {
+        status: 'unverified',
+        totalEntries: 0,
+        hashedEntries: 0,
+        unhashedEntries: 0,
+        brokenLinks: 0,
+        verifiedAt,
+        reason: 'no entries: there is no chain to verify',
+      };
     }
 
     let brokenLinks = 0;
-    const prevHashByOrg: Record<number, string> = {};
+    let hashedEntries = 0;
+    let unhashedEntries = 0;
+    const prevHashByOrg: Record<number, string | null> = {};
 
     for (const row of rows) {
       const oid = row.organization_id;
-      const prevHash = prevHashByOrg[oid] || null;
+      const prevHash = prevHashByOrg[oid] ?? null;
 
+      if (!row.record_hash) {
+        // A row that was never hashed cannot be a link in the chain. The
+        // hash-chain trigger (db/migrations/20260222_audit_events_hash_chain.sql)
+        // is not in C2C_MIGRATION_FILES, so on a canonically-provisioned
+        // database every row is like this — and this loop used to skip them
+        // all and report 'intact' over a chain in which nothing was checked.
+        unhashedEntries++;
+        prevHashByOrg[oid] = null;
+        continue;
+      }
+      hashedEntries++;
       if (row.previous_hash !== prevHash && prevHash !== null && row.previous_hash !== null) {
         brokenLinks++;
       }
       prevHashByOrg[oid] = row.record_hash;
     }
 
+    if (brokenLinks > 0) {
+      return { status: 'broken', totalEntries: rows.length, hashedEntries, unhashedEntries, brokenLinks, verifiedAt };
+    }
+    if (hashedEntries === 0) {
+      return {
+        status: 'unverified',
+        totalEntries: rows.length,
+        hashedEntries,
+        unhashedEntries,
+        brokenLinks: 0,
+        verifiedAt,
+        reason: 'no row carries a record_hash: the chain has never been hashed, so no link could be checked',
+      };
+    }
+    if (unhashedEntries > 0) {
+      return {
+        status: 'unverified',
+        totalEntries: rows.length,
+        hashedEntries,
+        unhashedEntries,
+        brokenLinks: 0,
+        verifiedAt,
+        reason: `${unhashedEntries} of ${rows.length} rows carry no record_hash; the links through them could not be checked`,
+      };
+    }
+    return { status: 'intact', totalEntries: rows.length, hashedEntries, unhashedEntries: 0, brokenLinks: 0, verifiedAt };
+  } catch (err) {
+    // The honest branch, unchanged in meaning: the query did not run.
     return {
-      status: brokenLinks === 0 ? 'intact' : 'broken',
-      totalEntries: rows.length,
-      brokenLinks,
+      status: 'unavailable',
+      totalEntries: 0,
+      brokenLinks: 0,
       verifiedAt: new Date().toISOString(),
+      reason: describeFailure(err),
     };
-  } catch {
-    return { status: 'unavailable', totalEntries: 0, brokenLinks: 0, verifiedAt: new Date().toISOString() };
   }
 }
 
@@ -299,8 +376,67 @@ export async function generateSignedAuditExport(
   // 3. Snapshot chain integrity at time of export
   const chainIntegrity = await snapshotChainIntegrity(pool, request.organizationId);
 
-  // 4. Build manifest
+  // 4. Record the export in the audit trail — BEFORE the manifest is sealed,
+  //    so the signature covers the record's id, and refusing outright when
+  //    the row cannot be written (WO-16B finding 26). This INSERT used to run
+  //    after signing, put the export id (a string) into
+  //    `audit_events.entity_id integer NOT NULL`, fail 22P02 on every call,
+  //    and be swallowed — so no export was ever recorded and every manifest
+  //    was sealed as if it had been. The signing key is resolved first so the
+  //    only step after the row lands is deterministic.
+  getSigningKey();
   const exportId = `AUDIT-EXPORT-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  if (request.organizationId == null || !Number.isFinite(Number(request.organizationId))) {
+    throw new VerificationUnavailableError(
+      'audit-export record',
+      'no organisation id: audit_events.organization_id is NOT NULL and an export must be attributable to a tenant',
+    );
+  }
+  let exportAuditEventId: number;
+  try {
+    const recorded = await pool.query(
+      `INSERT INTO audit_events
+        (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+         user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
+       VALUES ($1, 'audit.export', 'audit_export', $2, $3, $4, $5, $6, NOW(), $7, $8, true, true)
+       RETURNING id`,
+      [
+        Number(request.organizationId),
+        // entity_id is integer NOT NULL and an export has no integer entity;
+        // 0 is the repository's convention for "no entity" (ivdr-pack-worker,
+        // orchestration-checkpoints). The export id is in reason and metadata.
+        0,
+        Number.isFinite(Number(request.exportedBy)) ? Number(request.exportedBy) : null,
+        request.exportedBy,
+        request.exportedByRole || 'unknown',
+        request.ipAddress || 'unknown',
+        `Audit trail export ${exportId}: ${rows.length} records, format=${request.format}`,
+        JSON.stringify({
+          exportId,
+          dataHash,
+          chainIntegrityAtExport: chainIntegrity.status,
+          filters: {
+            organizationId: request.organizationId,
+            startDate: request.startDate,
+            endDate: request.endDate,
+            eventType: request.eventType,
+            userId: request.userId,
+          },
+        }),
+      ]
+    );
+    const id = Number((recorded.rows[0] as { id?: unknown } | undefined)?.id);
+    if (!Number.isInteger(id)) {
+      throw new VerificationUnavailableError('audit-export record', 'INSERT returned no row id');
+    }
+    exportAuditEventId = id;
+  } catch (err) {
+    if (isVerificationUnavailable(err)) throw err;
+    console.error('[SignedExport] refusing: the export could not be recorded in the audit trail:', describeFailure(err));
+    throw new VerificationUnavailableError('audit-export record', describeFailure(err));
+  }
+
+  // 5. Build manifest
   const manifest: ExportManifest = {
     exportId,
     exportedAt: new Date().toISOString(),
@@ -321,6 +457,7 @@ export async function generateSignedAuditExport(
     hashAlgorithm: 'SHA-256',
     manifestVersion: 2,
     chainIntegrity,
+    exportRecord: { auditEventId: exportAuditEventId },
     compliance: {
       standard: '21 CFR Part 11',
       section: '§11.10(e)',
@@ -328,40 +465,13 @@ export async function generateSignedAuditExport(
     },
   };
 
-  // 5. Sign manifest — every field, at every depth (L55).
+  // 6. Sign manifest — every field, at every depth (L55), the export record included.
   const canonicalManifest = canonicalizeManifest(manifest);
   const signature = hmacSign(canonicalManifest);
 
-  // 6. Build filename
+  // 7. Build filename
   const ts = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
   const filename = `audit_export_${ts}_${exportId.substring(exportId.length - 8)}.${request.format}`;
-
-  // 7. Record the export event itself in audit trail
-  try {
-    await pool.query(
-      `INSERT INTO audit_events
-        (organization_id, event_type, entity_type, entity_id, user_id, user_name,
-         user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
-       VALUES ($1, 'audit.export', 'audit_export', $2, $3, $4, $5, $6, NOW(), $7, $8, true, true)`,
-      [
-        request.organizationId ?? null,
-        exportId,
-        request.exportedBy,
-        request.exportedBy,
-        request.exportedByRole || 'unknown',
-        request.ipAddress || 'unknown',
-        `Audit trail exported: ${rows.length} records, format=${request.format}`,
-        JSON.stringify({
-          dataHash,
-          signature: signature.substring(0, 16) + '...',
-          chainIntegrityAtExport: chainIntegrity.status,
-          filters: manifest.queryFilters,
-        }),
-      ]
-    );
-  } catch (err: any) {
-    console.error('[SignedExport] Failed to log export event:', err.message);
-  }
 
   return {
     data,

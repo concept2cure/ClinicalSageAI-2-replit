@@ -282,13 +282,13 @@ replacement exists.
 
 | # | Step | Deletes | Notes |
 |---|---|---|---|
-| 0 | Migration-amendment policy, in `CLAUDE.md` | — | Blocks everything else. Half a day. |
+| 0 | Migration-amendment policy, in `CLAUDE.md` | — | **Shipped** — RULE 1, enforced by `ci:migration-drop-safety` in pre-push, with a selftest that fires on the real case in both replay orders. |
 | 1a | `organization_id` on `vault.documents`, backfilled, unattributable rows quarantined | nothing | **Shipped** — `migrations/20260905_vault_documents_organization_id.sql`. |
 | 1b | `submission_leaves.document_id` INTEGER → TEXT + `document_version_id` | nothing | Its own change: ~128 coercion sites, and a surviving `Number()` yields `NaN`, resolves to nothing and ships an incomplete sequence silently. |
 | 2 | `regulatory_structure_versions` / `_nodes`, seeded **mechanically from `c2c_rule_packs`** | nothing | Zero transcription risk — the rows already exist. |
 | 3 | `regulatory_document_types` + generated-constant drift test, then the `vault-taxonomy.ts` deletions in one commit | the three vocabularies | The zero-duplication change. |
 | 4 | `document_placements` + the `20260823` amendment | `folder_id`, `ctd_section`, `evidence_kind` | Where the architecture actually lands. |
-| 5 | `expected_items` + the shared not-assessed helper; fix `readinessEvaluator.ts:176` | — | Failing test first: assert a no-matrix filing type is **not** 100%. |
+| 5 | `expected_items` + the shared not-assessed helper | — | `readinessEvaluator.ts:176` is **shipped** — a no-matrix filing type now reports `assessed: false` with a critical gap, and the artifact weight is dropped from the score rather than filled with a fabricated 100. It was **225 of 234** registry entries. The shared `expected_items` model remains. |
 
 **Transcription runs in parallel and gates nothing** except the completeness numbers for the
 frameworks being transcribed, which report `not_assessed` until it finishes. That is the correct

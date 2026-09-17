@@ -219,6 +219,8 @@ beforeAll(async () => {
       // and refuses to commit one without the other, so this table is now a
       // prerequisite for the authoring spine, not an optional extra.
       'db/migrations/20260803_document_span_lineage.sql',
+      'migrations/20260907_span_lineage_accepted_machine_draft.sql',
+      'migrations/20260908_span_lineage_machine_draft.sql',
       // Comment threading + author identity. The comment READ path
       // (GET /documents/:id/comments) has always selected user_name,
       // user_email, parent_comment_id and position_data, so this migration is

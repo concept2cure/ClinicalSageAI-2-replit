@@ -165,8 +165,10 @@ export function verifyLedger(rowsOldestFirst: LedgerRow[]): LedgerVerdict {
  * arbitrary ids would let a caller write any name it liked into the attribution
  * of a governed record.
  */
+export const ANA_MACHINE_AUTHOR_ID = 'ana';
+
 export const MACHINE_AUTHOR_IDS: Readonly<Record<string, string>> = Object.freeze({
-  ana: 'AnA (AI draft)',
+  [ANA_MACHINE_AUTHOR_ID]: 'AnA (AI draft)',
 });
 
 export interface MachineContributor {
@@ -193,6 +195,46 @@ export function machineContributors(raw: unknown): MachineContributor[] {
     if (!canonicalName) continue;
     if (out.some((c) => c.id === id)) continue;
     out.push({ id, name: canonicalName });
+  }
+  return out;
+}
+
+/**
+ * Longest accepted machine text one save may carry per entry. Bounded by what
+ * a section can hold (the batch-draft accept refuses content past 400k), so a
+ * genuine acceptance always fits; an entry past it is dropped whole rather
+ * than truncated, because a truncated text would silently stop matching the
+ * clauses at its end and hand them to the human.
+ */
+export const MAX_ACCEPTED_MACHINE_TEXT_CHARS = 400_000;
+
+export interface AcceptedMachineTextEntry {
+  /** A MACHINE_AUTHOR_IDS key. */
+  authorId: string;
+  /** The accepted insertion's text, as the editor had it. */
+  text: string;
+}
+
+/**
+ * The text a reviewer accepted from machine authors in the editing session a
+ * save closes — the clause-grain companion of {@link machineContributors}.
+ *
+ * Same boundary, same rule: the author id must be one the server itself names,
+ * or the entry is discarded. The lineage gate attributes a clause to a machine
+ * only when the clause is verbatim inside one of these texts AND in the saved
+ * content, so what this parser cannot check — whether the words were really
+ * saved — is checked there; what it can, it does: the id, the type, the caps.
+ */
+export function acceptedMachineText(raw: unknown): AcceptedMachineTextEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const out: AcceptedMachineTextEntry[] = [];
+  for (const entry of raw.slice(0, 32)) {
+    const authorId = (entry as { authorId?: unknown })?.authorId;
+    const text = (entry as { text?: unknown })?.text;
+    if (typeof authorId !== 'string' || !MACHINE_AUTHOR_IDS[authorId]) continue;
+    if (typeof text !== 'string' || text.trim().length === 0) continue;
+    if (text.length > MAX_ACCEPTED_MACHINE_TEXT_CHARS) continue;
+    out.push({ authorId, text });
   }
   return out;
 }

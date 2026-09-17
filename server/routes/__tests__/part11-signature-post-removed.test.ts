@@ -109,3 +109,42 @@ describe('POST /api/part11/signatures — removed (single e-signature write path
     expect(routes).not.toContain('POST /signatures');
   });
 });
+
+/**
+ * Contract: `POST /api/part11/signatures/:signatureId/revoke` is GONE too.
+ *
+ * The handler never touched `electronic_signatures` — no existence check, no
+ * tenant scoping (unlike every sibling route in this file), no UPDATE — yet
+ * answered `{ revoked: true, revokedAt }`. A caller was told a §11.70 signature
+ * had been revoked while the row kept `is_valid = true` and `superseded_by
+ * NULL`, and submission-package-orchestrator went on returning it as the active
+ * release signature. The audit entry it wrote almost certainly never persisted
+ * either: `audit_events.organization_id` is NOT NULL and appendAuditEntry is
+ * called there with no organization, so the INSERT raises 23502 into a
+ * swallowing `.catch`.
+ *
+ * Deleted rather than repaired, for the same reason POST /signatures was: no
+ * caller in client/ or server/, and the canonical revocation already exists —
+ * persistGovernedSignatureRevocation, reached through POST /api/c2c/actions.
+ */
+describe('POST /api/part11/signatures/:signatureId/revoke — removed (single revocation path)', () => {
+  it('is not routed', async () => {
+    const res = await request(buildApp())
+      .post('/api/part11/signatures/sig-1/revoke')
+      .send({ revokedBy: 'user-1', reason: 'superseded' });
+    expect(res.status).toBe(404);
+  });
+
+  it('no revoke route survives on the Part 11 router', () => {
+    const routes = (part11Router as any).stack
+      .filter((l: any) => l.route)
+      .map((l: any) => `${Object.keys(l.route.methods)[0].toUpperCase()} ${l.route.path}`);
+    expect(routes).not.toContain('POST /signatures/:signatureId/revoke');
+    expect(routes.some((r: string) => /revoke/i.test(r))).toBe(false);
+  });
+
+  it('the router never claims a revocation it did not perform', () => {
+    // Executable source only — the tombstone comment quotes the old response.
+    expect(/revoked:\s*true/.test(ROUTER_CODE)).toBe(false);
+  });
+});

@@ -5,7 +5,7 @@
  * Backed by coauthor_documents table with eCTD-specific filtering.
  */
 import { Router, Request, Response } from 'express';
-import { eq, desc, and, like, sql } from 'drizzle-orm';
+import { eq, desc, and, like } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, transaction } from '../db';
 import { coauthorDocuments } from '../../shared/schema';

@@ -33,11 +33,34 @@ const OK = '#047857';
 /** Human label for a provenance kind — no jargon in a document a reviewer reads. */
 function originLabel(row: SpanLineageRow): string {
   if (row.provenanceKind === 'author_assertion') return 'Author assertion';
+  if (row.provenanceKind === 'accepted_machine_draft') {
+    // The vocabulary name already says what it is ("AnA (AI draft)"); an id
+    // only appears when the server no longer names that author.
+    return row.machineAuthorName ?? `AI draft (${row.machineAuthorId ?? 'machine author'})`;
+  }
+  if (row.provenanceKind === 'machine_draft') {
+    // The most important line this report can carry: prose in a filing that no
+    // person has yet stood behind. It goes in the heading, not a footnote.
+    const who = row.machineAuthorName ?? row.machineAuthorId ?? 'machine author';
+    return `${who} — NOT YET ACCEPTED`;
+  }
   return row.sourceTitle ? `Source: ${row.sourceTitle}` : `Source #${row.referenceId ?? '—'}`;
 }
 
 /** How the source was used, spelled out rather than left as a verb stem. */
-function usageLabel(usage: string): string {
+function usageLabel(usage: string, kind?: SpanLineageRow['provenanceKind']): string {
+  // An accepted machine draft is 'asserted' in the usage vocabulary — the human
+  // accepted the words — but "Asserted by the author" would put the author's
+  // name behind prose a model produced, which is the falsehood this kind exists
+  // to remove.
+  if (kind === 'accepted_machine_draft' && usage === 'asserted') {
+    return 'Drafted by the AI, accepted by the author';
+  }
+  // And an unaccepted one is 'asserted' in the usage vocabulary while nobody
+  // has asserted it. Saying so is the whole point of the kind.
+  if (kind === 'machine_draft' && usage === 'asserted') {
+    return 'Drafted by the AI — no person has accepted it';
+  }
   switch (usage) {
     case 'quoted':
       return 'Quoted verbatim';
@@ -222,10 +245,20 @@ export function renderDataOriginsPdf(
 
     const bits: string[] = [
       `characters ${row.charStart}–${row.charEnd}`,
-      usageLabel(row.usage),
+      usageLabel(row.usage, row.provenanceKind),
     ];
     if (row.sourceLocator) bits.push(row.sourceLocator);
-    if (row.assertedBy) bits.push(`by ${row.assertedBy}`);
+    if (row.assertedBy) {
+      bits.push(
+        row.provenanceKind === 'accepted_machine_draft'
+          ? `accepted by ${row.assertedBy}`
+          : `by ${row.assertedBy}`,
+      );
+    } else if (row.provenanceKind === 'machine_draft') {
+      // An absent asserter is the FACT here, not a missing field, so it is
+      // printed as one rather than left as a gap the reader has to interpret.
+      bits.push('accepted by nobody');
+    }
     if (row.confidence !== null && row.confidence !== undefined) {
       bits.push(`confidence ${Math.round(row.confidence * 100)}%`);
     }

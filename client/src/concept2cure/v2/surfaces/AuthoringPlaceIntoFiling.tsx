@@ -48,6 +48,7 @@ import { mutateVerbatim } from './SubmissionSeqWorkspaces';
 import { SC_LIFECYCLE_OPS, SC_SEQ_STATUS } from '../fixtures/submission';
 import type { FireToast } from '../toast';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
+import { normalizeCtdCode, ctdFolderSlug } from '@shared/regulatory/section-code';
 
 /* ── Server row shapes (only the columns this dialog reads) ── */
 
@@ -211,7 +212,37 @@ export function AuthoringPlaceIntoFiling({
 
   const lockedSeqs = seqs.rows.filter((s) => isLocked(s.status));
   const seq = seqs.rows.find((s) => s.id === seqId) ?? null;
-  const canPlace = !placing && !dirty && seq != null && !isLocked(seq.status) && section.trim() !== '';
+  /* What the typed section code resolves to, by the SAME rule the write
+     boundary and the packager apply (shared/regulatory/section-code). The
+     section code decides which module folder the document is filed into, and
+     this input was free text with no feedback: an unusable value was only
+     discovered after a filing snapshot had already been created for it, and
+     before the write boundary was closed it produced a package with a
+     top-level folder no eCTD layout defines. */
+  const sectionCanonical = normalizeCtdCode(section);
+  const sectionFolder = ctdFolderSlug(section);
+  const sectionIsPlaceable = sectionCanonical !== null && sectionCanonical.includes('.');
+  const sectionNote: { tone: 'ok' | 'err'; text: string } | null =
+    section.trim() === ''
+      ? null
+      : !sectionIsPlaceable
+        ? {
+            tone: 'err',
+            text:
+              sectionCanonical === null
+                ? `"${section.trim()}" is not a CTD section code. Use one like 1.2, 2.7.3 or 3.2.S.4.2.`
+                : `Module ${sectionCanonical} on its own is a container, not a section a document can be filed at.`,
+          }
+        : {
+            tone: 'ok',
+            text:
+              sectionCanonical!.charAt(0) === '1'
+                ? `Files as ${sectionCanonical} in the regional Module 1 folder (${sectionFolder}/).`
+                : `Files as ${sectionCanonical} at m${sectionCanonical!.charAt(0)}/${sectionFolder}/.`,
+          };
+
+  const canPlace =
+    !placing && !dirty && seq != null && !isLocked(seq.status) && section.trim() !== '' && sectionIsPlaceable;
 
   const place = async () => {
     if (!canPlace || !seq) return;
@@ -417,10 +448,22 @@ export function AuthoringPlaceIntoFiling({
                   id="apf-section"
                   className="c2c-input"
                   type="text"
-                  placeholder="e.g. 2.7.3 or m1/us/1.2"
+                  placeholder="e.g. 1.2, 2.7.3 or 3.2.S.4.2"
                   value={section}
                   onChange={(e) => setSection(e.target.value)}
+                  aria-describedby={sectionNote ? 'apf-section-note' : undefined}
+                  aria-invalid={sectionNote?.tone === 'err' ? true : undefined}
                 />
+                {sectionNote && (
+                  <div
+                    id="apf-section-note"
+                    role="status"
+                    className={sectionNote.tone === 'err' ? 'de-err' : 'de-desc'}
+                    style={{ marginTop: 4 }}
+                  >
+                    {sectionNote.text}
+                  </div>
+                )}
               </div>
               <div className="de-field half">
                 <label className="de-label" htmlFor="apf-op">Lifecycle operation</label>
@@ -484,7 +527,9 @@ export function AuthoringPlaceIntoFiling({
                       ? 'Choose a submission and a non-frozen sequence'
                       : !section.trim()
                         ? 'A section code is required'
-                        : 'Snapshot the saved document and place it as a leaf'
+                        : !sectionIsPlaceable
+                          ? 'The section code must name a CTD section a document can be filed at'
+                          : 'Snapshot the saved document and place it as a leaf'
                 }
               >
                 {I.layers} {placing ? 'Placing…' : 'Place leaf in the sequence'}

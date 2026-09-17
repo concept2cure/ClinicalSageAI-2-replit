@@ -139,6 +139,7 @@ export const ICH_E3_STRUCTURE: CSRSection[] = [
       { number: '9.5', title: 'Efficacy and Safety Variables', required: true, status: 'empty', description: 'Endpoint definitions and assessment schedule' },
       { number: '9.6', title: 'Data Quality Assurance', required: true, status: 'empty', description: 'Monitoring, data management, quality control' },
       { number: '9.7', title: 'Statistical Methods', required: true, status: 'empty', description: 'Analysis populations, statistical methods, sample size' },
+      { number: '9.8', title: 'Changes in the Conduct of the Study or Planned Analyses', required: true, status: 'empty', description: 'Protocol amendments, SAP changes and other departures from the planned conduct or analyses, with timing (before/after unblinding) and rationale' },
     ],
   },
   {
@@ -165,6 +166,7 @@ export const ICH_E3_STRUCTURE: CSRSection[] = [
       { number: '12.3', title: 'Deaths, SAEs, Other Significant AEs', required: true, status: 'empty', description: 'Narratives for deaths, SAEs' },
       { number: '12.4', title: 'Clinical Laboratory Evaluation', required: true, status: 'empty', description: 'Lab results, shifts, clinically significant values' },
       { number: '12.5', title: 'Vital Signs, Physical Findings, Other Safety', required: true, status: 'empty', description: 'Vital signs, ECG, other safety data' },
+      { number: '12.6', title: 'Safety Conclusions', required: true, status: 'empty', description: 'Overall safety evaluation integrating exposure, adverse events, deaths and SAEs, laboratory and vital-sign findings' },
     ],
   },
   { number: '13', title: 'Discussion and Overall Conclusions', required: true, status: 'empty', description: 'Efficacy discussion, safety discussion, benefit-risk assessment' },
@@ -811,6 +813,8 @@ function generateSectionTemplate(
 
     '9.7': `The statistical analysis plan (SAP) was finalized prior to database lock. The primary analysis population was the intent-to-treat (ITT) population, defined as all randomized patients who received at least one dose of study treatment. The primary endpoint of ${info.primaryEndpoint} was analyzed using [statistical method to be specified]. A two-sided significance level of 0.05 was used for the primary analysis.${info.sampleSize ? `\n\nSample size: ${info.sampleSize} patients were planned to provide [X]% power to detect a clinically meaningful difference.` : ''}`,
 
+    '9.8': `[DATA TO BE INSERTED]\n\nChanges to the conduct of the study after it began: [list each protocol amendment with its number, date and rationale, or state that there were none]. Changes to the planned analyses: [describe each departure from the protocol- or SAP-specified analyses, when it was decided and whether before or after unblinding, or state that there were none].`,
+
     '10.1': `[DATA TO BE INSERTED]\n\nA total of [N] patients were screened, of whom [N] were randomized${info.comparator ? ` to ${info.investigationalProduct} (n=[N]) or ${info.comparator} (n=[N])` : ''}. The most common reasons for screen failure were [reasons]. [N] patients completed the study treatment period. The most common reasons for discontinuation were [reasons].`,
 
     '11.4': `[DATA TO BE INSERTED]\n\nThe primary endpoint of ${info.primaryEndpoint} was met/not met. In the ITT population, ${info.investigationalProduct} demonstrated [result] compared with ${info.comparator || 'baseline'} (p=[value]).`,
@@ -818,6 +822,8 @@ function generateSectionTemplate(
     '12.2': `[DATA TO BE INSERTED]\n\nAdverse events were reported by [N]% of patients in the ${info.investigationalProduct} group${info.comparator ? ` and [N]% in the ${info.comparator} group` : ''}. The most common adverse events (≥5% incidence) were [list]. Most adverse events were mild or moderate in severity.`,
 
     '12.3': `[DATA TO BE INSERTED]\n\n[N] deaths occurred during the study. [N] serious adverse events (SAEs) were reported. Individual narratives for deaths and SAEs are provided below.`,
+
+    '12.6': `[DATA TO BE INSERTED]\n\nOverall, ${info.investigationalProduct} was [well tolerated / associated with the following safety findings] in patients with ${info.indication}. The most frequent adverse events were [list]. [N] deaths and [N] serious adverse events were reported; [summarize assessed relationship to treatment]. [No clinically meaningful trends were observed / Describe trends] in laboratory parameters, vital signs or ECG findings. The safety profile observed in this study is [consistent with / differs from] the known profile of ${info.investigationalProduct} in that [describe].`,
 
     '13': `This Phase ${info.phase} ${info.studyDesign} study evaluated the ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.\n\nEFFICACY DISCUSSION\n[To be drafted based on study results]\n\nSAFETY DISCUSSION\n[To be drafted based on safety data]\n\nBENEFIT-RISK ASSESSMENT\nBased on the efficacy and safety data from this study, the benefit-risk profile of ${info.investigationalProduct} is considered [favorable/unfavorable] for the treatment of ${info.indication}.`,
   };

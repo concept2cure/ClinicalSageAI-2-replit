@@ -89,10 +89,19 @@ describe('GET /api/c2c/projects/:id', () => {
     const res = await request(appWith(7)).get('/api/c2c/projects/b6d3e141-7abb-4f1d-9b8b-f0f334604a05');
     expect(res.status).toBe(200);
     const [sql] = query.mock.calls[0] as [string];
-    // regression: these columns do not exist and used to 500 the read
-    for (const bad of ['sponsor_name', 'lead_indication', 'filing_date', 'pdufa_date', 'completion_percentage']) {
+    // regression: these are NOT regulatory_programs columns and referencing them
+    // on the `p.` alias 500'd the read with 42703. The hazard is the column
+    // reference, so pin the alias-qualified form — `sponsor_name` is a legitimate
+    // output alias when it comes from the organizations join (asserted below).
+    for (const bad of ['p.sponsor_name', 'p.lead_indication', 'p.filing_date', 'p.pdufa_date', 'p.completion_percentage']) {
       expect(sql).not.toContain(bad);
     }
     expect(sql).toContain('progress_percent');
+    // WO-9 Click 1: the landing shows sponsor and the agency application number,
+    // both read from the database — sponsor from the organisation row, the number
+    // from regulatory_programs.application_number (20260907 migration).
+    expect(sql).toContain('p.application_number');
+    expect(sql).toMatch(/o\.name\s+AS\s+sponsor_name/);
+    expect(sql).toContain('LEFT JOIN organizations o ON o.id = p.organization_id');
   });
 });

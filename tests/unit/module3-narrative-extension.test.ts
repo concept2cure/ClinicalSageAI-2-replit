@@ -161,18 +161,27 @@ describe('composeAppendices — Appendix sections (3.2.A.*)', () => {
     }
   });
 
-  it('3.2.A.2 produces "not applicable" narrative when no biological drug substance is present', () => {
+  it('3.2.A.2 declares non-applicability when no biological drug substance is present', () => {
     const sections = composeAppendices(smallMoleculeSources());
     const a2 = sections.find((s) => s.sectionKey === '3.2.A.2');
     expect(a2).toBeDefined();
-    // The chemical-modality path must render the NOT-APPLICABLE narrative —
-    // never the biologic narrative — for a small-molecule program. Anchor
-    // on the literal phrase the composer emits so the assertion guards the
-    // user-visible regulatory statement.
-    expect(a2!.narrativeDraft.toLowerCase()).toContain('not applicable');
-    expect(a2!.narrativeDraft).toContain('chemical');
+    /* Asserts the CLAIM, not the wording. This anchored on the literal phrase
+       "not applicable", and the narrative was rewritten to say what the record
+       actually supports — "does not apply to the drug substance itself", with
+       an explicit paragraph that this is a statement about the SUBSTANCE and
+       not about every material used to make it. The old phrasing is gone; the
+       regulatory statement it was guarding is not, and that is what is checked
+       here. A wording assertion that fails on a strictly better sentence
+       protects nothing. */
+    expect(a2!.narrativeDraft).toContain('does not apply to the drug substance');
+    // Non-applicability must rest on something the record HOLDS. This fixture
+    // records a route, so the narrative names it rather than the modality.
+    expect(a2!.narrativeDraft).toContain('Chemical synthesis (5-step)');
     // And it must NOT claim a viral safety evaluation was performed.
     expect(a2!.narrativeDraft).not.toMatch(/viral safety evaluation:/i);
+    // Nor make the positive raw-material safety claim the composer removed:
+    // "no animal- or human-derived raw materials" was never read from a field.
+    expect(a2!.narrativeDraft).not.toContain('no animal- or human-derived raw materials');
   });
 });
 
@@ -524,7 +533,25 @@ describe('composeAppendices — claims only what the registers hold', () => {
     const sec = a2Of([
       source('drug_substance', { name: 'BX-204', manufacturingRoute: 'Four-step convergent chemical synthesis' }),
     ] as never[]);
-    expect(cell(sec, 'Applicability')).toMatch(/Not applicable/i);
+    /* Again the claim, not the wording: the cell reads "Does not apply to the
+       drug substance — no biological origin is recorded", which says the same
+       thing AND names the basis, where the bare "Not applicable" did not. */
+    expect(cell(sec, 'Applicability')).toMatch(/Does not apply/i);
+    expect(cell(sec, 'Applicability')).toMatch(/no biological origin is recorded/i);
+    // The route it read is the route it names — not an empty interpolation.
+    expect(sec.narrativeDraft).toContain('Four-step convergent chemical synthesis');
+    expect(cell(sec, 'Manufacturing Route')).toBe('Four-step convergent chemical synthesis');
+  });
+
+  it('and says "not recorded" for a route it does not have, never an em-dash that reads as a value', () => {
+    /* The modality is the basis here and no route exists. The narrative used to
+       interpolate the empty route regardless — "whose recorded manufacturing
+       route is: ." — and the table put an em-dash in the Manufacturing Route
+       cell, which in a filing table reads as a value rather than an absence. */
+    const sec = a2Of([source('drug_substance', { name: 'BX-204', modality: 'small_molecule' })] as never[]);
+    expect(sec.narrativeDraft).not.toMatch(/manufacturing route is:\s*\./);
+    expect(sec.narrativeDraft).toContain('modality is recorded as a chemical synthesis');
+    expect(cell(sec, 'Manufacturing Route')).toBe('not recorded');
   });
 
   it('a section whose own narrative says NOT ESTABLISHED is not scored complete', () => {

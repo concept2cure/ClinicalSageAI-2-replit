@@ -717,16 +717,22 @@ export function V2App() {
      the overlay css uses, so a desktop Escape never collapses the persistent
      rail — the overlay is the only rail state Escape should dismiss. */
   React.useEffect(() => {
-    if (prefs.railCollapsed) return undefined;
+    // The two narrow-width overlays — the rail drawer (≤640px) and the AnA
+    // drawer (≤900px) — are the only states Escape should dismiss. The AnA drawer only exists when the
+    // surface does not own the conversation (otherwise there is no rail).
+    const anaDrawer = prefs.anaOpen && !ownsConversation;
+    if (prefs.railCollapsed && !anaDrawer) return undefined;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && window.matchMedia('(max-width: 640px)').matches) {
-        set('railCollapsed', true);
-      }
+      if (e.key !== 'Escape') return;
+      const phone = window.matchMedia('(max-width: 640px)').matches;
+      const tablet = window.matchMedia('(max-width: 900px)').matches;
+      if (phone && !prefs.railCollapsed) set('railCollapsed', true);
+      else if (tablet && anaDrawer) set('anaOpen', false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefs.railCollapsed]);
+  }, [prefs.railCollapsed, prefs.anaOpen, ownsConversation]);
 
   return (
     /* Licence verdicts are fetched once, above the rail, so the rail and the
@@ -772,6 +778,11 @@ export function V2App() {
       {!prefs.railCollapsed && (
         <div aria-hidden="true" className="rail-scrim" onClick={() => set('railCollapsed', true)} />
       )}
+      {/* The AnA drawer's scrim (≤900px only — display is CSS-gated on
+          data-ana-open inside the 900px query, exactly like .rail-scrim). */}
+      {!ownsConversation && prefs.anaOpen && (
+        <div aria-hidden="true" className="ana-scrim" onClick={() => set('anaOpen', false)} />
+      )}
       <main className="main">
         <TopBar
           surface={activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface}
@@ -815,7 +826,7 @@ export function V2App() {
           onPause={() => void anaChat.pause()}
           onResume={() => void anaChat.resume()}
           onStop={() => anaChat.stop()}
-          onSteer={(m) => void anaChat.interject(m)}
+          onSteer={(m) => anaChat.interject(m)}
           /* The live work dock reads the raw turns: progress phases, tool
              timings, pending steers and outputs that the adapted rail message
              shape does not carry. */
@@ -857,7 +868,7 @@ export function V2App() {
         /* Interactivity without surrender: a question or steer typed into the
            strip lands mid-run (the run-control interject) — AnA answers and
            continues driving; the person never has to take over just to speak. */
-        onSteer={(m) => void anaChat.interject(m)}
+        onSteer={(m) => anaChat.interject(m)}
       />
     </div>
     </NavEntitlementsProvider>

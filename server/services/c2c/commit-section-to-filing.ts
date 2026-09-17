@@ -83,6 +83,16 @@ export interface CommitSectionInput {
   /** Why, for the version ledger. Absent means the save did not state one, and
    *  that is what the ledger records — see REASON_NOT_STATED. */
   reason?: string;
+  /**
+   * What produced THIS content, when the caller genuinely knows — the same
+   * signal `createRevision`'s `origin` already uses ('ana' when the save
+   * incorporated an accepted AI draft). Absent/null means "not stated", which
+   * stays the honest default: this field makes a POSITIVE claim only when the
+   * caller has one, it never guesses 'human' for an ordinary save. See the
+   * draft_source comment below for why the wrong guess in either direction is
+   * worse than leaving it unstated.
+   */
+  draftSource?: string | null;
 }
 
 export type CommitSectionResult =
@@ -101,7 +111,7 @@ export type CommitSectionResult =
 export async function commitSectionToFiling(
   input: CommitSectionInput,
 ): Promise<CommitSectionResult> {
-  const { client, sectionId, content, actorId, tenantId, reason } = input;
+  const { client, sectionId, content, actorId, tenantId, reason, draftSource } = input;
 
   // ── Is there a governed store to commit into at all? ────────────────────────
   // This runs inside the caller's OPEN transaction, and in PostgreSQL a failed
@@ -207,23 +217,30 @@ export async function commitSectionToFiling(
   // Org-scoped through the document: c2c_document_sections has no org column of
   // its own, so the EXISTS is what keeps this write inside the caller's tenant.
   const updated = await client.query<{ section_key: string }>(
-    // draft_source is NULL — "origin not stated" — and deliberately not 'human'.
+    // draft_source defaults to NULL — "origin not stated" — and is never
+    // GUESSED as 'human'. authoring_sections has no provenance column of its
+    // own (db/migrations/20260725_authoring_document_loop_tables.sql), so this
+    // function cannot independently know who authored the text — but its
+    // CALLER sometimes does. The PATCH /sections/:sectionId handler tracks
+    // accepted AI contributors for exactly this save (machineContributors,
+    // revision-ledger.ts) and the AI-draft-accept route's whole content is by
+    // definition an accepted draft; both now pass that knowledge through as
+    // `draftSource` rather than it being invented here.
     //
-    // authoring_sections has no provenance column (see
-    // db/migrations/20260725_authoring_document_loop_tables.sql): the editing
-    // layer stores text and never records whether a person typed it or accepted
-    // an AnA draft. Writing 'human' here therefore asserted, in the system of
-    // record for a filing, a fact this layer has no way to know — and the
-    // snapshot trigger then carried that assertion into the immutable version
-    // ledger, where `author_kind` is what an inspector reads to answer "who
-    // wrote this". A guess is indistinguishable there from a genuine human
-    // assertion, so it cannot be audited back out.
+    // The asymmetry is deliberate: a caller-supplied 'ana' is a genuine,
+    // upstream-validated fact (machineContributors only admits ids present in
+    // MACHINE_AUTHOR_IDS), so writing it is not a guess. An ABSENT draftSource
+    // still resolves to NULL, never to a default 'human' — the exact
+    // fabrication 20260822_section_version_author_kind_unspecified.sql closed
+    // one layer up. This function only ever ADDS a true claim; it does not
+    // invent the false one the old hardcoded NULL was silently protecting
+    // against by never claiming anything at all.
     //
-    // NULL records that the origin was not captured, which is true. When the
-    // editing layer learns to carry provenance, it can state it here.
+    // NULL still records that the origin was not captured, which stays true
+    // for every caller that has not been taught to pass one.
     `UPDATE c2c_document_sections ds
         SET content      = jsonb_build_object('text', $3::text),
-            draft_source = NULL,
+            draft_source = $5::text,
             drafted_at   = now(),
             updated_at   = now()
       WHERE ds.document_id = $1
@@ -231,7 +248,7 @@ export async function commitSectionToFiling(
         AND EXISTS (SELECT 1 FROM c2c_documents d
                      WHERE d.id = ds.document_id AND d.org_id = $4)
       RETURNING ds.section_key`,
-    [documentId, code, content, tenantId],
+    [documentId, code, content, tenantId, draftSource ?? null],
   );
 
   // rows.length, never rowCount: PGlite does not populate rowCount, and this

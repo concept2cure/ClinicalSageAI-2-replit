@@ -51,7 +51,17 @@ export const SPAN_USAGE_KINDS = [
 export type SpanUsageKind = (typeof SPAN_USAGE_KINDS)[number];
 
 /** Where a span came from. */
-export const SPAN_PROVENANCE_KINDS = ['cre_evidence_source', 'author_assertion'] as const;
+export const SPAN_PROVENANCE_KINDS = [
+  'cre_evidence_source',
+  'author_assertion',
+  // Drafted by a machine author (machineAuthorId) and accepted by a human
+  // (assertedBy / assertedAt) — both named. migrations/20260907.
+  'accepted_machine_draft',
+  // Drafted by a machine author and accepted by NOBODY: assertedBy and
+  // assertedAt are NULL and the CHECK requires them to be. Who asked for the
+  // draft is in createdBy, a different claim. migrations/20260908.
+  'machine_draft',
+] as const;
 export type SpanProvenanceKind = (typeof SPAN_PROVENANCE_KINDS)[number];
 
 export const documentSpanLineage = pgTable(
@@ -80,10 +90,15 @@ export const documentSpanLineage = pgTable(
     payloadSha256: text('payload_sha256'),
     sourceLocator: text('source_locator'),
 
-    // Author assertion — the author is the source of record.
+    // Author assertion — the author is the source of record. For an accepted
+    // machine draft these name the human who ACCEPTED the words.
     assertedBy: text('asserted_by'),
     assertedAt: timestamp('asserted_at', { withTimezone: true }),
     signatureId: text('signature_id'),
+
+    // Accepted machine draft — the machine author that drafted the words
+    // (a MACHINE_AUTHOR_IDS key). NULL for every other kind.
+    machineAuthorId: text('machine_author_id'),
 
     usage: text('usage').notNull().$type<SpanUsageKind>(),
     confidence: real('confidence'),

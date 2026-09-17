@@ -1,8 +1,8 @@
 # eCTD DTD vendoring point
 
-This directory holds the agency-published eCTD DTDs that every generated
-package bundles under `util/dtd/`, making each package **self-contained** and
-DTD-validatable. Until the files below are present, every generated package
+This directory holds the agency-published eCTD DTDs — and, since 2026-09-07,
+the agency stylesheets — that every generated package bundles under `util/dtd/`
+and `util/style/`, making each package **self-contained** and DTD-validatable. Until the files below are present, every generated package
 references DTDs it does not contain, and `validateEctdPackage` flags it as
 **not submission-ready** (see `HI_8_ECTD_SCOPING_BRIEF.md` G1). Production
 builds refuse to ship without them when `ECTD_REQUIRE_DTD=true`.
@@ -49,6 +49,13 @@ Renaming any file will break self-containment and gateway acceptance.
 | `eu-regional.dtd` | EMA (`eu-regional.xml`) | EU Module 1 Specification v3.0.x | `buildEmaBackbone` ⇒ `<!DOCTYPE eu-regional SYSTEM "../../util/dtd/eu-regional.dtd">` | EMA / Heads of Medicines Agencies eSubmission portal (https://esubmission.ema.europa.eu/eumodule1/index.htm) |
 | `jp-regional.dtd` | PMDA (`jp-regional.xml`) | PMDA Notification PFSB/ELD No.0617001 (latest) | `buildPmdaBackbone` ⇒ `<!DOCTYPE jp-regional SYSTEM "../../util/dtd/jp-regional.dtd">` | PMDA eCTD page (https://www.pmda.go.jp/english/review-services/regulatory-info/0006.html) |
 | `ca-regional.dtd` | Health Canada (`ca-regional.xml`) | Health Canada Module 1 / Regional CTD (current) | `buildHcBackbone` ⇒ `<!DOCTYPE ca-regional SYSTEM "../../util/dtd/ca-regional.dtd">` | Health Canada eCTD guidance (https://www.canada.ca/en/health-canada/services/drugs-health-products/drug-products/applications-submissions/guidance-documents/ectd.html) |
+| `ectd-2-0.xsl` | ICH stylesheet (`index.xml`) | ICH eCTD v3.2.2 stylesheet | `buildIndexXml` ⇒ `<?xml-stylesheet type="text/xsl" href="util/style/ectd-2-0.xsl"?>` | ICH eCTD Specification — same page as the DTD |
+| `us-regional.xsl` | FDA stylesheet (`us-regional.xml`) | FDA US Regional stylesheet (Module 1 Backbone Files Spec, current) | `buildFdaBackbone` ⇒ `<?xml-stylesheet type="text/xsl" href="../../util/style/us-regional.xsl"?>` | FDA eCTD specifications page — same page as the DTD |
+
+> Only the FDA backbone emits a stylesheet processing instruction today, so only
+> FDA requires a regional stylesheet; the ICH stylesheet is required for every
+> region because every `index.xml` references it. Extend `REGIONAL_STYLESHEET`
+> in `dtd-bundler.ts` in the same change that adds a PI to another backbone.
 
 > Spec versions evolve. Before each acquisition cycle, re-check the agency's
 > canonical page (column "Source") for the currently-mandated version and update
@@ -76,9 +83,11 @@ acquisition time and record it in the runbook:
 
 ## How bundling works
 
-- On export, `bundleVendoredDtds()` (`server/services/ectd/dtd-bundler.ts`)
+- On export, the packager (`regional-packager.ts`, through `listVendoredDtds()`
+  and `listVendoredStylesheets()` in `server/services/ectd/dtd-bundler.ts`)
   copies every `*.dtd` in this directory (or `$ECTD_DTD_DIR`) into the package
-  at `util/dtd/<name>.dtd`.
+  at `util/dtd/<name>.dtd`, and every `*.xsl` into `util/style/<name>.xsl`.
+  Both are checksummed into `util/index-md5.txt` like any other package file.
 - Each backbone's DOCTYPE already points at the right filename, so once the
   files are present the references resolve.
 - No code change is needed when you add the files — drop them in, update
@@ -149,6 +158,8 @@ assets/ectd-dtd/
     index-invalid.xml             (small invalid backbone)
   ich-ectd-3-2.dtd                (vendored agency artifact + license header)
   us-regional-v3-3.dtd            (vendored agency artifact + license header)
+  ectd-2-0.xsl                    (vendored ICH stylesheet)
+  us-regional.xsl                 (vendored FDA stylesheet)
   eu-regional.dtd                 (vendored agency artifact + license header)
   jp-regional.dtd                 (vendored agency artifact + license header)
   ca-regional.dtd                 (vendored agency artifact + license header)

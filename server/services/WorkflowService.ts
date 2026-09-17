@@ -10,7 +10,7 @@
  */
 
 import { db } from '../db';
-import { and, eq, inArray, desc, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, desc, isNull, sql } from 'drizzle-orm';
 import {
   workflowTemplates,
   workflowSteps,

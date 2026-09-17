@@ -74,6 +74,7 @@ describe('assembleRealPackage', () => {
       {
         submissionId: 'sub-1',
         region: 'US',
+        organizationId: 7,
         applicationNumber: CTX.applicationNumber,
         sequenceNumber: CTX.sequenceNumber,
         submissionType: CTX.submissionType,
@@ -99,6 +100,7 @@ describe('assembleRealPackage', () => {
       {
         submissionId: 'sub-1',
         region: 'US',
+        organizationId: 7,
         applicationNumber: CTX.applicationNumber,
         sequenceNumber: CTX.sequenceNumber,
         submissionType: CTX.submissionType,

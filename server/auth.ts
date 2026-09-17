@@ -84,6 +84,11 @@ declare global {
         role?: string;
         roles?: string[];
         organizationId?: number | string;
+        /** organizations.uuid — the tenant key for every non-public schema.
+         *  Set from a verified membership row (middleware/orgMembership.ts).
+         *  Declared in all five copies of this block because TypeScript
+         *  requires merged Request declarations to be identical. */
+        organizationUuid?: string | null;
         permissions?: string[];
         tenantId?: number | string;
         industryMode?: string | null;

@@ -489,6 +489,311 @@ export function scheduleOfActivitiesGate(design: StudyDesign): DesignFinding[] {
   }));
 }
 
+// ─── §9 · Analysis populations ───────────────────────────────────────────────
+
+/**
+ * Population definitions decide which patients the primary inference is about.
+ * A superiority trial whose primary analysis set is per-protocol is analysed on
+ * a self-selected subset (FDA default is ITT); a plan with no primary analysis
+ * set leaves the primary inference undefined; a trial with no safety
+ * population has nowhere to put its adverse events. Non-inferiority's need for
+ * a PP co-primary is FRM-003 and is not repeated here.
+ */
+export function populationGate(design: StudyDesign): DesignFinding[] {
+  const findings: DesignFinding[] = [];
+  const sets = design.population?.analysisPopulations ?? [];
+  if (sets.length === 0) {
+    findings.push({
+      code: 'POP-001',
+      section: '§9 Analysis populations',
+      severity: 'major',
+      standard: 'ICH E9 §5.2',
+      title: 'No analysis populations defined',
+      detail: 'The design declares no analysis population, so the primary analysis has no defined analysis set.',
+      suggestedFix: 'Define ITT (or the frame-appropriate primary set), per-protocol and safety populations, and mark the primary set.',
+    });
+    return findings;
+  }
+  const primary = sets.filter(p => p.isPrimaryAnalysisSet);
+  if (primary.length === 0) {
+    findings.push({
+      code: 'POP-002',
+      section: '§9 Analysis populations',
+      severity: 'major',
+      standard: 'ICH E9 §5.2',
+      title: 'No analysis population marked primary',
+      detail: `${sets.length} population(s) are defined but none is marked as the primary analysis set.`,
+      suggestedFix: 'Mark the primary analysis set (ITT for superiority; ITT and PP co-primary for non-inferiority).',
+    });
+  }
+  const frame = design.framework?.inferentialFrame;
+  if (frame === 'superiority' && primary.length > 0 && primary.every(p => p.kind === 'PP')) {
+    findings.push({
+      code: 'POP-003',
+      section: '§9 Analysis populations',
+      severity: 'major',
+      standard: 'ICH E9 §5.2.3',
+      title: 'Superiority primary analysis on the per-protocol set',
+      detail:
+        'The only primary analysis set is per-protocol. In a superiority trial the per-protocol set is a ' +
+        'self-selected subset and the primary analysis is expected on all randomised patients (ITT).',
+      suggestedFix: 'Make ITT the primary analysis set and keep per-protocol as a supportive analysis.',
+    });
+  }
+  if (!sets.some(p => p.kind === 'Safety')) {
+    findings.push({
+      code: 'POP-004',
+      section: '§9 Analysis populations',
+      severity: 'minor',
+      standard: 'ICH E3 §11.4',
+      title: 'No safety population defined',
+      detail: 'Safety analyses are reported on all patients who received study treatment, as treated; no such set is declared.',
+      suggestedFix: 'Add a Safety population: all patients who received at least one dose, analysed as treated.',
+    });
+  }
+  return findings;
+}
+
+// ─── §11 · Method–endpoint matching ──────────────────────────────────────────
+
+type MethodFamily = 'time_to_event' | 'continuous' | 'binary' | 'ordinal' | 'count' | 'unknown';
+
+/** Classify a free-text analysis method into the family it is fit for. */
+export function classifyAnalysisMethod(method: string): MethodFamily {
+  const m = method.toLowerCase();
+  // The named TEST decides the family, not the data it is described as being
+  // run on: "t-test on median survival" is a t-test, which is the mismatch
+  // this gate exists to catch, so the explicit test names are matched first.
+  if (/t[- ]?test|\bancova\b|\banova\b|\bmmrm\b|mixed[- ]model|least squares|wilcoxon|mann[- ]whitney/.test(m)) return 'continuous';
+  if (/cox|kaplan|\bkm\b|log[- ]?rank|rmst|weibull|accelerated failure|competing risk|fine[- ]gray/.test(m)) return 'time_to_event';
+  if (/proportional odds|ordinal|van elteren|cumulative logit/.test(m)) return 'ordinal';
+  if (/negative binomial|poisson|andersen|lwyy|rate ratio|recurrent/.test(m)) return 'count';
+  if (/logistic|cmh|cochran|mantel|fisher|chi[- ]?square|risk difference|odds ratio|relative risk|exact test/.test(m)) return 'binary';
+  if (/\bgee\b|linear|repeated/.test(m)) return 'continuous';
+  return 'unknown';
+}
+
+/** Endpoint type → the method families that fit it (ICH E9 §5.4; skill §IV table). */
+const FIT_FOR_ENDPOINT: Record<string, MethodFamily[]> = {
+  time_to_event: ['time_to_event'],
+  continuous: ['continuous'],
+  patient_reported: ['continuous', 'ordinal'],
+  binary: ['binary'],
+  ordinal: ['ordinal', 'continuous'], // Wilcoxon / Mann-Whitney classify as continuous and are fit for ordinal data
+  count: ['count'],
+  composite: ['time_to_event', 'binary', 'continuous', 'ordinal', 'count'],
+};
+
+/**
+ * The planned analysis must fit the endpoint it analyses. A t-test on median
+ * survival, an ANOVA on a responder rate or a chi-square on an ordinal scale
+ * is not a stylistic choice — it is the wrong inference. Applies to primary
+ * and key-secondary endpoints; a required endpoint with no planned analysis
+ * at all is a gap of its own.
+ */
+export function methodEndpointGate(design: StudyDesign): DesignFinding[] {
+  const findings: DesignFinding[] = [];
+  const analyses = design.statisticalPlan?.plannedAnalyses ?? [];
+  for (const e of design.endpoints ?? []) {
+    if (!ESTIMAND_REQUIRED_ROLES.includes(e.role)) continue;
+    const planned = analyses.filter(a => a.endpointName === e.name);
+    if (planned.length === 0) {
+      findings.push({
+        code: 'MTH-001',
+        section: '§11 Statistical methods',
+        severity: e.role === 'primary' ? 'major' : 'minor',
+        standard: 'ICH E9 §5.4',
+        endpointName: e.name,
+        title: `No planned analysis for ${e.role.replace('_', ' ')} endpoint "${e.name}"`,
+        detail: 'The statistical plan names no analysis method for this endpoint, so its primary analysis is not pre-specified.',
+        suggestedFix: 'Add a planned analysis naming the method (e.g. MMRM, Cox proportional hazards, logistic regression) and the estimand it targets.',
+      });
+      continue;
+    }
+    for (const a of planned) {
+      const family = classifyAnalysisMethod(a.method);
+      const fit = FIT_FOR_ENDPOINT[e.type] ?? [];
+      if (family === 'unknown') continue; // an unrecognised method is not evidence of a mismatch
+      if (!fit.includes(family)) {
+        findings.push({
+          code: 'MTH-002',
+          section: '§11 Statistical methods',
+          severity: 'major',
+          standard: 'ICH E9 §5.4',
+          endpointName: e.name,
+          title: `"${a.method}" does not fit a ${e.type.replace(/_/g, ' ')} endpoint`,
+          detail:
+            `"${a.method}" is a ${family.replace(/_/g, ' ')}-data method planned for "${e.name}", ` +
+            `which is a ${e.type.replace(/_/g, ' ')} endpoint.`,
+          suggestedFix: suggestedMethodFor(e.type),
+        });
+      } else if (e.type === 'continuous' && /\banova\b/.test(a.method.toLowerCase()) && !/ancova/.test(a.method.toLowerCase())) {
+        findings.push({
+          code: 'MTH-003',
+          section: '§11 Statistical methods',
+          severity: 'minor',
+          standard: 'EMA guideline on baseline covariates (2015)',
+          endpointName: e.name,
+          title: `ANOVA without baseline adjustment for "${e.name}"`,
+          detail: 'A change-from-baseline endpoint analysed by ANOVA ignores the baseline covariate; ANCOVA or MMRM with baseline is the accepted model.',
+          suggestedFix: 'Use ANCOVA with the baseline value as a covariate, or MMRM for repeated measures.',
+        });
+      }
+    }
+  }
+  return findings;
+}
+
+function suggestedMethodFor(type: string): string {
+  switch (type) {
+    case 'time_to_event': return 'Use Kaplan–Meier with a log-rank test and a Cox proportional-hazards model (or RMST if hazards are non-proportional).';
+    case 'binary': return 'Use logistic regression or a CMH test stratified by the randomisation factors.';
+    case 'ordinal': return 'Use a proportional-odds model or a Wilcoxon / van Elteren test; do not collapse to binary.';
+    case 'count': return 'Use a negative-binomial (or Poisson) model; for recurrent events, Andersen–Gill or LWYY.';
+    default: return 'Use MMRM or ANCOVA with the baseline value as a covariate.';
+  }
+}
+
+// ─── §12 · Missing data ──────────────────────────────────────────────────────
+
+/**
+ * The missing-data strategy must be pre-specified and must serve the estimand.
+ * LOCF as the primary approach is the one method both FDA and EMA have moved
+ * away from; a plan with no strategy at all leaves the primary analysis's
+ * handling of dropouts to the CSR author.
+ */
+export function missingDataGate(design: StudyDesign): DesignFinding[] {
+  const findings: DesignFinding[] = [];
+  const sp = design.statisticalPlan;
+  if (!sp) return findings; // PWR-000 already reports the absent plan
+  const strategy = (sp.missingDataStrategy ?? '').trim();
+  if (!strategy) {
+    findings.push({
+      code: 'MIS-001',
+      section: '§12 Missing data',
+      severity: 'major',
+      standard: 'ICH E9(R1) §A.6',
+      title: 'No missing-data strategy specified',
+      detail: 'The statistical plan does not say how missing outcomes are handled in the primary analysis, so the estimand cannot be shown to be estimated.',
+      suggestedFix: 'Pre-specify the primary approach (e.g. MMRM under MAR, multiple imputation, tipping-point sensitivity) aligned with the estimand strategy.',
+    });
+    return findings;
+  }
+  const s = strategy.toLowerCase();
+  if (/\blocf\b|last observation carried forward/.test(s)) {
+    findings.push({
+      code: 'MIS-002',
+      section: '§12 Missing data',
+      severity: sp.sensitivityAnalysesSpecified ? 'minor' : 'major',
+      standard: 'FDA / EMA missing-data guidance (NRC 2010; EMA 2010)',
+      title: 'LOCF as the primary missing-data method',
+      detail:
+        'Last observation carried forward assumes no change after dropout and is biased in either direction; ' +
+        'both agencies have moved to model-based (MMRM) or imputation-based (MI) primary analyses.' +
+        (sp.sensitivityAnalysesSpecified ? ' Sensitivity analyses are specified, which limits the exposure.' : ' No sensitivity analyses are specified.'),
+      suggestedFix: 'Make MMRM or multiple imputation the primary approach; keep LOCF, if at all, as a sensitivity analysis.',
+    });
+  } else if (/complete[- ]case/.test(s)) {
+    findings.push({
+      code: 'MIS-003',
+      section: '§12 Missing data',
+      severity: 'minor',
+      standard: 'ICH E9(R1) §A.6',
+      title: 'Complete-case analysis as the primary approach',
+      detail: 'A complete-case primary analysis assumes missingness is completely at random and discards randomised patients.',
+      suggestedFix: 'Use MMRM or multiple imputation as the primary approach and present complete-case as supportive.',
+    });
+  }
+  // Strategy family versus the primary estimand's intercurrent-event strategy.
+  const primaryName = (design.endpoints ?? []).find(e => e.role === 'primary')?.name;
+  const est = primaryName ? (design.estimands ?? []).find(x => x.endpointName === primaryName) : undefined;
+  if (est?.strategy === 'treatment_policy' && /censor|truncat|while on treatment|on[- ]treatment only/.test(s)) {
+    findings.push({
+      code: 'MIS-004',
+      section: '§12 Missing data',
+      severity: 'major',
+      standard: 'ICH E9(R1) §A.3',
+      endpointName: primaryName,
+      title: 'Missing-data approach contradicts the treatment-policy estimand',
+      detail:
+        'The primary estimand follows patients regardless of intercurrent events, but the missing-data approach censors or truncates at discontinuation — that estimates a different (while-on-treatment) estimand.',
+      suggestedFix: 'For a treatment-policy estimand, collect data after discontinuation and use multiple imputation (with tipping-point sensitivity) rather than censoring.',
+    });
+  }
+  return findings;
+}
+
+// ─── §13 · Interim analysis ──────────────────────────────────────────────────
+
+/**
+ * An interim look spends alpha. A plan that declares interims but names no
+ * spending function has no type I error control; a plan with no independent
+ * DMC has nobody to see the unblinded data.
+ */
+export function interimAnalysisGate(design: StudyDesign): DesignFinding[] {
+  const findings: DesignFinding[] = [];
+  const interim = design.statisticalPlan?.interim;
+  const fractions = interim?.informationFractions ?? [];
+  if (!interim || fractions.length === 0) return findings;
+  if (!interim.spendingFunction) {
+    findings.push({
+      code: 'INT-001',
+      section: '§13 Interim analysis',
+      severity: 'critical',
+      standard: 'ICH E9 §4.5; FDA adaptive-design guidance (2019)',
+      title: 'Interim analyses with no alpha-spending function',
+      detail: `${fractions.length} interim look(s) are planned but no spending function is named, so the overall type I error is not controlled.`,
+      suggestedFix: 'Name the spending function (O\'Brien–Fleming, Lan–DeMets, Pocock) and derive the efficacy boundaries from it.',
+    });
+  }
+  const sorted = fractions.every((f, i) => f > 0 && f <= 1 && (i === 0 || f > fractions[i - 1]));
+  if (!sorted || fractions[fractions.length - 1] !== 1) {
+    findings.push({
+      code: 'INT-002',
+      section: '§13 Interim analysis',
+      severity: 'major',
+      standard: 'ICH E9 §4.5',
+      title: 'Information fractions are not a valid schedule',
+      detail: `Information fractions must be strictly increasing within (0, 1] and end at 1 (the final analysis); the plan has [${fractions.join(', ')}].`,
+      suggestedFix: 'List the interim fractions in order and end the schedule with 1.0 for the final analysis.',
+    });
+  }
+  if (!interim.efficacyBoundaries?.length && !interim.futilityBoundaries?.length) {
+    findings.push({
+      code: 'INT-003',
+      section: '§13 Interim analysis',
+      severity: 'minor',
+      standard: 'ICH E9 §4.5',
+      title: 'No stopping boundaries stated',
+      detail: 'Neither efficacy nor futility boundaries are recorded for the planned interim looks.',
+      suggestedFix: 'Record the efficacy (and, where applicable, futility) boundaries derived from the spending function.',
+    });
+  }
+  const dmc = design.safety?.dmcCharter;
+  if (!dmc?.present) {
+    findings.push({
+      code: 'INT-004',
+      section: '§13 Interim analysis',
+      severity: 'major',
+      standard: 'FDA DMC guidance (2006)',
+      title: 'Interim analyses without a data monitoring committee',
+      detail: 'Interim looks at unblinded data are planned but no DMC charter is recorded, so the sponsor would be the one seeing the interim results.',
+      suggestedFix: 'Charter an independent DMC with a statistical member and an unblinding procedure before the first look.',
+    });
+  } else if (dmc.hasStatisticalMember === false) {
+    findings.push({
+      code: 'INT-005',
+      section: '§13 Interim analysis',
+      severity: 'minor',
+      standard: 'FDA DMC guidance (2006)',
+      title: 'DMC without a statistical member',
+      detail: 'The DMC charter records no statistician on the committee that will read the interim analysis.',
+      suggestedFix: 'Add an independent statistician to the DMC.',
+    });
+  }
+  return findings;
+}
+
 // ─── Aggregate ───────────────────────────────────────────────────────────────
 
 /** Run every gate over a design and return the combined findings. */
@@ -499,6 +804,10 @@ export function runAllGates(design: StudyDesign): DesignFinding[] {
     ...frameworkRules(design),
     ...multiplicityGate(design),
     ...powerRedFlags(design),
+    ...populationGate(design),
+    ...methodEndpointGate(design),
+    ...missingDataGate(design),
+    ...interimAnalysisGate(design),
     ...scheduleOfActivitiesGate(design),
   ];
 }

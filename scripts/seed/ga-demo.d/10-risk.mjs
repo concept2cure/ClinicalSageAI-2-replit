@@ -22,11 +22,12 @@
  *   control_type      inherent_safety | protective_measure | information_safety
  *   control status    proposed | implemented | verified | effective
  *
- * Shape note: migrations/20260609_design_risk.sql declares a DIFFERENT
- * risk_items/risk_controls shape (uuid PK, rmf_id NOT NULL). Both migrations
- * use CREATE TABLE IF NOT EXISTS and 20260507 sorts first, so a database
- * migrated in order has the mdx shape this module targets — but we verify the
- * distinguishing columns before inserting and skip gracefully otherwise.
+ * Shape note: a second, uuid-keyed risk_items/risk_controls definition used to
+ * exist in migrations/20260609_design_risk.sql. It never applied on any
+ * provisioning path and was deleted (2026-09-11) in favour of the Drizzle
+ * shapes, so 20260507's mdx shape is now the only one. The column check below
+ * stays regardless: it is cheap, and it is what tells us the shape changed
+ * rather than letting an INSERT fail mid-seed.
  *
  * rbm_risk_assessments is NOT referenced by these tables (it is the FK parent
  * of the separate rbm_* family only), so no handling is needed here.
@@ -328,7 +329,7 @@ export default async function seed(client, { org, admin }) {
   const mdxShape = ['organization_id', 'ref_code', 'severity', 'probability', 'status']
     .every((c) => itemCols.has(c));
   if (!mdxShape) {
-    console.log('   ⚠ risk_items lacks the mdx (20260507) shape — found the design-risk variant, skipping');
+    console.log('   ⚠ risk_items lacks the mdx (20260507) shape — skipping');
     return;
   }
 

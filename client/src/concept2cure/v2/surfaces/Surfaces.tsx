@@ -23,8 +23,6 @@ import {
   NAV_GROUP_OF,
   READINESS_META,
   getSegmentContext,
-  getSegmentModules,
-  getSurfaceMeta,
 } from '../registryModel';
 import type { GlobalRiCatalog, EnrichedGlobalRiCapability } from '@shared/types/global-ri-api';
 import { consumeNavParams } from '../navParams';
@@ -32,6 +30,8 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/surfaces-v2.css';
 import { useChatUpload } from '../../hooks/useChatUpload';
+import { AppMentionMenu, useAppMentions } from '../appMentions';
+import { CapabilityBrowser } from './CapabilityBrowser';
 
 /* ════════════ Home — AnA-first landing (centered composer) ════════════ */
 
@@ -118,7 +118,11 @@ export function Home({
   const [modeOpen, setModeOpen] = React.useState(false);
   const [mode, setMode] = React.useState('standard');
   const [plusOpen, setPlusOpen] = React.useState(false);
+  const [browseOpen, setBrowseOpen] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
+  /* `@app` on the front door — the same hook the rail and the thread use. */
+  const draftRef = React.useRef<HTMLTextAreaElement>(null);
+  const mentions = useAppMentions(draft, setDraft, draftRef);
   const ctx = getSegmentContext(segment);
 
   /* ── "Attach file" opened a picker into nothing ────────────────────────────
@@ -183,7 +187,6 @@ export function Home({
     onNav('projects');
   };
 
-  const modGroups = getSegmentModules(segment) ?? [];
 
   const quickActions =
     ctx?.actions ??
@@ -208,16 +211,16 @@ export function Home({
           <div className="landing-segctx">
             <div className="landing-segctx-top">
               <span className="landing-segctx-cat">{ctx.label}</span>
-              <span className="landing-segctx-tag">{ctx.tagline}</span>
             </div>
             <HomeLeadProgram onNav={onNav} />
-            <div className="landing-segctx-paths">
-              {ctx.pathways.map((p, i) => (
-                <span key={i} className="landing-segctx-path">
-                  {p}
-                </span>
-              ))}
-            </div>
+            {/* The tagline and the pathway chip strip (ctx.pathways — "510(k),
+                De Novo, PMA, EU MDR") were removed here on 2026-09-07. Both are
+                static segment copy, not this tenant's state: they described the
+                category the user already picked, above a lead programme that
+                reads their real portfolio. `ctx.pathways` is still rendered by
+                the segment picker (Shell.tsx:415), where the pathways describe
+                the category you are choosing between — which is the one place
+                that copy answers a question the user is actually asking. */}
             <button type="button" className="landing-newproj" onClick={newProject}>
               <span className="ico">{I.plus}</span>Start a new {ctx.label} project
             </button>
@@ -225,18 +228,26 @@ export function Home({
         )}
         <div className="landing-composer">
           <textarea
+            ref={draftRef}
             className="landing-input"
             rows={3}
-            placeholder="How can I help you today?"
+            placeholder="How can I help you today? Type @ to name an app."
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            aria-autocomplete="list"
+            aria-controls={mentions.open ? 'landing-mentions' : undefined}
+            aria-expanded={mentions.open}
+            onChange={(e) => { setDraft(e.target.value); mentions.sync(e.currentTarget); }}
+            onSelect={(e) => mentions.sync(e.currentTarget)}
+            onBlur={() => mentions.close()}
             onKeyDown={(e) => {
+              if (mentions.onKeyDown(e)) return;
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 send();
               }
             }}
           />
+          <AppMentionMenu api={mentions} id="landing-mentions" />
           <input
             ref={fileRef}
             type="file"
@@ -357,39 +368,26 @@ export function Home({
             </button>
           ))}
         </div>
-        {modGroups.length > 0 && (
-          <div className="landing-modules">
-            <div className="landing-modules-head">
-              <span className="lm-title">Everything in your {ctx ? ctx.label : 'workspace'}</span>
-              <span className="lm-sub">All modules built for this client category</span>
-            </div>
-            <div className="landing-modgroups">
-              {modGroups.map((g) => (
-                <section key={g.label} className="landing-modgroup">
-                  <h3 className="lm-grp-label">{g.label}</h3>
-                  <div className="lm-grp-grid">
-                    {g.items.map((id) => {
-                      const m = getSurfaceMeta(id);
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          className="lm-card"
-                          onClick={() => onNav(id)}
-                          title={('notes' in m && m.notes) || m.label}
-                        >
-                          <span className="lm-card-ic">{(m.icon && I[m.icon]) ?? I.grid}</span>
-                          <span className="lm-card-l">{m.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* ── The module grid moved into CapabilityBrowser (2026-09-07) ──
+            This rendered every module in the tenant's segment inline, below the
+            composer — the product's whole capability catalogue on the first
+            authenticated screen, under a composer whose point is that you can
+            just ask. The home is the short head; the catalogue is the long tail
+            and now opens on demand.
+
+            Same data, same `onNav(id)`, same cards: nothing became less
+            reachable, it went from one click to two and gained a search. */}
+        <button type="button" className="landing-browse" onClick={() => setBrowseOpen(true)}>
+          Browse all capabilities
+        </button>
       </div>
+      {browseOpen && (
+        <CapabilityBrowser
+          segment={segment}
+          onNav={onNav}
+          onClose={() => setBrowseOpen(false)}
+        />
+      )}
     </div>
   );
 }

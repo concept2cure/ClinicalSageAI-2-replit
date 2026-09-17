@@ -56,6 +56,43 @@ describe('buildPreflightReport', () => {
     expect(labels.filter((l) => l === 'ich-ectd-3-2.dtd')).toHaveLength(1);
   });
 
+  // ── The stylesheets are procurement items too ──────────────────────────────
+  // Every index.xml carries <?xml-stylesheet href="util/style/ectd-2-0.xsl"?>
+  // and the FDA backbone carries ../../util/style/us-regional.xsl. The preflight
+  // built its required set from requiredDtdsForRegion ONLY, so it would report
+  // procurement "ready" with both stylesheets still unobtained — and the
+  // packager's own gate (assessDtdReadiness, which counts them) would then
+  // refuse the production package the preflight had just cleared.
+  it('requires the agency STYLESHEETS, not just the DTDs', () => {
+    const labels = buildPreflightReport(EMPTY).items.map((i) => i.label);
+    expect(labels).toContain('ectd-2-0.xsl');
+    expect(labels).toContain('us-regional.xsl');
+    // The ICH stylesheet is shared by every region — reported exactly once.
+    expect(labels.filter((l) => l === 'ectd-2-0.xsl')).toHaveLength(1);
+  });
+
+  it('does not go ready with all five DTDs vendored and the stylesheets absent', () => {
+    const r = buildPreflightReport({
+      ...EMPTY,
+      dtdFilesPresent: [
+        'ich-ectd-3-2.dtd',
+        'us-regional-v3-3.dtd',
+        'eu-regional.dtd',
+        'jp-regional.dtd',
+        'ca-regional.dtd',
+      ],
+      estarFilesPresent: [],
+      validators: [{ id: 'internal', label: 'Internal', configured: true }],
+    });
+    expect(r.ready).toBe(false);
+    const actions = r.actions.join(' ');
+    expect(actions).toContain('ectd-2-0.xsl');
+    expect(actions).toContain('us-regional.xsl');
+    // …and the five DTDs are correctly reported satisfied (not a blanket fail).
+    const dtdGaps = r.items.filter((i) => !i.satisfied && i.label.endsWith('.dtd'));
+    expect(dtdGaps).toEqual([]);
+  });
+
   it('tells the maintainer where each missing artifact goes and what it unblocks', () => {
     const r = buildPreflightReport(EMPTY);
     for (const gap of r.items.filter((i) => !i.satisfied)) {
@@ -72,7 +109,11 @@ describe('buildPreflightReport', () => {
       .map((i) => i.label);
     const r = buildPreflightReport({
       ...EMPTY,
-      dtdFilesPresent: everyArtifact.filter((f) => f.endsWith('.dtd')),
+      // assets/ectd-dtd/ is ONE drop-point holding both the .dtd files and the
+      // agency .xsl stylesheets (see its README "Required files"), so the
+      // observation of that directory carries both. This filtered .dtd only
+      // while the preflight required DTDs only.
+      dtdFilesPresent: everyArtifact.filter((f) => f.endsWith('.dtd') || f.endsWith('.xsl')),
       estarFilesPresent: everyArtifact.filter((f) => f.endsWith('.pdf')),
       validators: [{ id: 'internal', label: 'Internal', configured: true }],
     });

@@ -5,6 +5,10 @@ import { db } from '../db.js';
 import { sql } from 'drizzle-orm';
 import { authenticateToken } from '../middleware/auth.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId.js';
+import { serverError } from '../lib/api-response.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('semantic-search');
 
 const router = express.Router();
 
@@ -66,10 +70,7 @@ router.post('/embeddings/component', async (req, res) => {
     
   } catch (error) {
     console.error('Error generating component embeddings:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    return serverError(res, logger, 'saving component', error);
   }
 });
 
@@ -103,10 +104,7 @@ router.post('/embeddings/document', async (req, res) => {
     
   } catch (error) {
     console.error('Error generating document embeddings:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    return serverError(res, logger, 'saving document', error);
   }
 });
 
@@ -160,10 +158,7 @@ router.post('/search', async (req, res) => {
     
   } catch (error) {
     console.error('Semantic search error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    return serverError(res, logger, 'searching', error);
   }
 });
 
@@ -213,10 +208,7 @@ router.get('/embeddings/stats', async (req, res) => {
     
   } catch (error) {
     console.error('Error fetching embedding stats:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    return serverError(res, logger, 'loading stats', error);
   }
 });
 
@@ -246,10 +238,7 @@ router.delete('/embeddings/component/:componentId', async (req, res) => {
     
   } catch (error) {
     console.error('Error deleting embeddings:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    return serverError(res, logger, 'deleting component', error);
   }
 });
 
@@ -308,10 +297,7 @@ router.post('/reindex', async (req, res) => {
     
   } catch (error) {
     console.error('Error reindexing components:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    return serverError(res, logger, 'reindexing', error);
   }
 });
 

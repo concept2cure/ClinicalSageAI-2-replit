@@ -298,6 +298,40 @@ export const apiRequest = async (
 };
 
 /**
+ * Send a multipart body (a file the user attached) with the SAME auth and
+ * tenant headers `apiRequest` sends.
+ *
+ * Separate from `apiRequest` for one reason: `Content-Type` must be left unset
+ * so the browser writes the multipart boundary itself. Setting it by hand — or
+ * reusing apiRequest, which always sets `application/json` — produces a body the
+ * server cannot parse, which is how an upload path ends up "failing for no
+ * reason". The auth/org header logic is NOT duplicated here; both callers read
+ * the same cached values.
+ *
+ * Unlike `apiRequest` this RESOLVES on a non-2xx rather than throwing: an upload
+ * refusal (wrong file type, a blank template, no sequence to file into) is
+ * information the user needs in the server's own words, not an exception.
+ */
+export const apiUpload = async (
+  method: 'POST' | 'PUT' | 'PATCH',
+  url: string,
+  form: FormData,
+  customHeaders?: Record<string, string>,
+): Promise<Response> => {
+  const authToken = getCachedAuthToken();
+  return fetch(url, {
+    method,
+    credentials: 'include',
+    headers: {
+      'x-organization-id': getCachedOrgId(),
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      ...customHeaders,
+    },
+    body: form,
+  });
+};
+
+/**
  * Parse a fetch Response body as JSON. Returns null for empty/204 responses.
  * Used by service-layer wrappers (api-connector) that work with raw Responses.
  */
