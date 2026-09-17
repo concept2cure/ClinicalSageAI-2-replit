@@ -28,12 +28,48 @@ export interface ToolCall {
   id: string;
   name: string;
   input: Record<string, unknown>;
+  /**
+   * Set when the model's arguments for this call could not be reconstructed
+   * from the stream (see AnaToolUse.inputParseError). `input` is `{}`, which
+   * is indistinguishable from a zero-argument call, so an executor MUST check
+   * this before dispatching: running the handler on `{}` would execute the
+   * tool as though the model had asked for nothing.
+   */
+  inputParseError?: string;
 }
 
 export interface ToolResultEntry {
   tool_use_id: string;
   name: string;
   content: string;
+}
+
+/**
+ * The result body for a call whose arguments never reached us, or `null` when
+ * the call is fine to dispatch.
+ *
+ * An executor calls this before handing anything to a handler. The distinction
+ * it preserves: a call with `input: {}` and no `inputParseError` is a
+ * zero-argument tool and runs normally; a call with `input: {}` AND an
+ * `inputParseError` is a call whose arguments we lost in transport. Running
+ * the handler on the second one executes the tool as though the model had
+ * asked for nothing, and returns a "missing parameters" error that reads as
+ * the model's mistake — so the model stops trusting a tool that was never
+ * given a chance.
+ *
+ * The message says whose fault it is and asks for the same call again,
+ * because the model's only other reading of a bare failure is that the tool
+ * cannot answer the question.
+ */
+export function lostToolInputResult(call: ToolCall): { error: string; tool: string } | null {
+  if (!call.inputParseError) return null;
+  return {
+    error:
+      `The arguments for this call did not reach the tool (${call.inputParseError}). ` +
+      `This is a transport failure on our side, not a problem with the request. ` +
+      `Call the tool again with the same arguments.`,
+    tool: call.name,
+  };
 }
 
 export interface ModelTurn {

@@ -372,6 +372,71 @@ function resolveSeed(requested: number | undefined): number {
  */
 export const resolveSeedForTest = resolveSeed;
 
+/** One buffer per open tool_use block, keyed by the stream event's `index`. */
+type ToolInputBuffers = Map<number, { toolIndex: number; json: string }>;
+
+/**
+ * Append one `input_json_delta` fragment to its block's buffer. A fragment for
+ * a block we never saw open is dropped rather than starting a buffer with no
+ * tool to attach to.
+ */
+function appendToolInputFragment(
+  buffers: ToolInputBuffers,
+  index: number,
+  fragment: unknown
+): void {
+  const buffered = buffers.get(index);
+  if (buffered) buffered.json += typeof fragment === 'string' ? fragment : '';
+}
+
+/**
+ * Attach a streamed tool input to its tool use.
+ *
+ * `buffered` is the concatenation of the block's `input_json_delta` fragments.
+ * Three cases, and the difference between the last two is the whole point:
+ *
+ *   - empty buffer      the model emitted no fragments, so the tool genuinely
+ *                       takes no arguments. `input` stays `{}` and nothing is
+ *                       flagged.
+ *   - parses            the model's arguments, attached as-is.
+ *   - does not parse    the arguments existed and we could not reconstruct
+ *                       them. `input` stays `{}` — but `inputParseError` says
+ *                       so, because dispatching a handler on `{}` here would
+ *                       run the tool as though the model had asked for
+ *                       nothing, and report back a "missing parameters" error
+ *                       that blames the model for our loss.
+ *
+ * `truncationReason` is for a block that never closed, where even an empty
+ * buffer means arguments that had not arrived yet rather than none at all.
+ *
+ * Never throws: a malformed input is a reportable outcome for one tool call,
+ * not a reason to fail the whole turn.
+ */
+function finalizeToolInput(
+  toolUse: AnaToolUse | undefined,
+  buffered: string,
+  truncationReason?: string
+): void {
+  if (!toolUse) return;
+  if (truncationReason) {
+    // The block never closed. An empty buffer here is not a zero-argument
+    // call — it is a call whose arguments had not arrived yet.
+    toolUse.inputParseError = truncationReason;
+    return;
+  }
+  if (buffered.length === 0) return;
+  try {
+    const parsed = JSON.parse(buffered);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      toolUse.input = parsed as Record<string, unknown>;
+      return;
+    }
+    toolUse.inputParseError = `tool input was ${Array.isArray(parsed) ? 'an array' : typeof parsed}, not an object`;
+  } catch (err: any) {
+    toolUse.inputParseError = `tool input was not parseable JSON: ${err?.message ?? 'unknown error'}`;
+  }
+}
+
 export class AIGateway {
   private config: GatewayConfig;
   private models: ModelConfig[];
@@ -1435,6 +1500,13 @@ export class AIGateway {
     let content = '';
     let thinking = '';
     const toolUses: AnaToolUse[] = [];
+    // Tool inputs arrive as a run of `input_json_delta` fragments between the
+    // block's start and stop, split at arbitrary points (mid-key, mid-value).
+    // Blocks interleave when the model calls tools in parallel, so the buffer
+    // is keyed by the event's own `index` — the only thing that identifies
+    // which block a fragment belongs to. `toolIndex` points back at the entry
+    // in `toolUses` so the parsed object lands on the right tool.
+    const toolInputBuffers: ToolInputBuffers = new Map();
     let inputTokens = 0;
     let outputTokens = 0;
     let cacheCreationInputTokens = 0;
@@ -1479,7 +1551,9 @@ export class AIGateway {
             thinking += event.delta.thinking;
             onStream('', { type: 'thinking', thinkingContent: event.delta.thinking });
           } else if (event.delta?.type === 'input_json_delta') {
-            // Tool input streaming — accumulate
+            // The model's arguments for a tool, one fragment at a time. Append
+            // verbatim; the fragments are only valid JSON once concatenated.
+            appendToolInputFragment(toolInputBuffers, event.index, event.delta.partial_json);
           }
         } else if (event.type === 'content_block_start') {
           if (event.content_block?.type === 'tool_use') {
@@ -1488,6 +1562,15 @@ export class AIGateway {
               name: event.content_block.name,
               input: {},
             });
+            toolInputBuffers.set(event.index, { toolIndex: toolUses.length - 1, json: '' });
+          }
+        } else if (event.type === 'content_block_stop') {
+          // The block is closed, so its fragments are now a complete JSON
+          // document — parse it onto the tool use it belongs to.
+          const buffered = toolInputBuffers.get(event.index);
+          if (buffered) {
+            toolInputBuffers.delete(event.index);
+            finalizeToolInput(toolUses[buffered.toolIndex], buffered.json);
           }
         } else if (event.type === 'message_delta') {
           stopReason = event.delta?.stop_reason || stopReason;
@@ -1511,6 +1594,15 @@ export class AIGateway {
     } finally {
       clearInterval(chunkWatchdog);
     }
+
+    // Any buffer still open never saw its content_block_stop — a stall, an
+    // abort, or a dropped connection cut the stream mid-input. Finalize them
+    // anyway so a truncated input is reported as lost rather than silently
+    // reading as a tool that was called with no arguments.
+    for (const [, buffered] of toolInputBuffers) {
+      finalizeToolInput(toolUses[buffered.toolIndex], buffered.json, 'the stream ended before the tool input was complete');
+    }
+    toolInputBuffers.clear();
 
     // If stream stalled but we have partial content, mark finish reason accordingly
     if (streamStalled && content) {
