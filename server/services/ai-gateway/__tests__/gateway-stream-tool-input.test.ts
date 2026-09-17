@@ -44,6 +44,8 @@ const modelConfig: ModelConfig = {
   costPer1kOutput: 0.075,
   capabilities: ['chat'],
   enabled: true,
+  thinkingMode: 'adaptive',
+  supportsSamplingParams: false,
 };
 
 /** A gateway whose Anthropic client yields exactly these wire events. */

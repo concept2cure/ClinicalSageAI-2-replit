@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-17T04:46:35.365Z",
+  "generatedAt": "2026-09-17T17:03:47.638Z",
   "git": {
-    "sha": "9fbcffdad48a5d1a180450cad40a0ddb23a1e8be",
+    "sha": "c104aca83753e945a95424bb4c2f7700f4854595",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1957,7 +1957,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1027362
+        "bytes": 1027892
       },
       {
         "file": "shared/schema.ts",
@@ -2061,7 +2061,11 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 126017
+        "bytes": 126125
+      },
+      {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 119963
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2118,10 +2122,6 @@
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 105559
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 100587
       }
     ],
     "largeFilesByLines": [
@@ -2131,7 +2131,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19910
+        "lines": 19921
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2214,6 +2214,10 @@
         "lines": 2949
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2925
+      },
+      {
         "file": "server/src/routes/stability.router.ts",
         "lines": 2807
       },
@@ -2223,7 +2227,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2777
+        "lines": 2781
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2236,10 +2240,6 @@
       {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2588
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2509
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2366,6 +2366,10 @@
         "lines": 1912
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1907
+      },
+      {
         "file": "server/routes/regulatory-digital-twin.ts",
         "lines": 1898
       },
@@ -2375,7 +2379,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1871
+        "lines": 1884
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
@@ -2444,10 +2448,6 @@
       {
         "file": "server/services/ana/submission-chat-handler.ts",
         "lines": 1756
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1755
       },
       {
         "file": "server/services/cmc-write-through.ts",

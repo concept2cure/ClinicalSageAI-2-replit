@@ -1,7 +1,7 @@
 # AnA Document Catalog — remember, consume, contextualize client files
 
 **Date:** 2026-09-05
-**Feature flag:** `ana.document_catalog` (FeatureToggleService, off by default, fails closed) · env override `ANA_DOCUMENT_CATALOG_FORCE_ON=true`
+**Feature flag:** `ana.document_catalog` (FeatureToggleService, **off by default**, fails closed) · env override `ANA_DOCUMENT_CATALOG_FORCE_ON=true` · **see Rollout — nothing here runs until the toggle is on**
 **Migration:** `migrations/20260905_document_catalog.sql` (in `C2C_MIGRATION_FILES`)
 
 ## The problem this closes
@@ -53,14 +53,16 @@ knows precisely what is left to read. This is the mechanism that makes "a
 sampled page recorded as reviewed" impossible, and the tests exercise the
 refusal first (`server/services/vault/__tests__/document-catalog.service.test.ts`).
 
-### Five AnA tools (defs `document-catalog-tool-defs.ts`, handlers `document-catalog-tools.ts`)
+### Seven AnA tools (defs `document-catalog-tool-defs.ts`, handlers `document-catalog-tools.ts`)
 
 | Tool | What it does |
 |---|---|
 | `list_project_documents` | Enumerates the vault (program-scoped via `projects.regulatory_program_id`, else org-wide): filed location, catalog state per document. Uncataloged and extraction-failed files are labeled as exactly that. Also returns the org's **chat uploads** from the evidence spine (`listClientDocuments`, `currentOnly` — superseded re-uploads excluded) with each one's `fileId`, so a file attached in a past conversation reopens through `read_uploaded_document`. A failed chat-upload listing is reported as an error, never as "no chat uploads". |
-| `read_project_document` | Serves the extracted text in windows, records a receipt per window, reports coverage + remaining unread ranges. On extraction failure it says so with the recorded reason instead of returning empty text. |
+| `read_project_document` | Serves the extracted text in windows, records a receipt per window, reports coverage + remaining unread ranges. On extraction failure it says so with the recorded reason instead of returning empty text. Text produced by OCR carries its mean confidence and an explicit caveat — a recognised digit is not a typed one. |
 | `catalog_project_document` | Writes the comprehension tier — refused below full coverage; embeds the record for semantic recall. |
+| `place_project_document` | Files the document into its dossier folder through the canonical `placeVaultDocument` — governed, audited with both the old and new location, and **refused for a document with no comprehension record**. `unfile:true` is the honest fallback. |
 | `file_chat_upload_to_vault` | Files a chat upload into the project vault through the canonical `ingestVaultDocument`, so it gains a dossier placement, a catalog record, chunks and semantic search. Refuses a vault UUID (already filed) and asks which program rather than guessing one. |
+| `search_document_passages` | Passage search INSIDE the filed documents (`vault.document_chunks`, through the canonical `ragRouter` vault corpus): the sentences that answer a question, with the document and locator that make them citable. States how many documents are not in the passage index, and reports an unavailable index as unavailable. |
 | `search_project_documents` | Semantic (pgvector cosine) search over the comprehension records (`document-catalog-search.ts`), org-checked. Only cataloged documents are searchable — the response counts the unsearchable ones so absence is never read as nonexistence — and an unreachable embedding provider or a vector-less database is reported as unavailability, never as an empty result. |
 
 Definitions are in `ALL_ANA_TOOLS_RAW` (registry-consistency suite holds
@@ -104,6 +106,106 @@ end to end (SHA-256, bytes on disk, the audit chain, atomicity, the
 cross-tenant refusal) — plus a new dbtest that files a real chat upload and
 proves the resulting vault document carries the tenant key, the audit row, the
 catalog tier, and is immediately readable.
+
+### One canonical filing, and the tool that reaches it
+
+**Service:** `server/services/vault/vault-placement.service.ts` · **Tool:** `place_project_document`
+
+The same shape as the ingest, one step later in the document's life. The
+classifier in `vault-filing.service.ts` PROPOSES a placement at upload — from a
+filename, a title, and a sample of the text — and `vault-ingest` writes that
+proposal once. Nothing ever revisited it. A document the rules could not place
+sat in the Unfiled queue permanently; one they placed wrongly sat under
+"suggested" permanently. The only writer of a filing decision was 191 lines
+inside `POST /api/c2c/project-vault/:id/file`, reachable only by a person
+clicking in the Vault surface, and covered by no test at all — a §11-audited
+mutation that was believed to work rather than known to.
+
+So the write moved to `placeVaultDocument`, unchanged in behaviour, and both
+callers use it: the route maps its result to HTTP (191 lines → 55) and the tool
+maps the same result to AnA's transcript. The guards travel with it — program
+ownership reported as absence rather than as forbidden, the row taken `FOR
+UPDATE` inside the transaction, a folder validated against the program's *own*
+taxonomy view, and the UPDATE and its hash-chained audit row committing
+together or not at all.
+
+`place_project_document` adds one rule on top, and only for AnA: **she may file
+only a document she has cataloged.** Filing is a claim about what a document
+is, and a placement resting on a filename is the classifier's guess wearing her
+name. Unfiling is exempt, because it retracts a claim rather than making one —
+`unfile:true` puts the document in the visible Unfiled queue with her reason
+recorded, which is the honest answer when she cannot justify a folder.
+
+`tests/db/vault-placement.dbtest.ts` proves the write against real PostgreSQL:
+the filed row and its audit entry (both locations, hash-chained), a folder from
+another modality's taxonomy refused with nothing written, confirm-with-no-
+suggestion refused, an explicit unfile honoured, and another organization's
+caller unable to move the document. The taxonomy guard and the tenancy
+predicate were each removed in turn to watch exactly one test go red.
+
+### Both chat paths rehydrate at session start
+
+**Helper:** `sessionBootstrapBlockFor` (`server/services/ana-session-bootstrap.ts`) ·
+**Tripwire:** `server/routes/__tests__/session-bootstrap-wiring.test.ts`
+
+The session-start rehydration — the working summary, the top project and client
+atoms, AnA's own past lessons, and the project-files digest this workstream
+added — was called from exactly one place: `POST /api/chat/send-message`.
+
+The product has two canonical chat endpoints, and it is the other one,
+`POST /api/ana-ri/stream`, that a chat UI actually uses. There the memory was
+query-driven only: it answers what the user just typed and never says a document
+exists. So a streaming session began not knowing the client had uploaded
+anything — the exact failure this workstream was built to end, still true on the
+path that matters most, because the capability had been wired to one of two
+equivalent doors.
+
+The gate, the `ANA_SESSION_BOOTSTRAP_AUTO` kill-switch and the failure path move
+into one helper that both routes call; the streaming path counts its prior turns
+(server history, else the client's) and injects the block as a system turn ahead
+of the user's message when there are none. The tripwire enumerates the canonical
+chat entry points and asserts each one calls the helper, injects what it gets
+back, and does NOT re-implement the gate — which is how the two diverged.
+
+### The passage corpus becomes reachable
+
+**Service:** `server/services/vault/document-passage-search.ts` · **Tool:** `search_document_passages`
+
+The chunk corpus had been written by every ingest since it was built, and swept
+for the legacy backlog. Nothing AnA could call ever read it. The tool that looks
+like it should — `project_knowledge_search` — passes an `artifactScope`, which
+routes retrieval to the project ATOM index (Data Room artifacts) and never to
+the client's uploads; the only readers of the vault corpus were the Cortex query
+route and the RAG eval harness. So the passages of the client's own evidence
+were indexed and unreachable: the same shape as the defect that created the
+corpus (a reader with no store), with the halves swapped.
+
+The tool is a thin adapter over `ragRouter` with `corpus: 'vault'` — no second
+SQL path — with two deliberate departures from the `regulatory_qa` defaults,
+because this runs inside an agent turn rather than behind one request a person
+is waiting on: `strategy: 'basic'` (the default 'advanced' is HyDE plus
+multi-query, two model round trips before a row is read) and
+`useReranking: false` (an LLM-as-judge pass per search). Hybrid retrieval, MMR
+and ±1 context expansion stay on — they are SQL and arithmetic, and a matched
+sentence without its surrounding clause is how a figure gets quoted away from
+the condition attached to it.
+
+Honesty, in three places: a missing tenant identity is REFUSED here rather than
+passed to the pipeline, whose own refusal is an empty array indistinguishable
+from "nothing matched" by the time a model reads it; every answer carries the
+chunking ledger's coverage (indexed / pending / failed of total), so a miss over
+a partly-indexed corpus is never reported as absence; and an unreachable
+embedding provider is stated, never rendered as zero passages.
+
+`tests/db/vault-passage-search.dbtest.ts` proves it end to end against real
+PostgreSQL and a real (stub) embedding endpoint through the governed provider
+seam: two documents uploaded through the ingest route are searchable by their
+CONTENTS in the same session, a stability question returns the stability
+passage and a tox question the tox one (the stub is a deterministic
+bag-of-words projection, not a constant vector, precisely so selection is under
+test), another organization's identical document never appears, and the
+tenant-less call refuses. Routing the search back through `artifactScope` — the
+exact misrouting that made the corpus unreachable — turns four of the six red.
 
 ### Two id spaces, told apart (`document-catalog-tools.ts`)
 
@@ -265,11 +367,34 @@ nothing like every other bootstrap source.
 
 ## Rollout
 
+> **Everything below is OFF until someone turns it on.** `feature_toggles` is
+> empty on a fully migrated database — no migration seeds it — and
+> `isFeatureEnabled` correctly returns false for a key with no row. So the whole
+> surface resolved off in every deployment, and with no row there was nothing in
+> the toggle table for an operator to find: not a feature switched off, a
+> feature that could not be discovered. Startup now creates both rows (disabled)
+> and prints the resolved state, so a deployment running without the capability
+> says so instead of looking like one that has it
+> (`server/startup/document-catalog-bootstrap.ts`, proven in
+> `tests/db/document-catalog-toggles.dbtest.ts`). Enabling is still a decision,
+> not a default: chunking embeds every upload at ingest and carries a per-upload
+> cost.
+
 1. Deploy (migration applies via `deploy-migrate` / `apply-c2c-migrations`).
-2. Enable per tenant: `FeatureToggleService.enableFeature('ana.document_catalog', <orgId>)`,
-   or globally via the toggle row; `ANA_DOCUMENT_CATALOG_FORCE_ON=true` for dev.
-3. New vault ingests write the extraction tier immediately; legacy documents
-   are backfilled lazily on first `read_project_document`.
+2. Read the startup line — it names both keys and their resolved state.
+3. Turn it on, either way:
+   - **Per tenant:** `FeatureToggleService.enableFeatureForTenant('ana.document_catalog', <orgId>)`
+     (and `'ana.vault_chunking'` for the passage index).
+   - **Globally:** `UPDATE feature_toggles SET enabled = TRUE WHERE feature_key IN
+     ('ana.document_catalog', 'ana.vault_chunking');`
+   - **Per environment (dev):** `ANA_DOCUMENT_CATALOG_FORCE_ON=true`,
+     `ANA_VAULT_CHUNKING_FORCE_ON=true`.
+   The catalog can run without chunking: the tools and recall work, and
+   `search_document_passages` reports that nothing is indexed rather than
+   returning an empty result. Chunking without the catalog does nothing.
+4. New vault ingests write the extraction tier immediately; legacy documents
+   are backfilled lazily on first `read_project_document`, and their passages by
+   `scripts/backfill-vault-chunks.mjs`.
 
 ## Known gaps / next steps (deliberately out of scope here)
 
@@ -280,10 +405,16 @@ nothing like every other bootstrap source.
   deliberately: the comprehension record hangs off `vault.documents`, and
   filing is the act that gives a file a governed home. `remember_document_in_project`
   (now embedding its entries) remains their lighter durable-memory path.
-- **Cataloging is still model-invoked:** Anna reads and catalogs a document
-  when the work calls for it; nothing sweeps the backlog of "extracted but not
-  yet studied" files on its own. The listing labels them honestly, so the
-  backlog is visible rather than hidden.
+- **Passage search does not narrow to one document.** It searches the
+  organization's whole filed corpus; "what does THIS report say about X" is
+  served by reading that document. Adding a document filter means adding a
+  column to the shared `rag-filters` layer, which is a change to every corpus,
+  not to this tool.
+- **Cataloging and filing are still model-invoked:** Anna reads, catalogs and
+  files a document when the work calls for it; nothing sweeps the backlog of
+  "extracted but not yet studied" files, or the Unfiled queue, on its own. Both
+  are labeled honestly in the listing and in session recall, so the backlog is
+  visible rather than hidden — but a file nobody asks about stays unstudied.
 - ~~`vault.documents.page_count` never populated~~ — **closed.** Ingest now
   reads the count from the PDF itself (`pdfPageCount`, no text-layer census) and
   writes it to the document and its catalog row. It stays null for a format

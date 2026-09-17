@@ -38,74 +38,21 @@
  */
 
 import type { ToolContext } from './AnaToolExecutor.js';
+import {
+  CHAT_UPLOAD_ID,
+  requireCatalog,
+  unknownDocumentRefusal,
+  withCaughtErrors,
+  type CatalogService,
+  type RegisterFn,
+} from './document-tools-shared.js';
+import { registerDocumentPlacementHandlers } from './document-placement-tools.js';
+import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DISABLED_MESSAGE =
-  'The document catalog is not enabled for this organization (feature ana.document_catalog). ' +
-  'Say so plainly; do not simulate a listing.';
-
-type CatalogService = typeof import('../vault/document-catalog.service.js');
-
-/**
- * A chat upload's file_id, as minted by the chat-upload route
- * (`file_<epoch>_<rand>`). Vault documents are UUIDs, so the two id spaces are
- * distinguishable on sight.
- */
-const CHAT_UPLOAD_ID = /^file_[0-9]+_[a-z0-9]+$/i;
-
-/**
- * The refusal for a document id the vault does not hold.
- *
- * "Not found" was the only answer here, and it was wrong in the one case that
- * matters most: list_project_documents returns the org's chat uploads beside
- * its vault documents, each with the file_id that reopens it, so the obvious
- * next call carries an id these tools do not take. Answering that with
- * absence — for a file we had just listed — is the failure this whole surface
- * exists to prevent, and under the persona's client-files rule AnA would relay
- * it to the client as "your document isn't there".
- *
- * So the two cases are told apart: an id shaped like a chat upload is in the
- * wrong STORE (say which tool reads it), and anything else genuinely is not a
- * vault document this organization holds.
- */
-function unknownDocumentRefusal(documentId: string, toolName: string): string {
-  if (CHAT_UPLOAD_ID.test(documentId)) {
-    return JSON.stringify({
-      ok: false,
-      error:
-        `${documentId} is a chat-uploaded file, not a vault document, so ${toolName} cannot take it. ` +
-        'Read it with read_uploaded_document (or inspect_uploaded_document first, for a large one) using that same file_id. ' +
-        'The file exists — do not report it as missing. Durable catalog records live on vault documents; ' +
-        'file_chat_upload_to_vault files this one into the project vault so it gains one.',
-      idSpace: 'chat_upload',
-    });
-  }
-  return JSON.stringify({
-    ok: false,
-    error:
-      `No vault document with id ${documentId} is in your organization's programs. ` +
-      'Call list_project_documents to see what the project folder actually holds — vault documents carry UUID ids.',
-    idSpace: 'unknown',
-  });
-}
-
-/** Shared preamble: tenant present + feature on, else the honest refusal. */
-async function requireCatalog(
-  ctx: ToolContext | undefined,
-  toolName: string,
-): Promise<{ svc: CatalogService; orgId: number } | { refusal: string }> {
-  if (!ctx?.organizationId) {
-    return { refusal: `${toolName} requires an organization context.` };
-  }
-  const svc = await import('../vault/document-catalog.service.js');
-  if (!(await svc.isDocumentCatalogEnabled(ctx.organizationId))) {
-    return { refusal: DISABLED_MESSAGE };
-  }
-  return { svc, orgId: ctx.organizationId };
-}
 
 function listMessage(docs: Array<{ catalogStatus: string }>): string {
   if (docs.length === 0) return 'No documents in the vault for this scope.';
@@ -262,6 +209,27 @@ function coverageMessage(
   }. catalog_project_document will refuse until coverage is complete.`;
 }
 
+/**
+ * Say so when the text was recognised rather than read.
+ *
+ * OCR output is a reading of pixels, not the document's own characters: a
+ * digit can come back wrong and the sentence around it still scans. The
+ * persona requires a scan to be treated as a document, which it is — but a
+ * quoted figure from a 71%-confidence recognition needs to be checked against
+ * the page, and nothing said so before.
+ */
+function ocrCaveat(catalog: { extractionMethod: string | null; extractionConfidence: number | null }): string {
+  if (catalog.extractionMethod !== 'pdf-ocr' && catalog.extractionMethod !== 'image-ocr') return '';
+  const confidence =
+    typeof catalog.extractionConfidence === 'number'
+      ? ` at ${Math.round(catalog.extractionConfidence)}% mean confidence`
+      : '';
+  return (
+    ` This text was produced by OCR${confidence}, not read from a text layer — treat exact figures, ` +
+    'identifiers and dates as needing confirmation against the page before you quote them as fact.'
+  );
+}
+
 async function handleReadProjectDocument(
   input: Record<string, unknown>,
   ctx?: ToolContext,
@@ -306,6 +274,12 @@ async function handleReadProjectDocument(
     fileName: doc.fileName,
     documentTitle: doc.documentTitle,
     extractionMethod: doc.catalog!.extractionMethod,
+    /* An OCR'd scan is not the same evidence as a born-digital text layer, and
+       the method alone does not say how well it read. The mean confidence
+       travels with the window so a low-confidence recognition is qualified
+       rather than quoted as if it were typed. Null for methods that do not
+       produce one (utf8, pdf-text, docx, xlsx). */
+    extractionConfidence: doc.catalog!.extractionConfidence,
     window: { start: offset, end, text: text.slice(offset, end) },
     totalChars: charCount,
     coverage: {
@@ -313,7 +287,8 @@ async function handleReadProjectDocument(
       complete: coverage.complete,
       uncoveredRanges: coverage.uncovered.slice(0, 10),
     },
-    message: coverageMessage(coverage, charCount, end),
+    message:
+      coverageMessage(coverage, charCount, end) + ocrCaveat(doc.catalog!),
   });
 }
 
@@ -566,28 +541,11 @@ async function handleFileChatUploadToVault(
   });
 }
 
-/** Errors become structured tool results, matching the house handler style. */
-function withCaughtErrors(
-  name: string,
-  handler: (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>,
-) {
-  return async (input: Record<string, unknown>, ctx?: ToolContext): Promise<string> => {
-    try {
-      return await handler(input, ctx);
-    } catch (err) {
-      return JSON.stringify({
-        error: `${name} failed: ${err instanceof Error ? err.message : String(err)}`,
-      });
-    }
-  };
-}
-
-type RegisterFn = (
-  name: string,
-  handler: (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>,
-) => void;
-
 export function registerDocumentCatalogHandlers(register: RegisterFn): void {
+  // Placement lives in its own module (see document-tools-shared.ts) but is
+  // registered here, so the catalog stack still has one entry point.
+  registerDocumentPlacementHandlers(register);
+  registerDocumentPassageHandlers(register);
   register(
     'file_chat_upload_to_vault',
     withCaughtErrors('file_chat_upload_to_vault', handleFileChatUploadToVault),

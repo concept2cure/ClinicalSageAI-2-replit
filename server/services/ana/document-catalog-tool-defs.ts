@@ -9,7 +9,10 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
-import { VAULT_INGEST_DOCUMENT_TYPES } from '../../../shared/constants/domain/vault-taxonomy.js';
+import {
+  VAULT_DOC_KINDS,
+  VAULT_INGEST_DOCUMENT_TYPES,
+} from '../../../shared/constants/domain/vault-taxonomy.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -160,11 +163,95 @@ export const FILE_CHAT_UPLOAD_TO_VAULT: AnaTool = {
   },
 };
 
+export const SEARCH_DOCUMENT_PASSAGES: AnaTool = {
+  name: 'search_document_passages',
+  description:
+    'Search INSIDE the client\u0027s filed documents and get back the actual passages \u2014 the sentences that ' +
+    'answer the question, with the document and page they came from. This is the tool for "what does the ' +
+    'stability data show at 6 months", "which batch failed", "what did the sponsor commit to in the meeting ' +
+    'minutes": questions the text settles. It searches the passage index built from every vault upload, so it ' +
+    'reaches the contents, not just the titles or the summaries. Prefer it over reading a whole document when ' +
+    'you need a fact; prefer read_project_document when you need to UNDERSTAND a document (and you must read ' +
+    'all of it before cataloging it \u2014 passages are not a substitute for that). Use ' +
+    'search_project_documents instead to find WHICH file covers a topic. The response states how many ' +
+    'documents are not in the passage index, so a miss is never evidence of absence; if the index or the ' +
+    'embedding provider is unavailable it says so rather than returning nothing.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description:
+          'The question or phrase to find, in the words you expect the document to use. Specific terms \u2014 an assay, a batch id, an endpoint \u2014 retrieve better than a paraphrase.',
+      },
+      limit: { type: 'number', description: 'Maximum passages to return (default 8, max 25).' },
+    },
+    required: ['query'],
+  },
+};
+
+export const PLACE_PROJECT_DOCUMENT: AnaTool = {
+  name: 'place_project_document',
+  description:
+    'File a project-vault document into its dossier folder \u2014 the act that turns "we have this" into "it is ' +
+    'where it belongs". At upload a classifier PROPOSES a placement from the file name and a sample of the text; ' +
+    'a document it could not place sits in the Unfiled queue and one it guessed wrong sits under "suggested", and ' +
+    'nothing revisits either. Use this once you have READ the document and recorded what it is: the placement then ' +
+    'rests on comprehension instead of a filename. It is a governed, 21 CFR Part 11 audited move (the prior and new ' +
+    'locations are both recorded), so say what you moved and where. Refused for a document you have not cataloged ' +
+    '\u2014 read it with read_project_document and record it with catalog_project_document first. If you genuinely ' +
+    'cannot tell where it belongs, pass unfile:true: the visible Unfiled queue is the honest answer, and a guessed ' +
+    'folder is worse than an admitted gap.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: {
+        type: 'string',
+        description: 'The vault document UUID, from list_project_documents or read_project_document.',
+      },
+      folder_id: {
+        type: 'string',
+        description:
+          'The taxonomy folder to file it into (e.g. "module-4"). It must exist in this program\u0027s vault view; ' +
+          'a folder from another modality\u0027s tree is refused rather than stored.',
+      },
+      confirm_suggested: {
+        type: 'boolean',
+        description:
+          'Confirm the classifier\u0027s existing suggestion in place, without naming a folder. Refused when there is no suggestion to confirm.',
+      },
+      unfile: {
+        type: 'boolean',
+        description:
+          'Move it to the Unfiled queue \u2014 the honest answer when the document does not belong anywhere you can justify.',
+      },
+      ctd_section: {
+        type: 'string',
+        description: 'Finer CTD placement when the document states one (e.g. "4.2.3.2"). Omit rather than infer.',
+      },
+      evidence_kind: {
+        type: 'string',
+        enum: VAULT_DOC_KINDS.map(k => k.value),
+        description:
+          'What the document IS in the vault taxonomy, when you know it. Omitted leaves the existing value \u2014 which is better than a kind you had to reach for.',
+      },
+      rationale: {
+        type: 'string',
+        description:
+          'Why this is the right folder, in one sentence, grounded in what the document says. Recorded on the row and in the audit trail.',
+      },
+    },
+    required: ['document_id', 'rationale'],
+  },
+};
+
 export const DOCUMENT_CATALOG_TOOLS: AnaTool[] = [
   FILE_CHAT_UPLOAD_TO_VAULT,
   LIST_PROJECT_DOCUMENTS,
   READ_PROJECT_DOCUMENT,
   CATALOG_PROJECT_DOCUMENT,
+  PLACE_PROJECT_DOCUMENT,
   SEARCH_PROJECT_DOCUMENTS,
+  SEARCH_DOCUMENT_PASSAGES,
 ];
 

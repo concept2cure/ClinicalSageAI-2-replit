@@ -25,6 +25,7 @@ import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
   resolveEffortLevel,
   resolveEffortStrategy,
+  resolveApiEffort,
   resolveStrategyWithPrecedence,
   resolveModelOverride,
 } from '../../services/ai-gateway/effort.js';
@@ -80,11 +81,15 @@ import {
   mapWithConcurrency,
   describeToolPlan,
   lostToolInputResult,
+  abortRace,
+  ToolRunCancelled,
+  CANCELLED_TOOL_RESULT,
   type ToolCall,
   type ToolResultEntry,
   type ModelTurn,
   type FailedToolCall,
 } from '../../services/ana/agentic-loop.js';
+import { buildSteerMessage } from '../../services/ana/operator-channel.js';
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import {
   buildTraceEntry,
@@ -258,6 +263,9 @@ export function mountStreamRoute(router: Router): void {
       // running the whole investigation to completion unseen.
       runId = `run_${randomUUID()}`;
       runControlRegistry.register(runId);
+      // Handed to the gateway and the tool dispatcher so a stop lands on work
+      // already in flight, rather than waiting for the next round boundary.
+      const runSignal = runControlRegistry.cancelSignal(runId) ?? undefined;
       const cancelRun = () => runControlRegistry.requestCancel(runId);
       res.on('close', cancelRun);
       req.on('close', cancelRun);
@@ -577,11 +585,15 @@ export function mountStreamRoute(router: Router): void {
       }
 
       let streamHistoryLoaded = false;
+      /* How many turns preceded this one. It decides whether this is the START
+         of a session, which is the only point the rehydration below fires. */
+      let streamPriorTurns = 0;
       if (threadId) {
         try {
           const serverHistory = await getThreadMessages(threadId);
           // Exclude the message we just saved (it's the current user message)
           const previousMsgs = serverHistory.slice(0, -1);
+          streamPriorTurns = previousMsgs.length;
           if (previousMsgs.length > 0) {
             for (const msg of previousMsgs.slice(-20)) {
               messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
@@ -606,7 +618,49 @@ export function mountStreamRoute(router: Router): void {
           if (!msg.role || !['user', 'assistant'].includes(msg.role)) continue;
           if (typeof msg.content !== 'string' || msg.content.length > MAX_MSG_LENGTH) continue;
           messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
+          streamPriorTurns += 1;
         }
+      }
+
+      /* Session-start rehydration — the same block POST /api/chat/send-message
+         injects, which this path did not.
+
+         The memory assembled above is QUERY-DRIVEN: it answers what the user
+         just typed. It never tells AnA what the client's project folder holds,
+         where each file is filed, what it is for, or which files the client
+         attached in past conversations — so on the streaming path, the one a
+         chat UI actually uses, she began every session not knowing a document
+         existed until someone named it. That is the "she doesn't remember the
+         file is there" this workstream exists to end, and it was still true
+         here because the rehydration was wired to the other endpoint.
+
+         Fires only at session start (no prior turns), degrades to nothing, and
+         rides as a system turn ahead of the user's message, exactly like the
+         memory and enrichment blocks above. */
+      const { sessionBootstrapBlockFor } = await import('../../services/ana-session-bootstrap.js');
+      /* streamProjectId is whatever the client sent — 'proj_7', '7', 7, or a
+         program UUID — and the project-atom loader takes the numeric projects.id.
+         Normalized here rather than passed through: a UUID reaching an integer
+         column raises 22P02, which the loader's own fault tolerance would
+         swallow into "this project has no memory". Anything that is not a
+         positive integer is simply omitted, and the org-level half of the
+         rehydration (client atoms, lessons, the vault files) still lands. */
+      const streamBootstrapProjectId = ((): number | undefined => {
+        const raw = typeof streamProjectId === 'string'
+          ? streamProjectId.replace(/^proj_/, '')
+          : streamProjectId;
+        const n = Number(raw);
+        return Number.isInteger(n) && n > 0 ? n : undefined;
+      })();
+      const streamBootstrapBlock = await sessionBootstrapBlockFor({
+        priorMessageCount: streamPriorTurns,
+        organizationId: orgId ? Number(orgId) : null,
+        projectId: streamBootstrapProjectId,
+        threadId: threadId ?? undefined,
+        atomLimit: 6,
+      });
+      if (streamBootstrapBlock) {
+        messages.push({ role: 'system', content: streamBootstrapBlock });
       }
 
       // Place a cache breakpoint on the last assistant message in history so
@@ -819,6 +873,20 @@ export function mountStreamRoute(router: Router): void {
         routingPlanStrategy: routingPlan.strategy,
       });
 
+      // The API's own effort — how hard the chosen model works, as opposed to
+      // which model gets chosen. Only the second half was ever sent, so a user
+      // asking for Thorough got a better model that then reasoned at the same
+      // depth as Fast.
+      //
+      // The same governance rule applies: a kernel-pinned strategy always wins,
+      // so a tenant pinned to quality cannot be dropped to 'low' from the
+      // composer. When a policy hint is present the user's effort is not in
+      // force, and sending its API effort would smuggle the override back in
+      // through the other half of the control.
+      const apiEffort = policyHint?.preferredStrategy
+        ? undefined
+        : resolveApiEffort(effortUsed);
+
       // Optional explicit model override. Validated against THIS tenant's enabled
       // model set; an invalid / disabled / absent value is DROPPED SILENTLY and we
       // fall back to the (effort-derived) strategy above. The override does not
@@ -872,7 +940,12 @@ export function mountStreamRoute(router: Router): void {
       const controlEvents: HumanControlEvent[] = [];
       // A steering interjection queued by the checkpoint, spliced into the next
       // model turn's user message (same mechanism as the adaptation note).
-      let pendingInterjection = '';
+      // Steers accepted at a round boundary, held as OPERATOR TURNS rather
+      // than a string. They used to be concatenated onto the tool-result user
+      // message, which put a human's redirect in the same turn as tool output
+      // — the untrusted half of the transcript — with nothing to tell the two
+      // apart. See services/ana/operator-channel.ts.
+      let pendingOperatorTurns: GatewayMessage[] = [];
       // Structured record of the tools run this turn (persisted on the assistant
       // message's metadata for cross-turn memory; see tool-trace.ts).
       const toolTrace: ToolTraceEntry[] = [];
@@ -1012,6 +1085,9 @@ export function mountStreamRoute(router: Router): void {
           ? { provider: tieredModel.provider, model: tieredModel.model }
           : {}),
         promptCache: { enabled: true, type: 'ephemeral' },
+        // Stop means stop generating, not just stop rendering.
+        signal: runSignal,
+        apiEffort,
         ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
         ...(streamTools.length > 0 ? { tools: streamTools } : {}),
         stream: true,
@@ -1137,10 +1213,16 @@ export function mountStreamRoute(router: Router): void {
               const handler = getToolHandler(toolUse.name);
               const toolStart = Date.now();
               let resultStr: string;
-              let toolStatus: 'success' | 'error' | 'not_found' = 'success';
+              let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' = 'success';
               let toolErrorMessage: string | undefined;
               const lostInput = lostToolInputResult(toolUse);
-              if (lostInput) {
+              if (runSignal?.aborted) {
+                // Stopped before this step got its turn. It never ran, and
+                // saying so is the honest record — a step that silently
+                // vanishes reads as one that was never asked for.
+                resultStr = JSON.stringify(CANCELLED_TOOL_RESULT(toolUse.name));
+                toolStatus = 'cancelled';
+              } else if (lostInput) {
                 // The model chose arguments and the stream lost them; never
                 // dispatch on `{}`. See lostToolInputResult for why the
                 // message blames the transport rather than the request.
@@ -1149,22 +1231,40 @@ export function mountStreamRoute(router: Router): void {
                 toolErrorMessage = toolUse.inputParseError;
               } else if (handler) {
                 try {
-                  resultStr = await handler(toolUse.input, {
-                    organizationId: orgId,
-                    userId: userId || null,
-                    projectId: streamProjectId ? Number(streamProjectId) || null : null,
-                    projectRef: streamProjectId ? String(streamProjectId) : null,
-                    // Lets navigate_to tell the model the truth about what its
-                    // directive does this turn (applied live vs offered chip).
-                    liveDrive: driveState.enabled,
-                  });
+                  // Raced against the stop. The handler's own promise is not
+                  // cancellable — an orphaned call settles into a void — but
+                  // the ROUND stops waiting for it, which is the difference
+                  // between a stop that lands in a second and one that waits
+                  // out a forty-second search.
+                  resultStr = await Promise.race([
+                    handler(toolUse.input, {
+                      organizationId: orgId,
+                      userId: userId || null,
+                      projectId: streamProjectId ? Number(streamProjectId) || null : null,
+                      projectRef: streamProjectId ? String(streamProjectId) : null,
+                      // Lets navigate_to tell the model the truth about what its
+                      // directive does this turn (applied live vs offered chip).
+                      liveDrive: driveState.enabled,
+                      signal: runSignal,
+                    }),
+                    abortRace(runSignal),
+                  ]);
                 } catch (toolErr: any) {
+                  if (toolErr instanceof ToolRunCancelled) {
+                    // Not an error: the person stopped it. Falls through to
+                    // the same telemetry and result path as any other outcome,
+                    // so the step is still recorded — just recorded truthfully.
+                    resultStr = JSON.stringify(CANCELLED_TOOL_RESULT(toolUse.name));
+                    toolStatus = 'cancelled';
+                    toolErrorMessage = undefined;
+                  } else {
                   resultStr = JSON.stringify({
                     error: `Tool execution failed: ${toolErr?.message || 'unknown error'}`,
                     tool: toolUse.name,
                   });
                   toolStatus = 'error';
                   toolErrorMessage = toolErr?.message || 'unknown error';
+                  }
                 }
               } else {
                 resultStr = JSON.stringify({
@@ -1200,7 +1300,12 @@ export function mountStreamRoute(router: Router): void {
             // Record this call in the turn's tool-trace memory + evidence corpus.
             toolTrace.push(buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr));
             // Failures collected for the round's adaptation note (see below).
-            if (toolStatus !== 'success') {
+            // A cancelled step is NOT a failure to adapt to: the note tells the
+            // model "these did not work, try something else", and the run is
+            // ending — there is no next attempt to steer, and telling her to
+            // work around a step the person stopped would invite her to do the
+            // very thing she was stopped from doing.
+            if (toolStatus !== 'success' && toolStatus !== 'cancelled') {
               roundFailures.push({
                 name: toolUse.name,
                 label: stepLabel,
@@ -1219,6 +1324,8 @@ export function mountStreamRoute(router: Router): void {
                 ? `AnA couldn't finish ${humanStep}. She'll continue with what she has.`
                 : toolStatus === 'not_found'
                 ? `This step (${humanStep}) isn't available here. AnA will work around it.`
+                : toolStatus === 'cancelled'
+                ? `You stopped ${humanStep} before it finished.`
                 : undefined;
             res.write(
               `data: ${JSON.stringify({
@@ -1411,12 +1518,14 @@ export function mountStreamRoute(router: Router): void {
         // Call the model with the latest tool results, streaming its narration. On
         // the terminal round includeTools is false to force a grounded answer.
         const loopMessages: GatewayMessage[] = [...messages];
-        const callModel = async (
-          results: ToolResultEntry[],
-          priorText: string,
-          round: number,
-          includeTools: boolean
-        ): Promise<ModelTurn> => {
+        /* Stage one round's turns onto loopMessages: what the model said last,
+           the tool results it now has, and any operator steer waiting.
+
+           Separated from callModel below because it is bookkeeping over three
+           closure variables and callModel is where the round's MODEL decisions
+           live; reading them interleaved made both harder to follow, and the
+           mix pushed callModel past the complexity limit. */
+        const stageRound = (results: ToolResultEntry[], priorText: string): void => {
           loopMessages.push({ role: 'assistant', content: priorText || '' });
           // Entries arrive pre-budgeted from executeTools, so the per-result cap
           // here is a no-op safety net. The adaptation note (when a tool failed
@@ -1424,11 +1533,6 @@ export function mountStreamRoute(router: Router): void {
           // instead of retrying the identical call.
           const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
           pendingAdaptationNote = '';
-          // A human interjection queued at the round boundary rides the same user
-          // turn as the tool results so the model course-corrects toward the steer
-          // on this round. `pendingInterjection` already carries its own label.
-          const interjectionSuffix = pendingInterjection;
-          pendingInterjection = '';
           loopMessages.push({
             role: 'user',
             content:
@@ -1440,9 +1544,26 @@ export function mountStreamRoute(router: Router): void {
                     )}`
                 )
                 .join('\n\n') +
-              adaptationSuffix +
-              interjectionSuffix,
+              adaptationSuffix,
           });
+          // Steers ride AFTER the tool results, as operator turns. Order
+          // matters twice over: the gateway requires an inline system turn to
+          // follow a user turn, and a redirect read after the evidence is a
+          // redirect the model applies to this round rather than one it has
+          // already reasoned past.
+          if (pendingOperatorTurns.length > 0) {
+            loopMessages.push(...pendingOperatorTurns);
+            pendingOperatorTurns = [];
+          }
+        };
+
+        const callModel = async (
+          results: ToolResultEntry[],
+          priorText: string,
+          round: number,
+          includeTools: boolean
+        ): Promise<ModelTurn> => {
+          stageRound(results, priorText);
 
           // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
           // production behavior is byte-identical until deliberately enabled and
@@ -1473,6 +1594,11 @@ export function mountStreamRoute(router: Router): void {
               ? { provider: tieredModel.provider, model: tieredModel.model }
               : {}),
             promptCache: { enabled: true, type: 'ephemeral' },
+            signal: runSignal,
+            // Pinned per TURN, not per round: changing effort mid-conversation
+            // invalidates the messages cache, and the follow-up rounds are the
+            // same piece of work as the first.
+            apiEffort,
             ...(includeTools && streamTools.length > 0 ? { tools: streamTools } : {}),
             stream: true,
             onStream: (chunk: string, metadata?: any) => {
@@ -1553,7 +1679,19 @@ export function mountStreamRoute(router: Router): void {
 
           // Interjections: splice each queued steer into the next model turn.
           for (const inj of runControlRegistry.consumeInterjections(runId)) {
-            pendingInterjection += `\n\n[User interjection]: ${inj}`;
+            const framed = buildSteerMessage(inj);
+            if (framed) {
+              pendingOperatorTurns.push({
+                role: 'system',
+                inlineSystem: true,
+                // Scanned, not exempt. It is the operator's channel, but the
+                // words are still typed by a human into a text box, and
+                // `origin: 'app'` is reserved for content our own code
+                // authored verbatim (see GatewayMessage.origin).
+                origin: 'external',
+                content: framed,
+              });
+            }
             emitControl({ type: 'interjected', round: upcomingRound, message: inj });
             recordControl('interject', upcomingRound, inj);
           }
