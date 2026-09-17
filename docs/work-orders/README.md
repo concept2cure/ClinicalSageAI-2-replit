@@ -22,7 +22,7 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-15 finding 8 — the two blind gates | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed `b9152a016` |
 | WO-15 finding 4 — `/api/design-risk` | `…session_01J935DZwfFEardJCv85SJds` | **released** — done `153481465` |
 | WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
-| WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **claimed** 2026-09-17 |
+| WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | WO-15 — `KNOWN_UNLISTED`: 14 of 16 entries fail the list's stated reason | — | **unclaimed**, new, see finding 5 |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 
@@ -78,7 +78,7 @@ session has confirmed it recently — **open the doc and check before trusting i
 | WO-12 | Complexity refactor | Unverified | — |
 | WO-13 | GRDHE tenant scoping | Partial | doc: "What is now fixed" |
 | WO-14 / 14A | Cortex Prime broken and mounted | Partial, some left deliberately undone | doc |
-| WO-15 | Schema the code expects that no deploy creates | **Open** — 2 of 9 left, see §3 | verified 2026-09-17 |
+| WO-15 | Schema the code expects that no deploy creates | **All nine resolved** — 8 fixed, 1 refused | verified 2026-09-17 |
 | WO-16 / 16B / 16C | Fabricated content sweep | Largely closed | docs + commits |
 
 ---
@@ -90,7 +90,7 @@ Nine findings. State as of 2026-09-17:
 | Finding | State |
 |---|---|
 | 1 | **Refused** by adversarial review. Stays refused — do not reopen without new evidence. |
-| 2 | Open — `project_charters`, 27 columns versus 48 selected |
+| 2 | **Fixed** — 21 declared columns added on the applier. Confirmed as written, and it corrected my own finding-3 error: push does NOT create the charter tables. |
 | 3 | **Fixed** `0186d8d2d` — charter audit Part 11 append-only triggers |
 | 4 | **Fixed** `153481465` — `/api/design-risk` deleted: 20 endpoints over ten tables that exist on no database |
 | 5 | **Fixed** — `20260716_template_doc_types.sql` listed in the set, its false `KNOWN_UNLISTED` exemption removed. Confirmed, not corrected: the finding was right. |
@@ -103,17 +103,20 @@ Findings 3 and 7 in `WO-15-...md` each carry a **CORRECTED** block. The original
 finding text is preserved beneath it under "Original finding, as written" — read
 the correction first; in both cases the original headline was wrong.
 
-**Remaining: 2.** (4, 5 and 8 are done; 1 stays refused.) Finding 5 also surfaced a
-new item that is NOT part of WO-15's nine: **14 of the 16 `KNOWN_UNLISTED`
-entries in `tests/ops/apply-c2c-migrations-manifest.test.mjs` fail that list's
-own stated reason** — upper bound, at least one known false positive. Each needs
-the per-file treatment finding 5 received.
+**All nine findings are resolved: 8 fixed, 1 (finding 1) refused by adversarial
+review and staying refused.** Three had wrong headlines (3, 7 and — in the
+opposite direction — my own correction to 3); two were right as written (5, 2).
+Check each claim, do not assume either way.
 
-Finding 2 first step: `project_charters` is reported as having 27 columns while
-48 are selected. Re-derive it against a canonically provisioned database before
-changing anything — and note that finding 5 is the counter-example to the
-correcting reflex: three findings in a row had wrong headlines, and the fourth
-was right. Check, do not assume either way.
+One item surfaced here is NOT part of WO-15's nine and remains open: **14 of the
+16 `KNOWN_UNLISTED` entries in `tests/ops/apply-c2c-migrations-manifest.test.mjs`
+fail that list's own stated reason** — an upper bound from a crude heuristic with
+at least one known false positive. Each needs the per-file treatment finding 5
+received.
+
+With WO-15 closed, the next unclaimed work is the `KNOWN_UNLISTED` triage above,
+then the untouched orders in §2 — WO-3, WO-5, WO-7, WO-9, WO-10, WO-12 are all
+marked *unverified*, meaning no session has confirmed their status recently.
 
 ---
 
