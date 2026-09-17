@@ -1,7 +1,7 @@
 # AnA Document Catalog — remember, consume, contextualize client files
 
 **Date:** 2026-09-05
-**Feature flag:** `ana.document_catalog` (FeatureToggleService, off by default, fails closed) · env override `ANA_DOCUMENT_CATALOG_FORCE_ON=true`
+**Feature flag:** `ana.document_catalog` (FeatureToggleService, **off by default**, fails closed) · env override `ANA_DOCUMENT_CATALOG_FORCE_ON=true` · **see Rollout — nothing here runs until the toggle is on**
 **Migration:** `migrations/20260905_document_catalog.sql` (in `C2C_MIGRATION_FILES`)
 
 ## The problem this closes
@@ -343,11 +343,34 @@ nothing like every other bootstrap source.
 
 ## Rollout
 
+> **Everything below is OFF until someone turns it on.** `feature_toggles` is
+> empty on a fully migrated database — no migration seeds it — and
+> `isFeatureEnabled` correctly returns false for a key with no row. So the whole
+> surface resolved off in every deployment, and with no row there was nothing in
+> the toggle table for an operator to find: not a feature switched off, a
+> feature that could not be discovered. Startup now creates both rows (disabled)
+> and prints the resolved state, so a deployment running without the capability
+> says so instead of looking like one that has it
+> (`server/startup/document-catalog-bootstrap.ts`, proven in
+> `tests/db/document-catalog-toggles.dbtest.ts`). Enabling is still a decision,
+> not a default: chunking embeds every upload at ingest and carries a per-upload
+> cost.
+
 1. Deploy (migration applies via `deploy-migrate` / `apply-c2c-migrations`).
-2. Enable per tenant: `FeatureToggleService.enableFeature('ana.document_catalog', <orgId>)`,
-   or globally via the toggle row; `ANA_DOCUMENT_CATALOG_FORCE_ON=true` for dev.
-3. New vault ingests write the extraction tier immediately; legacy documents
-   are backfilled lazily on first `read_project_document`.
+2. Read the startup line — it names both keys and their resolved state.
+3. Turn it on, either way:
+   - **Per tenant:** `FeatureToggleService.enableFeatureForTenant('ana.document_catalog', <orgId>)`
+     (and `'ana.vault_chunking'` for the passage index).
+   - **Globally:** `UPDATE feature_toggles SET enabled = TRUE WHERE feature_key IN
+     ('ana.document_catalog', 'ana.vault_chunking');`
+   - **Per environment (dev):** `ANA_DOCUMENT_CATALOG_FORCE_ON=true`,
+     `ANA_VAULT_CHUNKING_FORCE_ON=true`.
+   The catalog can run without chunking: the tools and recall work, and
+   `search_document_passages` reports that nothing is indexed rather than
+   returning an empty result. Chunking without the catalog does nothing.
+4. New vault ingests write the extraction tier immediately; legacy documents
+   are backfilled lazily on first `read_project_document`, and their passages by
+   `scripts/backfill-vault-chunks.mjs`.
 
 ## Known gaps / next steps (deliberately out of scope here)
 
