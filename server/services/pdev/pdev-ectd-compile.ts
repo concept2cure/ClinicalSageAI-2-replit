@@ -34,7 +34,7 @@ import { createScopedLogger } from '../../utils/logger';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import { assembleSubmissionEctd } from '../ectd/assemble-from-core';
 import { pdevIndAssemblyService, type IndAssemblyReport } from './pdev-ind-assembly';
-import { recordAuditRow, type PdevAuditRecordOutcome } from './pdev-audit-record';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 
 const logger = createScopedLogger('pdev-ectd-compile');
 
@@ -106,12 +106,12 @@ export interface PdevEctdCompileResult {
    * as `ectdAuditTrail`, kept distinct from its own agent-level row.
    *
    * The shape is the one pdev-clearance and pdev-workflow-bridge already carry,
-   * from the shared ./pdev-audit-record — not a second copy of it. `chained`
+   * from the shared ../audit/audit-write-outcome — not a second copy of it. `chained`
    * separates the retrievable `audit_logs` row from a tamper-proof-only write;
    * the failure arm carries a stable code and a user-safe sentence, never the
    * store's own text (that is in the log line recordAuditRow already wrote).
    */
-  audit?: PdevAuditRecordOutcome;
+  audit?: AuditRowOutcome;
 }
 
 export class PdevEctdCompileService {

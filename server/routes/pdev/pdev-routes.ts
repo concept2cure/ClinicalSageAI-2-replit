@@ -76,7 +76,7 @@ import { pdevProgramActivities } from '../../../shared/schema/pdev-workflow';
  * `auditService` is reached through that module, so it is no longer imported
  * here directly.
  */
-import { recordAuditRow } from '../../services/pdev/pdev-audit-record';
+import { recordAuditRow } from '../../services/audit/audit-write-outcome';
 
 import { pdevOrchestrator } from '../../services/pdev/pdev-orchestrator';
 import {

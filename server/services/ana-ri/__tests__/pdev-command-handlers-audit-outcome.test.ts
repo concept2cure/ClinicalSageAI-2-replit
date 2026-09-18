@@ -50,7 +50,7 @@ vi.mock('../../pdev/pdev-ectd-compile', () => ({
   pdevEctdCompileService: { compile: async () => COMPILE.result },
 }));
 
-vi.mock('../../pdev/pdev-audit-record', () => ({
+vi.mock('../../audit/audit-write-outcome', () => ({
   recordAuditRow: async () => AGENT_ROW.outcome,
 }));
 
