@@ -354,6 +354,21 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
     });
   });
 
+  it('hands the comprehension record BACK on the next read, instead of starting from zero', async () => {
+    /* key_data — the batch, the assay figure, the retest period AnA extracted
+       after reading the whole document — was written, embedded into the vector
+       the catalog search matches on, and then returned by nothing. Every
+       re-read began from raw text, re-deriving numbers the record already held:
+       the client re-explaining their own file, which is the thing this whole
+       workstream exists to stop. */
+    const read = await callTool('read_project_document', { document_id: txtDocId });
+    expect(read.ok).toBe(true);
+    expect(read.comprehension, 'a cataloged document must return what was learned').toBeTruthy();
+    expect(read.comprehension.documentKind).toBe('Stability study report');
+    expect(read.comprehension.keyData).toMatchObject({ batch: '23-104', retestMonths: 24 });
+    expect(read.comprehension.catalogedAt).toBeTruthy();
+  });
+
   it('another tenant cannot list or read the document', async () => {
     const listed = await callTool(
       'list_project_documents',
