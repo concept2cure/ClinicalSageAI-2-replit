@@ -24,6 +24,7 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
 | WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | `KNOWN_UNLISTED` triage — 10 entries, 16 tables | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed, all ten now on the applier |
+| Schema authority — the live-schema baseline and the tables behind it (`scripts/ci/check-tables-against-live-schema.mjs`, `scripts/ci/tables-live-schema-baseline.json`, `scripts/db/migration-set.mjs`) | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **claimed** 2026-09-18 |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 
 If you are one of the sessions above, correct your own row. If a lane you want
