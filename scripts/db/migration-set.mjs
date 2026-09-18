@@ -359,6 +359,12 @@ export const C2C_MIGRATION_FILES = [
   // guarded (CREATE/ALTER ... IF NOT EXISTS), so idempotent where push already
   // provisioned them.
   'db/migrations/20260725_submission_orchestrator_store_port.sql',
+  /* Immediately after the port, which is the only file on this applier that
+     creates submission_orchestrator_runs with the narrow four-value region
+     CHECK — so the DROP-then-ADD below always has that constraint to replace on
+     a bare database, and never runs before its table exists. The live state on a
+     pushed database is no CHECK at all; see the file's 2026-09-18 header. */
+  'migrations/20260629_orchestrator_region_check_alignment.sql',
   'db/migrations/20260725_esig_gate_columns_port.sql',
   'db/migrations/20260725_users_signing_lockout_columns.sql',
 

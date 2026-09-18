@@ -679,18 +679,30 @@ on a preview branch predating the base table. Verified identical.)
 > `persistRun` path three times against a provisioned database: step-1 → step-2 →
 > step-3, no 42703, `updated_at` set.
 >
-> **Sub-item A is wrong, and the live state is a third thing.** The finding says
-> `20260629_orchestrator_region_check_alignment.sql` is on neither applier "while
-> the route accepts all 13" — implying the database holds `044b`'s narrow
-> four-value CHECK and rejects the other nine. It holds **no CHECK at all**: push
-> creates the table, so the `CHECK (region IN ('US','EU','JP','CA'))` that both
-> SQL files declare never runs, and `'us'` lowercase inserts cleanly. The
-> alignment migration is indeed on neither applier (0 hits in
-> `C2C_MIGRATION_FILES`, not referenced by the port). So the hazard is not a
-> route/DB mismatch — it is that the database enforces no region domain at all,
-> and any writer that bypasses the route's zod can store anything. Note also that
-> the route's enum has 13 values while the service's `RegionCode` type
-> (`server/services/module3-extensions.ts:30`) has four.
+> **Sub-item A is wrong, and FIXED 2026-09-18 — with a correction of my own.**
+> The finding says `20260629_orchestrator_region_check_alignment.sql` is on
+> neither applier "while the route accepts all 13", implying the database holds
+> the narrow four-value CHECK and rejects the other nine. It does not: push
+> creates the table, so the `CHECK (region IN ('US','EU','JP','CA'))` both SQL
+> files declare inline never runs.
+>
+> I first reported the live state as **no CHECK at all**, measured on a
+> provisioned database. That was an artifact: that database's install-fresh had
+> aborted at step 2 during the 2026-09-17/18 provisioning break, so the step-3
+> overlay never ran. The alignment file lives in the root `migrations/` tree,
+> which install-fresh DOES apply — so a healthy install already carried the
+> 13-value constraint, verified after install-fresh alone.
+>
+> The real gap was the other applier: absent from `C2C_MIGRATION_FILES`,
+> deploy-migrate never applied it, so an existing database never received the
+> widening and any later amendment to the file would have reached new installs
+> only. Same class as findings 3 and 5 and the sixteen tables `a8e1cff2` closed.
+> Now listed at set index 38, immediately after the port that creates the table;
+> amended to add the constraint `NOT VALID` with an opportunistic `VALIDATE`, so
+> it can never abort a deploy on a pre-existing off-list row while still enforcing
+> every new write. Note also, unreconciled: the route's enum has 13 values while
+> the service's `RegionCode` (`server/services/module3-extensions.ts:30`) has
+> four.
 >
 > **Sub-item B is confirmed, and the compliance document was wrong about it.**
 > The `steps.run_id` FK is `NO ACTION` live — neither the CASCADE both files
