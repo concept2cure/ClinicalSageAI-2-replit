@@ -60,7 +60,9 @@ import {
   DEFAULT_CTQ_FACTORS, DEFAULT_KRIS, DEFAULT_QTLS,
   type KriDirection,
 } from '../services/rbm/rbm-engine';
-import { generatePlanFromAssessment, amendAssessment } from '../services/rbm/rbm-actuator';
+import { generatePlanFromAssessment, amendAssessment, approveAssessment, approvePlan } from '../services/rbm/rbm-actuator';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
 import {
   detectSiteOutliers, scorePatientCohort,
@@ -172,9 +174,9 @@ router.post('/rbm-assessments', async (req, res) => {
   const p = parsed.data;
   try {
     const { rows } = await pool.query(
-      `INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [orgId, p.programId ?? null, p.title, p.framework ?? 'ich_e6r3', p.overallRisk ?? null, p.status ?? 'draft'],
+      `INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [orgId, p.programId ?? null, p.title, p.framework ?? 'ich_e6r3', p.overallRisk ?? null, p.status ?? 'draft', getUserId(req)],
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create-assessment', err); }
@@ -204,9 +206,9 @@ router.post('/rbm-assessments/seed', async (req, res) => {
     // unreviewed default library govern monitoring-tier assignment and the
     // risk review report without anyone having signed for it.
     const { rows: aRows } = await client.query(
-      `INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status)
-       VALUES ($1,$2,$3,$4,$5,'draft') RETURNING *`,
-      [orgId, programId, parsed.data.title ?? 'Risk assessment (RACT)', parsed.data.framework ?? 'ich_e6r3', overall],
+      `INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status, created_by)
+       VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`,
+      [orgId, programId, parsed.data.title ?? 'Risk assessment (RACT)', parsed.data.framework ?? 'ich_e6r3', overall, getUserId(req)],
     );
     const assessment = aRows[0];
     for (const f of DEFAULT_CTQ_FACTORS) {
@@ -936,35 +938,71 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
   if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
   const signoff = await verifySignerCredentials(defaultSignoffDeps, { userId: signerId, password: parsed.data.password, mfaToken: parsed.data.mfaToken });
   if (!signoff.verified) return clientError(res, 401, signoff.error ?? 'Signer verification failed (21 CFR 11.200)', signoff.code ? { code: signoff.code } : undefined);
+  // 21 CFR Part 11 §11.10(g): identity is not authority. A fully re-authenticated
+  // signer (password + MFA above) may still apply a signature only if their
+  // organization role carries signing authority. The policy is the one every
+  // other signing surface uses — services/part11/signing-authority — so this
+  // route cannot drift into its own idea of who may sign.
+  const signerRole = await resolveSignerOrgRole(signerId, orgId);
+  if (!isSigningAuthorized(signerRole)) {
+    return clientError(
+      res,
+      403,
+      'Your role does not permit approving this record (21 CFR Part 11 §11.10(g)).',
+      { code: 'RBM_NO_SIGNING_AUTHORITY' },
+    );
+  }
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const { rows } = await client.query(
-      `UPDATE rbm_risk_assessments
-          SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
-        WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
-        RETURNING *`,
-      [signerId, parsed.data.reason, id, orgId],
+    // 21 CFR Part 11 §11.10(d) — the two-person rule. The author of a risk
+    // assessment may not be the person who approves it: a governing risk basis
+    // signed by the one person who wrote it has had no independent review, and
+    // the signature asserts that it has. Read inside the transaction, so the
+    // row cannot change between the check and the UPDATE.
+    //
+    // A row written before created_by existed has no author to compare against.
+    // Refusing those would strand every draft that predates this column, which
+    // is a lockout, not a control — so they are approved and the signed record
+    // says the author was never captured. An inspector can then tell an
+    // approval that WAS two-person-checked from one that could not be.
+    const authorRow = await client.query(
+      `SELECT created_by FROM rbm_risk_assessments
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [id, orgId],
     );
-    if (rows.length === 0) {
+    if (authorRow.rows.length === 0) {
       await client.query('ROLLBACK');
       return notFoundInTenant(res, 'Risk assessment');
     }
-    // Approving a version supersedes the one it replaces: the prior active
-    // version is archived in the SAME transaction, so a program never has two
-    // assessments claiming to be the governing risk basis at once. The archived
-    // row and its items are left untouched — that is the signed record.
-    if (rows[0].program_id) {
-      await client.query(
-        `UPDATE rbm_risk_assessments SET status = 'archived', updated_at = NOW()
-          WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
-            AND id <> $3 AND status = 'active'`,
-        [orgId, rows[0].program_id, id],
+    const authorId: number | null = authorRow.rows[0].created_by ?? null;
+    if (authorId !== null && authorId === signerId) {
+      await client.query('ROLLBACK');
+      return clientError(
+        res,
+        403,
+        'You wrote this risk assessment, so you cannot also approve it. A second person has to review and sign it (21 CFR Part 11 §11.10(d)).',
+        { code: 'RBM_SELF_APPROVAL' },
       );
     }
+
+    // This route kept its own copy of the approval UPDATE, and the supersede
+    // that goes with it, while the AnA tool path wrote the same table through
+    // rbm-actuator. Two implementations of one governed write is how they came
+    // to disagree: this one verified a password and MFA and archived the prior
+    // version; that one did neither. Both go through approveAssessment now.
+    // `client` is this request's transaction, so activate+archive still commit
+    // or roll back together.
+    const row = await approveAssessment(client, orgId, signerId, id, parsed.data.reason, {
+      authorKnown: authorId !== null,
+    });
+    if (!row) {
+      await client.query('ROLLBACK');
+      return notFoundInTenant(res, 'Risk assessment');
+    }
     await client.query('COMMIT');
-    return ok(res, rows[0]);
+    return ok(res, row);
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     return serverError(res, log, 'approve-assessment', err);
@@ -1030,17 +1068,46 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
   if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
   const signoff = await verifySignerCredentials(defaultSignoffDeps, { userId: signerId, password: parsed.data.password, mfaToken: parsed.data.mfaToken });
   if (!signoff.verified) return clientError(res, 401, signoff.error ?? 'Signer verification failed (21 CFR 11.200)', signoff.code ? { code: signoff.code } : undefined);
-  try {
-    const { rows } = await pool.query(
-      `UPDATE rbm_monitoring_plans
-          SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
-        WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
-        RETURNING *`,
-      [signerId, parsed.data.reason, id, orgId],
+  // 21 CFR Part 11 §11.10(g): identity is not authority. A fully re-authenticated
+  // signer (password + MFA above) may still apply a signature only if their
+  // organization role carries signing authority. The policy is the one every
+  // other signing surface uses — services/part11/signing-authority — so this
+  // route cannot drift into its own idea of who may sign.
+  const signerRole = await resolveSignerOrgRole(signerId, orgId);
+  if (!isSigningAuthorized(signerRole)) {
+    return clientError(
+      res,
+      403,
+      'Your role does not permit approving this record (21 CFR Part 11 §11.10(g)).',
+      { code: 'RBM_NO_SIGNING_AUTHORITY' },
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
-    return ok(res, rows[0]);
+  }
+
+  try {
+    // §11.10(d) two-person rule — see the assessment route above for why an
+    // authorless row is approved rather than stranded.
+    const authorRow = await pool.query(
+      `SELECT created_by FROM rbm_monitoring_plans
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [id, orgId],
+    );
+    if (authorRow.rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
+    const authorId: number | null = authorRow.rows[0].created_by ?? null;
+    if (authorId !== null && authorId === signerId) {
+      return clientError(
+        res,
+        403,
+        'You wrote this monitoring plan, so you cannot also approve it. A second person has to review and sign it (21 CFR Part 11 §11.10(d)).',
+        { code: 'RBM_SELF_APPROVAL' },
+      );
+    }
+    // The route carried its own copy of this UPDATE while the AnA path wrote
+    // the same table through rbm-actuator; both go through approvePlan now.
+    const row = await approvePlan(pool, orgId, signerId, id, parsed.data.reason, {
+      authorKnown: authorId !== null,
+    });
+    if (!row) return notFoundInTenant(res, 'Monitoring plan');
+    return ok(res, row);
   } catch (err) { return serverError(res, log, 'approve-plan', err); }
 });
 
@@ -1081,9 +1148,9 @@ router.post('/rbm-monitoring-plans', async (req, res) => {
   const p = parsed.data;
   try {
     const { rows } = await pool.query(
-      `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [orgId, p.programId ?? null, p.assessmentId ?? null, p.title, p.strategy ?? 'risk_based', p.status ?? 'draft'],
+      `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [orgId, p.programId ?? null, p.assessmentId ?? null, p.title, p.strategy ?? 'risk_based', p.status ?? 'draft', getUserId(req)],
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create-plan', err); }
