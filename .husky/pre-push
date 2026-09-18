@@ -258,4 +258,28 @@ if ! npm run --silent ci:fabricated-identity 2>&1; then
 fi
 echo "   ✅ Fabricated-identity check passed."
 
+# ── A Part 11 audit row written and its outcome discarded (unconditional) ──
+#
+# `auditService.logAction` does not reject when persistence fails. That is
+# deliberate -- an audit-trail outage must not break the action it records -- so
+# it RESOLVES an AuditWriteResult and says what happened in `persisted`.
+# `void auditService.logAction(...)` throws that away, and the call then has two
+# possible outcomes and one observable result: the caller, the HTTP envelope and
+# the surface are byte-identical whether the §11.10(e) record exists or does not.
+#
+# WO-16C finding 133 converted the PDEV approval and IND-clearance path. The
+# baseline caps the rest per file WITH ITS COUNT, so a baselined file cannot
+# quietly grow and a clean file cannot become dirty. Shrink it; never grow it.
+echo "   Checking for a discarded Part 11 audit-write outcome..."
+if ! npm run --silent ci:void-audit-write 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Discarded audit-write outcome FAILED."
+  echo "   Await the write and report it: if (!audit.persisted) log.error(...)."
+  echo "   Where a client is answered, carry the outcome to it -- see"
+  echo "   recordAuditRow in server/services/pdev/pdev-audit-record.ts."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No discarded audit-write outcome."
+
 echo "✅ Pre-push checks complete — all gates passed."

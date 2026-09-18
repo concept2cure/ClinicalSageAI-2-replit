@@ -796,12 +796,48 @@ For each recommendation, include specific citations to relevant regulatory guide
     // Generate a wisdom trace for the analysis process
     const wisdomTrace = [
       {
+        /*
+         * WO-16C finding 65, follow-up review 2026-09-18. The other two
+         * sections of this trace were corrected and this one was left as it
+         * was. It said:
+         *
+         *   `Sample size of ${sample_size} participants analyzed against benchmarks`
+         *   `Primary endpoint "${primary_endpoint}" evaluated for statistical robustness`
+         *   `Study duration of ${duration_weeks} weeks compared with similar trials`
+         *
+         * Three claims of analysis over one real act. This handler holds no
+         * benchmark set, evaluates no statistical robustness, and compares no
+         * duration against anything — its only comparison is
+         * findSimilarProtocols, which the Evidence Base section below already
+         * reports honestly, usually as "no comparison was performed".
+         *
+         * Worse, `analyzeProtocol` defaults none of these fields: each is
+         * `undefined` when its regex does not match, which for a protocol body
+         * that states no sample size produced the literal sentence "Sample size
+         * of undefined participants analyzed against benchmarks" — and
+         * "Identified undefined protocol for undefined" above it.
+         *
+         * What the handler genuinely does is a pattern extraction over the
+         * submitted text. Each line now names that act and reports what the
+         * extractor found, or that it found nothing.
+         */
         section: 'Protocol Structure',
         insights: [
-          `Identified ${protocolData.phase} protocol for ${protocolData.indication}`,
-          `Sample size of ${protocolData.sample_size} participants analyzed against benchmarks`,
-          `Primary endpoint "${protocolData.primary_endpoint}" evaluated for statistical robustness`,
-          `Study duration of ${protocolData.duration_weeks} weeks compared with similar trials`,
+          protocolData.phase
+            ? `Extracted phase from the submitted text: ${protocolData.phase}`
+            : 'No phase was found in the submitted text',
+          protocolData.indication
+            ? `Classified therapeutic area from the submitted text: ${protocolData.indication}`
+            : 'No therapeutic area could be determined from the submitted text',
+          typeof protocolData.sample_size === 'number'
+            ? `Extracted sample size: ${protocolData.sample_size} participants (not compared against any benchmark here)`
+            : 'No sample size was found in the submitted text',
+          protocolData.primary_endpoint
+            ? `Extracted primary endpoint: "${protocolData.primary_endpoint}" (recorded as stated; not evaluated here)`
+            : 'No primary endpoint was found in the submitted text',
+          typeof protocolData.duration_weeks === 'number'
+            ? `Extracted study duration: ${protocolData.duration_weeks} weeks (not compared against other trials here)`
+            : 'No study duration was found in the submitted text',
         ],
       },
       {

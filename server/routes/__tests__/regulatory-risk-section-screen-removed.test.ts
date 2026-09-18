@@ -73,14 +73,73 @@ describe('regulatory risk-by-section screen (WO-16C #63)', () => {
     });
   }
 
+  /*
+   * WO-16C #63, follow-up review: the previous version of this test asserted
+   *
+   *     expect(res.text ?? '').not.toContain('Requirement appears to be addressed');
+   *
+   * and could not fail on any head. `analyzeProtocolCompliance` computes that
+   * `reason` string per requirement and never appends it to `analysisText` —
+   * measured on the real service, the phrase is absent from the returned screen
+   * for every input. So the assertion pinned a string the route never emitted,
+   * on top of a 404 that already made the body Express's own error page. A
+   * check that cannot fail is not coverage.
+   *
+   * What the collision actually changed IS in the payload, and is what the two
+   * tests below pin: the SCREEN SUMMARY's matched count. Measured against the
+   * real service with the exact placeholder the deleted handler passed
+   * (`Section <id>`, 'Phase 2'), over its 14 Phase 2 requirements:
+   *
+   *     Section 3           -> matched 0
+   *     Section consent     -> matched 1
+   *     Section safety      -> matched 1
+   *     Section monitoring  -> matched 0
+   *
+   * `extractKeyPhrases` also emits every single word longer than five
+   * characters as a phrase, so a sectionId that happens to be requirement
+   * vocabulary scores a match against text nobody read — the same screen,
+   * differing only by the id in the URL.
+   */
+  it('the placeholder screen really did score a match on a colliding id', async () => {
+    // Not a test of the route — a test of the claim the route's removal rests
+    // on. If this stops holding, the two assertions below stop meaning
+    // anything, and this is where that shows up.
+    const { RegulatoryIntelligenceService } = await import('../../services/regulatory-intelligence-service');
+    const svc = new RegulatoryIntelligenceService();
+    const screen = (sectionId: string) =>
+      (svc as unknown as {
+        analyzeProtocolCompliance(t: string, p: string): Promise<string>;
+      }).analyzeProtocolCompliance(`Section ${sectionId}`, 'Phase 2');
+    const matched = async (sectionId: string) => {
+      const m = /matching language detected: (\d+)/.exec(await screen(sectionId));
+      return m ? Number(m[1]) : -1;
+    };
+
+    expect(await matched('3')).toBe(0);
+    expect(await matched('consent')).toBe(1);
+
+    // And the markers the route assertions below look for are strings this
+    // screen really produces — which is what makes those `not.toContain`
+    // assertions falsifiable rather than decorative. The phrase the previous
+    // version of this test pinned is NOT among them.
+    const real = await screen('consent');
+    for (const marker of ['SCREEN SUMMARY', 'matching language detected', 'Requirements checked']) {
+      expect(real, `the service does emit ${marker}`).toContain(marker);
+    }
+    expect(real).not.toContain('Requirement appears to be addressed');
+  });
+
   it('a sectionId that collides with requirement vocabulary gets no screen either', async () => {
-    // Pre-fix, `/risk/consent` flipped exactly one requirement to "compliant"
-    // because the placeholder happened to contain a requirement keyword — a
-    // spurious pass on text that was never read.
     const res = await request(await app()).get('/api/regulatory/risk/consent');
 
     expect(res.status).toBe(404);
-    expect(res.text ?? '').not.toContain('Requirement appears to be addressed');
+    const body = typeof res.text === 'string' ? res.text : JSON.stringify(res.body);
+    // The strings a screen genuinely emits — including the summary line whose
+    // count the collision moved. Each of these appears in the service's real
+    // output, so each of these assertions can fail.
+    expect(body).not.toContain('SCREEN SUMMARY');
+    expect(body).not.toContain('matching language detected');
+    expect(body).not.toContain('Requirements checked');
   });
 
   it('the router no longer screens a placeholder through analyzeProtocolCompliance', () => {

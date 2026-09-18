@@ -62,7 +62,21 @@ import {
 import { db } from '../../db';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import { pdevProgramActivities } from '../../../shared/schema/pdev-workflow';
-import auditService from '../../services/auditService';
+/*
+ * WO-16C #133. The three governed writes in this router each recorded their
+ * 21 CFR Part 11 §11.10(e) row with `void auditService.logAction({…})`, which
+ * throws away the `AuditWriteResult` that call resolves. `logAction` never
+ * rejects when persistence fails — deliberately, an audit-trail outage must
+ * not break the user action it records — so the discarded value was the ONLY
+ * place the failure was visible: the row, the envelope and the surface came
+ * back byte-identical whether the §11.10(e) record existed or not. They now
+ * go through the shared `recordAuditRow`, which reports the outcome and is
+ * already the shape pdev-clearance and pdev-workflow-bridge return; each
+ * route carries that outcome out in its response envelope's `meta`.
+ * `auditService` is reached through that module, so it is no longer imported
+ * here directly.
+ */
+import { recordAuditRow } from '../../services/pdev/pdev-audit-record';
 
 import { pdevOrchestrator } from '../../services/pdev/pdev-orchestrator';
 import {
@@ -247,7 +261,19 @@ router.post('/programs/:programId/readiness/snapshot', async (req: Request, res:
     const report = await pdevReadinessService.snapshot(programId, orgId, userId, 'manual');
     if (!report) return notFoundInTenant(res, 'program');
 
-    void auditService.logAction({
+    /*
+     * WO-16C #133. The snapshot rows are committed by the call above; what was
+     * unobservable was whether the §11.10(e) record of who took the snapshot,
+     * and against which score, exists at all. `recordAuditRow` never throws
+     * and never blocks the snapshot, so the 201 is unchanged in every
+     * successful case — it simply adds the answer to `meta.auditTrail`, which
+     * also distinguishes a row in the retrievable chained `audit_logs` from
+     * one that reached the tamper-proof store only. The snapshot is not
+     * rolled back over a lost log row: the action stands and the caller is
+     * told. The store's own reason stays in the log line recordAuditRow
+     * writes, keyed on this action and resource id — never in this envelope.
+     */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: userId ?? undefined,
       action: 'pdev_readiness_snapshot',
@@ -256,7 +282,7 @@ router.post('/programs/:programId/readiness/snapshot', async (req: Request, res:
       details: { trigger: 'manual', overallScore: report.overall.readinessScore },
     });
 
-    return created(res, report);
+    return created(res, report, { auditTrail });
   } catch (err) {
     return serverError(res, log, 'Failed to snapshot readiness', err);
   }
@@ -461,7 +487,19 @@ router.post(
         row = inserted[0];
       }
 
-      void auditService.logAction({
+      /*
+       * WO-16C #133, second follow-up review. This was
+       * `void auditService.logAction({…})`: the activity row above was already
+       * committed, and a transition whose §11.10(e) record was never written
+       * answered byte-identically to one whose record landed — including the
+       * dependency-gate override flag, which is the single most audit-relevant
+       * detail this route produces. The outcome now leaves the handler in the
+       * envelope (see the return below). The transition is NOT reverted
+       * because its audit row failed; the state change stands and the caller
+       * is told. The store's own reason is in recordAuditRow's log line, keyed
+       * on this action and `row.id`, and never on the wire.
+       */
+      const stateChangeAuditTrail = await recordAuditRow({
         tenantId: orgId,
         userId: userId ?? undefined,
         action: 'pdev_activity_state_change',
@@ -491,7 +529,30 @@ router.post(
         newState: parsed.data.state as (typeof PDEV_ACTIVITY_STATES)[number],
       });
 
-      return ok(res, row, clearance.cleared ? { indCleared: true } : undefined);
+      /*
+       * WO-16C #133, follow-up review. This said `{ indCleared: true }` and
+       * dropped `clearance.audit`, so a clearance whose 21 CFR Part 11 record
+       * was never written answered byte-identically to one that was. The
+       * clearance itself stands — the program row is committed — and the client
+       * is told what happened to the record beside it.
+       */
+      return ok(res, row, {
+        /*
+         * WO-16C #133, second follow-up. The state-change row gets its own
+         * key rather than `auditTrail`, because `auditTrail` below already
+         * names the CLEARANCE row — a different row, written by
+         * pdev-clearance — and silently changing which record a key describes
+         * would be the same class of lie this finding is about. Two governed
+         * writes can happen in one request, so both are reported, separately.
+         * `meta` is therefore always present now; it used to be omitted
+         * entirely unless the program had cleared, which is exactly how the
+         * missing state-change record stayed invisible.
+         */
+        stateChangeAuditTrail,
+        ...(clearance.cleared || clearance.alreadyCleared
+          ? { indCleared: clearance.cleared, auditTrail: clearance.audit }
+          : {}),
+      });
     } catch (err) {
       return serverError(res, log, 'Failed to update activity state', err);
     }
@@ -1015,7 +1076,18 @@ router.post('/admin/readiness/snapshot-all', async (req: Request, res: Response)
 
   try {
     const result = await pdevReadinessScheduler.snapshotActivePrograms(orgId, userId);
-    void auditService.logAction({
+    /*
+     * WO-16C #133. A role-gated batch write across every active program in the
+     * org is precisely the action whose §11.10(e) record an inspector asks
+     * for, and `void auditService.logAction({…})` meant the 200 looked the
+     * same whether that record existed or not — the snapshot rows landed
+     * either way, so nothing downstream could tell. `recordAuditRow` neither
+     * throws nor blocks the batch; the counts are returned unchanged and
+     * `meta.auditTrail` says whether the entry for this sweep was durably
+     * recorded (and whether it is retrievable from the chained log or sits in
+     * the tamper-proof store only). The snapshots stand; the caller is told.
+     */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: userId ?? undefined,
       action: 'pdev_readiness_snapshot_batch',
@@ -1026,7 +1098,7 @@ router.post('/admin/readiness/snapshot-all', async (req: Request, res: Response)
         snapshotted: result.snapshotted,
       },
     });
-    return ok(res, result);
+    return ok(res, result, { auditTrail });
   } catch (err) {
     return serverError(res, log, 'Batch readiness snapshot', err);
   }
