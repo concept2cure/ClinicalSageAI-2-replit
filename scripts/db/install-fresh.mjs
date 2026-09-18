@@ -789,8 +789,27 @@ async function main() {
             AND table_schema NOT IN ('pg_catalog', 'information_schema')`,
       );
       const have = new Set(existing.map((r) => `${r.table_schema}.${r.table_name}`));
-      const missing = declared
-        .filter((t) => !have.has(`${t.schema}.${t.name}`))
+      const absent = declared.filter((t) => !have.has(`${t.schema}.${t.name}`));
+
+      /* Split by schema, because push is not responsible for both halves
+         (2026-09-18). Making this check schema-qualified was right and it found
+         a real missing creator; asserting the NAMED-schema half HERE was not.
+         `drizzle-kit push` creates nothing outside `public` — the commit that
+         taught this check to see `vault.*` says so itself ("push creates no
+         vault tables") — and all six vault tables are created one step later,
+         by root migrations in the step-3 overlay (20260608_vault_retention,
+         20260905b, 20260906b, 20260911_vault_evidence_citations). So the check
+         demanded push do work push never does, and from-scratch provisioning
+         died at step 2 naming six tables that step 3 would have created. Every
+         install-fresh run failed for 26 hours.
+         The assertion is not dropped — dropping it is what hid the vault schema
+         in the first place. It MOVES to 8/8, alongside CORE_TABLES, which exists
+         for exactly this reason: "these come from the raw overlay, not push". */
+      const missing = absent
+        .filter((t) => t.schema === 'public')
+        .map((t) => `${t.schema}.${t.name}`);
+      const deferredToOverlay = absent
+        .filter((t) => t.schema !== 'public')
         .map((t) => `${t.schema}.${t.name}`);
 
       /* A `<ident>.table('…')` whose pgSchema binding cannot be resolved is a
@@ -822,11 +841,20 @@ async function main() {
             `${missing.length > 25 ? `, …and ${missing.length - 25} more` : ''}`,
         );
       }
+      if (deferredToOverlay.length > 0) {
+        console.log(
+          `  • ${deferredToOverlay.length} declared table(s) live in a named schema, which push ` +
+            `does not create; the overlay does. Asserted in 8/8, not here: ` +
+            `${deferredToOverlay.slice(0, 10).join(', ')}` +
+            `${deferredToOverlay.length > 10 ? `, …and ${deferredToOverlay.length - 10} more` : ''}`,
+        );
+      }
       const bySchema = new Map();
       for (const t of declared) bySchema.set(t.schema, (bySchema.get(t.schema) ?? 0) + 1);
       console.log(
         `  ✓ schema pushed from ${entrypoint.paths.join(', ')} ` +
-          `(${declared.length} declared tables verified present: ` +
+          `(${declared.length - deferredToOverlay.length} of ${declared.length} declared tables ` +
+          `verified present here: ` +
           `${[...bySchema].map(([sch, n]) => `${n} in ${sch}`).join(', ')})`,
       );
       return;
@@ -981,6 +1009,7 @@ async function main() {
     //   0006      FKs to cmc_projects(id)   → code-derived reconstruction
     // Apply those creators FIRST (each idempotent), the same documented
     // exception pattern as the authoring subsystem in step 4.
+
     const PRE_OVERLAY_CREATORS = [
       'db/migrations/20260401_cmc_convergence_os.sql',
       'db/migrations/20260224_ai_trace_chain.sql',
@@ -1393,6 +1422,57 @@ async function main() {
       );
     }
 
+    /* ── Second chance for files guarded on a named-schema object ──────────
+       A root overlay file that opens with
+
+         IF to_regclass('vault.documents') IS NULL THEN RETURN; END IF;
+
+       turns "my dependency does not exist YET" into SUCCESS. Three of them —
+       20260905b_vault_document_chunks, 20260906b_vault_legal_holds and
+       20260911_vault_evidence_citations — guard on vault.documents, whose only
+       creator is 044c_gcc_vault_schema.sql in THIS step, three steps after the
+       overlay ran. So the overlay recorded all three as applied, the multi-pass
+       retry that exists for exactly this ordering never reconsidered them
+       (a no-op is indistinguishable from real work), nothing was recorded
+       incomplete, and the three tables simply never existed on any fresh
+       install. 8/8's named-schema assertion is what makes that visible; this is
+       what makes it not happen.
+       Re-applied here rather than moved earlier because 044c itself needs the
+       `core` schema and its can_access_program function, which this tree
+       bootstraps — pulling it before the overlay inverts a deeper dependency
+       (tried: "schema \"core\" does not exist"). Selected mechanically by the
+       guard they share, not by filename, so a fourth such file is covered the
+       day it is written. Before the tenant sweep below, so anything created
+       here is still policied by it. */
+    const namedSchemaGuard = /to_regclass\(\s*'(?!public\.)[a-z_][a-z0-9_]*\.[a-z0-9_]+'\s*\)/i;
+    const rlsNames = new Set(RLS_MIGRATIONS);
+    const guardedRoots = fs
+      .readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.endsWith('.sql') && !rlsNames.has(f))
+      .filter((f) => namedSchemaGuard.test(fs.readFileSync(path.join(MIGRATIONS_DIR, f), 'utf8')))
+      .sort();
+    let reSwept = 0;
+    for (const file of guardedRoots) {
+      const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
+      try {
+        await pool.query('BEGIN');
+        await pool.query(sql);
+        await pool.query('COMMIT');
+        reSwept++;
+      } catch (err) {
+        await pool.query('ROLLBACK').catch(() => {});
+        /* Not fatal on its own: 8/8 decides whether the objects exist. Named
+           here so a re-sweep failure is never silent. */
+        console.log(`  ⚠ re-sweep ${file}: ${(err.message || '').split('\n')[0]}`);
+      }
+    }
+    if (guardedRoots.length > 0) {
+      console.log(
+        `  ✓ re-applied ${reSwept}/${guardedRoots.length} root file(s) guarded on a named schema ` +
+          `(their dependency exists only after this tree)`,
+      );
+    }
+
     // ── Close the sweep over what this tree just created ────────────────────
     // 0021 (step 5) policies every integer tenant-keyed table that exists WHEN
     // IT RUNS. This tree runs after it and adds more — 063_gcc_cognitive_agent_runtime.sql
@@ -1490,6 +1570,42 @@ async function main() {
     }
     if (policyCount < 1) {
       verifyFail('row-level security', 'no RLS policies created — tenant isolation would be absent');
+    }
+
+    /* Every table the schema graph declares OUTSIDE `public` must exist by now.
+       push creates none of them (2/8 defers them here saying so), the step-3
+       overlay does, and nothing verified that it had until this check existed:
+       `vault.evidence_citations` was declared, written to by
+       advancedRAGPipeline, created by a file on no applier, and absent on every
+       provisioned database — for as long as both halves of the 2/8 count were
+       public-only. Asserting it HERE rather than at 2/8 keeps that closed
+       without demanding push do the overlay's work. */
+    const declaredNonPublic = declaredTables(resolveDrizzleEntrypoints().paths).filter(
+      (t) => t.schema !== 'public',
+    );
+    if (declaredNonPublic.length > 0) {
+      const { rows: nonPublicRows } = await pool.query(
+        `SELECT table_schema, table_name FROM information_schema.tables
+          WHERE table_type = 'BASE TABLE' AND table_schema <> 'public'`,
+      );
+      const haveNonPublic = new Set(
+        nonPublicRows.map((r) => `${r.table_schema}.${r.table_name}`),
+      );
+      const absentNonPublic = declaredNonPublic
+        .map((t) => `${t.schema}.${t.name}`)
+        .filter((q) => !haveNonPublic.has(q));
+      if (absentNonPublic.length > 0) {
+        verifyFail(
+          'named-schema tables',
+          `${absentNonPublic.length} of ${declaredNonPublic.length} declared table(s) outside ` +
+            `public do not exist after the overlay: ${absentNonPublic.join(', ')}. push does not ` +
+            `create these; a file in migrations/ must, and every creator must be on an applier.`,
+        );
+      } else {
+        console.log(
+          `  named-schema tables: ${declaredNonPublic.length}/${declaredNonPublic.length} present`,
+        );
+      }
     }
 
     // Assert the core product tables the shipping routes read actually exist —

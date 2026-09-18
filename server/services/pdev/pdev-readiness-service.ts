@@ -47,6 +47,24 @@ export interface PdevReadinessReport {
   findings: PdevReadinessFinding[];
 }
 
+/**
+ * What `snapshot()` computed, and whether it was stored.
+ *
+ * Two separate facts, previously one return value. `report` is real work either
+ * way — the readiness figures are computed from live activity rows and a caller
+ * may legitimately show them — but `persisted: false` means no row exists in
+ * `pdev_readiness_snapshots`, so nothing can be read back, trended, or cited
+ * later. A caller that answers "snapshot taken" off `report` alone is reporting
+ * a write that did not happen.
+ */
+export interface PdevReadinessSnapshotOutcome {
+  report: PdevReadinessReport;
+  /** True only when the INSERT committed. */
+  persisted: boolean;
+  /** How many rows the insert attempted (workstreams + the 'overall' row). */
+  rowsAttempted: number;
+}
+
 export class PdevReadinessService {
   /**
    * Compute the per-workstream readiness + cross-workstream findings.
@@ -157,13 +175,36 @@ export class PdevReadinessService {
   /**
    * Materialize a readiness snapshot per workstream into
    * pdev_readiness_snapshots, plus an 'overall' row.
+   *
+   * Returns `null` when readiness could not be COMPUTED, and otherwise the
+   * computed report together with whether the rows were actually WRITTEN. Those
+   * are different facts and this method used to conflate them.
+   *
+   * Found by the adversarial review of the WO-16C #133 conversion — the
+   * reviewer was checking whether a new comment in the route was true ("the
+   * snapshot rows are committed by the call above") and it was not. The insert
+   * below is wrapped in a `try` that logs and falls through to `return report`,
+   * so a rejected insert produced a report indistinguishable from a stored
+   * snapshot. Unlike an audit row, which accompanies an action that already
+   * happened, these rows ARE the action: materializing them is the entire
+   * purpose of POST /readiness/snapshot. Every caller therefore reported
+   * success for a no-op — the route a 201 with the report, the scheduler
+   * `snapshotted += 1` and `status: 'snapshotted'`, the AnA handler
+   * "Snapshotted readiness; overall N%" — and after the #133 conversion the
+   * route also attached a §11.10(e) row saying a snapshot had been taken. A
+   * truthful audit entry for a snapshot that does not exist is worse than the
+   * silence it replaced.
+   *
+   * The insert is still not allowed to throw out of here: a scheduled batch must
+   * not abort on one program, which is why the `catch` exists. What changes is
+   * that the caller is told. The store's own reason stays in the log line.
    */
   async snapshot(
     programId: string,
     organizationId: number,
     actorUserId: number | null,
     trigger: 'manual' | 'state_change' | 'scheduled' = 'manual'
-  ): Promise<PdevReadinessReport | null> {
+  ): Promise<PdevReadinessSnapshotOutcome | null> {
     const report = await this.computeReadiness(programId, organizationId);
     if (!report) return null;
 
@@ -220,14 +261,19 @@ export class PdevReadinessService {
       trigger,
     });
 
+    let persisted = false;
     try {
       // Drizzle insert with decimal-as-string for readiness_score (NUMERIC).
       await db.insert(pdevReadinessSnapshots).values(rows as never);
+      persisted = true;
     } catch (err) {
+      // `err` carries the store's own text and is deliberately NOT returned —
+      // these outcomes reach a tenant client. Find it by this log line, keyed on
+      // the program id repeated in the outcome.
       logger.error('Failed to persist readiness snapshots', { err, programId });
     }
 
-    return report;
+    return { report, persisted, rowsAttempted: rows.length };
   }
 }
 

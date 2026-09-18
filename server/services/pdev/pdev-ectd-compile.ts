@@ -93,10 +93,17 @@ export interface PdevEctdCompileResult {
    * break the action it records — it RESOLVES an AuditWriteResult and reports
    * what happened in `persisted`. Discarding that value meant an eCTD package
    * could be assembled from the canonical submission spine, handed to the
-   * caller, and recorded nowhere — and the result object, the route envelope
-   * and the agent tool response were byte-identical to the compile whose
-   * record exists. Same for the refusal, which is the audit trail's only
-   * evidence that a below-threshold compile was attempted and blocked.
+   * caller, and recorded nowhere, with this result object identical to the
+   * compile whose record exists. Same for the refusal, which is the audit
+   * trail's only evidence that a below-threshold compile was attempted and
+   * blocked.
+   *
+   * The route envelope and the agent tool response were the same way, and this
+   * field alone did not change that — a service that reports an outcome its
+   * caller drops is the same defect one layer up. A review of this conversion
+   * found exactly that, so `pdev-routes.ts` now sends it in the envelope (in
+   * `meta` on the 201, in `details` on the 409) and the AnA handler carries it
+   * as `ectdAuditTrail`, kept distinct from its own agent-level row.
    *
    * The shape is the one pdev-clearance and pdev-workflow-bridge already carry,
    * from the shared ./pdev-audit-record — not a second copy of it. `chained`

@@ -924,6 +924,48 @@ findings.
 
 The practical rule, for the next work order: **the fix gets the refuters too.**
 
+## The conversion reviews — a second round, on the round above
+
+The `void`-audit conversions were themselves reviewed, one reviewer per file, same
+default-to-reporting-a-problem rule. Four of six found something outside their own
+file, and the pattern is the one this whole work order keeps producing: **a
+conversion is not finished at the function boundary.**
+
+- **The eCTD compile outcome, dropped by both callers.** The service reported it;
+  the route discarded it on the 201 and the 409 alike, and the AnA handler
+  discarded it in both arms. The handler case is the sharper one: it *does* report
+  an audit outcome, for a DIFFERENT row — its own `agent.ana.…` row — and because
+  the note helper appends nothing when the outcome it is handed persisted, a run
+  where the agent row landed and the service row was lost produced a tool response
+  with **no audit note at all.** A positive "the record is fine" signal about a
+  record that does not exist.
+
+- **A new defect, found because a reviewer checked whether a COMMENT was true.**
+  The comment said "the snapshot rows are committed by the call above".
+  `pdevReadinessService.snapshot` wrapped its INSERT in a `try` that logged and
+  fell through to `return report`. These rows are not a log beside an action —
+  materializing them *is* the action of POST /readiness/snapshot. So the route
+  answered **201 Created for a snapshot no table contained**, the scheduler
+  counted it, the AnA handler said "Snapshotted readiness; overall N%", and a
+  total store outage would have reported every program snapshotted. After the #133
+  conversion the route also attached an audit row saying a snapshot had been
+  taken: a truthful §11.10(e) entry for a snapshot that does not exist, which is
+  worse than the silence it replaced. Now `{ report, persisted, rowsAttempted }`,
+  a 503 rather than a 201, and a `not_persisted` outcome in the batch — neither a
+  skip, which computed nothing, nor an error, which threw.
+
+- **Two untrue comments, both mine, both inside a fix for a fabrication finding.**
+  One claimed `meta` "used to be omitted entirely unless the program had cleared"
+  — false of every version, since `ok()` is `meta ? { data, meta } : { data }` and
+  `{}` is truthy. The other used the past tense about a route envelope the field
+  had not yet changed. **A comment that invents prior observable behaviour is the
+  same defect in prose**, and it is the one form of it no gate will ever catch.
+
+That third item is the reason this round mattered most. Every other check in this
+work order reads code. A reviewer asking "is this sentence true of this code?" is
+the only thing that catches a fix which describes itself falsely — and two of mine
+did.
+
 ## Commits
 
 | Commit | What |
@@ -931,7 +973,8 @@ The practical rule, for the next work order: **the fix gets the refuters too.**
 | `6af4c0e2d` | #70's two must-fix findings; #72's stale error counters |
 | `563bb5122` | #70/#71: `gxpRelevant` third state, `'signed'` made unrepresentable, honest report statistics, client reads the server's assessments |
 | `fa207f24d` | #63's vacuous assertion, #65's remaining trace section, #133's terminal IND write |
-| `48917d7b1` | `ci:void-audit-write` + baseline; all 19 PDEV `void` sites converted |
+| `48917d7b1` | `ci:void-audit-write` + baseline; all 18 PDEV `void` sites converted |
+| `bb4b0ec22` | The conversion reviews: the dropped eCTD outcome, the unstored readiness snapshot, two untrue comments |
 
 One gate failure is outstanding and is not from this work: `ci:server-error-leaks`
 fails on `server/routes/real-world-evidence.ts` (2 → 3, lines 663/834/840),

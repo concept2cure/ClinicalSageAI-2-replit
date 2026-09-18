@@ -69,6 +69,54 @@ export function VaultPlaceIntoSubmission({
   const [placing, setPlacing] = React.useState(false);
   const [placed, setPlaced] = React.useState<PlacedLeaf | null>(null);
 
+  /* Dialog behaviour the surrounding pattern does not carry. `aria-modal` is a
+     claim that everything outside is inert; making it without trapping focus
+     tells a screen-reader user that content is unavailable while their focus
+     can still walk into it, which is worse than not claiming it at all. So the
+     claim is backed here: focus moves in on open, is held, and is returned to
+     whatever opened the dialog on close. Escape closes, as a dialog must. */
+  const dialogRef = React.useRef<HTMLDivElement | null>(null);
+  const firstFieldRef = React.useRef<HTMLSelectElement | HTMLInputElement | null>(null);
+  const openerRef = React.useRef<Element | null>(null);
+
+  React.useEffect(() => {
+    openerRef.current = document.activeElement;
+    // Focus the dialog itself rather than a control: the heading and the
+    // sentence explaining what filing does are read before the first field,
+    // which is the part a person needs to hear before choosing anything.
+    dialogRef.current?.focus();
+    return () => {
+      const opener = openerRef.current as HTMLElement | null;
+      if (opener && typeof opener.focus === 'function') opener.focus();
+    };
+  }, []);
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape' && !placing) {
+      e.stopPropagation();
+      onClose();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    const root = dialogRef.current;
+    if (!root) return;
+    const focusable = Array.from(
+      root.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]',
+      ),
+    ).filter((el) => el.offsetParent !== null || el === document.activeElement);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
   React.useEffect(() => {
     target.load();
     // Loading the org's submissions is a mount-time read; `target` is stable
@@ -122,21 +170,38 @@ export function VaultPlaceIntoSubmission({
   };
 
   return (
-    <div className="de-backdrop" role="dialog" aria-modal="true" aria-label="Place into submission">
-      <div className="de-dialog">
-        <div className="de-head">
+    <div
+      className="de-bd"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && !placing) onClose();
+      }}
+    >
+      <div
+        className="de"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="vpf-title"
+        ref={dialogRef}
+        tabIndex={-1}
+        onKeyDown={onKeyDown}
+      >
+        <div className="de-h">
           <div>
-            <div className="sp-eyebrow">Vault {I.dot} filing</div>
-            <h2 className="de-title">Place into submission</h2>
+            <div className="de-h-eye">Vault → filing</div>
+            <div className="de-h-t" id="vpf-title">Place into submission</div>
+            <div className="de-h-s">
+              The vault copy is filed as itself — the leaf points at this document, so what is
+              assembled is what is stored here. Nothing is copied.
+            </div>
           </div>
-          <button className="de-x" onClick={onClose} aria-label="Close">×</button>
+          <button className="de-x" onClick={onClose} aria-label="Close" disabled={placing}>
+            {I.close}
+          </button>
         </div>
 
         <div className="de-body">
           <div className="de-desc" style={{ marginBottom: 12 }}>
-            <b>{documentTitle}</b> will be filed as itself. The leaf points at this vault
-            document, so the bytes assembled into the package are the ones in the vault —
-            there is no snapshot and no second copy to keep in step.
+            Filing <b>{documentTitle}</b>.
           </div>
 
           <FilingTargetFields target={target} idPrefix="vpf" />
@@ -177,18 +242,39 @@ export function VaultPlaceIntoSubmission({
             </select>
           </div>
 
+          <div className="de-gov">
+            <span className="ico">{I.lock}</span>
+            <span className="de-gov-t">
+              Placement is recorded in the submission of record — audited and org-scoped. The
+              server refuses a frozen or dispatched sequence, and re-checks the document against
+              the hash held for it before assembling.
+            </span>
+          </div>
+
           {verdict && (
-            <div className={verdict.kind === 'error' ? 'de-err' : 'de-ok'} role="status">
-              {verdict.message}
+            <div className={verdict.kind === 'error' ? 'de-err' : 'de-gov'} role="status">
+              {verdict.kind === 'ok' ? <span className="ico">{I.checkCircle}</span> : null}
+              <span className={verdict.kind === 'ok' ? 'de-gov-t' : undefined}>{verdict.message}</span>
             </div>
           )}
         </div>
 
-        <div className="de-foot">
-          <button className="sp-btn" onClick={onClose}>
-            {placed ? 'Done' : 'Cancel'}
+        <div className="de-f">
+          <button className="de-btn ghost" onClick={onClose} disabled={placing}>
+            {placed ? 'Close' : 'Cancel'}
           </button>
-          <button className="sp-ask" onClick={() => void place()} disabled={!canPlace}>
+          <button
+            className="de-btn primary"
+            onClick={() => void place()}
+            disabled={!canPlace}
+            title={
+              !seq
+                ? 'Choose a submission and a sequence that can take a leaf'
+                : !sectionUsable
+                  ? 'A CTD section code is required'
+                  : undefined
+            }
+          >
             {placing ? 'Filing…' : 'Place into submission'}
           </button>
         </div>

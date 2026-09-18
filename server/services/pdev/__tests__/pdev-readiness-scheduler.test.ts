@@ -24,8 +24,14 @@ vi.mock('../../../db', () => ({
 }));
 
 const SNAP = vi.hoisted(() => ({
-  // Map programId -> behaviour: 'ok' | 'null' | 'throw'
-  behaviour: {} as Record<string, 'ok' | 'null' | 'throw'>,
+  /*
+   * Map programId -> behaviour. `unpersisted` is the fourth case, added with the
+   * outcome shape: `snapshot()` used to swallow its own INSERT failure and
+   * return the computed report, so this scheduler counted the program as
+   * snapshotted and reported `status: 'snapshotted'` for rows that never landed.
+   * A total store outage would have reported every program snapshotted.
+   */
+  behaviour: {} as Record<string, 'ok' | 'null' | 'throw' | 'unpersisted'>,
   calls: [] as Array<{ programId: string; trigger: string; actor: number | null }>,
 }));
 
@@ -36,7 +42,12 @@ vi.mock('../pdev-readiness-service', () => ({
       const b = SNAP.behaviour[programId] ?? 'ok';
       if (b === 'throw') throw new Error('boom');
       if (b === 'null') return null;
-      return { overall: { readinessScore: 42 }, workstreams: [], findings: [] };
+      // PdevReadinessSnapshotOutcome: the computed report AND whether it stored.
+      return {
+        report: { overall: { readinessScore: 42 }, workstreams: [], findings: [] },
+        persisted: b !== 'unpersisted',
+        rowsAttempted: 2,
+      };
     }),
   },
 }));
@@ -115,5 +126,45 @@ describe('pdevReadinessScheduler.snapshotActivePrograms', () => {
     const r = await pdevReadinessScheduler.snapshotActivePrograms();
     expect(r.snapshotted).toBe(1);
     expect(SNAP.calls[0].actor).toBeNull();
+  });
+
+  /*
+   * Found by the review of the WO-16C #133 conversion, not by the sweep. The
+   * readiness service wrapped its INSERT in a `try` that logged and fell through
+   * to `return report`, so a program whose rows never landed was counted here as
+   * snapshotted and reported `status: 'snapshotted'`. The batch total was an
+   * upper bound presented as a count.
+   */
+  test('a program whose rows did not store is not counted as snapshotted', async () => {
+    H.activityProgramIds = [{ programId: 'p1' }];
+    H.programs = [{ id: 'p1', organizationId: 1 }];
+    SNAP.behaviour = { p1: 'unpersisted' };
+
+    const r = await pdevReadinessScheduler.snapshotActivePrograms(1, 7);
+
+    expect(r.programsConsidered).toBe(1);
+    expect(r.snapshotted).toBe(0);
+    expect(r.results[0].status).toBe('not_persisted');
+    // The readiness WAS computed — that is real work and is still reported.
+    expect(r.results[0].overallReadiness).toBe(42);
+    // And it is neither a skip (which computed nothing) nor an error (which threw).
+    expect(r.results[0].status).not.toBe('skipped');
+    expect(r.results[0].status).not.toBe('error');
+  });
+
+  test('a total store outage reports zero snapshotted, not every program', async () => {
+    H.activityProgramIds = [{ programId: 'p1' }, { programId: 'p2' }, { programId: 'p3' }];
+    H.programs = [
+      { id: 'p1', organizationId: 1 },
+      { id: 'p2', organizationId: 1 },
+      { id: 'p3', organizationId: 1 },
+    ];
+    SNAP.behaviour = { p1: 'unpersisted', p2: 'unpersisted', p3: 'unpersisted' };
+
+    const r = await pdevReadinessScheduler.snapshotActivePrograms(1, 7);
+
+    expect(r.programsConsidered).toBe(3);
+    expect(r.snapshotted).toBe(0);
+    expect(r.results.every(x => x.status === 'not_persisted')).toBe(true);
   });
 });
