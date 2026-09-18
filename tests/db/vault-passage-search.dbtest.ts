@@ -342,3 +342,77 @@ describe('search_document_passages reaches it', () => {
     expect(out.message).toContain('Do not report that the documents do not mention it');
   }, 60_000);
 });
+
+describe('a retrieved passage can be cited', () => {
+  /* Runs last on purpose: it ingests a third document, and the coverage
+     assertion above counts every document this organization holds. */
+  it('carries a real page number, derived from the PDF and not from arithmetic', async () => {
+    /* The chunk INSERT omitted page_number and section_title entirely, so every
+       passage came back with a null locator — while the tool's own description
+       promises "the sentences that answer the question, with the document and
+       page they came from". A citation nobody can turn to is not a citation.
+
+       Each page carries well over the 4,000-character chunk target, so the
+       pages land in DIFFERENT chunks and the assertion is that the chunk
+       quoting page three says page three — not merely that some number is
+       present, which a single-chunk document would satisfy by accident. */
+    const { PDFDocument, StandardFonts } = await import('pdf-lib');
+    const pdf = await PDFDocument.create();
+    const font = await pdf.embedFont(StandardFonts.Helvetica);
+    const MARKERS = ['Leiden building four', 'twenty five degrees', 'ninety eight point four'];
+    const filler = (marker: string, n: number) =>
+      Array.from({ length: n }, (_, i) => `Line ${i} of this section mentions ${marker} in context.`);
+    for (const marker of MARKERS) {
+      // ~54 lines of ~60 chars each, drawn small, is comfortably past 4,000.
+      const lines = filler(marker, 54);
+      const page = pdf.addPage([612, 792]);
+      lines.forEach((line, i) => page.drawText(line, { x: 24, y: 760 - i * 14, size: 8, font }));
+    }
+    const bytes = Buffer.from(await pdf.save());
+
+    const res = await request(app)
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', `${PROBE_CODE}-PAGED`)
+      .field('documentTitle', 'Three section report')
+      .field('documentType', 'REPORT')
+      .attach('file', bytes, 'three-sections.pdf');
+    expect(res.status).toBe(201);
+    const docId = String(res.body.document.id);
+
+    const { rows } = await owner.query(
+      `SELECT c.chunk_index, c.page_number, c.char_start, d.extracted_text
+         FROM vault.document_chunks c
+         JOIN vault.documents d ON d.id = c.document_id
+        WHERE c.document_id = $1 ORDER BY c.chunk_index`,
+      [docId],
+    );
+    expect(rows.length).toBeGreaterThan(1);
+    // The column is no longer uniformly NULL, which is what it was before.
+    expect(rows.every(r => r.page_number != null)).toBe(true);
+
+    /* The page is the RIGHT one, derived here INDEPENDENTLY of the code under
+       test: each page's marker appears only on that page, so the first
+       occurrence of markers two and three in the stored text are the page
+       boundaries. A chunk beginning before boundary two is on page one, and so
+       on. Re-deriving the answer from the document itself is what makes this a
+       test of the mapping rather than a restatement of it. */
+    const text = String(rows[0].extracted_text);
+    const startOfPage2 = text.indexOf(MARKERS[1]);
+    const startOfPage3 = text.indexOf(MARKERS[2]);
+    expect(startOfPage2).toBeGreaterThan(0);
+    expect(startOfPage3).toBeGreaterThan(startOfPage2);
+    const expectedPage = (charStart: number): number =>
+      charStart < startOfPage2 ? 1 : charStart < startOfPage3 ? 2 : 3;
+
+    for (const r of rows) {
+      expect(
+        Number(r.page_number),
+        `chunk ${r.chunk_index} starts at ${r.char_start}`,
+      ).toBe(expectedPage(Number(r.char_start)));
+    }
+    // And every page is actually reached — a mapping stuck on page 1 would
+    // satisfy the per-chunk check on a document whose chunks all began there.
+    expect(new Set(rows.map(r => Number(r.page_number)))).toEqual(new Set([1, 2, 3]));
+  }, 120_000);
+});

@@ -167,7 +167,8 @@ export const SEARCH_DOCUMENT_PASSAGES: AnaTool = {
   name: 'search_document_passages',
   description:
     'Search INSIDE the client\u0027s filed documents and get back the actual passages \u2014 the sentences that ' +
-    'answer the question, with the document and page they came from. This is the tool for "what does the ' +
+    'answer the question, with the document they came from and, for a paged format whose pages could be ' +
+    'located, the page. This is the tool for "what does the ' +
     'stability data show at 6 months", "which batch failed", "what did the sponsor commit to in the meeting ' +
     'minutes": questions the text settles. It searches the passage index built from every vault upload, so it ' +
     'reaches the contents, not just the titles or the summaries. Prefer it over reading a whole document when ' +

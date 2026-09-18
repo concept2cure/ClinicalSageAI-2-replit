@@ -308,8 +308,18 @@ were inside the measurement above.
 **#4 — dialogs without semantics: CLOSED.** `FilingsCatalog` was done earlier.
 `CollabLauncher` and both `AnaCommand` gates are done here — see the a11y
 commit. All now carry `role="dialog"`, `aria-modal`, an accessible name, Escape,
-and focus restore. `useDialog` remains a partial trap by design (Tab can leave);
-that is unchanged and still worth a real focus trap one day.
+and focus restore.
+
+`useDialog` was also "a partial trap by design — Tab can leave the panel", which
+this section first recorded as still open. It is closed now, and it should not
+have been carried as a design limitation at all: every one of its 36 call sites
+sets `aria-modal="true"`, and that attribute tells a screen reader to hide
+everything outside the dialog. A keyboard user tabbing past the last control
+therefore landed on a control that had been removed from their accessibility
+tree, behind an opaque backdrop. Tab now wraps at both ends, escaped focus is
+pulled back, and a panel with nothing focusable holds focus itself. Tested at
+the hook, not through a surface — a per-surface test would prove it for one
+modal and leave the other thirty-five unexamined.
 
 **#6 — keyboard-unreachable controls: CLOSED.** ProtocolDev's heat-map cell and
 risk row, and QmpWorkspace's plan-name cell. `Orchestration.tsx`'s nav chip was

@@ -372,18 +372,32 @@ export interface UploadRow {
   owner_name: string | null;
 }
 
+/**
+ * What the leaf calls this upload: its taxonomy kind when the classifier
+ * recorded one, else the declared document type, else just 'File'.
+ *
+ * 'OTHER' is deliberately not shown — it is the ingest schema's "I was not
+ * told", and rendering it as a type would dress an absent answer as a given
+ * one. Its own function because it is three fallbacks deep and reading it
+ * inline is what carried uploadLeaf over the complexity limit.
+ */
+function uploadTypeLabel(row: UploadRow): string {
+  if (row.evidence_kind) return KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind;
+  if (row.document_type && row.document_type !== 'OTHER') return row.document_type;
+  return 'File';
+}
+
 /** An uploaded vault.documents row → a VaultDoc leaf (all real columns).
  *  Exported for the tree-merge regression test. */
 export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
   const placementStatus = row.placement_status || 'unfiled';
-  const kind = row.evidence_kind ? KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind : null;
   const title = row.document_title || row.file_name || 'Document';
   const size = prettySize(row.file_size);
   const leaf: VaultDoc = {
     id: `up-${row.id}`,
     num: row.ctd_section ?? '—',
     title,
-    type: kind ?? (row.document_type && row.document_type !== 'OTHER' ? row.document_type : 'File'),
+    type: uploadTypeLabel(row),
     status: placementStatus,
     // Uploads have no authoring completion; 0 rather than a fabricated figure.
     pct: 0,

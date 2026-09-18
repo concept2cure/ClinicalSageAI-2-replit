@@ -268,12 +268,30 @@ async function handleReadProjectDocument(
   });
   const coverage = await svc.getReadCoverage(doc.id, doc.contentHash, charCount);
 
+  /* What was already learned about this document, handed back with the text.
+     The comprehension record was written by a previous read and then never
+     returned by anything, so every re-read started from zero — the client's
+     own figures re-derived from scratch, which is exactly the re-explaining
+     the catalog exists to end. Present only when the record exists; a
+     not-yet-studied document says nothing here rather than an empty shape. */
+  const comprehension =
+    doc.catalog!.status === 'cataloged'
+      ? {
+          documentKind: doc.catalog!.documentKind,
+          purpose: doc.catalog!.purpose,
+          summary: doc.catalog!.summary,
+          keyData: doc.catalog!.keyData ?? null,
+          catalogedAt: doc.catalog!.catalogedAt,
+        }
+      : undefined;
+
   return JSON.stringify({
     ok: true,
     documentId: doc.id,
     fileName: doc.fileName,
     documentTitle: doc.documentTitle,
     extractionMethod: doc.catalog!.extractionMethod,
+    ...(comprehension ? { comprehension } : {}),
     /* An OCR'd scan is not the same evidence as a born-digital text layer, and
        the method alone does not say how well it read. The mean confidence
        travels with the window so a low-confidence recognition is qualified

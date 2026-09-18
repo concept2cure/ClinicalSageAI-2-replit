@@ -2180,6 +2180,47 @@ export const C2C_MIGRATION_FILES = [
      implications and belongs to WO-1. */
   'migrations/20260917_project_charters_declared_columns.sql',
 
+  /* ── KNOWN_UNLISTED triage, 2026-09-17 ──────────────────────────────────────
+     Ten root migrations creating SIXTEEN tables that reached a database only
+     through install-fresh's step-3 overlay. Every one of the sixteen is: not on
+     the drizzle push surface, created by no other file in this set, present on a
+     canonically provisioned database, and referenced by live non-test code
+     (3-44 references each). Nothing re-asserted any of them, and any later
+     change to these files would have reached new installs only.
+
+     They were exempted from the applier allowlist by KNOWN_UNLISTED in
+     tests/ops/apply-c2c-migrations-manifest.test.mjs, whose stated reason is
+     that such files' "objects come from shared/schema.ts via drizzle-kit push
+     and they carry nothing an existing database additionally needs". Neither
+     half held for any of these ten. That list's own comment sets the rule:
+     "Removing an entry (by listing the file in the applier) is always safe;
+     adding one requires the reason above to actually hold."
+
+     Safe to replay, verified per file rather than assumed: ZERO DROP statements
+     across all ten, every CREATE and ALTER guarded by IF NOT EXISTS, and every
+     table carries organization_id/org_id. Their only external FK targets are
+     `organizations` and `users` — base tables that 39 files already in this set
+     also reference and that the schema-contract harness provisions via
+     FK_PREREQUISITES, so the C-33 bare-database replay is satisfied. (That is
+     the finding-3 trap checked and cleared: project_charters failed it because
+     it is NOT a base table and is not in that prerequisite set.)
+
+     NOT claimed: that these tables gain RLS policies by being listed here. None
+     of the ten defines any, which is the status quo on a provisioned database
+     today — listing them changes nothing about it. The tenant sweep stays the
+     final pair of this set.
+     ─────────────────────────────────────────────────────────────────────────── */
+  'migrations/20260701_protocol_soa.sql',                               // protocol_soa_assessments, protocol_soa_cells
+  'migrations/20260702_protocol_budget.sql',                            // protocol_budget_items, protocol_budget_params
+  'migrations/20260703_dmsp.sql',                                       // dms_plans, dms_plan_elements
+  'migrations/20260704_biosketch.sql',                                  // biosketches, biosketch_sections
+  'migrations/20260704_other_support.sql',                              // other_support_documents, other_support_entries
+  'migrations/20260705_export_control.sql',                             // export_control_reviews
+  'migrations/20260705_invention_disclosure.sql',                       // invention_disclosures
+  'migrations/20260705_research_agreements.sql',                        // research_agreements
+  'migrations/20260728_chat_thread_store.sql',                          // chat_threads, chat_messages
+  'migrations/20260731c_canonical_documents.sql',                       // canonical_documents
+
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
   // sweeps below are blind to them: the integer sweep matches on

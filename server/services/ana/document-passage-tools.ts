@@ -30,7 +30,7 @@ import { requireCatalog, withCaughtErrors, type RegisterFn } from './document-to
 
 /** One line of honest context about what the search could not see. */
 function coverageNote(
-  c: { total: number; indexed: number; pending: number; failed: number } | null,
+  c: { total: number; indexed: number; pending: number; failed: number; failureReasons?: string[] } | null,
 ): string {
   if (!c) {
     return (
@@ -56,7 +56,14 @@ function coverageNote(
   if (c.indexed >= c.total) return `All ${c.total} document(s) are in the passage index.`;
   const parts: string[] = [`${c.indexed} of ${c.total} document(s) are in the passage index`];
   if (c.pending > 0) parts.push(`${c.pending} not indexed yet`);
-  if (c.failed > 0) parts.push(`${c.failed} failed to index`);
+  if (c.failed > 0) {
+    /* The reason, not just the count. It was recorded on every failure and
+       read by nothing, so a document whose passages could not be built looked
+       exactly like one nobody had got to — and "N failed" is a number nobody
+       can act on. */
+    const why = (c.failureReasons ?? []).length ? ` (${(c.failureReasons ?? []).join('; ')})` : '';
+    parts.push(`${c.failed} failed to index${why}`);
+  }
   return (
     `${parts.join('; ')}. A passage not found here is not evidence the document does not say it — ` +
     'read the file with read_project_document before telling the user it is absent.'
