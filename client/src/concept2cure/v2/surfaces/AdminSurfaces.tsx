@@ -571,11 +571,26 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
           hint={`${loadError} — nothing below is editable until the organization record loads, so no change can be lost.`}
         />
       )}
-      {saveNote && (
-        <div className="txw-help" data-tone={saveNote.tone === 'warn' ? 'warn' : undefined}>
-          {saveNote.tone === 'warn' ? I.alertTriangle : I.checkCircle} {saveNote.text}
-        </div>
-      )}
+      {/* The result of a governed, audited PATCH. It was a plain div that
+          appeared after the write, so the only report that "Save to
+          organization" had landed — or been refused with "Not saved: …" — was
+          an icon swap and a tint. The region is rendered unconditionally and
+          filled conditionally, because a live region has to exist before its
+          content changes for the change to be announced reliably; empty, it has
+          no class and so no box. */}
+      <div
+        className={saveNote ? 'txw-help' : undefined}
+        data-tone={saveNote?.tone === 'warn' ? 'warn' : undefined}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {saveNote ? (
+          <>
+            {saveNote.tone === 'warn' ? I.alertTriangle : I.checkCircle} {saveNote.text}
+          </>
+        ) : null}
+      </div>
 
       <div className="txw-settings">
         {/* -- Org profile -- */}
@@ -646,7 +661,13 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                   ))}
                 </div>
                 {clientTypeStatus && (
+                  /* Cycles through "Saving to governed org profile…" and its
+                     outcome. Choosing a client-type chip fires a governed write
+                     and the chips merely disable and re-enable, so without this
+                     the write was silent from start to finish. */
                   <span
+                    role="status"
+                    aria-live="polite"
                     className="txw-help"
                     data-tone={
                       saveState.status === 'error' || profile.status === 'error'
@@ -1161,6 +1182,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
         <div className="vault-search" style={{ flex: '1 1 240px', maxWidth: 360 }}>
           <span className="ico">{I.search}</span>
           <input
+            aria-label="Search audit trail entries"
             placeholder="Search entries..."
             value={q}
             onChange={(e) => setQ(e.target.value)}

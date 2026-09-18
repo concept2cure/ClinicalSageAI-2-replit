@@ -739,7 +739,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
               <button className="ac-gate-x" aria-label="Close" onClick={() => setGateOpen(false)}>{I.close}</button>
             </div>
             {gateRes.loading ? (
-              <div className="scaf-note" style={{ padding: '28px 16px' }}>Running the pre-submission gate…</div>
+              <div role="status" className="scaf-note" style={{ padding: '28px 16px' }}>Running the pre-submission gate…</div>
             ) : gateRes.error ? (
               <EmptyState
                 tone="error"

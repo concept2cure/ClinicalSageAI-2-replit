@@ -795,11 +795,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       {/* Filters + views */}
       <div className="tb-bar">
         <div className="tb-filters">
-          <select className="tb-sel" value={proj} onChange={e => setProj(e.target.value)}>
+          <select id="tb-filter-project" aria-label="Filter by project" className="tb-sel" value={proj} onChange={e => setProj(e.target.value)}>
             <option value="all">All projects (org-scoped)</option>
             {projectOpts.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
           </select>
-          <select className="tb-sel" value={mod} onChange={e => setMod(e.target.value)}>
+          <select id="tb-filter-module" aria-label="Filter by module" className="tb-sel" value={mod} onChange={e => setMod(e.target.value)}>
             {modules.map(m => <option key={m} value={m}>{m === 'all' ? 'All modules' : m}</option>)}
           </select>
           <button className={`tb-chip${mine ? ' on' : ''}`} onClick={() => setMine(m => !m)}>{I.user} My tasks</button>
@@ -888,14 +888,18 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               data-status={t.status}
               role="button"
               tabIndex={0}
-              aria-label={`Open ${t.title}`}
+              /* The rail dot carried completed / in-progress / pending in its
+                 colour alone, and the row's name said only "Open <title>", so
+                 the one thing the critical path is read for was the one thing
+                 not stated. */
+              aria-label={`Open ${t.title} — ${t.status}`}
               onClick={() => setSel(t)}
               onKeyDown={(e) => {
                 if (e.target !== e.currentTarget) return;
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(t); }
               }}
             >
-              <div className="tb-path-rail"><span className="tb-path-dot" data-status={t.status} />{i < critChain.length - 1 && <span className="tb-path-line" />}</div>
+              <div className="tb-path-rail"><span className="tb-path-dot" data-status={t.status} aria-hidden="true" />{i < critChain.length - 1 && <span className="tb-path-line" />}</div>
               <div className="tb-path-card">
                 <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
                 <div className="tb-path-m">

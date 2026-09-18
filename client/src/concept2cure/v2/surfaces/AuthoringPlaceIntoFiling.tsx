@@ -52,6 +52,7 @@
  */
 import React from 'react';
 import { I } from '../icons';
+import { useDialog } from '../useDialog';
 import { liveGetOrNull } from '../dataConnect';
 import {
   useFilingTarget,
@@ -155,6 +156,10 @@ export function AuthoringPlaceIntoFiling({
   fireToast,
 }: AuthoringPlaceIntoFilingProps) {
   const [open, setOpen] = React.useState(false);
+  /* `enabled` is the open flag: the panel is inline below rather than its own
+     component, and a hook cannot be called conditionally. Guarded on `placing`
+     so Escape cannot dismiss the dialog mid-write, matching the backdrop. */
+  const dlgRef = useDialog(() => { if (!placing) setOpen(false); }, open);
 
   // Where to file. Shared with the Vault's own place-into-submission dialog
   // (./filingTarget), so the rule that a frozen or dispatched sequence cannot
@@ -299,11 +304,27 @@ export function AuthoringPlaceIntoFiling({
             if (e.target === e.currentTarget && !placing) setOpen(false);
           }}
         >
-          <div className="de" role="dialog" aria-label="Place into filing">
+          {/* It declared role="dialog" and stopped there. No aria-modal, so a
+              screen reader kept reading the editor underneath; no Escape; and
+              focus stayed on the trigger behind the scrim, so the only exits
+              were a backdrop mousedown (mouse-only) or tabbing blind through
+              the page. This is a governed write — it snapshots the document and
+              PUTs a submission leaf — so a user could also tab out of it into
+              the live editor while it was still on screen. The Escape path is
+              guarded the same way the backdrop already was, so it cannot
+              dismiss mid-write. */}
+          <div
+            className="de"
+            ref={dlgRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="apf-title"
+          >
             <div className="de-h">
               <div>
                 <div className="de-h-eye">Authoring → filing</div>
-                <div className="de-h-t">Place into filing</div>
+                <div className="de-h-t" id="apf-title">Place into filing</div>
                 <div className="de-h-s">{IDENTITY_STATEMENT}</div>
               </div>
               <button className="de-x" onClick={() => setOpen(false)} aria-label="Close">

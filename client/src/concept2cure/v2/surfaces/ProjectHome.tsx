@@ -132,7 +132,10 @@ function Anchored<T>(props: {
 }) {
   const { state } = props;
   if (state.loading) {
-    return <div className="scaf-note" style={{ padding: '16px 10px' }}>{props.loadingText}</div>;
+    /* Every Anchored<T> panel on this surface waits through here, so one
+       missing live region silenced all of them while their error and empty
+       twins below go through EmptyState, which announces. */
+    return <div role="status" aria-busy="true" className="scaf-note" style={{ padding: '16px 10px' }}>{props.loadingText}</div>;
   }
   if (state.error) {
     return <EmptyState tone="error" icon={I.alertTriangle} title={props.errorTitle} hint={props.errorHint} />;

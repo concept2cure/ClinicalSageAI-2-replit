@@ -647,7 +647,10 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
               <span className="lp-sec-n">{s.n}</span>
               <span className="lp-sec-l">{s.label}</span>
               {s.flag === 'agency' && <span className="lp-sec-flag" title="FDA proposed an edit">{I.gitBranch || I.alertTriangle}</span>}
-              <span className="lp-sec-dot" data-st={s.st} />
+              {/* USPI authoring status was this dot's colour and nothing
+                  else, on the tree a labelling lead works the whole day from. */}
+              <span className="lp-sec-dot" data-st={s.st} aria-hidden="true" />
+              <span className="sr-only">{s.st}</span>
             </button>
           ))}
         </aside>

@@ -163,12 +163,22 @@ function RegRow({ r, prod, productId, onAsk }: RegRowProps) {
 
   return (
     <>
-      <tr
-        className={'reg-row has-doss' + (open ? ' open' : '')}
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-      >
-        <td><div className="reg-mkt"><span className="reg-caret">{open ? I.chevDown : (I.chevRight || I.right)}</span><span className="reg-flag">{r.flag}</span><div><div className="reg-mkt-n">{r.mkt}</div><div className="reg-mkt-a">{r.auth}</div></div></div></td>
+      {/* The row expanded its dossier on click with no role, tabIndex or key
+          handler, and carried aria-expanded on the <tr> itself — an attribute
+          describing a control, on something that was not one. Putting the
+          control in the cell keeps the row a row and moves aria-expanded onto
+          the thing that actually expands. */}
+      <tr className={'reg-row has-doss' + (open ? ' open' : '')} onClick={() => setOpen((o) => !o)}>
+        <td>
+          <button
+            type="button"
+            className="reg-mkt-btn"
+            aria-expanded={open}
+            onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
+          >
+            <div className="reg-mkt"><span className="reg-caret" aria-hidden="true">{open ? I.chevDown : (I.chevRight || I.right)}</span><span className="reg-flag">{r.flag}</span><div><div className="reg-mkt-n">{r.mkt}</div><div className="reg-mkt-a">{r.auth}</div></div></div>
+          </button>
+        </td>
         <td className="reg-proc">{r.proc}</td>
         <td><span className="reg-id">{r.id}</span></td>
         <td><span className={`reg-pill ${_rgStatusPill[r.status] || 'neutral'}`}>{_rgStatusLabel[r.status] || r.status}</span></td>
@@ -180,7 +190,7 @@ function RegRow({ r, prod, productId, onAsk }: RegRowProps) {
         <tr className="reg-doss-row"><td colSpan={7}>
           <div className="reg-doss">
             {doss.loading ? (
-              <div className="reg-cert pending">{I.clock} Reading the {r.mkt} label record…</div>
+              <div role="status" className="reg-cert pending">{I.clock} Reading the {r.mkt} label record…</div>
             ) : doss.error ? (
               /* A failed dossier read is NOT "this market has no labels" — the
                  second is a regulatory claim about the org's file. */

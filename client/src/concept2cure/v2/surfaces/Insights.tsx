@@ -1125,7 +1125,10 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
               </div>
             </div>
           )}
-          {busy && <div className="rc-msg rc-ana-msg"><span className="rc-ana-mark sm">*</span><div className="rc-ana-body"><div className="rc-typing"><span /><span /><span /></div></div></div>}
+          {/* Three empty coloured dots and nothing else — the whole report is
+              being composed and a screen reader was told nothing at all. The
+              dots are decoration; the sentence beside them is the status. */}
+          {busy && <div className="rc-msg rc-ana-msg" role="status"><span className="rc-ana-mark sm" aria-hidden="true">*</span><div className="rc-ana-body"><div className="rc-typing" aria-hidden="true"><span /><span /><span /></div><span className="sr-only">Preparing your report…</span></div></div>}
         </div>
 
         {/* Composer + tier */}
@@ -1135,7 +1138,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
           </div>
           <div className="rc-input">
-            <textarea rows={1} value={draft} placeholder={`Describe the report or dashboard you need for ${p.code}...`}
+            <textarea rows={1} aria-label="Describe the report or dashboard you need" value={draft} placeholder={`Describe the report or dashboard you need for ${p.code}...`}
               onChange={e => setDraft(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <button className="rc-send" disabled={!draft.trim() || busy} onClick={() => send()} aria-label="Send">{I.arrowUp || I.right}</button>

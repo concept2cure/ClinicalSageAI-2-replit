@@ -96,10 +96,10 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
      impossible in a production build — always under its standing banner. */
   const extras = useProgramExtras(program?.id ?? null);
   const modulesState = toDataState(extras.pmaModules, extras.loading, extras.error, {
-    idleReason: 'Select a program to see how its PMA modules are assembled.',
+    idleReason: 'PMA module assembly is held per program.',
   });
   const trialState = toDataState(extras.pmaTrialMetrics, extras.loading, extras.error, {
-    idleReason: 'Select a program to see its pivotal-trial figures.',
+    idleReason: 'Pivotal-trial figures are held per program.',
   });
 
   /* Real export action — POST /api/510k/estar/build with the program's ident
@@ -136,7 +136,7 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
           <div className="section-sub">
             {program
               ? `Phase ${Math.max(activeIdx, 0) + 1} of ${phases.length} — ${activeLabel} · ${program.dueLabel}`
-              : `${phases.length} phases · select a program to see where it stands`}
+              : `${phases.length} phases · position is set by the active program`}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
