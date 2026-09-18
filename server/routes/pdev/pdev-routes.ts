@@ -62,7 +62,21 @@ import {
 import { db } from '../../db';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import { pdevProgramActivities } from '../../../shared/schema/pdev-workflow';
-import auditService from '../../services/auditService';
+/*
+ * WO-16C #133. The three governed writes in this router each recorded their
+ * 21 CFR Part 11 §11.10(e) row with `void auditService.logAction({…})`, which
+ * throws away the `AuditWriteResult` that call resolves. `logAction` never
+ * rejects when persistence fails — deliberately, an audit-trail outage must
+ * not break the user action it records — so the discarded value was the ONLY
+ * place the failure was visible: the row, the envelope and the surface came
+ * back byte-identical whether the §11.10(e) record existed or not. They now
+ * go through the shared `recordAuditRow`, which reports the outcome and is
+ * already the shape pdev-clearance and pdev-workflow-bridge return; each
+ * route carries that outcome out in its response envelope's `meta`.
+ * `auditService` is reached through that module, so it is no longer imported
+ * here directly.
+ */
+import { recordAuditRow } from '../../services/pdev/pdev-audit-record';
 
 import { pdevOrchestrator } from '../../services/pdev/pdev-orchestrator';
 import {
@@ -244,19 +258,60 @@ router.post('/programs/:programId/readiness/snapshot', async (req: Request, res:
   if (!UUID_RE.test(programId)) return clientError(res, 400, 'programId must be a UUID');
 
   try {
-    const report = await pdevReadinessService.snapshot(programId, orgId, userId, 'manual');
-    if (!report) return notFoundInTenant(res, 'program');
+    const snapshot = await pdevReadinessService.snapshot(programId, orgId, userId, 'manual');
+    if (!snapshot) return notFoundInTenant(res, 'program');
 
-    void auditService.logAction({
+    /*
+     * WO-16C #133, plus what the review of that conversion turned up here.
+     *
+     * The audit part: `void auditService.logAction(...)` made it unobservable
+     * whether the §11.10(e) record of who took this snapshot, and against which
+     * score, exists at all. `recordAuditRow` never throws and never blocks the
+     * request, so it simply adds the answer to `meta.auditTrail` — which also
+     * distinguishes a row in the retrievable chained `audit_logs` from one that
+     * reached the tamper-proof store only. The store's own reason stays in the
+     * log line recordAuditRow writes, never in this envelope.
+     *
+     * The snapshot part: the first version of this comment said "the snapshot
+     * rows are committed by the call above", and the reviewer checked. They were
+     * not — `pdevReadinessService.snapshot` wrapped its INSERT in a try that
+     * logged and fell through, so this route answered 201 Created, with the
+     * report, for a snapshot that no table contained. These rows are not a log
+     * accompanying an action; materializing them IS the action. So a failed
+     * write is answered as a failed write, and the audit row records the
+     * attempt either way — including, in its details, that the rows did not
+     * land, so the trail does not claim a snapshot that does not exist.
+     */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: userId ?? undefined,
       action: 'pdev_readiness_snapshot',
       resourceType: 'regulatory_program',
       resourceId: programId,
-      details: { trigger: 'manual', overallScore: report.overall.readinessScore },
+      details: {
+        trigger: 'manual',
+        overallScore: snapshot.report.overall.readinessScore,
+        rowsPersisted: snapshot.persisted,
+        rowsAttempted: snapshot.rowsAttempted,
+      },
     });
 
-    return created(res, report);
+    if (!snapshot.persisted) {
+      // 503, the status this repo gives a governed operation that could not be
+      // carried out (WO-16B settled this for the chain verifier). A code and a
+      // sentence; the store's text is in the service's log line, keyed on the
+      // program id.
+      return res.status(503).json({
+        error: {
+          code: 'READINESS_SNAPSHOT_NOT_PERSISTED',
+          message:
+            'The readiness figures were computed but the snapshot could not be stored, so there is nothing to read back or trend. Nothing was recorded as a snapshot. This has been logged for follow-up.',
+        },
+        meta: { auditTrail, readinessComputed: snapshot.report.overall.readinessScore },
+      });
+    }
+
+    return created(res, snapshot.report, { auditTrail });
   } catch (err) {
     return serverError(res, log, 'Failed to snapshot readiness', err);
   }
@@ -461,7 +516,19 @@ router.post(
         row = inserted[0];
       }
 
-      void auditService.logAction({
+      /*
+       * WO-16C #133, second follow-up review. This was
+       * `void auditService.logAction({…})`: the activity row above was already
+       * committed, and a transition whose §11.10(e) record was never written
+       * answered byte-identically to one whose record landed — including the
+       * dependency-gate override flag, which is the single most audit-relevant
+       * detail this route produces. The outcome now leaves the handler in the
+       * envelope (see the return below). The transition is NOT reverted
+       * because its audit row failed; the state change stands and the caller
+       * is told. The store's own reason is in recordAuditRow's log line, keyed
+       * on this action and `row.id`, and never on the wire.
+       */
+      const stateChangeAuditTrail = await recordAuditRow({
         tenantId: orgId,
         userId: userId ?? undefined,
         action: 'pdev_activity_state_change',
@@ -491,7 +558,38 @@ router.post(
         newState: parsed.data.state as (typeof PDEV_ACTIVITY_STATES)[number],
       });
 
-      return ok(res, row, clearance.cleared ? { indCleared: true } : undefined);
+      /*
+       * WO-16C #133, follow-up review. This said `{ indCleared: true }` and
+       * dropped `clearance.audit`, so a clearance whose 21 CFR Part 11 record
+       * was never written answered byte-identically to one that was. The
+       * clearance itself stands — the program row is committed — and the client
+       * is told what happened to the record beside it.
+       *
+       * TWO governed writes can happen in one request here, and each gets its
+       * own §11.10(e) row: this route's activity state change, and — only when
+       * the clearance activity reaches a completing state — the terminal
+       * program transition written by pdev-clearance.
+       *
+       * `auditTrail` means "this request's own row" in all three POSTs of this
+       * router, so it names the state-change row, and the clearance outcome is
+       * NESTED under `indClearance`, the shape pdev-workflow-bridge already
+       * returns for the same pair. An earlier version of this had them the other
+       * way round; a key that names a different record depending on the branch
+       * is the same class of confusion this finding is about.
+       *
+       * (A prior comment here claimed `meta` "used to be omitted entirely
+       * unless the program had cleared". That was not true of any version:
+       * `ok()` is `meta ? { data, meta } : { data }`, and every object literal
+       * including `{}` is truthy, so `meta` was present-but-empty. What was
+       * actually missing is that no key inside it ever described this route's
+       * own audit row.)
+       */
+      return ok(res, row, {
+        auditTrail: stateChangeAuditTrail,
+        ...(clearance.cleared || clearance.alreadyCleared
+          ? { indClearance: { cleared: clearance.cleared, audit: clearance.audit } }
+          : {}),
+      });
     } catch (err) {
       return serverError(res, log, 'Failed to update activity state', err);
     }
@@ -597,28 +695,47 @@ router.post(
         force: parsed.data.force,
       });
       if (result.status === 'refused_low_readiness') {
+        /*
+         * WO-16C #133, review of the conversion. The service now reports what
+         * became of its §11.10(e) row and this arm dropped it, which is the
+         * same defect one layer up: the 409 for a refusal that WAS recorded was
+         * byte-identical to one that was not. The refusal row is the audit
+         * trail's only evidence that a below-threshold compile was attempted
+         * and blocked, so it is the one least safe to lose silently.
+         */
         return clientError(res, 409, result.refusalReason ?? 'Readiness too low', {
           readinessSnapshot: result.readinessSnapshot,
           thresholdApplied: result.thresholdApplied,
+          auditTrail: result.audit,
         });
       }
       // Honest framing: route returns metadata only. Caller pulls the
       // ZIP via the existing /api/ectd/export pipeline if they want the
       // binary — the buffer here is dropped to keep the response shape
       // JSON-friendly.
-      return created(res, {
-        status: result.status,
-        thresholdApplied: result.thresholdApplied,
-        forced: result.forced,
-        readinessAtCompile: result.readinessSnapshot.overallReadiness,
-        package: result.package
-          ? {
-              filename: result.package.filename,
-              sizeBytes: result.package.sizeBytes,
-              stats: result.package.stats,
-            }
-          : undefined,
-      });
+      return created(
+        res,
+        {
+          status: result.status,
+          thresholdApplied: result.thresholdApplied,
+          forced: result.forced,
+          readinessAtCompile: result.readinessSnapshot.overallReadiness,
+          package: result.package
+            ? {
+                filename: result.package.filename,
+                sizeBytes: result.package.sizeBytes,
+                stats: result.package.stats,
+              }
+            : undefined,
+        },
+        // WO-16C #133, review of the conversion: the service's outcome was
+        // dropped here. The compile row records a `forced: true` override of the
+        // readiness floor, so a customer downloading this package needs to know
+        // whether that override is on the record. `result.audit` carries only
+        // `{persisted, chained}` or `{persisted:false, code, message}` — never
+        // the store's own text.
+        { auditTrail: result.audit },
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Compile failed';
       if (message.includes('not found in tenant')) {
@@ -1015,7 +1132,18 @@ router.post('/admin/readiness/snapshot-all', async (req: Request, res: Response)
 
   try {
     const result = await pdevReadinessScheduler.snapshotActivePrograms(orgId, userId);
-    void auditService.logAction({
+    /*
+     * WO-16C #133. A role-gated batch write across every active program in the
+     * org is precisely the action whose §11.10(e) record an inspector asks
+     * for, and `void auditService.logAction({…})` meant the 200 looked the
+     * same whether that record existed or not — the snapshot rows landed
+     * either way, so nothing downstream could tell. `recordAuditRow` neither
+     * throws nor blocks the batch; the counts are returned unchanged and
+     * `meta.auditTrail` says whether the entry for this sweep was durably
+     * recorded (and whether it is retrievable from the chained log or sits in
+     * the tamper-proof store only). The snapshots stand; the caller is told.
+     */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: userId ?? undefined,
       action: 'pdev_readiness_snapshot_batch',
@@ -1026,7 +1154,7 @@ router.post('/admin/readiness/snapshot-all', async (req: Request, res: Response)
         snapshotted: result.snapshotted,
       },
     });
-    return ok(res, result);
+    return ok(res, result, { auditTrail });
   } catch (err) {
     return serverError(res, log, 'Batch readiness snapshot', err);
   }

@@ -102,3 +102,48 @@ describe('the PMA phase list is a taxonomy, not a programme', () => {
     expect(PMA_PHASES.every((p) => p.status === 'idle')).toBe(true);
   });
 });
+
+/**
+ * The same defect one layer up, found by an adversarial verifier checking a
+ * different finding on this surface.
+ *
+ * PmaSurface's header read, with no PMA program in the tenant's list:
+ *
+ *   PMA pathway · CV-330 Implantable Monitor
+ *   Phase 1 of 10 — Pre-submission · PMA filing Q3 2026
+ *
+ * An invented device, an invented filing date, and a phase claimed as current —
+ * written as inline JSX literals rather than imported from a data module, so no
+ * fixture audit and no import-based gate could see them. The phase claim was the
+ * quietest: `Math.max(activeIdx, 0)` turns "no active phase" (-1) into "phase 1"
+ * and prints it beside ten bars all reading 0%.
+ *
+ * Asserted against the source because rendering this surface pulls in the eSTAR
+ * export chain, the pathway panes and the official filing panel, none of which
+ * this is about. What matters is that the literals are not there to render.
+ */
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
+describe('the PMA surface names nothing the program did not supply', () => {
+  const src = readFileSync(
+    path.join(process.cwd(), 'client/src/concept2cure/mdx/surfaces/PmaSurface.tsx'),
+    'utf8',
+  );
+  /* Comments quote the removed literals on purpose, to record what shipped. */
+  const code = src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .map((l) => l.replace(/\/\/.*$/, ''))
+    .join('\n');
+
+  it('carries no invented device name or filing date', () => {
+    expect(code).not.toMatch(/CV-330/);
+    expect(code).not.toMatch(/PMA filing Q[1-4]\s*20\d\d/);
+  });
+
+  it('does not claim a current phase when no program is selected', () => {
+    // The phase line must be reached only on the program branch.
+    expect(code).toMatch(/program\s*\n?\s*\?\s*`Phase \$\{/);
+  });
+});

@@ -488,7 +488,21 @@ if (process.argv.includes('--list')) {
 }
 
 if (process.argv.includes('--write-baseline')) {
-  writeFileSync(BASELINE, JSON.stringify({ files: [...new Set(hits.map((h) => h.file))].sort() }, null, 2) + '\n');
+  /* Carry forward any reasons already recorded. A baselined line is a claim
+     that someone looked; without the reason the next reader cannot tell a
+     examined false positive from an unexamined defect, and regenerating the
+     file would quietly erase the difference. */
+  const priorReasons = existsSync(BASELINE)
+    ? (JSON.parse(readFileSync(BASELINE, 'utf8')).reasons ?? {})
+    : {};
+  const files = [...new Set(hits.map((h) => h.file))].sort();
+  const reasons = Object.fromEntries(
+    Object.entries(priorReasons).filter(([f]) => files.includes(f))
+  );
+  writeFileSync(
+    BASELINE,
+    JSON.stringify(Object.keys(reasons).length ? { files, reasons } : { files }, null, 2) + '\n'
+  );
   console.log(`Baseline written: ${hits.length} occurrence(s) across ${new Set(hits.map((h) => h.file)).size} file(s).`);
   process.exit(0);
 }

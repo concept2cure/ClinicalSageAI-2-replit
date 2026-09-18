@@ -18,7 +18,9 @@
  *   - attached_document_codes ← document code from the registry
  *   - stateChangedBy / stateChangedAt recorded
  *
- * Audit is via the existing `auditService` (dual-write hash chain).
+ * Audit is via the existing `auditService` (dual-write hash chain), through
+ * ./pdev-audit-record so that the row's OUTCOME is reported rather than
+ * discarded (see `PdevAiDraftResult.audit`).
  * No new audit machinery, no new artifact table.
  *
  * @module server/services/pdev/pdev-ai-drafting
@@ -39,7 +41,7 @@ import {
   type PdevActivity,
   type PdevRequiredDocument,
 } from './pdev-activity-registry';
-import auditService from '../auditService';
+import { recordAuditRow, type PdevAuditRecordOutcome } from './pdev-audit-record';
 
 const logger = createScopedLogger('pdev-ai-drafting');
 
@@ -81,6 +83,32 @@ export interface PdevAiDraftResult {
   title: string;
   /** Word count of generated content. */
   wordCount: number;
+  /**
+   * What happened to the 21 CFR Part 11 §11.10(e) audit row for this draft.
+   * Always present: this path attempts exactly one row, unconditionally, so
+   * there is no arm on which the question "was it recorded?" is unasked.
+   *
+   * WO-16C finding 133, follow-up review 2026-09-18. The write below was
+   * `void auditService.logAction({…})`. `logAction` never rejects on a
+   * persistence failure — by deliberate policy, an audit-trail outage must not
+   * break the action it records — it RESOLVES an AuditWriteResult and says so
+   * in `persisted`. Discarding that value meant a generated draft could be
+   * recorded nowhere while `concept2cure_artifacts` held a new governed
+   * artifact and `pdev_program_activities` had already been promoted to
+   * `ai_draft_generated` by a named user at a recorded time, and every caller
+   * — the AnA command handler, the ai-draft route, the workbench — was handed
+   * a byte-identical success either way. The only trace was one `logger.error`
+   * line in the server log.
+   *
+   * The shape is the one pdev-workflow-bridge and pdev-clearance already
+   * carry, from the shared ./pdev-audit-record — not a second copy of it.
+   * `chained` on the success arm separates "the record exists" from "the
+   * record is retrievable from `audit_logs`"; the failure arm carries a stable
+   * code and a sentence fit for a user, never the store's own text (that stays
+   * in the log line recordAuditRow already wrote against this action and
+   * resource id).
+   */
+  audit: PdevAuditRecordOutcome;
 }
 
 export class PdevAiDraftingService {
@@ -94,7 +122,8 @@ export class PdevAiDraftingService {
    *   4. Persist via executeGovernedAnaOperation (full quality gate +
    *      decision lineage + concept2cureArtifacts).
    *   5. Update pdev_program_activities row to ai_draft_generated.
-   *   6. Audit-log the action.
+   *   6. Audit-log the action and REPORT what happened to the row
+   *      (`result.audit`) — never assume it landed.
    */
   async generateActivityDraft(input: PdevAiDraftInput): Promise<PdevAiDraftResult> {
     const activity = getActivityByKey(input.activityKey);
@@ -276,8 +305,14 @@ export class PdevAiDraftingService {
       stateRowId = inserted[0].id;
     }
 
-    // 5. Audit log via the existing dual-write hash-chain auditor.
-    void auditService.logAction({
+    // 5. Audit log via the existing dual-write hash-chain auditor — and keep
+    //    what it says. WO-16C #133: this was `void auditService.logAction({…})`,
+    //    so a draft whose 21 CFR Part 11 §11.10(e) record was never written
+    //    returned exactly the same object as one whose record exists. The
+    //    outcome now travels out on `PdevAiDraftResult.audit`, which the
+    //    ai-draft route already serialises into its `created(res, result)`
+    //    body, so the workbench can see the difference too.
+    const audit = await recordAuditRow({
       tenantId: input.organizationId,
       userId: input.userId,
       action: 'pdev_ai_draft_generated',
@@ -295,6 +330,10 @@ export class PdevAiDraftingService {
       },
     });
 
+    // The artifact and the promoted activity row are already committed, and
+    // discarding a real governed draft because its audit row failed would be
+    // the worse lie. The draft stands AND the caller is told what happened to
+    // the record.
     return {
       activityStateId: stateRowId,
       artifactId,
@@ -303,6 +342,7 @@ export class PdevAiDraftingService {
       qualityGrade,
       title,
       wordCount,
+      audit,
     };
   }
 }

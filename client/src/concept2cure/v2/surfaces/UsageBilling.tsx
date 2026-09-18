@@ -782,7 +782,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
                 audited).
               </>
             ) : usageState.loading ? (
-              <>Loading your plan tier…</>
+              <span role="status">Loading your plan tier…</span>
             ) : (
               <>
                 Weekly limits and overage caps are governed (admin/owner,

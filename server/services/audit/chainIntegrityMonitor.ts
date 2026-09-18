@@ -59,16 +59,61 @@ const logger = createScopedLogger('ChainMonitor');
 export interface ChainMonitorStatus {
   lastCheckAt: string | null;
   status: 'healthy' | 'broken' | 'unverified' | 'unchecked' | 'error';
-  totalEntries: number;
+  /**
+   * Rows this scan read. OPTIONAL because an errored scan read none: it used
+   * to spread the previous status and answer with a count from a scan that was
+   * not this one (WO-16C #72 follow-up). Undefined means "this run did not
+   * count"; it never means zero.
+   */
+  totalEntries?: number;
   /** Rows carrying a record_hash — the only rows a link can be checked on. */
   hashedEntries?: number;
   /** Rows carrying no record_hash, so no link through them was checkable. */
   unhashedEntries?: number;
-  brokenLinks: number;
-  details: Array<{ id: number; sequenceNumber: number; orgId: number }>;
+  /** Optional for the same reason as totalEntries: absent, not zero, on error. */
+  brokenLinks?: number;
+  /** Absent on error. An empty array here would read as "no breaks found". */
+  details?: Array<{ id: number; sequenceNumber: number; orgId: number }>;
+  /** The last scan that actually completed, kept so an error does not erase it. */
+  lastSuccessfulScan?: {
+    at: string;
+    status: 'healthy' | 'broken' | 'unverified';
+    totalEntries: number;
+    brokenLinks: number;
+  };
   intervalMs: number;
   /** Why the status is not a verdict, when it is not one. */
   reason?: string;
+}
+
+/**
+ * The status for a scan that did not run.
+ *
+ * WO-16C #72 follow-up. Both error branches used to spread the previous
+ * `_status`, so the endpoint answered `totalEntries` from an older scan
+ * alongside `brokenLinks: 0` and `details: []` — a pair a reader takes as "no
+ * breaks found" — under a `lastCheckAt` stamped with now. An error is never
+ * rendered as an empty result, so this run's counters are ABSENT, and the last
+ * scan that did complete is preserved under its own key where it cannot be
+ * mistaken for this one.
+ */
+function erroredStatus(prev: ChainMonitorStatus, reason: string): ChainMonitorStatus {
+  const completed =
+    prev.status === 'healthy' || prev.status === 'broken' || prev.status === 'unverified'
+      ? {
+          at: prev.lastCheckAt ?? 'unknown',
+          status: prev.status,
+          totalEntries: prev.totalEntries ?? 0,
+          brokenLinks: prev.brokenLinks ?? 0,
+        }
+      : prev.lastSuccessfulScan;
+  return {
+    lastCheckAt: new Date().toISOString(),
+    status: 'error',
+    intervalMs: prev.intervalMs,
+    reason,
+    lastSuccessfulScan: completed,
+  };
 }
 
 /** One audit_events row as the linkage check consumes it. */
@@ -202,14 +247,7 @@ async function runCheck(): Promise<ChainMonitorStatus> {
     // wedging the monitor — every later cycle saw "check in progress".)
     if (!_pool) {
       // Counters from an earlier run describe a scan that is not this one.
-      _status = {
-        ..._status,
-        lastCheckAt: new Date().toISOString(),
-        status: 'error',
-        hashedEntries: undefined,
-        unhashedEntries: undefined,
-        reason: 'database pool unavailable',
-      };
+      _status = erroredStatus(_status, 'database pool unavailable');
       recordBackgroundJobRun(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR, {
         ok: false,
         error: 'database pool unavailable',
@@ -329,14 +367,10 @@ async function runCheck(): Promise<ChainMonitorStatus> {
     return outcome;
   } catch (err: any) {
     logger.error('check failed', { err: err?.message });
-    _status = {
-      ..._status,
-      lastCheckAt: new Date().toISOString(),
-      status: 'error',
-      hashedEntries: undefined,
-      unhashedEntries: undefined,
-      reason: err?.message ? `chain integrity scan failed: ${err.message}` : 'chain integrity scan failed',
-    };
+    _status = erroredStatus(
+      _status,
+      err?.message ? `chain integrity scan failed: ${err.message}` : 'chain integrity scan failed',
+    );
     recordBackgroundJobRun(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR, { ok: false, error: err?.message });
     return _status;
   } finally {

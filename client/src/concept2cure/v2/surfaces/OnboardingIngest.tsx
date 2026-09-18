@@ -211,7 +211,7 @@ export function OnboardingIngest({ onNav }: SurfaceViewProps) {
 
       {phase === 'reading' && (
         <div className="opr-group">
-          <div className="opr-group-h">Reading your document…</div>
+          <div role="status" className="opr-group-h">Reading your document…</div>
           <div className="opr-empty">
             AnA is looking for values it can trace back to a specific place in the document.
           </div>

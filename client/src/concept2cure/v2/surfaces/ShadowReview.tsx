@@ -221,9 +221,20 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
       }
     : majors > 0
       ? {
+          /* WO-16C #99 follow-up. This branch took its verdict from the finding
+             severities alone, so a run recording RTF 90% with one major finding
+             read "fileable … None are filing-blockers" in the same paragraph as
+             "RTF risk 90%" — the two-screen contradiction the fix removed,
+             relocated into one sentence. The recorded score is the run's own
+             verdict and outranks a count of the list below, exactly as in the
+             no-finding branch. */
           tone: 'calm' as const,
-          h: <>Your submission is <b>fileable, with {majors} substantive point{majors > 1 ? 's' : ''}</b> a {lens.agency} reviewer would raise. RTF risk {riskPct(rtf)}, {lens.gates.crl.split(' ')[0]} risk {riskPct(crl)}.</>,
-          b: <>None are filing-blockers, but each is a likely question in the review cycle. Address them in the dossier now and you shorten the back-and-forth after you file.</>,
+          h: elevated
+            ? <>The {lens.label} recorded an <b>elevated gate risk</b> alongside {majors} substantive point{majors > 1 ? 's' : ''} a {lens.agency} reviewer would raise. RTF risk {riskPct(rtf)}, {lens.gates.crl.split(' ')[0]} risk {riskPct(crl)}.</>
+            : <>Your submission is <b>fileable, with {majors} substantive point{majors > 1 ? 's' : ''}</b> a {lens.agency} reviewer would raise. RTF risk {riskPct(rtf)}, {lens.gates.crl.split(' ')[0]} risk {riskPct(crl)}.</>,
+          b: elevated
+            ? <>None of the findings below is marked a blocker, but the run's own gate score is the verdict here and it is not low. Treat the gate as open: clear the score, not just the list.</>
+            : <>None are filing-blockers, but each is a likely question in the review cycle. Address them in the dossier now and you shorten the back-and-forth after you file.</>,
         }
       : {
           tone: (!scored || elevated ? 'calm' : 'good') as 'calm' | 'good',
@@ -357,7 +368,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         <div className="sr-foot">
           <PedigreeBadge level="model_assisted" />
           <PedigreeBadge level="deterministic_registry" />
-          <span className="sr-foot-note">Findings are model-assisted — produced by the platform’s governed regulatory-review model, not by a human reviewer. The RTF/CRL percentages are the scores the run itself recorded: the reviewer model’s own gate risk, floored by a deterministic aggregation over its findings (a single critical saturates the gate). A gate the run did not score shows “not scored”, never 0%. Connect a sequence to run the live reviewer against it.</span>
+          <span className="sr-foot-note">Findings are model-assisted — produced by the platform’s governed regulatory-review model, not by a human reviewer. The RTF/CRL percentages are the scores the run itself recorded — for a model-assisted run, the reviewer model’s own gate risk floored by a deterministic aggregation over its findings (a single critical saturates the gate); a seeded or replayed run records that aggregation alone. A gate the run did not score shows “not scored”, never 0%. Connect a sequence to run the live reviewer against it.</span>
           <div className="sr-actions">
             {/* FLAG (mock action): asks AnA to run the reviewer rather than calling
                 POST /sequences/:seqId/shadow-review directly — the real endpoint

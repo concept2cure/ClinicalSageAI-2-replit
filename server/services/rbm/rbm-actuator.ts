@@ -587,14 +587,29 @@ export async function updateAction(exec: Exec, organizationId: number, input: Up
 // ── Governed approvals (21 CFR Part 11 — reason-for-change captured) ──────────
 
 /** Approve + activate a risk assessment, recording the reason-for-change and the
- *  approving user (attribution). Returns null when not found in the tenant. */
+ *  approving user (attribution). Returns null when not found in the tenant.
+ *
+ *  `userId` is `number`, not `number | null`, and that is the point. Both
+ *  writers of this table reach it here, and this one accepted null and wrote
+ *  `approved_by = NULL` — an activated governing risk basis with no identified
+ *  approver, which 21 CFR 11.10(e) and 11.50 exist to make impossible. The HTTP
+ *  route never sent null (it 401s first), but the AnA tool path passed
+ *  `ctx?.userId ?? null` straight through, so the one route with NO signature
+ *  check was also the one that could leave the approver blank.
+ *
+ *  Narrowing the type rather than throwing puts it on the compiler: a caller
+ *  that cannot name the approver cannot reach the UPDATE. The runtime guard
+ *  below covers callers that are not typechecked. */
 export async function approveAssessment(
   exec: Exec,
   organizationId: number,
-  userId: number | null,
+  userId: number,
   assessmentId: number,
   reason: string,
 ) {
+  if (userId == null) {
+    throw new Error('A risk-assessment approval requires an identified approver (21 CFR 11.10(e)).');
+  }
   const { rows } = await exec.query(
     `UPDATE rbm_risk_assessments
         SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
@@ -611,10 +626,14 @@ export async function approveAssessment(
 export async function approvePlan(
   exec: Exec,
   organizationId: number,
-  userId: number | null,
+  userId: number,
   planId: number,
   reason: string,
 ) {
+  /* Same rule as approveAssessment above — see its header. */
+  if (userId == null) {
+    throw new Error('A monitoring-plan approval requires an identified approver (21 CFR 11.10(e)).');
+  }
   const { rows } = await exec.query(
     `UPDATE rbm_monitoring_plans
         SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),

@@ -10,7 +10,9 @@
  * 2. Audit codes are prefixed `agent.ana.pdev.<verb>` so an auditor can
  *    distinguish AnA-initiated PDEV mutations from human ones via the
  *    underlying service's audit_logs rows (auditService is dual-write
- *    hash-chain).
+ *    hash-chain). Every one of those rows is written through
+ *    `recordAuditRow` and its OUTCOME is returned to the caller in
+ *    `data.agentAuditTrail` — see `auditNote` below and WO-16C finding 133.
  *
  * 3. Tenant scope: every handler reads ctx.organizationId from the chat
  *    context and passes it to the underlying PDEV service. The service
@@ -28,7 +30,7 @@
  * @module server/services/ana-ri/pdev-command-handlers
  */
 
-import auditService from '../auditService';
+import { recordAuditRow, type PdevAuditRecordOutcome } from '../pdev/pdev-audit-record';
 import type { CommandContext, CommandResult } from './command-executor';
 import { requireGovernedToolGate, mapServiceError, agentAuditDetails } from './mdx-tool-policy';
 
@@ -61,6 +63,40 @@ import {
 // ─── Local helpers ──────────────────────────────────────────────────────────
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The clause a handler appends to its own message when the 21 CFR Part 11
+ * §11.10(e) row for its `agent.ana.pdev.<verb>` action did not reach a durable
+ * store.
+ *
+ * WO-16C finding 133, follow-up review 2026-09-18. Every governed handler in
+ * this file wrote its audit row with `void auditService.logAction({…})`.
+ * `logAction` never rejects when persistence fails — that is deliberate policy,
+ * an audit-trail outage must not break the user action it records — it RESOLVES
+ * an `AuditWriteResult` and reports what happened in `persisted`. Discarding
+ * that value left each handler with two possible outcomes and one observable
+ * result: the `CommandResult`, the AnA turn built from it and the sentence read
+ * back to the regulated user were byte-identical whether the agent-initiated
+ * record existed or did not, while the mutation underneath had already
+ * committed.
+ *
+ * So the outcome travels twice, because this surface has two kinds of reader:
+ * `data.agentAuditTrail` for anything parsing the structure, and this clause in
+ * `message` for the conversational turn, which is the only part a chat user
+ * ever sees. The mutation is never reverted — reverting a committed governed
+ * write because its log row was lost is the worse lie — and the store's own
+ * error text never appears here: `recordAuditRow` has already logged it against
+ * the action and resource id.
+ *
+ * The field is `agentAuditTrail`, not `auditTrail`, because several of these
+ * handlers spread the underlying PDEV service's result into `data` and those
+ * services (pdev-workflow-bridge) already return `auditTrail` for their OWN
+ * §11.10(e) row. The two rows are distinct records of distinct actions and
+ * neither may shadow the other.
+ */
+function auditNote(outcome: PdevAuditRecordOutcome): string {
+  return outcome.persisted ? '' : ` ${outcome.message}`;
+}
 
 function strParam(params: Record<string, unknown>, key: string): string | null {
   const v = params[key];
@@ -505,7 +541,12 @@ export async function pdevActivitySetState(
       stateRowId = inserted[0].id;
     }
 
-    void auditService.logAction({
+    // WO-16C #133 (follow-up review): was `void auditService.logAction({…})`,
+    // so an activity state that had already been written to
+    // pdev_program_activities reported `success: true` with no way to tell a
+    // recorded transition from an unrecorded one. The row write stands; the
+    // outcome now leaves in `data.agentAuditTrail` and in the message clause.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.pdev.activity.set_state',
@@ -533,17 +574,31 @@ export async function pdevActivitySetState(
       newState: newState as PdevActivityState,
     });
 
+    /*
+     * WO-16C #133, follow-up review. The cleared message asserted a terminal
+     * regulatory transition and said nothing about its 21 CFR Part 11 record,
+     * which `applyIndClearanceIfTerminal` now reports. The transition stands
+     * either way — reverting a cleared IND over a failed audit write would be
+     * the worse lie — so the sentence carries the record's state rather than
+     * omitting it, and the outcome travels in `data` for any caller that reads
+     * the structure instead of the prose.
+     */
+    const clearanceAuditNote =
+      clearance.audit && !clearance.audit.persisted ? ` ${clearance.audit.message}` : '';
+
     return {
       success: true,
       action,
       message: clearance.cleared
-        ? `Activity ${activityKeyOrErr} → ${newState}. IND cleared — program moved to its terminal approved state.`
-        : `Activity ${activityKeyOrErr} → ${newState} (was ${previousState}).`,
+        ? `Activity ${activityKeyOrErr} → ${newState}. IND cleared — program moved to its terminal approved state.${clearanceAuditNote}${auditNote(agentAuditTrail)}`
+        : `Activity ${activityKeyOrErr} → ${newState} (was ${previousState}).${auditNote(agentAuditTrail)}`,
       data: {
         activityStateId: stateRowId,
         previousState,
         newState,
         indCleared: clearance.cleared,
+        ...(clearance.audit ? { indClearanceAuditTrail: clearance.audit } : {}),
+        agentAuditTrail,
       },
     };
   } catch (err) {
@@ -588,7 +643,11 @@ export async function pdevActivityAiDraft(
         : undefined,
     });
 
-    void auditService.logAction({
+    // WO-16C #133 (follow-up review): the draft, its artifact row and its
+    // quality grade are all committed by the time this runs, and the handler
+    // reported them identically whether or not the §11.10(e) record of the
+    // agent having drafted them existed. `agentAuditTrail` says which.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.pdev.activity.ai_draft',
@@ -606,8 +665,8 @@ export async function pdevActivityAiDraft(
     return {
       success: true,
       action,
-      message: `Drafted ${result.title} (${result.wordCount} words, quality ${result.qualityGrade}). Filed against ${result.documentCode}${result.ectdSection ? ' · eCTD ' + result.ectdSection : ''}.`,
-      data: result as unknown as Record<string, unknown>,
+      message: `Drafted ${result.title} (${result.wordCount} words, quality ${result.qualityGrade}). Filed against ${result.documentCode}${result.ectdSection ? ' · eCTD ' + result.ectdSection : ''}.${auditNote(agentAuditTrail)}`,
+      data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -657,7 +716,10 @@ export async function pdevActivityEvidenceAttach(
         ?? undefined,
       rationale: strParam(params, 'rationale') ?? undefined,
     });
-    void auditService.logAction({
+    // WO-16C #133 (follow-up review): the evidence link is written before this
+    // point, so "Attached evidence …" was true and complete-sounding with or
+    // without the §11.10(e) row behind it. `agentAuditTrail` separates them.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.pdev.activity.evidence_attach',
@@ -672,8 +734,8 @@ export async function pdevActivityEvidenceAttach(
     return {
       success: true,
       action,
-      message: `Attached evidence ${evidenceId} to ${activityKeyOrErr}.`,
-      data: result as unknown as Record<string, unknown>,
+      message: `Attached evidence ${evidenceId} to ${activityKeyOrErr}.${auditNote(agentAuditTrail)}`,
+      data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -709,7 +771,11 @@ export async function pdevActivityEvidenceDetach(
       activityKey: activityKeyOrErr,
       evidenceObjectId: evidenceId,
     });
-    void auditService.logAction({
+    // WO-16C #133 (follow-up review): a detach REMOVES a provenance link, so
+    // the audit row is the only remaining evidence that it ever existed and who
+    // removed it. Discarding the write outcome meant the handler could report
+    // `removedLinks: n` with no record of the removal anywhere.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.pdev.activity.evidence_detach',
@@ -725,8 +791,8 @@ export async function pdevActivityEvidenceDetach(
     return {
       success: true,
       action,
-      message: `Detached evidence ${evidenceId} from ${activityKeyOrErr} (${result.removedLinks} link(s) removed).`,
-      data: result as unknown as Record<string, unknown>,
+      message: `Detached evidence ${evidenceId} from ${activityKeyOrErr} (${result.removedLinks} link(s) removed).${auditNote(agentAuditTrail)}`,
+      data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -787,7 +853,11 @@ export async function pdevFdaFeedbackApply(
       userId: ctx.userId,
       mappings,
     });
-    void auditService.logAction({
+    // WO-16C #133 (follow-up review): the rollup has already moved activity
+    // states in response to FDA commitments — exactly the kind of change an
+    // inspector traces back to its trigger. The applied/skipped counts were
+    // reported the same whether or not that trace was written.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.pdev.fda_feedback.apply',
@@ -801,8 +871,8 @@ export async function pdevFdaFeedbackApply(
     return {
       success: true,
       action,
-      message: `Applied ${result.applied.length} rollup(s); skipped ${result.skipped.length}.`,
-      data: result as unknown as Record<string, unknown>,
+      message: `Applied ${result.applied.length} rollup(s); skipped ${result.skipped.length}.${auditNote(agentAuditTrail)}`,
+      data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -842,7 +912,25 @@ export async function pdevIndAssemblyCompile(
       readinessThreshold: numParam(params, 'readinessThreshold') ?? undefined,
       force: boolParam(params, 'force'),
     });
-    void auditService.logAction({
+    /*
+     * WO-16C #133 (follow-up review). TWO §11.10(e) rows are written per call
+     * and both arms below carry both, under distinct keys.
+     *
+     * `agentAuditTrail` is THIS handler's row — that AnA invoked the compile.
+     * `ectdAuditTrail` is the SERVICE's row — the `pdev_ectd_compiled` /
+     * `pdev_ectd_compile_refused` entry, which is the one that records the
+     * compile itself and a `forced: true` override of the readiness floor.
+     *
+     * The first version of this conversion reported only the agent row, and
+     * because `auditNote` returns '' when its argument persisted, a run where
+     * the agent row landed and the SERVICE row was lost produced a tool
+     * response with no audit note at all — a positive "record is fine" signal
+     * about a record that does not exist. Reporting an outcome for a different
+     * row than the one that failed is worse than reporting none, so they are
+     * named separately, exactly as pdev-routes.ts keeps the state-change row
+     * distinct from the clearance row.
+     */
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.pdev.ind_assembly.compile',
@@ -859,18 +947,20 @@ export async function pdevIndAssemblyCompile(
       return {
         success: false,
         action,
-        message: result.refusalReason ?? 'Readiness too low to compile.',
+        message: `${result.refusalReason ?? 'Readiness too low to compile.'}${auditNote(agentAuditTrail)}${result.audit ? auditNote(result.audit) : ''}`,
         error: 'READINESS_TOO_LOW',
         data: {
           readinessSnapshot: result.readinessSnapshot,
           thresholdApplied: result.thresholdApplied,
+          agentAuditTrail,
+          ectdAuditTrail: result.audit,
         },
       };
     }
     return {
       success: true,
       action,
-      message: `Compiled ${result.package?.filename} (${result.package?.sizeBytes} bytes). Readiness ${result.readinessSnapshot.overallReadiness}%. eCTD assembly readiness — not new publishing.`,
+      message: `Compiled ${result.package?.filename} (${result.package?.sizeBytes} bytes). Readiness ${result.readinessSnapshot.overallReadiness}%. eCTD assembly readiness — not new publishing.${auditNote(agentAuditTrail)}${result.audit ? auditNote(result.audit) : ''}`,
       data: {
         filename: result.package?.filename,
         sizeBytes: result.package?.sizeBytes,
@@ -878,6 +968,8 @@ export async function pdevIndAssemblyCompile(
         readinessAtCompile: result.readinessSnapshot.overallReadiness,
         thresholdApplied: result.thresholdApplied,
         forced: result.forced,
+        agentAuditTrail,
+        ectdAuditTrail: result.audit,
       },
     };
   } catch (err) {
@@ -896,30 +988,53 @@ export async function pdevReadinessSnapshot(
   const programIdOrErr = requireProgramId(action, params);
   if (typeof programIdOrErr !== 'string') return programIdOrErr;
   try {
-    const report = await pdevReadinessService.snapshot(
+    const snapshot = await pdevReadinessService.snapshot(
       programIdOrErr,
       ctx.organizationId,
       ctx.userId,
       'manual'
     );
-    if (!report) {
+    if (!snapshot) {
       return { success: false, action, message: 'Program not found in tenant.', error: 'NOT_FOUND' };
     }
-    void auditService.logAction({
+    /*
+     * WO-16C #133 (follow-up review), and what the review of that conversion
+     * found behind it. `agentAuditTrail` says whether the §11.10(e) row exists.
+     * `snapshot.persisted` says whether the SNAPSHOT does — the service used to
+     * swallow its own INSERT failure and return the computed report, so this
+     * handler said "Snapshotted readiness; overall N%" for a snapshot no table
+     * contained. Materializing those rows is the action here, so a failed write
+     * is not a success with a footnote.
+     */
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.pdev.readiness.snapshot',
       resourceType: 'regulatory_program',
       resourceId: programIdOrErr,
       details: { ...agentAuditDetails(ctx, gate),
-        overallReadiness: report.overall.readinessScore,
+        overallReadiness: snapshot.report.overall.readinessScore,
+        rowsPersisted: snapshot.persisted,
+        rowsAttempted: snapshot.rowsAttempted,
       },
     });
+    if (!snapshot.persisted) {
+      return {
+        success: false,
+        action,
+        message:
+          `Readiness computed at ${snapshot.report.overall.readinessScore}%, but the snapshot could not be stored — ` +
+          `there is nothing to read back or trend, and nothing was recorded as a snapshot. ` +
+          `This has been logged for follow-up.${auditNote(agentAuditTrail)}`,
+        error: 'SNAPSHOT_NOT_PERSISTED',
+        data: { report: snapshot.report, persisted: false, agentAuditTrail },
+      };
+    }
     return {
       success: true,
       action,
-      message: `Snapshotted readiness; overall ${report.overall.readinessScore}%.`,
-      data: { report },
+      message: `Snapshotted readiness; overall ${snapshot.report.overall.readinessScore}%.${auditNote(agentAuditTrail)}`,
+      data: { report: snapshot.report, persisted: true, agentAuditTrail },
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -964,7 +1079,13 @@ export async function pdevWorkflowKickoff(
       requestedByRole: ctx.userRole,
       reason: typeof params.reason === 'string' ? params.reason : undefined,
     });
-    void auditService.logAction({
+    // WO-16C #133 (follow-up review): the workflow run, its checkpoints and the
+    // activity hold are all committed by `kickoff`, which already reports its
+    // OWN §11.10(e) row in `result.auditTrail` (forwarded in `data`). This row
+    // is the separate record of AnA having started the chain, and its outcome
+    // was the one being discarded. It travels as `agentAuditTrail` so the two
+    // records stay distinguishable.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.pdev.workflow.kickoff',
@@ -980,8 +1101,8 @@ export async function pdevWorkflowKickoff(
     return {
       success: true,
       action,
-      message: `Started ${result.checkpointIds.length}-step approval chain for ${activityKeyOrErr} → ${targetState}. Activity held at ${result.holdingState}.`,
-      data: result as unknown as Record<string, unknown>,
+      message: `Started ${result.checkpointIds.length}-step approval chain for ${activityKeyOrErr} → ${targetState}. Activity held at ${result.holdingState}.${auditNote(agentAuditTrail)}`,
+      data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -1078,7 +1199,14 @@ export async function pdevWorkflowDecide(
       decision: decision as 'approve' | 'reject',
       reason,
     });
-    void auditService.logAction({
+    // WO-16C #133 (follow-up review): the approval or rejection is already
+    // recorded on the checkpoint and may already have advanced the activity to
+    // its target state. `recordDecision` reports its own §11.10(e) row in
+    // `result.auditTrail` (and the terminal clearance's in
+    // `result.indClearance.audit`), both forwarded in `data`; this is the
+    // separate record of AnA having cast the decision, and it was the one with
+    // no observable outcome. The decision stands either way.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: `agent.ana.pdev.workflow.${decision}`,
@@ -1094,14 +1222,15 @@ export async function pdevWorkflowDecide(
       success: result.checkpointStatus !== 'failed',
       action,
       message:
-        result.activityFinalState
+        (result.activityFinalState
           ? `Chain complete; activity advanced to ${result.activityFinalState}.`
           : result.nextCheckpointId
           ? `Checkpoint approved; next checkpoint ${result.nextCheckpointId} awaiting review.`
           : result.checkpointStatus === 'failed'
           ? `Rejected: ${result.rejectionReason ?? reason}.`
-          : `Decision recorded (status=${result.checkpointStatus}).`,
-      data: result as unknown as Record<string, unknown>,
+          : `Decision recorded (status=${result.checkpointStatus}).`) +
+        auditNote(agentAuditTrail),
+      data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
     };
   } catch (err) {
     return mapServiceError(action, err);

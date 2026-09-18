@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * `live ?? FIXTURE` — a tenant's regulated screen falling back to example rows.
+ * `live ?? FIXTURE`, and the ternary that means the same thing — a tenant's
+ * regulated screen falling back to example rows.
  *
  * ── The defect ───────────────────────────────────────────────────────────────
  *     const changes = reg.changes ?? FIXTURE_CHANGES;
@@ -88,6 +89,67 @@ const WRITE = argv.has('--write-baseline');
 const CONTENT_NAME = /^(?:FIXTURE|SAMPLE|DEMO|MOCK|SEED)(?:_|$)/;
 
 
+/**
+ * The SECOND shape of the same defect: a ternary, not a `??`.
+ *
+ *     extras.pmaTrialMetrics?.length ? extras.pmaTrialMetrics : PMA_TRIAL_METRICS
+ *
+ * That line shipped `Enrolled 412 / 680 · Behind plan by 3 weeks` and
+ * `Adverse events 47 · 3 serious · 2 device-related under adjudication` to any
+ * regulated tenant whose read was empty, slow or failing — another company's
+ * enrolment and another company's serious adverse events, with no banner. It is
+ * identical in effect to `live ?? FIXTURE` and the `??` scan above could not see
+ * it, nor could the name rule: the constants are named for the pathway, not
+ * FIXTURE_/SAMPLE_/DEMO_.
+ *
+ * So the signal here is structural instead of lexical: the else-branch is a bare
+ * identifier this file IMPORTS from a `data/` or `fixtures/` module, and the
+ * then-branch is not. Two exclusions keep it honest, and both were found by
+ * running it — each is a real line in this tree that is CORRECT:
+ *
+ *   Overview.tsx     `sourcePrograms.length > 0 || !sampleOn ? derive(...) : MDX_HEALTH`
+ *                    The fixture is behind the sample-mode boundary, which is
+ *                    the remedy, not the defect. A condition that consults
+ *                    sample mode is exempt.
+ *
+ *   Pyramid.tsx      `vocab === 'risk' ? PY_RISK : PY_STATUS`
+ *                    Both branches are imported constants, so this SELECTS a
+ *                    vocabulary rather than substituting for absent data.
+ *
+ * Kept in this file rather than a new one: it is the same rule about the same
+ * thing, and a second gate would be a second place to forget.
+ */
+const SAMPLE_GATED = /\b(?:sampleOn|isSampleMode|useSampleMode|sampleModeAvailable|showingSample)\b/;
+
+/** Names imported as values from a `data/` or `fixtures/` module. */
+function importedContentNames(src) {
+  const names = new Set();
+  for (const m of src.matchAll(/import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*'([^']*)'/g)) {
+    if (!/(?:^|\/)(?:data|fixtures)\//.test(m[2])) continue;
+    for (const raw of m[1].split(',')) {
+      const part = raw.trim();
+      if (!part || /^type\s/.test(part)) continue;          // `type Foo` is not a value
+      names.add(part.replace(/\s+as\s+.*$/, '').trim());
+    }
+  }
+  return names;
+}
+
+function ternaryFallbacks(src, rel) {
+  const found = [];
+  const names = importedContentNames(src);
+  if (!names.size) return found;
+  for (const m of src.matchAll(/\?([^?:;]{0,200}?):\s*([A-Za-z_$][\w$]*)\s*[;,)\]\n]/g)) {
+    const [whole, thenBranch, id] = m;
+    if (!names.has(id)) continue;
+    if (names.has(thenBranch.trim())) continue;             // a selector, not a fallback
+    const from = Math.max(0, m.index - 220);
+    if (SAMPLE_GATED.test(src.slice(from, m.index + whole.length))) continue;
+    found.push({ where: `${rel}:${src.slice(0, m.index).split('\n').length}`, id, shape: '? :' });
+  }
+  return found;
+}
+
 function walk(dir, out = []) {
   let entries;
   try {
@@ -153,13 +215,17 @@ function main() {
         if (m[2]) continue;
         // `X.find(…) ?? X[1]` — an intra-fixture default, not a live fallback.
         if (new RegExp(`\\b${id}\\b[\\s\\S]*\\?\\?`).test(line)) continue;
-        findings.push({ where: `${rel}:${i + 1}`, id });
+        findings.push({ where: `${rel}:${i + 1}`, id, shape: '??' });
       }
     });
+
+    findings.push(...ternaryFallbacks(stripComments(src), rel));
   }
 
   findings.sort((a, b) => a.where.localeCompare(b.where));
-  const key = (f) => `${f.where} ?? ${f.id}`;
+  /* The shape is part of the identity: the same line can only hold one, and a
+     reader sent to look for `??` on a ternary looks for the wrong thing. */
+  const key = (f) => `${f.where} ${f.shape ?? '??'} ${f.id}`;
   const current = [...new Set(findings.map(key))].sort();
 
   if (WRITE) {
@@ -176,12 +242,12 @@ function main() {
   );
   const fresh = findings.filter((f) => !baseline.has(key(f)));
 
-  console.log('[ci:fixture-fallback] `live ?? FIXTURE` in client/src/concept2cure');
+  console.log('[ci:fixture-fallback] `live ?? FIXTURE` and `live?.length ? live : FIXTURE` in client/src/concept2cure');
   console.log(`  ungated content fallbacks  : ${findings.length}`);
   console.log(`  baselined (known, unfixed) : ${baseline.size}`);
 
   if (LIST) for (const f of findings) {
-    console.log(`  ${baseline.has(key(f)) ? ' ' : '!'} ${f.where}  ?? ${f.id}`);
+    console.log(`  ${baseline.has(key(f)) ? ' ' : '!'} ${f.where}  ${f.shape ?? '??'} ${f.id}`);
   }
 
   if (fresh.length === 0) {
@@ -190,7 +256,7 @@ function main() {
   }
 
   console.log(`\n❌ ${fresh.length} new ungated fixture fallback(s):\n`);
-  for (const f of fresh) console.log(`  ${f.where}  ?? ${f.id}`);
+  for (const f of fresh) console.log(`  ${f.where}  ${f.shape ?? '??'} ${f.id}`);
   console.log(
     '\n  This substitutes example content for a tenant\'s own data on exactly the\n' +
       '  occasions they cannot detect it: an empty tenant, an expired token, a 500,\n' +

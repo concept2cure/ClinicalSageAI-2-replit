@@ -3010,7 +3010,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               flat document list — indistinguishable from a project with no
               rule pack. The failure and the wait are now said. */}
           {filing.loading && (
-            <div className="scaf-note" style={{ padding: '4px 0' }}>Reading the governed filing outline…</div>
+            <div role="status" className="scaf-note" style={{ padding: '4px 0' }}>Reading the governed filing outline…</div>
           )}
           {filing.error && (
             <div className="scaf-note" role="alert" style={{ padding: '4px 0' }}>

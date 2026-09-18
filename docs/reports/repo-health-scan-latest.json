@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-17T17:47:00.455Z",
+  "generatedAt": "2026-09-18T18:38:25.968Z",
   "git": {
-    "sha": "c0b5bf6347c58b893b653ca3bda6ec6ad4afcd1a",
+    "sha": "ea7cfab002efa25383449f162716da236a68260f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1957,7 +1957,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1028502
+        "bytes": 1029302
       },
       {
         "file": "shared/schema.ts",
@@ -1977,7 +1977,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 236355
+        "bytes": 236369
       },
       {
         "file": "server/statistics-service.ts",
@@ -1989,7 +1989,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 184081
+        "bytes": 184175
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2005,7 +2005,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 153184
+        "bytes": 154282
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2131,7 +2131,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19933
+        "lines": 19945
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2175,7 +2175,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3466
+        "lines": 3488
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2459,7 +2459,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1702
+        "lines": 1706
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",

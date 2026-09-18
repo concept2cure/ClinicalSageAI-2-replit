@@ -117,6 +117,38 @@ afterEach(() => {
 });
 
 describe('chain integrity monitor: a verdict only when something was verified', () => {
+  /**
+   * WO-16C #72 follow-up, found by an adversarial review of the #72 fix.
+   *
+   * The two error branches spread the previous `_status`, so a scan that DID
+   * NOT RUN answered with `totalEntries` from an older scan plus
+   * `brokenLinks: 0` and `details: []` — a pair that reads as "no breaks
+   * found" — all under a `lastCheckAt` stamped with now. GET
+   * /api/audit/chain-monitor/status returns that object verbatim.
+   *
+   * "An error is never rendered as an empty result" is the rule, and the fix
+   * had applied it to hashedEntries/unhashedEntries only.
+   */
+  it('an errored scan reports no counters of its own, and no empty break list', async () => {
+    // First, a real scan so there IS a previous result to leak.
+    startChainMonitor(poolServing([row(1, 1, 1, 'h1', null), row(2, 1, 2, 'h2', 'h1')]) as any, 60_000);
+    const good = await runOnDemandCheck();
+    expect(good.totalEntries).toBe(2);
+    stopChainMonitor();
+
+    // Now a scan whose query throws.
+    const failing = { query: () => Promise.reject(new Error('relation "audit_events" does not exist')) };
+    startChainMonitor(failing as any, 60_000);
+    const errored = await runOnDemandCheck();
+
+    expect(errored.status).toBe('error');
+    expect(errored.reason).toBeTruthy();
+    // None of these may carry the earlier scan's numbers.
+    expect(errored.totalEntries).not.toBe(2);
+    expect(errored.brokenLinks).not.toBe(0);
+    expect(errored.details).not.toEqual([]);
+  });
+
   it('a table in which no row carries a record_hash is "unverified", not "healthy"', async () => {
     const pool = poolServing([
       row(1, 1, 1, null, null),

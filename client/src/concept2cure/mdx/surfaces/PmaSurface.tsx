@@ -96,10 +96,10 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
      impossible in a production build — always under its standing banner. */
   const extras = useProgramExtras(program?.id ?? null);
   const modulesState = toDataState(extras.pmaModules, extras.loading, extras.error, {
-    idleReason: 'Select a program to see how its PMA modules are assembled.',
+    idleReason: 'PMA module assembly is held per program.',
   });
   const trialState = toDataState(extras.pmaTrialMetrics, extras.loading, extras.error, {
-    idleReason: 'Select a program to see its pivotal-trial figures.',
+    idleReason: 'Pivotal-trial figures are held per program.',
   });
 
   /* Real export action — POST /api/510k/estar/build with the program's ident
@@ -121,12 +121,22 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
     <>
       <div className="section-hdr">
         <div>
+          {/* With no PMA program this read "PMA pathway · CV-330 Implantable
+              Monitor" over "Phase 1 of 10 — Pre-submission · PMA filing Q3
+              2026": an invented device, an invented filing date, and a phase
+              claimed as current, all as inline literals with no sample-mode
+              guard, so they shipped to any tenant whose programme list has no
+              pathway === 'pma' row. The phase claim was the quietest of the
+              three — Math.max(activeIdx, 0) turns "no active phase" (-1) into
+              "phase 1", which is then asserted beside ten bars reading 0%.
+              Nothing is named here that the program did not supply. */}
           <div className="section-title">
-            PMA pathway · {program ? program.title : 'CV-330 Implantable Monitor'}
+            PMA pathway{program ? ` · ${program.title}` : ''}
           </div>
           <div className="section-sub">
-            Phase {Math.max(activeIdx, 0) + 1} of {phases.length} — {activeLabel}
-            {program ? ` · ${program.dueLabel}` : ' · PMA filing Q3 2026'}
+            {program
+              ? `Phase ${Math.max(activeIdx, 0) + 1} of ${phases.length} — ${activeLabel} · ${program.dueLabel}`
+              : `${phases.length} phases · position is set by the active program`}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>

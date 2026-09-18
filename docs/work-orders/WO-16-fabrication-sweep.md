@@ -764,3 +764,219 @@ reached the conclusion independently on different lenses.
 | 130 | low | refuted by both | `server/services/ana/se-discussion/fixtures.ts` | **reach** REACH IS NIL, AND THE ONE RESIDUAL CONSEQUENCE THE VERIFIER ASSERTS DOES NOT EXIST TODAY. I confirmed the relevant tree is byte-identical to the claimed head: `git diff c5e770288 HEAD -- server/services/ana/se-discussio… |
 | 131 | low | no consequence | `server/prisma/client.js` | **reach** REACH AND CONSEQUENCE BOTH COLLAPSE — and the verifier's own reach block concedes it (mounted: NOT_MOUNTED, customer_impact: "Nothing"). I re-walked every hop in source at c5e770288 (file is byte-identical there; `git d… |
 | 132 | low | no consequence | `server/utils/audit-logger.js` | **reach** The three code facts are real and I re-confirmed them at head (the file is byte-identical between c5e770288 and HEAD 8327d15a4 — `git diff --stat` over audit-logger.js/retentionCron.ts/run-retention.ts is empty). `od -c… |
+
+
+---
+
+# The review round — every one of the thirteen fixes reviewed, 17–18 September 2026
+
+**Thirteen fixes went in. Thirteen reviews found something. Two of the findings
+were must-fix, and both were inside my own #70 fix — in the field that had
+replaced the one it removed.** Nothing new reaches the customer that the sweep
+did not already name; what this round found is that a fix which narrows a
+fabrication is not the same as a fix that removes it, and that the difference is
+invisible unless someone reads the fix as adversarially as the original code.
+
+## Why this round happened
+
+WO-16C's method was one agent per finding, then two refuters per survivor on
+distinct lenses. That method was applied to the FINDINGS. It was not applied to
+the FIXES. So the fixes carried exactly the authority of the agent that wrote
+them and of my own reading — which is the same standing the original code had
+before the sweep started.
+
+The round ran one reviewer per fix, each told to default to reporting a problem
+and to confirm "clean" only against a fixed checklist: is any converted value
+observable to a caller; does it survive the next hop; does any store text now
+reach the wire; did anything change besides the thing being fixed; is every new
+comment true of *this* code.
+
+## What it found, per fix
+
+| Fix | Severity of what the review found | The finding |
+|---|---|---|
+| #70 | **must-fix** ×2 | A signature manifestation nothing recorded, and a default pass on the decision rows |
+| #70/#71 | should-fix ×2 | `gxpRelevant` hardcoded `true` at five constructors; the client's "Attested against" block ignoring the statuses #71 had just made the server compute |
+| #63 | should-fix | A content assertion that could not fail on any head |
+| #65 | should-fix | The one trace section the first fix did not reach — three claims of analysis, and the literal word `undefined` |
+| #133 | should-fix | The fix stopped at the bridge's door: the terminal IND-clearance write was still `void` |
+| #72 | should-fix | An errored scan answering with an older scan's count beside `brokenLinks: 0` |
+| #99 | should-fix | A third copy of the duplicated formula, which my own commit message had claimed was gone |
+| others | note | Comment precision, test-name accuracy, one over-strong assertion of my own |
+
+### The two must-fix findings, both in #70
+
+The #70 fix replaced a blanket `cfr11Compliant: true` with a per-element
+`part11RecordCheck`. That is the right shape. Two things were wrong inside it.
+
+**A signature manifestation nothing recorded.** The check counted §11.50 as
+PRESENT whenever `signatureStatus === 'signed'`. That value is nothing but
+`status === 'approved'` relabelled. `workflow_approvals` has no signature column
+at all — id, workflowId, stepId, stepOrder, status, assignedTo, assignmentType,
+requiredActions, completedBy, completedAt, comments — and the service reads no
+signature store anywhere. So every approved approval still exported as COMPLETE,
+under a badge reading "Part 11 record complete" and a tooltip naming "any
+required signature". The fabrication had been narrowed from a blanket verdict to
+one of three elements, and that one element was still unearned. I confirmed the
+column list against `shared/schema/unified_workflow.ts:187-203` myself before
+changing anything.
+
+**A default pass on the decision rows.** Both `audit_logs` readers passed the
+literal `requiresSignature: false` into the check, while the record carries the
+caller's real value — `recordDecision` writes it into `details`, which
+`auditService` stores in `new_values`. A decision recorded as requiring a
+signature and carrying none therefore read COMPLETE as soon as its `user_id` was
+numeric. Against the words "no default pass" in the function's own docstring.
+
+Both are answered by a third state rather than a better guess: `PARTIAL` plus a
+`notAssessed` list, so COMPLETE now means every required element was *checked*
+and present.
+
+### The strongest single move of the round
+
+`'signed'` is no longer a member of `SignatureStatus` at all. Removing the member
+made the claim **unrepresentable** rather than merely unused — and that is what
+found the rest of it. `tsc` then pointed at the two remaining places that
+asserted the value: the compliance report's `signaturesSigned` counter, and the
+DecisionLineage surface's "Signed" badge. Neither was in the review's findings.
+Neither would have been found by reading.
+
+A type that cannot express the lie is a better gate than a check that looks for
+it.
+
+### The statistic that could only print one value
+
+`regulatory.gxpRelevant` was the literal `true` at all five node constructors.
+Three of the four source tables have no such column. The compliance report counts
+it —
+
+    gxpRelevantRecords: allDecisions.filter(d => d.regulatory.gxpRelevant).length
+
+— so that figure always equalled `totalDecisionRecords`. **A statistic with one
+possible value measures nothing**, and it sat in a report headed "Decision
+Lineage Compliance Report" beside figures that were real.
+
+### The test that could not fail
+
+#63's fix included
+
+    expect(res.text ?? '').not.toContain('Requirement appears to be addressed');
+
+`analyzeProtocolCompliance` computes that `reason` string per requirement and
+never appends it to `analysisText`. Measured against the real service: absent
+from the returned screen for every input. So the assertion pinned a string the
+route never emitted, on top of a 404 that had already made the body Express's own
+error page. **A check that cannot fail is not coverage** — it is the same defect
+as a verdict nothing computed, in test form, and I wrote it.
+
+What the collision actually changed is in the payload, and is what the test pins
+now: the SCREEN SUMMARY's matched count, measured on the real service with the
+exact placeholder the deleted handler passed. `Section 3` → 0 of 14 requirements;
+`Section consent` → 1, because `extractKeyPhrases` emits every word over five
+characters as a phrase.
+
+### Carried, then dropped
+
+#133 gave the PDEV bridge a `{persisted}` outcome and carried it to the route.
+The review found the pattern one layer along: `pdev-clearance` — the module that
+moves a regulatory program to its **terminal** IND-cleared state — still wrote
+both of its rows with `void`, and all three of its callers received
+`cleared: true` whether or not the record existed. The module's own header
+promised "audit event 'pdev_ind_cleared' via the existing dual-write auditor",
+which the code could not keep.
+
+Carrying an outcome and then dropping it is the same defect one layer up. So the
+conversion was finished across the whole PDEV path — 18 sites, zero left — and
+capped for the rest of the repository by a gate.
+
+(The commit message on `48917d7b1` says 19. It is wrong by one: the gate's own
+population count went 96 → 78, and 18 is what `git show 8a0620036:<file>` counts
+across the six files. The commit is pushed, so the correction lives here.)
+
+## The gate this round produced
+
+`ci:void-audit-write` — `void auditService.logAction(...)` anywhere in
+`server/**`, with comments and string literals blanked so the files that document
+the defect by quoting it are not flagged. Baseline: **78 sites across 27 files**,
+recorded per file **with its count**, not as an allowlist. A 78-entry allowlist
+would have let any of those files add a hundred more; the `--self-test` includes
+that mutation as a case, because a baseline admitting growth would make this gate
+the thing it exists to catch. Shrink it; never grow it.
+
+Proven red over the real population before any baseline existed, and its own
+pre-push wiring blocked the push that carried it — which is how the baseline came
+to be in the same commit rather than the one after.
+
+## What this round says about the sweep's own numbers
+
+Nothing changes in the 65-of-104 answer or in the pilot conclusion. What changes
+is the confidence interval on the phrase "fixed".
+
+Three times in this work a fix was reported complete and was not: #99's third
+copy of a formula my commit message had called gone, #70's narrowed-but-unearned
+signature element, and #133's conversion stopping at the module boundary. The
+common shape is that **each fix was verified against the finding it answered,
+never against the invariant the finding was an instance of.** A review that reads
+the fix as a claim — and asks what it would take for that claim to be false —
+caught all three. Thirteen for thirteen is not a coincidence; it is the expected
+yield when the fixes have not been through the same adversarial pass as the
+findings.
+
+The practical rule, for the next work order: **the fix gets the refuters too.**
+
+## The conversion reviews — a second round, on the round above
+
+The `void`-audit conversions were themselves reviewed, one reviewer per file, same
+default-to-reporting-a-problem rule. Four of six found something outside their own
+file, and the pattern is the one this whole work order keeps producing: **a
+conversion is not finished at the function boundary.**
+
+- **The eCTD compile outcome, dropped by both callers.** The service reported it;
+  the route discarded it on the 201 and the 409 alike, and the AnA handler
+  discarded it in both arms. The handler case is the sharper one: it *does* report
+  an audit outcome, for a DIFFERENT row — its own `agent.ana.…` row — and because
+  the note helper appends nothing when the outcome it is handed persisted, a run
+  where the agent row landed and the service row was lost produced a tool response
+  with **no audit note at all.** A positive "the record is fine" signal about a
+  record that does not exist.
+
+- **A new defect, found because a reviewer checked whether a COMMENT was true.**
+  The comment said "the snapshot rows are committed by the call above".
+  `pdevReadinessService.snapshot` wrapped its INSERT in a `try` that logged and
+  fell through to `return report`. These rows are not a log beside an action —
+  materializing them *is* the action of POST /readiness/snapshot. So the route
+  answered **201 Created for a snapshot no table contained**, the scheduler
+  counted it, the AnA handler said "Snapshotted readiness; overall N%", and a
+  total store outage would have reported every program snapshotted. After the #133
+  conversion the route also attached an audit row saying a snapshot had been
+  taken: a truthful §11.10(e) entry for a snapshot that does not exist, which is
+  worse than the silence it replaced. Now `{ report, persisted, rowsAttempted }`,
+  a 503 rather than a 201, and a `not_persisted` outcome in the batch — neither a
+  skip, which computed nothing, nor an error, which threw.
+
+- **Two untrue comments, both mine, both inside a fix for a fabrication finding.**
+  One claimed `meta` "used to be omitted entirely unless the program had cleared"
+  — false of every version, since `ok()` is `meta ? { data, meta } : { data }` and
+  `{}` is truthy. The other used the past tense about a route envelope the field
+  had not yet changed. **A comment that invents prior observable behaviour is the
+  same defect in prose**, and it is the one form of it no gate will ever catch.
+
+That third item is the reason this round mattered most. Every other check in this
+work order reads code. A reviewer asking "is this sentence true of this code?" is
+the only thing that catches a fix which describes itself falsely — and two of mine
+did.
+
+## Commits
+
+| Commit | What |
+|---|---|
+| `6af4c0e2d` | #70's two must-fix findings; #72's stale error counters |
+| `563bb5122` | #70/#71: `gxpRelevant` third state, `'signed'` made unrepresentable, honest report statistics, client reads the server's assessments |
+| `fa207f24d` | #63's vacuous assertion, #65's remaining trace section, #133's terminal IND write |
+| `48917d7b1` | `ci:void-audit-write` + baseline; all 18 PDEV `void` sites converted |
+| `bb4b0ec22` | The conversion reviews: the dropped eCTD outcome, the unstored readiness snapshot, two untrue comments |
+
+One gate failure is outstanding and is not from this work: `ci:server-error-leaks`
+fails on `server/routes/real-world-evidence.ts` (2 → 3, lines 663/834/840),
+which arrived by merge from the concurrent session's RWE work. Left to that
+session rather than raced.

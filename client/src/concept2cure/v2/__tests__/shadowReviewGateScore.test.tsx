@@ -163,6 +163,41 @@ describe('ShadowReview — the RTF gate shows the run\'s recorded score', () => 
     expect(lead).toMatch(/RTF risk 90%/);
     expect(lead).not.toMatch(/RTF risk 0%/);
   });
+
+  /**
+   * WO-16C #99 follow-up, found by an adversarial review of the #99 fix.
+   *
+   * The fix computed `elevated` from the recorded scores but wired it only into
+   * the zero-finding branch. The `majors > 0` branch still took its verdict
+   * from finding severity alone, so this very fixture — rtfRiskScore 0.9 with a
+   * major finding — rendered "Your submission is fileable, with 1 substantive
+   * point … RTF risk 90%" over a body reading "None are filing-blockers".
+   *
+   * That is the same contradiction #99 set out to remove, relocated from two
+   * screens into one paragraph. The case above passes it, because asserting the
+   * substring "RTF risk 90%" says nothing about the verdict wording around it.
+   */
+  it('does not call a 90%-RTF run fileable just because no finding is critical', async () => {
+    const { container } = renderSurface([lensRow()]);
+    await waitFor(() => expect(container.querySelector('.sr-lead-h')).toBeTruthy());
+    const head = container.querySelector('.sr-lead-h')?.textContent ?? '';
+    const body = container.querySelector('.sr-lead-b')?.textContent ?? '';
+
+    expect(head).toMatch(/RTF risk 90%/);
+    expect(head).not.toMatch(/fileable/i);
+    expect(body).not.toMatch(/none are filing-blockers/i);
+    // It must say the recorded score holds the gate, not the finding count.
+    expect(`${head} ${body}`).toMatch(/gate|score/i);
+  });
+
+  it('still calls a genuinely low-risk run with a major finding fileable', async () => {
+    const { container } = renderSurface([
+      lensRow({ rtfRiskScore: 0.05, crlRiskScore: 0.05 }),
+    ]);
+    await waitFor(() => expect(container.querySelector('.sr-lead-h')).toBeTruthy());
+    const head = container.querySelector('.sr-lead-h')?.textContent ?? '';
+    expect(head).toMatch(/fileable/i);
+  });
 });
 
 describe('ShadowReview — a run with no recorded gate score says so', () => {

@@ -118,6 +118,21 @@ export function Home({
   const [modeOpen, setModeOpen] = React.useState(false);
   const [mode, setMode] = React.useState('standard');
   const [plusOpen, setPlusOpen] = React.useState(false);
+
+  /* Both landing popovers opened on click and closed on nothing but a second
+     click on their own trigger: no Escape, no outside dismissal, and the
+     trigger never said it was expanded. Escape closes whichever is open. */
+  React.useEffect(() => {
+    if (!plusOpen && !modeOpen) return undefined;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setPlusOpen(false);
+      setModeOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [plusOpen, modeOpen]);
   const [browseOpen, setBrowseOpen] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
   /* `@app` on the front door — the same hook the rail and the thread use. */
@@ -287,6 +302,8 @@ export function Home({
                 type="button"
                 className="landing-tool"
                 title="Attach files"
+                aria-haspopup="true"
+                aria-expanded={plusOpen}
                 onClick={() => setPlusOpen((o) => !o)}
               >
                 {I.plus}
@@ -324,7 +341,8 @@ export function Home({
               )}
             </div>
             <div className="landing-crow-r">
-              <button type="button" className="landing-engine" onClick={() => setModeOpen((o) => !o)}>
+              <button type="button" className="landing-engine" aria-haspopup="true" aria-expanded={modeOpen}
+                onClick={() => setModeOpen((o) => !o)}>
                 <span className="landing-eng-ana">AnA</span>
                 <span>{engine.model}</span>
                 <span className="landing-eng-mode">{engine.label}</span>
@@ -762,7 +780,10 @@ function GlobalRiCapability({
         <div className="gri-form">
           {Object.entries(props).map(([k, p]) => (
             <div className="gri-field" key={k}>
-              <label>
+              {/* The label sat beside each control naming nothing; the runner
+                  builds its form from the capability's own schema, so the id is
+                  built from the same key. */}
+              <label htmlFor={`gri-${k}`}>
                 {labelize(k)}
                 {required.includes(k) && <span className="req">*</span>}
               </label>
@@ -786,7 +807,7 @@ function GlobalRiCapability({
                   <span className="gri-toggle-l">{form[k] ? 'Yes' : 'No'}</span>
                 </div>
               ) : p.enum ? (
-                <select className="gri-input" value={String(form[k])} onChange={(e) => set(k, e.target.value)}>
+                <select id={`gri-${k}`} className="gri-input" value={String(form[k])} onChange={(e) => set(k, e.target.value)}>
                   <option value="">Select…</option>
                   {p.enum.map((o) => (
                     <option key={o} value={o}>
@@ -796,6 +817,7 @@ function GlobalRiCapability({
                 </select>
               ) : (
                 <input
+                  id={`gri-${k}`}
                   className="gri-input"
                   type={p.format === 'date' ? 'date' : p.type === 'number' ? 'number' : 'text'}
                   value={String(form[k])}

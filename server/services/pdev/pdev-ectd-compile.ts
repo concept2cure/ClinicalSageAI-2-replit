@@ -21,7 +21,9 @@
  *     it is never papered over with a placeholder package.
  *   - Returns the package buffer + filename + stats, plus the
  *     ind-assembly readiness snapshot at compile time.
- *   - Audit-logs the compile through the existing dual-write auditor.
+ *   - Audit-logs the compile through the existing dual-write auditor,
+ *     whose OUTCOME is returned (see `PdevEctdCompileResult.audit`) rather
+ *     than discarded.
  *
  * @module server/services/pdev/pdev-ectd-compile
  */
@@ -32,7 +34,7 @@ import { createScopedLogger } from '../../utils/logger';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import { assembleSubmissionEctd } from '../ectd/assemble-from-core';
 import { pdevIndAssemblyService, type IndAssemblyReport } from './pdev-ind-assembly';
-import auditService from '../auditService';
+import { recordAuditRow, type PdevAuditRecordOutcome } from './pdev-audit-record';
 
 const logger = createScopedLogger('pdev-ectd-compile');
 
@@ -79,6 +81,37 @@ export interface PdevEctdCompileResult {
   refusalReason?: string;
   thresholdApplied: number;
   forced: boolean;
+  /**
+   * What happened to the 21 CFR Part 11 §11.10(e) audit row for this call —
+   * the refusal row on `refused_low_readiness`, the compile row on `compiled`.
+   * Never `undefined` on either of those paths: both of them write a row, so a
+   * caller that sees no outcome is looking at a throw, not at a silent success.
+   *
+   * WO-16C finding 133, follow-up review 2026-09-18. Both writes below were
+   * `void auditService.logAction({…})`. `logAction` never rejects when
+   * persistence fails — by deliberate policy, an audit-trail outage must not
+   * break the action it records — it RESOLVES an AuditWriteResult and reports
+   * what happened in `persisted`. Discarding that value meant an eCTD package
+   * could be assembled from the canonical submission spine, handed to the
+   * caller, and recorded nowhere, with this result object identical to the
+   * compile whose record exists. Same for the refusal, which is the audit
+   * trail's only evidence that a below-threshold compile was attempted and
+   * blocked.
+   *
+   * The route envelope and the agent tool response were the same way, and this
+   * field alone did not change that — a service that reports an outcome its
+   * caller drops is the same defect one layer up. A review of this conversion
+   * found exactly that, so `pdev-routes.ts` now sends it in the envelope (in
+   * `meta` on the 201, in `details` on the 409) and the AnA handler carries it
+   * as `ectdAuditTrail`, kept distinct from its own agent-level row.
+   *
+   * The shape is the one pdev-clearance and pdev-workflow-bridge already carry,
+   * from the shared ./pdev-audit-record — not a second copy of it. `chained`
+   * separates the retrievable `audit_logs` row from a tamper-proof-only write;
+   * the failure arm carries a stable code and a user-safe sentence, never the
+   * store's own text (that is in the log line recordAuditRow already wrote).
+   */
+  audit?: PdevAuditRecordOutcome;
 }
 
 export class PdevEctdCompileService {
@@ -111,7 +144,11 @@ export class PdevEctdCompileService {
     }
 
     if (snapshot.overallReadiness < threshold && !forced) {
-      void auditService.logAction({
+      // WO-16C #133: the refusal row's outcome now travels with the refusal.
+      // Nothing is reverted here — there is nothing to revert, the compile did
+      // not run — but the caller can no longer be told "blocked, and recorded"
+      // when only the first half happened.
+      const audit = await recordAuditRow({
         tenantId: input.organizationId,
         userId: input.userId,
         action: 'pdev_ectd_compile_refused',
@@ -130,6 +167,7 @@ export class PdevEctdCompileService {
         refusalReason: `IND assembly readiness ${snapshot.overallReadiness}% < threshold ${threshold}%`,
         thresholdApplied: threshold,
         forced,
+        audit,
       };
     }
 
@@ -149,7 +187,7 @@ export class PdevEctdCompileService {
       throw err instanceof Error ? err : new Error('eCTD compile failed');
     }
 
-    void auditService.logAction({
+    const audit = await recordAuditRow({
       tenantId: input.organizationId,
       userId: input.userId,
       action: 'pdev_ectd_compiled',
@@ -169,6 +207,19 @@ export class PdevEctdCompileService {
       },
     });
 
+    // WO-16C #133: the package is already assembled and the submission spine
+    // rows the packager wrote are already committed; throwing the compile away
+    // because its audit row was lost would be the worse lie. The compile stands
+    // and the caller is told what became of the record — recordAuditRow has
+    // already logged the store's own reason against this action and program id.
+    if (!audit.persisted) {
+      logger.warn('eCTD compile succeeded but its audit row was not persisted', {
+        programId: input.programId,
+        submissionId: input.submissionId,
+        filename: pkg.filename,
+      });
+    }
+
     return {
       status: 'compiled',
       readinessSnapshot: snapshot,
@@ -180,6 +231,7 @@ export class PdevEctdCompileService {
       },
       thresholdApplied: threshold,
       forced,
+      audit,
     };
   }
 }

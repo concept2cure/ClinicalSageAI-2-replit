@@ -23,17 +23,62 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-15 finding 4 — `/api/design-risk` | `…session_01J935DZwfFEardJCv85SJds` | **released** — done `153481465` |
 | WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
 | WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
-| WO-15 — `KNOWN_UNLISTED`: 14 of 16 entries fail the list's stated reason | — | **unclaimed**, new, see finding 5 |
+| `KNOWN_UNLISTED` triage — 10 entries, 16 tables | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed, all ten now on the applier |
+| Schema authority — live-schema baseline + the 61 tables behind it | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **active** — gate fixed, baseline 70→61; the 57 no-creator entries remain |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
+
+**Note for the UI/authoring lane (`AuthoringPlaceIntoFiling.tsx`):** the placement
+dialog work (`0f8e6a84b`, `0e47244ec`) left 13 dead symbols in that file — the
+`SubmissionRow`/`SequenceRow` types, `SC_SEQ_STATUS`, `normalizeCtdCode`,
+`ctdFolderSlug`, and the `subs`/`subId`/`seqs`/`seqId`/`lockedSeqs`/
+`pickSubmission`/`sectionCanonical`/`sectionFolder` bindings — plus 3 in
+`server/services/workflow/DecisionLineageService.ts` (`sql`, `inArray`,
+`unifiedDocuments`). Together that is 15 over the ratchet baseline, so
+`ci:eslint-warning-ratchet` is red on trunk. They are all unused imports and
+unused destructurings from a refactor, so deleting them is mechanical — but the
+file is yours and mid-flight, so it is reported here rather than edited from
+another lane. Clearing them puts the gate back at 6549 with nothing else needed.
 
 **Note for the vault-storage lane:** `server/services/vault/storage-migration.service.ts`
 (`c029711ae`) landed `migrateVaultStorage` at complexity 17 / 102 lines, which put
 `ci:eslint-warning-ratchet` one over its baseline. It was paid down elsewhere rather than
 in your file, so the gate is green and the function is untouched — but it is still two
 warnings you own. Splitting the per-document body out of the loop clears both.
+
+**Live-schema baseline — where it stands, and the trap in it.** Ratcheted
+70 → 61 on 2026-09-18 (`e6b769525`). The 61 remaining are real: server SQL
+referencing relations a full `install-fresh` + `deploy-migrate` does not
+produce. Categorised with exact schema-qualified matching:
+
+| | |
+|---|---|
+| created by a file already in the set, yet absent | **0** |
+| created by SQL on no applier — *looks* listable | 4 |
+| created by nothing anywhere in the repo | 57 |
+
+**Do not simply list those 4.** Checked one at a time, none should be:
+
+- `assembly_docs`, `assembly_audit_logs` (`db/migrations/20260130_*`) — an
+  explicit, dated decision already exists at `server/db/ensureCoreTables.ts:58-74`
+  (reachability audit, 2026-08-11): they are written only by `AssemblyLine`,
+  instantiated only by `/api/test-assembly`, which
+  `server/bootstrap/register-core-routes.ts:50` mounts only when
+  `testRoutesEnabled`. **Test scaffolding, not production schema.** Verified
+  still true 2026-09-18. Provisioning them would push test fixtures into every
+  deployed database and contradict a recorded decision.
+- `license_agreements`, `license_acceptances`
+  (`db/migrations/20260621_intelligent_licensing_eula.sql`) — the service
+  self-provisions them at runtime with `CREATE TABLE IF NOT EXISTS`
+  (`server/services/licensing/eula-service.ts:113,131`). Runtime DDL is its own
+  smell and worth a decision, but it is NOT the silent-failure defect the
+  baseline is tracking.
+
+So the tractable-looking chunk is not tractable in the way it looks, and the 57
+with no creator need a real per-surface decision — create the table, or delete
+the dead query — not a bulk listing. That is the next piece of this lane.
 
 ---
 
@@ -108,15 +153,19 @@ review and staying refused.** Three had wrong headlines (3, 7 and — in the
 opposite direction — my own correction to 3); two were right as written (5, 2).
 Check each claim, do not assume either way.
 
-One item surfaced here is NOT part of WO-15's nine and remains open: **14 of the
-16 `KNOWN_UNLISTED` entries in `tests/ops/apply-c2c-migrations-manifest.test.mjs`
-fail that list's own stated reason** — an upper bound from a crude heuristic with
-at least one known false positive. Each needs the per-file treatment finding 5
-received.
+One item surfaced here was NOT part of WO-15's nine and is now also **fixed**:
+10 of the 15 `KNOWN_UNLISTED` entries in
+`tests/ops/apply-c2c-migrations-manifest.test.mjs` failed that list's own stated
+reason, covering 16 tables. All ten are now on the applier and their exemptions
+are gone, with `tests/schema-contract/known-unlisted-reason-holds.contract.test.ts`
+enforcing the rule the list only stated in prose. The first figure published here
+was "14 of 16" from a crude heuristic; re-measured it was 10 of 15. See WO-15
+finding 5.
 
-With WO-15 closed, the next unclaimed work is the `KNOWN_UNLISTED` triage above,
-then the untouched orders in §2 — WO-3, WO-5, WO-7, WO-9, WO-10, WO-12 are all
-marked *unverified*, meaning no session has confirmed their status recently.
+With WO-15 and the `KNOWN_UNLISTED` triage both closed, the next unclaimed work
+is the untouched orders in §2 — WO-3, WO-5, WO-7, WO-9, WO-10 and WO-12 are all
+marked *unverified*, meaning no session has confirmed their status recently. Start
+by re-deriving the status rather than trusting the row.
 
 ---
 
@@ -127,8 +176,12 @@ evidence that the migration *set* is complete.** Finding 3's first attempt added
 `migrations/20260629_charter_tables_rebuild.sql` to `C2C_MIGRATION_FILES` and
 passed a live-database proof. It was wrong: the file has five
 `REFERENCES project_charters(id)` clauses and nothing in the set creates that
-table — Drizzle push does. The live database already had it from install-fresh,
-so the proof could not expose the gap.
+table. (This paragraph first said "Drizzle push does" — it does not, and that
+error is itself WO-15 finding 2's subject: `project-charter.ts` is re-exported
+from `shared/schema/index.ts`, which is not a drizzle entrypoint, so the charter
+tables are outside the push surface and come from install-fresh's overlay.) The
+live database already had the table from install-fresh, so the proof could not
+expose the gap.
 `tests/schema-contract/tenant-isolation-sweep.contract.test.ts` C-33 applies the
 set to a **bare** database and caught it. Run the schema-contract shards before
 believing any change to the set.

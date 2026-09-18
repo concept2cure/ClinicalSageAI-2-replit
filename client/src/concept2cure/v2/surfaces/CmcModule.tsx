@@ -2098,11 +2098,11 @@ export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id:
       <CmHead title="Change control" meta="Model a CMC change -> filing path across markets — SUPAC / ICH Q12" ask={ask} suggest={CMC_SUGGEST.change} />
       <div className="pj-card">
         <div className="pj-card-b">
-          <div className="de-field"><label className="de-label">Change type</label>
-            <select className="de-select" value={type} onChange={(e) => { setType(e.target.value); setResult(null); }}>{CMC_CHANGE_TYPES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
+          <div className="de-field"><label className="de-label" htmlFor="cmc-change-type">Change type</label>
+            <select id="cmc-change-type" className="de-select" value={type} onChange={(e) => { setType(e.target.value); setResult(null); }}>{CMC_CHANGE_TYPES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
           </div>
-          <div className="de-field"><label className="de-label">Describe the change<span className="req">*</span></label>
-            <textarea className="de-textarea" rows={2} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="e.g. switch the drug-substance supplier from A to B; comparable process, new site" />
+          <div className="de-field"><label className="de-label" htmlFor="cmc-change-desc">Describe the change<span className="req">*</span></label>
+            <textarea id="cmc-change-desc" className="de-textarea" rows={2} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="e.g. switch the drug-substance supplier from A to B; comparable process, new site" />
           </div>
           <div className="de-field"><label className="de-label">Markets</label>
             <div className="cm-mkt">{CMC_MARKETS.map(([id, l]) => (<button key={id} type="button" className="cm-mkt-opt" data-on={markets.includes(id) || undefined} onClick={() => toggle(id)}>{markets.includes(id) ? I.check : I.plus}{l}</button>))}</div>

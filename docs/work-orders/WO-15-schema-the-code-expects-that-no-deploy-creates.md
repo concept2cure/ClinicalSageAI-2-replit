@@ -515,27 +515,71 @@ it exercises the engine on in-memory literals and never touches a database.
 > does not change that and is not claimed to. Fixing it means either writing the
 > column or removing the feature, which is a product decision.
 >
-> **2. 14 of the 16 `KNOWN_UNLISTED` entries fail that list's stated reason.**
+> **2. 10 of the 15 `KNOWN_UNLISTED` entries failed that list's stated reason — FIXED 2026-09-17.**
 > The stated reason is that such files' *"objects come from `shared/schema.ts`
 > via drizzle-kit push and they carry nothing an existing database additionally
 > needs"*, and the list's own comment says *"adding one requires the reason
-> above to actually hold."* Measured by checking each entry's created tables
-> against the Drizzle surface:
+> above to actually hold."*
+>
+> **CORRECTED 2026-09-17: this block first said "14 of 16". That was a crude
+> heuristic and it was wrong in both numbers.** Re-measured properly:
 >
 > | | |
 > |---|---|
-> | entries | 16 |
-> | create a table with **no** Drizzle definition, or carry an `ADD COLUMN` | **14** |
+> | entries actually in the list | **15** (one of the "16" was a path inside a comment) |
+> | reason holds — tables are on the push surface | 2 — `report_definitions`, `onboarding_proposal_runs` |
+> | reason holds — `ADD COLUMN` of a Drizzle-declared column | 2 — `apiUsageLogs.model`, `organizationUsers.persona` |
+> | clean for a *different*, verified reason | 1 — `authoring_reviews` |
+> | **genuinely fail the stated reason** | **10**, covering **16 tables** |
 >
-> Among them `protocol_soa_assessments`, `protocol_budget_items`, `dms_plans`,
-> `biosketches`, `other_support_documents`, `export_control_reviews`,
-> `invention_disclosures`, `research_agreements`, `chat_threads`,
-> `canonical_documents`. **This is a crude heuristic and at least one result is
-> a false positive**: `20260728_authoring_reviews.sql` has a real, documented,
-> *different* reason (its provisioner runs on both appliers) that the check
-> cannot see. So the 14 is an upper bound on a real problem, not a verdict on
-> each file. Each needs the same per-file treatment finding 5 just received —
-> too large to fold in here, and too large to leave unrecorded.
+> The `authoring_reviews` exception was flagged as a suspected false positive
+> and is now confirmed as one: `db/migrations/20260730_authoring_subsystem_schema.sql`
+> creates it, that file is in `AUTHORING_SUBSYSTEM_FILES`, and
+> `applyAuthoringSubsystem` is called at `deploy-migrate.mjs:319` — so it does
+> run on both appliers, exactly as its comment claims.
+>
+> The 10 that remain, and what they leave unreachable:
+>
+> | Entry | Tables |
+> |---|---|
+> | `20260701_protocol_soa.sql` | `protocol_soa_assessments`, `protocol_soa_cells` |
+> | `20260702_protocol_budget.sql` | `protocol_budget_items`, `protocol_budget_params` |
+> | `20260703_dmsp.sql` | `dms_plans`, `dms_plan_elements` |
+> | `20260704_biosketch.sql` | `biosketches`, `biosketch_sections` |
+> | `20260704_other_support.sql` | `other_support_documents`, `other_support_entries` |
+> | `20260705_export_control.sql` | `export_control_reviews` |
+> | `20260705_invention_disclosure.sql` | `invention_disclosures` |
+> | `20260705_research_agreements.sql` | `research_agreements` |
+> | `20260728_chat_thread_store.sql` | `chat_threads`, `chat_messages` |
+> | `20260731c_canonical_documents.sql` | `canonical_documents` |
+>
+> All 16 are on no push surface, created by no file in `C2C_MIGRATION_FILES`,
+> present on a canonically provisioned database, and referenced by live non-test
+> code (3–44 references each). Same class as findings 3 and 5, at 16× the scale.
+>
+> **FIXED**: all ten listed in `C2C_MIGRATION_FILES` (270 → 281) and their ten
+> `KNOWN_UNLISTED` exemptions removed. Safe to replay, verified per file rather
+> than assumed: zero DROP statements across all ten, every CREATE and ALTER
+> `IF NOT EXISTS`-guarded, every table carrying `organization_id`/`org_id`, and
+> the only external FK targets `organizations`/`users` — base tables that 39
+> files already in the set reference and that the harness provisions through
+> `FK_PREREQUISITES`. That is the finding-3 trap checked and cleared:
+> `project_charters` failed it because it is not a base table.
+>
+> Proven by breaking it — dropped `chat_threads`, `chat_messages`, `biosketches`,
+> `biosketch_sections` and `export_control_reviews` (five tables across three of
+> the ten files) on the canonical database, ran the real `deploy-migrate`, and
+> all five came back with their full shapes. Applied again: idempotent.
+>
+> New gate `tests/schema-contract/known-unlisted-reason-holds.contract.test.ts`
+> turns the list's prose rule into an enforced one — red first on exactly the 10,
+> now 5/5. It also asserts the *premise* of its one reasoned exception rather
+> than the exception itself: if `applyAuthoringSubsystem` ever stops running on
+> `deploy-migrate`, the `authoring_reviews` exemption fails with it.
+>
+> **NOT claimed:** that these tables gained RLS policies. None of the ten defines
+> any — the status quo on a provisioned database today, unchanged by listing them.
+> C-33 green: the whole set still replays on a bare database.
 
 ### Original finding, as written
 

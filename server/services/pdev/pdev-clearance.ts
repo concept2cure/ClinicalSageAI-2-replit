@@ -12,7 +12,8 @@
  *   - regulatory_programs.status      → 'approved'  (IND cleared = safe to proceed)
  *   - regulatory_programs.approvalDate → now
  *   - regulatory_programs.metadata     ← merge { indClearedAt, indClearedBy }
- *   - audit event 'pdev_ind_cleared' via the existing dual-write auditor
+ *   - audit event 'pdev_ind_cleared' via the existing dual-write auditor,
+ *     whose OUTCOME is returned (see `IndClearanceResult.audit`)
  *
  * Idempotent: re-running on an already-cleared program is a no-op (the
  * audit still records the attempt, but the columns don't churn).
@@ -30,7 +31,7 @@ import { db } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import type { PdevActivityState } from './pdev-activity-registry';
-import auditService from '../auditService';
+import { recordAuditRow, type PdevAuditRecordOutcome } from './pdev-audit-record';
 
 const logger = createScopedLogger('pdev-clearance');
 
@@ -51,6 +52,25 @@ export interface IndClearanceResult {
   /** True when the program was already cleared before this call. */
   alreadyCleared: boolean;
   programStatus?: string;
+  /**
+   * What happened to the 21 CFR Part 11 §11.10(e) audit row for this call —
+   * `undefined` on the paths that attempt no row at all, so a caller cannot
+   * read a persisted record off a call that never wrote one.
+   *
+   * WO-16C finding 133, follow-up review 2026-09-18. Both writes below were
+   * `void auditService.logAction({…})`. `logAction` never rejects on a
+   * persistence failure — by deliberate policy, an audit-trail outage must not
+   * break the action it records — it RESOLVES an AuditWriteResult and says so
+   * in `persisted`. Discarding that meant an IND clearance could be recorded
+   * nowhere while `regulatory_programs` was already moved to 'approved' with an
+   * `indClearedAt` stamp on it, and every caller got `cleared: true` either
+   * way. This is the terminal transition of the whole PDEV → IND path; it is
+   * the last place that should be silent about its own record.
+   *
+   * The outcome shape is the one pdev-workflow-bridge already carries, from the
+   * shared ./pdev-audit-record — not a second copy of it.
+   */
+  audit?: PdevAuditRecordOutcome;
 }
 
 /**
@@ -104,7 +124,7 @@ export async function applyIndClearanceIfTerminal(input: {
 
   if (alreadyCleared) {
     // Idempotent — record the attempt in audit but don't churn columns.
-    void auditService.logAction({
+    const audit = await recordAuditRow({
       tenantId: input.organizationId,
       userId: input.userId ?? undefined,
       action: 'pdev_ind_cleared_noop',
@@ -116,7 +136,12 @@ export async function applyIndClearanceIfTerminal(input: {
         newState: input.newState,
       },
     });
-    return { cleared: false, alreadyCleared: true, programStatus: program.status ?? undefined };
+    return {
+      cleared: false,
+      alreadyCleared: true,
+      programStatus: program.status ?? undefined,
+      audit,
+    };
   }
 
   const now = new Date();
@@ -135,7 +160,7 @@ export async function applyIndClearanceIfTerminal(input: {
     })
     .where(eq(regulatoryPrograms.id, input.programId));
 
-  void auditService.logAction({
+  const audit = await recordAuditRow({
     tenantId: input.organizationId,
     userId: input.userId ?? undefined,
     action: 'pdev_ind_cleared',
@@ -153,7 +178,12 @@ export async function applyIndClearanceIfTerminal(input: {
   logger.info('IND cleared — program moved to terminal state', {
     programId: input.programId,
     previousStatus: program.status,
+    auditRowPersisted: audit.persisted,
   });
 
-  return { cleared: true, alreadyCleared: false, programStatus: 'approved' };
+  // The program row is already committed, and reverting a cleared IND because
+  // its audit row failed would be the worse lie. The clearance stands and the
+  // caller is told what happened to the record — recordAuditRow has already
+  // logged the store's own reason against this action and resource id.
+  return { cleared: true, alreadyCleared: false, programStatus: 'approved', audit };
 }
