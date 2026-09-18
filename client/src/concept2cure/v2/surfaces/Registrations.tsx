@@ -164,11 +164,19 @@ function RegRow({ r, prod, productId, onAsk }: RegRowProps) {
   return (
     <>
       {/* The row expanded its dossier on click with no role, tabIndex or key
-          handler, and carried aria-expanded on the <tr> itself — an attribute
-          describing a control, on something that was not one. Putting the
-          control in the cell keeps the row a row and moves aria-expanded onto
-          the thing that actually expands. */}
-      <tr className={'reg-row has-doss' + (open ? ' open' : '')} onClick={() => setOpen((o) => !o)}>
+          handler, so the dossier was mouse-only. The control goes in the cell,
+          which keeps the row a row.
+
+          aria-expanded STAYS on the <tr>. An earlier pass here moved it onto
+          the button, on the reasoning that it describes a control and a row is
+          not one — which is wrong: ARIA's `row` role supports aria-expanded,
+          and an expandable grid row is exactly what it is for. The button
+          carries it too, as the disclosure control the user operates. */}
+      <tr
+        className={'reg-row has-doss' + (open ? ' open' : '')}
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
         <td>
           <button
             type="button"
