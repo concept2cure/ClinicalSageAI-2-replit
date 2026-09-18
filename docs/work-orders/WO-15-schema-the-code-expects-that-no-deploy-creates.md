@@ -30,6 +30,36 @@ wrong.
 
 ---
 
+## Finding 1 — CONFIRMED and FIXED 2026-09-18
+
+> **FIXED by `f52b4fe1`** — "deploy-migrate refuses to declare success when the
+> governed-content tree never ran". Correction 1 named the closing move as *"a
+> `deploy-migrate` preflight assertion"*, and that is what landed: the readiness
+> contract now carries three governed-content sentinels. Re-reproduced today with
+> the same PATH shim, and the deploy no longer blesses the database:
+>
+> ```
+> ▶ 1/5 Preflight — database already provisioned?
+>   ✓ base schema present (organizations, users, c2c_documents, regulatory_programs)
+> ▶ 5/5 Verify readiness contract
+>   governed-content tree: 0/3 sentinel(s) present
+> ❌ Deploy migration failed: the governed-content tree (db/migrations/*_gcc_*.sql)
+>    did not run on this database — missing: identity.organizations,
+>    core.program_ownerships, core.programs.org_id.          ← exit 1
+> ```
+>
+> **AND IT CORRECTS THE REPRODUCTION BELOW.** The section states that with `psql`
+> hidden `core.programs` "is then the 7-column shape from `044b`", and quotes
+> `42703: column "org_id" does not exist`. On a database built that way today the
+> `core` SCHEMA does not exist at all and neither does the table — `044b` and
+> `000_gcc_bootstrap_core` are themselves `*_gcc_*` files, so nothing creates it
+> when the tree is skipped, and the authorization query fails 42P01, not 42703.
+> The 7-column state is reachable only where the tree ran once and `069` did not.
+> That does not weaken the finding — an absent table is worse than a narrow one —
+> but the quoted error is not what a psql-less install produces.
+
+### Original finding, as written
+
 ## Finding 1 — a missing `psql` leaves `core.programs` cross-tenant readable, and the deploy says it is fine
 
 **Severity: highest here.** Rewritten 2026-09-10 after a full reproduction. Three
@@ -428,6 +458,36 @@ section count to return"), `:419-421` ("`charter_audit_events` … was never
 migrated"), and four "CONTRACT DEVIATION" notes in
 `tests/unit/charters-routes.test.ts`.
 
+## Finding 4 — CONFIRMED and FIXED 2026-09-17
+
+> **FIXED by `15348146`** — "Delete /api/design-risk: 20 endpoints over ten tables
+> that exist on no database". The finding below says the C-29 product decision
+> blocks any code change and that the honest interim is to unmount the router.
+> The decision was made instead, the same way D11d made the IVDR half on
+> 2026-08-13: **the rival definition is deleted and the Drizzle shapes are
+> canonical.** `server/routes/design-risk.ts`, its service and
+> `migrations/20260609_design_risk.sql` are removed, not unmounted, and the
+> `CLASSIFIED_OVERLAY_SKIPS` entry is gone with them.
+>
+> Two things the finding did not have, both measured on a canonically provisioned
+> database (install-fresh + deploy-migrate, 963 tables):
+>
+> * It is **all twenty** endpoints, not only the eight-table ones. `risk_items`
+>   and `risk_controls` DO land, in the pushed shape, so those handlers fail on
+>   shape rather than absence: `rmf_id` is 42703 and the controls join is
+>   `operator does not exist: integer = uuid`.
+> * The capability is not lost, because a second implementation already served
+>   it: `DesignControls.tsx` reads and writes `/api/design-controls`
+>   (`server/routes/design-controls.routes.ts` over `c2c_design_controls`), which
+>   is tested and fails closed on 42P01. The ui-v2 registry had been advertising
+>   `apiPrefixes: ['/api/design-risk']` on that surface at `readiness:
+>   routes-ready` while the component called the other prefix; it now names the
+>   prefix it calls.
+>
+> The eight missing tables were re-confirmed absent at 963 tables before deleting.
+
+### Original finding, as written
+
 ## Finding 4 — `/api/design-risk` is mounted and every endpoint fails
 
 `server/bootstrap/register-document-routes.ts:42,259` mounts the router. All 20
@@ -609,6 +669,40 @@ deliberate, self-documented, byte-identical defensive guard so the file applies
 on a preview branch predating the base table. Verified identical.)
 
 ---
+
+## Finding 6 — FIXED upstream; both sub-items re-measured 2026-09-18
+
+> **The main defect is FIXED by `c92c7122`** — "Submission orchestrator runs could
+> be started and never advanced". `shared/schema/submissions.ts` now declares
+> `createdAt`/`updatedAt`, so push creates them and the trigger's
+> `NEW.updated_at` assignment resolves. Verified by executing the exact
+> `persistRun` path three times against a provisioned database: step-1 → step-2 →
+> step-3, no 42703, `updated_at` set.
+>
+> **Sub-item A is wrong, and the live state is a third thing.** The finding says
+> `20260629_orchestrator_region_check_alignment.sql` is on neither applier "while
+> the route accepts all 13" — implying the database holds `044b`'s narrow
+> four-value CHECK and rejects the other nine. It holds **no CHECK at all**: push
+> creates the table, so the `CHECK (region IN ('US','EU','JP','CA'))` that both
+> SQL files declare never runs, and `'us'` lowercase inserts cleanly. The
+> alignment migration is indeed on neither applier (0 hits in
+> `C2C_MIGRATION_FILES`, not referenced by the port). So the hazard is not a
+> route/DB mismatch — it is that the database enforces no region domain at all,
+> and any writer that bypasses the route's zod can store anything. Note also that
+> the route's enum has 13 values while the service's `RegionCode` type
+> (`server/services/module3-extensions.ts:30`) has four.
+>
+> **Sub-item B is confirmed, and the compliance document was wrong about it.**
+> The `steps.run_id` FK is `NO ACTION` live — neither the CASCADE both files
+> declare nor the RESTRICT the hardening installs, because that file's `DO` block
+> matches `confdeltype = 'c'` only and so no-ops. Proven by execution: a run with
+> one step event refuses deletion (`violates foreign key constraint … is still
+> referenced`) and the event survives. `docs/compliance/part11-immutability-record-class-policy.md:34`
+> asserted `ON DELETE CASCADE` and called RESTRICT "a future change"; the
+> protection is already in force and the row understated it in the one direction
+> that matters. Corrected 2026-09-18.
+
+### Original finding, as written
 
 ## Finding 6 — a trigger writes a column the table does not have, so orchestrator runs can never advance
 
