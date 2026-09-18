@@ -274,9 +274,21 @@ export function RbmPatients({ board, onReload }: SubProps) {
         <div className="rbm-card">
           <div className="rbm-card-h">Cohort — ranked by anomaly score<span className="rbm-card-sub">{flagged} flagged — {review} in review</span></div>
           <table className="rbm-tbl"><thead><tr><th>Subject</th><th>Site</th><th>Anomaly</th><th>Top dimension</th><th>Status</th></tr></thead>
+            {/* Selecting a subject in the monitoring cohort was mouse-only:
+                a bare <tr onClick>. The control goes in the first cell so the
+                table keeps its row semantics. */}
             <tbody>{P.map(p => (
               <tr key={p.sid} data-on={open === p.sid || undefined} className="rowbtn" onClick={() => setOpen(p.sid)}>
-                <td className="mono">{p.sid}</td><td className="mono">{p.site}</td>
+                <td className="mono">
+                  <button
+                    type="button"
+                    className="tbl-name-btn"
+                    aria-current={open === p.sid || undefined}
+                    onClick={(e) => { e.stopPropagation(); setOpen(p.sid); }}
+                  >
+                    {p.sid}
+                  </button>
+                </td><td className="mono">{p.site}</td>
                 <td>{p.anomaly != null
                   ? <span className="rbm-z" data-hi={p.anomaly >= 3.5 ? 2 : p.anomaly >= 3 ? 1 : 0}>{p.anomaly.toFixed(1)}</span>
                   : <span className="mut">Not scored</span>}</td>

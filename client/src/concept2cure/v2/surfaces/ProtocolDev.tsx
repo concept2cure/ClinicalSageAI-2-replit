@@ -99,7 +99,10 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
       <div className="pd-tree">
         {sections.map((s: any) => (
           <button key={s.id} className={'pd-tree-row' + (activeSec === s.id ? ' on' : '')} onClick={() => onSec(s)}>
-            <span className="pd-tree-dot" data-status={s.status} />
+            {/* Section completion was this dot's colour alone, in the outline
+                a protocol author navigates by. */}
+            <span className="pd-tree-dot" data-status={s.status} aria-hidden="true" />
+            <span className="sr-only">{s.status}</span>
             <span className="pd-tree-num">{s.num}</span>
             <span className="pd-tree-t">{s.title}</span>
             {!s.required && <span className="pd-tree-opt">opt</span>}

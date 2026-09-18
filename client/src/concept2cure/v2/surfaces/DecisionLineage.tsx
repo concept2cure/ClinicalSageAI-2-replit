@@ -558,7 +558,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
         <aside className="dl-aside">
           <div className="dl-verify">
             {chainState.loading ? (
-              <div className="scaf-note" style={{ padding: '8px 2px' }}>
+              <div role="status" className="scaf-note" style={{ padding: '8px 2px' }}>
                 Verifying the hash chain…
               </div>
             ) : chainState.error ? (

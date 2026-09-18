@@ -878,8 +878,12 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
           {rejecting && (
             <div className="rv-reject">
+              {/* The reason a reviewer is sending work back — a governed
+                  record, and the only thing naming it was a placeholder, which
+                  a screen reader drops the moment the user types. */}
               <textarea
                 className="rv-reject-ta"
+                aria-label="Reason for requesting changes"
                 placeholder="State the specific change required..."
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}

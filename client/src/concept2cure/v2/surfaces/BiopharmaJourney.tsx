@@ -571,8 +571,12 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
             <div className="pj-card-h"><span className="t">CTD readiness</span><button className="pj-card-h-go" onClick={() => open('nda-cockpit')} style={{ fontSize: 11, color: 'var(--accent-200)' }}>Open cockpit {I.right}</button></div>
             <div className="pj-card-b">
               <div className="pj-mods">
+                {/* "At risk" was the fill turning amber and nothing else, so the
+                    one thing this bar exists to flag was the one thing not said.
+                    The accessible name carries it; the fill stays as the glance. */}
                 {mods.map((m) => (
-                  <button key={m.m} className="pj-mod" onClick={() => open('nda-cockpit')}>
+                  <button key={m.m} className="pj-mod" onClick={() => open('nda-cockpit')}
+                    aria-label={`Module ${m.m} — ${m.label}, ${m.pct}% ready${m.risk ? ', at risk' : ''}`}>
                     <span className="pj-mod-n">M{m.m}</span>
                     <span className="pj-mod-b">
                       <span className="pj-mod-l">{m.label}</span>

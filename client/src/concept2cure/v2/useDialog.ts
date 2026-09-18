@@ -38,11 +38,21 @@ function focusable(panel: HTMLElement): HTMLElement[] {
   );
 }
 
-export function useDialog(onClose: () => void) {
+/**
+ * @param enabled  Whether the dialog is currently open. Defaults to true, which
+ *   is the shape every existing caller uses: a panel component that only mounts
+ *   while open, so mounting IS the open signal. Pass the open flag explicitly
+ *   when the panel is inline under `{open && …}` in a larger component and
+ *   cannot be extracted cheaply — a hook cannot be called conditionally, and
+ *   re-implementing Escape and focus handling beside it would be a second copy
+ *   of this file.
+ */
+export function useDialog(onClose: () => void, enabled = true) {
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    if (!enabled) return undefined;
     const prev = document.activeElement as HTMLElement | null;
     ref.current?.focus();
     const onKey = (e: KeyboardEvent) => {
@@ -86,6 +96,6 @@ export function useDialog(onClose: () => void) {
       document.removeEventListener('keydown', onKey);
       prev?.focus?.();
     };
-  }, []);
+  }, [enabled]);
   return ref;
 }

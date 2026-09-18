@@ -724,7 +724,9 @@ export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
               >
                 <span className="ed-num">{s.num}</span>
                 <span className="ed-lbl">{s.label}</span>
-                <span className="ed-dot" data-s={s.status} />
+                {/* draft / review / complete was this dot's colour alone. */}
+                <span className="ed-dot" data-s={s.status} aria-hidden="true" />
+                <span className="sr-only">{s.status}</span>
               </button>
             ))}
           </div>

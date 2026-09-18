@@ -30,6 +30,7 @@
 
 import React from 'react';
 import { I } from '../icons';
+import { useDialog } from '../useDialog';
 import { apiRequest } from '@/lib/queryClient';
 import { EmptyState, useLiveData, useLiveRows } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
@@ -406,9 +407,9 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
             </div>
             <div className="pj-card-b">
               {readiness.loading ? (
-                <div className="cm-meta">Computing readiness…</div>
+                <div role="status" aria-busy="true" className="cm-meta">Computing readiness…</div>
               ) : readiness.error ? (
-                <div className="cm-meta">Readiness could not be computed — {readiness.error}</div>
+                <div role="alert" className="cm-meta">Readiness could not be computed — {readiness.error}</div>
               ) : readiness.data ? (
                 <div className="cm-gate">
                   <span className={'rd-chip tone-' + (readiness.data.exportReady ? 'ok' : 'warn')}>
@@ -816,9 +817,21 @@ function SectionProvenance({
   const events = useLiveRows<ProvenanceEvent>(
     '/api/cmc/module3-os/provenance/' + encodeURIComponent(projectId) + '/' + encodeURIComponent(section.sectionKey),
   );
+  const dlgRef = useDialog(onClose);
   return (
     <div className="de-bd" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="de" role="dialog" aria-label={'Provenance for section ' + section.sectionKey}>
+      {/* It declared role="dialog" and stopped there: no aria-modal, so a screen
+          reader kept reading the build behind it; no Escape; and focus stayed on
+          whatever opened it. useDialog is the shared answer and this is already
+          its own component, so the hook can simply live here. */}
+      <div
+        className="de"
+        ref={dlgRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={'Provenance for section ' + section.sectionKey}
+      >
         <div className="de-h">
           <div>
             <div className="de-h-eye">Module 3 — provenance</div>
