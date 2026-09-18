@@ -29,7 +29,7 @@ import { evidenceObjects, evidenceLinks } from '../../../shared/schema/programs'
 import type { EvidenceObject } from '../../../shared/schema/programs';
 import { pdevProgramActivities } from '../../../shared/schema/pdev-workflow';
 import { getActivityByKey } from './pdev-activity-registry';
-import { recordAuditRow, type PdevAuditRecordOutcome } from './pdev-audit-record';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 
 const logger = createScopedLogger('pdev-evidence-attach');
 
@@ -94,9 +94,9 @@ export class PdevEvidenceAttachService {
      * the route envelope and the surface were byte-identical either way.
      *
      * The outcome shape is the one pdev-clearance and pdev-workflow-bridge
-     * already carry, from the shared ./pdev-audit-record — not a second copy.
+     * already carry, from the shared ../audit/audit-write-outcome — not a second copy.
      */
-    audit: PdevAuditRecordOutcome;
+    audit: AuditRowOutcome;
   }> {
     const activity = getActivityByKey(input.activityKey);
     if (!activity) {
@@ -260,7 +260,7 @@ export class PdevEvidenceAttachService {
      * removed what was indistinguishable from a fully recorded one. On a
      * removal that is the more serious of the two directions.
      */
-    audit?: PdevAuditRecordOutcome;
+    audit?: AuditRowOutcome;
   }> {
     const activity = getActivityByKey(input.activityKey);
     if (!activity) {

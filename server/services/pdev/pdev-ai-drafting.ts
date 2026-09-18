@@ -19,7 +19,7 @@
  *   - stateChangedBy / stateChangedAt recorded
  *
  * Audit is via the existing `auditService` (dual-write hash chain), through
- * ./pdev-audit-record so that the row's OUTCOME is reported rather than
+ * ../audit/audit-write-outcome so that the row's OUTCOME is reported rather than
  * discarded (see `PdevAiDraftResult.audit`).
  * No new audit machinery, no new artifact table.
  *
@@ -41,7 +41,7 @@ import {
   type PdevActivity,
   type PdevRequiredDocument,
 } from './pdev-activity-registry';
-import { recordAuditRow, type PdevAuditRecordOutcome } from './pdev-audit-record';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 
 const logger = createScopedLogger('pdev-ai-drafting');
 
@@ -101,14 +101,14 @@ export interface PdevAiDraftResult {
    * line in the server log.
    *
    * The shape is the one pdev-workflow-bridge and pdev-clearance already
-   * carry, from the shared ./pdev-audit-record — not a second copy of it.
+   * carry, from the shared ../audit/audit-write-outcome — not a second copy of it.
    * `chained` on the success arm separates "the record exists" from "the
    * record is retrievable from `audit_logs`"; the failure arm carries a stable
    * code and a sentence fit for a user, never the store's own text (that stays
    * in the log line recordAuditRow already wrote against this action and
    * resource id).
    */
-  audit: PdevAuditRecordOutcome;
+  audit: AuditRowOutcome;
 }
 
 export class PdevAiDraftingService {

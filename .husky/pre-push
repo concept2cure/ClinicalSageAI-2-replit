@@ -189,6 +189,23 @@ if ! npm run --silent ci:drizzle-tenant-scope 2>&1; then
 fi
 echo "   ✅ Drizzle tenant scope passed."
 
+# A className that no stylesheet defines styles NOTHING, and nothing else in the
+# pipeline says so: a test that drives a form never asks whether the form was
+# visible, and `className` takes any string so the typechecker is silent too. A
+# filing dialog shipped with six invented names and rendered with no backdrop,
+# no dialog box, no header and no footer, with a green suite. Baselined against
+# the two known-harmless semantic hooks: this fails only on a NEW one.
+echo "   Validating every v2 className is defined in a stylesheet..."
+if ! npm run --silent ci:undefined-css-classes 2>&1; then
+  echo ""
+  echo "🚫 ERROR: undefined CSS class check FAILED."
+  echo "   The element renders unstyled and no test will tell you. Use the existing"
+  echo "   vocabulary, or baseline the name WITH A REASON if it is a deliberate hook."
+  echo ""
+  exit 1
+fi
+echo "   ✅ v2 class names passed."
+
 # Cheap, no database, and guards a privilege-escalation footgun: `SET
 # app.bypass_rls` is SESSION-scoped, so it survives client.release() and the
 # next checkout — a different tenant — inherits a full RLS bypass across 142

@@ -30,7 +30,7 @@
  * @module server/services/ana-ri/pdev-command-handlers
  */
 
-import { recordAuditRow, type PdevAuditRecordOutcome } from '../pdev/pdev-audit-record';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import type { CommandContext, CommandResult } from './command-executor';
 import { requireGovernedToolGate, mapServiceError, agentAuditDetails } from './mdx-tool-policy';
 
@@ -94,7 +94,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * §11.10(e) row. The two rows are distinct records of distinct actions and
  * neither may shadow the other.
  */
-function auditNote(outcome: PdevAuditRecordOutcome): string {
+function auditNote(outcome: AuditRowOutcome): string {
   return outcome.persisted ? '' : ` ${outcome.message}`;
 }
 
