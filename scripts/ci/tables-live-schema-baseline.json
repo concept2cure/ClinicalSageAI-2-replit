@@ -1,9 +1,9 @@
 {
   "_comment": "Tables the server QUERIES that do not exist on a database built by a full, successful provisioning run (install-fresh + deploy-migrate). Unlike ci:unbacked-tables and ci:migration-reachability — which compare the repo to itself and can only tell you whether some file CLAIMS to create a table — every entry here was checked against a real PostgreSQL and was not there. Each one is an endpoint that 500s on \"relation does not exist\", or a write inside a try/catch that silently discards its data. This file may only SHRINK: fix an entry (add the creating migration to a durable applier, or delete the dead query) and remove it here. Re-running --baseline to make a failure go away converts a caught defect into an accepted one.",
-  "generatedAt": "2026-09-18T19:43:03.853Z",
+  "generatedAt": "2026-09-18T20:45:44.972Z",
   "liveRelationCount": 1282,
-  "referencedCount": 753,
-  "count": 61,
+  "referencedCount": 752,
+  "count": 60,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -181,9 +181,6 @@
     ],
     "trials": [
       "server/storage.ts"
-    ],
-    "user_roles": [
-      "server/services/rules-engine/actions/index.ts"
     ],
     "vault.drafting_sessions": [
       "server/api/drafting/routes.ts"
