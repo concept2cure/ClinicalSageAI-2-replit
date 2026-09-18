@@ -1519,10 +1519,25 @@ export const C2C_MIGRATION_FILES = [
      tables "are on no deploy path" and so "may not exist" on a populated
      database. The second half is WRONG and is corrected in that work order:
      project_charters, charter_sections, timeline_phases, project_commitments
-     AND charter_audit_events are all declared in shared/schema/project-charter.ts
-     (projectCharters:76 … charterAuditEvents:446), so drizzle-kit push creates
-     them at install-fresh step 2. Verified present on a canonically
-     provisioned database.
+     AND charter_audit_events all EXIST on a canonically provisioned database —
+     verified by querying one.
+
+     CORRECTED 2026-09-17: this entry used to add "so drizzle-kit push creates
+     them at install-fresh step 2". That is FALSE. They are declared in
+     shared/schema/project-charter.ts, but drizzle.config.ts names only
+     shared/schema.ts, ana-intelligence.ts and report-os.ts, and
+     project-charter.ts is re-exported from shared/schema/index.ts, which is not
+     an entrypoint and is not reachable from one — the same NOT-re-exported
+     pattern already noted at the two entries above. The charter tables are
+     outside the push surface entirely. They come from install-fresh's step-3
+     overlay: 0012_project_charter_timeline.sql for project_charters, and
+     20260629_charter_tables_rebuild.sql for the other four.
+
+     The fix below is unaffected — it is guarded on the table existing, not on
+     what created it — but the reason it gives was wrong, and a wrong reason is
+     how the next person reaches a wrong conclusion. The consequence of the real
+     mechanism is WO-15 finding 2: project_charters is frozen at 0012's 27
+     columns while the declaration names 48.
 
      What Drizzle CANNOT express is a trigger. charter_audit_events_no_update
      and charter_audit_events_no_delete existed only in
@@ -2081,6 +2096,7 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260906b_vault_legal_holds.sql',
   'migrations/20260906c_vault_documents_content_hash_idx.sql',
   'migrations/20260917_vault_documents_storage_version.sql',
+  'migrations/20260917b_submission_leaf_document_uuid.sql',
 
   /* vault.evidence_citations — the RAG provenance store, added 2026-09-11
      (WO-15 finding 8). Placed after the vault chunk store above because its
@@ -2135,6 +2151,75 @@ export const C2C_MIGRATION_FILES = [
      with-column or without. Recorded in the work order as its own finding
      rather than fixed by inventing a writer. */
   'migrations/20260716_template_doc_types.sql',
+
+  /* project_charters — the 21 declared columns no applier ever created, added
+     2026-09-17 (WO-15 finding 2).
+
+     server/routes/charters.ts issues an unqualified d.select().from(
+     projectCharters), which expands to all 48 columns the declaration names.
+     migrations/0012_project_charter_timeline.sql is the ONLY creator of this
+     table in the repository and makes 27, so that select raised 42703 on every
+     database. server/routes/pma-workflow-routes.ts names pma_config explicitly
+     in raw SQL three times, so the PMA workflow-progress feature could not work
+     anywhere.
+
+     CORRECTION TO AN EARLIER NOTE IN THIS FILE: the charter entry above once
+     said drizzle-kit push creates the charter tables. It does NOT.
+     drizzle.config.ts names shared/schema.ts, ana-intelligence.ts and
+     report-os.ts; shared/schema/project-charter.ts is re-exported only from
+     shared/schema/index.ts, which is not an entrypoint and is not reachable
+     from one. The charter tables are outside the push surface entirely and come
+     from install-fresh's overlay — 0012 for project_charters, 20260629 for the
+     other four. The finding-3 fix above is unaffected (it is guarded on the
+     table existing, not on what created it), but its reasoning is corrected
+     here and in the file itself.
+
+     Additive and idempotent: ADD COLUMN IF NOT EXISTS throughout, guarded on
+     the table. The 27 pre-existing columns' jsonb/timestamp-vs-json/timestamptz
+     divergence from the declaration is NOT touched — that is a retype with data
+     implications and belongs to WO-1. */
+  'migrations/20260917_project_charters_declared_columns.sql',
+
+  /* ── KNOWN_UNLISTED triage, 2026-09-17 ──────────────────────────────────────
+     Ten root migrations creating SIXTEEN tables that reached a database only
+     through install-fresh's step-3 overlay. Every one of the sixteen is: not on
+     the drizzle push surface, created by no other file in this set, present on a
+     canonically provisioned database, and referenced by live non-test code
+     (3-44 references each). Nothing re-asserted any of them, and any later
+     change to these files would have reached new installs only.
+
+     They were exempted from the applier allowlist by KNOWN_UNLISTED in
+     tests/ops/apply-c2c-migrations-manifest.test.mjs, whose stated reason is
+     that such files' "objects come from shared/schema.ts via drizzle-kit push
+     and they carry nothing an existing database additionally needs". Neither
+     half held for any of these ten. That list's own comment sets the rule:
+     "Removing an entry (by listing the file in the applier) is always safe;
+     adding one requires the reason above to actually hold."
+
+     Safe to replay, verified per file rather than assumed: ZERO DROP statements
+     across all ten, every CREATE and ALTER guarded by IF NOT EXISTS, and every
+     table carries organization_id/org_id. Their only external FK targets are
+     `organizations` and `users` — base tables that 39 files already in this set
+     also reference and that the schema-contract harness provisions via
+     FK_PREREQUISITES, so the C-33 bare-database replay is satisfied. (That is
+     the finding-3 trap checked and cleared: project_charters failed it because
+     it is NOT a base table and is not in that prerequisite set.)
+
+     NOT claimed: that these tables gain RLS policies by being listed here. None
+     of the ten defines any, which is the status quo on a provisioned database
+     today — listing them changes nothing about it. The tenant sweep stays the
+     final pair of this set.
+     ─────────────────────────────────────────────────────────────────────────── */
+  'migrations/20260701_protocol_soa.sql',                               // protocol_soa_assessments, protocol_soa_cells
+  'migrations/20260702_protocol_budget.sql',                            // protocol_budget_items, protocol_budget_params
+  'migrations/20260703_dmsp.sql',                                       // dms_plans, dms_plan_elements
+  'migrations/20260704_biosketch.sql',                                  // biosketches, biosketch_sections
+  'migrations/20260704_other_support.sql',                              // other_support_documents, other_support_entries
+  'migrations/20260705_export_control.sql',                             // export_control_reviews
+  'migrations/20260705_invention_disclosure.sql',                       // invention_disclosures
+  'migrations/20260705_research_agreements.sql',                        // research_agreements
+  'migrations/20260728_chat_thread_store.sql',                          // chat_threads, chat_messages
+  'migrations/20260731c_canonical_documents.sql',                       // canonical_documents
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
@@ -2212,6 +2297,12 @@ export const C2C_MIGRATION_FILES = [
   // with no RLS policy, and the policy COUNT still goes up, which is what makes
   // the mistake invisible without ci:migration-set-order.
   'db/migrations/20260917_ana_runs.sql',
+  // ── RBM author attribution, for the Part 11 two-person rule ──────────────
+  // rbm_risk_assessments and rbm_monitoring_plans shipped with approved_by and
+  // no created_by, so the approval path could not ask whether the signer was
+  // the author. Additive and IF NOT EXISTS, so it replays as a no-op; above the
+  // final pair because ci:migration-set-order pins those two last.
+  'migrations/20260918_rbm_author_attribution.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

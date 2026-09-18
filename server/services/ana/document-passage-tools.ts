@@ -30,7 +30,7 @@ import { requireCatalog, withCaughtErrors, type RegisterFn } from './document-to
 
 /** One line of honest context about what the search could not see. */
 function coverageNote(
-  c: { total: number; indexed: number; pending: number; failed: number } | null,
+  c: { total: number; indexed: number; pending: number; failed: number; failureReasons?: string[] } | null,
 ): string {
   if (!c) {
     return (
@@ -39,10 +39,31 @@ function coverageNote(
     );
   }
   if (c.total === 0) return 'No documents are filed in this vault yet.';
+  if (c.indexed === 0) {
+    /* The index is EMPTY — a different statement from "nothing matched", and a
+       very different one from "the embedding provider is unreachable", which is
+       what this used to report because the query was embedded before anyone
+       checked whether there was anything to search. An empty index almost
+       always means the ana.vault_chunking feature is off, so the answer routes
+       to a switch instead of to a shrug. */
+    return (
+      `None of the ${c.total} document(s) in this vault are in the passage index, so nothing was ` +
+      'searched — this is not a result about what the documents say. The index is built by the ' +
+      'ana.vault_chunking feature; if it is off, say so plainly rather than reporting the content as ' +
+      'absent, and read the file itself with read_project_document to answer from it.'
+    );
+  }
   if (c.indexed >= c.total) return `All ${c.total} document(s) are in the passage index.`;
   const parts: string[] = [`${c.indexed} of ${c.total} document(s) are in the passage index`];
   if (c.pending > 0) parts.push(`${c.pending} not indexed yet`);
-  if (c.failed > 0) parts.push(`${c.failed} failed to index`);
+  if (c.failed > 0) {
+    /* The reason, not just the count. It was recorded on every failure and
+       read by nothing, so a document whose passages could not be built looked
+       exactly like one nobody had got to — and "N failed" is a number nobody
+       can act on. */
+    const why = (c.failureReasons ?? []).length ? ` (${(c.failureReasons ?? []).join('; ')})` : '';
+    parts.push(`${c.failed} failed to index${why}`);
+  }
   return (
     `${parts.join('; ')}. A passage not found here is not evidence the document does not say it — ` +
     'read the file with read_project_document before telling the user it is absent.'

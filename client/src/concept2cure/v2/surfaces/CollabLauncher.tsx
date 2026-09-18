@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveRows, liveGetOrNull } from '../dataConnect';
+import { useDialog } from '../useDialog';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import {
   SURFACE_CTX, CL_MOD, CL_TYPE, CL_PRI,
@@ -558,7 +559,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
             </button>
           ))}
           {Object.keys(C2C.team).length === 0 && (
-            <span className="cl-asg-empty">{C2C.directoryState === 'loading'
+            <span className="cl-asg-empty" role="status" aria-busy={C2C.directoryState === 'loading' || undefined}>{C2C.directoryState === 'loading'
               ? 'Loading your team…'
               : C2C.directoryState === 'error'
                 ? 'Couldn’t load your team — the task can still be created unassigned.'
@@ -805,7 +806,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
             </button>
           ))}
           {Object.keys(C2C.team).length === 0 && (
-            <span className="cl-asg-empty">{C2C.directoryState === 'loading'
+            <span className="cl-asg-empty" role="status" aria-busy={C2C.directoryState === 'loading' || undefined}>{C2C.directoryState === 'loading'
               ? 'Loading your team…'
               : C2C.directoryState === 'error'
                 ? 'Couldn’t load your team — retry, or continue without a recipient.'
@@ -813,10 +814,10 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
           )}
         </div>
       </div>
-      <div className="cl-field"><label>Message</label>
+      <div className="cl-field"><label htmlFor="cl-message">Message</label>
         {/* The "@name" prompt only appears once a real teammate is selected;
             with no recipient it used to read "@ -- share context...". */}
-        <textarea rows={4} autoFocus value={body} onChange={e => setBody(e.target.value)}
+        <textarea id="cl-message" rows={4} autoFocus value={body} onChange={e => setBody(e.target.value)}
           placeholder={(C2C.team[to] ? '@' + C2C.team[to].n + ' — ' : '') + 'share context, ask a question, or route this for action...'} />
       </div>
       <button type="button" className={`cl-tasktoggle${makeTask ? ' on' : ''}`} onClick={() => setMakeTask(m => !m)}>
@@ -845,6 +846,60 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
   );
 }
 
+/* The modal panel, extracted only so `useDialog` can run — a hook cannot be
+   conditional and this renders solely while open.
+
+   It shipped as a bare pair of <div>s: no role, no accessible name, no keyboard
+   exit, and focus left behind on the FAB that opened it. This layer is mounted
+   once and lives on every screen, so that was the same gap on every screen in
+   the product. The two mode buttons were likewise plain buttons whose selected
+   state was carried by a class, visible to sighted users only. */
+function CollabModal({ tab, setTab, onClose, ctx, onCreated, onGoToBoard }: {
+  tab: string;
+  setTab: (t: string) => void;
+  onClose: () => void;
+  ctx: C2CContext;
+  onCreated: (t?: C2CTask) => void;
+  onGoToBoard: () => void;
+}) {
+  const panel = useDialog(onClose);
+  const tabId = tab === 'task' ? 'cl-tab-task' : 'cl-tab-collab';
+  return (
+    <div className="cl-bd" onClick={onClose}>
+      <div
+        className="cl-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add a task or collaborate"
+        tabIndex={-1}
+        ref={panel}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="cl-head">
+          <div className="cl-tabs" role="tablist" aria-label="Launcher mode">
+            <button type="button" id="cl-tab-task" role="tab" aria-selected={tab === 'task'}
+              aria-controls="cl-panel" className={`cl-tab${tab === 'task' ? ' on' : ''}`}
+              onClick={() => setTab('task')}>
+              <span className="ico">{I.checkSquare || I.check}</span>New task
+            </button>
+            <button type="button" id="cl-tab-collab" role="tab" aria-selected={tab === 'collab'}
+              aria-controls="cl-panel" className={`cl-tab${tab === 'collab' ? ' on' : ''}`}
+              onClick={() => setTab('collab')}>
+              <span className="ico">{I.messageSquare}</span>Collaborate
+            </button>
+          </div>
+          <button type="button" className="cl-x" onClick={onClose} aria-label="Close">{I.close}</button>
+        </div>
+        <div className="cl-body" id="cl-panel" role="tabpanel" aria-labelledby={tabId}>
+          {tab === 'task'
+            ? <QuickTask ctx={ctx} onClose={onClose} onCreated={onCreated} onGoToBoard={onGoToBoard} />
+            : <CollabDiscuss ctx={ctx} onClose={onClose} onCreated={onCreated} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── The layer: launcher (FAB) + modal. Mounted once, lives on every screen. ── */
 
 export function CollabLayer({ onNav }: CollabLayerProps) {
@@ -853,6 +908,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
   const [tab, setTab] = useState('task');
   const [toast, setToast] = useState<ToastState | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const fabRef = React.useRef<HTMLButtonElement>(null);
 
   // Org-wide open-task count for the launcher menu -- REAL persisted data from
   // the unifiedTasks board (GET /api/task-management/board), never the retired
@@ -864,6 +920,22 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
   const openAcrossOrg = board.rows.filter(t => t.status !== 'completed').length;
 
   useEffect(() => C2C.subscribe(() => setTick(x => x + 1)), []);
+
+  /* The launcher menu dismissed on onMouseLeave and nothing else: a keyboard
+     user who opened it had no way to close it, and the pointer straying off it
+     closed it for everyone. Escape closes it and hands focus back to the FAB
+     that opened it, which is the one thing a mouseleave can never do. */
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setMenuOpen(false);
+      fabRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
 
   // Load the real org directory (roster + programmes) the first time the
   // launcher is actually opened, rather than on every app boot — it is only
@@ -907,22 +979,24 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
       {/* floating launcher -- present on every surface */}
       <div className="cl-fab-wrap">
         {menuOpen && (
-          <div className="cl-fab-menu" onMouseLeave={() => setMenuOpen(false)}>
-            <button className="cl-fab-mi" onClick={() => { setTab('task'); setOpen(true); setMenuOpen(false); }}>
+          <div className="cl-fab-menu" role="menu" aria-label="Add a task or collaborate"
+            onMouseLeave={() => setMenuOpen(false)}>
+            <button role="menuitem" className="cl-fab-mi" onClick={() => { setTab('task'); setOpen(true); setMenuOpen(false); }}>
               <span className="ico">{I.checkSquare || I.check}</span>
               <span><b>New task</b><em>Assign &amp; track from here</em></span>
             </button>
-            <button className="cl-fab-mi" onClick={() => { setTab('collab'); setOpen(true); setMenuOpen(false); }}>
+            <button role="menuitem" className="cl-fab-mi" onClick={() => { setTab('collab'); setOpen(true); setMenuOpen(false); }}>
               <span className="ico">{I.messageSquare}</span>
               <span><b>Collaborate</b><em>Message — @mention — route</em></span>
             </button>
-            <button className="cl-fab-mi" onClick={() => { onNav?.('tasks'); setMenuOpen(false); }}>
+            <button role="menuitem" className="cl-fab-mi" onClick={() => { onNav?.('tasks'); setMenuOpen(false); }}>
               <span className="ico">{I.layoutPanels || I.grid}</span>
               <span><b>Open task board</b><em>{board.loading || board.error ? 'View the org-wide board' : `${openAcrossOrg} open across the org`}</em></span>
             </button>
           </div>
         )}
-        <button className="cl-fab" data-open={menuOpen || undefined}
+        <button className="cl-fab" ref={fabRef} data-open={menuOpen || undefined}
+          aria-haspopup="true" aria-expanded={menuOpen}
           onClick={() => setMenuOpen(o => !o)} title="Add a task or collaborate"
           aria-label="Add a task or collaborate">
           <span className="ico">{menuOpen ? I.close : (I.checkSquare || I.plus)}</span>
@@ -931,27 +1005,14 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
 
       {/* the modal */}
       {open && (
-        <div className="cl-bd" onClick={() => setOpen(false)}>
-          <div className="cl-modal" onClick={e => e.stopPropagation()}>
-            <div className="cl-head">
-              <div className="cl-tabs">
-                <button className={`cl-tab${tab === 'task' ? ' on' : ''}`} onClick={() => setTab('task')}>
-                  <span className="ico">{I.checkSquare || I.check}</span>New task
-                </button>
-                <button className={`cl-tab${tab === 'collab' ? ' on' : ''}`} onClick={() => setTab('collab')}>
-                  <span className="ico">{I.messageSquare}</span>Collaborate
-                </button>
-              </div>
-              <button className="cl-x" onClick={() => setOpen(false)} aria-label="Close">{I.close}</button>
-            </div>
-            <div className="cl-body">
-              {tab === 'task'
-                ? <QuickTask ctx={currentCtx} onClose={() => setOpen(false)} onCreated={created}
-                    onGoToBoard={() => { onNav?.('tasks'); setOpen(false); }} />
-                : <CollabDiscuss ctx={currentCtx} onClose={() => setOpen(false)} onCreated={created} />}
-            </div>
-          </div>
-        </div>
+        <CollabModal
+          tab={tab}
+          setTab={setTab}
+          onClose={() => setOpen(false)}
+          ctx={currentCtx}
+          onCreated={created}
+          onGoToBoard={() => { onNav?.('tasks'); setOpen(false); }}
+        />
       )}
 
       {/* toast -- confirms the draft task was captured in the in-session store,

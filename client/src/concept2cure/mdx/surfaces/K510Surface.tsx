@@ -473,16 +473,29 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                   const isSel = selected.has(p.k);
                   return (
                     <tr key={p.k} className={isSel ? 'multi-selected' : ''} onClick={() => toggle(p.k)}>
-                      <td
-                        className="cb"
-                        onClick={e => {
-                          e.stopPropagation();
-                          toggle(p.k);
-                        }}
-                      >
-                        <span className="cbox" data-on={isSel}>
+                      {/* Selecting the predicates a 510(k) claims substantial
+                          equivalence against was mouse-only: this "checkbox" was
+                          a <span> with a data-on attribute, inside a <td> and a
+                          <tr> that both carried click handlers and nothing else.
+                          No input, no role, no tab stop — there was no keyboard
+                          path to the selection at all. The cell's own handler is
+                          gone with it; the control now IS the control, and still
+                          stops the row handler from toggling a second time. */}
+                      <td className="cb">
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={isSel}
+                          aria-label={`Select predicate ${p.k}`}
+                          className="cbox"
+                          data-on={isSel}
+                          onClick={e => {
+                            e.stopPropagation();
+                            toggle(p.k);
+                          }}
+                        >
                           {I.check}
-                        </span>
+                        </button>
                       </td>
                       <td>
                         <span className="k-num">{p.k}</span>

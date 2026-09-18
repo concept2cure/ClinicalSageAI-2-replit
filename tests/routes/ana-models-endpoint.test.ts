@@ -93,11 +93,18 @@ describe('GET /api/claude/models', () => {
     expect(ids).not.toContain('disabled-model'); // enabled-filtered
 
     const opus = models.find((m) => m.id === 'claude-opus-4')!;
-    // The label follows the WIRE MODEL, not the registry id. `claude-opus-4` is
-    // a stable alias whose pin moves — it pointed at 4.7, then 4.8, now 5 — and
-    // a picker that kept saying "Claude Opus 4" while serving something else
-    // would be naming the alias rather than the model the person is choosing.
-    // The id stays stable for callers; the label tells the truth about what runs.
+    /* The label follows the WIRE model, not the alias id — deriveModelLabel says
+       so in as many words: "the label describes what will actually run, and a
+       stable alias id does not". This fixture's alias is 'claude-opus-4' and its
+       wire model is 'claude-opus-4-7', so the picker must read "Claude Opus 4.7".
+       This asserted 'Claude Opus 4' — the humanized-ALIAS fallback, which is what
+       you get only while claudeModelLabel does not recognise the wire model. It
+       does now, so the old expectation was pinning the fallback and describing
+       the picker as showing a version the gateway would not route to.
+
+       The id is asserted alongside it: the alias is what callers pin against and
+       must NOT move when the label does. Checking only the label would leave the
+       two free to drift apart. */
     expect(opus.id).toBe('claude-opus-4');
     expect(opus.label).toBe('Claude Opus 4.7');
     expect(opus.recommendedEffort).toBe('thorough');

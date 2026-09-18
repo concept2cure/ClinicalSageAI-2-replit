@@ -10,8 +10,18 @@
 -- project_charters, charter_sections, timeline_phases, project_commitments and
 -- charter_audit_events — are declared in shared/schema/project-charter.ts
 -- (projectCharters:76, charterSections:183, timelinePhases:248,
--- projectCommitments:323, charterAuditEvents:446), so `drizzle-kit push`
--- creates all five on every install-fresh run. The tables are fine.
+-- projectCommitments:323, charterAuditEvents:446) and all five EXIST on a
+-- canonically provisioned database. The tables are fine.
+--
+-- CORRECTED 2026-09-17: this header used to say push creates them. It does not.
+-- drizzle.config.ts names shared/schema.ts, ana-intelligence.ts and
+-- report-os.ts; project-charter.ts is re-exported only from
+-- shared/schema/index.ts, which is not an entrypoint. The charter tables are
+-- outside the push surface; they come from install-fresh's step-3 overlay
+-- (0012 for project_charters, 20260629 for the other four). This file is
+-- unaffected — its trigger installs are guarded on the table existing, not on
+-- what created it — but the reason stated was wrong. See WO-15 finding 2 for
+-- the consequence: project_charters is frozen at 0012's 27 columns.
 --
 -- What is NOT fine is the immutability enforcement. Drizzle cannot express a
 -- trigger. charter_audit_events_no_update and charter_audit_events_no_delete
@@ -28,21 +38,25 @@
 --
 --   * 20260629 is NOT self-contained. It has five `REFERENCES
 --     project_charters(id)` clauses and does not create project_charters —
---     that table comes from drizzle push, and no file in C2C_MIGRATION_FILES
---     creates it. Applying the set in order against a database that has not
---     been pushed fails at the first FK with `relation "project_charters" does
---     not exist`. tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+--     that table comes from migrations/0012_project_charter_timeline.sql on
+--     install-fresh's overlay (NOT from push; see the correction above), and no
+--     file in C2C_MIGRATION_FILES creates it. Applying the set in order against
+--     a database the overlay has not run on fails at the first FK with
+--     `relation "project_charters" does not exist`. tests/schema-contract/tenant-isolation-sweep.contract.test.ts
 --     C-33 does exactly that and caught it. The live-database proof passed only
 --     because c2c_testdb already carried project_charters from install-fresh,
 --     so it could not expose a dependency the set does not satisfy.
 --
---   * Its 367 lines contribute nothing else. Every table it creates is
---     `CREATE TABLE IF NOT EXISTS` against a table drizzle push has already
---     made, so on any real database all of that DDL no-ops. The function and
+--   * Its 367 lines contribute nothing else ON A PROVISIONED DATABASE. Every
+--     table it creates is `CREATE TABLE IF NOT EXISTS`, and 20260629 is itself
+--     the overlay file that created those four in the first place — so on any
+--     real database, re-running that DDL no-ops. (The original wording here said
+--     "a table drizzle push has already made"; push makes none of them. The
+--     conclusion is unchanged, the mechanism was misstated.) The function and
 --     the two triggers below are the entire delta. Putting the rest on the
 --     replaying applier would add a second, independent definition of four
---     tables whose authority is the Drizzle schema — the duplicate-table-DDL
---     divergence this repo already tracks — in exchange for nothing.
+--     tables — the duplicate-table-DDL divergence this repo already tracks — in
+--     exchange for nothing.
 --
 -- So the trigger definitions are lifted here verbatim and 20260629 stays where
 -- it is, on install-fresh only, where it is harmless and already satisfied.

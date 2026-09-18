@@ -201,7 +201,95 @@ make the middleware refuse rather than pass `''`; (b) add the explicit org join 
 `advancedRAGPipeline.ts:895,:935` — unconditional, cheap, no schema change, and the correct fix
 regardless; (c) only then `FORCE`.
 
-### 4.5 A vault document can never become a submission
+> **Progress 2026-09-18. (b) is done; (a) is now PROVEN rather than assumed, and the
+> answer corrects a comment that would have misled whoever did (c).**
+>
+> `server/middleware/__tests__/tenant-scope-org-guc.test.ts` pins what the GUC actually
+> receives, including the two middlewares composed exactly as `middleware/auth.ts:183`
+> composes them:
+>
+> - **The uuid DOES reach `app.current_org_id`.** `enforceOrgMembership` resolves
+>   `organizations.uuid` in its membership LEFT JOIN, `attachOrgUuid` puts it on
+>   `req.user.organizationUuid` immediately before calling `next()`, and that `next()`
+>   IS `establishRequestTenantScope`, whose `resolveOrgUuid` reads exactly that field.
+>
+> - **`orgMembership.ts` said the opposite**, in a note ending "it is NOT wired into
+>   `app.current_org_id`, which the identity-FK family would deny-all against until the
+>   C-48 unification lands." That is false and was not harmless: it describes the GUC the
+>   vault's policies resolve a programme against, so anyone planning (c) — or C-48 — would
+>   have been reasoning from it. Corrected in place, with the test named beside it.
+>
+> - **The residual risk is narrower than §4.4 assumed, and still real.** The empty string
+>   is written only when the membership lookup resolves NO uuid — an organisation row
+>   without one, or an enrichment JOIN that fell back (which `orgMembership` deliberately
+>   declines to cache, so it self-heals). Under `FORCE` those requests read an EMPTY VAULT.
+>   Not a leak: an outage that looks like "this customer has no documents".
+>
+> So (a) is no longer "prove the GUC works". It is the narrower, answerable question: can
+> a member's organisation resolve no uuid on a deployed database?
+>
+> **Answered: no, not in steady state.** `organizations.uuid` is
+> `uuid DEFAULT gen_random_uuid() NOT NULL` at the database level
+> (`migrations/0000_sweet_joseph.sql:4188`) and `.notNull()` in the Drizzle model
+> (`shared/schema.ts:155`). Every organisation row has one, guaranteed by the column.
+> So the membership LEFT JOIN returns null only when
+>
+>   1. the JOIN itself failed at runtime — which `orgMembership` detects, refuses to
+>      cache, and self-heals from on the next request; or
+>   2. `organizations` is absent from the schema module, which is a partial-schema dev
+>      fixture, not a deployed database.
+>
+> **What that means for (c).** The `''` risk is a TRANSIENT window, not a structural
+> gap — so `FORCE` is much closer to the one-line `ALTER` §4.4 took it for than this
+> section feared. The honest remainder: during such a window a FORCEd vault reads EMPTY
+> for the affected requests, which is the worst-shaped failure available ("this customer
+> has no documents"). The mitigation is small and precise — have the middleware REFUSE
+> rather than pass `''` — and it must land **with** `FORCE`, not before: today those
+> requests succeed because ENABLE-only policies never run for the owner role, so
+> refusing now would break working requests to pre-empt a risk that does not yet exist.
+>
+> Deliberately NOT done here for that reason. (c) is now a two-line change with a stated
+> order, rather than an unquantified risk.
+
+### 4.5 A vault document can never become a submission — **CLOSED 2026-09-17**
+
+> **This gap is closed.** A vault document can now be filed into a submission and
+> assembled into a package. What it took, in order:
+>
+> 1. **Vault bytes moved onto the canonical storage seam.** Ingest writes through
+>    `getStorageProvider()` and records `storage_version_id`. This was the blocker
+>    nobody had written down, and it was the real one — see correction 3 below.
+> 2. **`submission_leaves.document_uuid`** — one nullable sibling column beside the
+>    integer `document_id`. NOT a widening: that is Option A of the identity
+>    contract and stays rejected. Adjudicated with the product owner 2026-09-17.
+> 3. **`vault_documents` moved from `EXTERNAL_DOCUMENT_TABLES` into
+>    `RESOLVABLE_DOCUMENT_TABLES`**, with a resolver branch and a tenancy verifier
+>    at the write boundary (the repo's own drift guard refused to let the first
+>    land without the second).
+>
+> Four fail-closed gates on the read path, because the eCTD index md5 is computed
+> from whatever is staged and nothing downstream would catch wrong bytes: an
+> org-scoped row read through the programme, the provider's own orgId boundary on
+> the bytes, a hash check against `content_hash`, and a `%PDF-` header verified on
+> the bytes rather than trusted from the mime string. Bytes are staged RAW — the
+> vault copy is the governed record, and re-rendering would file something the
+> vault has never seen.
+>
+> **The control exists too.** "Place into submission…" on an uploaded document in
+> the Vault: choose the submission and sequence (frozen and dispatched ones are
+> excluded, with the reason), give a section code, file. The vault copy is filed
+> as itself — no snapshot, so there is no second artifact to keep in step. The
+> picker and the section-code rule are shared with the authoring dialog rather
+> than copied, which already paid for itself: the copy written separately for the
+> Vault would have accepted a bare module and filed a document at a container.
+>
+> **Still required before a customer sees it:** rows uploaded BEFORE the storage
+> move must be backfilled — `npm run db:backfill-vault-storage -- --org N`, dry-run
+> by default. Until that runs for a tenant, filing one of their older documents
+> produces a leaf that resolves as unresolved and names that script as the fix.
+> Nothing is lost and nothing is silent; it simply will not assemble yet.
+
+The original assessment follows, for the record.
 
 `server/services/ectd/leaf-document-tables.ts` declares `vault_documents` non-materializable.
 The leaf is surfaced as **unresolved**, never dropped, and transmit fails closed on any
@@ -536,11 +624,10 @@ ALL SEVEN SHIPPED**, each verified by making the check fail first.
   neither touched it: the purge used `public.vault_documents`, the export swept
   `public` only.
 
-Still open from §4: a vault document has a tenant now but still cannot become a submission
-leaf (§4.5). **Corrected 2026-09-17:** not "until `submission_leaves.document_id` widens" —
-that is rejected by the approved identity contract and would not have sufficed anyway. The
-binding constraint is the storage seam: the packager cannot reach bytes that vault ingest
-wrote outside the storage provider. See §4.5.
+~~Still open from §4: a vault document has a tenant now but still cannot become a submission
+leaf (§4.5).~~ **CLOSED 2026-09-17.** The storage seam (the real blocker) and the leaf id
+space were both closed; a vault document can be filed and assembled. Remaining: backfill
+pre-existing rows onto the provider, and build the UI affordance. See §4.5.
 
 **Weeks 2–4 — make the vault usable**
 Server-side vault search with a GIN index and pagination; a search box in `Vault.tsx`; wire the

@@ -99,7 +99,10 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
       <div className="pd-tree">
         {sections.map((s: any) => (
           <button key={s.id} className={'pd-tree-row' + (activeSec === s.id ? ' on' : '')} onClick={() => onSec(s)}>
-            <span className="pd-tree-dot" data-status={s.status} />
+            {/* Section completion was this dot's colour alone, in the outline
+                a protocol author navigates by. */}
+            <span className="pd-tree-dot" data-status={s.status} aria-hidden="true" />
+            <span className="sr-only">{s.status}</span>
             <span className="pd-tree-num">{s.num}</span>
             <span className="pd-tree-t">{s.title}</span>
             {!s.required && <span className="pd-tree-opt">opt</span>}
@@ -336,15 +339,45 @@ export function RiskTab({ doc, onAdd }: ListTabProps) {
           <div className="pd-heat-yl">{`Likelihood →`}</div>
           <div className="pd-heat-grid">{[5, 4, 3, 2, 1].map(l => (
             <div key={l} className="pd-heat-row"><span className="pd-heat-axis">{l}</span>
-              {[1, 2, 3, 4, 5].map(i => { const items = grid[l + '-' + i]; return (
-                <div key={i} className="pd-heat-cell" data-tone={cellTone(l, i)} onClick={() => items.length && setSel(items[0])}>
-                  {items.length ? <span className="pd-heat-n">{items.length}</span> : null}
-                </div>); })}</div>))}
+              {[1, 2, 3, 4, 5].map(i => { const items = grid[l + '-' + i]; const n = items.length; return (
+                // A 5x5 ISO 14971 matrix cell. It opened a risk on click and was
+                // reachable by mouse only; an empty cell still showed a pointer
+                // cursor for something it would never do. Populated cells are
+                // buttons, empty ones are disabled — so the tab order walks the
+                // risks that exist, and the axes are named rather than implied
+                // by position, which is all a screen reader had to go on.
+                <button
+                  key={i}
+                  type="button"
+                  className="pd-heat-cell"
+                  data-tone={cellTone(l, i)}
+                  disabled={!n}
+                  aria-label={`Likelihood ${l}, impact ${i} — score ${l * i}, ${n} risk${n === 1 ? '' : 's'}`}
+                  onClick={() => n && setSel(items[0])}
+                >
+                  {n ? <span className="pd-heat-n">{n}</span> : null}
+                </button>); })}</div>))}
           </div>
           <div className="pd-heat-xl">{[1, 2, 3, 4, 5].map(i => <span key={i}>{i}</span>)}<span className="pd-heat-xt">{`Impact →`}</span></div>
         </div>
         <div className="pd-risk-list">{risks.map((r: any) => (
-          <div key={r.id} className={'pd-risk' + (sel && sel.id === r.id ? ' on' : '')} onClick={() => setSel(r)}>
+          // Selecting a risk reveals its mitigation below. The row carries block
+          // children (PG.StatusBadge and two flex rows), so it cannot be a native
+          // <button> — hence the explicit role, matching TaskBoard's .tb-card.
+          // Its accessible name comes from its own content, which already reads
+          // as the hazard, its score and its residual rating.
+          <div
+            key={r.id}
+            className={'pd-risk' + (sel && sel.id === r.id ? ' on' : '')}
+            role="button"
+            tabIndex={0}
+            aria-expanded={Boolean(sel && sel.id === r.id)}
+            onClick={() => setSel(r)}
+            onKeyDown={(e) => {
+              if (e.target !== e.currentTarget) return;
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(r); }
+            }}
+          >
             <div className="pd-risk-top">
               <span className="pd-risk-score" data-tone={cellTone(r.l, r.i)}>{r.l * r.i}</span>
               <span className="pd-risk-haz">{r.hazard}</span><PG.StatusBadge status={r.status} />

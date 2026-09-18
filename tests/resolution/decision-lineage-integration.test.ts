@@ -11,52 +11,19 @@
  */
 
 import { describe, it, expect } from 'vitest';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TYPES (matching DecisionLineageMap)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface LineageNode {
-  id: string;
-  nodeType: 'decision' | 'document_state' | 'workflow_step' | 'evidence_link' | 'delegation';
-  entityType: string;
-  entityId: number;
-  action: string;
-  // WO-16C finding 70: both are nullable — the service reports an actor or a
-  // time only when the source record carries one, and no longer substitutes
-  // 'system' / the moment of export for one it does not.
-  performedBy: string | null;
-  performedAt: string | null;
-  details: Record<string, unknown>;
-  recordHash?: string;
-  parentIds: string[];
-  childIds: string[];
-  regulatory: {
-    gxpRelevant: boolean;
-    requiresSignature: boolean;
-    signatureStatus?: 'pending' | 'signed' | 'rejected';
-    // Replaced the hardcoded `cfr11Compliant: true` (WO-16C finding 70): a
-    // per-record presence check of the elements Part 11 requires an entry to
-    // carry, not a conformance verdict.
-    part11RecordCheck: { status: 'COMPLETE' | 'INCOMPLETE'; missing: string[] };
-  };
-}
-
-interface LineageGraph {
-  rootEntityType: string;
-  rootEntityId: number;
-  nodes: LineageNode[];
-  edges: Array<{ from: string; to: string; relationship: string }>;
-  metadata: {
-    generatedAt: string;
-    totalDecisions: number;
-    totalApprovals: number;
-    totalRejections: number;
-    totalDelegations: number;
-    chainVerified: boolean;
-    complianceFrameworks: string[];
-  };
-}
+/*
+ * WO-16C #70, second follow-up review. This file used to re-declare
+ * `LineageNode` and `LineageGraph` as local copies, and the copies had drifted:
+ * they still carried `gxpRelevant: boolean`, `signatureStatus?: … | 'signed'`,
+ * a two-valued `part11RecordCheck.status` and `complianceFrameworks: string[]`
+ * — a shape the service stopped producing. A structural test whose types are a
+ * private copy of the thing under test cannot fail when that thing changes; it
+ * pins the OLD contract and reads as coverage.
+ *
+ * The real types are imported instead, so the fixture below is checked against
+ * the service's own vocabulary at compile time and this file cannot drift again.
+ */
+import type { LineageGraph } from '../../server/services/workflow/DecisionLineageService';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TESTS: COMPONENT INTERFACE
@@ -143,9 +110,10 @@ describe('Lineage Graph Structure', () => {
         action: 'created', performedBy: 'user-1', performedAt: '2026-03-20T10:00:00Z',
         details: { status: 'draft' }, parentIds: [], childIds: ['node-2'],
         regulatory: {
-          gxpRelevant: true,
+          // A document_audit_logs row records no GxP classification.
+          gxpRelevant: null,
           requiresSignature: false,
-          part11RecordCheck: { status: 'COMPLETE', missing: [] },
+          part11RecordCheck: { status: 'COMPLETE', missing: [], notAssessed: [] },
         },
       },
       {
@@ -155,8 +123,15 @@ describe('Lineage Graph Structure', () => {
         regulatory: {
           gxpRelevant: true,
           requiresSignature: true,
-          signatureStatus: 'signed',
-          part11RecordCheck: { status: 'COMPLETE', missing: [] },
+          // No 'signed' exists: nothing in this subsystem reads a signature
+          // store, so a record that needs one is reported unchecked, and a
+          // record with nothing missing and an unchecked element is PARTIAL.
+          signatureStatus: 'not_assessed',
+          part11RecordCheck: {
+            status: 'PARTIAL',
+            missing: [],
+            notAssessed: ['applied-signature'],
+          },
         },
       },
       {
@@ -166,8 +141,15 @@ describe('Lineage Graph Structure', () => {
         regulatory: {
           gxpRelevant: true,
           requiresSignature: true,
-          signatureStatus: 'signed',
-          part11RecordCheck: { status: 'COMPLETE', missing: [] },
+          // No 'signed' exists: nothing in this subsystem reads a signature
+          // store, so a record that needs one is reported unchecked, and a
+          // record with nothing missing and an unchecked element is PARTIAL.
+          signatureStatus: 'not_assessed',
+          part11RecordCheck: {
+            status: 'PARTIAL',
+            missing: [],
+            notAssessed: ['applied-signature'],
+          },
         },
       },
     ],
@@ -182,7 +164,11 @@ describe('Lineage Graph Structure', () => {
       totalRejections: 0,
       totalDelegations: 0,
       chainVerified: true,
-      complianceFrameworks: ['FDA 21 CFR Part 11', 'EU Annex 11'],
+      chainVerification: 'verified',
+      complianceFrameworks: [
+        { framework: 'FDA 21 CFR Part 11', status: 'COMPLIANT' },
+        { framework: 'EU Annex 11', status: 'COMPLIANT' },
+      ],
     },
   };
 
@@ -204,26 +190,42 @@ describe('Lineage Graph Structure', () => {
     expect(mockGraph.edges[0].to).toBe('node-2');
   });
 
-  it('metadata tracks compliance', () => {
-    expect(mockGraph.metadata.chainVerified).toBe(true);
-    expect(mockGraph.metadata.complianceFrameworks).toContain('FDA 21 CFR Part 11');
-  });
-
-  it('regulatory nodes have GxP relevance flags', () => {
-    for (const node of mockGraph.nodes) {
-      expect(node.regulatory.gxpRelevant).toBe(true);
-      // The interface carries a per-record element check, never a standing
-      // Part 11 verdict. The real service's values are asserted against real
-      // rows in server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts.
-      expect(node.regulatory.part11RecordCheck.status).toMatch(/^(COMPLETE|INCOMPLETE)$/);
-      expect(node.regulatory).not.toHaveProperty('cfr11Compliant');
+  it('metadata carries a per-framework standing, not a list of names', () => {
+    expect(mockGraph.metadata.chainVerification).toBe('verified');
+    // WO-16C #71: a framework appears with the status something computed for
+    // it. A bare name in a list reads as conformance and asserts nothing.
+    const part11 = mockGraph.metadata.complianceFrameworks.find(
+      f => f.framework === 'FDA 21 CFR Part 11',
+    );
+    expect(part11).toBeDefined();
+    expect(part11!.status).toBe('COMPLIANT');
+    for (const f of mockGraph.metadata.complianceFrameworks) {
+      expect(f.status).toMatch(/^(COMPLIANT|REVIEW_REQUIRED|UNVERIFIABLE|NOT_ASSESSED)$/);
     }
   });
 
-  it('approval decisions have signature status', () => {
+  it('GxP relevance is three-valued — recorded, recorded-false, or not recorded', () => {
+    for (const node of mockGraph.nodes) {
+      // WO-16C #70, second follow-up review: `true` at every constructor made
+      // the compliance report's gxpRelevantRecords equal its total, always.
+      expect([true, false, null]).toContain(node.regulatory.gxpRelevant);
+      // The interface carries a per-record element check, never a standing
+      // Part 11 verdict. The real service's values are asserted against real
+      // rows in server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts.
+      expect(node.regulatory.part11RecordCheck.status).toMatch(/^(COMPLETE|PARTIAL|INCOMPLETE)$/);
+      expect(node.regulatory).not.toHaveProperty('cfr11Compliant');
+    }
+    // The document_state row comes from a table with no such column.
+    expect(mockGraph.nodes[0].regulatory.gxpRelevant).toBeNull();
+  });
+
+  it('an approval that requires a signature is never reported as signed', () => {
     const approvalNode = mockGraph.nodes.find(n => n.action === 'approved');
     expect(approvalNode).toBeDefined();
     expect(approvalNode!.regulatory.requiresSignature).toBe(true);
-    expect(approvalNode!.regulatory.signatureStatus).toBe('signed');
+    // 'signed' is not a member of the union — this subsystem reads no signature
+    // store, so the strongest true statement is that it was not assessed here.
+    expect(approvalNode!.regulatory.signatureStatus).toBe('not_assessed');
+    expect(approvalNode!.regulatory.part11RecordCheck.notAssessed).toContain('applied-signature');
   });
 });

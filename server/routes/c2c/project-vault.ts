@@ -372,18 +372,32 @@ export interface UploadRow {
   owner_name: string | null;
 }
 
+/**
+ * What the leaf calls this upload: its taxonomy kind when the classifier
+ * recorded one, else the declared document type, else just 'File'.
+ *
+ * 'OTHER' is deliberately not shown — it is the ingest schema's "I was not
+ * told", and rendering it as a type would dress an absent answer as a given
+ * one. Its own function because it is three fallbacks deep and reading it
+ * inline is what carried uploadLeaf over the complexity limit.
+ */
+function uploadTypeLabel(row: UploadRow): string {
+  if (row.evidence_kind) return KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind;
+  if (row.document_type && row.document_type !== 'OTHER') return row.document_type;
+  return 'File';
+}
+
 /** An uploaded vault.documents row → a VaultDoc leaf (all real columns).
  *  Exported for the tree-merge regression test. */
 export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
   const placementStatus = row.placement_status || 'unfiled';
-  const kind = row.evidence_kind ? KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind : null;
   const title = row.document_title || row.file_name || 'Document';
   const size = prettySize(row.file_size);
   const leaf: VaultDoc = {
     id: `up-${row.id}`,
     num: row.ctd_section ?? '—',
     title,
-    type: kind ?? (row.document_type && row.document_type !== 'OTHER' ? row.document_type : 'File'),
+    type: uploadTypeLabel(row),
     status: placementStatus,
     // Uploads have no authoring completion; 0 rather than a fabricated figure.
     pct: 0,
@@ -451,6 +465,36 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
   };
 }
 
+/**
+ * How a LIVE section row renders — status, completion, owner, version, time.
+ *
+ * Separated from leafDoc because every field here is the same question asked of
+ * one optional row ("what does the live section say, and what do we show when
+ * there is no live section"), while the rest of leafDoc is about the rule-pack
+ * spec. Reading them interleaved hid that, and the mix put leafDoc over the
+ * complexity limit.
+ */
+function liveSectionPresentation(
+  live: LiveSection | undefined,
+  hasContent: boolean,
+): Pick<VaultDoc, 'status' | 'pct' | 'owner' | 'ver' | 'updated'> {
+  const status = live?.status ?? null;
+  return {
+    status: normalizeStatus(status, hasContent),
+    // Completion, on the SAME definition the document row beside this one uses
+    // (c2c_documents.readiness = % of sections approved/locked). This used to be
+    // `hasContent ? 100 : 0`, so one typed sentence reported a finished section
+    // next to a document reporting 0%. Drafting progress is still carried by
+    // `status` and by the mandatory-without-content blocker in leafDoc.
+    pct: sectionCompletionPct(status),
+    // Owner is resolved ONLY from a real user (section owner_id); unattributed
+    // sections stay '—' rather than borrowing the target agency's name.
+    owner: live?.owner_name ?? '—',
+    ver: live?.version != null ? `v${live.version}` : '—',
+    updated: live ? relativeTime(live.updated_at) : '—',
+  };
+}
+
 /** A rule-pack section spec merged with its live row → a VaultDoc leaf. */
 function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined): VaultDoc {
   const hasContent = live?.has_content ?? false;
@@ -462,18 +506,7 @@ function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined):
     num: spec.key,
     title: label,
     type: mandatory ? 'Required' : 'Optional',
-    status: normalizeStatus(live?.status ?? null, hasContent),
-    // Completion, on the SAME definition the document row beside this one uses
-    // (c2c_documents.readiness = % of sections approved/locked). This used to be
-    // `hasContent ? 100 : 0`, so one typed sentence reported a finished section
-    // next to a document reporting 0%. Drafting progress is still carried by
-    // `status` and by the mandatory-without-content blocker below.
-    pct: sectionCompletionPct(live?.status ?? null),
-    // Owner is resolved ONLY from a real user (section owner_id); unattributed
-    // sections stay '—' rather than borrowing the target agency's name.
-    owner: live?.owner_name ?? '—',
-    ver: live?.version != null ? `v${live.version}` : '—',
-    updated: live ? relativeTime(live.updated_at) : '—',
+    ...liveSectionPresentation(live, hasContent),
     preview: `${docTitle} · ${spec.key} · ${label}${mandatory ? ' · mandatory section' : ''}`,
   };
   if (mandatory && !hasContent) {

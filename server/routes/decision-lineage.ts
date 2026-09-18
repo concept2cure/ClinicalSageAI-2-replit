@@ -239,10 +239,31 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
     const chainDependent = (): 'COMPLIANT' | 'REVIEW_REQUIRED' | 'UNVERIFIABLE' =>
       chainStatus === 'VERIFIED' ? 'COMPLIANT' : chainStatus === 'INTEGRITY_FAILURE' ? 'REVIEW_REQUIRED' : 'UNVERIFIABLE';
 
-    const gxpRelevant = allDecisions.filter(d => d.regulatory.gxpRelevant);
+    /*
+     * WO-16C #70, second follow-up review. Two of these counters could only
+     * ever print one value.
+     *
+     * `gxpRelevantRecords` counted `d.regulatory.gxpRelevant`, which was the
+     * literal `true` at all five node constructors — so it always equalled
+     * `totalDecisionRecords`. The flag is now `boolean | null`, recorded only
+     * where a source record carries one, so the count is of records that SAY
+     * so, and the records that say nothing are reported separately instead of
+     * being absorbed into the positive figure.
+     *
+     * `signaturesSigned` counted `signatureStatus === 'signed'`, which was
+     * `status === 'approved'` relabelled: `workflow_approvals` has no signature
+     * column and the lineage service reads no signature store. There is no
+     * longer such a value to count. The rows are reported as unassessed, which
+     * is what they are — not as signatures applied, and not as signatures
+     * missing either.
+     */
+    const gxpRelevant = allDecisions.filter(d => d.regulatory.gxpRelevant === true);
+    const gxpNotRecorded = allDecisions.filter(d => d.regulatory.gxpRelevant === null);
     const signatureRequired = allDecisions.filter(d => d.regulatory.requiresSignature);
     const signaturesPending = signatureRequired.filter(d => d.regulatory.signatureStatus === 'pending');
-    const signaturesSigned = signatureRequired.filter(d => d.regulatory.signatureStatus === 'signed');
+    const signaturesNotAssessed = signatureRequired.filter(
+      d => d.regulatory.signatureStatus !== 'pending' && d.regulatory.signatureStatus !== 'rejected',
+    );
 
     const report = {
       reportTitle: 'Decision Lineage Compliance Report',
@@ -264,10 +285,13 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
       statistics: {
         totalDecisionRecords: allDecisions.length,
         gxpRelevantRecords: gxpRelevant.length,
+        gxpRelevanceNotRecorded: gxpNotRecorded.length,
         signaturesRequired: signatureRequired.length,
         signaturesPending: signaturesPending.length,
-        signaturesSigned: signaturesSigned.length,
         signaturesRejected: signatureRequired.filter(d => d.regulatory.signatureStatus === 'rejected').length,
+        signaturesNotAssessed: signaturesNotAssessed.length,
+        signatureNote:
+          'This report reads no signature store. A record needing a signature is counted as pending or rejected only where its source row positively says so; every other such record is reported as not assessed here.',
       },
       complianceFrameworks: [
         {

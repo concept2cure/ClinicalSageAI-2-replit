@@ -147,3 +147,103 @@ export function declaredPublicTableNames(entrypoints, repoRoot) {
     .filter((t) => t.schema === 'public')
     .map((t) => t.name);
 }
+
+/**
+ * Constructors that appear as `key: fn('name', …)` inside a pgTable body but
+ * name an INDEX or CONSTRAINT rather than a column. Excluded so the column map
+ * cannot silently gain an index name.
+ */
+const NON_COLUMN_BUILDERS = new Set([
+  'index', 'uniqueIndex', 'foreignKey', 'primaryKey', 'unique', 'check',
+]);
+
+/**
+ * Physical column names the push surface declares, per table:
+ * `Map<tableName, Set<columnName>>`.
+ *
+ * Used to answer "would drizzle-kit push provide this column?" — the question
+ * the KNOWN_UNLISTED exemption list in
+ * tests/ops/apply-c2c-migrations-manifest.test.mjs asserts an answer to for
+ * every entry it carries.
+ *
+ * Deliberately keyed on the PHYSICAL name (the constructor's first string
+ * argument), not the TypeScript property, because that is what SQL names.
+ *
+ * CAVEAT, stated rather than left to be discovered: the map is keyed by BARE
+ * table name, so a `public.x` and a `vault.x` would merge into one entry. No
+ * such pair exists today (487 declared tables, 486 distinct bare names, the one
+ * collision being a name declared twice in the same schema). Callers that need
+ * schema-qualified column sets must extend this rather than assume.
+ */
+export function declaredTableColumns(entrypoints, repoRoot) {
+  const out = new Map();
+  for (const file of reachableSchemaFiles(entrypoints, repoRoot)) {
+    const src = fs.readFileSync(file, 'utf8');
+    const schemaOf = new Map();
+    for (const m of src.matchAll(SCHEMA_BINDING)) schemaOf.set(m[1], m[2]);
+
+    const DECL = /\b(?:pgTable|([a-zA-Z_$][\w$]*)\.table)\(\s*['"`]([a-zA-Z0-9_]+)['"`]\s*,/g;
+    for (const m of src.matchAll(DECL)) {
+      const receiver = m[1];
+      // Unresolvable receiver: skipped for the same reason declaredTableEntries
+      // skips it — guessing would file columns under the wrong table.
+      if (receiver && !schemaOf.has(receiver)) continue;
+      const body = balancedBody(src, m.index + m[0].length - 1);
+      if (body === null) continue;
+      const cols = out.get(m[2]) ?? new Set();
+      for (const c of body.matchAll(
+        /\b([a-zA-Z_$][\w$]*)\s*:\s*([a-zA-Z_$][\w$]*)\(\s*['"`]([a-zA-Z0-9_]+)['"`]/g,
+      )) {
+        if (NON_COLUMN_BUILDERS.has(c[2])) continue;
+        cols.add(c[3]);
+      }
+      out.set(m[2], cols);
+    }
+  }
+  return out;
+}
+
+/**
+ * Text between the comma after the table name and the matching close paren of
+ * the declaration, found by balancing parentheses rather than by guessing where
+ * the body ends.
+ *
+ * The first attempt used a non-greedy match to the next `\n)`, which stopped at
+ * the first nested close and silently produced column sets for only 436 of the
+ * 486 declared tables. A truncated body reads as "that column is not declared",
+ * which is exactly the wrong answer for a gate that decides whether push
+ * provides a column.
+ *
+ * String literals, template literals and comments are skipped so a paren inside
+ * one cannot unbalance the scan.
+ */
+function balancedBody(src, commaIndex) {
+  let depth = 1; // we start just inside `pgTable(`
+  let i = commaIndex + 1;
+  const startBody = i;
+  while (i < src.length) {
+    const ch = src[i];
+    if (ch === '/' && src[i + 1] === '/') {
+      i = src.indexOf('\n', i);
+      if (i === -1) return null;
+    } else if (ch === '/' && src[i + 1] === '*') {
+      i = src.indexOf('*/', i);
+      if (i === -1) return null;
+      i += 1;
+    } else if (ch === "'" || ch === '"' || ch === '`') {
+      const quote = ch;
+      i += 1;
+      while (i < src.length && src[i] !== quote) {
+        if (src[i] === '\\') i += 1;
+        i += 1;
+      }
+    } else if (ch === '(') {
+      depth += 1;
+    } else if (ch === ')') {
+      depth -= 1;
+      if (depth === 0) return src.slice(startBody, i);
+    }
+    i += 1;
+  }
+  return null;
+}

@@ -30,6 +30,36 @@ wrong.
 
 ---
 
+## Finding 1 — CONFIRMED and FIXED 2026-09-18
+
+> **FIXED by `f52b4fe1`** — "deploy-migrate refuses to declare success when the
+> governed-content tree never ran". Correction 1 named the closing move as *"a
+> `deploy-migrate` preflight assertion"*, and that is what landed: the readiness
+> contract now carries three governed-content sentinels. Re-reproduced today with
+> the same PATH shim, and the deploy no longer blesses the database:
+>
+> ```
+> ▶ 1/5 Preflight — database already provisioned?
+>   ✓ base schema present (organizations, users, c2c_documents, regulatory_programs)
+> ▶ 5/5 Verify readiness contract
+>   governed-content tree: 0/3 sentinel(s) present
+> ❌ Deploy migration failed: the governed-content tree (db/migrations/*_gcc_*.sql)
+>    did not run on this database — missing: identity.organizations,
+>    core.program_ownerships, core.programs.org_id.          ← exit 1
+> ```
+>
+> **AND IT CORRECTS THE REPRODUCTION BELOW.** The section states that with `psql`
+> hidden `core.programs` "is then the 7-column shape from `044b`", and quotes
+> `42703: column "org_id" does not exist`. On a database built that way today the
+> `core` SCHEMA does not exist at all and neither does the table — `044b` and
+> `000_gcc_bootstrap_core` are themselves `*_gcc_*` files, so nothing creates it
+> when the tree is skipped, and the authorization query fails 42P01, not 42703.
+> The 7-column state is reachable only where the tree ran once and `069` did not.
+> That does not weaken the finding — an absent table is worse than a narrow one —
+> but the quoted error is not what a psql-less install produces.
+
+### Original finding, as written
+
 ## Finding 1 — a missing `psql` leaves `core.programs` cross-tenant readable, and the deploy says it is fine
 
 **Severity: highest here.** Rewritten 2026-09-10 after a full reproduction. Three
@@ -211,7 +241,80 @@ deploys green.
 It applies exactly one — 044b, at index 11 — and that one is the file creating
 `core.programs`. The comment and the list contradict each other.
 
-## Finding 2 — `project_charters` is 27 columns; the code selects 48
+## Finding 2 — CONFIRMED and FIXED 2026-09-17
+
+> **Confirmed exactly as written**, and it is the most consequential of the
+> nine. Measured on a canonically provisioned database: 27 live columns, 48
+> declared, and all 21 named columns genuinely absent.
+>
+> **AND IT CORRECTS AN ERROR OF MINE.** Finding 3's correction block said the
+> charter tables are "declared in `shared/schema/project-charter.ts`, so
+> `drizzle-kit push` creates them at install-fresh step 2". The first half is
+> true; **the second is false.** `drizzle.config.ts` names only
+> `shared/schema.ts`, `shared/schema/ana-intelligence.ts` and
+> `shared/schema/report-os.ts`. `project-charter.ts` is re-exported from
+> `shared/schema/index.ts`, which is **not** an entrypoint and is not reachable
+> from one:
+>
+> ```
+> project-charter.ts reachable from the drizzle entrypoints: false
+>   project_charters      on push surface: false
+>   charter_sections      on push surface: false
+>   timeline_phases       on push surface: false
+>   project_commitments   on push surface: false
+>   charter_audit_events  on push surface: false
+> ```
+>
+> So the charter tables are outside the push surface entirely. They come from
+> install-fresh's step-3 overlay — `0012_project_charter_timeline.sql` for
+> `project_charters` (27 columns, the only creator anywhere) and `20260629` for
+> the other four. That is *why* the table is frozen: nothing reconciles it, and
+> no file in `C2C_MIGRATION_FILES` had ever created or altered it.
+>
+> The finding-3 fix is unaffected — it is guarded on the table existing, not on
+> what created it — but the wrong mechanism is corrected in all three places it
+> was written: the migration header, the migration-set entry, and finding 3's
+> block above. A wrong reason is how the next person reaches a wrong conclusion.
+>
+> **What was broken, executed:**
+>
+> | Surface | Statement | Result before |
+> |---|---|---|
+> | `charters.ts:403` | `d.select().from(projectCharters)` — unqualified, expands to all 48 | `ERROR: column "pma_config" does not exist` |
+> | `pma-workflow-routes.ts:71` | `SELECT pma_config FROM project_charters` | same |
+> | `:34` / `:43` | `SET pma_config = $1` / `INSERT … pma_config` | same |
+>
+> The PMA workflow-progress feature could not work on any database, and every
+> charter read raised 42703.
+>
+> **FIXED** by `migrations/20260917_project_charters_declared_columns.sql`, new
+> in `C2C_MIGRATION_FILES` (270): the 21 columns with the types the declaration
+> asks for, plus `proj_charter_stage_idx`, the one declared index whose column
+> did not exist. Every name and type read off `shared/schema/project-charter.ts`
+> — nothing invented.
+>
+> ```
+> BEFORE  columns: 27   select: ERROR: column "pma_config" does not exist
+> AFTER   columns: 48   select: resolves     UPDATE pma_config: UPDATE 0
+> ```
+>
+> Applied twice more: idempotent, still 48.
+>
+> **Not converged, recorded instead:** the 27 columns `0012` already makes use
+> `jsonb` and `timestamp` where the declaration says `json` and `timestamptz` —
+> `0012`'s own comment (line 94) acknowledges this. Retyping live columns is a
+> rewrite with data implications, not an additive fix; it belongs to WO-1's
+> schema-authority work. The new columns match the declaration; the old ones keep
+> their shapes.
+>
+> **Also still true and untouched:** `charters.ts:398-401` says `charter_sections`
+> "was dropped by `migrations/20260611_drop_charter_staging_tables.sql`; there is
+> no section count to return." That table EXISTS (22 columns, verified live) —
+> `20260611` is on no applier and `20260629` creates it. The comment is false but
+> changing the endpoint's behaviour is a product decision, not a schema fix.
+
+### Original finding, as written
+
 
 `migrations/0012_project_charter_timeline.sql:10` is the **only** creator of
 `project_charters` in the repository, and no `ALTER TABLE project_charters`
@@ -243,9 +346,20 @@ is one of the 21 that do not exist.
 > **The claim below is half wrong, and the wrong half is the headline.** The
 > four tables do NOT fail to exist. `project_charters`, `charter_sections`,
 > `timeline_phases`, `project_commitments` and `charter_audit_events` are all
-> declared in `shared/schema/project-charter.ts`, so `drizzle-kit push` creates
-> them at install-fresh step 2. Verified present on a canonically provisioned
-> database. Any deployed database has them.
+> declared in `shared/schema/project-charter.ts` and all five EXIST on a
+> canonically provisioned database. Any deployed database has them.
+>
+> **CORRECTED AGAIN 2026-09-17:** this block used to say push creates them at
+> install-fresh step 2. That is **false**, and the error was mine.
+> `drizzle.config.ts` names only `shared/schema.ts`,
+> `shared/schema/ana-intelligence.ts` and `shared/schema/report-os.ts`;
+> `project-charter.ts` is re-exported from `shared/schema/index.ts`, which is
+> **not** an entrypoint and is not reachable from one. The charter tables are
+> outside the push surface entirely — they come from install-fresh's step-3
+> overlay (`0012` for `project_charters`, `20260629` for the other four). The
+> fix below stands unchanged, because it is guarded on the table existing rather
+> than on what created it; the reasoning was wrong, not the code. Finding 2 is
+> the direct consequence of the real mechanism.
 >
 > **What is genuinely on no replaying applier is the Part 11 immutability
 > enforcement.** Drizzle cannot express a trigger, so
@@ -344,6 +458,36 @@ section count to return"), `:419-421` ("`charter_audit_events` … was never
 migrated"), and four "CONTRACT DEVIATION" notes in
 `tests/unit/charters-routes.test.ts`.
 
+## Finding 4 — CONFIRMED and FIXED 2026-09-17
+
+> **FIXED by `15348146`** — "Delete /api/design-risk: 20 endpoints over ten tables
+> that exist on no database". The finding below says the C-29 product decision
+> blocks any code change and that the honest interim is to unmount the router.
+> The decision was made instead, the same way D11d made the IVDR half on
+> 2026-08-13: **the rival definition is deleted and the Drizzle shapes are
+> canonical.** `server/routes/design-risk.ts`, its service and
+> `migrations/20260609_design_risk.sql` are removed, not unmounted, and the
+> `CLASSIFIED_OVERLAY_SKIPS` entry is gone with them.
+>
+> Two things the finding did not have, both measured on a canonically provisioned
+> database (install-fresh + deploy-migrate, 963 tables):
+>
+> * It is **all twenty** endpoints, not only the eight-table ones. `risk_items`
+>   and `risk_controls` DO land, in the pushed shape, so those handlers fail on
+>   shape rather than absence: `rmf_id` is 42703 and the controls join is
+>   `operator does not exist: integer = uuid`.
+> * The capability is not lost, because a second implementation already served
+>   it: `DesignControls.tsx` reads and writes `/api/design-controls`
+>   (`server/routes/design-controls.routes.ts` over `c2c_design_controls`), which
+>   is tested and fails closed on 42P01. The ui-v2 registry had been advertising
+>   `apiPrefixes: ['/api/design-risk']` on that surface at `readiness:
+>   routes-ready` while the component called the other prefix; it now names the
+>   prefix it calls.
+>
+> The eight missing tables were re-confirmed absent at 963 tables before deleting.
+
+### Original finding, as written
+
 ## Finding 4 — `/api/design-risk` is mounted and every endpoint fails
 
 `server/bootstrap/register-document-routes.ts:42,259` mounts the router. All 20
@@ -431,27 +575,71 @@ it exercises the engine on in-memory literals and never touches a database.
 > does not change that and is not claimed to. Fixing it means either writing the
 > column or removing the feature, which is a product decision.
 >
-> **2. 14 of the 16 `KNOWN_UNLISTED` entries fail that list's stated reason.**
+> **2. 10 of the 15 `KNOWN_UNLISTED` entries failed that list's stated reason — FIXED 2026-09-17.**
 > The stated reason is that such files' *"objects come from `shared/schema.ts`
 > via drizzle-kit push and they carry nothing an existing database additionally
 > needs"*, and the list's own comment says *"adding one requires the reason
-> above to actually hold."* Measured by checking each entry's created tables
-> against the Drizzle surface:
+> above to actually hold."*
+>
+> **CORRECTED 2026-09-17: this block first said "14 of 16". That was a crude
+> heuristic and it was wrong in both numbers.** Re-measured properly:
 >
 > | | |
 > |---|---|
-> | entries | 16 |
-> | create a table with **no** Drizzle definition, or carry an `ADD COLUMN` | **14** |
+> | entries actually in the list | **15** (one of the "16" was a path inside a comment) |
+> | reason holds — tables are on the push surface | 2 — `report_definitions`, `onboarding_proposal_runs` |
+> | reason holds — `ADD COLUMN` of a Drizzle-declared column | 2 — `apiUsageLogs.model`, `organizationUsers.persona` |
+> | clean for a *different*, verified reason | 1 — `authoring_reviews` |
+> | **genuinely fail the stated reason** | **10**, covering **16 tables** |
 >
-> Among them `protocol_soa_assessments`, `protocol_budget_items`, `dms_plans`,
-> `biosketches`, `other_support_documents`, `export_control_reviews`,
-> `invention_disclosures`, `research_agreements`, `chat_threads`,
-> `canonical_documents`. **This is a crude heuristic and at least one result is
-> a false positive**: `20260728_authoring_reviews.sql` has a real, documented,
-> *different* reason (its provisioner runs on both appliers) that the check
-> cannot see. So the 14 is an upper bound on a real problem, not a verdict on
-> each file. Each needs the same per-file treatment finding 5 just received —
-> too large to fold in here, and too large to leave unrecorded.
+> The `authoring_reviews` exception was flagged as a suspected false positive
+> and is now confirmed as one: `db/migrations/20260730_authoring_subsystem_schema.sql`
+> creates it, that file is in `AUTHORING_SUBSYSTEM_FILES`, and
+> `applyAuthoringSubsystem` is called at `deploy-migrate.mjs:319` — so it does
+> run on both appliers, exactly as its comment claims.
+>
+> The 10 that remain, and what they leave unreachable:
+>
+> | Entry | Tables |
+> |---|---|
+> | `20260701_protocol_soa.sql` | `protocol_soa_assessments`, `protocol_soa_cells` |
+> | `20260702_protocol_budget.sql` | `protocol_budget_items`, `protocol_budget_params` |
+> | `20260703_dmsp.sql` | `dms_plans`, `dms_plan_elements` |
+> | `20260704_biosketch.sql` | `biosketches`, `biosketch_sections` |
+> | `20260704_other_support.sql` | `other_support_documents`, `other_support_entries` |
+> | `20260705_export_control.sql` | `export_control_reviews` |
+> | `20260705_invention_disclosure.sql` | `invention_disclosures` |
+> | `20260705_research_agreements.sql` | `research_agreements` |
+> | `20260728_chat_thread_store.sql` | `chat_threads`, `chat_messages` |
+> | `20260731c_canonical_documents.sql` | `canonical_documents` |
+>
+> All 16 are on no push surface, created by no file in `C2C_MIGRATION_FILES`,
+> present on a canonically provisioned database, and referenced by live non-test
+> code (3–44 references each). Same class as findings 3 and 5, at 16× the scale.
+>
+> **FIXED**: all ten listed in `C2C_MIGRATION_FILES` (270 → 281) and their ten
+> `KNOWN_UNLISTED` exemptions removed. Safe to replay, verified per file rather
+> than assumed: zero DROP statements across all ten, every CREATE and ALTER
+> `IF NOT EXISTS`-guarded, every table carrying `organization_id`/`org_id`, and
+> the only external FK targets `organizations`/`users` — base tables that 39
+> files already in the set reference and that the harness provisions through
+> `FK_PREREQUISITES`. That is the finding-3 trap checked and cleared:
+> `project_charters` failed it because it is not a base table.
+>
+> Proven by breaking it — dropped `chat_threads`, `chat_messages`, `biosketches`,
+> `biosketch_sections` and `export_control_reviews` (five tables across three of
+> the ten files) on the canonical database, ran the real `deploy-migrate`, and
+> all five came back with their full shapes. Applied again: idempotent.
+>
+> New gate `tests/schema-contract/known-unlisted-reason-holds.contract.test.ts`
+> turns the list's prose rule into an enforced one — red first on exactly the 10,
+> now 5/5. It also asserts the *premise* of its one reasoned exception rather
+> than the exception itself: if `applyAuthoringSubsystem` ever stops running on
+> `deploy-migrate`, the `authoring_reviews` exemption fails with it.
+>
+> **NOT claimed:** that these tables gained RLS policies. None of the ten defines
+> any — the status quo on a provisioned database today, unchanged by listing them.
+> C-33 green: the whole set still replays on a bare database.
 
 ### Original finding, as written
 
@@ -481,6 +669,40 @@ deliberate, self-documented, byte-identical defensive guard so the file applies
 on a preview branch predating the base table. Verified identical.)
 
 ---
+
+## Finding 6 — FIXED upstream; both sub-items re-measured 2026-09-18
+
+> **The main defect is FIXED by `c92c7122`** — "Submission orchestrator runs could
+> be started and never advanced". `shared/schema/submissions.ts` now declares
+> `createdAt`/`updatedAt`, so push creates them and the trigger's
+> `NEW.updated_at` assignment resolves. Verified by executing the exact
+> `persistRun` path three times against a provisioned database: step-1 → step-2 →
+> step-3, no 42703, `updated_at` set.
+>
+> **Sub-item A is wrong, and the live state is a third thing.** The finding says
+> `20260629_orchestrator_region_check_alignment.sql` is on neither applier "while
+> the route accepts all 13" — implying the database holds `044b`'s narrow
+> four-value CHECK and rejects the other nine. It holds **no CHECK at all**: push
+> creates the table, so the `CHECK (region IN ('US','EU','JP','CA'))` that both
+> SQL files declare never runs, and `'us'` lowercase inserts cleanly. The
+> alignment migration is indeed on neither applier (0 hits in
+> `C2C_MIGRATION_FILES`, not referenced by the port). So the hazard is not a
+> route/DB mismatch — it is that the database enforces no region domain at all,
+> and any writer that bypasses the route's zod can store anything. Note also that
+> the route's enum has 13 values while the service's `RegionCode` type
+> (`server/services/module3-extensions.ts:30`) has four.
+>
+> **Sub-item B is confirmed, and the compliance document was wrong about it.**
+> The `steps.run_id` FK is `NO ACTION` live — neither the CASCADE both files
+> declare nor the RESTRICT the hardening installs, because that file's `DO` block
+> matches `confdeltype = 'c'` only and so no-ops. Proven by execution: a run with
+> one step event refuses deletion (`violates foreign key constraint … is still
+> referenced`) and the event survives. `docs/compliance/part11-immutability-record-class-policy.md:34`
+> asserted `ON DELETE CASCADE` and called RESTRICT "a future change"; the
+> protection is already in force and the row understated it in the one direction
+> that matters. Corrected 2026-09-18.
+
+### Original finding, as written
 
 ## Finding 6 — a trigger writes a column the table does not have, so orchestrator runs can never advance
 

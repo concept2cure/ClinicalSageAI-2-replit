@@ -217,6 +217,22 @@ jobs:
         # over a rejecting pool. Proven red on the pre-fix head.
         run: npm run ci:unverified-verdicts
 
+      - name: A Part 11 audit row written and its outcome discarded
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # `void auditService.logAction(...)` throws away the AuditWriteResult.
+        # logAction does not reject when persistence fails — by deliberate
+        # policy, an audit-trail outage must not break the action it records —
+        # so a voided call has two outcomes and one observable result: nothing
+        # downstream can tell a recorded governed action from an unrecorded one.
+        # WO-16C #133 converted the PDEV approval and IND-clearance path; the
+        # baseline caps the rest per file WITH ITS COUNT, so a baselined file
+        # cannot quietly grow. The self-test runs first and includes that
+        # ratchet case, because a baseline that admits growth would make this
+        # gate the thing it exists to catch.
+        run: |
+          npm run ci:void-audit-write:self-test
+          npm run ci:void-audit-write
+
       - name: Gates that existed but ran nowhere
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # An audit of what CI actually executes found 88 gate files, 67 of them

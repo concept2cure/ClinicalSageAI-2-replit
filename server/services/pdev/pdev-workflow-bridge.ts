@@ -40,6 +40,7 @@ import {
   type PdevActivityState,
 } from './pdev-activity-registry';
 import { applyIndClearanceIfTerminal } from './pdev-clearance';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import auditService from '../auditService';
 
 const logger = createScopedLogger('pdev-workflow-bridge');
@@ -47,74 +48,15 @@ const logger = createScopedLogger('pdev-workflow-bridge');
 // ─────────────────────────────────────────────────────────────────────────────
 // The §11.10(e) audit row: recorded, or not — never assumed
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// Extracted out of this file so pdev-clearance could report its own audit rows
+// through the same shape instead of a second copy (WO-16C #133 follow-up
+// review), and now lives in ../audit/audit-write-outcome because callers outside
+// PDEV need it too — it was never PDEV-specific, only its first caller was.
+// Re-exported here because the type is part of this module's public result
+// shapes.
 
-/**
- * Whether the 21 CFR Part 11 §11.10(e) audit row for a governed PDEV
- * transition actually reached a durable store.
- *
- * WO-16C finding 133. Every audit write in this file used to be
- * `void auditService.logAction({…})`. That is not fire-and-forget with a
- * guarantee behind it: `logAction` never rejects on a persistence failure —
- * by deliberate policy, "an audit-trail outage must not break the user action
- * it records" — it resolves `AuditWriteResult` and says so in `persisted`.
- * Discarding that value meant the bridge could not tell a recorded approval
- * from an unrecorded one, and neither could the route: the response was
- * byte-identical either way, while the checkpoint, the workflow run and the
- * activity state had all committed. The only trace of the missing record was
- * one `logger.error` line in the server log.
- *
- * So the outcome is carried, in the third state this repo already uses for
- * "the thing did not happen" (`VerificationOutcome`'s `{ran}/{reason}` in
- * server/lib/verification-outcome.ts), spoken in `AuditWriteResult`'s own
- * word: `persisted`. A caller cannot read `reason` off the success arm and
- * cannot claim success without the flag.
- *
- * This does NOT make the write transactional — the governed rows are already
- * committed by the time the audit row is attempted, and a path that needs the
- * row to EXIST before its mutation lands must use
- * `writeChainedAuditRow(client, …)` on its own transaction. What it removes is
- * the silence.
- */
-export type PdevAuditRecordOutcome =
-  | { persisted: true }
-  | { persisted: false; reason: string };
-
-/** The object call form of `auditService.logAction` (its entry type is not exported). */
-type PdevAuditEntry = Extract<Parameters<typeof auditService.logAction>[0], object>;
-
-/**
- * Write one audit row and REPORT what happened to it. Never throws: an
- * audit-trail outage must not break the transition it records, which is the
- * same policy `logAction` holds — the difference is that the caller is now
- * told, and tells its own caller.
- */
-async function recordAuditRow(entry: PdevAuditEntry): Promise<PdevAuditRecordOutcome> {
-  let result: Awaited<ReturnType<typeof auditService.logAction>> | undefined;
-  let thrown: string | undefined;
-  try {
-    result = await auditService.logAction(entry);
-  } catch (err) {
-    // Documented never to happen; if it ever does, it is still not a reason to
-    // report an audit row that does not exist.
-    thrown = err instanceof Error ? err.message : String(err);
-  }
-  if (result?.persisted) return { persisted: true };
-
-  const reason =
-    thrown ??
-    result?.error ??
-    'auditService.logAction reported no durable store; the audit row cannot be shown to exist';
-  logger.error(
-    'PDEV audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist',
-    {
-      action: entry.action,
-      resourceType: entry.resourceType,
-      resourceId: entry.resourceId,
-      reason,
-    },
-  );
-  return { persisted: false, reason };
-}
+export type { AuditRowOutcome } from '../audit/audit-write-outcome';
 
 const COMPLETED_TARGET_STATES: ReadonlySet<PdevActivityState> = new Set([
   'approved',
@@ -176,7 +118,7 @@ export interface PdevWorkflowKickoffResult {
    * regardless, so an envelope that omitted this could not be told apart from
    * one where the record exists.
    */
-  auditTrail: PdevAuditRecordOutcome;
+  auditTrail: AuditRowOutcome;
 }
 
 export interface PdevApprovalChainStatus {
@@ -265,11 +207,19 @@ export interface PdevCheckpointDecisionResult {
   rejectionReason?: string;
   /**
    * Whether the §11.10(e) audit row for this decision was durably recorded.
-   * Required, not optional — see `PdevAuditRecordOutcome`. The approver's
+   * Required, not optional — see `AuditRowOutcome`. The approver's
    * identity survives in `approval_checkpoints.approvals` either way; what is
    * lost when this is `persisted: false` is the audit-trail entry.
    */
-  auditTrail: PdevAuditRecordOutcome;
+  auditTrail: AuditRowOutcome;
+  /**
+   * Set only when this decision completed the chain on the IND-clearance
+   * activity and the terminal program transition was therefore attempted.
+   * WO-16C #133 follow-up review: the call was made and its result discarded,
+   * so a clearance recorded nowhere was indistinguishable from one recorded —
+   * one layer up from the defect #133 fixed.
+   */
+  indClearance?: { cleared: boolean; audit?: AuditRowOutcome };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -820,14 +770,23 @@ export class PdevWorkflowBridge {
 
     // Terminal IND-clearance transition: a completed approval chain on
     // the clearance activity moves the program to its cleared state.
+    //
+    // WO-16C #133, follow-up review: the result of this call was discarded.
+    // It now reports whether the §11.10(e) row for the clearance itself was
+    // written, and that travels with the decision — the whole point of the
+    // outcome is that nobody in the chain drops it.
+    let indClearance: PdevCheckpointDecisionResult['indClearance'];
     if (run.programId && activityKey) {
-      await applyIndClearanceIfTerminal({
+      const clearance = await applyIndClearanceIfTerminal({
         programId: run.programId,
         organizationId: input.organizationId,
         userId: input.userId,
         activityKey,
         newState: targetState,
       });
+      if (clearance.cleared || clearance.alreadyCleared) {
+        indClearance = { cleared: clearance.cleared, audit: clearance.audit };
+      }
     }
 
     return {
@@ -835,6 +794,7 @@ export class PdevWorkflowBridge {
       workflowStatus: metPlan.workflowStatus,
       activityFinalState: targetState,
       auditTrail,
+      ...(indClearance ? { indClearance } : {}),
     };
   }
 }

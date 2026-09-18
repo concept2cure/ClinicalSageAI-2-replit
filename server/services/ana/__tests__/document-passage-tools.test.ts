@@ -122,6 +122,38 @@ describe('what it says when it finds nothing', () => {
     expect(out.message).toContain('read_project_document');
   });
 
+  it('gives the RECORDED reason a document failed to index, not just a count', async () => {
+    // chunk_error has been written on every indexing failure since the ledger
+    // existed and read by nothing, so a document whose passages could not be
+    // built was indistinguishable from one nobody had reached — and "1 failed"
+    // is a number nobody can act on.
+    searchDocumentPassages.mockResolvedValue({
+      hits: [],
+      coverage: {
+        total: 4,
+        indexed: 2,
+        pending: 1,
+        failed: 1,
+        failureReasons: ['Embedding provider refused: 429 rate limited'],
+      },
+    });
+    const out = await call({ query: 'assay at six months' });
+    expect(out.message).toContain('1 failed to index');
+    expect(out.message).toContain('429 rate limited');
+  });
+
+  it('does not invent a reason when none was recorded', async () => {
+    searchDocumentPassages.mockResolvedValue({
+      hits: [],
+      coverage: { total: 4, indexed: 2, pending: 1, failed: 1, failureReasons: [] },
+    });
+    const out = await call({ query: 'assay at six months' });
+    expect(out.message).toContain('1 failed to index');
+    // No empty parenthetical where a reason would go. ('document(s)' elsewhere
+    // in the note is why this is anchored to the clause rather than the string.)
+    expect(out.message).not.toContain('failed to index (');
+  });
+
   it('says the coverage is unknown rather than implying it searched everything', async () => {
     // A ledger read that fails must not take the search down, and must not
     // quietly become "all indexed" — the passages are still worth returning,
@@ -146,6 +178,26 @@ describe('what it says when it finds nothing', () => {
     expect(out.passages).toHaveLength(1);
     expect(out.message).toContain('could not be read');
     expect(out.message).not.toContain('All ');
+  });
+
+  it('an EMPTY index is reported as empty, not as a provider failure or a miss', async () => {
+    // The state most deployments will actually be in: the catalog is on (free
+    // at ingest) and the passage index is not (it embeds every upload). The
+    // search used to embed the query first and fail at the provider, so the
+    // tool reported "the embedding provider is unreachable" — infrastructure
+    // blame for a switch being off. The service now answers from coverage
+    // without embedding anything, and the message names the switch.
+    searchDocumentPassages.mockResolvedValue({
+      hits: [],
+      coverage: { total: 6, indexed: 0, pending: 6, failed: 0 },
+    });
+    const out = await call({ query: 'assay at six months' });
+    expect(out.ok).toBe(true);
+    expect(out.unavailable).toBeUndefined();
+    expect(out.message).toContain('None of the 6 document(s)');
+    expect(out.message).toContain('nothing was searched');
+    expect(out.message).toContain('ana.vault_chunking');
+    expect(out.message).not.toContain('embedding provider');
   });
 
   it('says plainly when the vault holds no documents at all', async () => {

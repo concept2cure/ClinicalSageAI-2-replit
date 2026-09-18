@@ -431,7 +431,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
         /* First, not last. This branch now also catches the whole window in
            which a payload is in hand but belongs to a different trial or scope
            — the window the assessed block used to render through. */
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
           Reading {tid}'s TMF completeness… Nothing is stated about this trial's readiness until the read lands.
         </div>
       ) : tmfState === 'unreadable' ? (

@@ -71,6 +71,16 @@ export interface PassageCoverage {
   indexed: number;
   pending: number;
   failed: number;
+  /**
+   * Why the failures failed, de-duplicated and bounded.
+   *
+   * `chunk_error` has been recorded on every indexing failure since the ledger
+   * existed and read by nothing, so a document whose passages could not be
+   * built was indistinguishable from one nobody had got to yet — to AnA and to
+   * an operator alike. A count of failures with no reason is a number that
+   * cannot be acted on.
+   */
+  failureReasons: string[];
 }
 
 export interface PassageSearchResult {
@@ -92,7 +102,13 @@ export async function getPassageCoverage(organizationId: number): Promise<Passag
     `SELECT COUNT(*)::int AS total,
             COUNT(*) FILTER (WHERE c.chunk_status = 'chunked' AND COALESCE(c.chunk_count, 0) > 0)::int AS indexed,
             COUNT(*) FILTER (WHERE c.chunk_status IS NULL OR c.chunk_status = 'pending')::int AS pending,
-            COUNT(*) FILTER (WHERE c.chunk_status = 'chunk_failed')::int AS failed
+            COUNT(*) FILTER (WHERE c.chunk_status = 'chunk_failed')::int AS failed,
+            -- The distinct reasons, capped: five identical provider timeouts are
+            -- one fact, and an unbounded list would put a wall of text where a
+            -- diagnosis belongs.
+            (ARRAY_AGG(DISTINCT c.chunk_error) FILTER (
+               WHERE c.chunk_status = 'chunk_failed' AND c.chunk_error IS NOT NULL
+             ))[1:3] AS failure_reasons
        FROM vault.documents d
        JOIN regulatory_programs p ON p.id = d.program_id
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
@@ -105,6 +121,7 @@ export async function getPassageCoverage(organizationId: number): Promise<Passag
     indexed: Number(r.indexed ?? 0),
     pending: Number(r.pending ?? 0),
     failed: Number(r.failed ?? 0),
+    failureReasons: Array.isArray(r.failure_reasons) ? r.failure_reasons.filter(Boolean) : [],
   };
 }
 
@@ -152,6 +169,22 @@ export async function searchDocumentPassages(
     coverage = await getPassageCoverage(args.organizationId);
   } catch {
     coverage = null;
+  }
+
+  /* NOTHING IS INDEXED — answer without embedding anything.
+     The two feature flags are independent, and catalog-on/chunking-off is the
+     combination most deployments will actually run: cataloging is free at
+     ingest, the passage index embeds every upload and is not. In that state a
+     search used to embed the query first and then fail at the provider, so the
+     tool reported "the embedding provider is unreachable" — infrastructure
+     blame for a state that is nothing of the sort, and the opposite of what the
+     startup line promises an operator. Even with a healthy provider it was a
+     network round trip to search zero rows.
+     Checked against `indexed`, not `total`: an organization with no documents
+     at all is a different (also honest) message the caller composes from the
+     same coverage. */
+  if (coverage && coverage.total > 0 && coverage.indexed === 0) {
+    return { hits: [], coverage };
   }
 
   const { ragRouter } = await import('../ragRouter.js');

@@ -264,6 +264,12 @@ CREATE TABLE IF NOT EXISTS submission_leaves (
   lifecycle_op    TEXT NOT NULL DEFAULT 'new',
   document_table  TEXT,
   document_id     INTEGER,
+  -- The uuid half of the polymorphic reference
+  -- (migrations/20260917b_submission_leaf_document_uuid.sql): stores whose key
+  -- is a UUID (vault.documents) are named by this, integer-keyed ones by
+  -- document_id. The Drizzle model selects it, so omitting it here fails every
+  -- assembler test with a missing-column error rather than a useful one.
+  document_uuid   UUID,
   document_type   TEXT,
   leaf_guid       TEXT,
   parent_leaf_id  INTEGER,

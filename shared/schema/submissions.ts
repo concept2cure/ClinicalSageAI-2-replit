@@ -149,6 +149,12 @@ export const submissionLeaves = pgTable(
     lifecycleOp: text('lifecycle_op').default('new').notNull(), // new|replace|append|delete
     documentTable: text('document_table'), // coauthor_documents|ctd_onboarding_documents|unified_documents|vault_documents
     documentId: integer('document_id'), // polymorphic id within documentTable
+    /** The UUID half of the polymorphic reference, for stores whose key is a
+     *  UUID (vault.documents). NULL for integer-keyed stores, which use
+     *  documentId; a leaf never needs both. Added rather than widening
+     *  documentId — see migrations/20260917b_submission_leaf_document_uuid.sql
+     *  and docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md, which rejects widening. */
+    documentUuid: uuid('document_uuid'),
     documentType: text('document_type'), // classifier hint for pathway leaf→slot matching (e.g. 'protocol', 'cer')
     leafGuid: text('leaf_guid'),
     parentLeafId: integer('parent_leaf_id'),

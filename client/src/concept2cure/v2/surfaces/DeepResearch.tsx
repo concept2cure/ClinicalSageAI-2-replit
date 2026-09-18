@@ -684,7 +684,10 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                       </span>
                       <span className="sp-row-b">
                         <span className="sp-row-t">{j.name}</span>
-                        <span className="sp-row-s">
+                        {/* Each fan-out row flips from "querying..." to its
+                            result independently; without a live region the
+                            whole sweep completes in silence. */}
+                        <span className="sp-row-s" role="status" aria-live="polite">
                           {j.state === 'done' ? j.hits + ' results returned' : 'querying...'}
                         </span>
                       </span>

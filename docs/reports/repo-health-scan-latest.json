@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-17T17:23:49.662Z",
+  "generatedAt": "2026-09-18T19:51:54.646Z",
   "git": {
-    "sha": "b12f8c8d38dc9e5082f03e84acca55af419e37cb",
+    "sha": "38c545e4fa25db89b57761cfc0c4c49562063c7f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1957,7 +1957,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1027892
+        "bytes": 1029061
       },
       {
         "file": "shared/schema.ts",
@@ -1977,7 +1977,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 236355
+        "bytes": 236369
       },
       {
         "file": "server/statistics-service.ts",
@@ -1989,7 +1989,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 184081
+        "bytes": 184175
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2005,7 +2005,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 153184
+        "bytes": 154282
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2131,7 +2131,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19921
+        "lines": 19939
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2175,7 +2175,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3466
+        "lines": 3488
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2459,7 +2459,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1702
+        "lines": 1706
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
@@ -2471,7 +2471,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1657
+        "lines": 1665
       },
       {
         "file": "server/services/contradiction-engine-service.ts",

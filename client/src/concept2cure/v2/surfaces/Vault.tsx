@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
+import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
 import {
@@ -655,6 +656,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const results = searching
     ? (searchState.data?.results ?? []).map(searchHitToDoc)
     : folderDocs;
+  /* The vault document currently being filed into a submission, if any. The
+     tree id is `up-<uuid>`; the uuid is what a leaf names. */
+  const [filingIntoSubmission, setFilingIntoSubmission] = React.useState<
+    { documentUuid: string; documentTitle: string } | null
+  >(null);
+
   const sel =
     allDocs.find((d) => d.id === selId) || results[0] || allDocs[0] || null;
 
@@ -887,6 +894,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         >
           {(downloadNote ?? uploadNote)!.text}
         </div>
+      )}
+
+      {filingIntoSubmission && (
+        <VaultPlaceIntoSubmission
+          documentUuid={filingIntoSubmission.documentUuid}
+          documentTitle={filingIntoSubmission.documentTitle}
+          onClose={() => setFilingIntoSubmission(null)}
+        />
       )}
 
       {/* The filing cabinet is a WINDOW onto the vault, not the vault. Said
@@ -1134,6 +1149,44 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                         suggestion (with its confidence + rationale), or the
                         person's confirmed decision. Committing a change posts
                         to /file — governed, audited — and the tree re-reads. */}
+                    {/* ── Into a submission ──
+                        Dossier filing (below) decides where the document sits in
+                        the ROOM. This decides whether it goes in a FILING, which
+                        is a different question and used to have no answer at all:
+                        a customer could upload a CSR and then not put it in the
+                        NDA. The vault copy is filed as itself — no snapshot. */}
+                    <div className="vd-d-seclbl">Submission</div>
+                    <div className="vd-d-filing">
+                      <div className="vd-d-filing-row">
+                        <span className="k">Filing</span>
+                        <span className="v">
+                          File into an eCTD sequence. The leaf points at the vault copy, so
+                          what is assembled is what is stored here.
+                        </span>
+                      </div>
+                      {sel.docId && (
+                        <div className="vd-d-filing-acts">
+                          <button
+                            className="sp-primary"
+                            style={{ padding: '7px 11px' }}
+                            onClick={() =>
+                              setFilingIntoSubmission({
+                                // `docId` is vault.documents.id — the bare uuid the
+                                // download and filing actions already use. The tree id
+                                // beside it is `up-<uuid>`, and a leaf carrying that
+                                // prefix is refused server-side as a malformed uuid.
+                                documentUuid: sel.docId!,
+                                documentTitle: sel.title || sel.num || 'Vault document',
+                              })
+                            }
+                            data-testid="vault-place-into-submission"
+                          >
+                            {I.folder} Place into submission…
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="vd-d-seclbl">Dossier filing</div>
                     <div className="vd-d-filing" data-testid="vault-filing-block">
                       <div className="vd-d-filing-row">

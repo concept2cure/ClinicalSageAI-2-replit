@@ -271,14 +271,29 @@ describe('decision-lineage nodes: no node asserts Part 11 conformance nothing ch
       'applied-signature',
     ]);
 
+    /*
+     * WO-16C #70 follow-up, from an adversarial review of the #70 fix.
+     *
+     * An approved approval must NOT read COMPLETE. `workflow_approvals` has no
+     * signature column at all — status, assignedTo, completedBy, completedAt,
+     * comments — so the `signatureStatus: 'signed'` the service derives is an
+     * approval status relabelled, and this service never reads the real
+     * signature store. Counting it as the §11.50 element PRESENT is a
+     * signature manifestation nothing recorded: the same fabrication the fix
+     * narrowed, surviving inside the field that replaced it.
+     *
+     * The signature element is therefore never ASSESSED here, and a record
+     * whose other elements are present but whose signature was not checked is
+     * PARTIAL, not COMPLETE.
+     */
     const signed = g.nodes.find(n => n.id === 'approval-12')!;
-    expect(signed.regulatory.part11RecordCheck).toEqual({ status: 'COMPLETE', missing: [] });
+    expect(signed.regulatory.part11RecordCheck.status).toBe('PARTIAL');
+    expect(signed.regulatory.part11RecordCheck.missing).toEqual([]);
+    expect(signed.regulatory.part11RecordCheck.notAssessed).toEqual(['applied-signature']);
 
     const unattributed = g.nodes.find(n => n.id === `audit-${UNATTRIBUTED_DECISION_ROW.id}`)!;
-    expect(unattributed.regulatory.part11RecordCheck).toEqual({
-      status: 'INCOMPLETE',
-      missing: ['attributed-actor'],
-    });
+    expect(unattributed.regulatory.part11RecordCheck.status).toBe('INCOMPLETE');
+    expect(unattributed.regulatory.part11RecordCheck.missing).toContain('attributed-actor');
   });
 
   it('assessPart11Record is a pure function of the record, with no default pass', () => {
@@ -289,7 +304,7 @@ describe('decision-lineage nodes: no node asserts Part 11 conformance nothing ch
         performedAt: null,
         requiresSignature: false,
       }),
-    ).toEqual({ status: 'INCOMPLETE', missing: ['attributed-actor', 'recorded-timestamp'] });
+    ).toEqual({ status: 'INCOMPLETE', missing: ['attributed-actor', 'recorded-timestamp'], notAssessed: [] });
 
     expect(
       assessPart11Record({
@@ -298,7 +313,44 @@ describe('decision-lineage nodes: no node asserts Part 11 conformance nothing ch
         requiresSignature: true,
         signatureStatus: 'rejected',
       }),
-    ).toEqual({ status: 'INCOMPLETE', missing: ['applied-signature'] });
+    ).toEqual({ status: 'INCOMPLETE', missing: ['applied-signature'], notAssessed: [] });
+
+    /*
+     * WO-16C #70 follow-up. A record that REQUIRES a signature and that this
+     * service did not check does not prove one: no signature store is read
+     * here. The element is unchecked, so the record is PARTIAL — never
+     * COMPLETE, which would assert a §11.50 manifestation nothing recorded.
+     *
+     * Second follow-up review: `'signed'` is no longer a member of
+     * `SignatureStatus` at all, so the claim cannot be expressed. The two
+     * remaining ways to reach this branch — an explicit `not_assessed`, and a
+     * record that carries no status — both come back PARTIAL.
+     */
+    expect(
+      assessPart11Record({
+        performedBy: 'user-1',
+        performedAt: '2026-05-01T00:00:00.000Z',
+        requiresSignature: true,
+        signatureStatus: 'not_assessed',
+      }),
+    ).toEqual({ status: 'PARTIAL', missing: [], notAssessed: ['applied-signature'] });
+
+    expect(
+      assessPart11Record({
+        performedBy: 'user-1',
+        performedAt: '2026-05-01T00:00:00.000Z',
+        requiresSignature: true,
+      }),
+    ).toEqual({ status: 'PARTIAL', missing: [], notAssessed: ['applied-signature'] });
+
+    // Nothing required, everything present: the only way to COMPLETE.
+    expect(
+      assessPart11Record({
+        performedBy: 'user-1',
+        performedAt: '2026-05-01T00:00:00.000Z',
+        requiresSignature: false,
+      }),
+    ).toEqual({ status: 'COMPLETE', missing: [], notAssessed: [] });
   });
 });
 
@@ -314,7 +366,11 @@ describe('decision-lineage exports: the downloaded audit file repeats none of it
     expect(data).not.toContain('"awaiting_decision","reviewer-assigned-1"');
     expect(data).toContain('""assignedTo"":[""reviewer-assigned-1"",""reviewer-assigned-2""]');
     expect(data).toContain('Part 11 Record Elements');
-    expect(data).toContain('INCOMPLETE (attributed-actor; recorded-timestamp; applied-signature)');
+    // WO-16C #70 follow-up: the signature element is not checked here, so a
+    // pending approval is missing the actor and the time and carries the
+    // signature as unchecked — never as absent-or-satisfied.
+    expect(data).toContain('INCOMPLETE (missing: attributed-actor; recorded-timestamp');
+    expect(data).toContain('not assessed here: applied-signature');
   });
 
   it('XML marks the absent fields as absent rather than filling them', async () => {
@@ -326,7 +382,14 @@ describe('decision-lineage exports: the downloaded audit file repeats none of it
     expect(data).toContain('<performed-by attributed="false" />');
     expect(data).toContain('<performed-at recorded="false" />');
     expect(data).toContain('<part11-record-elements status="INCOMPLETE"');
-    expect(data).toContain('<part11-record-elements status="COMPLETE" missing="" />');
+    // An approved approval is PARTIAL: nothing missing, signature unchecked.
+    expect(data).toContain(
+      '<part11-record-elements status="PARTIAL" missing="" not-assessed="applied-signature" />',
+    );
+    // A record needing no signature and carrying actor + time is legitimately
+    // COMPLETE; what must not appear is a COMPLETE on one that required a
+    // signature this service never checked.
+    expect(data).not.toMatch(/status="COMPLETE"[^>]*not-assessed="applied-signature"/);
   });
 
   it('JSON carries null, not a stand-in a machine reader would trust', async () => {
@@ -339,5 +402,90 @@ describe('decision-lineage exports: the downloaded audit file repeats none of it
     expect(pending.performedBy).toBeNull();
     expect(pending.performedAt).toBeNull();
     expect(data).not.toContain('"cfr11Compliant"');
+  });
+});
+
+describe('decision-lineage nodes: GxP relevance and signature status are read, never assumed', () => {
+  /*
+   * WO-16C #70, second follow-up review.
+   *
+   * Two fields survived the first fix with a value nothing recorded.
+   *
+   *   `regulatory.gxpRelevant` was the literal `true` at ALL FIVE node
+   *   constructors. Three of the four source tables have no such column —
+   *   `workflow_approvals`, `workflow_history` and `document_audit_logs` each
+   *   carry id/action/actor/time/details and nothing else — so the flag was
+   *   asserted for every row from them. The compliance report at
+   *   GET /api/decision-lineage/compliance-report counts it:
+   *   `gxpRelevantRecords: allDecisions.filter(d => d.regulatory.gxpRelevant).length`,
+   *   which therefore always equalled `totalDecisionRecords`. A statistic that
+   *   can only ever print one value measures nothing.
+   *
+   *   `regulatory.signatureStatus` reported `'signed'` for every approved
+   *   approval. `workflow_approvals` has no signature column, and this service
+   *   reads no signature store; the value was `status === 'approved'`
+   *   relabelled as a §11.50 manifestation. The same report counted it as
+   *   `signaturesSigned`.
+   */
+  it('leaves gxpRelevant null for rows from tables that do not record it', async () => {
+    const g = await graph();
+
+    for (const id of ['approval-11', 'approval-12', 'history-21', 'docaudit-31']) {
+      const n = g.nodes.find(x => x.id === id)!;
+      expect(n, `${id} must be in the graph`).toBeDefined();
+      expect(
+        n.regulatory.gxpRelevant,
+        `${id} comes from a table with no GxP-relevance column, so nothing can assert one`,
+      ).toBeNull();
+    }
+  });
+
+  it('reads gxpRelevant from the audit record where the record carries it', async () => {
+    // recordDecision writes the caller's flag into `details`, which auditService
+    // stores in new_values. Both values round-trip; a row without the key is null.
+    setRows(auditLogs, [
+      { ...UNATTRIBUTED_DECISION_ROW, id: 'row-gxp-true', newValues: { decisionId: 'D1', gxpRelevant: true } },
+      { ...UNATTRIBUTED_DECISION_ROW, id: 'row-gxp-false', newValues: { decisionId: 'D2', gxpRelevant: false } },
+      { ...UNATTRIBUTED_DECISION_ROW, id: 'row-gxp-absent', newValues: { decisionId: 'D3' } },
+    ]);
+    const g = await graph();
+
+    expect(g.nodes.find(n => n.id === 'audit-row-gxp-true')!.regulatory.gxpRelevant).toBe(true);
+    expect(g.nodes.find(n => n.id === 'audit-row-gxp-false')!.regulatory.gxpRelevant).toBe(false);
+    expect(g.nodes.find(n => n.id === 'audit-row-gxp-absent')!.regulatory.gxpRelevant).toBeNull();
+  });
+
+  it('never reports an approved approval as signed', async () => {
+    const g = await graph();
+
+    const signed = g.nodes.find(n => n.id === 'approval-12')!;
+    expect(signed.regulatory.signatureStatus).not.toBe('signed');
+    expect(signed.regulatory.signatureStatus).toBe('not_assessed');
+
+    // The two statuses that ARE positive statements about the signature keep
+    // saying so: a step nobody has acted on carries no signature, and a
+    // rejected one was not signed.
+    expect(g.nodes.find(n => n.id === 'approval-11')!.regulatory.signatureStatus).toBe('pending');
+  });
+
+  it('the exports print the absence rather than a Yes or a signature', async () => {
+    const csv = (await decisionLineageService.exportLineage('artifact', 42, 'csv', 7)).data;
+    const xml = (await decisionLineageService.exportLineage('artifact', 42, 'xml', 7)).data;
+
+    // Every row of this fixture comes from a table with no GxP-relevance
+    // column, so the "GxP Relevant" cell — column 8 — says so on every row. It
+    // used to read "Yes" on every row instead, for the same reason.
+    const dataRows = csv.split('\n').filter(l => l.startsWith('"'));
+    expect(dataRows.length).toBeGreaterThan(0);
+    for (const row of dataRows) {
+      expect(row.split('","')[7], `GxP cell of ${row.slice(0, 24)}`).toBe('not recorded in source');
+    }
+    expect(csv).toContain('"not assessed here"');
+    expect(csv).not.toContain('"signed"');
+
+    expect(xml).not.toContain('<gxp-relevant>true</gxp-relevant>');
+    expect(xml).toContain('<gxp-relevant recorded="false" />');
+    expect(xml).toContain('<signature-status>not_assessed</signature-status>');
+    expect(xml).not.toContain('<signature-status>signed</signature-status>');
   });
 });
