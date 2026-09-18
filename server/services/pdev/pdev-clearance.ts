@@ -31,7 +31,7 @@ import { db } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import type { PdevActivityState } from './pdev-activity-registry';
-import { recordAuditRow, type PdevAuditRecordOutcome } from './pdev-audit-record';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 
 const logger = createScopedLogger('pdev-clearance');
 
@@ -68,9 +68,9 @@ export interface IndClearanceResult {
    * the last place that should be silent about its own record.
    *
    * The outcome shape is the one pdev-workflow-bridge already carries, from the
-   * shared ./pdev-audit-record — not a second copy of it.
+   * shared ../audit/audit-write-outcome — not a second copy of it.
    */
-  audit?: PdevAuditRecordOutcome;
+  audit?: AuditRowOutcome;
 }
 
 /**

@@ -846,10 +846,17 @@ export function V2App() {
              to say so until she finished. */
           streaming={anaChat.isStreaming}
           runStatus={anaChat.runStatus}
-          onPause={() => void anaChat.pause()}
-          onResume={() => void anaChat.resume()}
-          onStop={() => anaChat.stop()}
-          onSteer={(m) => anaChat.interject(m)}
+          /* Pause, resume and steer are offered only once a controllable run
+             exists — runStatus stays null until `run_started` arrives, and a
+             turn that opened no run row (no resolvable tenant) never sends one.
+             Rendering them regardless would put buttons on screen that quietly
+             do nothing, which is the failure this strip was added to end.
+             Stop is unconditional: it aborts the client's own request, which
+             works whether or not the server opened a run. */
+          onPause={anaChat.runStatus ? () => void anaChat.pause() : undefined}
+          onResume={anaChat.runStatus ? () => void anaChat.resume() : undefined}
+          onStop={() => void anaChat.stop()}
+          onSteer={anaChat.runStatus ? (m) => anaChat.interject(m) : undefined}
           /* The live work dock reads the raw turns: progress phases, tool
              timings, pending steers and outputs that the adapted rail message
              shape does not carry. */
@@ -887,7 +894,7 @@ export function V2App() {
         activity={driveActivity}
         narration={ownsConversation ? driveNarration : undefined}
         onTakeOver={takeOverDrive}
-        onStop={() => anaChat.stop()}
+        onStop={() => void anaChat.stop()}
         /* Interactivity without surrender: a question or steer typed into the
            strip lands mid-run (the run-control interject) — AnA answers and
            continues driving; the person never has to take over just to speak. */

@@ -201,6 +201,56 @@ make the middleware refuse rather than pass `''`; (b) add the explicit org join 
 `advancedRAGPipeline.ts:895,:935` — unconditional, cheap, no schema change, and the correct fix
 regardless; (c) only then `FORCE`.
 
+> **Progress 2026-09-18. (b) is done; (a) is now PROVEN rather than assumed, and the
+> answer corrects a comment that would have misled whoever did (c).**
+>
+> `server/middleware/__tests__/tenant-scope-org-guc.test.ts` pins what the GUC actually
+> receives, including the two middlewares composed exactly as `middleware/auth.ts:183`
+> composes them:
+>
+> - **The uuid DOES reach `app.current_org_id`.** `enforceOrgMembership` resolves
+>   `organizations.uuid` in its membership LEFT JOIN, `attachOrgUuid` puts it on
+>   `req.user.organizationUuid` immediately before calling `next()`, and that `next()`
+>   IS `establishRequestTenantScope`, whose `resolveOrgUuid` reads exactly that field.
+>
+> - **`orgMembership.ts` said the opposite**, in a note ending "it is NOT wired into
+>   `app.current_org_id`, which the identity-FK family would deny-all against until the
+>   C-48 unification lands." That is false and was not harmless: it describes the GUC the
+>   vault's policies resolve a programme against, so anyone planning (c) — or C-48 — would
+>   have been reasoning from it. Corrected in place, with the test named beside it.
+>
+> - **The residual risk is narrower than §4.4 assumed, and still real.** The empty string
+>   is written only when the membership lookup resolves NO uuid — an organisation row
+>   without one, or an enrichment JOIN that fell back (which `orgMembership` deliberately
+>   declines to cache, so it self-heals). Under `FORCE` those requests read an EMPTY VAULT.
+>   Not a leak: an outage that looks like "this customer has no documents".
+>
+> So (a) is no longer "prove the GUC works". It is the narrower, answerable question: can
+> a member's organisation resolve no uuid on a deployed database?
+>
+> **Answered: no, not in steady state.** `organizations.uuid` is
+> `uuid DEFAULT gen_random_uuid() NOT NULL` at the database level
+> (`migrations/0000_sweet_joseph.sql:4188`) and `.notNull()` in the Drizzle model
+> (`shared/schema.ts:155`). Every organisation row has one, guaranteed by the column.
+> So the membership LEFT JOIN returns null only when
+>
+>   1. the JOIN itself failed at runtime — which `orgMembership` detects, refuses to
+>      cache, and self-heals from on the next request; or
+>   2. `organizations` is absent from the schema module, which is a partial-schema dev
+>      fixture, not a deployed database.
+>
+> **What that means for (c).** The `''` risk is a TRANSIENT window, not a structural
+> gap — so `FORCE` is much closer to the one-line `ALTER` §4.4 took it for than this
+> section feared. The honest remainder: during such a window a FORCEd vault reads EMPTY
+> for the affected requests, which is the worst-shaped failure available ("this customer
+> has no documents"). The mitigation is small and precise — have the middleware REFUSE
+> rather than pass `''` — and it must land **with** `FORCE`, not before: today those
+> requests succeed because ENABLE-only policies never run for the owner role, so
+> refusing now would break working requests to pre-empt a risk that does not yet exist.
+>
+> Deliberately NOT done here for that reason. (c) is now a two-line change with a stated
+> order, rather than an unquantified risk.
+
 ### 4.5 A vault document can never become a submission — **CLOSED 2026-09-17**
 
 > **This gap is closed.** A vault document can now be filed into a submission and

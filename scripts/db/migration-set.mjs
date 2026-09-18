@@ -359,6 +359,12 @@ export const C2C_MIGRATION_FILES = [
   // guarded (CREATE/ALTER ... IF NOT EXISTS), so idempotent where push already
   // provisioned them.
   'db/migrations/20260725_submission_orchestrator_store_port.sql',
+  /* Immediately after the port, which is the only file on this applier that
+     creates submission_orchestrator_runs with the narrow four-value region
+     CHECK — so the DROP-then-ADD below always has that constraint to replace on
+     a bare database, and never runs before its table exists. The live state on a
+     pushed database is no CHECK at all; see the file's 2026-09-18 header. */
+  'migrations/20260629_orchestrator_region_check_alignment.sql',
   'db/migrations/20260725_esig_gate_columns_port.sql',
   'db/migrations/20260725_users_signing_lockout_columns.sql',
 
@@ -2287,6 +2293,22 @@ export const C2C_MIGRATION_FILES = [
   // policies it — and above the uuid step too, because ci:migration-set-order
 // pins the FINAL PAIR to the two isolation steps. See ADR-0007 point 6.
   'db/migrations/20260910_contradiction_links_port.sql',
+
+  // ── ana_runs: a live AnA turn survives the process that started it ───────
+  // Run control lived in a process-local Map with a 30-minute TTL, so pausing
+  // or stopping her 404'd after a restart and, on a second instance without
+  // sticky routing, never bound to the right run at all. public +
+  // organization_id INTEGER NOT NULL, so the sweep below policies it — and
+  // ABOVE that sweep, because a table ordered after it is never swept, ships
+  // with no RLS policy, and the policy COUNT still goes up, which is what makes
+  // the mistake invisible without ci:migration-set-order.
+  'db/migrations/20260917_ana_runs.sql',
+  // ── RBM author attribution, for the Part 11 two-person rule ──────────────
+  // rbm_risk_assessments and rbm_monitoring_plans shipped with approved_by and
+  // no created_by, so the approval path could not ask whether the signer was
+  // the author. Additive and IF NOT EXISTS, so it replays as a no-op; above the
+  // final pair because ci:migration-set-order pins those two last.
+  'migrations/20260918_rbm_author_attribution.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

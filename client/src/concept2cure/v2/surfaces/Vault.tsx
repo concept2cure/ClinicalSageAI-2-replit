@@ -1157,21 +1157,34 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                         NDA. The vault copy is filed as itself — no snapshot. */}
                     <div className="vd-d-seclbl">Submission</div>
                     <div className="vd-d-filing">
-                      <div className="de-desc" style={{ marginBottom: 8 }}>
-                        File this document into an eCTD sequence. The leaf points at the vault
-                        copy, so what is assembled is what is stored here.
+                      <div className="vd-d-filing-row">
+                        <span className="k">Filing</span>
+                        <span className="v">
+                          File into an eCTD sequence. The leaf points at the vault copy, so
+                          what is assembled is what is stored here.
+                        </span>
                       </div>
-                      <button
-                        className="sp-btn"
-                        onClick={() =>
-                          setFilingIntoSubmission({
-                            documentUuid: String(sel.id).replace(/^up-/, ''),
-                            documentTitle: sel.title || sel.num || 'Vault document',
-                          })
-                        }
-                      >
-                        {I.folder} Place into submission…
-                      </button>
+                      {sel.docId && (
+                        <div className="vd-d-filing-acts">
+                          <button
+                            className="sp-primary"
+                            style={{ padding: '7px 11px' }}
+                            onClick={() =>
+                              setFilingIntoSubmission({
+                                // `docId` is vault.documents.id — the bare uuid the
+                                // download and filing actions already use. The tree id
+                                // beside it is `up-<uuid>`, and a leaf carrying that
+                                // prefix is refused server-side as a malformed uuid.
+                                documentUuid: sel.docId!,
+                                documentTitle: sel.title || sel.num || 'Vault document',
+                              })
+                            }
+                            data-testid="vault-place-into-submission"
+                          >
+                            {I.folder} Place into submission…
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="vd-d-seclbl">Dossier filing</div>

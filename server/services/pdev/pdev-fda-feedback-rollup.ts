@@ -40,7 +40,7 @@ import {
   type PdevActivity,
   type PdevActivityState,
 } from './pdev-activity-registry';
-import { recordAuditRow, type PdevAuditRecordOutcome } from './pdev-audit-record';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 
 const logger = createScopedLogger('pdev-fda-feedback-rollup');
 
@@ -111,9 +111,9 @@ export interface PdevFdaFeedbackApplyResult {
      * `POST /api/pdev/programs/:programId/fda-feedback/apply`.
      *
      * The outcome shape is the one pdev-clearance and pdev-workflow-bridge
-     * already carry, from the shared ./pdev-audit-record — not a third copy.
+     * already carry, from the shared ../audit/audit-write-outcome — not a third copy.
      */
-    audit: PdevAuditRecordOutcome;
+    audit: AuditRowOutcome;
   }>;
   skipped: Array<{
     commitmentId: string;
