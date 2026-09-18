@@ -912,11 +912,24 @@ export async function pdevIndAssemblyCompile(
       readinessThreshold: numParam(params, 'readinessThreshold') ?? undefined,
       force: boolParam(params, 'force'),
     });
-    // WO-16C #133 (follow-up review): the most consequential PDEV verb, and the
-    // one whose audit row records both the compile AND a `forced: true` override
-    // of the readiness floor. Both return arms below carry the outcome — the
-    // refusal arm too, because the row it writes is the record that a compile
-    // was attempted below threshold.
+    /*
+     * WO-16C #133 (follow-up review). TWO §11.10(e) rows are written per call
+     * and both arms below carry both, under distinct keys.
+     *
+     * `agentAuditTrail` is THIS handler's row — that AnA invoked the compile.
+     * `ectdAuditTrail` is the SERVICE's row — the `pdev_ectd_compiled` /
+     * `pdev_ectd_compile_refused` entry, which is the one that records the
+     * compile itself and a `forced: true` override of the readiness floor.
+     *
+     * The first version of this conversion reported only the agent row, and
+     * because `auditNote` returns '' when its argument persisted, a run where
+     * the agent row landed and the SERVICE row was lost produced a tool
+     * response with no audit note at all — a positive "record is fine" signal
+     * about a record that does not exist. Reporting an outcome for a different
+     * row than the one that failed is worse than reporting none, so they are
+     * named separately, exactly as pdev-routes.ts keeps the state-change row
+     * distinct from the clearance row.
+     */
     const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
@@ -934,19 +947,20 @@ export async function pdevIndAssemblyCompile(
       return {
         success: false,
         action,
-        message: `${result.refusalReason ?? 'Readiness too low to compile.'}${auditNote(agentAuditTrail)}`,
+        message: `${result.refusalReason ?? 'Readiness too low to compile.'}${auditNote(agentAuditTrail)}${result.audit ? auditNote(result.audit) : ''}`,
         error: 'READINESS_TOO_LOW',
         data: {
           readinessSnapshot: result.readinessSnapshot,
           thresholdApplied: result.thresholdApplied,
           agentAuditTrail,
+          ectdAuditTrail: result.audit,
         },
       };
     }
     return {
       success: true,
       action,
-      message: `Compiled ${result.package?.filename} (${result.package?.sizeBytes} bytes). Readiness ${result.readinessSnapshot.overallReadiness}%. eCTD assembly readiness — not new publishing.${auditNote(agentAuditTrail)}`,
+      message: `Compiled ${result.package?.filename} (${result.package?.sizeBytes} bytes). Readiness ${result.readinessSnapshot.overallReadiness}%. eCTD assembly readiness — not new publishing.${auditNote(agentAuditTrail)}${result.audit ? auditNote(result.audit) : ''}`,
       data: {
         filename: result.package?.filename,
         sizeBytes: result.package?.sizeBytes,
@@ -955,6 +969,7 @@ export async function pdevIndAssemblyCompile(
         thresholdApplied: result.thresholdApplied,
         forced: result.forced,
         agentAuditTrail,
+        ectdAuditTrail: result.audit,
       },
     };
   } catch (err) {
@@ -973,19 +988,24 @@ export async function pdevReadinessSnapshot(
   const programIdOrErr = requireProgramId(action, params);
   if (typeof programIdOrErr !== 'string') return programIdOrErr;
   try {
-    const report = await pdevReadinessService.snapshot(
+    const snapshot = await pdevReadinessService.snapshot(
       programIdOrErr,
       ctx.organizationId,
       ctx.userId,
       'manual'
     );
-    if (!report) {
+    if (!snapshot) {
       return { success: false, action, message: 'Program not found in tenant.', error: 'NOT_FOUND' };
     }
-    // WO-16C #133 (follow-up review): the snapshot rows are already persisted
-    // and the readiness percentage is already computed, so the handler quoted a
-    // number that a reader would later try to tie back to an audit entry that
-    // may not exist. `agentAuditTrail` says whether it does.
+    /*
+     * WO-16C #133 (follow-up review), and what the review of that conversion
+     * found behind it. `agentAuditTrail` says whether the §11.10(e) row exists.
+     * `snapshot.persisted` says whether the SNAPSHOT does — the service used to
+     * swallow its own INSERT failure and return the computed report, so this
+     * handler said "Snapshotted readiness; overall N%" for a snapshot no table
+     * contained. Materializing those rows is the action here, so a failed write
+     * is not a success with a footnote.
+     */
     const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
@@ -993,14 +1013,28 @@ export async function pdevReadinessSnapshot(
       resourceType: 'regulatory_program',
       resourceId: programIdOrErr,
       details: { ...agentAuditDetails(ctx, gate),
-        overallReadiness: report.overall.readinessScore,
+        overallReadiness: snapshot.report.overall.readinessScore,
+        rowsPersisted: snapshot.persisted,
+        rowsAttempted: snapshot.rowsAttempted,
       },
     });
+    if (!snapshot.persisted) {
+      return {
+        success: false,
+        action,
+        message:
+          `Readiness computed at ${snapshot.report.overall.readinessScore}%, but the snapshot could not be stored — ` +
+          `there is nothing to read back or trend, and nothing was recorded as a snapshot. ` +
+          `This has been logged for follow-up.${auditNote(agentAuditTrail)}`,
+        error: 'SNAPSHOT_NOT_PERSISTED',
+        data: { report: snapshot.report, persisted: false, agentAuditTrail },
+      };
+    }
     return {
       success: true,
       action,
-      message: `Snapshotted readiness; overall ${report.overall.readinessScore}%.${auditNote(agentAuditTrail)}`,
-      data: { report, agentAuditTrail },
+      message: `Snapshotted readiness; overall ${snapshot.report.overall.readinessScore}%.${auditNote(agentAuditTrail)}`,
+      data: { report: snapshot.report, persisted: true, agentAuditTrail },
     };
   } catch (err) {
     return mapServiceError(action, err);
