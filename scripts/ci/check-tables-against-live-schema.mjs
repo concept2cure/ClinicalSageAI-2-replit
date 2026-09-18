@@ -91,6 +91,7 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { sslFor } from '../db/connection.mjs';
 import { referencedTables } from './check-migration-reachability.mjs';
+import { classifyBaselineDrift } from './lib/baseline-drift.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -274,7 +275,17 @@ try {
     !strict && fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, 'utf8')) : { tables: {} };
   const baselined = new Set(Object.keys(baseline.tables || {}));
   const added = absent.filter((t) => !baselined.has(t));
-  const resolvedSince = [...baselined].filter((t) => !absent.includes(t));
+  /* Two different facts, not one — see scripts/ci/lib/baseline-drift.mjs. A
+     baselined name leaves the absent set either because it now RESOLVES or
+     because nothing REFERENCES it any more. This used to be one filter reported
+     as "now exist", which on 2026-09-18 named eight tables that did not exist:
+     they dropped out when 153481465 deleted /api/design-risk and its queries. */
+  const { nowExists, noLongerReferenced } = classifyBaselineDrift({
+    baselined,
+    referenced: new Set(names),
+    absent,
+  });
+  const resolvedSince = [...nowExists, ...noLongerReferenced];
 
   if (jsonOut) {
     fs.writeFileSync(
@@ -294,11 +305,20 @@ try {
     );
   }
 
-  if (resolvedSince.length) {
+  if (nowExists.length) {
     console.log(
-      `${TAG} ✅ ${resolvedSince.length} baselined table(s) now exist — remove them from the baseline to ratchet down:`,
+      `${TAG} ✅ ${nowExists.length} baselined table(s) NOW EXIST on the live database ` +
+        '— remove them from the baseline to ratchet down:',
     );
-    for (const t of resolvedSince.slice(0, 20)) console.log(`    • ${t}`);
+    for (const t of nowExists.slice(0, 20)) console.log(`    • ${t}`);
+  }
+  if (noLongerReferenced.length) {
+    console.log(
+      `${TAG} ✅ ${noLongerReferenced.length} baselined table(s) are NO LONGER REFERENCED by ` +
+        'server SQL — the querying code was removed, so they are out of scope. They were ' +
+        'NOT created; remove them from the baseline to ratchet down:',
+    );
+    for (const t of noLongerReferenced.slice(0, 20)) console.log(`    • ${t}`);
   }
 
   if (added.length === 0) {

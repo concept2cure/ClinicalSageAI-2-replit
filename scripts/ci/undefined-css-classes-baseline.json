@@ -1,0 +1,24 @@
+{
+  "_comment": [
+    "Class names used in a v2 surface that no stylesheet defines, and which are",
+    "CORRECT anyway. A class with no rule is not automatically a defect: it can be",
+    "a semantic hook on an element styled entirely inline, or a modifier whose",
+    "sibling is styled and which is deliberately neutral. What is a defect is an",
+    "element that was meant to be styled and is not, and no scanner can tell those",
+    "apart — so each entry here names why it is fine.",
+    "An entry without a reason is the thing this file exists to prevent.",
+    "See scripts/ci/check-undefined-css-classes.mjs."
+  ],
+  "allow": [
+    {
+      "className": "es-manifest-row",
+      "file": "client/src/concept2cure/v2/surfaces/AuthoringSignatures.tsx",
+      "reason": "A naming hook only. The element carries its entire layout in an inline style attribute (grid, columns, gap, padding, font-size), so there is nothing for a rule to add. Retire this entry by moving that inline style into a real .es-manifest-row rule."
+    },
+    {
+      "className": "up",
+      "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+      "reason": "A deliberately neutral modifier. `.tb-dep-row.dn svg` is coloured with --warning because 'blocks' is the alarming direction; 'depends on' carries `up` and is intentionally left at the default colour. The class marks the direction for readers and for any future rule."
+    }
+  ]
+}

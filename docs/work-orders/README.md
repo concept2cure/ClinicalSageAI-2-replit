@@ -24,6 +24,7 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
 | WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | `KNOWN_UNLISTED` triage — 10 entries, 16 tables | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed, all ten now on the applier |
+| Schema authority — live-schema baseline + the 61 tables behind it | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **active** — gate fixed, baseline 70→61; the 57 no-creator entries remain |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 
 If you are one of the sessions above, correct your own row. If a lane you want
@@ -46,6 +47,38 @@ another lane. Clearing them puts the gate back at 6549 with nothing else needed.
 `ci:eslint-warning-ratchet` one over its baseline. It was paid down elsewhere rather than
 in your file, so the gate is green and the function is untouched — but it is still two
 warnings you own. Splitting the per-document body out of the loop clears both.
+
+**Live-schema baseline — where it stands, and the trap in it.** Ratcheted
+70 → 61 on 2026-09-18 (`e6b769525`). The 61 remaining are real: server SQL
+referencing relations a full `install-fresh` + `deploy-migrate` does not
+produce. Categorised with exact schema-qualified matching:
+
+| | |
+|---|---|
+| created by a file already in the set, yet absent | **0** |
+| created by SQL on no applier — *looks* listable | 4 |
+| created by nothing anywhere in the repo | 57 |
+
+**Do not simply list those 4.** Checked one at a time, none should be:
+
+- `assembly_docs`, `assembly_audit_logs` (`db/migrations/20260130_*`) — an
+  explicit, dated decision already exists at `server/db/ensureCoreTables.ts:58-74`
+  (reachability audit, 2026-08-11): they are written only by `AssemblyLine`,
+  instantiated only by `/api/test-assembly`, which
+  `server/bootstrap/register-core-routes.ts:50` mounts only when
+  `testRoutesEnabled`. **Test scaffolding, not production schema.** Verified
+  still true 2026-09-18. Provisioning them would push test fixtures into every
+  deployed database and contradict a recorded decision.
+- `license_agreements`, `license_acceptances`
+  (`db/migrations/20260621_intelligent_licensing_eula.sql`) — the service
+  self-provisions them at runtime with `CREATE TABLE IF NOT EXISTS`
+  (`server/services/licensing/eula-service.ts:113,131`). Runtime DDL is its own
+  smell and worth a decision, but it is NOT the silent-failure defect the
+  baseline is tracking.
+
+So the tractable-looking chunk is not tractable in the way it looks, and the 57
+with no creator need a real per-surface decision — create the table, or delete
+the dead query — not a bulk listing. That is the next piece of this lane.
 
 ---
 
