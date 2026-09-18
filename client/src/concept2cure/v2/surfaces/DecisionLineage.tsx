@@ -10,6 +10,7 @@ import {
   // map (label/icon/tone per nodeType) and the regulatory-framework catalog.
   LINEAGE_NODE_TYPES,
   LINEAGE_FRAMEWORKS,
+  type LineageFrameworkAssessment,
   type LineageGraph,
   type LineageNode,
   type LineageNodeTypeConfig,
@@ -28,6 +29,14 @@ function dlTime(iso: string): string {
     return iso;
   }
 }
+
+/** How each framework standing reads in the aside. Never "attested". */
+const FW_STATUS_LABEL: Record<LineageFrameworkAssessment['status'], string> = {
+  COMPLIANT: 'Chain verified',
+  REVIEW_REQUIRED: 'Chain verification failed — review required',
+  UNVERIFIABLE: 'Chain verifier could not run',
+  NOT_ASSESSED: 'Not assessed by this trail',
+};
 
 function dlActionLabel(a: string): string {
   return String(a || '')
@@ -100,7 +109,13 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
   const nodes: LineageNode[] = (g && g.nodes) || [];
   const md = (g && g.metadata) || { totalDecisions: 0, totalApprovals: 0, totalRejections: 0, totalDelegations: 0 };
 
-  const openDecisions = useMemo(
+  /* WO-16C #70, second follow-up review. `signatureStatus === 'pending'` is an
+     approval step nobody has decided yet — `workflow_approvals.status`, which
+     carries no signature information at all. These are steps AWAITING A
+     DECISION, and the surface now says that rather than "pending signature";
+     the server no longer emits a 'signed' value for this field, because
+     nothing here reads a signature store. */
+  const awaitingDecisionNodes = useMemo(
     () =>
       nodes.filter(
         (n) =>
@@ -113,47 +128,76 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
   );
 
   const isLocked = nodes.some((n) => n.action === 'locked');
-  const pendingSig = openDecisions.length > 0;
+  const awaitingDecision = awaitingDecisionNodes.length > 0;
+
+  /* The per-framework standings the SERVER computed for this trail, joined to
+     the section citations in the reference catalogue. A framework the server
+     does not send is not shown; the catalogue supplies citations, never a
+     status. */
+  const frameworkRows = useMemo(() => {
+    const assessed: LineageFrameworkAssessment[] = (md as { complianceFrameworks?: LineageFrameworkAssessment[] })
+      .complianceFrameworks ?? [];
+    return assessed.map((a) => ({
+      framework: a.framework,
+      status: a.status,
+      sections: LINEAGE_FRAMEWORKS.find((f) => f.framework === a.framework)?.sections ?? [],
+    }));
+  }, [md]);
   const lastNode = nodes[nodes.length - 1] || ({} as LineageNode);
 
-  /* answer-first verdict */
+  /* answer-first verdict.
+
+     WO-16C #70, second follow-up review. The locked branch used to open "This
+     artifact is fully defensible … all Part-11 signed", and close "with the
+     electronic signature manifestation attached. The chain is cryptographically
+     verified." Three assertions, none of them checked: `isLocked` is only
+     `nodes.some(n => n.action === 'locked')`, no signature store is read on
+     this surface or in the service behind it, and the chain result lives in
+     `chainState` — which this text did not consult and which can be
+     unverifiable. The awaiting branch called the open step "approved, pending
+     electronic signature"; a step with `signatureStatus === 'pending'` has not
+     been approved, it has not been decided.
+
+     What each branch says now is what the trail records. The chain verdict is
+     rendered from the live result in the panel beside it, once. */
   const lead = isLocked
     ? {
         tone: 'good' as const,
         h: (
           <>
-            This artifact is <b>fully defensible</b>. Every step from creation to lock is on an
-            immutable, hash-chained record — {md.totalDecisions} governed decision
-            {md.totalDecisions === 1 ? '' : 's'}, {md.totalApprovals} approval
-            {md.totalApprovals === 1 ? '' : 's'}, all Part-11 signed.
+            This artifact&apos;s decision trail runs <b>through to lock</b> — {md.totalDecisions}{' '}
+            governed decision{md.totalDecisions === 1 ? '' : 's'} and {md.totalApprovals} approval
+            {md.totalApprovals === 1 ? '' : 's'}, ending in a lock record.
           </>
         ),
         b: (
           <>
             If an inspector asks &quot;how did this document come to say what it says?&quot;, this is
-            the answer — traceable back to the locked source evidence, with the electronic signature
-            manifestation attached. The chain is cryptographically verified.
+            the trail — each step with the actor and the time its own record carries. Whether a
+            binding §11 signature was applied is not read here; the hash-chain result is in the
+            panel on the right.
           </>
         ),
         re: 'Nothing here was reconstructed after the fact — each record was written when the action happened and cannot be altered without breaking the chain.',
       }
-    : pendingSig
+    : awaitingDecision
       ? {
           tone: 'calm' as const,
           h: (
             <>
-              The trail is clean and complete — it just needs the final signature.{' '}
-              {md.totalDecisions} decision{md.totalDecisions === 1 ? '' : 's'} recorded, the last
-              is <b>approved, pending electronic signature</b>.
+              The trail is <b>open</b> — {md.totalDecisions} decision
+              {md.totalDecisions === 1 ? '' : 's'} recorded, {awaitingDecisionNodes.length} step
+              {awaitingDecisionNodes.length === 1 ? '' : 's'} still awaiting a decision.
             </>
           ),
           b: (
             <>
-              Everything up to the lock is defensible and hash-chained. One Part-11 signature
-              (§11.50) closes the loop and locks the record. I can route it to the signer.
+              Every step recorded so far is on the hash-chained audit store. Once the open step is
+              decided, a binding §11 signature is applied in the authoring workspace — this surface
+              records the decision, it does not read the signature.
             </>
           ),
-          re: 'The revision that reviewer requested is captured in the trail too — better the reviewer sees you addressed it than wonders if you did.',
+          re: 'A revision a reviewer requested is captured in the trail too — better the reviewer sees you addressed it than wonders if you did.',
         }
       : {
           tone: 'calm' as const,
@@ -311,6 +355,9 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
           // up; the picker was reading it raw, which is the asymmetry.
           const xNodes = (x && x.nodes) || [];
           const locked = xNodes.some((n) => n.action === 'locked');
+          // `signatureStatus === 'pending'` is an undecided approval step, not
+          // a signature waiting to be applied — see the note on
+          // awaitingDecisionNodes above.
           const pend = xNodes.some(
             (n) => n.regulatory && n.regulatory.signatureStatus === 'pending',
           );
@@ -326,7 +373,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                   'dl-pick-st ' + (locked ? 'locked' : pend ? 'pending' : 'open')
                 }
               >
-                {locked ? 'Locked' : pend ? 'Pending signature' : 'In review'}
+                {locked ? 'Locked' : pend ? 'Awaiting decision' : 'In review'}
               </span>
             </button>
           );
@@ -472,15 +519,25 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                                 : 'Part 11 record incomplete'}
                           </span>
                         )}
+                        {/* WO-16C #70, second follow-up review: the 'Signed'
+                            badge came from `status === 'approved'` relabelled.
+                            No signature store is read on this surface or in the
+                            service behind it, so the only honest readings are
+                            "no signature, and here is why" and "not checked". */}
                         {n.regulatory && n.regulatory.requiresSignature && (
-                          <span className={'dl-badge sig ' + (sigStatus || '')}>
-                            {sigStatus === 'signed'
-                              ? 'Signed'
-                              : sigStatus === 'pending'
-                                ? 'Signature pending'
-                                : sigStatus === 'rejected'
-                                  ? 'Signature rejected'
-                                  : 'Signature required'}
+                          <span
+                            className={'dl-badge sig ' + (sigStatus || 'not_assessed')}
+                            title={
+                              sigStatus === 'pending' || sigStatus === 'rejected'
+                                ? 'The source record positively shows no signature has been applied.'
+                                : 'This surface reads no signature store, so it cannot say whether a §11.50 signature was applied. The authoring workspace holds the binding signatures.'
+                            }
+                          >
+                            {sigStatus === 'pending'
+                              ? 'Unsigned — awaiting decision'
+                              : sigStatus === 'rejected'
+                                ? 'Unsigned — rejected'
+                                : 'Signature not checked here'}
                           </span>
                         )}
                         {n.recordHash && (
@@ -528,13 +585,31 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                     Hash chain {chain.chainIntegrity === 'VERIFIED' ? 'verified' : 'unverified'}
                   </span>
                 </div>
+                {/* WO-16C #70, second follow-up review: this sentence printed
+                    "N audit entries cryptographically verified — tamper-evident"
+                    beside the words "Hash chain unverified" whenever the
+                    verifier came back INTEGRITY_FAILURE, which is a 200. A
+                    failed verification verified nothing; it found a break. */}
                 <p className="dl-verify-b">
-                  {(chain.entriesVerified || 0).toLocaleString()} audit entries cryptographically
-                  verified — tamper-evident. Any alteration to a past record breaks the chain and
-                  is detected.
+                  {chain.chainIntegrity === 'VERIFIED' ? (
+                    <>
+                      {(chain.entriesVerified || 0).toLocaleString()} audit entries cryptographically
+                      verified — tamper-evident. Any alteration to a past record breaks the chain and
+                      is detected.
+                    </>
+                  ) : (
+                    <>
+                      The chain check did not come back clean over{' '}
+                      {(chain.entriesVerified || 0).toLocaleString()} audit entries. Treat the trail
+                      as unverified until it does — the audit service has the detail.
+                    </>
+                  )}
                 </p>
                 <div className="dl-verify-meta">
-                  <span>Verified {dlTime(chain.verifiedAt)}</span>
+                  <span>
+                    {chain.chainIntegrity === 'VERIFIED' ? 'Verified' : 'Checked'}{' '}
+                    {dlTime(chain.verifiedAt)}
+                  </span>
                   <span
                     className={
                       'dl-verify-status ' +
@@ -567,17 +642,41 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
             </div>
           </div>
 
+          {/* WO-16C #71, second follow-up review. This block used to map a
+              STATIC four-item constant and put a check beside each under the
+              heading "Attested against" — an attestation computed from nothing
+              and independent of the graph it sat next to. The server already
+              assesses each framework (assessComplianceFrameworks in
+              DecisionLineageService) and sends the result in the graph's own
+              metadata: three follow the hash-chain verifier's three-valued
+              result, and two are NOT_ASSESSED because nothing in this
+              subsystem evaluates them. The client type said `string[]`, so the
+              surface could not read them. It reads them now, and the section
+              names each framework's standing instead of asserting conformance.
+              The constant stays as what it always was — the section catalogue —
+              and is looked up for the citations only. */}
           <div className="dl-frameworks">
-            <div className="dl-fw-hd">Attested against</div>
-            {LINEAGE_FRAMEWORKS.map((f, i) => (
-              <div key={i} className="dl-fw">
-                <span className="dl-fw-check">{I.check}</span>
-                <span className="dl-fw-main">
-                  <span className="dl-fw-name">{f.framework}</span>
-                  <span className="dl-fw-sec">{f.sections.join(' — ')}</span>
-                </span>
+            <div className="dl-fw-hd">Compliance frameworks</div>
+            {frameworkRows.length === 0 ? (
+              <div className="dl-fw-none">
+                This trail carries no framework assessment.
               </div>
-            ))}
+            ) : (
+              frameworkRows.map((f, i) => (
+                <div key={i} className="dl-fw">
+                  <span className={'dl-fw-check st-' + f.status.toLowerCase().replace(/_/g, '-')}>
+                    {f.status === 'COMPLIANT' ? I.check : f.status === 'REVIEW_REQUIRED' ? I.alertTriangle : I.minus}
+                  </span>
+                  <span className="dl-fw-main">
+                    <span className="dl-fw-name">{f.framework}</span>
+                    {f.sections.length > 0 && (
+                      <span className="dl-fw-sec">{f.sections.join(' — ')}</span>
+                    )}
+                    <span className="dl-fw-st">{FW_STATUS_LABEL[f.status]}</span>
+                  </span>
+                </div>
+              ))
+            )}
           </div>
 
           {/* The control below is named for what it does: it opens the assistant
@@ -599,7 +698,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
               artifactLabel for the lineage graph, not authoring document ids. So
               the honest thing is to say where signing happens rather than to
               guess an id into a §11 write. */}
-          {pendingSig && (
+          {awaitingDecision && (
             <>
             <button
               className="dl-cta"

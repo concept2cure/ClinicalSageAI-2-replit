@@ -55,6 +55,24 @@ export type Part11RecordElement = 'attributed-actor' | 'recorded-timestamp' | 'a
  * node constructors, computed from nothing, printed as a conformance assertion
  * into every export and as a badge on every node of the surface.
  */
+/**
+ * What this service can say about the §11.50 element of a record.
+ *
+ * WO-16C #70, second follow-up review. There is deliberately no `'signed'`
+ * member. The approvals reader used to derive one from `status === 'approved'`,
+ * and `workflow_approvals` has no signature column at all (id, workflowId,
+ * stepId, stepOrder, status, assignedTo, assignmentType, requiredActions,
+ * completedBy, completedAt, comments) — no reader in this service touches the
+ * real signature store. Removing the member makes the claim unrepresentable
+ * rather than merely unused: a future reader that genuinely verifies a
+ * signature has to add the value, and adding it is the moment to check that it
+ * was earned.
+ *
+ * `'pending'` and `'rejected'` are positive statements that no signature has
+ * been applied. `'not_assessed'` is the absence of a check, not a pass.
+ */
+export type SignatureStatus = 'pending' | 'rejected' | 'not_assessed';
+
 export interface Part11RecordCheck {
   /**
    * COMPLETE only when every required element was CHECKED and present.
@@ -86,7 +104,7 @@ export function assessPart11Record(record: {
   performedBy: string | null;
   performedAt: string | null;
   requiresSignature: boolean;
-  signatureStatus?: 'pending' | 'signed' | 'rejected';
+  signatureStatus?: SignatureStatus;
 }): Part11RecordCheck {
   const missing: Part11RecordElement[] = [];
   const notAssessed: Part11RecordElement[] = [];
@@ -138,9 +156,20 @@ export interface LineageNode {
   childIds: string[];
   /** Regulatory significance flags */
   regulatory: {
-    gxpRelevant: boolean;
+    /**
+     * Whether the SOURCE RECORD classifies this event as GxP-relevant —
+     * `null` when the record does not say, which is every row from
+     * `workflow_approvals`, `workflow_history` and `document_audit_logs`,
+     * none of which has such a column.
+     *
+     * WO-16C #70, second follow-up review: this was the literal `true` at all
+     * five node constructors, so the compliance report's
+     * `gxpRelevantRecords` could only ever equal `totalDecisionRecords`. A
+     * statistic with one possible value measures nothing.
+     */
+    gxpRelevant: boolean | null;
     requiresSignature: boolean;
-    signatureStatus?: 'pending' | 'signed' | 'rejected';
+    signatureStatus?: SignatureStatus;
     /** Which Part 11 record elements this row carries — not a verdict. */
     part11RecordCheck: Part11RecordCheck;
   };
@@ -207,6 +236,15 @@ export function assessComplianceFrameworks(
     { framework: 'PMDA ERES Guidelines', status: chainDependent },
     { framework: 'GAMP 5', status: 'NOT_ASSESSED', note: NOT_EVALUATED_HERE },
   ];
+}
+
+/**
+ * The GxP-relevance flag a decision row carries, or `null` when it carries
+ * none. `new_values` is free-form JSON, so anything that is not a boolean is
+ * read as "not recorded" rather than coerced.
+ */
+function readRecordedGxpRelevant(recorded: Record<string, unknown>): boolean | null {
+  return typeof recorded.gxpRelevant === 'boolean' ? recorded.gxpRelevant : null;
 }
 
 /** One cell of the CSV export: `COMPLETE`, or what the record is missing. */
@@ -334,8 +372,14 @@ export class DecisionLineageService {
           // assignment is real, so it stays — as an assignment, in `details`.
           const performedBy = (approval.completedBy as string | null) || null;
           const performedAt = approval.completedAt?.toISOString() || null;
-          const signatureStatus: 'pending' | 'signed' | 'rejected' =
-            status === 'approved' ? 'signed' : status === 'pending' ? 'pending' : 'rejected';
+          // WO-16C #70, second follow-up review. `'approved'` used to map to
+          // `'signed'`, which reported a §11.50 manifestation from a column
+          // that does not exist. An approval decision is not a signature, and
+          // nothing here reads the signature store, so an approved step is
+          // unassessed. Pending and rejected stay as they are: both are
+          // positive statements that no signature has been applied.
+          const signatureStatus: SignatureStatus =
+            status === 'pending' ? 'pending' : status === 'rejected' ? 'rejected' : 'not_assessed';
 
           nodes.push({
             id: nodeId,
@@ -355,7 +399,8 @@ export class DecisionLineageService {
             parentIds: [],
             childIds: [],
             regulatory: {
-              gxpRelevant: true,
+              // `workflow_approvals` has no GxP-relevance column.
+              gxpRelevant: null,
               requiresSignature: true,
               signatureStatus,
               part11RecordCheck: assessPart11Record({
@@ -404,7 +449,8 @@ export class DecisionLineageService {
             parentIds: [],
             childIds: [],
             regulatory: {
-              gxpRelevant: true,
+              // `workflow_history` has no GxP-relevance column.
+              gxpRelevant: null,
               requiresSignature: false,
               part11RecordCheck: assessPart11Record({
                 performedBy,
@@ -443,7 +489,8 @@ export class DecisionLineageService {
           parentIds: [],
           childIds: [],
           regulatory: {
-            gxpRelevant: true,
+            // `document_audit_logs` has no GxP-relevance column.
+            gxpRelevant: null,
             requiresSignature: false,
             part11RecordCheck: assessPart11Record({
               performedBy,
@@ -504,6 +551,11 @@ export class DecisionLineageService {
            */
           const recorded = (log.newValues as Record<string, unknown>) || {};
           const rowRequiresSignature = recorded.requiresSignature === true;
+          // recordDecision writes the caller's flag into `details`, which
+          // auditService stores in new_values, so a decision row DOES carry
+          // this one — but only where a caller supplied it. A row without the
+          // key is unclassified, not non-GxP and not GxP.
+          const rowGxpRelevant = readRecordedGxpRelevant(recorded);
 
           nodes.push({
             id: nodeId,
@@ -517,7 +569,7 @@ export class DecisionLineageService {
             parentIds: [],
             childIds: [],
             regulatory: {
-              gxpRelevant: true,
+              gxpRelevant: rowGxpRelevant,
               requiresSignature: rowRequiresSignature,
               part11RecordCheck: assessPart11Record({
                 performedBy,
@@ -609,6 +661,7 @@ export class DecisionLineageService {
         // `false` here was a default pass on the §11.50 element.
         const rowRecorded = (row.newValues as Record<string, unknown>) || {};
         const rowRequiresSignature = rowRecorded.requiresSignature === true;
+        const rowGxpRelevant = readRecordedGxpRelevant(rowRecorded);
 
         nodes.push({
           id: `audit-${row.id}`,
@@ -622,7 +675,7 @@ export class DecisionLineageService {
           parentIds: [],
           childIds: [],
           regulatory: {
-            gxpRelevant: true,
+            gxpRelevant: rowGxpRelevant,
             requiresSignature: rowRequiresSignature,
             part11RecordCheck: assessPart11Record({
               performedBy,
@@ -693,9 +746,13 @@ export class DecisionLineageService {
       // literal 'system' and as the moment this file was generated (finding 70).
       n.performedBy ?? 'not attributed',
       n.performedAt ?? 'not recorded',
-      n.regulatory.gxpRelevant ? 'Yes' : 'No',
+      // A flag the source record does not carry is printed as absent. It was
+      // printed as 'Yes' for every row (finding 70, second follow-up review).
+      n.regulatory.gxpRelevant === null ? 'not recorded in source' : n.regulatory.gxpRelevant ? 'Yes' : 'No',
       n.regulatory.requiresSignature ? 'Yes' : 'No',
-      n.regulatory.signatureStatus || 'N/A',
+      n.regulatory.signatureStatus === 'not_assessed'
+        ? 'not assessed here'
+        : n.regulatory.signatureStatus || 'N/A',
       formatPart11RecordCheck(n.regulatory.part11RecordCheck),
       JSON.stringify(n.details),
     ]);
@@ -741,7 +798,9 @@ export class DecisionLineageService {
         ? `<performed-at>${escapeXml(n.performedAt)}</performed-at>`
         : `<performed-at recorded="false" />`}
       <regulatory>
-        <gxp-relevant>${n.regulatory.gxpRelevant}</gxp-relevant>
+        ${n.regulatory.gxpRelevant !== null
+          ? `<gxp-relevant>${n.regulatory.gxpRelevant}</gxp-relevant>`
+          : `<gxp-relevant recorded="false" />`}
         <requires-signature>${n.regulatory.requiresSignature}</requires-signature>
         <signature-status>${n.regulatory.signatureStatus || 'none'}</signature-status>
         <part11-record-elements status="${n.regulatory.part11RecordCheck.status}" missing="${escapeXml(n.regulatory.part11RecordCheck.missing.join(' '))}" not-assessed="${escapeXml(n.regulatory.part11RecordCheck.notAssessed.join(' '))}" />
