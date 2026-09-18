@@ -2288,6 +2288,13 @@ export const C2C_MIGRATION_FILES = [
 // pins the FINAL PAIR to the two isolation steps. See ADR-0007 point 6.
   'db/migrations/20260910_contradiction_links_port.sql',
 
+  // ── RBM author attribution, for the Part 11 two-person rule ──────────────
+  // rbm_risk_assessments and rbm_monitoring_plans shipped with approved_by and
+  // no created_by, so the approval path could not ask whether the signer was
+  // the author. Additive and IF NOT EXISTS, so it replays as a no-op; above the
+  // final pair because ci:migration-set-order pins those two last.
+  'migrations/20260918_rbm_author_attribution.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

@@ -1,28 +1,40 @@
 /**
- * The 21 CFR Part 11 §11.10(e) audit row for a governed PDEV transition:
- * recorded, or not — never assumed.
+ * The 21 CFR Part 11 §11.10(e) audit row for a governed action: recorded, or
+ * not — never assumed.
  *
- * Extracted from pdev-workflow-bridge (WO-16C #133) so that
- * pdev-clearance — the module that moves a regulatory program to its terminal
- * IND-cleared state, which is the most consequential PDEV write there is —
- * reports its audit row through the SAME shape rather than a second copy of it.
- * That module was still using `void auditService.logAction(…)` for both of its
- * rows, so the clearance of an IND could be recorded nowhere and the caller
- * would be told `cleared: true` with nothing to distinguish it.
+ * `auditService.logAction` does not reject when a persistence attempt fails.
+ * That is deliberate policy — an audit-trail outage must not break the user
+ * action it records — so it RESOLVES an `AuditWriteResult` and says what
+ * happened in `persisted`, and in `chained`, which distinguishes the
+ * retrievable `audit_logs` row from a tamper-proof-only write.
  *
- * @module server/services/pdev/pdev-audit-record
+ * `void auditService.logAction({...})` discards that value, leaving the call
+ * with two possible outcomes and one observable result: the caller, its caller,
+ * the HTTP envelope and the surface are byte-identical whether the §11.10(e)
+ * record exists or does not. `recordAuditRow` is the one shape this repository
+ * uses instead, and `ci:void-audit-write` is the gate that keeps the population
+ * of unconverted sites shrinking.
+ *
+ * HISTORY. This began as a private helper inside pdev-workflow-bridge
+ * (WO-16C #133), moved to server/services/pdev/pdev-audit-record.ts when
+ * pdev-clearance needed the same shape, and lives here now that callers outside
+ * PDEV need it too. It was never PDEV-specific — only its first caller was —
+ * and a second copy under another directory is exactly what the zero-duplication
+ * rule exists to prevent. The type lost its `Pdev` prefix in the same move.
+ *
+ * @module server/services/audit/audit-write-outcome
  */
 
 import { createScopedLogger } from '../../utils/logger';
 import auditService from '../auditService';
 
-const logger = createScopedLogger('pdev-audit-record');
+const logger = createScopedLogger('audit-write-outcome');
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Whether the 21 CFR Part 11 §11.10(e) audit row for a governed PDEV
- * transition actually reached a durable store.
+ * Whether the 21 CFR Part 11 §11.10(e) audit row for a governed action
+ * actually reached a durable store.
  *
  * WO-16C finding 133. Every audit write in the PDEV bridge used to be
  * `void auditService.logAction({…})`. That is not fire-and-forget with a
@@ -61,7 +73,7 @@ const logger = createScopedLogger('pdev-audit-record');
  *    read back or export — is lost. `chained` says which, so "the record
  *    exists" and "the record is retrievable" are not conflated.
  */
-export type PdevAuditRecordOutcome =
+export type AuditRowOutcome =
   | { persisted: true; chained: boolean }
   | { persisted: false; code: 'AUDIT_ROW_NOT_PERSISTED'; message: string };
 
@@ -70,7 +82,7 @@ const AUDIT_NOT_PERSISTED_MESSAGE =
   'The 21 CFR Part 11 audit entry for this transition could not be written. The action itself completed. This has been logged for follow-up.';
 
 /** The object call form of `auditService.logAction` (its entry type is not exported). */
-type PdevAuditEntry = Extract<Parameters<typeof auditService.logAction>[0], object>;
+type AuditEntry = Extract<Parameters<typeof auditService.logAction>[0], object>;
 
 /**
  * Write one audit row and REPORT what happened to it. Never throws: an
@@ -78,7 +90,7 @@ type PdevAuditEntry = Extract<Parameters<typeof auditService.logAction>[0], obje
  * same policy `logAction` holds — the difference is that the caller is now
  * told, and tells its own caller.
  */
-export async function recordAuditRow(entry: PdevAuditEntry): Promise<PdevAuditRecordOutcome> {
+export async function recordAuditRow(entry: AuditEntry): Promise<AuditRowOutcome> {
   let result: Awaited<ReturnType<typeof auditService.logAction>> | undefined;
   let thrown: string | undefined;
   try {
@@ -93,7 +105,7 @@ export async function recordAuditRow(entry: PdevAuditEntry): Promise<PdevAuditRe
     // chained audit_logs row is the one a customer reads back or exports.
     if (!result.chained) {
       logger.warn(
-        'PDEV audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist',
+        'Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist',
         { action: entry.action, resourceType: entry.resourceType, resourceId: entry.resourceId },
       );
     }
@@ -105,7 +117,7 @@ export async function recordAuditRow(entry: PdevAuditEntry): Promise<PdevAuditRe
     result?.error ??
     'auditService.logAction reported no durable store; the audit row cannot be shown to exist';
   logger.error(
-    'PDEV audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist',
+    'Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist',
     {
       action: entry.action,
       resourceType: entry.resourceType,

@@ -40,7 +40,7 @@ import {
   type PdevActivityState,
 } from './pdev-activity-registry';
 import { applyIndClearanceIfTerminal } from './pdev-clearance';
-import { recordAuditRow, type PdevAuditRecordOutcome } from './pdev-audit-record';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import auditService from '../auditService';
 
 const logger = createScopedLogger('pdev-workflow-bridge');
@@ -49,12 +49,14 @@ const logger = createScopedLogger('pdev-workflow-bridge');
 // The §11.10(e) audit row: recorded, or not — never assumed
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// Moved to ./pdev-audit-record so pdev-clearance reports its own audit rows
+// Extracted out of this file so pdev-clearance could report its own audit rows
 // through the same shape instead of a second copy (WO-16C #133 follow-up
-// review). Re-exported here because the type is part of this module's public
-// result shapes.
+// review), and now lives in ../audit/audit-write-outcome because callers outside
+// PDEV need it too — it was never PDEV-specific, only its first caller was.
+// Re-exported here because the type is part of this module's public result
+// shapes.
 
-export type { PdevAuditRecordOutcome } from './pdev-audit-record';
+export type { AuditRowOutcome } from '../audit/audit-write-outcome';
 
 const COMPLETED_TARGET_STATES: ReadonlySet<PdevActivityState> = new Set([
   'approved',
@@ -116,7 +118,7 @@ export interface PdevWorkflowKickoffResult {
    * regardless, so an envelope that omitted this could not be told apart from
    * one where the record exists.
    */
-  auditTrail: PdevAuditRecordOutcome;
+  auditTrail: AuditRowOutcome;
 }
 
 export interface PdevApprovalChainStatus {
@@ -205,11 +207,11 @@ export interface PdevCheckpointDecisionResult {
   rejectionReason?: string;
   /**
    * Whether the §11.10(e) audit row for this decision was durably recorded.
-   * Required, not optional — see `PdevAuditRecordOutcome`. The approver's
+   * Required, not optional — see `AuditRowOutcome`. The approver's
    * identity survives in `approval_checkpoints.approvals` either way; what is
    * lost when this is `persisted: false` is the audit-trail entry.
    */
-  auditTrail: PdevAuditRecordOutcome;
+  auditTrail: AuditRowOutcome;
   /**
    * Set only when this decision completed the chain on the IND-clearance
    * activity and the terminal program transition was therefore attempted.
@@ -217,7 +219,7 @@ export interface PdevCheckpointDecisionResult {
    * so a clearance recorded nowhere was indistinguishable from one recorded —
    * one layer up from the defect #133 fixed.
    */
-  indClearance?: { cleared: boolean; audit?: PdevAuditRecordOutcome };
+  indClearance?: { cleared: boolean; audit?: AuditRowOutcome };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

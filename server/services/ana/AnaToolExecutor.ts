@@ -3296,19 +3296,17 @@ registerToolHandler('approve_rbm_assessment', async (input, ctx) => {
   if (!reason || reason.trim().length < 3) {
     return rbmErr('A reason for change is required for this governed (21 CFR Part 11) approval — ask the user.');
   }
-  const { getPool } = await import('../../db.js');
-  /* This path had no signature check at all — no password, no MFA — and handed
-     the writer `ctx?.userId ?? null`, so the weakest route to activating a
-     governing risk basis was also the one that could leave the approver blank.
-     The signature policy for this action is a live question; refusing to record
-     an approval nobody is named for is not, so that much is closed here. */
-  if (ctx?.userId == null) {
-    return rbmErr('This approval must be made by a named user. Open the risk assessment and approve it there, where the Part 11 signature is captured.');
-  }
-  const { approveAssessment } = await import('../rbm/rbm-actuator.js');
-  const row = await approveAssessment(getPool(), orgId, ctx.userId, assessmentId, reason.trim());
-  if (!row) return rbmErr('Assessment not found in this tenant.');
-  return JSON.stringify({ source: 'AnA RBM · approve_rbm_assessment', governed: true, assessment: row });
+  /* Activating a risk assessment is an electronic signature event. 21 CFR
+     11.200 requires the signer's identity to be re-established at the moment of
+     signing (password + MFA), and §11.10(g) requires that the signer hold
+     signing authority. This path can satisfy neither: it has no credential to
+     re-verify and no signature record to bind the approval to. It nonetheless
+     called the same writer as the signed route, so the ONLY path that could not
+     capture a signature was also the easiest one to reach. It refuses, and
+     hands the user to the route that can sign. */
+  return rbmErr(
+    'Approving a risk assessment applies an electronic signature, so it has to be done on the assessment itself — it needs your password and second factor at the moment of signing (21 CFR 11.200). Open the assessment and approve it there. I can summarise what is still outstanding on it first.',
+  );
 });
 
 registerToolHandler('approve_rbm_plan', async (input, ctx) => {
@@ -3320,15 +3318,11 @@ registerToolHandler('approve_rbm_plan', async (input, ctx) => {
   if (!reason || reason.trim().length < 3) {
     return rbmErr('A reason for change is required for this governed (21 CFR Part 11) approval — ask the user.');
   }
-  const { getPool } = await import('../../db.js');
-  /* Same as approve_rbm_assessment above. */
-  if (ctx?.userId == null) {
-    return rbmErr('This approval must be made by a named user. Open the monitoring plan and approve it there, where the Part 11 signature is captured.');
-  }
-  const { approvePlan } = await import('../rbm/rbm-actuator.js');
-  const row = await approvePlan(getPool(), orgId, ctx.userId, planId, reason.trim());
-  if (!row) return rbmErr('Monitoring plan not found in this tenant.');
-  return JSON.stringify({ source: 'AnA RBM · approve_rbm_plan', governed: true, plan: row });
+  /* Same as approve_rbm_assessment above: no credential to re-verify here, so
+     no signature can be applied. */
+  return rbmErr(
+    'Approving a monitoring plan applies an electronic signature, so it has to be done on the plan itself — it needs your password and second factor at the moment of signing (21 CFR 11.200). Open the plan and approve it there. I can summarise what is still outstanding on it first.',
+  );
 });
 
 // Regulatory-pathway advisor — drug/biologic/device/IVD routes (FDA & EU).
