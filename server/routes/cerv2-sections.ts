@@ -11,7 +11,7 @@ import { cerv2510kSections, cerv2SectionVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger';
-import auditService from '../services/auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import {
   recordCerv2SectionVersion,
   type SectionVersionExec,
@@ -333,7 +333,18 @@ router.post('/', authMiddleware, async (req, res) => {
       return created;
     });
 
-    void auditService.logAction({
+    /* WO-16C #133. The section row and its first version row are committed by
+       the transaction above, so this is the 21 CFR Part 11 §11.10(e) log BESIDE
+       a completed create, not the record of it: a lost audit row does not undo
+       the section. But `void auditService.logAction({…})` discarded the outcome
+       `logAction` resolves instead of rejecting on, so this 201 was
+       byte-identical whether the §11.10(e) record existed or not. `recordAuditRow` never
+       throws, and its answer now reaches the caller in `auditTrail` below,
+       including whether the row landed in the retrievable chained `audit_logs`
+       table or in the tamper-proof store only. The store's own reason stays in
+       recordAuditRow's log line, keyed on this action and the section id, and
+       never on the wire. */
+    const auditTrail = await recordAuditRow({
       tenantId: organizationId,
       userId: userId ?? undefined,
       action: 'section.create',
@@ -348,7 +359,7 @@ router.post('/', authMiddleware, async (req, res) => {
       },
     });
 
-    return res.status(201).json({ section: serializeSection(inserted) });
+    return res.status(201).json({ section: serializeSection(inserted), auditTrail });
   } catch (error) {
     logger.error('Failed to create section', { error });
     return res.status(500).json({ error: 'Failed to create section' });
@@ -484,7 +495,21 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
     // unified table to query across resources. A status flip into a
     // section-approval state is logged with action `section.approve`
     // separately so reviewers can find sign-offs directly.
-    void auditService.logAction({
+    //
+    // WO-16C #133. Both of those writes were `void auditService.logAction({…})`,
+    // which discards the outcome `logAction` resolves instead of rejecting on — so this
+    // 200 was byte-identical whether either §11.10(e) row existed or not, while
+    // the content update and its version row had already committed. The update
+    // is NOT reverted because a log row beside it was lost; it stands, and the
+    // caller is told.
+    //
+    // Because up to TWO governed audit rows come out of one request here, there
+    // is no unqualified `auditTrail` key: `editAuditTrail` is the `section.edit`
+    // row and `approvalAuditTrail` the `section.approve` row, so neither name
+    // can be read as the other's record. Only the codes and sentences
+    // `recordAuditRow` returns go on the wire; the store's own text is in its
+    // log lines, keyed on the action and this section id.
+    const editAuditTrail = await recordAuditRow({
       tenantId: organizationId,
       userId: userId ?? undefined,
       action: 'section.edit',
@@ -499,8 +524,11 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
       },
     });
 
+    /* Absent unless this request is the status flip that produced a sign-off,
+       which is also the only case in which a `section.approve` row is written. */
+    let approvalAuditTrail: AuditRowOutcome | undefined;
     if (statusBecameApproved(existing.status, updated.status)) {
-      void auditService.logAction({
+      approvalAuditTrail = await recordAuditRow({
         tenantId: organizationId,
         userId: userId ?? undefined,
         action: 'section.approve',
@@ -517,7 +545,11 @@ router.patch('/:sectionId', authMiddleware, async (req, res) => {
       });
     }
 
-    return res.json({ section: serializeSection(updated) });
+    return res.json({
+      section: serializeSection(updated),
+      editAuditTrail,
+      ...(approvalAuditTrail ? { approvalAuditTrail } : {}),
+    });
   } catch (error) {
     logger.error('Failed to update section', { error, sectionId });
     return res.status(500).json({ error: 'Failed to update section' });
@@ -550,7 +582,18 @@ router.delete('/:sectionId', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Section not found' });
     }
 
-    void auditService.logAction({
+    /* WO-16C #133. The DELETE above has committed, and `cerv2_section_versions`
+       declares `onDelete: 'cascade'` on `section_id` (shared/schema.ts), so the
+       section's version history went with it. That makes this the §11.10(e) log
+       beside a completed action — the deletion is done and is not reverted over
+       a lost log row — but also the only record this handler leaves naming what
+       was deleted. `void auditService.logAction({…})` discarded the one value
+       that says whether that record exists; `{ success: true }` read the same
+       either way. It now travels with it as `auditTrail`, which also
+       distinguishes the retrievable chained `audit_logs` row from a
+       tamper-proof-only write. The store's own reason is in recordAuditRow's log
+       line, never in this body. */
+    const auditTrail = await recordAuditRow({
       tenantId: organizationId,
       userId: resolveUserId(req) ?? undefined,
       action: 'section.delete',
@@ -564,7 +607,7 @@ router.delete('/:sectionId', authMiddleware, async (req, res) => {
       },
     });
 
-    return res.json({ success: true });
+    return res.json({ success: true, auditTrail });
   } catch (error) {
     logger.error('Failed to delete section', { error, sectionId });
     return res.status(500).json({ error: 'Failed to delete section' });
@@ -740,7 +783,17 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
       return { updated: row, nextVersion: version };
     });
 
-    void auditService.logAction({
+    /* WO-16C #133. The status flip, the lineage rewrite and the version row are
+       committed by the transaction above, so this is the §11.10(e) log beside a
+       completed acceptance and the acceptance is not reverted because the log
+       row was lost. `void auditService.logAction({…})` discarded the outcome,
+       which mattered most here: this row is the trail's record of the moment an
+       AI-drafted body became a person's to answer for, and the 200 looked the
+       same whether it was written or not. `auditTrail` below carries whether it
+       persisted, and whether it reached the retrievable chained `audit_logs`
+       table or the tamper-proof store only; the store's own reason stays in
+       recordAuditRow's log line, keyed on this action and the section id. */
+    const auditTrail = await recordAuditRow({
       tenantId: organizationId,
       userId:   userId === null ? undefined : userId,
       action:   'section.ana_draft_accepted',
@@ -772,7 +825,7 @@ router.post('/:sectionId/accept-ana-draft', authMiddleware, async (req, res) => 
       logger.warn('c2c_ana_actions write failed (non-blocking)', { err });
     });
 
-    return res.json({ section: serializeSection(updated) });
+    return res.json({ section: serializeSection(updated), auditTrail });
   } catch (error) {
     logger.error('Failed to accept AnA draft', { error, sectionId });
     return res.status(500).json({ error: 'Failed to accept AnA draft' });

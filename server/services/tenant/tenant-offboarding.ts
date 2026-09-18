@@ -475,6 +475,10 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // the administrator's decision reason. The canonical audit event survives;
   // this tenant-owned working record does not.
   'module_access_requests',
+  // A tenant's AnA run-control records: the pauses, steers and stops their
+  // people issued mid-turn. Tenant-owned working data, not the audit trail —
+  // the Part 11 rows for those actions live elsewhere and outlive the account.
+  'ana_runs',
   // CMC/project workflow payloads are customer plans and assignments. Delete
   // them before their project parents; workflow_tasks cascade where the
   // canonical FK is present, while editions without this table/column are

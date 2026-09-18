@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-09-10T18:54:45.183Z",
+  "generatedAt": "2026-09-17T18:33:53.040Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 290,
+  "totalMigrations": 291,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -14,7 +14,7 @@
           "007_gcc_heatmap_views.sql",
           "007_gcc_shadow_run_groups.sql"
         ],
-        "resolution": "Execute in alphabetical order: verify \u2192 heatmap \u2192 shadow"
+        "resolution": "Execute in alphabetical order: verify → heatmap → shadow"
       },
       {
         "prefix": "008",
@@ -623,7 +623,8 @@
     "20260906_cmc_interview_sessions.sql",
     "20260907_qc_testing_batch_attribution.sql",
     "20260907_module_catalog_submission_orchestrator.sql",
-    "20260910_contradiction_links_port.sql"
+    "20260910_contradiction_links_port.sql",
+    "20260917_ana_runs.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

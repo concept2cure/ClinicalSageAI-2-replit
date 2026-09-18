@@ -33,6 +33,7 @@ import { loadAnaToolPolicy, filterToolsByPolicy } from '../ana-ri/mdx-tool-polic
 import { resolveMaxRounds, resolveRoundExtension } from './agentic-loop.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import { selectToolsForTurn } from './tool-selection.js';
+import { STALE_AFTER_MS } from './run-status.js';
 
 /** The two investigation tools — excluded from a run's own tool surface so a
  * background investigation can never recursively spawn more investigations. */
@@ -44,8 +45,14 @@ export const DEEP_INVESTIGATION_TOOL_NAMES: ReadonlySet<string> = new Set([
 /** Max queued+running investigations per tenant (runaway-cost guard). */
 export const MAX_CONCURRENT_INVESTIGATIONS = 2;
 
-/** A running/queued row with no heartbeat inside this window is stalled. */
-export const STALE_AFTER_MS = 5 * 60_000;
+/**
+ * A running/queued row with no heartbeat inside this window is stalled.
+ *
+ * Re-exported, not re-declared: `run-status.ts` owns the number so the run
+ * reaper and this status reporter can never answer the same question
+ * differently. Every existing importer of this name is unaffected.
+ */
+export { STALE_AFTER_MS };
 
 /** Progress events kept per row (append-only, oldest retained). */
 const PROGRESS_EVENT_CAP = 60;
