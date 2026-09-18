@@ -24,7 +24,7 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
 | WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | `KNOWN_UNLISTED` triage — 10 entries, 16 tables | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed, all ten now on the applier |
-| Schema authority — live-schema baseline + the 61 tables behind it | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **active** — gate fixed, baseline 70→61→47; DEAD surfaces deleted (7 files, §7); LIVE/provision group remains |
+| Schema authority — live-schema baseline + the 61 tables behind it | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **active** — gate fixed, baseline 70→61→47; DEAD surfaces deleted (7 files, §7); triage corrected (§8) — 8 relations are LIVE and need provisioning |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 
 If you are one of the sessions above, correct your own row. If a lane you want
@@ -361,3 +361,65 @@ a new defect into an accepted one, so the diff is the check, not the exit code.
 **The lesson worth keeping:** a comment naming the module that justifies a
 config value is load-bearing evidence. When it names a module nothing imports,
 the value has never actually been checked against anything.
+
+---
+
+## 8. Triage correction — two "DEAD" verdicts were wrong (2026-09-18)
+
+The plan's cluster triage was produced by Explore agents. Re-verified by tracing
+mounts directly, **two of the three DEAD verdicts do not hold.** Recording this
+because acting on them would have deleted live surfaces.
+
+| Surface | Agent verdict | Verified | Evidence |
+|---|---|---|---|
+| `server/api/cmc/playbookRoutes.ts` | DEAD | **LIVE** | `blueprintRoutes.ts:9` imports it, `:748` mounts it at `/playbook`; `register-core-routes.ts:68` mounts `blueprintRoutes` at `/api/cmc/blueprint` — unconditionally (a plain `try` block, not a feature gate). Reachable at `/api/cmc/blueprint/playbook/*`. |
+| `server/api/cmc/portfolio.ts` | DEAD | **LIVE** | Same router: `blueprintRoutes.ts:8` imports, `:746` mounts at `/portfolio`. Reachable at `/api/cmc/blueprint/portfolio/*`. |
+| `server/routes/cognitive-ecosystem.ts` | DEAD | **DEAD, but blocked** | Explicitly retired (#844, Phase 0.2) and unregistered — see the note at `register-document-routes.ts:246`. See below for why it was not deleted. |
+
+So 8 of the 47 baselined relations belong to **live, mounted endpoints** and need
+**provisioning**, not deletion:
+
+- `/api/cmc/blueprint/playbook/*` → `cmc_workflows`, `cmc_workflow_instances`,
+  `cmc_workflow_tasks`, `cmc_checklist_instances`, `cmc_ai_tool_executions`
+- `/api/cmc/blueprint/portfolio/*` → `reg_submissions`, `reg_m3_sections`,
+  `reg_rpi_snapshots`
+
+**The method that caught this:** grep for the *exact* import path, not the
+basename. A basename search for `portfolio` matches `ind-portfolio`,
+`portfolio-simulation` and `protocol-portfolio-metrics`, none of which is the
+file in question — and a bare `from './types'` matches every service directory
+in the repo. A loose pattern produced a confident, wrong DEAD verdict; the same
+loose-matching error cost this lane a day earlier (§4).
+
+### Why `cognitive-ecosystem` was NOT deleted, though it is dead
+
+It is a self-contained unmounted island: the route, plus the 11-file
+`server/services/cognitive-ecosystem/` subtree. The **only** external importer of
+that subtree is the route's own line 28 — and that import is empty
+(`import { } from '../services/cognitive-ecosystem'`), the residue of the
+retirement. Nothing else in `server/` or `client/` imports any of it.
+
+Route and subtree are therefore **one decision, not two**: only the route is in
+`unreferenced-modules-baseline.json`; the 11 service files are absent from it
+precisely *because* that empty import still counts as a reference. Delete the
+route alone and the whole subtree becomes newly unreferenced — the same cascade
+§7 describes, but this time landing on files that must not be quietly baselined.
+
+**The blocker is Part 11, and it is real.** `cognitive-audit.service.ts` is the
+sole writer of four `cognitive_audit.*` tables that **do exist** on a provisioned
+database (`db/migrations/064_gcc_cognitive_audit_schema.sql`) and are **not** in
+the live-schema baseline. `server/services/audit/domain-history-link.ts:216-237`
+records that service as the registered `owner` of all four, with semantics like
+*"One AI reasoning step with its prompt and semantic content (own hash chain)"*
+and *"One e-signature applied over cognitive-audit content."*
+
+Deleting it would remove the only writer of provisioned electronic-signature and
+audit-chain schema and leave four dangling owner entries in the audit domain map.
+That is a compliance decision, not a cleanup, so it is **recorded rather than
+guessed at**. Whoever takes it needs to answer: are the `cognitive_audit.*`
+tables retired along with the subtree — in which case the domain-map entries and
+migration 064 go too — or is the subtree meant to be re-mounted?
+
+Contrast with `federated_*` (4 baselined entries, referenced by the route and by
+`federated-learning.service.ts` only): those tables exist nowhere, so they carry
+no such coupling. They are blocked only by being on the same island.
