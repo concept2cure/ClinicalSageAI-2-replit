@@ -127,11 +127,19 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
     corpus: 'vaultDocumentChunks',
     table: 'vault.document_chunks',
     dimensions: 1536,
-    // The active writer (layout-aware-ingestion.ts, CONFIG.embeddingModel) and
-    // the reader (advancedRAGPipeline.searchVaultSimilar) both use
-    // text-embedding-3-small; only the column DEFAULT is the legacy ada-002,
-    // which the writer overrides. Registered as 3-small to match what the index
-    // is actually built and queried with — both are 1536d, so no re-vectorize.
+    // The active writer (vault/document-chunking.service.ts:110,
+    // CHUNK_EMBEDDING_MODEL) and the reader
+    // (advancedRAGPipeline.searchVaultSimilar) both use text-embedding-3-small;
+    // only the column DEFAULT is the legacy ada-002, which the writer overrides.
+    // Registered as 3-small to match what the index is actually built and
+    // queried with — both are 1536d, so no re-vectorize.
+    //
+    // Corrected 2026-09-18: this named layout-aware-ingestion.ts as the active
+    // writer. That module was unreachable — its only importer,
+    // enhanced-ingestion-pipeline.ts, was itself unimported — and both were
+    // deleted. The registration is unchanged because the REAL writer
+    // independently uses 3-small, but the attribution was wrong, and the
+    // attribution is the evidence this entry rests on.
     model: 'text-embedding-3-small',
     purpose: 'Vault document chunks — semantic similarity search over indexed vault PDFs/DOCX',
   },

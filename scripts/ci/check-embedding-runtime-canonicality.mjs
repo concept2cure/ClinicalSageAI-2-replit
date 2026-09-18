@@ -65,8 +65,12 @@ const APPROVED = new Set([
   //     survives an outage that its searchability does not.
   // Search/index helpers that embed queries.
   'server/services/semanticSearch.js',
-  // Workers — pre-existing batch path.
-  'server/workers/entity-extraction-worker.ts',
+  // server/workers/entity-extraction-worker.ts — deleted 2026-09-18 with the
+  // rest of the unmounted neuro-symbolic subtree (its only importers were
+  // server/api/neuro-symbolic/routes.ts and enhanced-ingestion-pipeline.ts,
+  // both deleted in the same change). Removed from this list because
+  // assertAllowlistPathsExist below exits 1 on an allowlist path that no longer
+  // exists — an orphaned entry breaks the gate rather than merely ageing.
   // Additional pre-existing direct callers documented at gate-introduction
   // time (2026-05-07). Migration target: enhancedEmbeddingService.embed().
   'server/api/drafting/routes.ts',
