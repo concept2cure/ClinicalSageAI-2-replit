@@ -46,9 +46,25 @@ interface OrgMembershipCacheEntry {
   // so uuid-keyed subsystems (e.g. manufacturing routes) can org-scope regardless of
   // which mint path issued the token — the MFA path stamps organizationUuid into the
   // JWT but refresh/SSO/enterprise/legacy tokens drop it (ledger C-47/C-48 Stage 0).
-  // NOTE: this deliberately populates req.user only — it is NOT wired into
-  // app.current_org_id, which the identity-FK family would deny-all against until the
-  // C-48 unification lands.
+  //
+  // CORRECTED 2026-09-18. This note used to end: "it is NOT wired into
+  // app.current_org_id, which the identity-FK family would deny-all against
+  // until the C-48 unification lands." THAT IS NO LONGER TRUE, and it is not a
+  // harmless staleness — it describes the GUC the vault's RLS policies resolve
+  // a programme against.
+  //
+  // What actually happens: middleware/auth.ts:183 wires these two together as
+  //   enforceOrgMembership(req, res, () => establishRequestTenantScope(...))
+  // so this middleware's next() IS the scope opener. attachOrgUuid() sets
+  // req.user.organizationUuid immediately before that next(), and
+  // establishRequestTenantScope's resolveOrgUuid() reads exactly that field and
+  // writes it into app.current_org_id. So on the authenticated path the GUC
+  // DOES carry a real uuid whenever this lookup resolves one — and the empty
+  // string only when it does not.
+  //
+  // Pinned end to end by
+  // server/middleware/__tests__/tenant-scope-org-guc.test.ts, so the claim is a
+  // test rather than a sentence that can rot again.
   orgUuid: string | null;
   expiresAt: number;
 }
@@ -288,8 +304,12 @@ function cacheMembership(key: string, isMember: boolean, orgUuid: string | null 
 }
 
 /** Attach the resolved org uuid to req.user (localized cast — the global
- *  Express.Request['user'] type does not declare organizationUuid). Never sets
- *  app.current_org_id; see the cache-entry note. */
+ *  Express.Request['user'] type does not declare organizationUuid).
+ *
+ *  This function does not touch app.current_org_id itself, but the value it
+ *  sets REACHES that GUC: this middleware's next() is establishRequestTenantScope
+ *  (middleware/auth.ts:183), which reads req.user.organizationUuid and writes it
+ *  there. See the corrected note on the cache entry above. */
 function attachOrgUuid(req: Request, orgUuid: string | null): void {
   if (req.user && orgUuid) {
     (req.user as { organizationUuid?: string | null }).organizationUuid = orgUuid;

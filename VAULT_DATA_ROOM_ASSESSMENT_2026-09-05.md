@@ -201,6 +201,35 @@ make the middleware refuse rather than pass `''`; (b) add the explicit org join 
 `advancedRAGPipeline.ts:895,:935` — unconditional, cheap, no schema change, and the correct fix
 regardless; (c) only then `FORCE`.
 
+> **Progress 2026-09-18. (b) is done; (a) is now PROVEN rather than assumed, and the
+> answer corrects a comment that would have misled whoever did (c).**
+>
+> `server/middleware/__tests__/tenant-scope-org-guc.test.ts` pins what the GUC actually
+> receives, including the two middlewares composed exactly as `middleware/auth.ts:183`
+> composes them:
+>
+> - **The uuid DOES reach `app.current_org_id`.** `enforceOrgMembership` resolves
+>   `organizations.uuid` in its membership LEFT JOIN, `attachOrgUuid` puts it on
+>   `req.user.organizationUuid` immediately before calling `next()`, and that `next()`
+>   IS `establishRequestTenantScope`, whose `resolveOrgUuid` reads exactly that field.
+>
+> - **`orgMembership.ts` said the opposite**, in a note ending "it is NOT wired into
+>   `app.current_org_id`, which the identity-FK family would deny-all against until the
+>   C-48 unification lands." That is false and was not harmless: it describes the GUC the
+>   vault's policies resolve a programme against, so anyone planning (c) — or C-48 — would
+>   have been reasoning from it. Corrected in place, with the test named beside it.
+>
+> - **The residual risk is narrower than §4.4 assumed, and still real.** The empty string
+>   is written only when the membership lookup resolves NO uuid — an organisation row
+>   without one, or an enrichment JOIN that fell back (which `orgMembership` deliberately
+>   declines to cache, so it self-heals). Under `FORCE` those requests read an EMPTY VAULT.
+>   Not a leak: an outage that looks like "this customer has no documents".
+>
+> So (a) is no longer "prove the GUC works". It is the narrower, answerable question: can
+> a member's organisation resolve no uuid on a deployed database? Close that — a NOT NULL
+> `organizations.uuid`, or a middleware refusal when it is absent — and (c) becomes the
+> one-line `ALTER` §4.4 originally took it for.
+
 ### 4.5 A vault document can never become a submission — **CLOSED 2026-09-17**
 
 > **This gap is closed.** A vault document can now be filed into a submission and
