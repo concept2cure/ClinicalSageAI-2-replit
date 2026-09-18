@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-18T20:48:29.164Z",
+  "generatedAt": "2026-09-18T21:25:02.558Z",
   "git": {
-    "sha": "6e64123008bd61f3d7ffd1ff618ea8dc2c96a488",
+    "sha": "e511ce6132a6fbfa7a4d1bc8bffc5b2f832e16f9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 206,
+    "duplicateBasenames": 205,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
@@ -225,26 +225,6 @@
         ]
       },
       {
-        "basename": "routes",
-        "count": 14,
-        "paths": [
-          "server/api/ai/routes.ts",
-          "server/api/cmc/routes.ts",
-          "server/api/drafting/routes.ts",
-          "server/api/ectd/routes.ts",
-          "server/api/enterprise/routes.js",
-          "server/api/gcc/ectd/routes.js",
-          "server/api/gcc/labeling/routes.js",
-          "server/api/gcc/signing/routes.js",
-          "server/api/gcc/site-intel/routes.js",
-          "server/api/labeling/routes.ts",
-          "server/api/neuro-symbolic/routes.ts",
-          "server/api/site-intel/routes.ts",
-          "server/api/templates/routes.ts",
-          "server/startup/routes.ts"
-        ]
-      },
-      {
         "basename": "data",
         "count": 13,
         "paths": [
@@ -261,6 +241,25 @@
           "ui_kits/risk/data.jsx",
           "ui_kits/submission/data.jsx",
           "ui_kits/tasking/data.jsx"
+        ]
+      },
+      {
+        "basename": "routes",
+        "count": 13,
+        "paths": [
+          "server/api/ai/routes.ts",
+          "server/api/cmc/routes.ts",
+          "server/api/drafting/routes.ts",
+          "server/api/ectd/routes.ts",
+          "server/api/enterprise/routes.js",
+          "server/api/gcc/ectd/routes.js",
+          "server/api/gcc/labeling/routes.js",
+          "server/api/gcc/signing/routes.js",
+          "server/api/gcc/site-intel/routes.js",
+          "server/api/labeling/routes.ts",
+          "server/api/site-intel/routes.ts",
+          "server/api/templates/routes.ts",
+          "server/startup/routes.ts"
         ]
       },
       {
@@ -1062,14 +1061,6 @@
         "paths": [
           "design-system/_sync/reconciliation-2026-06-02/files/data-submissions.jsx",
           "ui_kits/mdx_phase2/data-submissions.jsx"
-        ]
-      },
-      {
-        "basename": "database",
-        "count": 2,
-        "paths": [
-          "server/db/database.js",
-          "server/utils/database.js"
         ]
       },
       {
@@ -2519,7 +2510,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 399,
+      "duplicateGroups": 396,
       "largeByBytes": 33,
       "largeByLines": 79
     },
