@@ -361,11 +361,25 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     [control],
   );
 
-  const stop = useCallback(() => {
+  const stop = useCallback(async () => {
     // Cancel server-side too (the fetch abort alone leaves the server
     // generating and running the tool loop to completion — the pre-existing
     // "Stop doesn't stop AnA" gap).
-    if (runIdRef.current) void control('cancel');
+    //
+    // AWAITED, deliberately. Fired-and-forgotten, the abort below dropped the
+    // socket first, the server recorded the turn as `client_disconnected`, and
+    // the cancel then arrived at a run already terminal and was refused. A
+    // person pressing Stop was written into the decision lineage as a network
+    // event — inverting the one distinction the audit is there to draw. The
+    // cancel already aborts the run server-side, so waiting for it costs
+    // nothing: generation stops on the server's acknowledgement, not on ours.
+    if (runIdRef.current) {
+      try {
+        await control('cancel');
+      } catch {
+        // A failed cancel must not leave the client streaming; abort anyway.
+      }
+    }
     abortRef.current?.abort();
   }, [control]);
 

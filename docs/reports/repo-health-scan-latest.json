@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-18T19:51:54.646Z",
+  "generatedAt": "2026-09-18T20:45:37.167Z",
   "git": {
-    "sha": "38c545e4fa25db89b57761cfc0c4c49562063c7f",
+    "sha": "9f73f91fff4ccea1c2cc7a119e841baacef6666e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 206,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 42,
+    "largeFilesByBytes": 43,
     "largeFilesByLines": 96
   },
   "findings": {
@@ -2122,6 +2122,10 @@
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 105559
+      },
+      {
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 100798
       }
     ],
     "largeFilesByLines": [
@@ -2298,6 +2302,10 @@
         "lines": 2155
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 2103
+      },
+      {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
         "lines": 2093
       },
@@ -2362,10 +2370,6 @@
         "lines": 1917
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1915
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
         "lines": 1912
       },
@@ -2374,12 +2378,12 @@
         "lines": 1898
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
-        "lines": 1888
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1893
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1884
+        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+        "lines": 1888
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
@@ -2516,7 +2520,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 399,
-      "largeByBytes": 32,
+      "largeByBytes": 33,
       "largeByLines": 79
     },
     {

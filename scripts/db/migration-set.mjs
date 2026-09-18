@@ -2288,6 +2288,15 @@ export const C2C_MIGRATION_FILES = [
 // pins the FINAL PAIR to the two isolation steps. See ADR-0007 point 6.
   'db/migrations/20260910_contradiction_links_port.sql',
 
+  // ── ana_runs: a live AnA turn survives the process that started it ───────
+  // Run control lived in a process-local Map with a 30-minute TTL, so pausing
+  // or stopping her 404'd after a restart and, on a second instance without
+  // sticky routing, never bound to the right run at all. public +
+  // organization_id INTEGER NOT NULL, so the sweep below policies it — and
+  // ABOVE that sweep, because a table ordered after it is never swept, ships
+  // with no RLS policy, and the policy COUNT still goes up, which is what makes
+  // the mistake invisible without ci:migration-set-order.
+  'db/migrations/20260917_ana_runs.sql',
   // ── RBM author attribution, for the Part 11 two-person rule ──────────────
   // rbm_risk_assessments and rbm_monitoring_plans shipped with approved_by and
   // no created_by, so the approval path could not ask whether the signer was

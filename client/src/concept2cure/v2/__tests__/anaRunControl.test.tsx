@@ -58,6 +58,20 @@ describe('mid-run control reaches the rail', () => {
     expect(container.querySelector('.ana-runctl')).toBeNull();
   });
 
+  it('offers only Stop while a run is streaming but not yet controllable', () => {
+    // `runStatus` stays null until `run_started` arrives — and a turn that
+    // opened no run row (no resolvable tenant, so no NOT NULL organization_id)
+    // never sends one. V2App therefore passes no pause/resume/steer handler in
+    // that case, and the strip must render exactly what it was given rather
+    // than buttons that quietly do nothing. Stop survives: it aborts the
+    // client's own request, which works with or without a server-side run.
+    renderRail({ runStatus: null, onPause: undefined, onResume: undefined, onSteer: undefined });
+    expect(screen.queryByRole('button', { name: 'Pause' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Resume' })).toBeNull();
+    expect(screen.queryByLabelText('Steer this run')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeTruthy();
+  });
+
   it('pauses the run', () => {
     const { onPause } = renderRail();
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
