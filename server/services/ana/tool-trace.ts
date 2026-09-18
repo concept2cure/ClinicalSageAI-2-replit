@@ -15,7 +15,7 @@
  * continuity note. The DB persistence and route wiring live elsewhere.
  */
 
-import type { HumanControlEvent } from './run-control-registry.js';
+import type { HumanControlEvent } from './run-status.js';
 
 export interface ToolTraceEntry {
   tool: string;

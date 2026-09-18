@@ -148,13 +148,9 @@ export interface HumanControlEvent {
 export const STALE_AFTER_MS = 5 * 60_000;
 
 /**
- * How long a run may sit paused before it is resumed as abandoned.
- *
- * Shared with the approval gate deliberately: an approval that outlives the
- * pause ceiling would be a second timeout number for the same human-is-away
- * condition.
+ * The two limits the client also has to know, re-exported rather than
+ * re-declared. The steer cap in particular is rendered as the composer's
+ * maxLength, and a box that accepts more than the server keeps would truncate a
+ * person's redirect with nothing saying which half landed.
  */
-export const MAX_PAUSE_MS = 10 * 60_000;
-
-/** Steer text cap — a redirect, not a new document. */
-export const MAX_INTERJECTION_CHARS = 2_000;
+export { MAX_INTERJECTION_CHARS, MAX_PAUSE_MS } from '@shared/ana/run-control-limits';

@@ -44,6 +44,36 @@
  * Same-instance control, which is almost all of it, short-circuits to the local
  * handle immediately after the write and never waits for the round-trip.
  *
+ * ── Tenant scope: which of these queries carries one, and how ───────────────
+ * Pool access is scoped by AsyncLocalStorage, not by the connection: 
+ * `poolInstrumentation.runQueryScoped` reads `getTenantScope()` AT QUERY TIME and
+ * pins `app.current_tenant_id` from it, and once RLS_ENFORCE=on — which
+ * production is the only permitted setting for — an unscoped query is rejected
+ * fail-closed. So a query's correctness depends on the context it RUNS in, not
+ * the context it was written in.
+ *
+ * That splits this module in two:
+ *
+ *   request-time   beginRun, applyControl, readRun, readStatus,
+ *                  consumeInterjections, endRun, the handle's heartbeat. These
+ *                  run inside the request's own scope from
+ *                  `establishRequestTenantScope`, and inherit it correctly.
+ *
+ *   background     the LISTEN client, the poll fallback, the NOTIFY handler,
+ *                  reapOrphanedRuns, and stopRunInternally when it is reached
+ *                  from a socket 'close'. These have NO ambient request scope,
+ *                  or worse, the WRONG one: setInterval and the pg notification
+ *                  callback both carry the context they were created in, so the
+ *                  poller armed by the first turn after boot would stay pinned
+ *                  to that first tenant forever and silently return zero rows
+ *                  for every other one. Zero rows is not an error, so nothing
+ *                  would report it.
+ *
+ * Every background path therefore opens its own scope explicitly, the same way
+ * the sweeps in server/jobs/ do. A cross-instance sweep takes the system scope
+ * because it is genuinely estate-wide; a write about one known run takes that
+ * run's own tenant rather than a super-admin bypass it does not need.
+ *
  * ── Honesty about what is and is not exercised ───────────────────────────────
  * The row writes, the state machine, the ownership rules and the atomic drain
  * are covered by `__tests__/run-control.pglite.integration.test.ts` against a
@@ -58,6 +88,7 @@
 import { randomUUID } from 'crypto';
 import type { Pool } from 'pg';
 
+import { runWithSystemTenantScope, runWithTenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger';
 import {
   canTransitionRunStatus,
@@ -78,8 +109,6 @@ export const RUN_CONTROL_CHANNEL = 'ana_run_control';
 
 /** Poll interval for the fallback path. Bounded latency, not none. */
 export const POLL_FALLBACK_MS = 2_000;
-
-export { MAX_INTERJECTION_CHARS };
 
 /** A run as the row holds it. */
 export interface RunRow {
@@ -229,6 +258,29 @@ export async function beginRun(input: BeginRunInput): Promise<{ runId: string; h
 }
 
 /**
+ * A handle with an abort signal and nothing durable behind it.
+ *
+ * For a turn that could not open a run row — no resolvable tenant, or the
+ * insert failed. Stop must still stop the work: the signal is what the gateway
+ * and the tool dispatcher hold, and it does not need a row to function. What is
+ * lost is everything the row provides — pause, steer, cross-instance control,
+ * and the audit record — which is why the route emits no `run_started` in that
+ * case and the client offers only Stop.
+ *
+ * Named so it cannot be mistaken for the real thing at a call site.
+ */
+export function localOnlyRunHandle(): RunHandle {
+  const controller = new AbortController();
+  return {
+    runId: '',
+    cancelSignal: controller.signal,
+    wake: async () => {},
+    heartbeat: async () => {},
+    abortLocally: () => controller.abort(),
+  } as RunHandle & { abortLocally: () => void };
+}
+
+/**
  * Close a run.
  *
  * Guarded on a live status for the same reason the deep-investigation
@@ -242,7 +294,9 @@ export async function endRun(
   status: Extract<RunStatus, 'finished' | 'failed'>,
   stoppedReason: RunStoppedReason,
 ): Promise<void> {
-  localRuns.delete(runId);
+  // Write first, release after. Releasing first meant a failed write left a row
+  // saying `running` with the only AbortController for it already discarded —
+  // a run advertising itself as live that nothing in this process could stop.
   await pool
     .query(
       `UPDATE ana_runs
@@ -250,7 +304,19 @@ export async function endRun(
        WHERE id = $1 AND status IN ('running','paused','awaiting_approval')`,
       [runId, status, stoppedReason],
     )
-    .catch(err => log.warn(`[ana-run-control] endRun failed for ${runId}: ${err?.message}`));
+    .catch(err => log.error(`[ana-run-control] endRun failed for ${runId}: ${err?.message}`))
+    .finally(() => releaseLocalRun(runId));
+}
+
+/**
+ * Forget this process's half of a run.
+ *
+ * Every exit path must reach this. `endRun` was once the only caller, so a run
+ * that ended by disconnect — which settles the row without calling endRun —
+ * leaked its LocalRun and its AbortController for the lifetime of the process.
+ */
+export function releaseLocalRun(runId: string): void {
+  localRuns.delete(runId);
 }
 
 /** Read a run, scoped to the tenant. */
@@ -308,13 +374,23 @@ export interface ApplyControlInput {
 export async function applyControl(input: ApplyControlInput): Promise<ControlResult> {
   const { pool, runId, organizationId, userId, action } = input;
 
-  const { rows } = await pool.query(`SELECT * FROM ana_runs WHERE id = $1`, [runId]);
+  // Scoped in the SQL, not only in JS: the predicate is the isolation, and a
+  // read that is correct only because a policy happened to filter it is a read
+  // that breaks the day the policy is not attached.
+  const { rows } = await pool.query(
+    `SELECT * FROM ana_runs WHERE id = $1 AND organization_id = $2`,
+    [runId, organizationId],
+  );
   const raw = rows[0];
-  if (!raw || Number(raw.organization_id) !== organizationId) {
-    return { ok: false, code: 'NOT_FOUND', status: null };
-  }
+  if (!raw) return { ok: false, code: 'NOT_FOUND', status: null };
   const row = toRow(raw);
-  if (row.userId !== null && userId !== null && row.userId !== userId) {
+  // Ownership needs an owner on BOTH sides. The earlier form skipped the check
+  // whenever either side was null, which fails OPEN twice over: an unattributed
+  // run became controllable by every member of the org, and an unattributed
+  // caller could control anyone's. `user_id` stays nullable for non-interactive
+  // surfaces that have no person behind them — and those are precisely the runs
+  // no person should be able to seize.
+  if (row.userId === null || userId === null || row.userId !== userId) {
     return { ok: false, code: 'NOT_YOURS', status: row.status };
   }
   if (!isLiveRunStatus(row.status)) {
@@ -407,16 +483,40 @@ export async function stopRunInternally(
   pool: Pool,
   runId: string,
   reason: Extract<RunStoppedReason, 'client_disconnected' | 'orphaned'>,
+  organizationId?: number,
 ): Promise<void> {
-  await pool
-    .query(
+  // The abort is local and needs no database, so it happens first and happens
+  // regardless: a socket that dropped should stop the work even if the row
+  // write below cannot be made.
+  driveLocalRun(runId, 'cancelled');
+  // An EventEmitter listener runs in the context of whoever called emit, not
+  // the context it was registered in, so a 'close' handler cannot rely on
+  // inheriting the request's tenant scope. The run's own tenant is passed in
+  // and used — never the super-admin scope, which this write does not need.
+  const scoped = <T>(fn: () => Promise<T>): Promise<T> =>
+    organizationId === undefined
+      ? fn()
+      : runWithTenantScope(
+          {
+            tenantId: String(organizationId),
+            role: null,
+            source: 'request',
+            caller: 'ana-run-control:disconnect',
+          },
+          fn,
+        );
+  await scoped(() =>
+    pool
+      .query(
       `UPDATE ana_runs
        SET status = 'cancelled', stopped_reason = $2, finished_at = now(), updated_at = now()
        WHERE id = $1 AND status IN ('running','paused','awaiting_approval')`,
-      [runId, reason],
-    )
-    .catch(err => log.warn(`[ana-run-control] internal stop failed for ${runId}: ${err?.message}`));
-  driveLocalRun(runId, 'cancelled');
+        [runId, reason],
+      )
+      .catch(err =>
+        log.error(`[ana-run-control] internal stop failed for ${runId}: ${err?.message}`),
+      ),
+  );
 }
 
 /**
@@ -467,12 +567,18 @@ async function notifyAndDrive(pool: Pool, runId: string, status: RunStatus): Pro
  * this is the same refusal for chat runs.
  */
 export async function reapOrphanedRuns(pool: Pool, staleAfterMs = STALE_AFTER_MS): Promise<number> {
-  const { rowCount } = await pool.query(
+  // System scope, explicitly. This sweep is estate-wide by design — the runs
+  // that most need reaping belong to an instance that is gone — and it is
+  // called opportunistically from inside a request, whose tenant scope would
+  // silently reduce it to that one org and return a reassuring small number.
+  const { rowCount } = await runWithSystemTenantScope('ana-run-control:reap', () =>
+    pool.query(
     `UPDATE ana_runs
      SET status = 'failed', stopped_reason = 'orphaned', finished_at = now(), updated_at = now()
      WHERE status IN ('running','paused','awaiting_approval')
        AND heartbeat_at < now() - make_interval(secs => $1)`,
-    [Math.round(staleAfterMs / 1000)],
+      [Math.round(staleAfterMs / 1000)],
+    ),
   );
   return rowCount ?? 0;
 }
@@ -496,7 +602,15 @@ export async function startRunControlListener(pool: Pool): Promise<void> {
   listenerStarted = true;
 
   try {
-    const client = await pool.connect();
+    // Every query below is estate-wide — a notification names a run, not a
+    // tenant, and the poller asks about whatever this process happens to own.
+    // Opened under the system scope explicitly, because the alternative is what
+    // it inherits: setInterval and the pg notification callback both carry the
+    // context they were CREATED in, so arming from inside the first turn after
+    // boot would pin every later firing to that first tenant, and RLS would
+    // return zero rows for every other one — silently, because zero rows is not
+    // an error.
+    const client = await runWithSystemTenantScope('ana-run-control:listen', () => pool.connect());
     client.on('notification', msg => {
       if (msg.channel !== RUN_CONTROL_CHANNEL || !msg.payload) return;
       void refreshFromRow(pool, msg.payload);
@@ -523,23 +637,40 @@ function startPollFallback(pool: Pool): void {
   if (pollTimer) return;
   pollTimer = setInterval(() => {
     if (localRuns.size === 0) return;
-    void pool
-      .query(
-        `SELECT id, status FROM ana_runs
-         WHERE id = ANY($1::text[]) AND status <> 'running'`,
-        [[...localRuns.keys()]],
-      )
+    // Scoped per firing, not per arming. A setInterval callback inherits the
+    // context the timer was CREATED in, which here is whichever request first
+    // failed to open a listener — so without this the poller would ask about
+    // every run this process owns while pinned to one tenant, and quietly see
+    // none of the others.
+    void runWithSystemTenantScope('ana-run-control:poll', () =>
+      pool.query(`SELECT id, status FROM ana_runs WHERE id = ANY($1::text[])`, [
+        [...localRuns.keys()],
+      ]),
+    )
       .then(({ rows }) => {
         for (const r of rows) driveLocalRun(r.id, r.status as RunStatus);
       })
-      .catch(() => {});
+      // Not swallowed. This is the path that is ALLOWED to be the only one that
+      // works, so a failure here is control silently not arriving — the exact
+      // thing the durable record was built to stop being possible.
+      .catch(err =>
+        log.error(`[ana-run-control] poll fallback query failed: ${err?.message}`),
+      );
   }, POLL_FALLBACK_MS);
   pollTimer.unref?.();
 }
 
 async function refreshFromRow(pool: Pool, runId: string): Promise<void> {
   if (!localRuns.has(runId)) return; // not ours
-  const status = await readStatus(pool, runId).catch(() => null);
+  // The notification carries a run id and no tenant, and this callback runs in
+  // the LISTEN socket's creation context rather than the notifying request's —
+  // so it opens its own system scope rather than inheriting a stale one.
+  const status = await runWithSystemTenantScope('ana-run-control:notify', () =>
+    readStatus(pool, runId),
+  ).catch(err => {
+    log.error(`[ana-run-control] notify refresh failed for ${runId}: ${err?.message}`);
+    return null;
+  });
   if (status) driveLocalRun(runId, status);
 }
 
@@ -551,7 +682,20 @@ export function _resetLocalRunsForTest(): void {
   listenerStarted = false;
 }
 
-/** Test seam: the instance id this process stamps on the rows it owns. */
-export function _instanceIdForTest(): string {
-  return INSTANCE_ID;
+/**
+ * Resume a run whose pause outlived the ceiling.
+ *
+ * Deliberately NOT routed through `applyControl`: nobody decided this, so it
+ * writes no control event and is attributed to no user. Recording an abandoned
+ * pause as a person pressing resume would put a decision nobody made into the
+ * lineage the dossier reads — the same distinction `stopRunInternally` draws
+ * for a dropped socket.
+ */
+export async function resumeAbandonedRun(pool: Pool, runId: string): Promise<void> {
+  await pool
+    .query(`UPDATE ana_runs SET status = 'running', updated_at = now() WHERE id = $1 AND status = 'paused'`, [
+      runId,
+    ])
+    .catch(err => log.warn(`[ana-run-control] abandoned resume failed for ${runId}: ${err?.message}`));
+  driveLocalRun(runId, 'running');
 }

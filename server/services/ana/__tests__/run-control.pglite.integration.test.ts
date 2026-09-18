@@ -276,6 +276,21 @@ describe('ownership', () => {
     expect((await readRun(pool(), runId, ORG))?.status).toBe('running');
   });
 
+  it('a run with no attributed user is controllable by NOBODY', async () => {
+    // Ownership needs an owner on both sides. Skipping the check when either
+    // side is null fails open twice: an unattributed run becomes controllable
+    // by every member of the org, and an unattributed caller can control
+    // anyone's. user_id stays nullable for non-interactive surfaces — and those
+    // are exactly the runs no person should be able to seize.
+    const { runId } = await newRun({ userId: null });
+    expect((await control(runId, 'cancel')).code).toBe('NOT_YOURS');
+    const anonymous = await applyControl({
+      pool: pool(), runId, organizationId: ORG, userId: null, action: 'cancel',
+    });
+    expect(anonymous.code).toBe('NOT_YOURS');
+    expect((await readRun(pool(), runId, ORG))?.status).toBe('running');
+  });
+
   it('a read is scoped to the tenant', async () => {
     const { runId } = await newRun();
     expect(await readRun(pool(), runId, OTHER_ORG)).toBeNull();

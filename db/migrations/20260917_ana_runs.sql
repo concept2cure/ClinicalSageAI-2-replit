@@ -30,9 +30,35 @@
 --     exists to prevent.
 --   - Additive and idempotent (CREATE TABLE / INDEX IF NOT EXISTS). Nothing is
 --     dropped or renamed.
+--   - Consequence of that idempotence, worth knowing before editing this file:
+--     because the whole set re-executes on every deploy, CREATE TABLE IF NOT
+--     EXISTS is a NO-OP on any database that already has the table. Adding a
+--     column by editing the CREATE TABLE above would therefore take effect only
+--     on a fresh database and silently never on a provisioned one. A later
+--     column goes in as its own ADD COLUMN IF NOT EXISTS statement in this
+--     file, below the CREATE TABLE, with a dated note saying what and why
+--     (CLAUDE.md RULE 1).
 --   - Purged with the tenant: listed in PURGE_CHILD_TABLES
 --     (server/services/tenant/tenant-offboarding.ts). The rows are the
 --     tenant's own control decisions.
+--
+-- AMENDMENT 2026-09-18 (in place, per CLAUDE.md RULE 1 — this file re-executes
+-- on every deploy, so a correction is an edit here, never an appended DROP or
+-- an ALTER in a later file):
+--   idx_ana_runs_live was first written as (owner_instance, heartbeat_at). The
+--   reaper it exists for does not filter on owner_instance and must not — the
+--   runs that most need reaping belong to an instance that is gone, and a dead
+--   process cannot sweep its own rows — so the leading column had to be the one
+--   the predicate ranges over. Changed to (heartbeat_at).
+--
+--   Caveat, and the reason this note exists rather than a silent edit: the
+--   statement is CREATE INDEX IF NOT EXISTS under an unchanged NAME, so any
+--   database that already applied the first version keeps the OLD index and
+--   never gets this one. No deployed database has applied this file (it is
+--   introduced and amended in the same unreleased change), so there is nothing
+--   to correct today. Should that ever stop being true, the fix is a new index
+--   name here — not a DROP, and not an edit that cannot reach the databases it
+--   is meant for.
 -- =============================================================================
 
 -- One row per in-flight AnA turn.

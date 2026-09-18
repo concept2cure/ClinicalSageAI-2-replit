@@ -93,7 +93,13 @@ describe('GET /api/claude/models', () => {
     expect(ids).not.toContain('disabled-model'); // enabled-filtered
 
     const opus = models.find((m) => m.id === 'claude-opus-4')!;
-    expect(opus.label).toBe('Claude Opus 4');
+    // The label follows the WIRE MODEL, not the registry id. `claude-opus-4` is
+    // a stable alias whose pin moves — it pointed at 4.7, then 4.8, now 5 — and
+    // a picker that kept saying "Claude Opus 4" while serving something else
+    // would be naming the alias rather than the model the person is choosing.
+    // The id stays stable for callers; the label tells the truth about what runs.
+    expect(opus.id).toBe('claude-opus-4');
+    expect(opus.label).toBe('Claude Opus 4.7');
     expect(opus.recommendedEffort).toBe('thorough');
 
     const haiku = models.find((m) => m.id === 'claude-haiku-4')!;

@@ -14,6 +14,8 @@ import {
   statusAfterControl,
   LIVE_RUN_STATUSES,
   type RunStatus,
+  MAX_PAUSE_MS,
+  STALE_AFTER_MS,
 } from '../run-status.js';
 
 const ALL: RunStatus[] = [
@@ -115,5 +117,33 @@ describe('statusAfterControl', () => {
     // told the person declined and adapts.
     expect(statusAfterControl('deny')).toBe('running');
     expect(statusAfterControl('deny')).not.toBe('cancelled');
+  });
+});
+
+describe('the pause ceiling and the staleness ceiling have to be read together', () => {
+  it('a run may be paused for LONGER than it may go without a heartbeat', () => {
+    // Stated, not asserted away. MAX_PAUSE_MS (10 min) deliberately exceeds
+    // STALE_AFTER_MS (5 min), so a pause the product explicitly permits outlives
+    // the window the reaper uses to decide a run was orphaned by a restart.
+    //
+    // That is only safe because something beats THROUGH the pause: the SSE
+    // keepalive in routes/ana-ri/stream.ts refreshes heartbeat_at every 15s for
+    // the whole turn, including while held at a pause and during a single round
+    // that runs long. Before it did, a person who paused and went to lunch had
+    // their live run marked failed/orphaned by another request's sweep at the
+    // five-minute mark, after which every control 409'd, no `resumed` event was
+    // ever sent, and the turn completed into a row permanently recorded as
+    // failed.
+    //
+    // This case exists so that raising MAX_PAUSE_MS, or lowering STALE_AFTER_MS,
+    // lands on a comment that says what else has to be true.
+    expect(MAX_PAUSE_MS).toBeGreaterThan(STALE_AFTER_MS);
+  });
+
+  it('leaves room for several keepalives inside one staleness window', () => {
+    // The keepalive is 15s. If STALE_AFTER_MS ever dropped near it, a single
+    // dropped beat would orphan a live run.
+    const KEEPALIVE_MS = 15_000;
+    expect(STALE_AFTER_MS).toBeGreaterThan(KEEPALIVE_MS * 4);
   });
 });
