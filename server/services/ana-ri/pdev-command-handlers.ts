@@ -533,17 +533,30 @@ export async function pdevActivitySetState(
       newState: newState as PdevActivityState,
     });
 
+    /*
+     * WO-16C #133, follow-up review. The cleared message asserted a terminal
+     * regulatory transition and said nothing about its 21 CFR Part 11 record,
+     * which `applyIndClearanceIfTerminal` now reports. The transition stands
+     * either way — reverting a cleared IND over a failed audit write would be
+     * the worse lie — so the sentence carries the record's state rather than
+     * omitting it, and the outcome travels in `data` for any caller that reads
+     * the structure instead of the prose.
+     */
+    const clearanceAuditNote =
+      clearance.audit && !clearance.audit.persisted ? ` ${clearance.audit.message}` : '';
+
     return {
       success: true,
       action,
       message: clearance.cleared
-        ? `Activity ${activityKeyOrErr} → ${newState}. IND cleared — program moved to its terminal approved state.`
+        ? `Activity ${activityKeyOrErr} → ${newState}. IND cleared — program moved to its terminal approved state.${clearanceAuditNote}`
         : `Activity ${activityKeyOrErr} → ${newState} (was ${previousState}).`,
       data: {
         activityStateId: stateRowId,
         previousState,
         newState,
         indCleared: clearance.cleared,
+        ...(clearance.audit ? { indClearanceAuditTrail: clearance.audit } : {}),
       },
     };
   } catch (err) {

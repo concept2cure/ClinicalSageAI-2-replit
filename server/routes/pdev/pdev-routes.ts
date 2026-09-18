@@ -491,7 +491,20 @@ router.post(
         newState: parsed.data.state as (typeof PDEV_ACTIVITY_STATES)[number],
       });
 
-      return ok(res, row, clearance.cleared ? { indCleared: true } : undefined);
+      /*
+       * WO-16C #133, follow-up review. This said `{ indCleared: true }` and
+       * dropped `clearance.audit`, so a clearance whose 21 CFR Part 11 record
+       * was never written answered byte-identically to one that was. The
+       * clearance itself stands — the program row is committed — and the client
+       * is told what happened to the record beside it.
+       */
+      return ok(
+        res,
+        row,
+        clearance.cleared || clearance.alreadyCleared
+          ? { indCleared: clearance.cleared, auditTrail: clearance.audit }
+          : undefined,
+      );
     } catch (err) {
       return serverError(res, log, 'Failed to update activity state', err);
     }
