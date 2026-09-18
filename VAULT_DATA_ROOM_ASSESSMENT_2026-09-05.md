@@ -226,9 +226,30 @@ regardless; (c) only then `FORCE`.
 >   Not a leak: an outage that looks like "this customer has no documents".
 >
 > So (a) is no longer "prove the GUC works". It is the narrower, answerable question: can
-> a member's organisation resolve no uuid on a deployed database? Close that — a NOT NULL
-> `organizations.uuid`, or a middleware refusal when it is absent — and (c) becomes the
-> one-line `ALTER` §4.4 originally took it for.
+> a member's organisation resolve no uuid on a deployed database?
+>
+> **Answered: no, not in steady state.** `organizations.uuid` is
+> `uuid DEFAULT gen_random_uuid() NOT NULL` at the database level
+> (`migrations/0000_sweet_joseph.sql:4188`) and `.notNull()` in the Drizzle model
+> (`shared/schema.ts:155`). Every organisation row has one, guaranteed by the column.
+> So the membership LEFT JOIN returns null only when
+>
+>   1. the JOIN itself failed at runtime — which `orgMembership` detects, refuses to
+>      cache, and self-heals from on the next request; or
+>   2. `organizations` is absent from the schema module, which is a partial-schema dev
+>      fixture, not a deployed database.
+>
+> **What that means for (c).** The `''` risk is a TRANSIENT window, not a structural
+> gap — so `FORCE` is much closer to the one-line `ALTER` §4.4 took it for than this
+> section feared. The honest remainder: during such a window a FORCEd vault reads EMPTY
+> for the affected requests, which is the worst-shaped failure available ("this customer
+> has no documents"). The mitigation is small and precise — have the middleware REFUSE
+> rather than pass `''` — and it must land **with** `FORCE`, not before: today those
+> requests succeed because ENABLE-only policies never run for the owner role, so
+> refusing now would break working requests to pre-empt a risk that does not yet exist.
+>
+> Deliberately NOT done here for that reason. (c) is now a two-line change with a stated
+> order, rather than an unquantified risk.
 
 ### 4.5 A vault document can never become a submission — **CLOSED 2026-09-17**
 
