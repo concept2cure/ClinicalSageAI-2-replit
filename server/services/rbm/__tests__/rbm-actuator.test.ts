@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   addCtqFactor, defineKri, recordKriReading, setQtl, raiseSignal, triageSignal,
-  draftPlan, generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment,
+  draftPlan, generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment, approvePlan,
   inferSecondaryLimit, type Exec,
 } from '../rbm-actuator';
 
@@ -155,6 +155,35 @@ describe('rbm-actuator — inference', () => {
     const { exec } = mockExec([[]]);
     const row = await approveAssessment(exec, ORG, 7, 999, 'reason');
     expect(row).toBeNull();
+  });
+
+  /* Both writers of rbm_risk_assessments reach this function, and it used to
+     take `userId: number | null` and write `approved_by = NULL` — an activated
+     governing risk basis with nobody named as its approver, which 21 CFR
+     11.10(e) and 11.50 exist to make impossible.
+
+     The HTTP route never sent null (it 401s on an unauthenticated signer). The
+     AnA tool path did: it had no signature check at all and passed
+     `ctx?.userId ?? null` straight through, so the one route with no password
+     and no MFA was also the one that could leave the approver blank.
+
+     The type is `number` now, so a caller that cannot name the approver does
+     not compile. These two cases cover the callers TypeScript does not see. */
+  it('refuses to approve an assessment it cannot attribute', async () => {
+    const { exec, calls } = mockExec([[{ id: 1, status: 'active' }]]);
+    await expect(
+      approveAssessment(exec, ORG, null as unknown as number, 1, 'reason'),
+    ).rejects.toThrow(/identified approver/i);
+    // Nothing was written: the refusal is before the UPDATE, not after it.
+    expect(calls).toHaveLength(0);
+  });
+
+  it('refuses to approve a monitoring plan it cannot attribute', async () => {
+    const { exec, calls } = mockExec([[{ id: 2, status: 'active' }]]);
+    await expect(
+      approvePlan(exec, ORG, null as unknown as number, 2, 'reason'),
+    ).rejects.toThrow(/identified approver/i);
+    expect(calls).toHaveLength(0);
   });
 });
 

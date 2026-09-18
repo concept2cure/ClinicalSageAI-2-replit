@@ -3297,8 +3297,16 @@ registerToolHandler('approve_rbm_assessment', async (input, ctx) => {
     return rbmErr('A reason for change is required for this governed (21 CFR Part 11) approval — ask the user.');
   }
   const { getPool } = await import('../../db.js');
+  /* This path had no signature check at all — no password, no MFA — and handed
+     the writer `ctx?.userId ?? null`, so the weakest route to activating a
+     governing risk basis was also the one that could leave the approver blank.
+     The signature policy for this action is a live question; refusing to record
+     an approval nobody is named for is not, so that much is closed here. */
+  if (ctx?.userId == null) {
+    return rbmErr('This approval must be made by a named user. Open the risk assessment and approve it there, where the Part 11 signature is captured.');
+  }
   const { approveAssessment } = await import('../rbm/rbm-actuator.js');
-  const row = await approveAssessment(getPool(), orgId, ctx?.userId ?? null, assessmentId, reason.trim());
+  const row = await approveAssessment(getPool(), orgId, ctx.userId, assessmentId, reason.trim());
   if (!row) return rbmErr('Assessment not found in this tenant.');
   return JSON.stringify({ source: 'AnA RBM · approve_rbm_assessment', governed: true, assessment: row });
 });
@@ -3313,8 +3321,12 @@ registerToolHandler('approve_rbm_plan', async (input, ctx) => {
     return rbmErr('A reason for change is required for this governed (21 CFR Part 11) approval — ask the user.');
   }
   const { getPool } = await import('../../db.js');
+  /* Same as approve_rbm_assessment above. */
+  if (ctx?.userId == null) {
+    return rbmErr('This approval must be made by a named user. Open the monitoring plan and approve it there, where the Part 11 signature is captured.');
+  }
   const { approvePlan } = await import('../rbm/rbm-actuator.js');
-  const row = await approvePlan(getPool(), orgId, ctx?.userId ?? null, planId, reason.trim());
+  const row = await approvePlan(getPool(), orgId, ctx.userId, planId, reason.trim());
   if (!row) return rbmErr('Monitoring plan not found in this tenant.');
   return JSON.stringify({ source: 'AnA RBM · approve_rbm_plan', governed: true, plan: row });
 });
