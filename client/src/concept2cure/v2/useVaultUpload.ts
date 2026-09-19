@@ -31,6 +31,7 @@
 
 import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/utils/authToken';
 import type { VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
 
 export interface VaultUploadOutcome {
@@ -89,6 +90,25 @@ async function uploadOne(
       method: 'POST',
       body: form,
       credentials: 'include',
+      /* THE UPLOAD COULD NOT AUTHENTICATE WITHOUT THIS.
+         `/api/vault/ingest` is mounted behind `authMiddleware`
+         (server/bootstrap/register-inline-routes.ts), whose header reads
+         "Validates Bearer JWT tokens only" and which answers a request with no
+         Authorization header `401 { error: 'Bearer token required' }`. It reads
+         `req.headers.authorization` and has no cookie fallback, so
+         `credentials: 'include'` alone never authenticated this request — every
+         upload through this hook was refused, on all three of its callers (the
+         v2 Vault, the MDX Document vault, the MDX pathway attach).
+
+         The irony worth recording: Etmf.tsx's hand-rolled copy of this request
+         — the one the assessment recommended deleting in favour of this hook —
+         sent these headers and was the only upload path that worked.
+
+         NO Content-Type here, deliberately: the browser must set it so the
+         multipart boundary is generated, and naming it produces a body the
+         server cannot parse. `getAuthHeaders()` sets only Authorization and
+         x-organization-id. */
+      headers: { ...getAuthHeaders() },
     });
   } catch {
     /* A transport failure, not a server refusal. The distinction matters: the

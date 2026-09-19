@@ -475,13 +475,47 @@ the literal `tmf_essential` the ingest enum rejects. Pinned by 18 tests in
 `tmf_essential` is not an accepted ingest type, and one asserting the literal is not
 re-introduced into the source.
 
-**The duplication half is still open, and "fix by deletion" understated it.** `Etmf.tsx` still
-hand-rolls its own `FormData` + `fetch('/api/vault/ingest')` instead of calling
-`useVaultUpload`, so the governed write path still has two implementations. It cannot simply
-call the hook today: the hook's outcome reports file NAMES (`succeeded: string[]`), and eTMF
-needs the id of the row the vault actually wrote in order to bind the TMF artifact to it.
-Closing this means widening the hook's outcome to carry the document id and migrating both
-callers onto it — not deleting forty lines.
+**The duplication half is still open — and "fix by deletion" would have deleted the only
+upload path that worked.** Following that advice is what found this: `useVaultUpload`, the
+canonical hook, sent `credentials: 'include'` and **no `Authorization` header**.
+`/api/vault/ingest` is mounted behind `authMiddleware`
+(`register-inline-routes.ts`), whose header reads "Validates Bearer JWT tokens only" and which
+answers `401 { error: 'Bearer token required' }` — it reads `req.headers.authorization` and has
+no cookie fallback. So **every upload through the canonical hook was refused, on all three of
+its callers**: the v2 Vault, the MDX Document vault and the MDX pathway attach. `Etmf.tsx`'s
+hand-rolled copy sent `getAuthHeaders()` and was the one that worked. Fixed 2026-09-19, with a
+test that fails on the unfixed hook.
+
+This is a class, not an instance, and the mechanism is why it survives: `authBoundary` runs in
+mode `warn` outside production and `enforce` in it, so a call missing its bearer token **works
+in development and 401s in production**. (The vault hook was worse still: `/api/vault/ingest`
+carries `authMiddleware` inline as well, so it failed in every environment.) Work already in
+flight upstream fixes two MDX hooks on the same diagnosis — see
+`client/src/concept2cure/mdx/hooks/__tests__/mdx-hooks-send-auth.test.ts`, whose opening line is
+"`credentials: 'include'` is not authentication in this app."
+
+A repo-wide sweep of `fetch('/api/…')` across `client/src` found **one more real instance**, now
+fixed: `useSubmissions.ts` read a package's readiness gate and milestones with
+`credentials: 'include'` and no headers, against `/api/submission-ops`, which is not on
+PUBLIC_API_ALLOWLIST. The failure mode was the honest-state one rather than a blank screen — a
+401 is not `res.ok`, so both branches left `gate` and `log` null and the surface rendered a
+package with no readiness gate and no milestones, indistinguishable from one that has neither.
+
+**The other 13 hits the sweep reported are false positives, checked individually**, and the
+number is recorded here so nobody re-runs the same crude scan and re-reports them: `ZenLogin`,
+`ZenSignup`, `Concept2CureLogin` and `Onboarding`'s license-request call are `/api/auth/*`,
+public by design and on the allowlist; `portal/logger.ts` posts to `/api/v1`, likewise
+allowlisted; `useEstarFiling` (×5) and `useCerLiterature` (×2) call a local `jsonHeaders()`
+that spreads `buildAuthHeaders()`; and `Onboarding`'s other two build a `headers` object with
+`...getAuthHeaders()` further up the function. No CI gate is proposed for this class for that
+reason: a scanner that cannot resolve a local header helper would need thirteen baselined
+non-defects to go green, and a baseline that large teaches people to add to it.
+
+The remaining duplication is still worth closing, and it is not forty lines: the hook's outcome
+reports file NAMES (`succeeded: string[]`), while eTMF needs the id of the row the vault wrote
+in order to bind the TMF artifact to it, and it sets its own `documentCode`/`documentTitle`
+from the TMF vocabulary rather than the filename. Closing it means widening the hook's contract
+and migrating all four callers onto it.
 
 **Search.** `Vault.tsx` has exactly one `<input>` and it is the file picker at `:774`. There is
 no search box. What filtering exists is a client-side substring match over rows already in

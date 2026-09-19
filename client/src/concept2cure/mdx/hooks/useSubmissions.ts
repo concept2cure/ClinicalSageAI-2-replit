@@ -16,7 +16,7 @@ import type {
   SubmissionLogEntry,
   SubmissionStage,
 } from '../data/workbench';
-import { useFetchJson } from './useFetchJson';
+import { useFetchJson, buildAuthHeaders } from './useFetchJson';
 import { firstArray, shapeMismatch } from '../lib/payloadShape';
 import { FAMILY_TO_SUBMISSION_PATHWAY } from '../../../../../shared/constants/mdx';
 
@@ -240,12 +240,26 @@ export function useSubmissionDetail(packageId: string | null): UseSubmissionDeta
     let cancelled = false;
     setState({ gate: null, log: null, loading: true, error: null });
 
+    /* `credentials: 'include'` is not authentication in this app. The global
+       /api gate reads `req.headers.authorization` and has no cookie fallback
+       (server/middleware/auth.ts, `extractBearerToken`), and
+       `/api/submission-ops` is not on PUBLIC_API_ALLOWLIST — so these two
+       reads sent no token and 401'd. The boundary runs in mode 'warn' outside
+       production and 'enforce' in it, which is why this worked on a laptop and
+       failed for every user.
+
+       The failure was silent and worse than a blank screen: a 401 is not
+       `res.ok`, so both branches below left `gate` and `log` as null, and the
+       surface rendered a package with no readiness gate and no milestones —
+       indistinguishable from a package that genuinely has neither. */
     Promise.allSettled([
       fetch(`/api/submission-ops/packages/${encodeURIComponent(packageId)}/readiness`, {
         credentials: 'include',
+        headers: buildAuthHeaders(),
       }),
       fetch(`/api/submission-ops/packages/${encodeURIComponent(packageId)}/milestones`, {
         credentials: 'include',
+        headers: buildAuthHeaders(),
       }),
     ])
       .then(async ([readinessRes, milestonesRes]) => {
