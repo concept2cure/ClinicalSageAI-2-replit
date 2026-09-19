@@ -19109,12 +19109,43 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
     if (!rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
     const { content, ...meta } = rows[0];
     const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
+
+    // This tool hands the model the TEXT it will quote into a filing section,
+    // and until now it handed it no way to cite that text. A drafting tool can
+    // only record a verified quote against `cre_evidence_sources.id`, so a
+    // passage read here could never become a source span — every clause drawn
+    // from it fell to author lineage, and the evidence behind a filed sentence
+    // was unrecoverable. `project_knowledge_search` already resolves this the
+    // one legitimate way; the same resolver is used here rather than a second.
+    //
+    // Resolution verifies existence and tenant ownership. An artifact with no
+    // canonical source resolves to null and the hint says so — never a guessed
+    // id, because a citation nobody can check is worse than no citation.
+    let evidenceSourceId: number | null = null;
+    try {
+      const { evidenceSourceIdsForRetrieval } = await import('./drafting-source-lineage.js');
+      const resolved = await evidenceSourceIdsForRetrieval(Number(ctx.organizationId), [
+        (meta as { artifact_id?: string }).artifact_id ?? null,
+      ]);
+      const key = (meta as { artifact_id?: string }).artifact_id;
+      evidenceSourceId = key ? (resolved.get(key) ?? null) : null;
+    } catch {
+      // Resolution is additive: a read must not fail because attribution prep
+      // did. The absent id then reads as "not citable", which is true.
+      evidenceSourceId = null;
+    }
+
     return JSON.stringify({
       ok: true,
       document: meta,
       content: excerpt.content,
       totalChars: excerpt.totalChars,
       truncated: excerpt.truncated,
+      evidence_source_id: evidenceSourceId,
+      citation_hint:
+        evidenceSourceId === null
+          ? 'This document does not resolve to a Data Room source, so nothing quoted from it can be recorded as a citation; text drafted from it is recorded as a draft you wrote, not as evidence.'
+          : `Quoting this document: pass { evidence_source_id: ${evidenceSourceId}, excerpt: "<the passage you quoted>" } in the drafting tool's sources[], so every clause you reproduce verbatim is recorded against this Data Room source rather than as unsourced prose.`,
       ...(excerpt.truncated
         ? { message: `Content truncated at ${excerpt.content.length} of ${excerpt.totalChars} characters — raise max_chars to read more.` }
         : {}),
