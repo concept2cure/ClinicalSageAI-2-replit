@@ -19,7 +19,10 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
-import auditService from '../services/auditService';
+/* WO-16C #133: the audit row's OUTCOME is reported, so a lost 21 CFR Part 11
+   §11.10(e) row is not indistinguishable from a written one. See
+   server/services/audit/audit-write-outcome.ts. */
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 const router = Router();
 const log = createScopedLogger('mdx-cdx');
@@ -106,12 +109,18 @@ router.post('/cdx/pairings', async (req: Request, res: Response) => {
         p.emaApprovalDate ?? null, p.cdxLabelText ?? null,
       ],
     );
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`, which discards the
+       AuditWriteResult that call resolves — and `logAction` never rejects on a
+       persistence failure, so the discarded value was the only place a lost row
+       was visible. The pairing row is already committed by the INSERT above, so
+       this is a log beside it: the 201 stands and `meta.auditTrail` says whether
+       the log exists. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, action: 'mdx.cdx.pairing.create',
       resourceType: 'cdx_pairing', resourceId: rows[0]?.id,
       details: { drugName: p.drugName, biomarker: p.biomarker },
     });
-    return created(res, rows[0]);
+    return created(res, rows[0], { auditTrail });
   } catch (err) {
     return serverError(res, log, 'pairing-create', err);
   }

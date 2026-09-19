@@ -549,4 +549,14 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      leaf (its only FKs are to organizations, which a purge updates rather than
      deletes, and users), so its position at the end is free. */
   'rendered_leaf_files',
+  /* The assumptions and decisions register behind the resolution subsystem.
+     Customer content in full: an assumption row carries the value the tenant
+     assumed, their rationale and the source they took it from; a decision row
+     carries the recommendation, who approved it and why it was rejected. Both
+     are org-keyed and both are true leaves — neither declares a foreign key in
+     either direction, which is precisely why a purge could not reach them: with
+     no FK there is no cascade path, so nothing but this list can erase them.
+     Position is therefore free. */
+  'assumption_records',
+  'decision_records',
 ]);

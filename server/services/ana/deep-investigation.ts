@@ -29,9 +29,8 @@ import {
   resolveTierModel,
 } from '../ai-gateway/reasoning.js';
 import { buildAnaRISystemPrompt } from '../ana-ri/persona.js';
-import { loadAnaToolPolicy, filterToolsByPolicy } from '../ana-ri/mdx-tool-policy.js';
+import { governedToolsetFor } from './governed-toolset.js';
 import { resolveMaxRounds, resolveRoundExtension } from './agentic-loop.js';
-import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import { selectToolsForTurn } from './tool-selection.js';
 import { STALE_AFTER_MS } from './run-status.js';
 
@@ -215,9 +214,8 @@ async function runInvestigation(id: string): Promise<void> {
 
   // Governed tool surface: tenant deny-list first, then relevance selection for
   // the question — minus the investigation tools themselves (no recursion).
-  const policy = orgId != null ? await loadAnaToolPolicy(pool, orgId) : {};
   const tools = selectToolsForTurn(
-    filterToolsByPolicy(getAllEnabledTools(), policy).filter(
+    (await governedToolsetFor(pool, orgId)).filter(
       t => !DEEP_INVESTIGATION_TOOL_NAMES.has(t.name),
     ),
     String(row.question),

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-18T21:25:02.558Z",
+  "generatedAt": "2026-09-19T04:13:56.430Z",
   "git": {
-    "sha": "e511ce6132a6fbfa7a4d1bc8bffc5b2f832e16f9",
+    "sha": "12c39181343da7ec332cef4ff76273492fae7b12",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,11 +12,11 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 205,
+    "duplicateBasenames": 204,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 96
+    "largeFilesByLines": 98
   },
   "findings": {
     "duplicateBasenames": [
@@ -1064,14 +1064,6 @@
         ]
       },
       {
-        "basename": "dispatch-readiness",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/v2/fixtures/dispatch-readiness.ts",
-          "server/services/ectd/dispatch-readiness.ts"
-        ]
-      },
-      {
         "basename": "dmsp",
         "count": 2,
         "paths": [
@@ -1948,7 +1940,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1029061
+        "bytes": 1036201
       },
       {
         "file": "shared/schema.ts",
@@ -1964,7 +1956,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 329643
+        "bytes": 333162
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
@@ -2087,6 +2079,10 @@
         "bytes": 114269
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 110643
+      },
+      {
         "file": "server/routes/concept2cure.ts",
         "bytes": 109695
       },
@@ -2113,10 +2109,6 @@
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 105559
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 100798
       }
     ],
     "largeFilesByLines": [
@@ -2126,11 +2118,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19939
+        "lines": 20087
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7498
+        "lines": 7598
       },
       {
         "file": "server/statistics-service.ts",
@@ -2265,6 +2257,10 @@
         "lines": 2327
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 2308
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2278
       },
@@ -2291,10 +2287,6 @@
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2103
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2461,12 +2453,12 @@
         "lines": 1696
       },
       {
-        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
-        "lines": 1678
+        "file": "server/routes/submissions.ts",
+        "lines": 1681
       },
       {
-        "file": "server/routes/submissions.ts",
-        "lines": 1665
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1678
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
@@ -2501,6 +2493,14 @@
         "lines": 1532
       },
       {
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 1521
+      },
+      {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1503
+      },
+      {
         "file": "server/services/grdhe/grdheService.ts",
         "lines": 1501
       }
@@ -2510,9 +2510,9 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 396,
+      "duplicateGroups": 395,
       "largeByBytes": 33,
-      "largeByLines": 79
+      "largeByLines": 81
     },
     {
       "owner": "Unassigned (TBD)",
@@ -2528,7 +2528,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 56,
+      "duplicateGroups": 55,
       "largeByBytes": 5,
       "largeByLines": 9
     },

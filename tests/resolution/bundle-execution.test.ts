@@ -21,6 +21,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { sqlText } from './drivers/drizzle-sql-text';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCK DATABASE
@@ -74,6 +75,36 @@ vi.mock('../../server/db', () => {
     });
     return chain;
   };
+
+  /**
+   * Which statement gets which rows, IN ORDER — the first `when` that matches
+   * answers. Order is load-bearing and is why this is a list rather than a
+   * lookup: stageRewrite issues INSERT … SELECT … FROM concept2cure_artifacts,
+   * which contains both 'concept2cure_artifacts' and 'SELECT', so the
+   * artifact-status route would answer it with a status row if it came first.
+   *
+   * The lineage answers are a STUB — what the gate really records is proven
+   * against the real schema in the PGlite lineage tests. The receipt route is
+   * not: ADR-0009 persistence does INSERT … RETURNING id and the executor
+   * treats a receipt it cannot persist as a FAILED execution. That is
+   * deliberate and is not relaxed for tests, so the mock models the table.
+   */
+  const ROUTES: Array<{ when: (q: string) => boolean; rows: { rows: any[] } }> = [
+    { when: (q) => q.includes('INSERT INTO concept2cure_artifact_versions'), rows: { rows: [{ id: 'mock-version' }] } },
+    { when: (q) => q.includes('document_span_lineage') && q.includes('INSERT'), rows: { rows: [{ id: 'mock-span' }] } },
+    { when: (q) => q.includes('document_span_lineage') && q.includes('char_start'), rows: { rows: [{ char_start: 0, char_end: 1_000_000 }] } },
+    { when: (q) => q.includes('document_span_lineage'), rows: { rows: [] } },
+    { when: (q) => q.includes('bundle_execution_receipts') && q.includes('INSERT'), rows: { rows: [{ id: 'mock-receipt-bundle-exec' }] } },
+    { when: (q) => q.includes('bundle_execution_receipts'), rows: { rows: [] } },
+    { when: (q) => q.includes('concept2cure_artifacts') && q.includes('SELECT'), rows: { rows: [{ status: 'draft' }] } },
+    { when: (q) => q.includes('supersession_records') && q.includes('SELECT'), rows: { rows: [] } },
+  ];
+
+  const mockExec = vi.fn().mockImplementation((query: any) => {
+    const queryStr = sqlText(query);
+    const route = ROUTES.find((r) => r.when(queryStr));
+    return Promise.resolve(route ? route.rows : { rows: [] });
+  });
 
   return {
     db: {
@@ -163,34 +194,12 @@ vi.mock('../../server/db', () => {
       update: vi.fn().mockImplementation((table: any) => {
         return createChainedMock();
       }),
-      execute: vi.fn().mockImplementation((query: any) => {
-        // A drizzle StringChunk stringifies to "[object Object]" — its text lives
-        // in .value as a string[]. The previous String(queryChunks[0]) therefore
-        // matched nothing and every branch below fell through to { rows: [] }.
-        const chunks: any[] = query?.queryChunks ?? [];
-        const queryStr = chunks.length
-          ? chunks
-              .map(c => (Array.isArray(c?.value) ? c.value.join('') : typeof c === 'string' ? c : ''))
-              .join(' ')
-          : String(query?.sql ?? '');
-
-        // ADR-0009 receipt persistence: INSERT … RETURNING id, and the executor
-        // treats a receipt it cannot persist as a FAILED execution. That is
-        // deliberate and is not relaxed for tests — the mock has to model the
-        // table instead.
-        if (queryStr.includes('bundle_execution_receipts')) {
-          return queryStr.includes('INSERT')
-            ? Promise.resolve({ rows: [{ id: 'mock-receipt-bundle-exec' }] })
-            : Promise.resolve({ rows: [] });
-        }
-        if (queryStr.includes('concept2cure_artifacts') && queryStr.includes('SELECT')) {
-          return Promise.resolve({ rows: [{ status: 'draft' }] });
-        }
-        if (queryStr.includes('supersession_records') && queryStr.includes('SELECT')) {
-          return Promise.resolve({ rows: [] });
-        }
-        return Promise.resolve({ rows: [] });
-      }),
+      execute: mockExec,
+      /* stageRewrite wraps its version write and its lineage in one
+         transaction (ledger L177). No real transaction to give it here, so
+         the callback runs against the same execute — enough for these
+         outcome-level tests. */
+      transaction: async (fn: (tx: any) => any) => fn({ execute: mockExec }),
     },
   };
 });

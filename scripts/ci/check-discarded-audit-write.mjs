@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CI Guard: `void auditService.logAction(...)` — a §11.10(e) row nobody checked.
+ * CI Guard: a 21 CFR Part 11 §11.10(e) audit row whose outcome is DISCARDED.
  *
  * ── The defect ────────────────────────────────────────────────────────────────
  * `logAction` does not reject when a persistence attempt fails. That is
@@ -9,10 +9,24 @@
  * `persisted` (and in `chained`, which distinguishes the retrievable
  * `audit_logs` row from a tamper-proof-only write).
  *
- * `void` discards that value. The call then has two possible outcomes and one
- * observable result: the caller, its caller, the HTTP envelope and the surface
- * are byte-identical whether the 21 CFR Part 11 record exists or does not. The
- * only trace of a lost row is one line in the server log.
+ * Two syntaxes discard that value, and they are the same defect:
+ *
+ *     void auditService.logAction({ … });      // explicit fire-and-forget
+ *     await auditService.logAction({ … });     // awaited at statement position
+ *
+ * The second form reads more careful than the first and is not: awaiting a promise
+ * and throwing away what it resolved to reports exactly as much as not awaiting
+ * it. Either way the call has two possible outcomes and one observable result —
+ * the caller, its caller, the HTTP envelope and the surface are byte-identical
+ * whether the Part 11 record exists or does not, and the only trace of a lost row
+ * is one line in the server log.
+ *
+ * This guard originally caught only `void`. Closing that hole is the whole reason
+ * it was renamed: at the time the awaited form was found there were 135 of those
+ * sites against 0 remaining `void` ones, so the gate had been reporting a
+ * near-clean repository while the larger population of the identical defect went
+ * unmeasured. A gate that catches one syntax of a defect and lets the other
+ * through is worse than no gate, because its green is believed.
  *
  * This is not the same defect as `check-dead-audit-catch`, which flags a `catch`
  * that cannot fire. That one is unreachable handling. This one is no handling,
@@ -45,19 +59,62 @@
  * quoting it, and a guard that fails on its own explanation is noise.
  *
  * Usage:
- *   node scripts/ci/check-void-audit-write.mjs                 # fail on new
- *   node scripts/ci/check-void-audit-write.mjs --self-test     # prove the gate
- *   node scripts/ci/check-void-audit-write.mjs --list
- *   node scripts/ci/check-void-audit-write.mjs --write-baseline
+ *   node scripts/ci/check-discarded-audit-write.mjs              # fail on new
+ *   node scripts/ci/check-discarded-audit-write.mjs --self-test  # prove the gate
+ *   node scripts/ci/check-discarded-audit-write.mjs --list
+ *   node scripts/ci/check-discarded-audit-write.mjs --write-baseline
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 
 const ROOT = path.resolve(new URL('../..', import.meta.url).pathname);
-const BASELINE = path.join(ROOT, 'scripts/ci/void-audit-write-baseline.json');
+const BASELINE = path.join(ROOT, 'scripts/ci/discarded-audit-write-baseline.json');
 
-const VOID_WRITE = /\bvoid\s+auditService\s*\.\s*logAction\s*\(/g;
+/**
+ * The two calls that RESOLVE an outcome a caller is meant to read.
+ *
+ * `auditService.logAction` is the raw writer. `recordAuditRow`
+ * (server/services/audit/audit-write-outcome.ts) is the canonical wrapper this
+ * repository converts to, and discarding ITS result is the same defect — a
+ * conversion that swaps one name for the other and keeps throwing the value away
+ * fixes nothing observable while satisfying a gate that only knew the old name.
+ * There were zero such sites when this was added; it is here so the next
+ * conversion cannot be vacuous and green at the same time.
+ *
+ * `writeChainedAuditRow` is deliberately NOT here: it returns `Promise<void>` and
+ * THROWS on failure, because it runs inside the caller's transaction so a failed
+ * row rolls the mutation back with it. There is no outcome to discard.
+ */
+const AUDIT_CALL = String.raw`(?:auditService\s*\.\s*logAction|recordAuditRow)`;
+
+/** `void auditService.logAction(` / `void recordAuditRow(` — fire-and-forget. */
+const VOID_WRITE = new RegExp(String.raw`\bvoid\s+${AUDIT_CALL}\s*\(`, 'g');
+
+/**
+ * `await auditService.logAction(` at STATEMENT position — awaited and thrown away.
+ *
+ * Anchored to the start of a line (after indentation) so the forms that DO keep
+ * the value are not flagged:
+ *   `const audit = await auditService.logAction(…)`  — assigned
+ *   `return await auditService.logAction(…)`         — handed to the caller
+ *   `x = await auditService.logAction(…)`            — assigned
+ * Those all have a token before `await` on the line.
+ *
+ * One shape defeats that anchor: a call passed as an ARGUMENT across lines —
+ *
+ *     transmitAttemptAudit.push(
+ *       await recordAuditRow({ … }),
+ *     );
+ *
+ * where the `await` does start its own line and the value is nevertheless kept.
+ * `isArgumentPosition` below excludes it. There is no such site in the current
+ * population — I checked all 102 — but the shape is real (it appears verbatim in
+ * ind-icsr-transmission-persistence, with recordAuditRow), and a gate that flags
+ * correct code gets that code BASELINED, which then admits a genuine defect in the
+ * same file later. Cheaper to exclude it than to explain the baseline entry.
+ */
+const AWAITED_DISCARDED = new RegExp(String.raw`^[ \t]*await\s+${AUDIT_CALL}\s*\(`, 'gm');
 
 /**
  * Blank out comments and string/template literals, preserving newlines so line
@@ -102,6 +159,21 @@ function stripNonCode(src) {
   return out;
 }
 
+/**
+ * True when the matched `await` is an argument rather than a statement: the
+ * previous code-bearing line ends in a token that opens one.
+ */
+function isArgumentPosition(code, matchIndex) {
+  const before = code.slice(0, matchIndex).split('\n');
+  before.pop(); // the line the match is on
+  for (let i = before.length - 1; i >= 0; i--) {
+    const line = before[i].trimEnd();
+    if (line.trim() === '') continue;
+    return /[([,=]$|=>$|&&$|\|\|$|\?$|:$/.test(line);
+  }
+  return false;
+}
+
 function sourceFiles() {
   return execSync("git ls-files 'server/**/*.ts'", {
     cwd: ROOT,
@@ -116,13 +188,17 @@ function sourceFiles() {
 /** Scan one source string. Exposed separately so --self-test can drive it. */
 export function scanSource(src, file) {
   const hits = [];
-  if (!src.includes('logAction')) return hits;
+  if (!src.includes('logAction') && !src.includes('recordAuditRow')) return hits;
   const code = stripNonCode(src);
-  VOID_WRITE.lastIndex = 0;
-  let m;
-  while ((m = VOID_WRITE.exec(code)) !== null) {
-    hits.push({ file, line: code.slice(0, m.index).split('\n').length });
+  for (const re of [VOID_WRITE, AWAITED_DISCARDED]) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(code)) !== null) {
+      if (re === AWAITED_DISCARDED && isArgumentPosition(code, m.index)) continue;
+      hits.push({ file, line: code.slice(0, m.index).split('\n').length });
+    }
   }
+  hits.sort((a, b) => a.line - b.line);
   return hits;
 }
 
@@ -150,6 +226,36 @@ if (process.argv.includes('--self-test')) {
     async function f(entry) {
       void auditService.logAction({ action: entry.action });
     }`;
+  const AWAITED = `
+    async function f(entry) {
+      await auditService.logAction({ action: entry.action });
+    }`;
+  const RETURNED = `
+    async function f(entry) {
+      return await auditService.logAction({ action: entry.action });
+    }`;
+  const REASSIGNED = `
+    async function f(entry) {
+      let audit;
+      audit = await auditService.logAction({ action: entry.action });
+      if (!audit.persisted) log.error('audit row NOT persisted', { a: 1 });
+    }`;
+  const DISCARDED_WRAPPER = `
+    async function f(entry) {
+      await recordAuditRow({ action: entry.action });
+    }`;
+  const WRAPPER_REPORTED = `
+    async function f(entry) {
+      const audit = await recordAuditRow({ action: entry.action });
+      return { ok: true, audit };
+    }`;
+  const ARGUMENT = `
+    async function f(entry, collected) {
+      collected.push(
+        await auditService.logAction({ action: entry.action }),
+      );
+      return collected;
+    }`;
   const REPORTED = `
     async function f(entry) {
       const audit = await auditService.logAction({ action: entry.action });
@@ -176,7 +282,13 @@ if (process.argv.includes('--self-test')) {
     else { console.error(`  ✗ ${name}`); ok = false; }
   };
   say(scanSource(VOIDED, '<t>').length === 1, 'a void write is flagged');
+  say(scanSource(AWAITED, '<t>').length === 1, 'an awaited write whose result is discarded is flagged');
   say(scanSource(REPORTED, '<t>').length === 0, 'an awaited-and-reported write is not flagged');
+  say(scanSource(RETURNED, '<t>').length === 0, 'a write returned to the caller is not flagged');
+  say(scanSource(REASSIGNED, '<t>').length === 0, 'a write assigned to an existing variable is not flagged');
+  say(scanSource(ARGUMENT, '<t>').length === 0, 'a write passed as an argument across lines is not flagged');
+  say(scanSource(DISCARDED_WRAPPER, '<t>').length === 1, 'a discarded recordAuditRow is flagged too');
+  say(scanSource(WRAPPER_REPORTED, '<t>').length === 0, 'a recordAuditRow whose outcome is returned is not flagged');
   say(scanSource(DOCUMENTED, '<t>').length === 0, 'the defect quoted in a comment is not flagged');
 
   // Case 4: the ratchet. A file baselined at 1 that now has 2 must fail.
@@ -201,7 +313,7 @@ const counts = countByFile(hits);
 
 if (process.argv.includes('--list')) {
   for (const h of hits) console.log(`${h.file}:${h.line}`);
-  console.log(`\n${hits.length} void audit write(s) across ${Object.keys(counts).length} file(s).`);
+  console.log(`\n${hits.length} discarded audit-write outcome(s) across ${Object.keys(counts).length} file(s).`);
   process.exit(0);
 }
 
@@ -212,9 +324,10 @@ if (process.argv.includes('--write-baseline')) {
     JSON.stringify(
       {
         $note:
-          'Per-file COUNT of `void auditService.logAction(...)`. Shrink only — a file at its ' +
+          'Per-file COUNT of DISCARDED audit-write outcomes — `void auditService.logAction(...)` ' +
+          'and statement-position `await auditService.logAction(...)`. Shrink only — a file at its ' +
           'baselined count passes, a file above it fails, and a file not listed here must be ' +
-          'zero. See scripts/ci/check-void-audit-write.mjs for what to write instead.',
+          'zero. See scripts/ci/check-discarded-audit-write.mjs for what to write instead.',
         files: sorted,
       },
       null,
@@ -238,10 +351,12 @@ if (over.length > 0) {
     for (const h of hits.filter((x) => x.file === file)) console.error(`       ${h.file}:${h.line}`);
   }
   console.error(`
-   \`void auditService.logAction(...)\` discards the AuditWriteResult. logAction
-   does not reject when persistence fails — by policy — so the call has two
-   outcomes and one observable result: nothing downstream can tell a recorded
-   action from an unrecorded one.
+   Both \`void auditService.logAction(...)\` and a statement-position
+   \`await auditService.logAction(...)\` discard the AuditWriteResult. logAction
+   does not reject when persistence fails — by policy — so either way the call has
+   two outcomes and one observable result: nothing downstream can tell a recorded
+   action from an unrecorded one. Awaiting and ignoring reports no more than not
+   awaiting at all.
 
      const audit = await auditService.logAction({ ... });
      if (!audit.persisted) {
@@ -259,7 +374,7 @@ if (over.length > 0) {
 
 const stale = Object.entries(baseline).filter(([f, n]) => (counts[f] ?? 0) < n);
 console.log(
-  `check-void-audit-write: no new occurrences. ${hits.length} baselined across ${Object.keys(counts).length} file(s).` +
+  `check-discarded-audit-write: no new occurrences. ${hits.length} baselined across ${Object.keys(counts).length} file(s).` +
     (stale.length
       ? `\n  ${stale.length} baselined file(s) now below their count — run --write-baseline to shrink it.`
       : ''),

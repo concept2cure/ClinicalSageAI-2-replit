@@ -25,7 +25,10 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
-import auditService from '../services/auditService';
+/* WO-16C #133: the audit row's OUTCOME is reported, so a lost 21 CFR Part 11
+   §11.10(e) row is not indistinguishable from a written one. See
+   server/services/audit/audit-write-outcome.ts. */
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 const router = Router();
 const log = createScopedLogger('mdx-ivdr');
@@ -136,12 +139,16 @@ router.post('/ivdr/classifications', async (req: Request, res: Response) => {
         p.certificateNo ?? null, p.certificateExpiry ?? null,
       ],
     );
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. An IVDR class
+       determination is the kind of record a notified body asks to see, and the
+       row is already committed by the INSERT above — so this is a log beside it,
+       and `meta.auditTrail` says whether the log exists. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, action: 'mdx.ivdr.classification.confirm',
       resourceType: 'ivdr_classification', resourceId: rows[0]?.id,
       details: { ivdrClass: p.ivdrClass, deviceName: p.deviceName },
     });
-    return created(res, rows[0]);
+    return created(res, rows[0], { auditTrail });
   } catch (err) {
     return serverError(res, log, 'class-create', err);
   }

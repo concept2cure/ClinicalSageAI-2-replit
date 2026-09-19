@@ -1,7 +1,7 @@
 {
   "$comment": "Modules that resolve the caller's organization or user id from the raw request instead of importing resolveOrgId / resolveUserId from server/types/auth-request. This list may only shrink. Re-point the call site, then regenerate with npm run ci:tenant-resolvers:write-baseline. Write the integration tests in ledger L58 BEFORE re-pointing — the precedence orders differ, and changing one without a test covering the disagreement is the change most likely to cause a cross-tenant read. Adding an entry by hand is a regression, not a fix.",
   "generatedBy": "scripts/ci/check-tenant-resolvers.mjs --write-baseline",
-  "count": 190,
+  "count": 189,
   "modules": [
     "server/api/cmc/module3AutoDraftRoutes.ts",
     "server/api/cmc/module3BuildStateRoutes.ts",
@@ -66,7 +66,6 @@
     "server/routes/decision-lineage.routes.ts",
     "server/routes/deep-research-board.routes.ts",
     "server/routes/design-controls.routes.ts",
-    "server/routes/design-risk.ts",
     "server/routes/dmsp.ts",
     "server/routes/doc-journey.routes.ts",
     "server/routes/dossier-map.routes.ts",

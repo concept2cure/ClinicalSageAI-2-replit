@@ -22,7 +22,7 @@ import {
   PV_PMS_PLAN,
   PV_TRENDS,
 } from '../data/postmarket';
-import { PV_DOC_FRAMEWORKS, PV_DOCUMENTS } from '../data/postmarket-docs';
+import { PV_DOC_FRAMEWORKS } from '../data/postmarket-docs';
 import { usePostmarket } from '../hooks/usePostmarket';
 import { useTriageQueue } from '../hooks/useTriageQueue';
 import { DataGate } from '../components/DataGate';
@@ -41,6 +41,9 @@ export interface PostmarketSurfaceProps {
    */
   program?: Program | null;
 }
+
+/** Stable identity: an empty list must not churn memo/effect deps. */
+const EMPTY_DOCS: KitDocument[] = [];
 
 export function PostmarketSurface({
   onAskAna,
@@ -69,8 +72,16 @@ export function PostmarketSurface({
      acceptable — a fabricated MDR submission reads as a statutory filing that
      never happened. Same gate as every other panel now: live rows would win,
      sample only in explicit sample mode, honest empty otherwise. */
-  const documents = useSampleRows<KitDocument>(null, PV_DOCUMENTS as unknown as readonly KitDocument[]);
-  const frameworks = useSampleRows<KitDocFramework>(null, PV_DOC_FRAMEWORKS as unknown as readonly KitDocFramework[]);
+  /* This panel has no live feed, and the rows it used to show under sample
+     mode were fabricated regulatory artifacts — several asserting
+     `esigState: 'signed'` with a named signer and a date (pv-docs.ts).
+     There is no real document list to show here yet, so it shows none:
+     the panel renders its honest empty state instead of example records.
+     Wiring a real read is what fills it. */
+  const documents: KitDocument[] = EMPTY_DOCS;
+  /* The framework list is a real category taxonomy, not tenant data, so it
+     is not sample content and is no longer gated as though it were. */
+  const frameworks = PV_DOC_FRAMEWORKS as unknown as KitDocFramework[];
   /* The gate above was right and the marking was missing: these rows carry
      `esigState: 'signed'` with a named signer and a date (data/postmarket-docs.ts),
      so on the one screen where an example row is least acceptable the user was
