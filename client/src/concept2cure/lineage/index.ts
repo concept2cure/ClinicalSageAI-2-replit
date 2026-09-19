@@ -22,6 +22,11 @@ export {
   type DocumentAttributionBarProps,
 } from './DocumentAttributionBar';
 export {
+  useAttributionHighlights,
+  type AttributionSpan,
+  type HighlightState,
+} from './useAttributionHighlights';
+export {
   fetchDataOrigins,
   downloadDataOriginsPdf,
   type DataOriginsReport,
@@ -34,5 +39,6 @@ export {
 export {
   selectionToRange,
   offsetsAreTrustworthy,
+  rangeForOffsets,
   type SelectionRange,
 } from './selectionOffsets';

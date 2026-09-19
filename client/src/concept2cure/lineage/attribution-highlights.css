@@ -1,0 +1,56 @@
+/**
+ * Inline attribution highlighting (ledger L179, Phase 6a).
+ *
+ * Painted with the CSS Custom Highlight API rather than by wrapping text in
+ * spans. Wrapping would mutate the editor's DOM, which ProseMirror owns and
+ * rebuilds — a highlight span injected into a contenteditable tree is a source
+ * of cursor jumps, lost selections and phantom nodes in the serialized output.
+ * `::highlight()` paints over ranges and touches nothing.
+ *
+ * TONE. These sit UNDER live editable text an author is reading for meaning, so
+ * they are washes, not markers: enough to answer "is this attributed" at a
+ * glance without turning a regulatory document into a highlighter test page.
+ * Underlines carry the distinction rather than colour alone (see the component
+ * — the legend is the accessible answer; this is the glanceable one).
+ *
+ * The two that need to stand out are the two that mean something is wrong:
+ * unaccepted machine text, and a citation whose source has moved.
+ */
+
+::highlight(attribution-source) {
+  background-color: rgb(4 120 87 / 0.10);
+  text-decoration: underline;
+  text-decoration-color: rgb(4 120 87 / 0.45);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+::highlight(attribution-author) {
+  /* The ordinary case. Deliberately the quietest: most of a good document is
+     the author's, and washing all of it would say nothing. */
+  background-color: rgb(20 20 19 / 0.04);
+}
+
+::highlight(attribution-machine-accepted) {
+  background-color: rgb(20 20 19 / 0.07);
+  text-decoration: underline dotted;
+  text-decoration-color: rgb(20 20 19 / 0.35);
+  text-underline-offset: 3px;
+}
+
+::highlight(attribution-machine-unaccepted) {
+  /* Nobody has accepted this text. Loudest of the four, on purpose. */
+  background-color: rgb(180 83 9 / 0.16);
+  text-decoration: underline wavy;
+  text-decoration-color: rgb(180 83 9 / 0.7);
+  text-underline-offset: 3px;
+}
+
+::highlight(attribution-stale) {
+  /* Cited, but the source moved after it was cited. Drawn over the citation
+     wash so it reads as "this citation, but check it". */
+  background-color: rgb(180 83 9 / 0.12);
+  text-decoration: underline wavy;
+  text-decoration-color: rgb(180 83 9 / 0.55);
+  text-underline-offset: 3px;
+}

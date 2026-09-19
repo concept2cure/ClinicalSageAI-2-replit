@@ -129,3 +129,60 @@ export function offsetsAreTrustworthy(root: HTMLElement | null, canonicalText: s
     .join('');
   return rendered === canonicalText;
 }
+
+/**
+ * The inverse mapping: a character range in the canonical text → a DOM Range.
+ *
+ * Used to PAINT attribution over the text the author is reading, where
+ * `selectionToRange` reads a selection out of it. Same walk, same definition of
+ * an offset, so the two cannot disagree about where a span begins.
+ *
+ * Returns null when the range cannot be located exactly — off the end of the
+ * rendered text, or inverted. A highlight drawn over the wrong words is a
+ * confident, silent lie about which sentence a source backs, so there is no
+ * best-effort branch here either.
+ *
+ * CALLERS MUST STILL CHECK `offsetsAreTrustworthy` FIRST. This function can
+ * only find the offset inside what is rendered; whether that text is the text
+ * the offsets were recorded against is a different question, and the one that
+ * actually goes wrong (an unsaved edit shifts every offset below it).
+ */
+export function rangeForOffsets(
+  root: HTMLElement | null,
+  charStart: number,
+  charEnd: number,
+): Range | null {
+  if (!root) return null;
+  if (!Number.isFinite(charStart) || !Number.isFinite(charEnd)) return null;
+  if (charEnd <= charStart || charStart < 0) return null;
+
+  const nodes = textNodesIn(root);
+  let seen = 0;
+  let startNode: Text | null = null;
+  let startOffset = 0;
+  let endNode: Text | null = null;
+  let endOffset = 0;
+
+  for (const t of nodes) {
+    const len = t.data.length;
+    // `<=` on the start so a boundary falling exactly between two text nodes
+    // binds to the start of the next one rather than past the end of this one.
+    if (startNode === null && charStart < seen + len) {
+      startNode = t;
+      startOffset = charStart - seen;
+    }
+    if (startNode !== null && charEnd <= seen + len) {
+      endNode = t;
+      endOffset = charEnd - seen;
+      break;
+    }
+    seen += len;
+  }
+
+  if (!startNode || !endNode) return null;
+
+  const range = document.createRange();
+  range.setStart(startNode, Math.max(0, Math.min(startOffset, startNode.data.length)));
+  range.setEnd(endNode, Math.max(0, Math.min(endOffset, endNode.data.length)));
+  return range;
+}

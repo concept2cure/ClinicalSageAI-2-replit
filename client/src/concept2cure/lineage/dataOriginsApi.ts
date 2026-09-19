@@ -132,6 +132,19 @@ export interface DocumentAttributionSummary {
   };
   /** Subset of byKind.fromSources whose source changed after it was cited. */
   staleChars: number;
+  /**
+   * The spans themselves, clipped to the current text and in document order,
+   * for painting attribution over the words (useAttributionHighlights). A
+   * projection of the rows, not the rows: no checksums, no actor ids.
+   */
+  spans: Array<{
+    charStart: number;
+    charEnd: number;
+    provenanceKind: string;
+    usage: string;
+    sourceTitle: string | null;
+    stale: boolean;
+  }>;
   generatedAt: string;
 }
 
