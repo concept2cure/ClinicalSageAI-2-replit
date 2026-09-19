@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T05:13:10.872Z",
+  "generatedAt": "2026-09-19T05:18:32.696Z",
   "git": {
-    "sha": "96a448fdea23ffd1f0ac14c57b92a12448124676",
+    "sha": "7ae3c4442d7a30da04d125834d46fa5d0e103e93",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2004,7 +2004,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 144837
+        "bytes": 145015
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3365
+        "lines": 3360
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
