@@ -1,14 +1,13 @@
 {
-  "generatedAt": "2026-09-03T01:10:39.512Z",
+  "generatedAt": "2026-09-19T03:55:07.786Z",
   "purgeChildTables": [
     "module_access_requests",
+    "ana_runs",
     "project_workflows",
     "organization_users",
     "client_workspaces",
     "projects",
     "documents",
-    "vault_documents",
-    "document_chunks",
     "regulatory_programs",
     "file_uploads",
     "regulatory_twin_simulations",
@@ -19,7 +18,11 @@
     "cmc_material_specs",
     "cmc_formulation_records",
     "cmc_characterization_studies",
-    "manufacturing_processes"
+    "manufacturing_processes",
+    "cmc_interview_sessions",
+    "rendered_leaf_files",
+    "assumption_records",
+    "decision_records"
   ],
   "count": 611,
   "tables": [
