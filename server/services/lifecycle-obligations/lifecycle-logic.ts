@@ -59,19 +59,64 @@ export interface Occurrence {
   dueDate: string;
 }
 
+/** The periodic report a cadence is generating occurrences for. */
+export type PeriodicReportKind = 'psur' | 'dsur' | 'unknown';
+
 /**
- * Generate the next `count` periodic occurrences (e.g. PSURs) from an anchor
- * date and a cadence in months. The report is conventionally due ~70 days after
- * the data-lock point / period end (ICH E2C / GVP); we use 70 days. Pure.
+ * Map a free-text `classification` ('PSUR', 'PBRER', 'DSUR', …) onto the kind
+ * that decides the reporting allowance. Unrecognised text stays 'unknown'.
  */
-export function generateOccurrences(anchorDate: string, recurrenceMonths: number, count: number): Occurrence[] {
+export function periodicReportKind(classification?: string | null): PeriodicReportKind {
+  const c = String(classification ?? '').trim().toUpperCase();
+  if (!c) return 'unknown';
+  if (c.includes('DSUR')) return 'dsur';
+  if (c.includes('PSUR') || c.includes('PBRER')) return 'psur';
+  return 'unknown';
+}
+
+/**
+ * Calendar days after the data-lock point / period end within which the report
+ * is due.
+ *
+ *  - DSUR — ICH E2F: 60 days after the DSUR data lock point (the DIBD
+ *    anniversary). A flat 70 dated every DSUR occurrence TEN DAYS LATE, and
+ *    `obligationUrgency` then bucketed a report that was already overdue as
+ *    on-track. That is the defect this function exists to fix.
+ *  - PSUR / PBRER — ICH E2C(R2) and EU GVP Module VII: 70 days for an interval
+ *    of 12 months or less, 90 days for an interval longer than 12 months.
+ *
+ * An UNKNOWN classification keeps 70. It is deliberately NOT extended to 90 on a
+ * long interval: lengthening a deadline for a report nobody has identified is
+ * the unsafe direction, and 70 is the shorter, already-established default.
+ */
+export function reportingAllowanceDays(
+  kind: PeriodicReportKind,
+  recurrenceMonths: number,
+): number {
+  if (kind === 'dsur') return 60;
+  if (kind === 'psur') return recurrenceMonths > 12 ? 90 : 70;
+  return 70;
+}
+
+/**
+ * Generate the next `count` periodic occurrences from an anchor date and a
+ * cadence in months, dating each one by the allowance its report kind actually
+ * carries (see reportingAllowanceDays). Pure.
+ */
+export function generateOccurrences(
+  anchorDate: string,
+  recurrenceMonths: number,
+  count: number,
+  classification?: string | null,
+): Occurrence[] {
   const out: Occurrence[] = [];
   if (recurrenceMonths <= 0 || count <= 0) return out;
+  const allowance = reportingAllowanceDays(periodicReportKind(classification), recurrenceMonths);
   let periodStart = anchorDate;
   for (let i = 0; i < count; i++) {
     const periodEnd = addMonths(periodStart, recurrenceMonths);
     const dueDays = toDays(periodEnd);
-    const dueDate = dueDays != null ? fromDays(dueDays + 70) : periodEnd;
+    const dueDate = dueDays != null ? fromDays(dueDays + allowance) : periodEnd;
     out.push({ periodStart, periodEnd, dueDate });
     periodStart = periodEnd;
   }

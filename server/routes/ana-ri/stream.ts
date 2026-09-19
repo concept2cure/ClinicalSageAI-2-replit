@@ -137,12 +137,16 @@ import {
   readRun,
   releaseLocalRun,
   consumeInterjections,
+  requestApproval,
+  recordApprovalDecision,
+  readApprovalDecision,
   stopRunInternally,
   resumeAbandonedRun,
   reapOrphanedRuns,
   type RunHandle,
 } from '../../services/ana/run-control.js';
 import { MAX_PAUSE_MS, type HumanControlEvent } from '../../services/ana/run-status.js';
+import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
 import { resolveOrgId, resolveUserId } from '../../types/auth-request.js';
 
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
@@ -1285,6 +1289,185 @@ export function mountStreamRoute(router: Router): void {
 
         // Execute one round: announce the step, stream tool_use/result events, run
         // the handler, log telemetry, and surface any generated document draft.
+        /**
+         * One SSE control frame.
+         *
+         * Declared HERE, above its first use, rather than beside the checkpoint
+         * where it used to sit: the approval gate below also emits through it,
+         * and that only worked because executeTools happens to be invoked after
+         * the checkpoint is built. Relying on that ordering is a temporal dead
+         * zone waiting for someone to move a block.
+         */
+        const emitControl = (obj: Record<string, unknown>) => {
+          if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
+        };
+
+        /**
+         * Settle every tool call in this round that a person has to authorise.
+         *
+         * Returns one entry per GOVERNED call; ungoverned calls are absent and
+         * dispatch normally. Every entry is a real tool result — a denial, a
+         * timeout and a disconnect all produce one, because an empty result is
+         * an error rendered as nothing, and here it would read to the model as
+         * a step that was never asked for.
+         */
+        const settleApprovals = async (
+          calls: ToolCall[],
+          round: number
+        ): Promise<Map<string, { ok: boolean; result: unknown; why?: string }>> => {
+          const out = new Map<string, { ok: boolean; result: unknown; why?: string }>();
+          for (const toolUse of calls) {
+            const verdict = classifyToolCall(toolUse);
+            if (verdict.kind === 'UNGOVERNED') continue;
+
+            if (verdict.kind === 'UNDECIDABLE') {
+              // A call nobody could read is refused, never dispatched. Before
+              // the streamed-tool-input fix this was EVERY call on this path,
+              // which is why it is its own outcome rather than a quiet pass.
+              out.set(toolUse.id, {
+                ok: false,
+                why: verdict.why,
+                result: {
+                  error: 'GOVERNED_CALL_UNREADABLE',
+                  tool: toolUse.name,
+                  message:
+                    `This action could not be read well enough to put to a person (${verdict.why}), ` +
+                    'so it was not run. Re-issue it with the arguments spelled out.',
+                },
+              });
+              continue;
+            }
+
+            if (!runId || !runHandle) {
+              // No durable run means no way to ask and no way to wait. Refusing
+              // is the only honest outcome: the alternative is running a
+              // governed action with nobody having authorised it.
+              out.set(toolUse.id, {
+                ok: false,
+                why: 'no controllable run',
+                result: {
+                  error: 'HUMAN_CONFIRMATION_REQUIRED',
+                  action: verdict.command,
+                  message:
+                    'This action changes the official record, so a person has to take it. ' +
+                    'This turn has no controllable run, so it could not be put to anyone — ' +
+                    'ask them to run it from the surface it belongs to.',
+                },
+              });
+              continue;
+            }
+
+            out.set(toolUse.id, await awaitDecision(toolUse, verdict, round));
+          }
+          return out;
+        };
+
+        /** Put one action to the person and hold the turn until they answer. */
+        const awaitDecision = async (
+          toolUse: ToolCall,
+          verdict: Extract<ReturnType<typeof classifyToolCall>, { kind: 'NEEDS_APPROVAL' }>,
+          round: number
+        ): Promise<{ ok: boolean; result: unknown; why?: string }> => {
+          const refused = (why: string, message: string) => ({
+            ok: false,
+            why,
+            result: {
+              error: 'HUMAN_CONFIRMATION_DECLINED',
+              action: verdict.command,
+              message,
+              // She must not try again inside this turn. A person said no, or
+              // nobody said anything; retrying would be asking the same
+              // question louder.
+              retry: false,
+            },
+          });
+
+          const opened = await requestApproval(getPool(), runId, {
+            toolUseId: toolUse.id,
+            command: verdict.command,
+            params: verdict.params,
+            tier: verdict.tier,
+            requestedAt: new Date().toISOString(),
+            rationale: typeof (verdict.params as any)?.reason === 'string'
+              ? String((verdict.params as any).reason)
+              : undefined,
+          }).catch(() => false);
+          if (!opened) {
+            return refused(
+              'the run would not hold',
+              'This action needs a person to authorise it, and the run could not be held to ask. ' +
+                'It was not run.'
+            );
+          }
+
+          // The envelope the client already understands — the same shape
+          // buildHumanConfirmationRequiredResult produces, so GovernedActionSignoff
+          // opens on it unchanged. runId + toolUseId are what let the decision
+          // come back to THIS waiting turn instead of running on its own.
+          emitControl({
+            type: 'approval_required',
+            round,
+            runId,
+            toolUseId: toolUse.id,
+            action: verdict.command,
+            openModal: 'esign',
+            data: {
+              reasonRequired: true,
+              signatureRequired: verdict.tier === 'esignature',
+              proposedByAgent: true,
+              retry: { command: verdict.command, params: verdict.params },
+            },
+            message:
+              'This action changes the official record, so it has to be taken by a person rather ' +
+              'than on your behalf. Review it and confirm to continue — your reason for the change ' +
+              'is recorded with it. AnA is waiting on this before she goes on.',
+          });
+
+          // The wait. Same machinery as pause: woken by the decision, with the
+          // ceiling only bounding a wake that never arrives.
+          const WAKE_CEILING_MS = 5_000;
+          const started = Date.now();
+          for (;;) {
+            if (runHandle!.cancelSignal.aborted) {
+              return refused('the run was stopped', 'The run was stopped before anyone decided, so this action did not run.');
+            }
+            if (res.writableEnded) {
+              await stopRunInternally(getPool(), runId, 'client_disconnected', runOrgId ?? undefined);
+              return refused('the client disconnected', 'The connection dropped before anyone decided, so this action did not run.');
+            }
+            const decision = await readApprovalDecision(getPool(), runId, toolUse.id).catch(() => null);
+            if (decision) {
+              emitControl({ type: 'approval_decided', round, toolUseId: toolUse.id, decided: decision.decided });
+              if (decision.decided === 'approved' && decision.error === undefined) {
+                return { ok: true, result: decision.result ?? { success: true } };
+              }
+              return refused(
+                decision.error ?? 'declined',
+                decision.error
+                  ? `A person authorised this, but it did not complete: ${decision.error}`
+                  : 'A person reviewed this and declined it, so it did not run.'
+              );
+            }
+            if (Date.now() - started > MAX_PAUSE_MS) {
+              // Timeout DENIES. The same ceiling as an abandoned pause, so
+              // there is one number for "the human is not coming back" rather
+              // than two that can drift apart.
+              await recordApprovalDecision(getPool(), runId, {
+                toolUseId: toolUse.id,
+                decided: 'denied',
+                decidedAt: new Date().toISOString(),
+                byUserId: null,
+                error: 'no decision within the approval window',
+              }).catch(() => false);
+              return refused(
+                'nobody decided in time',
+                'Nobody authorised this within the time allowed, so it did not run. Nothing was changed.'
+              );
+            }
+            await runHandle!.wake(WAKE_CEILING_MS);
+          }
+        };
+
         const executeTools = async (
           calls: ToolCall[],
           round: number
@@ -1340,6 +1523,20 @@ export function mountStreamRoute(router: Router): void {
               })}\n\n`
             );
           }
+          // ── Anything that needs a person is settled FIRST, one at a time ──
+          //
+          // Before this, a governed command reached executeCommands, was
+          // refused with HUMAN_CONFIRMATION_REQUIRED, and AnA's turn ENDED. The
+          // person then signed in a modal and the action ran on its own, with
+          // no way for her to carry on from it. She asked, but she could not
+          // wait for the answer.
+          //
+          // Serial on purpose, and not a missed parallelism: a person decides
+          // one action at a time, and two gates open at once would mean
+          // authorising one thing while the row described another. Everything
+          // ungoverned still runs concurrently below.
+          const approvals = await settleApprovals(calls, round);
+
           const ran = await mapWithConcurrency(
             calls,
             async toolUse => {
@@ -1349,7 +1546,18 @@ export function mountStreamRoute(router: Router): void {
               let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' = 'success';
               let toolErrorMessage: string | undefined;
               const lostInput = lostToolInputResult(toolUse);
-              if (runSignal?.aborted) {
+              const approval = approvals.get(toolUse.id);
+              if (approval) {
+                // Already settled by a person (or refused because it could not
+                // be put to one). The handler is NOT called: when the action
+                // ran, it ran inside the governed-action route, which is the
+                // single place that stamps humanConfirmed. What comes back here
+                // is that execution's result, so there is still one execution,
+                // one signature and one audit row.
+                resultStr = JSON.stringify(approval.result);
+                toolStatus = approval.ok ? 'success' : 'error';
+                toolErrorMessage = approval.ok ? undefined : approval.why;
+              } else if (runSignal?.aborted) {
                 // Stopped before this step got its turn. It never ran, and
                 // saying so is the honest record — a step that silently
                 // vanishes reads as one that was never asked for.
@@ -1776,9 +1984,6 @@ export function mountStreamRoute(router: Router): void {
         // this process cannot lose a human decision; what happens below is only
         // telling the client what the server did.
         let pauseAnnounced = false;
-        const emitControl = (obj: Record<string, unknown>) => {
-          if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
-        };
         const checkpoint = async (upcomingRound: number): Promise<'continue' | 'abort'> => {
           if (!runId || !runHandle) return 'continue';
           if (runHandle.cancelSignal.aborted) {
