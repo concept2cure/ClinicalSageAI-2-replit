@@ -87,6 +87,14 @@ lane that added it (the pre-push hook does not run the ratchet; CI does) and
 costs the NEXT lane to push a diagnostic round each time. Running
 `npm run ci:eslint-ratchet` before you push keeps it in the lane that created it.
 
+**ESLint ERROR cleared from another lane (2026-09-19):**
+`server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts:169` (commit
+`1e8ddb6d2`) carried four literal spaces inside a regex, which `no-regex-spaces`
+reports as an **error**, not a warning — so the Run ESLint step was red on
+trunk, and the ratchet, which only counts warnings, said OK. Changed to `{4}`;
+identical semantics, 13 tests still pass. Worth knowing in that lane: the
+warning ratchet passing is not the lint step passing.
+
 **Note for the vault-storage lane:** `server/services/vault/storage-migration.service.ts`
 (`c029711ae`) landed `migrateVaultStorage` at complexity 17 / 102 lines, which put
 `ci:eslint-warning-ratchet` one over its baseline. It was paid down elsewhere rather than
