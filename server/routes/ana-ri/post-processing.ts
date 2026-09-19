@@ -14,7 +14,7 @@ import type { Response } from 'express';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import type { UserRole } from '../../services/ana-ri/persona.js';
 import { buildAssistantMetadata, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
-import type { HumanControlEvent } from '../../services/ana/run-control-registry.js';
+import type { HumanControlEvent } from '../../services/ana/run-status.js';
 import {
   checkEvidenceDiscipline,
   validateResponseStructure,

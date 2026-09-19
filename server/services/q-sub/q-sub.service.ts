@@ -11,7 +11,7 @@
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { db } from '../../db';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import {
   qSubmissions,
@@ -387,10 +387,33 @@ export interface CreateQSubInput {
   createdBy?: string | null;
 }
 
+/**
+ * A created Q-Sub row, with what happened to the 21 CFR Part 11 §11.10(e)
+ * record of its creation carried on it.
+ *
+ * WO-16C finding 133. The audit write below was
+ * `void auditService.logAction({…})`. `logAction` never rejects on a
+ * persistence failure — by deliberate policy, an audit-trail outage must not
+ * break the action it records — it RESOLVES an `AuditWriteResult` and reports
+ * what happened in `persisted`. Discarding that value meant the `q_submissions`
+ * row was already committed and every caller — the POST /api/q-sub route, AnA's
+ * `create_q_sub` tool, the MDX `q_sub.create` handler — was handed a
+ * byte-identical success whether the §11.10(e) record existed or not.
+ *
+ * The inserted row is returned intact with the outcome added, so callers that
+ * read `id` / `qNumber` / `stage` / `programId` off it are unaffected and the
+ * outcome travels with it. `auditTrail` is the key a service already uses for
+ * its OWN row (`PdevWorkflowKickoffResult.auditTrail`); a handler that writes a
+ * second, `agent.ana.*` row for the same request reports that one under its own
+ * key (`agentAuditTrail` in server/services/ana-ri/pdev-command-handlers.ts),
+ * so neither is ever read for the other.
+ */
+export type CreatedQSubmission = QSubmission & { auditTrail: AuditRowOutcome };
+
 export async function createQSubmission(
   organizationId: number,
   input: CreateQSubInput,
-): Promise<QSubmission> {
+): Promise<CreatedQSubmission> {
   // Tenant gate: program must belong to caller's org.
   const [program] = await db
     .select({ id: regulatoryPrograms.id })
@@ -421,8 +444,14 @@ export async function createQSubmission(
     })
     .returning();
 
-  // Part 11 audit trail. Fire-and-forget; auditService never throws.
-  void auditService.logAction({
+  // Part 11 §11.10(e) audit trail. `recordAuditRow` does not throw and does not
+  // reject: an audit-trail outage must not break the creation it records. The
+  // insert above is already committed, so the submission stands either way and
+  // is returned either way — with what happened to its record on it, in
+  // `auditTrail`. The store's own reason for a failure stays in the log line
+  // recordAuditRow wrote against this action and resource id; `message` on the
+  // failure arm is the only text fit to show a user.
+  const auditTrail = await recordAuditRow({
     tenantId: organizationId,
     userId: input.createdBy ?? undefined,
     action: 'q_sub.create',
@@ -436,7 +465,7 @@ export async function createQSubmission(
     },
   });
 
-  return row;
+  return { ...row, auditTrail };
 }
 
 // ─── Mark commitment as rolled-in ───────────────────────────────────────────
@@ -447,10 +476,36 @@ export interface SetRolledInInput {
   rolledInBy?: string | null;
 }
 
+/**
+ * An updated commitment row, with what happened to the 21 CFR Part 11
+ * §11.10(e) record of the roll-in (or roll-out) carried on it.
+ *
+ * WO-16C finding 133, same shape and same reason as `CreatedQSubmission`
+ * above: the `q_sub_commitments` update is committed before the audit write is
+ * attempted, and discarding the write's result left "this roll-in is recorded in
+ * the Part 11 trail" indistinguishable from "it is rolled in and no §11.10(e)
+ * entry exists for the transition".
+ *
+ * The commitment row carries `rolledIn` / `rolledInAt` / `rolledInBy` itself —
+ * the UPDATE below writes all three and `getQSubDetail` reads them back — so the
+ * audit row is a log beside a committed state change that names its own actor,
+ * never the only record of it. That is why the toggle stands and the outcome is
+ * reported rather than the update being reverted.
+ *
+ * (An earlier version of this sentence said the alternative was "it is rolled in
+ * and nothing records who did that". That was false of this code in the exact
+ * case it named, and it overstated the Part 11 exposure: the actor survives on
+ * the governed row; what a failed write loses is the tamper-evident trail entry.
+ * A reviewer caught it, and it is worth leaving the correction visible, because
+ * this is the sentence a later reader would use to decide whether this site is
+ * the kind where a failed audit write means a failed action.)
+ */
+export type UpdatedQSubCommitment = QSubCommitment & { auditTrail: AuditRowOutcome };
+
 export async function setCommitmentRolledIn(
   organizationId: number,
   input: SetRolledInInput,
-): Promise<QSubCommitment> {
+): Promise<UpdatedQSubCommitment> {
   // Tenant gate: walk commitment → question → submission → program → org.
   const [scoped] = await db
     .select({ id: qSubCommitments.id })
@@ -484,7 +539,10 @@ export async function setCommitmentRolledIn(
     .where(eq(qSubCommitments.id, input.commitmentId))
     .returning();
 
-  void auditService.logAction({
+  // Part 11 §11.10(e) audit trail, on the same terms as `createQSubmission`:
+  // the update is committed, the toggle stands whatever happened to its record,
+  // and the outcome rides out on the returned row instead of being discarded.
+  const auditTrail = await recordAuditRow({
     tenantId: organizationId,
     userId: input.rolledInBy ?? undefined,
     action: input.rolledIn ? 'q_sub.commitment.rolled_in' : 'q_sub.commitment.rolled_out',
@@ -497,7 +555,7 @@ export async function setCommitmentRolledIn(
     },
   });
 
-  return updated;
+  return { ...updated, auditTrail };
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

@@ -37,6 +37,7 @@ import { stashNavParamsForTarget } from './navParams';
 import { listDemoScripts } from '@shared/navigation/demo-scripts';
 import { applySurfaceAction, validateDriveAction } from './surfaceActions';
 import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
+import { MAX_INTERJECTION_CHARS } from '@shared/ana/run-control-limits';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
@@ -1069,13 +1070,21 @@ export function AnaRail({
           </div>
         )}
         {/* Mid-run control.
-            Every action here lands at a ROUND BOUNDARY, not instantly — the
-            loop checks between rounds — so the copy says "after this step"
-            rather than implying the tool in flight stops dead. Steering is the
-            reason this exists: a reviewer watching AnA work a question the
-            wrong way could previously only wait for her to finish, while the
-            server has spliced steers into the next round, and recorded them in
-            the decision lineage, all along. */}
+            The three actions have three different scopes, and the copy below
+            says which is which rather than one blanket promise:
+              Stop   cuts the step in flight — the model call and the tools are
+                     aborted, so it is "Stopping…", acknowledged by the server.
+              Pause  holds at the next ROUND BOUNDARY, deliberately: killing a
+                     tool to pause throws the work away and then redoes it, so
+                     "after this step" is the honest label and stays.
+              Steer  applies at the next round.
+            Steering is the reason this exists: a reviewer watching AnA work a
+            question the wrong way could previously only wait for her to finish,
+            while the server has spliced steers into the next round, and
+            recorded them in the decision lineage, all along.
+            Pause and Steer are offered only when the run is durably
+            controllable; Stop is always offered because aborting the request
+            needs no run record. */}
         {streaming && (onPause || onStop || onSteer) && (
           <div className="ana-runctl" role="group" aria-label="Control this run">
             <span className="ana-runctl-state">
@@ -1142,7 +1151,7 @@ export function AnaRail({
                   type="text"
                   className="ana-runctl-input"
                   value={steer}
-                  maxLength={2000}
+                  maxLength={MAX_INTERJECTION_CHARS}
                   onChange={(e) => {
                     setSteer(e.target.value);
                     if (steerRefused) setSteerRefused(false);
