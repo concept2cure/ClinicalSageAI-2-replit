@@ -139,14 +139,23 @@ export function DocumentsPanel({
               ? 'E-signature required'
               : 'E-signature not yet applicable';
           return (
-            <button
+            <div
               key={d.id}
               className="docs-row"
               data-status={d.status}
               data-blocker={d.blocker || undefined}
-              onClick={() => onOpenEditor?.(d.id)}
-              type="button"
             >
+              {/* The row-open action and the Ask-AnA action are SIBLINGS, not
+                  nested. Previously the whole row was a <button> with a
+                  role="button" span inside it — interactive-in-interactive,
+                  which is invalid HTML and gives unpredictable keyboard/AT
+                  behaviour. The main click now lives on this inner button and
+                  the chip below is its own button. */}
+              <button
+                className="docs-row-main"
+                onClick={() => onOpenEditor?.(d.id)}
+                type="button"
+              >
               <div className="docs-rail" />
               <div className="docs-body">
                 <div className="docs-head">
@@ -222,30 +231,22 @@ export function DocumentsPanel({
                   </div>
                 )}
               </div>
+              </button>
               <div className="docs-actions">
                 {onAskAna && (
-                  <span
+                  <button
                     className="docs-action-chip"
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAskAna(`Draft the next missing section of ${d.title}.`);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.stopPropagation();
-                        onAskAna(`Draft the next missing section of ${d.title}.`);
-                      }
-                    }}
+                    type="button"
+                    onClick={() => onAskAna(`Draft the next missing section of ${d.title}.`)}
                     title="Ask AnA to draft"
+                    aria-label="Ask AnA to draft"
                   >
                     {I.sparkles}
-                  </span>
+                  </button>
                 )}
-                <span className="docs-open">{I.arrowRight}</span>
+                <span className="docs-open" aria-hidden="true">{I.arrowRight}</span>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
