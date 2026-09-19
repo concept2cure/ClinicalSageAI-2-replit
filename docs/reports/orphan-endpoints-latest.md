@@ -1,11 +1,11 @@
 # Orphan-endpoint inventory
 
-Generated: 2026-09-11T21:19:29.917Z
+Generated: 2026-09-19T04:23:12.344Z
 
 ## Summary
 
-- Declared server endpoints: **1756**
-- Consumed (client + server-to-server, heuristic): **586**
+- Declared server endpoints: **1757**
+- Consumed (client + server-to-server, heuristic): **587**
 - Orphans (no caller reference): **1170**
 
 ## Orphans by owner

@@ -11,7 +11,7 @@ import { Router, Request, Response } from 'express';
 
 import { authenticateToken } from '../middleware/auth';
 import { pool } from '../db';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { loadAnaToolPolicy, type AnaToolPolicy } from '../services/ana-ri/mdx-tool-policy';
 
 const router = Router();
@@ -94,7 +94,15 @@ router.put('/', async (req: Request, res: Response) => {
       [settings, orgId],
     );
 
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})` — the discarded
+       AuditWriteResult was the only place a lost row was visible, and this row is
+       the change record for which agent tools a tenant permits. The UPDATE above
+       has committed, so this is a log beside it: the policy change stands and the
+       response says whether the record of it was written. `previousPolicy` and
+       `newPolicy` are in the row's details, so the row is the before/after
+       evidence for a governance change — which is why losing it silently is worth
+       reporting. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: (req as any).user?.id ?? null,
       action: 'ana_tool_policy.update',
@@ -105,7 +113,7 @@ router.put('/', async (req: Request, res: Response) => {
       details: { previousPolicy, newPolicy: next },
     });
 
-    res.json({ organizationId: orgId, policy: next });
+    res.json({ organizationId: orgId, policy: next, auditTrail });
   } catch (err) {
     res.status(500).json({
       error: 'Failed to update policy',

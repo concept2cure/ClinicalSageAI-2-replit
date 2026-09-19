@@ -8,6 +8,32 @@
 -- Regulatory backbone: 21 CFR 820.198, 820.100, 803, 806; EU MDR Reg
 -- 2017/745 Article 87; ISO 13485 §8.2; ISO 14971 §10.
 
+-- ─── AMENDED 2026-09-19 — the three self-generated codes are unique PER
+-- PROGRAM, not globally ────────────────────────────────────────────────────
+-- complaints_code_uq, mdr_events_code_uq and capa_records_code_uq were each
+-- created on the code column ALONE. The codes are GENERATED per program:
+-- nextCode() in server/services/capa-mdr/capaMdr.service.ts counts
+-- `WHERE program_id = $1` and formats CAPA-<year>-0001. So the second program
+-- in the whole deployment to open its first CAPA of a year is handed
+-- 'CAPA-2025-0001', which already exists, and the insert dies 23505 — the
+-- normal path, not a race, surfaced to the caller as 500 "Operation failed"
+-- with the constraint name in `detail`. Across tenants it also meant one
+-- customer's numbering could block another's, on tables whose isolation is
+-- already service-layer only.
+--
+-- That function's own comment asserted the index this file should always have
+-- had: "the (programId, code) unique index will reject duplicates". It did not
+-- exist. Amended in place, per CLAUDE.md RULE 1, so a fresh install is correct
+-- from birth. Because this file is overlay-only (install-fresh step 3) and is
+-- NOT in C2C_MIGRATION_FILES, an already-provisioned database never re-runs it
+-- — migrations/20260919_capa_code_uniqueness_per_program.sql, which IS in the
+-- set, converts the old single-column indexes in place for those. It is
+-- conditional on the live index definition, so it no-ops here.
+--
+-- The agency-issued numbers (mdr_events_fda_report_uq, mdr_events_eu_report_uq)
+-- stay globally unique on purpose: FDA and EU authorities issue those, and the
+-- same number must never appear twice in the deployment.
+
 BEGIN;
 
 -- ─── complaints ─────────────────────────────────────────────────────────
@@ -69,7 +95,7 @@ CREATE INDEX IF NOT EXISTS complaints_state_idx       ON complaints (triage_stat
 CREATE INDEX IF NOT EXISTS complaints_received_idx    ON complaints (received_at);
 CREATE INDEX IF NOT EXISTS complaints_udi_idx         ON complaints (device_udi_di);
 CREATE INDEX IF NOT EXISTS complaints_severity_idx    ON complaints (severity_assessment);
-CREATE UNIQUE INDEX IF NOT EXISTS complaints_code_uq  ON complaints (complaint_code);
+CREATE UNIQUE INDEX IF NOT EXISTS complaints_code_uq  ON complaints (program_id, complaint_code);
 
 -- ─── mdr_events ─────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS mdr_events (
@@ -125,7 +151,7 @@ CREATE INDEX IF NOT EXISTS mdr_events_state_idx         ON mdr_events (state);
 CREATE INDEX IF NOT EXISTS mdr_events_jurisdiction_idx  ON mdr_events (jurisdiction);
 CREATE INDEX IF NOT EXISTS mdr_events_due_idx           ON mdr_events (report_due_at);
 CREATE INDEX IF NOT EXISTS mdr_events_source_idx        ON mdr_events (source_complaint_id);
-CREATE UNIQUE INDEX IF NOT EXISTS mdr_events_code_uq    ON mdr_events (mdr_code);
+CREATE UNIQUE INDEX IF NOT EXISTS mdr_events_code_uq    ON mdr_events (program_id, mdr_code);
 CREATE UNIQUE INDEX IF NOT EXISTS mdr_events_fda_report_uq ON mdr_events (fda_report_number)
   WHERE fda_report_number IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS mdr_events_eu_report_uq  ON mdr_events (eu_report_number)
@@ -182,7 +208,7 @@ CREATE INDEX IF NOT EXISTS capa_records_state_idx       ON capa_records (state);
 CREATE INDEX IF NOT EXISTS capa_records_risk_idx        ON capa_records (risk_level);
 CREATE INDEX IF NOT EXISTS capa_records_source_idx      ON capa_records (source);
 CREATE INDEX IF NOT EXISTS capa_records_target_idx      ON capa_records (target_close_date);
-CREATE UNIQUE INDEX IF NOT EXISTS capa_records_code_uq  ON capa_records (capa_code);
+CREATE UNIQUE INDEX IF NOT EXISTS capa_records_code_uq  ON capa_records (program_id, capa_code);
 
 -- ─── capa_actions ───────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS capa_actions (

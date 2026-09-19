@@ -6,18 +6,143 @@
 
 ---
 
+## ⚠ Status re-derived 2026-09-19 — the central premise is superseded
+
+Run, not trusted, per the README's instruction to re-derive rather than believe
+the row. Every number below moved, and one of them changed meaning.
+
+| Tranche                            | This WO (09-10) |                   Measured 09-19 |
+| ---------------------------------- | --------------: | -------------------------------: |
+| `tenant-resolvers`                 |             190 |                              189 |
+| `drizzle-tenant-scope`             |             151 |                    148 (3 fixed) |
+| `requestdb-coverage` — shared pool |              82 | **230 of 258, and reclassified** |
+| `tenant-isolation` raw SQL         |              10 |                                9 |
+| `tenant-entry-points`              |              10 |                                9 |
+| `tenant-blind-models`              |               5 |                                4 |
+| `tenant-column-types`              |               — |                  OK, all integer |
+
+**"Why the 82 is the number that matters" no longer holds.** This WO says a
+shared-pool route "connects as a role that bypasses [RLS], so for those 82 the
+second layer of defence is not weak — it is not engaged." That is no longer the
+architecture. `scripts/ci/audit-requestdb-coverage.mjs` now reports 230 of 258
+route files on the shared pool but classifies them: **228 JWT-boundary
+auto-scoped, 2 explicit pre-tenant scope, 0 unclassified.** Protected routes
+receive AsyncLocalStorage scope at the global auth boundary and the instrumented
+pool applies it automatically, so shared-pool use is no longer synonymous with
+RLS being inert. The count went UP because it now measures the whole route
+surface; nothing regressed.
+
+The honest remaining statement is the one this WO already reaches for: isolation
+is **proven for the surface the live probe covers and asserted everywhere else**,
+and the work is breadth — extending
+`tests/db/two-tenant-application-rls.dbtest.ts` past its two route modules and
+three tables.
+
+**2026-09-19 — breadth advanced, three tables to five; still not closed.**
+`c2c_design_controls` and `risk_items` joined the domain list, in the same three
+shapes each: 13 tests to 19. Falsified before being believed — with RLS disabled
+on those two tables alone, exactly the six new tests fail plus the catalog
+assertion, and all eleven pre-existing tests still pass, so the new domains
+genuinely read through the policy rather than passing because the harness is
+permissive. Run as `app_service` (`NOSUPERUSER NOBYPASSRLS`) with `RLS_ENFORCE=on`
+against a full `install-fresh` + `deploy-migrate` database; all five tables
+confirmed `relrowsecurity` **and** `relforcerowsecurity` true with
+`tenant_isolation_policy` keyed on `organization_id`.
+
+**`public.electronic_signatures` was the obvious third candidate and is
+deliberately excluded — this is a finding, not an omission.** It is the most
+consequential table in the set (a cross-tenant read is another company's signed
+approvals), and it cannot participate in a fixture-cleanup probe as written:
+`esign_block_mutation()` refuses DELETE outright — _"rows cannot be deleted.
+Insert a superseding signature instead"_ — and, unlike `audit_logs`, whose
+immutability trigger provides the documented `app.audit_archive_bypass` door this
+probe's own teardown already uses, it provides **no door at all**. So every run
+would strand a permanent row, and `electronic_signatures.signer_id`'s FK to
+`users` then makes the teardown fail with 23503 and leak every fixture behind it.
+That asymmetry between two Part 11 immutability triggers — one with an archive
+path, one without — is for whoever owns Part 11 to settle; covering the table
+needs a fixture strategy that never deletes (a dedicated signer whose rows are
+expected to accumulate, or superseding inserts), not a trigger-disable recipe
+copied out of a test file. Also noted while measuring: there are FOUR
+`electronic_signatures` tables (`cognitive_audit`, `compliance`, `public`,
+`regulatory_harmonization`), and `capa_records` has `rls=false`, zero policies
+and **no tenant column at all**.
+
+Teardown was rewritten to delete by the two reserved fixture org ids instead of
+ids captured in memory during the seed. `TAG` carries a pid and a timestamp, so a
+run that died part-way through `beforeAll` stranded rows no later run's TAG could
+match — and because those tables are the FK spine, the strand made the
+`organizations` delete fail with 23503 for **every subsequent run, permanently**,
+until someone cleaned the database by hand. That happened twice while this
+extension was being written. Org-scoped deletes are idempotent: each run now also
+clears whatever its predecessors stranded. Verified by two consecutive runs to
+exit 0 with zero leftover rows.
+
+The remaining breadth is unchanged in kind: `submission_orchestrator_runs` is the
+next domain (its PK is `run_id`, which is why `idColumnFor` exists at all).
+
+### The `app.current_org_id` distribution — the question the vault lane handed over
+
+`server/middleware/__tests__/tenant-scope-org-guc.test.ts` closes with: _"This
+says nothing about how OFTEN the uuid is absent — that depends on which mint path
+issued the token … Establishing that distribution is the next step, not this
+one."_ Established here, and the answer is reassuring in one direction and thin in
+another.
+
+**Mint-path census — 2 of 8 sites stamp `organizationUuid` into the JWT:**
+
+| Site                                                  |        |
+| ----------------------------------------------------- | ------ |
+| `server/services/mfaService.ts:539`                   | stamps |
+| `server/routes/setup.ts:123`                          | stamps |
+| `server/auth.ts:321` — **the primary login**          | drops  |
+| `server/routes/users.ts:810`, `:924`                  | drops  |
+| `server/routes/authEnterprise.ts:463`, `:752`, `:861` | drops  |
+
+So an ordinarily-logged-in user's token carries no org uuid. **That does not leave
+the GUC empty, because the token is not the source.** `authenticateToken`
+composes `enforceOrgMembership(req, res, () => establishRequestTenantScope(…))`
+at `server/middleware/auth.ts:183`, and `enforceOrgMembership` resolves the uuid
+from `organizations.uuid` by LEFT JOIN on every authenticated request. All 68
+route files using `authenticateToken` inherit it; only 2 reference
+`enforceOrgMembership` directly, which is why it looks unmounted and is not. That
+composition is pinned by
+`server/middleware/__tests__/auth-establishes-scope.integration.test.ts`.
+
+**The residual hole is the degraded path, and it was pinned by nothing.** When the
+LEFT JOIN throws, a membership-only fallback answers — correctly, since
+`organization_users` is the sole authority — but `orgUuid` is null, which
+`tenantSessionVars` turns into an EMPTY `app.current_org_id` for the whole
+request. The module guards against the worst version of this with one `if`
+(`if (!enrichmentDegraded) cacheMembership(…)`), because a cached null would
+serve numeric-only scoping for the full 60s TTL. Ledger L148 is what the
+unguarded shape costs: the flagship authoring journey ran EVERY request degraded
+and proved its tenant-isolation steps with the org variable empty.
+`server/middleware/__tests__/orgMembership-degraded-enrichment.test.ts` now pins
+membership standing, the uuid being absent, the degradation being counted, the
+answer not being cached, and the self-heal — verified by deleting the guard and
+watching it go red.
+
+**For the vault lane:** the §4.4 order is "prove the GUC, then FORCE". The GUC
+carries a real uuid on every authenticated request whose enrichment JOIN
+succeeds, independent of mint path — so FORCE is safe with respect to mint paths.
+It is NOT safe with respect to the degraded path: while the JOIN is broken, FORCE
+empties the vault for that user rather than merely under-scoping them. The
+degradation is now counted (`degradedEnrichmentCount()`), so that rate is
+measurable before FORCE lands rather than after.
+
 ## What the code actually says
 
 Five overlapping tranches, all currently green because all are baselined:
 
-| Entries | Baseline | Meaning |
-|---:|---|---|
-| 190 | `tenant-resolvers` | Modules not on the canonical tenant resolver |
-| 151 | `drizzle-tenant-scope` | ORM query sites with no tenant scope |
-| **82** | `requestdb-coverage` | **Route files on the shared pool — this is what keeps RLS inert** |
-| 10 | `tenant-isolation` | Raw SQL with no tenant predicate (down from 25 in July) |
-| 10 | `tenant-entry-points` | Entry points whose tenant entitlement justification drifted |
-| 5 | `tenant-blind-models` | Models with no tenant column at all |
+| Entries | Baseline               | Meaning                                                           |
+| ------: | ---------------------- | ----------------------------------------------------------------- |
+|     190 | `tenant-resolvers`     | Modules not on the canonical tenant resolver                      |
+|     151 | `drizzle-tenant-scope` | ORM query sites with no tenant scope                              |
+|  **82** | `requestdb-coverage`   | **Route files on the shared pool — this is what keeps RLS inert** |
+|      10 | `tenant-isolation`     | Raw SQL with no tenant predicate (down from 25 in July)           |
+|      10 | `tenant-entry-points`  | Entry points whose tenant entitlement justification drifted       |
+|       5 | `tenant-blind-models`  | Models with no tenant column at all                               |
 
 ## Why the 82 is the number that matters
 
@@ -60,13 +185,16 @@ exists because the stated bar is real customer data.
    `activeJwtSecret()`, connects through `requestPgClient` as the real
    non-superuser `app_service` role that install-fresh provisions, seeds two
    organisations (90301 / 90302), and asserts across three domains
-   (`projects`, `documents`, `audit_logs`) in three shapes — list/read/existence
+   (`projects`, `documents`, `audit_logs`, and since 2026-09-19
+   `c2c_design_controls`, `risk_items`) in three shapes — list/read/existence
    probes, update and delete returning an indistinguishable not-found, and
    `WITH CHECK` refusing a planted row — plus a negative control that the
-   pooled session context is reset. Thirteen tests.
+   pooled session context is reset. Nineteen tests.
    **What this work order still has to build is BREADTH, not the probe.** It
-   covers two route modules and three tables. The remaining scope is extending
-   the same harness to the rest of the routes that serve regulated data.
+   covers two route modules and, as of 2026-09-19, five tables in nineteen tests
+   — `design_controls` and `risk_items` added, `electronic_signatures` excluded
+   for the §11.70 reason recorded above. The remaining scope is extending the
+   same harness to the rest of the routes that serve regulated data.
 
 ## Exit criteria
 
@@ -91,12 +219,13 @@ without opening `tests/db/`.
 
 The narrower statement that survives: **isolation is PROVEN for the surface the
 probe covers and ASSERTED everywhere else.** The probe mounts two route modules
-and exercises three tables. So the exit criterion is not "build a probe" but
+and exercises five tables (three until 2026-09-19). So the exit criterion is not "build a probe" but
 "extend this one until the routes that serve regulated data are all inside it",
 and the honest interim status is a coverage number, not a yes/no.
 
 Two properties of the existing probe make that extension cheap, and both are
 easy to lose:
+
 - it connects as `app_service`, the real `NOSUPERUSER NOBYPASSRLS` role — a
   superuser bypasses RLS unconditionally and an owner bypasses it unless the
   table carries `FORCE`, so a probe on the wrong account passes while proving

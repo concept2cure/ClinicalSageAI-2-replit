@@ -17,7 +17,7 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
-import auditService from '../services/auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
 import {
   saveAssessment, listAssessments, getAssessment, deleteAssessment,
@@ -49,6 +49,37 @@ function pathParam(req: Request, key: string): string {
   return Array.isArray(v) ? (v[0] ?? '') : (v ?? '');
 }
 const logger = createScopedLogger('ivd-assessments');
+
+/**
+ * Report a §11.10(e) audit outcome on a response whose body is a stored row.
+ *
+ * WO-16C #133. The three audit writes in this router were
+ * `await auditService.logAction({…})` at statement position: awaited, and the
+ * `AuditWriteResult` it resolved discarded. `logAction` does not reject when
+ * persistence fails — an audit-trail outage must not break the action it
+ * records — so discarding that value left a recorded save and an unrecorded one
+ * answering byte-identically. All three now go through `recordAuditRow`, and
+ * each carries its outcome out: `POST /` and `POST /documents` in these headers,
+ * `DELETE /:id` in its own `{ ok: true }` body.
+ *
+ * Why headers for the two POSTs: both answer with the row the INSERT returned
+ * (`RETURNING *`), which is the same representation `GET /`, `GET /:id` and
+ * `GET /documents` hand back from a plain SELECT. A key added to the create
+ * body would make one representation of a saved assessment carry a field the
+ * list representation of the same row does not. Headers leave the row as it
+ * was, and no status code changes.
+ *
+ * `X-Audit-Row-Persisted` is `'true'` or `'false'`; `X-Audit-Row-Code` is set
+ * only on the failure arm and carries `recordAuditRow`'s stable code — never the
+ * store's own error text, which stays in that helper's log line. Same header
+ * pair as server/routes/device-projects.ts, server/routes/client-branding.ts,
+ * the transparent proxy in server/routes/predicate-intelligence.ts and the 204
+ * in server/routes/submissions.ts.
+ */
+function setAuditRowHeaders(res: Response, outcome: AuditRowOutcome): void {
+  res.setHeader('X-Audit-Row-Persisted', String(outcome.persisted));
+  if (!outcome.persisted) res.setHeader('X-Audit-Row-Code', outcome.code);
+}
 
 /* This file kept a private `fail()` that put `Error.message` in the response as
    `detail` — the exact disclosure server/lib/api-response.ts documents having
@@ -99,7 +130,15 @@ router.post('/', async (req, res) => {
       createdBy: getUserId(req),
       ...(typeof b.programId === 'string' ? { programId: b.programId } : {}),
     } as any);
-    await auditService.logAction({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.assessment.save', resourceType: 'ivd_assessment', resourceId: row.id, details: { type: b.assessmentType } });
+    /* WO-16C #133. The assessment row is already committed by the `saveAssessment`
+       call above — `row` is what its INSERT returned, and the tenant can read it
+       back through `GET /:id` — so this is the §11.10(e) log BESIDE a completed
+       action, not the action itself. A lost audit row is therefore not a reason to
+       delete a saved assessment: the save stands and the caller is told, in
+       headers rather than in the row body (see `setAuditRowHeaders`). This handler
+       writes one audit row, so one outcome and one header pair. */
+    const auditTrail = await recordAuditRow({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.assessment.save', resourceType: 'ivd_assessment', resourceId: row.id, details: { type: b.assessmentType } });
+    setAuditRowHeaders(res, auditTrail);
     res.status(201).json(row);
   } catch (e) { serverError(res, logger, 'saving the IVD assessment', e); }
 });
@@ -127,7 +166,13 @@ router.post('/documents', async (req, res) => {
       status: b.status ?? 'draft', corpusVersion: corpusVersion(),
       createdBy: getUserId(req), programId: typeof b.programId === 'string' ? b.programId : null,
     });
-    await auditService.logAction({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.document.save', resourceType: 'ivd_generated_document', resourceId: row.id, details: { docType: b.docType } });
+    /* WO-16C #133. The document row is already committed by `saveGeneratedDocument`
+       above — `row` is what its INSERT returned, and `GET /documents` lists it —
+       so this is the log BESIDE a completed action. The save stands and the caller
+       is told, in headers rather than in the row body (see `setAuditRowHeaders`).
+       One audit row here, so one outcome and one header pair. */
+    const auditTrail = await recordAuditRow({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.document.save', resourceType: 'ivd_generated_document', resourceId: row.id, details: { docType: b.docType } });
+    setAuditRowHeaders(res, auditTrail);
     res.status(201).json(row);
   } catch (e) { serverError(res, logger, 'saving the generated IVD document', e); }
 });
@@ -146,8 +191,18 @@ router.delete('/:id', async (req, res) => {
   try {
     const ok = await deleteAssessment(orgId, pathParam(req, 'id'));
     if (!ok) return res.status(404).json({ error: 'Assessment not found' });
-    await auditService.logAction({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.assessment.delete', resourceType: 'ivd_assessment', resourceId: pathParam(req, 'id') });
-    res.json({ ok: true });
+    /* WO-16C #133. The soft-delete is already committed: `deleteAssessment`
+       returned true only because its UPDATE set `deleted_at` on a matching row,
+       and every read in this file filters on `deleted_at IS NULL`, so the record
+       is already gone from the tenant's view. This is the log beside that
+       completed action, so a lost audit row does not un-delete it — the delete
+       stands and the caller is told. Worth stating plainly: `ivd_assessments` has
+       `deleted_at` but no `deleted_by`, so WHEN it was deleted survives in the
+       table and WHO deleted it exists only in this audit row. `auditTrail` goes
+       in the body here because this body is built by this handler rather than
+       read out of the table. One audit row, one `auditTrail` key. */
+    const auditTrail = await recordAuditRow({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.assessment.delete', resourceType: 'ivd_assessment', resourceId: pathParam(req, 'id') });
+    res.json({ ok: true, auditTrail });
   } catch (e) { serverError(res, logger, 'deleting the IVD assessment', e); }
 });
 

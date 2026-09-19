@@ -13,8 +13,14 @@
  * action is a state transition, not a full update — it stamps
  * gudid_submitted_at = NOW() and records the payload that was submitted.
  *
- * Audit-logged via the global mutation middleware. AnA can read + mutate
- * via the dedicated AnA tools in the registry.
+ * Create and submit-gudid each record a 21 CFR Part 11 §11.10(e) row and
+ * report in `meta.auditTrail` whether it persisted; the PATCH endpoint records
+ * none (see the note on the `recordAuditRow` import). This file's own earlier
+ * header said "Audit-logged via the global mutation middleware" — there is no
+ * such middleware on these routes: `server/middleware/auditLogger.js` exists,
+ * but nothing in the repository imports or mounts it, so the only §11.10(e)
+ * rows these endpoints produce are the ones written below. AnA can read +
+ * mutate via the dedicated AnA tools in the registry.
  */
 
 import { Router, Request, Response } from 'express';
@@ -25,7 +31,44 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
-import auditService from '../services/auditService';
+/*
+ * WO-16C #133. The two writes in this router that record a §11.10(e) row each
+ * did so with `void auditService.logAction({…})`, which throws away the
+ * `AuditWriteResult` that call resolves. `logAction` never rejects when
+ * persistence fails — deliberately, an audit-trail outage must not break the
+ * user action it records — so the discarded value was the ONLY place a lost row
+ * was visible: the returned record and the HTTP envelope came back
+ * byte-identical whether the §11.10(e) record existed or not.
+ *
+ * Both now go through the shared `recordAuditRow`, and each route carries its
+ * outcome out in the response envelope's `meta.auditTrail`. Both are a log
+ * BESIDE an already-committed write — the INSERT or UPDATE has returned its row
+ * before the audit row is attempted — so neither reverts its mutation over a
+ * lost log row: the action stands and the caller is told. Each handler writes
+ * exactly one audit row, so one unqualified `auditTrail` key per envelope names
+ * it unambiguously.
+ *
+ * Two is the number of AUDITED writes in this file, not of governed ones. The
+ * `PATCH /udi/:id` handler below updates a UDI record — `udi_di` and
+ * `issuing_agency`, the device identifier itself, included — and records no
+ * §11.10(e) row at all. That is a separate gap from #133, and not one this
+ * conversion could fix: nothing is discarded there because nothing is written.
+ *
+ * `recordAuditRow` returns `{persisted, chained}` or `{persisted: false, code,
+ * message}` and never the store's own text; that text goes to its log line,
+ * keyed on the action and the resource id. `auditService` is reached through
+ * that module, so it is no longer imported here directly.
+ */
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
+
+/*
+ * Every governed write below was guarded by nothing but the caller's org
+ * context, which is tenant scoping, not authorization: a read-only `viewer`
+ * could create and amend UDI records, IVDR classifications and performance
+ * evaluations, CDx pairings and concordance. These are the device and IVD
+ * records a submission is assembled from.
+ */
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const router = Router();
 const log = createScopedLogger('mdx-udi');
@@ -294,7 +337,7 @@ router.get('/udi', async (req: Request, res: Response) => {
 
 /* ─── POST /api/mdx/udi ───────────────────────────────────────────── */
 
-router.post('/udi', async (req: Request, res: Response) => {
+router.post('/udi', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = createBody.safeParse(req.body ?? {});
@@ -323,12 +366,18 @@ router.post('/udi', async (req: Request, res: Response) => {
         p.singleUse ?? false, p.rxOnly ?? true,
       ],
     );
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The INSERT above has
+       already committed the UDI record and returned it, so this is a log beside
+       a completed issuance rather than the issuance itself: it is never
+       reverted here. What the caller can now see is whether the §11.10(e)
+       record of this device identifier being issued exists —
+       `meta.auditTrail`. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, action: 'mdx.udi.issue',
       resourceType: 'udi_record', resourceId: rows[0]?.id,
       details: { udiDi: p.udiDi, deviceName: p.deviceName, issuingAgency: p.issuingAgency },
     });
-    return created(res, rows[0]);
+    return created(res, rows[0], { auditTrail });
   } catch (err: unknown) {
     const code = (err as { code?: string }).code;
     if (code === '23505') {
@@ -360,7 +409,7 @@ router.get('/udi/:id', async (req: Request, res: Response) => {
 
 /* ─── PATCH /api/mdx/udi/:id ──────────────────────────────────────── */
 
-router.patch('/udi/:id', async (req: Request, res: Response) => {
+router.patch('/udi/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -404,7 +453,31 @@ router.patch('/udi/:id', async (req: Request, res: Response) => {
       args,
     );
     if (rows.length === 0) return notFoundInTenant(res, 'UDI record');
-    return ok(res, rows[0]);
+    /* Editing a UDI record recorded NO 21 CFR Part 11 §11.10(e) row at all, while
+       issuing one (`mdx.udi.issue`) and submitting it to GUDID
+       (`mdx.udi.gudid.submit`) each record one. Found by the census the reviewer
+       of this file's #133 conversion ran — there was nothing to convert here,
+       because nothing was written.
+
+       A UDI-DI is the device identifier FDA's GUDID holds, so changing the
+       identifier, the device class, the product code or the brand name after
+       issue is the change an inspector traces; `changedFields` names which
+       columns moved. The UPDATE above has committed, so this is a log beside it:
+       the 200 stands and `meta.auditTrail` says whether the log exists. */
+    const auditTrail = await recordAuditRow({
+      tenantId: orgId,
+      // `(req as any).user?.id` — the same object getOrgId reads. Worth noting
+      // that neither sibling row in this router passes an actor at all, so
+      // `mdx.udi.issue` and `mdx.udi.gudid.submit` currently record a §11.10(e)
+      // entry with no `user_id`. That is an attribution gap rather than a
+      // discarded-outcome one, so it is reported here and not silently copied.
+      userId: (req as any).user?.id ?? undefined,
+      action: 'mdx.udi.update',
+      resourceType: 'udi_record',
+      resourceId: String(id),
+      details: { changedFields: Object.keys(parsed.data).filter(k => parsed.data[k as keyof typeof parsed.data] !== undefined) },
+    });
+    return ok(res, rows[0], { auditTrail });
   } catch (err) {
     return serverError(res, log, 'patch', err);
   }
@@ -412,7 +485,7 @@ router.patch('/udi/:id', async (req: Request, res: Response) => {
 
 /* ─── POST /api/mdx/udi/:id/submit-gudid ──────────────────────────── */
 
-router.post('/udi/:id/submit-gudid', async (req: Request, res: Response) => {
+router.post('/udi/:id/submit-gudid', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -437,11 +510,17 @@ router.post('/udi/:id/submit-gudid', async (req: Request, res: Response) => {
         'UDI record not found, already submitted, or not in draft/rejected state',
       );
     }
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The UPDATE above has
+       already flipped `gudid_status` to 'submitted' and stamped
+       `gudid_submitted_at`, so this is a log beside a completed transition
+       rather than the transition itself: it is never reverted here. What the
+       caller can now see is whether the §11.10(e) record of that submission
+       exists — `meta.auditTrail`. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, action: 'mdx.udi.submit_gudid',
       resourceType: 'udi_record', resourceId: id,
     });
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { auditTrail });
   } catch (err) {
     return serverError(res, log, 'submit-gudid', err);
   }

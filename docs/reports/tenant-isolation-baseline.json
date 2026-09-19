@@ -1,9 +1,10 @@
 {
-  "generatedAt": "2026-09-06T09:21:36.450Z",
+  "generatedAt": "2026-09-19T01:05:10.457Z",
   "fingerprints": [
     "server/routes/admin/licensing-history.ts#de79288a97cb:audit_logs,users",
-    "server/routes/c2c/project-vault.ts#264b5030acc4:documents",
-    "server/routes/c2c/project-vault.ts#61054d905301:documents",
+    "server/routes/c2c/project-vault.ts#1ef63278667b:documents",
+    "server/routes/c2c/project-vault.ts#aeaf9cb0cc6b:documents",
+    "server/routes/module-access-requests.ts#50bb69637301:",
     "server/services/advancedRAGPipeline.ts#134b510a783e:rag_chunks,rag_documents",
     "server/services/deep-research-orchestrator.ts#3f65c4aa2be4:deep_research_jobs",
     "server/services/kernel-adaptive-policy.ts#a5493933404b:",

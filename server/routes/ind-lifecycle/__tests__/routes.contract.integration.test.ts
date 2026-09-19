@@ -1015,8 +1015,18 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
     // row to 'transmitted'. Capture what the route handed the transport: it must
     // be built from the persisted row, not re-composed from request input.
     const seen: any[] = [];
-    icsrTransport.override = async (built: any) => {
+    icsrTransport.override = async (built: any, opts?: any) => {
       seen.push(built);
+      /* WO-16C #133. The real transport calls this sink for every attempt, and
+         the IND_ICSR_TRANSMIT_ATTEMPT row it asks for is the only durable record
+         of an attempt that ends in a refusal. Every override in this file used to
+         replace the transport WITHOUT calling the sink, so `transmitAttemptAudit`
+         came back `[]` on the one lifecycle test that reaches a 200 — and `[]`
+         reads to a consumer as "every attempt row is fine", because
+         `[].every(o => o.persisted)` is `true`. A reviewer found the shape; this
+         override now exercises the sink so the assertion below is against a real
+         entry rather than an empty array that cannot fail. */
+      await opts?.audit?.({ phase: 'submitted', gateway: built.gateway, messageId: 'MSG-1001' });
       return {
         simulated: false,
         status: 'transmitted',
@@ -1036,6 +1046,13 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
     expect(seen).toHaveLength(1);
     expect(seen[0]).toMatchObject({ gateway: 'FDA_FAERS', receiverId: 'ZZFDA', transmitReady: true, gaps: [] });
     expect(seen[0].message).toBe(prep.message);
+    // The attempt row's outcome reaches the client, and is a real entry — not an
+    // empty array that would read as "all fine" while meaning "never recorded".
+    expect(Array.isArray(tx.body.transmitAttemptAudit)).toBe(true);
+    expect(tx.body.transmitAttemptAudit).toHaveLength(1);
+    expect(tx.body.transmitAttemptAudit[0]).toHaveProperty('persisted');
+    // And the transmission's own §11.10(e) outcome is beside it, under its own key.
+    expect(tx.body.audit).toHaveProperty('persisted');
 
     const ack = await request(app)
       .post(`/api/ind-lifecycle/icsr-transmissions/${txId}/acknowledge`)

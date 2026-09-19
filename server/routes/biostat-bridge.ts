@@ -35,27 +35,17 @@ import {
   listBridgeDesigns,
   placementsForApplication,
 } from '../services/biostatistics-bridge/bridge-service';
+/* The CANONICAL resolvers. This module defined its own pair, reading the same
+   places in a different order — and a second answer to "which organization is
+   this" is a tenant-isolation decision, not a helper (`ci:tenant-resolvers`).
+   Every caller below already refuses a falsy id, so the canonical resolveUserId
+   admitting 0 changes no behaviour here. */
+import { resolveOrgId, resolveUserId } from '../types/auth-request';
 
 const router = Router();
 const logger = createScopedLogger('biostat-bridge');
 
 // ─── Request context (polymorphic per the auth middleware, as study-design.ts) ─
-
-function resolveUserId(req: Request): number | null {
-  const r = req as any;
-  const raw = r.userId ?? r.user?.id ?? r.user?.userId;
-  if (raw === null || raw === undefined) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-function resolveOrgId(req: Request): number | null {
-  const r = req as any;
-  const raw = r.tenantId ?? r.organizationId ?? r.user?.organizationId ?? r.user?.tenantId ?? r.tenantContext?.organizationId;
-  if (raw === null || raw === undefined) return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
 
 const studyIdParam = z.string().min(1).max(100);
 

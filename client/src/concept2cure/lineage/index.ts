@@ -18,11 +18,18 @@
 export { DataOriginsMenu, type DataOriginsMenuProps } from './DataOriginsMenu';
 export { DataOriginsPanel, type DataOriginsPanelProps } from './DataOriginsPanel';
 export {
+  DocumentAttributionBar,
+  type DocumentAttributionBarProps,
+} from './DocumentAttributionBar';
+export {
   fetchDataOrigins,
   downloadDataOriginsPdf,
   type DataOriginsReport,
   type OriginRow,
   type SelectionQuery,
+  fetchDocumentAttribution,
+  AttributionUnsupportedError,
+  type DocumentAttributionSummary,
 } from './dataOriginsApi';
 export {
   selectionToRange,

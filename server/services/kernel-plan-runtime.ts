@@ -1,28 +1,101 @@
 import { randomUUID } from 'crypto';
+import type { PoolClient } from 'pg';
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
 import type { GoalPlan, PlanStepStatus } from './kernel-goal-planner';
 
 const logger = createScopedLogger('kernel-plan-runtime');
 
-async function recordPlanRunEvent(input: {
-  planRunId: string;
-  eventType: string;
-  stepId?: string;
-  payload?: Record<string, unknown>;
-}) {
-  await pool.query(
+/**
+ * Append one plan-run event.
+ *
+ * ── This table had never accepted a row ──────────────────────────────────────
+ * `id` is BIGSERIAL (20260325_ai_goal_plan_step_events.sql:4) and this INSERT
+ * supplied `gpe_<uuid>` into it, so PostgreSQL rejected every single call with
+ * `invalid input syntax for type bigint`. Not sometimes — every one, since the
+ * table was created.
+ *
+ * The consequence was not a missing log. `advanceGoalPlanStep` and
+ * `executeNextGoalPlanStep` each ran the state UPDATE and this INSERT inside
+ * ONE try block with `await pool.query` — separate statements, each
+ * auto-committed. So the UPDATE committed, this threw, and the catch returned
+ * `{ ok: false, message: 'Failed to update plan run' }`. Every step advance
+ * SUCCEEDED in the database and reported failure to its caller, and a caller
+ * that retried then hit `canTransitionStepStatus(completed, completed)` and was
+ * told "Invalid transition".
+ *
+ * The id is now left to the sequence, and the write takes a CLIENT so it can
+ * share its caller's transaction — which is the other half of the fix: a state
+ * change and the record of it must land together or not at all. That is the
+ * posture the rest of this codebase already holds (see the QMS tool handlers:
+ * "FAILS CLOSED — a broken audit write rolls the approval back").
+ */
+async function recordPlanRunEvent(
+  db: Pick<PoolClient, 'query'>,
+  input: {
+    planRunId: string;
+    eventType: string;
+    stepId?: string;
+    payload?: Record<string, unknown>;
+  }
+) {
+  await db.query(
     `INSERT INTO ai_goal_plan_step_events
-       (id, plan_run_id, step_id, event_type, payload)
-     VALUES ($1,$2,$3,$4,$5)`,
+       (plan_run_id, step_id, event_type, payload)
+     VALUES ($1,$2,$3,$4)`,
     [
-      `gpe_${randomUUID()}`,
       input.planRunId,
       input.stepId ?? null,
       input.eventType,
       JSON.stringify(input.payload ?? {}),
     ]
   );
+}
+
+/**
+ * Persist a step transition and its event atomically.
+ *
+ * Both writes or neither. Before this they were two auto-committed statements
+ * in one try block, so a failed event left a committed state change reported as
+ * a failure — the worst of both, since the caller then believes nothing
+ * happened to a plan that has already moved.
+ */
+async function persistStepTransition(input: {
+  planRunId: string;
+  goalPlan: unknown;
+  runStatus: string;
+  stepId: string;
+  eventType: string;
+  payload: Record<string, unknown>;
+}): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `UPDATE ai_goal_plan_runs
+          SET goal_plan = $2, status = $3, updated_at = NOW()
+        WHERE id = $1`,
+      [input.planRunId, JSON.stringify(input.goalPlan), input.runStatus]
+    );
+    await recordPlanRunEvent(client, {
+      planRunId: input.planRunId,
+      stepId: input.stepId,
+      eventType: input.eventType,
+      payload: input.payload,
+    });
+    if (input.runStatus === 'completed') {
+      await recordPlanRunEvent(client, {
+        planRunId: input.planRunId,
+        eventType: 'run_completed',
+      });
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 const ALLOWED_TRANSITIONS: Record<PlanStepStatus, PlanStepStatus[]> = {
@@ -45,8 +118,15 @@ export async function createGoalPlanRun(input: {
   metadata?: Record<string, unknown>;
 }): Promise<{ id: string }> {
   const id = `gpr_${randomUUID()}`;
+  const client = await pool.connect();
   try {
-    await pool.query(
+    // One transaction: a run and its `run_created` event land together or not
+    // at all. They used to be two auto-committed statements in one try block,
+    // and since the event INSERT threw on every call (see recordPlanRunEvent),
+    // every run that has ever existed was created without the event that says
+    // it was.
+    await client.query('BEGIN');
+    await client.query(
       `INSERT INTO ai_goal_plan_runs
          (id, organization_id, thread_id, route, status, goal_plan, metadata)
        VALUES ($1,$2,$3,$4,'active',$5,$6)`,
@@ -59,13 +139,22 @@ export async function createGoalPlanRun(input: {
         JSON.stringify(input.metadata || {}),
       ]
     );
-    await recordPlanRunEvent({
+    await recordPlanRunEvent(client, {
       planRunId: id,
       eventType: 'run_created',
       payload: { route: input.route, stepCount: input.goalPlan.steps.length },
     });
+    await client.query('COMMIT');
   } catch (error: any) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    // Pre-existing contract, left as it is rather than widened here: callers
+    // receive an id whether or not the row was written, so a failed persist
+    // hands back an id that refers to nothing. That is worth fixing, and it is
+    // a change to this function's signature and to every caller — not
+    // something to slip into a transaction fix.
     logger.warn(`Failed to persist goal plan run: ${error?.message || 'unknown error'}`);
+  } finally {
+    client.release();
   }
   return { id };
 }
@@ -119,24 +208,14 @@ export async function advanceGoalPlanStep(input: {
   const runStatus = allCompleted ? 'completed' : 'active';
 
   try {
-    await pool.query(
-      `UPDATE ai_goal_plan_runs
-          SET goal_plan = $2, status = $3, updated_at = NOW()
-        WHERE id = $1`,
-      [input.planRunId, JSON.stringify(run.goalPlan), runStatus]
-    );
-    await recordPlanRunEvent({
+    await persistStepTransition({
       planRunId: input.planRunId,
+      goalPlan: run.goalPlan,
+      runStatus,
       stepId: input.stepId,
       eventType: 'step_advanced',
       payload: { nextStatus: input.nextStatus, runStatus },
     });
-    if (runStatus === 'completed') {
-      await recordPlanRunEvent({
-        planRunId: input.planRunId,
-        eventType: 'run_completed',
-      });
-    }
     return { ok: true };
   } catch (error: any) {
     logger.warn(`Failed to advance goal plan step: ${error?.message || 'unknown error'}`);
@@ -181,24 +260,14 @@ export async function executeNextGoalPlanStep(planRunId: string): Promise<{
   const runStatus = allCompleted ? 'completed' : 'active';
 
   try {
-    await pool.query(
-      `UPDATE ai_goal_plan_runs
-          SET goal_plan = $2, status = $3, updated_at = NOW()
-        WHERE id = $1`,
-      [planRunId, JSON.stringify(run.goalPlan), runStatus]
-    );
-    await recordPlanRunEvent({
+    await persistStepTransition({
       planRunId,
+      goalPlan: run.goalPlan,
+      runStatus,
       stepId: nextStep.id,
       eventType: 'step_executed',
       payload: { mode: 'auto_execute_next', runStatus },
     });
-    if (runStatus === 'completed') {
-      await recordPlanRunEvent({
-        planRunId,
-        eventType: 'run_completed',
-      });
-    }
     return { ok: true, executedStepId: nextStep.id };
   } catch (error: any) {
     logger.warn(`Failed to execute next plan step: ${error?.message || 'unknown error'}`);

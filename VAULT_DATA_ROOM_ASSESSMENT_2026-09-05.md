@@ -347,7 +347,30 @@ A customer can upload a CSR and then cannot put it in the NDA.
 
 Condensed from 220 verified findings. Severity as adjudicated after verification.
 
-**Lifecycle & versioning.** No lifecycle state on `vault.documents` at all — the UI renders the
+**Lifecycle & versioning.** **Partly closed 2026-09-19 — the `placed` transition is
+reachable.** The orchestrator refused it outright (`PLACEMENT_BINDING_NOT_WIRED`) because the
+live route built its bindings without an `upsertLeaf` writer; the real writer is injected now.
+That refusal was correct and was not loosened: `lifecycleBindings.ts` records the default it
+replaced, which minted a `leaf:${randomUUID()}` for a `submission_leaves` row that was never
+written and attested it in the hash-chained audit trail.
+
+The binding refuses rather than guesses in three places — no `sequenceId` on the placement
+(`registryId` is an application *type*, and an org can hold several submissions each with a
+sequence 0000), no source the assembler can materialise, and a key-space mismatch where the
+STORE's declared id kind governs rather than the ref's claim. Refusals surface as a 409 in the
+orchestrator's own shape, never a 500.
+
+It works for vault documents specifically because `document_uuid` landed earlier this session:
+`SOURCE_ID_KIND` already declared `vault_documents` uuid-keyed, so the model had anticipated
+this seam before there was a column for it.
+
+**Still open here:** `packaged` remains unwired (`ASSEMBLY_BINDING_NOT_WIRED`). The assembler
+exists, but wiring it makes an HTTP transition build a real eCTD package — an architecture
+decision about where that work runs, not the mechanical injection `placed` needed. And
+`vault.documents` still has no stage column of its own; the lifecycle runs over the canonical
+document store, not over the vault row.
+
+Original finding: no lifecycle state on `vault.documents` at all — the UI renders the
 *filing* status in the status slot because there is nothing else
 (`server/routes/c2c/project-vault.ts:312`). A good, default-deny, unit-tested state machine
 exists (`shared/regulatory/document-lifecycle.ts:146-195`) and is mounted
@@ -360,7 +383,47 @@ users "Create a new version to make further changes"
 (`server/services/authoring/document-lock.ts:68-73`) and **no such route exists** in either
 governed store.
 
-**Security.** Org membership is the whole authorization model in the Vault:
+**Security.** ~~Org membership is the whole authorization model in the Vault~~ —
+**the WRITES are role-gated as of 2026-09-19.** Both governed writes into
+`vault.documents` now carry `requireEditorAccess`, the repo's one governed-write gate,
+which excludes `viewer`: the filing decision (`POST /:id/file`) and the upload
+(`POST /api/vault/ingest`). Each creates or moves a regulatory record AND writes a Part 11
+row attributing it to the caller, so a viewer could previously author an attributable
+governed record. Ingest is gated BEFORE multer — refusing after the upload is buffered is a
+denial-of-service shape rather than a permission one. The upload path was already READING the
+role to stamp into its audit arguments and never deciding anything with it.
+
+The READS are deliberately still open to a viewer: enumerating and downloading their own
+organisation's dossier is the viewer role working as intended, and widening the fix there
+would break the role rather than enforce it.
+
+Nothing covered either route before this, so the tests came with the gate
+(`server/routes/__tests__/vault-file-authorization.test.ts`).
+
+> **Is this systemic? Partly — and NOT in the way it first looks. Recorded so the
+> next person does not raise the alarm I nearly did.**
+>
+> A scan finds 279 router files with write routes and no role-gate reference, and 164
+> of 174 router mounts pass only an auth middleware. Neither number is a finding list.
+>
+> - **They ARE authenticated.** `server/middleware/authBoundary.ts` is a default-deny
+>   boundary mounted once (`server/startup/middleware.ts`) before any route
+>   registration, covering the whole `/api` surface — `enforce` in production, `warn`
+>   otherwise. A router with no auth middleware of its own, and no `req.user`
+>   reference at all, is still behind it. `server/routes/mdx-qms.ts` is exactly that
+>   shape and it is **not** an unauthenticated endpoint.
+> - **What the scan actually measures is ROLE gating**, which this codebase applies
+>   per-route rather than at the mount. Whether an ungated write is a defect depends
+>   on whether that particular write is governed — which no scanner can adjudicate,
+>   and which is why the two vault routes were fixed by reading them rather than by
+>   running a list.
+>
+> So: worth a deliberate review of governed writes route by route, not a sweep, and
+> not a count anyone should quote as a vulnerability total.
+
+The original finding follows:
+
+Org membership is the whole authorization model in the Vault:
 `project-vault.ts:562`, `:823`, `:925` resolve `orgId` and nothing else, so any authenticated
 `viewer` can enumerate every program's dossier, download every byte, and re-file any document —
 after which a chained audit row is written for a move nobody was authorized to make (`:1069`).
@@ -382,12 +445,24 @@ subsystem is inert today — which is the only reason the missing legal hold has
 a record under litigation.
 
 **Taxonomy & metadata.** No subtype/classification hierarchy, no per-type fields, no picklist
-governance — 16 flat document types (`shared/constants/domain/vault-taxonomy.ts:71-76`).
-`readinessEvaluator.ts:176-184` returns `completionPercent: required.length > 0 ? … : 100` — so a
-filing type with no artifact matrix reports **100% complete with zero gaps**, which is exactly
-the honesty failure `CLAUDE.md` names ("nothing-assessed is not assessed-and-clear"). The
-adjacent unknown-id path at `:95-113` gets this right and returns 0 with a critical gap; copy
-that.
+governance — 16 flat document types (`shared/constants/domain/vault-taxonomy.ts`). The
+Type→Subtype→Classification model remains the real gap and the real build.
+
+> **Two narrower things fixed since.**
+>
+> - ~~`readinessEvaluator.ts` returns `completionPercent: required.length > 0 ? … : 100`, so a
+>   filing type with no artifact matrix reports 100% complete with zero gaps.~~ **Fixed
+>   2026-09-05.** It carries `assessed: false` and an `ARTIFACT_REQUIREMENTS_NOT_MODELLED` gap,
+>   and no longer contributes its weight. 225 of 234 registry filing types were reporting 100%.
+> - **The two vocabularies in that file were not reconciled** (fixed 2026-09-19).
+>   `VAULT_INGEST_DOCUMENT_TYPES` are wire tokens; `VaultDocKind` is what the surface classifies
+>   by; nothing mapped between them. So when the classifier had assigned no evidence kind, the
+>   document list rendered the token itself — a reviewer read `MODULE_3` and `CORRESPONDENCE`.
+>   There is a label map beside the enum now, for the reason the enum's own note gives (one
+>   list, shared), with a test that the map covers the enum exactly: a type added to one and not
+>   the other is precisely how the raw token comes back. A value outside the enum returns as
+>   ITSELF rather than as "Other" — the column is TEXT with no CHECK, the token is ugly but
+>   true, and "Other" would be a classification nobody made.
 
 **The eTMF File button does not work.** `client/src/concept2cure/v2/surfaces/Etmf.tsx:286` posts
 `documentType: 'tmf_essential'` and no `programId`. The server requires a UUID `programId` and one
@@ -422,10 +497,36 @@ updated" it). A due-date tile tests `/days/.test(p.due)` against a value formatt
 critical path, no risk/issue/decision log, no portfolio view. Task CRUD exists and works
 (modulo §4.1).
 
-**Data room.** Nothing. No external principal exists in the auth model — an outside party can
-only be given a full internal seat. `client_access` is read but never written. No code path
-sets a document to a client-visible status. No per-folder or per-file permissions, no tiers, no
-watermarking, no expiry, no per-viewer analytics, no Q&A.
+**Data room.** ~~Nothing.~~ **Corrected 2026-09-19 — more exists than this said, and it
+dead-ends at one precise point.** The distinction matters because it changes where the work
+starts.
+
+What exists and is sound:
+
+- `/api/client-portal` is MOUNTED (`register-tenant-routes.ts:54`) and its scoping is
+  fail-closed. An external caller is restricted to their own `client_access` grants; a
+  `?clientWorkspaceId=` they were not granted cannot pivot them, because the parameter only
+  reorders a result set the WHERE has already restricted to their own rows. Staff "preview"
+  is separately restricted to workspaces their own organisation owns.
+- `client_workspaces` rows ARE created, by two writers (`clients-routes.ts:316`,
+  `projects-management.ts:200`).
+
+What does not exist, at all:
+
+- **`client_access` is never written.** No INSERT anywhere in `server/`, `scripts/`,
+  `migrations/` or `db/`. So a workspace can be created and the portal will scope correctly to
+  it, and no human being can ever be granted access to one. The external path is complete on
+  the read side and absent on the grant side — one missing write, not a missing subsystem.
+- The portal serves a single route, `GET /overview`. No document objects reach it.
+
+Still true from the original finding: no code path sets a document to a client-visible status,
+and there are no per-folder or per-file permissions, tiers, watermarking, expiry, per-viewer
+analytics, or Q&A.
+
+**Why this is not just "add the INSERT".** Who may grant, whether the recipient is an existing
+account or an invitation, and whether a grant expires or is revocable are policy decisions with
+regulatory consequence — this is external access to a governed document store. Building them on
+an assumption would be the wrong kind of initiative. Deliberately left for a decision.
 
 **API & integrations.** No document or vault objects on the public API; `documents:read` is a
 grantable scope that unlocks nothing. The tenant data export cannot see the `vault` schema —

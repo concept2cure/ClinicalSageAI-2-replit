@@ -64,7 +64,7 @@ import { redactInternals } from '@/lib/queryClient';
 import * as Y from 'yjs';
 import { structuralSignatureFromDom, structuralSignatureFromDoc, signatureDrift, docToPlainText } from './roundTrip';
 
-import { DataOriginsMenu } from '../../lineage';
+import { DataOriginsMenu, DocumentAttributionBar } from '../../lineage';
 import {
   TrackChanges,
   collectSuggestions,
@@ -452,6 +452,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     ref,
   ) {
     const [saveState, setSaveState] = useState<SaveState>('saved');
+    /* Advanced only when a save is CONFIRMED by the server, and used as the
+       attribution bar's refresh token. The figure describes the text as stored,
+       so re-reading on keystrokes would report the previous save against the
+       current buffer — a number wrong in a way the author cannot see. */
+    const [savedRevision, setSavedRevision] = useState(0);
     const [dirty, setDirty] = useState(false);
     const [words, setWords] = useState(0);
     // `words` starts at 0 and is only real once TipTap has parsed the content
@@ -1115,6 +1120,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         setDirty(stillDirty);
         onDirtyChange?.(stillDirty);
         setSaveState(stillDirty ? 'dirty' : 'saved');
+        setSavedRevision((n) => n + 1);
         if (storageKey) {
           try {
             localStorage.removeItem(cacheKeyFor(storageKey));
@@ -2525,14 +2531,27 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 </div>
               )}
               {lineage ? (
-                <DataOriginsMenu
-                  documentTable={lineage.documentTable}
-                  documentId={lineage.documentId}
-                  documentTitle={lineage.documentTitle}
-                  canonicalText={lineage.canonicalText}
-                >
-                  <EditorContent editor={editor} aria-label={ariaLabel} />
-                </DataOriginsMenu>
+                <>
+                  <DataOriginsMenu
+                    documentTable={lineage.documentTable}
+                    documentId={lineage.documentId}
+                    documentTitle={lineage.documentTitle}
+                    canonicalText={lineage.canonicalText}
+                  >
+                    <EditorContent editor={editor} aria-label={ariaLabel} />
+                  </DataOriginsMenu>
+                  {/* Data Origins answers for a SELECTION, which only helps an
+                      author who already suspects a gap. This says how much of
+                      the whole section has a recorded origin, without being
+                      asked. */}
+                  <div style={{ marginTop: 12 }}>
+                    <DocumentAttributionBar
+                      documentTable={lineage.documentTable}
+                      documentId={lineage.documentId}
+                      refreshToken={savedRevision}
+                    />
+                  </div>
+                </>
               ) : (
                 <EditorContent editor={editor} aria-label={ariaLabel} />
               )}

@@ -18,13 +18,12 @@
  */
 
 import { db } from '../../db';
-import { eq, and, gte, lte, desc, sql, inArray } from 'drizzle-orm';
+import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import {
   documentWorkflows,
   workflowApprovals,
   workflowHistory,
   documentAuditLogs,
-  unifiedDocuments,
 } from '../../../shared/schema/unified_workflow';
 import { auditLogs } from '../../../shared/schema';
 import auditService from '../auditService';

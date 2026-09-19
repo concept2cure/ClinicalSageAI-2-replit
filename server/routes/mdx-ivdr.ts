@@ -25,7 +25,19 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
-import auditService from '../services/auditService';
+/* WO-16C #133: the audit row's OUTCOME is reported, so a lost 21 CFR Part 11
+   §11.10(e) row is not indistinguishable from a written one. See
+   server/services/audit/audit-write-outcome.ts. */
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
+
+/*
+ * Every governed write below was guarded by nothing but the caller's org
+ * context, which is tenant scoping, not authorization: a read-only `viewer`
+ * could create and amend UDI records, IVDR classifications and performance
+ * evaluations, CDx pairings and concordance. These are the device and IVD
+ * records a submission is assembled from.
+ */
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const router = Router();
 const log = createScopedLogger('mdx-ivdr');
@@ -107,7 +119,7 @@ router.get('/ivdr/classifications', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/ivdr/classifications', async (req: Request, res: Response) => {
+router.post('/ivdr/classifications', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = classCreate.safeParse(req.body ?? {});
@@ -136,12 +148,16 @@ router.post('/ivdr/classifications', async (req: Request, res: Response) => {
         p.certificateNo ?? null, p.certificateExpiry ?? null,
       ],
     );
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. An IVDR class
+       determination is the kind of record a notified body asks to see, and the
+       row is already committed by the INSERT above — so this is a log beside it,
+       and `meta.auditTrail` says whether the log exists. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, action: 'mdx.ivdr.classification.confirm',
       resourceType: 'ivdr_classification', resourceId: rows[0]?.id,
       details: { ivdrClass: p.ivdrClass, deviceName: p.deviceName },
     });
-    return created(res, rows[0]);
+    return created(res, rows[0], { auditTrail });
   } catch (err) {
     return serverError(res, log, 'class-create', err);
   }
@@ -164,7 +180,7 @@ router.get('/ivdr/classifications/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/ivdr/classifications/:id', async (req: Request, res: Response) => {
+router.patch('/ivdr/classifications/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -268,7 +284,7 @@ router.get('/ivdr/per', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/ivdr/per', async (req: Request, res: Response) => {
+router.post('/ivdr/per', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = perCreate.safeParse(req.body ?? {});
@@ -324,7 +340,7 @@ router.get('/ivdr/per/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/ivdr/per/:id', async (req: Request, res: Response) => {
+router.patch('/ivdr/per/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);

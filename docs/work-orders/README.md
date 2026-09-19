@@ -26,6 +26,7 @@ to one line; edit only your own row to limit merge conflicts.
 | `KNOWN_UNLISTED` triage — 10 entries, 16 tables | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed, all ten now on the applier |
 | Schema authority — live-schema baseline + the 61 tables behind it | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **active** — gate fixed, baseline 70→61→47; DEAD surfaces deleted (7 files, §7); triage corrected (§8); CMC playbook provisioned (§9), baseline 47→42; reg_* refused with evidence |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
+| WO-3 — tenant-isolation proof: the `app.current_org_id` distribution (`orgMembership` enrichment, token mint paths) | `…session_01J935DZwfFEardJCv85SJds` | **released** 2026-09-19 — question answered, degraded path pinned; the 230-route migration itself is NOT claimed |
 
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
@@ -62,17 +63,29 @@ per the claim above. **Neither is a regression from the reporting lane's work.**
    it removed the *appearance* of a writer, not a writer. Deciding which
    relation is canonical is a council-lane call.
 
-**Note for the UI/authoring lane (`AuthoringPlaceIntoFiling.tsx`):** the placement
-dialog work (`0f8e6a84b`, `0e47244ec`) left 13 dead symbols in that file — the
-`SubmissionRow`/`SequenceRow` types, `SC_SEQ_STATUS`, `normalizeCtdCode`,
-`ctdFolderSlug`, and the `subs`/`subId`/`seqs`/`seqId`/`lockedSeqs`/
-`pickSubmission`/`sectionCanonical`/`sectionFolder` bindings — plus 3 in
-`server/services/workflow/DecisionLineageService.ts` (`sql`, `inArray`,
-`unifiedDocuments`). Together that is 15 over the ratchet baseline, so
-`ci:eslint-warning-ratchet` is red on trunk. They are all unused imports and
-unused destructurings from a refactor, so deleting them is mechanical — but the
-file is yours and mid-flight, so it is reported here rather than edited from
-another lane. Clearing them puts the gate back at 6549 with nothing else needed.
+**Cleared from another lane (2026-09-19):** the 16 dead symbols reported here on
+2026-09-17 — unused imports and destructurings in
+`client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx` and
+`server/services/workflow/DecisionLineageService.ts` — were still there a day
+later with the files untouched since, so they were deleted rather than left to
+block the ratchet for whoever added the next legitimate warning. Nothing but
+dead symbols was touched; both files' suites pass. Baseline relocked at 6522.
+
+**Ratchet debt absorbed from other lanes (2026-09-19, third time):** four more
+warnings arrived on trunk from lanes that pushed them, each one blocking every
+other lane's next push until somebody paid it. Cleared in place, semantics
+untouched, suites green:
+
+| File | What | Why it was fixed here |
+|---|---|---|
+| `server/services/ana/__tests__/run-control.pglite.integration.test.ts` | 103-line describe | Fixture builder hoisted (splitting broke five cases). The owning lane landed the same fix independently; the merge took theirs. |
+| `server/services/ana/__tests__/verified-seal-service.test.ts` | 102-line describe | Split at the E11 binding cases — 11 tests still pass. |
+| `tests/resolution/bundle-execution.test.ts` | mock query chain at complexity 16 | Three `document_span_lineage` branches extracted to `spanLineageAnswer` — 18 tests still pass. |
+
+The pattern is worth naming: a warning added in one lane is invisible to the
+lane that added it (the pre-push hook does not run the ratchet; CI does) and
+costs the NEXT lane to push a diagnostic round each time. Running
+`npm run ci:eslint-ratchet` before you push keeps it in the lane that created it.
 
 **Note for the vault-storage lane:** `server/services/vault/storage-migration.service.ts`
 (`c029711ae`) landed `migrateVaultStorage` at complexity 17 / 102 lines, which put
