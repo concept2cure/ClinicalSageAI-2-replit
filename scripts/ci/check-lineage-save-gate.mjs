@@ -160,11 +160,6 @@ const KNOWN_UNGUARDED = [
      silently gated so the debt is countable, and so the next reader sees four
      named surfaces instead of a guard that claims full coverage. */
   {
-    file: 'server/services/compute/artifactWriteback.ts',
-    what: "registerArtifactWithGovernance writes a type='regulatory_document' artifact and its version from compute output, an accepted conversation-OS proposal, or a generated draft (four callers) — provenance and audit are recorded in the transaction, span lineage is not",
-    row: 'L177',
-  },
-  {
     file: 'server/services/ana/verifiedSealService.ts',
     what: 'the fallback artifact + version insert in sealVerifiedVersion persists verified regulatory content that then receives a §11.50 manifestation and a signature — so a sealed document can carry a signature over text with no recorded origin',
     row: 'L177',
@@ -271,6 +266,10 @@ const GUARDED = [
   {
     file: 'server/services/labeling/labeling-pi-service.ts',
     why: 'upsertLabelingPiSection writes USPI label prose (labeling_pi_sections.content JSONB → heading + body derived text)',
+  },
+  {
+    file: 'server/services/compute/artifactWriteback.ts',
+    why: "registerArtifactWithGovernance is the shared writer behind compute output, an accepted conversation-OS proposal and a generated draft (four callers), each creating a type='regulatory_document' artifact + version (gated in ledger L177, the first of that row's four)",
   },
 ];
 
