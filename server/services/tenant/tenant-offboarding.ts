@@ -345,25 +345,54 @@ async function assertPurgePermitted(
   return existing;
 }
 
-/** Empty one tenant-owned table. Absent tables are skipped; other errors abort. */
 /**
- * Tenant-owned tables that are NOT keyed by organization_id, with the predicate
- * that scopes them to a tenant instead.
+ * Which vault documents belong to a tenant.
+ *
+ * NOT `organization_id = $1` alone, which is what both vault entries used and
+ * which under-deletes on a GDPR erasure.
+ * `vault.documents.organization_id` is NULLABLE by design — the schema records
+ * that "NULL = unattributable — the program is missing or SOFT-DELETED"
+ * (shared/schema/vault.ts). So a document whose programme has been soft-deleted
+ * carries a NULL there, matches no `organization_id = $1`, and SURVIVED the
+ * purge with its bytes, which is the precise failure an erasure request exists
+ * to prevent. Naming the vault tables correctly fixed the table-level miss; it
+ * left this row-level one behind, in the rows most likely to be old.
+ *
+ * The programme is the authoritative owner — the column is backfilled FROM it
+ * (migrations/20260905_vault_documents_organization_id.sql) — so ownership is
+ * asked of the programme, and the column is kept as a union rather than
+ * replaced: a row the programme cannot attribute but the column can is still
+ * this tenant's, and dropping that clause would trade one under-deletion for
+ * another.
+ *
+ * Deliberately NO `deleted_at IS NULL` on regulatory_programs. A purge must
+ * reach documents on a soft-deleted programme — that is exactly the population
+ * the column cannot attribute, and filtering them out here would reinstate the
+ * bug this predicate exists to fix.
+ */
+const VAULT_DOCUMENT_TENANCY =
+  '(organization_id = $1 OR program_id IN (SELECT id FROM regulatory_programs WHERE organization_id = $1))';
+
+/**
+ * Tenant-owned tables that are NOT purged by the uniform `organization_id = $1`,
+ * with the predicate that scopes them to a tenant instead.
  *
  * `vault.document_chunks` is keyed only by document_id — it inherits its tenancy
- * from the document it belongs to. Purging it with the uniform
- * `WHERE organization_id = $1` raised 42703 (undefined_column), which
- * purgeChildTable treats as "not in this deployment's schema" and skips
- * silently, so a purge left every chunk of every deleted document in place.
+ * from the document it belongs to. Purging it with the uniform predicate raised
+ * 42703 (undefined_column), which purgeChildTable treats as "not in this
+ * deployment's schema" and skips silently, so a purge left every chunk of every
+ * deleted document in place.
  *
  * Frozen and module-local for the same reason the table list is: a purge must
  * never take a predicate derived from request input.
  */
-const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.freeze({
+export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.freeze({
+  'vault.documents': VAULT_DOCUMENT_TENANCY,
   'vault.document_chunks':
-    'document_id IN (SELECT id FROM vault.documents WHERE organization_id = $1)',
+    `document_id IN (SELECT id FROM vault.documents WHERE ${VAULT_DOCUMENT_TENANCY})`,
 });
 
+/** Empty one tenant-owned table. Absent tables are skipped; other errors abort. */
 async function purgeChildTable(
   pool: Pool,
   table: string,
@@ -384,7 +413,17 @@ async function purgeChildTable(
   if (!/^[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)?$/.test(table)) {
     throw new OffboardingStateError('INVALID_PURGE_TABLE', `Unsafe table name: ${table}`);
   }
-  const predicate = PURGE_PARENT_SCOPED[table] ?? 'organization_id = $1';
+  /* OWN-KEY lookup, not a bare index. `PURGE_PARENT_SCOPED[table]` reaches
+     Object.prototype, so a table legitimately named `constructor` or
+     `toString` — both of which the name regex above admits — would yield a
+     FUNCTION as the predicate and interpolate it into the DELETE. This
+     codebase has been bitten by exactly this twice and fixed it the same way
+     each time: see `externalDocumentTableReason` in
+     server/services/ectd/leaf-document-tables.ts and `vaultStatus` in
+     client/src/concept2cure/v2/fixtures/vault-data.ts. */
+  const predicate = Object.prototype.hasOwnProperty.call(PURGE_PARENT_SCOPED, table)
+    ? PURGE_PARENT_SCOPED[table]
+    : 'organization_id = $1';
   try {
     await pool.query(`DELETE FROM ${table} WHERE ${predicate}`, [organizationId]);
   } catch (error) {
