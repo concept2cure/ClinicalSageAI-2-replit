@@ -103,10 +103,19 @@ export interface ReadinessDashboard {
   overallScore: number;
   trend: 'improving' | 'stable' | 'declining';
   trendDelta: number;
-  predictedOutcome: {
-    approvalProbability: number;
-    reviewTimeDays: number;
-    deficiencyCount: number;
+  /**
+   * Renamed from `predictedOutcome` on 2026-09-10. Nothing here is a
+   * prediction: see calculatePredictions for what each field is and what the
+   * previous three were computed from.
+   */
+  assessmentOutlook: {
+    /** Null always — no approval-probability model exists. Kept so callers can say so. */
+    approvalProbability: number | null;
+    /** The agency's statutory review clock for the submission type, not a forecast. */
+    reviewTimeDays: number | null;
+    reviewClockBasis: string | null;
+    /** Criteria scored not_met or partially_met by THIS assessment. */
+    unmetCriteriaCount: number;
   };
   moduleReadiness: ModuleReadiness[];
   topRisks: Array<{
@@ -709,9 +718,16 @@ export class SubmissionReadinessTwinService {
           dimensionScores.quality,
           dimensionScores.consistency,
           dimensionScores.compliance,
+          // predicted_approval_probability is now written NULL rather than the
+          // rescaled readiness score. The column stays (RULE 1: removing it
+          // means amending its creator, and it is the right home for a real
+          // model's output if one is ever built) but nothing fabricates a value
+          // into it. Rows written before 2026-09-10 still hold the old
+          // heuristic — getDashboard therefore ignores the stored value rather
+          // than reading it back.
           predictions.approvalProbability,
           predictions.reviewTimeDays,
-          predictions.deficiencyCount,
+          predictions.unmetCriteriaCount,
           JSON.stringify(riskFactors),
         ]
       );
@@ -897,44 +913,74 @@ export class SubmissionReadinessTwinService {
     submissionType: string,
     agency: string
   ): Promise<{
-    approvalProbability: number;
-    reviewTimeDays: number;
-    deficiencyCount: number;
+    approvalProbability: null;
+    reviewTimeDays: number | null;
+    reviewClockBasis: string | null;
+    unmetCriteriaCount: number;
   }> {
-    // Simple prediction model based on score
-    // In production, this would use ML models trained on historical data
+    /* ── 2026-09-10: this method used to return three "predictions" ───────────
+       Its own comment read "Simple prediction model based on score. In
+       production, this would use ML models trained on historical data." It was
+       never replaced, and the three values were not equally wrong, so they are
+       not treated equally here.
 
-    const criticalGaps = evaluations.filter(
-      e => e.status === 'not_met' && e.gapsIdentified && e.gapsIdentified.length > 0
-    ).length;
+       1. approvalProbability was
+              (overallScore / 100) * 0.8  -  criticalGaps * 0.05,
+          clamped to [0.1, 0.95]. That is the readiness score rescaled. No
+          approval outcome, no historical cohort and no comparator is consulted
+          anywhere in this service, so there is nothing it could be a
+          probability OF. It is removed rather than adjusted: there is no
+          smaller true version of it. Callers get null.
 
-    // Approval probability decreases with score and critical gaps
-    let approvalProbability = (overallScore / 100) * 0.8;
-    approvalProbability -= criticalGaps * 0.05;
-    approvalProbability = Math.max(0.1, Math.min(0.95, approvalProbability));
+       2. reviewTimeDays was a lookup on submission type plus `criticalGaps * 30`
+          ("Each gap adds ~30 days"). The LOOKUP is real reference data — these
+          are the statutory and user-fee review clocks, not estimates — but the
+          per-gap addition is invented, and adding it to a statutory figure made
+          the whole number look like a forecast. The clock is kept and labelled
+          as a clock; the addition is gone.
 
-    // Review time increases with complexity and gaps.
-    // Keyed by both legacy and registry IDs so any resolved form matches.
-    const baseReviewDays: Record<string, number> = {
+       3. deficiencyCount was a count of criteria this assessment itself scored
+          not_met or partially_met. That is an honest count of a present state
+          and the only defensible number of the three — but "deficiency" is what
+          an agency issues after review, so the name asserted a forecast the
+          arithmetic never made. Renamed to unmetCriteriaCount. */
+
+    // FDA review clocks by submission type. Keyed by both legacy and registry
+    // IDs so any resolved form matches.
+    //   IND      21 CFR 312.40 — 30-day safety review before a study may begin
+    //   NDA/BLA  PDUFA standard review, ~10 months from the 60-day filing date
+    //   510(k)   MDUFA — 90 FDA days
+    //   PMA      FD&C Act 515(d)(1) — 180 days
+    // These describe the AGENCY'S clock for the submission type. They are not a
+    // prediction about this program, and nothing about this program's content
+    // moves them.
+    const statutoryReviewDays: Record<string, number> = {
       IND: 30,   US_IND: 30,
       NDA: 300,  US_NDA: 300,
       BLA: 300,  US_BLA: 300,
       '510k': 90, US_510K: 90,
       PMA: 180,  US_PMA: 180,
     };
-    // Try resolved type first, then original string
     const entryForReview = resolveToRegistryEntry(submissionType);
-    let reviewTimeDays = baseReviewDays[entryForReview?.id ?? submissionType]
-      ?? baseReviewDays[submissionType]
-      ?? 180;
-    reviewTimeDays += criticalGaps * 30; // Each gap adds ~30 days
+    const resolvedKey = entryForReview?.id ?? submissionType;
+    const reviewTimeDays =
+      statutoryReviewDays[resolvedKey] ?? statutoryReviewDays[submissionType] ?? null;
 
-    // Deficiency count based on gaps
-    const deficiencyCount = evaluations.filter(
+    const unmetCriteriaCount = evaluations.filter(
       e => e.status === 'not_met' || e.status === 'partially_met'
     ).length;
 
-    return { approvalProbability, reviewTimeDays, deficiencyCount };
+    return {
+      approvalProbability: null,
+      reviewTimeDays,
+      // An unrecognised submission type previously fell back to 180 — the PMA
+      // clock — for anything unknown. Now it yields null and says so.
+      reviewClockBasis:
+        reviewTimeDays === null
+          ? null
+          : `statutory/user-fee review clock for ${resolvedKey}; not adjusted for this program`,
+      unmetCriteriaCount,
+    };
   }
 
   /**
@@ -1172,10 +1218,17 @@ export class SubmissionReadinessTwinService {
       overallScore: assessment.overallReadinessScore,
       trend: trendDirection,
       trendDelta,
-      predictedOutcome: {
-        approvalProbability: assessment.predictedApprovalProbability || 0,
-        reviewTimeDays: assessment.predictedReviewTimeDays || 0,
-        deficiencyCount: assessment.predictedDeficiencyCount || 0,
+      assessmentOutlook: {
+        // `|| 0` previously turned "never recorded" into a hard zero — a 0%
+        // approval probability and a 0-day review clock, both indistinguishable
+        // from measured values. Absent is now absent.
+        approvalProbability: null,
+        reviewTimeDays: assessment.predictedReviewTimeDays ?? null,
+        reviewClockBasis:
+          assessment.predictedReviewTimeDays == null
+            ? null
+            : 'statutory/user-fee review clock recorded with this assessment',
+        unmetCriteriaCount: assessment.predictedDeficiencyCount ?? 0,
       },
       moduleReadiness,
       topRisks: (assessment.riskFactors as any[]) || [],
@@ -1268,10 +1321,15 @@ export class SubmissionReadinessTwinService {
       overallScore: 0,
       trend: 'stable',
       trendDelta: 0,
-      predictedOutcome: {
-        approvalProbability: 0,
-        reviewTimeDays: 0,
-        deficiencyCount: 0,
+      // The empty dashboard: no assessment on record. Every figure is null, not
+      // zero. deepening-tools.test.ts already documents why — a zero here is
+      // "byte-identical to a genuinely terrible program", and a model handed
+      // that payload reports a zero readiness score as fact.
+      assessmentOutlook: {
+        approvalProbability: null,
+        reviewTimeDays: null,
+        reviewClockBasis: null,
+        unmetCriteriaCount: 0,
       },
       moduleReadiness: [],
       topRisks: [],

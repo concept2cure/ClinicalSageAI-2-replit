@@ -3,9 +3,19 @@
  *
  * Pulls every provenance row for an artifact so the docx-ledger-embedder
  * can serialize it into a stable AnALedger XML payload. The collector is
- * tenant-scoped (organizationId on every query) and tolerant of missing
- * tables — anything not migrated yet contributes empty arrays so the
- * ledger still ships, just with whatever's available.
+ * tenant-scoped (organizationId on every query).
+ *
+ * It used to be "tolerant of missing tables — anything not migrated yet
+ * contributes empty arrays so the ledger still ships". For the audit log and
+ * the signatures that tolerance was the defect (WO-16B finding 10): a query
+ * that FAILED — permission denied, table absent, connection gone — produced
+ * `<AuditLog count="0">` and `<Signatures count="0">`, and a reviewer reads a
+ * count as "this artifact has no history and no signatures". A count is a
+ * claim. Those two loads now carry a third state, `…Unavailable: <reason>`,
+ * which the XML renders as `<AuditLog unavailable="true" reason="…"/>` and
+ * which the DOCX export refuses to embed at all. The remaining loads
+ * (proposals, runs, plan) keep the tolerant behaviour; nothing regulated
+ * reads their counts as a verdict.
  *
  * The AnALedger contract:
  *   - artifact + active version + content_hash
@@ -21,6 +31,7 @@
  * @module server/services/export/docx-ledger-collector
  */
 import { getPool } from '../../db/runtime.js';
+import { describeFailure } from '../../lib/verification-outcome.js';
 
 export interface LedgerArtifact {
   artifactId: string;
@@ -160,7 +171,15 @@ export interface ArtifactLedger {
   citations: LedgerCitations | null;
   authoringPlan: LedgerAuthoringPlan | null;
   auditLog: LedgerAuditEntry[];
+  /**
+   * Non-null when the audit-log query could NOT run; `auditLog` is then empty
+   * because nothing was read, not because nothing exists. Renderers must show
+   * the reason, never a count.
+   */
+  auditLogUnavailable: string | null;
   signatures: LedgerSignature[];
+  /** As `auditLogUnavailable`, for the signatures query. */
+  signaturesUnavailable: string | null;
   proposals: LedgerProposal[];
   runs: LedgerRunSummary;
 }
@@ -252,7 +271,7 @@ async function loadArtifact(
 async function loadAuditLog(
   artifactId: string,
   organizationId: number
-): Promise<LedgerAuditEntry[]> {
+): Promise<{ entries: LedgerAuditEntry[]; unavailable: string | null }> {
   try {
     const { rows } = await getPool().query(
       `SELECT audit_id, action, action_category, change_reason,
@@ -266,7 +285,7 @@ async function loadAuditLog(
         LIMIT $3`,
       [artifactId, organizationId, MAX_AUDIT]
     );
-    return rows.map((r: any) => ({
+    const entries: LedgerAuditEntry[] = rows.map((r: any) => ({
       auditId: r.audit_id,
       action: r.action,
       actionCategory: r.action_category,
@@ -281,18 +300,19 @@ async function loadAuditLog(
       timestamp: new Date(r.timestamp).toISOString(),
       metadata: r.metadata ?? null,
     }));
+    return { entries, unavailable: null };
   } catch (err: any) {
-    if (!isMissingTable(err)) {
-      console.warn('[docx-ledger-collector] audit load failed:', err?.message);
-    }
-    return [];
+    // A missing table is not an empty history either: the store is absent,
+    // so nothing about this artifact's audit trail is known.
+    console.warn('[docx-ledger-collector] audit load could not run:', describeFailure(err));
+    return { entries: [], unavailable: describeFailure(err) };
   }
 }
 
 async function loadSignatures(
   artifactPk: number,
   organizationId: number
-): Promise<LedgerSignature[]> {
+): Promise<{ entries: LedgerSignature[]; unavailable: string | null }> {
   try {
     const { rows } = await getPool().query(
       `SELECT signature_id, artifact_version_id, signature_type,
@@ -308,7 +328,7 @@ async function loadSignatures(
         LIMIT $3`,
       [artifactPk, organizationId, MAX_SIGNATURES]
     );
-    return rows.map((r: any) => ({
+    const entries: LedgerSignature[] = rows.map((r: any) => ({
       signatureId: r.signature_id,
       artifactVersionId: r.artifact_version_id ?? null,
       signatureType: r.signature_type,
@@ -324,11 +344,10 @@ async function loadSignatures(
       signatureHash: r.signature_hash,
       signedAt: new Date(r.signed_at).toISOString(),
     }));
+    return { entries, unavailable: null };
   } catch (err: any) {
-    if (!isMissingTable(err)) {
-      console.warn('[docx-ledger-collector] signatures load failed:', err?.message);
-    }
-    return [];
+    console.warn('[docx-ledger-collector] signatures load could not run:', describeFailure(err));
+    return { entries: [], unavailable: describeFailure(err) };
   }
 }
 
@@ -460,8 +479,10 @@ export async function collectArtifactLedger(
     project: head.project,
     citations: head.citations,
     authoringPlan,
-    auditLog,
-    signatures,
+    auditLog: auditLog.entries,
+    auditLogUnavailable: auditLog.unavailable,
+    signatures: signatures.entries,
+    signaturesUnavailable: signatures.unavailable,
     proposals,
     runs,
   };

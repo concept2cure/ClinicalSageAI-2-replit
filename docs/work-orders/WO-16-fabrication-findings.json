@@ -1,0 +1,1074 @@
+[
+ {
+  "sev": "critical",
+  "file": "server/routes/real-world-evidence.ts",
+  "line": "472-481, 715-735",
+  "title": "FAERS \"signal detection\" invents ROR / PRR / IC025 and labels the method as MGPS",
+  "invented": "Pharmacovigilance disproportionality statistics. Reporting Odds Ratio, Proportional Reporting Ratio and IC025 (the lower bound of the 95% credibility interval of the Information Component) are standard, defined quantities that require a 2x2 contingency table against the whole FAERS background. Here ROR is `1.0 + percentage/10`, PRR is `1.0 + percentage/15`, and IC025 is literally the constant 0.5 or -0.5. `signalDetected` — a regulatory safety-signal determination — is `percentage > 5` within the 100-record page just fetched. The response then names the method as MGPS, the Bayesian data-mining algorithm FDA actually uses; no MGPS, no Bayesian shrinkage, and no background frequency computation exists anywhere in the file.",
+  "reach": "POST /api/real-world-evidence/signal-detection, mounted live in server/bootstrap/register-advanced-platform-routes.ts:174 behind authenticateToken. Any authenticated tenant user gets the numbers plus a fabricated `regulatoryImplication` telling them whether to consider a REMS evaluation or a label update."
+ },
+ {
+  "sev": "critical",
+  "file": "server/routes/real-world-evidence.ts",
+  "line": "486-495",
+  "title": "A failed FAERS fetch is rendered as \"No significant safety signals detected\"",
+  "invented": "A clean safety result. The catch swallows the openFDA failure and returns a zero-filled FAERSResult. The caller at line 715 has no way to distinguish it, so `signalDetection.filter(s => s.signalDetected).length > 0` is false and the endpoint answers `success: true` with `regulatoryImplication: 'No significant safety signals detected'` and `totalReportsAnalyzed: 0`.",
+  "reach": "Same live endpoint, POST /api/real-world-evidence/signal-detection. Also POST /faers (line 615) which returns the zeroed object directly."
+ },
+ {
+  "sev": "critical",
+  "file": "server/routes/leaves.js",
+  "line": "99-128 (definition), 295 (route)",
+  "title": "/api/leaves serves invented CMC, stability and batch-release facts with invented source document numbers",
+  "invented": "Three GMP/CMC facts and the documents they are cited to. A 99.5% HPLC purity figure, a 24-month ICH-condition stability claim, and a three-batch release conformance claim — each attributed to a specific, non-existent controlled document (AR-2025-001, SP-2024-003, BR-001/2/3) with a confidence of 0.95/0.98/1.0. The parameter `leafId` is ignored entirely; every leaf in every tenant gets the same three facts.",
+  "reach": "GET /api/leaves/:leafId/facts. Mounted at server/bootstrap/register-clinical-intel-routes.ts:125-126 as `app.use('/api/leaves', leavesRoutes.default)` — with no authenticateToken, unlike every other family in that same file. These are the source facts an eCTD leaf editor shows as the evidence backing the section being authored."
+ },
+ {
+  "sev": "critical",
+  "file": "server/routes/leaves.js",
+  "line": "55-97 (templates), 234-278 (route)",
+  "title": "/api/leaves/:leafId returns fabricated eCTD module prose, blocks and a citation",
+  "invented": "Module 2.3 / 3.2 / 4 / 5 content asserting completed work that no tenant supplied — that full structural characterisation was performed by NMR/MS/IR/X-ray, that Phase 1/2 studies demonstrated an acceptable safety profile — plus tracked authoring blocks attributed to 'System' and 'CMC Team' and a citation to AR-2025-001 pages 15-18.",
+  "reach": "GET /api/leaves/:leafId, same unauthenticated mount. It is the document-editor hydration call: this HTML is what the editor loads as the leaf's current content, so it is one Save away from a submission draft."
+ },
+ {
+  "sev": "critical",
+  "file": "server/routes/leaves.js",
+  "line": "205-222, 344-364",
+  "title": "/api/leaves accept-all fabricates a 21 CFR Part 11 e-signature record and persists nothing",
+  "invented": "An electronic signature event. `patchesAccepted: 5` is a literal — it is 5 whether zero or fifty patches exist. The `patch_hash` that binds the signature to the signed content is Math.random, so it is not derived from any content and can never be re-verified. `user_id` falls back to the string `'demo_user'` when the request carries no user, which is always possible here because the mount has no auth middleware. Nothing is written to any store.",
+  "reach": "POST /api/leaves/:leafId/patches/accept-all, unauthenticated mount. It answers 200 `{success: true}` with a signature object, so the client believes an e-signature was captured."
+ },
+ {
+  "sev": "critical",
+  "file": "server/routes/leaves.js",
+  "line": "188-203, 223-236, 337, 378",
+  "title": "/api/leaves apply-patch and save report success with invented change counts, writing nothing",
+  "invented": "A diff statistic (15 additions / 3 deletions / 7 modifications) that is a constant, and a persistence claim (`status: 'applied'`, `saved: true`, a version number) for operations that touch no store.",
+  "reach": "POST /api/leaves/:leafId/patches/apply and POST /api/leaves/:leafId/save, both answering `{ success: true, result }`."
+ },
+ {
+  "sev": "critical",
+  "file": "server/routes/ai-assistance.ts",
+  "line": "283, 302-306, 339-343",
+  "title": "AI content verification returns a hardcoded credibility score on the real-AI success path",
+  "invented": "The credibility score itself. The prompt asks the model to rate credibility 0-100; the model's rating is never parsed out of `aiResponse`. The literal 85 is returned instead, on both the AI-Gateway path (302) and the legacy-OpenAI path (339). `sources_verified: sources.length` asserts that every supplied source was verified — the sources array was only interpolated into the prompt as text; no source was fetched, resolved or checked.",
+  "reach": "POST /api/ai-assistance/verify, mounted at server/bootstrap/register-core-routes.ts:99-100. The response spreads the object and adds `isRealAI: true, fallback: false`."
+ },
+ {
+  "sev": "critical",
+  "file": "server/routes/document-understanding.ts",
+  "line": "664-718, 725-740, 531",
+  "title": "Document Understanding advertises LayoutLMv3, Donut, Table Transformer, DiT and a \"Bayesian ensemble\" as active models; none exists",
+  "invented": "The entire model inventory, its training corpora, per-model page limits, and the claim that each is `status: 'active'`. I grepped the repo, package.json and requirements.txt: nothing references layoutlm, donut, DiT or table-transformer except an unrelated HF model-name string in server/config/huggingface-models.ts. `POST /analyze` does `fs.readFileSync(fullPath, 'utf-8')`, splits on form-feeds, and classifies lines with regexes — then reports `processingInfo.modelUsed: 'layoutlmv3'` (the default when the caller does not name one).",
+  "reach": "GET /api/document-understanding/models, GET /health and the processingInfo block of POST /analyze, mounted at server/bootstrap/register-clinical-intel-routes.ts:96 behind authenticateToken. A buyer or an auditor asking 'what performs the document analysis' is told LayoutLMv3 pretrained on 11M documents."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/ivdrPackContent.ts",
+  "line": "148, 157, 166, 175",
+  "title": "IVDR technical-documentation pack prints \"No analytical validation records.\" / \"No clinical evidence records.\" when the query failed",
+  "invented": "The regulatory assertion of absence itself. All four IVDR content queries (ivdr_classifications, ivdr_analytical_validations, ivdr_clinical_evidence, ivdr_cdx_workflows) swallow ANY error into `{rows: []}` — not just 42P01. All four tables exist in the live DB (verified via information_schema), so the swallowed cases are permission errors, RLS denials, connection loss, type errors — never 'the table isn't provisioned yet'.",
+  "reach": "buildIvdrPackContent (line 128) -> server/workers/ivdr-pack-worker.ts:23 -> server/services/ivdrPackHtml.ts:108 which emits the literal `<p class=\"muted\">No analytical validation records.</p>` and :126 `No clinical evidence records.`, and server/services/docxGenerator.ts:183/221/261/281 which emit `No classification record found.` / `No analytical validation records.` / `No clinical evidence records.` / `No CDx workflow record.` into a generated .docx. The output is a downloadable IVDR technical file section."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/export/docx-ledger-collector.ts",
+  "line": "284-289 (audit), 327-332 (signatures)",
+  "title": "Exported DOCX ledger emits <AuditLog count=\"0\"> and <Signatures count=\"0\"> when the audit and signature queries fail",
+  "invented": "An empty Part 11 audit trail and an empty electronic-signature manifest. `isMissingTable(err)` gates only whether a warning is LOGGED — the `return []` is unconditional, so a permission error, an RLS denial or a dropped connection produces the same empty ledger as a missing table.",
+  "reach": "loadAuditTrail/loadSignatures -> ArtifactLedger -> server/services/export/docx-ledger-xml.ts:133 `out.push(`  <AuditLog count=\"${ledger.auditLog.length}\">`)` and :155 `out.push(`  <Signatures count=\"${ledger.signatures.length}\">`)` -> server/services/export/docx-ledger-export.ts -> route server/routes/ana-features.ts:3857. The count attribute is written into the exported document's custom XML part."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/contradiction-engine-service.ts",
+  "line": "992, 1080, 1195, 1299 (inner) + 1052, 1163, 1262, 1357 (outer) vs 1434 (the gate)",
+  "title": "Every Pass-8 contradiction detector swallows its own failure, defeating scanProjectFull's documented fail-closed branch",
+  "invented": "A finding count of zero for four of the seven detectors. scanProjectFull at line 1434 contains `if (result.status === 'rejected') throw result.reason;` with a comment stating the rule verbatim: 'A contradiction scan that could not run its full detector set is unknown, not clean: surface the failure ... rather than a fabricated low count.' That branch is unreachable for detectApprovedVsWorkingDrift, detectStatusConflict, detectCrossArtifactContentConflict and detectBodySpecificExpectationConflict, because each ends `catch (err) { log.warn(...) } return findings;` and therefore RESOLVES rather than rejects. Worse, each also pushes its name into `detectionMethods` (1395-1421), so a detector that ran zero checks is reported as having run.",
+  "reach": "scanProjectFull -> buildPreflightContradictionContext (1456) -> `unresolvedCount`, `blockingCount`, `blockingFindings` -> server/routes/authoring-actions.ts:2308, 2541, 2828, 3363 and server/services/decision-lifecycle-service.ts:743. A zero blockingCount is the preflight verdict a user reads before promoting or filing an artifact."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/auditService.ts",
+  "line": "586-596 (verifyChain) -> server/routes/decision-lineage.ts:169-187",
+  "title": "/api/decision-lineage/verify-chain reports 'INTEGRITY_FAILURE' and 'NON_COMPLIANT' against four named regulations when the audit store merely failed to initialise",
+  "invented": "A regulatory verdict and a verified-entry count. The route renders `chainIntegrity: result.valid ? 'VERIFIED' : 'INTEGRITY_FAILURE'`, `complianceStatus: result.valid ? 'COMPLIANT' : 'NON_COMPLIANT'`, and lists `['FDA 21 CFR Part 11 §11.10(e)', 'EU Annex 11 §9', 'ICH E6(R2) §5.5.3', 'PMDA ERES Guidelines']`. `entriesVerified: 0` is an invented count — nothing was counted. Note the `if (tpLog)` guard: when the tamper-proof store is simply not configured, the function falls through with no error at all and still returns valid:false.",
+  "reach": "GET /api/decision-lineage/verify-chain returns HTTP 200 with the verdict body; GET /api/decision-lineage/compliance-report (line 191) embeds the same result as `chainIntegrity.status` and as the per-framework `status` for 21 CFR Part 11, EU Annex 11 and PMDA ERES."
+ },
+ {
+  "sev": "critical",
+  "file": "server/routes/decision-lineage.ts",
+  "line": "244-262",
+  "title": "The compliance report's attestation and two of its five framework verdicts are emitted unconditionally, including when chain verification failed",
+  "invented": "Two hardcoded 'COMPLIANT' verdicts (ICH E6(R2) GCP, GAMP 5) that no code evaluates, and a signed-sounding attestation asserting the trail WAS 'cryptographically-verified' and 'tamper-evident' — emitted on the same response in which chainResult.valid is false because verifyChain's catch fired. The error is not merely rendered as an empty result; it is rendered as a positive attestation.",
+  "reach": "GET /api/decision-lineage/compliance-report, HTTP 200, the full report object. This is a document-shaped artefact titled 'Decision Lineage Compliance Report'."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/submission-package-orchestrator.ts",
+  "line": "954-960 (catch) -> server/services/ectd/signed-package-export.ts:272-278",
+  "title": "A signature lookup that throws is reported to the operator as \"it was superseded or rolled back\" — a §11.70 verdict about a check that never ran",
+  "invented": "The refusal reason. signed-package-export.ts:273-277 maps null to `refuse('signature-revoked', `Run ${runId} has no active release signature for its payload digest — it was superseded or rolled back. Re-sign before exporting.`)`, HTTP 409, and server/services/ectd/release-signature-status.ts:86 maps it to verdict `'revoked'`. The file's own header comment (lines 928-941) documents that this exact swallow already caused a real incident — a 42703 on `created_at` meant 'the §11.70 release gate could never clear for ANY IND/NDA/BLA/MAA, and told the operator the signature \"was superseded or rolled back\" when nothing of the sort had happened.' The ORDER BY was fixed; the swallow was not.",
+  "reach": "resolveSignedPackageForExport -> the eCTD signed-package export route, 409 + that sentence."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/cognitive-ecosystem/fhir-validation.service.ts",
+  "line": "753-754 (checkValueSet), 837-838 (checkSlice)",
+  "title": "Two FHIR validation rule evaluators return `{ passed: true }` from their catch — a rule that threw is recorded as complied-with",
+  "invented": "A PASS on a rule that never evaluated. Note the inconsistency: the parent dispatcher executeRule (line 651) fails CLOSED at 686-687 — `catch (error) { // Rule execution error = validation failure  return { passed: false }; }` — but because checkValueSet and checkSlice catch locally, their exceptions never reach it. The two functions that fail open are the only two whose failures are invisible.",
+  "reach": "executeRule (line 380) -> validationResult.issues -> validationStatus (line 512 `if (validationResult.validationStatus === FHIRValidationStatus.PASSED)`) -> the FHIRValidationEngine exported at server/services/cognitive-ecosystem/index.ts:26. I could NOT trace a mounted HTTP route reaching FHIRValidationEngine — reachability beyond the module export is unproven, which lowers severity of the delivery path but not of the code shape."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/tenant-export/tenant-export.service.ts",
+  "line": "153, 164, 175, 188, 198",
+  "title": "Tenant data export emits row counts and an audit-log count computed from swallowed query failures",
+  "invented": "The export manifest's `counts` block. Five queries (evidence_sufficiency_assessments, post_market_documents, gspr_program_mappings, cerv2_510k_sections, audit_logs) swallow any error, and the returned object then reports `evidenceSufficiencyAssessments: evidenceSufficiency.length`, `postMarketDocuments: ...`, `gsprMappings: ...`, `sections: ...`, `auditLogs: parseInt(auditLogCount, 10) || 0`. `audit_logs` exists in the live DB, so the swallowed case is a real read failure.",
+  "reach": "exportTenantData (line 60) -> server/routes/tenant-export.ts:23. This is the tenant's data-portability / offboarding export — a document handed to the customer or a regulator."
+ },
+ {
+  "sev": "critical",
+  "file": "server/api/cmc/workflowRoutes.ts",
+  "line": "83-88 (schema), 617-624 (system prompt), 630-640 (inputSummary), 684-700 (INSERT), 783-809 (download)",
+  "title": "POST /api/cmc/ai-command generates and stores a full CMC regulatory document (incl. nitrosamine risk assessments) from a drug name alone — the caller's real inputs are silently stripped by the Zod schema",
+  "invented": "Entire CMC regulatory documents — nitrosamine risk assessments, QbD control strategies, stability protocols, container-closure validation, analytical method summaries — plus the ICH/FDA guideline references the prompt demands. AI_COPILOT_COMMANDS declares requiredInputs (e.g. ['drugName','manufacturingRoute']) but nothing enforces them. Worse: `structuredInputs: z.object({})` has no `.passthrough()`, so Zod STRIPS every key the caller sent. I proved this by executing the real schema: passing {manufacturingRoute:'secondary amine + nitrite, aqueous, pH 4', batchData:'NDSRI < 18 ng/day'} yields `structuredInputs = {}`, and because `{}` is truthy the `(no additional structured inputs provided)` branch never fires — inputSummary becomes the empty string. The model receives a drug name and a command title, and is told to 'Be specific and technically accurate' and 'Generate a complete, professional CMC document'. There is no 'say so if you cannot determine' escape anywhere in either prompt.",
+  "reach": "Route mounted at server/bootstrap/register-core-routes.ts:17. The generated markdown is INSERTed into public.cmc_ai_command_results (table verified live: id, organization_id, command, drug_name, result NOT NULL, RLS forced) at line 684, returned to the caller as `result`, and served by GET /api/cmc/download/:id (line 783) with `Content-Disposition: attachment` as `<Command>_<DrugName>_<date>.md`. So it leaves the system as a downloadable file named after the drug."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/intelligence/readiness-scoring-engine.ts",
+  "line": "223-225",
+  "title": "Approval probability is the readiness score plus 10 — and it is the only branch that ever runs",
+  "invented": "A regulatory approval probability (0-100), an estimated agency review time in days, and an estimated deficiency count. None is a prediction: approvalProbability is arithmetic on the platform's own readiness score, estimatedReviewDays is the literal 180, estimatedDeficiencies is (100 - score)/10.",
+  "reach": "CONFIRMED LIVE. gatherTwinAssessment (line 389) begins `if (!ctx.programId) return null;` and every live caller builds ctx WITHOUT programId — server/routes/project-home-routes.ts:170 (`svcCtx = { organizationId, projectId, triggeredBy }`), server/services/ana-ri/context-enrichment.ts:435, server/services/ana-ri/orchestrator.ts:764. Additionally `select count(*) from innovation.readiness_twin_assessments` on the live DB returns 0. So `twin` is always null and the ?? fallback is the ONLY branch that executes. From there: (a) server/services/ana-ri/context-enrichment.ts:445 formats it into the AnA prompt as `**Predictions:** Approval probability ~{n}% | Est. {n} deficiencies | ~{n} review days` and closes with `Present these scores directly.`; enrichWithReadiness is wired to the readiness/audit/checklist/submit/report/preflight intents (lines 1219-1316). (b) GET /api/intelligence/projects/:projectId/readiness (server/routes/intelligence.ts:104-121) returns the object verbatim. (c) GET .../dashboard (line 416)."
+ },
+ {
+  "sev": "critical",
+  "file": "server/protocol-analyzer-service.ts",
+  "line": "65, 109, 116, 125, 134, 157, 163, 175, 225",
+  "title": "Whole clinical protocols fabricated from regex misses, then stamped confidence_score 0.85",
+  "invented": "Study phase, sample size, duration, primary endpoint, secondary endpoints, study design, number of arms — every one a hardcoded default returned when the regex misses. Plus `global_compliance: { FDA: true, EMA: true }` (line 195-196), asserting regulatory compliance unconditionally, and a fixed `confidence_score: 0.85` that does not move whether zero or seven fields were actually extracted.",
+  "reach": "REACHABLE OVER HTTP. `/api/protocol` is mounted (server/bootstrap/register-clinical-intel-routes.ts:92) and POST /api/protocol/analyze-file (server/routes/protocol_routes.ts:354) calls protocolAnalyzerService.analyzeProtocol at line 392, returning `{ success: true, protocol }`. It is also called by POST /api/analytics/demo-analysis (server/routes/analytics-routes.ts:716; /api/analytics mounted at server/bootstrap/register-project-routes.ts:99). WORSE: for the PDF/DOCX/DOC branch the route never extracts anything — server/routes/protocol_routes.ts:380-382 sets `text = 'Extracted text from ' + originalname + '. In a real implementation, we would use proper libraries for extraction...'` — so EVERY PDF or DOCX protocol upload returns exactly the fabricated Phase 2 / N=100 / 24-week / ORR protocol at 0.85 confidence. I found no first-party client component calling /api/protocol/analyze-file, so today's exposure is the mounted, authenticated HTTP API rather than a shipped screen."
+ },
+ {
+  "sev": "critical",
+  "file": "client/src/concept2cure/v2/surfaces/ReportEngine.tsx",
+  "line": "127-131",
+  "title": "A fake power calculation, printed to one decimal with an alpha, filed into the Module 5 dossier",
+  "invented": "Statistical power. `0.4 + N*d/100` is not a power function — it is linear in N, linear in d, and does not use alpha at all despite the string printing \"at alpha=0.05\". For N=100, d=0.5 it prints \"90.0% power\"; a two-sample t-test at that N and effect gives roughly 70%. Also invented: the \"typical dropout rate\" of 15% attributed to studies in the user's indication, which is a constant independent of `a.indication`.",
+  "reach": "CONFIRMED. genStatisticalInsights is one of the ReportEngine document generators; `md` is rendered in the document pane, and the 'Open in editor' button calls `openEditor()` (line 534) → `saveToAuthoring({ title, module: 'M5', code: docDef.id, content: md })` (line 542), which POSTs the document into the authoring store bound to the project. The route it would otherwise call, POST /api/analytics/analyze-protocol-text, shells out to `trialsage/deep_csr_analyzer.py` and `trialsage/confidence_scorer.py` — I verified there is NO `trialsage/` directory in the repo — so the server call always fails and `.catch(() => runLocal())` (line 435) silently substitutes this local generator."
+ },
+ {
+  "sev": "critical",
+  "file": "server/routes/biotech-artifacts.ts",
+  "line": "139-215",
+  "title": "Pharmacovigilance document generator invents the clinical facts of an E2B(R3) ICSR, a PSUR, a CIOMS-I and an expedited safety report",
+  "invented": "Every missing PV field is replaced by an asserted clinical fact rather than a refusal: a manufactured safety-report identifier (`ICSR-<epoch>`), a drug-event causality of 'possible', a seriousness of 'hospitalization' on an expedited report (i.e. the document states a patient was hospitalised when the caller said nothing), an outcome, a reporter qualification of 'physician', and — in a Periodic Safety Update Report — the regulatory conclusion 'The benefit-risk profile remains favorable.' `server/services/biotech-artifact-generator.ts:236-289` writes these straight into the E2B(R3) XML: `.ele('safetyreportid').txt(data.safetyReportId)`, `.ele('seriousnesshospitalization').txt(data.seriousness === 'hospitalization' ? '1' : '2')`, `.ele('drugadditional').txt(data.causality)`, with `messagereceiveridentifier` hardcoded to `EudraVigilance` and `reportergivename` hardcoded to `Redacted`.",
+  "reach": "POST /api/biotech-artifacts/pv/icsr, /pv/psur, /pv/cioms, /pv/expedited-report. Mounted at server/bootstrap/register-document-routes.ts:152 — `app.use('/api/biotech-artifacts', biotechArtifactsModule.default)` with NO per-mount auth (its neighbours pass `authenticateToken`); it is covered only by the blanket /api session gate at server/bootstrap/register-platform-routes.ts:240, so any authenticated user of any tenant reaches it, with no tenant scoping and no schema validation on the body. The handler returns a finished .docx / .xml download (sendDocx/sendXml). There is no NODE_ENV guard, no feature flag, no dev fence anywhere in the file."
+ },
+ {
+  "sev": "critical",
+  "file": "server/routes/protocol_routes.ts",
+  "line": "378-392",
+  "title": "/api/protocol/analyze-file fabricates the text of every PDF/DOCX upload, then analyses the fabrication",
+  "invented": "The entire content of the user's uploaded protocol. No extraction is performed; a placeholder sentence is substituted and passed to analyzeProtocol(), which then emits its own invented defaults (sample_size 100, 24 weeks, 'Overall Response Rate', 'Randomized, Double-Blind, Placebo-Controlled', 2 arms, confidence_score 0.85 — see the next finding). The response is `success: true`.",
+  "reach": "POST /api/protocol/analyze-file. Router mounted at server/bootstrap/register-clinical-intel-routes.ts:90 (`{ path: '/api/protocol', router: protocolRoutes }`), behind the global /api session gate only. The AV/magic-byte upload check runs first and passes a genuine PDF, so the fabrication path is the SUCCESS path for real files. The sibling endpoint POST /api/protocol/parse-file in the same file (lines ~460-475) fails closed with 422 'Could not extract text from the provided file' — proving the correct behaviour was written and this endpoint does not use it."
+ },
+ {
+  "sev": "critical",
+  "file": "server/protocol-analyzer-service.ts",
+  "line": "109-226",
+  "title": "protocol-analyzer-service invents sample size, endpoints, design and arms when the protocol does not state them, and asserts FDA/EMA compliance unconditionally",
+  "invented": "Clinical trial parameters that the regex did not find in the source text: a 100-participant sample size, a 24-week duration, an oncology primary endpoint ('Overall Response Rate'), oncology secondary endpoints ('Progression-Free Survival', 'Safety and Tolerability'), a study design ('Randomized, Double-Blind, Placebo-Controlled'), 2 arms, and a 'Randomized, Double-Blind, Placebo-Controlled' label. Line 175 then writes these invented values into a prose `summary` sentence indistinguishable from a real synopsis. Lines 196-198 assert `global_compliance: { FDA: true, EMA: true }` for every protocol regardless of content, and line 225 attaches a fixed `confidence_score: 0.85` to the whole result. This is the same shape as the deleted huggingface-service 'Phase 3: 500-1500 participants' templates.",
+  "reach": "Three live routes: POST /api/protocol/analyze-file (protocol_routes.ts:392), POST /api/analytics/demo-analysis (analytics-routes.ts:716) — which also PERSISTS the object to disk at exports/<session_id>/analysis_results.json (analytics-routes.ts:962) — and the /api/protocol/parse-file and /parse-text paths (protocol_routes.ts:477, 505). analytics-routes.ts:800-803 then quotes the invented numbers back as work performed: `Sample size of ${protocolData.sample_size} participants analyzed against benchmarks` and `Study duration of ${protocolData.duration_weeks} weeks compared with similar trials`."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/cerGenerationService.ts",
+  "line": "128",
+  "title": "Every generated Clinical Evaluation Report records 'contraindications: None identified' for a column that does not exist",
+  "invented": "A clinical safety statement. `data` here is the `device_profiles` row (buildCerStructure, line 483-489). I confirmed against the live database that `device_profiles` has no `contraindications` column at all — its columns are: classification, created_at, device_name, device_type, id, manufacturer, metadata, name, organization_id, product_code, updated_at. `data.contraindications` is therefore ALWAYS undefined, so EVERY CER this service generates asserts that no contraindications exist for the device. The same template block also emits undefined for intendedUse, indications, targetPopulation, materials and specifications, which have no columns either.",
+  "reach": "POST /api/cer/mdr/generate (server/routes/cer-routes.ts:584-611) -> UnifiedCERService.generateReport (server/services/cer/index.ts:107) -> cerGenerationService.generateCER, which INSERTs the structure into `cer_reports.deviceDescription` (cerGenerationService.ts:217) and writes an audit row asserting the CER was created (line 239). Router mounted auth-gated at server/bootstrap/register-regulatory-routes.ts:379. The row is durable regulated content in the tenant database and is returned to the caller as section content by buildSections."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/audit/signedAuditExport.ts",
+  "line": "170-188",
+  "title": "Signed audit-trail export asserts chainIntegrity 'intact' over rows that carry no hash at all — and HMAC-signs the claim",
+  "invented": "A cryptographic tamper-evidence verdict. The loop never re-derives record_hash from row content, and when record_hash/previous_hash are NULL the two null-guards short-circuit every comparison, so brokenLinks stays 0 and status is emitted as 'intact' with totalEntries = every row. The manifest additionally carries a fixed compliance block: standard '21 CFR Part 11', section '§11.10(e)', description 'Tamper-evident audit trail export with cryptographic integrity verification'.",
+  "reach": "GET /api/audit/export (server/routes/audit-trail-routes.ts:528-560, mounted app.use('/api', createAuditTrailRoutes(pool)) in server/bootstrap/register-inline-routes.ts:263) and the admin download in client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx:894 (GET /api/audit/export/signed). The status is set as the X-Audit-Chain-Status response header and is inside the manifestVersion-2 canonical manifest that hmacSign() signs, so the false 'intact' is cryptographically attested and travels with the downloaded file a regulator reads."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/audit/signedAuditExport.ts",
+  "line": "337-361",
+  "title": "The audit row recording that an audit export happened can never be written — string into an INTEGER NOT NULL column, swallowed",
+  "invented": "Nothing is invented here — the inverse: a real, highly sensitive governed action (a full audit-trail export leaving the system) with NO §11.10(e) trace, 100% of the time. $2 is exportId, a string like AUDIT-EXPORT-1757520000-ab12cd34, bound to `entity_id INTEGER NOT NULL`; $3 is request.exportedBy (a display name/email) bound to `user_id INTEGER`.",
+  "reach": "Every call of generateSignedAuditExport — GET /api/audit/export and /api/audit/export/signed. The export still streams successfully to the caller; only the record of it is lost, to a console.error nobody reads."
+ },
+ {
+  "sev": "critical",
+  "file": "server/routes/part11-compliance.ts",
+  "line": "314-341, 740-757",
+  "title": "POST /api/part11/audit-trail answers success:true with a hash-chained entry that is never persisted — the INSERT always violates NOT NULL",
+  "invented": "An audit trail entry: a uuid `id`, a `previousHash` and a `hash` computed from a module-level in-memory `lastAuditHash` seeded with computeHash('GENESIS_BLOCK_TRIALSAGE'). The chain link exists only in process memory, is never written (record_hash is not in the INSERT column list), and resets on restart. The route returns it as `data` under `success: true`.",
+  "reach": "Mounted at server/bootstrap/register-advanced-platform-routes.ts:184-187 — `app.use('/api/part11', authenticateToken, part11Routes.default)` with setAuditPool(pool) called. Every POST to /api/part11/audit-trail returns 200 success:true while the row is discarded. The INSERT is not awaited and its rejection is swallowed by .catch."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/grdhe/grdheService.ts",
+  "line": "1355-1400",
+  "title": "GRDHE electronic signature writes the user id as the §11.50 printed name, hashes the wrong thing, and asserts an authentication that never happened",
+  "invented": "Four things at once: (a) signer_name — the 21 CFR 11.50(a)(1) printed name of the signer — is filled with the raw user id; (b) content_hash, the §11.70 record binding, hashes objectType|objectId|version|Date.now() and never touches the signed content; (c) authentication_method asserts 'password_and_meaning' when the file's own comment says the password check is a placeholder — `password` appears nowhere else in the file; (d) request.userId comes from req.body, so the signer is whoever the caller says.",
+  "reach": "POST /api/grdhe/signatures (server/routes/grdheRoutes.ts:924-976; the route requires a `password` field to be PRESENT and never passes it to the service). Mounted at server/bootstrap/register-regulatory-routes.ts:424-426 as `app.use('/api/grdhe', authenticateToken, grdheModule.default)`. Row lands in regulatory_harmonization.electronic_signatures with is_valid=true and is returned to the caller."
+ },
+ {
+  "sev": "critical",
+  "file": "server/services/grdhe/grdheService.ts",
+  "line": "1450-1476",
+  "title": "verifyElectronicSignature computes the expected content hash, discards it, and returns valid:true unconditionally",
+  "invented": "A signature-verification verdict. `expectedContentHash` is assigned and never read; no comparison to row.content_hash, no signature_value check, no certificate check. Any row with is_valid=true returns valid:true.",
+  "reach": "GET /api/grdhe/signatures/:signatureId/verify (server/routes/grdheRoutes.ts:985-993) → `res.json({ success: true, data: result })`. The caller receives `{ valid: true }`."
+ },
+ {
+  "sev": "critical",
+  "file": "server/src/routes/stability.router.ts",
+  "line": "2463-2497",
+  "title": "Stability sign-off manufactures the signer's printed name from an email local-part, never verifies the password it demands, and stores a fake 'hash'",
+  "invented": "(a) signer_name = `email.split('@')[0]` — a §11.50 printed name synthesised from the local part of an address ('jmichaelpsmith' for jmichaelpsmith@gmail.com); (b) `hash` = `${stage}-${Date.now()}` — a column named hash containing no hash of anything, binding the sign-off to no content; (c) reason-for-change defaulted to '' rather than required; (d) `password` is destructured and never used — no re-authentication of any kind, and email comes from the body, so a caller can sign as anyone.",
+  "reach": "POST /api/stability/studies/:id/request-signoff. Mounted at server/bootstrap/register-inline-routes.ts:233-239 (`app.use('/api/stability', stabilityRouter)`). Row persists in public.stab_signoffs (verified present in the live DB, with RLS) and is read back by GET /api/stability/studies/:id/dependencies at line 2521 (`select stage, signer_name, signed_at, hash ...`)."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/ai-assistance.ts",
+  "line": "483-496",
+  "title": "The template-fallback verification invents a 75 credibility score",
+  "invented": "A 75/100 credibility score and an N-sources-verified count for a code path in which nothing was analysed and no source was touched.",
+  "reach": "POST /api/ai-assistance/verify line 363, when no provider is reachable."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/document-understanding.ts",
+  "line": "284, 336-343",
+  "title": "Document Understanding synthesises bounding boxes from line index and stamps confidences on them",
+  "invented": "Page geometry. A bounding box is a claim about where on the physical page a piece of content sits — it is the anchor a traceability/provenance highlight points at. These are computed from the element's ordinal position (x is always 72, y is index*20) against a document that was read as UTF-8 text and never rendered. `metadata.language: 'en'` (line 506) is likewise asserted with no detection, and every cell carries `confidence: 0.8`.",
+  "reach": "POST /api/document-understanding/analyze, /extract-tables, /extract-form-fields — the response carries `elements[].bbox`, `tables[].cells[].bbox`, and a `confidenceDistribution` computed over the fabricated confidences."
+ },
+ {
+  "sev": "high",
+  "file": "server/api/cmc/blueprintRoutes.ts",
+  "line": "366-372 (call sites), 553-558 and 729-743 (definitions)",
+  "title": "CMC blueprint: extract*() helpers ignore the model's response and return constants on the AI success path",
+  "invented": "The compliance requirements, technical risks, regulatory risks, mitigation strategies and critical items of a CMC development blueprint. Each function takes `blueprintText` — the model's actual answer — and discards it. `extractCriticalItems` also ignores its `context` argument, so the drug-substance and drug-product sections get identical items. Fixed timelines ('8-12 weeks', '10-14 weeks') sit beside them.",
+  "reach": "POST /api/cmc/blueprint/generate-blueprint (mounted server/bootstrap/register-core-routes.ts:68). This is the SUCCESS branch, not the fallback: the route has already INSERTed a real row into `cmc_projects`, and returns `{ success: true, data: { project: <real DB row>, blueprint: <this object>, ... } }`. The fallback branch at line 378 does attach `generatedFrom: 'fallback'`; the success branch attaches no provenance at all."
+ },
+ {
+  "sev": "high",
+  "file": "server/api/cmc/blueprintRoutes.ts",
+  "line": "382-438 (createWorkflowTemplates), 440-478 (createComplianceFramework), 480-518 (generateRiskAssessment)",
+  "title": "CMC blueprint: compliance framework, risk assessment and workflow templates are canned lists returned from async functions",
+  "invented": "A project risk register with likelihood/impact ratings, a compliance framework with per-guideline risk levels, and workflow templates carrying freshly minted UUIDs and `createdBy: 'system'` — all constants keyed only on drugType. `projectId` is accepted and never used.",
+  "reach": "Same POST /api/cmc/blueprint/generate-blueprint, returned as `data.risks`, `data.compliance`, `data.workflows` alongside the real `cmc_projects` row created moments earlier."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/manufacturing-routes.ts",
+  "line": "112-121 (getSeedData), 800-819, 843",
+  "title": "Manufacturing AI review feeds fixture facility data into findings labelled source: 'deterministic_rules'",
+  "invented": "The process, validation, stability and change-control halves of the reviewed snapshot. seed.json is demo content — sites 'BioPlant A' and 'FillFinish B', equipment 'MX-400' / 'DR-12' / bioreactor 'BR-3', material 'API-123'. On the success path only `equipment` and `ebr` come from the database; the other four keys always come from the fixture. On the catch path the whole snapshot is the fixture. The findings' `evidence` strings then quote fixture numbers verbatim ('PPQ completed 0 / target 3', 'Long-term data: Xm < claim: Ym').",
+  "reach": "GET /api/manufacturing/ai/review and POST /api/manufacturing/ai/simulate-deficiency, mounted at server/bootstrap/register-regulatory-routes.ts:254 behind authenticateToken. simulate-deficiency turns the same fixture-derived findings into a regulator-style deficiency letter plus drafted applicant responses (manufacturingReviewer.js:106-134), including the committed text 'We anticipate completing corrective actions within 60–90 days'."
+ },
+ {
+  "sev": "high",
+  "file": "server/src/services/ai/stability.ts",
+  "line": "232-251",
+  "title": "Stability OOS root-cause fallback invents four probable causes and four CAPAs",
+  "invented": "A ranked probable-cause list and a corrective-action list for a specific out-of-specification stability result. The schema the success path uses describes probableCauses as 'List of probable causes ranked by likelihood' and recommendations as 'Corrective actions'; the fallback fills both without seeing `oosData`.",
+  "reach": "POST /api/stability/studies/:id/ai/root-cause (server/src/routes/stability.router.ts:1705-1714), mounted at server/bootstrap/register-inline-routes.ts:233-235. The route returns `{ analysis }` — the whole object — with no fallback flag."
+ },
+ {
+  "sev": "high",
+  "file": "server/api/ai/routes.ts",
+  "line": "426-430",
+  "title": "AI boilerplate endpoint picks a regulatory boilerplate at random",
+  "invented": "The selection itself. For section_completion the endpoint returns one of the section's critical-flag boilerplates chosen by Math.random — so for 3.2.S.4 the same request returns microbial-limits justification text, elemental-impurities text, or batch-analysis text on successive calls, with no relation to the caller's `context`.",
+  "reach": "POST /api/ai/generate-boilerplate, mounted at server/bootstrap/register-core-routes.ts:47-48 behind authenticateToken. The text is returned as drafted document content for a named CTD section."
+ },
+ {
+  "sev": "high",
+  "file": "server/api/ai/routes.ts",
+  "line": "7-95 (calculateComplianceScore), 311, 353-357",
+  "title": "\"AI compliance analysis\" score is a regulatory-keyword word count",
+  "invented": "A regulatory compliance score. The number is a function of word count, how many of 17 keywords appear anywhere in the text, and whether the text has markdown headers/bullets. It is 0-100 and is returned under the key `complianceScore` from an endpoint named analyze-compliance. Separately, `boilerplateRecommendations[].confidence` is derived by mapping the severity label to 0.9 or 0.7.",
+  "reach": "POST /api/ai/analyze-compliance, live behind authenticateToken. Response is `{ complianceScore, suggestions, missingElements, regulatoryFlags, boilerplateRecommendations, templateGuidance }`."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/governed-decision-repository.ts",
+  "line": "321-324",
+  "title": "getRecentGovernedDecisions returns [] on any query failure; the governance-decisions route answers 200 with count: 0",
+  "invented": "An empty governance decision log. The metric records the failure but the caller receives no signal.",
+  "reach": "server/routes/c2c/governance-ops.ts:47-56 — `const entries = await getRecentGovernedDecisions({...}); return sendSuccess(res, { entries, count: entries.length });` — HTTP 200 with `{entries: [], count: 0}`. The route's own outer catch (line 57) can never fire, because the service already swallowed. getGovernedDecisionSummary (line 377-379, `catch { return null; }`) is the same shape on the adjacent /governance/summary route."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/governed-decision-repository.ts",
+  "line": "228-234 and 250-262",
+  "title": "recordGovernedDecisionSync returns a decisionId for a governed decision whose durable write was swallowed",
+  "invented": "A decision reference — a UUID and an ISO timestamp — for a decision record that does not exist in the database. The write is fire-and-forget and its failure is swallowed twice (inside the function and again at the call site's `.catch`).",
+  "reach": "server/src/control-plane/governed-document-evaluator.ts:325 `const decisionReference = recordGovernedDecisionSync(evaluation);` — the reference is returned to the evaluator's caller as the identifier of the governed decision that was just taken."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/ana/lineage-dossier.ts",
+  "line": "271-274, 302-305, 358-361, 392-395, 507-510",
+  "title": "Lineage dossier loaders swallow every read failure; a numeric 'lineage confidence' score is then computed from the silently-empty arrays",
+  "invented": "Empty version history, empty decisions, empty provenance events, empty data lineage — and, downstream, a confidence number. `warnUnless42P01` (line 53-59) only suppresses the LOG for a missing table; the `return []` runs for every error.",
+  "reach": "buildDocumentLineageDossier (line 524) -> server/routes/ana-ri/lineage.ts:37 and :65 (two dossier representations), and server/routes/report-os.ts:1197-1202 which passes the dossier to `computeLineageConfidence` at server/services/report-os/lineage-trace-report.ts:53-64: `let score = 30; if (dossier.versionHistory.length >= 1) score += 25; if (dossier.decisions.length >= 1) score += 15; ...` The rendered report shows that score."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/ana/since-last-visit.ts",
+  "line": "163-176",
+  "title": "'What changed since you were last here' reports nothing new when the blocker and contradiction lookups fail",
+  "invented": "A zero-deadline radar (`overdue: 0, due_soon: 0, upcoming: 0, total: 0`) and empty blocker/contradiction sets. buildSinceLastVisitBlock (line 119-121) then returns `''` because `summary.counts.total === 0`, so the assistant says nothing appeared.",
+  "reach": "GET /api/ana-ri/since-last-visit (server/routes/ana-ri/utility.ts:223). The route HAS an honest 500 branch at :225-232, but it can never fire for these three sources because they are swallowed first. The `block` string is also injected into Ana's context."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/unified-work/unified-work-view.ts",
+  "line": "338, 348, 358, 385",
+  "title": "Unified work board reports '0 open, 0 blocking' when any of its four source queries fails",
+  "invented": "The summary counts. Line 393 `return { items, summary: summarizeUnifiedWork(items) };` and summarizeUnifiedWork (142-155) computes `{ total, blocking, open, inProgress, done, bySource }` from whatever survived.",
+  "reach": "loadUnifiedWork -> server/routes/submission-ops.ts:1352-1353 `res.json({ ...view, sources: ['project_tasks', 'c2c_project_work_items', 'estar_submissions'] })` — and the response ASSERTS the three sources by name — and server/routes/project-schedule-of-events.ts:21."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/ana/AnaToolExecutor.ts",
+  "line": "19693 (and server/services/report-os/entitlement-map.ts:94-100, report-os/canvas/definition-service.ts:115, report-os/canvas/suggestion-service.ts:186, report-os/scheduling/worker-register.ts:38-45)",
+  "title": "An entitlement-tier resolution failure invents tier 'standard' at five sites; one of them ships the invented value in a payload that claims it never invents",
+  "invented": "The organisation's subscription tier, and every per-report `entitled` / `requiredTier` decision computed from it. The AnaToolExecutor site returns `ok: true` alongside a note asserting 'it never invents a report type or a metric' — while `tier` in that same object was invented by the catch.",
+  "reach": "AnaToolExecutor's list_report_types tool result is narrated to the user by Ana. entitlement-map.ts:96-100 (requireReportEntitlement) is the gate that decides whether a governed report may be generated or exported; definition-service.ts:115 feeds validatePanels (line 116) which decides whether a canvas panel is 'not_entitled'."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/realTimeValidationService.ts",
+  "line": "410-412",
+  "title": "AI validation analysis failure returns zero issues, inflating the document's compliance score toward 100",
+  "invented": "A clean AI analysis. Line 297 `issues.push(...aiAnalysis.issues);` merges the empty result into the issue set; line 337 `const complianceScore = this.calculateComplianceScore(issues);` and line 546 `if (issues.length === 0) return 100;` turn it into a number; line 350 sets `isValid: issues.filter(i => i.type === 'error').length === 0`.",
+  "reach": "validateContent -> server/services/ai-actions/handlers/run-validation.ts:74 -> the ValidationReport at :91-97 carrying `isValid` and `complianceScore`, returned by the AI-actions handler. The handler HAS a degradation path (`validationResult._degraded = true` at :86) but it only triggers when the whole service import/call throws — an internal AI failure is swallowed one level deeper and never sets _degraded."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/statistical-defensibility-service.ts",
+  "line": "158-181 (prompt), 211-221 (overall), 235-246 (dimensionScores)",
+  "title": "statistical-defensibility: prompt mandates seven 0-100 scores and a 'regulatoryPrecedent' with no 'cannot determine' option; missing scores are then replaced with a manufactured 50",
+  "invented": "(1) Seven dimension scores 0-100 (endpointQuality, sampleSizeAdequacy, multiplicityControl, missingDataHandling, statisticalMethodChoice, designAppropriateness, estimandClarity). The prompt gives no instruction for what to do when a dimension cannot be assessed — criterion (d). (2) `regulatoryPrecedent` invites a named FDA/EMA precedent for each issue with no source and no retrieval in the call. (3) The `|| 50` fallback fabricates a midpoint score whenever the model omits a dimension — and, because `||` treats 0 as falsy, it also silently rewrites a legitimate score of 0 (the worst possible rating) into 50. That same `|| 50` is applied twice: once inside the overallScore average and again in the returned dimensionScores. (4) The HTTP route defaults `sampleSize: sampleSize || 0` and `statisticalMethods: statisticalMethods || []`, so a caller supplying only the four required fields gets a full seven-dimension scored assessment of a study with sample size 0 and no methods.",
+  "reach": "POST /api/statistical-defensibility/assess (server/routes/statistical-defensibility.ts:45), mounted at server/bootstrap/register-inline-routes.ts:89. overallScore drives overallRating ('strong'|'adequate'|'weak'|'deficient') and reviewerRiskLevel, both returned to the client. Also exposed as the ANA command `assess_defensibility` (server/services/ana-ri/command-executor.ts:3026, registered at 4959), which reports `Defensibility score: ${result?.overallScore}/100` in chat."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/sentenceTraceabilityService.ts",
+  "line": "453-462 (prompt), 489 (excerpt precedence), 493 (relevanceScore), 702-729 (INSERT)",
+  "title": "sentenceTraceabilityService persists a model-composed 'excerpt' as a quotation from a source document, and the model's self-reported confidence becomes the stored evidence-link strength",
+  "invented": "The prompt asks the model to emit an `\"excerpt\"` field described as 'relevant excerpt from source'. At line 489 the code prefers the MODEL'S excerpt over the real one (`srcMapping.excerpt || source.excerpt`), so text the model composed is stored as the excerpt of a cited source document. Separately, the prompt demands a 'Confidence score (0-1)' with no instruction for the undeterminable case (criterion d), and 'most likely source documents' explicitly invites guessing at provenance. The model's number is assigned straight to `relevanceScore` and then bucketed into the persisted `strength` column ('strong' >= 0.8, 'moderate' >= 0.5, else 'weak').",
+  "reach": "INSERT INTO evidence_links (line 702) — table verified live as public.evidence_links — writing `strength` from the model's confidence and a JSON `rationale` containing `sourceExcerpt: source.excerpt.slice(0,200)`, i.e. the model-authored text. The module also reads innovation.auto_trace_links (verified live, line 848)."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/ana-ri/artifact-generator.ts",
+  "line": "78-129 (deficiency memo), 163-196 (reviewer brief), 197-235 (risk memo), 418-427 (message assembly), 470-472 + 474 (gates)",
+  "title": "AnA RI artifact-generator: prompts demand copy-pasteable agency response text, invented FDA reviewer quotations, month-count timeline impacts and a regulatory citation per gap; the caller controls message roles; the evidence-discipline check is computed but never enforced",
+  "invented": "(a) Text explicitly framed as sendable-to-FDA correspondence containing 'specific data references, regulatory citations, and evidence', generated from a chat transcript. (b) Blockquoted language attributed to an FDA/EMA reviewer — a simulated agency response, which CLAUDE.md forbids outright ('No simulated agency responses outside dev'). (c) A month count for schedule impact, demanded with no source and no escape (criterion d). (d) A 'specific regulatory citation' for every evidence gap. (e) reviewer_question_brief demands '**Supporting References**: [Specific data, studies, or regulatory precedent]' with no grounding constraint. Two secondary defects compound it: `checkEvidenceDiscipline` (server/services/ana-ri/enforcement.ts:149) merely counts [KNOWN]/[INFERRED]/[MISSING] bracket literals, and its result is never used to block — only `qualityResult.pass` gates persistence (line 474), while `evidenceResult` is logged and written to artifact metadata as `hasEvidence: evidenceResult.totalLabels > 0`, so an artifact whose every claim is tagged [MISSING] is recorded as having evidence. And at line 420 `conversationContext` elements are pushed with `role: msg.role` while the route (server/routes/ana-ri/generate-execute.ts:63-68) validates only that conversation_context is a non-empty array before casting `as any` — a caller can inject `{role:'system', ...}` into the message array, which is criterion (c) in its strongest form.",
+  "reach": "POST /api/ana-ri/generate (server/routes/ana-ri/generate-execute.ts:81). The result is persisted as a governed artifact in concept2cure_artifacts via executeGovernedAnaOperation, and the route returns 502 unless persistenceStatus === 'persisted' — so every success case is a stored governed document."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/endpoint-recommender-service.ts",
+  "line": "646-670 (AI guidance prompt), 610-616 (defaults incl. date '2023'), 275-292 (AI endpoint evidence)",
+  "title": "endpoint-recommender invents named FDA/EMA/PMDA guidance documents with quoted guidance text, stamps a hardcoded '2023' date on citations, and labels AI guesses as academic evidence with an occurrence count of 1 — all on the public API",
+  "invented": "(1) `getAIRegulatoryGuidance` (reached from getRegulatoryGuidance line 623 whenever the cache misses) asks the model to emit objects with `authority`, `document_name` and `guidance_text`, and supplies a worked example naming a real FDA guidance title — so the model produces named regulatory guidance documents and quoted guidance text with no retrieval and no verification of the returned name. (2) Line 614: `date: item.date || '2023'` stamps a fabricated publication year on a guidance citation whose source carried no date; `document_name: item.document || 'Regulatory Guidance'` and `guidance_text: ... || 'Recommended endpoint per regulatory guidance'` are the same shape. (3) For AI-generated endpoints the code writes `occurrence_count: 1` (a corpus recurrence count for something that occurred in no corpus), `confidence: 0.7` (hardcoded), `source_type: 'academic'` (an LLM guess labelled academic evidence), and `reference_text: 'Based on analysis of similar trial endpoints for ...'` — asserting an analysis that never ran, the same shape as the getFallbackResponse opener deleted today.",
+  "reach": "getComprehensiveEndpointRecommendations is called from server/routes/public-api.ts:499-505 — the metered, API-key-authenticated PUBLIC API (recordUsage 'api_endpoint_recommend'), so this reaches external integrators. Also registered at server/bootstrap/register-inline-routes.ts:28."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/safety-narrative-service.ts",
+  "line": "376-393 (system prompt items 9, 11, 12), 186 (FOUR_PLUS_DIGIT_RE), 249-260 (findUngroundedTokens), 482-485 (guard application)",
+  "title": "Aggregate safety narrative prompt demands percentage-point incidence differences, a class of number the hallucination guard provably cannot see",
+  "invented": "Percentage-point differences between treatment arms, incidence percentages, and small event counts — plus mechanism-of-action inferences (item 12) for which no mechanism data is in the request. The module has a genuine grounding guard (findUngroundedTokens) that withholds the AI narrative and falls back to a deterministic summary, but it only inspects 4+ digit integer runs and identifier-shaped tokens (which require an alphabetic lead). I ran the real regexes against the sentence 'A 8.2 percentage-point imbalance in serious infections was observed (14.2% vs 6.0%), with 37 events in the active arm versus 12 on placebo; the Grade 3 rate was 4.1%.' — the guard returns zero ungrounded tokens and the verdict is PASS. Every fabricated statistic in that sentence is exactly the shape item (9) asks for, and exactly the shape the guard cannot detect.",
+  "reach": "safetyNarrativeService is consumed by server/routes/safety-narrative.ts:13. The returned fullNarrative/sections/keyFindings/regulatoryConcerns are ICH E3 Section 12 content for a CSR, IB, or ISS."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/c2c/ai-editing.ts",
+  "line": "236-241 (evidenceBlock), 337-354 (path 1), 1174-1182 (path 2)",
+  "title": "c2c/ai-editing concatenates retrieved document chunks into the SYSTEM message, so a retrieved document's own text occupies the instruction channel",
+  "invented": "Nothing is invented by the prompt text itself; the defect is criterion (c) — untrusted retrieved content placed in the same turn as the instructions, with system authority. Raw chunk `content` from vault documents is string-concatenated into the system message with no escaping and no statement that the material between the markers is data rather than instruction. The `--- END EVIDENCE ---` terminator is a plain literal that a retrieved chunk can itself contain, closing the block early so the remainder of that chunk reads as system-level instruction. Both the drafting path (line 354) and the template path (line 1180) do this. The trailing 'If a claim is not supported by retrieved evidence, do NOT fabricate citations' is a real mitigation but sits inside the same injectable region, and on the template path the governing outputGuidance (which for the CSR-synopsis template is the only 'Use [brackets] for missing data' escape) is appended AFTER the evidence, so injected text precedes it.",
+  "reach": "Both handlers write through the AI gateway with callerModule 'concept2cure/ai-template-generate'; the drafting path persists to ai_generation_runs (line 371) and ai_claims (line 474), and both return document content that is written into authored regulatory sections. An ingested document that carries instruction-shaped text can therefore steer the content of a submission section and the claims recorded against it."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/cerv2-ai-routes.ts",
+  "line": "285 (/suggest), 737 (/section-generate)",
+  "title": "cerv2 /suggest and /section-generate instruct the model to cite ISO/IEC/FDA standards for a 510(k), PMA or EU MDR CER section with no source and no escape — while the sibling /equivalence and /benefit-risk handlers in the same file were explicitly hardened",
+  "invented": "Named consensus standards (ISO, IEC) and FDA guidance citations for a device-submission section, produced from at most a device name, a predicate name and an intended-use string. 'Be specific' (criterion e) and 'cite applicable standards' (criterion a) with no 'say so if you cannot determine' clause (criterion b). The user prompt supplies no standards list and no device test data.",
+  "reach": "POST /api/cerv2-ai/suggest and the section-generate handler, both behind authMiddleware + requireEditorAccess, returning `suggestion` that the CERV2 editor writes into 510(k) / PMA / EU MDR CER section fields. Emits generation_start trace events with sourceSystem cerv2_510k / cerv2_pma / cerv2_cer."
+ },
+ {
+  "sev": "high",
+  "file": "server/api/cmc/routes.ts",
+  "line": "1938 (system prompt), 1930 + 1944-1946 (user prompt)",
+  "title": "CMC Module 3 blueprint prompt demands specifications and acceptance criteria in the same request that says the drug product information was not provided",
+  "invented": "Specifications and acceptance criteria — the numeric release limits that govern whether a batch may be used in humans — plus ICH cross-references. The user turn can literally read 'Drug substance information not provided. / Drug product information not provided.' while the system turn still orders the model to include specifications and acceptance criteria. No 'if not determinable, say so' clause anywhere in either message.",
+  "reach": "The CMC blueprint-generator route returns {section, content, wordCount, submissionType} to the client, where it is used as the Module 3 section draft."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/cortexQueryRoutes.ts",
+  "line": "412-420 (prompt), 443-447 (riskLevel), 457 (recommendations)",
+  "title": "Cortex advisory prompt requires a risk assessment with no undeterminable option; the consumer then derives the risk level by substring-matching the prose and defaults to MEDIUM, and always returns an empty recommendations array",
+  "invented": "(1) A four-level regulatory risk classification demanded with no 'cannot determine' branch (criterion d) and 'Relevant regulatory patterns or precedents' plus 'cite relevant regulatory requirements' demanded with no source constraint (criterion a) and no escape (criterion b). (2) The returned `advisory.riskLevel` is not the model's classification at all — it is a keyword scrape of the prose, initialised to 'MEDIUM'. A response that never states a risk level, or one that mentions the word 'critical' incidentally (e.g. 'critical path', 'critical quality attribute'), yields a risk level the analysis never reached. (3) `relevantPatterns` is populated with RAG document titles rather than any pattern the model identified, and `recommendations` is hardcoded `[]` despite the prompt asking for 3-5.",
+  "reach": "The advisory handler in cortexQueryRoutes, loaded at server/bootstrap/register-document-routes.ts:420, returns results.advisory to the client alongside sources and metadata (aiProvider, aiModel)."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/intelligence/readiness-scoring-engine.ts",
+  "line": "161",
+  "title": "A gap COUNT manufactured from a score band",
+  "invented": "The number of gaps in an eCTD module. Nothing is counted; the value is a lookup on the module's score. A module scoring 49 reports exactly 3 gaps and a module scoring 74 reports exactly 1, always.",
+  "reach": "Part of the ReadinessScore.moduleBreakdown returned by GET /api/intelligence/projects/:projectId/readiness and the intelligence dashboard. NOTE: this specific branch only populates when `twin?.moduleScores` exists, which requires a row in innovation.readiness_twin_assessments — 0 rows live, and the only writer (readinessTwinService.runAssessment) sits behind server/routes/innovation-routes.ts, which is deliberately NOT MOUNTED (server/bootstrap/register-advanced-platform-routes.ts:66-80). So it is currently dormant: the field is defined and serialised, but the array is empty. Lower severity for that reason, and it is the shape that matters — a count derived from a constant."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/innovation/evidence-confidence-heatmap-service.ts",
+  "line": "241-246",
+  "title": "Evidence-confidence assessment computes over invented document text carrying an invented p-value and an invented citation",
+  "invented": "The document being assessed. `runConfidenceAssessment(documentId)` never reads documentId's content — it synthesises three sections asserting \"significant improvement (p=0.03)\" and a citation to \"Smith et al., 2020\". Both the p-value and the reference are fabricated. The resulting overallScore is then written back against the REAL document id.",
+  "reach": "NOT CURRENTLY REACHABLE, and I am stating that explicitly rather than overclaiming. `runConfidenceAssessment` has zero callers repo-wide (grep across server/ and client/src/), and server/routes/innovation-routes.ts — which exposes the sibling `runAssessment` — is deliberately unmounted (server/bootstrap/register-advanced-platform-routes.ts:66-80). It is a live method on an exported service (server/services/innovation/index.ts:9) one route registration away from writing fabricated evidence-confidence rows keyed to real documents."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/innovation/evidence-confidence-heatmap-service.ts",
+  "line": "263-285",
+  "title": "A caught database error is rendered as a 75% evidence-confidence score marked 'completed'",
+  "invented": "A 75% evidence-confidence score, produced by the failure path. Every count in the same object is 0, so the object simultaneously says \"zero claims examined\" and \"75% confident\".",
+  "reach": "NOT CURRENTLY REACHABLE — same reason as the finding above (no callers, innovation-routes unmounted). Reported because it is the exact inverse of CLAUDE.md's \"An error is never rendered as an empty result\": here an error is rendered as a POSITIVE result, and the fabricated row is pushed onto the static `assessments` array so it would appear in subsequent listings."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/shadow-review/shadow-review-service.ts",
+  "line": "162-163",
+  "title": "An LLM's self-reported Refuse-to-File risk float, stored and rendered to two decimals as a risk score",
+  "invented": "A probability of FDA Refuse-to-File and of a Complete Response Letter. `output.rtfRiskScore` is a number the language model wrote into its own JSON reply; whenever it exceeds the deterministic aggregate (which the Math.max makes the common case for any non-trivial model output) the stored value IS the model's invention.",
+  "reach": "CONFIRMED. Written to shadow_review_runs.rtf_risk_score / crl_risk_score (line 184) and into the Part 11 audit trail as `details.rtfRiskScore` (line 193). Rendered at client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:836-837 — `<td>{r.rtfRiskScore != null ? r.rtfRiskScore.toFixed(2) : '—'}</td>` — under table headers \"RTF risk\" and \"CRL risk\" (lines 816-817), with no indication of origin. (The sibling ShadowReview.tsx surface is clean: it recomputes deterministically from findings at line 103 and does not read the stored value.)"
+ },
+ {
+  "sev": "high",
+  "file": "server/services/orchestration/readiness-engine.ts",
+  "line": "128, 191, 102",
+  "title": "'Unknown = neutral' — an unassessed compliance dimension emitted as 50% into the AnA system prompt",
+  "invented": "Three things. (1) A compliance score of 50 for a project where nothing has been validated and no CMC signal exists — absence rendered as a mid-range measurement. (2) A consistency score of 50 when zero consistency checks were applicable. (3) A denominator: 15 documents = 100% document coverage, a number with no stated basis, contributing 40% of the completeness score. Also EXPECTED_DOCS at line 202-208 (Module 1: 3, Module 2: 5, Module 3: 4, Module 4: 3, Module 5: 4) sets per-module eCTD expectations from nothing, and line 223 falls back to `|| 3` for any module not listed.",
+  "reach": "CONFIRMED LIVE into an LLM prompt. server/services/lumen-context-builder.ts:783-799 imports computeReadinessAssessment and pushes `## Submission Readiness Intelligence — **Overall Readiness**: {n}% ... **Completeness**: {n}% | **Quality**: {n}% | **Compliance**: {n}% ... When the user asks about readiness, blockers, gaps, or what to do next, reference this data.` into the assembled system prompt (assembleSystemPrompt, line 475) → buildContextAwarePrompt (line 1042) → server/routes/cortex-unified.ts:308, mounted at /api/cortex (server/bootstrap/register-document-routes.ts:425-426). Also consumed by server/services/orchestration/workflow-orchestrator.ts:345/367/386 and continuity-service.ts:79."
+ },
+ {
+  "sev": "high",
+  "file": "client/src/concept2cure/v2/surfaces/Biostatistics.tsx",
+  "line": "326, 328, 345, 354",
+  "title": "Three fixed constants in the Biostatistics judgment table, filed into the dossier as a submission document",
+  "invented": "(1) The 'Effect-size assumption' dimension is ALWAYS verdict 'marginal', score 60 — it never varies with any input, including the effect size itself. (2) 'Enrollment feasibility' 85/60/35 is a lookup on N ≤ 300 / ≤ 800, thresholds with no site-capacity data behind them. (3) A confidence score of exactly 86, 64 or 42 out of 100 — three magic numbers standing in for high/moderate/low. (4) `fragilityIndex: 100 - margin`, an index that is definitionally the complement of a percentage already shown beside it.",
+  "reach": "CONFIRMED. These land in the generated markdown at line 407 (`- **Confidence Level**: ${j.confidence.level} (${j.confidence.score}/100)` and `- **Fragility**: ${j.fragility.category} (index: ${j.fragility.fragilityIndex})`) and line 413's Risk Memo `| Dimension | Verdict | Score | Key Flags |` table. Both `openEditor()` (line 626) and `attach()` (line 691) call `saveToAuthoring({ title, module: filingModule, content: md })`, filing the document into the project dossier under Module 5. `judge()` runs unconditionally in the browser (line 560); the `live` flag has no bearing on it."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/cerGenerationService.ts",
+  "line": "644-680",
+  "title": "CER benefit-risk verdict is derived by dividing the count of listed benefits by the count of listed risks",
+  "invented": "A regulatory benefit-risk determination. Three bullet-pointed benefits and one bullet-pointed risk yields 'Highly favorable' and the sentence 'The documented clinical benefits outweigh the residual risks when the device is used as intended.' Counting list lengths is not a benefit-risk analysis under MDR Annex I §8 or MEDDEV 2.7/1 rev 4; the arithmetic has no relation to severity, probability, or clinical significance. The zero-benefit and zero-risk cases were hardened (lines 648-663 carry a long comment about failing closed) but the ratio arithmetic that produces the affirmative verdict was left in place.",
+  "reach": "Written to `cer_reports.riskBenefitAnalysis` by the same POST /api/cer/mdr/generate path. At generation time the template is called with the device row, which carries no benefits/risks arrays, so today it returns 'Needs review' — the verdict fires only when the section is re-rendered with populated arrays. I could not find a second call site that supplies them, so the affirmative branch is currently latent rather than live; I am flagging it as such rather than claiming it fires today."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/regulatory-precedent-intelligence/seeds/crl-trigger-patterns.ts",
+  "line": "1-90",
+  "title": "Invented FDA frequency rates, cycle counts and success rates are seeded into every new tenant and into the platform tier, and drive a pre-submission readiness verdict",
+  "invented": "Quantitative regulatory statistics with no measurement behind them. The seed files' own headers admit it: crl-trigger-patterns.ts calls them 'a frequency estimate' to be refined 'once internal precedent records are loaded'; advisory-committee-patterns.ts:7-9 says 'Frequencies and negative-vote correlations are conservative estimates ... refine once internal precedent records are loaded'. The same files ship `panelistSensitivity: { biostatistician: 0.85, clinician: 0.6, consumer_rep: 0.45 }`, `fdaOverrideRate: 0.18`, `negativeVoteCorrelation: 0.55`, and `typicalFdaLanguage` arrays presented as verbatim FDA phrasings with no source CRL cited.",
+  "reach": "TWO live paths, neither dev-guarded. (1) POST /api/tenants fires seedAllRegulatoryPatterns on every tenant creation — server/routes/tenants-simple.ts:196-225, `void (async () => { ... await seedAllRegulatoryPatterns(orgIdStr) })()` — writing the rows into regulatory_intel.crl_trigger_patterns / advisory_committee_patterns per org. (2) migrations/20260814n_seed_regulatory_intel_platform_knowledge.sql, which IS in C2C_MIGRATION_FILES (scripts/db/migration-set.mjs:1445), has already seeded 9 CRL rows into the platform org in the live database — I read them back: EFFICACY_ENDPOINT_FAILURE 0.3400, BIOEQUIVALENCE_FAILURE 0.4100, MANUFACTURING_DEFICIENCY_CMC 0.2800, all under organization_id 00000000-0000-0000-0000-000000000000, which precedent-engine.ts:251 reads for EVERY tenant (`ANY($1::uuid[])` with [PLATFORM_ORG, organizationId]). Consumption: crl-trigger-service.assessCRLRisk multiplies frequencyRate into a 0-100 riskScore (crl-trigger-service.ts:296-301), and server/routes/orchestration.ts:533 feeds that risk level into deriveVerdict for the pre-submission gate, whose response (orchestration.ts:589-598) returns `crl.riskScore` and `topPatterns[].frequencyRate` verbatim. Also exposed directly by POST /api/regulatory-precedent-intelligence/crl/risk-assessment and GET .../crl/stats/by-category (auth-gated mount at server/bootstrap/register-governance-routes.ts:67-71)."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/precedent-engine.ts",
+  "line": "259-263",
+  "title": "basisOf() relabels a curated estimate as 'cited' because the row contains more curated text",
+  "invented": "The provenance label itself. `typical_fda_language` is not a citation — it is a hand-written array in the seed file (e.g. crl-trigger-patterns.ts:42-45, 'The single trial submitted does not provide substantial evidence of effectiveness as required under section 505(d) of the Act') with no CRL number, no date, no URL and no source document. Its mere non-emptiness promotes the pattern's evidenceBasis from 'curated' to 'cited'. The same function's caller then attaches `confidence: 0.8` to every stored pattern (line 283), with the comment 'Rather than invent one ... leaves confidence at the neutral value' — 0.8 IS an invented confidence, and analyzeCRLTriggers (line 1477-1485) then adds 0.05 per matched objection and rounds it to two decimals before returning it as `confidence`.",
+  "reach": "loadCrlPatternsFromStore / loadRtfTriggersFromStore / loadAdcomTriggersFromStore feed analyzeCRLTriggers, which returns `{ evidenceBasis, confidence, historicalRate, severity }` per trigger. Surfaced by /api/precedent-engine-board (server/routes/precedent-engine-board.ts:136-139 types the response off precedentEngine.analyzeCRLTriggers), mounted auth-gated at server/bootstrap/register-clinical-intel-routes.ts:198. Note: rows written by the SQL migration have typical_fda_language NULL in the live DB, so those correctly read 'curated'; rows written by the TypeScript seeder on tenant creation DO carry the array and are therefore labelled 'cited'."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/regulatoryRoutes.ts",
+  "line": "233-250",
+  "title": "GET /api/regulatory/risk/:sectionId runs a regulatory compliance screen on the literal string \"Section <id>\"",
+  "invented": "A per-section regulatory risk analysis. No section content is loaded — the string `Section 3` is passed as the protocol text, and the phase is hardcoded 'Phase 2'. analyzeProtocolCompliance (regulatory-intelligence-service.ts:595-600) then keyword-matches every mandatory requirement against those two words, so every requirement misses, and the output block 'CRITICAL ISSUES REQUIRING IMMEDIATE ATTENTION:' lists the full mandatory requirement set with agency, guideline and document_reference for each. The result is a maximal deficiency list generated from a placeholder. Duplicated verbatim at lines 243-250 as /regulatory/risk/:sectionId.",
+  "reach": "Mounted at server/bootstrap/register-clinical-intel-routes.ts:95 (`{ path: '/api/regulatory', router: regulatoryRoutes }`) behind the global /api session gate. No dev guard, no flag."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/regulatory-intelligence-service.ts",
+  "line": "532-576",
+  "title": "'Sample considerations' returned as SPECIAL CONSIDERATIONS FOR THIS PROTOCOL",
+  "invented": "Clinical trial design guidance selected by a phase/indication string switch and presented as analysis. The code's own comment calls them 'sample considerations'. This is the identical shape to the huggingface-service template generators deleted today — hardcoded clinical guidance emitted where a model or an analysis was intended.",
+  "reach": "generateSpecialConsiderations is called by getRegulatoryIntelligence (line 521), which is returned raw by GET /api/regulatory/intelligence-search and GET /api/regulatory/regulatory/search, and is embedded by analyzeProtocolCompliance at line 649 under the literal heading 'SPECIAL CONSIDERATIONS FOR THIS PROTOCOL:' — reached via GET /api/regulatory/risk/:sectionId. Same auth posture as the previous finding."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/analytics-routes.ts",
+  "line": "875-892",
+  "title": "IND Readiness Assessment asserts fixed 'strengths' and FDA/ICH/EMA alignment for whatever protocol was submitted",
+  "invented": "Findings about the caller's protocol. Under `title: 'IND Readiness Assessment'`, four 'strengths' are asserted for every protocol regardless of content, and four `regulatory_guidance` lines assert that this protocol aligns with FDA Phase 2 guidance, is consistent with ICH E6(R2), and meets EMA Scientific Advice requirements. No code in the handler evaluates any of those. The numeric score in the same object was correctly nulled with a comment ('The score was previously Math.floor(Math.random()*15)+75'), and the in-file comment claims the surviving lists are 'static regulatory guidance' — but a protocol's strengths and its alignment with a guidance are claims about the protocol, not guidance.",
+  "reach": "POST /api/analytics/demo-analysis returns them as `ind_analysis` (analytics-routes.ts:955) AND writes the whole response to disk at exports/<session_id>/analysis_results.json (line 962). Router mounted at server/bootstrap/register-project-routes.ts:99 (`{ path: '/api/analytics', router: analyticsRoutes }`) behind the global /api session gate. Despite the name, nothing about this endpoint is dev-gated — DEMO_ROUTES_ENABLED gates /api/demo only (server/bootstrap/register-document-routes.ts:287)."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/cer-routes.ts",
+  "line": "246-300",
+  "title": "CER narrative prompt orders a full MEDDEV 2.7/1 Rev.4 clinical evaluation, including device description and state of the art, from drug adverse-event counts alone",
+  "invented": "The prompt instructs the model to produce a device description, a state-of-the-art review, a demonstration of benefit-risk acceptability and specific clinician recommendations when the only supplied input is FAERS adverse-event counts and demographics for a DRUG. 'exclude ... placeholders' explicitly forbids the model from admitting the gap; 'authoritative' and 'Include specific recommendations for clinicians' compel it to fill the gap. This is precisely the nanoBananaService pattern reversed today ('Include data points, percentages, and specific metrics where relevant' from a topic string). Supporting defaults at line 230/241: `manufacturer: faersData.drug_info?.manufacturer || 'Manufacturer'` and a display name defaulting to 'Product'. temperature is 0.7.",
+  "reach": "POST /api/cer/faers/generate-narrative (cer-routes.ts:322-335) returns `{ narrative }`. Router mounted auth-gated at server/bootstrap/register-regulatory-routes.ts:379. Note the endpoint takes `faersData` FROM THE REQUEST BODY, so the 'real FDA FAERS data' the prompt asserts is whatever the caller posted."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/part11-compliance.ts",
+  "line": "712-745",
+  "title": "part11-compliance POST /audit-trail takes the actor's printed name from the request body, under a comment claiming it does not",
+  "invented": "The §11.10(e) actor display name. `userName` is destructured from req.body and written straight into audit_events.user_name; when absent it falls back to the numeric user id rendered as a name. The header comment asserts the opposite protection.",
+  "reach": "POST /api/part11/audit-trail body field `userName` → appendAuditEntry → audit_events.user_name → GET /api/audit/logs (formatAuditRow) and the Part11Console audit surface. (Today the write itself fails on the NULL org — see the preceding finding — but any caller who passes organizationId through a different appendAuditEntry call site inherits body-controlled attribution.)"
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/audit-trail-routes.ts",
+  "line": "44-48",
+  "title": "audit_events writer defaults the actor to user id 0 / name 'system' / role 'user' on three Part 11 INSERT paths",
+  "invented": "A person-shaped actor for an act whose actor was not resolved: user_id 0 (also produced whenever principalId is non-numeric, e.g. a uuid, because `Number(uuid) || 0` is 0), user_name 'system', user_role 'user'. `user_name` is NOT NULL in the live schema — the classic 'invent so the INSERT succeeds'.",
+  "reach": "getActingPrincipal feeds three INSERT INTO audit_events sites in the same file: line 259 (POST /api/audit/events), line 323 (POST /api/audit/events/batch), line 420 (POST /api/audit/signatures, where principal.userName is also written into the `signed_by` column). Mounted app.use('/api', createAuditTrailRoutes(pool)) at server/bootstrap/register-inline-routes.ts:263. Read back by GET /api/audit/logs, /api/audit-logs, /api/audit/events, /api/audit."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/mdx-audit.ts",
+  "line": "114-115",
+  "title": "MDX audit surface manufactures a printed name from the user id — 'User 41' / 'u-41' / 'system'",
+  "invented": "A person's display name. actor_name comes from `COALESCE(u.name, u.email)` on a LEFT JOIN to users; when the join misses (deleted user, cross-tenant id, id 0) the route substitutes `User 41` — a name nobody has — or 'system' when user_id is NULL.",
+  "reach": "GET /api/mdx/audit → client/src/concept2cure/mdx/hooks/usePathwayTabsData.ts:63-84 (`adaptAudit`), which sets `signed = kind === 'sign'` for actions sign/esign/approve and carries `sig: e.sha`. So a Part 11 e-signature event renders in the MDX Audit Log pane as signed by 'User 41' or 'system'. The same payload drives the 'Distinct actors' KPI at line 175."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/workflow/DecisionLineageService.ts",
+  "line": "230-231, 262-263, 309-310, 400-401, 194-199",
+  "title": "Decision-lineage eCTD audit export stamps 'system' as the actor, the report's own build time as the action time, and cfr11Compliant:true on every node",
+  "invented": "Three artefacts per node: (a) an actor 'system' for a record whose performedBy/userId is null; (b) a WHEN — a record with no createdAt is stamped with the moment the report was generated, presented as the moment the action occurred; (c) a hardcoded `cfr11Compliant: true` on all five node constructors (lines 198, 238, 270, 317, 408) regardless of whether the node has an actor, a time, or a signature.",
+  "reach": "GET /api/decision-lineage/:entityType/:entityId/export?format=json|csv|xml (server/routes/decision-lineage.ts:54) downloads a file. The XML is headed 'Decision Lineage Report — eCTD Audit Trail' and emits `<performed-by>`, `<performed-at>`, `<cfr11-compliant>` per record; the CSV columns are 'Performed By', 'Performed At', 'CFR 11 Compliant'. Also rendered in client/src/concept2cure/v2/surfaces/DecisionLineage.tsx."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/workflow/DecisionLineageService.ts",
+  "line": "347-354",
+  "title": "Decision-lineage export headers assert five regulatory frameworks as a hardcoded constant",
+  "invented": "A compliance attestation. Nothing evaluates any of the five; the array is a literal on every graph.",
+  "reach": "Rendered into the downloadable exports at lines 480 (`# Compliance: ${graph.metadata.complianceFrameworks.join(', ')}`) and 524/540 (`<compliance-frameworks><framework>…`), inside a file titled 'eCTD Audit Trail' intended for regulatory submission."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/audit/chainIntegrityMonitor.ts",
+  "line": "73-95, 155-198",
+  "title": "Continuous chain-integrity monitor logs 'chain integrity verified — all links intact' over rows that carry no hashes",
+  "invented": "A §11.10(e) integrity status. With every previous_hash NULL, both guards short-circuit and the monitor reports status:'healthy', brokenLinks:0, totalEntries:<all rows> — 'verified' over rows in which nothing was verifiable.",
+  "reach": "Started at server/startup/services.ts:411; status exposed via getChainMonitorStatus() at server/routes/audit-trail-routes.ts:655-656 and runOnDemandCheck() at line 682 — both mounted under /api."
+ },
+ {
+  "sev": "high",
+  "file": "server/routes/audit-trail-routes.ts",
+  "line": "128-158",
+  "title": "Audit-log read path renders a missing actor as 'System', synthesizes the reason-for-change, and stamps every row region:'US'",
+  "invented": "Four artefacts on the read side: (a) an actor 'System' for a row whose user_name is empty; (b) a reason-for-change fabricated from the event type ('APPROVE on document') where the record captured none; (c) an action 'VIEW' when event_type is empty; (d) a data-residency region 'US' hardcoded on every row regardless of where the event occurred.",
+  "reach": "formatAuditRow is the response shape of GET /api/audit/logs, GET /api/audit-logs and GET /api/audit — the Part 11 audit-trail viewer."
+ },
+ {
+  "sev": "high",
+  "file": "server/services/grdhe/grdheService.ts",
+  "line": "73-76, 1039-1062, 1077-1090",
+  "title": "GRDHE attributes every created_by / updated_by / audit row and an export 'completion signature' to a process-wide env var defaulting to 'system'",
+  "invented": "The acting person, at 9 call sites (lines 284, 520, 899, 1005, 1039, 1077, 1164, 1493 and the logAudit at 1483). Worst case is line 1056: a `completion_signature_hash` on a regulatory export job, computed over the file path, the literal 'system', and the current clock — a signature-shaped value nobody produced. Setting CURRENT_USER_ID is worse than leaving it: every user's action is then attributed to one real person.",
+  "reach": "regulatory_harmonization.tenant_data_residency.created_by, terminology_mappings.created_by, export_jobs.created_by/completed_by/completion_signature_hash, export_job_audit_log.user_id, and regulatory_harmonization.log_audit(). All reachable through the /api/grdhe/* routes (mounted server/bootstrap/register-regulatory-routes.ts:424). The tables exist in the live DB."
+ },
+ {
+  "sev": "medium",
+  "file": "server/routes/cortexAdvisoryRoutes.ts",
+  "line": "410-423",
+  "title": "Cortex advisory response carries a constant confidence: 85 beside a genuinely computed readiness score",
+  "invented": "The `confidence` field. `readinessScore` above it is a real ratio over real DB-derived counts; `confidence: 85` is a literal in the same object.",
+  "reach": "GET /api/cortex/advisory/:projectId (and the legacy double-prefixed path at line 429)."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/sap-generator-service.ts",
+  "line": "196, 213-218, 236-241",
+  "title": "Generated SAP asserts stratification factors and subgroup analyses the caller never supplied",
+  "invented": "Two specific design facts about the trial: its randomisation stratification factors, and its pre-specified subgroups. `SapRequestData` has no field for either, so these are constants printed into every SAP regardless of protocol.",
+  "reach": "generateSAP is reached from statistical-continuum-service.ts:164 and POST via server/routes/biostatPlatform.ts:138. The content is written to `<SAP_DIR>/${protocol_id}_sap.txt` and returned as `sapContent`."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/knowledgeGraphService.ts",
+  "line": "267, 373, 401, 428; and server/routes/cortexManagementRoutes.ts:196-202",
+  "title": "Knowledge-graph edges are persisted with per-heuristic invented confidences",
+  "invented": "Edge confidence and relationship strength. 0.5/0.6/0.7 are per-branch literals with no derivation; the manual-edge route assigns 0.9 confidence to an assertion a human just typed and defaults an omitted strength to 0.8.",
+  "reach": "Persisted onto knowledge-graph edges via graphService.createEdge and read back by the graph traversal in server/routes/graphrag.ts (which itself re-stamps `confidence: 0.8` on every entity and relationship it materialises at lines 423 and 435)."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/lumen-context/base-system-prompt.ts",
+  "line": "231-241",
+  "title": "System prompt few-shot exemplars carry fabricated clinical results and a specific predicate K-number",
+  "invented": "Concrete clinical numerics (N=648/612, LSM differences, CIs, p-values), a specific 510(k) number K183421, and device performance specifics — presented to the model as the target register for regulated drafting.",
+  "reach": "This is the base system prompt for the regulatory drafting assistant, so the model's output goes into authored Module 2.5 / SE-discussion content. The reach is probabilistic rather than mechanical: the prompt does instruct the model not to paste them. I am reporting it as a risk I could not prove fires, not as a confirmed leak — a model given a well-formed numeric exemplar and asked for the same section is a known copying hazard, but I did not observe an instance of K183421 or -0.82% in generated output."
+ },
+ {
+  "sev": "medium",
+  "file": "server/api/enterprise/routes.js",
+  "line": "381-403, 139",
+  "title": "Enterprise text enhancement appends a compliance-review claim after two regex substitutions",
+  "invented": "The claim 'Content reviewed for regulatory compliance', appended into the returned document text. Nothing reviewed anything; the 'regulatory compliance' branch performs no substitution at all, it only appends this sentence.",
+  "reach": "POST /api/enterprise/regulatory/enhance line 139, when openaiService is unavailable. The sentence is inside `enhancedText`, i.e. inside the document body the caller receives, and an audit entry `regulatory.text.enhanced` is written for it."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/auditService.ts",
+  "line": "565-579",
+  "title": "getAuditLog returns [] when the tamper-proof fallback query fails on an unscoped read",
+  "invented": "An empty audit-log result set. Note the same function does the right thing for the tenant-scoped path immediately above (line 553-561: it throws AUDIT_LOG_TENANT_SCOPE_UNAVAILABLE rather than answer with the wrong scope), so the honest branch exists in the same function and the unscoped path does not use it. The `if (tpLog)` guard also means an unconfigured store falls through to [] with no error.",
+  "reach": "Any unscoped (admin/global) audit-log read through auditService.getAuditLog. I did not trace a specific mounted route for the unscoped variant, so the delivery path is unproven for HTTP callers."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/ana/contradiction-watch.ts",
+  "line": "155-157",
+  "title": "getOpenContradictionsForOrg swallows all failures into an empty open-contradiction list",
+  "invented": "The org's open-contradiction set. Zero open contradictions is a positive claim about a governed program.",
+  "reach": "server/services/ana/since-last-visit.ts:175 (where it is swallowed a second time). This is the source that makes the since-last-visit finding above unfixable at the call site alone."
+ },
+ {
+  "sev": "medium",
+  "file": "server/routes/c2c/project-access.ts",
+  "line": "286-288",
+  "title": "verifyProjectAccess returns false on any error, and every caller renders that as 'Project not found' (404)",
+  "invented": "The assertion that the project does not exist. This is fail-CLOSED for security, which is correct, but the message is a factual claim the code did not establish.",
+  "reach": "server/routes/c2c/governance-ops.ts:43-44, 70-71, 94-95, 121-122, 165, 185 and server/routes/c2c/artifacts.ts:377, 404, 785, 1137 — every one is `if (!hasAccess) return sendError(res, 404, 'Project not found');`"
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/biostats-signal-engine/engine.ts",
+  "line": "442-444 (getProjectSignals), 457-459 (getSignalReceipts)",
+  "title": "Biostat signal and proof-receipt reads swallow into empty arrays",
+  "invented": "An empty active-signal list and an empty proof-receipt list. Receipts are the evidence that a signal was computed; an empty receipt set says the signal has no proof.",
+  "reach": "The biostats signal-engine service surface. I did not confirm a mounted route, so the delivery path is unproven."
+ },
+ {
+  "sev": "medium",
+  "file": "server/src/services/reg/evidence.ts",
+  "line": "24, 38, 52",
+  "title": "gatherEvidence swallows each evidence query, defeating the evidence-search route's explicit honest-500 branch",
+  "invented": "The absence of stability P.8 tokens, quality specs, and process control-strategy mapping from the evidence set.",
+  "reach": "server/routes/evidence-search.ts:142-143 (GET /api/evidence-search/gather/:productId), which returns `{success: true, data: {productId, sectionCode, evidence, count: evidence.length}}`. The route author explicitly wrote the honest branch at :144-151 — 'A failed evidence gather must not report success with an empty set — that reads as \"no evidence exists\" rather than \"the gather failed\"' — and returns 500. That branch cannot fire for a per-query failure because the service swallowed it first."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/working-memory.ts",
+  "line": "381-388, 465",
+  "title": "Semantic working-memory recall returns [] on failure, silently shrinking the context an answer is built from",
+  "invented": "An empty recall set. Logged at debug level only. getLatestWorkingMemory (285-292) and getLatestWorkingMemoryByThread (315-318) return null on the same shape.",
+  "reach": "server/services/memory-context-assembler.ts:243 wraps it in a further `.catch(() => [])`. The assembled context feeds model answers shown to the user."
+ },
+ {
+  "sev": "medium",
+  "file": "server/routes/c2c/context-intelligence.ts",
+  "line": "801-803",
+  "title": "CONFIRMED (already recorded): compliance tracking rows swallowed into an empty compliance list",
+  "invented": "An empty compliance-tracking list (framework, requirement, status, findings, capaCount, riskLevel). The comment claims the table may not exist, but the catch is unconditional — no error code is inspected.",
+  "reach": "The route returns `res.json(complianceItems)` — HTTP 200 with `[]`. The outer catch at :806 can never fire for this query."
+ },
+ {
+  "sev": "medium",
+  "file": "server/routes/innovation-routes.ts",
+  "line": "120-141",
+  "title": "CONFIRMED (already recorded): guardQuery returns null for connect failure, query failure, and rollback failure alike",
+  "invented": "A null that callers cannot distinguish from 'no rows'. This is the tenant-ownership resolver for the innovation routes (PROGRAM_ORG_SOURCES at :146+), so it sits directly on an ownership check with app.bypass_rls set.",
+  "reach": "assertChildInOrg / the org-resolution helpers used by every /guardrails/* and innovation route."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/contradiction-consequence-service.ts",
+  "line": "451, 499, 554, 697 (and server/services/contradiction-engine-service.ts:606, server/services/resolution/contradiction-resolution-orchestrator.ts:460, 547)",
+  "title": "CONFIRMED (already recorded): contradiction_consequence_log INSERTs sit in catches that discard the error, while the caller still returns the consequence as executed",
+  "invented": "The consequence-execution record. The INSERT writes `execution_status = 'executed'`; when it fails, the function still returns the threadId/consequence id and the caller reports success. The bare `catch {}` does not even log.",
+  "reach": "applyConsequence's return shape `{ consequenceType, consequenceObjectId, success }` — success is computed independently of whether the consequence log row was written."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/figureGenerationService.ts",
+  "line": "191/205-216 (regulatoryGuidance), 540-544 (system prompt assembly), 553 (no-source branch), 561-578 (computeFigureConfidence), 322 (assignment)",
+  "title": "Figure-generation type configs order the model to include percentages, error bars, Cmax/Tmax/AUC and an ICH Q1E shelf-life estimate even when no source data was supplied; the stored confidence is arbitrary arithmetic",
+  "invented": "The per-type `regulatoryGuidance` strings are concatenated into the system prompt (line 540-544) unconditionally, so when sourceData is empty the model is simultaneously told 'No source data provided — generate a representative template with [DATA PLACEHOLDER] markers' and 'Include percentages and counts' / 'Include a shelf-life estimate per ICH Q1E' / 'Show mean ± SD ... Cmax, Tmax, AUC'. 'Representative template' is itself invention-shaped language for a regulated figure. Separately, computeFigureConfidence manufactures a confidence from a 0.5 base plus fixed increments for the mere presence of a '{' or the string 'graph' in the output — it measures output syntax, not data accuracy, yet the field is documented at line 37 as 'confidence in data accuracy'.",
+  "reach": "generateFigure is invoked from server/routes/audit-services.ts:41-49 (and autoInsertFigures at :72). storeFigure INSERTs into concept2cure_artifacts as category 'visualization', and `confidence` is returned at lines 614/630/658."
+ },
+ {
+  "sev": "medium",
+  "file": "server/routes/planner-routes.ts",
+  "line": "112-129 (prompt), 137-139 (csrContext addendum), 142-143 (system prompt)",
+  "title": "generate-sap demands a sample-size calculation and power, and invites alignment with precedent trials, with no escape",
+  "invented": "A sample-size calculation with power — i.e. assumed effect size, variance, dropout and the resulting N — whenever the pasted protocol text does not already contain them. The csrContext addendum tells the model to align with 'precedent from similar trials' without naming or supplying any, inviting invented precedent. Neither the user prompt nor the system prompt contains a 'say so if the protocol does not specify' clause (criterion b).",
+  "reach": "POST /api/planner/generate-sap returns {success:true, content} — the SAP body — to the caller. The handler correctly returns 503 when the AI provider is down, so the only output path is model text."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/statistical-continuum-service.ts",
+  "line": "372",
+  "title": "statistical-continuum injects a hardcoded 24-week trial duration into the ADaM specification prompt as if it were the protocol's value",
+  "invented": "A trial duration of 24 weeks. Every other field on the same prompt degrades honestly to the string 'Not specified' (`protocol?.indication || 'Not specified'`, `phase`, `primaryEndpoint`, `secondaryEndpoints`, `sampleSize`) — duration alone is silently replaced with a fabricated number and presented to the model as fact. The model then writes ADaM dataset specifications, derivation rules and analysis populations against a 24-week study that may be a 52-week study.",
+  "reach": "The parsed `datasets` payload is stored as analysis specifications (the code comment at line 390 reads 'Store each dataset specification'), and the resulting analysisSpecSnapshot is fed forward into the TLF-shell prompt at line 374."
+ },
+ {
+  "sev": "medium",
+  "file": "server/routes/ana-cortex-ft.ts",
+  "line": "807-813 (FDA prompt), 815-820 (EMA prompt), 1058-1059 (citation mode), 1072 (fallback), 846-848 (wisdom profile)",
+  "title": "ana-cortex-ft regulatory system prompts instruct the model to 'Always cite specific FDA guidance documents, CFR references' with no retrieval; the gateway-down fallback then opens on a structured response that does not follow",
+  "invented": "Specific FDA guidance document titles, CFR section numbers, ICH references and FDA Form numbers, mandated by the word 'Always' with no retrieval step in this handler and no 'say so if you cannot' clause — criteria (a) and (b). The EMA variant is the same shape ('Cite EMA guidelines, EU directives/regulations'). Point 5 of the FDA prompt ('Note when information gaps exist') is a partial mitigation but concerns gaps in the sponsor's data, not gaps in the model's citation knowledge. Two compounding defects: the gateway-down fallback at line 1072 announces 'here is a structured response following FDA guidelines' and then delivers nothing structured — the same opener shape as the getFallbackResponse deleted today, though here it is at least preceded by a bracketed unavailability marker; and buildWisdomProfile raises confidenceBand to 'high' on `citations.length >= 3` while advising the user to 'Add additional primary citations ... for defensibility', so unverified citation count is what moves the confidence score.",
+  "reach": "REGULATORY_SYSTEM_PROMPTS is selected at line 1039-1042 as the system message for the lumen-cortex-ft/inference gateway call; the generated content and the derived wisdomProfile (confidenceBand, riskLevel, evidenceDiscipline) are returned as the inference response."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/cognitive-ecosystem/digital-twin-runtime.service.ts",
+  "line": "826-836, 434, 456-472",
+  "title": "Math.random() generating CQA predictions and a confidence score persisted to a GMP real-time-release table",
+  "invented": "Assay, Dissolution, Content Uniformity and Impurities values (98-102%), their confidence intervals, and an in-spec probability — all from Math.random(). The averaged `avgConfidence` is then written to rtrt_predictions.confidence_score and the random CQA array to predicted_cqa as JSON.",
+  "reach": "NOT CURRENTLY REACHABLE. The only consumer, server/routes/cognitive-ecosystem.ts, is explicitly unmounted — server/bootstrap/register-document-routes.ts:241-244: \"Retired (#844, Phase 0.2): cognitive-ecosystem was a placeholder — every endpoint returned hardcoded mock data.\" A partial mitigation already exists in-file (lines 449-453 force MANUAL_REVIEW instead of RTRT_APPROVED), but that guard only protects the DECISION; the random numbers and the derived confidence_score are still persisted verbatim and returned to the caller."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/innovation/submission-readiness-twin-service.ts",
+  "line": "810, 826, 912-913, 930",
+  "title": "Per-criterion readiness scores of 50 and 100 asserted for criteria that were never analysed, then converted to an approval probability",
+  "invented": "A score of 50 for any criterion whose content merely EXISTS (the file's own comment at 803-809 admits \"automated content analysis is not implemented\"), a score of 100 for every not-applicable criterion — which inflates the weighted mean because it enters the numerator at full marks — and an approval probability that is a linear transform of that mean. `baseReviewDays` (lines 917-923: IND 30, NDA 300, 510k 90, PMA 180) and \"+30 days per gap\" are asserted constants.",
+  "reach": "PARTIALLY. The writer, runAssessment, is reachable only from server/routes/innovation-routes.ts:670, which is unmounted, and innovation.readiness_twin_assessments has 0 rows live — so these values are not being produced today. The READ side IS live: AnA's get_submission_readiness_twin tool (server/services/ana/AnaToolExecutor.ts:16502) calls getDashboard and, at line 16551, instructs the model that \"The predicted approval probability, review time and deficiency count are MODEL ESTIMATES from historical patterns.\" That instruction is itself a fabrication — there is no historical model; it is `(score/100)*0.8 - gaps*0.05`. server/services/report-os/prediction/model-adapters.ts:79 also passes approvalProbability straight into Report OS prediction reports."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/biostatistics-judgment/assumption-fragility.ts",
+  "line": "122-146",
+  "title": "'Approximate power' computed as power × 0.64, which is not how power behaves",
+  "invented": "A sensitivity power figure. Power is Φ(d·√(n/4) − z), not proportional to d²; multiplying power by 0.64 is arithmetically unrelated to the quantity named. From 0.90 it prints 58%; the correct answer for a typical two-sample design is near 73%. The same wrong number also drives the score increments (+25 / +15 / +5) and the emitted failureModes strings.",
+  "reach": "Returned in SubAssessment.factors[].description and failureModes from the biostatistics judgment layer, which composes the assumption-fragility section of the statistical judgment output."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/figureGenerationService.ts",
+  "line": "561-578, 37",
+  "title": "A figure's 'confidence in data accuracy' scored by whether the output string contains a brace",
+  "invented": "A confidence in the accuracy of the data in a generated clinical figure. Nothing about accuracy is measured: the score is 0.5 plus string tests on the model's own output. A figure containing the character `{` scores 0.1 higher than one that does not.",
+  "reach": "Assigned at line 322 and returned to the caller at lines 614, 630 and 658. Exposed through server/routes/audit-services.ts:41-49 (`generateFigure`) and :72 (`autoInsertFigures`), which inserts generated figures into documents."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/regulatory-graph/standards-applicability.service.ts",
+  "line": "112, 127, 133, 313-323",
+  "title": "Hand-picked confidence numbers attached to deterministic standards-applicability verdicts, including 0.7 for 'no rule fired'",
+  "invented": "A calibrated-looking confidence (0.95 / 0.9 / 0.85 / 0.8 / 0.7 / 0.6 / 0.4 / 0.3) on each of ~20 rules that are, by the file's own header, \"rule-driven (deterministic)\". A deterministic rule either matched or it did not; the attached probability measures nothing. The 0.7 on the catch-all `does_not_apply` is the sharpest case — the file's own comment at lines 80-83 already describes the harm: \"A SaMD program would have been told, in writing and with a confidence score, that ISO 14971 does not apply to it.\" The rule was hardened; the fabricated confidence number was left in place.",
+  "reach": "CONFIRMED. GET /api/standards/programs/:programId/recommendations (server/routes/standards.ts:157-177) returns `recommendations: recs` with `confidence` on every entry. /api/standards is mounted (server/bootstrap/register-document-routes.ts:252)."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/evidence-sufficiency/evidence-sufficiency.service.ts",
+  "line": "190-196",
+  "title": "Evidence-sufficiency pillar scored 100 from a count threshold",
+  "invented": "A 0-100 sufficiency score for a regulatory evidence pillar. The only measurement behind a 100 is `approved.length >= p.minimumApprovedEvidence` — a count clearing a threshold. Nothing examines whether the evidence supports the claim; the intermediate bands (60/50/30) are asserted ordinals presented on a continuous scale.",
+  "reach": "Returned as PillarScore from /api/evidence-sufficiency, which IS mounted (server/bootstrap/register-document-routes.ts:255)."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/shadow-review/shadow-review-service.ts",
+  "line": "58-68",
+  "title": "Refuse-to-File risk of 0% rendered with a filled gauge when the reviewer raised no findings on that dimension",
+  "invented": "A probability of Refuse-to-File. The formula — a severity mean over n+1 plus a 0.15-per-finding bonus capped at 3 — has no derivation; and `return 0` converts \"this lens raised nothing under the rtf/format dimensions\" into a stated 0% risk that the agency refuses the filing.",
+  "reach": "CONFIRMED. client/src/concept2cure/v2/surfaces/ShadowReview.tsx:103 recomputes this client-side and lines 262-265 render `{Math.round(g.v * 100)}%` plus a proportionally filled bar and the words \"{riskWord} risk\", under the label \"Administrative gate — will they accept the filing?\". The surface correctly distinguishes lens-not-run from lens-run-with-zero-findings (line 92, `lensRan`), so the honest-empty case is handled — but a run that produced no rtf-dimension finding still paints 0% / low risk."
+ },
+ {
+  "sev": "medium",
+  "file": "server/routes/biotech-artifacts.ts",
+  "line": "99-131",
+  "title": "eCTD cover letter and validation report default to a manufactured application number and applicant",
+  "invented": "A regulatory identifier ('IND-000000'), an eCTD sequence number ('0001'), and an applicant of record ('Concept2Cure Inc.' — the vendor, not the sponsor) on a generated eCTD cover letter, and the same sequence on a generated eCTD validation report.",
+  "reach": "POST /api/biotech-artifacts/ectd/cover-letter and /ectd/validation-report, same unauthenticated-at-mount router as the PV finding, returning a downloadable .docx named eCTD_Cover_Letter_0001_<date>.docx."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/ai-gateway/gateway.ts",
+  "line": "299-305, 1974-1988",
+  "title": "Deterministic-mode gateway asserts [KNOWN] findings about a document it never read, and reports provider 'anthropic' for a fixture",
+  "invented": "Two things. (a) Assertions about the caller's document — 'The document structure follows eCTD Module format', 'Section headers present and correctly numbered' — tagged **[KNOWN]**, which is this platform's own marker for a verified fact, when no document was examined. (b) `provider: 'anthropic'` on a response that no provider produced.",
+  "reach": "Reachable in a deployed environment: `AI_GATEWAY_DETERMINISTIC=true` (or the legacy `DETERMINISTIC_MODE=true`) is read in buildConfig at gateway.ts:2296 with NO NODE_ENV condition, and the check at line 538 short-circuits every route() call before model selection. The keyless-prod fallback below it IS correctly fenced (line 550 throws under NODE_ENV=production), and the boot banner and /readyz do report 'deterministic' — so this is an operator-visible opt-in, which is why it is MEDIUM and not higher. What is not disclosed is that the fixture text makes positive claims about the user's document rather than only announcing demo mode."
+ },
+ {
+  "sev": "medium",
+  "file": "shared/schema/gspr.seed.ts",
+  "line": "1-10",
+  "title": "GSPR coverage percentage is computed against a self-described partial transcription of EU MDR/IVDR Annex I",
+  "invented": "Completeness. The catalog holds 26 clauses across both MDR and IVDR Annex I. server/services/gspr-postmarket/gspr.service.ts:315-316 then computes `coveragePercent = Math.round((decided / totalApplicable) * 1000) / 10` against exactly that set, so a program that has addressed the 26 seeded clauses reports 100% Annex I coverage while whole GSPRs (§10.4, §14, the §23 information-supplied requirements) were never in the denominator. This is the truncated-seed hazard CLAUDE.md Rule 1 names explicitly ('a percentage against a truncated tree').",
+  "reach": "Partially. The seed is `tsx scripts/seed-gspr.ts` — a laptop script, not in package.json and not in C2C_MIGRATION_FILES — and migrations/20260429_gspr_postmarket.sql creates the table without populating it, so on a deployed database the catalog is empty, totalApplicable is 0, and the service correctly reports 0% and fails its gate (the honest branch at line 315). The fabricated percentage therefore materialises only where someone has run the seed. I am flagging it as a latent completeness fiction, not a live one."
+ },
+ {
+  "sev": "medium",
+  "file": "regulatory_data/guidance.json",
+  "line": "1-30",
+  "title": "Static per-document relevance_score returned as the relevance of a search result",
+  "invented": "A per-query relevance number. The scores are fixed properties of each guidance record, authored by hand; getRegulatoryIntelligence (server/services/regulatory-intelligence-service.ts:496-518) sorts by them and adds a flat +0.1 if any tag substring-matches the indication, then returns the top 5 as `relevant_guidance` with the score attached. The score is therefore almost entirely independent of what the user searched for.",
+  "reach": "loadRegulatoryData (regulatory-intelligence-service.ts:112-127) reads ./regulatory_data/guidance.json and requirements.json at construction, and GET /api/regulatory/intelligence-search / /api/regulatory/regulatory/search return the result object directly (regulatoryRoutes.ts:213-231). Mounted at server/bootstrap/register-clinical-intel-routes.ts:95 behind the global /api gate. The file is committed to the repo and ships in the image."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/ana-ri/mdx-explain-audit-row.ts",
+  "line": "171, 183, 156",
+  "title": "Auditor-facing audit-row explainer defaults the actor KIND to 'human' and the actor id to 'system'",
+  "invented": "The answer to the single most consequential Part 11 attribution question — was this act performed by a person or by the machine. Any audit row that did not stamp actorKind is asserted to be 'human user'. A NULL user_id is rendered as 'system'.",
+  "reach": "The AnA command `audit.explain` (registered at server/services/ana-ri/command-executor.ts:5029), whose module header describes it as an 'Auditor-facing capability' producing a Markdown explainer for an auditor, and which returns both the rendered text and a `structured.actorKind` field."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/regulatory-programs.service.ts",
+  "line": "342, 350, 627",
+  "title": "Program history and section-edit history name 'System' as the actor when a recorded user id does not resolve",
+  "invented": "The actor, in the branch that matters most: the audit row DOES carry a user id, the lookup fails (deleted user, cross-tenant, id 0), and the surface positively states the platform performed the act. Also `?? 'updated'` invents an action verb for an unmapped/absent action.",
+  "reach": "The program history and section-edit feeds of the regulatory-programs surface."
+ },
+ {
+  "sev": "medium",
+  "file": "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx",
+  "line": "845",
+  "title": "CMC Module 3 provenance chain displays a missing creator as 'system' in both its drawer and its audit table",
+  "invented": "The actor of a compile/refresh/approval event in the Module 3 provenance chain.",
+  "reach": "The 'Module 3 — provenance' dialog (role=\"dialog\" aria-label 'Provenance for section …'). The same substitution is in the Actor column of the provenance/audit-chain table at client/src/concept2cure/v2/surfaces/CmcModule.tsx:3018 (`<td>{e.createdBy || 'system'}</td>`)."
+ },
+ {
+  "sev": "medium",
+  "file": "client/src/concept2cure/mdx/hooks/usePathwayTabsData.ts",
+  "line": "63-84",
+  "title": "MDX audit pane substitutes 'system' as the actor on rows it also marks as signed",
+  "invented": "Two: the actor ('system'), and the event KIND — an action not in ACTION_TO_KIND is silently classified as 'access', i.e. a read.",
+  "reach": "The MDX Audit Log surface. Because 'sign'/'esign'/'approve' map to kind 'sign', a signature row whose actor did not resolve is displayed as signed by 'system' with a signature hash beside it."
+ },
+ {
+  "sev": "medium",
+  "file": "client/src/concept2cure/v2/surfaces/DecisionLineage.tsx",
+  "line": "169",
+  "title": "Decision-lineage narrative names 'the reviewer' as the holder of an open item that has no recorded performer",
+  "invented": "A named party holding an open governed item. The sentence asserts a reviewer exists and has it.",
+  "reach": "The Decision Lineage surface's status narrative, in the same paragraph as the claim 'recorded and hash-chained'."
+ },
+ {
+  "sev": "medium",
+  "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+  "line": "2623",
+  "title": "Admin access-grant list and submission owner list render a missing actor as 'system' / 'System'",
+  "invented": "The person who granted an access right. Same shape at client/src/concept2cure/mdx/hooks/useSubmissions.ts:253 — `who: r.ownerName ?? 'System'` for submission ownership.",
+  "reach": "The admin access-grant table and the submissions list. §11.10(d)/(g) authority-check evidence: who granted a privilege is exactly what an inspector asks."
+ },
+ {
+  "sev": "medium",
+  "file": "server/api/cmc/collaborationRoutes.ts",
+  "line": "81-83, 317",
+  "title": "CMC collaboration comments are authored by 'Current User' with userId 'current-user-id' and role 'Team Member'",
+  "invented": "A person: display name 'Current User', id 'current-user-id', role 'Team Member'. The mention-notification at line 100 then reads `${comment.user} mentioned you`, so another user is told 'Current User mentioned you'. Line 317 repeats it for presence.",
+  "reach": "POST /api/cmc/collaboration/comments and /presence, mounted at server/bootstrap/register-core-routes.ts:84. Records live in module-level Maps (comments/notifications/activeUsers), not the DB, and are returned in the response and to other viewers — so this reaches a USER but not a database. Stating that limit explicitly: it is not a persisted governed record."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/authoring/doc-journey-view-assembler.ts",
+  "line": "264",
+  "title": "Document journey view names an unattributed comment's author 'Reviewer'",
+  "invented": "A person. actorName() already falls through name → email → created_by and returns '' when all three are empty; the `|| 'Reviewer'` then asserts a role-holder for the 'Internal review' stage of the document journey.",
+  "reach": "The assembled document-journey view's `snap.comment.by` field, rendered in the review-stage snapshot."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/report-os/lineage-trace-report.ts",
+  "line": "245",
+  "title": "Lineage trace report's provenance table renders a missing actor as 'system'",
+  "invented": "The actor column of the 'Provenance events' table — the 'how this was made' trail — inside an assembled report.",
+  "reach": "The report-os lineage trace report, whose rows carry ProvenanceRef atoms (sourceTable concept2cure_provenance_events, auditId) so each row is presented as sourced from an audit record."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/tasking/task-audit.ts",
+  "line": "44-58, 129-138",
+  "title": "Task lineage fabricates the reason-for-change and drops the ledger row silently when it owns the transaction",
+  "invented": "The §11.10(e) reason-for-change on every task mutation where the caller captured none. Separately, when no executor is supplied the governed task mutation succeeds and the audit_logs + c2c_ana_actions pair is discarded to a console.warn — a real action with no trace.",
+  "reach": "auditTaskAction → recordGovernedAction → audit_logs.reason, the column an inspector reads for the WHY. The lineage loss reaches nobody: the mutation's HTTP response says nothing about it."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/regulatory-graph/defense-packet-staleness.service.ts",
+  "line": "254-270",
+  "title": "Defense-packet staleness marks Part 11 packets stale and discards the audit row into an empty catch",
+  "invented": "Nothing lands in the DB as 'system' (auditService coerces a non-numeric userId to NULL actor_id) — the defect is the empty catch: the packets are already UPDATEd to STALE before the loop, so the state change commits and the DEFENSE_PACKET_STALE_DETECTED audit event can vanish with no record and no caller signal.",
+  "reach": "propagateEvidenceChange and its siblings; the returned PropagationResult reports markedStaleCount but says nothing about whether the audit rows were written."
+ },
+ {
+  "sev": "medium",
+  "file": "client/src/concept2cure/_shared/components/EsignModal.tsx",
+  "line": "298, 331-337",
+  "title": "E-signature confirmation manifestation prints 'You' as the §11.50 signer name",
+  "invented": "The printed name in the post-signature manifestation block — rendered directly under the sentence 'The 21 CFR Part 11 audit trail has a new entry. This cannot be undone.'",
+  "reach": "The shared e-signature modal's success panel, which is the §11.50 human-readable manifestation the signer sees. Line 400 repeats the pattern: `{signer?.email ?? signer?.role ?? 'Current signer'}`."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/automation/scheduled-jobs.ts",
+  "line": "81-134",
+  "title": "Scheduled 'data freshness check' and 'dependency staleness audit' report status 'completed' with a placeholder count, having queried nothing",
+  "invented": "A job-run record: status 'completed', itemsProcessed 1, itemsFlagged 0, and a completedAt for work that never ran. handleDependencyStalenessAudit does the same with hardcoded `const processed = 0; const flagged = 0;` — a clean staleness audit that never queried governed_dependencies.",
+  "reach": "Registered as handlers for 'data_freshness_check' and 'dependency_staleness_audit' (lines 238-239); the result flows into `recordBackgroundJobRun(BACKGROUND_JOB.SCHEDULED_JOBS, { ok: result.status !== 'failed', processed: result.itemsProcessed })` at line 322, surfaced by getBackgroundJobHeartbeats (server/startup/inline-endpoints.ts:247-258) and renderBackgroundJobsMetrics (line 658)."
+ },
+ {
+  "sev": "medium",
+  "file": "server/services/decision-lifecycle-service.ts",
+  "line": "91",
+  "title": "Governed decision records attribute the decider to 'system', and one path substitutes the actor TYPE for the actor",
+  "invented": "The decider of a governed decision. The middle term is the notable one: when the id is absent, the actor TYPE (e.g. 'ai', 'human') is written into the identity field. Same 'system' fallback at server/services/decision-record-service.ts:155 (createDecision decidedBy), :421 (supersedeDecision performedBy), :437 (executeDecision performedBy), :478 (escalateDecision performedBy), and server/services/governed-decision-repository.ts:197 (`decidedBy: evaluation.context.actorId || 'system'`) and :296 (`actorId: String(row.decided_by ?? row.decidedBy ?? 'system')` on read-back).",
+  "reach": "decision_records.decided_by / the decision transition ledger, written by recordGovernedDecision — the governed-fabric decision repository — and read back through governed-decision-repository's mapper."
+ },
+ {
+  "sev": "low",
+  "file": "server/utils/document-generator.js",
+  "line": "88-127, 208-212, 238-273",
+  "title": "Unreachable: document-generator writes plaintext into .pdf and .docx files and returns a placeholder SVG as a rendered diagram",
+  "invented": "A file format and a diagram. Raw model text is written to a `.pdf` and a `.docx` extension and reported as `{ success: true, documentDetails: { format: outputFormat } }`. `renderProcessDiagram` returns an SVG containing only a title bar and the caption 'Generated by AI-CMC Blueprint Generator' — generateProcessFlowSVG / generateReactionSchemeSVG / generateEquipmentLayoutSVG all `return ''` — yet reports `success: true` with a diagramType and processName.",
+  "reach": "It does not, today. The only importer is server/api/cmc/blueprint-generator.js, and I could find no mount for that router anywhere in server/bootstrap or elsewhere — grep for 'blueprint-generator' returns only the file's own self-references. Stating this plainly: this is an unreachable fabrication, and calling it live would itself be a fabrication. It matters because the download route exists (GET /api/cmc/blueprint-generator/download/:documentId?format=pdf) and one `app.use` line would make an empty-diagram, mislabelled-format CMC document downloadable."
+ },
+ {
+  "sev": "low",
+  "file": "server/utils/generate_sap_snippet.ts",
+  "line": "161-168",
+  "title": "Unreachable: SAP snippet generator asserts \"approximately 80% power\" for any sample size",
+  "invented": "The power figure. No effect size, variance or endpoint type is available to the function, and no power calculation is performed; 80% is asserted for any N.",
+  "reach": "It does not. `generateSAP` in this file has no importers — the other generateSAP hits in the repo are different modules — and the file is listed in scripts/ci/unreferenced-modules-baseline.json:94. Reporting it as unreachable. It is worth recording because the live SAP generator (server/services/sap-generator-service.ts:126-137) was already fixed to defer this exact claim to the statistician, so this file is an un-migrated duplicate of a defect that was corrected elsewhere."
+ },
+ {
+  "sev": "low",
+  "file": "server/services/innovation/compliance-guardrails-sdk-service.ts",
+  "line": "742-759",
+  "title": "A compliance validation run that threw is stored as status 'completed' with overallResult 'pass'",
+  "invented": "An entire validation run: a fresh UUID, status 'completed', and overallResult 'pass' with zero errors — for a run that threw before evaluating a single rule. It is then pushed into this.validationRuns, the in-memory store that getValidationRuns (1136-1137) and getFindings (1147-1148) fall back to.",
+  "reach": "UNREACHABLE via HTTP as the code stands. I grepped the whole repo: runValidation, getValidationRuns and getFindings have no callers outside this file (server/routes/innovation-routes.ts mounts /guardrails/validate -> validate(), /guardrails/runs/:runId/findings -> getRunFindings(), /guardrails/history -> getValidationHistory() — the raw methods, not these wrappers). Reporting it as live would itself be a fabrication. It is a loaded gun one route-wiring change away from firing."
+ },
+ {
+  "sev": "low",
+  "file": "server/services/artifact-document-bridge.ts",
+  "line": "86-88 (per-query .catch) and 95 (outer 'degrade gracefully')",
+  "title": "getArtifactDocumentMapping returns all-zero artifact/document/link counts on failure",
+  "invented": "Four counts, all zero, plus a derived `unlinkedDocuments: documentCount - linkedCount`.",
+  "reach": "UNREACHABLE. grep across server/ and client/src finds no caller of getArtifactDocumentMapping. Its two siblings in the same file are honest — checkBridgeIntegrity (150-152) returns status:'error' and getBridgeHealth (211) reports the three reachability booleans as false — so this function is the outlier, not the pattern."
+ },
+ {
+  "sev": "low",
+  "file": "server/storage.ts",
+  "line": "2167, 2180, 2244, 2262, 2363, 2389, 2447, 2557, 2584, 2681, 2730, 2815, 2841, 2926, 2942, 3013, 3057, 3128, 3145, 3219, 3235, 3301, 3318, 3359, 3374, 3441, 3464 (+11 update methods)",
+  "title": "server/storage.ts: 38 read methods log the error and return [] / undefined / null",
+  "invented": "Empty CER compliance-check lists, empty CER export lists, empty document/folder/trial lists, undefined module subscriptions. getCerComplianceChecksByReportId (3145) and getCerExportsByReportId (3318) are the governed ones — a CER's compliance checks and its export history.",
+  "reach": "LARGELY UNREACHABLE as wired. Only server/routes/qc.routes.ts imports `storage` (line 16), and it uses getQcSpecifications, getQcSpecification, getSpecificationVersions, getOosInvestigation(s) and the OOS mutators — none of the 27 get* methods listed above. I could not find a route consumer for getCerComplianceChecksByReportId, getCerExportsByReportId, getModuleSubscriptions, getDocuments, getCerReports, getTrials or getFolders. Reporting these as live would be a fabrication; they are a 38-site latent pattern in the DAL that any new route picks up by default."
+ },
+ {
+  "sev": "low",
+  "file": "server/services/ind/ctd/lifecycle-document-types.ts",
+  "line": "86, 269, 471, 674 (attendee tables), 923 (Form FDA 3674), 886 (Form FDA 1571)",
+  "title": "Lifecycle document-type prompts ask the model to invent named meeting attendees and NCT numbers on statutory FDA forms — currently reachable only as JSON, not fed to a model",
+  "invented": "Named individuals with titles and affiliations for an FDA meeting request; NCT registry identifiers and a certifying official's signature block on Form FDA 3674, which is a statutory ClinicalTrials.gov certification; and on Form FDA 1571 the 'persons responsible for monitoring and for safety review' plus the commitment/signature block. None of these prompts carries a placeholder or no-fabrication instruction. The A/B against the same forms in the sibling file is exact: server/services/ind/ctd/authoring-guidance.ts covers Form 3674 with 'Include the applicant identification and authorized-official signature block with bracketed placeholders' and Form 1571 with 'Use bracketed placeholders for names, addresses, and dates' — the lifecycle copies drop both.",
+  "reach": "I could NOT establish a path from these strings to a model, and I am reporting that explicitly rather than implying one. LIFECYCLE_DOCUMENT_TYPES is consumed only by the lookup helpers in server/services/ind/ctd/index.ts:95-115 and served as JSON by GET /api/ind/lifecycle-types/:id and /by-registry/:registryId (server/routes/ind-generation.ts:112-136), which return `{...dt}` including the raw generationPrompt strings. The live drafting route in that same file (line 280-315) is well hardened — it threads sourceData, states 'Do NOT invent study results, numbers, NOAEL/dose values ... insert a clearly-bracketed ALL-CAPS placeholder', and runs findUnresolvedPlaceholders as a fail-closed completeness check — and it resolves prompts through getGenerationPrompt, which routes to buildSectionGenerationPrompt (server/services/ind/ctd/index.ts:146-181). That builder appends 'Do not fabricate study results, numbers, or product-specific facts you were not given' to every CTD-guidance prompt. Neither path reads the lifecycle component prompts. So this is a latent invitation shipped in the API surface, not a live fabrication; it becomes live the moment any caller feeds a returned generationPrompt to a model, which is what the field name invites."
+ },
+ {
+  "sev": "low",
+  "file": "server/services/orchestration/recommendation-engine.ts",
+  "line": "151, 183, 214, 249, 281",
+  "title": "Deterministic recommendation rules stamped with 0.95 / 0.9 / 0.7 confidences",
+  "invented": "A confidence attached to a statement of fact. \"This document has no validation record\" is either true or false against the database; 0.95 is a number typed next to it. Every rule in the file carries a different literal (0.95, 0.9, 0.85, 0.7) with no basis for the ordering.",
+  "reach": "Included in the RecommendationSet returned by GET /api/intelligence/.../dashboard (server/routes/intelligence.ts:417) and by project-home-routes. The recommendation text (not the confidence) also reaches the AnA prompt via lumen-context-builder.ts:808-812."
+ },
+ {
+  "sev": "low",
+  "file": "server/services/ana-scoped-rule-loader.ts",
+  "line": "195",
+  "title": "Invented efficacy statistic seeded into AnA's Module 2.5 drafting rules",
+  "invented": "A quantitative claim about FDA reviewer behaviour. There is no study, citation or source anywhere in the file; every other line in the same ruleContent is a structural instruction, and this one asserts a measured effect.",
+  "reach": "NOT CURRENTLY REACHABLE, stated plainly. The text lives in seedScopedRules (line 102), which inserts into ana_scoped_rules — and seedScopedRules has ZERO callers repo-wide (no route, no script, no migration). I confirmed against the live database: `select count(*) from ana_scoped_rules` returns 0. If it were seeded, buildScopedRuleContext (line 91 pushes rule.ruleContent) is wired into the AnA prompt at server/services/ana-context-router.ts:325, so AnA would repeat the statistic to users as drafting guidance. Note also CLAUDE.md Rule 1: a `scripts/seed-*` style seeder reaches a deployed database only through C2C_MIGRATION_FILES, and this one is in neither."
+ },
+ {
+  "sev": "low",
+  "file": "server/routes/cognitive-ecosystem.ts",
+  "line": "146-156",
+  "title": "Hardcoded workflow progress of 0.45 returned for any workflow id",
+  "invented": "A workflow progress value, a status and a current node — the same three values for every workflowId ever requested.",
+  "reach": "NOT REACHABLE. server/bootstrap/register-document-routes.ts:241-244 records the router as retired for exactly this reason (\"every endpoint returned hardcoded mock data\") and it is not in the mountAll list. Reported because the file is still in the tree and one `app.use` away from serving a constant 45% as live progress."
+ },
+ {
+  "sev": "low",
+  "file": "server/api/ai/routes.ts",
+  "line": "427-429",
+  "title": "A boilerplate critical-flag chosen at random from the template's list",
+  "invented": "Which regulatory critical flag applies. The selection is a coin toss over the template's flag list, not a determination about the submission; the same request returns different regulatory boilerplate on each call.",
+  "reach": "REACHABLE. POST /api/ai/generate-boilerplate (server/api/ai/routes.ts:386), mounted at server/bootstrap/register-core-routes.ts:48 (`app.use('/api/ai', aiCircuitBreaker, aiRoutes)`), for `section === 'section_completion'`. The returned boilerplate is intended to be pasted into a regulatory section."
+ },
+ {
+  "sev": "low",
+  "file": "client/src/concept2cure/mdx/data/presub.ts",
+  "line": "207-320",
+  "title": "Fabricated FDA Pre-Submission responses, meeting minutes and commitments in a shipped client data module",
+  "invented": "Verbatim FDA responses to Pre-Sub questions, a meeting date, a minutes-received date, and rolled-in commitments — attributed to CDRH and referencing real cleared devices (K212284 is Dexcom G6).",
+  "reach": "I could not establish a path. PRESUB_DETAIL has exactly one occurrence in the whole client tree — its own declaration at presub.ts:207. PreSubManager.tsx resolves its list and KPIs through useSampleRows (lines 367-368), which is the correct gate, and the detail pane is fed from usePresub's live /api/q-sub/:id fetch. So the fabricated FDA responses are currently unreachable dead data. Reporting it as live would itself be a fabrication. It remains a finding because it is an exported const one import away from a surface, and the client-side gate that would otherwise catch it (scripts/ci/check-ungated-fixture-fallback.mjs) only matches the `live ?? FIXTURE` shape and would not see a direct render."
+ },
+ {
+  "sev": "low",
+  "file": "server/seed.ts",
+  "line": "20-60",
+  "title": "Fabricated CSR records attributed to named real sponsors",
+  "invented": "Clinical study report records attributed to Biogen and Eli Lilly for real named products (aducanumab, tirzepatide SURPASS-1, tofersen), with status 'Processed' — i.e. presented as ingested and analysed.",
+  "reach": "I could not establish a path. server/seed.ts exports nothing and has no importer anywhere in server/ (searched for './seed' and '../seed' imports), and it is not referenced by any package.json script or Makefile target. It is runnable only by hand. Its target is organizationId 1. Unreachable as shipped; a lower-severity finding, but a real one, because the rows it would write into csr_reports are indistinguishable from ingested CSRs and would be attributed to real companies."
+ },
+ {
+  "sev": "low",
+  "file": "server/services/ana/se-discussion/fixtures.ts",
+  "line": "46-70",
+  "title": "SE-matrix fixtures with a fabricated predicate K-number and defense-readiness score live in the service tree, not the test tree",
+  "invented": "A predicate 510(k) number, a predicate device name, per-row confidence values of 0.9, and a defense_readiness_score of 0.82 on a substantial-equivalence matrix.",
+  "reach": "No production path. The only importer is server/services/ana/se-discussion/__tests__/se-discussion-author.test.ts. The header notes an unfinished `// INTEGRATION:` marker in se-discussion-author.ts where the live SE matrix is meant to replace it, which is the risk: the fixture is positioned as the stand-in for the real payload and sits in the service directory rather than under __tests__, so no path-based tooling treats it as test-only."
+ },
+ {
+  "sev": "low",
+  "file": "server/prisma/client.js",
+  "line": "63-83",
+  "title": "Unreachable but present: a prisma-shim writer that inserts audit_logs rows with no chain link at all",
+  "invented": "tenant_id 0, action 'unknown', table_name 'unknown' — and, more importantly, a row with NO sha256_chain, occurred_at, actor_id, target, payload_hash or hmac_seal. verifyAuditChain (chain.ts:188) filters `WHERE sha256_chain IS NOT NULL`, so such a row is excluded from verification and the verifier still reports ok:true.",
+  "reach": "I could not establish a path. Grep for `audit_log.create` / `prisma.audit_log` across server returns no callers, and the file's own header says 'The non-stub methods (audit_log/document/signature) currently have no ...'. Stating that plainly: this is an unreachable fabrication and is reported as a lower-severity finding on that basis, not as a live one."
+ },
+ {
+  "sev": "low",
+  "file": "server/utils/audit-logger.js",
+  "line": "39-48, 90, 127",
+  "title": "File-based Part 11 audit log writes a literal backslash-n instead of a newline, hashes each entry independently, and stamps a fabricated app version",
+  "invented": "(a) `version: '1.0.0'` — a software version stamped into every Part 11 audit record when APP_VERSION is unset, which §11.10 audit records use to tie an action to a validated build; (b) the record separator: in a JS string `'\\\\n'` is a literal backslash followed by 'n', so logs/audit.log is one unbounded line whose entries only LOOK newline-delimited; (c) `integrity_hash` is sha256 of the entry alone with no link to the previous entry, so any entry can be rewritten and re-hashed undetectably — a hash presented as integrity that provides none.",
+  "reach": "Imported at server/jobs/retentionCron.ts:35 and called at lines 155, 193 (logAction, per document retention/purge) and 280, 296 (logSystemEvent, per sweep). Retention deletion of a governed document is exactly the act that must be attributable."
+ },
+ {
+  "sev": "low",
+  "file": "server/services/pdev/pdev-workflow-bridge.ts",
+  "line": "333, 549, 608, 666, 718",
+  "title": "Systemic: 103 fire-and-forget audit writes across 34 server files, exempted by design from the dead-audit-catch gate",
+  "invented": "Nothing directly — this is the opposite direction: a governed mutation completes and its §11.10(e) row may not exist, with no caller-visible signal. `void` discards the AuditWriteResult that logAction was specifically changed to return.",
+  "reach": "34 files including server/services/q-sub/q-sub.service.ts (425, 487), server/services/ana/AnaToolExecutor.ts (13791, 13819, 13850), the whole server/services/pdev/* family, and server/services/ana-ri/mdx-command-handlers-phase2.ts:83. logAction does log its own failure internally, so the loss is visible in server logs — but not to the caller, the API response, or any health surface."
+ }
+]

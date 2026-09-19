@@ -95,6 +95,15 @@ describe('corpus ↔ gate cross-reference invariant', () => {
       { leaves: [leaf()], opts: { sequenceNumber: 'nope' } }, // SEQUENCE_NUMBER_FORMAT
       { leaves: [leaf({ lifecycleOp: 'frobnicate' })] }, // INVALID_LIFECYCLE_OP
       { leaves: [leaf({ documentTable: null, documentId: null })] }, // UNRESOLVED_DOCUMENT
+      { leaves: [leaf({ documentTable: 'coauthor_doccuments' })] }, // UNPLACEABLE_DOCUMENT_TABLE
+      // EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE has NO scenario, because as of
+      // 2026-09-17 it cannot be emitted: `vault_documents` was the only member
+      // of EXTERNAL_DOCUMENT_TABLES and it became resolvable, leaving that map
+      // empty. The rule and its mechanism are deliberately kept (the next store
+      // a leaf may point at but the assembler cannot render belongs there), so
+      // the corpus still catalogues the code — it simply has no input that
+      // produces it today. Adding a member back means restoring a scenario here
+      // and raising the floor below.
       { leaves: [leaf({ lifecycleOp: 'replace' })], opts: { isOriginalSequence: true } }, // LIFECYCLE_OP_IN_ORIGINAL
       { leaves: [leaf()], opts: { requiredSections: ['1.1'] } }, // MISSING_REQUIRED_SECTION
       { leaves: [leaf(), leaf()] }, // DUPLICATE_NEW_SECTION
@@ -115,6 +124,10 @@ describe('corpus ↔ gate cross-reference invariant', () => {
     }
 
     // Sanity: the battery actually exercised the corpus (not a vacuous pass).
-    expect(emitted.size).toBeGreaterThanOrEqual(7);
+    // 8, not 9, since 2026-09-17: EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE has no
+    // producible input while EXTERNAL_DOCUMENT_TABLES is empty (see the battery
+    // above). Lowered with that reason rather than left to fail, and it is a
+    // floor — a rule that stops firing for any OTHER reason still trips it.
+    expect(emitted.size).toBeGreaterThanOrEqual(8);
   });
 });

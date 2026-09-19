@@ -713,7 +713,10 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                   data-urgency={c.urgency}
                 >
                   <div className="cc-comm-l">
-                    <span className={'cc-comm-dot tone-' + (CC_TONE[c.urgency] || 'idle')} />
+                    {/* Urgency on an agency communication was carried by the
+                        dot's tone alone. */}
+                    <span className={'cc-comm-dot tone-' + (CC_TONE[c.urgency] || 'idle')} aria-hidden="true" />
+                    <span className="sr-only">{c.urgency ? `Urgency: ${c.urgency}` : 'Urgency not set'}</span>
                   </div>
                   <div className="cc-comm-b">
                     <div className="cc-comm-top">

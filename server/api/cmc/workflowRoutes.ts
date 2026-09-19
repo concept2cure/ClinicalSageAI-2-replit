@@ -83,7 +83,17 @@ const TaskUpdateSchema = z.object({
 const AICommandSchema = z.object({
   command: z.string().min(1),
   drugName: z.string().min(1),
-  structuredInputs: z.object({}).optional(),
+  /**
+   * ── 2026-09-10: this was `z.object({})`, which SILENTLY DISCARDED EVERY INPUT.
+   * zod strips unknown keys unless a shape is declared or .passthrough() is set,
+   * so whatever the caller sent arrived at the prompt builder as `{}` — and
+   * because `{}` is truthy, the honest `'(no additional structured inputs
+   * provided)'` branch never fired either: inputSummary became the EMPTY STRING.
+   * A caller who supplied a manufacturing route and asked for a nitrosamine risk
+   * assessment got one generated from the drug name alone, with nothing in the
+   * response saying their inputs had been dropped.
+   */
+  structuredInputs: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
   category: z.string().optional(),
 });
 
@@ -611,6 +621,13 @@ router.post('/ai-command', async (req, res) => {
     const commandConfig = AI_COPILOT_COMMANDS[command];
     const resultId = `cmd-${commandCounter++}`;
 
+    // Resolve the tenant BEFORE calling the model. getOrganizationId throws
+    // when there is no tenant context, and until 2026-09-10 it was first called
+    // at the INSERT, after generation — so a request with no tenant burned a
+    // gateway call and then 500'd. The org is needed to store the result at all,
+    // so there is no case where generating first is useful.
+    const orgId = getOrganizationId(req);
+
     // Build prompts and call AI gateway for real content generation
     let generatedContent = '';
 
@@ -622,14 +639,53 @@ router.post('/ai-command', async (req, res) => {
       `Produce a professional, regulatory-compliant markdown document.`,
       `Use proper markdown headings, bullet points, and tables where appropriate.`,
       `Be specific and technically accurate. Reference relevant ICH/FDA guidelines.`,
+      // Without this line the instruction above is an instruction to invent:
+      // "be specific" with no permission to be uncertain leaves the model
+      // nothing to do but supply plausible specifics.
+      `Write ONLY what the supplied inputs support. Where a section requires ` +
+        `information you were not given — a specification limit, a batch result, ` +
+        `a synthetic route, a supplier — write "Not supplied: <what is needed>" ` +
+        `and move on. Do NOT invent values, and do NOT present a typical or ` +
+        `representative figure as this product's. A document with gaps marked is ` +
+        `useful; a document with invented numbers is not.`,
     ].join('\n');
 
-    const inputSummary = structuredInputs
-      ? Object.entries(structuredInputs)
-          .filter(([, v]) => v !== undefined && v !== '')
-          .map(([k, v]) => `- ${k}: ${v}`)
-          .join('\n')
-      : '(no additional structured inputs provided)';
+    // Every command declares `requiredInputs`, and until 2026-09-10 NOTHING
+    // read them. 'Check nitrosamine risk assessment' declares
+    // ['drugName','manufacturingRoute']; without the route there is nothing to
+    // assess, so the document could only have been invented. Refuse instead.
+    const supplied: Record<string, string | number | boolean> = {
+      drugName,
+      ...(structuredInputs ?? {}),
+    };
+    const missingInputs = commandConfig.requiredInputs.filter(k => {
+      const v = supplied[k];
+      return v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
+    });
+    if (missingInputs.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_REQUIRED_INPUTS',
+          command,
+          missingInputs,
+          message:
+            `"${command}" requires ${commandConfig.requiredInputs.join(', ')}. ` +
+            `Not supplied: ${missingInputs.join(', ')}. No document was generated — ` +
+            `without these the content would not be derived from anything.`,
+        },
+      });
+    }
+
+    const suppliedEntries = Object.entries(structuredInputs ?? {}).filter(
+      ([, v]) => v !== undefined && v !== null && v !== ''
+    );
+    // The ternary below used to test `structuredInputs`, which is `{}` — truthy —
+    // so the no-inputs sentence was unreachable and the model saw a blank.
+    const inputSummary =
+      suppliedEntries.length > 0
+        ? suppliedEntries.map(([k, v]) => `- ${k}: ${v}`).join('\n')
+        : '(no additional structured inputs provided)';
 
     const userPrompt = [
       `Drug Name: ${drugName}`,
@@ -671,7 +727,10 @@ router.post('/ai-command', async (req, res) => {
       timestamp: new Date().toISOString(),
       estimatedTime: commandConfig.estimatedTime,
       result: generatedContent.trim(),
-      downloadUrl: `/api/cmc/download/${resultId}`,
+      // Was `/api/cmc/download/${resultId}`, which 404s: the only /download/:id
+      // handler is on THIS router, and it is mounted at /api/cmc/workflows
+      // (register-core-routes.ts:79). Nothing is mounted at bare /api/cmc.
+      downloadUrl: `/api/cmc/workflows/download/${resultId}`,
       metadata: {
         wordCount: generatedContent.split(' ').length,
         sections: generatedContent.split('#').length - 1,
@@ -679,7 +738,6 @@ router.post('/ai-command', async (req, res) => {
       },
     };
 
-    const orgId = getOrganizationId(req);
     const pool = getPool();
     await pool.query(
       `INSERT INTO cmc_ai_command_results (

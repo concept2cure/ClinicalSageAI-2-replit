@@ -26,7 +26,7 @@ import {
   organizations,
   deviceAuditTrail 
 } from '../../shared/schema.js';
-import { eq, and, or, inArray, like, sql, desc, asc, isNull, arrayOverlaps } from 'drizzle-orm';
+import { eq, and, or, inArray, like, sql, desc, arrayOverlaps } from 'drizzle-orm';
 import auditService from './auditService.js';
 import { ai } from '../lib/unified-ai-client';
 import multer from 'multer';

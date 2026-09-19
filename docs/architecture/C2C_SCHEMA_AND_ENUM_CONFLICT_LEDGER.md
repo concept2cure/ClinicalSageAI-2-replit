@@ -2973,3 +2973,59 @@ Per the no-documents rule, the following are **open questions**, not findings:
   list at all.
 - Whether the six commands in `COMMAND_REGISTRY` (76 entries) that lack a
   `COMMAND_HANDLERS` key (70 keys) are dead, aliased, or dispatched elsewhere.
+
+## C-50 — `compliance_tracking` is two different tables sharing one name *(medium — OPEN, contained 2026-09-08)*
+
+The C-6 pattern again, on a table that had gone unexamined. Two lineages declare
+`compliance_tracking` with **no columns in common beyond `id`, `organization_id`,
+`risk_level`, `assigned_to` and the timestamps**, and which one an estate has is
+decided by migration order rather than by code:
+
+| | `migrations/0000_sweet_joseph.sql:1729` | `db/migrations/20260402_cmc_runtime_ddl_to_migration.sql:20` |
+|---|---|---|
+| `id` | `serial` | `uuid DEFAULT gen_random_uuid()` |
+| tenant | `organization_id integer NOT NULL` | `organization_id integer` (**nullable**) |
+| subject | `product_id varchar(100) NOT NULL`, `agency_id integer NOT NULL` | `project_id uuid` |
+| finding | `compliance_status`, `compliance_score`, `requirements`/`findings`/`remediation_actions` json | `guideline`, `requirement`, `status`, `evidence`, `justification`, `mitigation` |
+| dates | `last_assessment_date`, `next_assessment_date` | `due_date`, `completed_date` |
+
+Only the second is in `C2C_MIGRATION_FILES`; the first reaches an estate through
+drizzle-kit push from `shared/schema.ts`. Both are effectively
+`CREATE TABLE IF NOT EXISTS`, so the first one to run wins and the other is a
+silent no-op.
+
+**The consumers disagree with each other, not just with one table.**
+
+- `server/api/cmc/routes.ts` (`POST /compliance/check-rules`) reads `guideline`,
+  `requirement`, `status`, `mitigation`, `risk_level` — the **20260402** shape.
+  On the other shape it raises 42703. That path returns 500, which is correct
+  and loud, but it means the endpoint is simply unavailable on half the estate.
+- `server/api/cmc/projectRoutes.ts` reads and writes through
+  `shared/cmc-schema.ts`, a **third** definition that maps neither
+  `product_id`/`agency_id` nor (until 2026-09-08) `organization_id`.
+- `shared/schema.ts:10428` defines the same table a **fourth** time, with
+  `organizationId` and `complianceStatus` — the 0000 shape.
+
+**What was fixed on 2026-09-08, and what was not.** The tenancy consequence was
+closed: the `projectRoutes` write now stamps the owning organization, the
+`check-rules` read no longer carries `OR organization_id IS NULL` (which had made
+every sponsor's compliance findings readable by every other sponsor, and was
+load-bearing precisely because the write left the column NULL), and
+`migrations/20260908_compliance_tracking_organization_backfill.sql` attributes
+the legacy rows through `project_id → cmc_projects.organization_id`. That
+migration is guarded on the **columns** rather than on the table, so on the 0000
+shape it is a NOTICE and a no-op instead of a permanent deploy halt for every
+tenant; `tests/schema-contract/cmc-compliance-tracking-tenancy.contract.test.ts`
+proves that on both shapes.
+
+**The collision itself is untouched.** Reconciling two live definitions that
+share a name but not a subject — one tracks a *product against an agency*, the
+other a *project against an ICH guideline* — is not a column rename. It needs a
+decision about whether these are one concept or two, and if two, one of them
+needs a different table name and a data move. Until then:
+
+- Anything reading this table must be shape-guarded, or must accept that it
+  works on only one lineage and fail loudly (never emptily) on the other.
+- Do not add a NOT NULL, a CHECK, or an index naming a column that only one
+  shape has, without an `information_schema` guard. The backfill above is the
+  worked example.

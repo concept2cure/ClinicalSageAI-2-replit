@@ -45,8 +45,33 @@ export interface CorpusPolicy {
  *   1. Add the pgvector column to shared/schema.ts.
  *   2. Add an entry here matching the column dimensions to the chosen model.
  *   3. Migrate via db:push.
- *   4. Use embeddingService.embedForCorpus(text, '<corpus name>') from
- *      runtime callers — never openai.embeddings.create directly.
+ *   4. Embed through the canonical runtime from runtime callers — never
+ *      openai.embeddings.create directly:
+ *
+ *          import { getEmbeddingService } from './enhancedEmbeddingService';
+ *          import { getPolicyForCorpus } from './embedding-corpus-policy';
+ *          const svc = getEmbeddingService(pool);
+ *          await svc.embed(text, getPolicyForCorpus('<corpus name>').model);
+ *
+ * ── CORRECTED 2026-09-11 (WO-15 finding 8) ──────────────────────────────────
+ * Step 4 used to read "Use embeddingService.embedForCorpus(text, '<corpus
+ * name>')". THAT METHOD DOES NOT EXIST — `embedForCorpus` appears nowhere in
+ * the repository except in the sentence instructing people to call it. The
+ * canonical runtime is EnhancedEmbeddingService and its method is `embed(text,
+ * model)`, reached via `getEmbeddingService(pool)`.
+ *
+ * Also not true as written: enhancedEmbeddingService.ts does not import this
+ * file, so the policy below is not consulted by the runtime it is written for.
+ * A caller picks the model itself and this table is documentation, not
+ * enforcement. Stated plainly rather than left implied, because a policy
+ * everyone believes is enforced is worse than one everyone knows is advisory.
+ *
+ * One consequence of that disconnection, recorded and not fixed here: the
+ * `EmbeddingModel` union is declared independently in BOTH files, with
+ * identical members. The example above type-checks only because the two happen
+ * to agree structurally. Making this file the single declaration is the right
+ * change and is larger than a comment correction, so it is named rather than
+ * quietly done.
  */
 export const CORPUS_POLICY: readonly CorpusPolicy[] = [
   {
@@ -102,11 +127,19 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
     corpus: 'vaultDocumentChunks',
     table: 'vault.document_chunks',
     dimensions: 1536,
-    // The active writer (layout-aware-ingestion.ts, CONFIG.embeddingModel) and
-    // the reader (advancedRAGPipeline.searchVaultSimilar) both use
-    // text-embedding-3-small; only the column DEFAULT is the legacy ada-002,
-    // which the writer overrides. Registered as 3-small to match what the index
-    // is actually built and queried with — both are 1536d, so no re-vectorize.
+    // The active writer (vault/document-chunking.service.ts:110,
+    // CHUNK_EMBEDDING_MODEL) and the reader
+    // (advancedRAGPipeline.searchVaultSimilar) both use text-embedding-3-small;
+    // only the column DEFAULT is the legacy ada-002, which the writer overrides.
+    // Registered as 3-small to match what the index is actually built and
+    // queried with — both are 1536d, so no re-vectorize.
+    //
+    // Corrected 2026-09-18: this named layout-aware-ingestion.ts as the active
+    // writer. That module was unreachable — its only importer,
+    // enhanced-ingestion-pipeline.ts, was itself unimported — and both were
+    // deleted. The registration is unchanged because the REAL writer
+    // independently uses 3-small, but the attribution was wrong, and the
+    // attribution is the evidence this entry rests on.
     model: 'text-embedding-3-small',
     purpose: 'Vault document chunks — semantic similarity search over indexed vault PDFs/DOCX',
   },

@@ -17,11 +17,21 @@
 --
 -- Idempotent: safe to re-run.
 
-DELETE FROM c2c_artifact_section_map dup
-USING c2c_artifact_section_map keep
-WHERE dup.artifact_id = keep.artifact_id
-  AND dup.section_db_id = keep.section_db_id
-  AND dup.id > keep.id;
+-- AMENDED IN PLACE 2026-09-07 (CLAUDE.md Rule 1): this file joined
+-- C2C_MIGRATION_FILES, which re-runs every entry on every deploy, and the
+-- table's creator is not in that set — so on a database without the table
+-- the DELETE aborted the whole set. Guarded on to_regclass: a no-op where the
+-- table does not exist, the same de-duplication and index where it does.
+DO $$
+BEGIN
+  IF to_regclass('public.c2c_artifact_section_map') IS NOT NULL THEN
+    DELETE FROM c2c_artifact_section_map dup
+    USING c2c_artifact_section_map keep
+    WHERE dup.artifact_id = keep.artifact_id
+      AND dup.section_db_id = keep.section_db_id
+      AND dup.id > keep.id;
 
-CREATE UNIQUE INDEX IF NOT EXISTS c2c_artsec_artifact_section_uq
-  ON c2c_artifact_section_map (artifact_id, section_db_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS c2c_artsec_artifact_section_uq
+      ON c2c_artifact_section_map (artifact_id, section_db_id);
+  END IF;
+END $$;

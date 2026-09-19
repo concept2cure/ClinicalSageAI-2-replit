@@ -132,9 +132,29 @@ export function aggregateCtdAuthoringReadiness(input: CtdAuthoringReadinessInput
   if (input.m24Summary && input.m4ReportSections) {
     const present = new Set(input.m4ReportSections);
     for (const cited of input.m24Summary.inputSectionKeys ?? []) {
-      // M2.4 cites CTD 4.2.x sections; a cited section with no corresponding
-      // (prefix-matching) report in the program is an orphan reference.
-      const traced = input.m4ReportSections.some((s) => s === cited || s.startsWith(cited) || cited.startsWith(s));
+      /* A cited section is traced by a report AT it, or BENEATH it — never by
+         one above it.
+         The test was `s === cited || s.startsWith(cited) || cited.startsWith(s)`,
+         a bidirectional prefix match, and the third clause is what defeated the
+         whole check: it lets a general section vouch for a specific citation.
+         '4.2' is not a hypothetical value for `s` — `ctdSection()` in
+         nonclinical-study-report-builder returns `map[studyType] ?? '4.2'`, so
+         every study type outside its 17-key map (immunotoxicity, phototoxicity,
+         juvenile toxicity, antigenicity, dependence, metabolite and impurity
+         studies — all ordinary in a real program) is placed at the module root,
+         and runM4NonclinicalQc's PLACEMENT check then requires the report be
+         filed at exactly that section. One such study put '4.2' into
+         m4ReportSections, after which every 4.2.x citation in the overview
+         traced to it, no FEED_FORWARD finding was ever raised for Module 4, and
+         the renderer printed "READY — no blocking findings" over an overview
+         citing studies that do not exist.
+
+         The surviving direction is the legitimate one: a report at 4.2.3.2.1
+         answers a citation of 4.2.3.2. Compared on section boundaries rather
+         than characters, so 4.2.30 does not trace a citation of 4.2.3. */
+      const traced = input.m4ReportSections.some(
+        (s) => s === cited || s.startsWith(`${cited}.`),
+      );
       if (!present.has(cited) && !traced) {
         findings.push({
           area: 'M2.4←M4',

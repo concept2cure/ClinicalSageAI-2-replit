@@ -86,8 +86,16 @@ export function advanceFlow(
     throw new Error(`Node "${nodeId}" not found in flow "${definition.id}"`);
   }
 
-  // Validate answers
-  const validationErrors = validateAnswers(currentNode, answers);
+  // Validate answers against the SAME answer set the renderer used to decide
+  // which fields were visible. `buildQuestionEvent` evaluates every
+  // `visibleWhen` over the flattened prior answers; validating without them
+  // made the validator judge a predicate over a prior node's field against
+  // `undefined` — `neq`/`not_in` then read TRUE, so a field the renderer had
+  // hidden was demanded as required (a question with no fields that could
+  // never be submitted: a deadlock), and `eq`/`in` read FALSE, so a required
+  // field the renderer SHOWED passed validation blank. Pinned by
+  // __tests__/visible-when-deadlock.test.ts.
+  const validationErrors = validateAnswers(currentNode, answers, state.answers);
   if (validationErrors.length > 0) {
     // Return the same question with validation errors surfaced as issues
     const validationIssues: DetectedIssue[] = validationErrors.map(err => ({
@@ -414,41 +422,52 @@ function buildFlowSummary(definition: FlowDefinition, state: FlowState): string 
   return summary;
 }
 
-function buildSuggestedActions(
+/**
+ * The actions a completed flow offers next.
+ *
+ * Every `actionType` here MUST name a registered AnA tool. The original list
+ * named thirty that no handler implemented (generate_csr, assemble_ectd,
+ * generate_cmc_module3, launch_dashboard, …): affordances the model could only
+ * fail to act on. Each category now points at the real tool that does the
+ * work, and `__tests__/intelligence-flow-suggested-actions.test.ts` resolves
+ * every actionType of every flow against the live handler registry, so a dead
+ * suggestion cannot be reintroduced. Where no tool exists for what an action
+ * promised (an SOP training plan, an advisory-panel package, a Medication
+ * Guide), the suggestion is gone rather than pointing somewhere untrue.
+ */
+export function buildSuggestedActions(
   definition: FlowDefinition,
-  _state: FlowState,
+  _state?: FlowState,
 ): IntelligenceFlowCompleteEvent['suggestedActions'] {
   const actions: IntelligenceFlowCompleteEvent['suggestedActions'] = [];
 
   switch (definition.category) {
     case 'protocol_development':
       actions.push(
-        { label: 'Generate Protocol Document', actionType: 'generate_document', description: 'Create a full protocol draft from collected information' },
-        { label: 'Review Protocol Synopsis', actionType: 'review_synopsis', description: 'Generate a protocol synopsis for stakeholder review' },
+        { label: 'Generate Protocol Document', actionType: 'generate_document', description: "Create a full protocol draft from collected information (generate_document with document_type 'protocol')" },
+        { label: 'Draft the Statistical Analysis Plan', actionType: 'generate_document', description: "Draft the SAP that accompanies the protocol (generate_document with document_type 'sap')" },
       );
       break;
     case 'csr_report':
       actions.push(
-        { label: 'Generate CSR Draft', actionType: 'generate_csr', description: 'Create a Clinical Study Report from collected data' },
-        { label: 'Generate CSR Synopsis', actionType: 'generate_synopsis', description: 'Create the study synopsis section' },
+        { label: 'Generate CSR Draft', actionType: 'generate_document', description: "Create a Clinical Study Report from collected data (generate_document with document_type 'csr'; the synopsis is its first section)" },
       );
       break;
     case 'ind_submission':
       actions.push(
-        { label: 'Draft IND Cover Letter', actionType: 'generate_ind_cover', description: 'Draft the IND cover letter (Form FDA 1571)' },
-        { label: 'Assemble IND Module 2', actionType: 'assemble_module', description: 'Assemble the Clinical Overview and Summary' },
+        { label: 'Draft an IND Section', actionType: 'ind_generate_section', description: 'Generate a governed draft of a specific CTD section for the IND (ind_generate_section with the section_code)' },
+        { label: 'Author IND Module 2 Narrative', actionType: 'plan_ind_module_authoring', description: 'Author the Module 2.5 Clinical Overview or 2.7 Clinical Summary from the collected facts (plan_ind_module_authoring)' },
       );
       break;
     case 'sop_development':
       actions.push(
         { label: 'Generate SOP Document', actionType: 'generate_sop', description: 'Create a Standard Operating Procedure from the collected requirements' },
-        { label: 'Generate SOP Training Plan', actionType: 'generate_training', description: 'Create the associated training plan' },
       );
       break;
     case 'device_510k':
       actions.push(
-        { label: 'Generate 510(k) Summary', actionType: 'generate_510k_summary', description: 'Create the 510(k) summary document' },
-        { label: 'Draft SE Comparison', actionType: 'generate_se_comparison', description: 'Generate the Substantial Equivalence comparison table' },
+        { label: 'Generate 510(k) Document', actionType: 'generate_document', description: "Create the 510(k) submission draft (generate_document with document_type '510k')" },
+        { label: 'Draft SE Comparison', actionType: 'draft_510k_substantial_equivalence', description: 'Build the Substantial Equivalence comparison structure against the chosen predicate (draft_510k_substantial_equivalence)' },
       );
       break;
     case 'cer_report':
@@ -464,63 +483,61 @@ function buildSuggestedActions(
       );
       break;
     case 'nda_submission':
-      actions.push(
-        { label: 'Generate NDA Module 2 Summaries', actionType: 'generate_nda_module2', description: 'Draft the Quality Overall Summary, Nonclinical Overview, and Clinical Overview' },
-        { label: 'Assemble eCTD Submission', actionType: 'assemble_ectd', description: 'Assemble the electronic Common Technical Document for NDA filing' },
-      );
-      break;
     case 'bla_submission':
       actions.push(
-        { label: 'Generate BLA Module 2 Summaries', actionType: 'generate_bla_module2', description: 'Draft the Quality Overall Summary and Clinical Overview for the BLA' },
-        { label: 'Assemble BLA eCTD', actionType: 'assemble_bla_ectd', description: 'Assemble the electronic Common Technical Document for BLA filing' },
+        { label: 'Draft Quality Overall Summary (2.3)', actionType: 'draft_quality_overall_summary_m2_3', description: 'Compose the Module 2.3 QOS from the program\'s CMC source objects (draft_quality_overall_summary_m2_3)' },
+        { label: 'Draft Clinical Overview (2.5)', actionType: 'draft_clinical_overview_m2_5', description: 'Draft the Module 2.5 Clinical Overview benefit-risk assessment (draft_clinical_overview_m2_5)' },
+        { label: 'Assemble eCTD Module from Artifacts', actionType: 'assemble_ectd_module_from_artifacts', description: 'Collect the project\'s artifacts for a CTD module prefix and assemble them in section order (assemble_ectd_module_from_artifacts)' },
       );
       break;
     case 'device_pma':
       actions.push(
-        { label: 'Generate PMA Summary', actionType: 'generate_pma_summary', description: 'Create the PMA summary of safety and effectiveness' },
-        { label: 'Draft Panel Package', actionType: 'generate_panel_package', description: 'Generate the advisory panel submission package' },
+        { label: 'Generate PMA Document', actionType: 'generate_document', description: "Create the PMA submission draft (generate_document with document_type 'pma')" },
+        { label: 'Assess PMA Filing Readiness', actionType: 'advise_pma_readiness', description: 'Report completeness across the 21 CFR 814.20 module structure and what is still missing (advise_pma_readiness)' },
       );
       break;
     case 'cmc_specification':
+      // First: land the answers in the CMC registers. The interview's output
+      // otherwise lives only in the completion event; commit_intelligence_flow
+      // projects it onto the register write paths that feed Module 3.
       actions.push(
-        { label: 'Generate CMC Module 3', actionType: 'generate_cmc_module3', description: 'Draft the CTD Module 3 Quality section from collected specifications' },
-        { label: 'Generate Specification Table', actionType: 'generate_spec_table', description: 'Create the drug substance and drug product specification tables' },
+        { label: 'Commit Answers to the CMC Registers', actionType: 'commit_intelligence_flow', description: 'Record the interview answers as CMC register records (container closure, manufacturing processes, formulation, characterisation, drug substance/product) so they feed Module 3 (commit_intelligence_flow with the session_id)' },
+        { label: 'Generate CMC Module 3', actionType: 'generate_document', description: "Draft the CTD Module 3 Quality section from the recorded registers (generate_document with document_type 'ctd_module3')" },
+        { label: 'Determine Specification Tests', actionType: 'set_specifications', description: 'Determine the required specification tests and acceptance criteria per ICH Q6A/Q6B for this product (set_specifications)' },
       );
       break;
     case 'risk_management':
       actions.push(
-        { label: 'Generate Risk Management Report', actionType: 'generate_risk_report', description: 'Create the risk management report per ISO 14971' },
-        { label: 'Generate Risk-Benefit Analysis', actionType: 'generate_risk_benefit', description: 'Draft the risk-benefit analysis summary' },
+        { label: 'Record ISO 14971 Risk Items', actionType: 'create_risk_item', description: 'Add each identified hazard as an ISO 14971 risk row (hazard, harm, severity × probability) under the program (create_risk_item)' },
       );
       break;
     case 'safety_narrative':
       actions.push(
-        { label: 'Generate Safety Narrative', actionType: 'generate_safety_narrative', description: 'Create the patient safety narrative from collected case data' },
-        { label: 'Generate Narrative Summary Table', actionType: 'generate_narrative_table', description: 'Create the tabular listing of serious adverse events' },
+        { label: 'Draft Safety Narrative', actionType: 'draft_safety_narrative', description: 'Draft the ICH E3 §16 patient safety narrative from the collected case facts (draft_safety_narrative)' },
+        { label: 'Compose E2B(R3) ICSR', actionType: 'compose_e2b_icsr', description: 'Compose the E2B(R3) ICSR data elements for the recorded adverse-event case (compose_e2b_icsr)' },
       );
       break;
     case 'labeling':
       actions.push(
-        { label: 'Generate USPI Draft', actionType: 'generate_uspi', description: 'Draft the United States Prescribing Information (USPI) document' },
-        { label: 'Generate Medication Guide', actionType: 'generate_med_guide', description: 'Create the patient Medication Guide' },
+        { label: 'Plan USPI Authoring', actionType: 'plan_labeling_authoring', description: 'Build the US PLR labeling authoring plan with the mandatory section headers (plan_labeling_authoring)' },
+        { label: 'Generate SPL XML', actionType: 'generate_spl', description: 'Generate the FDA Structured Product Labeling XML from a structured spec (generate_spl)' },
       );
       break;
     case 'briefing_book':
       actions.push(
-        { label: 'Generate Briefing Document', actionType: 'generate_briefing', description: 'Create the advisory committee briefing document' },
-        { label: 'Generate Slide Deck Outline', actionType: 'generate_slide_outline', description: 'Draft the presentation outline for the advisory committee meeting' },
+        { label: 'Assemble Briefing Book', actionType: 'assemble_briefing_book', description: 'Assemble the regulatory-agency meeting briefing book and stress-test the sponsor questions (assemble_briefing_book)' },
       );
       break;
     case 'stability_study':
       actions.push(
-        { label: 'Generate Stability Report', actionType: 'generate_stability_report', description: 'Create the stability study report per ICH Q1A(R2)' },
-        { label: 'Generate Stability Protocol', actionType: 'generate_stability_protocol', description: 'Draft the stability study protocol for regulatory submission' },
+        { label: 'Design the Stability Study', actionType: 'design_stability_study', description: 'Design an ICH Q1A(R2)-compliant stability program: storage conditions, intervals, batch requirements (design_stability_study)' },
+        { label: 'Assess Shelf Life from Data', actionType: 'assess_shelf_life_stability', description: 'Fit the degradation trend over measured timepoints and report the supportable shelf life (assess_shelf_life_stability)' },
       );
       break;
     case 'project_setup':
       actions.push(
-        { label: 'Launch Project Dashboard', actionType: 'launch_dashboard', description: 'Initialize the project dashboard with configured settings' },
-        { label: 'Generate Regulatory Strategy Memo', actionType: 'generate_reg_strategy', description: 'Create a regulatory strategy memorandum from the project configuration' },
+        { label: 'Generate Schedule of Events', actionType: 'generate_schedule_of_events', description: 'Generate the project\'s regulatory-aware schedule of milestones from the configured project (generate_schedule_of_events)' },
+        { label: 'Generate Regulatory Strategy Brief', actionType: 'global_ri_strategy_brief', description: 'Compose the registry-grounded cross-market regulatory strategy brief for the product (global_ri_strategy_brief)' },
       );
       break;
     default:

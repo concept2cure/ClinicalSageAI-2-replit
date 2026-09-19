@@ -134,7 +134,14 @@ interface CmcCorrespondence {
   /** Served by the file's GET (the closed-history read); the board omits it. */
   updatedAt?: string | null;
 }
-interface CmcSection { key: string; path: string; st: string; _new?: boolean; }
+interface CmcSection {
+  key: string; path: string; st: string; _new?: boolean;
+  /** The compiler's own score for the section (null when it never scored it)
+      and the required inputs it found missing — read from the section's
+      compiled record by the same rule the approve route and the export gate
+      refuse on (server/services/cmc/compiled-record.ts). */
+  completeness?: number | null; missingInputs?: string[];
+}
 interface CmcChangeType { id: string; label: string; risk: string; }
 interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string; paths: { m: string; label: string; path: string[] }[]; }
 
@@ -144,7 +151,14 @@ interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string
    rpiAverage / section counts are number | null — honestly null when the
    backend cannot measure them; rendered as "—", never fabricated. */
 interface CmcBoardKpis { submissions: number; rpiAverage: number | null; /** null when the question store could not be read — NOT zero. */ irOverdue: number | null; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
-interface CmcBoardMeta { projectId: string | null; portfolioProvisioned: boolean; sectionsProvisioned: boolean | null; generatedAt: string; }
+interface CmcBoardMeta {
+  projectId: string | null; portfolioProvisioned: boolean; sectionsProvisioned: boolean | null; generatedAt: string;
+  /** true = that register's read FAILED — as opposed to unprovisioned, or
+      provisioned and empty. A failed read is rendered as an error, never as an
+      empty register: "no sections" over a store that did not answer is a claim
+      nothing established. */
+  sectionsUnreadable?: boolean | null; portfolioUnreadable?: boolean; correspondenceUnreadable?: boolean;
+}
 interface CmcBoardData {
   portfolio?: CmcPortfolio[];
   sections?: CmcSection[] | null;
@@ -278,6 +292,126 @@ const CMC_MARKETS: [string, string][] = [['fda', 'FDA'], ['ema', 'EMA'], ['pmda'
    which is exactly the misunderstanding §11.50 exists to prevent, and it invites
    someone to sign more casually than the record deserves. The copy now states
    what actually happens. */
+/* What the approve route and the export gate refuse on, read the same way
+   here: a compiled record under 100, a required input still named missing, or
+   no score at all — a section the composer never scored is "nothing
+   established", not "complete". A row without the figures (an older payload)
+   fails closed to incomplete: the server would refuse the signature anyway. */
+function sectionIncomplete(s: CmcSection): boolean {
+  return s.completeness !== 100 || (s.missingInputs ?? []).length > 0;
+}
+/** Why the control is withheld, in the signer's terms — the same shape the approve route's 409 uses. */
+function incompleteReason(s: CmcSection): string {
+  const missing = s.missingInputs ?? [];
+  return (
+    '§' + s.key + (s.completeness == null ? ' has no compiled completeness record' : ' is ' + s.completeness + '% complete') +
+    ' and cannot be approved.' +
+    (missing.length ? ' Missing required inputs: ' + missing.join(', ') + '.' : '') +
+    ' Record the inputs on the Module 3 build board and recompile.'
+  );
+}
+
+/* ── What a signature is over ────────────────────────────────────────────────
+   A §11.50 signature is a signature over CONTENT. Until this panel existed the
+   only thing the product showed a signer at the moment of approving §3.2.S.4
+   was its key, its percentage and its missing inputs: the narrative and tables
+   the approve route hashes and snapshots were served by no route and rendered
+   on no screen, so the signature was over a section NUMBER.
+
+   This is the read step, and it is not skippable — "Approve section" opens it,
+   and the signature form opens from inside it. It shows the section exactly as
+   it will be filed (the markdown comes from the one renderer the eCTD leaf and
+   the governed artifact are both built from), the compiler's own verdict, and
+   the source records the words rest on. A section whose content could not be
+   read offers no signature at all: signing what you could not see is the thing
+   this panel exists to prevent. */
+interface CmcSectionRead {
+  sectionKey: string; title: string; approvalState: string; stale: boolean; staleReason: string | null;
+  completeness: number | null; missingInputs: string[]; narrative: string;
+  tables: Array<{ title: string; headers: string[]; rows: string[][] }> | null;
+  tablesUnknown: boolean; markdown: string; compiledHash: string | null; updatedAt: string | null;
+  lineage: Array<{ sourceType: string | null; sourceKey: string | null; changedSinceCompile: boolean }>;
+}
+
+function CmcSectionReview({
+  projectId, section, onCancel, onSign,
+}: {
+  projectId: string; section: CmcSection; onCancel: () => void; onSign: () => void;
+}) {
+  const read = useLiveData<CmcSectionRead>(
+    projectId ? `/api/cmc/module3-os/sections/${encodeURIComponent(projectId)}/${encodeURIComponent(section.key)}` : null,
+  );
+  const d = read.data;
+  const changed = (d?.lineage ?? []).filter((l) => l.changedSinceCompile);
+  return (
+    <div className="de-bd" onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+      <div className="de" role="dialog" aria-modal="true" aria-label={`Read section ${section.key} before signing`}>
+        <div className="de-h">
+          <div>
+            <div className="de-h-eye">Read before you sign — 21 CFR §11.50</div>
+            <div className="de-h-t">§{section.key}{d?.title ? ` — ${d.title}` : ''}</div>
+            <div className="de-h-s">This is the content your signature covers, as it will be filed.</div>
+          </div>
+          <button className="de-x" onClick={onCancel} aria-label="Close">{I.close}</button>
+        </div>
+        <div className="de-body">
+          {read.loading && <div className="pj-dim">Loading the compiled section…</div>}
+          {!read.loading && (read.error || !d) && (
+            <EmptyState
+              title="This section could not be read"
+              hint={read.error || 'The compiled section did not load. It cannot be signed until it can be read — this is a failed read, not an empty section.'}
+            />
+          )}
+          {d && (
+            <>
+              <div className="pj-dim" style={{ marginBottom: 10 }}>
+                {d.completeness == null ? 'No compiled completeness record' : `${d.completeness}% complete`}
+                {d.missingInputs.length > 0 ? ` · missing: ${d.missingInputs.join('; ')}` : ''}
+                {d.compiledHash ? ` · content hash ${d.compiledHash.slice(0, 12)}…` : ''}
+              </div>
+              {d.stale && (
+                <div className="pj-con" style={{ marginBottom: 10 }}>
+                  <div className="pj-con-t">This section is stale</div>
+                  <div className="pj-con-d">{d.staleReason || 'A source changed after it was built. Recompile before approving.'}</div>
+                </div>
+              )}
+              {d.tablesUnknown && (
+                <div className="pj-con" style={{ marginBottom: 10 }}>
+                  <div className="pj-con-t">Its tables are not known</div>
+                  <div className="pj-con-d">
+                    This section was compiled before its tables were stored, so what is shown below may be missing them.
+                    Recompile and re-approve it before it can be filed.
+                  </div>
+                </div>
+              )}
+              {changed.length > 0 && (
+                <div className="pj-con" style={{ marginBottom: 10 }}>
+                  <div className="pj-con-t">{changed.length} source record(s) changed since this was compiled</div>
+                  <div className="pj-con-d">{changed.map((c) => c.sourceKey || c.sourceType).join(', ')}</div>
+                </div>
+              )}
+              <div dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(d.markdown) }} />
+              <div className="pj-dim" style={{ marginTop: 14 }}>
+                Composed from {d.lineage.length} source record(s):{' '}
+                {d.lineage.map((l) => l.sourceKey || l.sourceType).filter(Boolean).join(', ') || '—'}
+              </div>
+            </>
+          )}
+        </div>
+        <div className="de-f">
+          <button className="de-btn ghost" onClick={onCancel}>Cancel</button>
+          <button
+            className="de-btn primary"
+            disabled={!d}
+            title={d ? 'Open the signature form for this section' : 'The section must be readable before it can be signed'}
+            onClick={onSign}
+          >{I.lock} Sign & approve</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function signForm(target: string): C2CFormConfig {
   return {
     eyebrow: '21 CFR §11.50 — e-signature', title: 'Sign to approve', sub: target, submitLabel: 'Sign & approve',
@@ -365,7 +499,7 @@ function CmHead({ title, meta, ask, suggest, actions }: CmHeadProps) {
    screen reader, and gains the focus ring. A tile with nothing behind it stays
    a plain <div>: a clickable dead end is noise, not an affordance. */
 function Kpi({ l, v, s, tone, onClick, title }: { l: string; v: React.ReactNode; s?: string; tone?: string; onClick?: () => void; title?: string }) {
-  const body = <><div className="reg-kpi-v">{v}</div><div className="reg-kpi-l">{l}{s ? ' -- ' + s : ''}</div></>;
+  const body = <><div className="reg-kpi-v">{v}</div><div className="reg-kpi-l">{l}{s ? ' — ' + s : ''}</div></>;
   if (onClick) return <button type="button" className="reg-kpi" data-tone={tone} title={title} onClick={onClick}>{body}</button>;
   return <div className="reg-kpi" data-tone={tone}>{body}</div>;
 }
@@ -390,6 +524,13 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
      project is in context but has no governed sections yet. */
   const liveSections: CmcSection[] | null = data && Array.isArray(data.sections) ? data.sections : null;
   const kpis = data?.kpis;
+  const meta = data?.meta;
+  /* true = that register's read FAILED. The board answers `sections: []` /
+     `portfolio: []` for a failed read exactly as for an empty one; only these
+     flags tell them apart, and the surface used to ignore them — so a store
+     that did not answer rendered as "no governed CMC sections authored". */
+  const sectionsUnreadable = meta?.sectionsUnreadable === true;
+  const portfolioUnreadable = meta?.portfolioUnreadable === true;
 
   /* Governed section-approval working set — seeded from the live governed store.
      useLiveData memoizes its result in state, so `liveSections` is a stable
@@ -400,6 +541,9 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
     setSecs((liveSections ?? []).map((s) => ({ ...s })));
   }, [liveSections]);
   const [sign, setSign] = useState<CmcSection | null>(null);
+  /* The section being READ before it is signed. "Approve section" opens this;
+     the signature form opens from inside it, never directly. */
+  const [review, setReview] = useState<CmcSection | null>(null);
   const [toast, fireToast] = useToast();
 
   /* rpi / ir are number | null -- honestly null when the backend cannot measure a
@@ -412,7 +556,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
      read the agency-question store. It is NOT zero, and it must not silently
      become the legacy per-row sum, which counts something else. */
   const irOverdue: number | null = kpis ? kpis.irOverdue : port.reduce((a, r) => a + (r.ir ?? 0), 0);
-  const irUnknown = irOverdue == null;
+  const irUnknown = irOverdue == null || meta?.correspondenceUnreadable === true;
   /* The overdue ATTRIBUTION comes from the same read as the COUNT. The lead
      used to count from the correspondence KPI but name submissions from the
      legacy per-row store — two sources, and when the legacy store was empty
@@ -425,10 +569,35 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   const readyTone = readyPct >= 80 ? 'ok' : readyPct >= 50 ? 'warn' : 'err';
   const stTone = (s: string) => s === 'approved' ? 'ok' : s === 'review' ? 'warn' : 'dim';
 
+  /* Export readiness is READ from the gate's own evaluation, never derived
+     here. The card used to say "Export ready" at 80% approved — while the gate
+     requires every section approved, none stale, every approved one complete,
+     every one with lineage, and a governed-state verdict. On the live case
+     that motivated this work (21/21 approved, three at 0% complete) the card
+     was green while the gate refused. The percentage stays as what it is:
+     approvals. */
+  const readiness = useLiveData<{
+    totalSections: number; approvedSections: number; staleSections: number; openCriticalContradictions: number;
+    sectionsWithoutProvenance: number; incompleteApprovedSections: string[]; governedStateEvaluated: boolean; exportReady: boolean;
+  }>(ctxProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(ctxProjectId) : null);
+  const readinessReasons = (() => {
+    const r = readiness.data;
+    if (!r || r.exportReady) return [];
+    const reasons: string[] = [];
+    if (r.totalSections > 0 && r.approvedSections < r.totalSections) reasons.push(`${r.totalSections - r.approvedSections} not approved`);
+    if (r.incompleteApprovedSections?.length) reasons.push(`${r.incompleteApprovedSections.length} approved but incomplete (§${r.incompleteApprovedSections.join(', §')})`);
+    if (r.staleSections > 0) reasons.push(`${r.staleSections} stale`);
+    if (r.sectionsWithoutProvenance > 0) reasons.push(`${r.sectionsWithoutProvenance} without source lineage`);
+    if (r.openCriticalContradictions > 0) reasons.push(`${r.openCriticalContradictions} critical contradiction(s) open`);
+    if (!r.governedStateEvaluated) reasons.push('governed state not evaluated');
+    return reasons;
+  })();
+
   // doSign — REAL, awaited section approval against the governed Module 3
   // operating-system endpoint (POST /api/cmc/module3-os/sections/:projectId/
   // :sectionKey/approve, server/api/cmc/module3OperatingSystemRoutes.ts). The
-  // backend blocks on unresolved critical contradictions (409), snapshots a new
+  // backend refuses (409) on an unresolved critical contradiction or on a
+  // section whose own compiled record is incomplete, else snapshots a new
   // approved version, sets approval_state, and writes a cmc_provenance_events
   // audit entry keyed to the authenticated user. The reason + reauth captured by
   // the sign form are forwarded, and the server VERIFIES the re-auth before any
@@ -460,7 +629,15 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
       );
       const json = await res.json().catch(() => null);
       if (res.status === 409) {
-        fireToast('Cannot approve ' + target.key + ' — resolve the critical contradictions first.', 'error');
+        /* 409 is the server refusing the signature for a STATED reason — an
+           unresolved critical contradiction, or a section whose compiled record
+           is incomplete. Render the reason it gave: the hard-coded "resolve the
+           critical contradictions first" sent a signer looking for
+           contradictions that did not exist. */
+        fireToast(
+          'Cannot approve ' + target.key + ' — ' + (serverMessage(json) ?? 'the server refused the signature (HTTP 409).'),
+          'error',
+        );
         return;
       }
       if (!res.ok) {
@@ -498,9 +675,11 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
      someone moved it, so a non-empty section set is positive evidence that the
      package is genuinely being assessed. The gate is `secs.length`, not
      `approved === 0`. */
+  /* A failed register read is unreadable, not not-assessed: the narrative must
+     not count sections or reassure over a store that did not answer. */
   const cmcState = assessmentState({
     loading: board.loading,
-    unreadable: Boolean(board.error),
+    unreadable: Boolean(board.error) || sectionsUnreadable || portfolioUnreadable,
     scopeExists: port.length > 0,
     findingCount: irOverdue ?? 0,
     assessmentRan: secs.length > 0,
@@ -513,20 +692,26 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
          for the identical state. Two sibling surfaces rendering one state in
          two visual languages is the drift this work is meant to remove. */
       tone={irUnknown ? 'calm' : irOverdue ? 'urgent' : cmcState === 'assessed-clear' ? 'good' : 'calm'}
-      eyebrow={cmcState === 'not-assessed' && port.length === 0
+      eyebrow={(cmcState === 'not-assessed' || cmcState === 'unreadable') && port.length === 0
         ? 'Is your CMC package ready'
         : 'Is your CMC package ready across all ' + port.length + ' submissions'}
       headline={cmcState === 'unreadable'
-        ? <>The Module 3 board could not be read.</>
+        ? <>{board.error
+            ? 'The Module 3 board'
+            : sectionsUnreadable && portfolioUnreadable
+              ? 'The submission portfolio and the governed §3.2 section register'
+              : sectionsUnreadable
+                ? 'The governed §3.2 section register'
+                : 'The submission portfolio'} could not be read.</>
         : cmcState === 'loading'
           ? <>Reading your Module 3 portfolio&hellip;</>
           : port.length === 0
             ? <>No CMC submissions are in scope yet.</>
             : avgRpi != null && lowSub
-              ? <>Your Module 3 averages <b>RPI {avgRpi}</b> -- the <b>{lowSub.sub}</b> at {lowSub.rpi} is what's holding the portfolio back.</>
+              ? <>Your Module 3 averages <b>RPI {avgRpi}</b> — the <b>{lowSub.sub}</b> at {lowSub.rpi} is what's holding the portfolio back.</>
               : <>Your Module 3 spans <b>{port.length}</b> {port.length === 1 ? 'submission' : 'submissions'}{avgRpi != null ? <> at an <b>RPI {avgRpi}</b> average</> : <>, with no preparedness index computed for {port.length === 1 ? 'it' : 'any of them'} yet</>}.</>}
       body={cmcState === 'unreadable'
-        ? <>This is a failed read, not an empty portfolio. Nothing shown here should be taken as the state of your CMC package. Sign in to your tenant and retry.</>
+        ? <>This is a failed read, not an empty register. Nothing shown or omitted here should be taken as the state of your CMC package. Sign in to your tenant and retry.</>
         : cmcState === 'loading'
           ? <>Nothing is being asserted about readiness until the read settles.</>
           : port.length === 0
@@ -604,7 +789,17 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Section approvals</span><span className="s">governed — 21 CFR §11</span></div>
             <div className="pj-card-b" style={{ padding: 0 }}>
-              {liveSections === null ? (
+              {sectionsUnreadable ? (
+                <div style={{ padding: 12 }}>
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="The Module 3 sections could not be read"
+                    hint="This is a failed read, not an empty register: the governed §3.2 section store did not answer, so nothing here says whether this project has sections or what state they are in. Retry, or check the service is reachable."
+                    testId="cmc-sections-unreadable"
+                  />
+                </div>
+              ) : liveSections === null ? (
                 <div style={{ padding: 12 }}>
                   <EmptyState icon={I.fileText} title="Open a project to see its Module 3 sections" hint="The governed §3.2.S / §3.2.P section list is per-project. Select a project to load its approval state." />
                 </div>
@@ -613,12 +808,45 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                   <EmptyState icon={I.fileText} title="No Module 3 sections yet" hint="This project has no governed §3.2 sections yet. They appear here with their approval state once created." />
                 </div>
               ) : (
-                <table className="reg-tbl"><thead><tr><th>Section</th><th>Path</th><th>State</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
-                <tbody>{secs.map((s) => (
+                /* Completeness sits beside the state because the two are
+                   signed together: an approval is a claim about content that
+                   was reviewed, and the compiler's record says whether the
+                   content is there. Found live: 21/21 approved, three at 0%,
+                   and this table showed neither the figure nor the gap. An
+                   incomplete section gets no live control — the approve route
+                   refuses it (409) and the export gate refuses the project. */
+                <table className="reg-tbl"><thead><tr><th>Section</th><th>Path</th><th>Completeness</th><th>State</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
+                <tbody>{secs.map((s) => {
+                  const incomplete = sectionIncomplete(s);
+                  const missing = s.missingInputs ?? [];
+                  return (
                   <tr key={s.key} className={s._new ? 'de-row-new' : undefined}><td className="mono" style={{ fontWeight: 600 }}>{s.key}</td><td>{s.path}</td>
-                    <td><span className={'rd-chip tone-' + stTone(s.st)}>{s.st}</span></td>
-                    <td style={{ textAlign: 'right' }}>{s.st === 'approved' ? <span className="cm-meta">{I.check} approved</span> : <button className="nda-open" onClick={() => setSign(s)}>{I.lock} Approve section</button>}</td>
-                  </tr>))}</tbody></table>
+                    <td>
+                      {s.completeness == null
+                        ? <span className="cm-meta">not established — never scored by the compiler</span>
+                        : <b className={incomplete ? 'sp-tone-warn' : undefined} style={{ fontVariantNumeric: 'tabular-nums' }}>{s.completeness}%</b>}
+                      {missing.length > 0 && <div className="cm-meta">missing: {missing.join(', ')}</div>}
+                    </td>
+                    <td>
+                      <span className={'rd-chip tone-' + stTone(s.st)}>{s.st}</span>
+                      {incomplete && <span className="rd-chip tone-err" style={{ marginLeft: 6 }} title={incompleteReason(s)}>incomplete</span>}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      {s.st === 'approved'
+                        ? <span className="cm-meta">{I.check} approved</span>
+                        : incomplete
+                          ? <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                              <button className="nda-open" disabled title={incompleteReason(s)}>{I.lock} Approve section</button>
+                              <button
+                                className="cm-linkish"
+                                title="Record the missing inputs and recompile on the Module 3 build board"
+                                onClick={() => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('build')}
+                              >Open the build board</button>
+                            </span>
+                          : <button className="nda-open" onClick={() => setReview(s)}>{I.lock} Approve section</button>}
+                    </td>
+                  </tr>);
+                })}</tbody></table>
               )}
             </div>
             {secs.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved Module 3 sections'} nav={nav} bar /></div>}
@@ -626,7 +854,17 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           <div className="pj-card" style={{ marginBottom: 16 }}>
             <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{port.length} submissions</span></div>
             <div className="pj-card-b" style={{ padding: 0 }}>
-              {port.length === 0 ? (
+              {portfolioUnreadable ? (
+                <div style={{ padding: 12 }}>
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="The submission portfolio could not be read"
+                    hint="This is a failed read, not an empty register: the submission store did not answer, so no submission, preparedness index or overdue count shown or omitted here is established. Retry, or check the service is reachable."
+                    testId="cmc-portfolio-unreadable"
+                  />
+                </div>
+              ) : port.length === 0 ? (
                 <div style={{ padding: 12 }}>
                   <EmptyState icon={I.fileText} title="No submissions yet" hint="Your regulatory submissions (BLA / MAA / NDA / J-NDA) appear here with their preparedness index and overdue information requests." />
                 </div>
@@ -643,26 +881,49 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           </div>
           {secs.length > 0 && (
             <div className="pj-card" style={{ marginBottom: 16 }}>
-              <div className="pj-card-h"><span className="t">Module 3 build state</span><span className="s">§3.2.S -- §3.2.P</span></div>
+              <div className="pj-card-h"><span className="t">Module 3 build state</span><span className="s">§3.2.S — §3.2.P</span></div>
               <div className="pj-card-b">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                   <div className="cm-projbar" style={{ flex: 1 }}><span className="fill" style={{ width: readyPct + '%', background: readyTone === 'ok' ? 'var(--success)' : readyTone === 'warn' ? 'var(--accent-100)' : 'var(--warning)' }} /></div>
-                  <b style={{ fontVariantNumeric: 'tabular-nums' }}>{readyPct}%</b>
-                  <span className={'rd-chip tone-' + (readyPct >= 80 ? 'ok' : 'warn')}>{readyPct >= 80 ? 'Export ready' : 'Not export ready'}</span>
+                  <b style={{ fontVariantNumeric: 'tabular-nums' }} title="Sections approved">{readyPct}% approved</b>
+                  {readiness.loading ? (
+                    <span className="rd-chip tone-dim" role="status">Evaluating export readiness…</span>
+                  ) : readiness.error || !readiness.data ? (
+                    <span className="rd-chip tone-err" role="alert" title={readiness.error || 'no readiness verdict was returned'}>Export readiness could not be read</span>
+                  ) : readiness.data.exportReady ? (
+                    <span className="rd-chip tone-ok">Export ready</span>
+                  ) : (
+                    <span className="rd-chip tone-warn" title={readinessReasons.join('; ')}>Not export ready</span>
+                  )}
                 </div>
-                <div className="cm-meta">{approved} of {secs.length} sections approved -- {drafts.length} draft</div>
+                <div className="cm-meta">
+                  {approved} of {secs.length} sections approved — {drafts.length} draft
+                  {!readiness.loading && readiness.data && !readiness.data.exportReady && readinessReasons.length > 0
+                    ? <> — export blocked: {readinessReasons.join('; ')}</>
+                    : null}
+                  {!readiness.loading && (readiness.error || !readiness.data)
+                    ? <> — the export gate's verdict could not be read, so readiness is not established; this is a failed read, not a pass.</>
+                    : null}
+                </div>
               </div>
             </div>
           )}
         </>
       )}
-      {sign && <C2CForm config={signForm('Section ' + sign.key + ' -- ' + sign.path)} onCancel={() => setSign(null)} onSubmit={doSign} />}
-      <C2CToast msg={toast} />
+      {review && (
+        <CmcSectionReview
+          projectId={ctxProjectId || ''}
+          section={review}
+          onCancel={() => setReview(null)}
+          onSign={() => { setSign(review); setReview(null); }}
+        />
+      )}
+      {sign && <C2CForm config={signForm('Section ' + sign.key + ' — ' + sign.path)} onCancel={() => setSign(null)} onSubmit={doSign} />}      <C2CToast msg={toast} />
     </div>
   );
 }
 
-/* ═══════════ Specifications -- create / edit / approve ═══════════ */
+/* ═══════════ Specifications — create / edit / approve ═══════════ */
 
 /** Extract an honest error string from a failed CMC write response. */
 function specErr(json: unknown, status: number): string {
@@ -865,7 +1126,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
       <CmImpurityProfiles />
       <CmDissolutionProfiles />
       {edit && <C2CForm config={FORM(edit === 'new' ? null : edit)} onCancel={() => setEdit(null)} onSubmit={save} />}
-      {sign && <C2CForm config={signForm(sign.attr + ' -- ' + sign.material)} onCancel={() => setSign(null)} onSubmit={doSign} />}
+      {sign && <C2CForm config={signForm(sign.attr + ' — ' + sign.material)} onCancel={() => setSign(null)} onSubmit={doSign} />}
       <C2CToast msg={toast} />
     </div>
   );
@@ -1743,7 +2004,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
         { key: 'yield', label: 'Yield (%)', type: 'number', min: 0, max: 100, required: true, half: true },
         { key: 'dev', label: 'Open deviations', type: 'number', min: 0, default: '0' },
       ] }} onCancel={() => setForm(false)} onSubmit={add} />}
-      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition -- §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed disposition recorded to the hash-chained audit trail. Released by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
+      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition — §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed disposition recorded to the hash-chained audit trail. Released by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
         { key: 'decision', label: 'Disposition', type: 'seg', options: ['approved', 'conditional', 'rejected'], default: 'approved', half: true },
         { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Disposition rationale (recorded with the signature)…', required: true },
         { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
@@ -1793,7 +2054,7 @@ export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id:
     const rec = r.type.risk === 'high' ? 'Do not implement until the highest-tier filing in scope is approved. Sequence the comparability work first.'
       : r.type.risk === 'med' ? 'Prepare the moderate-change filing(s) and implement per each market\'s reporting category; some markets allow do-and-tell.'
       : 'Implement under the annual/notification category; document in the next periodic report.';
-    let s = `# Regulatory Change Impact Assessment\n\n*${r.type.label} -- ${r.markets.map((m) => m.toUpperCase()).join(', ')} -- ${r.type.risk} impact*\n\n`;
+    let s = `# Regulatory Change Impact Assessment\n\n*${r.type.label} — ${r.markets.map((m) => m.toUpperCase()).join(', ')} — ${r.type.risk} impact*\n\n`;
     s += `## 1. Change Description\n\n${r.desc}\n\n## 2. Classification\n\n- **Change type**: ${r.type.label}\n- **Assessed risk**: ${r.type.risk}\n- **Frameworks applied**: SUPAC, ICH Q12 (post-approval change management), ICH Q5E (comparability)\n\n## 3. Filing Path by Market\n\n| Market | Reporting category | Regulatory basis |\n|---|---|---|\n`;
     r.paths.forEach((p) => { s += `| ${p.label} | ${p.path[0]} | ${p.path[1]} |\n`; });
     s += `\n## 4. Comparability Requirement\n\n${compBy}\n\n## 5. Supporting Data Expected\n\n- Side-by-side release testing (pre/post change) against the approved specification\n- Stability commitment on the first post-change ${r.type.risk === 'low' ? 'batch' : 'batches'} (ICH Q1A)\n- Updated §3.2.S / §3.2.P sections and, where applicable, method (re)validation\n\n## 6. Recommendation\n\n${rec}\n\n---\n*Generated from the CMC change model (SUPAC / ICH Q12 rules). Route through change control and e-signature before implementation.*\n`;
@@ -1837,11 +2098,11 @@ export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id:
       <CmHead title="Change control" meta="Model a CMC change -> filing path across markets — SUPAC / ICH Q12" ask={ask} suggest={CMC_SUGGEST.change} />
       <div className="pj-card">
         <div className="pj-card-b">
-          <div className="de-field"><label className="de-label">Change type</label>
-            <select className="de-select" value={type} onChange={(e) => { setType(e.target.value); setResult(null); }}>{CMC_CHANGE_TYPES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
+          <div className="de-field"><label className="de-label" htmlFor="cmc-change-type">Change type</label>
+            <select id="cmc-change-type" className="de-select" value={type} onChange={(e) => { setType(e.target.value); setResult(null); }}>{CMC_CHANGE_TYPES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select>
           </div>
-          <div className="de-field"><label className="de-label">Describe the change<span className="req">*</span></label>
-            <textarea className="de-textarea" rows={2} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="e.g. switch the drug-substance supplier from A to B; comparable process, new site" />
+          <div className="de-field"><label className="de-label" htmlFor="cmc-change-desc">Describe the change<span className="req">*</span></label>
+            <textarea id="cmc-change-desc" className="de-textarea" rows={2} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="e.g. switch the drug-substance supplier from A to B; comparable process, new site" />
           </div>
           <div className="de-field"><label className="de-label">Markets</label>
             <div className="cm-mkt">{CMC_MARKETS.map(([id, l]) => (<button key={id} type="button" className="cm-mkt-opt" data-on={markets.includes(id) || undefined} onClick={() => toggle(id)}>{markets.includes(id) ? I.check : I.plus}{l}</button>))}</div>
@@ -1878,7 +2139,7 @@ export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id:
             </div>
             <div className="cm-doc-page"><div className="cm-doc-render" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(memoMd(result)) }} /></div>
           </div>
-          <CmPush label={'Change-control package -- ' + result.type.label} nav={nav} bar />
+          <CmPush label={'Change-control package — ' + result.type.label} nav={nav} bar />
         </div>
       )}
       {/* The market matrix over these same changes — one screen, because "what
@@ -1990,7 +2251,7 @@ function CmGlobal({ nav }: { nav?: (id: string) => void }) {
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Filing path by market</span>
-          <span className="s">{open.length} open {open.length === 1 ? 'change' : 'changes'} -- {CMC_MARKETS.length} markets</span>
+          <span className="s">{open.length} open {open.length === 1 ? 'change' : 'changes'} — {CMC_MARKETS.length} markets</span>
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {open.length === 0 ? (
@@ -2771,7 +3032,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
           <div className="pj-card">
             <div className="pj-card-h">
               <span className="t">Contradiction history</span>
-              <span className="s">{resolved.length} resolved -- {open.length} open</span>
+              <span className="s">{resolved.length} resolved — {open.length} open</span>
             </div>
             <div className="pj-card-b" style={{ padding: 0 }}>
               {contradictions.rows.length === 0 ? (

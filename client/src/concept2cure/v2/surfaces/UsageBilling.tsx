@@ -6,6 +6,7 @@ import { C2CToast, useToast } from '../toast';
 import { GovernedConfirmDialog } from '../../_shared/components/GovernedConfirmDialog';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, type SurfaceActionHandler } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 
 /* ── Per-tier rate limits — canonical rate card, verbatim from the server's
@@ -357,6 +358,24 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
      state: a balance or an invoice list invented from a failed read would be a
      financial claim about the customer's account. */
   const activeId = surface && surface.id === 'billing' ? 'billing' : 'usage';
+
+  /* AnA can open any of the three on-screen tabs — the same click a person
+     makes. `tab` is local display state independent of which registry id
+     (`usage`/`billing`) is mounted, so the SAME handler body is registered
+     under whichever id currently owns the bus slot, mirroring the publish
+     gating just above/below. View-state only — nothing governed here. */
+  const openTab: SurfaceActionHandler = (params) => {
+    const target = params.tab;
+    if (target !== 'usage' && target !== 'billing' && target !== 'limits') {
+      return { ok: false, reason: `"${target}" is not a usage/billing tab.` };
+    }
+    if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
+    setTab(target);
+    return { ok: true, detail: `Opened the ${target} tab` };
+  };
+  useSurfaceActionHandlers(activeId === 'usage' ? 'usage' : null, { 'usage.open-tab': openTab });
+  useSurfaceActionHandlers(activeId === 'billing' ? 'billing' : null, { 'billing.open-tab': openTab });
+
   const anaContext = useMemo(() => {
     const inv = invoicesState.data;
     const cr = creditsState.data;
@@ -490,8 +509,13 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
           <div className="pj-card" style={{ marginBottom: 14 }}>
             <div className="pj-card-h">
               <span className="t">Weekly limits</span>
-              <a
+              {/* A button, not an <a> with no href: this asks AnA a question, it
+                  does not navigate, and without href the anchor was neither
+                  focusable nor activatable from the keyboard. */}
+              <button
+                type="button"
                 className="ub-link"
+                style={{ background: 'none', border: 0, padding: 0, font: 'inherit', cursor: 'pointer' }}
                 onClick={() =>
                   onAsk &&
                   onAsk(
@@ -500,7 +524,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
                 }
               >
                 Learn more about usage limits
-              </a>
+              </button>
             </div>
             <div className="pj-card-b">
               <Panel
@@ -758,7 +782,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
                 audited).
               </>
             ) : usageState.loading ? (
-              <>Loading your plan tier…</>
+              <span role="status">Loading your plan tier…</span>
             ) : (
               <>
                 Weekly limits and overage caps are governed (admin/owner,

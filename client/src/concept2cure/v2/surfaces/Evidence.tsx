@@ -238,7 +238,7 @@ export function Evidence(_props: SurfaceViewProps) {
             </div>
             <div className="gri-result-body">
               {loading ? (
-                <div className="gri-result-sum" style={{ opacity: 0.7 }}>
+                <div role="status" className="gri-result-sum" style={{ opacity: 0.7 }}>
                   Searching the corpus for “{asked}”…
                 </div>
               ) : error ? (

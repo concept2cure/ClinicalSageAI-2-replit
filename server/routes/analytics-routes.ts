@@ -15,6 +15,7 @@ import { analyzeText } from '../openai-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { powerTwoSampleMeans } from '../services/stats/assurance';
 import { csvRow } from '../utils/csv';
+import { serverError } from '../lib/api-response';
 
 const log = createScopedLogger('analytics-routes');
 
@@ -144,11 +145,7 @@ router.post('/upload-protocol', upload.single('file'), async (req, res) => {
         }
       } catch (error) {
         log.error('PDF extraction error:', error);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to extract text from PDF',
-          error: (error as Error).message,
-        });
+        return serverError(res, log, 'uploading protocol', error);
       }
     } else if (
       [
@@ -186,11 +183,7 @@ For best results, please use PDF format.`;
       analysisOutput = result.stdout;
     } catch (error) {
       log.error('Analysis execution error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to analyze protocol content',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'uploading protocol', error);
     }
 
     // Score the protocol confidence
@@ -285,11 +278,7 @@ For best results, please use PDF format.`;
     res.json(result);
   } catch (error) {
     log.error('Error processing protocol:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error processing protocol',
-      error: (error as Error).message,
-    });
+    return serverError(res, log, 'uploading protocol', error);
   }
 });
 
@@ -334,11 +323,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       fs.writeFileSync(tempFilePath, text);
     } catch (error) {
       log.error('Error saving temporary file:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error processing protocol text',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'analysing protocol text', error);
     }
 
     // Call the deep CSR analyzer
@@ -363,11 +348,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       }
 
       log.error('Analysis execution error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to analyze protocol text',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'analysing protocol text', error);
     }
 
     // Score the protocol confidence
@@ -454,11 +435,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
     res.json(result);
   } catch (error) {
     log.error('Error analyzing protocol text:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error analyzing protocol text',
-      error: (error as Error).message,
-    });
+    return serverError(res, log, 'analysing protocol text', error);
   }
 });
 
@@ -819,12 +796,48 @@ For each recommendation, include specific citations to relevant regulatory guide
     // Generate a wisdom trace for the analysis process
     const wisdomTrace = [
       {
+        /*
+         * WO-16C finding 65, follow-up review 2026-09-18. The other two
+         * sections of this trace were corrected and this one was left as it
+         * was. It said:
+         *
+         *   `Sample size of ${sample_size} participants analyzed against benchmarks`
+         *   `Primary endpoint "${primary_endpoint}" evaluated for statistical robustness`
+         *   `Study duration of ${duration_weeks} weeks compared with similar trials`
+         *
+         * Three claims of analysis over one real act. This handler holds no
+         * benchmark set, evaluates no statistical robustness, and compares no
+         * duration against anything — its only comparison is
+         * findSimilarProtocols, which the Evidence Base section below already
+         * reports honestly, usually as "no comparison was performed".
+         *
+         * Worse, `analyzeProtocol` defaults none of these fields: each is
+         * `undefined` when its regex does not match, which for a protocol body
+         * that states no sample size produced the literal sentence "Sample size
+         * of undefined participants analyzed against benchmarks" — and
+         * "Identified undefined protocol for undefined" above it.
+         *
+         * What the handler genuinely does is a pattern extraction over the
+         * submitted text. Each line now names that act and reports what the
+         * extractor found, or that it found nothing.
+         */
         section: 'Protocol Structure',
         insights: [
-          `Identified ${protocolData.phase} protocol for ${protocolData.indication}`,
-          `Sample size of ${protocolData.sample_size} participants analyzed against benchmarks`,
-          `Primary endpoint "${protocolData.primary_endpoint}" evaluated for statistical robustness`,
-          `Study duration of ${protocolData.duration_weeks} weeks compared with similar trials`,
+          protocolData.phase
+            ? `Extracted phase from the submitted text: ${protocolData.phase}`
+            : 'No phase was found in the submitted text',
+          protocolData.indication
+            ? `Classified therapeutic area from the submitted text: ${protocolData.indication}`
+            : 'No therapeutic area could be determined from the submitted text',
+          typeof protocolData.sample_size === 'number'
+            ? `Extracted sample size: ${protocolData.sample_size} participants (not compared against any benchmark here)`
+            : 'No sample size was found in the submitted text',
+          protocolData.primary_endpoint
+            ? `Extracted primary endpoint: "${protocolData.primary_endpoint}" (recorded as stated; not evaluated here)`
+            : 'No primary endpoint was found in the submitted text',
+          typeof protocolData.duration_weeks === 'number'
+            ? `Extracted study duration: ${protocolData.duration_weeks} weeks (not compared against other trials here)`
+            : 'No study duration was found in the submitted text',
         ],
       },
       {
@@ -841,9 +854,15 @@ For each recommendation, include specific citations to relevant regulatory guide
         // — an assertion of comparison, with nothing compared.
         section: 'Evidence Base',
         insights: [
-          similarProtocols.length > 0
-            ? `Compared against ${similarProtocols.length} stored protocol(s) matching indication "${protocolData.indication}"`
-            : `No stored protocol matched indication "${protocolData.indication}", so no comparison against prior protocols was performed`,
+          // Three cases, not two. `indication` became optional on 2026-09-10
+          // (the analyser stopped defaulting it), so "no comparison" now has
+          // two distinct causes and quoting an absent value would have rendered
+          // the literal string indication "undefined".
+          !protocolData.indication
+            ? 'This protocol does not state an indication, so no comparison against prior protocols could be attempted'
+            : similarProtocols.length > 0
+              ? `Compared against ${similarProtocols.length} stored protocol(s) matching indication "${protocolData.indication}"`
+              : `No stored protocol matched indication "${protocolData.indication}", so no comparison against prior protocols was performed`,
           'Regulatory guideline references for FDA, EMA, PMDA and Health Canada are listed under global_regulations. They are a fixed reference set, not a per-protocol assessment.',
         ],
         citations: [
@@ -886,32 +905,58 @@ For each recommendation, include specific citations to relevant regulatory guide
     // scripts/ci/check-no-mock-in-prod-routes.mjs now refuses any hardcoded DOI
     // in server/routes/**, which is what would have caught this.
 
-    // Create comprehensive IND assessment
+    // IND readiness: NOT ASSESSED. Nothing in this handler assesses it.
+    //
+    // WO-16C finding 65, 2026-09-11. This object was a literal that read
+    // neither `content`, nor `protocolData`, nor `detailedAnalysis`, and it
+    // stated, about whatever was submitted:
+    //
+    //   strengths: 'Well-defined primary and secondary endpoints'
+    //              'Clear inclusion/exclusion criteria'
+    //              'Appropriate statistical analysis plan'
+    //              'Adequate safety monitoring provisions'
+    //   regulatory_guidance[0..2]:
+    //              'Aligns with FDA guidance for Phase 2 trials in this
+    //               indication'
+    //              'Consistent with ICH E6(R2) requirements for Good Clinical
+    //               Practice'
+    //              'Meets basic requirements for EMA Scientific Advice
+    //               submissions'
+    //
+    // — for a Phase 1 protocol, for a Phase 3 protocol, for a protocol with no
+    // endpoint, for the string 'hello'. They are adequacy and alignment
+    // verdicts on a document nobody read, and they are written to
+    // exports/<session_id>/analysis_results.json with the caller's session id
+    // on them. They are removed, not relabelled: a verdict nothing computed
+    // has no truthful phrasing. (The identical four strengths and the same
+    // Phase 2 claim were removed from the client's own `genIndReadiness` in
+    // 6866d4fb1; this was the server twin.) The old comment here called them
+    // "static regulatory guidance", which was true of `citations` and of
+    // nothing else.
+    //
+    // What survives is what this handler actually has: a standing checklist of
+    // topics, each naming the published document that governs it. It is
+    // labelled as standing guidance — the same treatment `dropoutPrediction`
+    // below already carries — so no consumer can read it as a finding about
+    // their protocol. The former `improvement_areas` strings ('Additional
+    // details needed on…', 'Strengthen…', 'Expand on…') presupposed a
+    // deficiency in a protocol that was never read, so they are stated as the
+    // topics they are. `status` uses the repo's third state
+    // (server/lib/verification-outcome.ts; the NOT_ASSESSED frameworks in
+    // routes/decision-lineage.ts): not adequate, not inadequate — not
+    // assessed. `score` stays null until a real scorer is connected.
     const indAnalysis = {
       title: 'IND Readiness Assessment',
-      // No deterministic IND-readiness scorer is wired. The score was
-      // previously `Math.floor(Math.random()*15)+75` — a fabricated value.
-      // The qualitative strengths / improvement areas / citations below are
-      // static regulatory guidance and remain. Score is null until a real
-      // scorer is connected.
+      status: 'NOT_ASSESSED' as const,
       score: null as number | null,
-      strengths: [
-        'Well-defined primary and secondary endpoints',
-        'Clear inclusion/exclusion criteria',
-        'Appropriate statistical analysis plan',
-        'Adequate safety monitoring provisions',
-      ],
-      improvement_areas: [
-        'Additional details needed on concomitant medication management (FDA 21 CFR 312.23(a)(6))',
-        'Consider adding interim analysis points (ICH E9, Section 4.5)',
-        'Strengthen data management plan section (ICH E6(R2), Section 5.5)',
-        'Expand on randomization implementation details (EMA Guideline on multiplicity issues)',
-      ],
-      regulatory_guidance: [
-        'Aligns with FDA guidance for Phase 2 trials in this indication',
-        'Consistent with ICH E6(R2) requirements for Good Clinical Practice',
-        'Meets basic requirements for EMA Scientific Advice submissions',
-        'May require additional ethnic considerations for PMDA submission (PMDA: Points to Consider for Ethnic Factors)',
+      basis:
+        'No IND-readiness assessment was performed: this endpoint has no IND-readiness scorer wired. The items below are standing regulatory guidance, not derived from this protocol and not an assessment of it.',
+      standing_guidance: [
+        'Concomitant medication management (FDA 21 CFR 312.23(a)(6))',
+        'Interim analysis points (ICH E9, Section 4.5)',
+        'Data management plan (ICH E6(R2), Section 5.5)',
+        'Randomization implementation details (EMA Guideline on multiplicity issues)',
+        'Ethnic factors for a PMDA submission (PMDA: Points to Consider for Ethnic Factors)',
       ],
       citations: [
         'U.S. Food and Drug Administration. (2023). IND Application Procedures: Clinical Hold. 21 CFR 312.42',
@@ -989,10 +1034,7 @@ For each recommendation, include specific citations to relevant regulatory guide
     res.json(response);
   } catch (error) {
     log.error('Error in demo analysis:', error);
-    res.status(500).json({
-      error: 'Failed to analyze protocol',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, log, 'saving demo analysis', error);
   }
 });
 
@@ -1163,10 +1205,7 @@ router.get('/dashboard', async (req, res) => {
     });
   } catch (error) {
     log.error('Error generating analytics dashboard:', error);
-    res.status(500).json({
-      error: 'Failed to generate analytics dashboard',
-      message: (error as Error).message,
-    });
+    return serverError(res, log, 'loading dashboard', error);
   }
 });
 
@@ -1442,10 +1481,7 @@ router.get('/export', async (req, res) => {
     }
   } catch (error) {
     log.error('Error exporting analytics report:', error);
-    res.status(500).json({
-      error: 'Failed to export analytics report',
-      message: (error as Error).message,
-    });
+    return serverError(res, log, 'exporting', error);
   }
 });
 export default router;

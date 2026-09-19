@@ -1,12 +1,12 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import { parseDraftEnvelope } from './authoring-draft-envelope.js';
 import bcrypt from 'bcryptjs';
 import fs from 'fs';
 import path from 'path';
 // spawn — reserved for future PDF generation pipeline
 import crypto from 'crypto';
 // Lazy load docx to prevent startup failures
-import { PDFDocument } from 'pdf-lib';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { enforceOrgMembership } from '../middleware/orgMembership';
@@ -44,9 +44,13 @@ import {
   verifyLedger,
   type RevisionOrigin,
   machineContributors,
+  acceptedMachineText,
+  ANA_MACHINE_AUTHOR_ID,
+  MACHINE_AUTHOR_IDS,
 } from '../services/authoring/revision-ledger';
 import {
   checkSectionWritable,
+  checkDocumentWritable,
   LOCKED_DOCUMENT_STATUSES as LOCKED_STATUSES,
 } from '../services/authoring/document-lock';
 
@@ -146,33 +150,11 @@ router.use((req: Request, res: Response, next: any) => {
   // ~60s cache as authenticateToken.
   return enforceOrgMembership(req, res, next);
 });
-const ALLOWED_UPLOAD_MIME_TYPES = new Set([
-  'application/pdf',
-  'text/plain',
-  'application/json',
-  'application/xml',
-  'text/xml',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-]);
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: '/tmp',
-    filename: (_req, file, cb) => {
-      const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-      cb(null, `${Date.now()}-${safeName}`);
-    },
-  }),
-  limits: {
-    fileSize: 25 * 1024 * 1024,
-    files: 5,
-  },
-  fileFilter: (_req, file, cb) => {
-    if (!ALLOWED_UPLOAD_MIME_TYPES.has(file.mimetype)) {
-      return cb(new Error('Unsupported file type'));
-    }
-    cb(null, true);
-  },
-});
+/* A disk-backed multer instance and its MIME allowlist stood here, attached
+   to no route. The two upload routes this file does serve build their own
+   memory-storage instances further down (imageUpload, docxImport); an unused
+   /tmp writer with a 25MB limit was a configuration nobody could reach and
+   nobody was maintaining. */
 
 // Use centralized database pool
 const pool = getPool();
@@ -2332,6 +2314,12 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
        only the ones it recognises as non-human, because a human co-author is
        already named by created_by. */
     const contributors = machineContributors(req.body?.acceptedAuthors);
+    /* And the accepted text itself. `contributors` says who drafted SOME of
+       this save; this says WHICH words, so the lineage gate can record the
+       machine's clauses as the machine's — accepted by this actor — instead
+       of as this actor's own assertion. Same closed vocabulary, same boundary:
+       an author the server does not name is dropped here. */
+    const acceptedMachine = acceptedMachineText(req.body?.acceptedMachineText);
     const tenantId = getTenantId(req);
     const updatedByUser = getActorId(req);
     if (!updatedByUser) {
@@ -2556,6 +2544,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
         { documentTable: 'authoring_sections', documentId: String(sectionId) },
         content,
         updatedByUser,
+        { acceptedMachineText: acceptedMachine },
       );
 
       // ── Commit the working copy into the filing ─────────────────────────────
@@ -2571,6 +2560,10 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           actorId: String(updatedByUser),
           tenantId,
           reason: typeof req.body?.changeReason === 'string' ? req.body.changeReason : undefined,
+          // Same signal createRevision's `origin` already uses two blocks up.
+          // Only the machine-author id is ever written here — never a guessed
+          // 'human' for the zero-contributor case, see commit-section-to-filing.ts.
+          draftSource: contributors.length > 0 ? contributors[0].id : null,
         });
       }
 
@@ -3621,35 +3614,14 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
           callerModule: 'authoring-router/generate-draft',
         });
 
-        // Parse the structured envelope tolerantly. On ANY shortfall, fall back to
-        // treating the whole response as the draft with no attributions — the draft
-        // still lands and is attributed by verified quotes + author lineage
-        // (Phase 3). Structured paraphrase is additive; it must never break drafting.
-        let generatedContent = '';
-        let modelAttributions: Array<{ quote: string; src: number }> = [];
-        {
-          const rawResponse = gwResponse.content?.trim() || '';
-          let parsed: any = null;
-          try {
-            const fenced = rawResponse.replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
-            const start = fenced.indexOf('{');
-            const end = fenced.lastIndexOf('}');
-            if (start !== -1 && end > start) parsed = JSON.parse(fenced.slice(start, end + 1));
-          } catch {
-            parsed = null;
-          }
-          if (parsed && typeof parsed.content === 'string' && parsed.content.trim()) {
-            generatedContent = parsed.content.trim();
-            if (Array.isArray(parsed.attributions)) {
-              modelAttributions = parsed.attributions
-                .filter((a: any) => a && typeof a.quote === 'string' && Number.isInteger(Number(a.src)))
-                .map((a: any) => ({ quote: String(a.quote), src: Number(a.src) }));
-            }
-          } else {
-            // No usable structured content — treat the response as plain prose.
-            generatedContent = rawResponse;
-          }
-        }
+        // Parse the structured envelope tolerantly. On ANY shortfall the whole
+        // response becomes the draft with no attributions — the draft still lands
+        // and is attributed by verified quotes + author lineage (Phase 3).
+        // Structured paraphrase is additive; it must never break drafting. The
+        // parser is pure and lives in authoring-draft-envelope.ts so the malformed
+        // shapes it has to survive are unit-testable without the route.
+        const { content: generatedContent, attributions: modelAttributions } =
+          parseDraftEnvelope(gwResponse.content);
         if (generatedContent) {
           // Park the draft + the sources it came from so the accept endpoint can
           // record verified span-level source lineage (Phase 3). Best-effort:
@@ -4003,7 +3975,15 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         // source ids already resolved. The gate records each still-present,
         // still-retrieved one as a usage='paraphrased' span — an assertion behind
         // the verified-quote pass, never ahead of it.
-        { assertions: candidate.assertions },
+        {
+          assertions: candidate.assertions,
+          // The accepted content IS the machine's draft wherever the author
+          // left it unedited: a clause verbatim in what was generated is
+          // recorded as AnA's, accepted by this actor; a clause the author
+          // changed is the author's own. Attribution by verbatim match against
+          // the draft as generated — never by a flag on the whole save.
+          acceptedMachineText: [{ authorId: ANA_MACHINE_AUTHOR_ID, text: candidate.content }],
+        },
       );
 
       /* AND THE ACCEPTED DRAFT REACHES THE FILING.
@@ -4034,6 +4014,11 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
           typeof req.body?.changeReason === 'string' && req.body.changeReason.trim()
             ? req.body.changeReason
             : undefined,
+        // Unconditional, unlike the manual-save call site above: this whole
+        // route exists to accept an AI draft, so the content it commits is by
+        // definition AI-drafted — there is no ambiguous zero-contributor case
+        // here the way there is on an ordinary interactive save.
+        draftSource: 'ana',
       });
 
       await client.query('COMMIT');
@@ -4375,41 +4360,15 @@ router.get('/stats', async (req: Request, res: Response) => {
   }
 });
 
-// ============= Helper Functions for Step 5 =============
-
-function sha256(obj: any): string {
-  return crypto
-    .createHash('sha256')
-    .update(typeof obj === 'string' ? obj : JSON.stringify(obj))
-    .digest('hex');
-}
-
-// Build DOCX from sections with full 21 CFR Part 11 compliance
-
-function extractPlainText(contentJson: any): string {
-  // Minimal safe extractor; UI remains rich. Improve as needed.
-  try {
-    const walk = (node: any): string => {
-      if (!node) return '';
-      if (Array.isArray(node)) return node.map(walk).join(' ');
-      if (node.type === 'text') return node.text || '';
-      const kids = node.content ? walk(node.content) : '';
-      return kids;
-    };
-    return walk(contentJson) || '';
-  } catch {
-    return '';
-  }
-}
-
-// Build trivial PDF (wrapper) – optional; DOCX is primary
-async function buildPdfFromDocx(docxBuffer: Buffer): Promise<Buffer> {
-  // If you already have a proper PDF renderer, use it instead.
-  // This creates an empty PDF with the DOCX attached as a file (placeholder).
-  const pdf = await PDFDocument.create();
-  const bytes = await pdf.save();
-  return Buffer.from(bytes);
-}
+/* The three "Step 5 helpers" that stood here — sha256(), extractPlainText()
+   and buildPdfFromDocx() — were called by nothing. buildPdfFromDocx was the
+   one worth naming: it took a DOCX buffer, ignored it, and returned an EMPTY
+   PDF, with a comment calling that a placeholder. A helper that answers a
+   request for a rendered document with a blank one is the fabrication this
+   repo refuses; leaving it in place meant the next caller would ship empty
+   exports and see nothing wrong. Hashing goes through sha256Hex / crypto
+   directly at each site, which is where the rest of the file already does it.
+*/
 
 // ============= Step 5 Export, Submit, Sign, Freeze Endpoints =============
 
@@ -5039,7 +4998,10 @@ router.get('/sections/:sectionId/tokens', async (req: Request, res: Response) =>
 // POST /api/authoring/sections/:sectionId/refresh-token - Refresh a specific token
 router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Response) => {
   try {
-    const { sectionId } = req.params;
+    /* :sectionId is addressing only. A citation is identified by cite_id within
+       the caller's tenant, and refreshSourceCitation scopes on the tenant — the
+       section in the path is not a second scope and was never read as one, so
+       it is not bound here rather than bound and ignored. */
     const { cite_id } = req.body;
     const tenantId = getTenantId(req);
 
@@ -6930,6 +6892,45 @@ router.post('/users/pin', async (req: Request, res: Response) => {
 
 // ── Tracked Change Decisions (persist accept/reject) ──────────────────────────
 
+/**
+ * Who PROPOSED a tracked change, for the audit event — never validated against
+ * a roster, because there is no roster this could safely check. `authorId` on
+ * a human mark is the editor's own email (client/src/concept2cure/v2/editor/
+ * suggestions.ts), not a numeric user id, so it cannot be matched against
+ * doc_permissions or organization_users; a legitimate proposer can also be a
+ * live co-author whose mark predates any grant, a person whose grant was later
+ * revoked, or (per suggestions.ts's own doc comment) simply the case where the
+ * proposer and the decider are different people entirely — refusing an
+ * unrecognised proposer would drop a verified, hash-audited DECISION to guard
+ * an unverifiable PROPOSAL, which is the wrong thing to fail closed on here.
+ *
+ * What IS checkable is whether the claimed proposer is this server's own AI
+ * system, because that identity is a closed, server-owned vocabulary
+ * (MACHINE_AUTHOR_IDS — the same list machineContributors validates against
+ * for the revision ledger). So the one thing this function does is stop a
+ * caller from relabelling that identity: when `authorId` names a machine
+ * author, the CANONICAL name is recorded and the caller's own `authorName` is
+ * discarded, exactly as machineContributors discards it for the same reason
+ * ("the id is the claim being checked, and echoing a caller-supplied display
+ * name would put unvalidated text in the attribution position of a filed
+ * record" — revision-ledger.ts). Everything else is recorded as what it is:
+ * text the editing client asserted, not a verified identity — the audit rail
+ * already renders it qualified as "(proposed by X, as recorded by the editing
+ * client)" (DocumentAuthoring.tsx), and `proposedByVerified` carries that same
+ * fact into the stored row for any reader that does not go through the rail.
+ */
+function describeProposer(authorName: unknown, authorId: unknown): {
+  proposedBy?: string;
+  proposedByVerified?: boolean;
+} {
+  if (typeof authorId === 'string' && MACHINE_AUTHOR_IDS[authorId]) {
+    return { proposedBy: MACHINE_AUTHOR_IDS[authorId], proposedByVerified: true };
+  }
+  const claimed = typeof authorName === 'string' ? authorName : typeof authorId === 'string' ? authorId : null;
+  if (!claimed) return {};
+  return { proposedBy: claimed.slice(0, 200), proposedByVerified: false };
+}
+
 // authoring_tracked_change_decisions is now provisioned by
 // db/migrations/20260730_authoring_runtime_ddl.sql. Retained as a no-op so
 // existing call sites need no change; the router no longer issues runtime DDL.
@@ -6971,6 +6972,17 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
       });
     }
 
+    /* This route sits under /documents/:id, outside the /sections/:sectionId
+       prefix guard that refuses a FROZEN/APPROVED document on every other
+       authoring write. Nothing else here resolves the parent document at all,
+       so an accept against a sealed filing reached the INSERT unconditionally
+       and the hash-chained audit event below recorded a decision the record
+       itself was no longer able to accept. */
+    const lock = await checkDocumentWritable(pool, String(artifactId), tenantId);
+    if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
+      return res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason });
+    }
+
     const result = await pool.query(
       `INSERT INTO authoring_tracked_change_decisions
          (artifact_id, change_id, decision, user_id, user_name, tenant_id)
@@ -7003,12 +7015,11 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
         ...(typeof req.body?.sectionId === 'string' ? { sectionId: req.body.sectionId } : {}),
         /* Who PROPOSED the change, which is not who decided it — that is the
            audit row's own actor. A redline record that cannot tell the two
-           apart says nothing about review at all. */
-        ...(typeof req.body?.authorName === 'string'
-          ? { proposedBy: req.body.authorName }
-          : typeof req.body?.authorId === 'string'
-            ? { proposedBy: req.body.authorId }
-            : {}),
+           apart says nothing about review at all. See describeProposer above
+           for why this is canonicalised only for a machine author and
+           otherwise recorded as caller-asserted text, never validated as a
+           human identity. */
+        ...describeProposer(req.body?.authorName, req.body?.authorId),
         ...(typeof req.body?.at === 'string' ? { proposedAt: req.body.at } : {}),
       },
       tenantId
@@ -7055,6 +7066,15 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
       });
     }
 
+    // See the single-decision route above: this endpoint is equally outside
+    // the /sections/:sectionId lock guard, and "Accept all" is the single
+    // click by which an entire AI draft is adopted — the case with the most
+    // to lose from writing past a sealed document.
+    const lock = await checkDocumentWritable(pool, String(artifactId), tenantId);
+    if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
+      return res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason });
+    }
+
     // Upsert each decision
     const results = [];
     for (const changeId of changeIds) {
@@ -7078,17 +7098,24 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
        that looks complete is worse than one that admits its limit. */
     const MAX_SUMMARISED = 20;
     const rawChanges = Array.isArray(req.body?.changes) ? req.body.changes : [];
-    const summarised = rawChanges.slice(0, MAX_SUMMARISED).map((c: any) => ({
+    const summarised = rawChanges.slice(0, MAX_SUMMARISED).map((c: any) => {
+      // See describeProposer above (single-decision route): canonical name for
+      // a recognised machine author, otherwise caller-asserted text flagged as
+      // such via proposedByVerified.
+      const proposer = describeProposer(c?.authorName, c?.authorId);
+      return {
       changeId: typeof c?.changeId === 'string' ? c.changeId : null,
       changeType: typeof c?.changeType === 'string' ? c.changeType : null,
-      proposedBy:
-        typeof c?.authorName === 'string'
-          ? c.authorName
-          : typeof c?.authorId === 'string'
-            ? c.authorId
-            : null,
+      proposedBy: proposer.proposedBy ?? null,
+      proposedByVerified: proposer.proposedByVerified ?? null,
       text: typeof c?.text === 'string' ? c.text.slice(0, 200) : null,
-    }));
+      // The single-decision route above records this; the client already sends
+      // it (DocumentAuthoring.tsx's flushDecisions puts `at` on every change in
+      // the batch), and "Accept all" is the case that adopts the most text at
+      // once — the case that most needs to say when each change was proposed.
+      proposedAt: typeof c?.at === 'string' ? c.at : null,
+      };
+    });
     await createAuditEvent(
       artifactId,
       'tracked_change_bulk_decision',
@@ -7097,6 +7124,9 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
         changeIds,
         decision,
         count: changeIds.length,
+        // Same client field the single route records at the top level of its
+        // metadata (authoring.router.ts, POST /documents/:id/tracked-change-decisions).
+        ...(typeof req.body?.sectionId === 'string' ? { sectionId: req.body.sectionId } : {}),
         ...(summarised.length > 0 ? { changes: summarised } : {}),
         ...(rawChanges.length > MAX_SUMMARISED
           ? { changesOmittedFromSummary: rawChanges.length - MAX_SUMMARISED }

@@ -25,6 +25,7 @@ import {
   SR_ONLY_STYLE,
 } from '../hooks/useChatUpload';
 import { I } from './icons';
+import { AppMentionMenu, useAppMentions } from './appMentions';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
@@ -36,6 +37,7 @@ import { stashNavParamsForTarget } from './navParams';
 import { listDemoScripts } from '@shared/navigation/demo-scripts';
 import { applySurfaceAction, validateDriveAction } from './surfaceActions';
 import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
+import { MAX_INTERJECTION_CHARS } from '@shared/ana/run-control-limits';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
@@ -567,7 +569,11 @@ export function AnaRail({
   onResume?: () => void;
   onStop?: () => void;
   /** Splices a steer into the next round. Capped server-side at 2000 chars. */
-  onSteer?: (message: string) => void;
+  /* Returns whether the server ACCEPTED the steer, so the composer can keep
+     the text on a refusal instead of silently eating it. `void` is still
+     allowed: a caller that reports nothing is treated as accepted, which is
+     the pre-existing behaviour rather than a fabricated failure. */
+  onSteer?: (message: string) => void | boolean | Promise<boolean | void>;
   /** Lets a welcome starter open a real surface (e.g. the upload flow). */
   onNav?: (id: string) => void;
   /** Scopes chat uploads so extracted text lands in that project's memory.
@@ -608,6 +614,11 @@ export function AnaRail({
      RUNNING turn, a draft starts the next one, and sharing one buffer would
      make it ambiguous which a half-typed sentence was about to do. */
   const [steer, setSteer] = React.useState('');
+  /* Steer submit state. `steerRefused` exists because the only
+     acknowledgement this control has is the box emptying, so a refusal has to
+     say something rather than look like a send. */
+  const [steerBusy, setSteerBusy] = React.useState(false);
+  const [steerRefused, setSteerRefused] = React.useState(false);
   const [agent, setAgent] = React.useState(false);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
@@ -620,6 +631,11 @@ export function AnaRail({
   const agentActivity = useAgentActivity(workVisible, streaming);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const imgRef = React.useRef<HTMLInputElement>(null);
+  /* `@app` — the inline way to name a capability (appMentions.tsx). The menu
+     opens on `@`, inserts `@<label>`, and the server reads the label back
+     against the same vocabulary; nothing else travels. */
+  const draftRef = React.useRef<HTMLTextAreaElement>(null);
+  const mentions = useAppMentions(draft, setDraft, draftRef);
 
   /* The attach button used to be a lie.
    *
@@ -1054,49 +1070,110 @@ export function AnaRail({
           </div>
         )}
         {/* Mid-run control.
-            Every action here lands at a ROUND BOUNDARY, not instantly — the
-            loop checks between rounds — so the copy says "after this step"
-            rather than implying the tool in flight stops dead. Steering is the
-            reason this exists: a reviewer watching AnA work a question the
-            wrong way could previously only wait for her to finish, while the
-            server has spliced steers into the next round, and recorded them in
-            the decision lineage, all along. */}
+            The three actions have three different scopes, and the copy below
+            says which is which rather than one blanket promise:
+              Stop   cuts the step in flight — the model call and the tools are
+                     aborted, so it is "Stopping…", acknowledged by the server.
+              Pause  holds at the next ROUND BOUNDARY, deliberately: killing a
+                     tool to pause throws the work away and then redoes it, so
+                     "after this step" is the honest label and stays.
+              Steer  applies at the next round.
+            Steering is the reason this exists: a reviewer watching AnA work a
+            question the wrong way could previously only wait for her to finish,
+            while the server has spliced steers into the next round, and
+            recorded them in the decision lineage, all along.
+            Pause and Steer are offered only when the run is durably
+            controllable; Stop is always offered because aborting the request
+            needs no run record. */}
         {streaming && (onPause || onStop || onSteer) && (
           <div className="ana-runctl" role="group" aria-label="Control this run">
             <span className="ana-runctl-state">
               <span
-                className={runStatus === 'paused' ? 'ana-runctl-dot is-paused' : 'ana-runctl-dot'}
+                className={
+                  runStatus === 'paused' || runStatus === 'cancelled'
+                    ? 'ana-runctl-dot is-paused'
+                    : 'ana-runctl-dot'
+                }
                 aria-hidden="true"
               >
                 {runStatus === 'paused' ? I.pause : I.dot}
               </span>
-              {runStatus === 'paused' ? 'Paused after this step' : 'Working'}
+              {/* Pause still lands at a round boundary — deliberately: killing a
+                  tool to pause throws the work away and then redoes it. Stop
+                  now cuts the step in flight, so the copy must stop saying
+                  "after this step" for BOTH, and must not claim stopped before
+                  the server says so. */}
+              {runStatus === 'paused'
+                ? 'Paused after this step'
+                : runStatus === 'cancelled'
+                  ? 'Stopping…'
+                  : 'Working'}
             </span>
 
+            {/* ── The box used to empty whether or not the steer was accepted ──
+                `onSteer(v); setSteer('')` cleared the input synchronously, before
+                anything knew the server's answer — and `interject` answers with a
+                boolean that every call site discarded. A 404 (run already gone), a
+                409, a validation refusal and a dropped connection all looked
+                identical to success: the sentence vanished from the box, which is
+                the only acknowledgement this control has, and nothing anywhere
+                recorded it. The person had typed an instruction into nothing.
+
+                Now the text is only cleared once the server has accepted it, and a
+                refusal says so and leaves the sentence where it is, so it can be
+                sent again without retyping. */}
             {onSteer && (
               <form
                 className="ana-runctl-steer"
                 onSubmit={(e) => {
                   e.preventDefault();
                   const v = steer.trim();
-                  if (!v) return;
-                  onSteer(v);
-                  setSteer('');
+                  if (!v || steerBusy) return;
+                  setSteerBusy(true);
+                  setSteerRefused(false);
+                  void Promise.resolve(onSteer(v))
+                    .then((accepted) => {
+                      // `undefined` means the handler reports nothing either way;
+                      // treating that as accepted keeps the old behaviour for any
+                      // caller that has not been widened, rather than telling the
+                      // person their steer failed on no evidence.
+                      if (accepted === false) {
+                        setSteerRefused(true);
+                        return;
+                      }
+                      setSteer('');
+                    })
+                    .catch(() => setSteerRefused(true))
+                    .finally(() => setSteerBusy(false));
                 }}
               >
                 <input
                   type="text"
                   className="ana-runctl-input"
                   value={steer}
-                  maxLength={2000}
-                  onChange={(e) => setSteer(e.target.value)}
+                  maxLength={MAX_INTERJECTION_CHARS}
+                  onChange={(e) => {
+                    setSteer(e.target.value);
+                    if (steerRefused) setSteerRefused(false);
+                  }}
                   placeholder="Steer this run…"
                   aria-label="Steer this run"
+                  aria-invalid={steerRefused || undefined}
+                  aria-describedby={steerRefused ? 'ana-runctl-steer-err' : undefined}
                 />
-                <button type="submit" className="ana-runctl-go" disabled={!steer.trim()}>
-                  Steer
+                <button
+                  type="submit"
+                  className="ana-runctl-go"
+                  disabled={!steer.trim() || steerBusy}
+                >
+                  {steerBusy ? 'Sending…' : 'Steer'}
                 </button>
               </form>
+            )}
+            {steerRefused && (
+              <span id="ana-runctl-steer-err" className="ana-runctl-err" role="status">
+                Not sent — AnA did not accept this steer. The text is still here.
+              </span>
             )}
 
             <div className="ana-runctl-actions">
@@ -1161,17 +1238,25 @@ export function AnaRail({
             {statusMessage}
           </span>
           <textarea
+            ref={draftRef}
             rows={1}
-            placeholder={agent ? 'Describe a task for AnA to carry out…' : 'Ask AnA, or describe a task…'}
+            placeholder={agent ? 'Describe a task for AnA to carry out…' : 'Ask AnA, type @ to name an app…'}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            aria-autocomplete="list"
+            aria-controls={mentions.open ? 'ana-rail-mentions' : undefined}
+            aria-expanded={mentions.open}
+            onChange={(e) => { setDraft(e.target.value); mentions.sync(e.currentTarget); }}
+            onSelect={(e) => mentions.sync(e.currentTarget)}
+            onBlur={() => mentions.close()}
             onKeyDown={(e) => {
+              if (mentions.onKeyDown(e)) return;
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 send();
               }
             }}
           />
+          <AppMentionMenu api={mentions} id="ana-rail-mentions" />
           <input
             ref={fileRef}
             type="file"
@@ -1342,11 +1427,20 @@ export function AnaRail({
                 type="button"
                 className="ana-menu-item"
                 onClick={() => {
-                  onSend('Show slash commands and skills');
+                  // Start a command in the composer: the menu of commands the
+                  // server parses opens from the leading `/`.
                   setPlusOpen(false);
+                  setDraft('/');
+                  requestAnimationFrame(() => {
+                    const el = draftRef.current;
+                    if (!el) return;
+                    el.focus();
+                    el.setSelectionRange(1, 1);
+                    mentions.sync(el);
+                  });
                 }}
               >
-                <span className="ico">{I.sparkles}</span>Slash commands &amp; skills
+                <span className="ico">{I.terminal}</span>Slash commands
               </button>
             </div>
           )}

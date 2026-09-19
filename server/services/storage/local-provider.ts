@@ -89,7 +89,29 @@ export class LocalStorageProvider implements IStorageProvider {
     const metaPath = path.join(verPath, '_meta.json');
     if (!fs.existsSync(metaPath)) return null;
 
-    const meta: VersionMeta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    let meta: VersionMeta;
+    try {
+      meta = JSON.parse(fs.readFileSync(metaPath, 'utf8')) as VersionMeta;
+    } catch {
+      // A sidecar that will not parse is not an empty result — but there is
+      // nothing to serve either, and the caller's contract here is "missing".
+      return null;
+    }
+
+    // The owner `put` stamped on the sidecar must agree with the caller's org.
+    // findVersionDir already roots the search at that org, so this only differs
+    // when a version directory has been RELOCATED under the wrong org — moved
+    // by hand, restored from the wrong backup, or synced badly. The path then
+    // says one tenant and the record says another, and serving it would be a
+    // cross-tenant read that the directory scoping cannot see. The S3 provider
+    // already enforces exactly this (`meta.metadata.orgId` strict equality).
+    if (meta.metadata?.orgId !== String(orgId)) return null;
+
+    // `filename` comes back off disk, so it is not trusted to be a plain name:
+    // a traversing value resolves outside the version directory and would serve
+    // an arbitrary file. Refuse anything that is not its own basename.
+    if (!meta.filename || path.basename(meta.filename) !== meta.filename) return null;
+
     const filePath = path.join(verPath, meta.filename);
     if (!fs.existsSync(filePath)) return null;
 
@@ -106,6 +128,21 @@ export class LocalStorageProvider implements IStorageProvider {
   async delete(vaultVersionId: string, orgId: number): Promise<boolean> {
     const verPath = this.findVersionDir(vaultVersionId, orgId);
     if (!verPath) return false;
+
+    // Same owner re-check as `get`, and for a stronger reason: a relocated
+    // version directory read by the wrong tenant is a disclosure, but DELETED
+    // by the wrong tenant it is gone. Refuse rather than destroy.
+    const metaPath = path.join(verPath, '_meta.json');
+    if (fs.existsSync(metaPath)) {
+      try {
+        const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8')) as VersionMeta;
+        if (meta.metadata?.orgId !== String(orgId)) return false;
+      } catch {
+        // An unreadable sidecar cannot establish ownership, so it does not
+        // authorize a destructive operation.
+        return false;
+      }
+    }
 
     fs.rmSync(verPath, { recursive: true, force: true });
     return true;

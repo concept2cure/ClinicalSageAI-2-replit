@@ -151,7 +151,7 @@ const ENFORCED_APPROVAL_RULES: Array<{
     title: 'Machine-only segments are never approvable',
     detail:
       'Machine translation is a draft accelerator. A segment still carrying method "machine" cannot reach approved — only human and mt_postedited can.',
-    evidence: "approvableMethods: ['human', 'mt_postedited'] -- rejects with method_not_approvable.",
+    evidence: "approvableMethods: ['human', 'mt_postedited'] — rejects with method_not_approvable.",
   },
   {
     id: 'back-translation',
@@ -371,7 +371,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
         `${orgPath}/profile`,
         { name: name.trim(), reason: why },
       );
-      if (r.error) failures.push(`Organization name -- ${saveFailure(r.error, r.status)}`);
+      if (r.error) failures.push(`Organization name — ${saveFailure(r.error, r.status)}`);
       else setSavedName(r.data?.organization?.name ?? name.trim());
     }
 
@@ -387,7 +387,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
         settings: { translation: payload },
         reason: why,
       });
-      if (r.error) failures.push(`Translation workspace -- ${saveFailure(r.error, r.status)}`);
+      if (r.error) failures.push(`Translation workspace — ${saveFailure(r.error, r.status)}`);
       else setSavedTxw(payload);
     }
 
@@ -568,14 +568,29 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load your organization record"
-          hint={`${loadError} -- nothing below is editable until the organization record loads, so no change can be lost.`}
+          hint={`${loadError} — nothing below is editable until the organization record loads, so no change can be lost.`}
         />
       )}
-      {saveNote && (
-        <div className="txw-help" data-tone={saveNote.tone === 'warn' ? 'warn' : undefined}>
-          {saveNote.tone === 'warn' ? I.alertTriangle : I.checkCircle} {saveNote.text}
-        </div>
-      )}
+      {/* The result of a governed, audited PATCH. It was a plain div that
+          appeared after the write, so the only report that "Save to
+          organization" had landed — or been refused with "Not saved: …" — was
+          an icon swap and a tint. The region is rendered unconditionally and
+          filled conditionally, because a live region has to exist before its
+          content changes for the change to be announced reliably; empty, it has
+          no class and so no box. */}
+      <div
+        className={saveNote ? 'txw-help' : undefined}
+        data-tone={saveNote?.tone === 'warn' ? 'warn' : undefined}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {saveNote ? (
+          <>
+            {saveNote.tone === 'warn' ? I.alertTriangle : I.checkCircle} {saveNote.text}
+          </>
+        ) : null}
+      </div>
 
       <div className="txw-settings">
         {/* -- Org profile -- */}
@@ -646,7 +661,13 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                   ))}
                 </div>
                 {clientTypeStatus && (
+                  /* Cycles through "Saving to governed org profile…" and its
+                     outcome. Choosing a client-type chip fires a governed write
+                     and the chips merely disable and re-enable, so without this
+                     the write was silent from start to finish. */
                   <span
+                    role="status"
+                    aria-live="polite"
                     className="txw-help"
                     data-tone={
                       saveState.status === 'error' || profile.status === 'error'
@@ -723,7 +744,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                   translation service does not read them yet (project creation
                   takes its own target language, and draft generation routes
                   through the AnA gateway's model policy). Stating that once,
-                  here, is better than three hedged row captions -- and better
+                  here, is better than three hedged row captions — and better
                   than letting an administrator assume enforcement. */}
               <div className="txw-help" data-tone="warn">
                 {I.info} Declared org defaults. These three persist on the organization record and
@@ -757,7 +778,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                             fontSize: 10,
                           }}
                         >
-                          -- {l.agency}
+                          — {l.agency}
                         </span>
                       </button>
                     ))}
@@ -825,7 +846,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
               </div>
 
-              {/* Enforced, not configurable -- see the card comment above Setup.
+              {/* Enforced, not configurable — see the card comment above Setup.
                   These render as locked facts because approvalGuard() applies
                   DEFAULT_GUARDRAILS to every approval and reads no org setting;
                   a switch here would have let an administrator believe they had
@@ -871,7 +892,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
   );
 }
 
-/* ════════════ Audit trail -- immutable hash-chain viewer (ss11.10(e)) ════════════
+/* ════════════ Audit trail — immutable hash-chain viewer (ss11.10(e)) ════════════
    Live-anchored to GET /api/audit-trail/ledger (mounted in
    server/bootstrap/register-regulatory-routes.ts, router
    server/routes/audit-trail-ledger.routes.ts). REAL: an org-scoped, newest-first
@@ -1139,7 +1160,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             {chainStatus.intact ? 'Hash chain intact' : 'Chain verification failed'}
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--text-400)', marginTop: 2 }}>
-            {chainStatus.total} entries -- {chainStatus.valid}/{chainStatus.total} links
+            {chainStatus.total} entries — {chainStatus.valid}/{chainStatus.total} links
             verified — SHA-256 — append-only ledger
           </div>
         </div>
@@ -1161,6 +1182,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
         <div className="vault-search" style={{ flex: '1 1 240px', maxWidth: 360 }}>
           <span className="ico">{I.search}</span>
           <input
+            aria-label="Search audit trail entries"
             placeholder="Search entries..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -1352,7 +1374,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
               marginBottom: 12,
             }}
           >
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{entry.id} -- Entry detail</div>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{entry.id} — Entry detail</div>
             <button className="tbtn" aria-label="Close" onClick={() => setSel(null)} style={{ fontSize: 16 }}>
               {I.close}
             </button>
@@ -1644,7 +1666,7 @@ function mapLiveCatalog(payload: unknown, orgTier: string | null): AppGroup[] {
     const cat = mods[0]?.category || 'other';
     return {
       group: cat.charAt(0).toUpperCase() + cat.slice(1),
-      note: `${mods.length} module${mods.length === 1 ? '' : 's'} -- live subscription state for this organization`,
+      note: `${mods.length} module${mods.length === 1 ? '' : 's'} — live subscription state for this organization`,
       apps: mods.map((m) => ({
         id: m.moduleId,
         name: m.name,
@@ -1790,15 +1812,15 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       );
       if (!res.ok) {
         setOn(groupIdx, appId, !next);
-        fireToast(`Could not ${next ? 'enable' : 'disable'} ${label} -- sign in required`);
+        fireToast(`Could not ${next ? 'enable' : 'disable'} ${label} — sign in required`);
         return;
       }
       fireToast((next ? 'Enabled ' : 'Disabled ') + label);
     } catch (e) {
-      // Revert -- never report a write that did not happen.
+      // Revert — never report a write that did not happen.
       setOn(groupIdx, appId, !next);
       fireToast(
-        `Could not ${next ? 'enable' : 'disable'} ${label} -- ` +
+        `Could not ${next ? 'enable' : 'disable'} ${label} — ` +
           // Only apiRequest's own error has been through the envelope reader;
           // a bare rejection is the fetch failing ("Failed to fetch").
           (e instanceof ApiRequestError && e.message ? e.message : 'request failed')
@@ -1886,7 +1908,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   return (
     <div className="page-inner">
       <AdminHeader
-        eyebrow="Workspace -- /api/module-subscriptions"
+        eyebrow="Workspace — /api/module-subscriptions"
         title="Apps catalog"
         sub="Every application — the destinations you open and work in — entitlement-aware. Active apps launch; anything you cannot open states which of the reasons applies and the step that resolves it, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
@@ -1913,7 +1935,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
             <div className="lic-tier-v">
               {String(tierLabel).charAt(0).toUpperCase() + String(tierLabel).slice(1)}
               {lic.industryMode ? (
-                <span className="lic-ind"> -- {lic.industryMode}</span>
+                <span className="lic-ind"> — {lic.industryMode}</span>
               ) : null}
             </div>
           </div>
@@ -1972,7 +1994,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
           {I.info}
           <span>
             License &amp; entitlement details are unavailable right now
-            {licState.error ? " -- the billing service didn't respond" : ''}.
+            {licState.error ? " — the billing service didn't respond" : ''}.
           </span>
           <button
             className="btn ghost"
@@ -2729,7 +2751,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       fireToast(
         // Only apiRequest's own error has been through the envelope reader; a
         // bare rejection is the fetch failing ("Failed to fetch").
-        'Could not grant -- ' +
+        'Could not grant — ' +
           (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
         'error',
       );
@@ -2780,7 +2802,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       fireToast(
         // Only apiRequest's own error has been through the envelope reader; a
         // bare rejection is the fetch failing ("Failed to fetch").
-        'Could not revoke -- ' +
+        'Could not revoke — ' +
           (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
         'error',
       );
@@ -2811,7 +2833,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         // `json.error` was rendered raw, so an envelope of { error: '<CODE>',
         // message: '<a real sentence>' } toasted the token.
         fireToast(
-          'Could not create the key -- ' + (serverMessage(json) ?? 'sign in as an admin'),
+          'Could not create the key — ' + (serverMessage(json) ?? 'sign in as an admin'),
           'error',
         );
         return;
@@ -2826,7 +2848,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       fireToast(
         // Only apiRequest's own error has been through the envelope reader; a
         // bare rejection is the fetch failing ("Failed to fetch").
-        'Could not create the key -- ' +
+        'Could not create the key — ' +
           (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
         'error',
       );
@@ -2998,7 +3020,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     </div>
                     {vkitDocs.length > 0 ? (
                       <span className="ac-val-st ok">
-                        {I.check} Self-serve -- {vkitDocs.length} document{vkitDocs.length === 1 ? '' : 's'}
+                        {I.check} Self-serve — {vkitDocs.length} document{vkitDocs.length === 1 ? '' : 's'}
                       </span>
                     ) : (
                       <span className="ac-val-st soon">
@@ -3021,7 +3043,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="ac-val-note">
                   {I.shieldCheck} Every governed mutation carries a reason-for-change and lands
                   in the audit trail. Any row marked "provided at contract" is not yet self-serve
-                  -- tracked openly, never claimed early. Validation protocols download as drafts;
+                  — tracked openly, never claimed early. Validation protocols download as drafts;
                   executed and approved records are provided through QA at contract.
                 </div>
               </div>
@@ -3050,7 +3072,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     {LIC_ROLES.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.label}
-                        {r.business ? ' -- finance' : ''}
+                        {r.business ? ' — finance' : ''}
                       </option>
                     ))}
                   </select>
@@ -3105,7 +3127,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                         <span className="sp-row-b">
                           <span className="sp-row-t">{g.name || g.email}</span>
                           <span className="sp-row-s">
-                            {g.email} -- granted by {g.granted_by} -- {g.granted_at}
+                            {g.email} — granted by {g.granted_by} — {g.granted_at}
                           </span>
                         </span>
                         <span className={'rd-chip tone-' + (rm.business ? 'warn' : 'ai')}>
@@ -3336,9 +3358,9 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                           <span className="sp-row-s" style={{ fontFamily: 'var(--font-mono)' }}>
                             {k.keyPrefix ? k.keyPrefix + '…' : '—'}
                             {k.lastUsedAt
-                              ? ' -- used ' + String(k.lastUsedAt).slice(0, 10)
-                              : ' -- never used'}
-                            {k.status && k.status !== 'active' ? ' -- ' + k.status : ''}
+                              ? ' — used ' + String(k.lastUsedAt).slice(0, 10)
+                              : ' — never used'}
+                            {k.status && k.status !== 'active' ? ' — ' + k.status : ''}
                           </span>
                         </span>
                         {(!k.status || k.status === 'active') && (
@@ -3409,7 +3431,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                           type="button"
                           onClick={() => toggleKeyScope(s)}
                           aria-pressed={on}
-                          style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '4px 8px', borderRadius: 6, cursor: 'pointer', border: '1px solid ' + (on ? 'var(--accent-100, #d97757)' : 'var(--border)'), background: on ? 'var(--accent-100, #d97757)' : 'transparent', color: on ? '#fff' : 'inherit' }}
+                          style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '4px 8px', borderRadius: 6, cursor: 'pointer', border: '1px solid ' + (on ? 'var(--accent-100)' : 'var(--border)'), background: on ? 'var(--accent-100)' : 'transparent', color: on ? '#fff' : 'inherit' }}
                         >
                           {s}
                         </button>

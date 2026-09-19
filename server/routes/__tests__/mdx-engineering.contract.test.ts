@@ -179,6 +179,134 @@ describe('GET /api/mdx/engineering/:programId', () => {
     expect(res.body.data).toHaveProperty('dhf');
   });
 
+  /* ── The design-controls traceability panel reads c2c_design_controls, the
+        same store the v2 DesignControls surface reads. Two consumers of one
+        table must not answer a 21 CFR 820.30 question differently, and the
+        row below is the shape the store actually holds: a TEXT id, an `outputs`
+        JSONB array of OBJECTS, and verification PASSED while validation is
+        still PENDING. Verified against a real provisioned table. ───────────── */
+  const TRACE_ROW = {
+    id: 'dc-1757612345678',                       // TEXT, not a number
+    cat: 'performance',
+    req: 'Battery lasts 14 days',
+    risk_ref: 'RSK-004',
+    outputs: [
+      { id: 'DO-1', desc: 'Power management firmware v2.1' },
+      { id: 'DO-2', desc: 'Cell spec sheet' },
+    ],
+    ver: 'pass',
+    ver_ref: 'VER-009',
+    val: 'pending',                               // NOT a pass
+    val_ref: null,
+  };
+
+  function mockTrace(row: Record<string, unknown>) {
+    query.mockResolvedValueOnce({ rows: [{ id: PROGRAM }] }); // tenancy
+    query.mockResolvedValueOnce({ rows: [] });                // risks
+    query.mockResolvedValueOnce({ rows: [row] });              // trace
+    query.mockResolvedValue({ rows: [] });                     // everything after
+  }
+
+  it('does not call a design input verified while its validation is pending', async () => {
+    /* DesignControls.tsx:173 counts a row fully traced only on
+       `outputs.length && ver === 'pass' && val === 'pass'` — the OUTCOME. A
+       presence test (`ver && val`) reads the string 'pending' as truthy and
+       reports 820.30 verification satisfied over a validation that has not
+       happened. */
+    mockTrace(TRACE_ROW);
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.trace[0].state).not.toBe('verified');
+    expect(res.body.data.trace[0].state).toBe('in-progress');
+  });
+
+  it('renders the design outputs, not [object Object]', async () => {
+    /* `outputs` is JSONB holding objects. Array.prototype.join stringifies
+       each one to '[object Object]', which then appears in the OUTPUT column
+       of a design history file traceability matrix. */
+    mockTrace(TRACE_ROW);
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    const out = String(res.body.data.trace[0].output);
+    expect(out).not.toMatch(/\[object Object\]/);
+    expect(out).toMatch(/Power management firmware v2\.1/);
+  });
+
+  it('passes the store id through instead of re-prefixing a TEXT key', async () => {
+    /* The column is TEXT ('dc-<n>'). Typing it as a number and running
+       padStart over it produced 'UN-dc-1757612345678' — a second prefix on an
+       id that already has one, and an identifier that matches nothing the
+       write path or the other consumer of this table ever issued. */
+    mockTrace(TRACE_ROW);
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.body.data.trace[0].id).toBe('dc-1757612345678');
+  });
+
+  it('reports a panel that FAILED as unavailable, not as zero rows', async () => {
+    /* panel() returned [] for every error, not only 42P01. A permission denial
+       or an RLS fail-closed on the risk table therefore reached the surface as
+       an empty risk file — "this tenant has recorded no hazards" — with only a
+       server-side log line to say otherwise. That is an error rendered as a
+       finding, which is the one thing the MDX DataState primitive exists to
+       make unrepresentable (client/src/concept2cure/mdx/lib/dataState.ts).
+       42P01 stays [] and stays OUT of this list: a table that does not exist
+       yet is a deployment state, not a fault, and the panel above locks it. */
+    query.mockResolvedValueOnce({ rows: [{ id: PROGRAM }] });   // tenancy
+    const denied = Object.assign(new Error('permission denied for table risk_items'), {
+      code: '42501',
+    });
+    query.mockRejectedValueOnce(denied);                         // risks panel denied
+    query.mockResolvedValue({ rows: [] });                       // everything else fine
+
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.status).toBe(200);
+    expect(res.body.meta.unavailable).toContain('risks');
+    /* The other panels are unaffected — per-panel independence is the point. */
+    expect(res.body.meta.unavailable).not.toContain('trace');
+    expect(res.body.data).toHaveProperty('dhf');
+  });
+
+  it('marks the derived summary unavailable when a panel it counts failed', async () => {
+    /* summary.openRisks counts the risks array. A failed risks panel returns []
+       so the other panels survive, which makes openRisks 0 — a confident zero
+       about a regulated record nobody read. The roll-up is only as readable as
+       its inputs. */
+    query.mockResolvedValueOnce({ rows: [{ id: PROGRAM }] });   // tenancy
+    query.mockRejectedValueOnce(Object.assign(new Error('permission denied'), { code: '42501' }));
+    query.mockResolvedValue({ rows: [] });
+
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.body.data.summary.openRisks).toBe(0);            // the tempting lie
+    expect(res.body.meta.unavailable).toContain('summary');      // labelled as one
+  });
+
+  it('marks documents unavailable when the software panel it splices in failed', async () => {
+    /* `documents` is artifact rows PLUS the IEC 62304 software rows, so a failed
+       software read silently shortens the list rather than emptying it — the
+       harder case to notice. */
+    query.mockResolvedValueOnce({ rows: [{ id: PROGRAM }] });   // tenancy
+    query.mockResolvedValueOnce({ rows: [] });                   // risks
+    query.mockResolvedValueOnce({ rows: [] });                   // trace
+    query.mockResolvedValueOnce({ rows: [] });                   // dhf
+    query.mockResolvedValueOnce({ rows: [] });                   // ecrs
+    query.mockResolvedValueOnce({ rows: [] });                   // issues
+    query.mockResolvedValueOnce({ rows: [] });                   // documents
+    query.mockRejectedValueOnce(Object.assign(new Error('deadlock detected'), { code: '40P01' }));
+    query.mockResolvedValue({ rows: [] });                       // riskLastUpdated
+
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.body.meta.unavailable).toContain('documents');
+  });
+
+  it('does not list a merely unmigrated table as unavailable', async () => {
+    query.mockResolvedValueOnce({ rows: [{ id: PROGRAM }] });   // tenancy
+    query.mockRejectedValueOnce(Object.assign(new Error('relation does not exist'), { code: '42P01' }));
+    query.mockResolvedValue({ rows: [] });
+
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.body.data.risks).toEqual([]);
+    expect(res.body.meta.unavailable ?? []).not.toContain('risks');
+  });
+
   it('computes DHF completion only over required sections', async () => {
     query.mockResolvedValueOnce({ rows: [{ id: PROGRAM }] }); // tenancy
     query.mockResolvedValueOnce({ rows: [] }); // risks

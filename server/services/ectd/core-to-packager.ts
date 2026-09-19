@@ -33,6 +33,9 @@ export interface CoreLeaf {
   checksum?: string | null;
   documentTable?: string | null;
   documentId?: number | null;
+  /** The uuid half of the polymorphic reference, for uuid-keyed stores
+   *  (vault.documents). A leaf carries this OR documentId, never both. */
+  documentUuid?: string | null;
   granularity?: string | null;
   /** submission_leaves.document_type (e.g. 'ind_safety_report', 'ind_annual_report'). */
   documentType?: string | null;

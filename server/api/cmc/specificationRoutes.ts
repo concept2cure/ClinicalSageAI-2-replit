@@ -2,35 +2,15 @@ import express from 'express';
 import { getPool } from '../../db';
 import { z } from 'zod';
 import { writeThroughSpecification } from '../../services/cmc-write-through';
+/* The one path from a register save to the Module 3 canonical layer: it awaits
+   the write, reports { module3Linked, module3Warning } in the response and
+   meters a failure. The program is the stored row's project_id, never the
+   request body's, so no request is handed to it here. */
+import { linkToModule3 } from '../../services/cmc/link-to-module3';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
-import { createScopedLogger } from '../../utils/logger';
-import * as metricsModule from '../../metrics.js';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
 
 const router = express.Router();
-const logger = createScopedLogger('cmc-specs');
-
-/**
- * Observe a failed canonical write-through to the Module 3 submission source
- * object. The primary response is intentionally NOT blocked on this — but the
- * failure MUST be observable (logged + metered) rather than silently swallowed.
- * TODO(GA): consider retry/queue for guaranteed write-through.
- */
-function observeWriteThroughFailure(recordId: string | number, err: unknown): void {
-  logger.error('Module 3 canonical write-through failed (specification)', {
-    recordId: String(recordId),
-    propagation: 'writeThroughSpecification',
-    error: err instanceof Error ? err.message : String(err),
-  });
-  try {
-    (metricsModule as any).metrics.concept2cureErrors.inc({
-      operation: 'cmc_write_through_specification',
-      error_type: 'propagation_failed',
-    });
-  } catch {
-    /* metric increment must never affect request flow */
-  }
-}
 
 // Validation schemas
 const createSpecSchema = z.object({
@@ -65,6 +45,33 @@ const updateSpecSchema = z.object({
 const approveSpecSchema = governedSignatureSchema;
 
 
+/**
+ * The SET fragments and bound values of a specification update, in $1..$n order.
+ *
+ * approvalStatus is intentionally absent from the map: approval can ONLY happen
+ * via the governed POST /:id/approve endpoint, never through the ungoverned PUT.
+ */
+function buildSpecUpdate(data: Record<string, any>): { updates: string[]; values: any[] } {
+  const fieldMap: Record<string, string> = {
+    materialType: 'material_type',
+    materialName: 'material_name',
+    testParameters: 'test_parameters',
+    acceptanceCriteria: 'acceptance_criteria',
+    testMethods: 'test_methods',
+    justification: 'justification',
+    regulatoryBasis: 'regulatory_basis',
+  };
+  const updates: string[] = [];
+  const values: any[] = [];
+  for (const [key, col] of Object.entries(fieldMap)) {
+    const val = data[key];
+    if (val === undefined) continue;
+    updates.push(`${col} = $${values.length + 1}`);
+    values.push(typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
+  }
+  return { updates, values };
+}
+
 // GET /api/cmc/specifications/:projectId - List specs for a project
 router.get('/:projectId', async (req, res) => {
   try {
@@ -76,9 +83,19 @@ router.get('/:projectId', async (req, res) => {
     const pool = getPool();
 
 
+    /* Strictly the caller's tenant. `OR tenant_id IS NULL` used to sit here and
+       made every unattributed row readable — and, through the PUT below,
+       writable — by every organization. Nothing in this product creates a
+       global specification (the INSERT below always stamps the caller behind a
+       401), so the clause bought nothing; the NULL rows it exposed are the
+       legacy ones db/migrations/20260401_cmc_convergence_os.sql left behind
+       when it added tenant_id to an already-populated table. Same rationale
+       server/routes/part11-compliance.ts:479-486 records for dropping its own
+       unattributed-row disjunct: the application scope must not be looser than
+       the RLS policy behind it, and that policy excludes NULL. */
     const result = await pool.query(
       `SELECT * FROM quality_specifications
-       WHERE project_id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)
+       WHERE project_id = $1 AND tenant_id = $2
        ORDER BY created_at DESC`,
       [projectId, tenantId]
     );
@@ -151,18 +168,14 @@ router.post('/', async (req, res) => {
     );
 
     console.log(`[CMC Specs] Created specification ${spec.id} for ${data.materialName}`);
-    // Write-through: upsert canonical source object for Module 3
-    if (spec.project_id) {
-      writeThroughSpecification(Number(tenantId), spec.project_id, String(spec.id), spec).catch(err =>
-        observeWriteThroughFailure(spec.id, err)
-      );
-    }
+    const linkage = await linkToModule3('write_through_specification', Number(tenantId), spec, writeThroughSpecification);
 
     res.status(201).json({
       success: true,
       data: spec,
       message: 'Specification created successfully',
       timestamp: new Date().toISOString(),
+      ...linkage,
     });
   } catch (error) {
     console.error('[CMC Specs] Error creating specification:', error);
@@ -196,9 +209,9 @@ router.put('/:id', async (req, res) => {
     }
 
 
-    // Get current spec for audit trail (with tenant filter)
+    // Get current spec for audit trail (strict tenant scope — see the GET above)
     const currentResult = await pool.query(
-      `SELECT * FROM quality_specifications WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)`,
+      `SELECT * FROM quality_specifications WHERE id = $1 AND tenant_id = $2`,
       [id, tenantId]
     );
 
@@ -212,45 +225,39 @@ router.put('/:id', async (req, res) => {
     const currentSpec = currentResult.rows[0];
 
     // Build dynamic update
-    const updates: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    // approvalStatus is intentionally excluded: approval can ONLY happen via the
-    // governed POST /:id/approve endpoint, never through this ungoverned PUT.
-    const fieldMap: Record<string, string> = {
-      materialType: 'material_type',
-      materialName: 'material_name',
-      testParameters: 'test_parameters',
-      acceptanceCriteria: 'acceptance_criteria',
-      testMethods: 'test_methods',
-      justification: 'justification',
-      regulatoryBasis: 'regulatory_basis',
-    };
-
-    for (const [key, col] of Object.entries(fieldMap)) {
-      if ((data as any)[key] !== undefined) {
-        updates.push(`${col} = $${paramIndex}`);
-        const val = (data as any)[key];
-        values.push(typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
-        paramIndex++;
-      }
-    }
+    const { updates, values } = buildSpecUpdate(data);
+    let paramIndex = values.length + 1;
 
     if (updates.length === 0) {
       return res.status(400).json({ success: false, error: 'No updates provided' });
     }
 
+    /* The write carries its OWN tenant predicate rather than inheriting whatever
+       the read above admitted. A scoped read followed by an unscoped write is a
+       write primitive: change the read and the write silently keeps the old
+       reach. */
     values.push(id);
+    const idParam = paramIndex;
+    paramIndex++;
+    values.push(tenantId);
     const updateQuery = `
       UPDATE quality_specifications
       SET ${updates.join(', ')}, updated_at = NOW()
-      WHERE id = $${paramIndex}
+      WHERE id = $${idParam} AND tenant_id = $${paramIndex}
       RETURNING *
     `;
 
     const updateResult = await pool.query(updateQuery, values);
     const updatedSpec = updateResult.rows[0];
+    if (!updatedSpec) {
+      // No row matched the write's own scope. Fail closed: an empty result is
+      // never rendered as a success with `data: undefined` and an audit row
+      // whose new_values are null.
+      return res.status(404).json({
+        success: false,
+        error: 'Specification not found',
+      });
+    }
 
     // Log audit trail
     await pool.query(
@@ -260,18 +267,14 @@ router.put('/:id', async (req, res) => {
     );
 
     console.log(`[CMC Specs] Updated specification ${id}`);
-    // Write-through: upsert canonical source object for Module 3
-    if (updatedSpec?.project_id) {
-      writeThroughSpecification(Number(tenantId), updatedSpec.project_id, String(id), updatedSpec).catch(err =>
-        observeWriteThroughFailure(id, err)
-      );
-    }
+    const linkage = await linkToModule3('write_through_specification', Number(tenantId), updatedSpec, writeThroughSpecification);
 
     res.json({
       success: true,
       data: updatedSpec,
       message: 'Specification updated successfully',
       timestamp: new Date().toISOString(),
+      ...linkage,
     });
   } catch (error) {
     console.error('[CMC Specs] Error updating specification:', error);
@@ -322,7 +325,7 @@ router.post('/:id/approve', async (req, res) => {
 
     // Verify the spec exists for this tenant.
     const current = await client.query(
-      `SELECT * FROM quality_specifications WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)`,
+      `SELECT * FROM quality_specifications WHERE id = $1 AND tenant_id = $2`,
       [id, orgId],
     );
     if (current.rows.length === 0) {
@@ -333,11 +336,22 @@ router.post('/:id/approve', async (req, res) => {
     const updateResult = await client.query(
       `UPDATE quality_specifications
        SET approval_status = 'approved', updated_at = NOW()
-       WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)
+       WHERE id = $1 AND tenant_id = $2
        RETURNING *`,
       [id, orgId],
     );
     const updatedSpec = updateResult.rows[0];
+    // Fail closed on an UPDATE that matched nothing. The existence SELECT above
+    // is not a lock: a concurrent delete (or a tenant re-key) between the two
+    // statements leaves `rows` empty, and the code below would still COMMIT — a
+    // governed e-signature and a specification_audit_log row with
+    // `new_values: null`, attesting an approval of a record that is not there,
+    // returned to the caller as a 200 with no data. A 21 CFR 11 signature
+    // manifestation over a nonexistent record is a falsified one.
+    if (!updatedSpec) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'Specification not found' });
+    }
 
     const governance = await recordGovernedAction(client, {
       orgId,
@@ -363,18 +377,16 @@ router.post('/:id/approve', async (req, res) => {
 
     await client.query('COMMIT');
 
-    // Write-through canonical source object for Module 3.
-    if (updatedSpec?.project_id) {
-      writeThroughSpecification(orgId, updatedSpec.project_id, String(id), updatedSpec).catch(err =>
-        observeWriteThroughFailure(id, err)
-      );
-    }
+    /* The approval is committed under its signature above; whether it reached
+       the dossier layer is reported, never assumed. */
+    const linkage = await linkToModule3('write_through_specification', orgId, updatedSpec, writeThroughSpecification);
 
     return res.json({
       success: true,
       data: updatedSpec,
       governance: { actionId: governance.actionId, sha256Chain: governance.sha256Chain },
       timestamp: new Date().toISOString(),
+      ...linkage,
     });
   } catch (error) {
     try { await client.query('ROLLBACK'); } catch { /* noop */ }
@@ -403,7 +415,7 @@ router.get('/:id/history', async (req, res) => {
     const result = await pool.query(
       `SELECT sal.* FROM specification_audit_log sal
        JOIN quality_specifications qs ON qs.id = sal.specification_id
-       WHERE sal.specification_id = $1 AND (qs.tenant_id = $2 OR qs.tenant_id IS NULL)
+       WHERE sal.specification_id = $1 AND qs.tenant_id = $2
        ORDER BY sal.created_at DESC`,
       [id, tenantId]
     );

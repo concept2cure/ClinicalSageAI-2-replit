@@ -34,6 +34,10 @@ import {
   upsertLeaf,
   removeLeaf,
 } from '../services/submission-service/submission-service';
+import {
+  isPlaceableDocumentTable,
+  unplaceableDocumentTableMessage,
+} from '../services/ectd/leaf-document-tables';
 import { assessPathwayReadiness, PATHWAYS, type Pathway } from '../services/pathway-engines';
 import {
   generateSubmissionPlan,
@@ -184,8 +188,20 @@ const upsertLeafSchema = z.object({
   title: z.string().min(1).max(500),
   granularity: z.string().max(128).optional(),
   lifecycleOp: z.enum(['new', 'replace', 'append', 'delete']).optional(),
-  documentTable: z.string().max(64).optional(),
+  documentTable: z
+    .string()
+    .max(64)
+    .refine(isPlaceableDocumentTable, (v) => ({ message: unplaceableDocumentTableMessage(v) }))
+    .optional(),
   documentId: z.coerce.number().int().positive().optional(),
+  /* The uuid half of the polymorphic reference, for uuid-keyed stores
+     (vault.documents). Validated as a uuid HERE so a malformed value is a 400
+     naming the field, rather than reaching the ::uuid cast in the verifier and
+     surfacing as a generic refusal. Which of the two a given table requires —
+     and that a leaf carries one, not both — is enforced once, in upsertLeaf,
+     against the table vocabulary; duplicating that rule here is how the two
+     would drift. */
+  documentUuid: z.string().uuid().optional(),
   documentType: z.string().max(64).optional(),
   parentLeafId: z.coerce.number().int().positive().optional(),
 });

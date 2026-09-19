@@ -36,6 +36,95 @@ const logger = createScopedLogger('decision-lineage');
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * WO-16C finding 70. The elements 21 CFR Part 11 requires an audit-trail entry
+ * to carry — §11.10(e) "secure, computer-generated, time-stamped audit trails
+ * to independently record … the identity of the person" and, where a signature
+ * is required, §11.50 signature manifestation.
+ */
+export type Part11RecordElement = 'attributed-actor' | 'recorded-timestamp' | 'applied-signature';
+
+/**
+ * What ONE lineage record can honestly say about itself.
+ *
+ * This is deliberately NOT a compliance verdict, for the record or for the
+ * system: it reports only which of the elements above are present in the row
+ * the graph was built from. `COMPLETE` means "this record carries what Part 11
+ * requires a record to carry", never "this decision is Part 11 compliant".
+ * The field it replaced — `cfr11Compliant: true` — was a literal at all five
+ * node constructors, computed from nothing, printed as a conformance assertion
+ * into every export and as a badge on every node of the surface.
+ */
+/**
+ * What this service can say about the §11.50 element of a record.
+ *
+ * WO-16C #70, second follow-up review. There is deliberately no `'signed'`
+ * member. The approvals reader used to derive one from `status === 'approved'`,
+ * and `workflow_approvals` has no signature column at all (id, workflowId,
+ * stepId, stepOrder, status, assignedTo, assignmentType, requiredActions,
+ * completedBy, completedAt, comments) — no reader in this service touches the
+ * real signature store. Removing the member makes the claim unrepresentable
+ * rather than merely unused: a future reader that genuinely verifies a
+ * signature has to add the value, and adding it is the moment to check that it
+ * was earned.
+ *
+ * `'pending'` and `'rejected'` are positive statements that no signature has
+ * been applied. `'not_assessed'` is the absence of a check, not a pass.
+ */
+export type SignatureStatus = 'pending' | 'rejected' | 'not_assessed';
+
+export interface Part11RecordCheck {
+  /**
+   * COMPLETE only when every required element was CHECKED and present.
+   * PARTIAL when nothing is missing but an element could not be checked here.
+   * INCOMPLETE when a required element the record should carry is absent.
+   */
+  status: 'COMPLETE' | 'PARTIAL' | 'INCOMPLETE';
+  /** Required elements this record does not carry. */
+  missing: Part11RecordElement[];
+  /**
+   * Elements this service cannot speak to. WO-16C #70 follow-up: the first
+   * version counted §11.50 as satisfied whenever `signatureStatus === 'signed'`
+   * — but that value is only `status === 'approved'` relabelled.
+   * `workflow_approvals` has no signature column (id, workflowId, stepId,
+   * stepOrder, status, assignedTo, assignmentType, requiredActions,
+   * completedBy, completedAt, comments), and this service never reads the real
+   * signature store. An approval status is not a signature manifestation, so
+   * the element is reported unchecked rather than met.
+   */
+  notAssessed: Part11RecordElement[];
+}
+
+/**
+ * Assess one record. Pure, total, and with no default pass: every element is
+ * asserted from a value the source row supplied, and absence is reported as
+ * absence rather than substituted for.
+ */
+export function assessPart11Record(record: {
+  performedBy: string | null;
+  performedAt: string | null;
+  requiresSignature: boolean;
+  signatureStatus?: SignatureStatus;
+}): Part11RecordCheck {
+  const missing: Part11RecordElement[] = [];
+  const notAssessed: Part11RecordElement[] = [];
+  if (!record.performedBy) missing.push('attributed-actor');
+  if (!record.performedAt) missing.push('recorded-timestamp');
+  if (record.requiresSignature) {
+    // Never 'met' from an approval status. Rejected/pending is a positive
+    // statement that no signature was applied; anything else is unchecked,
+    // because no signature store is read here.
+    if (record.signatureStatus === 'rejected' || record.signatureStatus === 'pending') {
+      missing.push('applied-signature');
+    } else {
+      notAssessed.push('applied-signature');
+    }
+  }
+  const status: Part11RecordCheck['status'] =
+    missing.length > 0 ? 'INCOMPLETE' : notAssessed.length > 0 ? 'PARTIAL' : 'COMPLETE';
+  return { status, missing, notAssessed };
+}
+
 /** A single node in the decision lineage graph */
 export interface LineageNode {
   id: string;
@@ -43,8 +132,21 @@ export interface LineageNode {
   entityType: string;
   entityId: number;
   action: string;
-  performedBy: string;
-  performedAt: string; // ISO 8601
+  /**
+   * The actor the SOURCE ROW attributes this event to — `null` when the row
+   * attributes it to nobody. WO-16C finding 70: this used to fall back to the
+   * literal `'system'` for an `audit_logs` row with a NULL `user_id`, and to
+   * `assignedTo[0]` for an approval nobody had acted on yet. Both named an
+   * actor the record does not name. A missing actor is now missing.
+   */
+  performedBy: string | null;
+  /**
+   * ISO 8601, from the record — `null` when the record carries no time for
+   * this event, which is the case for an approval still awaiting a decision.
+   * It used to fall back to `new Date()`, i.e. the moment the graph or export
+   * was built, which reads as the moment the decision was taken.
+   */
+  performedAt: string | null;
   details: Record<string, unknown>;
   /** Hash of the audit record for tamper verification */
   recordHash?: string;
@@ -54,10 +156,22 @@ export interface LineageNode {
   childIds: string[];
   /** Regulatory significance flags */
   regulatory: {
-    gxpRelevant: boolean;
+    /**
+     * Whether the SOURCE RECORD classifies this event as GxP-relevant —
+     * `null` when the record does not say, which is every row from
+     * `workflow_approvals`, `workflow_history` and `document_audit_logs`,
+     * none of which has such a column.
+     *
+     * WO-16C #70, second follow-up review: this was the literal `true` at all
+     * five node constructors, so the compliance report's
+     * `gxpRelevantRecords` could only ever equal `totalDecisionRecords`. A
+     * statistic with one possible value measures nothing.
+     */
+    gxpRelevant: boolean | null;
     requiresSignature: boolean;
-    signatureStatus?: 'pending' | 'signed' | 'rejected';
-    cfr11Compliant: boolean;
+    signatureStatus?: SignatureStatus;
+    /** Which Part 11 record elements this row carries — not a verdict. */
+    part11RecordCheck: Part11RecordCheck;
   };
 }
 
@@ -74,8 +188,76 @@ export interface LineageGraph {
     totalRejections: number;
     totalDelegations: number;
     chainVerified: boolean;
-    complianceFrameworks: string[];
+    /** WO-16B: 'unverifiable' when the verifier could not run — not 'failed'. */
+    chainVerification: 'verified' | 'failed' | 'unverifiable';
+    chainVerificationReason?: string;
+    /**
+     * WO-16C finding 71. This was a five-element string literal, computed from
+     * nothing, printed by all three exports as an assertion of conformance.
+     * Each framework now carries the status the same router's compliance
+     * report gives it, so an exported audit file and the report agree.
+     */
+    complianceFrameworks: FrameworkAssessment[];
   };
+}
+
+/** A framework's standing, in the vocabulary routes/decision-lineage.ts uses. */
+export interface FrameworkAssessment {
+  framework: string;
+  status: 'COMPLIANT' | 'REVIEW_REQUIRED' | 'UNVERIFIABLE' | 'NOT_ASSESSED';
+  note?: string;
+}
+
+const NOT_EVALUATED_HERE = 'No check in this lineage record evaluates this framework.';
+
+/**
+ * The frameworks a lineage record can speak to, and what it can honestly say
+ * about each.
+ *
+ * Three of the five rest on the hash-chain verifier, so they take its three
+ * states — including "the verifier could not run", which WO-16B established is
+ * not a failure. The other two are named in the export header but nothing in
+ * this subsystem evaluates them, so they say so rather than claim conformance.
+ * Identical in content and order to the block in routes/decision-lineage.ts.
+ */
+export function assessComplianceFrameworks(
+  chainVerification: 'verified' | 'failed' | 'unverifiable',
+): FrameworkAssessment[] {
+  const chainDependent: FrameworkAssessment['status'] =
+    chainVerification === 'verified'
+      ? 'COMPLIANT'
+      : chainVerification === 'failed'
+        ? 'REVIEW_REQUIRED'
+        : 'UNVERIFIABLE';
+  return [
+    { framework: 'FDA 21 CFR Part 11', status: chainDependent },
+    { framework: 'EU Annex 11', status: chainDependent },
+    { framework: 'ICH E6(R2) GCP', status: 'NOT_ASSESSED', note: NOT_EVALUATED_HERE },
+    { framework: 'PMDA ERES Guidelines', status: chainDependent },
+    { framework: 'GAMP 5', status: 'NOT_ASSESSED', note: NOT_EVALUATED_HERE },
+  ];
+}
+
+/**
+ * The GxP-relevance flag a decision row carries, or `null` when it carries
+ * none. `new_values` is free-form JSON, so anything that is not a boolean is
+ * read as "not recorded" rather than coerced.
+ */
+function readRecordedGxpRelevant(recorded: Record<string, unknown>): boolean | null {
+  return typeof recorded.gxpRelevant === 'boolean' ? recorded.gxpRelevant : null;
+}
+
+/** One cell of the CSV export: `COMPLETE`, or what the record is missing. */
+function formatPart11RecordCheck(check: Part11RecordCheck): string {
+  // WO-16C #70 follow-up: PARTIAL is neither of the other two. Rendering it as
+  // INCOMPLETE with an empty parenthesis said a record was missing something
+  // and then named nothing; rendering it as COMPLETE would assert an element
+  // that was never checked.
+  if (check.status === 'COMPLETE') return 'COMPLETE';
+  const parts: string[] = [];
+  if (check.missing.length) parts.push(`missing: ${check.missing.join('; ')}`);
+  if (check.notAssessed.length) parts.push(`not assessed here: ${check.notAssessed.join('; ')}`);
+  return `${check.status}${parts.length ? ` (${parts.join(' | ')})` : ''}`;
 }
 
 /** Filters for lineage queries */
@@ -128,6 +310,12 @@ export class DecisionLineageService {
       details: {
         decisionId,
         ...params.details,
+        // WO-16C finding 70. `audit_logs.user_id` is an integer column, and
+        // auditService nulls any actor id that is not numeric — so a caller
+        // that identifies people by email or uuid loses the actor entirely and
+        // the graph then has nothing to attribute the decision to. Keep what
+        // the caller actually said, next to the decision it belongs to.
+        performedBy: params.performedBy,
         parentDecisionIds: params.parentDecisionIds || [],
         gxpRelevant: params.gxpRelevant ?? true,
         requiresSignature: params.requiresSignature ?? false,
@@ -176,26 +364,51 @@ export class DecisionLineageService {
           if (status === 'approved') approvalCount++;
           if (status === 'rejected') rejectionCount++;
 
+          // WO-16C finding 70. `assigned_to` is who the step is WAITING ON;
+          // `completed_by` / `completed_at` are who acted and when, and both are
+          // NULL for a step nobody has acted on. Reporting the assignee at the
+          // moment of export as the performer of an `awaiting_decision` node
+          // invented the two fields an audit trail exists to record. The
+          // assignment is real, so it stays — as an assignment, in `details`.
+          const performedBy = (approval.completedBy as string | null) || null;
+          const performedAt = approval.completedAt?.toISOString() || null;
+          // WO-16C #70, second follow-up review. `'approved'` used to map to
+          // `'signed'`, which reported a §11.50 manifestation from a column
+          // that does not exist. An approval decision is not a signature, and
+          // nothing here reads the signature store, so an approved step is
+          // unassessed. Pending and rejected stay as they are: both are
+          // positive statements that no signature has been applied.
+          const signatureStatus: SignatureStatus =
+            status === 'pending' ? 'pending' : status === 'rejected' ? 'rejected' : 'not_assessed';
+
           nodes.push({
             id: nodeId,
             nodeType: 'decision',
             entityType: 'workflow_approval',
             entityId: approval.id,
             action: status === 'pending' ? 'awaiting_decision' : status,
-            performedBy: (approval.assignedTo as string[])?.[0] || 'unassigned',
-            performedAt: approval.completedAt?.toISOString() || new Date().toISOString(),
+            performedBy,
+            performedAt,
             details: {
               workflowId: wf.id,
               stepId: approval.stepId,
               comments: approval.comments,
+              status,
+              assignedTo: (approval.assignedTo as string[]) || [],
             },
             parentIds: [],
             childIds: [],
             regulatory: {
-              gxpRelevant: true,
+              // `workflow_approvals` has no GxP-relevance column.
+              gxpRelevant: null,
               requiresSignature: true,
-              signatureStatus: status === 'approved' ? 'signed' : status === 'pending' ? 'pending' : 'rejected',
-              cfr11Compliant: true,
+              signatureStatus,
+              part11RecordCheck: assessPart11Record({
+                performedBy,
+                performedAt,
+                requiresSignature: true,
+                signatureStatus,
+              }),
             },
           });
         }
@@ -221,21 +434,29 @@ export class DecisionLineageService {
 
           if (action.includes('delegat')) delegationCount++;
 
+          const performedBy = (entry.performedBy as string | null) || null;
+          const performedAt = entry.createdAt?.toISOString() || null;
+
           nodes.push({
             id: nodeId,
             nodeType: action.includes('delegat') ? 'delegation' : 'workflow_step',
             entityType: 'workflow_history',
             entityId: entry.id,
             action,
-            performedBy: (entry.performedBy as string) || 'system',
-            performedAt: entry.createdAt?.toISOString() || new Date().toISOString(),
+            performedBy,
+            performedAt,
             details: (entry.details as Record<string, unknown>) || {},
             parentIds: [],
             childIds: [],
             regulatory: {
-              gxpRelevant: true,
+              // `workflow_history` has no GxP-relevance column.
+              gxpRelevant: null,
               requiresSignature: false,
-              cfr11Compliant: true,
+              part11RecordCheck: assessPart11Record({
+                performedBy,
+                performedAt,
+                requiresSignature: false,
+              }),
             },
           });
         }
@@ -253,21 +474,29 @@ export class DecisionLineageService {
 
       for (const log of docLogs) {
         const nodeId = `docaudit-${log.id}`;
+        const performedBy = (log.performedBy as string | null) || null;
+        const performedAt = log.performedAt?.toISOString() || null;
+
         nodes.push({
           id: nodeId,
           nodeType: 'document_state',
           entityType: 'document_audit',
           entityId: log.id,
           action: (log.action as string) || 'unknown',
-          performedBy: (log.performedBy as string) || 'system',
-          performedAt: log.performedAt?.toISOString() || new Date().toISOString(),
+          performedBy,
+          performedAt,
           details: (log.details as Record<string, unknown>) || {},
           parentIds: [],
           childIds: [],
           regulatory: {
-            gxpRelevant: true,
+            // `document_audit_logs` has no GxP-relevance column.
+            gxpRelevant: null,
             requiresSignature: false,
-            cfr11Compliant: true,
+            part11RecordCheck: assessPart11Record({
+              performedBy,
+              performedAt,
+              requiresSignature: false,
+            }),
           },
         });
       }
@@ -299,22 +528,54 @@ export class DecisionLineageService {
         const nodeId = `audit-${log.id}`;
         const action = log.action || 'unknown';
         if (action.startsWith('decision:')) {
-          // These are lineage-specific entries
+          // These are lineage-specific entries.
+          // WO-16C finding 70: `audit_logs.user_id` is nullable, and NULL for
+          // every decision whose actor could not be resolved to a numeric user
+          // (auditService coerces a non-numeric actor id to NULL before the
+          // INSERT). The literal 'system' named an actor that does not exist;
+          // the actor the caller supplied, where there was one, is preserved by
+          // recordDecision in `details.performedBy` and travels in `details`.
+          const performedBy = log.userId != null ? String(log.userId) : null;
+          const performedAt = log.createdAt?.toISOString() || null;
+          /*
+           * WO-16C #70 follow-up. These two lines used to pass the LITERAL
+           * `requiresSignature: false` into assessPart11Record, so a decision
+           * recorded as requiring a signature and carrying none reported
+           * COMPLETE the moment its user_id was numeric — a default pass, in
+           * the same constructors the fix rewrote and against the "no default
+           * pass" the function's own docstring claims. recordDecision writes
+           * the caller's real value into `details` (auditService stores it in
+           * new_values), so it is read from the record here. No signature
+           * status is knowable for an audit row, so where one IS required the
+           * element comes back not-assessed rather than met.
+           */
+          const recorded = (log.newValues as Record<string, unknown>) || {};
+          const rowRequiresSignature = recorded.requiresSignature === true;
+          // recordDecision writes the caller's flag into `details`, which
+          // auditService stores in new_values, so a decision row DOES carry
+          // this one — but only where a caller supplied it. A row without the
+          // key is unclassified, not non-GxP and not GxP.
+          const rowGxpRelevant = readRecordedGxpRelevant(recorded);
+
           nodes.push({
             id: nodeId,
             nodeType: 'decision',
             entityType: log.tableName || 'unknown',
             entityId: 0,
             action: action.replace('decision:', ''),
-            performedBy: log.userId?.toString() || 'system',
-            performedAt: log.createdAt?.toISOString() || new Date().toISOString(),
+            performedBy,
+            performedAt,
             details: (log.newValues as Record<string, unknown>) || {},
             parentIds: [],
             childIds: [],
             regulatory: {
-              gxpRelevant: true,
-              requiresSignature: false,
-              cfr11Compliant: true,
+              gxpRelevant: rowGxpRelevant,
+              requiresSignature: rowRequiresSignature,
+              part11RecordCheck: assessPart11Record({
+                performedBy,
+                performedAt,
+                requiresSignature: rowRequiresSignature,
+              }),
             },
           });
         }
@@ -323,14 +584,20 @@ export class DecisionLineageService {
       logger.warn('Failed to query general audit logs for lineage', err);
     }
 
-    // Verify chain integrity
-    let chainVerified = false;
-    try {
-      const result = await auditService.verifyChain();
-      chainVerified = result.valid;
-    } catch {
-      chainVerified = false;
-    }
+    // Verify chain integrity — three outcomes. A verifier that did not run is
+    // reported as such; it is not a failed chain (WO-16B finding 12).
+    const chainResult = await auditService.verifyChain();
+    const chainVerified = chainResult.ran && chainResult.valid;
+    const chainVerification: 'verified' | 'failed' | 'unverifiable' = !chainResult.ran
+      ? 'unverifiable'
+      : chainResult.valid
+        ? 'verified'
+        : 'failed';
+    const chainVerificationReason = !chainResult.ran
+      ? chainResult.reason
+      : chainResult.valid
+        ? undefined
+        : chainResult.invalidReason;
 
     return {
       rootEntityType: entityType,
@@ -344,13 +611,9 @@ export class DecisionLineageService {
         totalRejections: rejectionCount,
         totalDelegations: delegationCount,
         chainVerified,
-        complianceFrameworks: [
-          'FDA 21 CFR Part 11',
-          'EU Annex 11',
-          'ICH E6(R2) GCP',
-          'PMDA ERES Guidelines',
-          'GAMP 5',
-        ],
+        chainVerification,
+        chainVerificationReason,
+        complianceFrameworks: assessComplianceFrameworks(chainVerification),
       },
     };
   }
@@ -391,21 +654,34 @@ export class DecisionLineageService {
         .limit(limit);
 
       for (const row of rows) {
+        // Same nullable `user_id` as getLineageGraph reads — see the note there.
+        const performedBy = row.userId != null ? String(row.userId) : null;
+        const performedAt = row.createdAt?.toISOString() || null;
+        // WO-16C #70 follow-up — see the note in getLineageGraph: the literal
+        // `false` here was a default pass on the §11.50 element.
+        const rowRecorded = (row.newValues as Record<string, unknown>) || {};
+        const rowRequiresSignature = rowRecorded.requiresSignature === true;
+        const rowGxpRelevant = readRecordedGxpRelevant(rowRecorded);
+
         nodes.push({
           id: `audit-${row.id}`,
           nodeType: row.action?.startsWith('decision:') ? 'decision' : 'document_state',
           entityType: row.tableName || 'unknown',
           entityId: parseInt(row.recordId || '0', 10),
           action: row.action || 'unknown',
-          performedBy: row.userId?.toString() || 'system',
-          performedAt: row.createdAt?.toISOString() || new Date().toISOString(),
+          performedBy,
+          performedAt,
           details: (row.newValues as Record<string, unknown>) || {},
           parentIds: [],
           childIds: [],
           regulatory: {
-            gxpRelevant: true,
-            requiresSignature: false,
-            cfr11Compliant: true,
+            gxpRelevant: rowGxpRelevant,
+            requiresSignature: rowRequiresSignature,
+            part11RecordCheck: assessPart11Record({
+              performedBy,
+              performedAt,
+              requiresSignature: rowRequiresSignature,
+            }),
           },
         });
       }
@@ -457,7 +733,7 @@ export class DecisionLineageService {
     const headers = [
       'Node ID', 'Type', 'Entity Type', 'Entity ID', 'Action',
       'Performed By', 'Performed At', 'GxP Relevant', 'Requires Signature',
-      'Signature Status', 'CFR 11 Compliant', 'Details',
+      'Signature Status', 'Part 11 Record Elements', 'Details',
     ];
 
     const rows = graph.nodes.map(n => [
@@ -466,12 +742,18 @@ export class DecisionLineageService {
       n.entityType,
       n.entityId,
       n.action,
-      n.performedBy,
-      n.performedAt,
-      n.regulatory.gxpRelevant ? 'Yes' : 'No',
+      // An absent actor or time is printed as absent. It was printed as the
+      // literal 'system' and as the moment this file was generated (finding 70).
+      n.performedBy ?? 'not attributed',
+      n.performedAt ?? 'not recorded',
+      // A flag the source record does not carry is printed as absent. It was
+      // printed as 'Yes' for every row (finding 70, second follow-up review).
+      n.regulatory.gxpRelevant === null ? 'not recorded in source' : n.regulatory.gxpRelevant ? 'Yes' : 'No',
       n.regulatory.requiresSignature ? 'Yes' : 'No',
-      n.regulatory.signatureStatus || 'N/A',
-      n.regulatory.cfr11Compliant ? 'Yes' : 'No',
+      n.regulatory.signatureStatus === 'not_assessed'
+        ? 'not assessed here'
+        : n.regulatory.signatureStatus || 'N/A',
+      formatPart11RecordCheck(n.regulatory.part11RecordCheck),
       JSON.stringify(n.details),
     ]);
 
@@ -479,8 +761,11 @@ export class DecisionLineageService {
       `# Decision Lineage Report`,
       `# Generated: ${graph.metadata.generatedAt}`,
       `# Entity: ${graph.rootEntityType} #${graph.rootEntityId}`,
-      `# Compliance: ${graph.metadata.complianceFrameworks.join(', ')}`,
-      `# Chain Verified: ${graph.metadata.chainVerified ? 'PASS' : 'UNVERIFIED'}`,
+      `# Part 11 Record Elements: per-record presence check of what 21 CFR Part 11 requires an entry to carry`,
+      `#   (§11.10(e) attributed actor and recorded timestamp; §11.50 applied signature where one is required).`,
+      `#   COMPLETE means the record carries those elements. It is not a verdict on the decision or the system.`,
+      `# Compliance: ${graph.metadata.complianceFrameworks.map(f => `${f.framework} = ${f.status}`).join('; ')}`,
+      `# Chain Verified: ${graph.metadata.chainVerification === 'verified' ? 'PASS' : graph.metadata.chainVerification === 'failed' ? 'FAIL' : 'UNVERIFIABLE (the verifier could not run)'}`,
       '',
       headers.join(','),
       ...rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')),
@@ -506,13 +791,19 @@ export class DecisionLineageService {
       <entity-type>${escapeXml(n.entityType)}</entity-type>
       <entity-id>${n.entityId}</entity-id>
       <action>${escapeXml(n.action)}</action>
-      <performed-by>${escapeXml(n.performedBy)}</performed-by>
-      <performed-at>${escapeXml(n.performedAt)}</performed-at>
+      ${n.performedBy !== null
+        ? `<performed-by>${escapeXml(n.performedBy)}</performed-by>`
+        : `<performed-by attributed="false" />`}
+      ${n.performedAt !== null
+        ? `<performed-at>${escapeXml(n.performedAt)}</performed-at>`
+        : `<performed-at recorded="false" />`}
       <regulatory>
-        <gxp-relevant>${n.regulatory.gxpRelevant}</gxp-relevant>
+        ${n.regulatory.gxpRelevant !== null
+          ? `<gxp-relevant>${n.regulatory.gxpRelevant}</gxp-relevant>`
+          : `<gxp-relevant recorded="false" />`}
         <requires-signature>${n.regulatory.requiresSignature}</requires-signature>
         <signature-status>${n.regulatory.signatureStatus || 'none'}</signature-status>
-        <cfr11-compliant>${n.regulatory.cfr11Compliant}</cfr11-compliant>
+        <part11-record-elements status="${n.regulatory.part11RecordCheck.status}" missing="${escapeXml(n.regulatory.part11RecordCheck.missing.join(' '))}" not-assessed="${escapeXml(n.regulatory.part11RecordCheck.notAssessed.join(' '))}" />
       </regulatory>
     </decision-record>`).join('');
 
@@ -523,8 +814,13 @@ export class DecisionLineageService {
 <!--
   Decision Lineage Report — eCTD Audit Trail
   Generated: ${graph.metadata.generatedAt}
-  Compliance: ${graph.metadata.complianceFrameworks.join(', ')}
-  Chain Verified: ${graph.metadata.chainVerified ? 'PASS' : 'UNVERIFIED'}
+  Compliance: ${graph.metadata.complianceFrameworks.map(f => `${f.framework} = ${f.status}`).join('; ')}
+  Chain verification: ${graph.metadata.chainVerification === 'verified' ? 'PASS' : graph.metadata.chainVerification === 'failed' ? 'FAIL' : 'UNVERIFIABLE (the verifier could not run)'}
+  part11-record-elements: a per-record presence check of what 21 CFR Part 11 requires an entry to
+    carry — §11.10(e) attributed actor and recorded timestamp, §11.50 applied signature where one
+    is required. COMPLETE means the record carries those elements; it is not a verdict on the
+    decision or on the system. A <performed-by attributed="false"/> or <performed-at recorded="false"/>
+    element means the source record names nobody, or records no time, for that event.
 -->
 <decision-lineage
   xmlns="urn:clinicalsageai:lineage:1.0"
@@ -537,8 +833,13 @@ export class DecisionLineageService {
     <total-rejections>${graph.metadata.totalRejections}</total-rejections>
     <total-delegations>${graph.metadata.totalDelegations}</total-delegations>
     <chain-verified>${graph.metadata.chainVerified}</chain-verified>
+    <chain-verification>${graph.metadata.chainVerification}</chain-verification>
     <compliance-frameworks>
-      ${graph.metadata.complianceFrameworks.map(f => `<framework>${escapeXml(f)}</framework>`).join('\n      ')}
+      ${graph.metadata.complianceFrameworks
+        .map(f =>
+          `<framework name="${escapeXml(f.framework)}" status="${escapeXml(f.status)}"${f.note ? ` note="${escapeXml(f.note)}"` : ''} />`,
+        )
+        .join('\n      ')}
     </compliance-frameworks>
   </metadata>
   <decision-records>${nodesXml}

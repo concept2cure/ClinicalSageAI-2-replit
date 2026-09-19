@@ -25,6 +25,15 @@ import {
   coauthorDocuments,
 } from '../../../shared/schema';
 import { renderedLeafFiles } from '../../../shared/schema/submissions';
+import { unifiedDocuments, workflowDocumentVersions } from '../../../shared/schema/unified_workflow';
+import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
+import { readLocalUploadBuffer } from '../anthropic-files';
+import { sectionPlainText } from '../c2c/section-content';
+import {
+  externalDocumentTableReason,
+  isPlaceableDocumentTable,
+  unplaceableDocumentTableMessage,
+} from '../ectd/leaf-document-tables';
 import type {
   Submission,
   EctdSequence,
@@ -33,6 +42,7 @@ import type {
 import auditService, { writeChainedAuditRow } from '../auditService';
 import { deriveGovernedTargetBinding, BINDING_BASIS } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
+import { normalizeCtdCode } from '../ectd/section-to-ctd';
 
 const logger = createScopedLogger('submission-service');
 
@@ -449,13 +459,20 @@ async function applyGovernedSequenceTransition(
     );
   }
 
-  // Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof).
+  // Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof),
+  // composed for THIS step. Freeze takes every gate except the REQUIREMENT for a
+  // §11.70 release signature: that control is the transmit re-check, a release
+  // signature comes from a signed package orchestrator run, and requiring one to
+  // freeze inverted the order the product works in — freeze, then build and sign
+  // the release. A tampered signature still blocks a freeze, and dispatch is
+  // unchanged. See assess-dispatch-readiness → composeDispatchGatesForStep.
   const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
   const assessment = await assessSequenceDispatchReadiness({ sequenceId: id, organizationId: ctx.organizationId });
-  if (!assessment.gate.cleared) {
+  const stepGate = toStatus === 'frozen' ? assessment.freezeGate : assessment.gate;
+  if (!stepGate.cleared) {
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
-      `Dispatch gate blocks ${toStatus}: ${assessment.gate.blockers.join(' ')}`
+      `Dispatch gate blocks ${toStatus}: ${stepGate.blockers.join(' ')}`
     );
   }
 
@@ -715,12 +732,11 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   // backbone — a leaf resolves to a file inside the sequence. So fail closed on
   // ANY unresolved leaf (release the staged bundle and block), classifying the
   // cause only for the operator message.
-  const { EXTERNAL_DOCUMENT_TABLES } = await import('../ectd/leaf-source-resolver');
   const unresolved = assembled.unresolvedLeaves;
   if (unresolved.length > 0) {
     await assembled.cleanup();
     const isExternal = (l: { documentTable: string | null }) =>
-      l.documentTable != null && l.documentTable in EXTERNAL_DOCUMENT_TABLES;
+      externalDocumentTableReason(l.documentTable) !== null;
     const defects = unresolved.filter((l) => !isExternal(l));
     const external = unresolved.filter(isExternal);
     const parts: string[] = [];
@@ -834,10 +850,244 @@ export interface UpsertLeafInput {
   lifecycleOp?: string;
   documentTable?: string | null;
   documentId?: number | null;
+  /** The uuid half of the polymorphic reference, for uuid-keyed stores
+   *  (vault.documents). A leaf carries this OR documentId, never both. */
+  documentUuid?: string | null;
   documentType?: string | null;
   parentLeafId?: number | null;
   /** MD5 (or other) checksum of the leaf's rendered bytes, for the eCTD index-md5. */
   checksum?: string | null;
+}
+
+/**
+ * Tenancy + source pin for a leaf's document pointer, one entry per document
+ * table the READ side (server/services/ectd/leaf-source-resolver.ts) can
+ * materialize.
+ *
+ * ── Why a table-keyed dispatch and not another `if` ──────────────────────────
+ * This block used to be two hand-written `if (input.documentTable === …)`
+ * branches — coauthor_documents and rendered_leaf_files — under a comment
+ * promising "no dangling cross-tenant document pointers". The resolver could
+ * materialize five tables. The other three (unified_documents,
+ * ctd_onboarding_documents, c2c_document_sections) were written straight
+ * through: any id, from any organization or from nothing at all, was stored
+ * verbatim and left unpinned. The read side fails closed per table, so no
+ * foreign bytes ever reached a package — but dispatch readiness only checks
+ * that a pointer is PRESENT, so such a sequence reads as READY and only falls
+ * over at assembly as an `unresolved` leaf.
+ *
+ * Each verifier proves the document resolves IN THE CALLER'S ORGANIZATION
+ * (throwing FORBIDDEN otherwise) and returns the digest to pin, taken from the
+ * SAME org-scoped read — a second query could race a concurrent edit and pin
+ * content the tenancy check never saw. Its predicate mirrors the resolver's for
+ * that table exactly; when a new source is added there, the drift guard in
+ * __tests__/leaf-source-tenancy.pglite.test.ts fails until it is added here.
+ *
+ * NULL, never sha256(''), is the pin for every "nothing to pin" case: sha256('')
+ * is a real constant that would look exactly like a pin that had been taken and
+ * would then "match" any other empty document forever.
+ */
+type LeafSourceVerifier = (documentId: number, organizationId: number) => Promise<string | null>;
+
+const forbidRef = () =>
+  new SubmissionError('FORBIDDEN', 'Referenced document not found for this organization.');
+
+const sha256Hex = (value: string | Buffer): string =>
+  createHash('sha256')
+    .update(typeof value === 'string' ? Buffer.from(value, 'utf8') : value)
+    .digest('hex');
+
+const LEAF_SOURCE_VERIFIERS: Record<string, LeafSourceVerifier> = {
+  /** Authoring store. Pin = sha256 of the stored body text. */
+  coauthor_documents: async (documentId, organizationId) => {
+    const [doc] = await db
+      .select({ id: coauthorDocuments.id, content: coauthorDocuments.content })
+      .from(coauthorDocuments)
+      .where(and(eq(coauthorDocuments.id, documentId), eq(coauthorDocuments.organizationId, organizationId)))
+      .limit(1);
+    if (!doc) throw forbidRef();
+    return typeof doc.content === 'string' && doc.content.length > 0 ? sha256Hex(doc.content) : null;
+  },
+
+  /* Bytes this server rendered for a filing. The pin is the sha256 recorded
+     when the bytes were rendered, which is exactly what the resolver
+     re-verifies before staging them. */
+  rendered_leaf_files: async (documentId, organizationId) => {
+    const [rendered] = await db
+      .select({ sha256: renderedLeafFiles.sha256 })
+      .from(renderedLeafFiles)
+      .where(and(eq(renderedLeafFiles.id, documentId), eq(renderedLeafFiles.organizationId, organizationId)))
+      .limit(1);
+    if (!rendered) throw forbidRef();
+    return rendered.sha256;
+  },
+
+  /* Unified workflow document: the row is the tenant boundary, the body lives
+     in the latest workflow_document_versions row (read org-scoped directly, as
+     the resolver does, not only transitively through the parent).
+
+     The pin is over JSON.stringify(version.content). That is a CHANGE
+     DETECTOR, not a canonical serialization: it depends on the driver
+     preserving stored key order, so a pin that stops matching after a driver or
+     column-type change is not by itself tamper evidence. It is pinned this way
+     because an inspector can re-derive it from that single column; digesting
+     rendered text instead would drift with the renderer. */
+  unified_documents: async (documentId, organizationId) => {
+    const [doc] = await db
+      .select({ id: unifiedDocuments.id })
+      .from(unifiedDocuments)
+      .where(and(eq(unifiedDocuments.id, documentId), eq(unifiedDocuments.organizationId, organizationId)))
+      .limit(1);
+    if (!doc) throw forbidRef();
+    const [version] = await db
+      .select({ content: workflowDocumentVersions.content })
+      .from(workflowDocumentVersions)
+      .where(
+        and(
+          eq(workflowDocumentVersions.documentId, documentId),
+          eq(workflowDocumentVersions.organizationId, organizationId),
+        ),
+      )
+      .orderBy(desc(workflowDocumentVersions.version))
+      .limit(1);
+    return version && version.content != null ? sha256Hex(JSON.stringify(version.content)) : null;
+  },
+
+  /* Uploaded CTD binary. Tenancy is the row's organization_id; the pin is the
+     sha256 of the upload's bytes.
+
+     The byte read fails SOFT (pin NULL when the file is missing/rotated): the
+     placement is a metadata write, and making it depend on disk availability
+     would refuse a leaf the assembler can still legitimately report as
+     unresolved. Tenancy itself never fails soft — the row lookup above already
+     decided that. */
+  ctd_onboarding_documents: async (documentId, organizationId) => {
+    const [doc] = await db
+      .select({ storagePath: ctdOnboardingDocuments.storagePath })
+      .from(ctdOnboardingDocuments)
+      .where(and(eq(ctdOnboardingDocuments.id, documentId), eq(ctdOnboardingDocuments.organizationId, organizationId)))
+      .limit(1);
+    if (!doc) throw forbidRef();
+    let buf: Buffer | null;
+    try {
+      buf = await readLocalUploadBuffer(doc.storagePath);
+    } catch {
+      buf = null;
+    }
+    return buf && buf.length > 0 ? sha256Hex(buf) : null;
+  },
+
+  /* Governed authoring store (MDR/IVDR). c2c_document_sections carries NO
+     organization column: its tenant scope is the parent c2c_documents.org_id,
+     so the JOIN below IS the tenant gate — exactly the predicate the resolver
+     uses. Issued through drizzle's `db.execute` so the same PGlite harness the
+     sibling branches use covers it. Pin = sha256 of the canonical section text
+     (sectionPlainText), the same reading of the body the packager renders. */
+  c2c_document_sections: async (documentId, organizationId) => {
+    const res = await db.execute(sql`
+      SELECT s.content
+        FROM c2c_document_sections s
+        JOIN c2c_documents d ON d.id = s.document_id
+       WHERE s.id = ${documentId} AND d.org_id = ${organizationId}
+       LIMIT 1`);
+    const rows = ((res as unknown as { rows?: unknown[] }).rows ?? res) as Array<{ content: unknown }>;
+    if (!rows[0]) throw forbidRef();
+    // jsonb arrives parsed from node-postgres and PGlite; tolerate a driver
+    // that hands back the serialized string.
+    let content: unknown = rows[0].content;
+    if (typeof content === 'string') {
+      try { content = JSON.parse(content); } catch { /* keep as text */ }
+    }
+    const text = sectionPlainText(content).trim();
+    return text ? sha256Hex(text) : null;
+  },
+};
+
+/**
+ * The document tables upsertLeaf verifies tenancy for. Exported so the drift
+ * guard can assert this set still covers everything the read-side resolver
+ * branches on — a new resolver source with no verifier here would be storable
+ * unchecked and unpinned, which is the defect this dispatch closes.
+ */
+/**
+ * Verifiers for UUID-KEYED stores. Same contract as LEAF_SOURCE_VERIFIERS —
+ * prove the document resolves in the caller's organization, return the digest
+ * to pin, take both from one org-scoped read — but keyed by uuid rather than by
+ * integer, because `submission_leaves` addresses two key spaces
+ * (migrations/20260917b_submission_leaf_document_uuid.sql).
+ *
+ * Kept as a SECOND map rather than widening every existing verifier's
+ * signature: the integer verifiers are correct and their predicates mirror the
+ * resolver's branch for their table exactly, and rewriting five of them to
+ * carry a parameter four will never use is churn on the code path that decides
+ * what reaches a regulator.
+ */
+type LeafSourceUuidVerifier = (documentUuid: string, organizationId: number) => Promise<string | null>;
+
+/** Guards the ::uuid cast; a malformed value would raise 22P02 rather than a refusal. */
+const LEAF_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const LEAF_SOURCE_UUID_VERIFIERS: Record<string, LeafSourceUuidVerifier> = {
+  /* The vault. Scoped THROUGH THE PROGRAMME, which is the authoritative owner
+     of a vault document — vault.documents carries organization_id too, but it
+     is nullable by design (unattributable rows are quarantined) and so is
+     attribution rather than a scope to filter on. Pin = content_hash, which is
+     exactly what the resolver re-verifies before staging the bytes, so a source
+     altered after filing is detectable at assembly. */
+  vault_documents: async (documentUuid, organizationId) => {
+    if (!LEAF_UUID_RE.test(documentUuid)) throw forbidRef();
+    const res = await pool.query(
+      `SELECT d.content_hash
+         FROM vault.documents d
+        WHERE d.id = $1::uuid
+          AND d.deleted_at IS NULL
+          AND EXISTS (
+            SELECT 1 FROM regulatory_programs rp
+             WHERE rp.id = d.program_id
+               AND rp.organization_id = $2
+               AND rp.deleted_at IS NULL
+          )
+        LIMIT 1`,
+      [documentUuid, organizationId],
+    );
+    const row = res.rows[0] as { content_hash: string | null } | undefined;
+    if (!row) throw forbidRef();
+    return row.content_hash ?? null;
+  },
+};
+
+/** The document tables that name their document by UUID rather than by integer. */
+export const LEAF_UUID_KEYED_TABLES: ReadonlySet<string> = new Set(Object.keys(LEAF_SOURCE_UUID_VERIFIERS));
+
+export const LEAF_SOURCE_TENANCY_TABLES: ReadonlySet<string> = new Set([
+  ...Object.keys(LEAF_SOURCE_VERIFIERS),
+  ...Object.keys(LEAF_SOURCE_UUID_VERIFIERS),
+]);
+
+/**
+ * Prove the referenced document belongs to `organizationId` and return the
+ * digest to pin on the leaf (null when there is nothing to pin).
+ *
+ * A table with no registered verifier (vault_documents — UUID-keyed and
+ * program-scoped, so an integer leaf id cannot address it tenant-safely — or an
+ * unknown string) keeps today's behaviour: stored unverified and unpinned, and
+ * surfaced as an unresolved leaf at assembly. Widening that is a separate
+ * decision; the drift guard exists so it is a decision rather than an omission.
+ */
+async function verifyLeafSource(
+  documentTable: string,
+  ref: { documentId: number | null; documentUuid: string | null },
+  organizationId: number,
+): Promise<string | null> {
+  if (ref.documentUuid) {
+    const verifyUuid = LEAF_SOURCE_UUID_VERIFIERS[documentTable];
+    return verifyUuid ? verifyUuid(ref.documentUuid, organizationId) : null;
+  }
+  if (ref.documentId) {
+    const verify = LEAF_SOURCE_VERIFIERS[documentTable];
+    return verify ? verify(ref.documentId, organizationId) : null;
+  }
+  return null;
 }
 
 /** Create or update a leaf placement. Refuses if the parent sequence is locked. */
@@ -850,54 +1100,102 @@ export async function upsertLeaf(
     throw new SubmissionError('INVALID_STATE', `Sequence is ${seq.status}; its leaves are immutable.`);
   }
 
-  // When a leaf points at the canonical document table, the target must belong
-  // to the caller's org — no dangling cross-tenant document pointers.
-  /* Source pin (GA ledger L23). The leaf records where the document lives and
+  /* The leaf's SECTION CODE decides where the document lands in the package:
+     the packager derives the leaf's module, its folder and which backbone
+     carries it from this string (regional-packager `leafPackagePath`). Nothing
+     on the write path constrained it — the route schema takes any 64-character
+     string and the placement dialog is a free text input whose own placeholder
+     suggested `m1/us/1.2` — so a value that is not a CTD code became a FOLDER
+     NAME, and a package shipped with a top-level `mm/m1-us-1-2/` directory and
+     a backbone pointing into it.
+
+     The gate is deliberately code-SHAPE, not published-heading membership: four
+     of the codes this product itself writes (m1.5, m1.7, m1.9, m1.13 — the IND
+     annual report among them) are absent from FDA's published Module 1 table,
+     so a placeability gate here would refuse the product's own filings. That
+     mismatch is real and reported separately; it is not a reason to reject a
+     well-formed code.
+
+     The value is stored EXACTLY as given. Readers match on the spelling that
+     was written (the IND checklist looks for `m1.1.1`), so canonicalising here
+     would silently detach them from their own rows; the packager canonicalises
+     when it derives the layout. */
+  const canonicalSection = normalizeCtdCode(input.sectionCode);
+  if (canonicalSection === null || !canonicalSection.includes('.')) {
+    // A bare module ('3') is a CONTAINER — m3-quality holds sub-headings, never
+    // leaves — so it is code-shaped and still not a place a document can go.
+    throw new SubmissionError(
+      'VALIDATION',
+      `Section code "${input.sectionCode}" does not name a CTD section a document can be filed at. ` +
+        `Use a CTD section code — for example 1.2, 2.7.3 or 3.2.S.4.2 — since it decides where the ` +
+        `document is filed in the package. A bare module number is a container, not a section.`,
+    );
+  }
+
+  /* The leaf's document pointer is POLYMORPHIC — `document_table` is a plain
+     string. Nothing constrained it here, so a misspelled or invented table was
+     stored verbatim, audited as a placement, and reported dispatch-CLEAR by the
+     readiness validator (which only checks that a pointer is PRESENT); the
+     mistake only surfaced at assembly, as an unresolvable leaf, typically at the
+     end of a filing window. Refuse it at the write boundary instead — this is
+     the single choke point every caller funnels through (the REST route, AnA's
+     place_into_sequence, ind-lifecycle persistence and CMC placement). */
+  if (input.documentTable != null && !isPlaceableDocumentTable(input.documentTable)) {
+    throw new SubmissionError('VALIDATION', unplaceableDocumentTableMessage(input.documentTable));
+  }
+
+  /* THE KEY SPACE MUST MATCH THE TABLE. `submission_leaves` addresses two of
+     them — integer `document_id` for most stores, uuid `document_uuid` for
+     vault.documents — and this is the one place that rule is enforced.
+     Deliberately here and not as a CHECK constraint: the constraint would have
+     to name tables, which is exactly the vocabulary leaf-document-tables.ts
+     owns and keeps in step with the resolver's real branches, and splitting one
+     rule across a migration and a module is how the two drift.
+
+     Both directions are refused, because both produce a leaf that looks placed
+     and resolves to nothing: a vault leaf with only an integer cannot address
+     its document, and an integer-keyed leaf carrying a uuid names a document in
+     a store that has no uuids. */
+  if (input.documentTable != null) {
+    const uuidKeyed = LEAF_UUID_KEYED_TABLES.has(input.documentTable);
+    if (uuidKeyed && input.documentId != null) {
+      throw new SubmissionError(
+        'VALIDATION',
+        `"${input.documentTable}" is addressed by document_uuid, not document_id. Its documents are uuid-keyed; an integer cannot name one.`,
+      );
+    }
+    if (!uuidKeyed && input.documentUuid != null) {
+      throw new SubmissionError(
+        'VALIDATION',
+        `"${input.documentTable}" is addressed by document_id, not document_uuid. Only ${[...LEAF_UUID_KEYED_TABLES].sort().join(', ')} name a document by uuid.`,
+      );
+    }
+    if (uuidKeyed && input.documentUuid == null) {
+      throw new SubmissionError(
+        'VALIDATION',
+        `A leaf on "${input.documentTable}" must carry document_uuid — without it the leaf names no document and would be filed as unresolvable.`,
+      );
+    }
+  }
+
+  /* Tenancy + source pin for the document this leaf points at. One table-keyed
+     step (LEAF_SOURCE_VERIFIERS above) covers every source the resolver can
+     materialize: it proves the target belongs to the caller's org — no dangling
+     cross-tenant document pointers — and returns the digest to pin.
+
+     Source pin (GA ledger L23). The leaf records where the document lives and
      the MD5 of its RENDERED bytes; neither says what the SOURCE contained when
      it was filed. So "this went to the agency — is the document behind it still
      what went?" had no answer: `document_id` resolves to the document as it is
-     now, and editing it after filing changes nothing on the leaf.
-
-     The digest is taken from the SAME org-scoped read that already proves the
-     document belongs to the caller, so the bytes pinned are the bytes the
-     tenancy check passed on — a second query could race a concurrent edit and
-     pin content the check never saw. */
-  let documentContentSha256: string | null = null;
-  if (input.documentTable === 'coauthor_documents' && input.documentId) {
-    const [doc] = await db
-      .select({ id: coauthorDocuments.id, content: coauthorDocuments.content })
-      .from(coauthorDocuments)
-      .where(and(eq(coauthorDocuments.id, input.documentId), eq(coauthorDocuments.organizationId, ctx.organizationId)))
-      .limit(1);
-    if (!doc) {
-      throw new SubmissionError('FORBIDDEN', 'Referenced document not found for this organization.');
-    }
-    /* An empty or absent body pins NOTHING rather than the digest of an empty
-       string. sha256('') is a real, constant hex value that would look exactly
-       like a pin that had been taken, and would then "match" any other empty
-       document forever. NULL is the honest record of "no content to pin". */
-    documentContentSha256 =
-      typeof doc.content === 'string' && doc.content.length > 0
-        ? createHash('sha256').update(doc.content, 'utf8').digest('hex')
-        : null;
-  }
-
-  /* A rendered filing document (rendered_leaf_files) is the other pointer the
-     resolver can materialize. Same tenancy rule as above — an id that does not
-     resolve in this organization is refused, not silently stored — and the pin
-     is the sha256 recorded when the bytes were rendered, which is exactly what
-     the resolver re-verifies before staging them. */
-  if (input.documentTable === 'rendered_leaf_files' && input.documentId) {
-    const [rendered] = await db
-      .select({ sha256: renderedLeafFiles.sha256 })
-      .from(renderedLeafFiles)
-      .where(and(eq(renderedLeafFiles.id, input.documentId), eq(renderedLeafFiles.organizationId, ctx.organizationId)))
-      .limit(1);
-    if (!rendered) {
-      throw new SubmissionError('FORBIDDEN', 'Referenced document not found for this organization.');
-    }
-    documentContentSha256 = rendered.sha256;
-  }
+     now, and editing it after filing changes nothing on the leaf. */
+  const documentContentSha256: string | null =
+    input.documentTable && (input.documentId || input.documentUuid)
+      ? await verifyLeafSource(
+          input.documentTable,
+          { documentId: input.documentId ?? null, documentUuid: input.documentUuid ?? null },
+          ctx.organizationId,
+        )
+      : null;
 
   // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
   // parentLeafId — the GUID of the leaf it acts on. That parent MUST belong to the
@@ -936,6 +1234,7 @@ export async function upsertLeaf(
         ...(input.lifecycleOp ? { lifecycleOp: input.lifecycleOp } : {}),
         documentTable: input.documentTable ?? null,
         documentId: input.documentId ?? null,
+        documentUuid: input.documentUuid ?? null,
         documentType: input.documentType ?? null,
         parentLeafId: input.parentLeafId ?? null,
         ...(input.checksum !== undefined ? { checksum: input.checksum } : {}),
@@ -977,6 +1276,7 @@ export async function upsertLeaf(
       lifecycleOp: input.lifecycleOp ?? 'new',
       documentTable: input.documentTable ?? null,
       documentId: input.documentId ?? null,
+      documentUuid: input.documentUuid ?? null,
       documentType: input.documentType ?? null,
       parentLeafId: input.parentLeafId ?? null,
       checksum: input.checksum ?? null,

@@ -111,8 +111,10 @@ function makeApp(orgId = CALLER_ORG) {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    /* A role: transmit is role-gated. This harness attached none and still
-       reached the bundle guards, which is what it failed to notice. */
+    /* An editor role: the transmit route gates on the caller's organization
+       role (requireEditorAccess) before the bundle guards this file exercises
+       run, so the harness acts as an admin — the role gate itself is pinned in
+       mdx-submission-gateway-routes.test.ts. */
     (req as any).user = { id: 777, organizationId: orgId, role: 'admin' };
     (req as any).userRole = 'admin';
     next();

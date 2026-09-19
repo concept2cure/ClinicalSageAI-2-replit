@@ -19,9 +19,11 @@
  *                                write); plain text rendered via renderLeafPdf,
  *                                tenant-scoped through the parent
  *                                c2c_documents.org_id (renderable)
- *   - vault_documents          — an S3-backed binary (UUID-keyed, separate
- *                                `vault` schema); not addressable from an integer
- *                                leaf id and has no org scope → unresolved
+ *   - vault_documents          — a binary in the separate `vault` schema
+ *                                (UUID-keyed); not addressable from an integer
+ *                                leaf id, AND its bytes live outside the storage
+ *                                provider this module fetches through → unresolved
+ *                                (both reasons in leaf-document-tables.ts)
  *
  * Both assemblers (eCTD `assemble-from-core` and device
  * `assemble-technical-file-from-core`) previously resolved ONLY
@@ -52,6 +54,7 @@ import { getStorageProvider } from '../storage';
 import { readLocalUploadBuffer } from '../anthropic-files';
 import { sectionPlainText, C2C_SECTION_COMPLETE_STATUSES } from '../c2c/section-content';
 import { renderLeafPdf } from './leaf-pdf-renderer';
+import { externalDocumentTableReason } from './leaf-document-tables';
 import type { LeafLineage, ResolvedFile } from './core-to-packager';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { aliasesFor, canonicalIdFor } from '../c2c/document-alias-map.js';
@@ -62,40 +65,32 @@ import { aliasesFor, canonicalIdFor } from '../c2c/document-alias-map.js';
  * with a valid-looking checksum. (The md5 is computed from whatever we stage, so
  * there is no downstream content check to catch wrong bytes.)
  */
+/** Guards the ::uuid cast in the vault branch; a malformed value would raise
+ *  22P02 and fail the whole assembly rather than the one leaf. */
+const VAULT_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function looksLikePdf(buf: Buffer): boolean {
   return buf.length >= 5 && buf.subarray(0, 5).toString('latin1') === '%PDF-';
 }
-
-/** Tables whose content is stored locally and can be rendered to a PDF leaf. */
-export const RENDERABLE_DOCUMENT_TABLES = new Set(['coauthor_documents', 'unified_documents', 'c2c_document_sections']);
-
-/**
- * Tables whose content lives in an EXTERNAL system / as a binary upload and is
- * not locally renderable through this deterministic-PDF path. A leaf backed by
- * one of these is surfaced as unresolved, never silently dropped.
- */
-export const EXTERNAL_DOCUMENT_TABLES: Record<string, string> = {
-  // vault_documents CANNOT be materialized from a leaf today and is intentionally
-  // left unresolved (a guard-stop, not a silent drop): submission_leaves.document_id
-  // is INTEGER but vault.documents.id is a UUID (an integer cannot address the row),
-  // and vault.documents has no organization_id (it is program-scoped), so there is
-  // no tenant-safe lookup. Materializing it would require a reference/schema change;
-  // forcing it would risk shipping wrong or cross-tenant bytes to the agency.
-  vault_documents:
-    'vault_documents is an external S3-backed binary in the separate `vault` schema ' +
-    '(UUID-keyed, program-scoped); it cannot be addressed from an integer leaf ' +
-    'document_id and has no org scope, so it is not materializable here',
-};
 
 /** A leaf whose source document could not be materialized into the package. */
 export interface UnresolvedLeaf {
   documentTable: string | null;
   documentId: number | null;
+  /** Set instead of documentId when the leaf names a uuid-keyed store. */
+  documentUuid?: string | null;
   reason: string;
 }
 
 export interface MaterializeLeafSourcesParams {
-  leaves: Array<{ documentTable: string | null; documentId: number | null }>;
+  leaves: Array<{
+    documentTable: string | null;
+    documentId: number | null;
+    /** The uuid half of the polymorphic reference. Set for uuid-keyed stores
+     *  (vault.documents); null for integer-keyed ones. See
+     *  migrations/20260917b_submission_leaf_document_uuid.sql. */
+    documentUuid?: string | null;
+  }>;
   organizationId: number;
   /** Directory the rendered PDF leaves are written to. */
   stageDir: string;
@@ -197,8 +192,21 @@ async function coauthorLineage(organizationId: number, documentId: number): Prom
   };
 }
 
-/** Stable key for a leaf's polymorphic document reference. */
-export function leafSourceKey(documentTable: string | null | undefined, documentId: number | null | undefined): string {
+/**
+ * Stable key for a leaf's polymorphic document reference.
+ *
+ * The reference spans TWO key spaces: integer-keyed stores use `documentId`,
+ * and uuid-keyed ones (vault.documents) use `documentUuid`. The uuid is the
+ * unique part when present — without it every vault leaf collapses onto the key
+ * `vault_documents:` and the first document resolved would be staged for all of
+ * them, which is a wrong file in a submission rather than a missing one.
+ */
+export function leafSourceKey(
+  documentTable: string | null | undefined,
+  documentId: number | null | undefined,
+  documentUuid?: string | null,
+): string {
+  if (documentUuid) return `${documentTable ?? ''}:${documentUuid}`;
   return `${documentTable ?? ''}:${documentId ?? ''}`;
 }
 
@@ -253,13 +261,17 @@ export async function materializeLeafSources(
 
   // Deduplicate leaves by their polymorphic document reference.
   const seen = new Set<string>();
-  const refs: Array<{ documentTable: string | null; documentId: number | null }> = [];
+  const refs: Array<{ documentTable: string | null; documentId: number | null; documentUuid: string | null }> = [];
   for (const leaf of params.leaves) {
-    if (!leaf.documentTable || !leaf.documentId) continue; // no source → packager reports the gap
-    const key = leafSourceKey(leaf.documentTable, leaf.documentId);
+    const leafUuid = leaf.documentUuid ?? null;
+    // A leaf needs a table AND one of the two key spaces. Integer-keyed stores
+    // supply documentId; vault.documents is uuid-keyed and supplies
+    // documentUuid. Neither → no source, and the packager reports the gap.
+    if (!leaf.documentTable || (!leaf.documentId && !leafUuid)) continue;
+    const key = leafSourceKey(leaf.documentTable, leaf.documentId, leafUuid);
     if (seen.has(key)) continue;
     seen.add(key);
-    refs.push({ documentTable: leaf.documentTable, documentId: leaf.documentId });
+    refs.push({ documentTable: leaf.documentTable, documentId: leaf.documentId, documentUuid: leafUuid });
   }
 
   const write = async (key: string, baseName: string, content: string, opts: { title?: string; sectionCode?: string }) => {
@@ -279,7 +291,8 @@ export async function materializeLeafSources(
   for (const ref of refs) {
     const documentTable = ref.documentTable as string;
     const documentId = ref.documentId as number;
-    const key = leafSourceKey(documentTable, documentId);
+    const documentUuid = ref.documentUuid;
+    const key = leafSourceKey(documentTable, documentId, documentUuid);
 
     if (documentTable === 'coauthor_documents') {
       const [doc] = await db
@@ -433,6 +446,121 @@ export async function materializeLeafSources(
       continue;
     }
 
+    if (documentTable === 'vault_documents') {
+      // A vault document is UUID-keyed and its bytes live in the storage
+      // provider. Until 2026-09-17 this table was refused outright, for two
+      // reasons that both fell: the leaf can now name a uuid
+      // (submission_leaves.document_uuid), and vault ingest now writes through
+      // getStorageProvider() and records the version id it returns.
+      //
+      // FOUR gates, every one fail-closed, because the thing that leaves here
+      // goes to a regulator:
+      //   1. the row read is scoped to the caller's org THROUGH THE PROGRAMME —
+      //      the authoritative owner of a vault document. (vault.documents also
+      //      carries organization_id now, but it is nullable by design, so it
+      //      is attribution and not a scope to filter on.)
+      //   2. the byte fetch goes through the provider's own orgId boundary.
+      //      Object storage sits outside Postgres RLS, so that argument is the
+      //      only tenant gate the bytes themselves get.
+      //   3. the bytes are hash-verified against the content_hash the record
+      //      already claims. The md5 in the eCTD index is computed from
+      //      whatever we stage, so there is NO downstream check that would
+      //      catch wrong bytes — they would ship with a valid-looking checksum.
+      //   4. a real %PDF- header, verified on the bytes rather than trusted
+      //      from the mime string, exactly as the upload branch does.
+      if (!documentUuid) {
+        unresolved.push({
+          documentTable, documentId, documentUuid: null,
+          reason: 'vault leaf carries no document_uuid — a vault document is uuid-keyed and cannot be addressed by an integer document_id',
+        });
+        continue;
+      }
+      if (!VAULT_UUID_RE.test(documentUuid)) {
+        // Guard the ::uuid cast; a malformed value would otherwise raise 22P02
+        // and fail the whole assembly rather than this one leaf.
+        unresolved.push({
+          documentTable, documentId, documentUuid,
+          reason: 'vault leaf document_uuid is not a uuid',
+        });
+        continue;
+      }
+
+      const vaultRes = await queryableFromDrizzle(db).query(
+        `SELECT d.storage_version_id, d.content_hash, d.file_name
+           FROM vault.documents d
+          WHERE d.id = $1::uuid
+            AND d.deleted_at IS NULL
+            AND EXISTS (
+              SELECT 1 FROM regulatory_programs rp
+               WHERE rp.id = d.program_id
+                 AND rp.organization_id = $2
+                 AND rp.deleted_at IS NULL
+            )
+          LIMIT 1`,
+        [documentUuid, organizationId],
+      );
+      const vaultRow = vaultRes.rows[0] as
+        | { storage_version_id: string | null; content_hash: string | null; file_name: string | null }
+        | undefined;
+      if (!vaultRow) {
+        unresolved.push({
+          documentTable, documentId, documentUuid,
+          reason: 'vault document not found in this organization',
+        });
+        continue;
+      }
+      if (!vaultRow.storage_version_id) {
+        // A row written before the vault moved onto the storage provider. It is
+        // readable by its legacy path, but the packager fetches only through the
+        // provider — and reading the path here would be a second byte-reading
+        // implementation of exactly the kind that was just consolidated away.
+        // Say what makes it filable instead of guessing.
+        unresolved.push({
+          documentTable, documentId, documentUuid,
+          reason: 'vault document bytes are not on the storage provider yet (storage_version_id is null) — run scripts/backfill-vault-storage.mjs for this organization, then re-assemble',
+        });
+        continue;
+      }
+
+      const got = await getStorageProvider().get(vaultRow.storage_version_id, organizationId);
+      if (!got) {
+        unresolved.push({
+          documentTable, documentId, documentUuid,
+          reason: 'vault document bytes not retrievable from the storage provider for this organization',
+        });
+        continue;
+      }
+      const vaultSha = createHash('sha256').update(got.bytes).digest('hex');
+      if (vaultRow.content_hash && vaultSha !== vaultRow.content_hash) {
+        unresolved.push({
+          documentTable, documentId, documentUuid,
+          reason: 'vault document bytes do not match the content hash recorded for them — refusing to stage a leaf whose source may have been altered',
+        });
+        continue;
+      }
+      if (!looksLikePdf(got.bytes)) {
+        unresolved.push({
+          documentTable, documentId, documentUuid,
+          reason: 'vault document is not a valid PDF (missing %PDF- header) — refusing to stage a non-conformant leaf',
+        });
+        continue;
+      }
+
+      // Stage the RAW bytes, never re-rendered: the vault copy IS the governed
+      // record, and re-rendering would file something the vault has never seen.
+      const vaultFileName = leafFileName(vaultRow.file_name || 'vault', key);
+      const vaultPath = path.join(stageDir, vaultFileName);
+      await fs.writeFile(vaultPath, got.bytes);
+      byKey.set(key, {
+        fileName: vaultFileName,
+        sourcePath: vaultPath,
+        md5: createHash('md5').update(got.bytes).digest('hex'),
+        sha256: vaultSha,
+      });
+      materialized++;
+      continue;
+    }
+
     if (documentTable === 'rendered_leaf_files') {
       // Bytes this server rendered for a filing, retained at render time. Two
       // gates, both fail-closed: the row read is org-scoped, and the byte fetch
@@ -545,8 +673,9 @@ export async function materializeLeafSources(
       continue;
     }
 
-    if (documentTable in EXTERNAL_DOCUMENT_TABLES) {
-      unresolved.push({ documentTable, documentId, reason: EXTERNAL_DOCUMENT_TABLES[documentTable] });
+    const externalReason = externalDocumentTableReason(documentTable);
+    if (externalReason) {
+      unresolved.push({ documentTable, documentId, reason: externalReason });
       continue;
     }
 

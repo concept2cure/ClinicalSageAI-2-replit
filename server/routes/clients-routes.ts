@@ -9,7 +9,7 @@ import {
   projectModules,
   users,
 } from '@shared/schema';
-import { eq, and, sql, count } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
 
 // Create a new router for client endpoints

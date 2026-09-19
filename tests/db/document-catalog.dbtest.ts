@@ -209,6 +209,38 @@ describe('ingest with the catalog on — the extraction tier is recorded', () =>
     expect(tenant.rows[0].organization_id).toBe(orgId);
   });
 
+  it('a real PDF records its actual page count, not null', async () => {
+    /* page_count was declared at ingest and never assigned, so every document
+       reported NULL — a column reading "unknown" for a number that was one
+       call away. A text file legitimately has no pages; a PDF does, and says
+       so. */
+    const { PDFDocument } = await import('pdf-lib');
+    const pdf = await PDFDocument.create();
+    pdf.addPage();
+    pdf.addPage();
+    pdf.addPage();
+    const bytes = Buffer.from(await pdf.save());
+
+    const res = await request(app)
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', `${PROBE_CODE}-PAGES`)
+      .field('documentTitle', 'Three page report')
+      .field('documentType', 'REPORT')
+      .attach('file', bytes, 'three-pages.pdf');
+    expect(res.status).toBe(201);
+
+    const { rows } = await owner.query(
+      `SELECT d.page_count AS doc_pages, c.page_count AS catalog_pages
+         FROM vault.documents d
+         LEFT JOIN vault.document_catalog c ON c.document_id = d.id
+        WHERE d.id = $1`,
+      [res.body.document.id],
+    );
+    expect(rows[0].doc_pages).toBe(3);
+    expect(rows[0].catalog_pages).toBe(3);
+  }, 60_000);
+
   it('an upload extraction cannot read is recorded as a FAILURE with a reason', async () => {
     const res = await request(app)
       .post('/api/vault/ingest')
@@ -320,6 +352,21 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
       document_kind: 'Stability study report',
       batch: '23-104',
     });
+  });
+
+  it('hands the comprehension record BACK on the next read, instead of starting from zero', async () => {
+    /* key_data — the batch, the assay figure, the retest period AnA extracted
+       after reading the whole document — was written, embedded into the vector
+       the catalog search matches on, and then returned by nothing. Every
+       re-read began from raw text, re-deriving numbers the record already held:
+       the client re-explaining their own file, which is the thing this whole
+       workstream exists to stop. */
+    const read = await callTool('read_project_document', { document_id: txtDocId });
+    expect(read.ok).toBe(true);
+    expect(read.comprehension, 'a cataloged document must return what was learned').toBeTruthy();
+    expect(read.comprehension.documentKind).toBe('Stability study report');
+    expect(read.comprehension.keyData).toMatchObject({ batch: '23-104', retestMonths: 24 });
+    expect(read.comprehension.catalogedAt).toBeTruthy();
   });
 
   it('another tenant cannot list or read the document', async () => {

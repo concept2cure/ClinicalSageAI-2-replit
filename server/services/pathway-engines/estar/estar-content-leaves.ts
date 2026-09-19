@@ -150,6 +150,25 @@ export interface LoadDeviceContentLeavesOptions {
   /** Scope to one legacy document's sections (cerv2_510k_sections.document_id) when known. */
   documentId?: number;
   /**
+   * Which governed document CLASS to read, when `programId` is set. Defaults to
+   * `GOVERNED_DEVICE_DOC_TYPES` — every device class — which is
+   * `ORDER BY created_at DESC LIMIT 1` across k510, denovo, pma AND cer.
+   *
+   * That default is right for a readiness sweep and wrong for anything that
+   * files a section under its rule-pack KEY, because the keys are per-pathway
+   * and they collide: `D5` is "Shelf life and packaging" in the k510 pack and
+   * "Cybersecurity" in the denovo pack; `E1` is "Biocompatibility" in one and
+   * "Proposed labeling and instructions for use" in the other
+   * (migrations/20260901b_estar_510k_denovo_outlines.sql). Generating a CER, or
+   * scaffolding a De Novo beside a 510(k), changes which document answers — so
+   * a caller that means "this program's 510(k) content" must say so.
+   *
+   * The docblock on `loadGovernedDeviceSections` already names this exact use
+   * for the EU technical-file assembler; this is the same argument, applied to
+   * the callers that reach a named CDRH attachment slot.
+   */
+  docTypes?: ReadonlyArray<string>;
+  /**
    * The regulatory program (regulatory_programs.id) whose GOVERNED device
    * document to read. When set, the legacy store is not consulted at all.
    */
@@ -340,7 +359,9 @@ export async function loadDeviceContentLeaves(
   opts: LoadDeviceContentLeavesOptions = {},
 ): Promise<FilingLeaf[]> {
   if (opts.programId) {
-    const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
+    const rows = await loadGovernedDeviceSections(
+      organizationId, opts.programId, opts.client, opts.docTypes ?? GOVERNED_DEVICE_DOC_TYPES,
+    );
     return sectionsToLeaves(governedSectionsToDeviceSections(rows));
   }
   const where =
@@ -377,6 +398,20 @@ export interface AuthoredDeviceSection {
    * can name its files by outline key. Absent for the legacy store.
    */
   sectionCode?: string;
+  /**
+   * Whether the section is finalized content rather than a draft or a stub —
+   * the same rule `sectionsToLeaves` applies to the readiness path
+   * (`isSubstantive`), not a second opinion about it.
+   *
+   * This loader returns every AUTHORED section, and that is right for the draft
+   * package `/build` produces: a draft package containing drafts is what it
+   * says on the label. It is not right for a document going into a named CDRH
+   * attachment slot, where a section still marked `drafted` is an unreviewed
+   * machine draft filed as a submission. So the signal travels and the caller
+   * decides — narrowing what this RETURNS would have quietly emptied the draft
+   * package instead.
+   */
+  substantive: boolean;
 }
 
 /**
@@ -418,10 +453,17 @@ export async function loadAuthoredDeviceSections(
   opts: LoadDeviceContentLeavesOptions = {},
 ): Promise<AuthoredDeviceSection[]> {
   if (opts.programId) {
-    const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
+    const rows = await loadGovernedDeviceSections(
+      organizationId, opts.programId, opts.client, opts.docTypes ?? GOVERNED_DEVICE_DOC_TYPES,
+    );
     return governedSectionsToDeviceSections(rows)
       .filter(isAuthored)
-      .map((r) => ({ title: String(r.sectionTitle), content: String(r.content), sectionCode: String(r.sectionKey ?? '') || undefined }));
+      .map((r) => ({
+        title: String(r.sectionTitle),
+        content: String(r.content),
+        sectionCode: String(r.sectionKey ?? '') || undefined,
+        substantive: isSubstantive(r),
+      }));
   }
   const where =
     opts.documentId !== undefined
@@ -435,22 +477,40 @@ export async function loadAuthoredDeviceSections(
     .select({
       sectionTitle: cerv2510kSections.sectionTitle,
       sectionKey: cerv2510kSections.sectionKey,
+      // Selected so substantiveness can be ANSWERED rather than assumed. It was
+      // not read here, so every legacy section had to be treated as unknown —
+      // and an unknown that a caller reads as "fileable" is the failure this
+      // column prevents.
+      status: cerv2510kSections.status,
       content: cerv2510kSections.content,
     })
     .from(cerv2510kSections)
     .where(where)
     .orderBy(asc(cerv2510kSections.displayOrder));
 
+  return legacySectionsToAuthored(rows);
+}
+
+/**
+ * Legacy rows → authored sections. Split out so the substantive rule is
+ * testable without a database, and so it is visibly the SAME rule
+ * (`isSubstantive`) the governed branch and the readiness path apply.
+ */
+export function legacySectionsToAuthored(
+  rows: { sectionTitle?: string | null; sectionKey?: string | null; status?: string | null; content?: string | null }[],
+): AuthoredDeviceSection[] {
   return rows
     .filter((r) => (r.content ?? '').trim().length > 0)
     .map((r) => ({
       title: String(r.sectionTitle || r.sectionKey || 'Untitled section'),
       content: String(r.content),
+      substantive: isSubstantive({ status: r.status ?? null, content: r.content ?? null }),
     }));
 }
 
 export default {
   sectionsToLeaves,
+  legacySectionsToAuthored,
   loadDeviceContentLeaves,
   sectionsToEditorJson,
   loadAuthoredDeviceSections,

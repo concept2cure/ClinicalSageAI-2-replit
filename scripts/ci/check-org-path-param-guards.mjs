@@ -63,6 +63,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+// ZERO-DEBT BY DECISION, NOT BY ACCIDENT (recorded 2026-09-10, WO-4).
+//
+// This file does not exist, and that is intentional. An absent baseline reads as
+// an EMPTY one below (`fs.existsSync(BASELINE) ? ... : {}`), so any route taking
+// a tenant path parameter without one of the GUARDS is a fresh finding and the
+// gate fails closed. That is the correct posture for a tenant-scoping check, and
+// the count is currently zero.
+//
+// Do not "restore" this file because the path resolves to nothing. Running
+// --write-baseline would convert a clean tenant-isolation gate into a ratchet
+// and seed it with `reason: 'TODO'` entries — the opposite of what WO-3 is for.
 const BASELINE = path.join(repoRoot, 'docs/reports/org-path-param-guards-baseline.json');
 
 /** Path segments that name a tenant. */

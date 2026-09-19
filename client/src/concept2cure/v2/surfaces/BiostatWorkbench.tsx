@@ -52,8 +52,15 @@ import { saveToAuthoring } from '../authoringHandoff';
 import { engineResultToHtml } from '../engineResultHtml';
 
 interface Defensibility {
-  overallScore?: number;
-  overallRating?: string;
+  overallScore?: number | null;
+  overallRating?: string | null;
+  /**
+   * WO-16C finding 45. The server withholds the overall score when the model
+   * left a dimension unscored, rather than substituting a midpoint for it. The
+   * score and rating chips are already null-guarded, so without rendering this
+   * reason the card would simply go blank — an error shown as an empty result.
+   */
+  scoreBasis?: { ran?: boolean; reason?: string };
   reviewerRiskLevel?: string;
   criticalIssues?: any[];
   majorIssues?: any[];
@@ -469,7 +476,7 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Biostatistics workbench</span><span className="s">Reviewer-risk assessment + {CALCULATORS.length} design engines</span></div>
         <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--text-300,#6b6963)' }}>
-          Every calculation below runs on the server’s statistical engine — deterministic, provenance-stamped, and reference-tested against published tables and closed forms. Nothing is computed in the browser.
+          The design calculators below run on the server’s statistical engine — deterministic, provenance-stamped, and reference-tested against published tables and closed forms. Nothing is computed in the browser. The reviewer-risk defensibility assessment is not one of them: it is a model’s review of the fields you enter, and it scores only the dimensions those fields support.
         </div>
       </div>
 
@@ -493,6 +500,11 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
                 {asmtRes.overallRating && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.overallRating)}>{asmtRes.overallRating}</span><div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginTop: 4 }}>Rating</div></div>}
                 {asmtRes.reviewerRiskLevel && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.reviewerRiskLevel)}>{asmtRes.reviewerRiskLevel}</span><div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginTop: 4 }}>Reviewer risk</div></div>}
               </div>
+              {asmtRes.scoreBasis?.ran === false && (
+                <div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginBottom: 10 }}>
+                  No overall score: {asmtRes.scoreBasis.reason}
+                </div>
+              )}
               {Array.isArray(asmtRes.criticalIssues) && asmtRes.criticalIssues.length > 0 && (
                 <div style={{ marginBottom: 8 }}><div style={{ fontSize: 12, fontWeight: 600, color: 'var(--error,#b63939)' }}>Critical issues</div>
                   <ul style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 13 }}>{asmtRes.criticalIssues.map((x, i) => <li key={i}>{issueText(x)}</li>)}</ul></div>

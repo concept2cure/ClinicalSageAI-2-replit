@@ -17,6 +17,7 @@ import * as crypto from 'crypto';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { serverError } from '../lib/api-response';
+import { requireAuthedOrgId, usableOrgId } from '../utils/authedOrgId.js';
 
 const logger = createScopedLogger('audit-services');
 
@@ -406,8 +407,12 @@ router.post('/extraction/queue', async (req: Request, res: Response) => {
     }
     // Tenant comes from the authenticated context, never the body, and its
     // absence is a refusal rather than an extraction attributed to org 0.
-    const organizationId = Number(user?.organizationId);
-    if (!Number.isFinite(organizationId)) {
+    // usableOrgId, not a finite check: Number(null) is 0 and Number.isFinite(0)
+    // is true, and org 0 is a global carve-out in the artifacts RLS policy, so
+    // a finite check alone queues an unresolved tenant's extraction against
+    // every organization.
+    const organizationId = usableOrgId(user?.organizationId);
+    if (organizationId === null) {
       return res.status(403).json({ error: 'Organization context required' });
     }
 
@@ -434,8 +439,14 @@ router.post('/extraction/queue', async (req: Request, res: Response) => {
  */
 router.get('/extraction/status/:jobId', async (req: Request, res: Response) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const svc = await getSvc<any>(() => import('../services/autoExtractionPipeline.js'));
-    const job = svc.getExtractionStatus(String(req.params.jobId));
+    // Scoped to the caller's organization: a job owned by another tenant 404s
+    // exactly like one that does not exist, so this cannot be used to probe
+    // for job ids.
+    const job = svc.getExtractionStatus(String(req.params.jobId), guard.orgId);
 
     if (!job) {
       return res.status(404).json({ error: 'Job not found' });
@@ -453,8 +464,17 @@ router.get('/extraction/status/:jobId', async (req: Request, res: Response) => {
  */
 router.get('/extraction/project/:projectId', async (req: Request, res: Response) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const svc = await getSvc<any>(() => import('../services/autoExtractionPipeline.js'));
-    const jobs = svc.getProjectExtractionJobs(parseInt(String(req.params.projectId)));
+    // A project belonging to another organization reads as empty, exactly like
+    // a project with no extractions — deliberately not a 404, which would
+    // confirm the project id exists.
+    const jobs = svc.getProjectExtractionJobs(
+      parseInt(String(req.params.projectId)),
+      guard.orgId,
+    );
     res.json({ success: true, jobs });
   } catch (error: any) {
     return serverError(res, logger, 'loading project', error);

@@ -475,6 +475,10 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // the administrator's decision reason. The canonical audit event survives;
   // this tenant-owned working record does not.
   'module_access_requests',
+  // A tenant's AnA run-control records: the pauses, steers and stops their
+  // people issued mid-turn. Tenant-owned working data, not the audit trail —
+  // the Part 11 rows for those actions live elsewhere and outlive the account.
+  'ana_runs',
   // CMC/project workflow payloads are customer plans and assignments. Delete
   // them before their project parents; workflow_tasks cascade where the
   // canonical FK is present, while editions without this table/column are
@@ -533,6 +537,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      tenant's synthetic route, batch sizes and equipment: purged, not left as
      residue. */
   'manufacturing_processes',
+  /* The guided CMC interview's sessions: every answer a staffer gave AnA
+     about their drug substance and product, plus the register ids the commit
+     produced. Tenant content in full. A leaf (FKs to organizations and
+     users only). */
+  'cmc_interview_sessions',
   /* The rendered-leaf register: the per-leaf PDF bytes a sequence was built
      from, addressed by vault version and pinned by sha256/md5. That is the
      tenant's own submission content and its integrity record — a tenant that

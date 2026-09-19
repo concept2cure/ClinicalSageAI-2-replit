@@ -15,6 +15,7 @@ import { AnaActivity, type AnaActivityProps } from '../AnaActivity';
 import { C2CToast, useToast, type FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
+import { AppMentionMenu, useAppMentions } from '../appMentions';
 import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
 } from '../fixtures/conversation-thread-data';
@@ -706,6 +707,9 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
      AnA can actually retrieve it. Not a new upload path — the existing one,
      which this surface simply never called. */
   const fileRef = useRef<HTMLInputElement>(null);
+  /* `@app` in the thread composer — the same hook the rail uses (appMentions.tsx). */
+  const draftRef = useRef<HTMLTextAreaElement>(null);
+  const mentions = useAppMentions(draft, setDraft, draftRef);
   /* Scoped to the open project so extracted text lands in THAT project's
      memory, exactly as the shell composer and ProjectHome do. Null when no
      project is open, which the hook accepts — the file is still read, it just
@@ -904,9 +908,13 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
               >
                 {I.paperclip}
               </button>
-              <textarea rows={1} aria-label="Reply to AnA" placeholder="Reply to AnA — ask, or request a draft..." value={draft}
-                onChange={e => setDraft(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
+              <textarea ref={draftRef} rows={1} aria-label="Reply to AnA" placeholder="Reply to AnA — ask, request a draft, or type @ to name an app..." value={draft}
+                aria-autocomplete="list" aria-controls={mentions.open ? 'ct-mentions' : undefined} aria-expanded={mentions.open}
+                onChange={e => { setDraft(e.target.value); mentions.sync(e.currentTarget); }}
+                onSelect={e => mentions.sync(e.currentTarget)}
+                onBlur={() => mentions.close()}
+                onKeyDown={e => { if (mentions.onKeyDown(e)) return; if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
+              <AppMentionMenu api={mentions} id="ct-mentions" />
               <button
                 className="ct-comp-send"
                 aria-label="Send message to AnA"

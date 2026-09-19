@@ -22,7 +22,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { readVerifiedVaultBytes } from '../project-vault';
+import { readVerifiedVaultBytes, type VaultByteSource } from '../project-vault';
 
 const BYTES = Buffer.from('the vault copy, as filed\n');
 const sha = (b: Buffer) => createHash('sha256').update(b).digest('hex');
@@ -30,6 +30,18 @@ const sha = (b: Buffer) => createHash('sha256').update(b).digest('hex');
 const dir = path.resolve(process.cwd(), 'uploads', `c2c-vault-integrity-${process.pid}`);
 const key = path.join('uploads', path.basename(dir), 'doc.bin');
 const abs = path.resolve(process.cwd(), key);
+
+/**
+ * The legacy address shape. The reader became a DUAL read — a provider-backed
+ * `storageVersionId` for new rows, `s3_key` for everything written before it —
+ * and these cases are about the on-disk half, which is the half that can be
+ * tampered with behind the record's back.
+ */
+const legacy = (storageKey: string): VaultByteSource => ({
+  storageVersionId: null,
+  storageKey,
+  organizationId: 7,
+});
 
 beforeAll(async () => {
   await fs.mkdir(dir, { recursive: true });
@@ -42,7 +54,7 @@ afterAll(async () => {
 
 describe('readVerifiedVaultBytes', () => {
   it('returns the bytes when they match the recorded hash', async () => {
-    const r = await readVerifiedVaultBytes(key, sha(BYTES), 'doc-1');
+    const r = await readVerifiedVaultBytes(legacy(key), sha(BYTES), 'doc-1');
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.bytes.equals(BYTES)).toBe(true);
   });
@@ -50,7 +62,7 @@ describe('readVerifiedVaultBytes', () => {
   it('returns the bytes when no hash was ever recorded, rather than refusing', async () => {
     // A row predating content hashing is unverifiable, not corrupt. Refusing it
     // would take a working download away on no evidence.
-    const r = await readVerifiedVaultBytes(key, null, 'doc-1');
+    const r = await readVerifiedVaultBytes(legacy(key), null, 'doc-1');
     expect(r.ok).toBe(true);
   });
 
@@ -60,7 +72,7 @@ describe('readVerifiedVaultBytes', () => {
     expect(tampered.length).toBe(BYTES.length);
     await fs.writeFile(abs, tampered);
     try {
-      const r = await readVerifiedVaultBytes(key, sha(BYTES), 'doc-1');
+      const r = await readVerifiedVaultBytes(legacy(key), sha(BYTES), 'doc-1');
       expect(r.ok, 'a tampered file must not be served').toBe(false);
       if (!r.ok) {
         expect(r.status).toBe(409);
@@ -72,7 +84,7 @@ describe('readVerifiedVaultBytes', () => {
   });
 
   it('reports a missing file distinctly from a corrupt one', async () => {
-    const r = await readVerifiedVaultBytes(path.join('uploads', 'nope', 'gone.bin'), null, 'doc-1');
+    const r = await readVerifiedVaultBytes(legacy(path.join('uploads', 'nope', 'gone.bin')), null, 'doc-1');
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.status).toBe(409);
@@ -80,8 +92,25 @@ describe('readVerifiedVaultBytes', () => {
     }
   });
 
+  it('refuses a record that carries no storage address at all', async () => {
+    // The dual read has a third state the single-key reader could not express:
+    // neither a provider version nor a key. The ingest path refuses to create
+    // it, so it means a corrupt record — and serving a zero-byte file with a
+    // 200 would present that corruption as an empty document.
+    const r = await readVerifiedVaultBytes(
+      { storageVersionId: null, storageKey: null, organizationId: 7 },
+      null,
+      'doc-1',
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.status).toBe(409);
+      expect(r.error).toBe('NO_STORED_FILE');
+    }
+  });
+
   it('refuses a storage key that escapes the uploads root', async () => {
-    const r = await readVerifiedVaultBytes('../../etc/passwd', null, 'doc-1');
+    const r = await readVerifiedVaultBytes(legacy('../../etc/passwd'), null, 'doc-1');
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.status).toBe(409);

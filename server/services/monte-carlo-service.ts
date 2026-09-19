@@ -12,7 +12,7 @@
  * error, and confidence interval, and the result carries a provenance record.
  */
 import { Rng, createRng, seedFromObject } from './stats/rng';
-import { buildProvenance, type StatsProvenance } from './stats/computation-provenance';
+import { buildProvenance } from './stats/computation-provenance';
 
 export class MonteCarloService {
   /** Seeded generator for all Monte Carlo draws. Reseeded per simulation. */

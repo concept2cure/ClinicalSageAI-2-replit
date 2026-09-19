@@ -16,8 +16,8 @@ After deep analysis of the codebase, I've discovered a **critical integration ga
 
 | Component                        | Status   | Lines    | Location                                  |
 | -------------------------------- | -------- | -------- | ----------------------------------------- |
-| CortexPrimeService               | ✅ Built | 1,144    | `server/services/cortexPrimeService.ts`   |
-| Cortex Routes                    | ✅ Built | 678      | `server/routes/cortexRoutes.ts`           |
+| CortexPrimeService               | ❌ Retired 2026-09-10 (WO-14 Route B) | —    | was `server/services/cortexPrimeService.ts`; never worked — every write failed on every applier-produced schema |
+| Cortex Routes                    | ❌ Retired 2026-09-10 (WO-14 Route B) | —    | was `server/routes/cortexRoutes.ts`; unmounted, paths answer 404 |
 | Cortex Advisory Routes           | ✅ Built | 720      | `server/routes/cortexAdvisoryRoutes.ts`   |
 | Cortex Management Routes         | ✅ Built | 703      | `server/routes/cortexManagementRoutes.ts` |
 | Cortex Query Routes              | ✅ Built | 538      | `server/routes/cortexQueryRoutes.ts`      |

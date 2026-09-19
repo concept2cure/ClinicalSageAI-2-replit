@@ -58,6 +58,8 @@ const logger = createScopedLogger('ana-biostats-governed-documents');
  */
 const STATISTICAL_ARTIFACT_TYPE = 'statistical_summary';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Resolve the caller's organization id as a positive integer. The
  * concept2cure_artifacts.organization_id column is an integer FK, so the scope
@@ -103,6 +105,25 @@ export default function createAnaBiostatsGovernedDocumentsRoutes(): Router {
             .json({ success: false, error: 'projectId must be a positive integer' });
         }
         projectId = n;
+      }
+      // Optional programId filter — the regulatory_programs UUID the shell
+      // carries as the open project (window.C2C_PROJECT.id). Artifacts key on
+      // the integer projects.id, so the program is resolved through
+      // projects.regulatory_program_id, tenant-scoped. A program with no PM row
+      // has no artifacts by construction and returns an honest empty list; an
+      // unknown or malformed id matches nothing rather than the whole tenant.
+      if (projectId === undefined && typeof req.query.programId === 'string' && req.query.programId.trim()) {
+        const programId = req.query.programId.trim();
+        if (!UUID_RE.test(programId)) {
+          return res.status(400).json({ success: false, error: 'programId must be a UUID' });
+        }
+        const [project] = await db
+          .select({ id: projects.id })
+          .from(projects)
+          .where(and(eq(projects.regulatoryProgramId, programId), eq(projects.organizationId, orgId)))
+          .limit(1);
+        if (!project) return res.json({ success: true, data: [], total: 0, programId, unresolvedProgram: true });
+        projectId = project.id;
       }
 
       // Bounded result size.

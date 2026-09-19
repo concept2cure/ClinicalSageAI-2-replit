@@ -20,3 +20,14 @@ export type {
 } from './types';
 export { GatewayAuditLogger } from './audit';
 export { GatewayPolicyEngine } from './policy';
+export {
+  estimateRequestTokens,
+  fitsContextWindow,
+  GatewayContextWindowError,
+  ADMISSION_CHARS_PER_TOKEN,
+} from './context-budget';
+export {
+  classifyGatewayError,
+  isGatewayError,
+  GATEWAY_ERROR_HTTP_STATUS,
+} from './gateway-error-map';

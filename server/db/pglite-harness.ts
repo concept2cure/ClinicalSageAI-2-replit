@@ -264,6 +264,12 @@ CREATE TABLE IF NOT EXISTS submission_leaves (
   lifecycle_op    TEXT NOT NULL DEFAULT 'new',
   document_table  TEXT,
   document_id     INTEGER,
+  -- The uuid half of the polymorphic reference
+  -- (migrations/20260917b_submission_leaf_document_uuid.sql): stores whose key
+  -- is a UUID (vault.documents) are named by this, integer-keyed ones by
+  -- document_id. The Drizzle model selects it, so omitting it here fails every
+  -- assembler test with a missing-column error rather than a useful one.
+  document_uuid   UUID,
   document_type   TEXT,
   leaf_guid       TEXT,
   parent_leaf_id  INTEGER,
@@ -474,6 +480,40 @@ CREATE TABLE IF NOT EXISTS concept2cure_artifacts (
 `;
 
 /**
+ * The program spine — `organizations` + `regulatory_programs`, the record the
+ * Module 1 forms read their sponsor, product, indication and agency application
+ * number from, and the identity `resolveSubmissionSpine` matches a program to
+ * its `submissions` row by.
+ *
+ * Columns mirror shared/schema/programs.ts and migrations/20260524_program_
+ * workbench_schema.sql (+ 20260907 `application_number`). NOT NULL is kept only
+ * where the real schema has it and an insert needs it, and there are no FKs —
+ * a fixture that drags in the whole graph stops being usable.
+ */
+export const PROGRAM_SPINE_PGLITE_DDL = `
+CREATE TABLE IF NOT EXISTS organizations (
+  id    SERIAL PRIMARY KEY,
+  name  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS regulatory_programs (
+  id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id        INTEGER NOT NULL,
+  name                   TEXT NOT NULL,
+  code                   VARCHAR(50) NOT NULL,
+  program_type           TEXT NOT NULL,
+  primary_agency         TEXT NOT NULL DEFAULT 'FDA',
+  product_name           TEXT NOT NULL,
+  application_number     TEXT,
+  indication             TEXT,
+  target_submission_date TIMESTAMPTZ,
+  created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at             TIMESTAMPTZ
+);
+`;
+
+/**
  * Governed authoring store — c2c_documents + c2c_document_sections, the rows
  * the MDx editor and the eu-mdr / eu-ivdr rule packs write. Used by the
  * leaf-source-resolver and technical-file assembler tests to prove that an
@@ -609,6 +649,7 @@ export async function createIndPgliteDb(
     leafSources?: boolean;
     formArtifacts?: boolean;
     governedSections?: boolean;
+    programSpine?: boolean;
   } = {}
 ): Promise<IndPgliteDb> {
   const pglite = new PGlite();
@@ -618,6 +659,7 @@ export async function createIndPgliteDb(
   if (opts.leafSources) await pglite.exec(LEAF_SOURCE_PGLITE_DDL);
   if (opts.formArtifacts) await pglite.exec(FORM_ARTIFACT_PGLITE_DDL);
   if (opts.governedSections) await pglite.exec(GOVERNED_SECTIONS_PGLITE_DDL);
+  if (opts.programSpine) await pglite.exec(PROGRAM_SPINE_PGLITE_DDL);
   const db = drizzle(pglite);
   return { pglite, db, schemaGaps, close: () => pglite.close() };
 }

@@ -114,7 +114,98 @@ async function readIndProgramTargets(orgId: number): Promise<ProgramTargetRow[]>
   }
 }
 
+/**
+ * The org's authored documents — the store that supplies per-section AUTHORING
+ * STATUS, and nothing else.
+ *
+ * Fails closed to [] when the store is not provisioned (42P01), like the
+ * target-date read. It used to be an unguarded member of the bulk Promise.all,
+ * so on a database without the authoring store the whole assembly threw, the
+ * route degraded the ENTIRE response to an empty list, and an organisation
+ * holding real IND submissions was told it had no IND at all. The checklist's
+ * identity comes from `submissions`; the honest degradation of a missing
+ * authoring store is "no section status", never "no IND".
+ */
+async function readAuthoredDocuments(orgId: number): Promise<CoauthorDoc[]> {
+  try {
+    const res = await pool.query(
+      `SELECT id, module_number, status, module_name FROM coauthor_documents
+        WHERE organization_id = $1 AND module_number IS NOT NULL`,
+      [orgId],
+    );
+    return res.rows as CoauthorDoc[];
+  } catch (err) {
+    if ((err as { code?: string })?.code === '42P01') return [];
+    throw err;
+  }
+}
+
 const norm = (v: unknown): string => str(v).trim().toLowerCase();
+
+/** Shared empty set — a submission with no sponsor-completed form allocates none. */
+const EMPTY_FORM_IDS: ReadonlySet<string> = new Set<string>();
+
+/** `form_1571` → `FDA_1571`; null for a document type that names no FDA form. */
+function formIdForDocumentType(documentType: string | null): string | null {
+  const m = /^form_([0-9]{3,4}[a-z]?)$/i.exec((documentType ?? '').trim());
+  return m ? `FDA_${m[1].toUpperCase()}` : null;
+}
+
+/**
+ * Which FDA forms each submission has a sponsor-completed, retained document
+ * for — keyed by submission id, valued by canonical form id.
+ *
+ * The tenant gate is the `rendered_leaf_files` row's own organization_id, read
+ * here rather than inferred from the leaf: `submission_leaves.document_table` is
+ * a polymorphic reference with no FK, so a leaf can name a row id that belongs
+ * to another organisation or to nothing at all. Either would otherwise flip a
+ * form to complete on this checklist over a document this tenant does not have.
+ *
+ * Fails closed to "none" when the store is not provisioned (42P01), exactly as
+ * the target-date read does: a missing table means no sponsor-completed form is
+ * known, never a failed checklist.
+ */
+async function resolveSponsorCompletedForms(
+  leaves: Array<{ sequence_id: number; document_table: string | null; document_id: number | null; document_type: string | null }>,
+  seqToSub: Map<number, number>,
+  orgId: number,
+): Promise<Map<number, Set<string>>> {
+  const byId = new Map<number, Array<{ subId: number; formId: string }>>();
+  for (const l of leaves) {
+    if (l.document_table !== 'rendered_leaf_files' || l.document_id == null) continue;
+    const formId = formIdForDocumentType(l.document_type);
+    if (!formId) continue;
+    const subId = seqToSub.get(Number(l.sequence_id));
+    if (subId == null) continue;
+    const docId = Number(l.document_id);
+    const list = byId.get(docId) ?? [];
+    list.push({ subId, formId });
+    byId.set(docId, list);
+  }
+  const out = new Map<number, Set<string>>();
+  if (byId.size === 0) return out;
+
+  let ownedIds: number[];
+  try {
+    const res = await pool.query(
+      `SELECT id FROM rendered_leaf_files WHERE id = ANY($1) AND organization_id = $2`,
+      [[...byId.keys()], orgId],
+    );
+    ownedIds = (res.rows as Array<{ id: number | string }>).map((r) => Number(r.id));
+  } catch (err) {
+    if ((err as { code?: string })?.code === '42P01') return out;
+    throw err;
+  }
+
+  for (const id of ownedIds) {
+    for (const { subId, formId } of byId.get(id) ?? []) {
+      const set = out.get(subId) ?? new Set<string>();
+      set.add(formId);
+      out.set(subId, set);
+    }
+  }
+  return out;
+}
 
 /**
  * Resolve the submission's regulatory program by identity match (program
@@ -176,28 +267,39 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
         WHERE submission_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL`,
       [subIds, orgId],
     ),
-    pool.query(
-      `SELECT id, module_number, status, module_name FROM coauthor_documents
-        WHERE organization_id = $1 AND module_number IS NOT NULL`,
-      [orgId],
-    ),
+    readAuthoredDocuments(orgId),
     readIndProgramTargets(orgId),
   ]);
   const seqRows = seqRes.rows as Array<{ id: number; submission_id: number }>;
-  const coauthorDocs = coauthorRes.rows as CoauthorDoc[];
+  const coauthorDocs = coauthorRes;
   const docById = new Map<number, CoauthorDoc>(coauthorDocs.map((d) => [Number(d.id), d]));
 
   const seqIds = seqRows.map((r) => Number(r.id));
   const leavesRes = seqIds.length
     ? await pool.query(
-        `SELECT sequence_id, section_code, document_table, document_id FROM submission_leaves
+        `SELECT sequence_id, section_code, document_table, document_id, document_type FROM submission_leaves
           WHERE sequence_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL`,
         [seqIds, orgId],
       )
     : { rows: [] as Array<Record<string, unknown>> };
-  const leaves = leavesRes.rows as Array<{ sequence_id: number; section_code: string; document_table: string | null; document_id: number | null }>;
+  const leaves = leavesRes.rows as Array<{
+    sequence_id: number;
+    section_code: string;
+    document_table: string | null;
+    document_id: number | null;
+    document_type: string | null;
+  }>;
 
   const seqToSub = new Map<number, number>(seqRows.map((r) => [Number(r.id), Number(r.submission_id)]));
+
+  /* Forms completed by the SPONSOR rather than by authoring.
+     1571/1572/3674 are signed FDA forms: a sponsor completes and signs the
+     official PDF in Acrobat and attaches it, and the forms panel places it as a
+     Module 1 leaf typed `form_<number>` backed by the retained bytes
+     (rendered_leaf_files). Read only through those retained bytes, verified to
+     be THIS org's: a leaf pointing at nothing, or at another tenant's file, is
+     a placement with no form behind it and must not read as a completed one. */
+  const uploadedFormsBySub = await resolveSponsorCompletedForms(leaves, seqToSub, orgId);
 
   // Placed sections per submission: leaf.section_code (authoritative) → the referenced
   // coauthor doc's mapped status.
@@ -225,9 +327,10 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
       .map(([code, v]) => enrichSection(code, v.status, v.name))
       .sort((a, b) => compareSectionCode(a.code, b.code));
 
+    const sponsorCompleted = uploadedFormsBySub.get(subId) ?? EMPTY_FORM_IDS;
     const forms = FORM_SECTIONS.map((f) => ({
       id: f.id, title: f.title, label: f.label, ref: f.ref,
-      done: COMPLETE.has(statusByCode.get(f.code)?.status ?? ''),
+      done: COMPLETE.has(statusByCode.get(f.code)?.status ?? '') || sponsorCompleted.has(f.id),
     }));
 
     const productName = s.product_name != null && str(s.product_name).trim() !== '' ? str(s.product_name) : null;

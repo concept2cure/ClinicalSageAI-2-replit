@@ -10,14 +10,25 @@ Date: 2026-09-05
 Six ran: design-reviewer, a11y-auditor, part11-ux-auditor, microcopy-reviewer,
 motion-auditor, design-system-auditor. Plus honest-state-auditor.
 
-**Screenshots were NOT captured, and that is a real gap in this review.** The
-app needs Postgres and the Docker daemon is unavailable in this environment, so
-the running application could not be reached. What replaced them is stronger for
-the contrast question and weaker for everything else: the repo's own
-`visual-qa` pipeline renders all 126 captured surfaces in headless Chromium
-under the real shipped stylesheets and measures computed colour per text node.
-Layout, overflow, focus rings and responsive behaviour were NOT visually
-verified. Treat the layout half of this review as code-read only.
+~~**Screenshots were NOT captured, and that is a real gap in this review.**~~
+**Closed 2026-09-08 — see "Screenshots (added 2026-09-08)" below.** The original
+text is kept because it explains what the rest of this document was written
+without.
+
+> _Original note (2026-09-05):_ The app needs Postgres and the Docker daemon is
+> unavailable in this environment, so the running application could not be
+> reached. What replaced them is stronger for the contrast question and weaker
+> for everything else: the repo's own `visual-qa` pipeline renders all 126
+> captured surfaces in headless Chromium under the real shipped stylesheets and
+> measures computed colour per text node. Layout, overflow, focus rings and
+> responsive behaviour were NOT visually verified. Treat the layout half of this
+> review as code-read only.
+
+The blocker was environmental, not architectural: Postgres is provisionable
+locally with `scripts/db/install-fresh.mjs` (the Docker daemon is not needed —
+the container was already running), and Chromium ships at `/opt/pw-browsers`.
+36 screenshots now exist under `screenshots/`, and the layout half of this
+review is no longer code-read only.
 
 ## The finding that matters
 
@@ -136,6 +147,15 @@ the same braced comment and watching it parse cleanly.
 6. **Keyboard-unreachable controls**: `ProtocolDev.tsx` heat-map cell and risk
    row, `Orchestration.tsx` nav chip, `QmpWorkspace.tsx` table cell.
 
+7. **`document.body` stays light-themed in dark mode** (found 2026-09-08 by the
+   screenshot pass). `getComputedStyle(document.body).backgroundColor` is
+   `rgb(250, 249, 245)` under both themes. Not visible today because `.c2c-v2`
+   covers the viewport, so this is latent — but it is the fourth instance of the
+   exact shape root causes #1–#3 describe: a value resolving where the dark
+   tokens are not in scope. It would surface on overscroll, behind a shell
+   shorter than the viewport, or in a print/export path. Small fix, but it wants
+   the same care as the alias re-declaration rather than a hardcoded body rule.
+
 ## Fixed in this pass
 
 - Dark-mode text ramp and accent aliases (above).
@@ -154,3 +174,273 @@ tree. The Part 11 signature ceremony (`GovernedApprovalDialog`, `SignoffList`,
 `AuthoringSignatures`) meets §11.50 including the printed-name fallback. And
 the CI gates here are unusually good — two of them caught my own mistakes
 mid-pass, which is the point of a gate.
+
+---
+
+## Screenshots (added 2026-09-08)
+
+Captured by `capture-2026-09-08.mjs` in this folder, against the real dev server
+on a locally provisioned Postgres, in Chromium 1194. 36 shots: five active
+surfaces (home, projects, vault, tasks, apps) × light and dark × 1280 / 768 /
+375, plus the three read-states of one surface in both themes. Zero page errors
+across all of it.
+
+Dark is set through the **real preference** (`c2c-v2-prefs.dark`), not by forcing
+a class or an attribute. That matters here specifically: root cause #1 above was
+a shell whose class said dark while the generated ramp stayed light, so a capture
+that forced only one of the two would photograph a state no user can reach and
+would hide the very bug this review is about.
+
+Rows in the populated Projects shots are synthetic, served through request
+interception, as are the loading and failed states — a failed read cannot be
+photographed on demand otherwise. None of it is evidence about real data; it is
+evidence about layout and colour.
+
+### Both dark-theme root-cause fixes verified live
+
+Measured from `getComputedStyle` on the shell, not read off the pixels:
+
+| | light | dark |
+|---|---|---|
+| `.c2c-v2` has `dark` class | no | **yes** |
+| `data-theme` attribute | absent | **`"dark"`** |
+| `--bg-000` | `#faf9f5` | **`#262624`** |
+| `--accent-200` | `#ad5132` | **`#e8916f`** |
+
+Root cause #1 (the ramp's `[data-theme="dark"]` selector never matching) and
+root cause #2 (accent aliases frozen at light values — the review measured 223
+elements stuck at `#ad5132`) are both confirmed fixed in a running browser.
+`--accent-200` resolving to `#e8916f` is the direct disproof of the frozen-alias
+bug.
+
+### FIXED: `document.body` kept the light background in dark mode
+
+`getComputedStyle(document.body).backgroundColor` is `rgb(250, 249, 245)` —
+`--bg-000`'s LIGHT value — in both themes. The dark shots look correct because
+`.c2c-v2` paints over the full viewport, so **this is latent, not visible
+today**. It is the same shape as the two root causes above (a value resolving in
+a scope where the dark tokens are not in view), and it would surface as a light
+band on overscroll, behind a shell shorter than the viewport, or in any print or
+screenshot path that captures the body. Filed below rather than fixed here.
+
+**Fixed 2026-09-17.** It was worse than filed: `index.css` pointed the body rule
+at two literal `:root` tokens — `--color-bg: #faf9f5` and
+`--color-text-primary: #141413`, referenced nowhere else in the repo — so body's
+TEXT colour was frozen near-black too, not just its background. Both literals
+are gone; the rule now reads `var(--bg-000)` / `var(--text-100)`, and V2App
+marks BODY with the dark class so those resolve in a scope where the dark
+palette is in view. Marking body rather than `<html>` on purpose: the shell
+already makes every descendant dark, so this adds only body itself and anything
+portalled to it — the part that was actually wrong — whereas marking `<html>`
+would make `:root` dark and change what every alias in the palette resolves to.
+Measured in Chromium: light body stays `rgb(250,249,245)` on `rgb(20,20,19)`;
+dark body is now `rgb(38,38,36)` on `rgb(250,249,245)`.
+
+Worth noting for the next person: `ci:frozen-theme-aliases` does NOT catch this
+one. It looks for a `:root` alias whose value is `var(--x)`; these were literal
+values on a rule, which is a different shape of the same mistake.
+
+### Must-fix #3 confirmed, with pictures
+
+The claim was that loading, empty and failed "still look like three different
+components." They do, and the shots settle it:
+
+| State | What it renders |
+|---|---|
+| loading | thin left-accent rule, left-aligned text, no icon, full width |
+| empty | large dashed-border panel, centred, folder icon + bold title + hint |
+| failed | solid warning-bordered panel, icon + title + reason + "Try again" |
+
+Three different containers, three different alignments, three different border
+treatments, in one slot. `review-projects-state-{loading,empty,failed}-*.png`.
+
+### Honest-state discipline verified visually
+
+Worth recording because it is the thing this codebase most insists on, and the
+distinction is only legible side by side:
+
+- **empty** portfolio → `0 active programs · 0% average readiness · 0 blocked`
+- **failed** read → `— active programs · — average readiness · — blocked`
+
+Zero when the count is genuinely zero; an em dash when it is unknown. The
+`kv()` guard is doing exactly what it exists to do, and the two states cannot be
+mistaken for each other.
+
+### Not covered by these shots
+
+Focus rings, keyboard traversal and motion were not captured — they need
+interaction, not a screenshot, and must-fix #4 and #6 remain open on code-read
+evidence. The 8 remaining dark contrast failures are also not adjudicated here;
+they were measured per-element by `visual-qa:contrast`, which remains the right
+instrument for them. The `--text-400` on `--canvas-elevated` pair (3.6:1) a
+designer still needs to settle is visible in the dark Projects shots.
+
+---
+
+## Must-fix list, settled 2026-09-17
+
+Each item below is closed against measurement, not against a reading of the
+code. Three of them closed by *disproving the finding*, which is recorded here
+so they are not raised a fourth time.
+
+**#2 — dark-mode contrast: CLOSED, 0 failures.** The review said 8 remained,
+including "3 at `--text-400` on `--canvas-elevated` (3.6:1)". A fresh capture
+(the previous one was 11 days stale, and `visual-qa:contrast` refused to report
+against it) measures **126 surfaces × 2 themes, 8,230 text elements, 0 below
+WCAG 2.2 AA in either theme.**
+
+The `--text-400` / `--canvas-elevated` pair was already settled by an earlier
+pass, and the arithmetic is in `mdx/app.css` beside the rules it affects: the
+token is 4.74:1 on the white light value and 3.93:1 on the `#30302e` dark one,
+so `.eng-awareness-head .section-sub` and the `.docs-*` rows take `--text-300`
+in dark. The review's 3.6:1 is the *pre-fix* `#8a8880` (3.55:1), named in that
+same comment as the reason the fix was made. Nothing is outstanding for a
+designer to settle.
+
+Worth recording: `mdx/app.css` and `pdev/app.css` contain **no dark rules at
+all** — one `[data-theme]` mention, and that is a comment saying so. Both shells
+inherit the theme entirely through the design-system tokens, which is why the
+alias-freeze fix reached all 16 MDX and 8 PDEV surfaces without either sheet
+being touched. Their markup *is* captured (`mdx__*`, `pdev__*`, 24 of the 126
+dumps) and each dump carries its own `.mdx-shell` / `pdev` root, so both shells
+were inside the measurement above.
+
+**#4 — dialogs without semantics: CLOSED.** `FilingsCatalog` was done earlier.
+`CollabLauncher` and both `AnaCommand` gates are done here — see the a11y
+commit. All now carry `role="dialog"`, `aria-modal`, an accessible name, Escape,
+and focus restore.
+
+`useDialog` was also "a partial trap by design — Tab can leave the panel", which
+this section first recorded as still open. It is closed now, and it should not
+have been carried as a design limitation at all: every one of its 36 call sites
+sets `aria-modal="true"`, and that attribute tells a screen reader to hide
+everything outside the dialog. A keyboard user tabbing past the last control
+therefore landed on a control that had been removed from their accessibility
+tree, behind an opaque backdrop. Tab now wraps at both ends, escaped focus is
+pulled back, and a panel with nothing focusable holds focus itself. Tested at
+the hook, not through a surface — a per-surface test would prove it for one
+modal and leave the other thirty-five unexamined.
+
+**#6 — keyboard-unreachable controls: CLOSED.** ProtocolDev's heat-map cell and
+risk row, and QmpWorkspace's plan-name cell. `Orchestration.tsx`'s nav chip was
+already done. Held by `riskAndDialogA11y.test.tsx`, revert-proven a half at a
+time.
+
+### Findings that did not survive checking
+
+- **"51 `transition: all` uses."** There are five in the tree. Four are
+  `design-system/preview/*.html` and the README, where `transition: all 200ms`
+  is *documented as the intended global default*; the fifth is
+  `projects-prototype.css`. There is nothing to lint.
+- **"The 40px auth hero breaks the 18–24px title ceiling."** The README's rule
+  reads "`text-lg` (18px) is the max title size **outside marketing**". Both
+  40px rules in the tree are `.auth-brand-h` (the brand entry screen) and
+  `.tier-price` (pricing tiers). Both are marketing surfaces, and both are
+  inside the stated exception.
+- **A crude "does this file mention `sampleMode`" scan** marked 20 of 30 MDX
+  data consumers ungated. It is a false-positive generator: `DataGate` is the
+  other half of the gate, and `EngineeringSurface` passes its fixture as
+  `sample={ENG_DOCUMENTS}` to exactly that. Verified by hand before acting.
+
+### Found while checking, and fixed
+
+`ci:component-class-coverage` refused to report against a stale build. Rebuilt,
+it named four class names rendered with no rule in any shipped chunk, against a
+baseline of 0 — all 6–10 days old, from other sessions:
+
+- `.pj-dim` — real. Three lines in `CmcModule` (the loading note, the compiled
+  completeness figure, the lineage line) drew at full body emphasis where they
+  are meant to be subordinate. Defined now, on the `--text-400` ramp the rest of
+  the `.pj-*` family uses.
+- `.audit-unclassified` — real. The modifier had no rule, so on the 21 CFR
+  Part 11 audit tab the caveat "N rows could not be classified and this filter
+  cannot speak for them" rendered as a second, identical, centred grey sentence
+  beside "No events match this filter." Separated structurally, not by colour,
+  keeping the AA-verified `--text-400`.
+- `.indf-fact` / `.indf-record` — the gate's premise ("a class no stylesheet
+  defines renders as nothing") does not hold for these two: the block is styled
+  inline and renders correctly. Migrated to rules anyway, which is the truthful
+  way to clear it. One substantive change came out of the migration: the border
+  was `1px solid var(--text-400)` — a body-TEXT colour used as a hairline, which
+  put a full-weight box around a quiet restatement of record values. It is
+  `--border` now. `--radius-md` is exactly the 6px literal it replaces.
+
+---
+
+## Fabricated-data audit of the MDX kit, 2026-09-17
+
+The v2 shell's fixtures were swept earlier in this pass. `pdev/data` holds only
+`enums.ts`, `nav.ts` and `types.ts`, and its header records that the fixture rows
+were already stripped. That left the MDX kit — **16 production surfaces**, routed
+at `/concept2cure/mdx` and mounted through `DeviceSurfaces.tsx` → `MdxSurfaceHost`
+→ `surfaceViews.ts`, so it ships — and its 19 data modules had never been audited
+export by export.
+
+Every export of all 19 was classified, each fabricated one traced to its
+consumers, and every "reaches production ungated" claim put to two adversarial
+verifiers on different lenses.
+
+**184 exports · 65 fabricated · 20 asserting something a Part 11 record would.**
+
+### The boundary works, and that is the headline
+
+`lib/sampleMode.ts` force-disables sample mode whenever `import.meta.env.PROD`,
+and is otherwise opt-in only (`?sample=1`, or a top-bar toggle). `DataGate`
+renders its `sample` prop **only** under that flag and always behind a visible
+"Sample data" banner. Of 65 fabricated exports, **61 are correctly behind it** —
+including every one of the worst: fabricated e-signatures (`esigState: 'signed',
+signedBy: 'JC · 2026-04-08'`), a fabricated PMDA 30-day report with
+`eventType: 'death'`, invented FAERS signals, a fabricated acknowledgement
+(`'Jordan Chen, Reg Lead · 2026-04-29 09:55 UTC'`). None of those can reach a
+regulated tenant.
+
+### The four that went around it — all now fixed
+
+1. **`PMA_TRIAL_METRICS` / `PMA_MODULES`** — `PmaSurface` fell back to them via a
+   ternary, on its own admission: *"Falls back to kit fixtures during load + on
+   error."* So an empty tenant, an expired token or a 500 showed
+   `Enrolled 412 / 680 · Behind plan by 3 weeks` and `Adverse events 47 · 3
+   serious · 2 device-related under adjudication` — another company's enrolment
+   and another company's serious adverse events — with no banner. Both go
+   through `DataGate` now.
+2. **`PMA_PHASES`** — carried a hand-written position beside the canonical ten
+   phase labels. Reachable on the no-program branch, where the grid drew an
+   invented programme's progress for a user who had selected nothing. Taxonomy
+   kept, position removed.
+3. **`vaultKpisForFiles`** — three KPIs derived from the file list, the fourth
+   asserting `metric: '3'` under "Approaching 15-year minimum · audit before
+   purge", indistinguishable from the real three. `VaultFile` has no retention
+   date to derive it from. Reads as an em dash now.
+4. **Two inline JSX literals** — `'CV-330 Implantable Monitor'` and
+   `' · PMA filing Q3 2026'` in PmaSurface's header, plus `Math.max(activeIdx, 0)`
+   turning "no active phase" into "Phase 1 of 10" beside ten bars reading 0%.
+   **Found by an adversarial verifier checking a different finding on the same
+   surface** — they are inline literals, so they belong to no data module and no
+   fixture audit or import-based gate could have seen them. A follow-up sweep for
+   record-shaped string fallbacks across all three shells found no others (its
+   only two hits were `SHA-256`).
+
+### What the gate could not see, and now can
+
+`ci:fixture-fallback` exists for exactly defect 1 and did not fire: it keys on
+`live ?? FIXTURE` and on a `FIXTURE_`/`SAMPLE_`/`DEMO_` name, and this was a
+ternary over constants named for the pathway. It now also matches the ternary
+shape structurally — an else-branch that is a bare identifier imported from
+`data/` or `fixtures/` — with two exclusions found by running it against the
+tree, both real and correct code: a condition consulting sample mode
+(`Overview.tsx`), and both branches being imported constants, i.e. a vocabulary
+selector (`Pyramid.tsx`). Proven on the real case: restoring the two lines
+PmaSurface shipped fails the gate at both.
+
+It also could not be *described* without failing — its comment skip was a line
+test for a leading `*`, so a file explaining a removed fallback failed the check
+for the fallback it removed. It strips comments properly now.
+
+### Still open — a product decision, not a code defect
+
+The 61 gated fabrications include fabricated electronic signatures and a
+fabricated patient-death report. They cannot reach production. Whether content
+of that kind should exist as demo material **at all** is a call for the product
+owner, not something to delete unilaterally: sample mode is a deliberate,
+well-built capability and removing it would take the demo story with it. Flagged
+rather than actioned.

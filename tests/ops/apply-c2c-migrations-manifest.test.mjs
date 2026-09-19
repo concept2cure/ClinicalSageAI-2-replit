@@ -240,20 +240,10 @@ const RATCHET_FROM = '20260701';
  * always safe; adding one requires the reason above to actually hold.
  */
 const KNOWN_UNLISTED = new Set([
-  'migrations/20260701_protocol_soa.sql',
-  'migrations/20260702_protocol_budget.sql',
   'migrations/20260702_usage_model_credit_ledger.sql',
-  'migrations/20260703_dmsp.sql',
-  'migrations/20260704_biosketch.sql',
-  'migrations/20260704_other_support.sql',
-  'migrations/20260705_export_control.sql',
-  'migrations/20260705_invention_disclosure.sql',
-  'migrations/20260705_research_agreements.sql',
   'migrations/20260706_org_user_persona.sql',
   'migrations/20260706_report_definitions.sql',
-  'migrations/20260716_template_doc_types.sql',
   'migrations/20260727_onboarding_proposal_runs.sql',
-  'migrations/20260728_chat_thread_store.sql',
   // authoring_reviews is created by the authoring-subsystem provisioner
   // (db/migrations/20260730_authoring_subsystem_schema.sql, in
   // AUTHORING_SUBSYSTEM_FILES) which applyAuthoringSubsystem() runs on BOTH
@@ -266,7 +256,6 @@ const KNOWN_UNLISTED = new Set([
   // drizzle-push surface (shared/schema/unified_workflow.ts is unexported), so
   // fresh installs do NOT get them via push. They are on the durable applier
   // (C2C_MIGRATION_FILES) instead — see scripts/db/migration-set.mjs.
-  'migrations/20260731c_canonical_documents.sql',
 ]);
 
 test('no NEW root migration is silently absent from the applier allowlist', async () => {

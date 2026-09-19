@@ -201,7 +201,28 @@ describe('materializeLeafSources', () => {
     expect(res.unresolved).toHaveLength(1);
     expect(res.unresolved[0].documentTable).toBe('vault_documents');
     expect(res.unresolved[0].documentId).toBe(99);
-    expect(res.unresolved[0].reason).toMatch(/external|S3|not stored locally/i);
+    // Pins that the reason NAMES the blocker rather than merely saying "no".
+    // It used to match /S3/, which was itself wrong — vault rows are written
+    // with s3_bucket='local' and their bytes sit on local disk; nothing about
+    // this path is S3. Asserting a wrong fact is how a wrong fact survives.
+    expect(res.unresolved[0].reason).toMatch(/storage provider|document_id/i);
+  });
+
+  // A legacy row whose document_table collides with an Object.prototype key.
+  // The external-table lookup must be an OWN-key lookup: `table in
+  // EXTERNAL_DOCUMENT_TABLES` matches inherited keys, so such a leaf classified
+  // as an external-storage document and carried a Function as its reason.
+  it('treats a prototype-key document_table as unknown, not as an external store', async () => {
+    const stageDir = await stage();
+    const res = await materializeLeafSources({
+      leaves: [{ documentTable: 'toString', documentId: 5 }],
+      organizationId: ORG,
+      stageDir,
+    });
+    expect(res.materialized).toBe(0);
+    expect(res.unresolved).toHaveLength(1);
+    expect(typeof res.unresolved[0].reason).toBe('string');
+    expect(res.unresolved[0].reason).toMatch(/no resolver registered/i);
   });
 
   it('materializes a PDF ctd_onboarding_documents upload AS the leaf (real bytes, real md5)', async () => {

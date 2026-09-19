@@ -517,7 +517,7 @@ export function CmQcTesting() {
         const pass = rows.filter((r) => String(r.passFailStatus || '').toLowerCase() === 'pass').length;
         const fail = rows.filter((r) => String(r.passFailStatus || '').toLowerCase() === 'fail').length;
         const awaiting = rows.filter((r) => !r.reviewedBy).length;
-        return `${rows.length} samples -- ${pass} pass / ${fail} fail -- ${awaiting} awaiting review`;
+        return `${rows.length} samples — ${pass} pass / ${fail} fail — ${awaiting} awaiting review`;
       }}
       icon={I.microscope}
       loadingTitle="Loading QC testing records…"
@@ -683,7 +683,7 @@ export function CmComparabilityStudies() {
     <RegisterCard<ComparabilityApiRow>
       path="/api/cmc/comparability-studies"
       title="Comparability assessments"
-      meta={(rows) => `ICH Q5E -- ${rows.length} ${rows.length === 1 ? 'assessment' : 'assessments'}`}
+      meta={(rows) => `ICH Q5E — ${rows.length} ${rows.length === 1 ? 'assessment' : 'assessments'}`}
       icon={I.gitCompare}
       loadingTitle="Loading comparability assessments…"
       emptyTitle="No comparability assessments yet"
@@ -879,7 +879,7 @@ export function CmDrugSubstances() {
     <RegisterCard<DrugSubstanceApiRow>
       path="/api/cmc/drug-substances"
       title="Drug substance"
-      meta={(rows) => `§3.2.S -- ${rows.length} ${rows.length === 1 ? 'substance' : 'substances'}`}
+      meta={(rows) => `§3.2.S — ${rows.length} ${rows.length === 1 ? 'substance' : 'substances'}`}
       icon={I.atom}
       loadingTitle="Loading drug substances…"
       emptyTitle="No drug substances yet"
@@ -929,6 +929,7 @@ export interface DrugProductApiRow {
   strength: string;
   routeOfAdministration: string | null;
   composition?: { description?: string } | null;
+  batchFormula?: { description?: string } | null;
   manufacturingProcess?: { description?: string; site?: string } | null;
   packagingMaterials?: { containerClosure?: string } | null;
   status?: string | null;
@@ -942,6 +943,7 @@ function dpDefaults(r: DrugProductApiRow) {
     strength: r.strength ?? '',
     routeOfAdministration: r.routeOfAdministration ?? '',
     composition: { description: r.composition?.description },
+    batchFormula: { description: r.batchFormula?.description },
     manufacturingProcess: {
       description: r.manufacturingProcess?.description,
       site: r.manufacturingProcess?.site,
@@ -957,7 +959,7 @@ export function CmDrugProducts() {
     <RegisterCard<DrugProductApiRow>
       path="/api/cmc/drug-products"
       title="Drug product"
-      meta={(rows) => `§3.2.P -- ${rows.length} ${rows.length === 1 ? 'product' : 'products'}`}
+      meta={(rows) => `§3.2.P — ${rows.length} ${rows.length === 1 ? 'product' : 'products'}`}
       icon={I.beaker}
       loadingTitle="Loading drug products…"
       emptyTitle="No drug products yet"
@@ -1050,7 +1052,7 @@ export function CmContainerClosures() {
       meta={(rows) => {
         const qualified = rows.filter((r) => String(r.status || '').toLowerCase() === 'qualified').length;
         const withEl = rows.filter((r) => r.extractablesLeachables && Object.keys(r.extractablesLeachables).length > 0).length;
-        return `${rows.length} systems -- ${qualified} qualified -- ${withEl} with an E&L study`;
+        return `${rows.length} systems — ${qualified} qualified — ${withEl} with an E&L study`;
       }}
       icon={I.vault}
       loadingTitle="Loading container closure systems…"
@@ -1158,7 +1160,7 @@ export function CmReferenceStandards() {
       meta={(rows) => {
         const qualified = rows.filter((r) => String(r.status || '').toLowerCase() === 'qualified').length;
         const primary = rows.filter((r) => String(r.standardType || '').toLowerCase().includes('primary')).length;
-        return `${rows.length} standards -- ${primary} primary -- ${qualified} qualified`;
+        return `${rows.length} standards — ${primary} primary — ${qualified} qualified`;
       }}
       icon={I.scale}
       loadingTitle="Loading reference standards…"
@@ -1225,6 +1227,11 @@ export interface ImpurityProfileApiRow {
   materialName: string;
   impurityName: string;
   impurityType: string;
+  amesResult?: string | null;
+  structuralAlert?: string | null;
+  carcinogenicityData?: string | null;
+  treatmentDuration?: string | null;
+  cohortOfConcern?: string | null;
   origin?: string | null;
   casNumber?: string | null;
   molecularFormula?: string | null;
@@ -1272,7 +1279,7 @@ export function CmImpurityProfiles() {
         const qualified = rows.filter((r) => String(r.status || '').toLowerCase() === 'qualified').length;
         const withBasis = rows.filter((r) => String(r.qualificationBasis || '').trim()).length;
         const noDose = rows.filter((r) => !String(r.maximumDailyDose || '').trim()).length;
-        return `${rows.length} impurities -- ${withBasis} with a qualification basis -- ${qualified} qualified -- ${noDose} with no daily dose recorded`;
+        return `${rows.length} impurities — ${withBasis} with a qualification basis — ${qualified} qualified — ${noDose} with no daily dose recorded`;
       }}
       icon={I.sigma}
       loadingTitle="Loading impurities…"
@@ -1338,6 +1345,21 @@ export function CmImpurityProfiles() {
           },
         },
         { header: 'Structure', render: (r) => (r.structure || r.molecularFormula ? 'recorded' : <span className="rd-chip tone-warn">none</span>) },
+        {
+          /* ICH M7 decides the class from the Ames result and structural-alert
+             status; a mutagenic impurity with neither recorded cannot be
+             assessed at all, and the assessment says so rather than defaulting. */
+          header: 'M7 inputs',
+          render: (r) => {
+            const ames = String(r.amesResult || '').trim();
+            const alert = String(r.structuralAlert || '').trim();
+            if (ames && alert) return `Ames ${ames} · alert ${alert}`;
+            const isMutagenic = /mutagen|genotox/i.test(String(r.impurityType || ''));
+            return isMutagenic
+              ? <span className="rd-chip tone-warn">required for M7</span>
+              : ames || alert ? `Ames ${ames || '--'} · alert ${alert || '--'}` : '--';
+          },
+        },
         { header: 'Qualification basis', render: (r) => (r.qualificationBasis ? <span className="rd-chip tone-ok">recorded</span> : <span className="rd-chip tone-warn">none</span>) },
         { header: 'Status', render: (r) => chip(r.status, 'draft') },
       ]}
@@ -1390,7 +1412,7 @@ export function CmDissolutionProfiles() {
       meta={(rows) => {
         const release = rows.filter((r) => String(r.purpose || '') === 'release-specification').length;
         const noUnits = rows.filter((r) => !r.unitsTested).length;
-        return `${rows.length} profiles -- ${release} release specification -- ${noUnits} with no unit count`;
+        return `${rows.length} profiles — ${release} release specification — ${noUnits} with no unit count`;
       }}
       icon={I.barChart}
       loadingTitle="Loading dissolution profiles…"
@@ -1506,7 +1528,7 @@ export function CmMaterialSpecs() {
         const excipients = rows.filter((r) => isExcipientRole(r.materialRole)).length;
         const noOrigin = rows.filter((r) => !String(r.origin || '').trim()).length;
         const novel = rows.filter((r) => r.novelExcipient).length;
-        return `${rows.length} materials -- ${excipients} excipients -- ${novel} novel -- ${noOrigin} with no origin recorded`;
+        return `${rows.length} materials — ${excipients} excipients — ${novel} novel — ${noOrigin} with no origin recorded`;
       }}
       icon={I.atom}
       loadingTitle="Loading materials…"
@@ -1593,7 +1615,7 @@ export function CmFormulationRecords() {
       meta={(rows) => {
         const current = rows.filter((r) => String(r.status || '') === 'current').length;
         const withOverage = rows.filter((r) => (r.components || []).some((c) => String(c.overage || '').trim())).length;
-        return `${rows.length} versions -- ${current} current -- ${withOverage} with a component overage`;
+        return `${rows.length} versions — ${current} current — ${withOverage} with a component overage`;
       }}
       icon={I.clipboardList}
       loadingTitle="Loading formulation records…"
@@ -1684,7 +1706,7 @@ export function CmManufacturingProcesses() {
       meta={(rows) => {
         const validated = rows.filter((r) => String(r.validationStatus || '') === 'validated').length;
         const withSteps = rows.filter((r) => (r.processSteps || []).length > 0).length;
-        return `${rows.length} processes -- ${withSteps} with recorded steps -- ${validated} validated`;
+        return `${rows.length} processes — ${withSteps} with recorded steps — ${validated} validated`;
       }}
       icon={I.workflow}
       loadingTitle="Loading manufacturing processes…"
@@ -1822,7 +1844,7 @@ export function CmCharacterizationStudies() {
             && (String(r.result || '').trim() || String(r.conclusion || '').trim()),
         );
         const answered = ['structural', 'physicochemical', 'biological'].filter(answers).length;
-        return `${live.length} studies -- ${answered} of 3 characterisation questions answered`;
+        return `${live.length} studies — ${answered} of 3 characterisation questions answered`;
       }}
       icon={I.microscope}
       loadingTitle="Loading characterisation studies…"

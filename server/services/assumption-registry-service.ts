@@ -210,7 +210,15 @@ export class AssumptionRegistryService {
       );
       return result.rows[0] ?? null;
     } catch (err) {
-      log.warn('Contradiction link table unavailable (non-blocking)', {
+      // Was: warn('Contradiction link table unavailable (non-blocking)').
+      // Both halves stopped being true on 2026-09-10. The table IS available —
+      // db/migrations/20260910_contradiction_links_port.sql creates it on
+      // C2C_MIGRATION_FILES — so a failure here is a genuine write failure, not
+      // a missing relation. And it is not non-blocking: the caller asked for a
+      // contradiction link to be recorded and none was. Returning null is kept
+      // (the route turns it into a 500 rather than reporting success over it),
+      // but it is logged as the error it is.
+      log.error('Contradiction link NOT stored — the write failed', {
         error: err instanceof Error ? err.message : String(err),
       });
       return null;
@@ -227,8 +235,17 @@ export class AssumptionRegistryService {
         [projectId, organizationId]
       );
       return result.rows;
-    } catch {
-      return [];
+    } catch (err) {
+      // Deliberately NOT `return []`. An empty array is a claim that this
+      // project has no contradiction links; a failed read is not that claim,
+      // and "no contradictions found" is the answer a reviewer is most likely
+      // to accept without checking. The route surfaces the throw.
+      log.error('Contradiction link read failed — refusing to report an empty result', {
+        projectId,
+        organizationId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      throw err instanceof Error ? err : new Error(String(err));
     }
   }
 

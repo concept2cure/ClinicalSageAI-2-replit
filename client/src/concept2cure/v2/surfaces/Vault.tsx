@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
+import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
 import {
@@ -74,8 +75,14 @@ interface VaultDisplayShape {
   documentCount: number;
   tree: VaultFolder[];
   pendingStore?: boolean;
-  /** Uploads awaiting a person's filing decision (visible queue, not a black hole). */
+  /** Uploads awaiting a person's filing decision (visible queue, not a black hole).
+   *  Counted over the whole programme by the server, NOT over `uploadsWindow` —
+   *  a queue derived from the page below would shrink as the backlog grew. */
   unfiledCount?: number;
+  /** How much of the filing cabinet the tree actually carries. The server caps
+   *  that read (the vault is unbounded), so rendering the page without saying
+   *  so would state a partial cabinet as the whole one. */
+  uploadsWindow?: { shown: number; total: number; truncated: boolean };
   /** The capture→classify→file pipeline over the project's data room. */
   dataRoom?: DataRoomBlock;
   /** Branches the server could not serve, with why — rendered, not swallowed:
@@ -649,6 +656,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const results = searching
     ? (searchState.data?.results ?? []).map(searchHitToDoc)
     : folderDocs;
+  /* The vault document currently being filed into a submission, if any. The
+     tree id is `up-<uuid>`; the uuid is what a leaf names. */
+  const [filingIntoSubmission, setFilingIntoSubmission] = React.useState<
+    { documentUuid: string; documentTitle: string } | null
+  >(null);
+
   const sel =
     allDocs.find((d) => d.id === selId) || results[0] || allDocs[0] || null;
 
@@ -883,6 +896,28 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         </div>
       )}
 
+      {filingIntoSubmission && (
+        <VaultPlaceIntoSubmission
+          documentUuid={filingIntoSubmission.documentUuid}
+          documentTitle={filingIntoSubmission.documentTitle}
+          onClose={() => setFilingIntoSubmission(null)}
+        />
+      )}
+
+      {/* The filing cabinet is a WINDOW onto the vault, not the vault. Said
+          plainly for the same reason the unavailable branches below are: a
+          reviewer who believes a partial cabinet is the whole one concludes a
+          document is absent, and in a regulated vault "absent" is a finding.
+          The unfiled count beside the title is programme-wide, so it stays
+          correct here and is not re-stated. */}
+      {vault?.uploadsWindow?.truncated ? (
+        <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
+          Uploaded files: showing the {vault.uploadsWindow.shown.toLocaleString()} most
+          recently updated of {vault.uploadsWindow.total.toLocaleString()} documents in
+          this programme. Search to reach the rest.
+        </div>
+      ) : null}
+
       {/* A branch the server could not serve is said, not silently omitted —
           otherwise "no Uploaded files folder" and "no uploads" look identical. */}
       {vault?.unavailable?.map((u) => (
@@ -1024,7 +1059,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                  believable claim. */
               <div className="scaf-note" role="alert" style={{ margin: '8px 0 0', color: 'var(--error)' }}>
                 The vault could not be searched, so nothing was searched — this is
-                not a result of zero matches. {redactInternals(searchState.error)}
+                not a result of zero matches. {redactInternals(searchState.error, 'The search did not complete.')}
               </div>
             )}
             {searching && searchState.loading && !searchState.error && (
@@ -1114,6 +1149,44 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                         suggestion (with its confidence + rationale), or the
                         person's confirmed decision. Committing a change posts
                         to /file — governed, audited — and the tree re-reads. */}
+                    {/* ── Into a submission ──
+                        Dossier filing (below) decides where the document sits in
+                        the ROOM. This decides whether it goes in a FILING, which
+                        is a different question and used to have no answer at all:
+                        a customer could upload a CSR and then not put it in the
+                        NDA. The vault copy is filed as itself — no snapshot. */}
+                    <div className="vd-d-seclbl">Submission</div>
+                    <div className="vd-d-filing">
+                      <div className="vd-d-filing-row">
+                        <span className="k">Filing</span>
+                        <span className="v">
+                          File into an eCTD sequence. The leaf points at the vault copy, so
+                          what is assembled is what is stored here.
+                        </span>
+                      </div>
+                      {sel.docId && (
+                        <div className="vd-d-filing-acts">
+                          <button
+                            className="sp-primary"
+                            style={{ padding: '7px 11px' }}
+                            onClick={() =>
+                              setFilingIntoSubmission({
+                                // `docId` is vault.documents.id — the bare uuid the
+                                // download and filing actions already use. The tree id
+                                // beside it is `up-<uuid>`, and a leaf carrying that
+                                // prefix is refused server-side as a malformed uuid.
+                                documentUuid: sel.docId!,
+                                documentTitle: sel.title || sel.num || 'Vault document',
+                              })
+                            }
+                            data-testid="vault-place-into-submission"
+                          >
+                            {I.folder} Place into submission…
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="vd-d-seclbl">Dossier filing</div>
                     <div className="vd-d-filing" data-testid="vault-filing-block">
                       <div className="vd-d-filing-row">

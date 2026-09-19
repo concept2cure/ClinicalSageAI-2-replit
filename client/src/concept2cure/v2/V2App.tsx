@@ -716,17 +716,46 @@ export function V2App() {
   /* Escape closes the phone-width rail overlay. Gated on the SAME media query
      the overlay css uses, so a desktop Escape never collapses the persistent
      rail — the overlay is the only rail state Escape should dismiss. */
+  /* The shell's own dark marker cannot reach <body>, which sits ABOVE it, so
+     `body { background: var(--bg-000) }` resolved in a scope where the dark
+     palette was never in view. index.css had frozen that further, pointing the
+     rule at two literal :root tokens (--color-bg #faf9f5, --color-text-primary
+     #141413) used nowhere else — light in both themes by construction.
+     Today .c2c-v2 paints the viewport so nothing shows, but the light band is
+     there on overscroll, behind a shell shorter than the viewport, and in any
+     print or screenshot path that captures the body.
+     Marking BODY, not <html>: the shell already makes every descendant dark, so
+     this adds only body itself and anything portalled to it — which is the part
+     that was wrong. Putting it on <html> would instead make :root dark and
+     change what every alias in the palette resolves to. */
   React.useEffect(() => {
-    if (prefs.railCollapsed) return undefined;
+    const body = document.body;
+    if (!prefs.dark) return undefined;
+    body.classList.add('dark');
+    body.setAttribute('data-theme', 'dark');
+    return () => {
+      body.classList.remove('dark');
+      body.removeAttribute('data-theme');
+    };
+  }, [prefs.dark]);
+
+  React.useEffect(() => {
+    // The two narrow-width overlays — the rail drawer (≤640px) and the AnA
+    // drawer (≤900px) — are the only states Escape should dismiss. The AnA drawer only exists when the
+    // surface does not own the conversation (otherwise there is no rail).
+    const anaDrawer = prefs.anaOpen && !ownsConversation;
+    if (prefs.railCollapsed && !anaDrawer) return undefined;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && window.matchMedia('(max-width: 640px)').matches) {
-        set('railCollapsed', true);
-      }
+      if (e.key !== 'Escape') return;
+      const phone = window.matchMedia('(max-width: 640px)').matches;
+      const tablet = window.matchMedia('(max-width: 900px)').matches;
+      if (phone && !prefs.railCollapsed) set('railCollapsed', true);
+      else if (tablet && anaDrawer) set('anaOpen', false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefs.railCollapsed]);
+  }, [prefs.railCollapsed, prefs.anaOpen, ownsConversation]);
 
   return (
     /* Licence verdicts are fetched once, above the rail, so the rail and the
@@ -772,6 +801,11 @@ export function V2App() {
       {!prefs.railCollapsed && (
         <div aria-hidden="true" className="rail-scrim" onClick={() => set('railCollapsed', true)} />
       )}
+      {/* The AnA drawer's scrim (≤900px only — display is CSS-gated on
+          data-ana-open inside the 900px query, exactly like .rail-scrim). */}
+      {!ownsConversation && prefs.anaOpen && (
+        <div aria-hidden="true" className="ana-scrim" onClick={() => set('anaOpen', false)} />
+      )}
       <main className="main">
         <TopBar
           surface={activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface}
@@ -812,10 +846,17 @@ export function V2App() {
              to say so until she finished. */
           streaming={anaChat.isStreaming}
           runStatus={anaChat.runStatus}
-          onPause={() => void anaChat.pause()}
-          onResume={() => void anaChat.resume()}
-          onStop={() => anaChat.stop()}
-          onSteer={(m) => void anaChat.interject(m)}
+          /* Pause, resume and steer are offered only once a controllable run
+             exists — runStatus stays null until `run_started` arrives, and a
+             turn that opened no run row (no resolvable tenant) never sends one.
+             Rendering them regardless would put buttons on screen that quietly
+             do nothing, which is the failure this strip was added to end.
+             Stop is unconditional: it aborts the client's own request, which
+             works whether or not the server opened a run. */
+          onPause={anaChat.runStatus ? () => void anaChat.pause() : undefined}
+          onResume={anaChat.runStatus ? () => void anaChat.resume() : undefined}
+          onStop={() => void anaChat.stop()}
+          onSteer={anaChat.runStatus ? (m) => anaChat.interject(m) : undefined}
           /* The live work dock reads the raw turns: progress phases, tool
              timings, pending steers and outputs that the adapted rail message
              shape does not carry. */
@@ -853,11 +894,11 @@ export function V2App() {
         activity={driveActivity}
         narration={ownsConversation ? driveNarration : undefined}
         onTakeOver={takeOverDrive}
-        onStop={() => anaChat.stop()}
+        onStop={() => void anaChat.stop()}
         /* Interactivity without surrender: a question or steer typed into the
            strip lands mid-run (the run-control interject) — AnA answers and
            continues driving; the person never has to take over just to speak. */
-        onSteer={(m) => void anaChat.interject(m)}
+        onSteer={(m) => anaChat.interject(m)}
       />
     </div>
     </NavEntitlementsProvider>

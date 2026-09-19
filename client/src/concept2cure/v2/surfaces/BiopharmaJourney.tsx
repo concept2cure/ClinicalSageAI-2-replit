@@ -12,11 +12,12 @@
  * clock, predicted HAQs, cross-module contradictions and open blockers --
  * every row routes into the deep surface that owns it.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { getSurfaceMeta } from '../registryModel';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -255,6 +256,45 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     setSegState(v);
     setSel(null);
   };
+
+  /* AnA can select a lifecycle stage or switch the segment — the same clicks a
+     person makes. Both affordances only render on screen once the record loads
+     (see the loading/error/empty early returns below), so the handler refuses
+     in all three states rather than changing state AnA can't see reflected in
+     the published context. Held (retry) while it loads. */
+  useSurfaceActionHandlers('program-journey', {
+    'program-journey.select-stage': (params) => {
+      const raw = String(params.stage ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a stage by its id or label.' };
+      if (loading) return { ok: false, reason: 'The program journey is still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The program journey did not load, so there is no record to select a stage on.' };
+      if (empty) return { ok: false, reason: 'No program journey is recorded in this organization yet.' };
+      const needle = raw.toLowerCase();
+      const byId = PJ_STAGES.filter((s) => s.id.toLowerCase() === needle);
+      const hits = byId.length ? byId : PJ_STAGES.filter((s) => s.label.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No lifecycle stage matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} stages — name one exactly.` };
+      const s = hits[0];
+      if (sel === s.id) return { ok: true, detail: `Already on ${s.label}` };
+      setSel(s.id);
+      return { ok: true, detail: `Selected ${s.label}` };
+    },
+    'program-journey.switch-segment': (params) => {
+      const target = params.segment;
+      if (target !== 'biotech' && target !== 'pharma') {
+        return { ok: false, reason: `"${target}" is not a segment — choose biotech or pharma.` };
+      }
+      if (loading) return { ok: false, reason: 'The program journey is still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The program journey did not load, so there is no view to switch.' };
+      if (empty) return { ok: false, reason: 'No program journey is recorded in this organization yet.' };
+      if (seg === target) return { ok: true, detail: `Already on the ${target} segment` };
+      setSeg(target);
+      return { ok: true, detail: `Switched to the ${target} segment` };
+    },
+  });
+  useEffect(() => {
+    if (!loading && !error && !empty) notifySurfaceActionReady('program-journey');
+  }, [loading, error, empty]);
 
   /* WHAT ANA SEES HERE — published above the honest-state early returns so one
      call covers every branch. Two never-fabricate rules this surface holds: no
@@ -531,8 +571,12 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
             <div className="pj-card-h"><span className="t">CTD readiness</span><button className="pj-card-h-go" onClick={() => open('nda-cockpit')} style={{ fontSize: 11, color: 'var(--accent-200)' }}>Open cockpit {I.right}</button></div>
             <div className="pj-card-b">
               <div className="pj-mods">
+                {/* "At risk" was the fill turning amber and nothing else, so the
+                    one thing this bar exists to flag was the one thing not said.
+                    The accessible name carries it; the fill stays as the glance. */}
                 {mods.map((m) => (
-                  <button key={m.m} className="pj-mod" onClick={() => open('nda-cockpit')}>
+                  <button key={m.m} className="pj-mod" onClick={() => open('nda-cockpit')}
+                    aria-label={`Module ${m.m} — ${m.label}, ${m.pct}% ready${m.risk ? ', at risk' : ''}`}>
                     <span className="pj-mod-n">M{m.m}</span>
                     <span className="pj-mod-b">
                       <span className="pj-mod-l">{m.label}</span>

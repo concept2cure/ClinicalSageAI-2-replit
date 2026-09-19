@@ -305,6 +305,20 @@ export async function initializeEarlyServices(): Promise<void> {
     console.error('⚠️ Feature toggle bootstrap warning:', error.message);
   }
 
+  /* AnA's client-files surface. The rows are created so the switch is visible
+     to an operator at all — with no row the feature resolves off AND cannot be
+     found — and the resolved state is printed so a deployment never silently
+     runs without the capability it was built to have. Nothing is enabled here:
+     see document-catalog-bootstrap.ts on why that is not an agent's call. */
+  try {
+    const { bootstrapDocumentCatalogToggles, describeCatalogToggles } = await import(
+      './document-catalog-bootstrap.js'
+    );
+    console.info(describeCatalogToggles(await bootstrapDocumentCatalogToggles()));
+  } catch (error: any) {
+    console.error('⚠️ Document-catalog toggle bootstrap warning:', error?.message ?? error);
+  }
+
   // AnA fix F8: pre-warm the AI Gateway so the very first chat request
   // doesn't pay the 200–500 ms provider-init penalty.
   try {

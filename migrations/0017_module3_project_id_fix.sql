@@ -99,13 +99,30 @@ ALTER TABLE cmc_provenance_events ALTER COLUMN project_id TYPE TEXT USING projec
 ALTER TABLE cmc_module3_section_versions ALTER COLUMN project_id TYPE TEXT USING project_id::TEXT;
 
 -- 7. Recreate unique constraints with TEXT project_id
+--
+-- AMENDED IN PLACE 2026-09-08 (CLAUDE.md Rule 1). These created
+--   cmc_source_objects_project_key_idx  (project_id, source_type, source_key, version)
+--   cmc_module3_sections_project_key_idx (project_id, section_key)
+-- both of which OMIT organization_id.
+--
+-- What was removed: the two tenant-blind unique indexes.
+-- Why: a unique key without the tenant column is what ON CONFLICT resolves
+-- against, so it decides whose row an upsert overwrites — one tenant could
+-- write into another's canonical CMC source objects and Module 3 section
+-- bodies. The whole account is in
+-- migrations/20260728_cmc_module3_org_scoped_uniqueness.sql.
+-- Which change removed it: that file. Amended here as well because
+-- install-fresh applies both, so this re-created the defect on every fresh
+-- install and left a window in which the tenant-blind key was the arbiter.
+-- The org-scoped indexes are created here directly, in the same shape 20260728
+-- installs, so the two appliers agree.
 DROP INDEX IF EXISTS cmc_source_objects_project_key_idx;
-CREATE UNIQUE INDEX cmc_source_objects_project_key_idx
-  ON cmc_source_objects(project_id, source_type, source_key, version);
+CREATE UNIQUE INDEX IF NOT EXISTS cmc_source_objects_org_project_key_idx
+  ON cmc_source_objects(organization_id, project_id, source_type, source_key, version);
 
 DROP INDEX IF EXISTS cmc_module3_sections_project_key_idx;
-CREATE UNIQUE INDEX cmc_module3_sections_project_key_idx
-  ON cmc_module3_sections(project_id, section_key);
+CREATE UNIQUE INDEX IF NOT EXISTS cmc_module3_sections_org_project_key_idx
+  ON cmc_module3_sections(organization_id, project_id, section_key);
 
 -- 8. Recreate performance indexes
 CREATE INDEX IF NOT EXISTS idx_cmc_source_objects_org_project_v2

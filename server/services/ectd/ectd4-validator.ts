@@ -25,6 +25,8 @@
  * @compliance ICH eCTD, FDA ESG Technical Conformance Guide, 21 CFR Part 11
  */
 
+import { anyLeafSatisfies } from './section-code-match';
+
 import crypto from 'crypto';
 import {
   validateRegionalPackage,
@@ -274,9 +276,15 @@ export function validatePackage(
   const requiredSections = requiredSectionsFor(submissionType);
   const missingSections: string[] = [];
 
-  // 1. Check required sections
+  /* 1. Check required sections.
+     A required section is a NODE ('m3.2.S'); a placed leaf is a document under
+     it ('m3.2.S.1'). This was `presentSections.has(required)` — an exact
+     match — and nothing ever writes a leaf at the parent code, so a sequence
+     carrying all seventeen placed Module 3 leaves was reported missing drug
+     substance and drug product, while the compile path reported the same
+     sequence complete. The prefix rule now lives in one module both use. */
   for (const required of requiredSections) {
-    if (!presentSections.has(required)) {
+    if (!anyLeafSatisfies(presentSections, required)) {
       missingSections.push(required);
       findings.push({
         id: `V${++findingId}`,

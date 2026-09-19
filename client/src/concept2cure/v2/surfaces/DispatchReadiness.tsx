@@ -190,7 +190,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
     return (
       <div className="dr2">
         {head}
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Assessing dispatch readiness…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Assessing dispatch readiness…</div>
       </div>
     );
   }

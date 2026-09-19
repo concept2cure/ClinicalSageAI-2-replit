@@ -7,7 +7,7 @@
  * @module server/services/ana/intelligence-questions/war-game/types
  */
 
-import type { FlowCategory, IssueSeverity } from '../../../../../shared/types/intelligence-questions.js';
+import type { IssueSeverity } from '../../../../../shared/types/intelligence-questions.js';
 
 export type WarGameCategory =
   | 'protocol'

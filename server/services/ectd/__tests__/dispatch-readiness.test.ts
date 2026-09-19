@@ -7,6 +7,10 @@
  */
 import { describe, it, expect } from 'vitest';
 import { computeDispatchReadiness, type ReadinessLeaf } from '../dispatch-readiness';
+import {
+  PLACEABLE_DOCUMENT_TABLES,
+  RESOLVABLE_DOCUMENT_TABLES,
+} from '../leaf-document-tables';
 
 const goodLeaf = (over: Partial<ReadinessLeaf> = {}): ReadinessLeaf => ({
   sectionCode: 'm2.5',
@@ -138,5 +142,96 @@ describe('computeDispatchReadiness', () => {
       expect(r.findings.some(f => f.code === 'SEQUENCE_NUMBER_FORMAT')).toBe(true);
       expect(r.errors).toBeGreaterThanOrEqual(1);
     }
+  });
+});
+
+describe('computeDispatchReadiness — document-pointer rules', () => {
+  it('flags a leaf whose document_table no resolver can materialize', () => {
+    const r = computeDispatchReadiness([goodLeaf({ documentTable: 'coauthor_doccuments' })]);
+    expect(r.errors).toBe(1);
+    expect(r.findings.some(f => f.code === 'UNPLACEABLE_DOCUMENT_TABLE')).toBe(true);
+  });
+
+  it('does NOT flag the tables the assembler can resolve', () => {
+    const tables = [
+      'coauthor_documents',
+      'unified_documents',
+      'ctd_onboarding_documents',
+      'rendered_leaf_files',
+      'c2c_document_sections',
+    ];
+    const r = computeDispatchReadiness(
+      tables.map((documentTable, i) => goodLeaf({ sectionCode: `m2.${i}`, documentTable, documentId: 40 + i })),
+    );
+    expect(r.errors).toBe(0);
+    expect(r.findings.filter(f => f.code === 'UNPLACEABLE_DOCUMENT_TABLE')).toHaveLength(0);
+  });
+
+  // A vault_documents leaf is PLACEABLE (a documented polymorphic target the
+  // write path accepts) but the assembler cannot materialize it, and
+  // transmitSequence fails closed on ANY unresolved leaf — external ones
+  // included. A dispatch-clear verdict for such a sequence would assert
+  // something the system can never deliver, which is the exact defect the
+  // readiness gate exists to prevent.
+  /*
+   * THE EXTERNAL-TABLE CASE HAS NO MEMBER TO TEST WITH, as of 2026-09-17.
+   *
+   * `vault_documents` was the only entry in EXTERNAL_DOCUMENT_TABLES, and it
+   * became RESOLVABLE once both blockers fell: vault ingest now writes through
+   * getStorageProvider() (so the packager can fetch the bytes) and
+   * submission_leaves carries document_uuid (so a leaf can name a uuid-keyed
+   * document). The map is now empty, so EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE
+   * cannot be produced through the public API — there is no table to pass.
+   *
+   * The two tests that used vault_documents as the external example were
+   * removed rather than rewritten, because a test that asserts behaviour the
+   * system can no longer exhibit is worse than no test: it passes for the wrong
+   * reason or has to be forced. What replaces them is the assertion below —
+   * that the mechanism is intact and currently empty — so whoever adds the next
+   * external store is told, by a failing test, to restore this coverage.
+   */
+  it('has no external table today, and the vault leaf it used to flag now reads clear', () => {
+    // EXTERNAL_DOCUMENT_TABLES is module-local by design (externalDocumentTableReason
+    // is the only reader), so assert it derivatively: placeable is resolvable
+    // PLUS external, so the two sets matching means external is empty.
+    expect(PLACEABLE_DOCUMENT_TABLES.size).toBe(RESOLVABLE_DOCUMENT_TABLES.size);
+    const r = computeDispatchReadiness([goodLeaf({ documentTable: 'vault_documents', documentId: 1 })]);
+    // Placeable AND resolvable now — so neither the external finding nor the
+    // invented-table finding. A vault leaf is a legitimate pointer.
+    expect(r.findings.some(f => f.code === 'EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE')).toBe(false);
+    expect(r.findings.some(f => f.code === 'UNPLACEABLE_DOCUMENT_TABLE')).toBe(false);
+  });
+
+  // A delete leaf is exempt from the COMPLETENESS check — it legitimately ships
+  // no file — but that exemption was written as a blanket `return []` for every
+  // delete leaf, which skipped the two table checks as well. A delete row can
+  // still carry a document pointer (AnaToolExecutor accepts lifecycle_op with a
+  // document_table on the same call), and a bogus one read dispatch-clear.
+  // A pointer that EXISTS must be a valid one whatever the operation: the
+  // assembler calls resolveFile on every stored leaf, delete rows included, and
+  // counts each one it cannot resolve against submission completeness.
+  it('flags an invented document_table on a DELETE leaf — the completeness exemption is not a pointer exemption', () => {
+    const r = computeDispatchReadiness([
+      goodLeaf(),
+      goodLeaf({ sectionCode: 'm3.2', lifecycleOp: 'delete', documentTable: 'coauthor_doccuments', documentId: 7 }),
+    ]);
+    expect(r.findings.some(f => f.code === 'UNPLACEABLE_DOCUMENT_TABLE'), 'a typo table on a delete leaf read dispatch-clear').toBe(true);
+    expect(r.errors).toBe(1);
+  });
+
+  it('still exempts a delete leaf that carries NO pointer — that is the legitimate shape', () => {
+    const r = computeDispatchReadiness([
+      goodLeaf(),
+      goodLeaf({ sectionCode: 'm3.2', lifecycleOp: 'delete', documentTable: null, documentId: null }),
+    ]);
+    expect(r.errors).toBe(0);
+  });
+
+  it('does not double-report a delete leaf that points at a table the assembler CAN resolve', () => {
+    const r = computeDispatchReadiness([
+      goodLeaf(),
+      goodLeaf({ sectionCode: 'm3.2', lifecycleOp: 'delete', documentTable: 'coauthor_documents', documentId: 7 }),
+    ]);
+    expect(r.errors).toBe(0);
   });
 });

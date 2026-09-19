@@ -179,10 +179,12 @@ export async function registerAdvancedPlatformRoutes({
     authenticateToken,
   );
 
-  // ── 21 CFR Part 11 Compliance (needs pool for audit persistence) ──
+  // ── 21 CFR Part 11 Compliance ──
+  // `setAuditPool(pool)` was injected here until 2026-09-10 (WO-16B finding
+  // 27). POST /audit-trail now writes on the request's tenant-pinned client,
+  // like every other route in that file, so no module-level pool exists.
   try {
     const part11Routes = await import('../routes/part11-compliance');
-    if (part11Routes.setAuditPool) part11Routes.setAuditPool(pool);
     app.use('/api/part11', authenticateToken, part11Routes.default);
     console.log('✅ 21 CFR Part 11 Compliance routes mounted at /api/part11');
   } catch (error) {

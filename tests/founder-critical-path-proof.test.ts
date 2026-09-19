@@ -115,17 +115,43 @@ describe('SSO hidden in production', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. Sign-out is wired (sign-out UI still unshipped — re-audited 2026-06-11)
+// 7. Sign-out is wired
+//
+// UN-SKIPPED 2026-09-10 (WO-8). This block was `describe.skip` with a single
+// empty test and this reason: "no sign-out control exists anywhere in client/ —
+// authService.logout() is never invoked from any UI component. Re-enable (with
+// real assertions against the sign-out control) when a logout flow ships."
+//
+// It has shipped. Shell.tsx destructures `logout` from useAuth(), the account
+// menu carries a 'Log out' item with `action: 'logout'`, and the handler calls
+// `void logout()`. Nobody came back to the skip — which is the same failure mode
+// this repo already guards against for baselines, where a stale entry that
+// overstates debt fails the gate as loudly as a new defect. Tests have no such
+// guard, so a resolved blocker just sits there looking like open work.
+//
+// The assertions below are the "real assertions" the old comment asked for.
 // ---------------------------------------------------------------------------
-describe.skip('Sign-out is wired', () => {
-  // Legacy components (ZenSettings.tsx, IndustryAwareApp.tsx) were removed
-  // during the design-system port. The Phase 5 auth surface has PARTIALLY
-  // shipped: client/src/concept2cure/auth/ now contains ZenLogin / ZenSignup /
-  // ZenAuthLayout, but no sign-out control exists anywhere in client/ —
-  // authService.logout() (client/src/services/portal/authService.tsx) is
-  // never invoked from any UI component. Re-enable (with real assertions
-  // against the sign-out control) when a logout flow ships.
-  it('logout flow lives in the new auth surface', () => {
-    // Re-enable when a sign-out control ships in client/src/concept2cure/.
+describe('Sign-out is wired', () => {
+  it('the shell renders a sign-out control that calls the auth service', () => {
+    const shell = readFile('client/src/concept2cure/v2/Shell.tsx');
+
+    // A menu entry a user can actually reach...
+    expect(shell).toContain("label: 'Log out'");
+    expect(shell).toContain("action: 'logout'");
+    // ...wired to the hook, not to a local stub.
+    expect(shell).toMatch(/const\s*\{[^}]*\blogout\b[^}]*\}\s*=\s*useAuth\(\)/);
+    // ...and actually invoked. A menu item whose handler does nothing is the
+    // state this test was skipped for.
+    expect(shell).toMatch(/void\s+logout\(\)/);
+  });
+
+  it('the auth service logout reaches the server and can end every session', () => {
+    const authService = readFile('client/src/services/portal/authService.tsx');
+
+    expect(authService).toMatch(/async\s+logout\s*\(/);
+    // Server-side revocation, not just a client-side token drop — a logout that
+    // only clears localStorage leaves the token valid until it expires.
+    expect(authService).toMatch(/post\(`?\$\{?this\.baseUrl\}?\/logout/);
+    expect(authService).toContain('terminateAllSessions');
   });
 });

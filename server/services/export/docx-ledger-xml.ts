@@ -129,7 +129,11 @@ export function serializeAnALedgerXml(ledger: ArtifactLedger): string {
     out.push(`  <Citations xsi:nil="true"/>\n`);
   }
 
-  // Audit log
+  // Audit log. A count is a claim; when the query could not run the element
+  // says so instead (WO-16B finding 10).
+  if (ledger.auditLogUnavailable) {
+    out.push(`  <AuditLog unavailable="true"${attr('reason', ledger.auditLogUnavailable)}/>\n`);
+  } else {
   out.push(`  <AuditLog count="${ledger.auditLog.length}">\n`);
   for (const e of ledger.auditLog) {
     out.push(`    <Entry`);
@@ -150,8 +154,12 @@ export function serializeAnALedgerXml(ledger: ArtifactLedger): string {
     out.push(`    </Entry>\n`);
   }
   out.push(`  </AuditLog>\n`);
+  }
 
-  // Signatures
+  // Signatures — same rule.
+  if (ledger.signaturesUnavailable) {
+    out.push(`  <Signatures unavailable="true"${attr('reason', ledger.signaturesUnavailable)}/>\n`);
+  } else {
   out.push(`  <Signatures count="${ledger.signatures.length}">\n`);
   for (const s of ledger.signatures) {
     out.push(`    <Signature`);
@@ -172,6 +180,7 @@ export function serializeAnALedgerXml(ledger: ArtifactLedger): string {
     out.push(`    </Signature>\n`);
   }
   out.push(`  </Signatures>\n`);
+  }
 
   // Proposals
   out.push(`  <Proposals count="${ledger.proposals.length}">\n`);

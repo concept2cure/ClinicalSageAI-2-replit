@@ -40,9 +40,23 @@ import {
   type PdevActivityState,
 } from './pdev-activity-registry';
 import { applyIndClearanceIfTerminal } from './pdev-clearance';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import auditService from '../auditService';
 
 const logger = createScopedLogger('pdev-workflow-bridge');
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The §11.10(e) audit row: recorded, or not — never assumed
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Extracted out of this file so pdev-clearance could report its own audit rows
+// through the same shape instead of a second copy (WO-16C #133 follow-up
+// review), and now lives in ../audit/audit-write-outcome because callers outside
+// PDEV need it too — it was never PDEV-specific, only its first caller was.
+// Re-exported here because the type is part of this module's public result
+// shapes.
+
+export type { AuditRowOutcome } from '../audit/audit-write-outcome';
 
 const COMPLETED_TARGET_STATES: ReadonlySet<PdevActivityState> = new Set([
   'approved',
@@ -98,6 +112,13 @@ export interface PdevWorkflowKickoffResult {
   activityStateId: string;
   /** Activity moved to this state during kickoff (typically `human_review_required`). */
   holdingState: PdevActivityState;
+  /**
+   * Whether the §11.10(e) audit row for this kickoff was durably recorded.
+   * Required, not optional: the workflow run and the activity hold commit
+   * regardless, so an envelope that omitted this could not be told apart from
+   * one where the record exists.
+   */
+  auditTrail: AuditRowOutcome;
 }
 
 export interface PdevApprovalChainStatus {
@@ -184,6 +205,21 @@ export interface PdevCheckpointDecisionResult {
   /** Set when the chain completes — the activity is moved to its target state. */
   activityFinalState?: PdevActivityState;
   rejectionReason?: string;
+  /**
+   * Whether the §11.10(e) audit row for this decision was durably recorded.
+   * Required, not optional — see `AuditRowOutcome`. The approver's
+   * identity survives in `approval_checkpoints.approvals` either way; what is
+   * lost when this is `persisted: false` is the audit-trail entry.
+   */
+  auditTrail: AuditRowOutcome;
+  /**
+   * Set only when this decision completed the chain on the IND-clearance
+   * activity and the terminal program transition was therefore attempted.
+   * WO-16C #133 follow-up review: the call was made and its result discarded,
+   * so a clearance recorded nowhere was indistinguishable from one recorded —
+   * one layer up from the defect #133 fixed.
+   */
+  indClearance?: { cleared: boolean; audit?: AuditRowOutcome };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -330,7 +366,7 @@ export class PdevWorkflowBridge {
       activityStateId = inserted[0].id;
     }
 
-    void auditService.logAction({
+    const auditTrail = await recordAuditRow({
       tenantId: input.organizationId,
       userId: input.requestedByUserId,
       action: 'pdev_workflow_kickoff',
@@ -351,7 +387,7 @@ export class PdevWorkflowBridge {
       targetState: input.targetState,
     });
 
-    return { workflowRunId, checkpointIds, activityStateId, holdingState };
+    return { workflowRunId, checkpointIds, activityStateId, holdingState, auditTrail };
   }
 
   /**
@@ -546,7 +582,7 @@ export class PdevWorkflowBridge {
           );
       }
 
-      void auditService.logAction({
+      const auditTrail = await recordAuditRow({
         tenantId: input.organizationId,
         userId: input.userId,
         action: 'pdev_workflow_checkpoint_rejected',
@@ -566,6 +602,7 @@ export class PdevWorkflowBridge {
         checkpointStatus: 'failed',
         workflowStatus: 'failed',
         rejectionReason: input.reason,
+        auditTrail,
       };
     }
 
@@ -605,7 +642,7 @@ export class PdevWorkflowBridge {
       .where(eq(approvalCheckpoints.id, input.checkpointId));
 
     if (!checkpointMet) {
-      void auditService.logAction({
+      const auditTrail = await recordAuditRow({
         tenantId: input.organizationId,
         userId: input.userId,
         action: 'pdev_workflow_checkpoint_partial_approval',
@@ -623,6 +660,7 @@ export class PdevWorkflowBridge {
       return {
         checkpointStatus: partialPlan.checkpointStatus,
         workflowStatus: run.status,
+        auditTrail,
       };
     }
 
@@ -663,7 +701,7 @@ export class PdevWorkflowBridge {
         })
         .where(eq(workflowRuns.id, run.id));
 
-      void auditService.logAction({
+      const auditTrail = await recordAuditRow({
         tenantId: input.organizationId,
         userId: input.userId,
         action: 'pdev_workflow_checkpoint_approved',
@@ -683,6 +721,7 @@ export class PdevWorkflowBridge {
         checkpointStatus: metPlan.checkpointStatus,
         workflowStatus: metPlan.workflowStatus,
         nextCheckpointId: nextCheckpoint.id,
+        auditTrail,
       };
     }
 
@@ -715,7 +754,7 @@ export class PdevWorkflowBridge {
         );
     }
 
-    void auditService.logAction({
+    const auditTrail = await recordAuditRow({
       tenantId: input.organizationId,
       userId: input.userId,
       action: 'pdev_workflow_completed',
@@ -731,20 +770,31 @@ export class PdevWorkflowBridge {
 
     // Terminal IND-clearance transition: a completed approval chain on
     // the clearance activity moves the program to its cleared state.
+    //
+    // WO-16C #133, follow-up review: the result of this call was discarded.
+    // It now reports whether the §11.10(e) row for the clearance itself was
+    // written, and that travels with the decision — the whole point of the
+    // outcome is that nobody in the chain drops it.
+    let indClearance: PdevCheckpointDecisionResult['indClearance'];
     if (run.programId && activityKey) {
-      await applyIndClearanceIfTerminal({
+      const clearance = await applyIndClearanceIfTerminal({
         programId: run.programId,
         organizationId: input.organizationId,
         userId: input.userId,
         activityKey,
         newState: targetState,
       });
+      if (clearance.cleared || clearance.alreadyCleared) {
+        indClearance = { cleared: clearance.cleared, audit: clearance.audit };
+      }
     }
 
     return {
       checkpointStatus: metPlan.checkpointStatus,
       workflowStatus: metPlan.workflowStatus,
       activityFinalState: targetState,
+      auditTrail,
+      ...(indClearance ? { indClearance } : {}),
     };
   }
 }

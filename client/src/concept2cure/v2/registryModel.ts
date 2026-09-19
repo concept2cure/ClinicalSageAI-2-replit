@@ -106,7 +106,7 @@ export const RAIL_SPECIALIST = [
 /** Explore section */
 export const RAIL_EXPLORE = [
   { id: 'ana-command', label: 'AnA Command', icon: 'sparkles', badge: 'AnA' },
-  { id: 'ana-memory', label: 'AnA Memory', icon: 'database', badge: 'AnA' },
+  { id: 'ana-memory', label: 'AnA memory', icon: 'database', badge: 'AnA' },
   { id: 'apps', label: 'Apps catalog', icon: 'grid' },
   { id: 'artifacts-center', label: 'Artifacts Center', icon: 'sparkles' },
   { id: 'conversation-thread', label: 'Conversation', icon: 'messageSquare', badge: 'AnA' },
