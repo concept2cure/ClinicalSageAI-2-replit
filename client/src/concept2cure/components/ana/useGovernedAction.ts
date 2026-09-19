@@ -24,6 +24,60 @@ export interface PendingSignoff {
   signatureRequired: boolean;
   /** Server's human-readable explanation of what is being signed off. */
   message: string;
+  /**
+   * Set when AnA is HOLDING A TURN on this decision rather than having ended
+   * it. The pair routes the outcome back to the waiting run, so she carries on
+   * from what the person decided instead of the action running on its own
+   * after her turn is over.
+   *
+   * Absent for the original flow — a command blocked during a turn that has
+   * already finished — which still works exactly as it did.
+   */
+  runId?: string;
+  toolUseId?: string;
+}
+
+/** An `approval_required` frame, as the stream sends one. */
+interface ApprovalRequiredEvent {
+  type?: string;
+  runId?: unknown;
+  toolUseId?: unknown;
+  action?: unknown;
+  message?: unknown;
+  data?: {
+    signatureRequired?: boolean;
+    retry?: { command?: string; params?: Record<string, unknown> };
+  };
+}
+
+/**
+ * Pure: turn a live `approval_required` frame into the same PendingSignoff the
+ * end-of-turn path produces.
+ *
+ * Deliberately the SAME shape, so GovernedActionSignoff renders it unchanged
+ * and there is one sign-off surface rather than two to keep in step. Only
+ * well-formed frames — carrying a command AND the run/tool pair that routes the
+ * answer back — produce a prompt; anything else would render a dialog whose
+ * confirm button had nowhere to go.
+ */
+export function pendingSignoffFromApproval(event: ApprovalRequiredEvent): PendingSignoff | null {
+  const command = event?.data?.retry?.command;
+  const runId = event?.runId;
+  const toolUseId = event?.toolUseId;
+  if (typeof command !== 'string' || !command) return null;
+  if (typeof runId !== 'string' || !runId) return null;
+  if (typeof toolUseId !== 'string' || !toolUseId) return null;
+  return {
+    command,
+    params: event.data?.retry?.params ?? {},
+    signatureRequired: event.data?.signatureRequired === true,
+    message:
+      typeof event.message === 'string'
+        ? event.message
+        : 'This action requires a reason for change.',
+    runId,
+    toolUseId,
+  };
 }
 
 /** A raw command result as it arrives in post_done.executedCommands. */
@@ -70,6 +124,14 @@ export interface SubmitSignoffArgs {
   password?: string;
   /** Required when the signer has MFA enabled (high-impact tier). */
   mfaToken?: string;
+  /**
+   * Routes the outcome back to a turn that is waiting on this decision. When
+   * both are present the server reads the command and params FROM THE RUN ROW
+   * and ignores the ones posted here — so what the person saw is what executes,
+   * and a tampered body cannot redirect their signature onto another action.
+   */
+  runId?: string;
+  toolUseId?: string;
 }
 
 export interface GovernedActionResult {
