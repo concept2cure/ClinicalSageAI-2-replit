@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-18T21:25:02.558Z",
+  "generatedAt": "2026-09-19T01:26:05.490Z",
   "git": {
-    "sha": "e511ce6132a6fbfa7a4d1bc8bffc5b2f832e16f9",
+    "sha": "6ec63935ba584dfeb6df0f4f814897818f95ae2e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2087,6 +2087,10 @@
         "bytes": 114269
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 110571
+      },
+      {
         "file": "server/routes/concept2cure.ts",
         "bytes": 109695
       },
@@ -2113,10 +2117,6 @@
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 105559
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 100798
       }
     ],
     "largeFilesByLines": [
@@ -2265,6 +2265,10 @@
         "lines": 2327
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 2308
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2278
       },
@@ -2291,10 +2295,6 @@
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2103
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
