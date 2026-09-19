@@ -1,11 +1,11 @@
 {
   "summary": {
-    "generatedAt": "2026-09-19T04:01:14.320Z",
+    "generatedAt": "2026-09-19T04:23:12.344Z",
     "totalDeclared": 1757,
-    "totalConsumedByClient": 586,
-    "totalOrphans": 1171,
+    "totalConsumedByClient": 587,
+    "totalOrphans": 1170,
     "byOwner": {
-      "Platform API Gateway": 990,
+      "Platform API Gateway": 989,
       "Regulatory Intelligence": 67,
       "CMC Platform": 65,
       "Identity Access": 36,
@@ -13,7 +13,7 @@
       "Device & Diagnostics": 3
     },
     "byDecision": {
-      "needs-review": 1136,
+      "needs-review": 1135,
       "keep-server-only": 18,
       "retire-candidate": 17
     }
@@ -4224,16 +4224,6 @@
       "path": "/api/data-lineage/trace/upstream/:objectType/:objectId",
       "file": "server/routes/data-lineage.ts",
       "line": 47,
-      "ownerPrefix": "/api",
-      "owner": "Platform API Gateway",
-      "contact": "server/index.ts",
-      "decision": "needs-review"
-    },
-    {
-      "method": "GET",
-      "path": "/api/data-origins/document",
-      "file": "server/routes/data-origins.routes.ts",
-      "line": 210,
       "ownerPrefix": "/api",
       "owner": "Platform API Gateway",
       "contact": "server/index.ts",

@@ -61,6 +61,15 @@ import { pool } from '../db';
  */
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
+/*
+ * Every governed write below was guarded by nothing but the caller's org
+ * context, which is tenant scoping, not authorization: a read-only `viewer`
+ * could create and amend UDI records, IVDR classifications and performance
+ * evaluations, CDx pairings and concordance. These are the device and IVD
+ * records a submission is assembled from.
+ */
+import { requireEditorAccess } from '../middleware/orgMembership';
+
 const router = Router();
 const log = createScopedLogger('mdx-udi');
 
@@ -328,7 +337,7 @@ router.get('/udi', async (req: Request, res: Response) => {
 
 /* ─── POST /api/mdx/udi ───────────────────────────────────────────── */
 
-router.post('/udi', async (req: Request, res: Response) => {
+router.post('/udi', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = createBody.safeParse(req.body ?? {});
@@ -400,7 +409,7 @@ router.get('/udi/:id', async (req: Request, res: Response) => {
 
 /* ─── PATCH /api/mdx/udi/:id ──────────────────────────────────────── */
 
-router.patch('/udi/:id', async (req: Request, res: Response) => {
+router.patch('/udi/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -476,7 +485,7 @@ router.patch('/udi/:id', async (req: Request, res: Response) => {
 
 /* ─── POST /api/mdx/udi/:id/submit-gudid ──────────────────────────── */
 
-router.post('/udi/:id/submit-gudid', async (req: Request, res: Response) => {
+router.post('/udi/:id/submit-gudid', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
