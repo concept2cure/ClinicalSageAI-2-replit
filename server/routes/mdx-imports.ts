@@ -35,6 +35,16 @@ import { detectArchive } from '../services/legacy-importer/detector';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { recordArtifactProvenanceBestEffort } from '../services/provenance/artifact-provenance';
 
+/*
+ * Every governed write below was guarded by nothing but the caller's org
+ * context, which is tenant scoping, not authorization: a read-only `viewer`
+ * could create and amend UDI records, IVDR classifications and performance
+ * evaluations, CDx pairings and concordance, and approve an import into the
+ * artifact registry. These are the device and IVD records a submission is
+ * assembled from.
+ */
+import { requireEditorAccess } from '../middleware/orgMembership';
+
 const router = Router();
 const log = createScopedLogger('mdx-imports');
 
@@ -62,7 +72,7 @@ const createBody = z.object({
   programId:        z.string().regex(UUID_RE).optional().nullable(),
 });
 
-router.post('/imports', async (req: Request, res: Response) => {
+router.post('/imports', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = createBody.safeParse(req.body ?? {});
@@ -219,7 +229,7 @@ const patchFileBody = z.object({
   status:              z.enum(['pending', 'mapped', 'skipped']).optional(),
 });
 
-router.patch('/imports/:id/files/:fileId', async (req: Request, res: Response) => {
+router.patch('/imports/:id/files/:fileId', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const jobId = Number(req.params.id);
@@ -257,7 +267,7 @@ router.patch('/imports/:id/files/:fileId', async (req: Request, res: Response) =
 
 /* ─── POST /imports/:id/approve — materialize artifacts ───── */
 
-router.post('/imports/:id/approve', async (req: Request, res: Response) => {
+router.post('/imports/:id/approve', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
@@ -284,6 +294,26 @@ router.post('/imports/:id/approve', async (req: Request, res: Response) => {
     if (own.rows[0].status !== 'ready_for_review') {
       await client.query('ROLLBACK');
       return clientError(res, 409, `Import is not in ready_for_review state (current: ${own.rows[0].status})`);
+    }
+
+    /* The IMPORT JOB was proved to be this tenant's above; `projectId` was not,
+       and it comes straight from the request body. A caller could approve their
+       own import into ANOTHER TENANT'S project lineage — the artifacts, and the
+       provenance and audit rows that follow them, land under a project the
+       caller does not own.
+ 
+       `projects` is the right table: concept2cure_artifacts.project_id carries a
+       FOREIGN KEY to projects.id, so this is the tenant guard and the guarantee
+       that placement cannot fail at the constraint. Same check, same reasoning
+       and same 404 shape as cerv2-export-routes.ts, which closed this for
+       itself — "not yours" must not be distinguishable from "does not exist". */
+    const ownedProject = await client.query(
+      `SELECT 1 FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+      [projectId, orgId],
+    );
+    if (ownedProject.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return notFoundInTenant(res, 'Project');
     }
     await client.query(
       `UPDATE import_jobs SET status = 'approving', updated_at = NOW() WHERE id = $1`,
@@ -385,7 +415,7 @@ router.post('/imports/:id/approve', async (req: Request, res: Response) => {
 
 /* ─── POST /imports/:id/cancel ───────────────────────────── */
 
-router.post('/imports/:id/cancel', async (req: Request, res: Response) => {
+router.post('/imports/:id/cancel', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -408,7 +438,7 @@ router.post('/imports/:id/cancel', async (req: Request, res: Response) => {
 
 /* ─── POST /imports/:id/findings/:findingId/resolve ──────── */
 
-router.post('/imports/:id/findings/:findingId/resolve', async (req: Request, res: Response) => {
+router.post('/imports/:id/findings/:findingId/resolve', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const findingId = Number(req.params.findingId);

@@ -39,6 +39,11 @@ import {
   type DocumentStage,
 } from '../../shared/regulatory/document-lifecycle';
 import { randomUUID } from 'crypto';
+import {
+  makeUpsertLeafBinding,
+  LeafBindingRefusal,
+} from '../services/regulatory/lifecycle-leaf-binding';
+import { upsertLeaf } from '../services/submission-service/submission-service';
 
 export interface DocumentLifecycleRouterOptions {
   /** Drizzle handle. Defaults to the runtime db. */
@@ -157,9 +162,48 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       contentHash: typeof req.body?.contentHash === 'string' ? req.body.contentHash : input.contentHash,
       placement: req.body?.placement,
     };
-    const bindings = bindingsFactory({ organizationId, actor });
+    /* The real leaf writer. Without it the orchestrator refuses `placed`
+       outright (PLACEMENT_BINDING_NOT_WIRED) — correctly, because the default it
+       replaced minted a `leaf:${uuid}` for a submission_leaves row that was
+       never written, and attested it in the audit trail. Injecting the genuine
+       writer is what makes the refusal unnecessary rather than permanent.
 
-    const result = await advanceDocument(projected.state, to, ctx, bindings, projected.document);
+       `upsertLeaf` is the canonical governed write: it re-checks that the
+       document belongs to this organisation, pins the source digest, and
+       refuses a frozen or dispatched sequence. */
+    const actorUserId = resolveUserId(req);
+    const bindings = bindingsFactory({
+      organizationId,
+      actor,
+      ...(actorUserId != null
+        ? {
+            upsertLeaf: makeUpsertLeafBinding({
+              upsertLeaf: (leafInput, leafCtx) => upsertLeaf(leafInput as never, leafCtx),
+              organizationId,
+              userId: Number(actorUserId),
+            }),
+          }
+        : {}),
+    });
+
+    let result: Awaited<ReturnType<typeof advanceDocument>>;
+    try {
+      result = await advanceDocument(projected.state, to, ctx, bindings, projected.document);
+    } catch (err) {
+      /* A binding that cannot write a leaf refuses with a REASON, and that is a
+         409 in the orchestrator's own shape — not a 500. The distinction is the
+         point: 500 says the server broke, 409 says the request named something
+         that cannot be filed and here is which part. */
+      if (err instanceof LeafBindingRefusal) {
+        return res.status(409).json({
+          ok: false,
+          from: projected.state.stage,
+          to,
+          blockedBy: [`${err.code}: ${err.message}`],
+        });
+      }
+      throw err;
+    }
     if (!result.ok) {
       return res.status(409).json({ ok: false, from: result.from, to: result.to, blockedBy: result.blockedBy });
     }

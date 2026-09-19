@@ -81,6 +81,21 @@ export interface DossierPlacement {
   leafId?: string;
   /** eCTD sequence number, e.g. '0000', once assigned. */
   sequence?: string;
+  /**
+   * The `ectd_sequences` ROW id the leaf is written into.
+   *
+   * Distinct from `sequence` above, which is the agency-facing NUMBER ('0000')
+   * and does not identify a row: an organisation can hold several submissions
+   * each with their own 0000. Writing a leaf needs the row, so the caller that
+   * chose the sequence supplies it — the placement is not asked to guess which
+   * submission `registryId: 'US_IND'` meant when the org has three INDs.
+   *
+   * Optional because it is only needed to REACH `placed`. Absent, the leaf
+   * binding refuses with a named reason rather than inventing a target; it is
+   * deliberately NOT part of `isCompletePlacement`, which describes where a
+   * document belongs in a dossier, not which sequence it was filed into.
+   */
+  sequenceId?: number;
 }
 
 // ─── Approval / signature ─────────────────────────────────────────────────────

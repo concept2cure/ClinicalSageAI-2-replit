@@ -21,8 +21,10 @@ import { Router, type Request, type Response } from 'express';
 
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
+import { pool } from '../db';
 import {
   getSelectionOrigins,
+  summarizeDocumentAttribution,
   SpanLineageError,
 } from '../services/clinical-regulatory-evidence/span-lineage.service';
 import { renderDataOriginsPdf } from '../services/clinical-regulatory-evidence/data-origins-pdf';
@@ -144,6 +146,103 @@ router.post('/selection.pdf', async (req: Request, res: Response) => {
     res.setHeader('Content-Disposition', `attachment; filename="${name}"`);
     res.setHeader('Content-Length', String(pdf.length));
     res.end(pdf);
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/* ── Document-level attribution ────────────────────────────────────────────────
+ *
+ *   GET /api/data-origins/document → how much of this document is attributed,
+ *                                    and to what
+ *
+ * GET, unlike the two above: no document text travels here, only ids, so there
+ * is nothing that must be kept out of a URL.
+ *
+ * THE DENOMINATOR IS READ SERVER-SIDE, ON PURPOSE. A coverage percentage is
+ * attributed characters over total characters, so whoever supplies the total
+ * controls the percentage — a caller passing a short length would report a
+ * well-attributed document by arithmetic alone. The text length therefore comes
+ * from the server's own read of the governed row, in the same spirit as the
+ * tenant scope above never being taken from the request.
+ */
+
+/**
+ * Where each governed document's text lives. A whitelist, so the table and
+ * column below can be interpolated: only these keys can ever reach the query,
+ * and an unknown table is refused rather than guessed at.
+ *
+ * `labeling_pi_sections` is deliberately absent. Its content is JSONB and the
+ * lineage was recorded against the DERIVED heading+body string, so the length of
+ * the JSON is not the length the spans describe — and a denominator that is
+ * merely close would make every figure here quietly wrong.
+ */
+const CONTENT_COLUMNS: Readonly<Record<string, string>> = Object.freeze({
+  concept2cure_artifacts: 'content',
+  protocol_sections: 'content',
+  protocol_documents: 'synopsis',
+  biosketch_sections: 'content',
+  cerv2_510k_sections: 'content',
+  dms_plan_elements: 'content',
+  consent_form_elements: 'content',
+  coauthor_documents: 'content',
+  q_sub_section_bodies: 'content',
+});
+
+/** null = no such document for this organization (or it holds no text yet). */
+async function resolveContentLength(
+  orgId: number,
+  documentTable: string,
+  documentId: string,
+): Promise<number | null> {
+  const column = CONTENT_COLUMNS[documentTable];
+  if (!column) return null;
+  const { rows } = await pool.query(
+    `SELECT COALESCE(char_length(${column}), 0)::int AS len
+       FROM ${documentTable}
+      WHERE id::text = $1 AND organization_id = $2
+      LIMIT 1`,
+    [documentId, orgId],
+  );
+  return rows.length === 0 ? null : Number(rows[0].len);
+}
+
+router.get('/document', async (req: Request, res: Response) => {
+  const orgId = authedOrgId(req);
+  if (!orgId) {
+    return res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'Organization context required' } });
+  }
+
+  const documentTable = typeof req.query.documentTable === 'string' ? req.query.documentTable.trim() : '';
+  const documentId = typeof req.query.documentId === 'string' ? req.query.documentId.trim() : '';
+  if (!documentTable || !documentId) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'documentTable and documentId are required' } });
+  }
+  if (!CONTENT_COLUMNS[documentTable]) {
+    // Refusing beats answering about a table whose text this route cannot
+    // locate: a percentage over the wrong denominator is worse than no answer.
+    return res.status(400).json({
+      error: {
+        code: 'UNSUPPORTED_DOCUMENT_TABLE',
+        message: `Attribution coverage is not available for "${documentTable}".`,
+      },
+    });
+  }
+
+  try {
+    const contentLength = await resolveContentLength(orgId, documentTable, documentId);
+    if (contentLength === null) {
+      return res.status(404).json({
+        error: { code: 'NOT_FOUND', message: 'No such document in this organization.' },
+      });
+    }
+
+    const summary = await summarizeDocumentAttribution(
+      orgId,
+      { documentTable, documentId },
+      contentLength,
+    );
+    res.json({ success: true, summary });
   } catch (err) {
     fail(res, err);
   }
