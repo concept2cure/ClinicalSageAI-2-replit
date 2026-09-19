@@ -303,4 +303,50 @@ if ! npm run --silent ci:discarded-audit-write 2>&1; then
 fi
 echo "   ✅ No discarded audit-write outcome."
 
+# ── The commit has to build for somebody other than you ──────────────────────
+#
+# On 19 Sep 2026 an unanchored `uploads/` in .gitignore -- meant for the runtime
+# directory at the repo root -- silently excluded `server/services/uploads/`,
+# source added that minute. `git add -A` skipped it without a word, `git status`
+# showed nothing, and the commit shipped a route importing a module that was not
+# in the repository. Typecheck, 6,117 unit tests and the dbtests all passed,
+# because every one of them reads the WORKING TREE. Only the index disagreed,
+# and nothing consulted the index.
+#
+# This asks git, not the filesystem, whether each relative import in the pushed
+# files resolves. It is scoped to what the push changes, so a lane answers for
+# its own code and not the repo's backlog.
+echo "   Checking that pushed imports resolve to tracked files..."
+if ! npm run --silent ci:untracked-imports 2>&1; then
+  echo ""
+  echo "🚫 ERROR: An import resolves to a file git does not have."
+  echo "   Usually a .gitignore pattern matching a source directory:"
+  echo "     git check-ignore -v <path>"
+  echo "   Anchor a root-directory pattern with a leading slash (/uploads/)."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Pushed imports all resolve to tracked files."
+
+# ── ESLint ERRORS, before the push rather than after ─────────────────────────
+#
+# ci:eslint-warning-ratchet gates the WARNING total across 1,790 files; it counts
+# errors, prints them and passes, on the grounds that the Run ESLint step fails on
+# those. True -- and that step runs in CI only, and the ratchet is too slow to be
+# a pre-push gate, so nothing ran ESLint before a push at all. Two lanes shipped
+# the same `no-regex-spaces` error to trunk within an hour on 19 Sep 2026, and
+# each time the next person to push had to bisect somebody else's commit.
+#
+# Errors only -- warnings are the ratchet's job -- and only in the files this push
+# changes, which is ~1.4s rather than minutes.
+echo "   Checking for ESLint errors in the pushed files..."
+if ! npm run --silent ci:pushed-lint-errors 2>&1; then
+  echo ""
+  echo "🚫 ERROR: ESLint errors in the files this push changes."
+  echo "   These fail the Run ESLint step in CI; fix them here instead."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No ESLint errors in the pushed files."
+
 echo "✅ Pre-push checks complete — all gates passed."

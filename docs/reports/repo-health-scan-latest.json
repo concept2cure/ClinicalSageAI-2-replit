@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T05:06:25.335Z",
+  "generatedAt": "2026-09-19T05:18:32.696Z",
   "git": {
-    "sha": "024722598b7ac01cab3c21af3797f22c4edaff22",
+    "sha": "7ae3c4442d7a30da04d125834d46fa5d0e103e93",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2004,7 +2004,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 144837
+        "bytes": 145015
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2080,7 +2080,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 111614
+        "bytes": 113608
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3365
+        "lines": 3360
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2245,6 +2245,10 @@
         "lines": 2379
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 2360
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "lines": 2348
       },
@@ -2255,10 +2259,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "lines": 2327
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2322
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2469,6 +2469,10 @@
         "lines": 1650
       },
       {
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 1630
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1628
       },
@@ -2487,10 +2491,6 @@
       {
         "file": "server/services/advancedRAGPipeline.ts",
         "lines": 1569
-      },
-      {
-        "file": "server/services/submission-service/submission-service.ts",
-        "lines": 1550
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",

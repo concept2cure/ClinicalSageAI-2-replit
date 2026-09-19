@@ -87,6 +87,30 @@ lane that added it (the pre-push hook does not run the ratchet; CI does) and
 costs the NEXT lane to push a diagnostic round each time. Running
 `npm run ci:eslint-ratchet` before you push keeps it in the lane that created it.
 
+**Two new pre-push gates (2026-09-19) — both added after they caught a real
+defect, one of them mine:**
+
+- `ci:untracked-imports` — a pushed file must not import a module git does not
+  have. An unanchored `uploads/` in `.gitignore` (meant for the runtime
+  directory at the repo root) silently excluded `server/services/uploads/`, so
+  a commit shipped a route importing a file that was not in the repository and
+  trunk was unbuildable. Nothing local could see it: typecheck, 6,117 unit
+  tests and the dbtests all read the WORKING TREE, and `git add -A` printing
+  nothing is byte-identical to success. The gate reads the INDEX. `/tmp/`,
+  `/uploads/`, `/logs/` are now anchored; `data/logs/` is listed explicitly
+  because the unanchored form was genuinely covering it.
+  Repo-wide (`--all`) it also reports **21 pre-existing broken relative
+  imports**, mostly in `db/migrations/_consolidated/*.ts` importing
+  `../server/db` from a path where that does not resolve. Left alone: the gate
+  is scoped to what a push changes, so no lane inherits the backlog. If those
+  files are dead, deleting them clears it.
+- `ci:pushed-lint-errors` — ESLint ERRORS in the pushed files only, ~1.4s. The
+  warning ratchet is not on this hook (minutes on 1,790 files) and deliberately
+  ignores errors, so until now **nothing ran ESLint before a push**.
+
+Both are scoped to the diff against the upstream ref, so they hold a lane to its
+own code. Both fail closed on an ESLint crash or an unreadable index.
+
 **ESLint ERROR cleared from another lane (2026-09-19):**
 `server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts:169` (commit
 `1e8ddb6d2`) carried four literal spaces inside a regex, which `no-regex-spaces`
