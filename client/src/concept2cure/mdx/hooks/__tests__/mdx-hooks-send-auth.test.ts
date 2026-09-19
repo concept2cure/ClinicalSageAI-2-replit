@@ -54,7 +54,7 @@ const sentAuth = () =>
 describe('useAcceptAnaDraft', () => {
   it('sends the Bearer token the accept route requires', async () => {
     fetchMock.mockResolvedValue(ok({ ok: true }));
-    const { result } = renderHook(() => useAcceptAnaDraft({ sectionRowId: 11 }));
+    const { result } = renderHook(() => useAcceptAnaDraft(11));
     await act(async () => { await result.current.accept({ refinedContent: 'x' }); });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(sentAuth()).toEqual(['Bearer test-token']);
@@ -65,7 +65,7 @@ describe('useAcceptAnaDraft', () => {
 
   it('does not put the raw error envelope on screen', async () => {
     fetchMock.mockResolvedValue(unauthorized());
-    const { result } = renderHook(() => useAcceptAnaDraft({ sectionRowId: 11 }));
+    const { result } = renderHook(() => useAcceptAnaDraft(11));
     await act(async () => { await result.current.accept(); });
     await waitFor(() => expect(result.current.error).toBeTruthy());
     const shown = String(result.current.error);
