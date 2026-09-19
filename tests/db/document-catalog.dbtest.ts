@@ -473,3 +473,77 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
     expect(read.error).not.toMatch(/another organization|belongs to|exists/i);
   });
 });
+
+/**
+ * The retrieval atom records what it holds, in a real column.
+ *
+ * Both chat-upload paths wrote ONE `lumen_data_atoms` row per file carrying
+ * `extractedText.substring(0, 16000)`, and nothing recorded that the row was a
+ * prefix. A retrieval hit returned those characters as the document's content.
+ * The bound is unchanged — one atom is one embedding — but it is now written
+ * into `structured_data`, which only a real database can prove accepts it.
+ */
+describe('a chat upload knows it is indexed by its opening only', () => {
+  const ATOM_SOURCE = 'dbtest-catalog:upload-atom';
+
+  afterAll(async () => {
+    await owner
+      .query('DELETE FROM lumen_data_atoms WHERE source_id = $1', [ATOM_SOURCE])
+      .catch(() => {});
+  });
+
+  it('writes the file length and the embedded length onto the row', async () => {
+    const { writeUploadRetrievalAtom, ATOM_CONTENT_LIMIT } = await import(
+      '../../server/services/uploads/upload-retrieval-atom'
+    );
+    const text = Array.from(
+      { length: 200 },
+      (_, i) => `Paragraph ${i}. ${'Protocol body filler sentence. '.repeat(20)}`,
+    ).join('\n\n');
+    expect(text.length).toBeGreaterThan(ATOM_CONTENT_LIMIT);
+
+    const res = await writeUploadRetrievalAtom(owner as any, {
+      organizationId: orgId,
+      sourceId: ATOM_SOURCE,
+      fileName: 'protocol-v3.pdf',
+      text,
+      tags: ['source', 'chat_upload'],
+    });
+    expect(res.atomId).not.toBeNull();
+    expect(res.truncated).toBe(true);
+
+    const { rows } = await owner.query(
+      `SELECT content, structured_data FROM lumen_data_atoms WHERE source_id = $1`,
+      [ATOM_SOURCE],
+    );
+    expect(rows).toHaveLength(1);
+    // The row holds the bounded content…
+    expect(rows[0].content.length).toBe(res.embeddedChars);
+    expect(rows[0].content.length).toBeLessThan(text.length);
+    // …and says so, with the number that was previously unavailable anywhere.
+    const rec = rows[0].structured_data;
+    expect(rec.retrieval.truncated).toBe(true);
+    expect(rec.retrieval.extractedChars).toBe(text.length);
+    expect(rec.retrieval.embeddedChars).toBe(res.embeddedChars);
+    expect(rec.retrieval.note).toContain('opening of the file only');
+  });
+
+  it('a second write for the same source is a no-op, not a duplicate', async () => {
+    const { writeUploadRetrievalAtom } = await import(
+      '../../server/services/uploads/upload-retrieval-atom'
+    );
+    const again = await writeUploadRetrievalAtom(owner as any, {
+      organizationId: orgId,
+      sourceId: ATOM_SOURCE,
+      fileName: 'protocol-v3.pdf',
+      text: 'anything',
+      tags: ['source', 'chat_upload'],
+    });
+    expect(again.atomId).toBeNull();
+    const { rows } = await owner.query(
+      `SELECT COUNT(*)::int AS n FROM lumen_data_atoms WHERE source_id = $1`,
+      [ATOM_SOURCE],
+    );
+    expect(rows[0].n).toBe(1);
+  });
+});
