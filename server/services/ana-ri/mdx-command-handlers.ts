@@ -14,7 +14,10 @@
  * 2. Audit codes are prefixed `agent.ana.<resource>.<verb>` so an auditor
  *    can distinguish AnA-initiated mutations from human ones in the
  *    central audit_logs table. The reason-for-change is captured in
- *    audit details.
+ *    audit details. Every one of those rows is written through
+ *    `recordAuditRow` and its OUTCOME is returned to the caller — in `data`
+ *    under `agentAuditTrail`, and as a clause on `message` when the row did
+ *    not persist. See `auditNote` below and WO-16C finding 133.
  *
  * 3. Tenant scope: every handler reads `ctx.organizationId` from the
  *    chat context and passes it to the underlying service. The service
@@ -36,7 +39,7 @@ import {
   type QSubType,
 } from '../q-sub/q-sub.service';
 import { Q_SUB_TYPES } from '../../../shared/schema/q-sub';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import type { CommandContext, CommandResult } from './command-executor';
 import { requireGovernedToolGate, mapServiceError, agentAuditDetails } from './mdx-tool-policy';
 import { validateSignoff, buildSignatureRequiredResult } from './part11-governance';
@@ -44,6 +47,37 @@ import { validateSignoff, buildSignatureRequiredResult } from './part11-governan
 // ─── Local helpers ──────────────────────────────────────────────────────────
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The clause a handler appends to its own message when the 21 CFR Part 11
+ * §11.10(e) row it just attempted did not reach a durable store.
+ *
+ * WO-16C finding 133. Every audit write in this file was
+ * `void auditService.logAction({…})`. `logAction` never rejects when
+ * persistence fails — that is deliberate policy, an audit-trail outage must not
+ * break the user action it records — it RESOLVES an `AuditWriteResult` and
+ * reports what happened in `persisted`. Discarding that value left each handler
+ * with two possible outcomes and one observable result: the `CommandResult`, the
+ * AnA turn built from it and the sentence read back to the regulated user were
+ * byte-identical whether the `agent.ana.*` record existed or did not, while the
+ * mutation underneath had already committed.
+ *
+ * So the outcome travels twice, as it does in
+ * server/services/ana-ri/pdev-command-handlers.ts: in `data` for anything
+ * parsing the structure, and as this clause on `message` for the conversational
+ * turn, which is the only part a chat user ever sees. The mutation is never
+ * reverted — reverting a committed governed write because its log row was lost
+ * is the worse lie — and the store's own error text never appears here:
+ * `recordAuditRow` has already logged it against the action and resource id.
+ *
+ * Where a handler carries two outcomes they get two keys — `auditTrail` for the
+ * row the underlying service wrote for its own action, `agentAuditTrail` for the
+ * `agent.ana.*` row this file wrote — because they are distinct records of
+ * distinct actions and neither may be read for the other.
+ */
+function auditNote(outcome: AuditRowOutcome): string {
+  return outcome.persisted ? '' : ` ${outcome.message}`;
+}
 
 // ─── Q-Sub create ───────────────────────────────────────────────────────────
 
@@ -108,7 +142,15 @@ export async function qSubCreate(
       createdBy: `ana:${ctx.userId}`,
     });
 
-    void auditService.logAction({
+    /* WO-16C #133. The `q_submissions` INSERT is committed inside
+       createQSubmission before this row is attempted, so the submission stands
+       whatever happens here — a log beside a completed action, never reverted.
+       What changes is that the outcome is no longer discarded: it reaches the
+       caller as `data.agentAuditTrail` and, for a chat reader, through
+       `auditNote` on the message. `data.auditTrail` is a DIFFERENT record — the
+       service's own `q_sub.create` row, whose outcome createQSubmission returns
+       and this handler also dropped. */
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.q_sub.create',
@@ -131,10 +173,13 @@ export async function qSubCreate(
         qSubType: row.qSubType,
         title: row.title,
         stage: row.stage,
+        auditTrail: row.auditTrail,
+        agentAuditTrail,
       },
       message:
         `Created ${qSubType} Q-Sub "${title}" under program ${programId}. ` +
-        `It is in stage 'plan' until you file the package.`,
+        `It is in stage 'plan' until you file the package.` +
+        `${auditNote(agentAuditTrail)}${row.auditTrail ? auditNote(row.auditTrail) : ''}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -176,7 +221,14 @@ export async function qSubCommitmentSetRolledIn(
       rolledInBy: params.rolledIn ? `ana:${ctx.userId}` : null,
     });
 
-    void auditService.logAction({
+    /* WO-16C #133, on the same terms as q_sub.create above: the
+       `q_sub_commitments` UPDATE is committed inside setCommitmentRolledIn
+       before this row is attempted, so the toggle stands and is reported either
+       way — with what happened to its records on it. Two keys for two rows:
+       `auditTrail` is the service's own
+       `q_sub.commitment.rolled_in`/`rolled_out` record, `agentAuditTrail` is the
+       `agent.ana.*` counterpart written here. */
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: params.rolledIn
@@ -192,6 +244,7 @@ export async function qSubCommitmentSetRolledIn(
       },
     });
 
+    const auditClause = `${auditNote(agentAuditTrail)}${updated.auditTrail ? auditNote(updated.auditTrail) : ''}`;
     return {
       success: true,
       action,
@@ -199,10 +252,12 @@ export async function qSubCommitmentSetRolledIn(
         id: updated.id,
         displayCode: updated.displayCode,
         rolledIn: updated.rolledIn,
+        auditTrail: updated.auditTrail,
+        agentAuditTrail,
       },
       message: params.rolledIn
-        ? `Marked commitment ${updated.displayCode} as rolled in.`
-        : `Cleared rolled-in flag on commitment ${updated.displayCode}.`,
+        ? `Marked commitment ${updated.displayCode} as rolled in.${auditClause}`
+        : `Cleared rolled-in flag on commitment ${updated.displayCode}.${auditClause}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -279,7 +334,14 @@ export async function sectionApprove(
       [targetStatus, now, ctx.organizationId, sectionId],
     );
 
-    void auditService.logAction({
+    /* WO-16C #133. The status change is committed by the UPDATE above before
+       this row is attempted, so it is a log beside a completed action: the
+       approval stands whatever happened to the record, and is never reverted
+       over a lost log row. The outcome reaches the caller in
+       `data.agentAuditTrail` and, for a chat reader, through `auditNote`.
+       `agent.ana.section.approve` is the only §11.10(e) row on this path — the
+       UPDATE is issued here rather than through a service that writes one. */
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.section.approve',
@@ -302,8 +364,9 @@ export async function sectionApprove(
         sectionTitle: before.section_title,
         previousStatus: before.status,
         newStatus: targetStatus,
+        agentAuditTrail,
       },
-      message: `Section §${before.section_number} approved (${before.status ?? 'todo'} → ${targetStatus}).`,
+      message: `Section §${before.section_number} approved (${before.status ?? 'todo'} → ${targetStatus}).${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -433,7 +496,20 @@ export async function sectionUpdate(
   const fieldsChanged = written.fieldsChanged;
 
   try {
-    void auditService.logAction({
+    /* WO-16C #133. The content, its version row and its span lineage are
+       committed by the COMMIT above before this row is attempted, so this is a
+       log beside a completed action: the edit stands whatever happened to the
+       record and is never rolled back over a lost log row. The outcome reaches
+       the caller in `data.agentAuditTrail` and through the message clause.
+
+       The message used to assert, unconditionally, that a `section.edit` AND an
+       `agent.ana.section.edit` row had been written. `writeKitSectionTx` writes
+       the `cerv2_510k_sections` row, a `cerv2_section_versions` row and the
+       author/source lineage, and no audit_logs row at all, so the `section.edit`
+       half named a record this path never produces; the other half asserted an
+       outcome this call had just discarded. The claim is now made only when this
+       row actually persisted. */
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.section.edit',
@@ -465,10 +541,14 @@ export async function sectionUpdate(
         newLength: newContent.length,
         status: targetStatus,
         completionPercentage: targetCompletion,
+        agentAuditTrail,
       },
       message:
         `Updated §${before.section_number} (${(before.content ?? '').length} → ${newContent.length} chars). ` +
-        `Version ${nextVersion} recorded; section.edit + agent.ana.section.edit audit rows written.`,
+        `Version ${nextVersion} recorded.` +
+        (agentAuditTrail.persisted
+          ? ' agent.ana.section.edit audit row written.'
+          : auditNote(agentAuditTrail)),
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -539,7 +619,20 @@ export async function preflightModule(
     }
     const body = await res.json();
 
-    void auditService.logAction({
+    /* WO-16C #133. The pre-flight has already run and its verdict is in `body`
+       by the time this row is attempted, and nothing here mutates state, so this
+       is a log beside a completed action: the verdict is returned either way.
+       What it records is that AnA ran the gate — the traceability this handler's
+       own docstring claims — and that claim is only worth as much as the row, so
+       the outcome now travels in `data.agentAuditTrail` and on the message.
+       `data` keeps every field the pre-flight response carried; it is spread
+       rather than passed through so the outcome can ride alongside it. That
+       response already carries an `auditTrail` of its own — the route's
+       `k510_workflow.preflight` row (server/routes/authoring-actions.ts) — which
+       the spread forwards under that key. Two rows, two keys: `auditTrail` is
+       the route's record of the pre-flight, `agentAuditTrail` is this file's
+       record that AnA was the one who asked for it. */
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.k510_workflow.preflight',
@@ -559,8 +652,11 @@ export async function preflightModule(
     return {
       success: true,
       action,
-      data: body,
-      message: `Pre-flight for module ${moduleCode}: ${body?.overall ?? 'unknown'}.`,
+      data: {
+        ...(body && typeof body === 'object' ? (body as Record<string, unknown>) : {}),
+        agentAuditTrail,
+      },
+      message: `Pre-flight for module ${moduleCode}: ${body?.overall ?? 'unknown'}.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -742,7 +838,17 @@ export async function esgTransmit(
       surface: 'ana-mdx-command',
     });
 
-    void auditService.logAction({
+    /* WO-16C #133. By this line the bytes are at the FDA gateway and the
+       transmittal row is written by executeGovernedTransmit — the one
+       irreversible action on this surface. So this is a log beside a completed
+       action in the strongest sense: nothing may be reverted or reported as
+       un-sent because its agent-provenance row was lost. The outcome reaches
+       the caller in `data.agentAuditTrail` and on the message instead of being
+       discarded. It covers this `agent.ana.*` row only — the governed `sign`
+       ledger entry is written inside executeGovernedTransmit, which reports its
+       own failure as `outcome.ledgerWriteFailed`, recorded in this row's details
+       below. */
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.k510_workflow.transmit',
@@ -773,16 +879,26 @@ export async function esgTransmit(
         region: 'fda',
         gateway: 'esg',
         environment,
+        agentAuditTrail,
       },
       message:
         `Package ${packageId} handed to the FDA ESG (${environment}, ${outcome.result.transport}). ` +
         `Transmittal #${outcome.result.transmittalId}, status '${outcome.result.status}'. ` +
         `${outcome.result.message} ` +
         'Poll the transmittal for the ack1/ack2/ack3 ladder — an FDA acknowledgement exists only ' +
-        'once the agency sends one.',
+        `once the agency sends one.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
-    void auditService.logAction({
+    /* WO-16C #133. This row records a refused or failed transmit — the
+       `c2c_submission_packages` row and any transmittal state are whatever
+       executeGovernedTransmit left behind, and nothing here changes them, so the
+       refusal is reported as itself either way. What the row carries is that AnA
+       attempted an agency transmission and that it was not completed, so its
+       outcome travels onto the refusal rather than being dropped: the mapped
+       error keeps its code and its details and gains `data.agentAuditTrail`,
+       plus the clause on `message` when the row did not persist.
+       `recordAuditRow` never throws, so it cannot mask the transmit error. */
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.k510_workflow.transmit.failed',
@@ -794,7 +910,27 @@ export async function esgTransmit(
         error: err instanceof Error ? err.message : 'unknown',
       },
     });
-    return mapTransmitError(action, err);
+    const refusal = mapTransmitError(action, err);
+    /* The outcome rides on `message` alone where the mapped refusal carries no
+       `data`, and only joins an EXISTING `data` object otherwise.
+       `data: { ...(refusal.data ?? {}), agentAuditTrail }` — the first version of
+       this — manufactured a `data` object on the branches that deliberately have
+       none, and those are exactly the branches whose test says why:
+       "No identifier of any kind is minted for a transmission that never
+        happened."
+       That assertion is `expect(r.data).toBeUndefined()`, and it guards against
+       this surface handing back anything a caller could read as an FDA receipt
+       for a submission that was never made. An audit outcome is not an
+       identifier, but weakening the check that enforces the invariant — in order
+       to report an audit row — trades a real safeguard for a reporting channel
+       the message already provides. */
+    return refusal.data === undefined
+      ? { ...refusal, message: `${refusal.message}${auditNote(agentAuditTrail)}` }
+      : {
+          ...refusal,
+          message: `${refusal.message}${auditNote(agentAuditTrail)}`,
+          data: { ...refusal.data, agentAuditTrail },
+        };
   }
 }
 

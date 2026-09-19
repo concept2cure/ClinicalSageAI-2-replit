@@ -12,6 +12,7 @@ import { nonAccessTokenReason } from '../middleware/tokenType';
 import { enforceOrgMembership } from '../middleware/orgMembership';
 import { getPool } from '../db';
 import auditService, { writeChainedAuditRow } from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { isSigningAuthorized } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { authedOrgId } from '../utils/authedOrgId';
@@ -744,7 +745,27 @@ const createAuditTrail = async (
     const resourceId = String(sectionId ?? docId ?? '');
 
     if (executor === pool) {
-      void auditService.logAction({
+      /* WO-16C #133. Was `void auditService.logAction({…})`.
+         `logAction` never rejects on a persistence failure, so the discarded
+         AuditWriteResult was the only place a lost row was visible.
+
+         The outcome is NOT plumbed out to callers here, and the reason is
+         specific rather than convenient: `createAuditTrail` has a dozen call
+         sites in this file and what this row is, per the comment above, is the
+         secondary INDEX entry — "the dedicated authoring_audit_trail row above
+         remains the rich record". That row is written on `executor`, which on the
+         transactional path is the caller's BEGIN'd client, so it commits and
+         rolls back with the mutation. Losing THIS row therefore degrades the
+         unified audit_logs query; it does not lose the §11.10(e) record of the
+         change, which is the authoring_audit_trail row.
+
+         That distinction is why this is logged at error severity with what was
+         actually lost, rather than threaded through twelve call sites as a value
+         they would all ignore — an ignored return value is the vacuous
+         conversion this work order keeps finding. If the index entry ever
+         becomes the authoritative record for anything, this decision has to be
+         revisited, which is what this note is for. */
+      const indexRow = await recordAuditRow({
         tenantId,
         userId: actorEmail,
         action,
@@ -754,6 +775,14 @@ const createAuditTrail = async (
         userAgent,
         details: chainDetails,
       });
+      if (!indexRow.persisted) {
+        console.error(
+          '[authoring] audit_logs index entry NOT written for ' +
+            `${action} on ${resourceType} ${resourceId}; the authoritative ` +
+            'authoring_audit_trail row exists, but this event is missing from the ' +
+            'unified audit query',
+        );
+      }
     } else if (!auditOpts.chainedRowWrittenByCaller) {
       /* §11.10(e) — ENLISTED IN THE CALLER'S TRANSACTION.
        *
