@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T04:13:56.430Z",
+  "generatedAt": "2026-09-19T04:32:40.457Z",
   "git": {
-    "sha": "12c39181343da7ec332cef4ff76273492fae7b12",
+    "sha": "d9ca17d85e94c278e0a7621cbdf76393ccdd8441",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2056,7 +2056,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 116913
+        "bytes": 117979
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
@@ -2218,7 +2218,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2613
+        "lines": 2632
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
