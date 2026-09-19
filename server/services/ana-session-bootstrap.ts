@@ -80,7 +80,7 @@ export async function loadRecentOutcomeLessons(
  *
  * A capability wired to one of two equivalent paths is the failure this
  * function exists to make impossible to repeat: there is now one call to make,
- * and `server/routes/__tests__/session-bootstrap-wiring.test.ts` asserts both
+ * and `server/routes/__tests__/chat-path-parity.test.ts` asserts both
  * paths make it.
  *
  * Returns '' — never throws — when the session is not at its start, when there
@@ -206,12 +206,15 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
     (async () => {
       const svc = await import('./vault/document-catalog.service.js');
       if (!(await svc.isDocumentCatalogEnabled(organizationId))) return undefined;
-      const uploads = await svc.listChatUploads(organizationId, null, 8);
-      return uploads.map(u => ({
-        fileName: u.fileName,
-        fileId: u.fileId,
-        uploadedAt: u.uploadedAt,
-      }));
+      const page = await svc.listChatUploads(organizationId, null, 8);
+      return {
+        uploads: page.uploads.map(u => ({
+          fileName: u.fileName,
+          fileId: u.fileId,
+          uploadedAt: u.uploadedAt,
+        })),
+        hasMore: page.hasMore,
+      };
     })(),
     undefined
   );

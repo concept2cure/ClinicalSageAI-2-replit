@@ -38,6 +38,7 @@
  */
 
 import type { ToolContext } from './AnaToolExecutor.js';
+import type { ProjectDocumentPage } from '../vault/document-catalog.service.js';
 import {
   CHAT_UPLOAD_ID,
   requireCatalog,
@@ -54,20 +55,67 @@ import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 
-function listMessage(docs: Array<{ catalogStatus: string }>): string {
-  if (docs.length === 0) return 'No documents in the vault for this scope.';
-  const unstudied = docs.filter(
-    d => d.catalogStatus === 'extracted' || d.catalogStatus === 'uncataloged',
-  ).length;
-  const failed = docs.filter(d => d.catalogStatus === 'extraction_failed').length;
+/**
+ * The message AnA reads off a listing.
+ *
+ * Every number here comes from the PAGE's scope counts, never from the rows in
+ * hand. The rows are capped at 100 by default and 200 at most, so the old
+ * `docs.length` told a client with 340 documents that it had 200 — and told a
+ * client with 340 documents of which 300 were never studied that 200 were
+ * "not yet studied", a figure that is wrong in both directions at once.
+ */
+function listMessage(page: ProjectDocumentPage): string {
+  if (page.total === 0) return 'No documents in the vault for this scope.';
+  const shown =
+    page.withheld > 0
+      ? `${page.total} document(s); ${page.documents.length} listed here, ${page.withheld} not ` +
+        `returned (raise limit, or narrow with program_id, or use search_project_documents). ` +
+        `Do not answer "no such document" from this page.`
+      : `${page.total} document(s) — all of them are listed here.`;
   return (
-    `${docs.length} document(s).` +
-    (unstudied > 0
-      ? ` ${unstudied} not yet studied — read each with read_project_document (all of it) and record it with catalog_project_document.`
+    shown +
+    (page.notYetStudied > 0
+      ? ` ${page.notYetStudied} not yet studied — read each with read_project_document (all of it) and record it with catalog_project_document.`
       : '') +
-    (failed > 0
-      ? ` ${failed} with failed extraction — their recorded reasons are in extractionError; report those honestly.`
+    (page.extractionFailed > 0
+      ? ` ${page.extractionFailed} with failed extraction — their recorded reasons are in extractionError; report those honestly.`
+      : '') +
+    (page.unfiled > 0
+      ? ` ${page.unfiled} unfiled — place_project_document gives a document its folder.`
       : '')
+  );
+}
+
+/**
+ * The chat-upload half of a listing, resolved to the three things the response
+ * needs: the rows, whether more exist, and — when the spine is unreachable —
+ * the reason, SAID rather than rendered as "no chat uploads" (some installs
+ * have no evidence-spine tables).
+ */
+async function chatUploadsFor(
+  svc: CatalogService,
+  orgId: number,
+  programId: string | null,
+  limit: number | undefined,
+): Promise<{
+  uploads: Awaited<ReturnType<CatalogService['listChatUploads']>>['uploads'] | null;
+  hasMore: boolean;
+  error: string | null;
+}> {
+  try {
+    const page = await svc.listChatUploads(orgId, programId, Math.min(200, limit ?? 100));
+    return { uploads: page.uploads, hasMore: page.hasMore, error: null };
+  } catch (err) {
+    return { uploads: null, hasMore: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/** The one sentence about chat uploads that rides on the documents message. */
+function chatUploadNote(uploads: { length: number } | null, hasMore: boolean): string {
+  if (!uploads || uploads.length === 0) return '';
+  return (
+    ` Plus ${uploads.length}${hasMore ? '+' : ''} chat-uploaded file(s) — ` +
+    'reopen one with read_uploaded_document using its fileId.'
   );
 }
 
@@ -84,32 +132,25 @@ async function handleListProjectDocuments(
     programId = await svc.resolveProgramForProject(ctx.projectId, orgId);
   }
   const limit = typeof input.limit === 'number' ? input.limit : undefined;
-  const docs = await svc.listProjectDocuments(orgId, { programId, limit });
-
-  // Chat uploads ride along; a failure to list them is SAID, never rendered
-  // as "no chat uploads" (some installs have no evidence-spine tables).
-  let chatUploads: Awaited<ReturnType<CatalogService['listChatUploads']>> | null = null;
-  let chatUploadsError: string | null = null;
-  try {
-    chatUploads = await svc.listChatUploads(orgId, programId, Math.min(200, limit ?? 100));
-  } catch (err) {
-    chatUploadsError = err instanceof Error ? err.message : String(err);
-  }
+  const page = await svc.listProjectDocuments(orgId, { programId, limit });
+  const chat = await chatUploadsFor(svc, orgId, programId, limit);
 
   return JSON.stringify({
     ok: true,
     scope: programId ? { programId } : { organizationWide: true },
-    count: docs.length,
-    documents: docs,
-    chatUploads,
-    ...(chatUploadsError
-      ? { chatUploadsError: `Chat uploads could not be listed: ${chatUploadsError}` }
-      : {}),
-    message:
-      listMessage(docs) +
-      (chatUploads && chatUploads.length > 0
-        ? ` Plus ${chatUploads.length} chat-uploaded file(s) — reopen one with read_uploaded_document using its fileId.`
-        : ''),
+    // `returned` is the page; `total` is the scope. They were one field named
+    // `count`, which made the page the answer to both questions.
+    returned: page.documents.length,
+    total: page.total,
+    withheld: page.withheld,
+    notYetStudied: page.notYetStudied,
+    extractionFailed: page.extractionFailed,
+    unfiled: page.unfiled,
+    documents: page.documents,
+    chatUploads: chat.uploads,
+    ...(chat.hasMore ? { chatUploadsTruncated: true } : {}),
+    ...(chat.error ? { chatUploadsError: `Chat uploads could not be listed: ${chat.error}` } : {}),
+    message: listMessage(page) + chatUploadNote(chat.uploads, chat.hasMore),
   });
 }
 

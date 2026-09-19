@@ -397,15 +397,16 @@ describe('the reaper', () => {
   });
 });
 
-describe('holding a run at a governed action', () => {
-  const pending = (toolUseId = 'tu_1') => ({
-    toolUseId,
-    command: 'freeze_document',
-    params: { documentId: 7 },
-    tier: 'esignature',
-    requestedAt: '2026-09-19T00:00:00.000Z',
-  });
+/** The approval a governed tool call asks for; the toolUseId varies per case. */
+const pending = (toolUseId = 'tu_1') => ({
+  toolUseId,
+  command: 'freeze_document',
+  params: { documentId: 7 },
+  tier: 'esignature',
+  requestedAt: '2026-09-19T00:00:00.000Z',
+});
 
+describe('holding a run at a governed action', () => {
   it('moves the run to awaiting_approval and records what is being asked', async () => {
     const { runId } = await newRun();
     expect(await requestApproval(pool(), runId, pending())).toBe(true);
