@@ -154,9 +154,17 @@ describe('results', () => {
   it('clamps limit and offset to a sane page', async () => {
     store({ total: 5, rows: [] });
     await request(app()).get(url('x', '&limit=99999&offset=-4'));
-    const page = query.mock.calls.find(c => /LIMIT \$3 OFFSET \$4/.test(String(c[0])));
-    expect(page?.[1]?.[2]).toBe(100);
-    expect(page?.[1]?.[3]).toBe(0);
+    /* Matched on the SHAPE of the paging clause, not on `$3`/`$4`, and read from
+       the END of the parameter list where limit and offset always sit. Pinning
+       the placeholder NUMBERS coupled this assertion to how many predicates
+       happen to precede them: adding the organization_id predicate to the
+       statement shifted them to $4/$5, `find` returned undefined, and the test
+       stopped checking the clamp. It failed loudly here, but the same shape one
+       `?.` away from an optional assertion is how a test goes quiet instead. */
+    const page = query.mock.calls.find(c => /LIMIT \$\d+ OFFSET \$\d+/.test(String(c[0])));
+    expect(page, 'no paged query was issued').toBeDefined();
+    const params = page![1] as unknown[];
+    expect(params.slice(-2)).toEqual([100, 0]);
   });
 
   it('reports an honest zero when nothing matches', async () => {
