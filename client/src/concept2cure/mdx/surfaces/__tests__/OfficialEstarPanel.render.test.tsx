@@ -1047,7 +1047,12 @@ describe('OfficialEstarPanel — the preview re-reads after a sibling panel save
     });
     render(
       <>
-        <EstarFilingPanel />
+        {/* The programme is REQUIRED on this panel (see its own header): without
+            one, /filing-readiness falls through to legacy_org_wide and assesses
+            the whole organisation's sections under one device's header. Same
+            programme the sibling panel below is rendered for, so this pair is
+            one device. */}
+        <EstarFilingPanel programId={PROGRAM.id} />
         <OfficialEstarPanel program={PROGRAM} variant="device" />
       </>,
     );
