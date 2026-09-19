@@ -39,6 +39,7 @@
  *   node scripts/ci/check-eslint-warning-ratchet.mjs                  # gate
  *   node scripts/ci/check-eslint-warning-ratchet.mjs --list           # per-rule counts
  *   node scripts/ci/check-eslint-warning-ratchet.mjs --write-baseline # regenerate
+ *   node scripts/ci/check-eslint-warning-ratchet.mjs --since <ref>    # which FILES grew
  *
  * Test seams (same pattern as check-dependency-risk.mjs / NPM_AUDIT_JSON —
  * a full `eslint .` takes minutes, so the self-test injects the report):
@@ -180,6 +181,267 @@ function countWarnings(report) {
   return { total, rules, errors, files };
 }
 
+/* -- `--since <ref>`: which files gained warnings -----------------------------
+ *
+ * The ratchet says the total grew and names the rules. It cannot say WHERE,
+ * because the baseline records per-rule counts, not per-file ones -- and a
+ * per-file baseline for 6.5k warnings across ~1.7k files would be a merge
+ * conflict on every branch. So the answer to "which file did this?" was, until
+ * now, a manual hunt: check out the old tree somewhere else, lint it, diff the
+ * two reports by hand. CLAUDE.md Rule 0 forbids the second worktree that makes
+ * that convenient, so in practice nobody did it and red builds were resolved by
+ * guessing.
+ *
+ * This mode does the hunt: for every file changed since <ref>, lint the current
+ * bytes and the <ref> bytes and report the per-file delta. It lints only the
+ * changed files (seconds, not the minutes a full `eslint .` takes) -- which is
+ * sound here because a warning is a property of one file's contents, so a file
+ * nobody touched cannot have changed its count.
+ *
+ * The <ref> bytes are linted from a SIBLING temp file, never by checking the
+ * old version out over the working copy: a crash mid-run would otherwise leave
+ * the developer's tree silently reverted. The temp name PREFIXES the basename
+ * (`__eslint_ratchet_prev__.foo.test.ts`) so every suffix-shaped config glob --
+ * `**\/*.test.ts`, `**\/*.tsx` -- and every directory-shaped ignore still
+ * matches exactly as it does for the real file. Renaming to a different suffix
+ * would lint the old bytes under a different rule set and invent deltas.
+ */
+function runSinceMode(ref) {
+  const git = (args, opts = {}) =>
+    spawnSync('git', args, { cwd: repoRoot, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, ...opts });
+
+  const resolved = git(['rev-parse', '--verify', `${ref}^{commit}`]);
+  if (resolved.status !== 0) {
+    fail([
+      `\`${ref}\` is not a commit this repository knows.`,
+      '  Pass something git can resolve -- a SHA, a tag, `origin/concept2cure-v2`,',
+      '  `HEAD~5`. Fetch first if it is a remote ref you have not seen yet.',
+    ]);
+  }
+  const sha = resolved.stdout.trim();
+
+  // ref -> WORKING TREE (not ref -> HEAD): when the gate is red locally the
+  // offending edit is usually still uncommitted, and a diff that stopped at
+  // HEAD would report "no files changed" on exactly that case.
+  const diff = git(['diff', '--name-status', '--no-renames', sha, '--']);
+  if (diff.status !== 0) {
+    fail([`\`git diff ${ref}\` failed: ${(diff.stderr || '').trim()}`]);
+  }
+
+  const LINTABLE = /\.(js|jsx|cjs|mjs|ts|tsx|mts|cts)$/;
+  /** @type {{file: string, status: string}[]} */
+  const changed = [];
+  for (const line of diff.stdout.split('\n')) {
+    if (!line.trim()) continue;
+    const [status, file] = line.split('\t');
+    if (!file || !LINTABLE.test(file)) continue;
+    changed.push({ file, status: status[0] });
+  }
+
+  if (changed.length === 0) {
+    console.log(`${TAG} no lintable file changed between ${ref} and the working tree.`);
+    console.log(
+      '  If the ratchet is red anyway, the growth came from a file this diff does not\n' +
+        '  cover -- widen <ref>, or check that you fetched the ref you are comparing to.',
+    );
+    process.exit(0);
+  }
+
+  console.log(
+    `${TAG} --since ${ref} (${sha.slice(0, 9)}) -- ${changed.length} lintable file(s) changed; ` +
+      'linting both versions of each...',
+  );
+
+  const currentFiles = changed
+    .filter((c) => c.status !== 'D' && fs.existsSync(path.join(repoRoot, c.file)))
+    .map((c) => c.file);
+
+  const PREV_PREFIX = '__eslint_ratchet_prev__.';
+  /** @type {Map<string,string>} temp path -> original path */
+  const tempToReal = new Map();
+  const cleanup = () => {
+    for (const tmp of tempToReal.keys()) {
+      try { fs.unlinkSync(path.join(repoRoot, tmp)); } catch { /* already gone */ }
+    }
+    tempToReal.clear();
+  };
+  // Cleanup on the ways out that skip `finally`: ^C, and a throw that escapes.
+  process.on('SIGINT', () => { cleanup(); process.exit(130); });
+  process.on('SIGTERM', () => { cleanup(); process.exit(143); });
+  process.on('exit', cleanup);
+
+  let currentByFile;
+  let prevByFile;
+  try {
+    for (const { file, status } of changed) {
+      if (status === 'A') continue; // did not exist at <ref>
+      const show = git(['show', `${sha}:${file}`], { maxBuffer: 64 * 1024 * 1024 });
+      if (show.status !== 0) continue; // not present at <ref> after all
+      const dir = path.dirname(file);
+      if (!fs.existsSync(path.join(repoRoot, dir))) continue; // directory itself is gone
+      const tmp = path.join(dir, PREV_PREFIX + path.basename(file));
+      if (fs.existsSync(path.join(repoRoot, tmp))) {
+        fail([
+          `refusing to overwrite an existing file at ${tmp}.`,
+          "  That path is this mode's scratch name; a leftover means a previous run died.",
+          '  Delete it and re-run.',
+        ]);
+      }
+      fs.writeFileSync(path.join(repoRoot, tmp), show.stdout);
+      tempToReal.set(tmp, file);
+    }
+
+    currentByFile = messagesByFile(lintPaths(currentFiles), (p) => p);
+    prevByFile = messagesByFile(lintPaths([...tempToReal.keys()]), (p) => tempToReal.get(p) ?? p);
+  } finally {
+    cleanup();
+  }
+
+  const allFiles = [...new Set([...currentByFile.keys(), ...prevByFile.keys()])].sort();
+  const rows = allFiles
+    .map((file) => {
+      const now = currentByFile.get(file) ?? [];
+      const was = prevByFile.get(file) ?? [];
+      return {
+        file,
+        now: now.length,
+        was: was.length,
+        delta: now.length - was.length,
+        nowMsgs: now,
+        wasMsgs: was,
+      };
+    })
+    .filter((r) => r.delta !== 0);
+
+  const netGrowth = rows.reduce((n, r) => n + r.delta, 0);
+
+  if (rows.length === 0) {
+    console.log(`${TAG} no file changed its warning count since ${ref}.`);
+    process.exit(0);
+  }
+
+  console.log('');
+  for (const r of rows.sort((a, b) => b.delta - a.delta || a.file.localeCompare(b.file))) {
+    const sign = r.delta > 0 ? `+${r.delta}` : `${r.delta}`;
+    console.log(`  ${sign.padStart(4)}  ${r.file}  (${r.was} -> ${r.now})`);
+    if (r.delta > 0) {
+      for (const m of newMessages(r.nowMsgs, r.wasMsgs)) {
+        console.log(`         ${r.file}:${m.line}:${m.column}  ${m.ruleId ?? NO_RULE}  ${m.message}`);
+      }
+    }
+  }
+
+  console.log(
+    `\n${TAG} net ${netGrowth > 0 ? `+${netGrowth}` : netGrowth} warning(s) across the files ` +
+      `changed since ${ref}.`,
+  );
+  if (netGrowth > 0) {
+    console.log(
+      '  Those lines are what the ratchet is refusing. Fix them -- do not regenerate\n' +
+        '  the baseline to make room.',
+    );
+  }
+  process.exit(0);
+}
+
+/** Lint an explicit list of repo-relative paths; returns the ESLint JSON report. */
+function lintPaths(files) {
+  if (files.length === 0) return [];
+  const eslintBin = path.join(repoRoot, 'node_modules', 'eslint', 'bin', 'eslint.js');
+  if (!fs.existsSync(eslintBin)) {
+    fail(['node_modules/eslint/bin/eslint.js not found. Run `npm ci` first.']);
+  }
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'eslint-ratchet-since-'));
+  const outFile = path.join(tmpDir, 'report.json');
+  const proc = spawnSync(
+    process.execPath,
+    [
+      eslintBin,
+      '--format', 'json',
+      '--output-file', outFile,
+      // An ignored file is skipped on BOTH sides identically, so it contributes
+      // no delta; the per-file "ignored" warning would otherwise be counted as
+      // a real one and invent them.
+      '--no-warn-ignored',
+      '--no-error-on-unmatched-pattern',
+      ...files,
+    ],
+    { cwd: repoRoot, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
+  );
+  if (proc.error) fail([`could not spawn ESLint: ${proc.error.message}`]);
+  if (proc.status !== 0 && proc.status !== 1) {
+    fail([
+      `ESLint exited ${proc.status === null ? `on signal ${proc.signal}` : `with code ${proc.status}`} -- not a lint result.`,
+      proc.stderr
+        ? `\n  ESLint stderr:\n${proc.stderr.trimEnd().split('\n').map((l) => `    ${l}`).join('\n')}`
+        : '',
+    ]);
+  }
+  let raw;
+  try {
+    raw = fs.readFileSync(outFile, 'utf8');
+  } catch {
+    fail([`ESLint exited ${proc.status} but wrote no JSON report -- failing closed.`]);
+  }
+  return parseReport(raw, `eslint exit ${proc.status}`);
+}
+
+/** report -> Map<repo-relative path, warning messages>, keyed through `rename`. */
+function messagesByFile(report, rename) {
+  const byFile = new Map();
+  for (const result of report) {
+    const rel = path.relative(repoRoot, result.filePath);
+    const key = rename(rel);
+    const warnings = (result.messages ?? []).filter((m) => m.severity === 1);
+    byFile.set(key, [...(byFile.get(key) ?? []), ...warnings]);
+  }
+  return byFile;
+}
+
+/**
+ * Warnings present now that were not present at <ref>.
+ *
+ * Keyed on rule + message SHAPE, as a multiset. Two normalisations, each for a
+ * way the naive key over-reports:
+ *
+ *  - position is not in the key at all: line numbers move when anything above
+ *    them is edited, so matching on it would call every warning in a file whose
+ *    top changed "new";
+ *  - digit runs are masked, because these rules put a measurement in the text.
+ *    `File has too many lines (4695)` and `(4699)` are the SAME warning, one
+ *    line longer; keying on the literal string reported both the disappearance
+ *    of the old one and the arrival of a new one, so a file that gained 2
+ *    warnings listed 6.
+ */
+function newMessages(now, was) {
+  const shape = (m) => `${m.ruleId ?? NO_RULE} ${String(m.message).replace(/\d+/g, '#')}`;
+  const remaining = new Map();
+  for (const m of was) {
+    const k = shape(m);
+    remaining.set(k, (remaining.get(k) ?? 0) + 1);
+  }
+  const added = [];
+  for (const m of now) {
+    const k = shape(m);
+    const left = remaining.get(k) ?? 0;
+    if (left > 0) remaining.set(k, left - 1);
+    else added.push(m);
+  }
+  return added;
+}
+
+const sinceIdx = process.argv.indexOf("--since");
+if (sinceIdx !== -1) {
+  const ref = process.argv[sinceIdx + 1];
+  if (!ref || ref.startsWith("--")) {
+    fail([
+      "--since needs a git ref to compare against.",
+      "  e.g. `" + SELF + " --since origin/concept2cure-v2`",
+    ]);
+  }
+  runSinceMode(ref);
+}
+
 const report = produceReport();
 const current = countWarnings(report);
 const sortedRules = [...current.rules.entries()].sort(
@@ -280,10 +542,14 @@ if (current.total > baseTotal) {
   console.error(
     `\n  Every count here was frozen so the backlog could be paid down, not added to —\n` +
       `  6.7k warnings is already a green light bolted over a wall of noise, and a new\n` +
-      `  one is invisible in it without this gate. Fix the new warnings (run\n` +
-      `  \`npm run lint\` for file:line detail, or \`${SELF} --list\`\n` +
-      `  for per-rule counts). Do NOT regenerate the baseline to make room; it moves\n` +
-      `  in one direction.\n`,
+      `  one is invisible in it without this gate.\n\n` +
+      `  To find WHICH FILES grew — the question this per-rule report cannot answer —\n` +
+      `  lint both versions of everything you changed:\n` +
+      `    ${SELF} --since origin/concept2cure-v2\n` +
+      `  (a SHA, a tag or HEAD~n works too; it takes seconds, not the minutes a full\n` +
+      `  \`eslint .\` does, because it lints only the changed files). \`${SELF} --list\`\n` +
+      `  gives per-rule counts. Fix the new warnings. Do NOT regenerate the baseline to\n` +
+      `  make room; it moves in one direction.\n`,
   );
   process.exit(1);
 }
