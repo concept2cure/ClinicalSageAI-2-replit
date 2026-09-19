@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T04:42:29.231Z",
+  "generatedAt": "2026-09-19T04:50:51.467Z",
   "git": {
-    "sha": "483c5c8bdb74568cd922fe65c3dc62f5a3239e26",
+    "sha": "c555e64f38bfad925a2522e3060dbba64d85474b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1988,7 +1988,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 154282
+        "bytes": 154364
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2004,7 +2004,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 141946
+        "bytes": 144837
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2165,6 +2165,10 @@
         "lines": 3488
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 3365
+      },
+      {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "lines": 3326
       },
@@ -2175,10 +2179,6 @@
       {
         "file": "server/routes/submission-ops.ts",
         "lines": 3217
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3186
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",

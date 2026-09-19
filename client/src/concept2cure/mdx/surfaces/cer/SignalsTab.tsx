@@ -54,7 +54,7 @@ export function SignalsTab({ signals, loading, programTitle, onAskAna }: Signals
           <div className="actions">
             <button
               className={`tb-btn${includedOnly ? ' on' : ''}`}
-              title={includedOnly ? 'Show all signals' : 'Show included only'}
+              title={includedOnly ? 'Show all signals' : 'Show included only'} aria-label={includedOnly ? 'Show all signals' : 'Show included only'}
               aria-pressed={includedOnly}
               onClick={() => setIncludedOnly((v) => !v)}
             >
@@ -62,7 +62,7 @@ export function SignalsTab({ signals, loading, programTitle, onAskAna }: Signals
             </button>
             <button
               className="tb-btn"
-              title="Run a fresh signal scan with AnA"
+              title="Run a fresh signal scan with AnA" aria-label="Run a fresh signal scan with AnA"
               onClick={() =>
                 onAskAna(
                   `Run a fresh signal scan for ${programTitle ?? 'this program'} across FAERS, MAUDE, Eudamed and the literature corpus. ` +
