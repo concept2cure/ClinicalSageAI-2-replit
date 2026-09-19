@@ -16,6 +16,7 @@ import { didNotRun, type VerificationOutcome } from '../lib/verification-outcome
 import {
   TamperProofAuditLog,
   getTamperProofAuditLog,
+  AuditConfigurationError,
   AuditEventType,
 } from '../lib/tamper-proof-audit';
 import { createScopedLogger } from '../utils/logger';
@@ -168,6 +169,20 @@ async function ensureInitialized(): Promise<TamperProofAuditLog | null> {
     await initPromise;
     return tamperProofLog;
   } catch (error) {
+    /* A configuration REFUSAL is not a transient failure, and this catch used
+       to treat them the same. The constructor throws when AUDIT_HMAC_SECRET is
+       absent in production, with a message ending "Refusing to start." — and
+       then this line caught it, logged one warning, and returned null, so the
+       process started anyway and wrote its 21 CFR Part 11 records to the
+       console. A reader of that throw would have believed production was
+       protected by it.
+
+       Everything else still falls back, deliberately: the database can be
+       briefly unreachable and that must not take the process down. Only the
+       error that cannot improve on retry is allowed through. */
+    if (error instanceof AuditConfigurationError && process.env.NODE_ENV === 'production') {
+      throw error;
+    }
     logger.warn('Tamper-proof audit unavailable — fallback to console', error);
     return null;
   }
