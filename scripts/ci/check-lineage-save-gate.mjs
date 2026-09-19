@@ -160,11 +160,6 @@ const KNOWN_UNGUARDED = [
      silently gated so the debt is countable, and so the next reader sees four
      named surfaces instead of a guard that claims full coverage. */
   {
-    file: 'server/services/ana/verifiedSealService.ts',
-    what: 'the fallback artifact + version insert in sealVerifiedVersion persists verified regulatory content that then receives a §11.50 manifestation and a signature — so a sealed document can carry a signature over text with no recorded origin',
-    row: 'L177',
-  },
-  {
     file: 'server/services/resolution/bundle-executor.ts',
     what: 'a resolution rewrite inserts a NEW concept2cure_artifact_versions row carrying the rewritten text, so a governed document gains a version whose clauses have no recorded origin',
     row: 'L177',
@@ -270,6 +265,10 @@ const GUARDED = [
   {
     file: 'server/services/compute/artifactWriteback.ts',
     why: "registerArtifactWithGovernance is the shared writer behind compute output, an accepted conversation-OS proposal and a generated draft (four callers), each creating a type='regulatory_document' artifact + version (gated in ledger L177, the first of that row's four)",
+  },
+  {
+    file: 'server/services/ana/verifiedSealService.ts',
+    why: 'sealVerifiedVersion attributes the text before it applies a §11.50 manifestation, on both the Build-1 and fallback paths, so a signature is never applied over clauses with no recorded origin (ledger L177, the second of that row\'s four)',
   },
 ];
 
