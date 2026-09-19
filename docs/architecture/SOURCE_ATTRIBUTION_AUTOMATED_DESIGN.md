@@ -1,7 +1,6 @@
 # Automated Span-Level Source Attribution — Design
 
-**Status:** Phases 1–5 implemented. Phase 6 is implemented apart from inline
-highlighting — see that phase for what remains. The authoring draft-accept path is
+**Status:** Phases 1–6 implemented. The authoring draft-accept path is
 a live, tested span-grain source writer (verified quotes and model-asserted
 paraphrase), the save gate now sees documents that are CREATED as well as edited,
 and an author can see how much of a section has a recorded origin without asking.
@@ -306,11 +305,17 @@ Not-read-yet, reading, failed, unsupported and empty are five distinct sentences
 because rendering any of them as 0% tells an author their document has no
 provenance when the truth is that nobody looked.
 
-**(a) Inline highlighting — still to build.** Decorating the editor's own ranges
-needs TipTap decorations keyed to char offsets in `RichSectionEditor`, and has to
-survive an edit that shifts every offset below it. The coverage bar deliberately
-landed first: it needs no offset mapping, and it is what tells an author a gap
-exists at all.
+**(a) Inline highlighting — IMPLEMENTED.** Painted with the CSS Custom Highlight
+API, not TipTap decorations and not wrapped spans: wrapping mutates a DOM
+ProseMirror owns and rebuilds. `rangeForOffsets` inverts the existing
+`selectionToRange` (same walk, same definition of an offset) and refuses a range
+it cannot locate exactly rather than clamping.
+
+The edit-shifts-every-offset problem is handled by refusing, not by remapping:
+painting requires the rendered text to still equal the text the offsets describe,
+and both refusals are said out loud — "highlighting is paused while you edit" and
+"N spans could not be located" — because painting that stops silently reads as a
+document with nothing to paint.
 
 ---
 
