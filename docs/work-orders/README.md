@@ -87,6 +87,15 @@ lane that added it (the pre-push hook does not run the ratchet; CI does) and
 costs the NEXT lane to push a diagnostic round each time. Running
 `npm run ci:eslint-ratchet` before you push keeps it in the lane that created it.
 
+**Typecheck on trunk, eSTAR lane (2026-09-19):** `4cf0a8a6b` made
+`EstarFilingPanel`'s `programId` required — deliberately, so the compiler
+catches a surface that forgets and silently reads org-wide content — and left
+one call site behind in its own render test, so `ci:typecheck:no-regression`
+was red on trunk (baseline 0, found 1). Fixed in both lanes within minutes of
+each other; the merge kept that lane's version, which carries the better
+comment. No action needed — recorded because the required prop did exactly what
+its docblock said it would, and the gap was only the last call site.
+
 **Two new pre-push gates (2026-09-19) — both added after they caught a real
 defect, one of them mine:**
 
