@@ -4,7 +4,6 @@ import { PedigreeBadge } from '../intelligence/Intelligence';
 import { liveGetOrNull, unwrapList, useLiveData, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { evaluateDispatchGate, mergeDispatchGates } from '../fixtures/dispatch-readiness';
 import '../styles/project-home-v2.css';
 
 /* ── Display types — aligned to the server's dispatch-readiness assessment
@@ -36,8 +35,21 @@ interface ExternalValidation {
   blockers: string[];
 }
 
+/** The server's composed dispatch verdict. Authoritative — see `gate` below. */
+interface DispatchGate {
+  cleared: boolean;
+  blockers: string[];
+}
+
 interface DispatchReadinessAssessment {
   sequenceId: number;
+  /**
+   * The composed hard gate, as the server decided it
+   * (assess-dispatch-readiness.ts -> composeDispatchGatesForStep(..., 'dispatch')).
+   * Optional on the wire so a response that predates it, or one that failed to
+   * parse, is treated as UNANSWERED rather than silently recomputed.
+   */
+  gate?: DispatchGate;
   region: string;
   sequenceStatus: string;
   validationErrors: number;
@@ -107,20 +119,30 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
   );
   const a = live.data;
 
-  // Compose the hard gate client-side from the server-computed inputs, mirroring
-  // the server's assessSequenceDispatchReadiness (structural + external gates).
-  // evaluateDispatchGate / mergeDispatchGates are pure deterministic functions —
-  // the single source of truth for the blocker strings, not fixture data.
-  const gate = useMemo(
+  /* THE GATE IS THE SERVER'S, NOT OURS.
+     This used to RECOMPUTE the verdict here from the server's raw inputs, by
+     merging a local copy of evaluateDispatchGate with the external-validation
+     result. Two gates — and the server composes FOUR
+     (assess-dispatch-readiness.ts: structural, external, shadowPresence,
+     releaseSignature). So a sequence with zero validation errors, no external
+     validator configured, and ZERO completed Shadow Review runs had the server
+     answering `cleared: false` (shadowPresence blocks: never-reviewed is
+     unassessed, not clean) while this surface rendered "cleared to dispatch"
+     and published `facts.cleared: true` to AnA. The same applied to a missing
+     §11.70 release signature.
+
+     The local copy had also drifted: it did `Number.isFinite(x) ? x : 0`, the
+     exact coercion the server deliberately INVERTED because it made "could not
+     determine" indistinguishable from "none".
+
+     A recomputed verdict cannot be kept in step with a gate set that grows, and
+     duplicating it is what let these diverge. Consume the composed verdict; when
+     the server did not supply one, the gate is UNANSWERED, which is not
+     cleared. */
+  const gate = useMemo<DispatchGate>(
     () =>
-      a
-        ? mergeDispatchGates(
-            evaluateDispatchGate({
-              validationErrors: a.validationErrors,
-              unacknowledgedShadowCriticals: a.unacknowledgedShadowCriticals,
-            }),
-            { cleared: a.externalValidation.cleared, blockers: a.externalValidation.blockers || [] },
-          )
+      a?.gate && typeof a.gate.cleared === 'boolean'
+        ? { cleared: a.gate.cleared, blockers: a.gate.blockers ?? [] }
         : { cleared: false, blockers: [] as string[] },
     [a],
   );

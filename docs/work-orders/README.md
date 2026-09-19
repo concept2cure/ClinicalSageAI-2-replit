@@ -62,17 +62,13 @@ per the claim above. **Neither is a regression from the reporting lane's work.**
    it removed the *appearance* of a writer, not a writer. Deciding which
    relation is canonical is a council-lane call.
 
-**Note for the UI/authoring lane (`AuthoringPlaceIntoFiling.tsx`):** the placement
-dialog work (`0f8e6a84b`, `0e47244ec`) left 13 dead symbols in that file — the
-`SubmissionRow`/`SequenceRow` types, `SC_SEQ_STATUS`, `normalizeCtdCode`,
-`ctdFolderSlug`, and the `subs`/`subId`/`seqs`/`seqId`/`lockedSeqs`/
-`pickSubmission`/`sectionCanonical`/`sectionFolder` bindings — plus 3 in
-`server/services/workflow/DecisionLineageService.ts` (`sql`, `inArray`,
-`unifiedDocuments`). Together that is 15 over the ratchet baseline, so
-`ci:eslint-warning-ratchet` is red on trunk. They are all unused imports and
-unused destructurings from a refactor, so deleting them is mechanical — but the
-file is yours and mid-flight, so it is reported here rather than edited from
-another lane. Clearing them puts the gate back at 6549 with nothing else needed.
+**Cleared from another lane (2026-09-19):** the 16 dead symbols reported here on
+2026-09-17 — unused imports and destructurings in
+`client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx` and
+`server/services/workflow/DecisionLineageService.ts` — were still there a day
+later with the files untouched since, so they were deleted rather than left to
+block the ratchet for whoever added the next legitimate warning. Nothing but
+dead symbols was touched; both files' suites pass. Baseline relocked at 6522.
 
 **Note for the vault-storage lane:** `server/services/vault/storage-migration.service.ts`
 (`c029711ae`) landed `migrateVaultStorage` at complexity 17 / 102 lines, which put

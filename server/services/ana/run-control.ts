@@ -699,3 +699,119 @@ export async function resumeAbandonedRun(pool: Pool, runId: string): Promise<voi
     .catch(err => log.warn(`[ana-run-control] abandoned resume failed for ${runId}: ${err?.message}`));
   driveLocalRun(runId, 'running');
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Approval — holding a run at a governed action until a person decides
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** What AnA is asking permission to do, as the row holds it. */
+export interface PendingApproval {
+  /** The tool call this is for. Binds the decision to one proposal. */
+  toolUseId: string;
+  command: string;
+  params: Record<string, unknown>;
+  /** 'reason' | 'esignature' — what the person must supply. */
+  tier: string;
+  requestedAt: string;
+  /** The reason AnA gave for proposing it, if she gave one. */
+  rationale?: string;
+}
+
+/** What the person decided, and what came of it. */
+export interface ApprovalDecision {
+  toolUseId: string;
+  decided: 'approved' | 'denied';
+  decidedAt: string;
+  byUserId: number | null;
+  /** Their reason-for-change, recorded verbatim. */
+  reasonForChange?: string;
+  /** The executed command's result, when it ran. */
+  result?: unknown;
+  /** Why it did not run — a denial, a timeout, a failure. */
+  error?: string;
+}
+
+/**
+ * Hold the run at a governed action.
+ *
+ * Guarded on `running` so a run already cancelled cannot be moved into an
+ * approval gate it will never leave — and so a second tool in the same round
+ * cannot open a second gate over the first, which would leave the person
+ * authorising one thing while the row described another.
+ */
+export async function requestApproval(
+  pool: Pool,
+  runId: string,
+  pending: PendingApproval,
+): Promise<boolean> {
+  const { rowCount } = await pool.query(
+    `UPDATE ana_runs
+     SET status = 'awaiting_approval',
+         pending_approval = $2::jsonb,
+         approval_decision = NULL,
+         updated_at = now()
+     WHERE id = $1 AND status = 'running'`,
+    [runId, JSON.stringify(pending)],
+  );
+  if (!rowCount) return false;
+  await notifyAndDrive(pool, runId, 'awaiting_approval');
+  return true;
+}
+
+/** What the run is currently waiting on, if anything. */
+export async function readPendingApproval(
+  pool: Pool,
+  runId: string,
+  organizationId: number,
+): Promise<PendingApproval | null> {
+  const { rows } = await pool.query(
+    `SELECT pending_approval FROM ana_runs
+     WHERE id = $1 AND organization_id = $2 AND status = 'awaiting_approval'`,
+    [runId, organizationId],
+  );
+  return (rows[0]?.pending_approval as PendingApproval) ?? null;
+}
+
+/**
+ * Record what the person decided and release the run.
+ *
+ * Guarded on `awaiting_approval` AND on the toolUseId the row is actually
+ * holding: a decision must attach to the proposal it was shown, never to
+ * whatever the run moved on to. Without that, a signature collected for one
+ * action could be applied to another — which is the failure mode an e-signature
+ * exists to make impossible.
+ */
+export async function recordApprovalDecision(
+  pool: Pool,
+  runId: string,
+  decision: ApprovalDecision,
+): Promise<boolean> {
+  const { rowCount } = await pool.query(
+    `UPDATE ana_runs
+     SET status = 'running',
+         approval_decision = $2::jsonb,
+         pending_approval = NULL,
+         updated_at = now()
+     WHERE id = $1
+       AND status = 'awaiting_approval'
+       AND pending_approval ->> 'toolUseId' = $3`,
+    [runId, JSON.stringify(decision), decision.toolUseId],
+  );
+  if (!rowCount) return false;
+  await notifyAndDrive(pool, runId, 'running');
+  return true;
+}
+
+/** The decision for this tool call, once one has been recorded. */
+export async function readApprovalDecision(
+  pool: Pool,
+  runId: string,
+  toolUseId: string,
+): Promise<ApprovalDecision | null> {
+  const { rows } = await pool.query(
+    `SELECT approval_decision FROM ana_runs
+     WHERE id = $1 AND approval_decision ->> 'toolUseId' = $2`,
+    [runId, toolUseId],
+  );
+  return (rows[0]?.approval_decision as ApprovalDecision) ?? null;
+}

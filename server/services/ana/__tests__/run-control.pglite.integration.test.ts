@@ -37,6 +37,10 @@ import { fileURLToPath } from 'node:url';
 
 import {
   beginRun,
+  requestApproval,
+  readPendingApproval,
+  recordApprovalDecision,
+  readApprovalDecision,
   endRun,
   readRun,
   applyControl,
@@ -390,5 +394,129 @@ describe('the reaper', () => {
     const { runId, handle } = await newRun();
     await handle.heartbeat(4);
     expect((await readRun(pool(), runId, ORG))?.currentRound).toBe(4);
+  });
+});
+
+describe('holding a run at a governed action', () => {
+  const pending = (toolUseId = 'tu_1') => ({
+    toolUseId,
+    command: 'freeze_document',
+    params: { documentId: 7 },
+    tier: 'esignature',
+    requestedAt: '2026-09-19T00:00:00.000Z',
+  });
+
+  it('moves the run to awaiting_approval and records what is being asked', async () => {
+    const { runId } = await newRun();
+    expect(await requestApproval(pool(), runId, pending())).toBe(true);
+    const row = await readRun(pool(), runId, ORG);
+    expect(row?.status).toBe('awaiting_approval');
+    const asked = await readPendingApproval(pool(), runId, ORG);
+    expect(asked).toMatchObject({ command: 'freeze_document', params: { documentId: 7 } });
+  });
+
+  it('a cancelled run cannot be moved into a gate it would never leave', async () => {
+    const { runId } = await newRun();
+    await control(runId, 'cancel');
+    expect(await requestApproval(pool(), runId, pending())).toBe(false);
+    expect((await readRun(pool(), runId, ORG))?.status).toBe('cancelled');
+  });
+
+  it('a second tool cannot open a gate over the first', async () => {
+    // The person would be authorising one thing while the row described
+    // another, and the decision would attach to whichever won.
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending('tu_1'));
+    expect(await requestApproval(pool(), runId, pending('tu_2'))).toBe(false);
+    expect((await readPendingApproval(pool(), runId, ORG))?.toolUseId).toBe('tu_1');
+  });
+
+  it('a pending approval is scoped to the tenant', async () => {
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending());
+    expect(await readPendingApproval(pool(), runId, OTHER_ORG)).toBeNull();
+  });
+
+  it('releases the run when the person decides, and keeps what they decided', async () => {
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending());
+    const ok = await recordApprovalDecision(pool(), runId, {
+      toolUseId: 'tu_1',
+      decided: 'approved',
+      decidedAt: '2026-09-19T00:01:00.000Z',
+      byUserId: USER,
+      reasonForChange: 'Locking the CMC section before the filing',
+      result: { success: true },
+    });
+    expect(ok).toBe(true);
+    const row = await readRun(pool(), runId, ORG);
+    expect(row?.status).toBe('running');
+    const decision = await readApprovalDecision(pool(), runId, 'tu_1');
+    expect(decision).toMatchObject({ decided: 'approved', byUserId: USER });
+  });
+
+  it('A DECISION CANNOT BE APPLIED TO A DIFFERENT PROPOSAL', async () => {
+    // The invariant an electronic signature exists to provide. A decision the
+    // person gave while looking at tu_1 must never land on tu_2 — otherwise a
+    // signature collected for one action authorises another.
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending('tu_1'));
+    const ok = await recordApprovalDecision(pool(), runId, {
+      toolUseId: 'tu_2',
+      decided: 'approved',
+      decidedAt: '2026-09-19T00:01:00.000Z',
+      byUserId: USER,
+    });
+    expect(ok).toBe(false);
+    expect((await readRun(pool(), runId, ORG))?.status).toBe('awaiting_approval');
+    expect(await readApprovalDecision(pool(), runId, 'tu_2')).toBeNull();
+  });
+
+  it('a decision cannot be recorded against a run that is not waiting', async () => {
+    const { runId } = await newRun();
+    const ok = await recordApprovalDecision(pool(), runId, {
+      toolUseId: 'tu_1',
+      decided: 'approved',
+      decidedAt: '2026-09-19T00:01:00.000Z',
+      byUserId: USER,
+    });
+    expect(ok).toBe(false);
+  });
+
+  it('a denial releases the run too — she continues without the tool', async () => {
+    // Denying an action is not cancelling the turn. She is told the person
+    // declined and adapts; the alternative is losing the whole answer over one
+    // refused step.
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending());
+    await recordApprovalDecision(pool(), runId, {
+      toolUseId: 'tu_1',
+      decided: 'denied',
+      decidedAt: '2026-09-19T00:01:00.000Z',
+      byUserId: USER,
+      error: 'Not before the QA review',
+    });
+    expect((await readRun(pool(), runId, ORG))?.status).toBe('running');
+    expect((await readApprovalDecision(pool(), runId, 'tu_1'))?.decided).toBe('denied');
+  });
+
+  it('cancelling while she waits is still allowed', async () => {
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending());
+    const r = await control(runId, 'cancel');
+    expect(r.ok).toBe(true);
+    expect(r.status).toBe('cancelled');
+  });
+
+  it('a new request clears the previous decision', async () => {
+    // Otherwise a stale approval sits in the row and the next wait could read
+    // the last answer as this one.
+    const { runId } = await newRun();
+    await requestApproval(pool(), runId, pending('tu_1'));
+    await recordApprovalDecision(pool(), runId, {
+      toolUseId: 'tu_1', decided: 'approved', decidedAt: 'x', byUserId: USER,
+    });
+    await requestApproval(pool(), runId, pending('tu_2'));
+    expect(await readApprovalDecision(pool(), runId, 'tu_1')).toBeNull();
   });
 });
