@@ -495,8 +495,9 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
       />
 
       {/* eSTAR filing journey — register → assess → produce-gate → track,
-          org-scoped from the session. The IVD eSTAR shares this flow. */}
-      <EstarFilingPanel />
+          scoped to THIS programme — without programId the readiness verdict
+          is computed over every device in the organisation. The IVD eSTAR shares this flow. */}
+      <EstarFilingPanel programId={program?.id ?? null} />
     </>
   );
 

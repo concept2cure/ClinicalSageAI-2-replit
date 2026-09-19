@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { EstarFilingPanel } from '../EstarFilingPanel';
 
+const PROGRAM_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+
 /**
  * Mount tests for the eSTAR filing panel.
  *
@@ -61,7 +63,7 @@ function mockRegisteredOrg() {
 describe('EstarFilingPanel — survives first paint', () => {
   it('renders while every request is still pending (no data at all)', () => {
     mockFetch(() => new Promise<Response>(() => {})); // never resolves
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     expect(screen.getByText('eSTAR filing readiness')).toBeTruthy();
   });
 
@@ -69,7 +71,7 @@ describe('EstarFilingPanel — survives first paint', () => {
     mockFetch(() =>
       Promise.resolve({ ok: false, status: 401, json: () => Promise.resolve({}) } as Response),
     );
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() => expect(screen.getByText('eSTAR filing readiness')).toBeTruthy());
     // The four FDA prerequisites still render, all unheld — never a crash.
     expect(screen.getAllByText('Mark held').length).toBe(4);
@@ -77,7 +79,7 @@ describe('EstarFilingPanel — survives first paint', () => {
 
   it('renders when the network throws outright', async () => {
     mockFetch(() => Promise.reject(new Error('network down')));
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() => expect(screen.getByText('eSTAR filing readiness')).toBeTruthy());
   });
 
@@ -90,7 +92,7 @@ describe('EstarFilingPanel — survives first paint', () => {
       if (url.includes('/submissions')) return okJson({ submissions: [] });
       return okJson({});
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() =>
       expect(screen.getByText(/Not yet registered/i)).toBeTruthy(),
     );
@@ -125,7 +127,7 @@ describe('EstarFilingPanel — survives first paint', () => {
       }
       return okJson({});
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() => expect(screen.getByText(/4\/4 FDA prerequisites held/)).toBeTruthy());
     expect(screen.getByText('CV-330 PMA')).toBeTruthy();
     // The review clock is shown, not silently dropped.
@@ -148,7 +150,7 @@ describe('EstarFilingPanel — survives first paint', () => {
       if (url.includes('/catalog')) return okJson({ catalog: [] });
       return okJson({ registered: false, registration: null, clientRegistration: { clientId: 'o', satisfied: [] } });
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() => expect(screen.getByText('No review clock')).toBeTruthy());
   });
 });
@@ -156,7 +158,7 @@ describe('EstarFilingPanel — survives first paint', () => {
 describe('EstarFilingPanel — correspondent and declaration block', () => {
   it('shows the stored values and says where they are written', async () => {
     mockRegisteredOrg();
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() =>
       expect((screen.getByLabelText('Correspondent company name') as HTMLInputElement).value).toBe(
         'Acme Regulatory Ltd',
@@ -183,7 +185,7 @@ describe('EstarFilingPanel — correspondent and declaration block', () => {
       if (url.includes('/catalog')) return okJson({ catalog: [] });
       return okJson({ submissions: [] });
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() => expect(screen.getByText(/Not yet registered/i)).toBeTruthy());
     expect((screen.getByLabelText('Correspondent company name') as HTMLInputElement).value).toBe('');
     expect((screen.getByLabelText('Declaration of Conformity company name') as HTMLInputElement).value).toBe('');
@@ -192,7 +194,7 @@ describe('EstarFilingPanel — correspondent and declaration block', () => {
 
   it('Save PUTs the five text fields with the held prerequisites preserved', async () => {
     mockRegisteredOrg();
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() =>
       expect((screen.getByLabelText('Correspondent telephone') as HTMLInputElement).value).toBe('+1 555 0100'),
     );
@@ -215,7 +217,7 @@ describe('EstarFilingPanel — correspondent and declaration block', () => {
 
   it('toggling a prerequisite carries the stored correspondent values in the write', async () => {
     mockRegisteredOrg();
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() => expect(screen.getAllByText('Mark held').length).toBe(3));
     fireEvent.click(screen.getAllByText('Mark held')[0]);
     await waitFor(() => expect(sentPut()).not.toBeNull());
@@ -243,7 +245,7 @@ describe('EstarFilingPanel — correspondent and declaration block', () => {
         return okJson({ submissions: [] });
       }),
     );
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() =>
       expect((screen.getByLabelText('Correspondent company name') as HTMLInputElement).value).toBe('Acme Regulatory Ltd'),
     );
@@ -272,7 +274,7 @@ describe('EstarFilingPanel — the Declaration of Conformity company name', () =
       if (url.includes('/catalog')) return okJson({ catalog: [] });
       return okJson({ submissions: [] });
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     /* Wait for a value the stored row supplies — an empty field is also what
        first paint shows, so it would not prove the row had loaded. */
     await waitFor(() =>
@@ -328,7 +330,7 @@ describe('EstarFilingPanel — a toggle before the registration lands', () => {
       if (url.includes('/catalog')) return okJson({ catalog: [] });
       return okJson({ submissions: [] });
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     expect(screen.getAllByText('Mark held').length).toBe(4);
     fireEvent.click(screen.getAllByText('Mark held')[0]);
     await waitFor(() => expect(sentPut()).not.toBeNull());
@@ -355,7 +357,7 @@ describe('EstarFilingPanel — a toggle before the registration lands', () => {
       if (url.includes('/catalog')) return okJson({ catalog: [] });
       return okJson({ submissions: [] });
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() => expect(screen.getAllByText('Mark held').length).toBe(4));
     fireEvent.click(screen.getAllByText('Mark held')[1]);
     await waitFor(() => expect(sentPut()).not.toBeNull());
@@ -391,7 +393,7 @@ describe('EstarFilingPanel — a toggle before the registration lands', () => {
       if (url.includes('/catalog')) return okJson({ catalog: [] });
       return okJson({ submissions: [] });
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
 
     await waitFor(() => expect(screen.getByTestId('estar-registration-read-error')).toBeTruthy());
     expect(screen.getByText('The registration could not be read')).toBeTruthy();
@@ -407,7 +409,7 @@ describe('EstarFilingPanel — a toggle before the registration lands', () => {
       if (url.includes('/catalog')) return okJson({ catalog: [] });
       return okJson({ registered: true, registration: REGISTRATION, clientRegistration: { clientId: 'o1', satisfied: [] } });
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
 
     await waitFor(() => expect(screen.getByTestId('estar-submissions-read-error')).toBeTruthy());
     // The header sentence and the error banner both say it; one query for both.
@@ -424,7 +426,7 @@ describe('EstarFilingPanel — a toggle before the registration lands', () => {
       if (url.includes('/submissions')) return okJson({ submissions: [] });
       return okJson({ registered: true, registration: REGISTRATION, clientRegistration: { clientId: 'o1', satisfied: [] } });
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
 
     await waitFor(() =>
       expect(screen.getAllByText(/No tracked filings yet/).length).toBeGreaterThan(0),
@@ -441,7 +443,7 @@ describe('EstarFilingPanel — a toggle before the registration lands', () => {
       if (url.includes('/catalog')) return okJson({ catalog: [] });
       return okJson({ submissions: [] });
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() => expect(screen.getByLabelText('Correspondent company name')).toBeTruthy());
     fireEvent.change(screen.getByLabelText('Correspondent company name'), {
       target: { value: 'Acme Regulatory Ltd' },
@@ -469,7 +471,7 @@ describe('EstarFilingPanel — a toggle before the registration lands', () => {
       if (url.includes('/catalog')) return okJson({ catalog: [] });
       return okJson({ submissions: [] });
     });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() =>
       expect((screen.getByLabelText('Correspondent company name') as HTMLInputElement).value).toBe(
         'Acme Regulatory Ltd',
@@ -535,7 +537,7 @@ describe('EstarFilingPanel — an unsaved correspondent edit survives a toggle',
 
   it('keeps a typed Declaration of Conformity company name when a prerequisite is toggled', async () => {
     mockRereadAfterToggle();
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() => expect(field('Declaration of Conformity company name').value).toBe('Declaring Entity GmbH'));
     fireEvent.change(field('Declaration of Conformity company name'), {
       target: { value: 'Second Entity GmbH' },
@@ -550,7 +552,7 @@ describe('EstarFilingPanel — an unsaved correspondent edit survives a toggle',
 
   it('still follows the row when nobody has typed into the form', async () => {
     mockRereadAfterToggle();
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() => expect(field('Correspondent company name').value).toBe('Acme Regulatory Ltd'));
     fireEvent.click(screen.getAllByText('Mark held')[0]);
     await waitFor(() => expect(screen.getByText(/2\/4 FDA prerequisites held/)).toBeTruthy());
@@ -571,7 +573,7 @@ describe('EstarFilingPanel — an unsaved correspondent edit survives a toggle',
 describe('EstarFilingPanel — a refused correspondent save says which refusal it was', () => {
   async function attemptSave(respond: () => Promise<Response>) {
     mockRegisteredOrg();
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
     await waitFor(() => expect(screen.getByDisplayValue('Acme Regulatory Ltd')).toBeTruthy());
     fireEvent.change(screen.getByDisplayValue('Acme Regulatory Ltd'), {
       target: { value: 'Acme Regulatory Limited' },
@@ -604,5 +606,57 @@ describe('EstarFilingPanel — a refused correspondent save says which refusal i
         screen.getByText('Not saved — the server did not answer. Nothing was changed.'),
       ).toBeTruthy(),
     );
+  });
+});
+
+/**
+ * Filing readiness must be assessed against THIS device, not the organisation.
+ *
+ * The panel posted `{ catalogKey, variant, useProjectContent: true }` and no
+ * programme. Server-side, resolveDeviceContentScope takes `programId` to find
+ * the programme's governed document; given none it falls through to
+ * `legacy_org_wide` — every cerv2_510k_sections row in the organisation. So a
+ * second device's authored sections satisfied this device's eSTAR slots, and
+ * the completeness figure and "can file now" verdict were computed over the
+ * whole org while the panel sat under one device's header.
+ *
+ * /filing-readiness cannot resolve the anchor itself the way /build and
+ * /official do, so the programme has to arrive from the caller.
+ */
+describe('EstarFilingPanel — readiness is scoped to the programme', () => {
+  /** The decoded body of the POST to /filing-readiness, or null. */
+  function sentReadinessPost(): Record<string, unknown> | null {
+    const calls = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    const hit = calls.find(([url, init]) =>
+      String(url).includes('/filing-readiness') && (init as { method?: string } | undefined)?.method === 'POST');
+    return hit ? (JSON.parse((hit[1] as { body: string }).body) as Record<string, unknown>) : null;
+  }
+
+  function mockForAssess() {
+    mockFetch((url) => {
+      if (url.includes('/filing-readiness')) return okJson({ canFileNow: false, blockers: [], completeness: 0 });
+      if (url.includes('/catalog')) return okJson({ catalog: [{ key: 'k510', label: '510(k)' }] });
+      if (url.includes('/registration')) return okJson({ registration: REGISTRATION, satisfied: [] });
+      return okJson({ submissions: [] });
+    });
+  }
+
+  it('sends the programme with the assessment', async () => {
+    mockForAssess();
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
+    const select = await screen.findByRole('option', { name: '510(k)' });
+    fireEvent.change(select.closest('select')!, { target: { value: 'k510' } });
+    await waitFor(() => expect(sentReadinessPost()).not.toBeNull());
+    expect(sentReadinessPost()).toMatchObject({ programId: PROGRAM_ID, useProjectContent: true });
+  });
+
+  /* Null must not degrade into the org-wide read — that is the defect. */
+  it('refuses to assess without a programme rather than reading the whole org', async () => {
+    mockForAssess();
+    render(<EstarFilingPanel programId={null} />);
+    const select = await screen.findByRole('option', { name: '510(k)' });
+    fireEvent.change(select.closest('select')!, { target: { value: 'k510' } });
+    await screen.findByTestId('estar-readiness-refusal');
+    expect(sentReadinessPost(), 'no assessment may be requested').toBeNull();
   });
 });
