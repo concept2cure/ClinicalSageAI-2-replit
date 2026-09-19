@@ -360,7 +360,24 @@ users "Create a new version to make further changes"
 (`server/services/authoring/document-lock.ts:68-73`) and **no such route exists** in either
 governed store.
 
-**Security.** Org membership is the whole authorization model in the Vault:
+**Security.** ~~Org membership is the whole authorization model in the Vault~~ —
+**the WRITES are role-gated as of 2026-09-19.** Both governed writes into
+`vault.documents` now carry `requireEditorAccess`, the repo's one governed-write gate,
+which excludes `viewer`: the filing decision (`POST /:id/file`) and the upload
+(`POST /api/vault/ingest`). Each creates or moves a regulatory record AND writes a Part 11
+row attributing it to the caller, so a viewer could previously author an attributable
+governed record. Ingest is gated BEFORE multer — refusing after the upload is buffered is a
+denial-of-service shape rather than a permission one. The upload path was already READING the
+role to stamp into its audit arguments and never deciding anything with it.
+
+The READS are deliberately still open to a viewer: enumerating and downloading their own
+organisation's dossier is the viewer role working as intended, and widening the fix there
+would break the role rather than enforce it.
+
+Nothing covered either route before this, so the tests came with the gate
+(`server/routes/__tests__/vault-file-authorization.test.ts`). The original finding follows:
+
+Org membership is the whole authorization model in the Vault:
 `project-vault.ts:562`, `:823`, `:925` resolve `orgId` and nothing else, so any authenticated
 `viewer` can enumerate every program's dossier, download every byte, and re-file any document —
 after which a chained audit row is written for a move nobody was authorized to make (`:1069`).
