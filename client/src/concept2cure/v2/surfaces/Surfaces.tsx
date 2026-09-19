@@ -301,7 +301,7 @@ export function Home({
               <button
                 type="button"
                 className="landing-tool"
-                title="Attach files"
+                title="Attach files" aria-label="Attach files"
                 aria-haspopup="true"
                 aria-expanded={plusOpen}
                 onClick={() => setPlusOpen((o) => !o)}
@@ -371,7 +371,7 @@ export function Home({
                 className="landing-send"
                 disabled={upload.uploading || (!draft.trim() && !upload.attachments.some((a) => a.status === 'ready'))}
                 onClick={send}
-                title="Send"
+                title="Send" aria-label="Send"
               >
                 {I.arrowUp}
               </button>

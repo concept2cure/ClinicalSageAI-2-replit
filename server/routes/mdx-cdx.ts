@@ -24,6 +24,15 @@ import { pool } from '../db';
    server/services/audit/audit-write-outcome.ts. */
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
+/*
+ * Every governed write below was guarded by nothing but the caller's org
+ * context, which is tenant scoping, not authorization: a read-only `viewer`
+ * could create and amend UDI records, IVDR classifications and performance
+ * evaluations, CDx pairings and concordance. These are the device and IVD
+ * records a submission is assembled from.
+ */
+import { requireEditorAccess } from '../middleware/orgMembership';
+
 const router = Router();
 const log = createScopedLogger('mdx-cdx');
 
@@ -84,7 +93,7 @@ router.get('/cdx/pairings', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/cdx/pairings', async (req: Request, res: Response) => {
+router.post('/cdx/pairings', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = pairingCreate.safeParse(req.body ?? {});
@@ -147,7 +156,7 @@ router.get('/cdx/pairings/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/cdx/pairings/:id', async (req: Request, res: Response) => {
+router.patch('/cdx/pairings/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -206,7 +215,7 @@ const concordanceCreate = z.object({
 });
 const concordancePatch = concordanceCreate.partial();
 
-router.post('/cdx/pairings/:id/concordance', async (req: Request, res: Response) => {
+router.post('/cdx/pairings/:id/concordance', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const pairingId = Number(req.params.id);
@@ -262,7 +271,7 @@ router.get('/cdx/concordance/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/cdx/concordance/:id', async (req: Request, res: Response) => {
+router.patch('/cdx/concordance/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);

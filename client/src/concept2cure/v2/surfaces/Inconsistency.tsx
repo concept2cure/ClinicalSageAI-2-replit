@@ -779,7 +779,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
                       if (fact) setForm(fact);
                     }}>{I.gitCompare} Change value everywhere</button>}
                     {!done && <button className="sp-ask" onClick={() => ask('For the ' + progCode + ' contradiction "' + f.title + '", draft the governed resolution and the decision record, and tell me which documents update.')}>{I.sparkles} Draft resolution</button>}
-                    <button className="sp-go" title="Open the source record" onClick={() => open(f.factId ? 'cmc' : 'document-authoring')}>{I.right}</button>
+                    <button className="sp-go" title="Open the source record" aria-label="Open the source record" onClick={() => open(f.factId ? 'cmc' : 'document-authoring')}>{I.right}</button>
                   </div>
                   {done && <div className="gi-done-line">{I.check} Marked resolved by {f.resolvedBy || 'AnA'} in this view — the governed audit-trail write + re-approval routing is not yet wired.</div>}
                 </div>

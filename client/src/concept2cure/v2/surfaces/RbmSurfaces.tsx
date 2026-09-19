@@ -363,7 +363,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
               {I.activity} AnA at work
             </button>
           )}
-          <button className="tb-btn" onClick={onClose} title="Collapse">{I.panelRight}</button>
+          <button className="tb-btn" onClick={onClose} title="Collapse" aria-label="Collapse">{I.panelRight}</button>
         </span>
       </div>
       {showWork && work && (

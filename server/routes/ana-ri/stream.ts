@@ -1940,7 +1940,21 @@ export function mountStreamRoute(router: Router): void {
             // invalidates the messages cache, and the follow-up rounds are the
             // same piece of work as the first.
             apiEffort,
-            ...(includeTools && streamTools.length > 0 ? { tools: streamTools } : {}),
+            // The tools array stays on the request for EVERY round, including
+            // the terminal one. Withdrawing it is what the terminal round used
+            // to do, and it cost the whole prompt cache once per turn:
+            // Anthropic's cache prefix renders tools -> system -> messages, and
+            // a tool-definition change (add, remove or reorder) is the one
+            // change that preserves NO cache tier. Dropping the array on the
+            // last round therefore rebuilt tools, system AND messages, every
+            // turn, at exactly the point the conversation was longest.
+            //
+            // `tool_choice: 'none'` gets the same behaviour — a grounded text
+            // answer with no further tool calls — while changing only a
+            // parameter that preserves the tools and system caches. Same
+            // outcome, one cache tier instead of none.
+            ...(streamTools.length > 0 ? { tools: streamTools } : {}),
+            ...(includeTools ? {} : { toolChoice: 'none' as const }),
             stream: true,
             onStream: (chunk: string, metadata?: any) => {
               if (runHandle?.cancelSignal.aborted) return;

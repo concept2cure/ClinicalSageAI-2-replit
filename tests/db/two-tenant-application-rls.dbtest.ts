@@ -26,13 +26,70 @@ const TAG = `wo03_${process.pid}_${Date.now().toString(36)}`;
 const APP_ROLE = process.env.APP_SERVICE_DB_ROLE || 'app_service';
 const ORG_A = 90301;
 const ORG_B = 90302;
+/* Reserved for this probe alone. Teardown deletes by these ids, so anything else
+   that borrowed them would be deleted with the fixtures. */
+const FIXTURE_ORGS = [ORG_A, ORG_B];
 
-type Domain = 'projects' | 'documents' | 'audit_logs';
-const domains: Domain[] = ['projects', 'documents', 'audit_logs'];
+/**
+ * The domains this probe proves isolation FOR. Everything outside this list is
+ * asserted, not proven — that distinction is the whole status of WO-3, so the
+ * list is the coverage number and adding to it is the work.
+ *
+ * Extended 2026-09-19 from three tables to six. The three added are regulated
+ * stores, chosen because each carries the canonical `tenant_isolation_policy`
+ * keyed on an integer `organization_id` (verified on the provisioned database,
+ * not assumed) and each is read by a shipping surface:
+ *
+ *   design_controls  public.c2c_design_controls  21 CFR 820.30 design history
+ *                    file — the DHF surface's only store
+ *   risk_items       public.risk_items           ISO 14971 hazard analysis
+ *
+ * public.electronic_signatures was the third candidate and is DELIBERATELY NOT
+ * here, which is worth writing down because it is the most consequential table
+ * in the set. Its Part 11 trigger `esign_block_mutation()` refuses DELETE
+ * outright — "rows cannot be deleted. Insert a superseding signature instead."
+ * — and unlike audit_logs, whose immutability trigger provides the documented
+ * `app.audit_archive_bypass` door this file's own cleanup uses, it provides no
+ * door at all. So a fixture signature is permanent: every run would leak a row
+ * pair, and `electronic_signatures.signer_id`'s FK to users then makes the
+ * users cleanup fail with 23503 and leaks every fixture after it (observed,
+ * which is how this was found). Covering it needs a fixture strategy that does
+ * not require deletion — a dedicated signer whose rows are expected to
+ * accumulate, or a superseding-insert cleanup — not a trigger-disable recipe
+ * copied out of a test. Recorded for whoever owns Part 11.
+ *
+ * A table whose primary key is not `id` needs `idColumnFor` below; all six of
+ * these key on `id`, so `submission_orchestrator_runs` (run_id) is the next
+ * one to add and the reason that map exists.
+ */
+type Domain = 'projects' | 'documents' | 'audit_logs' | 'design_controls' | 'risk_items';
+const domains: Domain[] = ['projects', 'documents', 'audit_logs', 'design_controls', 'risk_items'];
 const tableFor: Record<Domain, string> = {
   projects: 'public.projects',
   documents: 'public.documents',
   audit_logs: 'public.audit_logs',
+  design_controls: 'public.c2c_design_controls',
+  risk_items: 'public.risk_items',
+};
+/** The column the generic handlers address a row by. */
+const idColumnFor: Record<Domain, string> = {
+  projects: 'id',
+  documents: 'id',
+  audit_logs: 'id',
+  design_controls: 'id',
+  risk_items: 'id',
+};
+/**
+ * A non-key column the PATCH probe writes, per domain. Replaces an inline
+ * ternary whose two `status` branches were identical, which made it read as a
+ * per-domain decision when it was not.
+ */
+const updateColumnFor: Record<Domain, string> = {
+  projects: 'status',
+  documents: 'status',
+  audit_logs: 'action',
+  design_controls: 'req',
+  risk_items: 'status',
 };
 let owner: Pool;
 let app: express.Express;
@@ -197,6 +254,24 @@ beforeAll(async () => {
       [org, user, `${TAG}-${side}`, JSON.stringify({ confidential: `fixture-body-${side}` })]
     );
     ids[side].audit_logs = String(a.rows[0].id);
+
+    /* ── The three domains added 2026-09-19 ────────────────────────────────
+       Seeded through the OWNER pool, like every fixture above: the point of
+       the probe is that the app_service role cannot reach the other tenant's
+       row, which requires the row to exist in the first place. */
+    const dc = await owner.query(
+      `INSERT INTO c2c_design_controls (id, organization_id, cat, req)
+       VALUES ($1,$2,'performance',$3) RETURNING id`,
+      [`${TAG}-dc-${side}`, org, `fixture-body-${side}`]
+    );
+    ids[side].design_controls = String(dc.rows[0].id);
+
+    const ri = await owner.query(
+      `INSERT INTO risk_items (organization_id, hazard, harm, severity, probability, status)
+       VALUES ($1,$2,$3,3,2,'open') RETURNING id`,
+      [org, `${TAG}-hazard-${side}`, `fixture-body-${side}`]
+    );
+    ids[side].risk_items = String(ri.rows[0].id);
   }
 
   tokenA = accessToken(userA, ORG_A);
@@ -215,7 +290,8 @@ beforeAll(async () => {
     if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
     const q = String(req.query.q || '');
     const result = await requestPgClient(req).query(
-      `SELECT id::text FROM ${tableFor[domain]} WHERE ($1 = '' OR id::text = $1) ORDER BY id::text`,
+      `SELECT ${idColumnFor[domain]}::text AS id FROM ${tableFor[domain]}
+        WHERE ($1 = '' OR ${idColumnFor[domain]}::text = $1) ORDER BY 1`,
       [q]
     );
     return res.json({ ids: result.rows.map(r => r.id) });
@@ -226,7 +302,7 @@ beforeAll(async () => {
     const domain = safeDomain(req.params.domain);
     if (!domain) return res.sendStatus(404);
     const result = await requestPgClient(req).query(
-      `SELECT 1 FROM ${tableFor[domain]} WHERE id::text=$1`,
+      `SELECT 1 FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1`,
       [req.params.id]
     );
     return res.sendStatus(result.rows.length ? 204 : 404);
@@ -235,7 +311,7 @@ beforeAll(async () => {
     const domain = safeDomain(req.params.domain);
     if (!domain) return res.status(404).json({ error: { code: 'NOT_FOUND' } });
     const result = await requestPgClient(req).query(
-      `SELECT id::text FROM ${tableFor[domain]} WHERE id::text=$1`,
+      `SELECT ${idColumnFor[domain]}::text AS id FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1`,
       [req.params.id]
     );
     return result.rows.length
@@ -260,11 +336,23 @@ beforeAll(async () => {
            VALUES ($1,$2,$3,$4,'REGULATORY',$5,$5)`,
           [foreignOrg, workspaceB, `${TAG}-FORGED`, `${TAG}-forged-document`, userA]
         );
-      } else {
+      } else if (domain === 'audit_logs') {
         await requestPgClient(req).query(
           `INSERT INTO audit_logs (tenant_id,user_id,action,table_name,record_id)
            VALUES ($1,$2,'FORGED','wo03',$3)`,
           [foreignOrg, userA, `${TAG}-forged-audit`]
+        );
+      } else if (domain === 'design_controls') {
+        await requestPgClient(req).query(
+          `INSERT INTO c2c_design_controls (id,organization_id,cat,req)
+           VALUES ($1,$2,'performance','forged')`,
+          [`${TAG}-forged-dc`, foreignOrg]
+        );
+      } else {
+        await requestPgClient(req).query(
+          `INSERT INTO risk_items (organization_id,hazard,harm,severity,probability)
+           VALUES ($1,$2,'forged',3,2)`,
+          [foreignOrg, `${TAG}-forged-hazard`]
         );
       }
       return res.sendStatus(201);
@@ -282,9 +370,8 @@ beforeAll(async () => {
     const domain = safeDomain(req.params.domain);
     if (!domain) return res.sendStatus(404);
     const result = await requestPgClient(req).query(
-      `UPDATE ${tableFor[domain]} SET ${
-        domain === 'audit_logs' ? 'action' : domain === 'projects' ? 'status' : 'status'
-      }=$1 WHERE id::text=$2 RETURNING id`,
+      `UPDATE ${tableFor[domain]} SET ${updateColumnFor[domain]}=$1
+         WHERE ${idColumnFor[domain]}::text=$2 RETURNING ${idColumnFor[domain]}`,
       ['TAMPERED', req.params.id]
     );
     return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
@@ -293,7 +380,7 @@ beforeAll(async () => {
     const domain = safeDomain(req.params.domain);
     if (!domain) return res.sendStatus(404);
     const result = await requestPgClient(req).query(
-      `DELETE FROM ${tableFor[domain]} WHERE id::text=$1 RETURNING id`,
+      `DELETE FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1 RETURNING ${idColumnFor[domain]}`,
       [req.params.id]
     );
     return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
@@ -333,18 +420,40 @@ afterAll(async () => {
         await cleanup.query('DELETE FROM documents WHERE document_code LIKE $1', [`${TAG}%`]);
         await cleanup.query('DELETE FROM projects WHERE name LIKE $1', [`${TAG}%`]);
         await cleanup.query('DELETE FROM saved_precedent_queries WHERE label LIKE $1', [`${TAG}%`]);
+        /* Everything below is scoped by the two reserved fixture org ids rather
+           than by ids captured in memory during the seed, and that is the point.
+           TAG carries a pid and a timestamp, so it is unique per run: a run that
+           dies part-way through beforeAll leaves rows no LATER run's TAG can
+           match, and because these tables are the FK spine (org_users → users →
+           organizations) the leak does not stay quiet — it makes the organizations
+           delete fail with 23503 for every subsequent run, forever, until someone
+           cleans the database by hand. Observed twice while this file was being
+           extended, both times costing a manual psql pass. ORG_A/ORG_B are
+           constants reserved for this probe and nothing else may use them, so
+           org-scoped deletes are safe AND idempotent: each run now also clears
+           whatever its predecessors stranded. Domains whose own rows carry no
+           organization_id are matched through the orgs instead. */
+        await cleanup.query('DELETE FROM risk_items WHERE organization_id=ANY($1::int[])', [
+          FIXTURE_ORGS,
+        ]);
         await cleanup.query(
-          'DELETE FROM project_industry_profiles WHERE program_id=ANY($1::uuid[])',
-          [[programA, programB]]
+          'DELETE FROM c2c_design_controls WHERE organization_id=ANY($1::int[])',
+          [FIXTURE_ORGS]
         );
-        await cleanup.query('DELETE FROM client_workspaces WHERE id=ANY($1::int[])', [
-          [workspaceA, workspaceB],
+        await cleanup.query(
+          'DELETE FROM project_industry_profiles WHERE organization_id=ANY($1::int[])',
+          [FIXTURE_ORGS]
+        );
+        await cleanup.query('DELETE FROM client_workspaces WHERE organization_id=ANY($1::int[])', [
+          FIXTURE_ORGS,
         ]);
-        await cleanup.query('DELETE FROM organization_users WHERE user_id=ANY($1::int[])', [
-          [userA, userB],
+        await cleanup.query('DELETE FROM organization_users WHERE organization_id=ANY($1::int[])', [
+          FIXTURE_ORGS,
         ]);
-        await cleanup.query('DELETE FROM users WHERE id=ANY($1::int[])', [[userA, userB]]);
-        await cleanup.query('DELETE FROM organizations WHERE id=ANY($1::int[])', [[ORG_A, ORG_B]]);
+        await cleanup.query('DELETE FROM users WHERE default_organization_id=ANY($1::int[])', [
+          FIXTURE_ORGS,
+        ]);
+        await cleanup.query('DELETE FROM organizations WHERE id=ANY($1::int[])', [FIXTURE_ORGS]);
       } finally {
         cleanup.release();
       }
@@ -365,8 +474,18 @@ describe('WO-03 two-tenant application isolation', () => {
          FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
          LEFT JOIN pg_policies p ON p.schemaname=n.nspname AND p.tablename=c.relname
          WHERE n.nspname='public' AND c.relname=$1 GROUP BY c.relrowsecurity,c.relforcerowsecurity`,
-        [domain]
+        /* The RELATION name, not the domain label. These coincided while every
+           domain was named after its table; `design_controls` →
+           c2c_design_controls and `signatures` → electronic_signatures broke
+           that, and the symptom was `expected undefined to match object` —
+           a posture assertion that had silently stopped finding its table
+           would otherwise read as a posture failure. */
+        [tableFor[domain].replace(/^public\./, '')]
       );
+      expect(
+        rows[0],
+        `${domain}: no pg_class row for ${tableFor[domain]} — the posture assertion found nothing to check`
+      ).toBeDefined();
       expect(rows[0]).toMatchObject({ enabled: true, forced: true });
       expect(rows[0].policies).toBeGreaterThan(0);
     }

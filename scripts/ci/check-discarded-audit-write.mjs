@@ -82,11 +82,30 @@ const BASELINE = path.join(ROOT, 'scripts/ci/discarded-audit-write-baseline.json
  * There were zero such sites when this was added; it is here so the next
  * conversion cannot be vacuous and green at the same time.
  *
+ * `logAuditEvent`, `logAuditEntry` and `auditTaskAction` are here for the same
+ * reason, and their addition is the third time this gate turned out to be smaller
+ * than the defect. It began matching only `void auditService.logAction`; extending
+ * it to the awaited form found 134 sites against 0 remaining void ones; and a
+ * census of the audit layer then found that `logAction` is one of at least EIGHT
+ * audit-writing mechanisms in the route layer, so "the population" this gate
+ * reported was never the population. The other three that resolve an outcome carry
+ * 95 more discarded sites between them — 23 / 46 / 15 — and not one of the 95
+ * assigned the result. Two of them (`logAuditEntry`, `auditTaskAction`) returned
+ * `Promise<void>` until this change, so their callers could not have reported an
+ * outcome; those contracts now return one.
+ *
  * `writeChainedAuditRow` is deliberately NOT here: it returns `Promise<void>` and
  * THROWS on failure, because it runs inside the caller's transaction so a failed
- * row rolls the mutation back with it. There is no outcome to discard.
+ * row rolls the mutation back with it. There is no outcome to discard, and
+ * flagging it would push authors toward the weaker helper.
+ *
+ * Still outside this gate, and named here so the next reader does not mistake a
+ * green run for a clean audit layer: `createAuditTrail`
+ * (part11ComplianceService, ~11 discarded call sites), `auditAuthEvent`,
+ * `emitAuditEvent` and `createAuditEvent`. Their contracts have not been read
+ * yet.
  */
-const AUDIT_CALL = String.raw`(?:auditService\s*\.\s*logAction|recordAuditRow)`;
+const AUDIT_CALL = String.raw`(?:auditService\s*\.\s*logAction|recordAuditRow|logAuditEvent|logAuditEntry|auditTaskAction)`;
 
 /** `void auditService.logAction(` / `void recordAuditRow(` — fire-and-forget. */
 const VOID_WRITE = new RegExp(String.raw`\bvoid\s+${AUDIT_CALL}\s*\(`, 'g');
@@ -188,7 +207,7 @@ function sourceFiles() {
 /** Scan one source string. Exposed separately so --self-test can drive it. */
 export function scanSource(src, file) {
   const hits = [];
-  if (!src.includes('logAction') && !src.includes('recordAuditRow')) return hits;
+  if (!/logAction|recordAuditRow|logAuditEvent|logAuditEntry|auditTaskAction/.test(src)) return hits;
   const code = stripNonCode(src);
   for (const re of [VOID_WRITE, AWAITED_DISCARDED]) {
     re.lastIndex = 0;
@@ -244,6 +263,19 @@ if (process.argv.includes('--self-test')) {
     async function f(entry) {
       await recordAuditRow({ action: entry.action });
     }`;
+  const DISCARDED_ENTRY = `
+    async function f(req) {
+      await logAuditEntry(req, 'CREATE', 'artifact', req.params.id);
+    }`;
+  const DISCARDED_TASK = `
+    async function f(p) {
+      await auditTaskAction({ orgId: p.orgId, userId: p.userId, command: 'task.create', taskId: p.id });
+    }`;
+  const ENTRY_REPORTED = `
+    async function f(req) {
+      const audit = await logAuditEntry(req, 'CREATE', 'artifact', req.params.id);
+      return { ok: true, audit };
+    }`;
   const WRAPPER_REPORTED = `
     async function f(entry) {
       const audit = await recordAuditRow({ action: entry.action });
@@ -289,6 +321,9 @@ if (process.argv.includes('--self-test')) {
   say(scanSource(ARGUMENT, '<t>').length === 0, 'a write passed as an argument across lines is not flagged');
   say(scanSource(DISCARDED_WRAPPER, '<t>').length === 1, 'a discarded recordAuditRow is flagged too');
   say(scanSource(WRAPPER_REPORTED, '<t>').length === 0, 'a recordAuditRow whose outcome is returned is not flagged');
+  say(scanSource(DISCARDED_ENTRY, '<t>').length === 1, 'a discarded logAuditEntry is flagged');
+  say(scanSource(DISCARDED_TASK, '<t>').length === 1, 'a discarded auditTaskAction is flagged');
+  say(scanSource(ENTRY_REPORTED, '<t>').length === 0, 'a logAuditEntry whose outcome is returned is not flagged');
   say(scanSource(DOCUMENTED, '<t>').length === 0, 'the defect quoted in a comment is not flagged');
 
   // Case 4: the ratchet. A file baselined at 1 that now has 2 must fail.

@@ -83,32 +83,28 @@ export const IVD_STAGES: IvdStage[] = [
   { id: 'submit',         label: 'Submit',               meta: 'EUDAMED · NB review' },
 ];
 
-export const IVD_CLASSIFICATIONS: IvdClassification[] = [
-  { id: 'c-01', device: 'BX-Dx HbA1c Assay',         intendedPurpose: 'Quantitative HbA1c for diabetes monitoring',        classification: 'C', rule: 'Rule 3(k) — monitoring', nearPatient: true },
-  { id: 'c-02', device: 'BX-Dx SARS-CoV-2 Antigen',  intendedPurpose: 'Qualitative detection of transmissible agent',      classification: 'D', rule: 'Rule 1 — transmissible agent', selfTest: true },
-  { id: 'c-03', device: 'BX-Dx EGFR Companion Test',  intendedPurpose: 'Select patients for targeted EGFR therapy',         classification: 'C', rule: 'Rule 3(c) — companion diagnostic', cdx: true },
-];
+/*
+ * IVD_CLASSIFICATIONS, IVD_VALIDATIONS, IVD_CLINICAL and IVD_GSPR — removed.
+ *
+ * They were example rows behind sample mode, and what they asserted was
+ * regulatory findings: Annex VIII class C and class D determinations, a limit
+ * of detection and precision CV per analyte, sensitivity and specificity to
+ * three decimal places against named study sizes, and a per-chapter conformity
+ * count that fed the surface's headline "% compliant".
+ *
+ * IvdSurface already refused fixtures for its companion-diagnostic and CLIA
+ * panels, in its own words: "an invented CDx approval or waiver grant is a
+ * regulatory claim". A class determination, an LoD and a clinical sensitivity
+ * are the same kind of claim. All four panels have live endpoints and now read
+ * live or read nothing, each stating its own reading through DataGate.
+ *
+ * One correction these rows carried is worth keeping, because it was about the
+ * regulation and not about any tenant: this surface once carried MDR's Annex I
+ * schedule — 23 requirements across 1–9 / 10–18 / 19–23 — on an IVD workbench,
+ * so an IVD manufacturer worked a checklist generated from the wrong
+ * regulation. IVDR (EU) 2017/746 Annex I has 20, split I (1–8), II (9–13),
+ * III (14–20). The server owns that structure now
+ * (/api/ivdr/gspr-checklist/:id/matrix returns the chapters and their labels),
+ * which is where a regulatory schedule belongs.
+ */
 
-export const IVD_VALIDATIONS: IvdValidation[] = [
-  { id: 'v-01', analyte: 'HbA1c',        lod: 2.1,  loq: 3.0,  precisionCV: 2.4, sensitivity: null, specificity: null, status: 'pass' },
-  { id: 'v-02', analyte: 'SARS-CoV-2 Ag', lod: 12.5, loq: 18.0, precisionCV: 4.8, sensitivity: 0.94, specificity: 0.99, status: 'pass' },
-  { id: 'v-03', analyte: 'EGFR exon 19',  lod: null, loq: null, precisionCV: 5.9, sensitivity: 0.88, specificity: 0.97, status: 'pending' },
-];
-
-export const IVD_CLINICAL: IvdClinicalEvidence[] = [
-  { id: 'e-01', study: 'HbA1c method comparison (n=420)',  tp: 198, fp: 6,  tn: 210, fn: 6,  sensitivity: 0.971, specificity: 0.972, ppv: 0.971, npv: 0.972, accuracy: 0.971, status: 'complete' },
-  { id: 'e-02', study: 'SARS-CoV-2 Ag field study (n=512)', tp: 240, fp: 4,  tn: 260, fn: 8,  sensitivity: 0.968, specificity: 0.985, ppv: 0.984, npv: 0.970, accuracy: 0.977, status: 'complete' },
-  { id: 'e-03', study: 'EGFR CDx bridging (n=180)',         tp: 70,  fp: 5,  tn: 95,  fn: 10, sensitivity: 0.875, specificity: 0.950, ppv: 0.933, npv: 0.905, accuracy: 0.917, status: 'in_review' },
-];
-
-/* IVDR Annex I, not MDR's. This surface carried MDR's schedule — 23
-   requirements across 1–9 / 10–18 / 19–23 — on an IVD workbench, so the
-   checklist an IVD manufacturer worked through was generated from the wrong
-   regulation. IVDR (EU) 2017/746 Annex I has 20, and the boundaries below are
-   the ones stated in the MDX work order. SEE THE COMMIT MESSAGE: the total is
-   certain, the internal split is the open question. */
-export const IVD_GSPR: IvdGsprChapter[] = [
-  { key: 'I',   label: 'General requirements (GSPR 1–8)',           total: 8, compliant: 6, partiallyCompliant: 1, nonCompliant: 0, notAssessed: 1 },
-  { key: 'II',  label: 'Performance, design & manufacture (9–13)',  total: 5, compliant: 3, partiallyCompliant: 1, nonCompliant: 1, notAssessed: 0 },
-  { key: 'III', label: 'Information supplied (GSPR 14–20)',         total: 7, compliant: 4, partiallyCompliant: 1, nonCompliant: 0, notAssessed: 2 },
-];
