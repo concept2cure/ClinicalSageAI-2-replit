@@ -6,7 +6,7 @@ inherits the repository and nothing else — no prior conversation, no plan file
 no task list. Everything a new session needs to avoid redoing settled work, or
 repeating a mistake that has already been paid for, has to be written down here.
 
-Last updated 2026-09-18.
+Last updated 2026-09-19.
 
 ---
 
@@ -24,7 +24,7 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
 | WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | `KNOWN_UNLISTED` triage — 10 entries, 16 tables | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed, all ten now on the applier |
-| Schema authority — live-schema baseline + the 61 tables behind it | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **active** — gate fixed, baseline 70→61→47; DEAD surfaces deleted (7 files, §7); triage corrected (§8) — 8 relations are LIVE and need provisioning |
+| Schema authority — live-schema baseline + the 61 tables behind it | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **active** — gate fixed, baseline 70→61→47; DEAD surfaces deleted (7 files, §7); triage corrected (§8); CMC playbook provisioned (§9), baseline 47→42; reg_* refused with evidence |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 
 If you are one of the sessions above, correct your own row. If a lane you want
@@ -423,3 +423,107 @@ migration 064 go too — or is the subtree meant to be re-mounted?
 Contrast with `federated_*` (4 baselined entries, referenced by the route and by
 `federated-learning.service.ts` only): those tables exist nowhere, so they carry
 no such coupling. They are blocked only by being on the same island.
+
+---
+
+## 9. CMC playbook provisioned — and the fabrication that provisioning would have switched on (2026-09-19)
+
+First of the **LIVE** surfaces from §8. `/api/cmc/blueprint/playbook/*` is
+mounted unconditionally and all five of its tables were missing, so every one of
+its endpoints returned 500.
+
+### The part that was not mechanical
+
+`playbookRoutes.ts` answered an empty read with **two hardcoded template objects
+under `success: true`**:
+
+```ts
+if (result.rows.length === 0) {
+  const defaultWorkflows = [ /* two invented ICH templates */ ];
+  return res.json({ success: true, data: defaultWorkflows });
+}
+```
+
+While the table did not exist the query **threw**, so that branch was
+unreachable and the 500 was honest. **Creating the table would have made it
+live** — turning an honest failure into invented data presented as records. The
+migration alone would have made the product less truthful than it was.
+
+So the branch was deleted in the same commit, and the twelve real templates are
+now seeded rows. **Generalise this before provisioning any other surface in §8:
+check what the handler does with an empty result before you give it one.** An
+empty-result fallback is invisible while the table is missing.
+
+### Where the schema came from
+
+A correct DDL file already sat at `server/database/cmc-playbook-schema.sql`, on
+**no applier** — not `install-fresh`, not `deploy-migrate`, not drizzle push.
+That is precisely why the tables were missing. It was **moved**, not copied:
+`ci:duplicate-table-ddl` scans 573 non-archived `.sql` files, so a second
+creator is a new duplicate, and the working agreement requires the parallel path
+to be deleted in the same change.
+
+Four deliberate changes, each with a dated note in the migration:
+
+| Change | Why |
+|---|---|
+| `cmc_workflows` omits the `organizations` FK | Its seed writes `organization_id = 0`, the platform's documented shared tenant (`playbookRoutes.ts:41`, `tenantRls.ts:93`, `authedOrgId.ts:55`). `organizations.id` is `serial` and **no applied migration inserts any organizations row**, so org 0 does not exist and the FK would fail the seed at apply time. The other four tables keep it. |
+| `cmc_workflow_tasks` gains `organization_id INTEGER NOT NULL` | It had no tenant column, which puts a table outside the population **every** RLS sweep operates on — the exact cause `check-unkeyed-request-tables.mjs` was written for. `playbookRoutes.ts` now supplies it; column and code had to land together. |
+| `command` is `TEXT`, not `VARCHAR(255)` | It stores `req.body.command`, unbounded client input. |
+| Row-count assertion on the seed | RULE 1: seed data reaching a deployed database cannot be corrected in place, so a truncated seed must fail at apply time. |
+
+`cmc_checklist_items` and `cmc_guideline_access` were **not** carried over — no
+TypeScript references either. Don't provision a table before it is real.
+
+### Verified, including by making each check fail
+
+- Applies to a bare database and **replays cleanly** (still 12 rows) — RULE 1.
+- Seed assertion proven: deleting one row from the literal fails apply with
+  *"expected 12 rows at organization_id = 0, found 11"*.
+- Ordering proven load-bearing: moving the entry after the sweep turns
+  `ci:migration-set-order` red; restored, green.
+- `tests/schema-contract/cmc-playbook-schema.contract.test.ts` (13 tests) pins
+  every handler statement **extracted from source**, so it cannot drift. Both
+  regressions were induced and caught: dropping `organization_id` from the tasks
+  INSERT, and restoring the fabricating fallback.
+- `tables-live-schema-baseline.json` 47 → 42, hand-edited, exactly those five.
+
+### Still NOT provisioned: `reg_*` / the portfolio surface
+
+`/api/cmc/blueprint/portfolio/*` is equally live, but provisioning it was
+**refused** — three blockers, all evidenced:
+
+1. **Nothing writes the data.** No file in the repo INSERTs into
+   `reg_submissions` or `reg_m3_sections`. They are read-only. Provisioning
+   yields permanently empty tables and a feature that is inert while *looking*
+   provisioned. The single INSERT anywhere in the group is
+   `reg_rpi_snapshots` at `portfolio.ts:187`, which derives from the two empty ones.
+2. **The only DDL contradicts the code.** `db/migrations/_legacy/060_regulatory_foundation.sql:25`
+   defines one `upstream_json jsonb`; the code needs three separate columns —
+   `up_proc`, `up_quality`, `up_stability` (`rpi.ts:35,42,49`, `portfolio.ts:112,254`).
+   `upstream_json` appears in no TypeScript; the three `up_*` appear in no SQL.
+   Both `_legacy` trees are walked by no applier.
+3. **The status domain disagrees.** Code treats `'LOCKED'` as terminal
+   (`portfolio.ts:111,253`, `rpi.ts:24`); the DDL enumerates
+   `'MISSING','DRAFT','READY','COMPLETE'` with no `'LOCKED'`. A `COMPLETE`
+   section would be counted as *missing*.
+
+Authoring a shape no migration ever agreed on, for tables nothing fills, is
+schema invention. It needs a product decision about where submissions data comes
+from — not a guess from this lane.
+
+### Two findings handed on, not fixed here
+
+- **`reg_submissions` is read with no tenant filter in two places.**
+  `server/src/services/reg/rpi.ts:17` (`where sub_id=$1` only) relies on its
+  caller having already scoped by `tenant_id`; `server/src/services/integrations/gmail.ts:89`
+  does `SELECT sub_id … ORDER BY created_at DESC LIMIT 1` with no filter at all,
+  returning the newest row **across all tenants**. Only reachable through
+  `gmailIngestToReg`, which nothing calls — dead today, a cross-tenant read the
+  moment it is wired up.
+- **`playbookRoutes.ts:444` `generateFallbackResult`** returns synthesized
+  regulatory prose when the AI call fails, persisted into
+  `cmc_ai_tool_executions.result`. It is at least labelled `status: 'fallback'`
+  (line 421). Left alone deliberately — a different concern from this migration,
+  and `server/api/` is outside the WO-16C fabrication sweep's stated scope of
+  `server/services/` and `server/routes/`, so it belongs to nobody right now.

@@ -2309,6 +2309,16 @@ export const C2C_MIGRATION_FILES = [
   // the author. Additive and IF NOT EXISTS, so it replays as a no-op; above the
   // final pair because ci:migration-set-order pins those two last.
   'migrations/20260918_rbm_author_attribution.sql',
+  // ── CMC playbook: the five tables /api/cmc/blueprint/playbook/* queries ──
+  // The surface is live and unconditionally mounted (register-core-routes.ts:68
+  // → blueprintRoutes.ts:748), and none of its tables existed on any
+  // provisioned database, so every one of its endpoints returned 500. A correct
+  // DDL file already sat at server/database/cmc-playbook-schema.sql on NO
+  // applier — which is exactly why the tables were missing; it is deleted in
+  // the same change rather than left as a second creator. All five are public +
+  // organization_id INTEGER NOT NULL so the sweep below policies them, and
+  // ABOVE that sweep for the reason the ana_runs note gives.
+  'migrations/20260919_cmc_playbook_schema.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
