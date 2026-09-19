@@ -3136,7 +3136,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                         <button
                           className="ac-revoke"
                           onClick={() => revoke(g.id)}
-                          title="Revoke (records a reason)"
+                          title="Revoke (records a reason)" aria-label="Revoke (records a reason)"
                         >
                           {I.close}
                         </button>
@@ -3366,7 +3366,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                         {(!k.status || k.status === 'active') && (
                           <button
                             className="ac-revoke"
-                            title="Revoke this API key (audited)"
+                            title="Revoke this API key (audited)" aria-label="Revoke this API key (audited)"
                             onClick={() => revokeKey(k.id, k.name)}
                           >
                             {I.close}
