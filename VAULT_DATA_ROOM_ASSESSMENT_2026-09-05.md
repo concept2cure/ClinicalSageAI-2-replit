@@ -360,7 +360,47 @@ users "Create a new version to make further changes"
 (`server/services/authoring/document-lock.ts:68-73`) and **no such route exists** in either
 governed store.
 
-**Security.** Org membership is the whole authorization model in the Vault:
+**Security.** ~~Org membership is the whole authorization model in the Vault~~ —
+**the WRITES are role-gated as of 2026-09-19.** Both governed writes into
+`vault.documents` now carry `requireEditorAccess`, the repo's one governed-write gate,
+which excludes `viewer`: the filing decision (`POST /:id/file`) and the upload
+(`POST /api/vault/ingest`). Each creates or moves a regulatory record AND writes a Part 11
+row attributing it to the caller, so a viewer could previously author an attributable
+governed record. Ingest is gated BEFORE multer — refusing after the upload is buffered is a
+denial-of-service shape rather than a permission one. The upload path was already READING the
+role to stamp into its audit arguments and never deciding anything with it.
+
+The READS are deliberately still open to a viewer: enumerating and downloading their own
+organisation's dossier is the viewer role working as intended, and widening the fix there
+would break the role rather than enforce it.
+
+Nothing covered either route before this, so the tests came with the gate
+(`server/routes/__tests__/vault-file-authorization.test.ts`).
+
+> **Is this systemic? Partly — and NOT in the way it first looks. Recorded so the
+> next person does not raise the alarm I nearly did.**
+>
+> A scan finds 279 router files with write routes and no role-gate reference, and 164
+> of 174 router mounts pass only an auth middleware. Neither number is a finding list.
+>
+> - **They ARE authenticated.** `server/middleware/authBoundary.ts` is a default-deny
+>   boundary mounted once (`server/startup/middleware.ts`) before any route
+>   registration, covering the whole `/api` surface — `enforce` in production, `warn`
+>   otherwise. A router with no auth middleware of its own, and no `req.user`
+>   reference at all, is still behind it. `server/routes/mdx-qms.ts` is exactly that
+>   shape and it is **not** an unauthenticated endpoint.
+> - **What the scan actually measures is ROLE gating**, which this codebase applies
+>   per-route rather than at the mount. Whether an ungated write is a defect depends
+>   on whether that particular write is governed — which no scanner can adjudicate,
+>   and which is why the two vault routes were fixed by reading them rather than by
+>   running a list.
+>
+> So: worth a deliberate review of governed writes route by route, not a sweep, and
+> not a count anyone should quote as a vulnerability total.
+
+The original finding follows:
+
+Org membership is the whole authorization model in the Vault:
 `project-vault.ts:562`, `:823`, `:925` resolve `orgId` and nothing else, so any authenticated
 `viewer` can enumerate every program's dossier, download every byte, and re-file any document —
 after which a chained audit row is written for a move nobody was authorized to make (`:1069`).

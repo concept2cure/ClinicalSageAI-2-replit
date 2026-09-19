@@ -52,29 +52,21 @@ export interface DispatchReadinessAssessment {
   leafCount: number;
 }
 
-/* -- VERBATIM evaluateDispatchGate (server/services/ectd/dispatch-gate.ts) -- */
-export function evaluateDispatchGate(input: DispatchGateInput): DispatchGate {
-  const blockers: string[] = [];
-  const ve = Number.isFinite(input.validationErrors) ? input.validationErrors : 0;
-  const sc = Number.isFinite(input.unacknowledgedShadowCriticals)
-    ? input.unacknowledgedShadowCriticals
-    : 0;
-  if (ve > 0)
-    blockers.push(
-      ve + ' open error-severity validation finding(s) must be resolved before dispatch.',
-    );
-  if (sc > 0)
-    blockers.push(
-      sc +
-        ' unacknowledged Shadow Review critical(s) must be acknowledged or fixed before dispatch.',
-    );
-  return { cleared: blockers.length === 0, blockers };
-}
-
-/* VERBATIM mergeDispatchGates -- cleared only when EVERY gate is cleared. */
-export function mergeDispatchGates(...gates: DispatchGate[]): DispatchGate {
-  const blockers = gates.reduce<string[]>((a, g) => a.concat(g.blockers || []), []);
-  return { cleared: gates.every((g) => g.cleared), blockers };
-}
+/* REMOVED: evaluateDispatchGate / mergeDispatchGates.
+ *
+ * These were a client-side copy of the server's dispatch gate, labelled
+ * "VERBATIM". They were not, and could not stay, verbatim:
+ *
+ *  - the server composes FOUR gates (structural, external, shadowPresence,
+ *    releaseSignature — assess-dispatch-readiness.ts); the copy merged two, so a
+ *    sequence with zero completed Shadow Review runs, or no §11.70 release
+ *    signature, rendered "cleared to dispatch" while the server said otherwise;
+ *  - the copy still did `Number.isFinite(x) ? x : 0`, the coercion the server
+ *    deliberately inverted (dispatch-gate.ts) because it made "could not
+ *    determine" read as "none".
+ *
+ * A recomputed verdict cannot track a gate set that grows. DispatchReadiness.tsx
+ * now consumes the server's composed `gate` and treats its absence as
+ * unanswered, not cleared. One canonical implementation, server-side. */
 
 

@@ -62,6 +62,7 @@ import {
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
+import { requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider } from '../../services/storage/index.js';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
@@ -1385,8 +1386,24 @@ export default function createProjectVaultRoutes(): Router {
      taxonomy check, the UPDATE and its §11 audit row in one transaction — lives
      in vault-placement.service.ts, because AnA now files documents too and a
      second copy of a governed write is how the two drift apart. This handler
-     parses the request and renders the outcome. */
-  router.post('/:id/file', async (req: Request, res: Response) => {
+     parses the request and renders the outcome.
+
+     ROLE-GATED, unlike everything above it. This router is mounted with
+     `authenticateToken` and nothing else (register-clinical-intel-routes.ts:187),
+     so until now ANY member of the organization could commit a filing decision —
+     including a `viewer`, the one organization role whose whole meaning is that
+     it does not write. The decision is governed: it moves a regulatory document
+     to a dossier folder and writes a Part 11 audit row naming the person as
+     having made it, so a viewer could author an attributable governed record.
+
+     The READS above are deliberately left open. A viewer enumerating and
+     downloading their own organization's dossier is the viewer role working as
+     intended, not a gap — the gap was only ever the write.
+
+     `requireEditorAccess` is the repo's ONE governed-write gate (the comment on
+     it records the four drifted copies it replaced); using it rather than a
+     local role check is the whole point of it existing. */
+  router.post('/:id/file', requireEditorAccess, async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
     const userId: number | null = (req as any).user?.id ?? null;
