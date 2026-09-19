@@ -61,6 +61,12 @@ describe('useAcceptAnaDraft', () => {
     const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
     expect(headers['x-organization-id']).toBe('7');
     expect(headers['Content-Type']).toBe('application/json');
+    // The id is interpolated straight into the path, so asserting only on
+    // headers let a wrong-shaped argument through: the hook was being called
+    // with an object, which is truthy, so it sailed past its own null guard and
+    // built `/api/cerv2-sections/[object Object]/accept-ana-draft`. Green suite,
+    // red typecheck, unreachable route.
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/cerv2-sections/11/accept-ana-draft');
   });
 
   it('does not put the raw error envelope on screen', async () => {
