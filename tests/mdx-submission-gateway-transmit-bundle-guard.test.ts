@@ -111,7 +111,10 @@ function makeApp(orgId = CALLER_ORG) {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    (req as any).user = { id: 777, organizationId: orgId };
+    /* A role: transmit is role-gated. This harness attached none and still
+       reached the bundle guards, which is what it failed to notice. */
+    (req as any).user = { id: 777, organizationId: orgId, role: 'admin' };
+    (req as any).userRole = 'admin';
     next();
   });
   app.use('/api/mdx', gatewayRouter);
