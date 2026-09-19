@@ -542,6 +542,7 @@ export function AnaRail({
   onSteer,
   liveDrive,
   work,
+  onNewThread,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -556,6 +557,12 @@ export function AnaRail({
    *  a conversation or dismissed it — the rail only renders it when present. */
   welcome?: OnboardingWelcome | null;
   onDismissWelcome?: () => void;
+  /** Starts a fresh AnA thread — aborts any in-flight run, clears the rail
+   *  transcript, and drops the thread id so the next send opens a new server
+   *  thread. Prior threads persist and are reachable from the
+   *  conversation-thread surface, so this is non-destructive. An absent handler
+   *  disables the button rather than leaving it inert. */
+  onNewThread?: () => void;
   /**
    * Mid-run control. The server has supported pause / resume / cancel /
    * interject at the agentic loop's round boundaries since run control
@@ -745,7 +752,14 @@ export function AnaRail({
               {I.activity}
             </button>
           )}
-          <button type="button" className="tb-btn" title="New thread">
+          <button
+            type="button"
+            className="tb-btn"
+            title="New thread"
+            aria-label="New thread"
+            onClick={onNewThread}
+            disabled={!onNewThread}
+          >
             {I.plus}
           </button>
           <button type="button" className="tb-btn" onClick={() => setOpen(false)} title="Collapse · ⌘\">

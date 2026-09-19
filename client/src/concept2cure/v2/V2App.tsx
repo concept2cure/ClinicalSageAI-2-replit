@@ -836,6 +836,10 @@ export function V2App() {
           onAct={onAct}
           welcome={welcome}
           onDismissWelcome={() => set('welcomeDismissed', true)}
+          /* "New thread" — was an inert button. Aborts any run, clears the rail
+             transcript and starts a fresh server thread; the prior thread stays
+             in history (conversation-thread surface), so this is non-destructive. */
+          onNewThread={anaChat.reset}
           onNav={nav}
           // Scopes composer uploads to the active project, so extracted text
           // lands in that project's memory — the same id useAnaChat uses.
