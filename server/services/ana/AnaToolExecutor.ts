@@ -169,6 +169,8 @@ import {
   buildAdaptationNote,
   mapWithConcurrency,
   CANCELLED_TOOL_RESULT,
+  ToolRunCancelled,
+  abortRace,
   type ToolCall,
   type ModelTurn,
   type ToolResultEntry,
@@ -15076,6 +15078,88 @@ registerDocumentCatalogHandlers(registerToolHandler);
 // Agentic Execution Loop
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Take the operator turns a checkpoint queued, emptying the caller's array.
+ *
+ * `splice`, not a reassignment: the array is CALLER-OWNED, and reassigning a
+ * local would leave theirs full so every steer replayed on every later round.
+ *
+ * Callers splice these in AFTER the tool results. Order matters twice over: the
+ * gateway requires an inline system turn to follow a user turn, and a redirect
+ * read after the evidence is one the model applies to THIS round rather than
+ * one it has already reasoned past. That is the same placement the streaming
+ * route uses, deliberately — a steer landing in a different position on a
+ * different surface would be a different instruction.
+ */
+/**
+ * Run one tool handler, raced against the stop.
+ *
+ * Two halves, and only together do they do anything. The signal placed in the
+ * handler's CONTEXT lets a handler that makes an outbound request abandon it;
+ * the RACE stops the round waiting for one that cannot. Neither truly cancels a
+ * handler — an orphaned call settles into a void, which is why
+ * CANCELLED_TOOL_RESULT never claims the work was undone — but together they
+ * are the difference between a stop that lands in a second and one that waits
+ * out a forty-second search.
+ *
+ * A cancelled tool is deliberately NOT given an `errorMessage`.
+ * `buildAdaptationNote` turns this round's errorMessages into a
+ * course-correction note for the next model turn, and a person pressing stop is
+ * not a failure for the model to adapt around: telling it to try a different
+ * approach would be acting on a decision that said to stop.
+ */
+async function runOneTool(
+  handler: ToolHandler,
+  call: ToolCall,
+  toolContext: ToolContext | undefined,
+  signal: AbortSignal | undefined
+): Promise<{ call: ToolCall; result: string; errorMessage?: string }> {
+  try {
+    const result = await Promise.race([
+      handler(call.input, { ...(toolContext ?? {}), signal } as ToolContext),
+      abortRace(signal),
+    ]);
+    return { call, result };
+  } catch (error: any) {
+    if (error instanceof ToolRunCancelled) {
+      return { call, result: JSON.stringify(CANCELLED_TOOL_RESULT(call.name)) };
+    }
+    return {
+      call,
+      result: JSON.stringify({
+        error: `Tool execution failed: ${error?.message ?? 'unknown error'}`,
+        tool: call.name,
+      }),
+      errorMessage: error?.message ?? 'unknown error',
+    };
+  }
+}
+
+/**
+ * One result per call, each SAYING it was cancelled.
+ *
+ * This replaces `return []`, which handed back ZERO entries for a round that
+ * had N calls. The loop's contract is one ToolResultEntry per ToolCall, and
+ * everything downstream maps over these: the per-result cap, the round budget,
+ * and the grounding corpus, whose whole claim is that it holds exactly what the
+ * model saw. A dropped entry is not a step that produced nothing — it is a step
+ * that VANISHES, and afterwards reads as one nobody ever asked for.
+ *
+ * Uses the same helper as the streaming route so the two surfaces cannot
+ * describe the same event differently.
+ */
+function cancelledRoundEntries(calls: ToolCall[]): ToolResultEntry[] {
+  return calls.map(call => ({
+    tool_use_id: call.id,
+    name: call.name,
+    content: JSON.stringify(CANCELLED_TOOL_RESULT(call.name)),
+  }));
+}
+
+function drainOperatorTurns(queued: GatewayMessage[] | undefined): GatewayMessage[] {
+  return queued && queued.length > 0 ? queued.splice(0, queued.length) : [];
+}
+
 export interface AgenticOptions {
   /** Maximum tool-use rounds before forcing stop */
   maxRounds?: number;
@@ -15103,6 +15187,21 @@ export interface AgenticOptions {
    * wrapper was not forwarding it.
    */
   checkpoint?: LoopCheckpoint;
+  /**
+   * Operator turns a checkpoint has queued for the next model turn — a steer.
+   *
+   * Caller-owned and drained here, the same shape the streaming route uses.
+   * Without it a checkpoint could pause and cancel but never actually REDIRECT:
+   * `consumeInterjections` drains the run row atomically, so a steer read by a
+   * checkpoint with nowhere to put it is gone from the row AND never reached
+   * the model. The person would watch their redirect be accepted, recorded in
+   * the control lineage, and silently do nothing.
+   *
+   * A mutable array rather than a callback because the checkpoint runs BETWEEN
+   * rounds and the splice happens INSIDE the next one; a callback would have to
+   * reach back into this function's message list anyway.
+   */
+  operatorTurns?: GatewayMessage[];
 }
 
 /**
@@ -15176,13 +15275,7 @@ export async function executeAgenticLoop(
     // So a cancelled tool returns a result SAYING it was cancelled, the same
     // way the streaming path does. Same helper, so the two surfaces cannot
     // describe the same event differently.
-    if (signal?.aborted) {
-      return calls.map(call => ({
-        tool_use_id: call.id,
-        name: call.name,
-        content: JSON.stringify(CANCELLED_TOOL_RESULT(call.name)),
-      }));
-    }
+    if (signal?.aborted) return cancelledRoundEntries(calls);
     const ran = await mapWithConcurrency(
       calls,
       async (call): Promise<{ call: ToolCall; result: string; errorMessage?: string }> => {
@@ -15197,19 +15290,7 @@ export async function executeAgenticLoop(
             errorMessage: 'no handler registered',
           };
         }
-        try {
-          const result = await handler(call.input, options?.toolContext);
-          return { call, result };
-        } catch (error: any) {
-          return {
-            call,
-            result: JSON.stringify({
-              error: `Tool execution failed: ${error?.message ?? 'unknown error'}`,
-              tool: call.name,
-            }),
-            errorMessage: error?.message ?? 'unknown error',
-          };
-        }
+        return runOneTool(handler, call, options?.toolContext, signal);
       },
       4,
     );
@@ -15254,6 +15335,9 @@ export async function executeAgenticLoop(
           .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
           .join('\n\n') + adaptationSuffix,
     });
+
+    // Steers ride AFTER the tool results. See drainOperatorTurns.
+    loopMessages.push(...drainOperatorTurns(options?.operatorTurns));
 
     const roundRequest: GatewayRequest = { ...request, messages: loopMessages, signal };
     if (!includeTools) {

@@ -44,8 +44,9 @@ const EXECUTOR = readFileSync(
 
 /** The shipped barge-in branch, extracted so a paraphrase cannot drift from it. */
 const BARGE_IN = (() => {
-  const m = /if \(signal\?\.aborted\) \{[\s\S]*?\n    \}/.exec(EXECUTOR);
-  return m ? m[0] : '';
+  const m = /if \(signal\?\.aborted\) return [^\n]*/.exec(EXECUTOR);
+  const helper = /function cancelledRoundEntries\([\s\S]*?\n\}/.exec(EXECUTOR);
+  return `${m ? m[0] : ''}\n${helper ? helper[0] : ''}`;
 })();
 
 describe('the cancelled-round shape', () => {
@@ -105,5 +106,75 @@ describe('the wrapper no longer drops the round', () => {
     // wrapper not forwarding it is why every non-SSE caller had cancel-only
     // control while the SSE route had all four.
     expect(EXECUTOR).toMatch(/checkpoint: options\.checkpoint/);
+  });
+});
+
+describe('a steer on the non-SSE path reaches the model', () => {
+  it('drains the queued operator turns into the next round', () => {
+    // The trap this closes: `checkpoint` is a public option on AgenticOptions,
+    // documented for the non-SSE callers. A checkpoint built the obvious way
+    // calls consumeInterjections — which drains the run row ATOMICALLY. With
+    // nowhere to put what it drained, the steer would be gone from the row AND
+    // never reach the model: the person watches their redirect be accepted,
+    // recorded in the control lineage, and silently do nothing.
+    //
+    // The splice is `splice(0, length)`, not a reassignment, because the array
+    // is CALLER-OWNED. Reassigning a local would leave the caller's array full
+    // and replay every steer on every subsequent round.
+    expect(EXECUTOR).toMatch(/queued\.splice\(0, queued\.length\)/);
+  });
+
+  it('places them AFTER the tool results, as the streaming route does', () => {
+    // Order matters twice: the gateway requires an inline system turn to follow
+    // a user turn, and a redirect read after the evidence is one the model
+    // applies to THIS round rather than one it has already reasoned past. A
+    // steer landing in a different position on a different surface would be a
+    // different instruction.
+    const spliceAt = EXECUTOR.indexOf('drainOperatorTurns(options?.operatorTurns)');
+    const toolResultsAt = EXECUTOR.indexOf('[Tool Result for ${tr.name}');
+    expect(toolResultsAt).toBeGreaterThan(0);
+    expect(spliceAt).toBeGreaterThan(toolResultsAt);
+  });
+
+  it('is declared on the public options, beside the checkpoint it serves', () => {
+    expect(EXECUTOR).toMatch(/operatorTurns\?: GatewayMessage\[\];/);
+  });
+});
+
+describe('a stop lands DURING a tool, not after it', () => {
+  it('races each handler against the signal', () => {
+    // Without the race, a stop pressed during a forty-second search waited out
+    // the search. The SSE path closed this when stop started landing mid-step;
+    // the four non-SSE callers had no equivalent — there was no abortRace
+    // anywhere in this module.
+    expect(EXECUTOR).toMatch(/Promise\.race\(\[/);
+    expect(EXECUTOR).toMatch(/abortRace\(signal\)/);
+  });
+
+  it('puts the signal INTO the handler context, not only around it', () => {
+    // The two halves do different work: the context signal lets a handler that
+    // makes an outbound request abandon it; the race stops the ROUND waiting
+    // for one that cannot. Only together is a stop both prompt and clean.
+    expect(EXECUTOR).toMatch(/\{ \.\.\.\(toolContext \?\? \{\}\), signal \}/);
+  });
+
+  it('a CANCELLED tool is not reported as a FAILED tool', () => {
+    // buildAdaptationNote turns this round's errorMessages into a
+    // course-correction note for the next model turn. A person pressing stop
+    // is not a failure for the model to adapt around — telling it to try a
+    // different approach would be acting on a decision that said to stop. So
+    // the cancelled branch returns no errorMessage at all.
+    const runner = /async function runOneTool\([\s\S]*?\n\}/.exec(EXECUTOR)?.[0] ?? '';
+    expect(runner).toMatch(/instanceof ToolRunCancelled/);
+    const cancelledBranch = /instanceof ToolRunCancelled\) \{[\s\S]*?\n    \}/.exec(runner)?.[0] ?? '';
+    expect(cancelledBranch).toMatch(/CANCELLED_TOOL_RESULT/);
+    expect(cancelledBranch).not.toMatch(/errorMessage/);
+  });
+
+  it('a genuine tool failure still carries its errorMessage', () => {
+    // The distinction has to cut both ways: a real failure must still reach
+    // buildAdaptationNote, or the model stops learning from broken tools.
+    const runner = /async function runOneTool\([\s\S]*?\n\}/.exec(EXECUTOR)?.[0] ?? '';
+    expect(runner).toMatch(/errorMessage: error\?\.message/);
   });
 });
