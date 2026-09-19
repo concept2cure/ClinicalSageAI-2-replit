@@ -62,17 +62,40 @@ export function mountPlanRoutes(router: Router): void {
       let planRunId: string | null = null;
       if (persist) {
         const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-        const persisted = await createGoalPlanRun({
-          organizationId: orgId ? Number(orgId) : null,
-          threadId: thread_id || null,
-          route: '/api/ana-ri/plan',
-          goalPlan,
-          metadata: {
-            intentLens: orchestration.detectedIntent.lens,
-            submissionType: orchestration.detectedSubmissionType,
-          },
-        });
-        planRunId = persisted.id;
+        try {
+          const persisted = await createGoalPlanRun({
+            organizationId: orgId ? Number(orgId) : null,
+            threadId: thread_id || null,
+            route: '/api/ana-ri/plan',
+            goalPlan,
+            metadata: {
+              intentLens: orchestration.detectedIntent.lens,
+              submissionType: orchestration.detectedSubmissionType,
+            },
+          });
+          planRunId = persisted.id;
+        } catch {
+          // `persist` was the request. A run that did not persist is not a run,
+          // and answering 200 with an id that 404s on the very next read is the
+          // fabrication this fails closed against.
+          //
+          // Caught here rather than left to the handler's outer catch so the
+          // client gets a precise code instead of a generic planner error
+          // carrying a raw Postgres message; the message itself stays in the
+          // server log, where kernel-plan-runtime warns before it throws.
+          //
+          // The plan preview computed fine and is discarded with the failed
+          // write. That is the right trade — the caller asked for persistence
+          // and did not get it — and a caller who wants only the preview
+          // already has that path: omit `persist`.
+          return sendError(
+            res,
+            500,
+            'Plan run could not be persisted',
+            null,
+            'PLAN_PERSIST_FAILED',
+          );
+        }
       }
 
       return sendSuccess(res, {

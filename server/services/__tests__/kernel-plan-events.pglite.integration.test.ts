@@ -171,3 +171,45 @@ describe('a state change and its record land together', () => {
     expect(rows[0].status).toBe('active');
   });
 });
+
+describe('an unpersisted run is not handed back as if it existed', () => {
+  const SERVICE_SRC = SERVICE;
+  const ROUTE = fs.readFileSync(
+    path.join(repoRoot, 'server', 'routes', 'ana-ri', 'plan.ts'),
+    'utf8',
+  );
+
+  it('createGoalPlanRun rethrows instead of returning a phantom id', () => {
+    // It used to log a warning and fall through to `return { id }`, so a caller
+    // that asked for persistence got an id referring to NO ROW. Every later use
+    // then failed on its own terms — GET /plan/:id 404s, advance and
+    // execute-next answer "Plan run not found", and /plan/:id/protocol writes
+    // audit rows pointing at nothing. A rolled-back transaction is not a result.
+    // Sliced to the NEXT export rather than matched with a non-greedy brace:
+    // the function contains nested blocks, so the obvious regex stops at the
+    // first inner `}` and reads only the opening lines.
+    const start = SERVICE_SRC.indexOf('export async function createGoalPlanRun');
+    const next = SERVICE_SRC.indexOf('\nexport ', start + 1);
+    const createFn = SERVICE_SRC.slice(start, next === -1 ? undefined : next);
+    expect(start).toBeGreaterThan(-1);
+    expect(createFn).toMatch(/throw error;/);
+    // The success path is unchanged: still resolves to { id }.
+    expect(createFn).toMatch(/return \{ id \};/);
+  });
+
+  it('the one caller answers a precise failure, not a 200 with a dead id', () => {
+    // An earlier comment deferred this as "a change to this function's
+    // signature and to every caller". There is exactly one caller and the
+    // signature did not change — the premise was false.
+    expect(ROUTE).toMatch(/PLAN_PERSIST_FAILED/);
+    expect(ROUTE).toMatch(/catch \{/);
+  });
+
+  it('the failure is caught at the call site, not left to the outer handler', () => {
+    // Left to the outer catch, the client would get a generic planner error
+    // carrying a raw Postgres message. The precise code is the point.
+    const persistBlock = /if \(persist\) \{[\s\S]*?\n      \}/.exec(ROUTE)?.[0] ?? '';
+    expect(persistBlock).toMatch(/createGoalPlanRun/);
+    expect(persistBlock).toMatch(/PLAN_PERSIST_FAILED/);
+  });
+});

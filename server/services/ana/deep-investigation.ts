@@ -128,11 +128,17 @@ export async function startDeepInvestigation(
   const pool = getPool();
   try {
     const active = await pool.query(
+      // The window is STALE_AFTER_MS, not a literal restatement of it. A cap
+      // that counted a different set of rows than `isInvestigationStale` calls
+      // alive is precisely the disagreement run-status.ts owns this number to
+      // prevent, and this file re-exports it to say so. Same shape
+      // `reapOrphanedRuns` already uses for the same constant: make_interval
+      // over the milliseconds divided down.
       `SELECT count(*)::int AS n FROM ana_deep_investigations
        WHERE status IN ('queued','running')
          AND (organization_id IS NOT DISTINCT FROM $1)
-         AND heartbeat_at > NOW() - INTERVAL '5 minutes'`,
-      [input.organizationId ?? null],
+         AND heartbeat_at > NOW() - make_interval(secs => $2)`,
+      [input.organizationId ?? null, Math.round(STALE_AFTER_MS / 1000)],
     );
     const running = active.rows[0]?.n ?? 0;
     if (running >= MAX_CONCURRENT_INVESTIGATIONS) {
