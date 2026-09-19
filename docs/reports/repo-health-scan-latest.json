@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T02:10:13.533Z",
+  "generatedAt": "2026-09-19T02:20:40.186Z",
   "git": {
-    "sha": "c5fa95c8c2f6a718c62bccc97efee154f3fe38ee",
+    "sha": "8c3b4c585f10503f72d300015c23572ad5834392",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1940,7 +1940,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1029061
+        "bytes": 1031109
       },
       {
         "file": "shared/schema.ts",
@@ -1956,7 +1956,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 331417
+        "bytes": 333162
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
@@ -2118,11 +2118,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19939
+        "lines": 19980
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7527
+        "lines": 7598
       },
       {
         "file": "server/statistics-service.ts",

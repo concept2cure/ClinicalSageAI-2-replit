@@ -218,6 +218,7 @@
     "ci:dependency-risk:reseal": "node scripts/ci/reseal-dependency-risk-ledger.mjs",
     "ci:eslint-ratchet": "node scripts/ci/check-eslint-warning-ratchet.mjs",
     "ci:eslint-ratchet:write-baseline": "node scripts/ci/check-eslint-warning-ratchet.mjs --write-baseline",
+    "ci:eslint-ratchet:since": "node scripts/ci/check-eslint-warning-ratchet.mjs --since",
     "test:ci-scripts": "node --test scripts/ci/__tests__/*.test.mjs",
     "test:dependency-risk": "node --test scripts/ci/__tests__/dependency-risk-gate.test.mjs",
     "ci:pptx-image-reachability": "node scripts/ci/check-pptx-image-reachability.mjs",
