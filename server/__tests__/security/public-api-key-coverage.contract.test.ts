@@ -59,6 +59,14 @@ vi.mock('../../services/endpoint-recommender-service.js', () => ({
     getComprehensiveEndpointRecommendations: vi.fn(async () => ({})),
   }),
 }));
+vi.mock('../../services/vault/vault-document-index.service.js', () => ({
+  listVaultDocuments: vi.fn(async () => ({ documents: [], total: 0 })),
+  getVaultDocument: vi.fn(async () => null),
+  isUuid: () => true,
+  VaultStoreUnavailableError: class extends Error {},
+  VAULT_CLASSIFICATIONS: ['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC'],
+  VAULT_PROCESSING_STATUSES: ['PENDING', 'EXTRACTING', 'VECTORIZING', 'INDEXED', 'FAILED', 'ARCHIVED'],
+}));
 vi.mock('../../services/precedent-engine.js', () => ({
   precedentEngine: {
     search: vi.fn(async () => []),
@@ -86,6 +94,8 @@ const DATA_ROUTES = [
   '/api/v1/endpoints/recommend',
   '/api/v1/precedent/search',
   '/api/v1/trial-design/suggest',
+  '/api/v1/documents',
+  '/api/v1/documents/2f1c9d8e-0b3a-4c5d-8e7f-a1b2c3d4e5f6',
 ];
 
 // Intentionally public — must stay reachable WITHOUT a key.

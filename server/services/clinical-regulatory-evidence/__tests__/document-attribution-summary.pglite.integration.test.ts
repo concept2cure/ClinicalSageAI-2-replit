@@ -53,6 +53,11 @@ function migration(rel: string): string {
   return fs.readFileSync(path.resolve(here, '../../../../', rel), 'utf8');
 }
 
+/** Checksum each source carried when it was created, so a citation can record
+ *  the value that was current — recordSourceSpan copies it, and a fixed stand-in
+ *  would make EVERY source span born stale and the stale test vacuous. */
+const sourceChecksums = new Map<number, string>();
+
 /** Insert a span directly: these tests are about the arithmetic, not the writers. */
 async function span(opts: {
   kind: 'cre_evidence_source' | 'author_assertion' | 'accepted_machine_draft' | 'machine_draft';
@@ -69,7 +74,7 @@ async function span(opts: {
          (organization_id, document_table, document_id, char_start, char_end,
           span_text_sha256, provenance_kind, source, reference_id, payload_sha256, usage)
        VALUES ($1,$2,$3,$4,$5,$6,$7,'cre_evidence_source',$8,$9,'quoted')`,
-      [...common, String(opts.sourceId), 'c'.repeat(64)],
+      [...common, String(opts.sourceId), sourceChecksums.get(opts.sourceId!) ?? 'unknown'],
     );
     return;
   }
@@ -109,7 +114,9 @@ async function makeSource(checksum: string): Promise<number> {
      VALUES ($1,'tenant_private','client_document','csr.pdf',$2,'ingested','extracted') RETURNING id`,
     [ORG, checksum],
   );
-  return Number((rows[0] as any).id);
+  const id = Number((rows[0] as any).id);
+  sourceChecksums.set(id, checksum);
+  return id;
 }
 
 beforeAll(async () => {
@@ -128,6 +135,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await pglite.exec(`DELETE FROM document_span_lineage; DELETE FROM cre_evidence_sources;`);
+  sourceChecksums.clear();
 });
 
 describe('summarizeDocumentAttribution', () => {
@@ -195,6 +203,11 @@ describe('summarizeDocumentAttribution', () => {
   it('reports stale citations as stale AND still sourced, never as unattributed', async () => {
     const sourceId = await makeSource('current-checksum');
     await span({ kind: 'cre_evidence_source', start: 0, end: 30, sourceId });
+
+    // Control: a citation recording the checksum that is current is NOT stale.
+    // Without this the assertion below would pass even if nothing ever moved.
+    expect((await summarizeDocumentAttribution(ORG, DOC, 30, exec as any)).staleChars).toBe(0);
+
     // The source moves underneath the citation.
     await exec.query(`UPDATE cre_evidence_sources SET checksum = 'moved' WHERE id = $1`, [sourceId]);
 
@@ -226,6 +239,39 @@ describe('summarizeDocumentAttribution', () => {
       machineDrafted: 0,
       machineDraftedUnaccepted: 0,
     });
+  });
+
+  it('projects the spans for painting — clipped, ordered, and without the checksum', async () => {
+    const sourceId = await makeSource('s1');
+    await span({ kind: 'author_assertion', start: 60, end: 90 });
+    await span({ kind: 'cre_evidence_source', start: 0, end: 500, sourceId }); // past the end
+
+    const s = await summarizeDocumentAttribution(ORG, DOC, 100, exec as any);
+
+    // Document order, not insertion order — a painter walks them in sequence.
+    expect(s.spans.map((sp) => [sp.charStart, sp.charEnd])).toEqual([
+      [0, 100],
+      [60, 90],
+    ]);
+    expect(s.spans[0].provenanceKind).toBe('cre_evidence_source');
+    expect(s.spans[0].sourceTitle).toBe('csr.pdf');
+    expect(s.spans[0].stale).toBe(false);
+
+    // A projection, not the row: nothing here hands a browser a checksum or an
+    // actor id it has no use for.
+    expect(Object.keys(s.spans[0]).sort()).toEqual([
+      'charEnd', 'charStart', 'provenanceKind', 'sourceTitle', 'stale', 'usage',
+    ]);
+  });
+
+  it('marks a span whose source moved as stale for the painter too', async () => {
+    const sourceId = await makeSource('before');
+    await span({ kind: 'cre_evidence_source', start: 0, end: 30, sourceId });
+    await exec.query(`UPDATE cre_evidence_sources SET checksum = 'after' WHERE id = $1`, [sourceId]);
+
+    const s = await summarizeDocumentAttribution(ORG, DOC, 30, exec as any);
+    expect(s.spans).toHaveLength(1);
+    expect(s.spans[0].stale).toBe(true);
   });
 
   it('reports empty content as empty rather than dividing by zero', async () => {

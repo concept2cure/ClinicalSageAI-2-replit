@@ -181,6 +181,47 @@ a mapping stuck on page 1 cannot pass. Reverting the write to NULL turns it red.
 `server/services/ocr/__tests__/page-offsets.test.ts` covers the refusals: an
 unfindable page, out-of-order pages, empty input.
 
+### A file sent in chat was indexed by its first 16,000 characters
+
+**Writer:** `server/services/uploads/upload-retrieval-atom.ts` ·
+**Tripwires:** its unit suite, `tests/db/document-catalog.dbtest.ts`,
+`document-passage-tools.test.ts`
+
+Both embedding paths in `server/routes/chat/upload.ts` did the same thing:
+
+```ts
+const boundedContent = extractedText.substring(0, 16000);
+INSERT INTO lumen_data_atoms (… content …) VALUES (… boundedContent …)
+await embeddingService.embedAtom(atomId);
+```
+
+One atom per file, holding its first 16,000 characters. A clinical protocol
+runs 300–600 KB of extracted text, so that is roughly the first four pages of a
+hundred and fifty. The rest was not embedded, not stored on the atom, and not
+recorded as missing — and a retrieval hit returned those characters AS the
+document's content. The honest answer, "I have the opening of this file and
+nothing else", was one the model had no way to give.
+
+That is this workstream's founding complaint sitting in the pipeline itself:
+grab a page, call it the document.
+
+The limit is not the defect — an atom is a single embedding, and an embedding
+over more text than that stops discriminating between the passages inside it.
+Pretending the limit was not there was the defect. So the prefix now knows it
+is a prefix: one writer for both paths (they were near-identical), the two
+lengths recorded in `structured_data`, a cut taken at a paragraph boundary so
+the embedded text is not a half-sentence making a claim the document does not,
+and the upload response carrying `indexedWholeFile`.
+
+The remedy is a different pipeline, not a bigger number.
+`file_chat_upload_to_vault` runs the canonical vault ingest, which chunks and
+page-numbers every character. `vault.document_chunks.document_id` carries a
+hard foreign key to `vault.documents`, so an unfiled upload cannot be in the
+passage corpus at all — which is why `search_document_passages` now reports how
+many chat uploads sit outside it. It used to say "All 4 document(s) are in the
+passage index" while the file the question was about sat outside, and a miss
+read as an exhaustive search.
+
 ### The toggle the operator flipped was never read
 
 **Service:** `FeatureToggleService.readToggle` / `readFeatureState` ·

@@ -1291,6 +1291,24 @@ export interface DocumentAttributionSummary {
   };
   /** Subset of `byKind.fromSources` whose source has changed since it was cited. */
   staleChars: number;
+  /**
+   * The spans themselves, clipped to the current text, for a surface that
+   * paints attribution over the words rather than summarising it.
+   *
+   * A projection, not the rows: the client needs where, what kind, and what to
+   * name the source. It does not need `payload_sha256` or `asserted_by`, and a
+   * checksum is not something to hand to a browser merely because it was in the
+   * row the server happened to read.
+   */
+  spans: Array<{
+    charStart: number;
+    charEnd: number;
+    provenanceKind: string;
+    usage: string;
+    sourceTitle: string | null;
+    /** 'changed' when the cited source moved after it was cited. */
+    stale: boolean;
+  }>;
   generatedAt: string;
 }
 
@@ -1355,6 +1373,7 @@ export async function summarizeDocumentAttribution(
     unattributedChars: length,
     byKind: { fromSources: 0, authorAsserted: 0, machineDrafted: 0, machineDraftedUnaccepted: 0 },
     staleChars: 0,
+    spans: [],
     generatedAt: new Date().toISOString(),
   };
   if (length === 0) return base;
@@ -1408,5 +1427,20 @@ export async function summarizeDocumentAttribution(
     unattributedChars: Math.max(0, length - attributedChars),
     byKind,
     staleChars,
+    spans: spans
+      .map((sp) => {
+        const r = clip(sp);
+        return {
+          charStart: r.start,
+          charEnd: r.end,
+          provenanceKind: String(sp.provenanceKind),
+          usage: String(sp.usage),
+          sourceTitle: sp.sourceTitle ?? null,
+          stale: sp.state === 'changed',
+        };
+      })
+      // A span entirely past the end describes text that is no longer there.
+      .filter((sp) => sp.charEnd > sp.charStart)
+      .sort((a, b) => a.charStart - b.charStart),
   };
 }

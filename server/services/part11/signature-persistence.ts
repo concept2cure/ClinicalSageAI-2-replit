@@ -148,6 +148,34 @@ export const GOVERNED_REVOCATION_SIGNATURE_TYPE = 'governed-revocation';
 /** verification_status stamped on a signature a governed revocation supersedes. */
 export const REVOKED_VERIFICATION_STATUS = 'revoked';
 
+/**
+ * Whether a signature row has been taken out of force.
+ *
+ * `persistGovernedSignatureRevocation` below marks a withdrawal by setting
+ * `superseded_by` (the §11.70 append-only pointer), `is_valid = false`, and
+ * `verification_status = 'revoked'`. It deliberately leaves the signed content
+ * — `bound_payload_digest`, `binding_basis`, `signature_manifest` — byte
+ * identical, because §11.70 requires the superseded signature be retained
+ * unaltered. So a reader that inspects only the binding columns cannot tell a
+ * live signature from a revoked one, and ANY authorization check must consult
+ * these three.
+ *
+ * Canonical and exported: this module writes the withdrawal, so it owns the
+ * rule for reading it. Every path that decides whether a signature still
+ * authorizes something calls this rather than restating the predicate.
+ */
+export function isSignatureWithdrawn(row: {
+  verification_status?: unknown;
+  superseded_by?: unknown;
+  is_valid?: unknown;
+}): boolean {
+  return (
+    String(row.verification_status ?? '') === REVOKED_VERIFICATION_STATUS ||
+    row.superseded_by != null ||
+    row.is_valid === false
+  );
+}
+
 export type BindingBasis = (typeof BINDING_BASIS)[keyof typeof BINDING_BASIS];
 
 // ── Canonical JSON (deterministic bytes for digests) ─────────────────────────
