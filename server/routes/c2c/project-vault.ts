@@ -62,6 +62,7 @@ import {
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
+import { requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider } from '../../services/storage/index.js';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
@@ -1210,13 +1211,35 @@ export default function createProjectVaultRoutes(): Router {
          user text (quotes, OR, -negation) and never raises a syntax error, so a
          stray colon in a search box is a query, not a 500. */
       const MATCH = `vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000))
-                     @@ websearch_to_tsquery('english', $2)`;
+                     @@ websearch_to_tsquery('english', $3)`;
+
+      /** The program+tenant+match predicate, shared by the page and its count for
+       *  the same reason `uploadsWhere` above is shared: a total taken over a
+       *  different set than the rows is a wrong number, not a display detail.
+       *
+       *  The EXISTS carries the tenant boundary IN the statement. The route does
+       *  prove ownership first (the regulatory_programs SELECT above 404s when
+       *  the program is not this org's), so these reads were already scoped —
+       *  but `vault.documents` has no organization_id to filter on directly, its
+       *  own RLS is program-scoped through core.can_access_program(program_id),
+       *  and relying on a check twenty lines up means the next edit that moves
+       *  or copies this query loses the boundary silently. `ci:tenant-isolation`
+       *  flags raw SQL against a tenant-scoped table with no org reference in the
+       *  same statement, and it was right to: this is the shape that decays. */
+      const searchWhere = `d.program_id = $1 AND d.deleted_at IS NULL
+              AND EXISTS (
+                SELECT 1 FROM regulatory_programs rp
+                 WHERE rp.id = d.program_id
+                   AND rp.organization_id = $2
+                   AND rp.deleted_at IS NULL
+              )
+              AND ${MATCH}`;
 
       const counted = await pool.query(
         `SELECT count(*)::int AS total
            FROM vault.documents d
-          WHERE d.program_id = $1 AND d.deleted_at IS NULL AND ${MATCH}`,
-        [id, q],
+          WHERE ${searchWhere}`,
+        [id, orgId, q],
       );
 
       const rows = await pool.query(
@@ -1224,18 +1247,18 @@ export default function createProjectVaultRoutes(): Router {
                 d.folder_id, d.ctd_section, d.placement_status, d.created_at,
                 ts_rank_cd(
                   vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000)),
-                  websearch_to_tsquery('english', $2)
+                  websearch_to_tsquery('english', $3)
                 ) AS rank,
                 -- A snippet from the body so a hit on content is legible as one.
                 -- ts_headline is expensive, so it runs on the returned page only.
                 ts_headline('english', COALESCE(left(d.extracted_text, 900000), ''),
-                            websearch_to_tsquery('english', $2),
+                            websearch_to_tsquery('english', $3),
                             'MaxFragments=1, MaxWords=28, MinWords=8, ShortWord=2') AS snippet
            FROM vault.documents d
-          WHERE d.program_id = $1 AND d.deleted_at IS NULL AND ${MATCH}
+          WHERE ${searchWhere}
           ORDER BY rank DESC, d.created_at DESC
-          LIMIT $3 OFFSET $4`,
-        [id, q, limit, offset],
+          LIMIT $4 OFFSET $5`,
+        [id, orgId, q, limit, offset],
       );
 
       return res.json({
@@ -1385,8 +1408,24 @@ export default function createProjectVaultRoutes(): Router {
      taxonomy check, the UPDATE and its §11 audit row in one transaction — lives
      in vault-placement.service.ts, because AnA now files documents too and a
      second copy of a governed write is how the two drift apart. This handler
-     parses the request and renders the outcome. */
-  router.post('/:id/file', async (req: Request, res: Response) => {
+     parses the request and renders the outcome.
+
+     ROLE-GATED, unlike everything above it. This router is mounted with
+     `authenticateToken` and nothing else (register-clinical-intel-routes.ts:187),
+     so until now ANY member of the organization could commit a filing decision —
+     including a `viewer`, the one organization role whose whole meaning is that
+     it does not write. The decision is governed: it moves a regulatory document
+     to a dossier folder and writes a Part 11 audit row naming the person as
+     having made it, so a viewer could author an attributable governed record.
+
+     The READS above are deliberately left open. A viewer enumerating and
+     downloading their own organization's dossier is the viewer role working as
+     intended, not a gap — the gap was only ever the write.
+
+     `requireEditorAccess` is the repo's ONE governed-write gate (the comment on
+     it records the four drifted copies it replaced); using it rather than a
+     local role check is the whole point of it existing. */
+  router.post('/:id/file', requireEditorAccess, async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
     const userId: number | null = (req as any).user?.id ?? null;

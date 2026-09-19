@@ -679,18 +679,30 @@ on a preview branch predating the base table. Verified identical.)
 > `persistRun` path three times against a provisioned database: step-1 → step-2 →
 > step-3, no 42703, `updated_at` set.
 >
-> **Sub-item A is wrong, and the live state is a third thing.** The finding says
-> `20260629_orchestrator_region_check_alignment.sql` is on neither applier "while
-> the route accepts all 13" — implying the database holds `044b`'s narrow
-> four-value CHECK and rejects the other nine. It holds **no CHECK at all**: push
-> creates the table, so the `CHECK (region IN ('US','EU','JP','CA'))` that both
-> SQL files declare never runs, and `'us'` lowercase inserts cleanly. The
-> alignment migration is indeed on neither applier (0 hits in
-> `C2C_MIGRATION_FILES`, not referenced by the port). So the hazard is not a
-> route/DB mismatch — it is that the database enforces no region domain at all,
-> and any writer that bypasses the route's zod can store anything. Note also that
-> the route's enum has 13 values while the service's `RegionCode` type
-> (`server/services/module3-extensions.ts:30`) has four.
+> **Sub-item A is wrong, and FIXED 2026-09-18 — with a correction of my own.**
+> The finding says `20260629_orchestrator_region_check_alignment.sql` is on
+> neither applier "while the route accepts all 13", implying the database holds
+> the narrow four-value CHECK and rejects the other nine. It does not: push
+> creates the table, so the `CHECK (region IN ('US','EU','JP','CA'))` both SQL
+> files declare inline never runs.
+>
+> I first reported the live state as **no CHECK at all**, measured on a
+> provisioned database. That was an artifact: that database's install-fresh had
+> aborted at step 2 during the 2026-09-17/18 provisioning break, so the step-3
+> overlay never ran. The alignment file lives in the root `migrations/` tree,
+> which install-fresh DOES apply — so a healthy install already carried the
+> 13-value constraint, verified after install-fresh alone.
+>
+> The real gap was the other applier: absent from `C2C_MIGRATION_FILES`,
+> deploy-migrate never applied it, so an existing database never received the
+> widening and any later amendment to the file would have reached new installs
+> only. Same class as findings 3 and 5 and the sixteen tables `a8e1cff2` closed.
+> Now listed at set index 38, immediately after the port that creates the table;
+> amended to add the constraint `NOT VALID` with an opportunistic `VALIDATE`, so
+> it can never abort a deploy on a pre-existing off-list row while still enforcing
+> every new write. Note also, unreconciled: the route's enum has 13 values while
+> the service's `RegionCode` (`server/services/module3-extensions.ts:30`) has
+> four.
 >
 > **Sub-item B is confirmed, and the compliance document was wrong about it.**
 > The `steps.run_id` FK is `NO ACTION` live — neither the CASCADE both files
@@ -873,6 +885,26 @@ lineage. And `detected_by` is written by no code: it defaults to `'system'` on
 one shape and to `null` on the other, so `mapFinding` returns a different answer
 depending on how the database was built.
 
+## Finding 8 — CONFIRMED and FIXED 2026-09-17
+
+> **FIXED by `b9152a01`** — "The installer could not see the vault schema, and it
+> was hiding a missing table". Part 1 (the embedding gate) was already fixed and
+> confirmed rather than assumed. Part 2 was open and concealing
+> `vault.evidence_citations`, whose only creator was on no applier.
+>
+> One consequence that landed later and is worth recording here, because it was
+> caused by that fix: teaching install-fresh's step-2 count to SEE
+> schema-qualified tables also made it ASSERT them at step 2, where
+> `drizzle-kit push` runs — and push creates nothing outside `public`. Every
+> from-scratch install failed for 26 hours until `04490a08` moved that assertion
+> to 8/8, beside CORE_TABLES. Moving it immediately exposed three more tables in
+> the same position (`vault.document_chunks`, `vault.legal_holds`,
+> `vault.evidence_citations` again) whose root creators guard on `vault.documents`
+> — created only in step 6, three steps after the overlay ran, so the guard turned
+> "not yet" into success and they never existed on any fresh install.
+
+### Original finding, as written
+
 ## Finding 8 — two gates cannot see what they were written to catch
 
 Neither is a schema defect; both are reasons the defects above went unreported.
@@ -897,6 +929,33 @@ Neither is a schema defect; both are reasons the defects above went unreported.
 use, **does not exist** — and `enhancedEmbeddingService.ts`, which that file's
 header calls "the single approved runtime that consults it", does not import the
 policy at all. The policy and its runtime are unconnected.
+
+## Finding 9 — CONFIRMED and FIXED 2026-09-18
+
+> All three instances are closed, each verified rather than taken on trust.
+>
+> * `guardQuery` / `programBelongsToOrg` (`innovation-routes.ts`) — fixed upstream
+>   2026-09-10. `guardQuery` now returns `{ran: false, reason}` and logs
+>   (`GuardUnavailableError`), and `programBelongsToOrg` tracks `anySourceRan` so
+>   it cannot invent a verdict when every source failed. Read and confirmed live.
+> * `AnaToolExecutor.ts:16515` — inherits that fix through `programBelongsToOrg`,
+>   exactly as this finding predicted it would.
+> * `verifyProjectAccess` (`c2c/project-access.ts`) — **FIXED by `ecda812b`.** The
+>   `catch { return false }` now logs and propagates. All 36 call sites were
+>   checked rather than assumed: every one routes `false` to
+>   `sendError(res, 404, 'Project not found')` inside a handler whose own catch
+>   returns 500, so a did-not-run outcome is an operator-visible failure instead
+>   of a sentence about the caller's access. Deliberately NOT given the
+>   `isMissingTableError` fallback that `loadProjectSharingState` uses 30 lines up
+>   the same file: that reads sharing settings, where defaults are defensible;
+>   this is the authorization decision, where there is no safe default.
+>
+> Proven by making it fail: the five did-not-run cases are red against the parent
+> with "promise resolved 'false' instead of rejecting", while both denial cases
+> pass on either side — a genuine no-match and an unparseable id must still be
+> denied, not promoted to a 500.
+
+### Original finding, as written
 
 ## Finding 9 — authorization checks that report having run when they did not
 

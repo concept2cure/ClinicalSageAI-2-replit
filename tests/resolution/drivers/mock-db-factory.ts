@@ -198,16 +198,63 @@ export function createMockDb(state: ResolutionTestState) {
    * A StringChunk holds its text in `.value` as a string[]; params are separate
    * chunks and contribute no text.
    */
+  let versionSeq = 0;
+
+  /* Reconstruct a drizzle `sql` template's text, RECURSING into nested SQL.
+     sql.join() (which db/drizzle-queryable.ts uses to rebuild a $1-style query)
+     produces chunks that are themselves SQL objects, not StringChunks — a flat
+     map over .value yields '' for every one of them, so any query issued through
+     queryableFromDrizzle reconstructed as the empty string and matched no branch
+     below. That is what made the span-lineage writes invisible here. */
+  function chunkText(c: any): string {
+    if (c == null) return '';
+    if (typeof c === 'string') return c;
+    if (Array.isArray(c?.value)) return c.value.join('');
+    if (Array.isArray(c?.queryChunks)) return c.queryChunks.map(chunkText).join(' ');
+    return '';
+  }
+
   function sqlText(query: any): string {
     const chunks: any[] = query?.queryChunks ?? [];
     if (chunks.length === 0) return String(query?.sql ?? '');
-    return chunks
-      .map(c => (Array.isArray(c?.value) ? c.value.join('') : typeof c === 'string' ? c : ''))
-      .join(' ');
+    return chunks.map(chunkText).join(' ');
   }
 
   function mockExecute(query: any): Promise<{ rows: any[] }> {
     const queryStr = sqlText(query);
+
+    /* Staged rewrite version insert (ledger L177).
+       MUST be tested before the artifact-status branch below: stageRewrite uses
+       INSERT … SELECT … FROM concept2cure_artifacts, so it contains both
+       'concept2cure_artifacts' and 'SELECT' and would otherwise be answered with
+       a status row.
+
+       stageRewrite now reads RETURNING id and treats zero rows as "no such
+       artifact in this tenant" — it used to return true regardless, reporting a
+       rewrite the database never took. So this models the match honestly: a row
+       comes back only when the scenario actually has an artifact. */
+    if (queryStr.includes('INSERT INTO concept2cure_artifact_versions')) {
+      versionSeq += 1;
+      return Promise.resolve(
+        state.artifacts.length > 0 ? { rows: [{ id: `mock-version-${versionSeq}` }] } : { rows: [] },
+      );
+    }
+
+    /* Span lineage (ledger L177). stageRewrite now attributes the rewritten text
+       in the same transaction, and the span writer reads rows[0].id.
+
+       A STUB, not a model — in the spirit of the catch-all note at the bottom of
+       this function: these are decision-matrix tests, not storage tests. The
+       insert hands back an id, and the coverage read reports one span wide
+       enough to satisfy assertLineageCoversContent. What the gate actually
+       records is proven against the real schema in the PGlite lineage tests. */
+    if (queryStr.includes('document_span_lineage')) {
+      if (queryStr.includes('INSERT')) return Promise.resolve({ rows: [{ id: 'mock-span' }] });
+      if (queryStr.includes('char_start')) {
+        return Promise.resolve({ rows: [{ char_start: 0, char_end: 1_000_000 }] });
+      }
+      return Promise.resolve({ rows: [] });
+    }
 
     // Artifact status lookup
     if (queryStr.includes('concept2cure_artifacts') && queryStr.includes('SELECT')) {
@@ -277,6 +324,11 @@ export function createMockDb(state: ResolutionTestState) {
         return createUpdateChain(tName);
       },
       execute: mockExecute,
+      /* stageRewrite wraps its version write and its lineage in one transaction
+         (ledger L177). The mock has no real transaction to give it, so the
+         callback runs against the same execute — enough for these
+         decision-matrix tests, which assert outcomes rather than atomicity. */
+      transaction: async (fn: (tx: any) => any) => fn({ execute: mockExecute }),
     },
     drivers: {
       supersession: supersessionDriver,

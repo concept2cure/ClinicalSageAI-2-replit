@@ -181,6 +181,33 @@ a mapping stuck on page 1 cannot pass. Reverting the write to NULL turns it red.
 `server/services/ocr/__tests__/page-offsets.test.ts` covers the refusals: an
 unfindable page, out-of-order pages, empty input.
 
+### The tenant tool deny-list holds on both chat paths
+
+**Helper:** `governedToolsetFor` (`server/services/ana/governed-toolset.ts`) ·
+**Tripwire:** `server/routes/__tests__/chat-path-parity.test.ts`
+
+The same one-of-two-doors shape as the rehydration above, one turn worse.
+`organizations.settings.anaToolPolicy.deny` lets a tenant switch an AnA tool off.
+Honouring it takes two steps — load the policy, filter the assembled toolset —
+and three call sites did both by hand while `POST /api/chat/send-message` did
+neither: it passed `getAllEnabledTools()` straight into relevance selection. A
+denied tool was denied on the streaming endpoint and still offered on the other.
+
+A capability wired to one door is a gap someone eventually notices. A GOVERNANCE
+CONTROL wired to one door does not fail visibly — it quietly does not hold, and
+the tenant finds out by watching the model use the tool they turned off.
+
+All three composers (both chat paths and deep-investigation) now go through one
+helper. Only the deny-list is applied, as `filterToolsByPolicy` documents: `allow`
+is scoped to governed mutations and enforced at execution, and applying it to the
+read toolset would strip every search tool the moment a tenant allowlisted one
+mutation. Relevance selection stays with each caller, which pins different tools
+for its own reasons — governance must not be entangled with relevance.
+
+The bootstrap tripwire became `chat-path-parity.test.ts`: one file enumerating
+the canonical chat entry points and asserting every cross-cutting concern holds
+on all of them, which is where the third instance of this shape belongs.
+
 ### Both chat paths rehydrate at session start
 
 **Helper:** `sessionBootstrapBlockFor` (`server/services/ana-session-bootstrap.ts`) ·

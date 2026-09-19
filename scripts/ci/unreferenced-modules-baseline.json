@@ -1,13 +1,12 @@
 {
   "$comment": "Modules under server/ or client/src/ that nothing in the repository references. This list may only shrink: delete the module, or wire it up, then regenerate with npm run ci:unreferenced-modules:write-baseline. Adding an entry by hand is a regression, not a fix.",
   "generatedBy": "scripts/ci/check-unreferenced-modules.mjs --write-baseline",
-  "count": 97,
+  "count": 94,
   "modules": [
     "client/src/setupTests.js",
     "server/academic-resource-upload.ts",
     "server/api/ectd/routes.ts",
     "server/api/labeling/routes.ts",
-    "server/api/neuro-symbolic/routes.ts",
     "server/api/semantic-search.js",
     "server/api/site-intel/routes.ts",
     "server/api/validation/index.js",
@@ -62,7 +61,6 @@
     "server/services/ai-governance/index.ts",
     "server/services/ana/index.ts",
     "server/services/analytical/acceptance.ts",
-    "server/services/analytical/lims.ts",
     "server/services/analytical/validationPlan.ts",
     "server/services/automation/index.ts",
     "server/services/biostats-signal-engine/index.ts",
@@ -98,7 +96,6 @@
     "server/utils/quality-utils.ts",
     "server/utils/templateRegistry.js",
     "server/utils/validateZip.js",
-    "server/validation/deviceValidation.js",
-    "server/workers/enhanced-ingestion-pipeline.ts"
+    "server/validation/deviceValidation.js"
   ]
 }

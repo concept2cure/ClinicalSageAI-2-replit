@@ -75,6 +75,60 @@ vi.mock('../../server/db', () => {
     return chain;
   };
 
+  const mockExec = vi.fn().mockImplementation((query: any) => {
+    // A drizzle StringChunk stringifies to "[object Object]" — its text lives
+    // in .value as a string[]. The previous String(queryChunks[0]) therefore
+    // matched nothing and every branch below fell through to { rows: [] }.
+    // Recurses into nested SQL: sql.join() (used by db/drizzle-queryable.ts to
+    // rebuild a $1-style query) produces chunks that are themselves SQL objects,
+    // so a flat map over .value returned '' for every query issued through
+    // queryableFromDrizzle — which is what made the span-lineage writes invisible.
+    const chunkText = (c: any): string => {
+      if (c == null) return '';
+      if (typeof c === 'string') return c;
+      if (Array.isArray(c?.value)) return c.value.join('');
+      if (Array.isArray(c?.queryChunks)) return c.queryChunks.map(chunkText).join(' ');
+      return '';
+    };
+    const chunks: any[] = query?.queryChunks ?? [];
+    const queryStr = chunks.length ? chunks.map(chunkText).join(' ') : String(query?.sql ?? '');
+
+    /* Staged rewrite version insert + its span lineage (ledger L177). Tested
+       BEFORE the concept2cure_artifacts/SELECT branch: stageRewrite uses
+       INSERT … SELECT … FROM concept2cure_artifacts, so it contains both tokens
+       and would otherwise be answered with a status row. It now reads RETURNING
+       id and treats zero rows as "no such artifact in this tenant", where it
+       used to return true regardless. The lineage answers are a stub — what the
+       gate really records is proven in the PGlite lineage tests. */
+    if (queryStr.includes('INSERT INTO concept2cure_artifact_versions')) {
+      return Promise.resolve({ rows: [{ id: 'mock-version' }] });
+    }
+    if (queryStr.includes('document_span_lineage')) {
+      if (queryStr.includes('INSERT')) return Promise.resolve({ rows: [{ id: 'mock-span' }] });
+      if (queryStr.includes('char_start')) {
+        return Promise.resolve({ rows: [{ char_start: 0, char_end: 1_000_000 }] });
+      }
+      return Promise.resolve({ rows: [] });
+    }
+
+    // ADR-0009 receipt persistence: INSERT … RETURNING id, and the executor
+    // treats a receipt it cannot persist as a FAILED execution. That is
+    // deliberate and is not relaxed for tests — the mock has to model the
+    // table instead.
+    if (queryStr.includes('bundle_execution_receipts')) {
+      return queryStr.includes('INSERT')
+        ? Promise.resolve({ rows: [{ id: 'mock-receipt-bundle-exec' }] })
+        : Promise.resolve({ rows: [] });
+    }
+    if (queryStr.includes('concept2cure_artifacts') && queryStr.includes('SELECT')) {
+      return Promise.resolve({ rows: [{ status: 'draft' }] });
+    }
+    if (queryStr.includes('supersession_records') && queryStr.includes('SELECT')) {
+      return Promise.resolve({ rows: [] });
+    }
+    return Promise.resolve({ rows: [] });
+  });
+
   return {
     db: {
       insert: vi.fn().mockImplementation((table: any) => {
@@ -163,34 +217,12 @@ vi.mock('../../server/db', () => {
       update: vi.fn().mockImplementation((table: any) => {
         return createChainedMock();
       }),
-      execute: vi.fn().mockImplementation((query: any) => {
-        // A drizzle StringChunk stringifies to "[object Object]" — its text lives
-        // in .value as a string[]. The previous String(queryChunks[0]) therefore
-        // matched nothing and every branch below fell through to { rows: [] }.
-        const chunks: any[] = query?.queryChunks ?? [];
-        const queryStr = chunks.length
-          ? chunks
-              .map(c => (Array.isArray(c?.value) ? c.value.join('') : typeof c === 'string' ? c : ''))
-              .join(' ')
-          : String(query?.sql ?? '');
-
-        // ADR-0009 receipt persistence: INSERT … RETURNING id, and the executor
-        // treats a receipt it cannot persist as a FAILED execution. That is
-        // deliberate and is not relaxed for tests — the mock has to model the
-        // table instead.
-        if (queryStr.includes('bundle_execution_receipts')) {
-          return queryStr.includes('INSERT')
-            ? Promise.resolve({ rows: [{ id: 'mock-receipt-bundle-exec' }] })
-            : Promise.resolve({ rows: [] });
-        }
-        if (queryStr.includes('concept2cure_artifacts') && queryStr.includes('SELECT')) {
-          return Promise.resolve({ rows: [{ status: 'draft' }] });
-        }
-        if (queryStr.includes('supersession_records') && queryStr.includes('SELECT')) {
-          return Promise.resolve({ rows: [] });
-        }
-        return Promise.resolve({ rows: [] });
-      }),
+      execute: mockExec,
+      /* stageRewrite wraps its version write and its lineage in one
+         transaction (ledger L177). No real transaction to give it here, so
+         the callback runs against the same execute — enough for these
+         outcome-level tests. */
+      transaction: async (fn: (tx: any) => any) => fn({ execute: mockExec }),
     },
   };
 });

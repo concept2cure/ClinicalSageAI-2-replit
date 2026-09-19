@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { getPool } from '../../db';
+import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
 
 interface WritebackInput {
   organizationId: number;
@@ -85,6 +86,26 @@ export async function registerArtifactWithGovernance(input: WritebackInput): Pro
         input.userId,
         now,
       ]
+    );
+
+    /* Span lineage, in the same transaction as the artifact and its version
+       (ledger L177, the pattern of L160's writers). This is the shared writer
+       behind compute output, an accepted conversation-OS proposal and a
+       generated draft, so a regulatory document created through any of its four
+       callers used to arrive with provenance and an audit row but no record of
+       where its sentences came from.
+
+       Author, not source: the content reaches this function already composed and
+       no retrieved Data Room chunks travel with it, so the honest attribution is
+       that the acting user asserted these clauses — inventing a source here
+       would be the dishonesty the attribution subsystem exists to prevent. A
+       lineage gap rolls the whole writeback back, artifact included. */
+    await enforceAuthorLineage(
+      client,
+      input.organizationId,
+      { documentTable: 'concept2cure_artifacts', documentId: String(artifactPk) },
+      input.content,
+      String(input.userId),
     );
 
     const provenanceEventId = `prov_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;

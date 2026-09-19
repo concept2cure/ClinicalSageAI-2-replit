@@ -23,7 +23,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getAuthHeaders } from '../../../utils/authToken';
-import { extractPendingSignoffs, type PendingSignoff } from './useGovernedAction';
+import {
+  extractPendingSignoffs,
+  pendingSignoffFromApproval,
+  type PendingSignoff,
+} from './useGovernedAction';
 import type { BriefingBookPremortemResult } from './BriefingBookPanel';
 import i18n from '@/i18n';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
@@ -361,11 +365,25 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     [control],
   );
 
-  const stop = useCallback(() => {
+  const stop = useCallback(async () => {
     // Cancel server-side too (the fetch abort alone leaves the server
     // generating and running the tool loop to completion — the pre-existing
     // "Stop doesn't stop AnA" gap).
-    if (runIdRef.current) void control('cancel');
+    //
+    // AWAITED, deliberately. Fired-and-forgotten, the abort below dropped the
+    // socket first, the server recorded the turn as `client_disconnected`, and
+    // the cancel then arrived at a run already terminal and was refused. A
+    // person pressing Stop was written into the decision lineage as a network
+    // event — inverting the one distinction the audit is there to draw. The
+    // cancel already aborts the run server-side, so waiting for it costs
+    // nothing: generation stops on the server's acknowledgement, not on ours.
+    if (runIdRef.current) {
+      try {
+        await control('cancel');
+      } catch {
+        // A failed cancel must not leave the client streaming; abort anyway.
+      }
+    }
     abortRef.current?.abort();
   }, [control]);
 
@@ -804,6 +822,42 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // Capture the run id so the user can pause/interject/cancel it.
               runIdRef.current = typeof event.runId === 'string' ? event.runId : null;
               setRunStatus('running');
+            } else if (event.type === 'approval_required') {
+              // AnA has HELD the turn at an action only a person may take.
+              // Attaching it to the streaming message reuses the sign-off
+              // surface the end-of-turn path already renders, so there is one
+              // dialog rather than two to keep in step — the difference is only
+              // that this one arrives while she is still waiting for the answer.
+              const live = pendingSignoffFromApproval(event);
+              if (live) {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? { ...m, pendingSignoffs: [...(m.pendingSignoffs ?? []), live] }
+                      : m
+                  )
+                );
+              }
+            } else if (event.type === 'approval_decided') {
+              // Decided — by this person, by someone else on another instance,
+              // or by the window closing. Either way the prompt is stale, and
+              // leaving it up would invite a second signature for an action
+              // that already has its answer.
+              const decidedId = typeof event.toolUseId === 'string' ? event.toolUseId : null;
+              if (decidedId) {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? {
+                          ...m,
+                          pendingSignoffs: (m.pendingSignoffs ?? []).filter(
+                            p => p.toolUseId !== decidedId
+                          ),
+                        }
+                      : m
+                  )
+                );
+              }
             } else if (event.type === 'paused') {
               setRunStatus('paused');
             } else if (event.type === 'resumed') {
