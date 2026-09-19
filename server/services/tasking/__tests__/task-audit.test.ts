@@ -59,10 +59,14 @@ describe('auditTaskAction', () => {
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });
 
-  it('never throws when the ledger write fails (best-effort)', async () => {
+  it('never throws when the ledger write fails, and reports that it failed', async () => {
     recordGovernedAction.mockRejectedValue(new Error('db down'));
-    await expect(
-      auditTaskAction({ orgId: 2, userId: 7, command: 'task.link', taskId: 'T' }),
-    ).resolves.toBeUndefined();
+    // WO-16C #133: best-effort is unchanged; the silence about it is not. The old
+    // assertion was `resolves.toBeUndefined()`, which described the `void`
+    // signature rather than the best-effort contract this test is named for.
+    const outcome = await auditTaskAction({ orgId: 2, userId: 7, command: 'task.link', taskId: 'T' });
+    expect(outcome.recorded).toBe(false);
+    expect(outcome).toMatchObject({ reason: 'WRITE_FAILED' });
+    expect(JSON.stringify(outcome)).not.toContain('db down');
   });
 });

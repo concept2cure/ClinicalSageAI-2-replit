@@ -9,7 +9,18 @@
  * emit policies). Replaying the 162-file migrations/ tree is not idempotent and
  * fails. This script is the one supported path for the application schema.
  *
- * What it does (idempotent — safe to re-run):
+ * ── What "re-run" does and does not do (2026-09-19) ──────────────────────────
+ * Every STEP here is written to be idempotent, and a re-run over an already
+ * complete database is safe. A re-run does NOT repair a database where step 2
+ * left tables uncreated, and no amount of re-running will: `drizzle-kit push`
+ * introspects before it emits, and drizzle-kit cannot represent an EXPRESSION
+ * index — `lower(email)`, `COALESCE(project_id, 0)` — so it dies in "Pulling
+ * schema from database" with a Zod error, emits nothing, and exits 0. The
+ * step-3 overlay below creates four such indexes, so push reads a database this
+ * script has already touched exactly once: the first time. Repair means an
+ * empty database, and step 2 says so when it detects that shape.
+ *
+ * What it does:
  *   1. Create the named schemas + extensions the Drizzle schema references.
  *   2. `drizzle-kit push` to lay down every table from the schema entrypoints
  *      declared in drizzle.config.ts.
@@ -706,7 +717,9 @@ async function main() {
     } catch (err) {
       pgvectorAvailable = false;
       console.log(`  ⚠ pgvector NOT available: ${(err.message || '').split('\n')[0]}`);
-      console.log('    Install it and re-run (this script is idempotent) to get the skipped objects:');
+      console.log('    To get the skipped objects, install it and provision again into an');
+      console.log('    EMPTY database — re-running over a partly-installed one cannot repair');
+      console.log('    step 2 (see the header note on what a re-run does):');
       console.log('      apt-get install -y postgresql-16-pgvector    # Debian/Ubuntu');
       console.log('    Continuing WITHOUT it. Every object whose definition needs the `vector`');
       console.log('    type is SKIPPED and named below — nothing is faked, and no stub type is');
@@ -833,6 +846,53 @@ async function main() {
       if (missing.length > 0) {
         console.error(res.stdout || '');
         console.error(res.stderr || '');
+
+        /* ── Two different failures wear the same result ───────────────────
+           "push exited 0 and the tables are not there" has a second cause, and
+           the message below used to assert the first one either way.
+
+           (a) push RAN and a statement failed. It applies its statements in one
+               sequential loop, stops at the first error and still exits 0, so
+               the tables after that point are missing. That is the story the
+               message told.
+           (b) push never ran at all. It introspects the database first, and
+               drizzle-kit validates what it pulled with Zod. An EXPRESSION
+               index — `lower(email)`, `COALESCE(project_id, 0)` — comes back
+               with a null expression, which its own schema rejects, so it dies
+               in "Pulling schema from database", emits no statement, and exits
+               0. Nothing failed to apply because nothing was attempted.
+
+           (b) is not hypothetical and it is not rare: this installer's own
+           step-3 overlay creates four such indexes
+           (organization_invitations_pending_uniq, ana_relational_profiles_scope_idx,
+           doc_permissions_email_lookup_idx, document_span_lineage_unique_link),
+           so EVERY run after the first hits it. A first run is unaffected
+           because push runs at step 2, before the overlay exists.
+
+           Telling an operator to look for a failing statement that was never
+           attempted costs them the whole diagnosis, so the two are reported
+           apart. */
+        const introspectionFailed =
+          /Pulling schema from database/.test(`${res.stdout || ''}${res.stderr || ''}`) &&
+          /ZodError/.test(`${res.stdout || ''}${res.stderr || ''}`);
+
+        if (introspectionFailed) {
+          throw new Error(
+            `drizzle-kit push could not READ this database, so it created nothing — it exited 0 ` +
+              `from "Pulling schema from database" with a Zod validation error, having attempted ` +
+              `no statement. drizzle-kit cannot represent an EXPRESSION index (its introspection ` +
+              `returns a null expression and its own schema rejects that), and this database ` +
+              `carries several that the step-3 raw-migration overlay creates. So push works on an ` +
+              `EMPTY database and stops working once the overlay has run. ` +
+              `${missing.length} of ${declared.length} declared table(s) are absent: ` +
+              `${missing.slice(0, 25).join(', ')}` +
+              `${missing.length > 25 ? `, …and ${missing.length - 25} more` : ''}. ` +
+              `Re-running this script will NOT repair that — push has to run before the overlay. ` +
+              `Provision into an empty database (createdb, then run this script once), or create ` +
+              `the missing tables from their declarations by hand.`,
+          );
+        }
+
         throw new Error(
           `drizzle-kit push exited 0 but did NOT create ${missing.length} of ` +
             `${declared.length} table(s) declared by the configured schema entrypoints. push stops at ` +
@@ -1784,8 +1844,11 @@ function report() {
     console.error('   this database. The rest of the schema was installed and the app can');
     console.error('   boot and serve from it.');
     console.error('   To get them: install the pgvector package for your PostgreSQL major');
-    console.error('   version (e.g. `apt-get install -y postgresql-16-pgvector`) and re-run');
-    console.error('   this script — it is idempotent and will fill in what it skipped.');
+    console.error('   version (e.g. `apt-get install -y postgresql-16-pgvector`), then');
+    console.error('   provision again INTO AN EMPTY DATABASE.');
+    console.error('   Re-running over this one will not fill them in: drizzle-kit push has to');
+    console.error('   read the schema before it writes, and it cannot read the expression');
+    console.error('   indexes the overlay has now created — so it emits nothing and exits 0.');
   }
 
   if (!incomplete.length) {
@@ -1820,8 +1883,10 @@ function report() {
   }
 
   console.error('\n❌ Install INCOMPLETE — not reporting success.');
-  console.error('   Resolve the areas above and re-run (the script is idempotent), or pass');
-  console.error('   --allow-incomplete to accept a partial install deliberately.');
+  console.error('   Resolve the areas above and provision again, or pass --allow-incomplete');
+  console.error('   to accept a partial install deliberately. If any area above is a table');
+  console.error('   step 2 did not create, provisioning again means an EMPTY database — see');
+  console.error('   the header note on what a re-run does.');
   return 1;
 }
 

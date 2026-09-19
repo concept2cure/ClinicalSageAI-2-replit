@@ -2216,16 +2216,16 @@ export const C2C_MIGRATION_FILES = [
      today — listing them changes nothing about it. The tenant sweep stays the
      final pair of this set.
      ─────────────────────────────────────────────────────────────────────────── */
-  'migrations/20260701_protocol_soa.sql',                               // protocol_soa_assessments, protocol_soa_cells
-  'migrations/20260702_protocol_budget.sql',                            // protocol_budget_items, protocol_budget_params
-  'migrations/20260703_dmsp.sql',                                       // dms_plans, dms_plan_elements
-  'migrations/20260704_biosketch.sql',                                  // biosketches, biosketch_sections
-  'migrations/20260704_other_support.sql',                              // other_support_documents, other_support_entries
-  'migrations/20260705_export_control.sql',                             // export_control_reviews
-  'migrations/20260705_invention_disclosure.sql',                       // invention_disclosures
-  'migrations/20260705_research_agreements.sql',                        // research_agreements
-  'migrations/20260728_chat_thread_store.sql',                          // chat_threads, chat_messages
-  'migrations/20260731c_canonical_documents.sql',                       // canonical_documents
+  'migrations/20260701_protocol_soa.sql', // protocol_soa_assessments, protocol_soa_cells
+  'migrations/20260702_protocol_budget.sql', // protocol_budget_items, protocol_budget_params
+  'migrations/20260703_dmsp.sql', // dms_plans, dms_plan_elements
+  'migrations/20260704_biosketch.sql', // biosketches, biosketch_sections
+  'migrations/20260704_other_support.sql', // other_support_documents, other_support_entries
+  'migrations/20260705_export_control.sql', // export_control_reviews
+  'migrations/20260705_invention_disclosure.sql', // invention_disclosures
+  'migrations/20260705_research_agreements.sql', // research_agreements
+  'migrations/20260728_chat_thread_store.sql', // chat_threads, chat_messages
+  'migrations/20260731c_canonical_documents.sql', // canonical_documents
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
@@ -2291,7 +2291,7 @@ export const C2C_MIGRATION_FILES = [
   // Listed HERE, not restored to the root tree, so RULE 1's replay carries it to
   // databases that already exist. Must stay ABOVE the sweep so the sweep
   // policies it — and above the uuid step too, because ci:migration-set-order
-// pins the FINAL PAIR to the two isolation steps. See ADR-0007 point 6.
+  // pins the FINAL PAIR to the two isolation steps. See ADR-0007 point 6.
   'db/migrations/20260910_contradiction_links_port.sql',
 
   // ── ana_runs: a live AnA turn survives the process that started it ───────
@@ -2310,6 +2310,28 @@ export const C2C_MIGRATION_FILES = [
   // final pair because ci:migration-set-order pins those two last.
   'migrations/20260918_rbm_author_attribution.sql',
 
+  // ── CAPA / complaint / MDR display codes: per program, not global ─────────
+  // complaints_code_uq, mdr_events_code_uq and capa_records_code_uq were each
+  // unique on the code column ALONE, while nextCode() generates those codes per
+  // program (`count(*) WHERE program_id = $1`, formatted CAPA-<year>-0001). The
+  // second program in the deployment to open its first CAPA of a year therefore
+  // got a code that already existed and the insert died 23505 — the normal path,
+  // not a race, and across tenants one customer's numbering blocked another's.
+  // Proven on the live schema: two inserts differing only in program_id, the
+  // second rejected.
+  //
+  // Its creator, migrations/20260504_capa_mdr.sql, was amended in place per
+  // RULE 1 so fresh installs are correct from birth — but that creator is
+  // overlay-only (install-fresh step 3) and is NOT in this set, so it never
+  // re-runs on an already-provisioned database. Hence this companion file, which
+  // IS in the set. Every statement in it is guarded on the LIVE index
+  // definition, so it converts only a still-old index and no-ops on a fresh
+  // install and on every deploy after the first: it cannot fight the amended
+  // creator in either ordering, which is why it is a conversion and not the
+  // recurring DROP rule 1 forbids. Above the final pair because
+  // ci:migration-set-order pins those two last.
+  'migrations/20260919_capa_code_uniqueness_per_program.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
@@ -2322,7 +2344,6 @@ export const C2C_MIGRATION_FILES = [
   // subsystem's own, including C-30's parent-scoped ones), and it SKIPS a
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
   TENANT_ISOLATION_SWEEP,
-
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
@@ -2357,21 +2378,22 @@ export async function applyMigrationFiles(
      forty tables and one that policied one were the same clean green run.
      The messages are the only signal these files produce; they belong in the
      deploy log next to the file that raised them. */
-  const noticeListener = (msg) => {
+  const noticeListener = msg => {
     const text = String(msg?.message ?? '').trim();
     if (!text) return;
     const severity = String(msg?.severity ?? 'NOTICE').toUpperCase();
     /* A NOTICE saying an object already exists is the IF NOT EXISTS guard
        working as designed, on every replay of every idempotent file — noise
        that would bury the ones that matter. */
-    if (severity === 'NOTICE' && /already exists, skipping|will create implicit/i.test(text)) return;
+    if (severity === 'NOTICE' && /already exists, skipping|will create implicit/i.test(text))
+      return;
     (severity === 'WARNING' || severity === 'ERROR' ? error : log)(`    [${severity}] ${text}`);
   };
   /* Attached to whatever the caller passed: deploy-migrate hands in a CLIENT
      (which is what emits 'notice'), apply-c2c-migrations hands in a POOL, whose
      clients emit it — so a pool is covered through 'connect'. A fresh pool
      opens its first connection on the first query below, after this line. */
-  const attachNotices = (target) => target?.on?.('notice', noticeListener);
+  const attachNotices = target => target?.on?.('notice', noticeListener);
   attachNotices(pool);
   pool.on?.('connect', attachNotices);
 
@@ -2387,50 +2409,50 @@ export async function applyMigrationFiles(
   }
 
   try {
-  for (const file of files) {
-    const full = path.join(repoRoot, file);
-    if (!fs.existsSync(full)) {
-      failures.push({ file, error: 'missing from repo' });
-      error(`✗ missing: ${file}`);
-      if (stopOnFirstFailure) return { applied, failures };
-      continue;
-    }
-    const sql = fs.readFileSync(full, 'utf8');
-    const wrap = !selfTransacting(sql);
-    try {
-      if (wrap) await pool.query('BEGIN');
-      await pool.query(sql);
-      if (wrap) await pool.query('COMMIT');
-      applied.push(file);
-      // Applied-file ledger + content-hash drift signal. The deploy mechanism
-      // records THAT migrations ran; this records WHICH file ran and the sha256 of
-      // the SQL that ran, so a file edited after it was applied is detectable
-      // instead of silently diverging. Sited here rather than in either caller so
-      // both the out-of-band applier and the deploy path are covered.
-      //
-      // `sql` is the already-read contents — deliberately not re-derived from a
-      // path inside the journal module (that read tripped a path-traversal SAST
-      // rule and there is no reason to touch the filesystem twice).
-      //
-      // Best-effort by default: a journal outage must not fail an otherwise good
-      // migration run. Set C2C_MIGRATION_JOURNAL_STRICT=1 to make it fatal.
-      try {
-        await recordApplied((text, params) => pool.query(text, params), file, sql);
-      } catch (journalErr) {
-        if (process.env.C2C_MIGRATION_JOURNAL_STRICT === '1') throw journalErr;
-        error(`  (journal skipped for ${file}: ${journalErr.message})`);
+    for (const file of files) {
+      const full = path.join(repoRoot, file);
+      if (!fs.existsSync(full)) {
+        failures.push({ file, error: 'missing from repo' });
+        error(`✗ missing: ${file}`);
+        if (stopOnFirstFailure) return { applied, failures };
+        continue;
       }
-      log(`✓ applied: ${file}`);
-    } catch (err) {
-      await pool.query('ROLLBACK').catch(() => {});
-      const detail = `${err.message}${err.detail ? ` (${err.detail})` : ''}`;
-      failures.push({ file, error: detail });
-      error(`✗ failed:  ${file} — ${detail}`);
-      if (stopOnFirstFailure) return { applied, failures };
+      const sql = fs.readFileSync(full, 'utf8');
+      const wrap = !selfTransacting(sql);
+      try {
+        if (wrap) await pool.query('BEGIN');
+        await pool.query(sql);
+        if (wrap) await pool.query('COMMIT');
+        applied.push(file);
+        // Applied-file ledger + content-hash drift signal. The deploy mechanism
+        // records THAT migrations ran; this records WHICH file ran and the sha256 of
+        // the SQL that ran, so a file edited after it was applied is detectable
+        // instead of silently diverging. Sited here rather than in either caller so
+        // both the out-of-band applier and the deploy path are covered.
+        //
+        // `sql` is the already-read contents — deliberately not re-derived from a
+        // path inside the journal module (that read tripped a path-traversal SAST
+        // rule and there is no reason to touch the filesystem twice).
+        //
+        // Best-effort by default: a journal outage must not fail an otherwise good
+        // migration run. Set C2C_MIGRATION_JOURNAL_STRICT=1 to make it fatal.
+        try {
+          await recordApplied((text, params) => pool.query(text, params), file, sql);
+        } catch (journalErr) {
+          if (process.env.C2C_MIGRATION_JOURNAL_STRICT === '1') throw journalErr;
+          error(`  (journal skipped for ${file}: ${journalErr.message})`);
+        }
+        log(`✓ applied: ${file}`);
+      } catch (err) {
+        await pool.query('ROLLBACK').catch(() => {});
+        const detail = `${err.message}${err.detail ? ` (${err.detail})` : ''}`;
+        failures.push({ file, error: detail });
+        error(`✗ failed:  ${file} — ${detail}`);
+        if (stopOnFirstFailure) return { applied, failures };
+      }
     }
-  }
 
-  return { applied, failures };
+    return { applied, failures };
   } finally {
     /* Removed on every path, including the early returns above: the pool
        outlives this call, and a listener left behind would double-print the
