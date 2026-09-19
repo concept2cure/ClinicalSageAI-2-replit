@@ -34,12 +34,8 @@
 import { pool } from '../db.js';
 import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome.js';
 import crypto from 'crypto';
-import {
-  composeFullModule3,
-  hasRegionalTemplate,
-  REGIONS_WITH_REGIONAL_TEMPLATE,
-  type RegionCode,
-} from './module3-extensions.js';
+import { composeFullModule3, type RegionCode } from './module3-extensions.js';
+import { classifyModule3Regional } from './module3-regional-readiness.js';
 import {
   buildM23QualityOverallSummary,
   buildM24NonclinicalOverview,
@@ -1468,14 +1464,13 @@ export async function runOrchestrator(
            for a gap in the product and hides an absent required section behind a
            status a reviewer reads as routine. The packaging layer already draws
            this same line with isPackagerBuildableRegion. */
-        if (inputs.cmcSources.length > 0 && !hasRegionalTemplate(inputs.region)) {
-          return {
-            skip: `no 3.2.R template for region ${
-              inputs.region
-            } — Module 3 regional content exists for ${[...REGIONS_WITH_REGIONAL_TEMPLATE]
-              .sort()
-              .join('/')} only`,
-          };
+        if (inputs.cmcSources.length > 0) {
+          /* The classifier owns this sentence, so the step, the pre-transmit gate
+             and any surface all say the same thing about a region — and so GLOBAL,
+             which is not a jurisdiction at all, is reported as "3.2.R does not
+             apply to it" rather than as a missing template. */
+          const coverage = classifyModule3Regional(inputs.region);
+          if (coverage.coverage !== 'authored') return { skip: coverage.reason! };
         }
         return null;
       }
