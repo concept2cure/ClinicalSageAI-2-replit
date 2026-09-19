@@ -166,7 +166,7 @@ describe('a stop lands DURING a tool, not after it', () => {
     // the cancelled branch returns no errorMessage at all.
     const runner = /async function runOneTool\([\s\S]*?\n\}/.exec(EXECUTOR)?.[0] ?? '';
     expect(runner).toMatch(/instanceof ToolRunCancelled/);
-    const cancelledBranch = /instanceof ToolRunCancelled\) \{[\s\S]*?\n    \}/.exec(runner)?.[0] ?? '';
+    const cancelledBranch = /instanceof ToolRunCancelled\) \{[\s\S]*?\n {4}\}/.exec(runner)?.[0] ?? '';
     expect(cancelledBranch).toMatch(/CANCELLED_TOOL_RESULT/);
     expect(cancelledBranch).not.toMatch(/errorMessage/);
   });

@@ -147,12 +147,19 @@ export async function createGoalPlanRun(input: {
     await client.query('COMMIT');
   } catch (error: any) {
     await client.query('ROLLBACK').catch(() => undefined);
-    // Pre-existing contract, left as it is rather than widened here: callers
-    // receive an id whether or not the row was written, so a failed persist
-    // hands back an id that refers to nothing. That is worth fixing, and it is
-    // a change to this function's signature and to every caller — not
-    // something to slip into a transaction fix.
+    // Fails closed. This used to log and fall through to `return { id }`, so a
+    // caller that asked for a run to be persisted was handed an id referring to
+    // NO ROW — and every later use of it then failed on its own terms: GET
+    // /plan/:id 404s, advance and execute-next answer "Plan run not found", and
+    // /plan/:id/protocol writes audit rows pointing at nothing. A rolled-back
+    // transaction is not a result.
+    //
+    // An earlier note here deferred this as "a change to this function's
+    // signature and to every caller". That premise was wrong: there is exactly
+    // one caller in the repo, and a throw changes no signature — the success
+    // path still resolves to { id }.
     logger.warn(`Failed to persist goal plan run: ${error?.message || 'unknown error'}`);
+    throw error;
   } finally {
     client.release();
   }

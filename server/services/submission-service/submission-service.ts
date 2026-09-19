@@ -41,7 +41,7 @@ import type {
 } from '../../../shared/types/database';
 import { writeChainedAuditRow } from '../auditService';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
-import { deriveGovernedTargetBinding, BINDING_BASIS } from '../part11/signature-persistence';
+import { deriveGovernedTargetBinding, BINDING_BASIS, isSignatureWithdrawn } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
 import { normalizeCtdCode } from '../ectd/section-to-ctd';
 
@@ -442,15 +442,44 @@ async function governedSignatureRefusal(
     return 'this sign action already authorized a governed transition; each step needs its own signature';
   }
 
+  /* The withdrawal columns are selected, not just the binding ones. A governed
+     revocation (persistGovernedSignatureRevocation) marks a signature out of
+     force by setting superseded_by / is_valid=false / verification_status, and
+     deliberately leaves bound_payload_digest, binding_basis and
+     signature_manifest byte-identical — §11.70 requires the superseded
+     signature be retained unaltered. It also writes a NEW c2c_ana_actions row
+     rather than touching the original `sign` row, so every earlier check in this
+     function still matches a revoked signature: the sign action is still
+     'executed' by the same actor, the declared intent is unchanged, the
+     spent-check filters different actions, and the leaf-manifest digest still
+     agrees because revocation does not alter content.
+
+     Reading only the binding columns therefore could not distinguish a live
+     signature from a withdrawn one, and revocation — the product's own §11.70
+     mechanism for taking an authorization back — had no effect on freeze or
+     transmit. (Dispatch was covered, because its Gate 2 release-signature check
+     does apply this predicate.) */
   const esig = await db.execute(sql`
-    SELECT bound_payload_digest, binding_basis FROM electronic_signatures
+    SELECT bound_payload_digest, binding_basis, superseded_by, is_valid, verification_status
+      FROM electronic_signatures
     WHERE organization_id = ${ctx.organizationId}
       AND signed_target = ${target}
       AND (signature_manifest::jsonb ->> 'actionId') = ${signatureActionId}
     LIMIT 1
   `);
-  const sig = ((esig as unknown as { rows?: Array<{ bound_payload_digest: string | null; binding_basis: string | null }> }).rows ?? [])[0];
+  const sig = ((esig as unknown as {
+    rows?: Array<{
+      bound_payload_digest: string | null;
+      binding_basis: string | null;
+      superseded_by: unknown;
+      is_valid: unknown;
+      verification_status: unknown;
+    }>;
+  }).rows ?? [])[0];
   if (!sig) return 'no electronic signature record is bound to this sign action';
+  if (isSignatureWithdrawn(sig)) {
+    return 'the electronic signature authorizing this step has been revoked; obtain a new signature';
+  }
   if (sig.binding_basis !== BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST || !sig.bound_payload_digest) {
     return 'the signature is not bound to this sequence\'s leaf manifest; re-sign the sequence';
   }
@@ -653,7 +682,12 @@ export function selectGateway(
  * call — same signature — produced a second real transmittal at the agency.
  * A rejected transmission may be retried; a sent or acknowledged one may not.
  */
+export const TRANSMITTING_STATUS = 'transmitting';
+
 export function resendRefusal(dispatchStatus: string | null | undefined): string | null {
+  if (dispatchStatus === TRANSMITTING_STATUS) {
+    return `A transmit of this sequence is already in flight (dispatch status '${dispatchStatus}'). It is not sent again while that attempt is unresolved — confirm at the agency whether the package arrived before retrying.`;
+  }
   if (dispatchStatus === 'sent' || dispatchStatus === 'acknowledged') {
     return `Sequence was already transmitted (dispatch status '${dispatchStatus}'); it is not sent again. A correction is a new sequence.`;
   }
@@ -712,6 +746,55 @@ export interface TransmitSequenceResult {
   transmissionId?: string | null;
   status?: string;
   dispatchStatus: string;
+}
+
+/**
+ * Claim the transmit slot with a COMPARE-AND-SET, before any bytes leave.
+ *
+ * `dispatch_status` is the only thing preventing a second real transmission to
+ * an agency, and it used to be read at the top of transmitSequence and written
+ * only AFTER the wire. Everything in between — both gates, the readiness
+ * assessment, package assembly, and the AS2/SFTP transfer itself — was a window
+ * in which a second caller read the same 'pending', passed the same guard, and
+ * transmitted the same sequence again. The single-use signature check could not
+ * catch it either: it looks for an audit row that is written after the transfer.
+ *
+ * Taking the claim here narrows that to a single atomic UPDATE. The predicate is
+ * the value that was read, so exactly one concurrent caller wins and the loser
+ * is refused with the ordinary INVALID_STATE wording.
+ *
+ * It is deliberately NOT inside applySequenceChangeWithAudit: that helper rolls
+ * its state change back when the §11.10(e) row cannot be written, which is right
+ * for freeze but wrong once a package is already at the agency — it left
+ * dispatch_status at 'pending' with the bytes delivered, so the operator's retry
+ * sent them a second time. The claim commits on its own and therefore survives
+ * that rollback.
+ */
+async function claimTransmitSlot(sequenceId: number, organizationId: number): Promise<boolean> {
+  const res = await pool.query(
+    `UPDATE ectd_sequences
+        SET dispatch_status = $3, updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+        AND status = 'dispatched'
+        AND (dispatch_status IS NULL OR dispatch_status IN ('pending', 'rejected'))
+      RETURNING id`,
+    [sequenceId, organizationId, TRANSMITTING_STATUS],
+  );
+  return (res.rowCount ?? res.rows?.length ?? 0) > 0;
+}
+
+/**
+ * Release a claim taken for an attempt that failed BEFORE the wire, so a
+ * packaging error does not wedge the sequence. Only ever called on the pre-wire
+ * path: once gw.transmit has been entered, delivery is ambiguous and the claim
+ * is deliberately left standing for a human to resolve.
+ */
+async function releaseTransmitSlot(sequenceId: number, organizationId: number): Promise<void> {
+  await pool.query(
+    `UPDATE ectd_sequences SET dispatch_status = 'pending', updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND dispatch_status = $3`,
+    [sequenceId, organizationId, TRANSMITTING_STATUS],
+  );
 }
 
 /**
@@ -796,9 +879,25 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     };
   }
 
-  // Assemble the package bytes, then hand them to the gateway.
+  /* Claim the send before a single byte is assembled or transmitted. Past this
+     point a concurrent caller is refused by the compare-and-set rather than by a
+     status it read minutes ago. */
+  if (!(await claimTransmitSlot(sequenceId, ctx.organizationId))) {
+    const fresh = await getSequence(sequenceId, ctx);
+    throw new SubmissionError(
+      'INVALID_STATE',
+      resendRefusal(fresh.dispatchStatus) ??
+        `Sequence ${sequenceId} is no longer in a transmittable state (dispatch status '${fresh.dispatchStatus ?? 'unknown'}').`,
+    );
+  }
+
+  // Assemble the package bytes, then hand them to the gateway. A failure
+  // anywhere below and BEFORE gw.transmit released nothing to the agency, so the
+  // claim taken above is released and the sequence stays transmittable.
   const { assembleSequence } = await import('../ectd/assemble-from-core');
-  const assembled = await assembleSequence({
+  let assembled;
+  try {
+    assembled = await assembleSequence({
     sequenceId,
     organizationId: ctx.organizationId,
     userId: ctx.userId,
@@ -808,9 +907,13 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     // also a package filename component. An unassigned value SAYS it is
     // unassigned, in the wording the transmit path already uses.
     applicationId,
-    sponsorId: params.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
-    sponsorName: params.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
-  });
+      sponsorId: params.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
+      sponsorName: params.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
+    });
+  } catch (err) {
+    await releaseTransmitSlot(sequenceId, ctx.organizationId);
+    throw err;
+  }
 
   // A dossier transmitted to an agency must physically contain every leaf's
   // file. `assemble` surfaces every leaf whose source could not be materialized
@@ -843,6 +946,7 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
           `(${external.map((d) => `${d.documentTable}:${d.documentId}`).join(', ')})`,
       );
     }
+    await releaseTransmitSlot(sequenceId, ctx.organizationId);
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
       `Transmit blocked — the transmitted sequence would be missing ${unresolved.length} leaf file(s): ${parts.join('; ')}. ` +
@@ -879,8 +983,13 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   const dispatchStatus = toDispatchStatus(result.status);
   await applySequenceChangeWithAudit(
     {
-      text: `UPDATE ectd_sequences SET dispatch_status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3`,
-      params: [dispatchStatus, sequenceId, ctx.organizationId],
+      // Predicated on the claim taken before the wire: this row is the one that
+      // resolves THIS attempt. If the §11.10(e) write fails, applySequenceChange-
+      // WithAudit rolls this back and the sequence stays 'transmitting' — bytes
+      // are already at the agency, so the correct posture is a state a human must
+      // resolve, not 'pending', which silently invited a second send.
+      text: `UPDATE ectd_sequences SET dispatch_status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 AND dispatch_status = $4`,
+      params: [dispatchStatus, sequenceId, ctx.organizationId, TRANSMITTING_STATUS],
     },
     {
       organizationId: ctx.organizationId,

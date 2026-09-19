@@ -81,6 +81,24 @@ export interface PassageCoverage {
    * cannot be acted on.
    */
   failureReasons: string[];
+  /**
+   * Files the client attached in chat that are OUTSIDE this index entirely.
+   *
+   * The corpus is `vault.document_chunks`, whose `document_id` carries a hard
+   * foreign key to `vault.documents` — so an upload that has not been filed
+   * into the vault cannot be in it, however long it has existed. Its text does
+   * reach a retrieval corpus, as ONE `lumen_data_atoms` row holding a bounded
+   * prefix of the file, which is not the same capability and cannot cite a
+   * page.
+   *
+   * Without this figure the coverage line said "All N document(s) are in the
+   * passage index" while the very file the question was about sat outside it,
+   * and a miss read as an exhaustive search. Null when the uploads could not be
+   * counted — unknown, never zero.
+   */
+  unfiledUploads: number | null;
+  /** True when there are more unfiled uploads than the bounded count probed. */
+  unfiledUploadsMore: boolean;
 }
 
 export interface PassageSearchResult {
@@ -97,6 +115,9 @@ export interface PassageSearchResult {
  * ledger cannot be read the caller gets null and says the coverage is unknown —
  * which is true, and which still lets the search itself run.
  */
+/** How many unfiled uploads the coverage line probes for before saying "more". */
+const UNFILED_UPLOAD_PROBE = 20;
+
 export async function getPassageCoverage(organizationId: number): Promise<PassageCoverage> {
   const { rows } = await pool.query(
     `SELECT COUNT(*)::int AS total,
@@ -116,7 +137,26 @@ export async function getPassageCoverage(organizationId: number): Promise<Passag
     [organizationId],
   );
   const r = rows[0] ?? {};
+  /* The uploads outside the corpus, through the one definition of "the chat
+     uploads this organization currently has". Bounded — the coverage line needs
+     to say THAT files sit outside the index and roughly how many, not to
+     enumerate them — and independently fault-tolerant, because a coverage
+     figure that fails the whole search would be a worse answer than a partial
+     one. */
+  let unfiledUploads: number | null;
+  let unfiledUploadsMore = false;
+  try {
+    const { listChatUploads } = await import('./document-catalog.service.js');
+    const page = await listChatUploads(organizationId, null, UNFILED_UPLOAD_PROBE);
+    unfiledUploads = page.uploads.length;
+    unfiledUploadsMore = page.hasMore;
+  } catch {
+    // Unknown, which the coverage note reports as unchecked — never as zero.
+    unfiledUploads = null;
+  }
   return {
+    unfiledUploads,
+    unfiledUploadsMore,
     total: Number(r.total ?? 0),
     indexed: Number(r.indexed ?? 0),
     pending: Number(r.pending ?? 0),

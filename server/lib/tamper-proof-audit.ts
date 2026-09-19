@@ -154,6 +154,27 @@ export interface VerificationResult {
  */
 const AUDIT_CHAIN_LOCK_KEY = '8213001100000001';
 
+/**
+ * A REFUSAL, not a failure.
+ *
+ * The audit subsystem's one caller wraps initialization in a try/catch that
+ * falls back to console logging, because initialize() touches the database and
+ * a transient database problem should not take the process down. A missing
+ * signing secret is not that: it is a configuration decision that cannot
+ * improve on retry, and degrading past it means a production process writing
+ * its 21 CFR Part 11 records to stdout with one warning line — the exact hole
+ * server/services/audit/auditSealPosture.ts was written to close for the
+ * SEALING key, while the CHAINING key still had it.
+ *
+ * Its own type so that caller can tell the two apart and let this one through.
+ */
+export class AuditConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuditConfigurationError';
+  }
+}
+
 export class TamperProofAuditLog {
   private pool: Pool;
   private readonly hmacSecret: string;
@@ -169,7 +190,7 @@ export class TamperProofAuditLog {
     const secret = process.env.AUDIT_HMAC_SECRET || '';
     if (!secret) {
       if (process.env.NODE_ENV === 'production') {
-        throw new Error(
+        throw new AuditConfigurationError(
           '[FATAL] AUDIT_HMAC_SECRET is required in production. ' +
             'The tamper-proof audit chain cannot sign records without a ' +
             'cryptographically random secret. Refusing to start.'

@@ -28,9 +28,40 @@
 import type { ToolContext } from './AnaToolExecutor.js';
 import { requireCatalog, withCaughtErrors, type RegisterFn } from './document-tools-shared.js';
 
+/**
+ * What sits OUTSIDE this index no matter how complete the vault side is.
+ *
+ * The corpus is keyed to vault documents. A file the client attached in chat
+ * and never filed cannot be in it — its text reaches retrieval only as one
+ * bounded-prefix atom, which cannot cite a page and does not hold the rest of
+ * the document. Saying "all N documents are indexed" while the file the
+ * question is about sits outside was the coverage line's blind spot, and it
+ * turned a miss into an exhaustive search.
+ */
+function outsideIndexNote(c: { unfiledUploads?: number | null; unfiledUploadsMore?: boolean }): string {
+  if (c.unfiledUploads == null) {
+    return ' Whether the client has chat-attached files outside this index could not be checked.';
+  }
+  if (c.unfiledUploads === 0) return '';
+  const n = `${c.unfiledUploads}${c.unfiledUploadsMore ? '+' : ''}`;
+  return (
+    ` Separately, ${n} file(s) the client attached in chat are NOT in this index at all — only the ` +
+    'opening of each reached the retrieval corpus. Do not treat this search as covering them: open one ' +
+    'with read_uploaded_document, or file_chat_upload_to_vault to index all of it, page by page.'
+  );
+}
+
 /** One line of honest context about what the search could not see. */
 function coverageNote(
-  c: { total: number; indexed: number; pending: number; failed: number; failureReasons?: string[] } | null,
+  c: {
+    total: number;
+    indexed: number;
+    pending: number;
+    failed: number;
+    failureReasons?: string[];
+    unfiledUploads?: number | null;
+    unfiledUploadsMore?: boolean;
+  } | null,
 ): string {
   if (!c) {
     return (
@@ -38,7 +69,7 @@ function coverageNote(
       'what it did not cover.'
     );
   }
-  if (c.total === 0) return 'No documents are filed in this vault yet.';
+  if (c.total === 0) return `No documents are filed in this vault yet.${outsideIndexNote(c)}`;
   if (c.indexed === 0) {
     /* The index is EMPTY — a different statement from "nothing matched", and a
        very different one from "the embedding provider is unreachable", which is
@@ -50,10 +81,13 @@ function coverageNote(
       `None of the ${c.total} document(s) in this vault are in the passage index, so nothing was ` +
       'searched — this is not a result about what the documents say. The index is built by the ' +
       'ana.vault_chunking feature; if it is off, say so plainly rather than reporting the content as ' +
-      'absent, and read the file itself with read_project_document to answer from it.'
+      'absent, and read the file itself with read_project_document to answer from it.' +
+      outsideIndexNote(c)
     );
   }
-  if (c.indexed >= c.total) return `All ${c.total} document(s) are in the passage index.`;
+  if (c.indexed >= c.total) {
+    return `All ${c.total} document(s) are in the passage index.${outsideIndexNote(c)}`;
+  }
   const parts: string[] = [`${c.indexed} of ${c.total} document(s) are in the passage index`];
   if (c.pending > 0) parts.push(`${c.pending} not indexed yet`);
   if (c.failed > 0) {
@@ -66,7 +100,8 @@ function coverageNote(
   }
   return (
     `${parts.join('; ')}. A passage not found here is not evidence the document does not say it — ` +
-    'read the file with read_project_document before telling the user it is absent.'
+    'read the file with read_project_document before telling the user it is absent.' +
+    outsideIndexNote(c)
   );
 }
 

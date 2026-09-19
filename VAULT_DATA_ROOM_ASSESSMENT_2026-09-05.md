@@ -95,9 +95,10 @@ this assessment could be written at all.
 
 **Would win an evaluation on:** the AI authoring/agent layer, the packager's integrity
 guarantees, the hash-chained audit.
-**Would lose on day one on:** the data room (there isn't one), per-document security (org
-membership is the entire model), and the fact that a document in the vault cannot become a
-submission.
+**Would lose on day one on:** the data room (there isn't one) and per-document security (org
+membership is the entire model). *(Corrected 2026-09-19: this line also read "and the fact that
+a document in the vault cannot become a submission". That closed on 2026-09-17 — see §4.5 — and
+the summary had not been updated with the section it summarises.)*
 
 ---
 
@@ -464,13 +465,23 @@ Type→Subtype→Classification model remains the real gap and the real build.
 >   ITSELF rather than as "Other" — the column is TEXT with no CHECK, the token is ugly but
 >   true, and "Other" would be a classification nobody made.
 
-**The eTMF File button does not work.** `client/src/concept2cure/v2/surfaces/Etmf.tsx:286` posts
-`documentType: 'tmf_essential'` and no `programId`. The server requires a UUID `programId` and one
-of the 16 enum values (`vault-ingest.ts:71-88`). Every eTMF filing attempt is a 400.
-`tmf_essential` appears nowhere else in the codebase. Meanwhile `useVaultUpload.ts` — the
-canonical hook — does it correctly. `Etmf.tsx` hand-rolled a duplicate upload path and broke it;
-the taxonomy file's own comment (`:68`) says the picker "can never offer a type the server will
-refuse." Fix by deletion.
+**~~The eTMF File button does not work.~~ FIXED — but only half of it.**
+*(Updated 2026-09-19.)* The button works. `Etmf.tsx` now resolves `programId` from the shell
+channel that already carries the open `regulatory_programs` uuid to every project-scoped
+surface, REFUSES with an honest message when no program is open rather than posting a request
+that cannot succeed, and derives `documentType` through `tmfCodeToIngestType(code)` instead of
+the literal `tmf_essential` the ingest enum rejects. Pinned by 18 tests in
+`client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts` — including one asserting
+`tmf_essential` is not an accepted ingest type, and one asserting the literal is not
+re-introduced into the source.
+
+**The duplication half is still open, and "fix by deletion" understated it.** `Etmf.tsx` still
+hand-rolls its own `FormData` + `fetch('/api/vault/ingest')` instead of calling
+`useVaultUpload`, so the governed write path still has two implementations. It cannot simply
+call the hook today: the hook's outcome reports file NAMES (`succeeded: string[]`), and eTMF
+needs the id of the row the vault actually wrote in order to bind the TMF artifact to it.
+Closing this means widening the hook's outcome to carry the document id and migrating both
+callers onto it — not deleting forty lines.
 
 **Search.** `Vault.tsx` has exactly one `<input>` and it is the file picker at `:774`. There is
 no search box. What filtering exists is a client-side substring match over rows already in
@@ -528,10 +539,49 @@ account or an invitation, and whether a grant expires or is revocable are policy
 regulatory consequence — this is external access to a governed document store. Building them on
 an assumption would be the wrong kind of initiative. Deliberately left for a decision.
 
-**API & integrations.** No document or vault objects on the public API; `documents:read` is a
-grantable scope that unlocks nothing. The tenant data export cannot see the `vault` schema —
-and the purge it gates silently skips vault documents, so a GDPR erasure request leaves the
-bytes. `VaultSyncService` (the Veeva-migration story) has no importer outside its own file.
+**API & integrations.** *(Updated 2026-09-19.)* Three of the four claims here are now closed.
+**The score stays at 1**, deliberately: what closed the first one is a read-only metadata index
+of two endpoints, and Veeva's document API is CRUD over documents, binders, workflows and bulk
+loads. Closing a hole is not parity.
+
+- ~~No document or vault objects on the public API; `documents:read` is a grantable scope that
+  unlocks nothing.~~ **CLOSED.** It was worse than "unlocks nothing". The scope was grantable
+  (`shared/schema/api-keys.ts:66`), offered in the admin key editor
+  (`AdminSurfaces.tsx:2578`), and *advertised* by `/api/v1/docs` — while no route anywhere in
+  the codebase required it. An operator could tick it, hand the key to an integrator, and
+  reasonably believe programmatic document access was on; the integrator had nothing to call,
+  and no error explained why, because there was no endpoint to receive the call. A permission
+  that unlocks nothing is worse than a missing one: it reads as a decision somebody made.
+  `GET /api/v1/documents` and `GET /api/v1/documents/:id` now require it
+  (`server/routes/public-api.ts`; read model in
+  `server/services/vault/vault-document-index.service.ts`).
+  **Metadata only, deliberately** — never bytes, never `extracted_text`, never storage
+  addressing (`s3_key`, `storage_version_id`). Returning document text from an endpoint named
+  "index" would be a content egress wearing a metadata endpoint's name, and would route around
+  the byte-level gates the in-app read path enforces. Whether a bearer API key may pull
+  regulated content at all is a separate egress decision and is **not** made here.
+  Tenancy is enforced by joining through `regulatory_programs`, not by trusting the nullable
+  `vault.documents.organization_id`. A test asserts that **every scope `/docs` advertises is
+  required by some endpoint `/docs` lists**, so this class of defect cannot recur silently.
+- ~~The tenant data export cannot see the `vault` schema.~~ **CLOSED** earlier in this pass:
+  `EXPORT_SCHEMAS` is `['public', 'vault']` (`tenant-full-export.service.ts:70`).
+- ~~The purge it gates silently skips vault documents, so a GDPR erasure request leaves the
+  bytes.~~ **CLOSED TWICE — the second time is the interesting one.** The first fix named the
+  tables where they actually live (`vault.documents`, not `public.vault_documents`, which
+  resolved to nothing and was skipped as "absent from this schema"). Fixing the table names
+  exposed a narrower version of the same bug underneath: both vault entries were keyed on
+  `organization_id = $1`, and that column is **nullable by design** — the schema records
+  "NULL = unattributable — the program is missing or soft-deleted". A document whose programme
+  had been soft-deleted therefore carried NULL, matched nothing, and survived the erasure with
+  its bytes — in precisely the rows old enough for someone to ask about. The purge now scopes
+  through `regulatory_programs` (the authoritative owner, since the column is backfilled from
+  it) unioned with the column: `VAULT_DOCUMENT_TENANCY` in `tenant-offboarding.ts`. Proven
+  against real Postgres, including a test that runs the *old* predicate and asserts it leaves
+  the row behind.
+- **`VaultSyncService` (the Veeva-migration story) has no importer outside its own file.**
+  **STILL OPEN** — re-verified 2026-09-19. The only references anywhere are its own definition
+  (`server/integrations/veeva-vault/vault-sync-service.ts`) and its own test. No route, service
+  or script constructs it, so the migration story remains a class nobody can invoke.
 
 ---
 
