@@ -147,7 +147,23 @@ router.patch('/settings', async (req: Request, res: Response) => {
       action: 'branding_settings_updated',
       resourceType: 'organization',
       resourceId: orgId,
-      details: { updatedFields: Object.keys(req.body) },
+      /* `requestKeys`, not `updatedFields`, and `?? {}` — both from the review of
+         this conversion.
+
+         The name: `Object.keys(req.body)` is what the request CARRIED, not what
+         changed. The merge two statements up is `{ ...base, ...req.body }`, so a
+         client that sends the whole settings object back with one field altered
+         produces a row naming every key.
+
+         The guard: without it, a PATCH with no body or a non-JSON content type
+         left `req.body` undefined, `Object.keys(undefined)` threw, and the catch
+         answered 500 — AFTER the branding row had already committed at the
+         `store.update` / `store.insert` above, because the spread does not throw
+         on undefined. A committed change reported as a server error is the same
+         class of lie as a failed one reported as success, and it also meant the
+         §11.10(e) row for that change was never even attempted. The mutation
+         stands, so the response says so. */
+      details: { requestKeys: Object.keys(req.body ?? {}) },
     });
     setAuditRowHeaders(res, auditTrail);
 
@@ -184,8 +200,14 @@ router.post('/upload-logo', async (req: Request, res: Response) => {
     }
 
     /* WO-16C #133. The logo bytes are already committed by the `store.update` /
-       `store.insert` directly above and are already servable at
-       GET /logo/:orgId, so this is the §11.10(e) log beside a completed action.
+       `store.insert` directly above and returned to the caller as `logoUrl`, so
+       this is the §11.10(e) log beside a completed action.
+
+       Deliberately NOT "already servable at GET /logo/:orgId": this handler
+       validates only that `logoBase64` is truthy, while that route requires a
+       `data:…;base64,…` match and answers 400 otherwise — so a committed upload
+       is not necessarily servable, and a reviewer was right that the earlier
+       wording claimed more than the code guarantees.
        A lost row does not un-upload the logo, so nothing is reverted; the
        outcome rides in this handler's own response body, which is not a stored
        record. `auditTrail` is `{ persisted: true, chained }` — `chained: false`
@@ -397,18 +419,27 @@ router.patch('/templates/:id', async (req: Request, res: Response) => {
     const result = await store.update(templateId, orgId, updated, req.body.name);
 
     /* WO-16C #133. The edit is already committed by the `store.update` directly
-       above, whose row is what `result` holds, so this is the §11.10(e) log
-       beside a completed action — and the one that records WHICH fields a user
-       changed, which the stored record itself does not keep. It is not a reason
-       to roll the edit back. The outcome goes in the headers because this body is
-       the stored template record and the merge above would turn any added key
-       into a stored field on the next PATCH. */
+       above (whose returned row is what `result` holds on the normal path), so
+       this is the §11.10(e) log beside a completed action, and the only record of
+       which keys the update request carried — `store.update` replaces `content`
+       wholesale and nothing keeps a history of it. It is not a reason to roll the
+       edit back. The outcome goes in the headers because this body is the stored
+       template record and the merge above would turn any added key into a stored
+       field on the next PATCH.
+
+       `requestKeys`, not `updatedFields`: `Object.keys(req.body)` is what the
+       request CARRIED, not what changed. This handler merges
+       `{ ...data, ...req.body }`, so a UI that sends the whole template back with
+       one field altered produces a row naming every key — and keys that are not
+       fields of the template at all are listed too. A reviewer caught the old
+       name; an audit row whose field name overstates what it knows is the same
+       defect as a surface that does. */
     const auditTrail = await recordAuditRow({
       tenantId: orgId,
       action: 'template_updated',
       resourceType: 'document_template',
       resourceId: templateId,
-      details: { updatedFields: Object.keys(req.body) },
+      details: { requestKeys: Object.keys(req.body ?? {}) },
     });
     setAuditRowHeaders(res, auditTrail);
 

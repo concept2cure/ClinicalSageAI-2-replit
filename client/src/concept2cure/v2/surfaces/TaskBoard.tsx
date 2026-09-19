@@ -865,8 +865,8 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                         <span className="tb-av" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>
                       </div>
                       <div className="tb-move" onClick={e => e.stopPropagation()}>
-                        <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back">{I.left}</button>
-                        <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title="Advance">{I.chevRight}</button>
+                        <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back" aria-label="Move back">{I.left}</button>
+                        <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title="Advance" aria-label="Advance">{I.chevRight}</button>
                       </div>
                     </div>
                   ))}

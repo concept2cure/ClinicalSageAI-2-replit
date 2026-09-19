@@ -1076,7 +1076,7 @@ function AuthorWorkspace({
                 this surface, so the picker below intentionally does not fabricate
                 a persisted/processing row. Uploading lives in the document
                 workspace. */}
-            <button className="pj-edit" title="Add document (opens the document workspace)" onClick={() => onNav('document-authoring')}>{I.plus}</button>
+            <button className="pj-edit" title="Add document (opens the document workspace)" aria-label="Add document (opens the document workspace)" onClick={() => onNav('document-authoring')}>{I.plus}</button>
           </div>
           <Anchored
             state={draftsState}

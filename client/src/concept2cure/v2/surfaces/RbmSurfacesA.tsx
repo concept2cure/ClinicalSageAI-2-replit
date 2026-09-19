@@ -396,7 +396,7 @@ export function RbmRact({ board, onReload }: SubProps) {
                 <td>{it.residual != null ? <RbmScore v={it.residual} /> : <span className="mut">Not assessed</span>}</td>
                 <td><RbmChip vocab="item" value={it.status} /></td>
                 <td><button className="rbm-rowedit" disabled={locked || mut.busy}
-                  title={locked ? 'Approved assessment — CtQ content is fixed under the signature' : 'Edit'}
+                  title={locked ? 'Approved assessment — CtQ content is fixed under the signature' : 'Edit'} aria-label={locked ? 'Approved assessment — CtQ content is fixed under the signature' : 'Edit'}
                   onClick={() => setEdit({ mode: 'edit', item: it })}>{I.penLine}</button></td>
               </tr>
             ))}
@@ -619,7 +619,7 @@ export function RbmQtls({ board, onReload }: SubProps) {
                 : <span className="mut">Not yet measured</span>}</td>
               <td><RbmChip vocab="qtl" value={q.status} /></td>
               <td><div className="rbm-qtl-acts">
-                <button className="rbm-rowedit" title="Configure" disabled={mut.busy} onClick={() => setCfg({ mode: 'edit', qtl: q })}>{I.penLine}</button>
+                <button className="rbm-rowedit" title="Configure" aria-label="Configure" disabled={mut.busy} onClick={() => setCfg({ mode: 'edit', qtl: q })}>{I.penLine}</button>
                 {q.status === 'breached' && !q.breachAction && <button className="rbm-linkbtn" disabled={mut.busy} onClick={() => setBreach(q)}>Document breach</button>}
               </div></td>
             </tr>

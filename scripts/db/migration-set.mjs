@@ -71,6 +71,8 @@ import { ensureJournal, recordApplied } from './migration-journal.mjs';
 export const TENANT_ISOLATION_SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
 export const UUID_TENANT_ISOLATION_NONPUBLIC =
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql';
+export const C48_STAGE1_IDENTITY_ORG_BRIDGE =
+  'db/migrations/20260919_c48_stage1_identity_org_bridge.sql';
 
 export const C2C_MIGRATION_FILES = [
   // ── Golden-journey prerequisites ────────────────────────────────────────────
@@ -2309,6 +2311,16 @@ export const C2C_MIGRATION_FILES = [
   // the author. Additive and IF NOT EXISTS, so it replays as a no-op; above the
   // final pair because ci:migration-set-order pins those two last.
   'migrations/20260918_rbm_author_attribution.sql',
+  // ── CMC playbook: the five tables /api/cmc/blueprint/playbook/* queries ──
+  // The surface is live and unconditionally mounted (register-core-routes.ts:68
+  // → blueprintRoutes.ts:748), and none of its tables existed on any
+  // provisioned database, so every one of its endpoints returned 500. A correct
+  // DDL file already sat at server/database/cmc-playbook-schema.sql on NO
+  // applier — which is exactly why the tables were missing; it is deleted in
+  // the same change rather than left as a second creator. All five are public +
+  // organization_id INTEGER NOT NULL so the sweep below policies them, and
+  // ABOVE that sweep for the reason the ana_runs note gives.
+  'migrations/20260919_cmc_playbook_schema.sql',
 
   // ── CAPA / complaint / MDR display codes: per program, not global ─────────
   // complaints_code_uq, mdr_events_code_uq and capa_records_code_uq were each
@@ -2331,6 +2343,18 @@ export const C2C_MIGRATION_FILES = [
   // recurring DROP rule 1 forbids. Above the final pair because
   // ci:migration-set-order pins those two last.
   'migrations/20260919_capa_code_uniqueness_per_program.sql',
+
+  // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
+  // Backfills identity.organizations from public.organizations.uuid (the
+  // canonical per-tenant uuid) + a forward-sync trigger, so a single
+  // app.current_org_id serves both the COALESCE-family tables and the
+  // identity-FK-bound family instead of the two disjoint uuid spaces deny-alling
+  // each other. Additive, idempotent, and a no-op on a fresh DB (public.organizations
+  // is empty); it does NOT set the GUC or flip enforcement (C-48 Stage 2/3). Placed
+  // before the final isolation pair — it is a backfill, not a sweep; prerequisites
+  // (identity.organizations from 051, organizations.uuid from 20260129) are far
+  // earlier in the set.
+  C48_STAGE1_IDENTITY_ORG_BRIDGE,
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
