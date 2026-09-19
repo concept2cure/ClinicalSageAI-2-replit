@@ -347,7 +347,30 @@ A customer can upload a CSR and then cannot put it in the NDA.
 
 Condensed from 220 verified findings. Severity as adjudicated after verification.
 
-**Lifecycle & versioning.** No lifecycle state on `vault.documents` at all — the UI renders the
+**Lifecycle & versioning.** **Partly closed 2026-09-19 — the `placed` transition is
+reachable.** The orchestrator refused it outright (`PLACEMENT_BINDING_NOT_WIRED`) because the
+live route built its bindings without an `upsertLeaf` writer; the real writer is injected now.
+That refusal was correct and was not loosened: `lifecycleBindings.ts` records the default it
+replaced, which minted a `leaf:${randomUUID()}` for a `submission_leaves` row that was never
+written and attested it in the hash-chained audit trail.
+
+The binding refuses rather than guesses in three places — no `sequenceId` on the placement
+(`registryId` is an application *type*, and an org can hold several submissions each with a
+sequence 0000), no source the assembler can materialise, and a key-space mismatch where the
+STORE's declared id kind governs rather than the ref's claim. Refusals surface as a 409 in the
+orchestrator's own shape, never a 500.
+
+It works for vault documents specifically because `document_uuid` landed earlier this session:
+`SOURCE_ID_KIND` already declared `vault_documents` uuid-keyed, so the model had anticipated
+this seam before there was a column for it.
+
+**Still open here:** `packaged` remains unwired (`ASSEMBLY_BINDING_NOT_WIRED`). The assembler
+exists, but wiring it makes an HTTP transition build a real eCTD package — an architecture
+decision about where that work runs, not the mechanical injection `placed` needed. And
+`vault.documents` still has no stage column of its own; the lifecycle runs over the canonical
+document store, not over the vault row.
+
+Original finding: no lifecycle state on `vault.documents` at all — the UI renders the
 *filing* status in the status slot because there is nothing else
 (`server/routes/c2c/project-vault.ts:312`). A good, default-deny, unit-tested state machine
 exists (`shared/regulatory/document-lifecycle.ts:146-195`) and is mounted
