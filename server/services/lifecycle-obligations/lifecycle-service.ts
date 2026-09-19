@@ -57,7 +57,7 @@ export async function createObligationTx(client: Queryable, orgId: number, userI
 
   let occurrencesCreated = 0;
   if (input.obligationType === 'periodic_report' && input.recurrenceMonths && input.recurrenceMonths > 0 && input.anchorDate) {
-    const occ = generateOccurrences(input.anchorDate, input.recurrenceMonths, Math.min(input.occurrencesToGenerate ?? 4, 24));
+    const occ = generateOccurrences(input.anchorDate, input.recurrenceMonths, Math.min(input.occurrencesToGenerate ?? 4, 24), input.classification);
     for (const o of occ) {
       await client.query(
         `INSERT INTO lifecycle_obligation_events (organization_id, obligation_id, period_start, period_end, due_date, status, created_by)
