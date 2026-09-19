@@ -397,7 +397,11 @@ describe('the reaper', () => {
   });
 });
 
-/** The approval a governed tool call asks for; the toolUseId varies per case. */
+/**
+ * The governed action a run is held at — one tool_use_id, one command.
+ * Shared by both suites below: the proposal is the same object whether it is
+ * being opened or being decided.
+ */
 const pending = (toolUseId = 'tu_1') => ({
   toolUseId,
   command: 'freeze_document',
@@ -407,6 +411,7 @@ const pending = (toolUseId = 'tu_1') => ({
 });
 
 describe('holding a run at a governed action', () => {
+
   it('moves the run to awaiting_approval and records what is being asked', async () => {
     const { runId } = await newRun();
     expect(await requestApproval(pool(), runId, pending())).toBe(true);
@@ -437,7 +442,14 @@ describe('holding a run at a governed action', () => {
     await requestApproval(pool(), runId, pending());
     expect(await readPendingApproval(pool(), runId, OTHER_ORG)).toBeNull();
   });
+});
 
+/**
+ * Deciding a held run. Split from the suite above so neither outgrows the file
+ * it documents: opening a gate and settling one are different invariants, and a
+ * reader chasing the e-signature rules should not have to read the gate's own.
+ */
+describe('deciding a held run', () => {
   it('releases the run when the person decides, and keeps what they decided', async () => {
     const { runId } = await newRun();
     await requestApproval(pool(), runId, pending());

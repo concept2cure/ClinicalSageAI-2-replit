@@ -6,6 +6,88 @@
 
 ---
 
+## ⚠ Status re-derived 2026-09-19 — the central premise is superseded
+
+Run, not trusted, per the README's instruction to re-derive rather than believe
+the row. Every number below moved, and one of them changed meaning.
+
+| Tranche | This WO (09-10) | Measured 09-19 |
+|---|---:|---:|
+| `tenant-resolvers` | 190 | 189 |
+| `drizzle-tenant-scope` | 151 | 148 (3 fixed) |
+| `requestdb-coverage` — shared pool | 82 | **230 of 258, and reclassified** |
+| `tenant-isolation` raw SQL | 10 | 9 |
+| `tenant-entry-points` | 10 | 9 |
+| `tenant-blind-models` | 5 | 4 |
+| `tenant-column-types` | — | OK, all integer |
+
+**"Why the 82 is the number that matters" no longer holds.** This WO says a
+shared-pool route "connects as a role that bypasses [RLS], so for those 82 the
+second layer of defence is not weak — it is not engaged." That is no longer the
+architecture. `scripts/ci/audit-requestdb-coverage.mjs` now reports 230 of 258
+route files on the shared pool but classifies them: **228 JWT-boundary
+auto-scoped, 2 explicit pre-tenant scope, 0 unclassified.** Protected routes
+receive AsyncLocalStorage scope at the global auth boundary and the instrumented
+pool applies it automatically, so shared-pool use is no longer synonymous with
+RLS being inert. The count went UP because it now measures the whole route
+surface; nothing regressed.
+
+The honest remaining statement is the one this WO already reaches for: isolation
+is **proven for the surface the live probe covers and asserted everywhere else**,
+and the work is breadth — extending
+`tests/db/two-tenant-application-rls.dbtest.ts` past its two route modules and
+three tables. That is NOT claimed by this session.
+
+### The `app.current_org_id` distribution — the question the vault lane handed over
+
+`server/middleware/__tests__/tenant-scope-org-guc.test.ts` closes with: *"This
+says nothing about how OFTEN the uuid is absent — that depends on which mint path
+issued the token … Establishing that distribution is the next step, not this
+one."* Established here, and the answer is reassuring in one direction and thin in
+another.
+
+**Mint-path census — 2 of 8 sites stamp `organizationUuid` into the JWT:**
+
+| Site | |
+|---|---|
+| `server/services/mfaService.ts:539` | stamps |
+| `server/routes/setup.ts:123` | stamps |
+| `server/auth.ts:321` — **the primary login** | drops |
+| `server/routes/users.ts:810`, `:924` | drops |
+| `server/routes/authEnterprise.ts:463`, `:752`, `:861` | drops |
+
+So an ordinarily-logged-in user's token carries no org uuid. **That does not leave
+the GUC empty, because the token is not the source.** `authenticateToken`
+composes `enforceOrgMembership(req, res, () => establishRequestTenantScope(…))`
+at `server/middleware/auth.ts:183`, and `enforceOrgMembership` resolves the uuid
+from `organizations.uuid` by LEFT JOIN on every authenticated request. All 68
+route files using `authenticateToken` inherit it; only 2 reference
+`enforceOrgMembership` directly, which is why it looks unmounted and is not. That
+composition is pinned by
+`server/middleware/__tests__/auth-establishes-scope.integration.test.ts`.
+
+**The residual hole is the degraded path, and it was pinned by nothing.** When the
+LEFT JOIN throws, a membership-only fallback answers — correctly, since
+`organization_users` is the sole authority — but `orgUuid` is null, which
+`tenantSessionVars` turns into an EMPTY `app.current_org_id` for the whole
+request. The module guards against the worst version of this with one `if`
+(`if (!enrichmentDegraded) cacheMembership(…)`), because a cached null would
+serve numeric-only scoping for the full 60s TTL. Ledger L148 is what the
+unguarded shape costs: the flagship authoring journey ran EVERY request degraded
+and proved its tenant-isolation steps with the org variable empty.
+`server/middleware/__tests__/orgMembership-degraded-enrichment.test.ts` now pins
+membership standing, the uuid being absent, the degradation being counted, the
+answer not being cached, and the self-heal — verified by deleting the guard and
+watching it go red.
+
+**For the vault lane:** the §4.4 order is "prove the GUC, then FORCE". The GUC
+carries a real uuid on every authenticated request whose enrichment JOIN
+succeeds, independent of mint path — so FORCE is safe with respect to mint paths.
+It is NOT safe with respect to the degraded path: while the JOIN is broken, FORCE
+empties the vault for that user rather than merely under-scoping them. The
+degradation is now counted (`degradedEnrichmentCount()`), so that rate is
+measurable before FORCE lands rather than after.
+
 ## What the code actually says
 
 Five overlapping tranches, all currently green because all are baselined:

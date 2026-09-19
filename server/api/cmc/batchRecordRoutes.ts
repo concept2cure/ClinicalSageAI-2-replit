@@ -9,6 +9,11 @@ import { writeThroughBatchRecord } from '../../services/cmc-write-through';
 import { linkToModule3 } from '../../services/cmc/link-to-module3';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import { resolveActorUserId } from './governance';
+/* The CANONICAL org resolver. This module defined its own, reading two of the
+   four places the canonical one reads, in its own order — and a second answer
+   to "which organization is this" is a tenant-isolation decision, not a helper
+   (`ci:tenant-resolvers`). */
+import { resolveOrgId } from '../../types/auth-request';
 
 const router = express.Router();
 
@@ -30,12 +35,6 @@ const router = express.Router();
  * `tenantParams`, which returns the same identity twice — once as text for
  * tenant_id, once as a number for organization_id.
  */
-function resolveOrgId(req: express.Request): number | null {
-  const raw = (req as any).tenantId ?? (req as any).tenantContext?.organizationId;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
-
 /** `[textForTenantId, intForOrganizationId]` — see resolveOrgId. */
 function tenantParams(orgId: number): [string, number] {
   return [String(orgId), orgId];
@@ -140,8 +139,8 @@ router.post('/', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    if (!tenantId) {
+    const orgId = resolveOrgId(req);
+    if (orgId === null) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
 
@@ -156,11 +155,11 @@ router.post('/', async (req, res) => {
       RETURNING *`,
       [
         data.projectId || null,
-        tenantId,
         // organization_id is NOT NULL on the provisioned table (migrations/0006)
         // and IS the tenant — the same value, written to both columns so reads
-        // scoped by either agree.
-        tenantId,
+        // scoped by either agree. tenantParams supplies it in each column's own
+        // type; see its note.
+        ...tenantParams(orgId),
         data.batchNumber,
         data.productName,
         data.batchSize || null,
@@ -177,7 +176,7 @@ router.post('/', async (req, res) => {
 
     const batch = result.rows[0];
     console.log(`[CMC Batch] Created batch record ${batch.id}: ${data.batchNumber}`);
-    const linkage = await linkToModule3('write_through_batch', Number(tenantId), batch, writeThroughBatchRecord);
+    const linkage = await linkToModule3('write_through_batch', orgId, batch, writeThroughBatchRecord);
 
     res.status(201).json({
       success: true,

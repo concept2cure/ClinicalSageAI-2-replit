@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { getPool } from '../db';
-import auditService from '../services/auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
 import {
@@ -70,6 +70,33 @@ async function requirePermissionManager(req: Request, res: Response): Promise<{
   return { ...ctx, docId };
 }
 
+/**
+ * Record the §11.10(e) row for a permission grant or revoke, and REPORT what
+ * happened to it.
+ *
+ * WO-16C #133, and this site had two defects rather than one.
+ *
+ * The outcome was discarded: `void auditService.logAction(…)`, and `logAction`
+ * never rejects when persistence fails — by deliberate policy, an audit-trail
+ * outage must not break the action it records — so the discarded
+ * `AuditWriteResult` was the only place a lost row was visible. The function
+ * returned `void`, so neither handler could report one either.
+ *
+ * And the `.catch()` on the end could never run. It logged "Failed to reflect
+ * authoring permission event into central audit log" and read, to anyone
+ * auditing this file, as handling — for a promise documented never to reject on
+ * exactly the failure the message names. That is the defect
+ * `ci:dead-audit-catch` exists for; it only matches `try`/`await`/`catch`, so
+ * this `.catch()` form slipped past it. Unreachable handling is worse than none:
+ * a reviewer checking "is the audit failure handled here?" finds a handler and
+ * moves on.
+ *
+ * `recordAuditRow` replaces both. It never throws, it logs the store's own
+ * reason itself, and it returns the outcome — which the grant and revoke
+ * handlers now put on the wire. Who may read and change a governed document is
+ * precisely the kind of change an inspector traces, so a silently lost record of
+ * it is worth surfacing.
+ */
 function recordPermissionAudit(input: {
   tenantId: number;
   actorId: string;
@@ -77,23 +104,15 @@ function recordPermissionAudit(input: {
   docId: string;
   permissionId?: string;
   details: Record<string, unknown>;
-}): void {
-  void auditService
-    .logAction({
-      tenantId: input.tenantId,
-      userId: input.actorId,
-      action: input.action,
-      resourceType: 'authoring_document_permission',
-      resourceId: input.permissionId ?? input.docId,
-      details: { docId: input.docId, ...input.details },
-    })
-    .catch(error => {
-      logger.error('Failed to reflect authoring permission event into central audit log', {
-        docId: input.docId,
-        permissionId: input.permissionId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    });
+}): Promise<AuditRowOutcome> {
+  return recordAuditRow({
+    tenantId: input.tenantId,
+    userId: input.actorId,
+    action: input.action,
+    resourceType: 'authoring_document_permission',
+    resourceId: input.permissionId ?? input.docId,
+    details: { docId: input.docId, ...input.details },
+  });
 }
 
 // This router is mounted once at `/api` before the legacy `/api/authoring`
@@ -165,7 +184,7 @@ router.post('/authoring/docs/:docId/permissions', async (req: Request, res: Resp
       validUntil,
     });
 
-    recordPermissionAudit({
+    const auditTrail = await recordPermissionAudit({
       tenantId: ctx.tenantId,
       actorId: ctx.principal.id,
       action: 'authoring.permission.grant',
@@ -181,7 +200,7 @@ router.post('/authoring/docs/:docId/permissions', async (req: Request, res: Resp
       },
     });
 
-    return res.status(201).json({ success: true, permission });
+    return res.status(201).json({ success: true, permission, auditTrail });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message === 'DOCUMENT_NOT_FOUND' || message === 'SECTION_SCOPE_MISMATCH') {
@@ -233,7 +252,7 @@ router.delete(
         });
       }
 
-      recordPermissionAudit({
+      const auditTrail = await recordPermissionAudit({
         tenantId: ctx.tenantId,
         actorId: ctx.principal.id,
         action: 'authoring.permission.revoke',
@@ -247,7 +266,7 @@ router.delete(
         },
       });
 
-      return res.json({ success: true, permission });
+      return res.json({ success: true, permission, auditTrail });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (message === 'LAST_OWNER') {

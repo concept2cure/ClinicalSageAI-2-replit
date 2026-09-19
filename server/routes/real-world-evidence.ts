@@ -43,6 +43,10 @@ import {
   screenSignalPanel,
   type SignalPanelResult,
 } from '../services/stats/signal-disproportionality';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
+
+const log = createScopedLogger('rwe');
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -836,14 +840,13 @@ router.post('/query', async (req: Request, res: Response) => {
         error: { code: 'source_not_configured', message: err.message, dataSource: err.dataSource },
       });
     }
-    console.error('[RWE] study execution failed:', err);
-    res.status(502).json({
-      success: false,
-      error: {
-        code: 'execution_failed',
-        message: `Study execution failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
-      },
-    });
+    /* `runRWEStudy` reaches EHR/FHIR endpoints, registries and this service's
+       own stores, so whatever it throws is internal shape — a driver message, a
+       connection string, a query. It was being interpolated straight into the
+       response body, where the reader is a regulatory director. The canonical
+       helper logs the detail against the request id and answers with a code, a
+       sentence and that id, so the operator can still find the real error. */
+    return serverError(res, log, 'executing the RWE study', err);
   }
 });
 

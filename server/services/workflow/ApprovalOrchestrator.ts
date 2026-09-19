@@ -76,7 +76,8 @@ export interface WorkflowStatus {
   }>;
 }
 
-export interface PendingApproval {
+/** A workflow STEP awaiting a reviewer — see PendingToolApproval for AnA's. */
+export interface PendingWorkflowApproval {
   approvalId: number;
   workflowId: number;
   documentId: number;
@@ -407,7 +408,7 @@ export class ApprovalOrchestrator {
   async getPendingApprovals(
     userId: string,
     organizationId: string | number,
-  ): Promise<PendingApproval[]> {
+  ): Promise<PendingWorkflowApproval[]> {
     // Get all active workflows for the org
     const activeWorkflows = await db
       .select()
@@ -506,7 +507,7 @@ export class ApprovalOrchestrator {
     );
 
     // Enrich with document titles and step names + human initiator name + due date
-    const results: PendingApproval[] = [];
+    const results: PendingWorkflowApproval[] = [];
     for (const approval of userApprovals) {
       const wf = activeWorkflows.find(w => w.id === approval.workflowId);
       if (!wf) continue;

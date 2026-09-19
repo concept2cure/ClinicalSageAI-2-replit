@@ -704,8 +704,15 @@ export async function resumeAbandonedRun(pool: Pool, runId: string): Promise<voi
 // Approval — holding a run at a governed action until a person decides
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** What AnA is asking permission to do, as the row holds it. */
-export interface PendingApproval {
+/**
+ * What AnA is asking permission to do, as the row holds it.
+ *
+ * Named for the TOOL CALL it holds, not for "an approval": the workflow layer
+ * has its own pending approval — a reviewer's step on a document — and one
+ * exported noun meaning both is how a reader greps the name and lands in the
+ * wrong module (`ci:duplicate-exported-types`).
+ */
+export interface PendingToolApproval {
   /** The tool call this is for. Binds the decision to one proposal. */
   toolUseId: string;
   command: string;
@@ -742,7 +749,7 @@ export interface ApprovalDecision {
 export async function requestApproval(
   pool: Pool,
   runId: string,
-  pending: PendingApproval,
+  pending: PendingToolApproval,
 ): Promise<boolean> {
   const { rowCount } = await pool.query(
     `UPDATE ana_runs
@@ -763,13 +770,13 @@ export async function readPendingApproval(
   pool: Pool,
   runId: string,
   organizationId: number,
-): Promise<PendingApproval | null> {
+): Promise<PendingToolApproval | null> {
   const { rows } = await pool.query(
     `SELECT pending_approval FROM ana_runs
      WHERE id = $1 AND organization_id = $2 AND status = 'awaiting_approval'`,
     [runId, organizationId],
   );
-  return (rows[0]?.pending_approval as PendingApproval) ?? null;
+  return (rows[0]?.pending_approval as PendingToolApproval) ?? null;
 }
 
 /**

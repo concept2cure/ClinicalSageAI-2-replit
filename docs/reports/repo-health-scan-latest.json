@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T01:26:05.490Z",
+  "generatedAt": "2026-09-19T02:20:40.186Z",
   "git": {
-    "sha": "6ec63935ba584dfeb6df0f4f814897818f95ae2e",
+    "sha": "8c3b4c585f10503f72d300015c23572ad5834392",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 205,
+    "duplicateBasenames": 204,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
@@ -1064,14 +1064,6 @@
         ]
       },
       {
-        "basename": "dispatch-readiness",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/v2/fixtures/dispatch-readiness.ts",
-          "server/services/ectd/dispatch-readiness.ts"
-        ]
-      },
-      {
         "basename": "dmsp",
         "count": 2,
         "paths": [
@@ -1948,7 +1940,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1029061
+        "bytes": 1031109
       },
       {
         "file": "shared/schema.ts",
@@ -1964,7 +1956,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 329643
+        "bytes": 333162
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
@@ -2088,7 +2080,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 110571
+        "bytes": 110643
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2126,11 +2118,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19939
+        "lines": 19980
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7498
+        "lines": 7598
       },
       {
         "file": "server/statistics-service.ts",
@@ -2510,7 +2502,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 396,
+      "duplicateGroups": 395,
       "largeByBytes": 33,
       "largeByLines": 79
     },
@@ -2528,7 +2520,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 56,
+      "duplicateGroups": 55,
       "largeByBytes": 5,
       "largeByLines": 9
     },

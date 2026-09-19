@@ -16,7 +16,7 @@ import { Router, Request, Response } from 'express';
 
 import { authenticateToken } from '../middleware/auth';
 import { pool } from '../db';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { buildMdxContextBlock } from '../services/ana-ri/mdx-context-resolver';
 
 const router = Router();
@@ -53,7 +53,18 @@ router.get('/mdx-context-snapshot', async (req: Request, res: Response) => {
       includeProactive,
     });
 
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`, which discards the
+       AuditWriteResult; `logAction` never rejects on a persistence failure, so
+       the discarded value was the only place a lost row was visible.
+
+       This one records a READ, not a mutation — nothing in this handler changes
+       state, and the row is the access record for a snapshot of the org's
+       regulatory context. So what a lost row costs is the evidence that this
+       user saw this data at this moment, not the record of a change: lower
+       stakes than a governed write, and deliberately described that way rather
+       than borrowed language about an unrecorded mutation. It is still reported
+       instead of discarded, in `access.auditTrail`. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: (req as any).user?.id ?? null,
       action: 'mdx.context_snapshot.read',
@@ -75,6 +86,9 @@ router.get('/mdx-context-snapshot', async (req: Request, res: Response) => {
       activeNav: activeNav ?? null,
       activeProgramCode,
       ...result.payload,
+      /* Namespaced so it cannot collide with a key from `result.payload`, which
+         is spread above and owned by the snapshot builder. */
+      access: { auditTrail },
     });
   } catch (err) {
     res.status(500).json({

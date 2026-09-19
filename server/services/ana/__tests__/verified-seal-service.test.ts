@@ -35,6 +35,28 @@ function signerLookup(sql: string, signer: typeof MEMBER_SIGNER | null) {
   return null;
 }
 
+/**
+ * The span-lineage gate sealVerifiedVersion now enlists (ledger L177). Every
+ * mock in this file has to answer it or the seal dies on `rows[0].id` inside
+ * recordAuthorSpan, so — like the signer lookup above — the stub lives in one
+ * place rather than in each of the four mocks.
+ *
+ * This is a STUB, not a model. The insert hands back an id so the span writer
+ * has a row to read, and the coverage read reports one span wide enough to
+ * cover any content so assertLineageCoversContent is satisfied. What the gate
+ * actually records — author spans over the real clauses, existing source spans
+ * preserved, and a roll-back when a gap remains — is proven against the real
+ * schema in verified-seal-lineage.pglite.integration.test.ts. Modelling it here
+ * would only let this file appear to assert something it cannot see.
+ */
+function lineageStub(sql: string) {
+  if (/INSERT INTO document_span_lineage\b/i.test(sql)) return { rows: [{ id: 'span_stub' }] };
+  if (/SELECT\s+char_start,\s*char_end\s+FROM document_span_lineage\b/i.test(sql)) {
+    return { rows: [{ char_start: 0, char_end: 1_000_000 }] };
+  }
+  return null;
+}
+
 /** A fake PoolClient that records queries and returns canned RETURNING rows. */
 function makePool(signer: typeof MEMBER_SIGNER | null = MEMBER_SIGNER) {
   const queries: { sql: string; params?: unknown[] }[] = [];
@@ -43,6 +65,8 @@ function makePool(signer: typeof MEMBER_SIGNER | null = MEMBER_SIGNER) {
       queries.push({ sql, params });
       const who = signerLookup(sql, signer);
       if (who) return who;
+      const lineage = lineageStub(sql);
+      if (lineage) return lineage;
       if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
       if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
       return { rows: [] };
@@ -112,6 +136,8 @@ describe('sealVerifiedVersion — happy path (one transaction)', () => {
         queries.push({ sql, params });
         const who = signerLookup(sql, MEMBER_SIGNER);
         if (who) return who;
+        const lineage = lineageStub(sql);
+        if (lineage) return lineage;
         // External-id → artifact PK resolution (org-scoped SELECT).
         if (/SELECT id FROM concept2cure_artifacts/.test(sql)) return { rows: [{ id: 777 }] };
         // version number → version-row PK resolution (org-scoped SELECT).
@@ -154,6 +180,8 @@ describe('sealVerifiedVersion — happy path (one transaction)', () => {
         queries.push({ sql, params });
         const who = signerLookup(sql, MEMBER_SIGNER);
         if (who) return who;
+        const lineage = lineageStub(sql);
+        if (lineage) return lineage;
         if (/SELECT id FROM concept2cure_artifacts/.test(sql)) return { rows: [] }; // not found / wrong org
         if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
         if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
@@ -215,6 +243,8 @@ describe('sealVerifiedVersion — fail-closed gates (no DB work)', () => {
       queries.push({ sql, params });
       const who = signerLookup(sql, MEMBER_SIGNER);
       if (who) return who;
+      const lineage = lineageStub(sql);
+      if (lineage) return lineage;
       if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
       if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
       if (/INSERT INTO concept2cure_signatures/.test(sql)) throw new Error('db write failed');

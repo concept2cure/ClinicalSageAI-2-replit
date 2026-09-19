@@ -14,17 +14,58 @@
  *   - This handler ALSO writes a separate row under
  *     `agent.ana.predicate.candidate.status` etc. so the cross-cutting
  *     audit-contract test sees an agent.ana.* row per tool.
+ *   - That agent.ana.* row is written through `recordAuditRow`, and the
+ *     OUTCOME of the write reaches the caller in `data.agentAuditTrail`
+ *     and as a clause on `message` — see `auditNote` below and WO-16C
+ *     finding 133.
  *
  * Tools shipped:
  *   - predicate.candidate.set_status
  *   - se_matrix.patch
  */
 
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import type { CommandContext, CommandResult } from './command-executor';
 import { requireGovernedToolGate, mapServiceError, agentAuditDetails } from './mdx-tool-policy';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The clause a handler appends to its own message when the 21 CFR Part 11
+ * §11.10(e) row for its `agent.ana.<verb>` action did not reach a durable
+ * store.
+ *
+ * WO-16C finding 133. Each of the three handlers in this file wrote its audit
+ * row with `void auditService.logAction({…})`. `logAction` never rejects when
+ * persistence fails — that is deliberate policy, an audit-trail outage must not
+ * break the user action it records — it RESOLVES an `AuditWriteResult` and
+ * reports what happened in `persisted`. Discarding that value left each handler
+ * with two possible outcomes and one observable result: the `CommandResult`,
+ * the AnA turn built from it and the sentence read back to the regulated user
+ * were byte-identical whether the agent-initiated record existed or did not,
+ * while the upstream mutation had already been accepted with a 2xx.
+ *
+ * So the outcome travels twice, because this surface has two kinds of reader:
+ * `data.agentAuditTrail` for anything parsing the structure, and this clause in
+ * `message` for the conversational turn, which is the only part a chat user
+ * ever sees. The upstream mutation is never reverted — reversing a committed
+ * governed write because its log row was lost is the worse lie — and the
+ * store's own error text never appears here: `recordAuditRow` has already
+ * logged it against the action and resource id.
+ *
+ * The field is `agentAuditTrail`, matching the sibling AnA MDX and PDEV
+ * handlers, so this agent-attribution row is never confused with an
+ * `auditTrail` a spread service result reports for a row of its own. Each
+ * handler here writes exactly one audit row per invocation, so one key per
+ * response is unambiguous. It is NOT the only §11.10(e) record of these
+ * actions: the BFF route each handler proxies to writes the human-action row
+ * (`logProxyMutation` in server/routes/predicate-intelligence.ts,
+ * `correspondence.ingest` in server/routes/regulatory-correspondence.ts), so a
+ * lost row here costs the AnA attribution, not the whole trail.
+ */
+function auditNote(outcome: AuditRowOutcome): string {
+  return outcome.persisted ? '' : ` ${outcome.message}`;
+}
 
 const ALLOWED_CANDIDATE_STATUSES = new Set<string>([
   'shortlisted',
@@ -148,7 +189,13 @@ export async function predicateCandidateSetStatus(
       };
     }
 
-    void auditService.logAction({
+    // WO-16C #133: was `void auditService.logAction({…})`, so a status change
+    // the shadow service had already accepted — the 2xx from the `proxyToBff`
+    // call above — reported `success: true` with no way to tell a recorded
+    // agent action from an unrecorded one. This is a log beside a completed
+    // mutation, so the status change stands; the outcome now leaves in
+    // `data.agentAuditTrail` and in the message clause.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.predicate.candidate.status',
@@ -164,8 +211,8 @@ export async function predicateCandidateSetStatus(
     return {
       success: true,
       action,
-      data: proxy.body as Record<string, unknown>,
-      message: `Set predicate candidate ${candidateId} status to ${status}.`,
+      data: { ...(proxy.body as Record<string, unknown>), agentAuditTrail },
+      message: `Set predicate candidate ${candidateId} status to ${status}.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -231,7 +278,13 @@ export async function seMatrixPatch(
       };
     }
 
-    void auditService.logAction({
+    // WO-16C #133: was `void auditService.logAction({…})`. The SE matrix row
+    // has already been patched upstream by the time this runs — the 2xx from
+    // the `proxyToBff` call above — and the handler reported the patch
+    // identically whether or not the §11.10(e) record of AnA having made it
+    // existed. A log beside a completed mutation: the patch stands, and
+    // `agentAuditTrail` says whether the agent row is there.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.se_matrix.patch',
@@ -247,8 +300,8 @@ export async function seMatrixPatch(
     return {
       success: true,
       action,
-      data: proxy.body as Record<string, unknown>,
-      message: `Patched SE matrix row ${matrixRowId}.`,
+      data: { ...(proxy.body as Record<string, unknown>), agentAuditTrail },
+      message: `Patched SE matrix row ${matrixRowId}.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -322,7 +375,13 @@ export async function correspondenceIngest(
     const responseBody = proxy.body as Record<string, unknown>;
     const correspondenceId = (responseBody?.data as any)?.id ?? null;
 
-    void auditService.logAction({
+    // WO-16C #133: was `void auditService.logAction({…})`. The correspondence
+    // record, its timeline event and its extracted issues are all persisted by
+    // the intake route before it answers 201, so by the time this runs the
+    // ingest is done — a log beside a completed action, never reverted here.
+    // What was missing was any way for the caller to tell an agent ingest that
+    // is on the §11.10(e) trail from one that is not.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.correspondence.ingest',
@@ -340,8 +399,8 @@ export async function correspondenceIngest(
     return {
       success: true,
       action,
-      data: responseBody,
-      message: `Ingested correspondence ${correspondenceId ?? '(no-id)'}: ${subject}.`,
+      data: { ...responseBody, agentAuditTrail },
+      message: `Ingested correspondence ${correspondenceId ?? '(no-id)'}: ${subject}.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
