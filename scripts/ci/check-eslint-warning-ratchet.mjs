@@ -321,12 +321,17 @@ function runSinceMode(ref) {
   }
 
   console.log('');
+  let sawApproximate = false;
   for (const r of rows.sort((a, b) => b.delta - a.delta || a.file.localeCompare(b.file))) {
     const sign = r.delta > 0 ? `+${r.delta}` : `${r.delta}`;
     console.log(`  ${sign.padStart(4)}  ${r.file}  (${r.was} -> ${r.now})`);
     if (r.delta > 0) {
-      for (const m of newMessages(r.nowMsgs, r.wasMsgs)) {
-        console.log(`         ${r.file}:${m.line}:${m.column}  ${m.ruleId ?? NO_RULE}  ${m.message}`);
+      for (const m of newMessages(r.nowMsgs, r.wasMsgs, changedLinesOf(git, sha, r.file))) {
+        console.log(
+          `         ${r.file}:${m.line}:${m.column}  ${m.ruleId ?? NO_RULE}  ${m.message}` +
+            (m.approximate ? '   [position approximate — see below]' : ''),
+        );
+        if (m.approximate) sawApproximate = true;
       }
     }
   }
@@ -341,7 +346,35 @@ function runSinceMode(ref) {
         '  the baseline to make room.',
     );
   }
+  if (sawApproximate) {
+    console.log(
+      '\n  [position approximate] means the file holds several warnings whose text is\n' +
+        '  word-for-word identical, so the count grew but no single one of them can be\n' +
+        '  named as the new one. The line shown is the best candidate -- the one your\n' +
+        '  diff actually touched. Read the whole function, not just that line.',
+    );
+  }
   process.exit(0);
+}
+
+/**
+ * The line numbers this file's diff touched, on the CURRENT side.
+ *
+ * Used only to break ties between identically-worded warnings; an empty set is
+ * a degraded report, never a wrong answer.
+ */
+function changedLinesOf(git, sha, file) {
+  const out = git(['diff', '-U0', sha, '--', file]);
+  if (out.status !== 0) return [];
+  const lines = [];
+  for (const line of out.stdout.split('\n')) {
+    const m = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/.exec(line);
+    if (!m) continue;
+    const start = Number(m[1]);
+    const count = m[2] === undefined ? 1 : Number(m[2]);
+    for (let i = 0; i < count; i += 1) lines.push(start + i);
+  }
+  return lines;
 }
 
 /** Lint an explicit list of repo-relative paths; returns the ESLint JSON report. */
@@ -412,22 +445,57 @@ function messagesByFile(report, rename) {
  *    line longer; keying on the literal string reported both the disappearance
  *    of the old one and the arrival of a new one, so a file that gained 2
  *    warnings listed 6.
+ *
+ * Which leaves the case those normalisations create. When a file holds many
+ * warnings whose text is word-for-word identical — AnaToolExecutor.ts carries
+ * TWENTY-FOUR `Async arrow function has a complexity of 17` — the multiset can
+ * say one was added and cannot say which. Reporting an arbitrary one is worse
+ * than saying nothing: it is a specific line number, and a reader trusts it. So
+ * candidates are ranked by how many of the diff's own changed lines fall inside
+ * them (from the warning's line to the next same-shaped warning, since a
+ * function-level warning is reported at the function's first line and the edit
+ * lands in its body), and anything picked without that evidence is flagged
+ * `approximate` rather than presented as fact.
  */
-function newMessages(now, was) {
+function newMessages(now, was, changedLines = []) {
   const shape = (m) => `${m.ruleId ?? NO_RULE} ${String(m.message).replace(/\d+/g, '#')}`;
-  const remaining = new Map();
+
+  const wasCount = new Map();
   for (const m of was) {
     const k = shape(m);
-    remaining.set(k, (remaining.get(k) ?? 0) + 1);
+    wasCount.set(k, (wasCount.get(k) ?? 0) + 1);
   }
-  const added = [];
+
+  const byShape = new Map();
   for (const m of now) {
     const k = shape(m);
-    const left = remaining.get(k) ?? 0;
-    if (left > 0) remaining.set(k, left - 1);
-    else added.push(m);
+    byShape.set(k, [...(byShape.get(k) ?? []), m]);
   }
-  return added;
+
+  const added = [];
+  for (const [k, listUnsorted] of byShape) {
+    const list = [...listUnsorted].sort((a, b) => a.line - b.line);
+    const extra = list.length - (wasCount.get(k) ?? 0);
+    if (extra <= 0) continue;
+    if (list.length === extra) {
+      // Every one of them is new; nothing to disambiguate.
+      added.push(...list);
+      continue;
+    }
+    // Rank by changed lines falling between this warning and the next of the
+    // same shape — the span a function-level warning actually covers.
+    const scored = list.map((m, i) => {
+      const upper = i + 1 < list.length ? list[i + 1].line : Number.POSITIVE_INFINITY;
+      const score = changedLines.filter((l) => l >= m.line && l < upper).length;
+      return { m, score };
+    });
+    scored.sort((a, b) => b.score - a.score || a.m.line - b.m.line);
+    for (const { m, score } of scored.slice(0, extra)) {
+      added.push(score > 0 ? m : { ...m, approximate: true });
+    }
+  }
+
+  return added.sort((a, b) => a.line - b.line || a.column - b.column);
 }
 
 const sinceIdx = process.argv.indexOf("--since");

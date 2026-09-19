@@ -19092,6 +19092,36 @@ registerToolHandler('list_vault_documents', async (input, ctx) => {
   }
 });
 
+/**
+ * The `cre_evidence_sources.id` a vault artifact can be cited as, or null.
+ *
+ * A read tool hands the model the TEXT it will quote into a filing section, and
+ * without this it hands it no way to cite that text: a drafting tool can only
+ * record a verified quote against an evidence-source id, so a passage read
+ * without one falls to author lineage and the evidence behind a filed sentence
+ * is unrecoverable. `project_knowledge_search` already resolves this the one
+ * legitimate way; the same resolver is used here rather than a second.
+ *
+ * Resolution verifies existence and tenant ownership. An artifact with no
+ * canonical source resolves to null — never a guessed id, because a citation
+ * nobody can check is worse than no citation — and resolution is additive, so a
+ * read must not fail because attribution prep did. Both absences read as "not
+ * citable", which is true.
+ */
+async function citableSourceIdFor(
+  organizationId: number,
+  artifactKey: string | undefined,
+): Promise<number | null> {
+  if (!artifactKey) return null;
+  try {
+    const { evidenceSourceIdsForRetrieval } = await import('./drafting-source-lineage.js');
+    const resolved = await evidenceSourceIdsForRetrieval(organizationId, [artifactKey]);
+    return resolved.get(artifactKey) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 registerToolHandler('read_vault_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'read_vault_document requires tenant context.' });
   const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
@@ -19110,30 +19140,10 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
     const { content, ...meta } = rows[0];
     const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
 
-    // This tool hands the model the TEXT it will quote into a filing section,
-    // and until now it handed it no way to cite that text. A drafting tool can
-    // only record a verified quote against `cre_evidence_sources.id`, so a
-    // passage read here could never become a source span — every clause drawn
-    // from it fell to author lineage, and the evidence behind a filed sentence
-    // was unrecoverable. `project_knowledge_search` already resolves this the
-    // one legitimate way; the same resolver is used here rather than a second.
-    //
-    // Resolution verifies existence and tenant ownership. An artifact with no
-    // canonical source resolves to null and the hint says so — never a guessed
-    // id, because a citation nobody can check is worse than no citation.
-    let evidenceSourceId: number | null = null;
-    try {
-      const { evidenceSourceIdsForRetrieval } = await import('./drafting-source-lineage.js');
-      const resolved = await evidenceSourceIdsForRetrieval(Number(ctx.organizationId), [
-        (meta as { artifact_id?: string }).artifact_id ?? null,
-      ]);
-      const key = (meta as { artifact_id?: string }).artifact_id;
-      evidenceSourceId = key ? (resolved.get(key) ?? null) : null;
-    } catch {
-      // Resolution is additive: a read must not fail because attribution prep
-      // did. The absent id then reads as "not citable", which is true.
-      evidenceSourceId = null;
-    }
+    const evidenceSourceId = await citableSourceIdFor(
+      Number(ctx.organizationId),
+      (meta as { artifact_id?: string }).artifact_id,
+    );
 
     return JSON.stringify({
       ok: true,
