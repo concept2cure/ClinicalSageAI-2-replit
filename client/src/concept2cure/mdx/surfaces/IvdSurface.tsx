@@ -174,7 +174,7 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
               <div className="actions">
                 <button
                   className="tb-btn"
-                  title="Classify a device with AnA"
+                  title="Classify a device with AnA" aria-label="Classify a device with AnA"
                   onClick={() =>
                     onAskAna(
                       `Classify ${subjectName} under IVDR Annex VIII. Walk the rule set, state the resulting ` +
@@ -280,7 +280,7 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
               <div className="actions">
                 <button
                   className="tb-btn"
-                  title="Draft the analytical performance section"
+                  title="Draft the analytical performance section" aria-label="Draft the analytical performance section"
                   onClick={() =>
                     onAskAna(
                       `Summarize the analytical performance for ${subjectName} — LoD, LoQ, precision (repeatability ` +
@@ -328,7 +328,7 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
               <div className="actions">
                 <button
                   className="tb-btn"
-                  title="Close out open GSPR requirements with AnA"
+                  title="Close out open GSPR requirements with AnA" aria-label="Close out open GSPR requirements with AnA"
                   onClick={() =>
                     onAskAna(
                       `Review the IVDR GSPR (Annex I) checklist for ${program?.code ?? 'this IVD'}. List every requirement ` +

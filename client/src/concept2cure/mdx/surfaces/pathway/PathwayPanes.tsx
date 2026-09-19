@@ -842,7 +842,7 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
           </div>
           <div className="dd-hdr-actions">
             <span className={`status-pill ${status}`}>{status}</span>
-            <button className="dd-close" onClick={onClose} title="Close">{I.close}</button>
+            <button className="dd-close" onClick={onClose} title="Close" aria-label="Close">{I.close}</button>
           </div>
         </div>
 

@@ -272,7 +272,7 @@ export function Rail({
           type="button"
           className="rail-collapse"
           onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? 'Expand' : 'Collapse'}
+          title={collapsed ? 'Expand' : 'Collapse'} aria-label={collapsed ? 'Expand' : 'Collapse'}
         >
           {I.panelLeft}
         </button>

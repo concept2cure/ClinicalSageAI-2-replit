@@ -648,7 +648,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
     <div className="ec-shell" data-tree-collapsed={treeCollapsed} data-focus={focus}>
       {/* Top bar */}
       <div className="ec-topbar">
-        <button className="ec-topbtn" onClick={() => setTreeCollapsed((v) => !v)} title="Toggle eCTD tree">{I.sidebar || I.menu || I.layers}</button>
+        <button className="ec-topbtn" onClick={() => setTreeCollapsed((v) => !v)} title="Toggle eCTD tree" aria-label="Toggle eCTD tree">{I.sidebar || I.menu || I.layers}</button>
         <div className="ec-crumbs">
           {activeDoc ? (
             <>

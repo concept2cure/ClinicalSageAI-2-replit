@@ -509,7 +509,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
                 ? <button className="hf-act" onClick={() => setMitigating(s)}
                     disabled={!s.id}
                     title={s.id ? 'Record a mitigation against the HFE/UE record' : 'This scenario has no record id — reload the HFE/UE file'}>{I.penLine} Mitigate</button>
-                : <button className="hf-go" title="Provenance" onClick={() => ask('Show the use-related risk provenance for ' + s.task)}>{I.search}</button>}
+                : <button className="hf-go" title="Provenance" aria-label="Provenance" onClick={() => ask('Show the use-related risk provenance for ' + s.task)}>{I.search}</button>}
             </div>
           );
         })}
