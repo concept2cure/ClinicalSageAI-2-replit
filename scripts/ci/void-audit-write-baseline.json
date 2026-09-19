@@ -1,6 +1,0 @@
-{
-  "$note": "Per-file COUNT of `void auditService.logAction(...)`. Shrink only — a file at its baselined count passes, a file above it fails, and a file not listed here must be zero. See scripts/ci/check-void-audit-write.mjs for what to write instead.",
-  "files": {
-    "server/services/ana/AnaToolExecutor.ts": 3
-  }
-}
