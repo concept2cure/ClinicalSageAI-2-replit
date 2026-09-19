@@ -71,6 +71,8 @@ import { ensureJournal, recordApplied } from './migration-journal.mjs';
 export const TENANT_ISOLATION_SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
 export const UUID_TENANT_ISOLATION_NONPUBLIC =
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql';
+export const C48_STAGE1_IDENTITY_ORG_BRIDGE =
+  'db/migrations/20260919_c48_stage1_identity_org_bridge.sql';
 
 export const C2C_MIGRATION_FILES = [
   // ── Golden-journey prerequisites ────────────────────────────────────────────
@@ -2331,6 +2333,18 @@ export const C2C_MIGRATION_FILES = [
   // recurring DROP rule 1 forbids. Above the final pair because
   // ci:migration-set-order pins those two last.
   'migrations/20260919_capa_code_uniqueness_per_program.sql',
+
+  // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
+  // Backfills identity.organizations from public.organizations.uuid (the
+  // canonical per-tenant uuid) + a forward-sync trigger, so a single
+  // app.current_org_id serves both the COALESCE-family tables and the
+  // identity-FK-bound family instead of the two disjoint uuid spaces deny-alling
+  // each other. Additive, idempotent, and a no-op on a fresh DB (public.organizations
+  // is empty); it does NOT set the GUC or flip enforcement (C-48 Stage 2/3). Placed
+  // before the final isolation pair — it is a backfill, not a sweep; prerequisites
+  // (identity.organizations from 051, organizations.uuid from 20260129) are far
+  // earlier in the set.
+  C48_STAGE1_IDENTITY_ORG_BRIDGE,
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
