@@ -168,6 +168,7 @@ import {
   budgetToolResultsForModel,
   buildAdaptationNote,
   mapWithConcurrency,
+  CANCELLED_TOOL_RESULT,
   type ToolCall,
   type ModelTurn,
   type ToolResultEntry,
@@ -15142,7 +15143,13 @@ export async function executeAgenticLoop(
 
   // First model turn. Streaming (when the request carries onStream) and tool
   // selection happen inside the gateway exactly as before.
-  let finalResponse = (await gateway.route(request)) as AnaGatewayResponse;
+  //
+  // The signal reaches the GATEWAY, not just this loop. Without it the abort
+  // checks here were advisory: they stopped us reading the response, while the
+  // model kept generating server-side and the turn was paid for in full. The
+  // streaming route has passed it since stop started landing mid-step; this is
+  // the same fix for the non-SSE callers.
+  let finalResponse = (await gateway.route({ ...request, signal })) as AnaGatewayResponse;
 
   // Fast path: the model answered without asking for any tool.
   if (!finalResponse.toolUses || finalResponse.toolUses.length === 0) {
@@ -15157,9 +15164,25 @@ export async function executeAgenticLoop(
   // ClinicalTrials no longer block each other), firing the per-tool hook in the
   // original call order so callers' telemetry/event streams stay deterministic.
   const executeTools = async (calls: ToolCall[]): Promise<ToolResultEntry[]> => {
-    // Barge-in: don't spend work running this round's tools once cancelled;
-    // callModel sees the abort next and ends the loop.
-    if (signal?.aborted) return [];
+    // Barge-in: don't spend work running this round's tools once cancelled.
+    //
+    // This used to `return []` — ZERO entries for a round that had N calls.
+    // The loop's contract is one ToolResultEntry per ToolCall, and everything
+    // downstream maps over these entries: the per-result cap, the round budget,
+    // and the grounding corpus, whose whole claim is that it holds exactly what
+    // the model saw. A dropped entry is a step that silently vanished, which
+    // reads afterwards as a step nobody ever asked for.
+    //
+    // So a cancelled tool returns a result SAYING it was cancelled, the same
+    // way the streaming path does. Same helper, so the two surfaces cannot
+    // describe the same event differently.
+    if (signal?.aborted) {
+      return calls.map(call => ({
+        tool_use_id: call.id,
+        name: call.name,
+        content: JSON.stringify(CANCELLED_TOOL_RESULT(call.name)),
+      }));
+    }
     const ran = await mapWithConcurrency(
       calls,
       async (call): Promise<{ call: ToolCall; result: string; errorMessage?: string }> => {
@@ -15232,7 +15255,7 @@ export async function executeAgenticLoop(
           .join('\n\n') + adaptationSuffix,
     });
 
-    const roundRequest: GatewayRequest = { ...request, messages: loopMessages };
+    const roundRequest: GatewayRequest = { ...request, messages: loopMessages, signal };
     if (!includeTools) {
       delete roundRequest.tools;
       delete roundRequest.toolChoice;
