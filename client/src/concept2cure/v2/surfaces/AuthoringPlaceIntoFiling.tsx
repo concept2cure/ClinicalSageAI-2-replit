@@ -59,14 +59,11 @@ import {
   FilingTargetFields,
   judgeSectionCode,
   isLocked,
-  type SubmissionRow,
-  type SequenceRow,
 } from './filingTarget';
 import { mutateVerbatim } from './SubmissionSeqWorkspaces';
-import { SC_LIFECYCLE_OPS, SC_SEQ_STATUS } from '../fixtures/submission';
+import { SC_LIFECYCLE_OPS } from '../fixtures/submission';
 import type { FireToast } from '../toast';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
-import { normalizeCtdCode, ctdFolderSlug } from '@shared/regulatory/section-code';
 
 /* ── Server row shapes (only the columns this dialog reads) ── */
 
@@ -165,7 +162,9 @@ export function AuthoringPlaceIntoFiling({
   // (./filingTarget), so the rule that a frozen or dispatched sequence cannot
   // take a leaf is stated in ONE place rather than two that can drift.
   const target = useFilingTarget(() => setVerdict(null));
-  const { subs, subId, seqs, seqId, seq, lockedSeqs, pickSubmission } = target;
+  /* Only `seq` is read here — the submission/sequence pickers and their locked
+     set are rendered by FilingTargetFields from the same hook. */
+  const { seq } = target;
 
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
@@ -190,8 +189,6 @@ export function AuthoringPlaceIntoFiling({
      before the write boundary was closed it produced a package with a
      top-level folder no eCTD layout defines. */
   const sectionJudged = judgeSectionCode(section);
-  const sectionCanonical = sectionJudged.canonical;
-  const sectionFolder = sectionJudged.folder;
   const sectionIsPlaceable = sectionJudged.placeable;
   const sectionNote = sectionJudged.note;
 

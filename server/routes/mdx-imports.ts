@@ -21,7 +21,18 @@ import {
 } from '../lib/api-response';
 import { pool } from '../db';
 import { detectArchive } from '../services/legacy-importer/detector';
-import auditService from '../services/auditService';
+/* WO-16C #133. The two audit writes in this router — import approve and finding
+   resolve — were `void auditService.logAction({…})`, which discards the
+   `AuditWriteResult` that call resolves, so the response was byte-identical
+   whether the §11.10(e) row existed or not. Both now go through the shared
+   `recordAuditRow` and carry their outcome out in `meta.auditTrail`. Neither is
+   the action itself: the approve transaction has COMMITted and the finding
+   UPDATE has returned its row before the audit row is attempted, so neither
+   mutation is reverted over a lost log row. `recordAuditRow` never returns the
+   store's own text — that goes to its log line, keyed on the action and resource
+   id — and `auditService` is reached through it, so it is no longer imported
+   here directly. */
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { recordArtifactProvenanceBestEffort } from '../services/provenance/artifact-provenance';
 
 const router = Router();
@@ -348,14 +359,22 @@ router.post('/imports/:id/approve', async (req: Request, res: Response) => {
       [id, userId, created],
     );
     await client.query('COMMIT');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The COMMIT on the line
+       above has already landed the whole approval — the job at 'completed' with
+       its approver and `artifacts_created`, the `concept2cure_artifacts` rows and
+       the imported file statuses — so this is a log beside a completed action and
+       is never reverted here. What the caller can now read is `meta.auditTrail`:
+       whether the §11.10(e) record of who approved this import, and of how many
+       artifacts it materialized, was written. This handler writes one audit row,
+       so the unqualified key names it unambiguously. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: userId ?? undefined, action: 'mdx.onboarding.import.approve',
       resourceType: 'import_job', resourceId: id, details: { artifactsCreated: created },
     });
     const { rows } = await pool.query(
       `SELECT * FROM import_jobs WHERE id = $1`, [id],
     );
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { auditTrail });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return serverError(res, log, 'approve', err);
@@ -404,11 +423,17 @@ router.post('/imports/:id/findings/:findingId/resolve', async (req: Request, res
       [findingId, orgId, note],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Finding');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The UPDATE above has
+       already committed `resolved = true` and the resolution note, and returned
+       the row, so this is a log beside a completed action, not the resolution
+       itself — it is never undone here. `meta.auditTrail` now tells the caller
+       whether the §11.10(e) record of who closed this import finding exists. One
+       audit row per request, so the unqualified key is unambiguous. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'mdx.onboarding.finding.resolve',
       resourceType: 'import_finding', resourceId: findingId,
     });
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'resolve-finding', err); }
 });
 

@@ -83,3 +83,43 @@ describe('describeCatalogToggles', () => {
     expect(out).toContain('list, read, catalog, file and passage-search');
   });
 });
+
+describe('a store it could not read is not a feature somebody turned off', () => {
+  /* The two states were one word. `isFeatureEnabled` fails closed — correctly —
+     so a refused read and a deliberately disabled toggle both arrived here as
+     `false`, and the startup line reported "inactive platform-wide" with the
+     same confidence for both. The operator whose flag did nothing needs those
+     told apart; the operator whose flag is simply off does not need a database
+     investigation. */
+  it('says UNKNOWN, and says the flag was not turned off', () => {
+    const line = describeCatalogToggles({
+      catalog: { enabled: false, source: 'unreadable' },
+      chunking: { enabled: false, source: 'unreadable' },
+    });
+    expect(line).toContain('UNKNOWN (toggle store unreadable)');
+    expect(line).toContain('NOT because anyone turned it off');
+    expect(line).toContain('[feature-toggle]');
+    // And it must not hand out the turn-it-on instructions, which would be
+    // advice for a different problem.
+    expect(line).not.toContain('ANA_DOCUMENT_CATALOG_FORCE_ON=true');
+  });
+
+  it('an ordinary off still reads as off, with the two ways to turn it on', () => {
+    const line = describeCatalogToggles({
+      catalog: { enabled: false, source: 'off' },
+      chunking: { enabled: false, source: 'off' },
+    });
+    expect(line).toContain('inactive platform-wide');
+    expect(line).toContain('ANA_DOCUMENT_CATALOG_FORCE_ON=true');
+    expect(line).not.toContain('UNKNOWN');
+  });
+
+  it('one unreadable flag is enough to stop claiming the other is simply off', () => {
+    const line = describeCatalogToggles({
+      catalog: { enabled: false, source: 'off' },
+      chunking: { enabled: false, source: 'unreadable' },
+    });
+    expect(line).toContain('could not be read');
+  });
+});
+

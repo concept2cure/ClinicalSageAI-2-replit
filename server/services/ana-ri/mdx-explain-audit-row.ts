@@ -24,7 +24,7 @@
  * explanation requests.
  */
 
-import auditService from '../auditService';
+import { recordAuditRow } from '../audit/audit-write-outcome';
 import type { CommandContext, CommandResult } from './command-executor';
 import { MDX_TOOLS, MDX_WORKFLOWS, getRegulation } from './mdx-knowledge-pack';
 
@@ -130,8 +130,18 @@ export async function explainAuditRow(
 
   const explainer = renderExplainer(row);
 
-  // Audit the explanation request itself (read-only audit).
-  void auditService.logAction({
+  /* Audit the explanation request itself (read-only audit).
+
+     WO-16C #133: was `void auditService.logAction({…})`, and `logAction` never
+     rejects on a persistence failure, so the discarded result was the only place a
+     lost row was visible.
+
+     This one is worth its own note: it is the record that AnA read a specific
+     audit row on a user's behalf. Nothing is mutated, so a lost row costs the
+     evidence of an agent's access to the audit trail, not the record of a change —
+     and an agent reading the audit trail is exactly the access an inspector would
+     want to see logged. Reported in `data.accessAuditTrail`. */
+  const accessAuditTrail = await recordAuditRow({
     tenantId: ctx.organizationId,
     userId: ctx.userId,
     action: 'agent.ana.audit.explain',
@@ -149,6 +159,7 @@ export async function explainAuditRow(
     success: true,
     action,
     data: {
+      accessAuditTrail,
       auditRowId: row.id,
       explainer,
       structured: {

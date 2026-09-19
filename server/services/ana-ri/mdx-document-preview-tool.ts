@@ -15,7 +15,7 @@
  * `agent.ana.k510_workflow.document_preview.read`.
  */
 
-import auditService from '../auditService';
+import { recordAuditRow } from '../audit/audit-write-outcome';
 import type { CommandContext, CommandResult } from './command-executor';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -89,7 +89,13 @@ export async function documentPreview(
     }
     const body = (await res.json()) as Record<string, unknown>;
 
-    void auditService.logAction({
+    /* WO-16C #133: was `void auditService.logAction({…})`, whose discarded result
+       was the only place a lost row was visible. A READ — the record that AnA
+       assembled a 510(k) document preview for this user — so a lost row costs the
+       evidence of that access, not the record of a change. Reported in
+       `data.accessAuditTrail`, namespaced because `...body` is spread beside it and
+       is owned by the upstream response. */
+    const accessAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.k510_workflow.document_preview.read',
@@ -109,7 +115,7 @@ export async function documentPreview(
     return {
       success: true,
       action,
-      data: { ...body, openModal: 'document-preview' },
+      data: { ...body, openModal: 'document-preview', accessAuditTrail },
       message:
         `Live document for ${body.documentTitle ?? projectIdent}: ` +
         `${body.approvedCount}/${body.totalSections} sections approved · ` +

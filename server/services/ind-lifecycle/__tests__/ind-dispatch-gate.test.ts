@@ -91,3 +91,47 @@ describe('evaluateDispatchGate', () => {
     expect(codes).toEqual(expect.arrayContaining(['EMPTY_SEQUENCE', 'MISSING_REQUIRED_SECTIONS', 'CRITICAL_ACTIONS_OPEN']));
   });
 });
+
+/**
+ * A clinical hold that was never EVALUATED is not a hold that is absent.
+ *
+ * `criticalActions` counts the 21 CFR 312.42 hold only when a regulatory clock
+ * reached deriveIndActionItems (ind-action-items.ts: `if (input.clock?.onHold)`).
+ * Both routes build that clock from the REQUEST BODY —
+ *
+ *     const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
+ *
+ * — so a caller that omits `clockInput` gets clock null, the hold item is never
+ * derived, `criticalCount` legitimately excludes it, and the gate answered
+ * `canDispatch: true` for a sequence under an active clinical hold. The line
+ * directly above it in the same route shows the authors already knew this class:
+ * `// From the register, never the request body`, applied to overdue safety
+ * reports. There is no persisted hold register to read instead, so the honest
+ * move is to refuse rather than to assume absence.
+ */
+describe('evaluateDispatchGate — an unevaluated clinical hold blocks', () => {
+  const clean = () => ({ sequenceValidation: validation([]), manifest: manifest(10, 0) });
+
+  it('blocks when the clinical-hold state was not evaluated', () => {
+    const v = evaluateDispatchGate({ ...clean(), criticalActions: 0, clinicalHoldEvaluated: false });
+    expect(v.canDispatch).toBe(false);
+    expect(v.blockers.map((b) => b.code)).toContain('CLINICAL_HOLD_NOT_EVALUATED');
+  });
+
+  it('clears when the hold WAS evaluated and there is none', () => {
+    const v = evaluateDispatchGate({ ...clean(), criticalActions: 0, clinicalHoldEvaluated: true });
+    expect(v.canDispatch).toBe(true);
+    expect(v.blockers).toHaveLength(0);
+  });
+
+  it('still blocks on a hold that WAS evaluated and is open', () => {
+    const v = evaluateDispatchGate({ ...clean(), criticalActions: 1, clinicalHoldEvaluated: true });
+    expect(v.canDispatch).toBe(false);
+    expect(v.blockers.map((b) => b.code)).toContain('CRITICAL_ACTIONS_OPEN');
+  });
+
+  it('leaves callers that do not model the clock at all unchanged', () => {
+    const v = evaluateDispatchGate(clean());
+    expect(v.canDispatch).toBe(true);
+  });
+});

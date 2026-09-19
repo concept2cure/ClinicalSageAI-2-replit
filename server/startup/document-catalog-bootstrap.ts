@@ -38,17 +38,25 @@ import { FeatureToggleService } from '../services/featureToggleService.js';
    literals here would let a rename create rows for keys nothing consults —
    toggles an operator can flip that change nothing, which is worse than the
    missing rows this module exists to add. */
-import {
-  DOCUMENT_CATALOG_FEATURE_KEY,
-  isDocumentCatalogEnabled,
-} from '../services/vault/document-catalog.service.js';
-import {
-  VAULT_CHUNKING_FEATURE_KEY,
-  isVaultChunkingEnabled,
-} from '../services/vault/document-chunking.service.js';
+import { DOCUMENT_CATALOG_FEATURE_KEY } from '../services/vault/document-catalog.service.js';
+import { VAULT_CHUNKING_FEATURE_KEY } from '../services/vault/document-chunking.service.js';
 
-/** How a flag came to be on — or that it is not. */
-export type ToggleSource = 'env' | 'toggle' | 'off';
+/**
+ * How a flag came to be on, that it is not — or that the answer is not known.
+ *
+ * `unreadable` is not a tidier spelling of `off`, and collapsing the two is
+ * what this bootstrap used to do. The toggle read is refused outright when it
+ * runs without a tenant scope under RLS_ENFORCE=on, and `isFeatureEnabled`
+ * fails closed to `false`, so a store that could not be reached and a feature
+ * an operator deliberately disabled produced the same startup line. The one
+ * line an operator reads to find this switch stated "inactive platform-wide"
+ * with equal confidence in both cases.
+ *
+ * The feature is inactive either way — fail-closed is the right behaviour — but
+ * "off" and "we could not find out" call for different next actions, so they
+ * are different words.
+ */
+export type ToggleSource = 'env' | 'toggle' | 'off' | 'unreadable';
 
 export interface CatalogToggleState {
   catalog: { enabled: boolean; source: ToggleSource };
@@ -65,8 +73,11 @@ export interface CatalogToggleState {
  * the qualifier would be a false statement about those tenants.
  */
 export function describeCatalogToggles(state: CatalogToggleState): string {
-  const how = (s: ToggleSource): string =>
-    s === 'env' ? 'ON (env override)' : s === 'toggle' ? 'ON (feature toggle)' : 'off';
+  const how = (s: ToggleSource): string => {
+    if (s === 'env') return 'ON (env override)';
+    if (s === 'toggle') return 'ON (feature toggle)';
+    return s === 'unreadable' ? 'UNKNOWN (toggle store unreadable)' : 'off';
+  };
   const head =
     `[ana-document-catalog] ${DOCUMENT_CATALOG_FEATURE_KEY}: ${how(state.catalog.source)} · ` +
     `${VAULT_CHUNKING_FEATURE_KEY}: ${how(state.chunking.source)}`;
@@ -75,6 +86,13 @@ export function describeCatalogToggles(state: CatalogToggleState): string {
       ? `${head} — AnA can list, read, catalog, file and passage-search the client's project files.`
       : `${head} — AnA can list, read, catalog and file project files; passage search has no index ` +
           'until vault chunking is on, and says so rather than returning nothing.';
+  }
+  if (state.catalog.source === 'unreadable' || state.chunking.source === 'unreadable') {
+    return (
+      `${head} — the toggle store could not be read, so the flags cannot be resolved. The surface is ` +
+      'inactive because the flag fails closed, NOT because anyone turned it off, and it stays inactive ' +
+      'until the read succeeds. Check the database connection and the preceding [feature-toggle] error.'
+    );
   }
   return (
     `${head} — the client-files surface is inactive platform-wide: no document tools, no session-start ` +
@@ -106,21 +124,31 @@ export async function bootstrapDocumentCatalogToggles(): Promise<CatalogToggleSt
     false,
   ).catch(() => undefined);
 
+  /* Reads the STATE, not the boolean. `isDocumentCatalogEnabled` fails closed
+     to false whether the feature is off or the store could not be read, and
+     this line is the one place where telling those apart is the whole job. The
+     env override is still checked here, exactly as those helpers check it, so
+     an environment forcing the feature on is reported as such without a read. */
   const resolve = async (
     envOn: boolean,
-    read: () => Promise<boolean>,
+    featureKey: string,
   ): Promise<{ enabled: boolean; source: ToggleSource }> => {
     if (envOn) return { enabled: true, source: 'env' };
-    const enabled = await read().catch(() => false);
+    const { enabled, readable } = await FeatureToggleService.readFeatureState(featureKey).catch(
+      () => ({ enabled: false, readable: false }),
+    );
+    if (!readable) return { enabled: false, source: 'unreadable' };
     return { enabled, source: enabled ? 'toggle' : 'off' };
   };
 
   return {
-    catalog: await resolve(process.env.ANA_DOCUMENT_CATALOG_FORCE_ON === 'true', () =>
-      isDocumentCatalogEnabled(undefined),
+    catalog: await resolve(
+      process.env.ANA_DOCUMENT_CATALOG_FORCE_ON === 'true',
+      DOCUMENT_CATALOG_FEATURE_KEY,
     ),
-    chunking: await resolve(process.env.ANA_VAULT_CHUNKING_FORCE_ON === 'true', () =>
-      isVaultChunkingEnabled(undefined),
+    chunking: await resolve(
+      process.env.ANA_VAULT_CHUNKING_FORCE_ON === 'true',
+      VAULT_CHUNKING_FEATURE_KEY,
     ),
   };
 }

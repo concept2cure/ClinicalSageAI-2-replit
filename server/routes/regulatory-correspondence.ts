@@ -20,7 +20,7 @@ import { getSecureOrgId } from '../utils/tenantContext';
 import { getOrCreateProfile } from '../services/intelligence/project-intelligence-service';
 import { db } from '../db';
 import { projectMemoryEntries } from '@shared/schema';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import {
   ISSUE_EXTRACTION_VERSION,
   ISSUE_PARSER_VERSION,
@@ -644,9 +644,16 @@ router.post('/correspondence/intake', async (req, res) => {
       summary: record.subject,
     });
 
-    // Central audit trail. The timeline event above is the per-correspondence
-    // narrative; this row gives auditors a single unified table to query.
-    void auditService.logAction({
+    /* Central audit trail. The timeline event above is the per-correspondence
+       narrative; this row gives auditors a single unified table to query.
+
+       WO-16C #133: was `void auditService.logAction({…})`. `logAction` never
+       rejects on a persistence failure, so discarding its result left a lost row
+       invisible. The correspondence record and its timeline event are already
+       committed, so this is a log beside them — and note what that means here: the
+       per-correspondence narrative survives a lost row, so what is lost is the
+       entry in the unified table auditors query, not the record of the intake. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId,
       action: 'correspondence.ingest',
@@ -663,7 +670,7 @@ router.post('/correspondence/intake', async (req, res) => {
       },
     });
 
-  return res.status(201).json({ data: record, issues: extracted, downstreamActions });
+  return res.status(201).json({ data: record, issues: extracted, downstreamActions, auditTrail });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Unknown error';
     console.error('[Correspondence Intake] DB operation failed:', message);

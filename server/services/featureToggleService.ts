@@ -8,7 +8,8 @@
 import { db } from '../db';
 import { featureToggles } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
-import { runWithSystemTenantScope } from '../db/tenantStore';
+import { getTenantScope, runWithSystemTenantScope } from '../db/tenantStore';
+import { logger } from '../utils/logger';
 
 export class FeatureToggleService {
   /**
@@ -19,23 +20,96 @@ export class FeatureToggleService {
    * @param clientWorkspaceId Client workspace ID to check (optional)
    * @returns Boolean indicating if the feature is enabled
    */
+  /**
+   * Read one toggle row, establishing a system scope only when the caller has
+   * none.
+   *
+   * ── Why a scope is needed at all ────────────────────────────────────────
+   * Pool instrumentation refuses any statement issued with no tenant scope
+   * while RLS_ENFORCE=on, which production hard-requires. `initializeFeatureToggle`
+   * already carries that argument in full — `feature_toggles` is platform
+   * reference data with no tenant column and no RLS policy, so the scope is a
+   * statement of what the operation IS rather than authority minted from an
+   * argument — and it was given a scope for exactly this reason.
+   *
+   * The READ was not. So every caller outside a request — the startup toggle
+   * bootstrap, any job — had its query refused, and the catch above turned the
+   * refusal into "the feature is off". The document-catalog bootstrap logged
+   * "inactive platform-wide" on every enforcing boot no matter what the
+   * operator had set, which is the one thing that bootstrap exists to report
+   * accurately. A control wired to one of two doors again: the write got the
+   * scope, the read did not, and only the read is on the path anybody watches.
+   *
+   * When a caller already has a scope, that scope is kept. Replacing a request's
+   * `admin` with `app_super_admin` would be inert against a table with no
+   * policy, but a data accessor that quietly upgrades its caller's role is a
+   * shape worth not having.
+   */
+  private static async readToggle(
+    featureKey: string,
+  ): Promise<Array<typeof featureToggles.$inferSelect>> {
+    /* `await` inside the callback, not outside it. A drizzle builder is lazy —
+       it issues nothing until it is awaited — so handing the builder back from
+       a synchronous callback lets runWithSystemTenantScope return, and the
+       query then runs with the scope already unwound. The refusal is
+       byte-identical to having no scope at all, which is what makes this worth
+       a sentence. */
+    const read = async () =>
+      await db.select().from(featureToggles).where(eq(featureToggles.featureKey, featureKey)).limit(1);
+    return getTenantScope() ? read() : runWithSystemTenantScope('feature-toggle:read', read);
+  }
+
   static async isFeatureEnabled(
     featureKey: string,
     organizationId?: number,
     clientWorkspaceId?: number
   ): Promise<boolean> {
+    const state = await this.readFeatureState(featureKey, organizationId, clientWorkspaceId);
+    return state.enabled;
+  }
+
+  /**
+   * The same resolution, with the one fact the boolean cannot carry: whether
+   * the toggle store could be read at all.
+   *
+   * `isFeatureEnabled` fails closed — never enable a feature we cannot confirm
+   * is on — which is right, and which makes "disabled" and "we could not find
+   * out" the same answer. For an operator trying to work out why a switch they
+   * flipped did nothing, those are the two different answers that matter, so
+   * the caller that reports the state at startup reads it from here instead.
+   * One query, two views; the boolean stays the default.
+   */
+  static async readFeatureState(
+    featureKey: string,
+    organizationId?: number,
+    clientWorkspaceId?: number
+  ): Promise<{ enabled: boolean; readable: boolean }> {
     let toggles: Array<typeof featureToggles.$inferSelect>;
     try {
-      toggles = await db
-        .select()
-        .from(featureToggles)
-        .where(eq(featureToggles.featureKey, featureKey))
-        .limit(1);
-    } catch {
-      // Fail-safe: if the toggle store is unreachable, treat the feature
-      // as disabled. Never enable a feature we cannot confirm is on.
-      return false;
+      toggles = await this.readToggle(featureKey);
+    } catch (err) {
+      /* Fail-safe: if the toggle store is unreachable, treat the feature as
+         disabled. But SAY SO — this catch used to be bare, so a refused read
+         and a deliberately disabled feature produced the same `false` with
+         nothing written anywhere, and the refused read was the common case
+         (see readToggle). An operator enabling a toggle and watching nothing
+         happen had no thread to pull. */
+      logger.error('[feature-toggle] read failed — reporting the feature DISABLED', {
+        featureKey,
+        organizationId,
+        reason: err instanceof Error ? ((err as any).cause?.message ?? err.message) : String(err),
+      });
+      return { enabled: false, readable: false };
     }
+    return { enabled: this.resolveEnabled(toggles, organizationId, clientWorkspaceId), readable: true };
+  }
+
+  /** Pure: what a fetched toggle row means for this tenant. */
+  private static resolveEnabled(
+    toggles: Array<typeof featureToggles.$inferSelect>,
+    organizationId?: number,
+    clientWorkspaceId?: number
+  ): boolean {
 
     if (toggles.length === 0) {
       return false;
