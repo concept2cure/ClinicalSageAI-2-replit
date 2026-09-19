@@ -7,16 +7,11 @@ import { requireAuthedOrgId } from '../../utils/authedOrgId.js';
 const router = Router();
 
 // Type definitions
-interface WorkflowTemplate {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  estimatedTime: string;
-  tasks: number;
-  priority: string;
-  steps: string[];
-}
+// `WorkflowTemplate` used to be declared here and was already unused before the
+// hardcoded template fallback was removed on 2026-09-19 — the fallback built
+// object literals, never this type. Deleted rather than left: the shape a
+// template actually has is now the cmc_workflows row, defined in
+// migrations/20260919_cmc_playbook_schema.sql.
 
 interface TaskTemplate {
   name: string;
@@ -37,8 +32,8 @@ router.get('/workflows', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    // Get workflows from database or return default templates. organization_id
-    // = 0 is the reserved system tenant holding the shared global templates.
+    // organization_id = 0 is the reserved system tenant holding the shared
+    // global templates, seeded by migrations/20260919_cmc_playbook_schema.sql.
     const query = `
       SELECT * FROM cmc_workflows
       WHERE organization_id = $1 OR organization_id = 0
@@ -47,46 +42,18 @@ router.get('/workflows', async (req: Request, res: Response) => {
 
     const result = await pool.query(query, [guard.orgId]);
 
-    // If no workflows exist, return default templates
-    if (result.rows.length === 0) {
-      const defaultWorkflows = [
-        {
-          id: 'ind-cmc-template',
-          name: 'IND CMC Package',
-          description: 'Complete Chemistry, Manufacturing, and Controls package for IND submission',
-          category: 'submission',
-          estimatedTime: '4-6 weeks',
-          tasks: 6,
-          priority: 'high',
-          steps: [
-            'Drug Substance Characterization',
-            'Manufacturing Process',
-            'Container Closure',
-            'Stability Protocol',
-            'Analytical Methods',
-            'Quality Specifications',
-          ],
-        },
-        {
-          id: 'nda-cmc-template',
-          name: 'NDA/BLA CMC Module 3',
-          description: 'Comprehensive Module 3 Quality section for NDA/BLA submission',
-          category: 'submission',
-          estimatedTime: '12-16 weeks',
-          tasks: 24,
-          priority: 'critical',
-          steps: [
-            '3.2.S Drug Substance',
-            '3.2.P Drug Product',
-            '3.2.A Appendices',
-            'Regional Requirements',
-          ],
-        },
-      ];
-
-      return res.json({ success: true, data: defaultWorkflows });
-    }
-
+    // Answer with what the database holds — including none.
+    //
+    // Until 2026-09-19 an empty result was replaced here by two hardcoded
+    // template objects returned under `success: true`. While the cmc_workflows
+    // table did not exist the query threw and this handler 500'd, so that branch
+    // was unreachable and the failure was at least honest. Provisioning the
+    // table (migrations/20260919_cmc_playbook_schema.sql) would have made the
+    // branch live and started serving invented templates as though they were
+    // records — an empty read rendered as data, which is the one thing this
+    // codebase does not do. The twelve real templates are seeded by that
+    // migration at the shared organization_id = 0 tenant; if they are ever
+    // absent the honest answer is an empty list, not a fabricated one.
     res.json({ success: true, data: result.rows });
   } catch (error) {
     console.error('Error fetching workflows:', error);
@@ -128,7 +95,7 @@ router.post('/workflows/:id/start', async (req: Request, res: Response) => {
     ]);
 
     // Create initial tasks for the workflow
-    await createWorkflowTasks(workflowInstanceId, String(id));
+    await createWorkflowTasks(workflowInstanceId, String(id), guard.orgId);
 
     res.json({
       success: true,
@@ -337,7 +304,11 @@ router.get('/guidelines', async (req: Request, res: Response) => {
 
 // ===== HELPER FUNCTIONS =====
 
-async function createWorkflowTasks(workflowInstanceId: string, templateId: string): Promise<void> {
+async function createWorkflowTasks(
+  workflowInstanceId: string,
+  templateId: string,
+  organizationId: number,
+): Promise<void> {
   if (!pool) {
     throw new Error('Database connection not available');
   }
@@ -366,13 +337,19 @@ async function createWorkflowTasks(workflowInstanceId: string, templateId: strin
     await pool.query(
       `
       INSERT INTO cmc_workflow_tasks (
-        id, workflow_instance_id, name, task_order, estimated_hours, 
-        status, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        id, workflow_instance_id, organization_id, name, task_order,
+        estimated_hours, status, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
     `,
       [
         `task_${randomUUID()}`,
         workflowInstanceId,
+        // Carried explicitly rather than left to be inferred through
+        // workflow_instance_id: a table with no tenant column of its own sits
+        // outside every RLS sweep in this repository, all of which key on one.
+        // See scripts/ci/check-unkeyed-request-tables.mjs and the note in
+        // migrations/20260919_cmc_playbook_schema.sql.
+        organizationId,
         task.name,
         task.order,
         task.estimatedHours,

@@ -15341,8 +15341,14 @@ export async function executeAgenticLoop(
 
     const roundRequest: GatewayRequest = { ...request, messages: loopMessages, signal };
     if (!includeTools) {
-      delete roundRequest.tools;
-      delete roundRequest.toolChoice;
+      // Keep the tools array; forbid their use instead. Deleting it changes the
+      // TOOL DEFINITIONS, which is the one change that preserves no cache tier
+      // at all (the prefix renders tools -> system -> messages), so the terminal
+      // round rebuilt the entire prompt cache once per turn. `tool_choice:
+      // 'none'` produces the same grounded answer and preserves the tools and
+      // system caches — it only invalidates the messages tier, which the new
+      // turn was going to invalidate regardless.
+      roundRequest.toolChoice = 'none';
     }
 
     finalResponse = (await gateway.route(roundRequest)) as AnaGatewayResponse;
