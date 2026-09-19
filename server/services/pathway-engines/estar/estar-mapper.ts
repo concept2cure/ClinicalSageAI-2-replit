@@ -291,6 +291,78 @@ const SLOTS_510K: SlotDef[] = [
         ti('substantial equivalence', 'predicate'))),
 ];
 
+/*
+ * THE IVD 510(k) SLOT REGISTRY.
+ *
+ * `mapToEstar` had two registries — SLOTS_510K and SLOTS_DE_NOVO — and no
+ * notion of variant. Both were enumerated from the nIVD eSTAR. So an IVD
+ * 510(k), which /assemble and /filing-readiness accept and echo as
+ * `variant: 'ivd'`, was scored against the non-IVD slot set: it was never once
+ * asked for analytical performance, method comparison or expected values, and
+ * an IVD holding none of them could reach "ready".
+ *
+ * Measured against the two vendored templates with listXfaFields. The nIVD
+ * form's PerformanceTesting section holds ClinicalTesting, BenchTesting and
+ * AnimalTesting (142 fields). The IVD form's holds AnalyticalPerformance (140
+ * fields on its own), ClinicalStudies, ComparisonStudies and ReferenceRange
+ * (329 total). The IVD questions below are FDA's own, quoted from the IVD
+ * template's captions — not authored here.
+ *
+ * NECESSITY. FDA asks each of these as a yes/no question the applicant answers,
+ * so all but one are `when-applicable`: the mapper reports them for a human to
+ * confirm rather than inventing a requirement it cannot decide. The exception
+ * is analytical performance itself. An IVD 510(k) with no analytical
+ * performance data at all is not a submission FDA will accept for review, and
+ * the form devotes 140 fields to it; that one is required, and it is what stops
+ * an IVD with nothing measured from scoring complete.
+ */
+const IVD_PERFORMANCE_SLOTS: SlotDef[] = [
+  always('ivd-analytical-performance', 'Analytical performance (precision, detection limit, linearity, interference)',
+    'FDA IVD eSTAR — Performance Testing › Analytical Performance › Assay Performance',
+    any(dt('analytical_performance', 'precision', 'linearity', 'detection_limit', 'lod', 'interference'),
+        ti('analytical performance', 'precision', 'repeatability', 'reproducibility', 'linearity',
+           'detection limit', 'analytical sensitivity', 'analytical specificity', 'interference'))),
+  whenApplicable('ivd-method-comparison', 'Method comparison study',
+    'FDA IVD eSTAR — "Did you perform Method Comparison Study?"',
+    'the assay is compared against a comparator or reference method',
+    any(dt('method_comparison'), ti('method comparison', 'comparator method'))),
+  whenApplicable('ivd-matrix-comparison', 'Validation of specimens / matrix comparison',
+    'FDA IVD eSTAR — "Did you perform Validation of Specimens/Matrix Comparison Study?"',
+    'more than one specimen type or matrix is claimed',
+    any(dt('matrix_comparison', 'specimen_validation'), ti('matrix comparison', 'validation of specimens', 'specimen type'))),
+  whenApplicable('ivd-reference-range', 'Reference range / expected values',
+    'FDA IVD eSTAR — "Do you have Reference Range/Expected Values information to include in this submission?"',
+    'the assay reports a quantitative or semi-quantitative result',
+    any(dt('reference_range', 'expected_values'), ti('reference range', 'expected values', 'reference interval'))),
+  whenApplicable('ivd-specimen-stability', 'Stability of specimens',
+    'FDA IVD eSTAR — "Did you perform Stability of Sample(s) Study?"',
+    'specimens are stored or transported before testing',
+    any(dt('specimen_stability', 'sample_stability'), ti('specimen stability', 'stability of sample', 'sample stability'))),
+  whenApplicable('ivd-traceability', 'Metrological traceability of calibrators and controls',
+    'FDA IVD eSTAR — "Do you have Traceability information to include in this submission?"',
+    'the assay reports a value against a calibrator',
+    any(dt('traceability', 'calibrator_traceability'), ti('traceability', 'calibrator'))),
+  whenApplicable('ivd-cutoff', 'Assay cut-off',
+    'FDA IVD eSTAR — "Did you perform Assay Cut-Off Study?"',
+    'the assay reports a qualitative result against a cut-off',
+    any(dt('assay_cutoff', 'cut_off'), ti('cut-off', 'cutoff', 'medical decision point'))),
+  whenApplicable('ivd-carryover', 'Carry-over',
+    'FDA IVD eSTAR — "Did you perform Carry-Over Study?"',
+    'the assay runs on an automated analyser that processes specimens in sequence',
+    any(dt('carry_over', 'carryover'), ti('carry-over', 'carryover'))),
+  whenApplicable('ivd-hook-effect', 'High-dose hook effect',
+    'FDA IVD eSTAR — "Did you perform High Dose Hook Effect Study?"',
+    'the assay is a sandwich immunoassay or otherwise subject to hook effect',
+    any(dt('hook_effect'), ti('hook effect', 'high dose hook'))),
+  whenApplicable('ivd-clinical-performance', 'Clinical performance (clinical sensitivity and specificity)',
+    'FDA IVD eSTAR — "Do you have Clinical Sensitivity and/or Clinical Specificity to include in this submission?"',
+    'the intended use makes a claim about clinical performance',
+    any(dt('clinical_performance', 'clinical_sensitivity', 'clinical_specificity'),
+        ti('clinical sensitivity', 'clinical specificity', 'clinical performance'))),
+];
+
+const SLOTS_510K_IVD: SlotDef[] = [...SLOTS_510K, ...IVD_PERFORMANCE_SLOTS];
+
 const SLOTS_DE_NOVO: SlotDef[] = [
   ...baseSlots,
   always('classification-request', 'De Novo classification request & risk-to-benefit',
@@ -337,6 +409,12 @@ export interface MapToEstarInput {
   leaves: EstarInputLeaf[];
   type: EstarType;
   /**
+   * nIVD ('device') or IVD. FDA ships one eSTAR per family and they ask
+   * different performance questions, so the slot registry follows the variant.
+   * Omitted means 'device', which is what every caller got before this existed.
+   */
+  variant?: 'device' | 'ivd';
+  /**
    * The device's answers to the seven intake flags. Optional so the existing
    * callers compile unchanged — but omitting it does NOT make the conditional
    * sections go away. They become undetermined, and an undetermined section
@@ -349,7 +427,14 @@ export interface MapToEstarInput {
 /** Map canonical leaves onto the FDA eSTAR sections + completeness report. */
 export function mapToEstar(input: MapToEstarInput): EstarResult {
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
-  const registry = input.type === 'de_novo' ? SLOTS_DE_NOVO : SLOTS_510K;
+  /* De Novo is filed on the same two family templates, but its own slot set is
+     enumerated from the nIVD form; an IVD De Novo is out of scope here and
+     falls to SLOTS_DE_NOVO exactly as before rather than being silently given
+     the 510(k) IVD set. */
+  const registry =
+    input.type === 'de_novo' ? SLOTS_DE_NOVO
+    : input.variant === 'ivd' ? SLOTS_510K_IVD
+    : SLOTS_510K;
   const sections = registry.map((s) => evalSlot(s, leaves, input.flags));
 
   const absent = sections.filter((s) => !s.present);
