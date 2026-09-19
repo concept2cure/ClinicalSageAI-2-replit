@@ -295,6 +295,7 @@
     "visual-qa:overflow": "node scripts/visual-qa/check-overflow.mjs",
     "visual-qa:live": "node scripts/visual-qa/check-live-overflow.mjs",
     "visual-qa:contrast-why": "node scripts/visual-qa/contrast-breakdown.mjs",
+    "visual-qa:attribution": "node scripts/visual-qa/check-attribution-highlights.mjs",
     "ci:canonicalizers": "node scripts/ci/check-canonicalizers.mjs",
     "ci:canonicalizers:write-baseline": "node scripts/ci/check-canonicalizers.mjs --write-baseline",
     "ci:fabricated-identity": "node scripts/ci/check-fabricated-identity.mjs",
