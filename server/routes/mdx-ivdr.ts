@@ -30,6 +30,15 @@ import { pool } from '../db';
    server/services/audit/audit-write-outcome.ts. */
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
+/*
+ * Every governed write below was guarded by nothing but the caller's org
+ * context, which is tenant scoping, not authorization: a read-only `viewer`
+ * could create and amend UDI records, IVDR classifications and performance
+ * evaluations, CDx pairings and concordance. These are the device and IVD
+ * records a submission is assembled from.
+ */
+import { requireEditorAccess } from '../middleware/orgMembership';
+
 const router = Router();
 const log = createScopedLogger('mdx-ivdr');
 
@@ -110,7 +119,7 @@ router.get('/ivdr/classifications', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/ivdr/classifications', async (req: Request, res: Response) => {
+router.post('/ivdr/classifications', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = classCreate.safeParse(req.body ?? {});
@@ -171,7 +180,7 @@ router.get('/ivdr/classifications/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/ivdr/classifications/:id', async (req: Request, res: Response) => {
+router.patch('/ivdr/classifications/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -275,7 +284,7 @@ router.get('/ivdr/per', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/ivdr/per', async (req: Request, res: Response) => {
+router.post('/ivdr/per', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = perCreate.safeParse(req.body ?? {});
@@ -331,7 +340,7 @@ router.get('/ivdr/per/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/ivdr/per/:id', async (req: Request, res: Response) => {
+router.patch('/ivdr/per/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);

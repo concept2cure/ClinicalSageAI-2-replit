@@ -32,6 +32,15 @@ import { pool } from '../db';
    server/services/audit/audit-write-outcome.ts. */
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
+/*
+ * Every governed write below was guarded by nothing but the caller's org
+ * context, which is tenant scoping, not authorization: a read-only `viewer`
+ * could create and amend UDI records, IVDR classifications and performance
+ * evaluations, CDx pairings and concordance. These are the device and IVD
+ * records a submission is assembled from.
+ */
+import { requireEditorAccess } from '../middleware/orgMembership';
+
 const router = Router();
 const log = createScopedLogger('mdx-ivd-performance');
 
@@ -107,7 +116,7 @@ router.get('/ivd/analytical', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/ivd/analytical', async (req: Request, res: Response) => {
+router.post('/ivd/analytical', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = analCreate.safeParse(req.body ?? {});
@@ -164,7 +173,7 @@ router.get('/ivd/analytical/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/ivd/analytical/:id', async (req: Request, res: Response) => {
+router.patch('/ivd/analytical/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -259,7 +268,7 @@ router.get('/ivd/clinical', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/ivd/clinical', async (req: Request, res: Response) => {
+router.post('/ivd/clinical', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = clinCreate.safeParse(req.body ?? {});
@@ -311,7 +320,7 @@ router.get('/ivd/clinical/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/ivd/clinical/:id', async (req: Request, res: Response) => {
+router.patch('/ivd/clinical/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
