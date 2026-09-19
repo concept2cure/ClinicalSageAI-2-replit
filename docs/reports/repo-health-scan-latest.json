@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T03:53:58.078Z",
+  "generatedAt": "2026-09-19T04:05:57.489Z",
   "git": {
-    "sha": "cebe35888153e44364801d889e622aa7142f9e20",
+    "sha": "8d24e88e1d1daeab2105db22849b34c12d05311a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 97
+    "largeFilesByLines": 98
   },
   "findings": {
     "duplicateBasenames": [
@@ -2497,6 +2497,10 @@
         "lines": 1521
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1503
+      },
+      {
         "file": "server/services/grdhe/grdheService.ts",
         "lines": 1501
       }
@@ -2508,7 +2512,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 395,
       "largeByBytes": 33,
-      "largeByLines": 80
+      "largeByLines": 81
     },
     {
       "owner": "Unassigned (TBD)",
