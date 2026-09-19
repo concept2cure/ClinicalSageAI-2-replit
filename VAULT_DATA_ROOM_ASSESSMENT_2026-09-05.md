@@ -445,12 +445,24 @@ subsystem is inert today — which is the only reason the missing legal hold has
 a record under litigation.
 
 **Taxonomy & metadata.** No subtype/classification hierarchy, no per-type fields, no picklist
-governance — 16 flat document types (`shared/constants/domain/vault-taxonomy.ts:71-76`).
-`readinessEvaluator.ts:176-184` returns `completionPercent: required.length > 0 ? … : 100` — so a
-filing type with no artifact matrix reports **100% complete with zero gaps**, which is exactly
-the honesty failure `CLAUDE.md` names ("nothing-assessed is not assessed-and-clear"). The
-adjacent unknown-id path at `:95-113` gets this right and returns 0 with a critical gap; copy
-that.
+governance — 16 flat document types (`shared/constants/domain/vault-taxonomy.ts`). The
+Type→Subtype→Classification model remains the real gap and the real build.
+
+> **Two narrower things fixed since.**
+>
+> - ~~`readinessEvaluator.ts` returns `completionPercent: required.length > 0 ? … : 100`, so a
+>   filing type with no artifact matrix reports 100% complete with zero gaps.~~ **Fixed
+>   2026-09-05.** It carries `assessed: false` and an `ARTIFACT_REQUIREMENTS_NOT_MODELLED` gap,
+>   and no longer contributes its weight. 225 of 234 registry filing types were reporting 100%.
+> - **The two vocabularies in that file were not reconciled** (fixed 2026-09-19).
+>   `VAULT_INGEST_DOCUMENT_TYPES` are wire tokens; `VaultDocKind` is what the surface classifies
+>   by; nothing mapped between them. So when the classifier had assigned no evidence kind, the
+>   document list rendered the token itself — a reviewer read `MODULE_3` and `CORRESPONDENCE`.
+>   There is a label map beside the enum now, for the reason the enum's own note gives (one
+>   list, shared), with a test that the map covers the enum exactly: a type added to one and not
+>   the other is precisely how the raw token comes back. A value outside the enum returns as
+>   ITSELF rather than as "Other" — the column is TEXT with no CHECK, the token is ugly but
+>   true, and "Other" would be a classification nobody made.
 
 **The eTMF File button does not work.** `client/src/concept2cure/v2/surfaces/Etmf.tsx:286` posts
 `documentType: 'tmf_essential'` and no `programId`. The server requires a UUID `programId` and one
