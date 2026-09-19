@@ -34,7 +34,6 @@ import {
   ENG_RISKS,
   ENG_TRACE,
 } from '../data/engineering';
-import { ENG_DOCUMENTS } from '../data/engineering-docs';
 import { useEngineering, type PanelScope } from '../hooks/useEngineering';
 import { gatedOn, readyRows } from '../lib/dataState';
 import type { Program } from '../data/programs';
@@ -249,7 +248,6 @@ export function EngineeringSurface({
         state={live.documents}
         label="engineering documents"
         onRetry={live.refresh}
-        sample={ENG_DOCUMENTS}
         emptyHint="Design and software deliverables appear here once artifacts exist for this organization."
       >
         {(docs) => (

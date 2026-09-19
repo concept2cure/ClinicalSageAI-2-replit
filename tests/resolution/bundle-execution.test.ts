@@ -21,6 +21,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { sqlText } from './drivers/drizzle-sql-text';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCK DATABASE
@@ -32,20 +33,6 @@ const mockItems: any[] = [];
 const mockSupersessions: any[] = [];
 let mockInsertCalls: any[] = [];
 let mockUpdateCalls: any[] = [];
-
-/**
- * The span-lineage answers, lifted out of the query mock's branch chain: three
- * of its conditions were about one table, and that chain is what grew past the
- * complexity budget. Returns null when the query is about something else, so
- * the caller falls through to its remaining branches. A function declaration,
- * so it is hoisted above the vi.mock factory that calls it.
- */
-function spanLineageAnswer(queryStr: string): { rows: unknown[] } | null {
-  if (!queryStr.includes('document_span_lineage')) return null;
-  if (queryStr.includes('INSERT')) return { rows: [{ id: 'mock-span' }] };
-  if (queryStr.includes('char_start')) return { rows: [{ char_start: 0, char_end: 1_000_000 }] };
-  return { rows: [] };
-}
 
 vi.mock('../../server/db', () => {
   const createChainedMock = () => {
@@ -89,53 +76,34 @@ vi.mock('../../server/db', () => {
     return chain;
   };
 
+  /**
+   * Which statement gets which rows, IN ORDER — the first `when` that matches
+   * answers. Order is load-bearing and is why this is a list rather than a
+   * lookup: stageRewrite issues INSERT … SELECT … FROM concept2cure_artifacts,
+   * which contains both 'concept2cure_artifacts' and 'SELECT', so the
+   * artifact-status route would answer it with a status row if it came first.
+   *
+   * The lineage answers are a STUB — what the gate really records is proven
+   * against the real schema in the PGlite lineage tests. The receipt route is
+   * not: ADR-0009 persistence does INSERT … RETURNING id and the executor
+   * treats a receipt it cannot persist as a FAILED execution. That is
+   * deliberate and is not relaxed for tests, so the mock models the table.
+   */
+  const ROUTES: Array<{ when: (q: string) => boolean; rows: { rows: any[] } }> = [
+    { when: (q) => q.includes('INSERT INTO concept2cure_artifact_versions'), rows: { rows: [{ id: 'mock-version' }] } },
+    { when: (q) => q.includes('document_span_lineage') && q.includes('INSERT'), rows: { rows: [{ id: 'mock-span' }] } },
+    { when: (q) => q.includes('document_span_lineage') && q.includes('char_start'), rows: { rows: [{ char_start: 0, char_end: 1_000_000 }] } },
+    { when: (q) => q.includes('document_span_lineage'), rows: { rows: [] } },
+    { when: (q) => q.includes('bundle_execution_receipts') && q.includes('INSERT'), rows: { rows: [{ id: 'mock-receipt-bundle-exec' }] } },
+    { when: (q) => q.includes('bundle_execution_receipts'), rows: { rows: [] } },
+    { when: (q) => q.includes('concept2cure_artifacts') && q.includes('SELECT'), rows: { rows: [{ status: 'draft' }] } },
+    { when: (q) => q.includes('supersession_records') && q.includes('SELECT'), rows: { rows: [] } },
+  ];
+
   const mockExec = vi.fn().mockImplementation((query: any) => {
-    // A drizzle StringChunk stringifies to "[object Object]" — its text lives
-    // in .value as a string[]. The previous String(queryChunks[0]) therefore
-    // matched nothing and every branch below fell through to { rows: [] }.
-    // Recurses into nested SQL: sql.join() (used by db/drizzle-queryable.ts to
-    // rebuild a $1-style query) produces chunks that are themselves SQL objects,
-    // so a flat map over .value returned '' for every query issued through
-    // queryableFromDrizzle — which is what made the span-lineage writes invisible.
-    const chunkText = (c: any): string => {
-      if (c == null) return '';
-      if (typeof c === 'string') return c;
-      if (Array.isArray(c?.value)) return c.value.join('');
-      if (Array.isArray(c?.queryChunks)) return c.queryChunks.map(chunkText).join(' ');
-      return '';
-    };
-    const chunks: any[] = query?.queryChunks ?? [];
-    const queryStr = chunks.length ? chunks.map(chunkText).join(' ') : String(query?.sql ?? '');
-
-    /* Staged rewrite version insert + its span lineage (ledger L177). Tested
-       BEFORE the concept2cure_artifacts/SELECT branch: stageRewrite uses
-       INSERT … SELECT … FROM concept2cure_artifacts, so it contains both tokens
-       and would otherwise be answered with a status row. It now reads RETURNING
-       id and treats zero rows as "no such artifact in this tenant", where it
-       used to return true regardless. The lineage answers are a stub — what the
-       gate really records is proven in the PGlite lineage tests. */
-    if (queryStr.includes('INSERT INTO concept2cure_artifact_versions')) {
-      return Promise.resolve({ rows: [{ id: 'mock-version' }] });
-    }
-    const lineage = spanLineageAnswer(queryStr);
-    if (lineage) return Promise.resolve(lineage);
-
-    // ADR-0009 receipt persistence: INSERT … RETURNING id, and the executor
-    // treats a receipt it cannot persist as a FAILED execution. That is
-    // deliberate and is not relaxed for tests — the mock has to model the
-    // table instead.
-    if (queryStr.includes('bundle_execution_receipts')) {
-      return queryStr.includes('INSERT')
-        ? Promise.resolve({ rows: [{ id: 'mock-receipt-bundle-exec' }] })
-        : Promise.resolve({ rows: [] });
-    }
-    if (queryStr.includes('concept2cure_artifacts') && queryStr.includes('SELECT')) {
-      return Promise.resolve({ rows: [{ status: 'draft' }] });
-    }
-    if (queryStr.includes('supersession_records') && queryStr.includes('SELECT')) {
-      return Promise.resolve({ rows: [] });
-    }
-    return Promise.resolve({ rows: [] });
+    const queryStr = sqlText(query);
+    const route = ROUTES.find((r) => r.when(queryStr));
+    return Promise.resolve(route ? route.rows : { rows: [] });
   });
 
   return {
