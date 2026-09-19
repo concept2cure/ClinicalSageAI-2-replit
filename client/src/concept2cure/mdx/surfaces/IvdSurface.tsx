@@ -10,14 +10,7 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import {
-  IVD_CLASSIFICATIONS,
-  IVD_CLINICAL,
-  IVD_GSPR,
-  IVD_STAGES,
-  IVD_VALIDATIONS,
-  type IvdParamStatus,
-} from '../data/ivd';
+import { IVD_STAGES, type IvdParamStatus } from '../data/ivd';
 import type { Program } from '../data/programs';
 import {
   useIvdClassifications,
@@ -29,7 +22,7 @@ import { AskAnaChip } from './AskAnaChip';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
-import { useSampleRows } from '../lib/useSampleRows';
+import { readyRows, toDataState } from '../lib/dataState';
 import { useCdxPairings, useCliaCategorizations } from '../hooks/useCdxClia';
 import { DataGate } from '../components/DataGate';
 import type { EditorSectionRef } from '../../v2/editorTarget';
@@ -68,10 +61,38 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
   const clinical = useIvdClinicalEvidence(programId);
   const gspr = useIvdGsprMatrix(programId);
 
-  const sourceClass = useSampleRows(classifications.rows, IVD_CLASSIFICATIONS);
-  const sourceValid = useSampleRows(validations.rows, IVD_VALIDATIONS);
-  const sourceClinical = useSampleRows(clinical.rows, IVD_CLINICAL);
-  const sourceGspr = useSampleRows(gspr.rows, IVD_GSPR);
+  /* Live or nothing. These four panels used to fall back to IVD_CLASSIFICATIONS,
+     IVD_VALIDATIONS, IVD_CLINICAL and IVD_GSPR under sample mode — an invented
+     Annex VIII class determination, an invented limit of detection, an invented
+     sensitivity and specificity, and an invented conformity assessment against
+     Annex I. This surface already refuses that for its CDx and CLIA panels, on
+     the stated grounds that "an invented CDx approval or waiver grant is a
+     regulatory claim"; a Class C determination and an LoD are the same kind of
+     claim, and the three above fed a headline "% compliant".
+
+     The notice that marked them was raised on
+     `!classifications.rows && !validations.rows && !clinical.rows` — ALL three
+     missing — so a tenant whose classifications loaded and whose validations
+     failed saw invented analytical performance with nothing said at all. That
+     partial case goes with the fixtures, and each panel now states its own
+     reading through DataGate. */
+  const classState = toDataState(classifications.rows, classifications.loading, classifications.error, {
+    idleReason: 'Classifications are held per program.',
+  });
+  const validState = toDataState(validations.rows, validations.loading, validations.error, {
+    idleReason: 'Analytical performance is held per program.',
+  });
+  const clinicalState = toDataState(clinical.rows, clinical.loading, clinical.error, {
+    idleReason: 'Clinical performance is held per program.',
+  });
+  const gsprState = toDataState(gspr.rows, gspr.loading, gspr.error, {
+    idleReason: 'The GSPR matrix is held per program.',
+  });
+
+  const sourceClass = readyRows(classState);
+  const sourceValid = readyRows(validState);
+  const sourceClinical = readyRows(clinicalState);
+  const sourceGspr = readyRows(gsprState);
 
   /* Companion diagnostics and CLIA — the two IVD differentiators the
      platform review names, built and previously reachable only through
@@ -82,8 +103,6 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
   const cdx = useCdxPairings(programId);
   const clia = useCliaCategorizations(programId);
 
-  const usingFixture = !classifications.rows && !validations.rows && !clinical.rows;
-
   const gsprTotals = sourceGspr.reduce(
     (acc, c) => ({
       total: acc.total + c.total,
@@ -92,9 +111,14 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
     }),
     { total: 0, compliant: 0, open: 0 },
   );
+  /* `?? 0` was safe while a fixture guaranteed rows. It is not safe now: an
+     unread matrix has a total of 0, and rendering that as "0% compliant" states
+     a conformity finding about a device nobody has assessed. Null means the
+     figure is not available, and the header says so rather than publishing the
+     most alarming value the arithmetic can produce. */
   const overallPercent =
     gspr.overallPercent ??
-    (gsprTotals.total > 0 ? Math.round((gsprTotals.compliant / gsprTotals.total) * 100) : 0);
+    (gsprTotals.total > 0 ? Math.round((gsprTotals.compliant / gsprTotals.total) * 100) : null);
 
   const subjectName = program ? program.title : sourceClass[0]?.device ?? 'IVD device';
 
@@ -144,22 +168,6 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
         })}
       </div>
 
-      {/* Honest fixture notice: distinct from live tenant data. Same posture as
-          K510's predicate banner — never present example records as the
-          tenant's own without saying so. */}
-      {usingFixture && (
-        <div
-          className="banner-warn"
-          role="status"
-        >
-          <span className="banner-ic">{I.alertCircle}</span>
-          <span>
-            Showing the canonical IVDR example so you can preview the workflow. Your tenant's
-            classifications, validations and clinical evidence appear here once recorded via the IVDR module.
-          </span>
-        </div>
-      )}
-
       <div className="col2">
         <div>
           {/* Annex VIII classification */}
@@ -186,45 +194,55 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
                 </button>
               </div>
             </div>
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>Device</th>
-                  <th>Intended purpose</th>
-                  <th>Class</th>
-                  <th>Rule</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sourceClass.map((c) => (
-                  <tr key={c.id}>
-                    <td>
-                      <div className="k-name">{c.device}</div>
-                      <div className="k-holder">
-                        {[c.cdx && 'CDx', c.selfTest && 'Self-test', c.nearPatient && 'Near-patient']
-                          .filter(Boolean)
-                          .join(' · ') || '—'}
-                      </div>
-                    </td>
-                    <td style={{ color: 'var(--text-300)' }}>{c.intendedPurpose}</td>
-                    <td>
-                      <span className={`status-pill ${c.classification === 'D' || c.classification === 'C' ? 'review' : 'complete'}`}>
-                        Class {c.classification}
-                      </span>
-                    </td>
-                    <td style={{ color: 'var(--text-300)' }}>
-                      {c.rule ?? '—'}
-                      {onAskAna && (
-                        <AskAnaChip
-                          onAsk={() => onAskAna(`Explain the IVDR Annex VIII rule that puts ${c.device} in Class ${c.classification}.`)}
-                          label={`Ask AnA about ${c.device}`}
-                        />
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataGate
+              state={classState}
+              label="device classifications"
+              onRetry={classifications.refresh}
+              emptyHint="Classify this device under Annex VIII to populate the table."
+              regulation="Serves the IVDR Annex VIII classification record"
+            >
+              {(rows) => (
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>Device</th>
+                      <th>Intended purpose</th>
+                      <th>Class</th>
+                      <th>Rule</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((c) => (
+                      <tr key={c.id}>
+                        <td>
+                          <div className="k-name">{c.device}</div>
+                          <div className="k-holder">
+                            {[c.cdx && 'CDx', c.selfTest && 'Self-test', c.nearPatient && 'Near-patient']
+                              .filter(Boolean)
+                              .join(' · ') || '—'}
+                          </div>
+                        </td>
+                        <td style={{ color: 'var(--text-300)' }}>{c.intendedPurpose}</td>
+                        <td>
+                          <span className={`status-pill ${c.classification === 'D' || c.classification === 'C' ? 'review' : 'complete'}`}>
+                            Class {c.classification}
+                          </span>
+                        </td>
+                        <td style={{ color: 'var(--text-300)' }}>
+                          {c.rule ?? '—'}
+                          {onAskAna && (
+                            <AskAnaChip
+                              onAsk={() => onAskAna(`Explain the IVDR Annex VIII rule that puts ${c.device} in Class ${c.classification}.`)}
+                              label={`Ask AnA about ${c.device}`}
+                            />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </DataGate>
           </div>
 
           {/* Clinical evidence 2×2 */}
@@ -237,35 +255,45 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
                 </div>
               </div>
             </div>
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>Study</th>
-                  <th>TP/FP/TN/FN</th>
-                  <th>Sens.</th>
-                  <th>Spec.</th>
-                  <th>PPV</th>
-                  <th>NPV</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sourceClinical.map((e) => (
-                  <tr key={e.id}>
-                    <td>
-                      <div className="k-name">{e.study}</div>
-                      <span className={`status-pill ${e.status === 'complete' ? 'complete' : 'review'}`}>{e.status}</span>
-                    </td>
-                    <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-300)' }}>
-                      {e.tp}/{e.fp}/{e.tn}/{e.fn}
-                    </td>
-                    <td style={{ fontVariantNumeric: 'tabular-nums' }}>{pct(e.sensitivity)}</td>
-                    <td style={{ fontVariantNumeric: 'tabular-nums' }}>{pct(e.specificity)}</td>
-                    <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-300)' }}>{pct(e.ppv)}</td>
-                    <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-300)' }}>{pct(e.npv)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataGate
+              state={clinicalState}
+              label="clinical performance studies"
+              onRetry={clinical.refresh}
+              emptyHint="Record a clinical performance study to populate the contingency table."
+              regulation="Serves the IVDR Annex XIII performance evaluation"
+            >
+              {(rows) => (
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>Study</th>
+                      <th>TP/FP/TN/FN</th>
+                      <th>Sens.</th>
+                      <th>Spec.</th>
+                      <th>PPV</th>
+                      <th>NPV</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((e) => (
+                      <tr key={e.id}>
+                        <td>
+                          <div className="k-name">{e.study}</div>
+                          <span className={`status-pill ${e.status === 'complete' ? 'complete' : 'review'}`}>{e.status}</span>
+                        </td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-300)' }}>
+                          {e.tp}/{e.fp}/{e.tn}/{e.fn}
+                        </td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums' }}>{pct(e.sensitivity)}</td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums' }}>{pct(e.specificity)}</td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-300)' }}>{pct(e.ppv)}</td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-300)' }}>{pct(e.npv)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </DataGate>
           </div>
         </div>
 
@@ -292,28 +320,38 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
                 </button>
               </div>
             </div>
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>Analyte</th>
-                  <th>LoD</th>
-                  <th>LoQ</th>
-                  <th>CV%</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sourceValid.map((v) => (
-                  <tr key={v.id}>
-                    <td><div className="k-name">{v.analyte}</div></td>
-                    <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-300)' }}>{v.lod ?? '—'}</td>
-                    <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-300)' }}>{v.loq ?? '—'}</td>
-                    <td style={{ fontVariantNumeric: 'tabular-nums' }}>{v.precisionCV ?? '—'}</td>
-                    <td><span className={`status-pill ${PARAM_PILL[v.status]}`}>{v.status}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataGate
+              state={validState}
+              label="analytical validations"
+              onRetry={validations.refresh}
+              emptyHint="Log an analytical performance study (LoD, precision, interference) to populate this table."
+              regulation="Serves the IVDR Annex XIII analytical performance record"
+            >
+              {(rows) => (
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>Analyte</th>
+                      <th>LoD</th>
+                      <th>LoQ</th>
+                      <th>CV%</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((v) => (
+                      <tr key={v.id}>
+                        <td><div className="k-name">{v.analyte}</div></td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-300)' }}>{v.lod ?? '—'}</td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-300)' }}>{v.loq ?? '—'}</td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums' }}>{v.precisionCV ?? '—'}</td>
+                        <td><span className={`status-pill ${PARAM_PILL[v.status]}`}>{v.status}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </DataGate>
           </div>
 
           {/* GSPR (Annex I) compliance matrix */}
@@ -322,7 +360,11 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
               <div>
                 <div className="t">GSPR compliance · Annex I</div>
                 <div className="s">
-                  {overallPercent}% compliant · {gsprTotals.open} requirement{gsprTotals.open === 1 ? '' : 's'} open
+                  {overallPercent === null
+                    ? 'Not yet assessed'
+                    : `${overallPercent}% compliant · ${gsprTotals.open} requirement${
+                        gsprTotals.open === 1 ? '' : 's'
+                      } open`}
                 </div>
               </div>
               <div className="actions">
@@ -340,27 +382,37 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
                 </button>
               </div>
             </div>
-            <div className="estar">
-              {sourceGspr.map((c) => {
-                const chPct = c.total > 0 ? Math.round((c.compliant / c.total) * 100) : 0;
-                return (
-                  <div key={c.key} className="estar-row" style={{ cursor: 'default' }}>
-                    <div className="estar-num">{c.key}</div>
-                    <div className="estar-label">
-                      {c.label}
-                      <div className="s" style={{ marginTop: 2 }}>
-                        {c.compliant}/{c.total} compliant
-                        {c.nonCompliant > 0 ? ` · ${c.nonCompliant} non-compliant` : ''}
-                        {c.notAssessed > 0 ? ` · ${c.notAssessed} not assessed` : ''}
+            <DataGate
+              state={gsprState}
+              label="GSPR chapters"
+              onRetry={gspr.refresh}
+              emptyHint="Start the GSPR matrix for this device to populate the chapter breakdown."
+              regulation="Serves the IVDR Annex I general safety and performance requirements"
+            >
+              {(rows) => (
+                <div className="estar">
+                  {rows.map((c) => {
+                    const chPct = c.total > 0 ? Math.round((c.compliant / c.total) * 100) : 0;
+                    return (
+                      <div key={c.key} className="estar-row" style={{ cursor: 'default' }}>
+                        <div className="estar-num">{c.key}</div>
+                        <div className="estar-label">
+                          {c.label}
+                          <div className="s" style={{ marginTop: 2 }}>
+                            {c.compliant}/{c.total} compliant
+                            {c.nonCompliant > 0 ? ` · ${c.nonCompliant} non-compliant` : ''}
+                            {c.notAssessed > 0 ? ` · ${c.notAssessed} not assessed` : ''}
+                          </div>
+                        </div>
+                        <span className={`status-pill ${chPct >= 80 ? 'complete' : chPct >= 50 ? 'review' : 'draft'}`}>
+                          {chPct}%
+                        </span>
                       </div>
-                    </div>
-                    <span className={`status-pill ${chPct >= 80 ? 'complete' : chPct >= 50 ? 'review' : 'draft'}`}>
-                      {chPct}%
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              )}
+            </DataGate>
           </div>
 
           {/* Companion diagnostics */}
