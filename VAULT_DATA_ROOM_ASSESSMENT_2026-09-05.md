@@ -497,10 +497,36 @@ updated" it). A due-date tile tests `/days/.test(p.due)` against a value formatt
 critical path, no risk/issue/decision log, no portfolio view. Task CRUD exists and works
 (modulo §4.1).
 
-**Data room.** Nothing. No external principal exists in the auth model — an outside party can
-only be given a full internal seat. `client_access` is read but never written. No code path
-sets a document to a client-visible status. No per-folder or per-file permissions, no tiers, no
-watermarking, no expiry, no per-viewer analytics, no Q&A.
+**Data room.** ~~Nothing.~~ **Corrected 2026-09-19 — more exists than this said, and it
+dead-ends at one precise point.** The distinction matters because it changes where the work
+starts.
+
+What exists and is sound:
+
+- `/api/client-portal` is MOUNTED (`register-tenant-routes.ts:54`) and its scoping is
+  fail-closed. An external caller is restricted to their own `client_access` grants; a
+  `?clientWorkspaceId=` they were not granted cannot pivot them, because the parameter only
+  reorders a result set the WHERE has already restricted to their own rows. Staff "preview"
+  is separately restricted to workspaces their own organisation owns.
+- `client_workspaces` rows ARE created, by two writers (`clients-routes.ts:316`,
+  `projects-management.ts:200`).
+
+What does not exist, at all:
+
+- **`client_access` is never written.** No INSERT anywhere in `server/`, `scripts/`,
+  `migrations/` or `db/`. So a workspace can be created and the portal will scope correctly to
+  it, and no human being can ever be granted access to one. The external path is complete on
+  the read side and absent on the grant side — one missing write, not a missing subsystem.
+- The portal serves a single route, `GET /overview`. No document objects reach it.
+
+Still true from the original finding: no code path sets a document to a client-visible status,
+and there are no per-folder or per-file permissions, tiers, watermarking, expiry, per-viewer
+analytics, or Q&A.
+
+**Why this is not just "add the INSERT".** Who may grant, whether the recipient is an existing
+account or an invitation, and whether a grant expires or is revocable are policy decisions with
+regulatory consequence — this is external access to a governed document store. Building them on
+an assumption would be the wrong kind of initiative. Deliberately left for a decision.
 
 **API & integrations.** No document or vault objects on the public API; `documents:read` is a
 grantable scope that unlocks nothing. The tenant data export cannot see the `vault` schema —
