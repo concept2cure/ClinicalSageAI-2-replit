@@ -100,16 +100,72 @@ export interface ChatUploadRecallDigest {
   uploadedAt?: string | null;
 }
 
+/**
+ * A bounded sample of the org's vault files together with the scope-wide
+ * numbers it was drawn from.
+ *
+ * The recall block lists the twelve most recent files under a heading that
+ * reads as the complete set. For an org with more than twelve it was not:
+ * the withheld ones were the OLDEST, which are exactly the files a client
+ * expects AnA to still know about and the ones she would otherwise answer
+ * "there is no such document" about. The sample is fine; presenting it as
+ * the whole is not, so the scope travels with it.
+ */
+export interface VaultFileScope {
+  files: VaultFileDigest[];
+  /** Live documents in the org — not `files.length`. */
+  total: number;
+  /** How many the sample leaves out. */
+  withheld: number;
+  notYetStudied: number;
+  extractionFailed: number;
+  unfiled: number;
+}
+
+/** Chat uploads for recall, and whether the limit hid any. */
+export interface ChatUploadScope {
+  uploads: ChatUploadRecallDigest[];
+  hasMore: boolean;
+}
+
 export interface SessionBootstrapParts {
   workingMemorySummary?: string | null;
   projectAtoms: BootstrapAtom[];
   clientAtoms: BootstrapAtom[];
   outcomeLessons: OutcomeLesson[];
   /** Project-vault files on record (document catalog); omitted when the catalog is off. */
-  vaultFiles?: VaultFileDigest[];
+  vaultFiles?: VaultFileScope;
   /** Files the client attached in past conversations — reachable, not yet filed. */
-  chatUploads?: ChatUploadRecallDigest[];
+  chatUploads?: ChatUploadScope;
   atomLimit?: number;
+}
+
+/**
+ * The sentence that stops a sample being read as a total.
+ *
+ * Returns '' only when the listing IS the scope and nothing in it needs
+ * attention — i.e. when there is genuinely nothing the lines above do not
+ * already say. Every other case names a number, because "12 files" and
+ * "12 of 40 files, 19 never studied" lead to different behaviour and the
+ * block used to render both identically.
+ */
+export function formatVaultScopeLine(scope: VaultFileScope): string {
+  const parts: string[] = [];
+  if (scope.withheld > 0) {
+    parts.push(
+      `Showing ${scope.files.length} of ${scope.total} files on record — ` +
+        `${scope.withheld} older one(s) are NOT listed above. Never answer "no such document" ` +
+        `from this list alone: use list_project_documents or search_project_documents first.`,
+    );
+  } else {
+    parts.push(`${scope.total} file(s) on record — this is all of them.`);
+  }
+  const flags: string[] = [];
+  if (scope.notYetStudied > 0) flags.push(`${scope.notYetStudied} not yet studied`);
+  if (scope.unfiled > 0) flags.push(`${scope.unfiled} unfiled`);
+  if (scope.extractionFailed > 0) flags.push(`${scope.extractionFailed} with failed extraction`);
+  if (flags.length) parts.push(`${flags.join(', ')} (across all of them, not just the ones above).`);
+  return parts.join(' ');
 }
 
 /** One recall line per file — location first, then what it is (or, honestly, that it awaits study). */
@@ -160,16 +216,20 @@ export function formatSessionBootstrap(parts: SessionBootstrapParts): string {
     }
   }
 
-  const files = (parts.vaultFiles ?? []).slice(0, 12);
+  const vault = parts.vaultFiles;
+  const files = (vault?.files ?? []).slice(0, 12);
   if (files.length) {
     lines.push('### Project files on record');
     for (const f of files) lines.push(formatVaultFileLine(f));
+    /* The scope line before the how-to: what is missing from this list changes
+       whether the reader should consult the tools at all. */
+    if (vault) lines.push(`_${formatVaultScopeLine(vault)}_`);
     lines.push(
       '_Use list_project_documents for the full folder; read_project_document to study a file (all of it)._'
     );
   }
 
-  const uploads = (parts.chatUploads ?? []).slice(0, 8);
+  const uploads = (parts.chatUploads?.uploads ?? []).slice(0, 8);
   if (uploads.length) {
     /* A chat upload is reachable but has no vault row, so it carries no filed
        location and no comprehension record — saying only "these exist" would
@@ -180,6 +240,11 @@ export function formatSessionBootstrap(parts: SessionBootstrapParts): string {
     for (const u of uploads) {
       lines.push(
         `- **${clip(u.fileName, 90)}**${u.fileId ? ` (${u.fileId})` : ''} — attached earlier, not filed into the vault.`
+      );
+    }
+    if (parts.chatUploads?.hasMore) {
+      lines.push(
+        `_More than these ${uploads.length} were attached — list_project_documents returns the rest._`
       );
     }
     lines.push(
