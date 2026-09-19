@@ -203,8 +203,21 @@ added a failure.
 
 Every run of the CI workflow on 2026-09-03 (78 of 78) failed on the branch; the two failures
 seen on 2026-09-05 are a missing server module (`server/routes/c2c/exports.ts`) and one
-Part 11 snapshot test, neither in this stream's territory. WO-11's files are unchanged on the
-current head (`106214a0` at the time of writing) and the carriage test is still present.
+Part 11 snapshot test, neither in this stream's territory. WO-11's files were unchanged on the head of 2026-09-05 (`106214a0`) and the carriage test was
+still present.
+
+**Re-checked 2026-09-19 on `974a3013`** (1,147 commits after the last WO-11 push). Ten later
+commits touched this stream's files: the thread composer gained `@app` mentions and a
+`role="status"` on its loading note; `AnaActivity` moved its lens phrases into the shared
+progress module; `AnaWorkPanel` dropped its own close button (the host's toggle is the one
+control, as WO-11 left it), closed its Tools section by default, and gained `omitDrafts` so the
+thread's artifact cards are not listed twice. None of that alters the seven rows, and all ten
+WO-11 invariants (the `toTurn` mapping, the in-turn `AnaActivity`, no `announce`, no dots, the
+header toggle, the persisted key, the measure steps, the dock split, the carriage test) hold on
+that head. On it: the seven suites pass, 78/78; typecheck 0 errors; every design gate green,
+including the selector-shadowing gate that was red on the base (the `mdx` rule has since been
+fixed by its owner); ESLint 0 errors. JM's row in the handoff session log is still open and §6
+is still empty.
 
 ### The seam, made to fail
 
