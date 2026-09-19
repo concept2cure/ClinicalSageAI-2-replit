@@ -11,6 +11,41 @@
  * - Tenant-scoped data isolation
  * - Workflow orchestration and status tracking
  * - FDA integration readiness
+ *
+ * ── Audit-row outcomes (WO-16C #133, 19 September 2026) ─────────────────────
+ *
+ * Most governed mutations in this file write TWO audit records, and they are
+ * not the same row:
+ *
+ *   1. a `device_audit_trail` row, via this class's own `logAuditTrail`;
+ *   2. an `audit_logs` row, via the shared audit service.
+ *
+ * (`linkCERToDevice` writes only (2). `createWorkflow` and
+ * `updateWorkflowStatus` write neither.)
+ *
+ * `logAction` does not reject when no store accepts the row — deliberate
+ * policy, an audit-trail outage must not break the action it records — it
+ * resolves an `AuditWriteResult` that says what happened. The seven calls in
+ * this file awaited it at statement position and discarded that value, so a
+ * created device record, a created 510(k) or PMA submission record, an
+ * uploaded submission document and a CER-to-device link were all returned
+ * byte-identically whether their §11.10(e) row existed or not. The only trace
+ * of a missing one was a server log line.
+ *
+ * The outcome of write (2) now travels out to the caller on a key named
+ * `auditLog`, produced by `recordAuditRow`
+ * (server/services/audit/audit-write-outcome.ts). That key is deliberately
+ * narrow: it is the `audit_logs` row for the one action named at its own call
+ * site, and nothing else. It says nothing about write (1) — the
+ * `device_audit_trail` insert in `logAuditTrail` is still wrapped in a catch
+ * that logs and returns, so that row's fate stays unreported. That is a
+ * separate finding and is deliberately not addressed here.
+ *
+ * Nothing is rolled back because an audit row failed. Every mutation below is
+ * already committed by the time its audit write is attempted, and undoing a
+ * real device or submission record over a lost log row would be the worse
+ * answer. `recordAuditRow`'s failure arm carries a stable code and a
+ * caller-safe sentence, never the store's own error text.
  */
 
 import { db } from '../db';
@@ -26,7 +61,7 @@ import {
   users,
 } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import auditService from './auditService';
+import { recordAuditRow } from './audit/audit-write-outcome';
 import crypto from 'crypto';
 
 import { createScopedLogger } from '../utils/logger';
@@ -81,17 +116,27 @@ class MedicalDeviceService {
         userId
       );
 
-      // Also log to main audit service for consistency
-      await auditService.logAction(
-        organizationId,
+      // Also log to main audit service for consistency.
+      //
+      // WO-16C #133. This was an awaited `logAction` call at statement position:
+      // the AuditWriteResult it resolves was thrown away, so the device object
+      // returned below was identical whether or not the §11.10(e) row for the
+      // creation existed. Rule-2 case: a log beside an already-committed write —
+      // the device row is committed by the `.insert(medicalDevices) …
+      // .returning()` above — so the creation stands and the outcome is
+      // reported instead of dropped.
+      const auditLog = await recordAuditRow({
+        tenantId: organizationId,
         userId,
-        'CREATE_MEDICAL_DEVICE',
-        'medical_devices',
-        newDevice[0].id,
-        { deviceName: deviceData.deviceName, deviceClass: deviceData.deviceClass }
-      );
+        action: 'CREATE_MEDICAL_DEVICE',
+        resourceType: 'medical_devices',
+        resourceId: newDevice[0].id,
+        details: { deviceName: deviceData.deviceName, deviceClass: deviceData.deviceClass },
+      });
 
-      return newDevice[0];
+      // `auditLog` is the audit_logs row for CREATE_MEDICAL_DEVICE only, not
+      // the device_audit_trail row written above. See the module note.
+      return { ...newDevice[0], auditLog };
     } catch (error) {
       logger.error('Error creating medical device:', { error: error });
       throw error;
@@ -175,16 +220,24 @@ class MedicalDeviceService {
         userId
       );
 
-      await auditService.logAction(
-        organizationId,
+      // WO-16C #133, as in createDevice: the awaited outcome was discarded.
+      // Rule-2 case: a log beside an already-committed write — the device row
+      // is committed by the `.update(medicalDevices) … .returning()` above — so
+      // the update stands and the outcome is reported on `auditLog`.
+      const auditLog = await recordAuditRow({
+        tenantId: organizationId,
         userId,
-        'UPDATE_MEDICAL_DEVICE',
-        'medical_devices',
-        deviceId,
-        { updates }
-      );
+        action: 'UPDATE_MEDICAL_DEVICE',
+        resourceType: 'medical_devices',
+        resourceId: deviceId,
+        details: { updates },
+      });
 
-      return updatedDevice[0];
+      // Preserved exactly: when the UPDATE matches no row — a deviceId outside
+      // this organization — `updatedDevice[0]` is `undefined`, which is what
+      // this returned before, and there is no object to carry `auditLog` on.
+      const updatedRow = updatedDevice[0];
+      return updatedRow === undefined ? undefined : { ...updatedRow, auditLog };
     } catch (error) {
       logger.error('Error updating medical device:', { error: error });
       throw error;
@@ -236,16 +289,25 @@ class MedicalDeviceService {
         userId
       );
 
-      await auditService.logAction(
-        organizationId,
+      // WO-16C #133. The discarded outcome here belonged to the §11.10(e) row
+      // for opening a 510(k) submission record — the file an eventual premarket
+      // notification is assembled in. Nothing on this path transmits anything
+      // to FDA (see submit510kToFDA). Rule-2 case: a log beside an
+      // already-committed write — the submission row is committed by the
+      // `.insert(fda510kSubmissions) … .returning()` above.
+      const auditLog = await recordAuditRow({
+        tenantId: organizationId,
         userId,
-        'CREATE_510K_SUBMISSION',
-        'fda_510k_submissions',
-        new510k[0].id,
-        { deviceId: submissionData.deviceId, submissionType: submissionData.submissionType }
-      );
+        action: 'CREATE_510K_SUBMISSION',
+        resourceType: 'fda_510k_submissions',
+        resourceId: new510k[0].id,
+        details: {
+          deviceId: submissionData.deviceId,
+          submissionType: submissionData.submissionType,
+        },
+      });
 
-      return new510k[0];
+      return { ...new510k[0], auditLog };
     } catch (error) {
       logger.error('Error creating 510(k) submission:', { error: error });
       throw error;
@@ -366,14 +428,22 @@ class MedicalDeviceService {
         userId
       );
 
-      await auditService.logAction(
-        organizationId,
+      // WO-16C #133. This is the audit row for every change to a 510(k)
+      // submission record, including the one that applies an electronic
+      // signature and moves the package to `ready_for_transmission` (that
+      // caller is submit510kToFDA below). Rule-2 case: a log beside an
+      // already-committed write — the submission row, its embedded `auditTrail`
+      // array and any new signature are all committed by the
+      // `.update(fda510kSubmissions) … .returning()` above, so the change
+      // stands and the outcome is reported rather than dropped.
+      const auditLog = await recordAuditRow({
+        tenantId: organizationId,
         userId,
-        'UPDATE_510K_SUBMISSION',
-        'fda_510k_submissions',
-        submissionId,
-        { updates }
-      );
+        action: 'UPDATE_510K_SUBMISSION',
+        resourceType: 'fda_510k_submissions',
+        resourceId: submissionId,
+        details: { updates },
+      });
 
       // Update workflow if status changed
       if (updates.submissionStatus) {
@@ -386,7 +456,10 @@ class MedicalDeviceService {
         );
       }
 
-      return updated510k[0];
+      // Preserved exactly: an UPDATE that matched no row returns `undefined`
+      // here as it did before, leaving no object to carry `auditLog` on.
+      const updatedRow = updated510k[0];
+      return updatedRow === undefined ? undefined : { ...updatedRow, auditLog };
     } catch (error) {
       logger.error('Error updating 510(k) submission:', { error: error });
       throw error;
@@ -444,7 +517,7 @@ class MedicalDeviceService {
       // rejected. `ready_for_transmission` means validated and e-signed locally
       // but NOT sent; only the gateway path — which obtains and stores a real
       // agency receipt — may ever write `submitted`.
-      await this.update510kSubmission(
+      const signedSubmission = await this.update510kSubmission(
         organizationId,
         submissionId,
         {
@@ -479,6 +552,14 @@ class MedicalDeviceService {
       return {
         success: true,
         transmitted: false,
+        // WO-16C #133. The governed write on this path is the e-signature and
+        // status UPDATE that `update510kSubmission` performed above, and this
+        // is the outcome of that call's audit_logs row
+        // (action UPDATE_510K_SUBMISSION), carried into the envelope instead of
+        // being discarded along with the rest of its return value. It is the
+        // only audit_logs row this method causes. Absent only when that UPDATE
+        // matched no row, in which case no signature was stored either.
+        auditLog: signedSubmission?.auditLog,
         message:
           '510(k) package validated and signed. NOT transmitted to FDA — no submission has been made. ' +
           'Use Gateway Transmittals to transmit and obtain an agency receipt.',
@@ -546,16 +627,23 @@ class MedicalDeviceService {
         userId
       );
 
-      await auditService.logAction(
-        organizationId,
+      // WO-16C #133. Same shape as create510kSubmission: the §11.10(e) row for
+      // opening a PMA submission record. Rule-2 case: a log beside an
+      // already-committed write — the row is committed by the
+      // `.insert(pmaSubmissions) … .returning()` above.
+      const auditLog = await recordAuditRow({
+        tenantId: organizationId,
         userId,
-        'CREATE_PMA_SUBMISSION',
-        'pma_submissions',
-        newPMA[0].id,
-        { deviceId: submissionData.deviceId, submissionType: submissionData.submissionType }
-      );
+        action: 'CREATE_PMA_SUBMISSION',
+        resourceType: 'pma_submissions',
+        resourceId: newPMA[0].id,
+        details: {
+          deviceId: submissionData.deviceId,
+          submissionType: submissionData.submissionType,
+        },
+      });
 
-      return newPMA[0];
+      return { ...newPMA[0], auditLog };
     } catch (error) {
       logger.error('Error creating PMA submission:', { error: error });
       throw error;
@@ -631,16 +719,21 @@ class MedicalDeviceService {
         userId
       );
 
-      await auditService.logAction(
-        organizationId,
+      // WO-16C #133. These documents are what submit510kToFDA checks for
+      // completeness before it signs a package, so this is the §11.10(e) record
+      // of who attached which piece of a submission. Rule-2 case: a log beside
+      // an already-committed write — the document row is committed by the
+      // `.insert(deviceSubmissionDocuments) … .returning()` above.
+      const auditLog = await recordAuditRow({
+        tenantId: organizationId,
         userId,
-        'UPLOAD_SUBMISSION_DOCUMENT',
-        'device_submission_documents',
-        newDoc[0].id,
-        { submissionType, submissionId, documentType: documentData.documentType }
-      );
+        action: 'UPLOAD_SUBMISSION_DOCUMENT',
+        resourceType: 'device_submission_documents',
+        resourceId: newDoc[0].id,
+        details: { submissionType, submissionId, documentType: documentData.documentType },
+      });
 
-      return newDoc[0];
+      return { ...newDoc[0], auditLog };
     } catch (error) {
       logger.error('Error adding submission document:', { error: error });
       throw error;
@@ -977,14 +1070,27 @@ class MedicalDeviceService {
         )
         .returning();
 
-      await auditService.logAction({
+      // WO-16C #133. The only audit record this mutation writes at all — it
+      // calls no logAuditTrail — and its outcome was discarded, so a CER
+      // project could be attached to a device with no §11.10(e) row and an
+      // identical return value. Rule-2 case: a log beside an already-committed
+      // write — the link is committed by the `.update(cerProjects) …
+      // .returning()` above.
+      //
+      // The entry fields are passed through unchanged, including the absence of
+      // a tenantId; what that costs the row is reported separately rather than
+      // altered here.
+      const auditLog = await recordAuditRow({
         userId,
         action: 'LINK_CER_TO_DEVICE',
         resourceType: 'cer_projects',
         details: { organizationId, cerProjectId, deviceId },
       });
 
-      return updated[0];
+      // Preserved exactly: a cerProjectId outside this organization matches no
+      // row, and `undefined` is what this returned before.
+      const linkedRow = updated[0];
+      return linkedRow === undefined ? undefined : { ...linkedRow, auditLog };
     } catch (error) {
       logger.error('Error linking CER to device:', { error: error });
       throw error;

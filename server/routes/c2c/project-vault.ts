@@ -54,6 +54,7 @@ import {
   foldersForView,
   VAULT_DOC_KINDS,
   type VaultViewId,
+  vaultIngestTypeLabel,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
 import {
@@ -382,9 +383,25 @@ export interface UploadRow {
  * one. Its own function because it is three fallbacks deep and reading it
  * inline is what carried uploadLeaf over the complexity limit.
  */
+/**
+ * What a reader is told an uploaded document IS.
+ *
+ * Preference order is most-specific-first: the classifier's evidence kind is a
+ * decision about this document, the ingest type is what the uploader declared,
+ * and 'File' is the honest floor when neither exists.
+ *
+ * The middle branch used to return `row.document_type` RAW, so a reviewer saw
+ * the wire token — `MODULE_3`, `CORRESPONDENCE` — in the document list. Correct
+ * data, nobody's vocabulary. It goes through the shared label map now, which
+ * lives beside the enum precisely so the two cannot drift; an unrecognised
+ * value still comes back as itself, because the token is ugly but true and
+ * 'Other' would be a classification nobody made.
+ */
 function uploadTypeLabel(row: UploadRow): string {
   if (row.evidence_kind) return KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind;
-  if (row.document_type && row.document_type !== 'OTHER') return row.document_type;
+  if (row.document_type && row.document_type !== 'OTHER') {
+    return vaultIngestTypeLabel(row.document_type);
+  }
   return 'File';
 }
 

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T02:20:40.186Z",
+  "generatedAt": "2026-09-19T03:53:58.078Z",
   "git": {
-    "sha": "8c3b4c585f10503f72d300015c23572ad5834392",
+    "sha": "cebe35888153e44364801d889e622aa7142f9e20",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 96
+    "largeFilesByLines": 97
   },
   "findings": {
     "duplicateBasenames": [
@@ -2453,12 +2453,12 @@
         "lines": 1696
       },
       {
-        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
-        "lines": 1678
+        "file": "server/routes/submissions.ts",
+        "lines": 1681
       },
       {
-        "file": "server/routes/submissions.ts",
-        "lines": 1665
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1678
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
@@ -2493,6 +2493,10 @@
         "lines": 1532
       },
       {
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 1521
+      },
+      {
         "file": "server/services/grdhe/grdheService.ts",
         "lines": 1501
       }
@@ -2504,7 +2508,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 395,
       "largeByBytes": 33,
-      "largeByLines": 79
+      "largeByLines": 80
     },
     {
       "owner": "Unassigned (TBD)",
