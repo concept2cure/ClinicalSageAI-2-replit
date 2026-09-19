@@ -27,7 +27,7 @@ import {
   UDI_MRI,
   UDI_SYMBOLS,
 } from '../data/udi';
-import { UDI_DOC_FRAMEWORKS, UDI_DOCUMENTS } from '../data/udi-docs';
+import { UDI_DOC_FRAMEWORKS } from '../data/udi-docs';
 import { useUdi } from '../hooks/useUdi';
 import { readyRows } from '../lib/dataState';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
@@ -183,7 +183,6 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
         state={live.labels}
         label="labeling documents"
         onRetry={live.refresh}
-        sample={UDI_DOCUMENTS as never}
         emptyHint="IFUs, package and on-device labels appear here once labeling documents are created."
       >
         {() => (
