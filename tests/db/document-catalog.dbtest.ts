@@ -494,7 +494,7 @@ describe('a chat upload knows it is indexed by its opening only', () => {
 
   it('writes the file length and the embedded length onto the row', async () => {
     const { writeUploadRetrievalAtom, ATOM_CONTENT_LIMIT } = await import(
-      '../../server/services/uploads/upload-retrieval-atom'
+      '../../server/services/chat-uploads/upload-retrieval-atom'
     );
     const text = Array.from(
       { length: 200 },
@@ -530,7 +530,7 @@ describe('a chat upload knows it is indexed by its opening only', () => {
 
   it('a second write for the same source is a no-op, not a duplicate', async () => {
     const { writeUploadRetrievalAtom } = await import(
-      '../../server/services/uploads/upload-retrieval-atom'
+      '../../server/services/chat-uploads/upload-retrieval-atom'
     );
     const again = await writeUploadRetrievalAtom(owner as any, {
       organizationId: orgId,

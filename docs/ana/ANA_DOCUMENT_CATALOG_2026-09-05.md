@@ -183,7 +183,7 @@ unfindable page, out-of-order pages, empty input.
 
 ### A file sent in chat was indexed by its first 16,000 characters
 
-**Writer:** `server/services/uploads/upload-retrieval-atom.ts` ·
+**Writer:** `server/services/chat-uploads/upload-retrieval-atom.ts` ·
 **Tripwires:** its unit suite, `tests/db/document-catalog.dbtest.ts`,
 `document-passage-tools.test.ts`
 

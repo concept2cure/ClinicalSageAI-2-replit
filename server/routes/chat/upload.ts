@@ -16,7 +16,7 @@
 import {
   writeUploadRetrievalAtom,
   type UploadAtomResult,
-} from '../../services/uploads/upload-retrieval-atom.js';
+} from '../../services/chat-uploads/upload-retrieval-atom.js';
 import type { Request, Response } from 'express';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
