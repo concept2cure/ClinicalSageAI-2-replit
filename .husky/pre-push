@@ -280,15 +280,19 @@ echo "   ✅ Fabricated-identity check passed."
 # `auditService.logAction` does not reject when persistence fails. That is
 # deliberate -- an audit-trail outage must not break the action it records -- so
 # it RESOLVES an AuditWriteResult and says what happened in `persisted`.
-# `void auditService.logAction(...)` throws that away, and the call then has two
-# possible outcomes and one observable result: the caller, the HTTP envelope and
-# the surface are byte-identical whether the §11.10(e) record exists or does not.
+# Two syntaxes throw that away: `void auditService.logAction(...)` and a
+# statement-position `await auditService.logAction(...)`. Either way the call has
+# two possible outcomes and one observable result: the caller, the HTTP envelope
+# and the surface are byte-identical whether the §11.10(e) record exists or does
+# not. Awaiting and ignoring reports no more than not awaiting at all -- the gate
+# caught only the `void` form until 19 Sep 2026, when the awaited form turned out
+# to be 134 sites against 0 remaining void ones.
 #
 # WO-16C finding 133 converted the PDEV approval and IND-clearance path. The
 # baseline caps the rest per file WITH ITS COUNT, so a baselined file cannot
 # quietly grow and a clean file cannot become dirty. Shrink it; never grow it.
 echo "   Checking for a discarded Part 11 audit-write outcome..."
-if ! npm run --silent ci:void-audit-write 2>&1; then
+if ! npm run --silent ci:discarded-audit-write 2>&1; then
   echo ""
   echo "🚫 ERROR: Discarded audit-write outcome FAILED."
   echo "   Await the write and report it: if (!audit.persisted) log.error(...)."
