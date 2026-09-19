@@ -329,6 +329,36 @@ const SQL_KEYWORD_RE = /\b(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b/i;
 // String-literal extraction lives in ./lib/extract-string-literals.mjs so it
 // can be unit-tested without executing this script's scan-and-exit flow.
 
+/**
+ * Resolve `${ident}` inside a SQL literal from same-file `const ident = \`…\``.
+ *
+ * The scanner reads one string literal at a time, so a predicate assembled in a
+ * variable is invisible to it. `project-vault.ts` builds
+ *
+ *     const uploadsWhere = `d.program_id = $1 AND d.deleted_at IS NULL
+ *       AND EXISTS (SELECT 1 FROM regulatory_programs rp
+ *                    WHERE rp.id = d.program_id AND rp.organization_id = $2 …)`;
+ *
+ * and then writes `WHERE ${uploadsWhere}` in three queries. That IS a real,
+ * unconditional tenant predicate — and the gate flagged all three, because the
+ * literal it scanned contained no tenant keyword.
+ *
+ * A gate that flags correct code is worse than one rule short: the cost of a
+ * false positive is paid in suppression markers and baseline rows, and the next
+ * reader cannot tell those from the real ones. One level of substitution, same
+ * file, template literals only — enough for the assemble-a-WHERE-clause idiom
+ * without pretending to evaluate JavaScript.
+ */
+function expandLocalInterpolations(sql, text) {
+  if (!sql.includes('${')) return sql;
+  return sql.replace(/\$\{(\w+)\}/g, (whole, ident) => {
+    const def = new RegExp(
+      '\\bconst\\s+' + ident + '\\s*(?::[^=]+)?=\\s*`([^`]*)`',
+    ).exec(text);
+    return def ? def[1] : whole;
+  });
+}
+
 const findings = [];
 const suppressed = [];
 
@@ -343,7 +373,9 @@ for (const file of walk(path.join(repoRoot, 'server'))) {
 
   // Iterate every SQL-shaped string literal in the file.
   for (const literal of extractStringLiterals(text)) {
-    const sql = literal.value;
+    /* Substitute same-file `const` fragments before any test below: a tenant
+       predicate assembled in a variable is still a tenant predicate. */
+    const sql = expandLocalInterpolations(literal.value, text);
     if (!SQL_KEYWORD_RE.test(sql)) continue;
     TABLE_PATTERN.lastIndex = 0;
     const tableHits = new Set();
