@@ -1,5 +1,5 @@
 /**
- * Every canonical chat entry point rehydrates at session start.
+ * Every canonical chat entry point does the cross-cutting things — all of them.
  *
  * ── The defect ───────────────────────────────────────────────────────────────
  * The session-start rehydration — the working summary, the top project and
@@ -24,8 +24,20 @@
  * the same shape as the persona tripwire: cheap, and it fails the moment
  * someone adds a third chat path or quietly drops the call from one.
  *
- * If a third canonical chat entry point appears, add it here. A path missing
- * from this list is a path that silently starts cold.
+ * The same shape has now bitten twice, so this file covers both and is where the
+ * third belongs:
+ *
+ *   1. SESSION-START REHYDRATION — wired only to send-message. Streaming
+ *      sessions began not knowing the client had uploaded anything.
+ *   2. THE TENANT TOOL DENY-LIST — wired only to stream. A tool an organization
+ *      switched off in `anaToolPolicy.deny` was still offered on send-message.
+ *      That one is worse: a capability on one door is a gap, a GOVERNANCE
+ *      CONTROL on one door does not fail visibly, it just quietly does not
+ *      hold, and the tenant finds out by watching the model use the tool they
+ *      turned off.
+ *
+ * If a third canonical chat entry point appears, add it to CHAT_ENTRY_POINTS. A
+ * path missing from this list is a path that silently skips both.
  */
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
@@ -41,7 +53,7 @@ const CHAT_ENTRY_POINTS: Array<{ endpoint: string; file: string }> = [
 
 const read = (rel: string): string => fs.readFileSync(path.join(repoRoot, rel), 'utf8');
 
-describe('session-start rehydration is on every chat path', () => {
+describe('the canonical chat paths stay in parity', () => {
   it.each(CHAT_ENTRY_POINTS)('$endpoint calls sessionBootstrapBlockFor', ({ file }) => {
     expect(read(file)).toContain('sessionBootstrapBlockFor');
   });
@@ -65,6 +77,46 @@ describe('session-start rehydration is on every chat path', () => {
         'ANA_SESSION_BOOTSTRAP_AUTO',
       );
     }
+  });
+
+  it.each(CHAT_ENTRY_POINTS)('$endpoint assembles its tools through governedToolsetFor', ({ file }) => {
+    expect(read(file)).toContain('governedToolsetFor');
+  });
+
+  it.each(CHAT_ENTRY_POINTS)('$endpoint does not assemble the raw tool surface itself', ({ file }) => {
+    // `selectToolsForTurn(getAllEnabledTools(), …)` is exactly the call that
+    // skipped the deny-list. Relevance selection must never see the unfiltered
+    // set: governance comes first, and the helper is what guarantees the order.
+    const src = read(file);
+    expect(src, `${file} must not call getAllEnabledTools directly`).not.toMatch(
+      /selectToolsForTurn\(\s*getAllEnabledTools\(\)/,
+    );
+  });
+
+  it('every composer of the AnA tool surface goes through the helper', () => {
+    // Not only the chat paths: deep-investigation assembles a toolset too, and
+    // three hand-rolled copies of "load the policy, then filter" is how one of
+    // them came to be missing the first step.
+    const composers = [
+      'server/routes/chat/send-message.ts',
+      'server/routes/ana-ri/stream.ts',
+      'server/services/ana/deep-investigation.ts',
+    ];
+    for (const file of composers) {
+      const src = read(file);
+      expect(src, `${file} should compose via governedToolsetFor`).toContain('governedToolsetFor');
+      expect(src, `${file} should not re-implement the filter`).not.toContain('filterToolsByPolicy');
+    }
+  });
+
+  it('the helper applies the deny-list and says why it does not apply the allowlist', () => {
+    const helper = read('server/services/ana/governed-toolset.ts');
+    expect(helper).toContain('filterToolsByPolicy');
+    expect(helper).toContain('loadAnaToolPolicy');
+    // The allowlist is deliberately not applied here; the reason has to survive,
+    // because applying it would strip every search tool the moment a tenant
+    // allowlisted one mutation.
+    expect(helper).toMatch(/allow`? is scoped to governed mutations/);
   });
 
   it('the helper still owns the gate, the kill-switch and the failure path', () => {

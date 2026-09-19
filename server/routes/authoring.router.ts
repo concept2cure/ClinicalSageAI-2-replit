@@ -12,6 +12,7 @@ import { nonAccessTokenReason } from '../middleware/tokenType';
 import { enforceOrgMembership } from '../middleware/orgMembership';
 import { getPool } from '../db';
 import auditService, { writeChainedAuditRow } from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { isSigningAuthorized } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { authedOrgId } from '../utils/authedOrgId';
@@ -744,7 +745,27 @@ const createAuditTrail = async (
     const resourceId = String(sectionId ?? docId ?? '');
 
     if (executor === pool) {
-      void auditService.logAction({
+      /* WO-16C #133. Was `void auditService.logAction({…})`.
+         `logAction` never rejects on a persistence failure, so the discarded
+         AuditWriteResult was the only place a lost row was visible.
+
+         The outcome is NOT plumbed out to callers here, and the reason is
+         specific rather than convenient: `createAuditTrail` has a dozen call
+         sites in this file and what this row is, per the comment above, is the
+         secondary INDEX entry — "the dedicated authoring_audit_trail row above
+         remains the rich record". That row is written on `executor`, which on the
+         transactional path is the caller's BEGIN'd client, so it commits and
+         rolls back with the mutation. Losing THIS row therefore degrades the
+         unified audit_logs query; it does not lose the §11.10(e) record of the
+         change, which is the authoring_audit_trail row.
+
+         That distinction is why this is logged at error severity with what was
+         actually lost, rather than threaded through twelve call sites as a value
+         they would all ignore — an ignored return value is the vacuous
+         conversion this work order keeps finding. If the index entry ever
+         becomes the authoritative record for anything, this decision has to be
+         revisited, which is what this note is for. */
+      const indexRow = await recordAuditRow({
         tenantId,
         userId: actorEmail,
         action,
@@ -754,6 +775,14 @@ const createAuditTrail = async (
         userAgent,
         details: chainDetails,
       });
+      if (!indexRow.persisted) {
+        console.error(
+          '[authoring] audit_logs index entry NOT written for ' +
+            `${action} on ${resourceType} ${resourceId}; the authoritative ` +
+            'authoring_audit_trail row exists, but this event is missing from the ' +
+            'unified audit query',
+        );
+      }
     } else if (!auditOpts.chainedRowWrittenByCaller) {
       /* §11.10(e) — ENLISTED IN THE CALLER'S TRANSACTION.
        *
@@ -6393,6 +6422,165 @@ router.get('/docs/:docId/workflow', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * The last workflow signature has cleared the chain: approve the document and
+ * leave the immutable record that approval means.
+ *
+ * Lifted out of POST /docs/:docId/sign as one named act, because it is one:
+ * the status flip and the freeze must land together or not at all, and at four
+ * blocks deep inside the handler that pairing was something a reader had to
+ * reconstruct. It runs on the CALLER'S transaction client for exactly that
+ * reason — it is not a step that may independently succeed.
+ */
+async function approveAndFreezeDocument(args: {
+  client: Queryable;
+  docId: string;
+  tenantId: number;
+  signerEmail: string;
+  contentHash: string;
+}): Promise<void> {
+  const { client, docId, tenantId, signerEmail, contentHash } = args;
+  await client.query(
+    `UPDATE authoring_documents
+     SET status = 'APPROVED', approved_at = NOW()
+     WHERE id = $1 AND tenant_id = $2`,
+    [docId, tenantId]
+  );
+
+  // Auto-freeze on approval — the final workflow signature approving the
+  // document must leave the same immutable legal record the e-sign
+  // APPROVER path produces. Without this the /sign workflow ended a
+  // document APPROVED with NO frozen_documents row: the approved content
+  // survived only in the editable authoring_sections table, and this
+  // approval signature's covered_freeze_version / covered_content_hash
+  // (bound above to `covered`, the pre-existing snapshot) were null —
+  // an approval that attests to "no snapshot". Mirror the proven e-sign
+  // pattern exactly: capture the FULL {document, sections, approvedBy,
+  // documentHash, frozenAt} snapshot, set content_hash to sha256 of the
+  // SNAPSHOT BYTES (so GET /docs/:docId/frozen's recompute-and-compare
+  // verifies), and INSERT ... ON CONFLICT DO NOTHING on THIS transaction
+  // client so the freeze lands with the status flip or rolls back with it.
+  const approvedDoc = await client.query(
+    'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+    [docId, tenantId]
+  );
+  const approvedSections = await client.query(
+    'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+    [docId, tenantId]
+  );
+  const frozenContent = JSON.stringify({
+    document: approvedDoc.rows[0] ?? null,
+    sections: approvedSections.rows,
+    approvedBy: signerEmail,
+    documentHash: contentHash,
+    frozenAt: new Date().toISOString(),
+  });
+  const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
+
+  await client.query(
+    `INSERT INTO frozen_documents
+     (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
+    [docId, 'approved', frozenContent, frozenContentHash, signerEmail, 'Approved and frozen', tenantId]
+  );
+}
+
+/**
+ * Advance this document's approval workflow on the strength of one signature.
+ *
+ * Only a signer whose VERIFIED roles carry the signature's meaning (or QA /
+ * RA_CMC) decides a step; when that clears the last pending step of a workflow
+ * that actually exists, the document is approved and frozen. Everything runs on
+ * the caller's transaction client, so a signature and the step it approves land
+ * together or not at all.
+ */
+async function advanceWorkflowForSignature(args: {
+  client: Queryable;
+  req: Request;
+  docId: string;
+  tenantId: number;
+  signerEmail: string;
+  meaning: string;
+  reason: string;
+  contentHash: string;
+}): Promise<void> {
+  const { client, req, docId, tenantId, signerEmail, meaning, reason, contentHash } = args;
+  // Update workflow step if applicable. Roles come from the VERIFIED token
+  // (req.user.roles), not from the x-roles header — the header is derived from
+  // claims by this router's JWT middleware, but reading the claim directly
+  // means an approval decision can never depend on a mutable header at all
+  // (ledger C-18).
+  const userRoles = (((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[])
+    .map((r) => String(r).toUpperCase());
+  if (userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC')) {
+    await client.query(
+      `UPDATE authoring_workflow_steps
+       SET status = 'APPROVED', decision_note = $1, decided_at = NOW()
+       WHERE doc_id = $2 AND approver_email = $3 AND status = 'PENDING' AND tenant_id = $4`,
+      [reason, docId, signerEmail, tenantId]
+    );
+
+    /* Are all approvals in — or were there never any?
+       This counted only PENDING steps and treated '0' as "all approved".
+       That count is also '0' when NO STEPS EXIST, and the only thing that
+       creates them is POST /docs/:docId/submit, which has no caller
+       anywhere in the client. So on the ordinary path — a document never
+       submitted for approval — the first APPROVER signature found zero
+       pending steps, concluded the chain was complete, flipped the document
+       to APPROVED and inserted a frozen_documents row. An approval chain
+       that was never required read exactly like one that finished, and the
+       result is the strongest and least reversible transition in this
+       lifecycle: APPROVED is sealed, and the content becomes immutable.
+
+       A check that ran zero assertions must not report a pass. The total is
+       counted alongside the pending, and the flip now requires that an
+       approval workflow actually EXISTED and is complete. A document with
+       no workflow is signed — the signature above is recorded either way —
+       and simply not approved, which is the truth about it. */
+    const stepCounts = await client.query(
+      `SELECT COUNT(*) FILTER (WHERE status = 'PENDING') AS pending,
+              COUNT(*) AS total
+         FROM authoring_workflow_steps
+        WHERE doc_id = $1 AND tenant_id = $2`,
+      [docId, tenantId]
+    );
+    const totalSteps = Number(stepCounts.rows[0]?.total ?? 0);
+    const pendingCount = Number(stepCounts.rows[0]?.pending ?? 0);
+
+    if (totalSteps > 0 && pendingCount === 0) {
+      await approveAndFreezeDocument({ client, docId, tenantId, signerEmail, contentHash });
+    }
+  }
+}
+
+/**
+ * What this signature is bound to: the document's content hash, the frozen
+ * snapshot it attests to, and the digest over both.
+ *
+ * The digest used to hash `new Date().toISOString()`, which made it impossible
+ * for anyone to recompute — a hash nobody can reproduce proves nothing. It
+ * covers only durable columns, including the frozen snapshot (§11.70
+ * signature/record link, C-11 residual 2), which is why the three are computed
+ * in one place rather than assembled at each signing path.
+ */
+async function computeSignatureBinding(
+  docId: string,
+  tenantId: number,
+  signerEmail: string,
+  meaning: string,
+) {
+  const contentHash = await computeDocHash(docId, tenantId);
+  const covered = await currentFrozenSnapshot(docId, tenantId);
+  const signatureDigest = computeSignatureDigest({
+    signerEmail,
+    meaning,
+    contentHash,
+    coveredContentHash: covered?.contentHash ?? null,
+  });
+  return { contentHash, covered, signatureDigest };
+}
+
 // ============= SIGN Operations =============
 
 // POST /api/authoring/docs/:docId/sign - Sign document (21 CFR Part 11)
@@ -6447,20 +6635,12 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid PIN' });
     }
 
-    // Compute document hash
-    const contentHash = await computeDocHash(docId, tenantId);
-
-    // The digest used to hash `new Date().toISOString()`, which made it
-    // impossible for anyone to recompute — a hash nobody can reproduce proves
-    // nothing. It now covers only durable columns, including the frozen snapshot
-    // this signature attests to (§11.70 signature/record link, C-11 residual 2).
-    const covered = await currentFrozenSnapshot(docId, tenantId);
-    const signatureDigest = computeSignatureDigest({
+    const { contentHash, covered, signatureDigest } = await computeSignatureBinding(
+      String(docId),
+      tenantId,
       signerEmail,
       meaning,
-      contentHash,
-      coveredContentHash: covered?.contentHash ?? null,
-    });
+    );
 
     // Store signature
     const signatureId = crypto.randomUUID();
@@ -6497,96 +6677,16 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         ]
       );
 
-      // Update workflow step if applicable. Roles come from the VERIFIED token
-      // (req.user.roles), not from the x-roles header — the header is derived from
-      // claims by this router's JWT middleware, but reading the claim directly
-      // means an approval decision can never depend on a mutable header at all
-      // (ledger C-18).
-      const userRoles = (((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[])
-        .map((r) => String(r).toUpperCase());
-      if (userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC')) {
-        await client.query(
-          `UPDATE authoring_workflow_steps
-           SET status = 'APPROVED', decision_note = $1, decided_at = NOW()
-           WHERE doc_id = $2 AND approver_email = $3 AND status = 'PENDING' AND tenant_id = $4`,
-          [reason, docId, signerEmail, tenantId]
-        );
-
-        /* Are all approvals in — or were there never any?
-           This counted only PENDING steps and treated '0' as "all approved".
-           That count is also '0' when NO STEPS EXIST, and the only thing that
-           creates them is POST /docs/:docId/submit, which has no caller
-           anywhere in the client. So on the ordinary path — a document never
-           submitted for approval — the first APPROVER signature found zero
-           pending steps, concluded the chain was complete, flipped the document
-           to APPROVED and inserted a frozen_documents row. An approval chain
-           that was never required read exactly like one that finished, and the
-           result is the strongest and least reversible transition in this
-           lifecycle: APPROVED is sealed, and the content becomes immutable.
-
-           A check that ran zero assertions must not report a pass. The total is
-           counted alongside the pending, and the flip now requires that an
-           approval workflow actually EXISTED and is complete. A document with
-           no workflow is signed — the signature above is recorded either way —
-           and simply not approved, which is the truth about it. */
-        const stepCounts = await client.query(
-          `SELECT COUNT(*) FILTER (WHERE status = 'PENDING') AS pending,
-                  COUNT(*) AS total
-             FROM authoring_workflow_steps
-            WHERE doc_id = $1 AND tenant_id = $2`,
-          [docId, tenantId]
-        );
-        const totalSteps = Number(stepCounts.rows[0]?.total ?? 0);
-        const pendingCount = Number(stepCounts.rows[0]?.pending ?? 0);
-
-        if (totalSteps > 0 && pendingCount === 0) {
-          // All approved - update document status
-          await client.query(
-            `UPDATE authoring_documents
-             SET status = 'APPROVED', approved_at = NOW()
-             WHERE id = $1 AND tenant_id = $2`,
-            [docId, tenantId]
-          );
-
-          // Auto-freeze on approval — the final workflow signature approving the
-          // document must leave the same immutable legal record the e-sign
-          // APPROVER path produces. Without this the /sign workflow ended a
-          // document APPROVED with NO frozen_documents row: the approved content
-          // survived only in the editable authoring_sections table, and this
-          // approval signature's covered_freeze_version / covered_content_hash
-          // (bound above to `covered`, the pre-existing snapshot) were null —
-          // an approval that attests to "no snapshot". Mirror the proven e-sign
-          // pattern exactly: capture the FULL {document, sections, approvedBy,
-          // documentHash, frozenAt} snapshot, set content_hash to sha256 of the
-          // SNAPSHOT BYTES (so GET /docs/:docId/frozen's recompute-and-compare
-          // verifies), and INSERT ... ON CONFLICT DO NOTHING on THIS transaction
-          // client so the freeze lands with the status flip or rolls back with it.
-          const approvedDoc = await client.query(
-            'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
-            [docId, tenantId]
-          );
-          const approvedSections = await client.query(
-            'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
-            [docId, tenantId]
-          );
-          const frozenContent = JSON.stringify({
-            document: approvedDoc.rows[0] ?? null,
-            sections: approvedSections.rows,
-            approvedBy: signerEmail,
-            documentHash: contentHash,
-            frozenAt: new Date().toISOString(),
-          });
-          const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
-
-          await client.query(
-            `INSERT INTO frozen_documents
-             (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
-             ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
-            [docId, 'approved', frozenContent, frozenContentHash, signerEmail, 'Approved and frozen', tenantId]
-          );
-        }
-      }
+      await advanceWorkflowForSignature({
+        client,
+        req,
+        docId: String(docId),
+        tenantId,
+        signerEmail,
+        meaning,
+        reason,
+        contentHash,
+      });
 
       // Create audit event
       await createAuditEvent(

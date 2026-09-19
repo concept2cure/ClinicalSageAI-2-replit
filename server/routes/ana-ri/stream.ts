@@ -50,7 +50,7 @@ import {
 import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
-import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
+import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import {
@@ -99,7 +99,6 @@ import {
 } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
-import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
@@ -384,9 +383,11 @@ export function mountStreamRoute(router: Router): void {
 
       // Resolve context
       const { orgId, userId } = extractRequestContext(req);
-      const toolPolicyPromise = orgId
-        ? loadAnaToolPolicy(getPool(), Number(orgId))
-        : Promise.resolve({});
+      /* The tenant's permitted tool surface, resolved in parallel with context
+         assembly. Composed by governedToolsetFor so this path and
+         POST /api/chat/send-message cannot drift on whether the deny-list is
+         applied — which they had. */
+      const toolPolicyPromise = governedToolsetFor(getPool(), orgId == null ? null : Number(orgId));
 
       // ── Live Drive (opt-in screen driving) ─────────────────────────────
       // The client sends `live_drive: true` only while the person has the
@@ -1158,15 +1159,14 @@ export function mountStreamRoute(router: Router): void {
       // organizations.settings.anaToolPolicy.deny. Honour the deny-list on
       // the assembled toolset so disabled tools are never offered to the
       // model. Loader is fail-open (default-allow) on any DB issue.
-      const allTools = getAllEnabledTools();
-      const toolPolicy = await toolPolicyPromise;
+      const governedTools = await toolPolicyPromise;
       // Governance first (tenant deny-list), then offer the subset relevant to this
       // turn's intent + context. The platform command bridge is always retained, so
       // intent selection never removes a capability — anything dropped stays
       // reachable through execute_platform_command. User-pinned tools are honoured.
       const asStr = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
       const streamTools = selectToolsForTurn(
-        filterToolsByPolicy(allTools, toolPolicy),
+        governedTools,
         typeof message === 'string' ? message : '',
         {
           // A driving turn MUST be offered the self-drive tools whatever the

@@ -1229,3 +1229,184 @@ export async function findUncoveredRanges(
 
   return gaps.filter((g) => g.charEnd > g.charStart);
 }
+
+/**
+ * What a whole document's attribution actually looks like, measured in
+ * CHARACTERS rather than in spans.
+ *
+ * ── WHY THIS IS NOT `getSelectionOrigins` OVER [0, length) ───────────────────
+ * That read answers "what backs the text I selected", and its `coveragePercent`
+ * means *characters carrying any lineage at all* — an author assertion counts
+ * toward it exactly as a citation does. That is the right meaning for the
+ * selection panel, and the wrong one for a document-level assurance: a section
+ * written entirely from the author's head is 100% covered by it, and a surface
+ * that rendered that as "traces to a source" would be stating something false
+ * about a regulated document. (The design doc's Phase 6 sketch used that
+ * wording; the numbers here are what make it honest.)
+ *
+ * Its `counts` are also span COUNTS, which cannot carry a percentage: ten short
+ * citations and one long author paragraph is "10 from sources, 1 authored" while
+ * most of the text is the author's.
+ *
+ * So this partitions the document by character and reports each kind's share.
+ *
+ * ── PRECEDENCE, AND WHY IT NEVER FLATTERS ────────────────────────────────────
+ * The gate writes disjoint spans (attributeMachineThenAuthor excludes machine
+ * ranges from author spans, and source-covered clauses are excluded from both),
+ * so in normal operation no character has two kinds. This is a defensive
+ * ordering for the case where one does — after a partial edit, a hand-written
+ * row, or a future writer that overlaps.
+ *
+ * A character claimed by more than one kind is reported as the LEAST favourable
+ * of them, so the summary can never overstate how well attributed the text is:
+ *
+ *   machine_draft (nobody accepted it)  ← never let another span hide this
+ *   accepted_machine_draft (a machine wrote it, a person accepted it)
+ *   author_assertion (a person asserts it, with nothing cited behind it)
+ *   cre_evidence_source (backed by a citation — the strongest claim)
+ *
+ * ── STALE IS REPORTED, NOT SUBTRACTED ────────────────────────────────────────
+ * `staleChars` counts characters whose cited source has changed checksum since
+ * it was cited. Those characters ARE still `fromSources` — the citation exists,
+ * it just no longer matches the source it points at — so stale is reported
+ * alongside the partition rather than carved out of it. Hiding it inside
+ * `unattributed` would misreport what happened, and dropping it would make a
+ * document look cleaner the moment its evidence moved.
+ */
+export interface DocumentAttributionSummary {
+  documentTable: string;
+  documentId: string;
+  /** The length the summary was computed against, from the server's own read. */
+  contentLength: number;
+  /** Characters carrying at least one lineage span. */
+  attributedChars: number;
+  /** Characters with no lineage at all. */
+  unattributedChars: number;
+  /** A partition of `attributedChars` — these four sum to it exactly. */
+  byKind: {
+    fromSources: number;
+    authorAsserted: number;
+    machineDrafted: number;
+    machineDraftedUnaccepted: number;
+  };
+  /** Subset of `byKind.fromSources` whose source has changed since it was cited. */
+  staleChars: number;
+  generatedAt: string;
+}
+
+type Range = { start: number; end: number };
+
+/** Merge overlapping/adjacent ranges so two sources on one sentence count once. */
+function mergeRanges(ranges: Range[]): Range[] {
+  const sorted = [...ranges].filter((r) => r.end > r.start).sort((a, b) => a.start - b.start);
+  const out: Range[] = [];
+  for (const r of sorted) {
+    const last = out[out.length - 1];
+    if (last && r.start <= last.end) last.end = Math.max(last.end, r.end);
+    else out.push({ ...r });
+  }
+  return out;
+}
+
+/** `from` minus `minus`, both assumed merged and sorted. */
+function subtractRanges(from: Range[], minus: Range[]): Range[] {
+  const out: Range[] = [];
+  for (const r of from) {
+    let cursor = r.start;
+    for (const m of minus) {
+      if (m.end <= cursor) continue;
+      if (m.start >= r.end) break;
+      if (m.start > cursor) out.push({ start: cursor, end: Math.min(m.start, r.end) });
+      cursor = Math.max(cursor, m.end);
+      if (cursor >= r.end) break;
+    }
+    if (cursor < r.end) out.push({ start: cursor, end: r.end });
+  }
+  return out.filter((r) => r.end > r.start);
+}
+
+function totalLength(ranges: Range[]): number {
+  return ranges.reduce((n, r) => n + (r.end - r.start), 0);
+}
+
+/**
+ * Least-favourable-first, so a character claimed by two kinds is reported as the
+ * weaker claim. See the precedence note on DocumentAttributionSummary.
+ */
+const KIND_PRECEDENCE = [
+  'machine_draft',
+  'accepted_machine_draft',
+  'author_assertion',
+  'cre_evidence_source',
+] as const;
+
+export async function summarizeDocumentAttribution(
+  orgId: number,
+  ref: Pick<DocumentRef, 'documentTable' | 'documentId'>,
+  contentLength: number,
+  exec: Queryable = defaultExec,
+): Promise<DocumentAttributionSummary> {
+  const length = Number.isFinite(contentLength) && contentLength > 0 ? Math.floor(contentLength) : 0;
+  const base: DocumentAttributionSummary = {
+    documentTable: ref.documentTable,
+    documentId: ref.documentId,
+    contentLength: length,
+    attributedChars: 0,
+    unattributedChars: length,
+    byKind: { fromSources: 0, authorAsserted: 0, machineDrafted: 0, machineDraftedUnaccepted: 0 },
+    staleChars: 0,
+    generatedAt: new Date().toISOString(),
+  };
+  if (length === 0) return base;
+
+  const spans = await listDocumentSpans(orgId, ref, exec);
+  if (spans.length === 0) return base;
+
+  // Clip to the CURRENT content: a span reaching past the end describes text
+  // that is no longer there, and must not inflate any figure.
+  const clip = (s: { charStart: number; charEnd: number }): Range => ({
+    start: Math.max(0, Math.min(s.charStart, length)),
+    end: Math.max(0, Math.min(s.charEnd, length)),
+  });
+
+  let claimed: Range[] = [];
+  const byKind = { ...base.byKind };
+  for (const kind of KIND_PRECEDENCE) {
+    const mine = mergeRanges(spans.filter((s) => s.provenanceKind === kind).map(clip));
+    const unclaimed = subtractRanges(mine, claimed);
+    const chars = totalLength(unclaimed);
+    if (kind === 'cre_evidence_source') byKind.fromSources = chars;
+    else if (kind === 'author_assertion') byKind.authorAsserted = chars;
+    else if (kind === 'accepted_machine_draft') byKind.machineDrafted = chars;
+    else byKind.machineDraftedUnaccepted = chars;
+    claimed = mergeRanges([...claimed, ...unclaimed]);
+  }
+
+  const attributedChars = totalLength(claimed);
+
+  // Stale characters are a subset of what was counted as fromSources, so they
+  // are intersected with exactly that: the ranges this partition credited to
+  // sources, not every stale span (one may sit under a weaker claim).
+  const sourceRanges = subtractRanges(
+    mergeRanges(spans.filter((s) => s.provenanceKind === 'cre_evidence_source').map(clip)),
+    mergeRanges(
+      spans
+        .filter((s) => s.provenanceKind !== 'cre_evidence_source')
+        .map(clip),
+    ),
+  );
+  const staleRanges = mergeRanges(
+    spans.filter((s) => s.provenanceKind === 'cre_evidence_source' && s.state === 'changed').map(clip),
+  );
+  const staleChars = totalLength(
+    subtractRanges(staleRanges, subtractRanges(staleRanges, sourceRanges)),
+  );
+
+  return {
+    ...base,
+    attributedChars,
+    unattributedChars: Math.max(0, length - attributedChars),
+    byKind,
+    staleChars,
+  };
+}

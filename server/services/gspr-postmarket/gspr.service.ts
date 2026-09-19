@@ -17,7 +17,7 @@ import {
   type GsprProgramMapping,
   type InsertGsprProgramMapping,
 } from '../../../shared/schema/gspr-postmarket';
-import { publishRegulatoryChange } from '../living-file/publish';
+import { publishRegulatoryChange, type PublishOutcome } from '../living-file/publish';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Profile + filter
@@ -153,7 +153,7 @@ export async function listProgramMappings(
 
 export async function upsertMapping(
   values: InsertGsprProgramMapping
-): Promise<GsprProgramMapping> {
+): Promise<GsprProgramMapping & { publish?: PublishOutcome }> {
   const [existing] = await db
     .select()
     .from(gsprProgramMappings)
@@ -187,8 +187,16 @@ export async function upsertMapping(
   // (sufficiency, NB reviewer persona, post-market planning). Publish only
   // when the applicability or evidence linkage actually changed; pure status
   // updates are not propagated.
+  let publish: PublishOutcome | undefined;
   if (applicabilityChanged || evidenceChanged) {
-    await publishRegulatoryChange({
+  /* WO-16C #133. This was a bare `await publishRegulatoryChange({…})`, and the
+     helper's own docstring called its result "informational only" — so the
+     per-channel propagation report was thrown away and a run where every channel
+     errored looked exactly like one where nothing needed to change. The outcome
+     travels with the result now. The mutation above stands either way: the
+     regulatory change really happened, and refusing it because the downstream
+     graph could not be notified would be the worse answer. */
+    publish = await publishRegulatoryChange({
       organizationId: row.organizationId,
       programId: row.programId,
       event: 'device_profile_changed',
@@ -199,7 +207,9 @@ export async function upsertMapping(
     });
   }
 
-  return row;
+  /* `undefined` when no publish was attempted — a pure status update is not
+     propagated, and that is not the same as a propagation that failed. */
+  return publish ? { ...row, publish } : row;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

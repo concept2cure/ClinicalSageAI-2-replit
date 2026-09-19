@@ -25,18 +25,23 @@ import type {
   ENG_RISKS,
   ENG_TRACE,
 } from '../data/engineering';
-import type { ENG_DOCUMENTS } from '../data/engineering-docs';
+import type { EngineeringDocument } from '../data/engineering-docs';
 
-/* Row types are derived from the canonical fixture exports so the live
+/* Row types are derived from the canonical example exports so the live
    payload and the example content cannot drift apart. `typeof` on a
-   type-only import is erased at compile time — no fixture data reaches
-   the production bundle through this module. */
+   type-only import is erased at compile time — no example data reaches
+   the production bundle through this module.
+
+   `DocumentRow` is the exception, and the direction to move the rest in:
+   its shape is declared outright in engineering-docs.ts, because the
+   examples it used to be inferred from asserted electronic signatures
+   that never happened and have been removed. */
 export type DhfRow = (typeof ENG_DHF)[number];
 export type TraceRow = (typeof ENG_TRACE)[number];
 export type RiskRow = (typeof ENG_RISKS)[number];
 export type EcrRow = (typeof ENG_ECRS)[number];
 export type IssueRow = (typeof ENG_ISSUES)[number];
-export type DocumentRow = (typeof ENG_DOCUMENTS)[number];
+export type DocumentRow = EngineeringDocument;
 
 /** Tenancy of a panel — see the route's scope-honesty note. */
 export type PanelScope = 'program' | 'organization';

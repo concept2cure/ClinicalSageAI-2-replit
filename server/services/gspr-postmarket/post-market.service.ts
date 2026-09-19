@@ -24,7 +24,7 @@ import {
   type PostMarketDocumentType,
   type InsertPostMarketDocument,
 } from '../../../shared/schema/gspr-postmarket';
-import { publishRegulatoryChange } from '../living-file/publish';
+import { publishRegulatoryChange, type PublishOutcome } from '../living-file/publish';
 import { DRAFT_SENTINEL } from './scaffold-sentinel';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -342,7 +342,7 @@ export interface ApproveArgs {
 export async function approveDocument(
   args: ApproveArgs
 ): Promise<
-  | { document: PostMarketDocument; validation: PostMarketValidationResult }
+  | { document: PostMarketDocument; validation: PostMarketValidationResult; publish: PublishOutcome }
   | { error: 'NOT_FOUND' }
   | { error: 'ALREADY_LOCKED' }
   | { error: 'GATE_BLOCKED'; validation: PostMarketValidationResult }
@@ -371,7 +371,14 @@ export async function approveDocument(
   // post-market posture. Sufficiency assessments and reviewer sims should
   // refresh; defense packets that referenced the prior version may need
   // staleness propagation through the reactive layer.
-  await publishRegulatoryChange({
+  /* WO-16C #133. This was a bare `await publishRegulatoryChange({…})`, and the
+     helper's own docstring called its result "informational only" — so the
+     per-channel propagation report was thrown away and a run where every channel
+     errored looked exactly like one where nothing needed to change. The outcome
+     travels with the result now. The mutation above stands either way: the
+     regulatory change really happened, and refusing it because the downstream
+     graph could not be notified would be the worse answer. */
+  const publish = await publishRegulatoryChange({
     organizationId: updated.organizationId,
     programId: updated.programId,
     event: 'device_profile_changed',
@@ -381,14 +388,14 @@ export async function approveDocument(
     userId: args.approvedBy,
   });
 
-  return { document: updated, validation };
+  return { document: updated, validation, publish };
 }
 
 export async function supersedeDocument(
   organizationId: number,
   oldDocumentId: string,
   patch: { newTitle?: string; createdBy?: string } = {}
-): Promise<PostMarketDocument | null> {
+): Promise<(PostMarketDocument & { publish: PublishOutcome }) | null> {
   const old = await getDocument(organizationId, oldDocumentId);
   if (!old) return null;
 
@@ -427,7 +434,14 @@ export async function supersedeDocument(
   // Living-file: superseding a post-market doc creates a new draft baseline
   // — surface this as a device-profile-changed event so downstream artifacts
   // get re-evaluated through the reactive layer.
-  await publishRegulatoryChange({
+  /* WO-16C #133. This was a bare `await publishRegulatoryChange({…})`, and the
+     helper's own docstring called its result "informational only" — so the
+     per-channel propagation report was thrown away and a run where every channel
+     errored looked exactly like one where nothing needed to change. The outcome
+     travels with the result now. The mutation above stands either way: the
+     regulatory change really happened, and refusing it because the downstream
+     graph could not be notified would be the worse answer. */
+  const publish = await publishRegulatoryChange({
     organizationId: old.organizationId,
     programId: old.programId,
     event: 'device_profile_changed',
@@ -437,5 +451,5 @@ export async function supersedeDocument(
     userId: patch.createdBy,
   });
 
-  return newDoc;
+  return { ...newDoc, publish };
 }

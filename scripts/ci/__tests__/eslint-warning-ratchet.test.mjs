@@ -149,3 +149,25 @@ test('--write-baseline writes totals and per-rule counts that the gate then acce
   const recheck = run({ report, baseline });
   assert.equal(recheck.status, 0, recheck.stderr);
 });
+
+// ── `--since <ref>` ──────────────────────────────────────────────────────────
+// The mode itself spawns the real linter over the real working tree, so its
+// happy path is proven against the live repo. What is pinned here is the pair
+// of ways it can be asked for nonsense: both must refuse, because a diagnostic
+// that silently reports "nothing changed" for a ref it could not resolve sends
+// the reader looking in the wrong place.
+
+test('--since with no ref refuses rather than diffing against nothing', () => {
+  const result = run({ report: [file('a.ts', msg('no-undef'))], args: ['--since'] });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /--since needs a git ref/);
+});
+
+test('--since with an unresolvable ref refuses rather than reporting no change', () => {
+  const result = run({
+    report: [file('a.ts', msg('no-undef'))],
+    args: ['--since', 'no-such-ref-4f2a9c'],
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /is not a commit this repository knows/);
+});

@@ -19199,6 +19199,36 @@ registerToolHandler('list_vault_documents', async (input, ctx) => {
   }
 });
 
+/**
+ * The `cre_evidence_sources.id` a vault artifact can be cited as, or null.
+ *
+ * A read tool hands the model the TEXT it will quote into a filing section, and
+ * without this it hands it no way to cite that text: a drafting tool can only
+ * record a verified quote against an evidence-source id, so a passage read
+ * without one falls to author lineage and the evidence behind a filed sentence
+ * is unrecoverable. `project_knowledge_search` already resolves this the one
+ * legitimate way; the same resolver is used here rather than a second.
+ *
+ * Resolution verifies existence and tenant ownership. An artifact with no
+ * canonical source resolves to null — never a guessed id, because a citation
+ * nobody can check is worse than no citation — and resolution is additive, so a
+ * read must not fail because attribution prep did. Both absences read as "not
+ * citable", which is true.
+ */
+async function citableSourceIdFor(
+  organizationId: number,
+  artifactKey: string | undefined,
+): Promise<number | null> {
+  if (!artifactKey) return null;
+  try {
+    const { evidenceSourceIdsForRetrieval } = await import('./drafting-source-lineage.js');
+    const resolved = await evidenceSourceIdsForRetrieval(organizationId, [artifactKey]);
+    return resolved.get(artifactKey) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 registerToolHandler('read_vault_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'read_vault_document requires tenant context.' });
   const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
@@ -19216,12 +19246,23 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
     if (!rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
     const { content, ...meta } = rows[0];
     const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
+
+    const evidenceSourceId = await citableSourceIdFor(
+      Number(ctx.organizationId),
+      (meta as { artifact_id?: string }).artifact_id,
+    );
+
     return JSON.stringify({
       ok: true,
       document: meta,
       content: excerpt.content,
       totalChars: excerpt.totalChars,
       truncated: excerpt.truncated,
+      evidence_source_id: evidenceSourceId,
+      citation_hint:
+        evidenceSourceId === null
+          ? 'This document does not resolve to a Data Room source, so nothing quoted from it can be recorded as a citation; text drafted from it is recorded as a draft you wrote, not as evidence.'
+          : `Quoting this document: pass { evidence_source_id: ${evidenceSourceId}, excerpt: "<the passage you quoted>" } in the drafting tool's sources[], so every clause you reproduce verbatim is recorded against this Data Room source rather than as unsourced prose.`,
       ...(excerpt.truncated
         ? { message: `Content truncated at ${excerpt.content.length} of ${excerpt.totalChars} characters — raise max_chars to read more.` }
         : {}),

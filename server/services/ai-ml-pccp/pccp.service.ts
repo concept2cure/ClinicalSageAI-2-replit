@@ -17,7 +17,7 @@ import {
   type InsertAiMlModification,
 } from '../../../shared/schema/ai-ml-pccp';
 import { validatePccp, type PccpValidationResult } from './pccp-validator.service';
-import { publishRegulatoryChange } from '../living-file/publish';
+import { publishRegulatoryChange, type PublishOutcome } from '../living-file/publish';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Read
@@ -129,6 +129,7 @@ export interface ApprovePlanArgs {
 export async function approvePlan(args: ApprovePlanArgs): Promise<{
   plan: AiMlPccpPlan;
   validation: PccpValidationResult;
+  publish: PublishOutcome;
 } | { error: 'NOT_FOUND' } | { error: 'GATE_BLOCKED'; validation: PccpValidationResult } | { error: 'ALREADY_LOCKED' }> {
   const plan = await getPlan(args.organizationId, args.planId);
   if (!plan) return { error: 'NOT_FOUND' };
@@ -157,7 +158,14 @@ export async function approvePlan(args: ApprovePlanArgs): Promise<{
   // Living-file: PCCP approval changes the AI/ML governance posture, which
   // downstream registrants (defense packets, sufficiency assessments,
   // reviewer simulations) need to reflect.
-  await publishRegulatoryChange({
+  /* WO-16C #133. This was a bare `await publishRegulatoryChange({…})`, and the
+     helper's own docstring called its result "informational only" — so the
+     per-channel propagation report was thrown away and a run where every channel
+     errored looked exactly like one where nothing needed to change. The outcome
+     travels with the result now. The mutation above stands either way: the
+     regulatory change really happened, and refusing it because the downstream
+     graph could not be notified would be the worse answer. */
+  const publish = await publishRegulatoryChange({
     organizationId: updated.organizationId,
     programId: updated.programId,
     event: 'device_profile_changed',
@@ -167,7 +175,7 @@ export async function approvePlan(args: ApprovePlanArgs): Promise<{
     userId: args.approvedBy,
   });
 
-  return { plan: updated, validation };
+  return { plan: updated, validation, publish };
 }
 
 export interface SupersedeArgs {
@@ -183,7 +191,7 @@ export interface SupersedeArgs {
  */
 export async function supersedePlan(
   args: SupersedeArgs
-): Promise<{ newPlan: AiMlPccpPlan; modCount: number } | null> {
+): Promise<{ newPlan: AiMlPccpPlan; modCount: number; publish: PublishOutcome } | null> {
   const old = await getPlan(args.organizationId, args.oldPlanId);
   if (!old) return null;
 
@@ -257,7 +265,14 @@ export async function supersedePlan(
     .where(eq(aiMlPccpPlans.id, old.id));
 
   // Living-file: superseding a PCCP shifts the AI/ML governance baseline.
-  await publishRegulatoryChange({
+  /* WO-16C #133. This was a bare `await publishRegulatoryChange({…})`, and the
+     helper's own docstring called its result "informational only" — so the
+     per-channel propagation report was thrown away and a run where every channel
+     errored looked exactly like one where nothing needed to change. The outcome
+     travels with the result now. The mutation above stands either way: the
+     regulatory change really happened, and refusing it because the downstream
+     graph could not be notified would be the worse answer. */
+  const publish = await publishRegulatoryChange({
     organizationId: old.organizationId,
     programId: old.programId,
     event: 'device_profile_changed',
@@ -267,7 +282,7 @@ export async function supersedePlan(
     userId: args.createdBy,
   });
 
-  return { newPlan, modCount: oldMods.length };
+  return { newPlan, modCount: oldMods.length, publish };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

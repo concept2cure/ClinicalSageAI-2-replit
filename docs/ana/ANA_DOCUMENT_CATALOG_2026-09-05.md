@@ -181,6 +181,97 @@ a mapping stuck on page 1 cannot pass. Reverting the write to NULL turns it red.
 `server/services/ocr/__tests__/page-offsets.test.ts` covers the refusals: an
 unfindable page, out-of-order pages, empty input.
 
+### The toggle the operator flipped was never read
+
+**Service:** `FeatureToggleService.readToggle` / `readFeatureState` ·
+**Tripwires:** `tests/db/document-catalog-toggles.dbtest.ts`,
+`server/startup/__tests__/document-catalog-bootstrap.test.ts`
+
+`initializeFeatureToggle` establishes a system tenant scope and carries eight
+lines of comment saying why: pool instrumentation refuses any statement issued
+with no tenant scope while `RLS_ENFORCE=on`, which production hard-requires,
+and `feature_toggles` is platform reference data with no tenant column and no
+RLS policy, so the scope states what the operation IS rather than minting
+authority from an argument.
+
+Every word of that applies to the READ. The read did not have one.
+
+So on every enforcing deployment the toggle query was refused,
+`isFeatureEnabled` caught the refusal in a bare `catch { return false }`, and
+the feature resolved OFF — for the startup line, and for anything else running
+outside a request. The bootstrap added in the slice above logged "the
+client-files surface is inactive platform-wide" no matter what the operator had
+set, which is the one thing that bootstrap exists to report accurately. Three
+dbtests were red on trunk saying so.
+
+Two fixes, because the defect has two halves. The read now establishes a system
+scope when the caller has none, keeping the caller's own scope when it has one
+— a data accessor that quietly upgrades its caller's role is a shape worth not
+having. And `readFeatureState` returns `{ enabled, readable }` so the startup
+line can distinguish "off" from "we could not find out": both leave the feature
+inactive, correctly, but only one of them is a decision somebody made.
+
+One subtlety worth keeping: a drizzle builder is lazy. Handing it back from a
+synchronous callback lets `runWithSystemTenantScope` return before the query
+runs, and the refusal is then byte-identical to having no scope at all.
+
+### A listing reports its scope, not the page it happened to return
+
+**Service:** `listProjectDocuments` → `ProjectDocumentPage` ·
+**Recall:** `formatVaultScopeLine` · **Tripwires:** `tests/db/document-catalog.dbtest.ts`,
+`server/services/__tests__/ana-session-bootstrap.test.ts`, `persona-client-files.test.ts`
+
+`listProjectDocuments` always applied a `LIMIT` — 100 by default, 200 at most —
+and returned a bare array. So the only number any caller could report was
+`rows.length`, and the AnA tool reported exactly that, as `count`. An
+organization with 340 documents was told it had 200. Session recall was worse:
+it samples the twelve most recent under a heading that reads as the complete
+set, so the files it omitted were the OLDEST — which is precisely where "the
+file I sent you last week" lives, and precisely the recall this catalog exists
+to provide.
+
+Nothing here failed. The listing returned rows and the model reasoned over
+them; it simply reasoned over a page while believing it had an inventory, and
+the observable result was AnA saying "there is no such document" about a
+document that was sitting in the vault. That is the user's original complaint
+reproduced by the mechanism built to fix it.
+
+Every listing now carries `total`, `withheld`, and the scope-wide counts of
+what needs attention — computed by window aggregates in the same scan, so
+honesty costs no extra round trip — and `count` is split into `returned` and
+`total` so a caller cannot answer both questions with one field. The recall
+block states what it is not showing; the persona says that a listing is a page
+and that "there is no such document" is a claim about the whole vault. Chat
+uploads get the same treatment through an exact limit+1 probe, needing nothing
+from the evidence spine.
+
+### The tenant tool deny-list holds on both chat paths
+
+**Helper:** `governedToolsetFor` (`server/services/ana/governed-toolset.ts`) ·
+**Tripwire:** `server/routes/__tests__/chat-path-parity.test.ts`
+
+The same one-of-two-doors shape as the rehydration above, one turn worse.
+`organizations.settings.anaToolPolicy.deny` lets a tenant switch an AnA tool off.
+Honouring it takes two steps — load the policy, filter the assembled toolset —
+and three call sites did both by hand while `POST /api/chat/send-message` did
+neither: it passed `getAllEnabledTools()` straight into relevance selection. A
+denied tool was denied on the streaming endpoint and still offered on the other.
+
+A capability wired to one door is a gap someone eventually notices. A GOVERNANCE
+CONTROL wired to one door does not fail visibly — it quietly does not hold, and
+the tenant finds out by watching the model use the tool they turned off.
+
+All three composers (both chat paths and deep-investigation) now go through one
+helper. Only the deny-list is applied, as `filterToolsByPolicy` documents: `allow`
+is scoped to governed mutations and enforced at execution, and applying it to the
+read toolset would strip every search tool the moment a tenant allowlisted one
+mutation. Relevance selection stays with each caller, which pins different tools
+for its own reasons — governance must not be entangled with relevance.
+
+The bootstrap tripwire became `chat-path-parity.test.ts`: one file enumerating
+the canonical chat entry points and asserting every cross-cutting concern holds
+on all of them, which is where the third instance of this shape belongs.
+
 ### Both chat paths rehydrate at session start
 
 **Helper:** `sessionBootstrapBlockFor` (`server/services/ana-session-bootstrap.ts`) ·

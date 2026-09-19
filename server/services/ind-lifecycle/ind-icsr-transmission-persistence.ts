@@ -18,7 +18,7 @@
 import { eq, and, asc } from 'drizzle-orm';
 import { db } from '../../db';
 import { indIcsrTransmissions, type IndIcsrTransmissionRow } from '../../../shared/schema/ind-icsr-transmissions';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
 import { composeE2bR3Icsr } from './e2b-icsr-composer';
 import { buildIcsrTransmission, parseIcsrAcknowledgment, type IcsrGateway, type IcsrTransmissionResult } from './e2b-icsr-message';
@@ -64,6 +64,53 @@ export class IcsrTransmissionError extends Error {
   }
 }
 
+/**
+ * A transmission row handed back together with what happened to the 21 CFR
+ * Part 11 §11.10(e) audit row this call wrote for it.
+ *
+ * WO-16C finding 133. The audit writes in this module were
+ * `await auditService.logAction({…})` at statement position: awaited, and the
+ * value it resolved to dropped. `logAction` does not reject when persistence
+ * fails — deliberate policy, an audit-trail outage must not break the action it
+ * records — it RESOLVES an `AuditWriteResult` and reports what happened in
+ * `persisted`. Awaiting that and discarding it reports exactly as much as not
+ * awaiting it, so the row returned here, and the JSON body the ICSR routes in
+ * server/routes/ind-lifecycle/registers.routes.ts build by passing it straight
+ * to `res.json`, were identical whether the §11.10(e) record for an FDA FAERS /
+ * EMA EudraVigilance safety-report transmission existed or did not.
+ *
+ * `audit` carries that outcome now. Which action's row it is depends on which
+ * function returned the shape:
+ *   `prepareIcsrTransmission`  → IND_ICSR_TRANSMISSION_PREPARED
+ *   `markIcsrTransmitted`      → IND_ICSR_TRANSMITTED
+ *   `recordIcsrAcknowledgment` → IND_ICSR_ACKNOWLEDGED
+ * (This used to say the action "is stated on each function that returns this
+ * shape". A reviewer counted: two of the three said so, and `prepare` named its
+ * action only in the argument. Listing them here is the version that stays true
+ * if a docstring below drifts.)
+ */
+export type AuditedIcsrTransmission = IndIcsrTransmissionRow & { audit: AuditRowOutcome };
+
+/**
+ * A transmitted row plus, under its own key, what happened to the audit row(s)
+ * for the transmit ATTEMPT — two different records, so two different keys and
+ * never one name a reader could take for the other:
+ *
+ *   - `audit`                → the 'IND_ICSR_TRANSMITTED' row (from markIcsrTransmitted)
+ *   - `transmitAttemptAudit` → the 'IND_ICSR_TRANSMIT_ATTEMPT' row(s) the
+ *                              transport's audit sink asked for on this call
+ *
+ * The attempt row is the only durable record this module keeps of an attempt
+ * that did not end in a recorded transmission: no column holds a refused one.
+ * So it is reported on the refusal paths too, in `IcsrTransmissionError.details` —
+ * and on the one failure path that is NOT an IcsrTransmissionError it is logged
+ * with the reason, because there the message has already left for the agency and
+ * the attempt row is all that says so.
+ */
+export type TransmittedIcsrTransmission = AuditedIcsrTransmission & {
+  transmitAttemptAudit: AuditRowOutcome[];
+};
+
 export interface PrepareIcsrTransmissionInput {
   submissionId: number;
   event: AdverseEvent;
@@ -79,7 +126,7 @@ export interface PrepareIcsrTransmissionInput {
 export async function prepareIcsrTransmission(
   input: PrepareIcsrTransmissionInput,
   ctx: IcsrTxCtx,
-): Promise<IndIcsrTransmissionRow> {
+): Promise<AuditedIcsrTransmission> {
   // C.1.7 (fulfils local expedited criteria) comes from the event's own
   // classification; it was hardcoded to Yes here regardless of the event.
   const composed = composeE2bR3Icsr(input.event, { icsr: input.icsr ?? null, now: input.now });
@@ -109,7 +156,13 @@ export async function prepareIcsrTransmission(
     })
     .returning();
 
-  await auditService.logAction({
+  // WO-16C #133: reported, not discarded. The INSERT above has committed and the
+  // transmission is retrievable through listIcsrTransmissions/getIcsrTransmission,
+  // so a lost audit row here is a lost log beside a real record rather than a lost
+  // record — the preparation stands and the caller is told. recordAuditRow has
+  // already logged the store's own reason against this action and resource id;
+  // that text is deliberately not in the returned value.
+  const audit = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'IND_ICSR_TRANSMISSION_PREPARED',
@@ -118,7 +171,7 @@ export async function prepareIcsrTransmission(
     details: { submissionId: input.submissionId, gateway: input.gateway, transmitReady: transmission.transmitReady },
   });
   logger.info('Prepared ICSR transmission', { submissionId: input.submissionId, gateway: input.gateway, transmitReady: transmission.transmitReady, organizationId: ctx.organizationId });
-  return row as IndIcsrTransmissionRow;
+  return { ...(row as IndIcsrTransmissionRow), audit };
 }
 
 /** List a submission's ICSR transmissions (org-scoped, stable order). */
@@ -154,7 +207,7 @@ export async function markIcsrTransmitted(
   id: string,
   ctx: IcsrTxCtx,
   receipt: IcsrTransmitReceipt,
-): Promise<IndIcsrTransmissionRow> {
+): Promise<AuditedIcsrTransmission> {
   const current = await getIcsrTransmission(id, ctx);
   if (!current.transmitReady) {
     throw new IcsrTransmissionError(
@@ -185,7 +238,12 @@ export async function markIcsrTransmitted(
     .set({ status: 'transmitted', transmittedAt, transportReceiptId: receipt.receiptId, updatedAt: new Date() })
     .where(and(eq(indIcsrTransmissions.id, id), eq(indIcsrTransmissions.organizationId, ctx.organizationId)))
     .returning();
-  await auditService.logAction({
+  // WO-16C #133. The UPDATE above has committed: the row says 'transmitted' and
+  // carries the gateway's own receipt id. An ICSR is a safety report that has
+  // actually reached the agency, so the transmission is never un-recorded because
+  // its audit row failed — that would deny a send that happened. The record
+  // stands and the caller is told what became of the 'IND_ICSR_TRANSMITTED' row.
+  const audit = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'IND_ICSR_TRANSMITTED',
@@ -194,7 +252,7 @@ export async function markIcsrTransmitted(
     details: { gateway: current.gateway, receiverId: receipt.receiverId, receiptId: receipt.receiptId, transmittedAt: receipt.timestamp },
   });
   logger.info('Recorded ICSR transmission receipt', { id, gateway: current.gateway, receiptId: receipt.receiptId, organizationId: ctx.organizationId });
-  return row as IndIcsrTransmissionRow;
+  return { ...(row as IndIcsrTransmissionRow), audit };
 }
 
 /**
@@ -214,7 +272,7 @@ export async function transmitIcsrTransmission(
   id: string,
   ctx: IcsrTxCtx,
   opts: Pick<TransmitIcsrOptions, 'now' | 'config'> = {},
-): Promise<IndIcsrTransmissionRow> {
+): Promise<TransmittedIcsrTransmission> {
   const current = await getIcsrTransmission(id, ctx);
   // Only a prepared row is transmitted. A second call on a transmitted,
   // acknowledged or rejected row used to send the same message number to the
@@ -235,38 +293,59 @@ export async function transmitIcsrTransmission(
     receiverId: current.receiverId,
   };
 
+  // WO-16C #133. The transport calls this sink for every attempt, success or
+  // refusal, and the row it asks for is the only durable record of an attempt
+  // that ends in a refusal — no column holds one. So each outcome is collected
+  // and carried out of this function: in `transmitAttemptAudit` when the
+  // transmission is recorded, and in the refusal's `details` on every path
+  // below. The sink cannot fail the attempt — recordAuditRow does not throw —
+  // and a lost log row is no reason to deny that the message was handed to the
+  // gateway.
+  const transmitAttemptAudit: AuditRowOutcome[] = [];
   let receipt: IcsrTransmitReceipt;
   try {
     receipt = await transmitIcsr(built, {
       ...opts,
       audit: async (event) => {
-        await auditService.logAction({
-          organizationId: ctx.organizationId,
-          userId: ctx.userId,
-          action: 'IND_ICSR_TRANSMIT_ATTEMPT',
-          resourceType: 'ind_icsr_transmission',
-          resourceId: id,
-          details: { ...event },
-        });
+        transmitAttemptAudit.push(
+          await recordAuditRow({
+            organizationId: ctx.organizationId,
+            userId: ctx.userId,
+            action: 'IND_ICSR_TRANSMIT_ATTEMPT',
+            resourceType: 'ind_icsr_transmission',
+            resourceId: id,
+            details: { ...event },
+          }),
+        );
       },
     });
   } catch (err) {
     if (err instanceof IcsrNotReadyError) {
-      throw new IcsrTransmissionError('NOT_READY', err.message, { gaps: err.gaps });
+      throw new IcsrTransmissionError('NOT_READY', err.message, { gaps: err.gaps, transmitAttemptAudit });
     }
     if (err instanceof IcsrGatewayNotConfiguredError) {
-      throw new IcsrTransmissionError('GATEWAY_NOT_CONFIGURED', err.message, { transmitted: false });
+      throw new IcsrTransmissionError('GATEWAY_NOT_CONFIGURED', err.message, { transmitted: false, transmitAttemptAudit });
     }
     const reason = err instanceof Error ? err.message : String(err);
     logger.error('ICSR gateway transmit failed', { id, gateway: current.gateway, organizationId: ctx.organizationId, reason });
     throw new IcsrTransmissionError(
       'GATEWAY_TRANSMIT_FAILED',
       `ICSR was NOT transmitted to ${current.gateway}; the transmission remains 'prepared'. Gateway transport failed: ${reason}`,
-      { transmitted: false },
+      { transmitted: false, transmitAttemptAudit },
     );
   }
 
-  return markIcsrTransmitted(id, ctx, receipt);
+  try {
+    return { ...(await markIcsrTransmitted(id, ctx, receipt)), transmitAttemptAudit };
+  } catch (err) {
+    // markIcsrTransmitted refuses a simulated or statusless receipt. Its code and
+    // sentence are kept exactly as it framed them; only what happened to the
+    // attempt row is added, which the caller would otherwise lose (WO-16C #133).
+    if (err instanceof IcsrTransmissionError) {
+      throw new IcsrTransmissionError(err.code, err.message, { ...err.details, transmitAttemptAudit });
+    }
+    throw err;
+  }
 }
 
 /**
@@ -278,7 +357,7 @@ export async function recordIcsrAcknowledgment(
   id: string,
   ackXml: string,
   ctx: IcsrTxCtx,
-): Promise<IndIcsrTransmissionRow> {
+): Promise<AuditedIcsrTransmission> {
   const current = await getIcsrTransmission(id, ctx); // tenant-scoped existence check (404 otherwise)
   const ack = parseIcsrAcknowledgment(ackXml);
 
@@ -322,7 +401,11 @@ export async function recordIcsrAcknowledgment(
     .where(and(eq(indIcsrTransmissions.id, id), eq(indIcsrTransmissions.organizationId, ctx.organizationId)))
     .returning();
 
-  await auditService.logAction({
+  // WO-16C #133. The UPDATE above has committed the agency's own act — an
+  // acceptance, or an AR rejection of a safety report — with its ACK code and
+  // the time it was recorded. That is not undone because the audit row failed;
+  // the caller is told instead what became of the 'IND_ICSR_ACKNOWLEDGED' row.
+  const audit = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'IND_ICSR_ACKNOWLEDGED',
@@ -330,5 +413,5 @@ export async function recordIcsrAcknowledgment(
     resourceId: id,
     details: { ackCode: ack.ackCode, status },
   });
-  return row as IndIcsrTransmissionRow;
+  return { ...(row as IndIcsrTransmissionRow), audit };
 }
