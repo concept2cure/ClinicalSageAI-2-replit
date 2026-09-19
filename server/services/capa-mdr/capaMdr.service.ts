@@ -25,7 +25,7 @@
  *   - getTriageQueue                — unified queue across complaints/MDR/CAPA
  */
 
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, like, sql } from 'drizzle-orm';
 
 import { db } from '../../db';
 import auditService from '../auditService';
@@ -99,50 +99,122 @@ async function assertProgramAccess(organizationId: number, programId: string): P
     .where(
       and(
         eq(regulatoryPrograms.id, sql`${programId}::uuid`),
-        eq(regulatoryPrograms.organizationId, organizationId),
-      ),
+        eq(regulatoryPrograms.organizationId, organizationId)
+      )
     )
     .limit(1);
   if (!row) {
-    throw new TenantAccessError(`Program ${programId} not accessible by organization ${organizationId}`);
+    throw new TenantAccessError(
+      `Program ${programId} not accessible by organization ${organizationId}`
+    );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Code generation — display ids like CMP-2025-001 / MDR-2025-001 / CAPA-2025-001
+// Code generation — display ids like CMP-2025-0001 / MDR-2025-0001 / CAPA-2025-0001
 // ─────────────────────────────────────────────────────────────────────────────
 
 function yearPrefix(): string {
   return new Date().getUTCFullYear().toString();
 }
 
-async function nextCode(prefix: string, programId: string, table: 'complaint' | 'mdr' | 'capa'): Promise<string> {
+/**
+ * The next display code for a program: CMP-2025-0001, MDR-2025-0001,
+ * CAPA-2025-0001.
+ *
+ * Amended 2026-09-19, on two counts.
+ *
+ * It read `count(*)` for the program and added one. That is wrong whenever the
+ * sequence has a gap — one removed row and the next create re-issues a code that
+ * is already taken — and it ignored the year entirely, so the first record of
+ * 2026 in a program that filed 12 in 2025 was handed 0013 rather than 0001.
+ * It now takes the maximum sequence already issued FOR THIS PROGRAM AND YEAR and
+ * increments that, which is gap-proof and year-correct.
+ *
+ * Its old comment also said: "in practice the (programId, code) unique index
+ * will reject duplicates and the caller can retry." Neither half was true. The
+ * index was on the code column ALONE, so it rejected duplicates ACROSS programs
+ * — meaning the second program in the whole deployment to open its first record
+ * of a year failed 23505 on the normal path, not on a race. And no caller
+ * retried anything. The index is now (program_id, code) as that comment always
+ * described (migrations/20260504_capa_mdr.sql plus the conversion file
+ * migrations/20260919_capa_code_uniqueness_per_program.sql), and the retry the
+ * comment promised is implemented in insertWithCode below.
+ */
+async function nextCode(
+  prefix: string,
+  programId: string,
+  table: 'complaint' | 'mdr' | 'capa'
+): Promise<string> {
   const year = yearPrefix();
-  // Count existing rows for this program/year and increment. Race-prone in
-  // theory; in practice the (programId, code) unique index will reject
-  // duplicates and the caller can retry.
-  let count = 0;
-  if (table === 'complaint') {
-    const [{ c }] = await db
-      .select({ c: sql<number>`count(*)::int` })
-      .from(complaints)
-      .where(eq(complaints.programId, programId));
-    count = c ?? 0;
-  } else if (table === 'mdr') {
-    const [{ c }] = await db
-      .select({ c: sql<number>`count(*)::int` })
-      .from(mdrEvents)
-      .where(eq(mdrEvents.programId, programId));
-    count = c ?? 0;
-  } else {
-    const [{ c }] = await db
-      .select({ c: sql<number>`count(*)::int` })
-      .from(capaRecords)
-      .where(eq(capaRecords.programId, programId));
-    count = c ?? 0;
-  }
-  const seq = String(count + 1).padStart(4, '0');
+  const codeColumn =
+    table === 'complaint'
+      ? complaints.complaintCode
+      : table === 'mdr'
+      ? mdrEvents.mdrCode
+      : capaRecords.capaCode;
+  const from = table === 'complaint' ? complaints : table === 'mdr' ? mdrEvents : capaRecords;
+  const programColumn =
+    table === 'complaint'
+      ? complaints.programId
+      : table === 'mdr'
+      ? mdrEvents.programId
+      : capaRecords.programId;
+
+  // Read the trailing sequence off this program's codes for this year only. The
+  // cast is safe because the LIKE pins the shape to <prefix>-<year>-<digits>.
+  const [row] = await db
+    .select({
+      maxSeq: sql<number | null>`max(
+        nullif(regexp_replace(${codeColumn}, '^.*-', ''), '')::int
+      )`,
+    })
+    .from(from)
+    .where(and(eq(programColumn, programId), like(codeColumn, `${prefix}-${year}-%`)));
+
+  const seq = String((row?.maxSeq ?? 0) + 1).padStart(4, '0');
   return `${prefix}-${year}-${seq}`;
+}
+
+/** Postgres unique-violation. */
+function isDuplicateCode(e: unknown): boolean {
+  return typeof e === 'object' && e !== null && (e as { code?: string }).code === '23505';
+}
+
+/**
+ * Generate a display code, insert with it, and retry on the per-program unique
+ * index — the retry nextCode's comment promised for years and nothing supplied.
+ *
+ * nextCode reads the current maximum and the insert writes max+1, so two creates
+ * racing in one program can compute the same code. That is now a real collision
+ * rather than a silent overwrite, because the index catches it; without a retry
+ * it would surface to the caller as 500 "Operation failed". Bounded at four
+ * attempts: each retry re-reads the maximum, so under contention the attempts
+ * converge instead of fighting, and a non-duplicate error is rethrown untouched
+ * on the first try rather than being retried blindly.
+ *
+ * Returns the code alongside the row because a retry means the caller cannot
+ * know which attempt won, and all three creates put the code in their vigilance
+ * payload.
+ */
+async function insertWithCode<T>(
+  prefix: string,
+  programId: string,
+  table: 'complaint' | 'mdr' | 'capa',
+  insert: (code: string) => Promise<T[]>
+): Promise<{ row: T; code: string }> {
+  const ATTEMPTS = 4;
+  for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+    const code = await nextCode(prefix, programId, table);
+    try {
+      const [row] = await insert(code);
+      return { row, code };
+    } catch (e) {
+      if (!isDuplicateCode(e) || attempt === ATTEMPTS) throw e;
+    }
+  }
+  /* Unreachable: the loop either returns or throws. */
+  throw new Error(`${prefix} code generation exhausted ${ATTEMPTS} attempts`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -219,7 +291,7 @@ export interface CreateComplaintInput {
 
 export async function createComplaint(
   organizationId: number,
-  input: CreateComplaintInput,
+  input: CreateComplaintInput
 ): Promise<Complaint> {
   await assertProgramAccess(organizationId, input.programId);
 
@@ -233,32 +305,32 @@ export async function createComplaint(
   };
   const classification = classify(triageInput);
 
-  const code = await nextCode('CMP', input.programId, 'complaint');
-
-  const [row] = await db
-    .insert(complaints)
-    .values({
-      programId: input.programId,
-      complaintCode: code,
-      source: input.source,
-      channel: input.channel,
-      receivedAt: input.receivedAt,
-      reporter: input.reporter ?? null,
-      deviceUdiDi: input.deviceUdiDi ?? null,
-      deviceLot: input.deviceLot ?? null,
-      deviceSerial: input.deviceSerial ?? null,
-      deviceModel: input.deviceModel ?? null,
-      eventDate: input.eventDate ?? null,
-      eventLocationCountry: input.eventLocationCountry ?? null,
-      eventNarrative: input.eventNarrative,
-      patientHarm: input.patientHarm ?? 'none',
-      severityAssessment: input.severityAssessment ?? 'minor',
-      preliminaryClassification: classification,
-      triageState: 'new',
-      createdBy: input.createdBy ?? null,
-      updatedBy: input.createdBy ?? null,
-    })
-    .returning();
+  const { row, code } = await insertWithCode('CMP', input.programId, 'complaint', generated =>
+    db
+      .insert(complaints)
+      .values({
+        programId: input.programId,
+        complaintCode: generated,
+        source: input.source,
+        channel: input.channel,
+        receivedAt: input.receivedAt,
+        reporter: input.reporter ?? null,
+        deviceUdiDi: input.deviceUdiDi ?? null,
+        deviceLot: input.deviceLot ?? null,
+        deviceSerial: input.deviceSerial ?? null,
+        deviceModel: input.deviceModel ?? null,
+        eventDate: input.eventDate ?? null,
+        eventLocationCountry: input.eventLocationCountry ?? null,
+        eventNarrative: input.eventNarrative,
+        patientHarm: input.patientHarm ?? 'none',
+        severityAssessment: input.severityAssessment ?? 'minor',
+        preliminaryClassification: classification,
+        triageState: 'new',
+        createdBy: input.createdBy ?? null,
+        updatedBy: input.createdBy ?? null,
+      })
+      .returning()
+  );
 
   await recordVigilance({
     organizationId,
@@ -285,7 +357,7 @@ export interface ListComplaintsFilters {
 
 export async function listComplaints(
   organizationId: number,
-  filters: ListComplaintsFilters = {},
+  filters: ListComplaintsFilters = {}
 ): Promise<Complaint[]> {
   const limit = Math.min(Math.max(filters.limit ?? 100, 1), 500);
   const conds = [eq(regulatoryPrograms.organizationId, organizationId)];
@@ -300,10 +372,7 @@ export async function listComplaints(
   const rows = await db
     .select({ row: complaints })
     .from(complaints)
-    .innerJoin(
-      regulatoryPrograms,
-      eq(regulatoryPrograms.id, sql`${complaints.programId}::uuid`),
-    )
+    .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${complaints.programId}::uuid`))
     .where(and(...conds))
     .orderBy(desc(complaints.receivedAt))
     .limit(limit);
@@ -315,13 +384,8 @@ export async function getComplaint(organizationId: number, id: string): Promise<
   const [row] = await db
     .select({ row: complaints })
     .from(complaints)
-    .innerJoin(
-      regulatoryPrograms,
-      eq(regulatoryPrograms.id, sql`${complaints.programId}::uuid`),
-    )
-    .where(
-      and(eq(complaints.id, id), eq(regulatoryPrograms.organizationId, organizationId)),
-    )
+    .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${complaints.programId}::uuid`))
+    .where(and(eq(complaints.id, id), eq(regulatoryPrograms.organizationId, organizationId)))
     .limit(1);
   return row?.row ?? null;
 }
@@ -338,7 +402,7 @@ export interface TransitionComplaintInput {
 export async function transitionComplaint(
   organizationId: number,
   id: string,
-  input: TransitionComplaintInput,
+  input: TransitionComplaintInput
 ): Promise<Complaint> {
   const current = await getComplaint(organizationId, id);
   if (!current) throw new NotFoundError(`Complaint ${id} not found`);
@@ -360,11 +424,7 @@ export async function transitionComplaint(
     update.closureReason = input.closureReason ?? null;
   }
 
-  const [row] = await db
-    .update(complaints)
-    .set(update)
-    .where(eq(complaints.id, id))
-    .returning();
+  const [row] = await db.update(complaints).set(update).where(eq(complaints.id, id)).returning();
 
   await recordVigilance({
     organizationId,
@@ -375,7 +435,11 @@ export async function transitionComplaint(
     actor: input.actor ?? null,
     actorRole: input.actorRole ?? null,
     occurredAt: now,
-    payload: { from: current.triageState, to: input.to, triageDecision: input.triageDecision ?? null },
+    payload: {
+      from: current.triageState,
+      to: input.to,
+      triageDecision: input.triageDecision ?? null,
+    },
     reason: input.reason ?? null,
   });
 
@@ -405,7 +469,7 @@ export interface CreateMdrEventInput {
 
 export async function createMdrEvent(
   organizationId: number,
-  input: CreateMdrEventInput,
+  input: CreateMdrEventInput
 ): Promise<MdrEvent> {
   await assertProgramAccess(organizationId, input.programId);
 
@@ -416,33 +480,34 @@ export async function createMdrEvent(
     euMdrSeverity: input.euMdrSeverity ?? null,
   });
 
-  const code = await nextCode('MDR', input.programId, 'mdr');
   const days = daysToDue(clock.reportDueAt);
 
-  const [row] = await db
-    .insert(mdrEvents)
-    .values({
-      programId: input.programId,
-      mdrCode: code,
-      sourceComplaintId: input.sourceComplaintId ?? null,
-      jurisdiction: input.jurisdiction,
-      usFdaReportType: input.usFdaReportType ?? null,
-      euMdrSeverity: input.euMdrSeverity ?? null,
-      decisionDate: input.decisionDate,
-      reportDueAt: clock.reportDueAt,
-      daysToDue: days,
-      eventNarrative: input.eventNarrative,
-      fdaPatientCode: input.fdaPatientCode ?? null,
-      fdaDeviceProblemCode: input.fdaDeviceProblemCode ?? null,
-      fdaHealthEffectCode: input.fdaHealthEffectCode ?? null,
-      patientOutcome: input.patientOutcome ?? null,
-      correctionsTaken: input.correctionsTaken ?? null,
-      attachmentRefs: input.attachmentRefs ?? null,
-      state: 'open',
-      createdBy: input.createdBy ?? null,
-      updatedBy: input.createdBy ?? null,
-    })
-    .returning();
+  const { row, code } = await insertWithCode('MDR', input.programId, 'mdr', generated =>
+    db
+      .insert(mdrEvents)
+      .values({
+        programId: input.programId,
+        mdrCode: generated,
+        sourceComplaintId: input.sourceComplaintId ?? null,
+        jurisdiction: input.jurisdiction,
+        usFdaReportType: input.usFdaReportType ?? null,
+        euMdrSeverity: input.euMdrSeverity ?? null,
+        decisionDate: input.decisionDate,
+        reportDueAt: clock.reportDueAt,
+        daysToDue: days,
+        eventNarrative: input.eventNarrative,
+        fdaPatientCode: input.fdaPatientCode ?? null,
+        fdaDeviceProblemCode: input.fdaDeviceProblemCode ?? null,
+        fdaHealthEffectCode: input.fdaHealthEffectCode ?? null,
+        patientOutcome: input.patientOutcome ?? null,
+        correctionsTaken: input.correctionsTaken ?? null,
+        attachmentRefs: input.attachmentRefs ?? null,
+        state: 'open',
+        createdBy: input.createdBy ?? null,
+        updatedBy: input.createdBy ?? null,
+      })
+      .returning()
+  );
 
   await recordVigilance({
     organizationId,
@@ -475,7 +540,7 @@ export interface ListMdrFilters {
 
 export async function listMdrEvents(
   organizationId: number,
-  filters: ListMdrFilters = {},
+  filters: ListMdrFilters = {}
 ): Promise<MdrEvent[]> {
   const limit = Math.min(Math.max(filters.limit ?? 100, 1), 500);
   const conds = [eq(regulatoryPrograms.organizationId, organizationId)];
@@ -483,16 +548,15 @@ export async function listMdrEvents(
   if (filters.state) conds.push(eq(mdrEvents.state, filters.state));
   if (filters.jurisdiction) conds.push(eq(mdrEvents.jurisdiction, filters.jurisdiction));
   if (filters.overdueOnly) {
-    conds.push(sql`${mdrEvents.reportDueAt} < now() AND ${mdrEvents.state} NOT IN ('filed','acknowledged','closed')`);
+    conds.push(
+      sql`${mdrEvents.reportDueAt} < now() AND ${mdrEvents.state} NOT IN ('filed','acknowledged','closed')`
+    );
   }
 
   const rows = await db
     .select({ row: mdrEvents })
     .from(mdrEvents)
-    .innerJoin(
-      regulatoryPrograms,
-      eq(regulatoryPrograms.id, sql`${mdrEvents.programId}::uuid`),
-    )
+    .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${mdrEvents.programId}::uuid`))
     .where(and(...conds))
     .orderBy(asc(mdrEvents.reportDueAt))
     .limit(limit);
@@ -505,13 +569,8 @@ export async function getMdrEvent(organizationId: number, id: string): Promise<M
   const [row] = await db
     .select({ row: mdrEvents })
     .from(mdrEvents)
-    .innerJoin(
-      regulatoryPrograms,
-      eq(regulatoryPrograms.id, sql`${mdrEvents.programId}::uuid`),
-    )
-    .where(
-      and(eq(mdrEvents.id, id), eq(regulatoryPrograms.organizationId, organizationId)),
-    )
+    .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${mdrEvents.programId}::uuid`))
+    .where(and(eq(mdrEvents.id, id), eq(regulatoryPrograms.organizationId, organizationId)))
     .limit(1);
   if (!row) return null;
   return { ...row.row, daysToDue: daysToDue(row.row.reportDueAt) };
@@ -530,7 +589,7 @@ export interface TransitionMdrInput {
 export async function transitionMdrEvent(
   organizationId: number,
   id: string,
-  input: TransitionMdrInput,
+  input: TransitionMdrInput
 ): Promise<MdrEvent> {
   const current = await getMdrEvent(organizationId, id);
   if (!current) throw new NotFoundError(`MDR event ${id} not found`);
@@ -550,18 +609,14 @@ export async function transitionMdrEvent(
     }
   }
 
-  const [row] = await db
-    .update(mdrEvents)
-    .set(update)
-    .where(eq(mdrEvents.id, id))
-    .returning();
+  const [row] = await db.update(mdrEvents).set(update).where(eq(mdrEvents.id, id)).returning();
 
   const kind: VigilanceEventKind =
     input.to === 'filed'
       ? 'mdr_filed'
       : input.to === 'acknowledged'
-        ? 'mdr_acknowledged'
-        : 'mdr_state_changed';
+      ? 'mdr_acknowledged'
+      : 'mdr_state_changed';
 
   await recordVigilance({
     organizationId,
@@ -599,30 +654,30 @@ export interface CreateCapaInput {
 
 export async function createCapaRecord(
   organizationId: number,
-  input: CreateCapaInput,
+  input: CreateCapaInput
 ): Promise<CapaRecord> {
   await assertProgramAccess(organizationId, input.programId);
-  const code = await nextCode('CAPA', input.programId, 'capa');
-
-  const [row] = await db
-    .insert(capaRecords)
-    .values({
-      programId: input.programId,
-      capaCode: code,
-      title: input.title,
-      summary: input.summary ?? null,
-      type: input.type,
-      source: input.source,
-      sourceRefs: input.sourceRefs ?? null,
-      riskLevel: input.riskLevel ?? 'medium',
-      assignedTo: input.assignedTo ?? null,
-      targetCloseDate: input.targetCloseDate ?? null,
-      problemStatement: input.problemStatement ?? null,
-      state: 'open',
-      createdBy: input.createdBy ?? null,
-      updatedBy: input.createdBy ?? null,
-    })
-    .returning();
+  const { row, code } = await insertWithCode('CAPA', input.programId, 'capa', generated =>
+    db
+      .insert(capaRecords)
+      .values({
+        programId: input.programId,
+        capaCode: generated,
+        title: input.title,
+        summary: input.summary ?? null,
+        type: input.type,
+        source: input.source,
+        sourceRefs: input.sourceRefs ?? null,
+        riskLevel: input.riskLevel ?? 'medium',
+        assignedTo: input.assignedTo ?? null,
+        targetCloseDate: input.targetCloseDate ?? null,
+        problemStatement: input.problemStatement ?? null,
+        state: 'open',
+        createdBy: input.createdBy ?? null,
+        updatedBy: input.createdBy ?? null,
+      })
+      .returning()
+  );
 
   await recordVigilance({
     organizationId,
@@ -648,7 +703,7 @@ export interface ListCapaFilters {
 
 export async function listCapaRecords(
   organizationId: number,
-  filters: ListCapaFilters = {},
+  filters: ListCapaFilters = {}
 ): Promise<CapaRecord[]> {
   const limit = Math.min(Math.max(filters.limit ?? 100, 1), 500);
   const conds = [eq(regulatoryPrograms.organizationId, organizationId)];
@@ -663,10 +718,7 @@ export async function listCapaRecords(
   const rows = await db
     .select({ row: capaRecords })
     .from(capaRecords)
-    .innerJoin(
-      regulatoryPrograms,
-      eq(regulatoryPrograms.id, sql`${capaRecords.programId}::uuid`),
-    )
+    .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${capaRecords.programId}::uuid`))
     .where(and(...conds))
     .orderBy(desc(capaRecords.updatedAt))
     .limit(limit);
@@ -680,18 +732,13 @@ export interface CapaDetail extends CapaRecord {
 
 export async function getCapaRecord(
   organizationId: number,
-  id: string,
+  id: string
 ): Promise<CapaDetail | null> {
   const [row] = await db
     .select({ row: capaRecords })
     .from(capaRecords)
-    .innerJoin(
-      regulatoryPrograms,
-      eq(regulatoryPrograms.id, sql`${capaRecords.programId}::uuid`),
-    )
-    .where(
-      and(eq(capaRecords.id, id), eq(regulatoryPrograms.organizationId, organizationId)),
-    )
+    .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${capaRecords.programId}::uuid`))
+    .where(and(eq(capaRecords.id, id), eq(regulatoryPrograms.organizationId, organizationId)))
     .limit(1);
   if (!row) return null;
 
@@ -715,7 +762,7 @@ export interface TransitionCapaInput {
 export async function transitionCapa(
   organizationId: number,
   id: string,
-  input: TransitionCapaInput,
+  input: TransitionCapaInput
 ): Promise<CapaRecord> {
   const current = await getCapaRecord(organizationId, id);
   if (!current) throw new NotFoundError(`CAPA ${id} not found`);
@@ -734,18 +781,14 @@ export async function transitionCapa(
     }
   }
 
-  const [row] = await db
-    .update(capaRecords)
-    .set(update)
-    .where(eq(capaRecords.id, id))
-    .returning();
+  const [row] = await db.update(capaRecords).set(update).where(eq(capaRecords.id, id)).returning();
 
   const kind: VigilanceEventKind =
     input.to === 'closed_effective' || input.to === 'closed_not_effective'
       ? 'capa_closed'
       : input.to === 'effectiveness_check'
-        ? 'capa_effectiveness_verified'
-        : 'capa_state_changed';
+      ? 'capa_effectiveness_verified'
+      : 'capa_state_changed';
 
   await recordVigilance({
     organizationId,
@@ -756,7 +799,11 @@ export async function transitionCapa(
     actor: input.actor ?? null,
     actorRole: input.actorRole ?? null,
     occurredAt: now,
-    payload: { from: current.state, to: input.to, effectiveness: input.effectivenessCheckResult ?? null },
+    payload: {
+      from: current.state,
+      to: input.to,
+      effectiveness: input.effectivenessCheckResult ?? null,
+    },
     reason: input.reason ?? null,
   });
 
@@ -778,7 +825,7 @@ export interface AddCapaActionInput {
 
 export async function addCapaAction(
   organizationId: number,
-  input: AddCapaActionInput,
+  input: AddCapaActionInput
 ): Promise<CapaAction> {
   // Verify the parent CAPA belongs to the org.
   const parent = await getCapaRecord(organizationId, input.capaId);
@@ -825,23 +872,15 @@ export interface UpdateCapaActionInput {
 export async function transitionCapaAction(
   organizationId: number,
   actionId: string,
-  input: UpdateCapaActionInput,
+  input: UpdateCapaActionInput
 ): Promise<CapaAction> {
   // Tenant guard via a join.
   const rows = await db
     .select({ action: capaActions, programId: capaRecords.programId })
     .from(capaActions)
     .innerJoin(capaRecords, eq(capaRecords.id, capaActions.capaId))
-    .innerJoin(
-      regulatoryPrograms,
-      eq(regulatoryPrograms.id, sql`${capaRecords.programId}::uuid`),
-    )
-    .where(
-      and(
-        eq(capaActions.id, actionId),
-        eq(regulatoryPrograms.organizationId, organizationId),
-      ),
-    )
+    .innerJoin(regulatoryPrograms, eq(regulatoryPrograms.id, sql`${capaRecords.programId}::uuid`))
+    .where(and(eq(capaActions.id, actionId), eq(regulatoryPrograms.organizationId, organizationId)))
     .limit(1);
   const ctx = rows[0];
   if (!ctx) throw new NotFoundError(`Action ${actionId} not found`);
@@ -893,7 +932,7 @@ export interface ListVigilanceFilters {
 
 export async function listVigilanceEvents(
   organizationId: number,
-  filters: ListVigilanceFilters,
+  filters: ListVigilanceFilters
 ): Promise<VigilanceEvent[]> {
   await assertProgramAccess(organizationId, filters.programId);
   const limit = Math.min(Math.max(filters.limit ?? 100, 1), 500);
@@ -935,7 +974,7 @@ export interface TriageQueueFilters {
 
 export async function getTriageQueue(
   organizationId: number,
-  filters: TriageQueueFilters = {},
+  filters: TriageQueueFilters = {}
 ): Promise<TriageQueueItem[]> {
   const limit = Math.min(Math.max(filters.limit ?? 200, 1), 500);
   const now = Date.now();
@@ -988,7 +1027,12 @@ export async function getTriageQueue(
       receivedOrOpenedAt: m.decisionDate.toISOString(),
       dueAt: m.reportDueAt ? m.reportDueAt.toISOString() : null,
       daysToDue: m.daysToDue ?? null,
-      overdue: due !== null && due < now && m.state !== 'filed' && m.state !== 'acknowledged' && m.state !== 'closed',
+      overdue:
+        due !== null &&
+        due < now &&
+        m.state !== 'filed' &&
+        m.state !== 'acknowledged' &&
+        m.state !== 'closed',
     });
   }
 

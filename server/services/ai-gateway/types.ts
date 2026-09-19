@@ -426,7 +426,17 @@ export interface GatewayRequest {
   tools?: AnyAnaTool[];
 
   /** Tool choice behavior */
-  toolChoice?: 'auto' | 'any' | { type: 'tool'; name: string };
+  /**
+   * `'none'` is the one a caller reaches for to end an agentic loop: it forbids
+   * further tool calls while LEAVING THE TOOLS ARRAY IN PLACE. Deleting the
+   * array instead changes the tool definitions, and a tool-definition change is
+   * the only change that preserves no prompt-cache tier at all — so withdrawing
+   * tools to force a final answer rebuilt the whole cache once per turn.
+   *
+   * `'any'` and `{type:'tool'}` are rejected on some current models; `'none'`
+   * is not.
+   */
+  toolChoice?: 'auto' | 'any' | 'none' | { type: 'tool'; name: string };
 
   /** Prompt caching config (Claude only) */
   promptCache?: PromptCacheConfig;

@@ -8,7 +8,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import auditService from '../services/auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { createScopedLogger } from '../utils/logger';
 import { createFeatureStore } from '../utils/feature-persistence';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
@@ -42,6 +42,41 @@ function authorLabel(req: Request): string | null {
   if (name) return name;
   if (email) return email;
   return u.id == null ? null : `user #${String(u.id)}`;
+}
+
+/**
+ * Report a §11.10(e) audit outcome on a response whose body is a stored record.
+ *
+ * WO-16C #133. The six audit writes in this router were
+ * `await auditService.logAction({…})` at statement position: awaited, and the
+ * `AuditWriteResult` it resolved discarded. `logAction` does not reject when
+ * persistence fails — an audit-trail outage must not break the action it
+ * records — so discarding the value left a recorded branding change and an
+ * unrecorded one producing byte-identical responses. All six now go through
+ * `recordAuditRow` and the outcome leaves the handler.
+ *
+ * Where it goes depends on the body. Three of the six answer with a body this
+ * file builds itself (`{ logoUrl, updated: true }`,
+ * `{ letterheadUrl, updated: true }`, `{ deleted: true }`) and carry the
+ * outcome in it under `auditTrail`. The other three answer with the branding or
+ * template record itself, and both PATCH handlers in this router merge a
+ * caller-supplied body straight over the stored record (settings via
+ * `{ ...base, ...req.body }`, templates via `{ ...data, ...req.body }`), so a
+ * key added to a record-shaped response becomes a stored field the moment a
+ * caller sends that body back. Those three report through headers instead,
+ * leaving the record representation byte-identical. No status code changes for
+ * either shape.
+ *
+ * `X-Audit-Row-Persisted` is `'true'` or `'false'`; `X-Audit-Row-Code` is set
+ * only on the failure arm and carries `recordAuditRow`'s stable code — never
+ * the store's own error text, which stays in that helper's log line. Same
+ * header pair as the transparent proxy in
+ * server/routes/predicate-intelligence.ts and the 204 in
+ * server/routes/submissions.ts.
+ */
+function setAuditRowHeaders(res: Response, outcome: AuditRowOutcome): void {
+  res.setHeader('X-Audit-Row-Persisted', String(outcome.persisted));
+  if (!outcome.persisted) res.setHeader('X-Audit-Row-Code', outcome.code);
 }
 
 router.get('/settings', async (req: Request, res: Response) => {
@@ -99,13 +134,38 @@ router.patch('/settings', async (req: Request, res: Response) => {
       await store.insert(orgId, 'settings', 'Branding Settings', updated);
     }
 
-    await auditService.logAction({
+    /* WO-16C #133. The branding row is already committed by the `store.update`
+       (existing row) or `store.insert` (first row) directly above, so this is
+       the §11.10(e) log BESIDE a completed action, not the action itself: a lost
+       audit row is not a reason to undo a settings change the tenant can already
+       read back. The change stands and the caller is told, through the headers
+       rather than the body because this response is the stored settings record
+       and the merge two statements up would turn any added key into a stored
+       field on the next PATCH. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       action: 'branding_settings_updated',
       resourceType: 'organization',
       resourceId: orgId,
-      details: { updatedFields: Object.keys(req.body) },
+      /* `requestKeys`, not `updatedFields`, and `?? {}` — both from the review of
+         this conversion.
+
+         The name: `Object.keys(req.body)` is what the request CARRIED, not what
+         changed. The merge two statements up is `{ ...base, ...req.body }`, so a
+         client that sends the whole settings object back with one field altered
+         produces a row naming every key.
+
+         The guard: without it, a PATCH with no body or a non-JSON content type
+         left `req.body` undefined, `Object.keys(undefined)` threw, and the catch
+         answered 500 — AFTER the branding row had already committed at the
+         `store.update` / `store.insert` above, because the spread does not throw
+         on undefined. A committed change reported as a server error is the same
+         class of lie as a failed one reported as success, and it also meant the
+         §11.10(e) row for that change was never even attempted. The mutation
+         stands, so the response says so. */
+      details: { requestKeys: Object.keys(req.body ?? {}) },
     });
+    setAuditRowHeaders(res, auditTrail);
 
     res.json(updated);
   } catch (err: any) {
@@ -139,7 +199,22 @@ router.post('/upload-logo', async (req: Request, res: Response) => {
       await store.insert(orgId, 'settings', 'Branding Settings', updated);
     }
 
-    await auditService.logAction({
+    /* WO-16C #133. The logo bytes are already committed by the `store.update` /
+       `store.insert` directly above and returned to the caller as `logoUrl`, so
+       this is the §11.10(e) log beside a completed action.
+
+       Deliberately NOT "already servable at GET /logo/:orgId": this handler
+       validates only that `logoBase64` is truthy, while that route requires a
+       `data:…;base64,…` match and answers 400 otherwise — so a committed upload
+       is not necessarily servable, and a reviewer was right that the earlier
+       wording claimed more than the code guarantees.
+       A lost row does not un-upload the logo, so nothing is reverted; the
+       outcome rides in this handler's own response body, which is not a stored
+       record. `auditTrail` is `{ persisted: true, chained }` — `chained: false`
+       meaning the tamper-proof store holds it but the retrievable audit_logs row
+       does not — or `{ persisted: false, code, message }` when no durable store
+       took it. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       action: 'logo_uploaded',
       resourceType: 'organization',
@@ -148,7 +223,7 @@ router.post('/upload-logo', async (req: Request, res: Response) => {
     });
 
     logger.info(`Logo uploaded for org ${orgId}`);
-    res.json({ logoUrl, updated: true });
+    res.json({ logoUrl, updated: true, auditTrail });
   } catch (err: any) {
     return serverError(res, logger, 'saving upload logo', err);
   }
@@ -213,7 +288,12 @@ router.post('/upload-letterhead', async (req: Request, res: Response) => {
       await store.insert(orgId, 'settings', 'Branding Settings', updated);
     }
 
-    await auditService.logAction({
+    /* WO-16C #133. The letterhead URL is already committed by the
+       `store.update` / `store.insert` directly above, so this is the §11.10(e)
+       log beside a completed action and a lost row is not a reason to revert it.
+       The outcome rides in this handler's own response body, which is not a
+       stored record. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       action: 'letterhead_uploaded',
       resourceType: 'organization',
@@ -222,7 +302,7 @@ router.post('/upload-letterhead', async (req: Request, res: Response) => {
     });
 
     logger.info(`Letterhead uploaded for org ${orgId}`);
-    res.json({ letterheadUrl: letterheadUrl, updated: true });
+    res.json({ letterheadUrl: letterheadUrl, updated: true, auditTrail });
   } catch (err: any) {
     return serverError(res, logger, 'saving upload letterhead', err);
   }
@@ -296,13 +376,20 @@ router.post('/templates', async (req: Request, res: Response) => {
 
     const template = await store.insert(orgId, 'template', name, templateData);
 
-    await auditService.logAction({
+    /* WO-16C #133. The template row is already committed by the `store.insert`
+       directly above — its id is in `template.id` and it is already listed by
+       GET /templates — so this is the §11.10(e) log beside a completed action.
+       The 201 stands and is not downgraded to make room for a reporting field;
+       the outcome goes in the headers because the body is the stored template
+       record, which the PATCH handler below merges a caller-supplied body over. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       action: 'template_created',
       resourceType: 'document_template',
       resourceId: template.id,
       details: { name, category },
     });
+    setAuditRowHeaders(res, auditTrail);
 
     logger.info(`Template ${template.id} created: ${name} [${category}]`);
     res.status(201).json(template);
@@ -331,13 +418,30 @@ router.patch('/templates/:id', async (req: Request, res: Response) => {
 
     const result = await store.update(templateId, orgId, updated, req.body.name);
 
-    await auditService.logAction({
+    /* WO-16C #133. The edit is already committed by the `store.update` directly
+       above (whose returned row is what `result` holds on the normal path), so
+       this is the §11.10(e) log beside a completed action, and the only record of
+       which keys the update request carried — `store.update` replaces `content`
+       wholesale and nothing keeps a history of it. It is not a reason to roll the
+       edit back. The outcome goes in the headers because this body is the stored
+       template record and the merge above would turn any added key into a stored
+       field on the next PATCH.
+
+       `requestKeys`, not `updatedFields`: `Object.keys(req.body)` is what the
+       request CARRIED, not what changed. This handler merges
+       `{ ...data, ...req.body }`, so a UI that sends the whole template back with
+       one field altered produces a row naming every key — and keys that are not
+       fields of the template at all are listed too. A reviewer caught the old
+       name; an audit row whose field name overstates what it knows is the same
+       defect as a surface that does. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       action: 'template_updated',
       resourceType: 'document_template',
       resourceId: templateId,
-      details: { updatedFields: Object.keys(req.body) },
+      details: { requestKeys: Object.keys(req.body ?? {}) },
     });
+    setAuditRowHeaders(res, auditTrail);
 
     res.json(result);
   } catch (err: any) {
@@ -358,14 +462,21 @@ router.delete('/templates/:id', async (req: Request, res: Response) => {
     const { id: _id, createdAt: _ca, updatedAt: _ua, ...data } = existing;
     await store.update(templateId, orgId, { ...data, isActive: false });
 
-    await auditService.logAction({
+    /* WO-16C #133. The soft delete is already committed by the
+       `store.update(…, { isActive: false })` directly above, so this is the
+       §11.10(e) log beside a completed action: the template has already dropped
+       out of GET /templates, which filters on `isActive !== false`, and a lost
+       audit row is not a reason to un-delete it. The outcome rides in this
+       handler's own response body, which is not a stored record; the 200 and the
+       existing `deleted: true` are unchanged. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       action: 'template_deleted',
       resourceType: 'document_template',
       resourceId: templateId,
     });
 
-    res.json({ deleted: true });
+    res.json({ deleted: true, auditTrail });
   } catch (err: any) {
     return serverError(res, logger, 'deleting templates', err);
   }

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T02:20:40.186Z",
+  "generatedAt": "2026-09-19T04:42:29.231Z",
   "git": {
-    "sha": "8c3b4c585f10503f72d300015c23572ad5834392",
+    "sha": "483c5c8bdb74568cd922fe65c3dc62f5a3239e26",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 96
+    "largeFilesByLines": 98
   },
   "findings": {
     "duplicateBasenames": [
@@ -1940,7 +1940,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1031109
+        "bytes": 1036698
       },
       {
         "file": "shared/schema.ts",
@@ -2056,7 +2056,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 116913
+        "bytes": 117979
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
@@ -2080,7 +2080,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 110643
+        "bytes": 111614
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2118,7 +2118,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19980
+        "lines": 20093
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2218,7 +2218,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2613
+        "lines": 2632
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2258,7 +2258,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2308
+        "lines": 2322
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2453,12 +2453,12 @@
         "lines": 1696
       },
       {
-        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
-        "lines": 1678
+        "file": "server/routes/submissions.ts",
+        "lines": 1681
       },
       {
-        "file": "server/routes/submissions.ts",
-        "lines": 1665
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1678
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
@@ -2493,6 +2493,14 @@
         "lines": 1532
       },
       {
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 1521
+      },
+      {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1503
+      },
+      {
         "file": "server/services/grdhe/grdheService.ts",
         "lines": 1501
       }
@@ -2504,7 +2512,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 395,
       "largeByBytes": 33,
-      "largeByLines": 79
+      "largeByLines": 81
     },
     {
       "owner": "Unassigned (TBD)",

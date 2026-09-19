@@ -238,9 +238,7 @@ export const complaints = pgTable(
 
     // Patient impact (preliminary — refined during triage)
     patientHarm: varchar('patient_harm', { length: 24 }).notNull().default('none'),
-    severityAssessment: varchar('severity_assessment', { length: 24 })
-      .notNull()
-      .default('minor'),
+    severityAssessment: varchar('severity_assessment', { length: 24 }).notNull().default('minor'),
 
     // Preliminary classification — populated by triageEngine on intake.
     // Shape: { fdaReportable: bool, mdrEuReportable: bool, requires806Notice: bool,
@@ -277,9 +275,15 @@ export const complaints = pgTable(
     byState: index('complaints_state_idx').on(t.triageState),
     byReceived: index('complaints_received_idx').on(t.receivedAt),
     byUdi: index('complaints_udi_idx').on(t.deviceUdiDi),
-    uniqueCode: uniqueIndex('complaints_code_uq').on(t.complaintCode),
+    /* Unique PER PROGRAM, not globally — amended 2026-09-19. These codes are
+       GENERATED per program by nextCode() in capaMdr.service.ts, so a global
+       unique index meant the second program in the deployment to open its first
+       record of a year collided with the first program's and the insert died
+       23505. capa_actions_capa_n_uq below had the parent-scoped shape all along;
+       these three did not. See migrations/20260504_capa_mdr.sql's header note. */
+    uniqueCode: uniqueIndex('complaints_code_uq').on(t.programId, t.complaintCode),
     bySeverity: index('complaints_severity_idx').on(t.severityAssessment),
-  }),
+  })
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -353,10 +357,16 @@ export const mdrEvents = pgTable(
     byJurisdiction: index('mdr_events_jurisdiction_idx').on(t.jurisdiction),
     byDue: index('mdr_events_due_idx').on(t.reportDueAt),
     bySource: index('mdr_events_source_idx').on(t.sourceComplaintId),
-    uniqueCode: uniqueIndex('mdr_events_code_uq').on(t.mdrCode),
+    /* Unique PER PROGRAM, not globally — amended 2026-09-19. These codes are
+       GENERATED per program by nextCode() in capaMdr.service.ts, so a global
+       unique index meant the second program in the deployment to open its first
+       record of a year collided with the first program's and the insert died
+       23505. capa_actions_capa_n_uq below had the parent-scoped shape all along;
+       these three did not. See migrations/20260504_capa_mdr.sql's header note. */
+    uniqueCode: uniqueIndex('mdr_events_code_uq').on(t.programId, t.mdrCode),
     uniqueFdaNumber: uniqueIndex('mdr_events_fda_report_uq').on(t.fdaReportNumber),
     uniqueEuNumber: uniqueIndex('mdr_events_eu_report_uq').on(t.euReportNumber),
-  }),
+  })
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -419,8 +429,14 @@ export const capaRecords = pgTable(
     byRisk: index('capa_records_risk_idx').on(t.riskLevel),
     bySource: index('capa_records_source_idx').on(t.source),
     byTarget: index('capa_records_target_idx').on(t.targetCloseDate),
-    uniqueCode: uniqueIndex('capa_records_code_uq').on(t.capaCode),
-  }),
+    /* Unique PER PROGRAM, not globally — amended 2026-09-19. These codes are
+       GENERATED per program by nextCode() in capaMdr.service.ts, so a global
+       unique index meant the second program in the deployment to open its first
+       record of a year collided with the first program's and the insert died
+       23505. capa_actions_capa_n_uq below had the parent-scoped shape all along;
+       these three did not. See migrations/20260504_capa_mdr.sql's header note. */
+    uniqueCode: uniqueIndex('capa_records_code_uq').on(t.programId, t.capaCode),
+  })
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -460,7 +476,7 @@ export const capaActions = pgTable(
     byState: index('capa_actions_state_idx').on(t.state),
     byOwner: index('capa_actions_owner_idx').on(t.owner),
     uniqByN: uniqueIndex('capa_actions_capa_n_uq').on(t.capaId, t.n),
-  }),
+  })
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -506,7 +522,7 @@ export const vigilanceEvents = pgTable(
     byEntity: index('vigilance_events_entity_idx').on(t.entityType, t.entityId),
     byKind: index('vigilance_events_kind_idx').on(t.kind),
     byOccurred: index('vigilance_events_occurred_idx').on(t.occurredAt),
-  }),
+  })
 );
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -82,7 +82,15 @@ describe('removeLeaf', () => {
     selectResults.push([]); // no dependent leaf
     selectResults.push([{ id: 5, sectionCode: '1.2', deletedAt: new Date() }]); // update .returning
 
-    await expect(removeLeaf(5, 10, ctx)).resolves.toBeUndefined();
+    /* WO-16C #133. This used to assert `resolves.toBeUndefined()`, which pinned
+       the old `void` signature rather than any invariant — unlike the sibling
+       below, whose "never a silent success" IS the invariant and is untouched.
+       `removeLeaf` now reports what became of its §11.10(e) row, so the
+       assertion is the stronger one: the removal happened AND the outcome came
+       back with it. */
+    const removal = await removeLeaf(5, 10, ctx);
+    expect(removal.leafId).toBe(5);
+    expect(removal.auditTrail.persisted).toBe(true);
     expect(updateCalls.count).toBe(1);
     expect(logAction).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'LEAF_REMOVED', resourceId: 5 })

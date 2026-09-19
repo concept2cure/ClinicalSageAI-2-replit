@@ -366,7 +366,29 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
   );
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
-  res.setHeader('Access-Control-Expose-Headers', 'X-Request-Id, X-RateLimit-Remaining');
+  /* WO-16C #133. `X-Audit-Row-Persisted` / `X-Audit-Row-Code` are added because
+     five converted handlers have nowhere else to report what became of their
+     21 CFR Part 11 §11.10(e) row: a 204 No Content has no body, and the
+     predicate-intelligence proxy forwards the upstream payload verbatim.
+
+     Without them on this list the conversion was pointless for the consumer it
+     was written for. `config.allowedOrigins` above admits separate app origins
+     (app.trialsage.com, app.concept2cure-ri.ai, app.clinicalsage.ai), so a
+     browser client on one of those calling the API host gets `null` from
+     `res.headers.get('X-Audit-Row-Persisted')` — the header reached Express and
+     stopped there, leaving those five handlers exactly as observable as the
+     discarded `await auditService.logAction(…)` they replaced. Carried and then
+     dropped, with the drop in this layer. A reviewer of the client-branding
+     conversion caught it; it is pinned by
+     server/middleware/__tests__/audit-outcome-headers-exposed.test.ts.
+
+     `X-Audit-Next-Cursor` (the SIEM feed's pagination cursor) is deliberately NOT
+     here: its documented consumers are server-side log shippers, which CORS does
+     not apply to. */
+  res.setHeader(
+    'Access-Control-Expose-Headers',
+    'X-Request-Id, X-RateLimit-Remaining, X-Audit-Row-Persisted, X-Audit-Row-Code',
+  );
 
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204);

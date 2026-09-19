@@ -71,8 +71,44 @@ import path from 'node:path';
 const ROOT = path.resolve(new URL('../..', import.meta.url).pathname);
 const BASELINE = path.join(ROOT, 'scripts/ci/discarded-audit-write-baseline.json');
 
-/** `void auditService.logAction(` — explicit fire-and-forget. */
-const VOID_WRITE = /\bvoid\s+auditService\s*\.\s*logAction\s*\(/g;
+/**
+ * The two calls that RESOLVE an outcome a caller is meant to read.
+ *
+ * `auditService.logAction` is the raw writer. `recordAuditRow`
+ * (server/services/audit/audit-write-outcome.ts) is the canonical wrapper this
+ * repository converts to, and discarding ITS result is the same defect — a
+ * conversion that swaps one name for the other and keeps throwing the value away
+ * fixes nothing observable while satisfying a gate that only knew the old name.
+ * There were zero such sites when this was added; it is here so the next
+ * conversion cannot be vacuous and green at the same time.
+ *
+ * `logAuditEvent`, `logAuditEntry` and `auditTaskAction` are here for the same
+ * reason, and their addition is the third time this gate turned out to be smaller
+ * than the defect. It began matching only `void auditService.logAction`; extending
+ * it to the awaited form found 134 sites against 0 remaining void ones; and a
+ * census of the audit layer then found that `logAction` is one of at least EIGHT
+ * audit-writing mechanisms in the route layer, so "the population" this gate
+ * reported was never the population. The other three that resolve an outcome carry
+ * 95 more discarded sites between them — 23 / 46 / 15 — and not one of the 95
+ * assigned the result. Two of them (`logAuditEntry`, `auditTaskAction`) returned
+ * `Promise<void>` until this change, so their callers could not have reported an
+ * outcome; those contracts now return one.
+ *
+ * `writeChainedAuditRow` is deliberately NOT here: it returns `Promise<void>` and
+ * THROWS on failure, because it runs inside the caller's transaction so a failed
+ * row rolls the mutation back with it. There is no outcome to discard, and
+ * flagging it would push authors toward the weaker helper.
+ *
+ * Still outside this gate, and named here so the next reader does not mistake a
+ * green run for a clean audit layer: `createAuditTrail`
+ * (part11ComplianceService, ~11 discarded call sites), `auditAuthEvent`,
+ * `emitAuditEvent` and `createAuditEvent`. Their contracts have not been read
+ * yet.
+ */
+const AUDIT_CALL = String.raw`(?:auditService\s*\.\s*logAction|recordAuditRow|logAuditEvent|logAuditEntry|auditTaskAction)`;
+
+/** `void auditService.logAction(` / `void recordAuditRow(` — fire-and-forget. */
+const VOID_WRITE = new RegExp(String.raw`\bvoid\s+${AUDIT_CALL}\s*\(`, 'g');
 
 /**
  * `await auditService.logAction(` at STATEMENT position — awaited and thrown away.
@@ -83,8 +119,21 @@ const VOID_WRITE = /\bvoid\s+auditService\s*\.\s*logAction\s*\(/g;
  *   `return await auditService.logAction(…)`         — handed to the caller
  *   `x = await auditService.logAction(…)`            — assigned
  * Those all have a token before `await` on the line.
+ *
+ * One shape defeats that anchor: a call passed as an ARGUMENT across lines —
+ *
+ *     transmitAttemptAudit.push(
+ *       await recordAuditRow({ … }),
+ *     );
+ *
+ * where the `await` does start its own line and the value is nevertheless kept.
+ * `isArgumentPosition` below excludes it. There is no such site in the current
+ * population — I checked all 102 — but the shape is real (it appears verbatim in
+ * ind-icsr-transmission-persistence, with recordAuditRow), and a gate that flags
+ * correct code gets that code BASELINED, which then admits a genuine defect in the
+ * same file later. Cheaper to exclude it than to explain the baseline entry.
  */
-const AWAITED_DISCARDED = /^[ \t]*await\s+auditService\s*\.\s*logAction\s*\(/gm;
+const AWAITED_DISCARDED = new RegExp(String.raw`^[ \t]*await\s+${AUDIT_CALL}\s*\(`, 'gm');
 
 /**
  * Blank out comments and string/template literals, preserving newlines so line
@@ -129,6 +178,21 @@ function stripNonCode(src) {
   return out;
 }
 
+/**
+ * True when the matched `await` is an argument rather than a statement: the
+ * previous code-bearing line ends in a token that opens one.
+ */
+function isArgumentPosition(code, matchIndex) {
+  const before = code.slice(0, matchIndex).split('\n');
+  before.pop(); // the line the match is on
+  for (let i = before.length - 1; i >= 0; i--) {
+    const line = before[i].trimEnd();
+    if (line.trim() === '') continue;
+    return /[([,=]$|=>$|&&$|\|\|$|\?$|:$/.test(line);
+  }
+  return false;
+}
+
 function sourceFiles() {
   return execSync("git ls-files 'server/**/*.ts'", {
     cwd: ROOT,
@@ -143,12 +207,13 @@ function sourceFiles() {
 /** Scan one source string. Exposed separately so --self-test can drive it. */
 export function scanSource(src, file) {
   const hits = [];
-  if (!src.includes('logAction')) return hits;
+  if (!/logAction|recordAuditRow|logAuditEvent|logAuditEntry|auditTaskAction/.test(src)) return hits;
   const code = stripNonCode(src);
   for (const re of [VOID_WRITE, AWAITED_DISCARDED]) {
     re.lastIndex = 0;
     let m;
     while ((m = re.exec(code)) !== null) {
+      if (re === AWAITED_DISCARDED && isArgumentPosition(code, m.index)) continue;
       hits.push({ file, line: code.slice(0, m.index).split('\n').length });
     }
   }
@@ -194,6 +259,35 @@ if (process.argv.includes('--self-test')) {
       audit = await auditService.logAction({ action: entry.action });
       if (!audit.persisted) log.error('audit row NOT persisted', { a: 1 });
     }`;
+  const DISCARDED_WRAPPER = `
+    async function f(entry) {
+      await recordAuditRow({ action: entry.action });
+    }`;
+  const DISCARDED_ENTRY = `
+    async function f(req) {
+      await logAuditEntry(req, 'CREATE', 'artifact', req.params.id);
+    }`;
+  const DISCARDED_TASK = `
+    async function f(p) {
+      await auditTaskAction({ orgId: p.orgId, userId: p.userId, command: 'task.create', taskId: p.id });
+    }`;
+  const ENTRY_REPORTED = `
+    async function f(req) {
+      const audit = await logAuditEntry(req, 'CREATE', 'artifact', req.params.id);
+      return { ok: true, audit };
+    }`;
+  const WRAPPER_REPORTED = `
+    async function f(entry) {
+      const audit = await recordAuditRow({ action: entry.action });
+      return { ok: true, audit };
+    }`;
+  const ARGUMENT = `
+    async function f(entry, collected) {
+      collected.push(
+        await auditService.logAction({ action: entry.action }),
+      );
+      return collected;
+    }`;
   const REPORTED = `
     async function f(entry) {
       const audit = await auditService.logAction({ action: entry.action });
@@ -224,6 +318,12 @@ if (process.argv.includes('--self-test')) {
   say(scanSource(REPORTED, '<t>').length === 0, 'an awaited-and-reported write is not flagged');
   say(scanSource(RETURNED, '<t>').length === 0, 'a write returned to the caller is not flagged');
   say(scanSource(REASSIGNED, '<t>').length === 0, 'a write assigned to an existing variable is not flagged');
+  say(scanSource(ARGUMENT, '<t>').length === 0, 'a write passed as an argument across lines is not flagged');
+  say(scanSource(DISCARDED_WRAPPER, '<t>').length === 1, 'a discarded recordAuditRow is flagged too');
+  say(scanSource(WRAPPER_REPORTED, '<t>').length === 0, 'a recordAuditRow whose outcome is returned is not flagged');
+  say(scanSource(DISCARDED_ENTRY, '<t>').length === 1, 'a discarded logAuditEntry is flagged');
+  say(scanSource(DISCARDED_TASK, '<t>').length === 1, 'a discarded auditTaskAction is flagged');
+  say(scanSource(ENTRY_REPORTED, '<t>').length === 0, 'a logAuditEntry whose outcome is returned is not flagged');
   say(scanSource(DOCUMENTED, '<t>').length === 0, 'the defect quoted in a comment is not flagged');
 
   // Case 4: the ratchet. A file baselined at 1 that now has 2 must fail.
