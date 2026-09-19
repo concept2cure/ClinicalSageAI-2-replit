@@ -209,6 +209,11 @@ export async function listVaultDocuments(
     // `d.id` breaks ties so OFFSET paging over equal updated_at values cannot
     // repeat or skip a row between pages.
     const [rows, counted] = await Promise.all([
+      // tenant-isolation-safe: `where` always begins with TENANT_WHERE (see its
+      // definition above), which requires an EXISTS on regulatory_programs with
+      // rp.organization_id = $1. The org predicate is in the statement; the
+      // scanner cannot see it because it arrives through the interpolated
+      // constant rather than as literal text here.
       pool.query(
         `SELECT ${DOCUMENT_COLUMNS}
            FROM vault.documents d
@@ -217,6 +222,9 @@ export async function listVaultDocuments(
           LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
         [...params, q.limit, q.offset],
       ),
+      // tenant-isolation-safe: the SAME `where`, deliberately — a total taken
+      // over a different set than the rows is how a window lies. Same
+      // TENANT_WHERE org predicate, same reason the scanner cannot see it.
       pool.query(
         `SELECT COUNT(*)::int AS total FROM vault.documents d WHERE ${where}`,
         params,

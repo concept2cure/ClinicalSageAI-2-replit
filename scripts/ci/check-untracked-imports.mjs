@@ -46,7 +46,14 @@ import path from 'node:path';
 const TAG = '[ci:untracked-imports]';
 const SOURCE = /\.(?:m|c)?[jt]sx?$/;
 /** How TS/bundler resolution rewrites a specifier, in the order it tries. */
-const CANDIDATE_SUFFIXES = ['', '.ts', '.tsx', '.js', '.jsx', '.mts', '.cts', '.mjs', '.cjs'];
+// '.d.ts' sits after '.ts'/'.tsx' because that is tsc's own order, and this list
+// exists to mirror tsc. Without it a type-only import of a declaration file was
+// reported as "resolves to nothing" — the opposite of true, since the .d.ts is
+// tracked, on disk, and resolved fine by tsc. (A specifier ending
+// shared/types/database resolving to shared/types/database.d.ts is the case that
+// surfaced it. Written without the import keyword on purpose: this scanner reads
+// its own source, and a quoted specifier in a comment parses as a real import.)
+const CANDIDATE_SUFFIXES = ['', '.ts', '.tsx', '.d.ts', '.js', '.jsx', '.mts', '.cts', '.mjs', '.cjs'];
 const INDEX_SUFFIXES = CANDIDATE_SUFFIXES.filter(Boolean).map(s => `/index${s}`);
 
 function fail(lines) {

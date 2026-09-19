@@ -389,6 +389,11 @@ const VAULT_DOCUMENT_TENANCY =
 export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.freeze({
   'vault.documents': VAULT_DOCUMENT_TENANCY,
   'vault.document_chunks':
+    // tenant-isolation-safe: the inner SELECT is filtered by
+    // VAULT_DOCUMENT_TENANCY above — `organization_id = $1 OR program_id IN
+    // (… WHERE organization_id = $1)`. The org predicate IS in the statement;
+    // it arrives through the interpolated constant, which a same-statement
+    // text match cannot follow.
     `document_id IN (SELECT id FROM vault.documents WHERE ${VAULT_DOCUMENT_TENANCY})`,
 });
 
@@ -598,4 +603,21 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      Position is therefore free. */
   'assumption_records',
   'decision_records',
+  /* The CMC workflow subsystem. All five are org-keyed with organization_id
+     NOT NULL, so every row belongs to exactly one tenant — there is no
+     platform-template population here for a purge to spare. What they hold is
+     the tenant's own work: the commands, drug names and AI results of
+     cmc_ai_tool_executions; the project names, teams and progress of the
+     checklist and workflow instances; the task names, assignees and due dates
+     under them; and the names, descriptions and template_data of cmc_workflows.
+
+     Tasks before instances. cmc_workflow_tasks DOES cascade from
+     cmc_workflow_instances today, so listing the parent alone would reach it —
+     but the deletion then depends on a foreign key staying ON DELETE CASCADE,
+     and this list is the thing that must not quietly stop reaching a table. */
+  'cmc_workflow_tasks',
+  'cmc_workflow_instances',
+  'cmc_checklist_instances',
+  'cmc_ai_tool_executions',
+  'cmc_workflows',
 ]);

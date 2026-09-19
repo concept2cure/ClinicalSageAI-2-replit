@@ -73,13 +73,19 @@ export const JURISDICTION_REGIONS: readonly [CanonicalRegion, ...CanonicalRegion
   REGION_IDENTITY
 ) as [CanonicalRegion, ...CanonicalRegion[]];
 
-export type SubmissionRegion = CanonicalRegion | 'GLOBAL';
+/**
+ * The scope a Module 3 section is classified under: one canonical jurisdiction,
+ * or GLOBAL for content that is not region-specific. Named for the scope rather
+ * than for "a submission region" because region-profiles/region-profile-service
+ * exports its own, narrower list under that noun.
+ */
+export type Module3RegionScope = CanonicalRegion | 'GLOBAL';
 
 /* Typed as a non-empty readonly tuple because z.enum needs to see that it has a
    first element; Object.keys alone gives string[], which no Zod overload accepts.
    The runtime contents are still derived, and a test pins them to
    REGION_IDENTITY + GLOBAL so the annotation cannot quietly become a fiction. */
-export const SUBMISSION_REGIONS: readonly [SubmissionRegion, ...SubmissionRegion[]] = [
+export const SUBMISSION_REGIONS: readonly [Module3RegionScope, ...Module3RegionScope[]] = [
   ...JURISDICTION_REGIONS,
   'GLOBAL',
 ];

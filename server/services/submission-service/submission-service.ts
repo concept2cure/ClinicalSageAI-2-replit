@@ -347,11 +347,28 @@ export async function transitionSequence(
     throw new SubmissionError('INVALID_STATE', `Cannot transition sequence from ${seq.status} to ${toStatus}.`);
   }
   const frozenAt = toStatus === 'frozen' ? new Date() : undefined;
+  /* Same compare-and-set as the governed twin: `seq.status` was read above and
+     canTransitionSequence was evaluated against it, so the write must apply only
+     while the row still holds that value. Without the predicate two concurrent
+     callers both passed the check and both wrote, and the second overwrote a
+     transition it never saw. */
   const [row] = await db
     .update(ectdSequences)
     .set({ status: toStatus, updatedAt: new Date(), ...(frozenAt ? { frozenAt } : {}) })
-    .where(and(eq(ectdSequences.id, id), eq(ectdSequences.organizationId, ctx.organizationId)))
+    .where(
+      and(
+        eq(ectdSequences.id, id),
+        eq(ectdSequences.organizationId, ctx.organizationId),
+        eq(ectdSequences.status, seq.status),
+      ),
+    )
     .returning();
+  if (!row) {
+    throw new SubmissionError(
+      'INVALID_STATE',
+      `Sequence ${id} is no longer in state '${seq.status}' — it changed while this transition was being applied. Re-read the sequence and retry if the transition still applies.`,
+    );
+  }
   // Part 11 §11.10(e). The UPDATE above is committed; the status is not moved
   // back when this write fails. `SEQUENCE_FROZEN` appears in the action below
   // only because it is the action name for a `frozen` target — `frozen` is in
@@ -509,14 +526,28 @@ function safeJson(text: string): Record<string, unknown> | null {
  * change back.
  */
 async function applySequenceChangeWithAudit(
-  update: { text: string; params: unknown[] },
+  update: {
+    text: string;
+    params: unknown[];
+    /**
+     * What zero affected rows MEANS for this caller. When the UPDATE carries a
+     * compare-and-set predicate, zero rows is a LOST RACE (the state moved after
+     * it was read), not a missing sequence, and reporting "not found" for it
+     * would send the operator looking for the wrong problem.
+     */
+    noRowsRefusal?: string;
+  },
   audit: { organizationId: number; userId: number; action: string; resourceId: number; details: Record<string, unknown> },
 ): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const res = (await client.query(update.text, update.params)) as { rowCount?: number | null };
-    if (!res.rowCount) throw new SubmissionError('NOT_FOUND', 'Sequence not found for this organization.');
+    if (!res.rowCount) {
+      throw update.noRowsRefusal
+        ? new SubmissionError('INVALID_STATE', update.noRowsRefusal)
+        : new SubmissionError('NOT_FOUND', 'Sequence not found for this organization.');
+    }
     await writeChainedAuditRow(client, {
       organizationId: audit.organizationId,
       userId: audit.userId,
@@ -579,10 +610,22 @@ async function applyGovernedSequenceTransition(
   // it is not yet sent.
   await applySequenceChangeWithAudit(
     {
+      /* COMPARE-AND-SET on the status this transition was authorized against.
+         `seq.status` was read at the top of this function, and everything since —
+         three queries in governedSignatureRefusal, deriveGovernedTargetBinding,
+         and the whole dispatch readiness assessment including an external
+         validator call — is a window in which another author can move the same
+         sequence. Without the predicate both callers' UPDATEs applied, each
+         spending its own signature and each writing a §11.10(e) row, so the
+         ledger recorded two irreversible transitions from a state only one of
+         them actually observed. */
       text: toStatus === 'frozen'
-        ? `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), frozen_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL`
-        : `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), dispatch_status = 'pending' WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL`,
-      params: [toStatus, id, ctx.organizationId],
+        ? `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), frozen_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND status = $4`
+        : `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), dispatch_status = 'pending' WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND status = $4`,
+      params: [toStatus, id, ctx.organizationId, seq.status],
+      noRowsRefusal:
+        `Sequence ${id} is no longer in state '${seq.status}' — it changed while this ${step} was being authorized. ` +
+        `Re-check the sequence and sign again if the transition still applies.`,
     },
     {
       organizationId: ctx.organizationId,
@@ -990,6 +1033,10 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
       // resolve, not 'pending', which silently invited a second send.
       text: `UPDATE ectd_sequences SET dispatch_status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 AND dispatch_status = $4`,
       params: [dispatchStatus, sequenceId, ctx.organizationId, TRANSMITTING_STATUS],
+      noRowsRefusal:
+        `Sequence ${sequenceId} was no longer the in-flight transmit when the result came back; ` +
+        `its dispatch status was resolved by something else. The package WAS handed to the gateway — ` +
+        `confirm at the agency before any further action.`,
     },
     {
       organizationId: ctx.organizationId,
