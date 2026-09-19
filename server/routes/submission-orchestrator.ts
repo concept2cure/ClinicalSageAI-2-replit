@@ -18,6 +18,10 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import {
+  JURISDICTION_REGIONS,
+  SUBMISSION_REGIONS,
+} from '../services/module3-regional-readiness.js';
+import {
   loadSubmissionFkBySubmissionIdText,
   runOrchestrator,
   getRun,
@@ -33,7 +37,10 @@ import {
   buildM27ClinicalSummary,
 } from '../services/m2-summary-builders.js';
 import { buildCSRTables } from '../services/csr-tabulation-builders.js';
-import { validateEctdPackageHardened, flattenFindings } from '../services/ectd/ectd-validator-hardening.js';
+import {
+  validateEctdPackageHardened,
+  flattenFindings,
+} from '../services/ectd/ectd-validator-hardening.js';
 import { loadCmcSourcesForProject } from '../services/cmc/load-cmc-sources-for-project.js';
 import { loadCsrInputsForProject } from '../services/csr/load-csr-inputs-for-project.js';
 import { loadNonclinicalStudiesForProject } from '../services/preclinical/load-nonclinical-studies-for-project.js';
@@ -64,7 +71,7 @@ async function auditOrchestratorAccess(
     | 'orchestrator_m27_built'
     | 'orchestrator_csr_tabulated'
     | 'orchestrator_validated_hardened',
-  details: Record<string, unknown> = {},
+  details: Record<string, unknown> = {}
 ): Promise<void> {
   const user = (req as any).user;
 
@@ -107,8 +114,7 @@ async function auditOrchestratorAccess(
  * touching regulated content.
  */
 function resolveOrgId(req: Request): number | null {
-  const raw =
-    (req as any).tenantContext?.organizationId ?? (req as any).user?.organizationId;
+  const raw = (req as any).tenantContext?.organizationId ?? (req as any).user?.organizationId;
   if (raw == null) return null;
   const n = Number(raw);
   return Number.isFinite(n) && n > 0 ? n : null;
@@ -160,10 +166,12 @@ function requireTenant(req: Request, res: Response): number | null {
  */
 async function resolveSubmissionFk(
   inputs: Omit<OrchestratorInputs, 'organizationId'>,
-  organizationId: number,
+  organizationId: number
 ): Promise<number | undefined> {
   if (typeof inputs.submissionFk === 'number') return inputs.submissionFk;
-  return (await loadSubmissionFkBySubmissionIdText(inputs.submissionId, organizationId)) ?? undefined;
+  return (
+    (await loadSubmissionFkBySubmissionIdText(inputs.submissionId, organizationId)) ?? undefined
+  );
 }
 
 /**
@@ -197,7 +205,13 @@ const router = Router();
 
 // ── Validation schemas ──────────────────────────────────────────────────────
 
-const RegionSchema = z.enum(['US', 'EU', 'JP', 'CA', 'UK', 'CN', 'AU', 'CH', 'BR', 'IN', 'KR', 'SG', 'GLOBAL']);
+/* Derived from SUBMISSION_REGIONS (the twelve canonical regions of
+   shared/regulatory/region-identity plus GLOBAL), not restated. This was an
+   independent z.enum, and being independent is how it drifted nine regions away
+   from the Module 3 3.2.R templates without anything noticing — a run for UK
+   reported its regional step "skipped (no inputs)" against inputs that were
+   plainly there. Adding a region now reaches the classifier and its tests. */
+const RegionSchema = z.enum(SUBMISSION_REGIONS);
 const SubmissionTypeSchema = z.string().min(1);
 
 const CanonicalSourceSchema = z.object({
@@ -210,8 +224,13 @@ const CanonicalSourceSchema = z.object({
 const NonclinicalStudySchema = z.object({
   studyId: z.string(),
   studyType: z.enum([
-    'pharmacology', 'pharmacokinetics', 'toxicology', 'safety_pharmacology',
-    'reproductive_tox', 'genotoxicity', 'carcinogenicity',
+    'pharmacology',
+    'pharmacokinetics',
+    'toxicology',
+    'safety_pharmacology',
+    'reproductive_tox',
+    'genotoxicity',
+    'carcinogenicity',
   ]),
   species: z.string().optional(),
   duration: z.string().optional(),
@@ -246,7 +265,9 @@ const CSRInputSchema = z.object({
   sampleSize: z.number().nullable(),
   ittPopulation: z.number().optional(),
   treatmentArms: z.array(z.string()).optional(),
-  topAEs: z.array(z.object({ pt: z.string(), rate: z.string(), severity: z.string().optional() })).optional(),
+  topAEs: z
+    .array(z.object({ pt: z.string(), rate: z.string(), severity: z.string().optional() }))
+    .optional(),
   saeCount: z.number().optional(),
   deathCount: z.number().optional(),
 });
@@ -357,7 +378,11 @@ router.post('/runs', async (req: Request, res: Response) => {
     // the inline-inputs arrays may end up logged client-side. Log server-side
     // with org context for triage; client gets a generic message.
     log.warn('Ambiguous /runs body: both projectId and inline inputs supplied', { organizationId });
-    return res.status(400).json({ error: 'ambiguous_request', message: 'Supply either projectId OR inline {cmcSources, nonclinicalStudies, csrInputs} — never both.' });
+    return res.status(400).json({
+      error: 'ambiguous_request',
+      message:
+        'Supply either projectId OR inline {cmcSources, nonclinicalStudies, csrInputs} — never both.',
+    });
   }
 
   const parsed = RunSchema.safeParse(rawBody);
@@ -378,7 +403,7 @@ router.post('/runs', async (req: Request, res: Response) => {
       // this resource" is the honest answer regardless of which org owns it.
       const { rows } = await pool.query(
         'SELECT id FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1',
-        [parsed.data.projectId, organizationId],
+        [parsed.data.projectId, organizationId]
       );
       if (rows.length === 0) {
         return res.status(403).json({ error: 'project_not_accessible' });
@@ -402,22 +427,24 @@ router.post('/runs', async (req: Request, res: Response) => {
 
       // 21 CFR Part 11 §11.10(e) audit attribution. Log COUNTS only — never
       // the payload bodies (PHI / sponsor-confidential data lives there).
-      auditService.logAction({
-        userId: (req as any).user?.id ?? 0,
-        tenantId: organizationId,
-        action: 'orchestrator_inputs_assembled',
-        resourceType: 'submission_orchestrator',
-        resourceId: parsed.data.submissionId,
-        details: {
-          mode: 'project',
-          projectId: parsed.data.projectId,
-          cmcProjectId: parsed.data.cmcProjectId,
-          ctdProgramId: parsed.data.ctdProgramId,
-          cmcSourceCount: cmcSources.length,
-          nonclinicalStudyCount: nonclinicalStudies.length,
-          csrInputCount: csrInputs.length,
-        },
-      }).catch(err => log.warn('Audit log failed (non-fatal)', { err: err?.message }));
+      auditService
+        .logAction({
+          userId: (req as any).user?.id ?? 0,
+          tenantId: organizationId,
+          action: 'orchestrator_inputs_assembled',
+          resourceType: 'submission_orchestrator',
+          resourceId: parsed.data.submissionId,
+          details: {
+            mode: 'project',
+            projectId: parsed.data.projectId,
+            cmcProjectId: parsed.data.cmcProjectId,
+            ctdProgramId: parsed.data.ctdProgramId,
+            cmcSourceCount: cmcSources.length,
+            nonclinicalStudyCount: nonclinicalStudies.length,
+            csrInputCount: csrInputs.length,
+          },
+        })
+        .catch(err => log.warn('Audit log failed (non-fatal)', { err: err?.message }));
 
       orchestratorInputs = {
         submissionId: parsed.data.submissionId,
@@ -471,7 +498,10 @@ router.post('/runs', async (req: Request, res: Response) => {
       };
     }
   } catch (err) {
-    log.error('Input assembly failed', { err: err instanceof Error ? err.message : String(err), organizationId });
+    log.error('Input assembly failed', {
+      err: err instanceof Error ? err.message : String(err),
+      organizationId,
+    });
     return serverError(res, log, 'saving runs', err);
   }
 
@@ -497,22 +527,30 @@ router.post('/runs', async (req: Request, res: Response) => {
       outputs: {
         m3SectionCount: result.outputs.module3Sections.length,
         csrTableSets: result.outputs.csrTables.length,
-        m23: result.outputs.m23 ? {
-          completeness: result.outputs.m23.completeness,
-          gaps: result.outputs.m23.gaps,
-        } : null,
-        m24: result.outputs.m24 ? {
-          completeness: result.outputs.m24.completeness,
-          gaps: result.outputs.m24.gaps,
-        } : null,
-        m25: result.outputs.m25 ? {
-          completeness: result.outputs.m25.completeness,
-          gaps: result.outputs.m25.gaps,
-        } : null,
-        m27: result.outputs.m27 ? {
-          completeness: result.outputs.m27.completeness,
-          gaps: result.outputs.m27.gaps,
-        } : null,
+        m23: result.outputs.m23
+          ? {
+              completeness: result.outputs.m23.completeness,
+              gaps: result.outputs.m23.gaps,
+            }
+          : null,
+        m24: result.outputs.m24
+          ? {
+              completeness: result.outputs.m24.completeness,
+              gaps: result.outputs.m24.gaps,
+            }
+          : null,
+        m25: result.outputs.m25
+          ? {
+              completeness: result.outputs.m25.completeness,
+              gaps: result.outputs.m25.gaps,
+            }
+          : null,
+        m27: result.outputs.m27
+          ? {
+              completeness: result.outputs.m27.completeness,
+              gaps: result.outputs.m27.gaps,
+            }
+          : null,
       },
     });
   } catch (err) {
@@ -645,7 +683,9 @@ router.post('/m2/qos', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
   }
   try {
-    const summary = buildM23QualityOverallSummary(parsed.data as Parameters<typeof buildM23QualityOverallSummary>[0]);
+    const summary = buildM23QualityOverallSummary(
+      parsed.data as Parameters<typeof buildM23QualityOverallSummary>[0]
+    );
     await auditOrchestratorAccess(req, organizationId, 'orchestrator_m23_built', {
       sectionCount: parsed.data.module3Sections.length,
       completeness: summary.completeness,
@@ -785,7 +825,12 @@ router.post('/validate/hardened', async (req: Request, res: Response) => {
     fileSize: z.number(),
     studyId: z.string().optional(),
   });
-  const ValidatorRegionSchema = z.enum(['US', 'EU', 'JP', 'CA', 'UK', 'CN', 'AU', 'CH', 'BR', 'IN', 'KR', 'SG']);
+  /* The twelve real jurisdictions, derived — a validation context needs an
+     actual agency to validate against, so GLOBAL is not a member here the way it
+     is in RegionSchema. This was a second hand-written region literal in this
+     same file, 600 lines below the first, and the test that pins the first one
+     found it. */
+  const ValidatorRegionSchema = z.enum(JURISDICTION_REGIONS);
   const Schema = z.object({
     leaves: z.array(LeafSchema),
     submissionId: z.string(),

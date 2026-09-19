@@ -25,7 +25,7 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | `KNOWN_UNLISTED` triage — 10 entries, 16 tables | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed, all ten now on the applier |
 | Schema authority — live-schema baseline + the 61 tables behind it | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **active** — gate fixed, baseline 70→61→47; DEAD surfaces deleted (7 files, §7); triage corrected (§8); CMC playbook provisioned (§9), baseline 47→42; reg_* refused with evidence |
-| AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
+| AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, `server/services/chat-uploads/*`, the retrieval-atom blocks of `server/routes/chat/upload.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 | WO-3 — tenant-isolation proof: the `app.current_org_id` distribution (`orgMembership` enrichment, token mint paths) | `…session_01J935DZwfFEardJCv85SJds` | **released** 2026-09-19 — question answered, degraded path pinned; the 230-route migration itself is NOT claimed |
 
 If you are one of the sessions above, correct your own row. If a lane you want
@@ -86,6 +86,38 @@ The pattern is worth naming: a warning added in one lane is invisible to the
 lane that added it (the pre-push hook does not run the ratchet; CI does) and
 costs the NEXT lane to push a diagnostic round each time. Running
 `npm run ci:eslint-ratchet` before you push keeps it in the lane that created it.
+
+**Two new pre-push gates (2026-09-19) — both added after they caught a real
+defect, one of them mine:**
+
+- `ci:untracked-imports` — a pushed file must not import a module git does not
+  have. An unanchored `uploads/` in `.gitignore` (meant for the runtime
+  directory at the repo root) silently excluded `server/services/uploads/`, so
+  a commit shipped a route importing a file that was not in the repository and
+  trunk was unbuildable. Nothing local could see it: typecheck, 6,117 unit
+  tests and the dbtests all read the WORKING TREE, and `git add -A` printing
+  nothing is byte-identical to success. The gate reads the INDEX. `/tmp/`,
+  `/uploads/`, `/logs/` are now anchored; `data/logs/` is listed explicitly
+  because the unanchored form was genuinely covering it.
+  Repo-wide (`--all`) it also reports **21 pre-existing broken relative
+  imports**, mostly in `db/migrations/_consolidated/*.ts` importing
+  `../server/db` from a path where that does not resolve. Left alone: the gate
+  is scoped to what a push changes, so no lane inherits the backlog. If those
+  files are dead, deleting them clears it.
+- `ci:pushed-lint-errors` — ESLint ERRORS in the pushed files only, ~1.4s. The
+  warning ratchet is not on this hook (minutes on 1,790 files) and deliberately
+  ignores errors, so until now **nothing ran ESLint before a push**.
+
+Both are scoped to the diff against the upstream ref, so they hold a lane to its
+own code. Both fail closed on an ESLint crash or an unreadable index.
+
+**ESLint ERROR cleared from another lane (2026-09-19):**
+`server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts:169` (commit
+`1e8ddb6d2`) carried four literal spaces inside a regex, which `no-regex-spaces`
+reports as an **error**, not a warning — so the Run ESLint step was red on
+trunk, and the ratchet, which only counts warnings, said OK. Changed to `{4}`;
+identical semantics, 13 tests still pass. Worth knowing in that lane: the
+warning ratchet passing is not the lint step passing.
 
 **Note for the vault-storage lane:** `server/services/vault/storage-migration.service.ts`
 (`c029711ae`) landed `migrateVaultStorage` at complexity 17 / 102 lines, which put

@@ -280,8 +280,9 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
       <OfficialEstarPanel program={program} type={officialEstarTypeFor(program)} variant={officialEstarVariantFor(program)} />
 
       {/* eSTAR filing journey — live registration prerequisites + tracked
-          submissions (register → produce → track), org-scoped from the session. */}
-      <EstarFilingPanel />
+          submissions (register → produce → track), scoped to THIS programme — without programId the readiness verdict
+          is computed over every device in the organisation. */}
+      <EstarFilingPanel programId={program?.id ?? null} />
     </>
   );
 

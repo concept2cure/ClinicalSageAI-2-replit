@@ -210,6 +210,70 @@ describe('what it says when it finds nothing', () => {
   });
 });
 
+/**
+ * The corpus is keyed to vault documents, so a file the client attached in chat
+ * and never filed cannot be in it at all — `vault.document_chunks.document_id`
+ * carries a hard foreign key to `vault.documents`. Its text reaches retrieval
+ * only as one bounded-prefix atom, which holds the opening of the file and
+ * cannot cite a page.
+ *
+ * The coverage line did not know that. It said "All 4 document(s) are in the
+ * passage index" while the very file the question was about sat outside it, so
+ * a miss read as an exhaustive search — the one thing this tool's coverage
+ * reporting exists to prevent, for the one class of file most likely to be
+ * asked about.
+ */
+describe('what it says about the files that are not in this index at all', () => {
+  it('will not claim full coverage while chat uploads sit outside the corpus', async () => {
+    searchDocumentPassages.mockResolvedValue({
+      hits: [],
+      coverage: { total: 4, indexed: 4, pending: 0, failed: 0, unfiledUploads: 3, unfiledUploadsMore: false },
+    });
+    const out = await call({ query: 'the primary endpoint' });
+    expect(out.message).toContain('All 4 document(s) are in the passage index');
+    expect(out.message).toContain('3 file(s) the client attached in chat are NOT in this index');
+    expect(out.message).toContain('only the opening of each');
+    expect(out.message).toContain('file_chat_upload_to_vault');
+  });
+
+  it('marks the count as a floor when there are more than it probed for', async () => {
+    searchDocumentPassages.mockResolvedValue({
+      hits: [],
+      coverage: { total: 2, indexed: 1, pending: 1, failed: 0, unfiledUploads: 20, unfiledUploadsMore: true },
+    });
+    const out = await call({ query: 'the primary endpoint' });
+    expect(out.message).toContain('20+ file(s)');
+  });
+
+  it('says nothing extra when there is nothing outside', async () => {
+    searchDocumentPassages.mockResolvedValue({
+      hits: [],
+      coverage: { total: 4, indexed: 4, pending: 0, failed: 0, unfiledUploads: 0, unfiledUploadsMore: false },
+    });
+    const out = await call({ query: 'the primary endpoint' });
+    expect(out.message).not.toContain('attached in chat');
+  });
+
+  it('an uncounted probe is reported as unchecked, never as zero', async () => {
+    searchDocumentPassages.mockResolvedValue({
+      hits: [],
+      coverage: { total: 4, indexed: 4, pending: 0, failed: 0, unfiledUploads: null, unfiledUploadsMore: false },
+    });
+    const out = await call({ query: 'the primary endpoint' });
+    expect(out.message).toContain('could not be checked');
+  });
+
+  it('covers an EMPTY vault too — no documents filed is not "nothing to search"', async () => {
+    searchDocumentPassages.mockResolvedValue({
+      hits: [],
+      coverage: { total: 0, indexed: 0, pending: 0, failed: 0, unfiledUploads: 2, unfiledUploadsMore: false },
+    });
+    const out = await call({ query: 'the primary endpoint' });
+    expect(out.message).toContain('No documents are filed in this vault yet');
+    expect(out.message).toContain('2 file(s) the client attached in chat');
+  });
+});
+
 describe('what it says when it could not look', () => {
   it('reports an unavailable index as unavailable, not as zero passages', async () => {
     // mockImplementation, not mockRejectedValue: the latter constructs the

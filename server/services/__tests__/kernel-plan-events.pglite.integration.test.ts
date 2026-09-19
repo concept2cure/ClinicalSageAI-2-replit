@@ -208,7 +208,7 @@ describe('an unpersisted run is not handed back as if it existed', () => {
   it('the failure is caught at the call site, not left to the outer handler', () => {
     // Left to the outer catch, the client would get a generic planner error
     // carrying a raw Postgres message. The precise code is the point.
-    const persistBlock = /if \(persist\) \{[\s\S]*?\n      \}/.exec(ROUTE)?.[0] ?? '';
+    const persistBlock = /if \(persist\) \{[\s\S]*?\n {6}\}/.exec(ROUTE)?.[0] ?? '';
     expect(persistBlock).toMatch(/createGoalPlanRun/);
     expect(persistBlock).toMatch(/PLAN_PERSIST_FAILED/);
   });

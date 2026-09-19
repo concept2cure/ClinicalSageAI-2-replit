@@ -181,6 +181,36 @@ export function mountStreamRoute(router: Router): void {
     // The round the keepalive stamps on each heartbeat. Updated at every
     // checkpoint so a reaped-and-resumed row still reports where it got to.
     let heartbeatRound = 0;
+    /**
+     * Prompt-cache totals for the WHOLE turn, every model call included.
+     *
+     * The telemetry reported only the first gateway call, so the agentic rounds
+     * — which is where a turn spends most of its input tokens, and where a
+     * cache miss costs the most because the conversation is longest — were
+     * invisible. That made the one number the plan says to judge a caching
+     * change by ("log cache_read_input_tokens across three consecutive turns;
+     * if it is zero after, a silent invalidator is still in the prefix")
+     * impossible to read honestly: a turn could report a healthy first-call hit
+     * while every round behind it rebuilt the prefix.
+     *
+     * `missedCalls` is the one that answers the question. Reads and writes can
+     * both look busy while half the calls are missing.
+     */
+    const turnCache = { calls: 0, missedCalls: 0, readTokens: 0, createTokens: 0 };
+    const recordCacheUsage = (response: unknown): void => {
+      const stats = (response as any)?.cacheStats;
+      turnCache.calls += 1;
+      if (!stats) {
+        // No stats at all is not a hit. A provider that reports nothing and a
+        // prefix that missed are different facts, but neither is a read.
+        turnCache.missedCalls += 1;
+        return;
+      }
+      const read = Number(stats.cacheReadInputTokens ?? 0);
+      turnCache.readTokens += read;
+      turnCache.createTokens += Number(stats.cacheCreationInputTokens ?? 0);
+      if (read === 0) turnCache.missedCalls += 1;
+    };
     try {
       const {
         message,
@@ -1262,6 +1292,7 @@ export function mountStreamRoute(router: Router): void {
         },
         callerModule: 'ana-ri-stream',
       });
+      recordCacheUsage(gwResponse);
       streamGatewayMs = Date.now() - streamGatewayStart;
 
       // Multi-round agentic tool execution via the orchestrator
@@ -1979,6 +2010,7 @@ export function mountStreamRoute(router: Router): void {
             fullContent += (fullContent ? '\n\n' : '') + roundText;
             res.write(`data: ${JSON.stringify({ type: 'text', content: roundText })}\n\n`);
           }
+          recordCacheUsage(roundResponse);
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
           return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
         };
@@ -2109,6 +2141,12 @@ export function mountStreamRoute(router: Router): void {
             ? {
                 hit: (gwResponse as any).cacheHit,
                 stats: (gwResponse as any).cacheStats || undefined,
+                // Every model call this turn, not just the first. `missedCalls`
+                // is what a caching change is judged on: a turn can show a
+                // healthy first-call hit while each round behind it rebuilt the
+                // whole prefix, and the first-call number alone cannot tell
+                // those apart.
+                turn: { ...turnCache },
               }
             : undefined,
         memory: streamMemoryDiag

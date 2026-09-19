@@ -178,7 +178,7 @@ describe('m3.regional distinguishes "no inputs" from "no template for this regio
     expect(step.outputRef).toMatch(/CA\/EU\/JP\/US/);
   });
 
-  it.each(['CN', 'GLOBAL'] as const)(
+  it.each(['CN', 'BR', 'SG'] as const)(
     'region %s is reported the same way — the fix is not UK-specific',
     async region => {
       const step = await regionalStep({ region });
@@ -187,6 +187,20 @@ describe('m3.regional distinguishes "no inputs" from "no template for this regio
       expect(step.outputRef).toContain('no 3.2.R template');
     }
   );
+
+  it('GLOBAL is reported as not-applicable, NOT as a missing template', async () => {
+    // GLOBAL is not a jurisdiction — region-identity defines its twelve canonical
+    // regions as "taxonomy Region minus GLOBAL" — and 3.2.R is regional
+    // information for a specific agency. So there is nothing to author for it,
+    // and calling it a missing template would invent a gap. It is the one
+    // accepted region where zero regional sections is the complete and correct
+    // answer.
+    const step = await regionalStep({ region: 'GLOBAL' });
+    expect(step.status).toBe('skipped');
+    expect(step.outputRef).toContain('GLOBAL is not a jurisdiction');
+    expect(step.outputRef).not.toContain('no 3.2.R template');
+    expect(step.outputRef).toContain('This is not a gap');
+  });
 
   it('"skipped (no inputs)" still means exactly that when no sources were supplied', async () => {
     // The original meaning must survive: a supported region with nothing to

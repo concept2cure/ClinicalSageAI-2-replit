@@ -27,7 +27,7 @@
  * @module client/src/concept2cure/lineage/DocumentAttributionBar
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   fetchDocumentAttribution,
@@ -48,6 +48,16 @@ export interface DocumentAttributionBarProps {
   refreshToken?: string | number;
   /** Open the fuller Data Origins view, when the host surface has one. */
   onOpenDetail?: () => void;
+  /**
+   * Handed the summary whenever one is read, so a host that also PAINTS the
+   * spans (see useAttributionHighlights) can reuse this fetch instead of making
+   * its own — two reads of the same thing can disagree, and the one the author
+   * sees painted would not be the one the bar counted.
+   *
+   * Called with null when the read failed or was refused, so a host cannot keep
+   * painting spans from a summary that no longer holds.
+   */
+  onSummary?: (summary: DocumentAttributionSummary | null) => void;
 }
 
 type Load =
@@ -126,15 +136,23 @@ export function DocumentAttributionBar({
   documentId,
   refreshToken,
   onOpenDetail,
+  onSummary,
 }: DocumentAttributionBarProps) {
   const [load, setLoad] = useState<Load>({ status: 'idle' });
+
+  /* Read through a ref so a host passing an inline arrow — the obvious way —
+     does not change `read`'s identity every render and re-fire the effect. */
+  const onSummaryRef = useRef(onSummary);
+  onSummaryRef.current = onSummary;
 
   const read = useCallback(async () => {
     setLoad({ status: 'loading' });
     try {
       const summary = await fetchDocumentAttribution({ documentTable, documentId });
       setLoad({ status: 'ready', summary });
+      onSummaryRef.current?.(summary);
     } catch (err) {
+      onSummaryRef.current?.(null);
       if (err instanceof AttributionUnsupportedError) {
         setLoad({ status: 'unsupported', message: err.message });
         return;

@@ -58,6 +58,14 @@ describe('useAcceptAnaDraft', () => {
     await act(async () => { await result.current.accept({ refinedContent: 'x' }); });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(sentAuth()).toEqual(['Bearer test-token']);
+    /* The section id is POSITIONAL. This passed `{ sectionRowId: 11 }`, an
+       object, which typechecked red and still ran: the hook only compares it to
+       null, so the request went to /api/cerv2-sections/[object Object]/… and
+       every assertion below still held. Pinning the URL is what makes the
+       argument shape observable from the test. */
+    expect(String(fetchMock.mock.calls[0][0])).toBe(
+      '/api/cerv2-sections/11/accept-ana-draft',
+    );
     const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
     expect(headers['x-organization-id']).toBe('7');
     expect(headers['Content-Type']).toBe('application/json');
