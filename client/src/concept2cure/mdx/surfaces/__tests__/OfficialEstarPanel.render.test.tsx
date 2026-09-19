@@ -1047,7 +1047,7 @@ describe('OfficialEstarPanel — the preview re-reads after a sibling panel save
     });
     render(
       <>
-        <EstarFilingPanel />
+        <EstarFilingPanel programId={PROGRAM.id} />
         <OfficialEstarPanel program={PROGRAM} variant="device" />
       </>,
     );
