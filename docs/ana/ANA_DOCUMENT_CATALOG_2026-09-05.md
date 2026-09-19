@@ -181,6 +181,40 @@ a mapping stuck on page 1 cannot pass. Reverting the write to NULL turns it red.
 `server/services/ocr/__tests__/page-offsets.test.ts` covers the refusals: an
 unfindable page, out-of-order pages, empty input.
 
+### The toggle the operator flipped was never read
+
+**Service:** `FeatureToggleService.readToggle` / `readFeatureState` ·
+**Tripwires:** `tests/db/document-catalog-toggles.dbtest.ts`,
+`server/startup/__tests__/document-catalog-bootstrap.test.ts`
+
+`initializeFeatureToggle` establishes a system tenant scope and carries eight
+lines of comment saying why: pool instrumentation refuses any statement issued
+with no tenant scope while `RLS_ENFORCE=on`, which production hard-requires,
+and `feature_toggles` is platform reference data with no tenant column and no
+RLS policy, so the scope states what the operation IS rather than minting
+authority from an argument.
+
+Every word of that applies to the READ. The read did not have one.
+
+So on every enforcing deployment the toggle query was refused,
+`isFeatureEnabled` caught the refusal in a bare `catch { return false }`, and
+the feature resolved OFF — for the startup line, and for anything else running
+outside a request. The bootstrap added in the slice above logged "the
+client-files surface is inactive platform-wide" no matter what the operator had
+set, which is the one thing that bootstrap exists to report accurately. Three
+dbtests were red on trunk saying so.
+
+Two fixes, because the defect has two halves. The read now establishes a system
+scope when the caller has none, keeping the caller's own scope when it has one
+— a data accessor that quietly upgrades its caller's role is a shape worth not
+having. And `readFeatureState` returns `{ enabled, readable }` so the startup
+line can distinguish "off" from "we could not find out": both leave the feature
+inactive, correctly, but only one of them is a decision somebody made.
+
+One subtlety worth keeping: a drizzle builder is lazy. Handing it back from a
+synchronous callback lets `runWithSystemTenantScope` return before the query
+runs, and the refusal is then byte-identical to having no scope at all.
+
 ### A listing reports its scope, not the page it happened to return
 
 **Service:** `listProjectDocuments` → `ProjectDocumentPage` ·

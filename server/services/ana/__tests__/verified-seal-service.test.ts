@@ -126,6 +126,27 @@ describe('sealVerifiedVersion — happy path (one transaction)', () => {
     expect(parsed.sealedRecord.algorithm).toBe('sha256');
   });
 
+  it('consumes Build-1 references without re-inserting artifact/version', async () => {
+    const { pool, queries } = makePool();
+    const result = await sealVerifiedVersion(
+      baseInput({ artifactPk: 900, artifactExternalId: 'artifact_b1', existingVersionId: 950, existingVersionNumber: 3 }),
+      pool,
+    );
+    const sqls = queries.map((q) => q.sql);
+    expect(sqls.some((s) => /INSERT INTO concept2cure_artifacts\b/.test(s))).toBe(false);
+    expect(sqls.some((s) => /INSERT INTO concept2cure_artifact_versions\b/.test(s))).toBe(false);
+    expect(result.artifactId).toBe('artifact_b1');
+    expect(result.versionId).toBe(950);
+    expect(result.version).toBe(3);
+  });
+});
+
+/**
+ * Which persisted row the seal BINDS to, resolved from external id + version
+ * number. Its own suite: both cases are about that resolution rather than the
+ * happy path, and together they outgrew the suite they were sitting in.
+ */
+describe('sealVerifiedVersion — resolving the row the seal binds to', () => {
   it('E11: binds the seal to the EXISTING persisted row resolved from external id + version number (no fallback)', async () => {
     // The client knows only the EXTERNAL artifact id and the version NUMBER — not
     // the row PKs. The service must resolve both org-scoped and seal the existing
@@ -197,20 +218,6 @@ describe('sealVerifiedVersion — happy path (one transaction)', () => {
     const sqls = queries.map((q) => q.sql);
     expect(sqls.some((s) => /INSERT INTO concept2cure_artifacts\b/.test(s))).toBe(true);
     expect(result.versionId).toBe(202);
-  });
-
-  it('consumes Build-1 references without re-inserting artifact/version', async () => {
-    const { pool, queries } = makePool();
-    const result = await sealVerifiedVersion(
-      baseInput({ artifactPk: 900, artifactExternalId: 'artifact_b1', existingVersionId: 950, existingVersionNumber: 3 }),
-      pool,
-    );
-    const sqls = queries.map((q) => q.sql);
-    expect(sqls.some((s) => /INSERT INTO concept2cure_artifacts\b/.test(s))).toBe(false);
-    expect(sqls.some((s) => /INSERT INTO concept2cure_artifact_versions\b/.test(s))).toBe(false);
-    expect(result.artifactId).toBe('artifact_b1');
-    expect(result.versionId).toBe(950);
-    expect(result.version).toBe(3);
   });
 });
 

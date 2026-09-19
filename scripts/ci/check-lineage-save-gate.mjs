@@ -159,11 +159,6 @@ const KNOWN_UNGUARDED = [
      because discovery matched edits and not creations. Listed rather than
      silently gated so the debt is countable, and so the next reader sees four
      named surfaces instead of a guard that claims full coverage. */
-  {
-    file: 'server/services/protocol-templates/protocol-templates-service.ts',
-    what: 'cloning a template seeds protocol_sections.content, and saveDocumentAsTemplateTx snapshots real document sections INTO templates — so seeded text can be previously-authored prose arriving in a new protocol with no lineage',
-    row: 'L177',
-  },
 ];
 
 const GUARDED = [
@@ -268,6 +263,15 @@ const GUARDED = [
   {
     file: 'server/services/resolution/bundle-executor.ts',
     why: "stageRewrite stages a bundle's prepared rewrite as a new artifact version and attributes it in the same transaction — it previously wrote by bare db.execute with no lineage at all (ledger L177, the third of that row's four)",
+  },
+  {
+    file: 'server/services/protocol-templates/protocol-templates-service.ts',
+    why: 'cloneTemplateToDocumentTx attributes the prose it seeds into a new protocol, so a section is not left unattributed until its second write (ledger L177, the last of that row\'s four)',
+    transaction: 'caller',
+    txOwners: [
+      'server/routes/protocol-templates.ts', // the clone route opens the transaction
+      'server/services/ana/AnaToolExecutor.ts', // the clone_protocol_template tool opens the transaction
+    ],
   },
 ];
 

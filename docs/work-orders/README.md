@@ -71,6 +71,22 @@ later with the files untouched since, so they were deleted rather than left to
 block the ratchet for whoever added the next legitimate warning. Nothing but
 dead symbols was touched; both files' suites pass. Baseline relocked at 6522.
 
+**Ratchet debt absorbed from other lanes (2026-09-19, third time):** four more
+warnings arrived on trunk from lanes that pushed them, each one blocking every
+other lane's next push until somebody paid it. Cleared in place, semantics
+untouched, suites green:
+
+| File | What | Why it was fixed here |
+|---|---|---|
+| `server/services/ana/__tests__/run-control.pglite.integration.test.ts` | 103-line describe | Fixture builder hoisted (splitting broke five cases). The owning lane landed the same fix independently; the merge took theirs. |
+| `server/services/ana/__tests__/verified-seal-service.test.ts` | 102-line describe | Split at the E11 binding cases — 11 tests still pass. |
+| `tests/resolution/bundle-execution.test.ts` | mock query chain at complexity 16 | Three `document_span_lineage` branches extracted to `spanLineageAnswer` — 18 tests still pass. |
+
+The pattern is worth naming: a warning added in one lane is invisible to the
+lane that added it (the pre-push hook does not run the ratchet; CI does) and
+costs the NEXT lane to push a diagnostic round each time. Running
+`npm run ci:eslint-ratchet` before you push keeps it in the lane that created it.
+
 **Note for the vault-storage lane:** `server/services/vault/storage-migration.service.ts`
 (`c029711ae`) landed `migrateVaultStorage` at complexity 17 / 102 lines, which put
 `ci:eslint-warning-ratchet` one over its baseline. It was paid down elsewhere rather than
