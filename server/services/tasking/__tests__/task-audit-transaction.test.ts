@@ -100,8 +100,13 @@ describe('auditTaskAction — the chain write owns a transaction', () => {
   it('ROLLs BACK rather than leaving half a pair when the chain write fails', async () => {
     h.recordGovernedAction.mockRejectedValueOnce(new Error('chain lock timeout'));
 
-    // Still non-fatal: a lineage failure must not break the task mutation.
-    await expect(auditTaskAction(PARAMS)).resolves.toBeUndefined();
+    /* Still non-fatal: a lineage failure must not break the task mutation. This
+       used to assert `resolves.toBeUndefined()`, which pinned the old `void`
+       signature rather than the invariant in the sentence above it — the
+       invariant is "does not throw", and it now also reports WHY (WO-16C #133). */
+    const outcome = await auditTaskAction(PARAMS);
+    expect(outcome.recorded).toBe(false);
+    expect(outcome).toMatchObject({ reason: 'WRITE_FAILED', enlisted: false });
 
     const sql = h.clientQuery.mock.calls.map((c) => String(c[0]));
     expect(sql).toContain('ROLLBACK');

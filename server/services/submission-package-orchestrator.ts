@@ -36,6 +36,8 @@ import { VerificationUnavailableError, describeFailure } from '../lib/verificati
 import crypto from 'crypto';
 import {
   composeFullModule3,
+  hasRegionalTemplate,
+  REGIONS_WITH_REGIONAL_TEMPLATE,
   type RegionCode,
 } from './module3-extensions.js';
 import {
@@ -47,11 +49,7 @@ import {
   type NonclinicalStudy,
   type CSRSummaryInput,
 } from './m2-summary-builders.js';
-import {
-  buildCSRTables,
-  type StudyData,
-  type CSRTables,
-} from './csr-tabulation-builders.js';
+import { buildCSRTables, type StudyData, type CSRTables } from './csr-tabulation-builders.js';
 import type { CanonicalSource, ComposedSection } from './module3Composer.js';
 import {
   buildModule3WithNarrative,
@@ -63,8 +61,15 @@ import {
   type HardenedValidationContext,
 } from './ectd/ectd-validator-hardening.js';
 import type { ECTDLeaf } from './ectd/ectd4-validator.js';
-import { assembleRealPackage, isPackagerBuildableRegion } from './ectd/orchestrator-real-package.js';
-import { isSignSealConfigured, sealSignPayloadDigest, verifySignPayloadSeal } from './ectd/sign-payload-seal.js';
+import {
+  assembleRealPackage,
+  isPackagerBuildableRegion,
+} from './ectd/orchestrator-real-package.js';
+import {
+  isSignSealConfigured,
+  sealSignPayloadDigest,
+  verifySignPayloadSeal,
+} from './ectd/sign-payload-seal.js';
 import { launchCSRBuildAsync } from './csr-builder.js';
 import { getCSRBuildJobStatus } from './csr/csr-job-runner.js';
 import {
@@ -96,7 +101,8 @@ function classifyStepError(err: unknown): string {
   ) {
     return 'validation_failed';
   }
-  if (/tenant|organization_id|organizationId.+required/i.test(msg)) return 'tenant_isolation_violation';
+  if (/tenant|organization_id|organizationId.+required/i.test(msg))
+    return 'tenant_isolation_violation';
   if (/SEQ_QUERY_FAILED|sequence history|sequence query/i.test(msg)) return 'sequence_query_failed';
   if (/gatewayReady|gateway not ready|hardenedScore/i.test(msg)) return 'gateway_not_ready';
   if (/hallucination|prompt-injection/i.test(msg)) return 'ai_hallucination_guard';
@@ -459,7 +465,13 @@ const STEP_DEPENDENCIES: Record<StepKey, StepKey[]> = {
   'm2.5.clinical': ['csr.tabulate'],
   'm2.7.clinical': ['csr.tabulate', 'csr.draft-narrative'],
   'm1.admin': [],
-  'package.assemble': ['m2.3.qos', 'm2.4.nonclinical', 'm2.5.clinical', 'm2.7.clinical', 'm1.admin'],
+  'package.assemble': [
+    'm2.3.qos',
+    'm2.4.nonclinical',
+    'm2.5.clinical',
+    'm2.7.clinical',
+    'm1.admin',
+  ],
   'package.validate': ['package.assemble'],
   // Path-to-GA §C.11 — e-sig gate. Single edge to package.validate; the
   // payload digest binds the validated leaf manifest + the validator's
@@ -556,7 +568,7 @@ function hashOutput(output: unknown): string {
 async function assembleForValidation(
   sections: ComposedSection[],
   inputs: OrchestratorInputs,
-  sequenceNumber: string,
+  sequenceNumber: string
 ): Promise<{ assembled: AssembledPackage; leafBuffers: Record<string, Buffer> }> {
   // Region widening (Move-7) accepts regions beyond the four the canonical
   // packager has a backbone builder for. For a region the packager cannot build,
@@ -609,7 +621,11 @@ async function assembleForValidation(
  */
 function buildDerivedManifest(sections: ComposedSection[]): ECTDLeaf[] {
   return sections.map(s => {
-    const payload = JSON.stringify({ narrative: s.narrativeDraft, tables: s.tables, structured: s.structuredPayload });
+    const payload = JSON.stringify({
+      narrative: s.narrativeDraft,
+      tables: s.tables,
+      structured: s.structuredPayload,
+    });
     return {
       sectionCode: `m${s.sectionKey}`,
       title: s.sectionKey,
@@ -723,7 +739,7 @@ export function computeBoundPayloadDigestFromComponents(params: {
         gatewayReady: params.validatorOutcome.gatewayReady,
         hardenedScore: params.validatorOutcome.hardenedScore,
         summary: params.validatorOutcome.summary,
-      }),
+      })
     )
     .digest('hex');
 
@@ -747,7 +763,7 @@ export function computeBoundPayloadDigestFromComponents(params: {
     h.update(
       typeof params.backboneXml === 'string'
         ? Buffer.from(params.backboneXml, 'utf8')
-        : params.backboneXml,
+        : params.backboneXml
     );
   }
   return h.digest('hex');
@@ -848,7 +864,7 @@ interface PackageSignStepPayload {
  *  output for the same manifest. The signed fingerprint is the md5 checksum, not
  *  the inline bytes. */
 function stripLeafBytes(leaves: ECTDLeaf[]): ECTDLeaf[] {
-  return leaves.map((leaf) => {
+  return leaves.map(leaf => {
     if (!('buffer' in leaf) || (leaf as { buffer?: unknown }).buffer === undefined) return leaf;
     const { buffer: _drop, ...rest } = leaf as ECTDLeaf & { buffer?: unknown };
     return rest as ECTDLeaf;
@@ -864,7 +880,7 @@ function buildSignedSnapshot(
   assembly: AssembledPackage,
   validation: HardenedValidationResult,
   submissionId: string,
-  organizationId: number,
+  organizationId: number
 ): SignedPackageSnapshot {
   return {
     // Fallback regions (buildDerivedManifest) have no backbone; store '' so the
@@ -953,7 +969,7 @@ export async function findActiveReleaseSignature(params: {
           AND superseded_by IS NULL
         ORDER BY id DESC
         LIMIT 1`,
-      [params.organizationId, params.boundPayloadDigest],
+      [params.organizationId, params.boundPayloadDigest]
     );
     if (result.rows.length === 0) return null;
     const row = result.rows[0] as Record<string, unknown>;
@@ -963,7 +979,7 @@ export async function findActiveReleaseSignature(params: {
   } catch (err) {
     console.error(
       '[Orchestrator] findActiveReleaseSignature could not run — not treating this as "no active signature":',
-      describeFailure(err),
+      describeFailure(err)
     );
     throw new VerificationUnavailableError('release-signature lookup', describeFailure(err));
   }
@@ -1005,7 +1021,9 @@ async function persistRun(run: OrchestratorRun): Promise<void> {
   // because such a row goes DARK to every tenant-scoped read.
   if (!Number.isFinite(run.organizationId) || run.organizationId <= 0) {
     throw new Error(
-      `[Orchestrator] persistRun: organizationId must be a positive integer (got: ${String(run.organizationId)})`
+      `[Orchestrator] persistRun: organizationId must be a positive integer (got: ${String(
+        run.organizationId
+      )})`
     );
   }
   try {
@@ -1016,7 +1034,9 @@ async function persistRun(run: OrchestratorRun): Promise<void> {
     // resume path only knows what the previous run row carried) cannot
     // clear a previously-populated FK back to NULL.
     const submissionFkParam =
-      typeof run.submissionFk === 'number' && Number.isFinite(run.submissionFk) && run.submissionFk > 0
+      typeof run.submissionFk === 'number' &&
+      Number.isFinite(run.submissionFk) &&
+      run.submissionFk > 0
         ? run.submissionFk
         : null;
     await pool.query(
@@ -1059,7 +1079,10 @@ async function persistRun(run: OrchestratorRun): Promise<void> {
       );
       throw err;
     }
-    console.warn('[Orchestrator] persistRun failed (non-fatal):', err instanceof Error ? err.message : err);
+    console.warn(
+      '[Orchestrator] persistRun failed (non-fatal):',
+      err instanceof Error ? err.message : err
+    );
   }
 }
 
@@ -1073,7 +1096,9 @@ async function persistStepEvent(
   // Defense-in-depth: same rationale as persistRun.
   if (!Number.isFinite(organizationId) || organizationId <= 0) {
     throw new Error(
-      `[Orchestrator] persistStepEvent: organizationId must be a positive integer (got: ${String(organizationId)})`
+      `[Orchestrator] persistStepEvent: organizationId must be a positive integer (got: ${String(
+        organizationId
+      )})`
     );
   }
   try {
@@ -1111,7 +1136,10 @@ async function persistStepEvent(
       );
       throw err;
     }
-    console.warn('[Orchestrator] persistStepEvent failed (non-fatal):', err instanceof Error ? err.message : err);
+    console.warn(
+      '[Orchestrator] persistStepEvent failed (non-fatal):',
+      err instanceof Error ? err.message : err
+    );
   }
 }
 
@@ -1162,9 +1190,7 @@ interface CSRNarrativeStepPayload {
   jobs: Array<{ studyId: string; protocolNumber: string; jobId: number }>;
 }
 
-function tryParseNarrativePayload(
-  raw: string | undefined
-): CSRNarrativeStepPayload | null {
+function tryParseNarrativePayload(raw: string | undefined): CSRNarrativeStepPayload | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
@@ -1188,7 +1214,9 @@ export async function runOrchestrator(
   // Tenant gate — fail fast before any DB write so we never persist an unscoped row.
   if (!Number.isFinite(inputs.organizationId) || inputs.organizationId <= 0) {
     throw new Error(
-      `[Orchestrator] organizationId is required and must be a positive integer (got: ${String(inputs.organizationId)})`
+      `[Orchestrator] organizationId is required and must be a positive integer (got: ${String(
+        inputs.organizationId
+      )})`
     );
   }
 
@@ -1248,10 +1276,24 @@ export async function runOrchestrator(
   const stepOf = (key: StepKey): StepRecord => run.steps.find(s => s.key === key)!;
 
   // Helper: run a step, with start/complete tracking
+  /**
+   * `fn` returns the step's output, or null to skip it for want of input, or
+   * `{ skip: reason }` to skip it for a reason that is NOT want of input.
+   *
+   * The third case was added 2026-09-19. A step that returned null was always
+   * recorded as 'skipped (no inputs)', which was the only story this function
+   * could tell — and m3.regional told it for two different situations: the caller
+   * supplied no sources, and the caller supplied sources for a region this
+   * product has no 3.2.R template for (nine of the thirteen the route accepts
+   * since the Move-7 widening). Reporting the second as an absence of input
+   * blames the caller for a gap in the product, and leaves a reviewer reading the
+   * run unable to tell which happened. Existing `return null` callers are
+   * unaffected.
+   */
   const runStep = async (
     key: StepKey,
     inputHash: string,
-    fn: () => Promise<{ outputRef: string; output: unknown } | null>
+    fn: () => Promise<{ outputRef: string; output: unknown } | { skip: string } | null>
   ): Promise<void> => {
     const step = stepOf(key);
     step.inputHash = inputHash;
@@ -1264,10 +1306,10 @@ export async function runOrchestrator(
       const result = await fn();
       step.completedAt = new Date().toISOString();
       step.durationMs = Date.now() - t0;
-      if (result === null) {
+      if (result === null || 'skip' in result) {
         step.status = 'skipped';
         step.outputHash = undefined;
-        step.outputRef = 'skipped (no inputs)';
+        step.outputRef = result === null ? 'skipped (no inputs)' : `skipped (${result.skip})`;
       } else {
         step.status = 'complete';
         step.outputHash = hashOutput(result.output);
@@ -1331,7 +1373,7 @@ export async function runOrchestrator(
       // never invoke AI, which is the common production case.
       inputs.useAI ? inputs.cmcSources : null,
       inputs.useAI ? inputs.organizationId : null,
-      inputs.useAI ? inputs.userId ?? null : null,
+      inputs.useAI ? inputs.userId ?? null : null
     );
     await runStep('m3.refine', refineHash, async () => {
       if (!inputs.useAI) {
@@ -1349,7 +1391,7 @@ export async function runOrchestrator(
       // a sentinel value — silent attribution would be a Part-11 violation.
       if (inputs.userId === undefined || inputs.userId === null) {
         throw new Error(
-          '[Orchestrator] m3.refine: inputs.userId is required when inputs.useAI=true (Part-11 audit-trail attribution)',
+          '[Orchestrator] m3.refine: inputs.userId is required when inputs.useAI=true (Part-11 audit-trail attribution)'
         );
       }
       // buildModule3WithNarrative expects a positive-integer projectId so
@@ -1373,7 +1415,7 @@ export async function runOrchestrator(
               if (!Number.isInteger(pid) || pid <= 0) {
                 throw new Error(
                   `[Orchestrator] m3.refine: inputs.projectId is required (and inputs.submissionId=${inputs.submissionId} ` +
-                    `cannot be coerced to a positive integer); narrative-builder requires a projectId for tenant scoping.`,
+                    `cannot be coerced to a positive integer); narrative-builder requires a projectId for tenant scoping.`
                 );
               }
               return pid;
@@ -1383,7 +1425,7 @@ export async function runOrchestrator(
         refineProjectId,
         inputs.userId,
         inputs.cmcSources,
-        { useAI: true },
+        { useAI: true }
       );
 
       // Swap the refined sections in so downstream steps (m3.regional,
@@ -1418,7 +1460,25 @@ export async function runOrchestrator(
     // m3.regional
     const regionalPresent = outputs.module3Sections.filter(s => s.sectionKey.startsWith('3.2.R'));
     await runStep('m3.regional', hashOutput(regionalPresent), async () => {
-      if (regionalPresent.length === 0) return null;
+      if (regionalPresent.length === 0) {
+        /* Zero regional sections has two causes and they are not the same
+           answer. Module 3 holds a 3.2.R template for four regions; the route
+           accepts thirteen. When sources WERE supplied and the region simply has
+           no template, say that — reporting it as 'no inputs' blames the caller
+           for a gap in the product and hides an absent required section behind a
+           status a reviewer reads as routine. The packaging layer already draws
+           this same line with isPackagerBuildableRegion. */
+        if (inputs.cmcSources.length > 0 && !hasRegionalTemplate(inputs.region)) {
+          return {
+            skip: `no 3.2.R template for region ${
+              inputs.region
+            } — Module 3 regional content exists for ${[...REGIONS_WITH_REGIONAL_TEMPLATE]
+              .sort()
+              .join('/')} only`,
+          };
+        }
+        return null;
+      }
       return { outputRef: `m3.regional:${regionalPresent.length}`, output: regionalPresent };
     });
 
@@ -1434,7 +1494,11 @@ export async function runOrchestrator(
     });
 
     // m2.3.qos
-    const m23Hash = hashInputs(outputs.module3Sections, inputs.drugSubstanceName ?? '', inputs.drugProductName ?? '');
+    const m23Hash = hashInputs(
+      outputs.module3Sections,
+      inputs.drugSubstanceName ?? '',
+      inputs.drugProductName ?? ''
+    );
     await runStep('m2.3.qos', m23Hash, async () => {
       if (outputs.module3Sections.length === 0) return null;
       outputs.m23 = buildM23QualityOverallSummary({
@@ -1442,11 +1506,18 @@ export async function runOrchestrator(
         drugSubstanceName: inputs.drugSubstanceName,
         drugProductName: inputs.drugProductName,
       });
-      return { outputRef: `m2.3.qos:completeness=${outputs.m23.completeness}`, output: outputs.m23 };
+      return {
+        outputRef: `m2.3.qos:completeness=${outputs.m23.completeness}`,
+        output: outputs.m23,
+      };
     });
 
     // m2.4.nonclinical
-    const m24Hash = hashInputs(inputs.nonclinicalStudies, inputs.drugSubstanceName ?? '', inputs.indication ?? '');
+    const m24Hash = hashInputs(
+      inputs.nonclinicalStudies,
+      inputs.drugSubstanceName ?? '',
+      inputs.indication ?? ''
+    );
     await runStep('m2.4.nonclinical', m24Hash, async () => {
       if (inputs.nonclinicalStudies.length === 0) return null;
       outputs.m24 = buildM24NonclinicalOverview({
@@ -1454,11 +1525,18 @@ export async function runOrchestrator(
         drugSubstanceName: inputs.drugSubstanceName,
         indication: inputs.indication,
       });
-      return { outputRef: `m2.4.nonclinical:completeness=${outputs.m24.completeness}`, output: outputs.m24 };
+      return {
+        outputRef: `m2.4.nonclinical:completeness=${outputs.m24.completeness}`,
+        output: outputs.m24,
+      };
     });
 
     // m2.5.clinical-overview
-    const m25Hash = hashInputs(inputs.csrInputs, inputs.indication ?? '', inputs.drugProductName ?? '');
+    const m25Hash = hashInputs(
+      inputs.csrInputs,
+      inputs.indication ?? '',
+      inputs.drugProductName ?? ''
+    );
     await runStep('m2.5.clinical', m25Hash, async () => {
       if (inputs.csrInputs.length === 0) return null;
       outputs.m25 = buildM25ClinicalOverview({
@@ -1466,7 +1544,10 @@ export async function runOrchestrator(
         indication: inputs.indication || '[indication not specified]',
         investigationalProduct: inputs.drugProductName || inputs.drugSubstanceName || '[product]',
       });
-      return { outputRef: `m2.5.clinical:completeness=${outputs.m25.completeness}`, output: outputs.m25 };
+      return {
+        outputRef: `m2.5.clinical:completeness=${outputs.m25.completeness}`,
+        output: outputs.m25,
+      };
     });
 
     // csr.draft-narrative (Move 6) — async ICH-E3 §1-§9/§13-§16 AI narrative
@@ -1493,7 +1574,7 @@ export async function runOrchestrator(
       inputs.enableCSRNarrative ? inputs.csrInputs : null,
       inputs.enableCSRNarrative ? inputs.organizationId : null,
       inputs.enableCSRNarrative ? inputs.projectId ?? null : null,
-      inputs.enableCSRNarrative ? inputs.userId ?? null : null,
+      inputs.enableCSRNarrative ? inputs.userId ?? null : null
     );
 
     if (inputs.enableCSRNarrative && inputs.csrInputs.length > 0) {
@@ -1513,7 +1594,7 @@ export async function runOrchestrator(
       // unattributable audit rows). Mirrors the m3.refine defense above.
       if (inputs.userId === undefined || inputs.userId === null) {
         const err = new Error(
-          '[Orchestrator] csr.draft-narrative: inputs.userId is required when inputs.enableCSRNarrative=true (Part-11 audit-trail attribution)',
+          '[Orchestrator] csr.draft-narrative: inputs.userId is required when inputs.enableCSRNarrative=true (Part-11 audit-trail attribution)'
         );
         narrativeStep.completedAt = new Date().toISOString();
         narrativeStep.durationMs = 0;
@@ -1530,8 +1611,19 @@ export async function runOrchestrator(
         // exact subset the task design specifies so we never trigger a
         // "full build of every leaf" by accident.
         const sectionsToGenerate = [
-          '1', '2', '3', '4', '5', '6', '7', '8', '9',
-          '13', '14', '15', '16',
+          '1',
+          '2',
+          '3',
+          '4',
+          '5',
+          '6',
+          '7',
+          '8',
+          '9',
+          '13',
+          '14',
+          '15',
+          '16',
         ];
 
         const enqueuedJobs: Array<{
@@ -1565,9 +1657,7 @@ export async function runOrchestrator(
                 indication: inputs.indication ?? '[indication not specified]',
                 sponsor: '[sponsor]',
                 investigationalProduct:
-                  inputs.drugProductName ||
-                  inputs.drugSubstanceName ||
-                  '[product]',
+                  inputs.drugProductName || inputs.drugSubstanceName || '[product]',
                 studyDesign: csr.studyDesign,
                 primaryEndpoint: csr.primaryEndpoint,
                 sampleSize: csr.sampleSize ?? undefined,
@@ -1578,7 +1668,7 @@ export async function runOrchestrator(
               organizationId: inputs.organizationId,
               projectId: inputs.projectId,
               requestedBy: inputs.userId,
-            },
+            }
           );
 
           enqueuedJobs.push({
@@ -1618,7 +1708,7 @@ export async function runOrchestrator(
           run.organizationId,
           narrativeStep,
           'complete',
-          run.submissionFk,
+          run.submissionFk
         );
 
         // Halt the synchronous pipeline. The run is suspended; the
@@ -1634,13 +1724,7 @@ export async function runOrchestrator(
         narrativeStep.durationMs = Date.now() - tNarrative;
         narrativeStep.status = 'failed';
         narrativeStep.error = err instanceof Error ? err.message : String(err);
-        await persistStepEvent(
-          runId,
-          run.organizationId,
-          narrativeStep,
-          'fail',
-          run.submissionFk,
-        );
+        await persistStepEvent(runId, run.organizationId, narrativeStep, 'fail', run.submissionFk);
         // Re-throw so the outer catch sets run.status = 'failed' and
         // persists the run. This matches the failure semantics of every
         // other step run via runStep().
@@ -1667,7 +1751,7 @@ export async function runOrchestrator(
         run.organizationId,
         narrativeStep,
         'complete',
-        run.submissionFk,
+        run.submissionFk
       );
     }
 
@@ -1680,7 +1764,10 @@ export async function runOrchestrator(
         indication: inputs.indication || '[indication not specified]',
         investigationalProduct: inputs.drugProductName || inputs.drugSubstanceName || '[product]',
       });
-      return { outputRef: `m2.7.clinical:completeness=${outputs.m27.completeness}`, output: outputs.m27 };
+      return {
+        outputRef: `m2.7.clinical:completeness=${outputs.m27.completeness}`,
+        output: outputs.m27,
+      };
     });
 
     // m1.admin — delegated to existing services (placeholder step record)
@@ -1708,7 +1795,7 @@ export async function runOrchestrator(
       const { assembled, leafBuffers } = await assembleForValidation(
         outputs.module3Sections,
         inputs,
-        sequenceNumber,
+        sequenceNumber
       );
       outputs.assembly = assembled;
       assembledLeafBuffers = leafBuffers;
@@ -1759,7 +1846,7 @@ export async function runOrchestrator(
         const result = await validateEctdPackageHardened(
           assembly.leaves,
           context,
-          assembly.backboneXml,
+          assembly.backboneXml
         );
         outputs.validation = result;
 
@@ -1853,9 +1940,7 @@ export async function runOrchestrator(
  * if a use case emerges where the assembled package needs the refined
  * narrative on a resumed pass.
  */
-function rederiveSyncOutputsForResume(
-  inputs: OrchestratorInputs,
-): OrchestratorOutputs {
+function rederiveSyncOutputsForResume(inputs: OrchestratorInputs): OrchestratorOutputs {
   const outputs: OrchestratorOutputs = {
     module3Sections: [],
     csrTables: [],
@@ -1884,14 +1969,17 @@ function rederiveSyncOutputsForResume(
  */
 function finalRunStatus(
   steps: StepRecord[],
-  inputs: Pick<OrchestratorInputs, 'submissionType' | 'skipValidation'>,
+  inputs: Pick<OrchestratorInputs, 'submissionType' | 'skipValidation'>
 ): 'complete' | 'failed' | 'partial' {
   if (steps.some(s => s.status === 'failed')) return 'partial';
   if (steps.every(s => s.status === 'skipped')) return 'failed';
   const validate = steps.find(s => s.key === 'package.validate');
   if (validate?.status === 'skipped') return 'partial';
   const sign = steps.find(s => s.key === 'package.sign');
-  if (sign?.status === 'skipped' && SIGNATURE_REQUIRED_SUBMISSION_TYPES.has(inputs.submissionType)) {
+  if (
+    sign?.status === 'skipped' &&
+    SIGNATURE_REQUIRED_SUBMISSION_TYPES.has(inputs.submissionType)
+  ) {
     return 'partial';
   }
   return 'complete';
@@ -1915,7 +2003,7 @@ function signStepInputHash(inputs: OrchestratorInputs, outputs: OrchestratorOutp
           hardenedScore: outputs.validation.hardenedScore,
           summary: outputs.validation.summary,
         }
-      : null,
+      : null
   );
 }
 
@@ -1924,7 +2012,7 @@ async function recordSignStepSkipped(
   run: OrchestratorRun,
   signStep: StepRecord,
   signInputHash: string,
-  outputRef: string,
+  outputRef: string
 ): Promise<void> {
   const now = new Date().toISOString();
   signStep.inputHash = signInputHash;
@@ -1963,15 +2051,23 @@ async function runPackageSignGate(args: {
 
   // OQ-1 skip path: non-REQUIRED submission types bypass the gate.
   if (!SIGNATURE_REQUIRED_SUBMISSION_TYPES.has(inputs.submissionType)) {
-    await recordSignStepSkipped(run, signStep, signInputHash,
-      `skipped (submissionType=${inputs.submissionType} not in REQUIRED allowlist)`);
+    await recordSignStepSkipped(
+      run,
+      signStep,
+      signInputHash,
+      `skipped (submissionType=${inputs.submissionType} not in REQUIRED allowlist)`
+    );
   } else if (validateStep.status !== 'complete' || !outputs.assembly || !outputs.validation) {
     // The gate is required, but upstream isn't gateway-ready. Mark skipped
     // (rather than failed) — the validate-failed step already owns the failure
     // signal. finalRunStatus reads this skip and refuses to call the run
     // `complete`, so the skip is recorded without being read as clearance.
-    await recordSignStepSkipped(run, signStep, signInputHash,
-      `skipped (package.validate status=${validateStep.status}; cannot sign a non-gateway-ready package)`);
+    await recordSignStepSkipped(
+      run,
+      signStep,
+      signInputHash,
+      `skipped (package.validate status=${validateStep.status}; cannot sign a non-gateway-ready package)`
+    );
   } else {
     // REQUIRED + gateway-ready: compute the bound payload digest and
     // look up an existing signature. If found → complete; else →
@@ -2007,7 +2103,7 @@ async function runPackageSignGate(args: {
         outputs.assembly,
         outputs.validation,
         inputs.submissionId,
-        inputs.organizationId,
+        inputs.organizationId
       );
 
       // Seal the digest with the server-held key so a mutable-steps-column
@@ -2037,7 +2133,13 @@ async function runPackageSignGate(args: {
         signStep.durationMs = Date.now() - tSign;
         signStep.outputRef = JSON.stringify(completePayload);
         signStep.outputHash = hashOutput(completePayload);
-        await persistStepEvent(run.runId, run.organizationId, signStep, 'complete', run.submissionFk);
+        await persistStepEvent(
+          run.runId,
+          run.organizationId,
+          signStep,
+          'complete',
+          run.submissionFk
+        );
         recordOrchestratorStepCompleted({
           step: 'package.sign',
           durationMs: signStep.durationMs,
@@ -2065,7 +2167,13 @@ async function runPackageSignGate(args: {
         // pairing convention (mirrors the csr.draft-narrative pattern);
         // the status column on the row records 'awaiting-signature' so an
         // auditor can distinguish.
-        await persistStepEvent(run.runId, run.organizationId, signStep, 'complete', run.submissionFk);
+        await persistStepEvent(
+          run.runId,
+          run.organizationId,
+          signStep,
+          'complete',
+          run.submissionFk
+        );
 
         // Suspend the run — return unchanged. Caller (UI or background
         // poller) invokes the signing route, then re-invokes
@@ -2105,20 +2213,18 @@ async function runPackageSignGate(args: {
  */
 async function resumeOrchestratorRun(
   inputs: OrchestratorInputs,
-  resumeRunId: string,
+  resumeRunId: string
 ): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs }> {
   const previousRun = await getRun(resumeRunId, inputs.organizationId);
   if (!previousRun) {
-    throw new Error(
-      `[Orchestrator] resume: run ${resumeRunId} not found or org mismatch`,
-    );
+    throw new Error(`[Orchestrator] resume: run ${resumeRunId} not found or org mismatch`);
   }
   if (previousRun.organizationId !== inputs.organizationId) {
     // Defensive: getRun already tenant-filters. This is belt + suspenders so
     // a future change to getRun semantics can't silently leak a cross-tenant
     // resume.
     throw new Error(
-      `[Orchestrator] resume: tenant mismatch — previousRun.organizationId=${previousRun.organizationId} but inputs.organizationId=${inputs.organizationId}`,
+      `[Orchestrator] resume: tenant mismatch — previousRun.organizationId=${previousRun.organizationId} but inputs.organizationId=${inputs.organizationId}`
     );
   }
 
@@ -2133,9 +2239,14 @@ async function resumeOrchestratorRun(
   ) {
     console.warn(
       `[Orchestrator] resume: workflow definition drift — run ${resumeRunId} was created under ` +
-        `${previousRun.workflowVersion ?? 'unknown version'} (digest ${previousRun.dependencyGraphDigest.slice(0, 12)}…) ` +
-        `but the live definition is ${WORKFLOW_DEFINITION_VERSION} (digest ${computeDependencyGraphDigest().slice(0, 12)}…). ` +
-        'The run resumes under its own step snapshot; new steps use the live definition.',
+        `${
+          previousRun.workflowVersion ?? 'unknown version'
+        } (digest ${previousRun.dependencyGraphDigest.slice(0, 12)}…) ` +
+        `but the live definition is ${WORKFLOW_DEFINITION_VERSION} (digest ${computeDependencyGraphDigest().slice(
+          0,
+          12
+        )}…). ` +
+        'The run resumes under its own step snapshot; new steps use the live definition.'
     );
   }
 
@@ -2167,14 +2278,16 @@ async function resumeOrchestratorRun(
   // for future steps that adopt the pattern.
   if (awaitingStep.key !== 'csr.draft-narrative') {
     throw new Error(
-      `[Orchestrator] resume: unexpected awaiting-async step '${awaitingStep.key}' — only csr.draft-narrative is supported today`,
+      `[Orchestrator] resume: unexpected awaiting-async step '${awaitingStep.key}' — only csr.draft-narrative is supported today`
     );
   }
 
   const payload = tryParseNarrativePayload(awaitingStep.outputRef);
   if (!payload) {
     throw new Error(
-      `[Orchestrator] resume: csr.draft-narrative step has no parseable jobs payload (outputRef='${awaitingStep.outputRef ?? ''}')`,
+      `[Orchestrator] resume: csr.draft-narrative step has no parseable jobs payload (outputRef='${
+        awaitingStep.outputRef ?? ''
+      }')`
     );
   }
 
@@ -2232,7 +2345,7 @@ async function resumeOrchestratorRun(
     j =>
       j.status === 'failed' ||
       j.status === 'missing' ||
-      (j.status !== 'complete' && !PENDING_STATUSES.has(j.status)),
+      (j.status !== 'complete' && !PENDING_STATUSES.has(j.status))
   );
   const allComplete = jobStatuses.every(j => j.status === 'complete');
 
@@ -2255,14 +2368,19 @@ async function resumeOrchestratorRun(
       stepRef.completedAt = new Date().toISOString();
       stepRef.error = jobStatuses
         .filter(j => j.status === 'failed' || j.status === 'missing')
-        .map(j => `${j.protocolNumber}/${j.jobId}: ${typeof j.error === 'string' ? j.error : JSON.stringify(j.error)}`)
+        .map(
+          j =>
+            `${j.protocolNumber}/${j.jobId}: ${
+              typeof j.error === 'string' ? j.error : JSON.stringify(j.error)
+            }`
+        )
         .join('; ');
       await persistStepEvent(
         previousRun.runId,
         previousRun.organizationId,
         stepRef,
         'fail',
-        previousRun.submissionFk,
+        previousRun.submissionFk
       );
     }
     previousRun.status = 'failed';
@@ -2277,9 +2395,7 @@ async function resumeOrchestratorRun(
   }
 
   // ── All complete: transition step, drive downstream pipeline ─────────────
-  const narrativeStepRef = previousRun.steps.find(
-    s => s.key === 'csr.draft-narrative',
-  );
+  const narrativeStepRef = previousRun.steps.find(s => s.key === 'csr.draft-narrative');
   if (narrativeStepRef) {
     narrativeStepRef.status = 'complete';
     narrativeStepRef.completedAt = new Date().toISOString();
@@ -2294,7 +2410,7 @@ async function resumeOrchestratorRun(
       previousRun.organizationId,
       narrativeStepRef,
       'complete',
-      previousRun.submissionFk,
+      previousRun.submissionFk
     );
   }
 
@@ -2310,13 +2426,12 @@ async function resumeOrchestratorRun(
   // runStep helper bound to `previousRun.runId` and reuse the same
   // logic as the fresh-run path.
   const runId = previousRun.runId;
-  const stepOf = (key: StepKey): StepRecord =>
-    previousRun.steps.find(s => s.key === key)!;
+  const stepOf = (key: StepKey): StepRecord => previousRun.steps.find(s => s.key === key)!;
 
   const runStep = async (
     key: StepKey,
     inputHash: string,
-    fn: () => Promise<{ outputRef: string; output: unknown } | null>,
+    fn: () => Promise<{ outputRef: string; output: unknown } | null>
   ): Promise<void> => {
     const step = stepOf(key);
     // Whitelist resumable statuses rather than blacklist non-resumable
@@ -2338,7 +2453,13 @@ async function resumeOrchestratorRun(
     step.inputHash = inputHash;
     step.status = 'running';
     step.startedAt = new Date().toISOString();
-    await persistStepEvent(runId, previousRun.organizationId, step, 'start', previousRun.submissionFk);
+    await persistStepEvent(
+      runId,
+      previousRun.organizationId,
+      step,
+      'start',
+      previousRun.submissionFk
+    );
     const t0 = Date.now();
     try {
       const result = await fn();
@@ -2353,13 +2474,25 @@ async function resumeOrchestratorRun(
         step.outputHash = hashOutput(result.output);
         step.outputRef = result.outputRef;
       }
-      await persistStepEvent(runId, previousRun.organizationId, step, 'complete', previousRun.submissionFk);
+      await persistStepEvent(
+        runId,
+        previousRun.organizationId,
+        step,
+        'complete',
+        previousRun.submissionFk
+      );
     } catch (err) {
       step.completedAt = new Date().toISOString();
       step.durationMs = Date.now() - t0;
       step.status = 'failed';
       step.error = err instanceof Error ? err.message : String(err);
-      await persistStepEvent(runId, previousRun.organizationId, step, 'fail', previousRun.submissionFk);
+      await persistStepEvent(
+        runId,
+        previousRun.organizationId,
+        step,
+        'fail',
+        previousRun.submissionFk
+      );
       throw err;
     }
   };
@@ -2374,7 +2507,10 @@ async function resumeOrchestratorRun(
         indication: inputs.indication || '[indication not specified]',
         investigationalProduct: inputs.drugProductName || inputs.drugSubstanceName || '[product]',
       });
-      return { outputRef: `m2.7.clinical:completeness=${outputs.m27.completeness}`, output: outputs.m27 };
+      return {
+        outputRef: `m2.7.clinical:completeness=${outputs.m27.completeness}`,
+        output: outputs.m27,
+      };
     });
 
     // m1.admin
@@ -2392,11 +2528,14 @@ async function resumeOrchestratorRun(
       const { assembled, leafBuffers } = await assembleForValidation(
         outputs.module3Sections,
         inputs,
-        sequenceNumber,
+        sequenceNumber
       );
       outputs.assembly = assembled;
       assembledLeafBuffers = leafBuffers;
-      return { outputRef: `package.assemble:${assembled.leaves.length}-leaves (Module 3 only; M1/M2/CSR outputs are reported on the run but are not in this package)`, output: assembled };
+      return {
+        outputRef: `package.assemble:${assembled.leaves.length}-leaves (Module 3 only; M1/M2/CSR outputs are reported on the run but are not in this package)`,
+        output: assembled,
+      };
     });
 
     // package.validate
@@ -2404,7 +2543,7 @@ async function resumeOrchestratorRun(
       const assembly = outputs.assembly;
       if (!assembly) {
         throw new Error(
-          '[Orchestrator] resume: package.validate has no assembled package — package.assemble must run first',
+          '[Orchestrator] resume: package.validate has no assembled package — package.assemble must run first'
         );
       }
       await runStep('package.validate', hashOutput(assembly), async () => {
@@ -2422,7 +2561,7 @@ async function resumeOrchestratorRun(
         const result = await validateEctdPackageHardened(
           assembly.leaves,
           context,
-          assembly.backboneXml,
+          assembly.backboneXml
         );
         outputs.validation = result;
         if (!result.gatewayReady) {
@@ -2430,7 +2569,7 @@ async function resumeOrchestratorRun(
           const regionalErrCount = result.regional.filter(f => f.severity === 'error').length;
           const seqErrCount = result.sequence.filter(f => f.severity === 'error').length;
           throw new Error(
-            `package not gateway-ready: ${errCount} structural error(s), ${regionalErrCount} regional error(s), ${seqErrCount} sequence error(s); hardenedScore=${result.hardenedScore}`,
+            `package not gateway-ready: ${errCount} structural error(s), ${regionalErrCount} regional error(s), ${seqErrCount} sequence error(s); hardenedScore=${result.hardenedScore}`
           );
         }
         return {
@@ -2496,7 +2635,7 @@ async function failResumeSignStep(
   signStep: StepRecord,
   previousRun: OrchestratorRun,
   outputs: OrchestratorOutputs,
-  error: string,
+  error: string
 ): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs }> {
   signStep.status = 'failed';
   signStep.error = error;
@@ -2506,7 +2645,7 @@ async function failResumeSignStep(
     previousRun.organizationId,
     signStep,
     'fail',
-    previousRun.submissionFk,
+    previousRun.submissionFk
   );
   previousRun.status = 'failed';
   previousRun.completedAt = new Date().toISOString();
@@ -2523,12 +2662,14 @@ async function failResumeSignStep(
 async function resumeAwaitingSignature(
   inputs: OrchestratorInputs,
   previousRun: OrchestratorRun,
-  signStep: StepRecord,
+  signStep: StepRecord
 ): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs }> {
   const persistedPayload = tryParseSignPayload(signStep.outputRef);
   if (!persistedPayload) {
     throw new Error(
-      `[Orchestrator] resume: package.sign step has no parseable payload (outputRef='${signStep.outputRef ?? ''}')`,
+      `[Orchestrator] resume: package.sign step has no parseable payload (outputRef='${
+        signStep.outputRef ?? ''
+      }')`
     );
   }
 
@@ -2570,7 +2711,12 @@ async function resumeAwaitingSignature(
       typeof snap.region === 'string' &&
       typeof snap.submissionType === 'string';
     if (!snapshotWellFormed) {
-      return failResumeSignStep(signStep, previousRun, outputs, 'signature_snapshot_integrity_failure');
+      return failResumeSignStep(
+        signStep,
+        previousRun,
+        outputs,
+        'signature_snapshot_integrity_failure'
+      );
     }
 
     // The frozen record must be for the submission/tenant being resumed. This is
@@ -2586,7 +2732,12 @@ async function resumeAwaitingSignature(
       snap.region !== inputs.region ||
       snap.submissionType !== inputs.submissionType
     ) {
-      return failResumeSignStep(signStep, previousRun, outputs, 'signature_resume_identity_mismatch');
+      return failResumeSignStep(
+        signStep,
+        previousRun,
+        outputs,
+        'signature_resume_identity_mismatch'
+      );
     }
 
     // Hydrate the FROZEN signed assembly.
@@ -2618,7 +2769,12 @@ async function resumeAwaitingSignature(
     });
 
     if (recomputedDigest !== persistedPayload.payloadDigest) {
-      return failResumeSignStep(signStep, previousRun, outputs, 'signature_snapshot_integrity_failure');
+      return failResumeSignStep(
+        signStep,
+        previousRun,
+        outputs,
+        'signature_snapshot_integrity_failure'
+      );
     }
 
     // Authenticity guard: the integrity check above only proves the snapshot is
@@ -2633,10 +2789,15 @@ async function resumeAwaitingSignature(
     const sealVerdict = verifySignPayloadSeal(
       recomputedDigest,
       snap.organizationId,
-      persistedPayload.payloadSeal,
+      persistedPayload.payloadSeal
     );
     if (sealVerdict === 'failed' || (sealVerdict === 'unsealed' && isSignSealConfigured())) {
-      return failResumeSignStep(signStep, previousRun, outputs, 'signature_seal_verification_failed');
+      return failResumeSignStep(
+        signStep,
+        previousRun,
+        outputs,
+        'signature_seal_verification_failed'
+      );
     }
   } else {
     // ── (B) LEGACY re-derive path (runs suspended before snapshot support) ──
@@ -2697,7 +2858,7 @@ async function resumeAwaitingSignature(
     const { assembled, leafBuffers } = await assembleForValidation(
       outputs.module3Sections,
       inputs,
-      sequenceNumber,
+      sequenceNumber
     );
     outputs.assembly = assembled;
 
@@ -2716,7 +2877,7 @@ async function resumeAwaitingSignature(
       outputs.validation = await validateEctdPackageHardened(
         outputs.assembly.leaves,
         context,
-        outputs.assembly.backboneXml,
+        outputs.assembly.backboneXml
       );
     }
 
@@ -2728,7 +2889,7 @@ async function resumeAwaitingSignature(
         signStep,
         previousRun,
         outputs,
-        'package.sign cannot resume: validation outcome missing (skipValidation set?)',
+        'package.sign cannot resume: validation outcome missing (skipValidation set?)'
       );
     }
 
@@ -2784,7 +2945,7 @@ async function resumeAwaitingSignature(
     previousRun.organizationId,
     signStep,
     'complete',
-    previousRun.submissionFk,
+    previousRun.submissionFk
   );
 
   previousRun.status = finalRunStatus(previousRun.steps, inputs);
@@ -2825,7 +2986,7 @@ async function resumeAwaitingSignature(
  */
 export async function getRunResumeReadiness(
   runId: string,
-  organizationId: number,
+  organizationId: number
 ): Promise<{ ready: boolean; jobStatus?: string }> {
   if (!Number.isFinite(organizationId) || organizationId <= 0) {
     return { ready: false };
@@ -2893,7 +3054,7 @@ export function markDownstreamStale(steps: StepRecord[], changedStep: StepKey): 
   // constant is only the fallback for legacy records persisted before
   // dependsOn was snapshotted.
   const edgesFor = (s: StepRecord): StepKey[] =>
-    Array.isArray(s.dependsOn) ? s.dependsOn : (STEP_DEPENDENCIES[s.key] ?? []);
+    Array.isArray(s.dependsOn) ? s.dependsOn : STEP_DEPENDENCIES[s.key] ?? [];
 
   while (queue.length > 0) {
     const current = queue.shift()!;
@@ -2956,7 +3117,9 @@ export async function regenerateAffected(
   // stale/forged previousRun could drive a regeneration under the wrong tenant.
   if (!Number.isFinite(inputs.organizationId) || inputs.organizationId <= 0) {
     throw new Error(
-      `[Orchestrator] regenerateAffected: inputs.organizationId is required and must be a positive integer (got: ${String(inputs.organizationId)})`
+      `[Orchestrator] regenerateAffected: inputs.organizationId is required and must be a positive integer (got: ${String(
+        inputs.organizationId
+      )})`
     );
   }
   if (previousRun.organizationId !== inputs.organizationId) {
@@ -2972,15 +3135,21 @@ export async function regenerateAffected(
   // Detect input-hash changes for terminal-source steps
   const m3Hash = hashInputs(inputs.cmcSources, inputs.region);
   const csrHash = hashInputs(inputs.clinicalStudyData);
-  const m24Hash = hashInputs(inputs.nonclinicalStudies, inputs.drugSubstanceName ?? '', inputs.indication ?? '');
+  const m24Hash = hashInputs(
+    inputs.nonclinicalStudies,
+    inputs.drugSubstanceName ?? '',
+    inputs.indication ?? ''
+  );
 
   const m3Step = previousRun.steps.find(s => s.key === 'm3.compose');
   const csrStep = previousRun.steps.find(s => s.key === 'csr.tabulate');
   const m24Step = previousRun.steps.find(s => s.key === 'm2.4.nonclinical');
 
   if (m3Step && m3Step.inputHash !== m3Hash) markDownstreamStale(previousRun.steps, 'm3.compose');
-  if (csrStep && csrStep.inputHash !== csrHash) markDownstreamStale(previousRun.steps, 'csr.tabulate');
-  if (m24Step && m24Step.inputHash !== m24Hash) markDownstreamStale(previousRun.steps, 'm2.4.nonclinical');
+  if (csrStep && csrStep.inputHash !== csrHash)
+    markDownstreamStale(previousRun.steps, 'csr.tabulate');
+  if (m24Step && m24Step.inputHash !== m24Hash)
+    markDownstreamStale(previousRun.steps, 'm2.4.nonclinical');
 
   const stale = previousRun.steps.filter(s => s.status === 'stale').map(s => s.key);
 
@@ -2991,7 +3160,12 @@ export async function regenerateAffected(
   // Run a fresh orchestrator pass — the earlier run record is preserved in audit log
   const fresh = await runOrchestrator(inputs);
 
-  return { run: fresh.run, outputs: fresh.outputs, regenerated: stale, supersededRunId: previousRun.runId };
+  return {
+    run: fresh.run,
+    outputs: fresh.outputs,
+    regenerated: stale,
+    supersededRunId: previousRun.runId,
+  };
 }
 
 // ── Status query ────────────────────────────────────────────────────────────
@@ -3001,7 +3175,11 @@ export class OrchestratorReadError extends Error {
   readonly operation: 'getRun' | 'getRunAudit';
   readonly cause: unknown;
   constructor(operation: 'getRun' | 'getRunAudit', cause: unknown) {
-    super(`[Orchestrator] ${operation} failed: ${cause instanceof Error ? cause.message : String(cause)}`);
+    super(
+      `[Orchestrator] ${operation} failed: ${
+        cause instanceof Error ? cause.message : String(cause)
+      }`
+    );
     this.name = 'OrchestratorReadError';
     this.operation = operation;
     this.cause = cause;
@@ -3071,16 +3249,18 @@ export async function getRun(
 export async function getRunAudit(
   runId: string,
   organizationId: number
-): Promise<Array<{
-  stepKey: string;
-  eventType: string;
-  status: string;
-  inputHash: string;
-  outputHash: string | null;
-  outputRef: string | null;
-  error: string | null;
-  occurredAt: string;
-}>> {
+): Promise<
+  Array<{
+    stepKey: string;
+    eventType: string;
+    status: string;
+    inputHash: string;
+    outputHash: string | null;
+    outputRef: string | null;
+    error: string | null;
+    occurredAt: string;
+  }>
+> {
   // Tenant gate — refuse to query without a positive tenant scope.
   if (!Number.isFinite(organizationId) || organizationId <= 0) {
     console.warn('[Orchestrator] getRunAudit called with invalid organizationId:', organizationId);
@@ -3182,4 +3362,3 @@ export async function loadSubmissionFkBySubmissionIdText(
     return null;
   }
 }
-

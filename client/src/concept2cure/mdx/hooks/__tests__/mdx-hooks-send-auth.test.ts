@@ -54,18 +54,32 @@ const sentAuth = () =>
 describe('useAcceptAnaDraft', () => {
   it('sends the Bearer token the accept route requires', async () => {
     fetchMock.mockResolvedValue(ok({ ok: true }));
-    const { result } = renderHook(() => useAcceptAnaDraft({ sectionRowId: 11 }));
+    const { result } = renderHook(() => useAcceptAnaDraft(11));
     await act(async () => { await result.current.accept({ refinedContent: 'x' }); });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(sentAuth()).toEqual(['Bearer test-token']);
+    /* The section id is POSITIONAL. This passed `{ sectionRowId: 11 }`, an
+       object, which typechecked red and still ran: the hook only compares it to
+       null, so the request went to /api/cerv2-sections/[object Object]/… and
+       every assertion below still held. Pinning the URL is what makes the
+       argument shape observable from the test. */
+    expect(String(fetchMock.mock.calls[0][0])).toBe(
+      '/api/cerv2-sections/11/accept-ana-draft',
+    );
     const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
     expect(headers['x-organization-id']).toBe('7');
     expect(headers['Content-Type']).toBe('application/json');
+    // The id is interpolated straight into the path, so asserting only on
+    // headers let a wrong-shaped argument through: the hook was being called
+    // with an object, which is truthy, so it sailed past its own null guard and
+    // built `/api/cerv2-sections/[object Object]/accept-ana-draft`. Green suite,
+    // red typecheck, unreachable route.
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/cerv2-sections/11/accept-ana-draft');
   });
 
   it('does not put the raw error envelope on screen', async () => {
     fetchMock.mockResolvedValue(unauthorized());
-    const { result } = renderHook(() => useAcceptAnaDraft({ sectionRowId: 11 }));
+    const { result } = renderHook(() => useAcceptAnaDraft(11));
     await act(async () => { await result.current.accept(); });
     await waitFor(() => expect(result.current.error).toBeTruthy());
     const shown = String(result.current.error);

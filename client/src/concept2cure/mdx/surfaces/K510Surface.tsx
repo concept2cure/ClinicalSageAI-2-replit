@@ -436,14 +436,14 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               <div className="actions">
                 <button
                   className={`tb-btn${showSelectedOnly ? ' on' : ''}`}
-                  title={showSelectedOnly ? 'Show all candidates' : 'Show selected only'}
+                  title={showSelectedOnly ? 'Show all candidates' : 'Show selected only'} aria-label={showSelectedOnly ? 'Show all candidates' : 'Show selected only'}
                   onClick={() => setShowSelectedOnly(s => !s)}
                 >
                   {I.filter}
                 </button>
                 <button
                   className="tb-btn"
-                  title="Refine query with AnA"
+                  title="Refine query with AnA" aria-label="Refine query with AnA"
                   onClick={() =>
                     onAskAna(
                       `Refine the predicate search for ${subjectName}. ` +
@@ -601,7 +601,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               <div className="actions">
                 <button
                   className="tb-btn"
-                  title="Export SE matrix as CSV"
+                  title="Export SE matrix as CSV" aria-label="Export SE matrix as CSV"
                   onClick={() => {
                     const headers = multi
                       ? ['Attribute', 'Subject', ...selectedList.map(p => p.k)]
@@ -692,7 +692,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               <div className="actions">
                 <button
                   className="tb-btn"
-                  title="Run pre-flight validation"
+                  title="Run pre-flight validation" aria-label="Run pre-flight validation"
                   onClick={() =>
                     onAskAna(
                       `Run pre-flight RTA validation on the 510(k) eSTAR module for ${program?.code ?? 'this project'}. ` +

@@ -13,6 +13,10 @@
  * Express Router wiring lives in the parent chat module.
  */
 
+import {
+  writeUploadRetrievalAtom,
+  type UploadAtomResult,
+} from '../../services/chat-uploads/upload-retrieval-atom.js';
 import type { Request, Response } from 'express';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -211,6 +215,10 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // (method + word count) regardless of project scope, and (b) the
     // project-scoped block below reuses it for the artifact + memory atom.
     // Falls back to a filename placeholder on failure.
+    /* What the retrieval corpus ends up holding for this file, so the response
+       can state it rather than leaving the caller to assume the whole document
+       was indexed. Null when no atom path ran (no org, or no extracted text). */
+    let atomBounds: UploadAtomResult | null = null;
     let extractionMethod: string | null = null;
     let extractionWords = 0;
     let extractedText = `[Uploaded via chat: ${fileName}] (${mimeType}, ${fileSize} bytes)`;
@@ -362,27 +370,16 @@ export const uploadHandler = async (req: Request, res: Response) => {
         });
       }
 
-      // Auto-embed into lumen_data_atoms for pgvector retrieval
-      try {
-        const atomResult = await pool.query(
-          `INSERT INTO lumen_data_atoms
-             (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
-           VALUES ($1, 'chat_upload', $2, 'source_document', $3, $4, '{source,chat_upload}', 0.85, 'active')
-           ON CONFLICT DO NOTHING
-           RETURNING id`,
-          [numericOrgId, artId, fileName, boundedContent.substring(0, 16000)]
-        );
-        if (atomResult.rows.length > 0) {
-          const { getEmbeddingService } = await import('../../services/enhancedEmbeddingService.js');
-          const embeddingService = getEmbeddingService(pool);
-          await embeddingService.embedAtom(atomResult.rows[0].id);
-        }
-      } catch (embedErr: any) {
-        logger.warn('Chat upload embedding failed (non-fatal)', {
-          err: embedErr?.message,
-          fileId,
-        });
-      }
+      // Retrieval atom, through the one writer both upload paths use. It bounds
+      // the content and RECORDS the bound, so the row says whether it holds the
+      // whole file or its opening — see upload-retrieval-atom.ts.
+      atomBounds = await writeUploadRetrievalAtom(pool, {
+        organizationId: numericOrgId,
+        sourceId: artId,
+        fileName,
+        text: extractedText,
+        tags: ['source', 'chat_upload'],
+      });
     }
 
     // ── Canonical source identity ──────────────────────────────────────────
@@ -649,43 +646,22 @@ export const uploadHandler = async (req: Request, res: Response) => {
       Number.isFinite(numericOrgId) &&
       numericOrgId > 0
     ) {
-      try {
-        const atomSourceId = sourceId != null ? `cre_source:${sourceId}` : `upload:${fileId}`;
-        const boundedContent = extractedText.substring(0, 16000);
-        const atomResult = await pool.query(
-          `INSERT INTO lumen_data_atoms
-             (organization_id, source_type, source_id, atom_type, title, content, tags, confidence, status)
-           SELECT $1, 'chat_upload', $2, 'source_document', $3, $4, $5::text[], 0.85, 'active'
-            WHERE NOT EXISTS (
-              SELECT 1 FROM lumen_data_atoms
-               WHERE organization_id = $1 AND source_id = $2
-            )
-           RETURNING id`,
-          [
-            numericOrgId,
-            atomSourceId,
-            fileName,
-            boundedContent,
-            ['source', 'chat_upload', `program:${projectScope.programId}`],
-          ]
-        );
-        if (atomResult.rows.length > 0) {
-          const { getEmbeddingService } = await import(
-            '../../services/enhancedEmbeddingService.js'
-          );
-          const embeddingService = getEmbeddingService(pool);
-          await embeddingService.embedAtom(atomResult.rows[0].id);
-          logger.info('Program-scoped upload embedded into retrieval corpus', {
-            fileId,
-            sourceId,
-            atomId: atomResult.rows[0].id,
-            programId: projectScope.programId,
-          });
-        }
-      } catch (embedErr: any) {
-        logger.warn('Program-scoped upload embedding failed (non-fatal)', {
-          err: embedErr?.message,
+      atomBounds = await writeUploadRetrievalAtom(pool, {
+        organizationId: numericOrgId,
+        sourceId: sourceId != null ? `cre_source:${sourceId}` : `upload:${fileId}`,
+        fileName,
+        text: extractedText,
+        tags: ['source', 'chat_upload', `program:${projectScope.programId}`],
+      });
+      if (atomBounds.atomId != null) {
+        logger.info('Program-scoped upload embedded into retrieval corpus', {
           fileId,
+          sourceId,
+          atomId: atomBounds.atomId,
+          programId: projectScope.programId,
+          embeddedChars: atomBounds.embeddedChars,
+          extractedChars: atomBounds.extractedChars,
+          truncated: atomBounds.truncated,
         });
       }
     }
@@ -704,6 +680,19 @@ export const uploadHandler = async (req: Request, res: Response) => {
       // many words landed in memory (null/0 when unscoped or extraction failed).
       extractionMethod,
       extractionWords,
+      /* What the retrieval corpus actually holds. An upload's atom is ONE
+         embedding over a bounded prefix, so for anything longer than a few
+         pages `indexedWholeFile` is false — and saying so here is the
+         difference between "your file is searchable" and the truth, which is
+         that its opening is. Filing it into the vault indexes all of it. */
+      retrieval: atomBounds
+        ? {
+            embeddedChars: atomBounds.embeddedChars,
+            extractedChars: atomBounds.extractedChars,
+            indexedWholeFile: !atomBounds.truncated,
+            embedded: atomBounds.embedded,
+          }
+        : null,
     });
   } catch (error: any) {
     logger.error('Upload error', { err: error?.message });
