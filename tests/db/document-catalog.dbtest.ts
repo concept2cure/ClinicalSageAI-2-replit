@@ -282,6 +282,88 @@ describe('ingest with the catalog on — the extraction tier is recorded', () =>
 
 });
 
+describe('a listing reports the scope, not the page it happened to return', () => {
+  /* ── A page is not an inventory ─────────────────────────────────────────
+     The listing has always applied a LIMIT (100 by default, 200 at most) and
+     returned a bare array, so the only number a caller could report was
+     `rows.length` — and the tool reported exactly that, as `count`. An
+     organization with more documents than the limit was told it had precisely
+     as many files as the query returned, and the ones it was NOT told about
+     were the oldest, because the listing is ORDER BY created_at DESC. Session
+     recall, which samples twelve, inherited the same lie under a heading that
+     reads as the complete set.
+
+     These cases drive the real SQL: the totals must describe the scope, and a
+     page must say what it left out. Reverting the window aggregates to
+     `documents.length` turns them red. */
+  it('reports the scope total while the page stays at the limit', async () => {
+    const truth = await owner.query(
+      `SELECT COUNT(*)::int AS n FROM vault.documents
+        WHERE program_id = $1 AND deleted_at IS NULL`,
+      [programId],
+    );
+    const scopeTotal: number = truth.rows[0].n;
+    expect(scopeTotal).toBeGreaterThan(1);
+
+    const page = await callTool('list_project_documents', { program_id: programId, limit: 1 });
+    expect(page.returned).toBe(1);
+    expect(page.documents).toHaveLength(1);
+    expect(page.total).toBe(scopeTotal);
+    expect(page.withheld).toBe(scopeTotal - 1);
+    expect(page.message).toContain(`${scopeTotal} document(s)`);
+    expect(page.message).toContain(`${scopeTotal - 1} not returned`);
+    expect(page.message).toContain('Do not answer "no such document" from this page');
+  });
+
+  it('counts what needs attention across the scope, not across the page', async () => {
+    const truth = await owner.query(
+      `SELECT COUNT(*) FILTER (
+                WHERE c.catalog_status IS NULL OR c.catalog_status = 'extracted'
+              )::int AS unstudied,
+              COUNT(*) FILTER (WHERE c.catalog_status = 'extraction_failed')::int AS failed,
+              COUNT(*) FILTER (WHERE d.placement_status = 'unfiled')::int AS unfiled
+         FROM vault.documents d
+         LEFT JOIN vault.document_catalog c ON c.document_id = d.id
+        WHERE d.program_id = $1 AND d.deleted_at IS NULL`,
+      [programId],
+    );
+    const { unstudied, failed, unfiled } = truth.rows[0];
+    // Limit 1: the page holds one document, so any count above 1 is reachable
+    // only from the scope aggregate.
+    const page = await callTool('list_project_documents', { program_id: programId, limit: 1 });
+    expect(page.notYetStudied).toBe(unstudied);
+    expect(page.extractionFailed).toBe(failed);
+    expect(page.unfiled).toBe(unfiled);
+    expect(failed).toBeGreaterThan(0);
+    expect(page.message).toContain(`${failed} with failed extraction`);
+  });
+
+  it('claims completeness only when the page really is the whole scope', async () => {
+    const page = await callTool('list_project_documents', { program_id: programId, limit: 200 });
+    expect(page.withheld).toBe(0);
+    expect(page.returned).toBe(page.total);
+    expect(page.message).toContain('all of them are listed here');
+    expect(page.message).not.toContain('not returned');
+  });
+
+  it('the session-start digest carries the scope it sampled from', async () => {
+    const svc = await import('../../server/services/vault/document-catalog.service');
+    const digest = await inTenantScope({ id: orgId, uuid: orgUuid }, () =>
+      svc.getCatalogBootstrapDigest(orgId, 1),
+    );
+    expect(digest.files).toHaveLength(1);
+    expect(digest.total).toBeGreaterThan(1);
+    expect(digest.withheld).toBe(digest.total - 1);
+
+    const { formatVaultScopeLine } = await import(
+      '../../server/services/ana-session-bootstrap-format'
+    );
+    const line = formatVaultScopeLine(digest);
+    expect(line).toContain(`Showing 1 of ${digest.total} files on record`);
+    expect(line).toContain('no such document');
+  });
+});
+
 describe('the read-coverage gate, end to end through the tool handlers', () => {
   it('catalog_project_document REFUSES a partial read and names what is unread', async () => {
     // Read only the first 40 characters — the sampled-page anti-pattern.
