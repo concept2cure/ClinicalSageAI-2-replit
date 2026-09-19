@@ -33,6 +33,20 @@ const mockSupersessions: any[] = [];
 let mockInsertCalls: any[] = [];
 let mockUpdateCalls: any[] = [];
 
+/**
+ * The span-lineage answers, lifted out of the query mock's branch chain: three
+ * of its conditions were about one table, and that chain is what grew past the
+ * complexity budget. Returns null when the query is about something else, so
+ * the caller falls through to its remaining branches. A function declaration,
+ * so it is hoisted above the vi.mock factory that calls it.
+ */
+function spanLineageAnswer(queryStr: string): { rows: unknown[] } | null {
+  if (!queryStr.includes('document_span_lineage')) return null;
+  if (queryStr.includes('INSERT')) return { rows: [{ id: 'mock-span' }] };
+  if (queryStr.includes('char_start')) return { rows: [{ char_start: 0, char_end: 1_000_000 }] };
+  return { rows: [] };
+}
+
 vi.mock('../../server/db', () => {
   const createChainedMock = () => {
     const chain: any = {};
@@ -103,13 +117,8 @@ vi.mock('../../server/db', () => {
     if (queryStr.includes('INSERT INTO concept2cure_artifact_versions')) {
       return Promise.resolve({ rows: [{ id: 'mock-version' }] });
     }
-    if (queryStr.includes('document_span_lineage')) {
-      if (queryStr.includes('INSERT')) return Promise.resolve({ rows: [{ id: 'mock-span' }] });
-      if (queryStr.includes('char_start')) {
-        return Promise.resolve({ rows: [{ char_start: 0, char_end: 1_000_000 }] });
-      }
-      return Promise.resolve({ rows: [] });
-    }
+    const lineage = spanLineageAnswer(queryStr);
+    if (lineage) return Promise.resolve(lineage);
 
     // ADR-0009 receipt persistence: INSERT … RETURNING id, and the executor
     // treats a receipt it cannot persist as a FAILED execution. That is

@@ -126,6 +126,9 @@ describe('sealVerifiedVersion — happy path (one transaction)', () => {
     expect(parsed.sealedRecord.algorithm).toBe('sha256');
   });
 
+});
+
+describe('sealVerifiedVersion — binding the seal to the persisted row', () => {
   it('E11: binds the seal to the EXISTING persisted row resolved from external id + version number (no fallback)', async () => {
     // The client knows only the EXTERNAL artifact id and the version NUMBER — not
     // the row PKs. The service must resolve both org-scoped and seal the existing
