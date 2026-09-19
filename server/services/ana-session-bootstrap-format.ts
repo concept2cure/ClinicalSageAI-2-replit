@@ -247,8 +247,13 @@ export function formatSessionBootstrap(parts: SessionBootstrapParts): string {
         `_More than these ${uploads.length} were attached — list_project_documents returns the rest._`
       );
     }
+    /* The retrieval corpus holds ONE bounded-prefix atom per chat upload, so
+       "it is searchable" is true of its opening and false of the rest. Filing
+       it runs the canonical vault ingest, which chunks and page-numbers all of
+       it — the difference matters before she answers from a search. */
     lines.push(
-      '_Reopen one with read_uploaded_document; file_chat_upload_to_vault puts it in the project folder so it can be cataloged._'
+      '_Only the OPENING of each is in the retrieval index. Reopen one with read_uploaded_document; ' +
+        'file_chat_upload_to_vault files it and indexes all of it, page by page._'
     );
   }
 
