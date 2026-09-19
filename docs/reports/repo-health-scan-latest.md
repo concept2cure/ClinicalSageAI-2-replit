@@ -1,19 +1,19 @@
 # Repo Health Scan
 
-Generated: 2026-09-19T02:20:40.186Z
+Generated: 2026-09-19T03:53:58.078Z
 Branch: concept2cure-v2
-SHA: 8c3b4c585f10503f72d300015c23572ad5834392
+SHA: cebe35888153e44364801d889e622aa7142f9e20
 
 ## Summary
 
 - Content-duplicate groups (gated): 0 (0 files)
 - Duplicate basenames (reported, not gated): 204
 - Files over byte threshold: 43
-- Files over line threshold: 96
+- Files over line threshold: 97
 
 ## Owner Summary
 
-- Backend Platform (server/routes + server/services owners): duplicateGroups=395, largeByBytes=33, largeByLines=79
+- Backend Platform (server/routes + server/services owners): duplicateGroups=395, largeByBytes=33, largeByLines=80
 - Unassigned (TBD): duplicateGroups=153, largeByBytes=2, largeByLines=7
 - Shared Contracts (shared/schema + shared/types owners): duplicateGroups=74, largeByBytes=3, largeByLines=1
 - Concept2Cure Frontend (client/src/concept2cure maintainers): duplicateGroups=55, largeByBytes=5, largeByLines=9

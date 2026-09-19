@@ -83,6 +83,19 @@ const VOID_WRITE = /\bvoid\s+auditService\s*\.\s*logAction\s*\(/g;
  *   `return await auditService.logAction(…)`         — handed to the caller
  *   `x = await auditService.logAction(…)`            — assigned
  * Those all have a token before `await` on the line.
+ *
+ * One shape defeats that anchor: a call passed as an ARGUMENT across lines —
+ *
+ *     transmitAttemptAudit.push(
+ *       await recordAuditRow({ … }),
+ *     );
+ *
+ * where the `await` does start its own line and the value is nevertheless kept.
+ * `isArgumentPosition` below excludes it. There is no such site in the current
+ * population — I checked all 102 — but the shape is real (it appears verbatim in
+ * ind-icsr-transmission-persistence, with recordAuditRow), and a gate that flags
+ * correct code gets that code BASELINED, which then admits a genuine defect in the
+ * same file later. Cheaper to exclude it than to explain the baseline entry.
  */
 const AWAITED_DISCARDED = /^[ \t]*await\s+auditService\s*\.\s*logAction\s*\(/gm;
 
@@ -129,6 +142,21 @@ function stripNonCode(src) {
   return out;
 }
 
+/**
+ * True when the matched `await` is an argument rather than a statement: the
+ * previous code-bearing line ends in a token that opens one.
+ */
+function isArgumentPosition(code, matchIndex) {
+  const before = code.slice(0, matchIndex).split('\n');
+  before.pop(); // the line the match is on
+  for (let i = before.length - 1; i >= 0; i--) {
+    const line = before[i].trimEnd();
+    if (line.trim() === '') continue;
+    return /[([,=]$|=>$|&&$|\|\|$|\?$|:$/.test(line);
+  }
+  return false;
+}
+
 function sourceFiles() {
   return execSync("git ls-files 'server/**/*.ts'", {
     cwd: ROOT,
@@ -149,6 +177,7 @@ export function scanSource(src, file) {
     re.lastIndex = 0;
     let m;
     while ((m = re.exec(code)) !== null) {
+      if (re === AWAITED_DISCARDED && isArgumentPosition(code, m.index)) continue;
       hits.push({ file, line: code.slice(0, m.index).split('\n').length });
     }
   }
@@ -194,6 +223,13 @@ if (process.argv.includes('--self-test')) {
       audit = await auditService.logAction({ action: entry.action });
       if (!audit.persisted) log.error('audit row NOT persisted', { a: 1 });
     }`;
+  const ARGUMENT = `
+    async function f(entry, collected) {
+      collected.push(
+        await auditService.logAction({ action: entry.action }),
+      );
+      return collected;
+    }`;
   const REPORTED = `
     async function f(entry) {
       const audit = await auditService.logAction({ action: entry.action });
@@ -224,6 +260,7 @@ if (process.argv.includes('--self-test')) {
   say(scanSource(REPORTED, '<t>').length === 0, 'an awaited-and-reported write is not flagged');
   say(scanSource(RETURNED, '<t>').length === 0, 'a write returned to the caller is not flagged');
   say(scanSource(REASSIGNED, '<t>').length === 0, 'a write assigned to an existing variable is not flagged');
+  say(scanSource(ARGUMENT, '<t>').length === 0, 'a write passed as an argument across lines is not flagged');
   say(scanSource(DOCUMENTED, '<t>').length === 0, 'the defect quoted in a comment is not flagged');
 
   // Case 4: the ratchet. A file baselined at 1 that now has 2 must fail.

@@ -111,6 +111,61 @@ describe('the toggle rows the deployment never had', () => {
   });
 });
 
+/**
+ * The read needs a tenant scope, and nothing at startup has one.
+ *
+ * `initializeFeatureToggle` establishes a system scope and says why in eight
+ * lines of comment: pool instrumentation refuses any statement issued with no
+ * tenant scope while RLS_ENFORCE=on, which production hard-requires, and
+ * `feature_toggles` is platform reference data with no tenant column and no
+ * RLS policy, so the scope is a statement of what the operation IS.
+ *
+ * Every word of that applies to the READ, and the read did not have one. So it
+ * was refused on every enforcing deployment, `isFeatureEnabled` caught the
+ * refusal and fell back to `false`, and the toggle an operator had just
+ * enabled resolved OFF — for the startup line, and for anything else running
+ * outside a request. The write got the scope; the read did not; only the read
+ * is on the path anybody watches.
+ */
+describe('the toggle read holds outside a request, where the bootstrap runs', () => {
+  it('reads an enabled row with no ambient tenant scope', async () => {
+    const { FeatureToggleService } = await import('../../server/services/featureToggleService');
+    const { getTenantScope } = await import('../../server/db/tenantStore');
+    // The condition under test: no scope at all, as at startup.
+    expect(getTenantScope()).toBeUndefined();
+
+    await owner.query(
+      `INSERT INTO feature_toggles (feature_key, description, enabled)
+       VALUES ($1, 'dbtest', TRUE)`,
+      ['ana.document_catalog'],
+    );
+    const state = await FeatureToggleService.readFeatureState('ana.document_catalog');
+    expect(state).toEqual({ enabled: true, readable: true });
+    expect(await FeatureToggleService.isFeatureEnabled('ana.document_catalog')).toBe(true);
+  });
+
+  it('a genuinely disabled row is readable and off — not the same answer as a failed read', async () => {
+    const { FeatureToggleService } = await import('../../server/services/featureToggleService');
+    await owner.query(
+      `INSERT INTO feature_toggles (feature_key, description, enabled)
+       VALUES ($1, 'dbtest', FALSE)`,
+      ['ana.document_catalog'],
+    );
+    expect(await FeatureToggleService.readFeatureState('ana.document_catalog')).toEqual({
+      enabled: false,
+      readable: true,
+    });
+  });
+
+  it('a key with no row is readable and off — absence is an answer, not a failure', async () => {
+    const { FeatureToggleService } = await import('../../server/services/featureToggleService');
+    expect(await FeatureToggleService.readFeatureState('ana.document_catalog')).toEqual({
+      enabled: false,
+      readable: true,
+    });
+  });
+});
+
 describe('the key written is the key read', () => {
   it('enabling the row turns the capability on for an organization', async () => {
     await bootstrap();
