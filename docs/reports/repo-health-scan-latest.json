@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T05:44:32.551Z",
+  "generatedAt": "2026-09-19T05:52:16.640Z",
   "git": {
-    "sha": "2c0db12e6fa50b541034fb66c0376dd3e8f26547",
+    "sha": "485b5bf39677a741135a8af3a9e82094d8084d08",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2357,12 +2357,12 @@
         "lines": 1912
       },
       {
-        "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1898
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1907
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1893
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "lines": 1898
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
