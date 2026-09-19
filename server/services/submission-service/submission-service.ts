@@ -41,7 +41,7 @@ import type {
 } from '../../../shared/types/database';
 import { writeChainedAuditRow } from '../auditService';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
-import { deriveGovernedTargetBinding, BINDING_BASIS } from '../part11/signature-persistence';
+import { deriveGovernedTargetBinding, BINDING_BASIS, isSignatureWithdrawn } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
 import { normalizeCtdCode } from '../ectd/section-to-ctd';
 
@@ -442,15 +442,44 @@ async function governedSignatureRefusal(
     return 'this sign action already authorized a governed transition; each step needs its own signature';
   }
 
+  /* The withdrawal columns are selected, not just the binding ones. A governed
+     revocation (persistGovernedSignatureRevocation) marks a signature out of
+     force by setting superseded_by / is_valid=false / verification_status, and
+     deliberately leaves bound_payload_digest, binding_basis and
+     signature_manifest byte-identical — §11.70 requires the superseded
+     signature be retained unaltered. It also writes a NEW c2c_ana_actions row
+     rather than touching the original `sign` row, so every earlier check in this
+     function still matches a revoked signature: the sign action is still
+     'executed' by the same actor, the declared intent is unchanged, the
+     spent-check filters different actions, and the leaf-manifest digest still
+     agrees because revocation does not alter content.
+
+     Reading only the binding columns therefore could not distinguish a live
+     signature from a withdrawn one, and revocation — the product's own §11.70
+     mechanism for taking an authorization back — had no effect on freeze or
+     transmit. (Dispatch was covered, because its Gate 2 release-signature check
+     does apply this predicate.) */
   const esig = await db.execute(sql`
-    SELECT bound_payload_digest, binding_basis FROM electronic_signatures
+    SELECT bound_payload_digest, binding_basis, superseded_by, is_valid, verification_status
+      FROM electronic_signatures
     WHERE organization_id = ${ctx.organizationId}
       AND signed_target = ${target}
       AND (signature_manifest::jsonb ->> 'actionId') = ${signatureActionId}
     LIMIT 1
   `);
-  const sig = ((esig as unknown as { rows?: Array<{ bound_payload_digest: string | null; binding_basis: string | null }> }).rows ?? [])[0];
+  const sig = ((esig as unknown as {
+    rows?: Array<{
+      bound_payload_digest: string | null;
+      binding_basis: string | null;
+      superseded_by: unknown;
+      is_valid: unknown;
+      verification_status: unknown;
+    }>;
+  }).rows ?? [])[0];
   if (!sig) return 'no electronic signature record is bound to this sign action';
+  if (isSignatureWithdrawn(sig)) {
+    return 'the electronic signature authorizing this step has been revoked; obtain a new signature';
+  }
   if (sig.binding_basis !== BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST || !sig.bound_payload_digest) {
     return 'the signature is not bound to this sequence\'s leaf manifest; re-sign the sequence';
   }
