@@ -48,10 +48,6 @@ function attachPoolMonitoring(p) {
   p.on('connect', _client => {
     dbStatus.poolSize++;
     dbStatus.events.emit('connect', { poolSize: dbStatus.poolSize });
-    console.log('[database] Database connection successful', {
-      timestamp: new Date().toISOString(),
-      poolSize: dbStatus.poolSize,
-    });
   });
 
   p.on('remove', _client => {

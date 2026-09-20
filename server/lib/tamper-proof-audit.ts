@@ -214,7 +214,7 @@ export class TamperProofAuditLog {
    */
   async initialize(): Promise<void> {
     const presence = await this.pool.query(
-      `SELECT to_regclass('audit.tamper_proof_log') IS NOT NULL AS present`,
+      `SELECT to_regclass('audit.tamper_proof_log') IS NOT NULL AS present`
     );
 
     if (!presence.rows[0]?.present) {
@@ -223,7 +223,7 @@ export class TamperProofAuditLog {
           'tamper-proof store is owned by db/migrations/20260813_audit_tamper_proof_log.sql ' +
           'and applied by `node scripts/db/deploy-migrate.mjs`, which runs as the ' +
           'database OWNER. The runtime role is deliberately append-only on the audit ' +
-          'schema and cannot create it. Run the deploy migration.',
+          'schema and cannot create it. Run the deploy migration.'
       );
     }
 
@@ -232,13 +232,13 @@ export class TamperProofAuditLog {
     // rather than as a failed audit write during a regulated action.
     const writable = await this.pool.query(
       `SELECT current_user AS role,
-              has_table_privilege(current_user, 'audit.tamper_proof_log', 'INSERT') AS can_insert`,
+              has_table_privilege(current_user, 'audit.tamper_proof_log', 'INSERT') AS can_insert`
     );
     if (!writable.rows[0]?.can_insert) {
       throw new Error(
         `[AuditLog] role "${writable.rows[0]?.role}" cannot INSERT into ` +
           'audit.tamper_proof_log. Re-run scripts/db/provision-app-role.mjs (or ' +
-          'deploy-migrate, which refreshes grants) to restore the append-only grant.',
+          'deploy-migrate, which refreshes grants) to restore the append-only grant.'
       );
     }
   }
@@ -318,8 +318,8 @@ export class TamperProofAuditLog {
             resourceId: context?.resourceId,
             ipAddress,
             userAgent: context?.userAgent,
-          }),
-        ),
+          })
+        )
       );
 
       // Create chain hash (content hash + previous hash)
@@ -448,7 +448,7 @@ export class TamperProofAuditLog {
       });
 
       const expectedContentHash = this.computeHash(
-        TamperProofAuditLog.stringifyForHash(contentData),
+        TamperProofAuditLog.stringifyForHash(contentData)
       );
 
       // Rows written before the canonicalization fix carry a hash over the
@@ -457,7 +457,11 @@ export class TamperProofAuditLog {
       const matchesContentHash =
         row.content_hash === expectedContentHash ||
         row.content_hash ===
-          this.computeHash(TamperProofAuditLog.legacyStringifyForVerify(contentData));
+          this.computeHash(TamperProofAuditLog.legacyStringifyForVerify(contentData)) ||
+        row.content_hash ===
+          this.computeHash(
+            TamperProofAuditLog.legacyVerificationRecordStringify(contentData) ?? ''
+          );
 
       if (!matchesContentHash) {
         return {
@@ -627,8 +631,7 @@ export class TamperProofAuditLog {
       eventType: input.eventType,
       action: input.action,
       details: input.details,
-      timestamp:
-        input.timestamp instanceof Date ? input.timestamp.toISOString() : input.timestamp,
+      timestamp: input.timestamp instanceof Date ? input.timestamp.toISOString() : input.timestamp,
     };
     // Fixed key order; nullish fields are dropped so write (undefined) and
     // read-back (null) serialize identically.
@@ -679,7 +682,7 @@ export class TamperProofAuditLog {
    * `legacyStringifyForVerify` below.
    */
   private static canonicalize(value: unknown): unknown {
-    if (Array.isArray(value)) return value.map((v) => TamperProofAuditLog.canonicalize(v));
+    if (Array.isArray(value)) return value.map(v => TamperProofAuditLog.canonicalize(v));
     if (value && typeof value === 'object' && !(value instanceof Date)) {
       const src = value as Record<string, unknown>;
       const out: Record<string, unknown> = {};
@@ -716,6 +719,34 @@ export class TamperProofAuditLog {
    */
   private static legacyStringifyForVerify(contentData: Record<string, unknown>): string {
     return JSON.stringify(contentData);
+  }
+
+  private static legacyVerificationRecordStringify(
+    contentData: Record<string, unknown>
+  ): string | undefined {
+    if (contentData.eventType !== 'AUDIT_VERIFICATION_PASSED') return undefined;
+
+    const details = contentData.details;
+    if (!details || typeof details !== 'object' || Array.isArray(details)) return undefined;
+
+    const historicalDetails = details as Record<string, unknown>;
+    const supportedKeys = new Set([
+      'entriesVerified',
+      'startSequence',
+      'endSequence',
+      'verifiedAt',
+    ]);
+    if (Object.keys(historicalDetails).some(key => !supportedKeys.has(key))) return undefined;
+
+    return JSON.stringify({
+      ...contentData,
+      details: {
+        entriesVerified: historicalDetails.entriesVerified,
+        startSequence: historicalDetails.startSequence,
+        endSequence: historicalDetails.endSequence,
+        verifiedAt: historicalDetails.verifiedAt,
+      },
+    });
   }
 
   private computeHash(data: string): string {

@@ -138,6 +138,10 @@ export const C2C_MIGRATION_FILES = [
   // fresh installs that already have it.
   'migrations/20260604_submission_core_canonical.sql',
 
+  // AnA capability registry and outcome tables. Must precede the governance
+  // migration below, which adds columns to ana_capability_registry.
+  'migrations/0013_ana_intelligence_system.sql',
+  'migrations/20260920_feature_toggles_provision.sql',
   'migrations/20260603_ai_capability_governance.sql',
   'migrations/20260603_pv_operational.sql',
   'migrations/20260603_commitments.sql',
@@ -2083,21 +2087,22 @@ export async function applyMigrationFiles(
      forty tables and one that policied one were the same clean green run.
      The messages are the only signal these files produce; they belong in the
      deploy log next to the file that raised them. */
-  const noticeListener = (msg) => {
+  const noticeListener = msg => {
     const text = String(msg?.message ?? '').trim();
     if (!text) return;
     const severity = String(msg?.severity ?? 'NOTICE').toUpperCase();
     /* A NOTICE saying an object already exists is the IF NOT EXISTS guard
        working as designed, on every replay of every idempotent file — noise
        that would bury the ones that matter. */
-    if (severity === 'NOTICE' && /already exists, skipping|will create implicit/i.test(text)) return;
+    if (severity === 'NOTICE' && /already exists, skipping|will create implicit/i.test(text))
+      return;
     (severity === 'WARNING' || severity === 'ERROR' ? error : log)(`    [${severity}] ${text}`);
   };
   /* Attached to whatever the caller passed: deploy-migrate hands in a CLIENT
      (which is what emits 'notice'), apply-c2c-migrations hands in a POOL, whose
      clients emit it — so a pool is covered through 'connect'. A fresh pool
      opens its first connection on the first query below, after this line. */
-  const attachNotices = (target) => target?.on?.('notice', noticeListener);
+  const attachNotices = target => target?.on?.('notice', noticeListener);
   attachNotices(pool);
   pool.on?.('connect', attachNotices);
 
@@ -2113,50 +2118,50 @@ export async function applyMigrationFiles(
   }
 
   try {
-  for (const file of files) {
-    const full = path.join(repoRoot, file);
-    if (!fs.existsSync(full)) {
-      failures.push({ file, error: 'missing from repo' });
-      error(`✗ missing: ${file}`);
-      if (stopOnFirstFailure) return { applied, failures };
-      continue;
-    }
-    const sql = fs.readFileSync(full, 'utf8');
-    const wrap = !selfTransacting(sql);
-    try {
-      if (wrap) await pool.query('BEGIN');
-      await pool.query(sql);
-      if (wrap) await pool.query('COMMIT');
-      applied.push(file);
-      // Applied-file ledger + content-hash drift signal. The deploy mechanism
-      // records THAT migrations ran; this records WHICH file ran and the sha256 of
-      // the SQL that ran, so a file edited after it was applied is detectable
-      // instead of silently diverging. Sited here rather than in either caller so
-      // both the out-of-band applier and the deploy path are covered.
-      //
-      // `sql` is the already-read contents — deliberately not re-derived from a
-      // path inside the journal module (that read tripped a path-traversal SAST
-      // rule and there is no reason to touch the filesystem twice).
-      //
-      // Best-effort by default: a journal outage must not fail an otherwise good
-      // migration run. Set C2C_MIGRATION_JOURNAL_STRICT=1 to make it fatal.
-      try {
-        await recordApplied((text, params) => pool.query(text, params), file, sql);
-      } catch (journalErr) {
-        if (process.env.C2C_MIGRATION_JOURNAL_STRICT === '1') throw journalErr;
-        error(`  (journal skipped for ${file}: ${journalErr.message})`);
+    for (const file of files) {
+      const full = path.join(repoRoot, file);
+      if (!fs.existsSync(full)) {
+        failures.push({ file, error: 'missing from repo' });
+        error(`✗ missing: ${file}`);
+        if (stopOnFirstFailure) return { applied, failures };
+        continue;
       }
-      log(`✓ applied: ${file}`);
-    } catch (err) {
-      await pool.query('ROLLBACK').catch(() => {});
-      const detail = `${err.message}${err.detail ? ` (${err.detail})` : ''}`;
-      failures.push({ file, error: detail });
-      error(`✗ failed:  ${file} — ${detail}`);
-      if (stopOnFirstFailure) return { applied, failures };
+      const sql = fs.readFileSync(full, 'utf8');
+      const wrap = !selfTransacting(sql);
+      try {
+        if (wrap) await pool.query('BEGIN');
+        await pool.query(sql);
+        if (wrap) await pool.query('COMMIT');
+        applied.push(file);
+        // Applied-file ledger + content-hash drift signal. The deploy mechanism
+        // records THAT migrations ran; this records WHICH file ran and the sha256 of
+        // the SQL that ran, so a file edited after it was applied is detectable
+        // instead of silently diverging. Sited here rather than in either caller so
+        // both the out-of-band applier and the deploy path are covered.
+        //
+        // `sql` is the already-read contents — deliberately not re-derived from a
+        // path inside the journal module (that read tripped a path-traversal SAST
+        // rule and there is no reason to touch the filesystem twice).
+        //
+        // Best-effort by default: a journal outage must not fail an otherwise good
+        // migration run. Set C2C_MIGRATION_JOURNAL_STRICT=1 to make it fatal.
+        try {
+          await recordApplied((text, params) => pool.query(text, params), file, sql);
+        } catch (journalErr) {
+          if (process.env.C2C_MIGRATION_JOURNAL_STRICT === '1') throw journalErr;
+          error(`  (journal skipped for ${file}: ${journalErr.message})`);
+        }
+        log(`✓ applied: ${file}`);
+      } catch (err) {
+        await pool.query('ROLLBACK').catch(() => {});
+        const detail = `${err.message}${err.detail ? ` (${err.detail})` : ''}`;
+        failures.push({ file, error: detail });
+        error(`✗ failed:  ${file} — ${detail}`);
+        if (stopOnFirstFailure) return { applied, failures };
+      }
     }
-  }
 
-  return { applied, failures };
+    return { applied, failures };
   } finally {
     /* Removed on every path, including the early returns above: the pool
        outlives this call, and a listener left behind would double-print the

@@ -43,7 +43,9 @@ import {
   getOrCreateThread,
   getThreadMessages,
   ThreadAccessError,
-  saveChatMessage as saveMessage, programIdForThread } from '../../services/chat-thread-helpers.js';
+  saveChatMessage as saveMessage,
+  programIdForThread,
+} from '../../services/chat-thread-helpers.js';
 import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
@@ -280,7 +282,7 @@ export function mountStreamRoute(router: Router): void {
       const driveStatePromise = resolveDriveState(
         live_drive === true,
         orgId != null ? Number(orgId) : null,
-        { driveMode: drive_mode },
+        { driveMode: drive_mode }
       );
 
       // ── Intelligence answer fast-path ──────────────────────────────────
@@ -931,8 +933,7 @@ export function mountStreamRoute(router: Router): void {
         // substantive nudge. High-stakes ('high' riskTier) and an explicit
         // Thorough effort still reason: resolveThinkingConfig enables those
         // regardless of this flag, so governance keeps its floor.
-        substantive:
-          substantiveTurn && !(driveState.enabled && driveState.mode === 'demo'),
+        substantive: substantiveTurn && !(driveState.enabled && driveState.mode === 'demo'),
       });
       const streamThinkingConfig = streamThinkingResolved.enabled
         ? streamThinkingResolved
@@ -1196,7 +1197,13 @@ export function mountStreamRoute(router: Router): void {
               // The same server-measured duration the telemetry row gets, so the
               // client's work panel can show how long each step really took
               // rather than timing the round-trip from its own side.
-              return { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs: Date.now() - toolStart };
+              return {
+                toolUse,
+                resultStr,
+                toolStatus,
+                toolErrorMessage,
+                latencyMs: Date.now() - toolStart,
+              };
             },
             4
           );

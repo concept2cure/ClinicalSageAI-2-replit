@@ -111,6 +111,20 @@ BEGIN
 
   -- Attribution. INTEGER to match users.id — see the header.
   ALTER TABLE vault.documents ADD COLUMN IF NOT EXISTS created_by INTEGER;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'vault'
+       AND table_name = 'documents'
+       AND column_name = 'created_by'
+       AND data_type <> 'integer'
+  ) THEN
+    IF EXISTS (SELECT 1 FROM vault.documents WHERE created_by IS NOT NULL) THEN
+      RAISE EXCEPTION
+        'vault.documents.created_by has populated non-integer values; a reviewed data migration is required';
+    END IF;
+    ALTER TABLE vault.documents
+      ALTER COLUMN created_by TYPE INTEGER USING NULL::INTEGER;
+  END IF;
 
   -- Carry the legacy identity columns into the canonical ones so an existing
   -- GCC-era row is not left with a null file_name / document_title the product
@@ -145,8 +159,12 @@ BEGIN
   -- and this file's job is to make writes possible, not to prune — but they
   -- stop being required, and `filename` is kept in step with `file_name` for
   -- any reader outside this repo that still expects it.
-  ALTER TABLE vault.documents ALTER COLUMN filename DROP NOT NULL;
-  UPDATE vault.documents SET filename = file_name WHERE filename IS NULL AND file_name IS NOT NULL;
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'vault' AND table_name = 'documents'
+               AND column_name = 'filename') THEN
+    ALTER TABLE vault.documents ALTER COLUMN filename DROP NOT NULL;
+    UPDATE vault.documents SET filename = file_name WHERE filename IS NULL AND file_name IS NOT NULL;
+  END IF;
 
   -- The uniqueness the route's ON CONFLICT target depends on. Without it the
   -- upsert raises "no unique or exclusion constraint matching the ON CONFLICT

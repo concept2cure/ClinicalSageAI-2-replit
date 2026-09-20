@@ -35,9 +35,38 @@ CREATE TABLE IF NOT EXISTS conversation_working_memory (
   generated_at                  timestamp DEFAULT now() NOT NULL
 );
 
--- Pre-existing (push-provisioned) tables get the new column added in place.
+-- Pre-existing tables can carry the early working-memory shape, which lacked
+-- the attribution columns created above. Converge that shape before creating
+-- indexes that depend on it.
 ALTER TABLE conversation_working_memory
-  ADD COLUMN IF NOT EXISTS project_id integer REFERENCES projects(id);
+  ADD COLUMN IF NOT EXISTS conversation_id integer REFERENCES concept2cure_conversations(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS project_id integer REFERENCES projects(id),
+  ADD COLUMN IF NOT EXISTS organization_id integer REFERENCES organizations(id),
+  ADD COLUMN IF NOT EXISTS structured_data json,
+  ADD COLUMN IF NOT EXISTS message_count_at_generation integer;
+
+DO $working_memory_shape$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'conversation_working_memory'
+      AND column_name = 'message_count'
+  ) THEN
+    UPDATE conversation_working_memory
+      SET message_count_at_generation = COALESCE(message_count, 0)
+      WHERE message_count_at_generation IS NULL;
+  ELSE
+    UPDATE conversation_working_memory
+      SET message_count_at_generation = 0
+      WHERE message_count_at_generation IS NULL;
+  END IF;
+END
+$working_memory_shape$;
+
+ALTER TABLE conversation_working_memory
+  ALTER COLUMN organization_id SET NOT NULL,
+  ALTER COLUMN message_count_at_generation SET NOT NULL;
 
 CREATE INDEX IF NOT EXISTS cwm_conv_idx ON conversation_working_memory(conversation_id);
 CREATE INDEX IF NOT EXISTS cwm_thread_idx ON conversation_working_memory(thread_id);
