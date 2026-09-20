@@ -30,7 +30,12 @@ const submission = { type: '510k' as string | null };
 
 const { pool } = vi.hoisted(() => ({
   pool: {
-    query: vi.fn(async (text: string) => {
+    // Declared with the second (params) argument so `mock.calls` types as
+    // `[text: string, params?: unknown[]][]` — the real pool.query is always
+    // called with params (server/routes/regulatory-correspondence.ts), and a
+    // one-argument mock signature made every recorded call a 1-tuple, so
+    // `lookup![1]` below had no element at that index to read.
+    query: vi.fn(async (text: string, _params?: unknown[]) => {
       // tableReady()
       if (/to_regclass/.test(text)) return { rows: [{ tbl: 'c2c_submissions' }], rowCount: 1 };
       // The ONE submission lookup intake performs — id, project_id and the

@@ -245,7 +245,7 @@ export function runGovernedIssueParser(
     m => `${m.category}:${m.regulatorAskType}:${m.impactedSubmissionComponent}`
   );
 
-  const issues = (!matches.length
+  const issues: CorrespondenceIssue[] = (!matches.length
     ? [{
         id: crypto.randomUUID(),
         correspondenceId,
@@ -270,35 +270,48 @@ export function runGovernedIssueParser(
           humanReviewRequired: true,
         },
       }]
-    : matches.map(match => ({
-        id: crypto.randomUUID(),
-        correspondenceId,
-        category: match.category,
-        ...(('subcategory' in match && match.subcategory) ? { subcategory: match.subcategory } : {}),
-        severity: match.severity,
-        blocker: match.blocker,
-        responseRequired: true,
-        sourceExcerpt: normalized.slice(0, 280),
-        confidence: match.blocker ? 0.78 : 0.63,
-        humanReviewStatus: 'pending' as const,
-        mappedCtdSections: match.sectionCandidates,
-        mappedArtifactIds: [],
-        resolutionStatus: 'open' as const,
-        owner: match.ownerFunction,
-        structuredExtraction: {
-          regulatorAskType: match.regulatorAskType,
-          impactedSubmissionComponent: match.impactedSubmissionComponent,
-          sectionCandidates: match.sectionCandidates,
-          recommendedOwnerFunction: match.ownerFunction,
-          recommendedResponsePackageType: match.responsePackageType,
-          evidenceNeeds: match.evidenceNeeds,
-          confidenceTrace: [
-            { signal: `rule_match:${match.category}`, score: 0.6, deterministic: true },
-            { signal: `severity:${match.severity}`, score: 0.2, deterministic: true },
-          ],
-          humanReviewRequired: true,
-        },
-      }))) satisfies CorrespondenceIssue[];
+    : matches.map(match => {
+        // `in`-narrowing across the union `taxonomy` resolves to after the
+        // device/keyword ternary and `.filter` loses precision on
+        // `match.subcategory`'s type (only DEVICE_ISSUE_TAXONOMY rows carry
+        // one), so TS could not tell this spread's value apart from `{}`. A
+        // `typeof` guard on an explicitly-typed local sidesteps that and
+        // changes nothing at runtime — device rows still contribute their
+        // topic, keyword rows still contribute nothing.
+        const subcategory: string | undefined =
+          'subcategory' in match && typeof match.subcategory === 'string'
+            ? match.subcategory
+            : undefined;
+        return {
+          id: crypto.randomUUID(),
+          correspondenceId,
+          category: match.category,
+          ...(subcategory !== undefined ? { subcategory } : {}),
+          severity: match.severity,
+          blocker: match.blocker,
+          responseRequired: true,
+          sourceExcerpt: normalized.slice(0, 280),
+          confidence: match.blocker ? 0.78 : 0.63,
+          humanReviewStatus: 'pending' as const,
+          mappedCtdSections: match.sectionCandidates,
+          mappedArtifactIds: [],
+          resolutionStatus: 'open' as const,
+          owner: match.ownerFunction,
+          structuredExtraction: {
+            regulatorAskType: match.regulatorAskType,
+            impactedSubmissionComponent: match.impactedSubmissionComponent,
+            sectionCandidates: match.sectionCandidates,
+            recommendedOwnerFunction: match.ownerFunction,
+            recommendedResponsePackageType: match.responsePackageType,
+            evidenceNeeds: match.evidenceNeeds,
+            confidenceTrace: [
+              { signal: `rule_match:${match.category}`, score: 0.6, deterministic: true },
+              { signal: `severity:${match.severity}`, score: 0.2, deterministic: true },
+            ],
+            humanReviewRequired: true,
+          },
+        };
+      }));
 
   return {
     issues,
