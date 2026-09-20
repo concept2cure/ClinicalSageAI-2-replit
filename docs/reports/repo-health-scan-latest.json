@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T05:52:16.640Z",
+  "generatedAt": "2026-09-20T17:50:38.137Z",
   "git": {
-    "sha": "485b5bf39677a741135a8af3a9e82094d8084d08",
+    "sha": "8568f7f8708dc7def7e292bad32a15c555869a7a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 98
+    "largeFilesByLines": 99
   },
   "findings": {
     "duplicateBasenames": [
@@ -2261,12 +2261,12 @@
         "lines": 2327
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "lines": 2278
+        "file": "services/regulatory/ind-ectd-sections.ts",
+        "lines": 2320
       },
       {
-        "file": "services/regulatory/ind-ectd-sections.ts",
-        "lines": 2276
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "lines": 2278
       },
       {
         "file": "server/routes/c2c/reviews.ts",
@@ -2497,6 +2497,10 @@
         "lines": 1532
       },
       {
+        "file": "server/routes/analytics-routes.ts",
+        "lines": 1521
+      },
+      {
         "file": "server/routes/c2c/project-vault.ts",
         "lines": 1503
       },
@@ -2512,7 +2516,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 395,
       "largeByBytes": 33,
-      "largeByLines": 81
+      "largeByLines": 82
     },
     {
       "owner": "Unassigned (TBD)",
