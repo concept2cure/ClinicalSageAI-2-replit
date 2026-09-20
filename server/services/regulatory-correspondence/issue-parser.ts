@@ -1,5 +1,11 @@
 import crypto from 'node:crypto';
 import type { CorrespondenceIssue } from '@shared/types/regulatory-correspondence';
+import {
+  DEVICE_ISSUE_TAXONOMY,
+  devicePathwayFor,
+  isDeviceSubmissionType,
+  type DeviceIssueRule,
+} from './device-issue-taxonomy';
 
 export const ISSUE_PARSER_RESPONSE_CONTRACT = 'governed_heuristic_mode_v1' as const;
 export const ISSUE_PARSER_VERSION = 'governed-parser-pipeline-v1' as const;
@@ -180,10 +186,61 @@ export function resolveIssueParserGovernanceConfig(env: NodeJS.ProcessEnv): Issu
   };
 }
 
-export function runGovernedIssueParser(text: string, correspondenceId: string): IssueExtractionResult {
+/**
+ * What the letter is ABOUT, so the right half of the taxonomy answers it.
+ *
+ * Optional, and omitting it reproduces the pre-2026-09-20 behaviour exactly:
+ * the drug/CTD taxonomy, unchanged. Every existing caller therefore keeps its
+ * results byte-for-byte until it opts in.
+ */
+export interface IssueParserContext {
+  /** `c2c_submissions.submission_type` — '510k', 'de_novo', 'pma', 'nda' … */
+  submissionType?: string | null;
+}
+
+/**
+ * A device rule projected onto the shape the extractor already consumes, with
+ * its section candidates resolved for THIS submission's pathway.
+ *
+ * A device pathway with no seeded rule pack (PMA, IDE, Q-Sub, 513(g)) resolves
+ * to no candidates rather than borrowing 510(k)'s — the keys collide across
+ * packs (510(k) D5 is shelf life; De Novo D5 is cybersecurity), so a borrowed
+ * key is not an approximation, it is a different section.
+ */
+function deviceRuleToMatch(rule: DeviceIssueRule, pathway: ReturnType<typeof devicePathwayFor>) {
+  return {
+    pattern: rule.pattern,
+    category: rule.category,
+    severity: rule.severity,
+    blocker: rule.blocker,
+    regulatorAskType: rule.regulatorAskType,
+    impactedSubmissionComponent: rule.impactedSubmissionComponent,
+    sectionCandidates: (pathway && rule.sections[pathway]) || [],
+    ownerFunction: rule.ownerFunction,
+    responsePackageType: rule.responsePackageType,
+    evidenceNeeds: rule.evidenceNeeds,
+    subcategory: rule.topic,
+  };
+}
+
+export function runGovernedIssueParser(
+  text: string,
+  correspondenceId: string,
+  context: IssueParserContext = {},
+): IssueExtractionResult {
   const normalized = text || '';
   const sourceTextDigest = crypto.createHash('sha256').update(normalized).digest('hex');
-  const matches = KEYWORD_TAXONOMY.filter(rule => rule.pattern.test(normalized));
+  /* ONE parser, two taxonomies, selected by what the letter is about — not two
+     parsers. A device letter run through the CTD rules produced sections a
+     510(k) does not have (measured: a CDRH AI letter returned CTD 2.5 / 2.7.4
+     and nothing else), and a drug letter run through the device rules would do
+     the mirror image. */
+  const device = isDeviceSubmissionType(context.submissionType);
+  const pathway = device ? devicePathwayFor(context.submissionType) : null;
+  const taxonomy = device
+    ? DEVICE_ISSUE_TAXONOMY.map(r => deviceRuleToMatch(r, pathway))
+    : KEYWORD_TAXONOMY;
+  const matches = taxonomy.filter(rule => rule.pattern.test(normalized));
   const deterministicSignals = matches.map(
     m => `${m.category}:${m.regulatorAskType}:${m.impactedSubmissionComponent}`
   );
@@ -217,6 +274,7 @@ export function runGovernedIssueParser(text: string, correspondenceId: string): 
         id: crypto.randomUUID(),
         correspondenceId,
         category: match.category,
+        ...(('subcategory' in match && match.subcategory) ? { subcategory: match.subcategory } : {}),
         severity: match.severity,
         blocker: match.blocker,
         responseRequired: true,
