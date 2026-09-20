@@ -211,6 +211,65 @@ function stringLiteralsOf(source) {
 }
 
 
+/**
+ * THIRD RULE — a demo-marked route reachable in production (ledger L167).
+ *
+ * L171 closed the fabrication half of L167: the minted DOIs are gone and the
+ * rule above catches a new one. It deliberately left the other half, which L171
+ * itself restates — `POST /api/analytics/demo-analysis` "is mounted live by
+ * register-project-routes with no NODE_ENV gate and no client caller". Correct
+ * content on an endpoint that should not be reachable at all is half a repair.
+ *
+ * It is worse than a naming problem. `analyticsRoutes` is mounted WITHOUT
+ * middleware (the sibling `mountAll` for quality management passes
+ * requireTenantContext; the analytics one passes nothing) and the file installs
+ * no `router.use` auth, so that handler was unauthenticated and tenant-less in
+ * production while writing caller-supplied text under `exports/` and spending a
+ * model call, for a route nothing in the client calls.
+ *
+ * WHY THE TOKEN IS `demo` AND NOTHING ELSE. The obvious rule — path contains
+ * demo|sample|mock|fake|dummy|example — was measured before it was written and
+ * rejected: it matches 8 route registrations, and 6 are `/sample-size`,
+ * `/apply-sample-size`, `/mmrm/sample-size` and `/estimand/regulatory-examples`.
+ * In a biostatistics product "sample size" is the domain vocabulary, not a
+ * marker of fake data, and baselining six real endpoints is how "a baseline
+ * grows until nobody reads it" — the failure this file's own header warns about.
+ * Restricted to a `demo` path segment the signal is sharp, not heuristic: two
+ * registrations in the whole of server/routes/, one of them genuine.
+ *
+ * SCOPE, STATED RATHER THAN IMPLIED: the gate is satisfied by a production gate
+ * anywhere in the FILE, not by one provably guarding this route. With two demo
+ * registrations tree-wide, a per-route AST check buys nothing a reader of the
+ * diff cannot see; a file that gated one demo route and not a second would need
+ * it. That limitation is the reason this is stated, not a claim it is absent.
+ */
+const DEMO_ROUTE_PATH = /^\/[A-Za-z0-9_\-/:.]*\bdemo/i;
+
+/**
+ * Both spellings, on purpose. `prodGatePattern` above matches only the POSITIVE
+ * form because that is what rule 1's allowlisted file uses. Reusing it here
+ * would repeat a mistake already paid for: check-no-dev-auth-in-prod.mjs matched
+ * only `NODE_ENV !== 'production'`, so sso.ts used the positive spelling and
+ * "read as clean" (see that file's header). A route is legitimately gated either
+ * way round, so both count — and an ENABLE_* opt-in flag counts too, which is
+ * how notification_routes.ts and cerv2-export-routes.ts gate theirs.
+ */
+const ANY_PROD_GATE = /NODE_ENV\s*(===|!==)\s*['"]production['"]|process\.env\.ENABLE_[A-Z0-9_]+/;
+
+/**
+ * Demo routes that are a named product capability rather than the L167 class.
+ *
+ * `/demo-packs` lists the DOCX factory's available demo INPUT packs from static
+ * JSON via the shadow service. It reads no tenant data, writes nothing, and
+ * fabricates no provenance — "demo pack" is the product's word for a starter
+ * input set, so gating it would remove a feature rather than close a hole. Keyed
+ * by file and path so the entry cannot silently cover a second demo route added
+ * to the same file later.
+ */
+const allowedDemoRoutes = new Set([
+  'server/routes/docx-factory.ts:/demo-packs',
+]);
+
 const betaPathHints = [
   'ana-ri',
   'authoring-actions',
@@ -275,6 +334,30 @@ for (const file of walk(routesDir)) {
     findings.push({
       file: rel,
       message: `emits a hardcoded DOI (${match[0]}) at line ${literal.line} — a citation the route never looked up`,
+    });
+  }
+}
+
+// Third pass for the demo-route rule. It reads string literals like the
+// provenance rule (a route PATH is a literal) and therefore inherits its
+// comment-immunity: stringLiteralsOf skips comments, so the worked example in
+// this rule's own header cannot trip it. The extra `router.` test on the source
+// line keeps an unrelated literal that merely starts with "/demo" — a docs URL,
+// a client path in a message — from reading as a registration.
+for (const file of walk(routesDir)) {
+  const rel = path.relative(repoRoot, file);
+  const rawText = fs.readFileSync(file, 'utf8');
+  const lines = rawText.split('\n');
+  const gated = ANY_PROD_GATE.test(rawText);
+
+  for (const literal of stringLiteralsOf(rawText)) {
+    if (!DEMO_ROUTE_PATH.test(literal.value)) continue;
+    if (!/router\s*\.\s*(get|post|put|patch|delete|use|all)\s*\(/.test(lines[literal.line - 1] ?? '')) continue;
+    if (allowedDemoRoutes.has(`${rel}:${literal.value}`)) continue;
+    if (gated) continue;
+    findings.push({
+      file: rel,
+      message: `mounts demo route ${literal.value} at line ${literal.line} with no production gate — reachable on a real deployment`,
     });
   }
 }
