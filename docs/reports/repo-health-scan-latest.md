@@ -1,8 +1,8 @@
 # Repo Health Scan
 
-Generated: 2026-09-20T18:45:17.559Z
+Generated: 2026-09-20T18:46:05.696Z
 Branch: concept2cure-v2
-SHA: 6d76367cb820be521654dbb2409db998d2927d3b
+SHA: 1359c829ff353fd9f1a00c542f7a98da0ad02581
 
 ## Summary
 
@@ -10,10 +10,6 @@ SHA: 6d76367cb820be521654dbb2409db998d2927d3b
 - Duplicate basenames (reported, not gated): 205
 - Files over byte threshold: 43
 - Files over line threshold: 98
-- Baseline: docs/reports/repo-health-scan-latest.json
-- Delta duplicate basenames: 0
-- Delta files over byte threshold: 0
-- Delta files over line threshold: -1
 
 ## Owner Summary
 

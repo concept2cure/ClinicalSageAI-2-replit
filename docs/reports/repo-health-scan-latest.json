@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-20T18:45:17.559Z",
+  "generatedAt": "2026-09-20T18:46:05.696Z",
   "git": {
-    "sha": "6d76367cb820be521654dbb2409db998d2927d3b",
+    "sha": "1359c829ff353fd9f1a00c542f7a98da0ad02581",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2514,15 +2514,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "contentDuplicateGroups": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": -1
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
