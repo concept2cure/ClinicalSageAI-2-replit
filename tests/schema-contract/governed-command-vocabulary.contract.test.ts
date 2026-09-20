@@ -55,6 +55,27 @@ describe.each([
     // UPDATE gdpr_data_subject_requests SET … execution_evidence = $2
     reader: ['server/services/compliance/gdprComplianceService.ts', /execution_evidence = \$\d/],
   },
+  // Found by the same audit on 2026-09-20, all three measured 42703 against a
+  // database built by install-fresh plus the whole set. The two 2026-02-24/25
+  // IVDR files fell off the applier together.
+  {
+    file: 'db/migrations/20260224_ai_claims_verifier_flags.sql',
+    what: 'ai_claims.verifier_flags',
+    // INSERT INTO ai_claims (… verifier_flags) — the chat send-message path
+    reader: ['server/routes/chat/send-message.ts', /INSERT INTO ai_claims[\s\S]{0,200}verifier_flags/],
+  },
+  {
+    file: 'db/migrations/20260224_binder_evidence_source_types.sql',
+    what: 'ivdr_binder_evidence.source_type',
+    // SELECT … source_type … source_atom_id … FROM ivdr_binder_evidence
+    reader: ['server/services/ivdrPackManifest.ts', /source_atom_id[\s\S]{0,120}FROM ivdr_binder_evidence/],
+  },
+  {
+    file: 'db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql',
+    what: 'ivdr_packs artifact hashes and warnings',
+    // UPDATE ivdr_packs SET … zip_sha256 … has_warnings — the promotion step
+    reader: ['server/workers/ivdr-pack-worker.ts', /UPDATE ivdr_packs SET[\s\S]{0,600}has_warnings/],
+  },
 ])('$what is on the applier', ({ file, reader }) => {
   it('the migration that adds it is in C2C_MIGRATION_FILES', () => {
     expect(C2C_MIGRATION_FILES, `${file} runs on no database unless it is in the set`).toContain(file);

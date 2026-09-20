@@ -31,6 +31,31 @@ export interface IssueExtractionResult {
   };
 }
 
+/**
+ * EVERY PATTERN IS WORD-ANCHORED, and that is load-bearing rather than tidy.
+ *
+ * These are unanchored regexes tested against the whole letter, so a keyword
+ * that happens to be a substring of an ordinary word fires on every letter
+ * containing that word. Measured 2026-09-20 across the taxonomy, there were
+ * four such accidents, and one of them fired on essentially every letter FDA
+ * sends:
+ *
+ *   "information"  → /format/  (in-FORMAT-ion)   → ectd_technical_formatting
+ *   "informational"→ /format/                    → ectd_technical_formatting
+ *   "asterisk"     → /risk/    (aste-RISK)       → clinical_safety_issue
+ *   "equality"     → /quality/ (e-QUALITY)       → cmc_quality_issue
+ *
+ * A Request for Additional Information therefore arrived carrying a fabricated
+ * eCTD-formatting issue mapped to `module_index` — a deficiency the regulator
+ * never raised, against a section they never mentioned, which then reaches the
+ * response-package compiler and the reviewer's queue as a real ask.
+ *
+ * The suffix forms (`\w*`) are deliberate: "formatting", "deficiencies",
+ * "rejected", "specifications" and "adverse events" are all real matches and
+ * must keep matching. The boundary is what removes the accidents; the suffix is
+ * what keeps the true positives. Both halves are pinned in
+ * `__tests__/issue-parser-governed.test.ts`.
+ */
 const KEYWORD_TAXONOMY: Array<{
   pattern: RegExp;
   category: CorrespondenceIssue['category'];
@@ -44,7 +69,7 @@ const KEYWORD_TAXONOMY: Array<{
   evidenceNeeds: string[];
 }> = [
   {
-    pattern: /refuse to file|rtf|reject/i,
+    pattern: /\brefuse to file\b|\brtf\b|\breject\w*/i,
     category: 'filing_acceptance_issue',
     severity: 'critical',
     blocker: true,
@@ -56,7 +81,7 @@ const KEYWORD_TAXONOMY: Array<{
     evidenceNeeds: ['administrative check matrix', 'filing acceptance remediation narrative'],
   },
   {
-    pattern: /deficiency|missing information|clarification/i,
+    pattern: /\bdeficienc\w*|\bmissing information\b|\bclarification\w*/i,
     category: 'missing_information_clarification',
     severity: 'high',
     blocker: true,
@@ -68,7 +93,7 @@ const KEYWORD_TAXONOMY: Array<{
     evidenceNeeds: ['point-by-point response table', 'supporting evidence references'],
   },
   {
-    pattern: /stability|specification|quality|cmc/i,
+    pattern: /\bstabilit\w*|\bspecification\w*|\bquality\b|\bcmc\b/i,
     category: 'cmc_quality_issue',
     severity: 'high',
     blocker: true,
@@ -80,7 +105,7 @@ const KEYWORD_TAXONOMY: Array<{
     evidenceNeeds: ['updated stability dataset', 'quality justification memo'],
   },
   {
-    pattern: /safety|adverse event|risk/i,
+    pattern: /\bsafety\b|\badverse event\w*|\brisks?\b/i,
     category: 'clinical_safety_issue',
     severity: 'high',
     blocker: true,
@@ -92,7 +117,7 @@ const KEYWORD_TAXONOMY: Array<{
     evidenceNeeds: ['integrated safety summary update', 'risk mitigation rationale'],
   },
   {
-    pattern: /efficacy|endpoint|benefit/i,
+    pattern: /\befficacy\b|\bendpoints?\b|\bbenefits?\b/i,
     category: 'clinical_efficacy_issue',
     severity: 'medium',
     blocker: false,
@@ -104,7 +129,7 @@ const KEYWORD_TAXONOMY: Array<{
     evidenceNeeds: ['endpoint sensitivity analysis', 'benefit-risk narrative'],
   },
   {
-    pattern: /format|ectd|technical/i,
+    pattern: /\bformat\w*|\bectd\b|\btechnical\w*/i,
     category: 'ectd_technical_formatting',
     severity: 'medium',
     blocker: false,
