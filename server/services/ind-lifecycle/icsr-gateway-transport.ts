@@ -9,14 +9,43 @@
  * (`server/services/submission-gateways/fda-esg.ts`, reached through the shared
  * `submission-gateways/governed-transmit.ts`):
  *
+ *   - With a gateway CONFIGURED, `transmitIcsr()` makes the real network call
+ *     (W5 2026-09-20, runbook B7 — it used to throw "not implemented" precisely
+ *     here). It reuses the ONE AS2 implementation in
+ *     `submission-gateways/as2-transport.ts`; there is no second AS2 client.
+ *     A receipt says `transmitted` only when the agency endpoint answered 2xx
+ *     AND its MDN accepted the very message that was sent (AS2), or answered
+ *     2xx with a receipt identifier (HTTPS). Anything else throws a typed
+ *     error — never a fabricated acknowledgement.
  *   - In PRODUCTION with no real gateway configured, `transmitIcsr()` THROWS.
  *     Returning a synthetic acknowledgement would tell a user their ICSR reached
  *     FAERS / EudraVigilance when nothing was transmitted — the most dangerous
  *     lie a pharmacovigilance platform can tell.
- *   - Outside production it returns an explicitly `simulated: true` receipt that
- *     no caller can mistake for a real agency acknowledgment.
+ *   - Outside production with no gateway it returns an explicitly
+ *     `simulated: true` receipt that no caller can mistake for a real agency
+ *     acknowledgment (and `markIcsrTransmitted` refuses to record it).
  *   - It refuses outright to transmit a message the readiness gate marks
  *     not-ready (mandatory-element gaps), in any environment.
+ *
+ * A transport receipt is NOT the E2B acknowledgement. FDA FAERS and
+ * EudraVigilance return the ICH ICSR ACK (AA / AE / AR) asynchronously; that is
+ * recorded separately by `markIcsrAcknowledged`. Status `transmitted` means
+ * "the agency gateway took delivery of the bytes", nothing more.
+ *
+ * ── Environment variables ─────────────────────────────────────────────────
+ *   ICSR_GATEWAY_URL               Gateway endpoint (https://…). Required.
+ *   ICSR_GATEWAY_PROTOCOL          'as2' (default when a client cert is set) |
+ *                                  'https' (default when only a password is set).
+ *   AS2 path (FDA ESG AS2 for FAERS; the EudraVigilance AS2 gateway for EMA):
+ *   ICSR_GATEWAY_USERNAME          Sender's AS2 identifier assigned by the agency
+ *   ICSR_GATEWAY_AS2_TO            Agency AS2 identifier (never defaulted)
+ *   ICSR_GATEWAY_CERT_PATH         mTLS client certificate (PEM path); also the
+ *                                  configuration trigger for the AS2 path
+ *   ICSR_GATEWAY_KEY_PATH          mTLS private key (PEM path)
+ *   ICSR_GATEWAY_AGENCY_CERT_PATH  Agency certificate (PEM path) — TLS trust
+ *                                  anchor; omitted ⇒ platform CA store
+ *   HTTPS path (a gateway provider's authenticated upload endpoint):
+ *   ICSR_GATEWAY_USERNAME / ICSR_GATEWAY_PASSWORD   HTTP Basic credentials
  *
  * The transmit timestamp is sourced from an injectable clock so the simulated
  * receipt is deterministic in tests (never raw `Date.now()` in asserted output).
@@ -24,18 +53,37 @@
  * @module server/services/ind-lifecycle/icsr-gateway-transport
  */
 
+import { promises as fs } from 'fs';
+import { randomUUID } from 'crypto';
 import type { IcsrGateway, IcsrTransmissionResult } from './e2b-icsr-message';
+import {
+  buildAs2Headers,
+  httpsPost,
+  mdnRefusal,
+  parseMdn,
+  postAs2,
+  signAs2Body,
+} from '../submission-gateways/as2-transport';
+import { TransportError } from '../submission-gateways/types';
 
 /** Gateway transport configuration, resolved from the environment. */
 export interface IcsrGatewayConfig {
   /** Gateway endpoint URL (e.g. FDA ESG AS2 / EudraVigilance gateway). */
   url: string;
-  /** Sender/account identifier registered with the gateway. */
+  /** Sender/account identifier registered with the gateway (AS2-From, or Basic username). */
   username?: string;
   /** Shared secret / password, when the gateway uses password auth. */
   password?: string;
   /** Path to the mTLS client certificate, when the gateway uses cert auth. */
   certPath?: string;
+  /** Path to the mTLS private key (AS2 path). */
+  keyPath?: string;
+  /** Path to the agency's certificate — TLS trust anchor (AS2 path, optional). */
+  agencyCertPath?: string;
+  /** Agency AS2 identifier (AS2 path). */
+  as2To?: string;
+  /** Wire protocol; derived from the credentials present when unset. */
+  protocol?: 'as2' | 'https';
 }
 
 /** Options for a transmit attempt. */
@@ -85,6 +133,10 @@ export interface IcsrTransmitReceipt {
   timestamp: string;
   /** Human-readable note — explicitly flags simulation in non-prod. */
   message: string;
+  /** Which wire protocol carried the message (absent on a simulated receipt). */
+  protocol?: 'as2' | 'https';
+  /** The agency's own response body, verbatim, when the transport returned one. */
+  agencyResponseRaw?: string;
 }
 
 /** Naming mirrors the FDA/ESG services (`FDA_ESG_*`); ICSR-specific prefix. */
@@ -92,6 +144,10 @@ const ENV_URL = 'ICSR_GATEWAY_URL';
 const ENV_USERNAME = 'ICSR_GATEWAY_USERNAME';
 const ENV_PASSWORD = 'ICSR_GATEWAY_PASSWORD';
 const ENV_CERT_PATH = 'ICSR_GATEWAY_CERT_PATH';
+const ENV_KEY_PATH = 'ICSR_GATEWAY_KEY_PATH';
+const ENV_AGENCY_CERT_PATH = 'ICSR_GATEWAY_AGENCY_CERT_PATH';
+const ENV_AS2_TO = 'ICSR_GATEWAY_AS2_TO';
+const ENV_PROTOCOL = 'ICSR_GATEWAY_PROTOCOL';
 
 /**
  * Resolve gateway config from the environment. Returns null when no gateway URL
@@ -110,7 +166,19 @@ export function resolveGatewayConfig(): IcsrGatewayConfig | null {
   // Credentials are required: either password auth or an mTLS cert path.
   if (!password && !certPath) return null;
 
-  return { url, username, password, certPath };
+  const protoRaw = process.env[ENV_PROTOCOL]?.trim().toLowerCase();
+  const protocol = protoRaw === 'as2' || protoRaw === 'https' ? protoRaw : undefined;
+
+  return {
+    url,
+    username,
+    password,
+    certPath,
+    keyPath: process.env[ENV_KEY_PATH],
+    agencyCertPath: process.env[ENV_AGENCY_CERT_PATH],
+    as2To: process.env[ENV_AS2_TO],
+    protocol,
+  };
 }
 
 /** A message that the readiness gate marks not-ready is never transmitted. */
@@ -125,15 +193,43 @@ export class IcsrNotReadyError extends Error {
   }
 }
 
-/** Production with no configured gateway → fail closed rather than fabricate an ACK. */
+/**
+ * No usable gateway → fail closed rather than fabricate an ACK. Raised in
+ * production when nothing is configured, and in ANY environment when a gateway
+ * is configured but the variables its protocol needs are missing (`missing`
+ * names them).
+ */
 export class IcsrGatewayNotConfiguredError extends Error {
-  constructor(gateway: IcsrGateway) {
+  constructor(gateway: IcsrGateway, public readonly missing: string[] = []) {
     super(
-      `ICSR gateway transport is not configured. Message was NOT transmitted to ${gateway}. ` +
-        `Set ${ENV_URL} and credentials (${ENV_PASSWORD} or ${ENV_CERT_PATH}) before ICSRs ` +
-        `can be transmitted. Returning a fabricated acknowledgement is prohibited.`,
+      missing.length === 0
+        ? `ICSR gateway transport is not configured. Message was NOT transmitted to ${gateway}. ` +
+          `Set ${ENV_URL} and credentials (${ENV_PASSWORD} or ${ENV_CERT_PATH}) before ICSRs ` +
+          `can be transmitted. Returning a fabricated acknowledgement is prohibited.`
+        : `ICSR gateway transport is configured but incomplete. Message was NOT transmitted to ${gateway}. ` +
+          `Missing: ${missing.join(', ')}. Returning a fabricated acknowledgement is prohibited.`,
     );
     this.name = 'IcsrGatewayNotConfiguredError';
+  }
+}
+
+/**
+ * A configured gateway was reached (or the network call was attempted) and the
+ * outcome is not an acceptance: TLS/DNS/timeout failure, a non-2xx, an MDN that
+ * rejects or acknowledges another message, or a 2xx carrying no receipt
+ * identifier. The message was NOT transmitted as far as this platform can prove.
+ */
+export class IcsrGatewayTransmitError extends Error {
+  readonly transmitted = false as const;
+  constructor(
+    gateway: IcsrGateway,
+    public readonly stage: 'transport' | 'gateway-rejected' | 'receipt-unproven',
+    detail: string,
+    public readonly httpStatus: number | null = null,
+    public readonly agencyResponseRaw: string | null = null,
+  ) {
+    super(`ICSR was NOT transmitted to ${gateway} (${stage}): ${detail}`);
+    this.name = 'IcsrGatewayTransmitError';
   }
 }
 
@@ -147,14 +243,143 @@ function extractMessageId(message: string): string {
   return match?.[1]?.trim() || 'UNKNOWN';
 }
 
+/** Which wire protocol a config selects: explicit, else derived from its credentials. */
+export function resolveProtocol(config: IcsrGatewayConfig): 'as2' | 'https' {
+  if (config.protocol) return config.protocol;
+  return config.certPath ? 'as2' : 'https';
+}
+
+function headerString(v: string | string[] | undefined): string | null {
+  if (Array.isArray(v)) return v[0] ?? null;
+  return typeof v === 'string' && v.trim() !== '' ? v : null;
+}
+
+/* ─── Real transports ────────────────────────────────────────────── */
+
+async function transmitViaAs2(
+  built: IcsrTransmissionResult,
+  config: IcsrGatewayConfig,
+  messageId: string,
+): Promise<{ receiptId: string; agencyResponseRaw: string }> {
+  const missing: string[] = [];
+  if (!config.username) missing.push(ENV_USERNAME);
+  if (!config.certPath) missing.push(ENV_CERT_PATH);
+  if (!config.keyPath) missing.push(ENV_KEY_PATH);
+  if (!config.as2To) missing.push(ENV_AS2_TO);
+  if (missing.length > 0) throw new IcsrGatewayNotConfiguredError(built.gateway, missing);
+
+  const [clientCertPem, clientKeyPem, agencyCertPem] = await Promise.all([
+    fs.readFile(config.certPath!, 'utf8'),
+    fs.readFile(config.keyPath!, 'utf8'),
+    config.agencyCertPath ? fs.readFile(config.agencyCertPath, 'utf8') : Promise.resolve(undefined),
+  ]);
+
+  const body = Buffer.from(built.message, 'utf8');
+  const as2MessageId = `<${randomUUID()}@${config.username}>`;
+  const headers = buildAs2Headers({
+    messageId: as2MessageId,
+    from: config.username!,
+    to: config.as2To!,
+    contentType: 'application/xml; charset=utf-8',
+    body,
+    signaturePem: signAs2Body(body, clientKeyPem),
+    filename: `${messageId}.xml`,
+    userAgent: 'concept2cure-icsr/1.0',
+  });
+
+  let response;
+  try {
+    response = await postAs2({
+      endpoint: config.url, headers, body,
+      clientCertPem, clientKeyPem, agencyCertPem,
+      errorPrefix: `ICSR AS2 POST (${built.gateway})`,
+    });
+  } catch (err) {
+    const detail = err instanceof TransportError ? err.message : err instanceof Error ? err.message : String(err);
+    throw new IcsrGatewayTransmitError(built.gateway, 'transport', detail);
+  }
+
+  const raw = response.body.toString('utf8');
+  if (response.httpStatus < 200 || response.httpStatus >= 300) {
+    throw new IcsrGatewayTransmitError(
+      built.gateway, 'gateway-rejected',
+      `HTTP ${response.httpStatus}: ${raw.slice(0, 500)}`,
+      response.httpStatus, raw,
+    );
+  }
+  const refusal = mdnRefusal(parseMdn(raw), as2MessageId);
+  if (refusal) {
+    throw new IcsrGatewayTransmitError(built.gateway, 'gateway-rejected', refusal, response.httpStatus, raw);
+  }
+  const receiptId = headerString(response.headers['message-id']) ?? as2MessageId;
+  return { receiptId, agencyResponseRaw: raw };
+}
+
+async function transmitViaHttps(
+  built: IcsrTransmissionResult,
+  config: IcsrGatewayConfig,
+  messageId: string,
+): Promise<{ receiptId: string; agencyResponseRaw: string }> {
+  const missing: string[] = [];
+  if (!config.username) missing.push(ENV_USERNAME);
+  if (!config.password) missing.push(ENV_PASSWORD);
+  if (missing.length > 0) throw new IcsrGatewayNotConfiguredError(built.gateway, missing);
+
+  const body = Buffer.from(built.message, 'utf8');
+  const basic = Buffer.from(`${config.username}:${config.password}`, 'utf8').toString('base64');
+  let response;
+  try {
+    response = await httpsPost({
+      endpoint: config.url,
+      headers: {
+        'Authorization': `Basic ${basic}`,
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${messageId}.xml"`,
+        'Content-Length': String(body.length),
+        'User-Agent': 'concept2cure-icsr/1.0',
+      },
+      body,
+      errorPrefix: `ICSR HTTPS POST (${built.gateway})`,
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new IcsrGatewayTransmitError(built.gateway, 'transport', detail);
+  }
+
+  const raw = response.body.toString('utf8');
+  if (response.httpStatus < 200 || response.httpStatus >= 300) {
+    throw new IcsrGatewayTransmitError(
+      built.gateway, 'gateway-rejected',
+      `HTTP ${response.httpStatus}: ${raw.slice(0, 500)}`,
+      response.httpStatus, raw,
+    );
+  }
+  // A 2xx with nothing to cite is not proof of delivery. The gateway must hand
+  // back an identifier this platform can later reconcile an ACK against.
+  const receiptId =
+    headerString(response.headers['x-receipt-id']) ??
+    headerString(response.headers['message-id']) ??
+    headerString(response.headers['location']);
+  if (!receiptId) {
+    throw new IcsrGatewayTransmitError(
+      built.gateway, 'receipt-unproven',
+      `gateway answered HTTP ${response.httpStatus} but returned no receipt identifier ` +
+        '(X-Receipt-Id, Message-ID or Location); refusing to record the message as transmitted.',
+      response.httpStatus, raw,
+    );
+  }
+  return { receiptId, agencyResponseRaw: raw };
+}
+
 /**
  * Transmit a built ICSR message to its target gateway.
  *
  * Gating order (fail-closed, deterministic):
  *   1. Refuse if the readiness assessment marks the message not-ready.
- *   2. In production with no configured gateway → throw (never fake an ACK).
- *   3. With a real gateway configured → real transport (not yet implemented;
- *      throws an actionable not-implemented error rather than a fake receipt).
+ *   2. With a real gateway configured → the real transport (AS2 via the shared
+ *      as2-transport module, or an HTTPS Basic upload). `transmitted` only on
+ *      an accepting 2xx; every other outcome is a typed error.
+ *   3. In production with no configured gateway → throw (never fake an ACK).
  *   4. Otherwise (non-production, no real gateway) → deterministic SIMULATED
  *      receipt, explicitly flagged `simulated: true`.
  */
@@ -184,24 +409,52 @@ export async function transmitIcsr(
 
   const config = opts.config !== undefined ? opts.config : resolveGatewayConfig();
 
-  // 2/3. A real gateway is configured: do NOT fabricate a transport. Until the
-  // production AS2/SFTP transport client exists, fail closed with an actionable
-  // error instead of returning a fake "transmitted" receipt.
+  // 2. A real gateway is configured: make the real call. Nothing below this
+  // line fabricates — a receipt exists only when the agency endpoint accepted.
   if (config) {
+    const protocol = resolveProtocol(config);
+    let delivery: { receiptId: string; agencyResponseRaw: string };
+    try {
+      delivery = protocol === 'as2'
+        ? await transmitViaAs2(built, config, messageId)
+        : await transmitViaHttps(built, config, messageId);
+    } catch (err) {
+      const reason =
+        err instanceof IcsrGatewayNotConfiguredError ? 'not-configured'
+        : err instanceof IcsrGatewayTransmitError ? err.stage
+        : 'transport';
+      await audit({
+        gateway: built.gateway,
+        receiverId: built.receiverId,
+        outcome: 'refused',
+        reason,
+      });
+      throw err;
+    }
+
+    const receipt: IcsrTransmitReceipt = {
+      simulated: false,
+      status: 'transmitted',
+      gateway: built.gateway,
+      receiverId: built.receiverId,
+      messageId,
+      receiptId: delivery.receiptId,
+      timestamp,
+      protocol,
+      agencyResponseRaw: delivery.agencyResponseRaw,
+      message:
+        `ICSR handed to ${built.gateway} over ${protocol.toUpperCase()} (${config.url}); transport receipt ${delivery.receiptId}. ` +
+        'This is delivery of the bytes, not the E2B acknowledgement — record the agency ACK (AA/AE/AR) when it arrives.',
+    };
     await audit({
       gateway: built.gateway,
       receiverId: built.receiverId,
-      outcome: 'refused',
-      reason: 'transport-not-implemented',
+      outcome: 'transmitted',
     });
-    throw new Error(
-      `ICSR gateway transport client is not implemented for ${built.gateway} ` +
-        `(${config.url}). A real AS2/SFTP transport must be wired before live ICSR ` +
-        `transmission. Refusing to fabricate a gateway acknowledgement.`,
-    );
+    return receipt;
   }
 
-  // 2 (prod, unconfigured). Fail closed — never pretend success.
+  // 3 (prod, unconfigured). Fail closed — never pretend success.
   if (process.env.NODE_ENV === 'production') {
     await audit({
       gateway: built.gateway,
