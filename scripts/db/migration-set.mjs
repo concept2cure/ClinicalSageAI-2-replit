@@ -1693,7 +1693,6 @@ export const C2C_MIGRATION_FILES = [
   // project_intelligence_profiles actually existing, so it is safe on a
   // set-only database where that push-surface table never appears. Ordered
   // before the sweep so the org-scoped tables get tenant policies.
-  'migrations/0013_ana_intelligence_system.sql',
 
   // ── The v2 module-catalog seed joins the durable path (found via BP-W1-5) ──
   // db/migrations/20260810_reconcile_module_catalog.sql seeds/reconciles the
@@ -2241,7 +2240,6 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260705_export_control.sql', // export_control_reviews
   'migrations/20260705_invention_disclosure.sql', // invention_disclosures
   'migrations/20260705_research_agreements.sql', // research_agreements
-  'migrations/20260728_chat_thread_store.sql', // chat_threads, chat_messages
   'migrations/20260731c_canonical_documents.sql', // canonical_documents
 
   // The three IVDR append-only history tables carry no tenant column of their
