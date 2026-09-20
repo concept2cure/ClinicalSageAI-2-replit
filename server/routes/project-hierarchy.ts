@@ -15,8 +15,8 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { db, getPool } from '../db';
-import { projects, auditEvents } from '@shared/schema';
-import { and, eq, isNull, sql, asc, desc } from 'drizzle-orm';
+import { projects } from '@shared/schema';
+import { and, eq, isNull, asc } from 'drizzle-orm';
 import { getTenantContext, getRequestActor } from '../utils/tenantContext';
 import { ProjectRollupService } from '../services/project-rollup-service';
 

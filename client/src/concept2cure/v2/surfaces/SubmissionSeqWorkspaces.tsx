@@ -546,7 +546,7 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
       </div>
       <div className="pj-card-b">
         {live.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Running the deterministic validation checks…
           </div>
         ) : live.error || !a || !Array.isArray(a.readiness?.findings) ? (
@@ -828,7 +828,23 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
                     data-cur={r.id === run?.id || undefined}
                     onClick={() => setSelRun(r.id)}
                   >
-                    <td className="sc-mono">#{r.id}</td>
+                    {/* The row was click-to-select with no role, tabIndex or key
+                        handler, so the shadow-review history was mouse-only.
+                        role="button" on the <tr> would buy the tab stop by
+                        destroying the row's table semantics, so the control goes
+                        in the cell instead: the row keeps being a row, the run id
+                        becomes the thing you activate, and the row's own onClick
+                        stays as the mouse convenience it already was. */}
+                    <td className="sc-mono">
+                      <button
+                        type="button"
+                        className="tbl-name-btn"
+                        aria-current={r.id === run?.id || undefined}
+                        onClick={(e) => { e.stopPropagation(); setSelRun(r.id); }}
+                      >
+                        #{r.id}
+                      </button>
+                    </td>
                     <td>{lensL(r.lens)}</td>
                     <td>
                       <Chip map={RUN_STATUS} k={r.status} />
@@ -979,7 +995,7 @@ export function CrossRegionWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow }
           />
         )}
         {state.phase === 'running' && (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Computing the cross-region gaps from the sequence&#39;s leaves…
           </div>
         )}
@@ -1105,7 +1121,7 @@ export function DispatchWorkspace({
           same gate the freeze/dispatch endpoints enforce atomically with the e-signature.
         </div>
         {live.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Computing the dispatch gate…
           </div>
         ) : live.error || !a ? (

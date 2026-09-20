@@ -374,7 +374,7 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
               ? <>A pediatric plan usually gates the parent submission, so finishing the {topDraft.kind} rationale keeps your main program on track. The age-range extrapolation is the part reviewers scrutinize most — get that right and the plan moves.</>
               /* BP-W0-3: `prea` being empty means no PREA milestone has been
                  RECORDED, which is not the same as none being overdue. The old
-                 copy read "No milestones are overdue -- you're in good standing",
+                 copy read "No milestones are overdue — you're in good standing",
                  which is a clearance claim derived from an empty list.
                  Then: `prea` is ALSO empty while the read is in flight and when
                  it has failed, and this branch spoke the recorded-nothing
@@ -602,7 +602,7 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
             /* BP-W0-3: `des.length > 0` only says a designation RECORD exists.
                With every record withdrawn, denied or still requested,
                `designated.length` is 0 and the old copy read "You hold 0 orphan
-               designations -- the exclusivity and incentives are secured", which
+               designations — the exclusivity and incentives are secured", which
                claims an entitlement the org does not have. "ready to file" was
                likewise asserted over a merely planned application that nothing
                had assessed. */
@@ -616,9 +616,9 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
                  decision, while the toast three lines away said it had not even
                  been saved. Only an explicitly recorded 'submitted' status may
                  carry that sentence; everything else reads as not yet filed. */
-              ? <>Your closest opportunity is <b>{topPending.product}</b> -- {topPendingIndication} -- {topPending.status === 'submitted' ? 'awaiting an agency decision' : 'not yet submitted'}.</>
+              ? <>Your closest opportunity is <b>{topPending.product}</b> — {topPendingIndication} — {topPending.status === 'submitted' ? 'awaiting an agency decision' : 'not yet submitted'}.</>
               : designated.length > 0
-                ? <>You hold <b>{designated.length} orphan {designated.length === 1 ? 'designation' : 'designations'}</b> -- the exclusivity and incentives are secured.</>
+                ? <>You hold <b>{designated.length} orphan {designated.length === 1 ? 'designation' : 'designations'}</b> — the exclusivity and incentives are secured.</>
                 : <>None of the <b>{des.length}</b> recorded {des.length === 1 ? 'designation has' : 'designations have'} been granted.</>}
             body={topPending
               ? <>Orphan status brings 7-year exclusivity, fee waivers, and RPD-voucher eligibility — real value worth getting right. The prevalence evidence and scientific rationale are what carry the application; that's where I can help most.</>
@@ -633,7 +633,7 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
             action={{
               label: topPending ? 'Draft the designation narrative' : 'Review the incentive value',
               onClick: () => ask(topPending
-                ? ('Draft the ' + topPending.agency + ' orphan designation application for ' + topPending.product + ' -- prevalence + scientific rationale for ' + topPending.indication)
+                ? ('Draft the ' + topPending.agency + ' orphan designation application for ' + topPending.product + ' — prevalence + scientific rationale for ' + topPending.indication)
                 : 'Compare exclusivity and incentive benefits across our orphan designations'),
             }}
             secondary="Or work designations, vouchers and advocacy below."
@@ -898,8 +898,8 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
             tone={highChg.length ? 'urgent' : 'calm'}
             eyebrow="What needs your attention across the approved portfolio"
             headline={highChg.length && topChg
-              ? <>A <b>high-risk CMC change</b> is in play -- {topChgTitle} -- and it decides your filing path.</>
-              : <>Your post-approval portfolio is steady -- {inReview.length} {inReview.length === 1 ? 'supplement' : 'supplements'} in agency review{nextRen ? <>, next renewal {nextRen.due}</> : null}.</>}
+              ? <>A <b>high-risk CMC change</b> is in play — {topChgTitle} — and it decides your filing path.</>
+              : <>Your post-approval portfolio is steady — {inReview.length} {inReview.length === 1 ? 'supplement' : 'supplements'} in agency review{nextRen ? <>, next renewal {nextRen.due}</> : null}.</>}
             body={highChg.length && topChg
               ? <>Under ICH Q12 this is the difference between a PACMP and a prior-approval supplement — get the classification right and you avoid a costly re-file. {inReview.length ? <>{inReview.length} {inReview.length === 1 ? 'supplement is' : 'supplements are'} already in review.</> : null}</>
               /* BP-W0-3: "Nothing is overdue" was asserted whether or not any
@@ -1185,7 +1185,7 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
                org holding aggregate reports but ZERO screened signals fell into
                this branch and read:
 
-                 "Nothing is alarming today -- the highest signal is within
+                 "Nothing is alarming today — the highest signal is within
                   expected range (PRR --) … You're keeping watch across FAERS and
                   EudraVigilance and nothing crosses the threshold for expedited
                   action. Your surveillance is doing its job."
@@ -1196,7 +1196,7 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
                Clearance copy now requires `top` to exist — a real screened
                signal to have been the highest one. */
             headline={highPrr && top
-              ? <>Yes -- <b>{topTerm.toLowerCase()}</b> on {top.product} is the one to look at: PRR <b>{prrOf(top)}</b> across {top.count} cases.</>
+              ? <>Yes — <b>{topTerm.toLowerCase()}</b> on {top.product} is the one to look at: PRR <b>{prrOf(top)}</b> across {top.count} cases.</>
               : top
                 ? <>Nothing is alarming today — the highest screened signal is {topTerm.toLowerCase()} (PRR {prrOf(top)}), still within routine monitoring.</>
                 : <>No signals have been screened for this organization.</>}
@@ -1213,9 +1213,9 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
             action={{
               label: highPrr ? 'Adjudicate this signal now' : (agg ? 'Continue the aggregate report' : 'Review the signal log'),
               onClick: () => ask(highPrr && top
-                ? ('Adjudicate the ' + topTerm + ' signal on ' + top.product + ' -- pull every case narrative, run causality assessment, and advise whether a label update is warranted')
+                ? ('Adjudicate the ' + topTerm + ' signal on ' + top.product + ' — pull every case narrative, run causality assessment, and advise whether a label update is warranted')
                 : (agg
-                  ? ('Continue drafting the ' + agg.cycle + ' -- focus on the §15 risk evaluation')
+                  ? ('Continue drafting the ' + agg.cycle + ' — focus on the §15 risk evaluation')
                   : 'Review the active safety signals and their dispositions')),
               alt: highPrr && agg ? { label: 'Work the ' + agg.cycle, onClick: () => ask('Continue drafting the ' + agg.cycle + ' §15 risk evaluation') } : undefined,
             }}
@@ -1233,7 +1233,7 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
       onAsk={ask}
     >
       <div className="sp-sec">
-        <SpCard title="Active signals" meta="FAERS + EudraVigilance · 90d" action={<AddBtn onClick={() => setForm(true)} label="Log signal" />} foot={top ? <SpAsk onAsk={ask} cmd={'Adjudicate the ' + topTerm + ' signal on ' + top.product + ' -- pull every case narrative, run causality assessment, suggest label update.'} label={'Adjudicate the ' + topTerm + ' signal'} /> : undefined}>
+        <SpCard title="Active signals" meta="FAERS + EudraVigilance · 90d" action={<AddBtn onClick={() => setForm(true)} label="Log signal" />} foot={top ? <SpAsk onAsk={ask} cmd={'Adjudicate the ' + topTerm + ' signal on ' + top.product + ' — pull every case narrative, run causality assessment, suggest label update.'} label={'Adjudicate the ' + topTerm + ' signal'} /> : undefined}>
           <div className="sp-list">
             {sigs.length > 0 ? sigs.map((s, i) => (
               <div key={i} className={rowcls(s)}>

@@ -82,7 +82,8 @@ describe('embedding-corpus-policy', () => {
     });
 
     it('passes for vaultDocumentChunks with 3-small (active writer + reader model)', () => {
-      // The vault writer (layout-aware-ingestion) and reader
+      // The vault writer (vault/document-chunking.service.ts, corrected
+      // 2026-09-18 from the deleted layout-aware-ingestion) and reader
       // (advancedRAGPipeline.searchVaultSimilar) both use text-embedding-3-small;
       // only the column default is the legacy ada-002, which the writer
       // overrides. Policy is registered as 3-small to match the live index.

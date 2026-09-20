@@ -23,6 +23,7 @@
  */
 
 import { getGateway } from '../services/ai-gateway/gateway';
+import { createScopedLogger } from '../utils/logger';
 import type {
   GatewayRequest,
   GatewayResponse,
@@ -34,6 +35,8 @@ import type {
   ExtendedThinkingConfig,
   AnaTool,
 } from '../services/ai-gateway/types';
+
+const log = createScopedLogger('unified-ai');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -181,12 +184,37 @@ class UnifiedAIClient {
 
   /**
    * Structured output — returns parsed JSON.
+   *
+   * The schema is enforced on the wire when the resolved model supports it. When
+   * it does not — a fallback to Sonnet 4.6, a private-cloud rung — the call still
+   * runs and the model usually returns valid JSON, but the shape is not
+   * guaranteed and this logs that fact. It is deliberately not an error: around
+   * fifteen services call this, the router reaches an unsupporting model on every
+   * fallback, and refusing would trade a silent gap for an outage. Use
+   * {@link structuredWithProvenance} where the caller needs to act on it rather
+   * than only have it recorded.
    */
   async structured<T = unknown>(
     messages: MessageInput,
     schema?: Record<string, unknown>,
     options?: AICompletionOptions
   ): Promise<T> {
+    return (await this.structuredWithProvenance<T>(messages, schema, options)).data;
+  }
+
+  /**
+   * As {@link structured}, but says whether the schema was actually enforced.
+   *
+   * A governed caller — one whose output becomes part of a regulatory record —
+   * should prefer this: a well-formed answer that was merely lucky and one that
+   * was constrained by construction are otherwise indistinguishable, and the
+   * difference is exactly what a reviewer would want to know.
+   */
+  async structuredWithProvenance<T = unknown>(
+    messages: MessageInput,
+    schema?: Record<string, unknown>,
+    options?: AICompletionOptions
+  ): Promise<{ data: T; schemaEnforced: boolean; model: string }> {
     const response = await this.chat(messages, {
       ...options,
       jsonMode: true,
@@ -195,8 +223,20 @@ class UnifiedAIClient {
       taskType: options?.taskType || 'structured_output',
     });
 
+    const schemaEnforced = response.structuredOutputEnforced === true;
+    if (schema && !schemaEnforced) {
+      log.warn(
+        `[unified-ai] structured() asked for a JSON schema but ${response.provider}/${response.model} ` +
+          'did not enforce it. The answer parsed, but its shape is not guaranteed.',
+      );
+    }
+
     try {
-      return JSON.parse(response.content) as T;
+      return {
+        data: JSON.parse(response.content) as T,
+        schemaEnforced,
+        model: response.resolvedModel || response.model,
+      };
     } catch {
       throw new Error(`Failed to parse AI response as JSON: ${response.content.slice(0, 200)}`);
     }
@@ -217,7 +257,12 @@ class UnifiedAIClient {
       ],
       {
         taskType: 'document_drafting',
-        model: 'claude-opus-4-7',
+        // The stable registry ALIAS, not a wire version. These helpers mean
+        // "the Opus tier", and pinning the version string meant every model
+        // bump silently stopped matching — selectModel falls through to normal
+        // routing on an unmatched pin, so the caller asked for one model, got
+        // another, and nothing said so.
+        model: 'claude-opus-4',
         maxTokens: 8192,
         cache: true,
         thinking: { enabled: true, budgetTokens: 10000 },
@@ -241,7 +286,7 @@ class UnifiedAIClient {
       ],
       {
         taskType: 'regulatory_review',
-        model: 'claude-opus-4-7',
+        model: 'claude-opus-4',
         maxTokens: 8192,
         cache: true,
         ...options,
@@ -254,7 +299,7 @@ class UnifiedAIClient {
    */
   async quick(prompt: string, options?: AICompletionOptions): Promise<string> {
     return this.complete(prompt, {
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-4',
       maxTokens: 2048,
       ...options,
     });
@@ -265,7 +310,7 @@ class UnifiedAIClient {
    */
   async fast(prompt: string, options?: AICompletionOptions): Promise<string> {
     return this.complete(prompt, {
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-haiku-4',
       maxTokens: 1024,
       ...options,
     });

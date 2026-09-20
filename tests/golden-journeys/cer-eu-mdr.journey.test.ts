@@ -118,6 +118,9 @@ const R = new JourneyRecorder(
     'migrations/20260506_kit_section_draft_provenance.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
     'migrations/20260817_reconcile_declared_updated_at_columns.sql',
+    'db/migrations/20260803_document_span_lineage.sql',
+    'migrations/20260907_span_lineage_accepted_machine_draft.sql',
+    'migrations/20260908_span_lineage_machine_draft.sql',
   ],
 );
 
@@ -181,6 +184,14 @@ beforeAll(async () => {
       // The declared-but-never-created updated_at columns, reconciled for real
       // rather than granted as test-only sql.
       'migrations/20260817_reconcile_declared_updated_at_columns.sql',
+      // Span lineage (ledger L177). The governed export in step 6 reaches
+      // registerArtifactWithGovernance, which now records which clauses the
+      // author asserted in the same transaction as the artifact. The gate fails
+      // CLOSED, so without these the export returns 500 rather than passing over
+      // a swallowed write — which is how this journey found the gap.
+      'db/migrations/20260803_document_span_lineage.sql',
+      'migrations/20260907_span_lineage_accepted_machine_draft.sql',
+      'migrations/20260908_span_lineage_machine_draft.sql',
     ],
     // The three TEST-ONLY column grants that were here are gone. Two of them
     // (cerv2_section_versions / concept2cure_artifact_versions .updated_at) are

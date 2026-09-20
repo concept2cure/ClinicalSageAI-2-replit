@@ -22,6 +22,7 @@ import {
   auditTrail,
 } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
+import { respondVerificationUnavailable } from '../lib/verification-outcome';
 import { serverError } from '../lib/api-response';
 
 const logger = createScopedLogger('ana-features');
@@ -3882,6 +3883,17 @@ router.post(
       );
       return res.send(result.buffer);
     } catch (err: any) {
+      if (err?.name === 'VerificationUnavailableError') {
+        // WO-16B finding 10: the ledger's audit or signature query could not
+        // run, so no document is produced — a DOCX with an unsubstantiated
+        // signature block would read as clean. Detail goes to the log.
+        return respondVerificationUnavailable(res, logger, 'reading the provenance ledger', err, {
+          code: 'LEDGER_UNAVAILABLE',
+          message:
+            'The export was refused: its provenance ledger could not be read, so the document cannot substantiate its audit history or signatures. Nothing was exported.',
+          extra: { artifactId },
+        });
+      }
       logger.error('[AnA citations export.docx] failed:', { error: err?.message || err });
       return res
         .status(500)

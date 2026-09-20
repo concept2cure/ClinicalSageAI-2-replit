@@ -10,7 +10,7 @@
  * @module server/services/ana/intelligence-questions/war-game/auditors/sop-auditor
  */
 
-import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
+import type { WarGameAuditor, AuditRule, WarGameFinding } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Helpers

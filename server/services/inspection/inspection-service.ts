@@ -15,7 +15,7 @@
 
 import { pool } from '../../db';
 import { responseDueDate } from './inspection-logic';
-import type { InspectionType, InspectionAgency, InspectionOutcome, FindingClassification, ReadinessAreaStatus } from '../../../shared/schema/inspection';
+import type { InspectionType, InspectionAgency, FindingClassification, ReadinessAreaStatus } from '../../../shared/schema/inspection';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;

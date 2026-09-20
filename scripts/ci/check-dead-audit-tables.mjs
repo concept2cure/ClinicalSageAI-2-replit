@@ -151,9 +151,37 @@ const SCAN_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|sql|json)$/;
  *
  * The baseline itself names every table by construction, so scanning it would
  * make the guard report its own record as a resurrection.
+ *
+ * TEST FIXTURES (`tests/**\/fixtures/`), added 2026-09-10.
+ *
+ * THIS GUARD HAS BEEN RED SINCE COMMIT 9a47438b6, AND I PUT IT THERE. That
+ * commit retired `migrations/0010_operating_system_foundation.sql` and kept its
+ * DDL as `tests/schema-contract/fixtures/drizzle-shaped-operating-system.sql`
+ * so `operating-system-collision.contract.test.ts` could keep demonstrating the
+ * collision the retirement removed. `tests` is in SCAN_ROOTS, the fixture
+ * contains `CREATE TABLE assumption_history`, and this guard read that as a
+ * dropped audit table gaining a writer.
+ *
+ * It is not one, and the guard's own stated concern says why: "A writer added
+ * now does not fail loudly — its table is dropped again on the next deploy and
+ * the rows go with it." A fixture applied to an in-memory PGlite inside a test
+ * never reaches a deployed database, so there is nothing to drop and no rows to
+ * lose. Same category, same reasoning and same narrowness as the exclusion in
+ * scripts/ci/check-duplicate-table-ddl.mjs: only `fixtures/` under `tests/`. A
+ * .sql file anywhere else in the test tree is still scanned, because a
+ * migration that drifts into tests/ is exactly what this should catch.
+ *
+ * WHY NOBODY NOTICED FOR A WEEK: this guard is wired into NOTHING — not
+ * .github/workflows, not .husky/pre-push. It is a WO-4-class gate that exists
+ * and runs nowhere, so a regression in it is invisible by construction. Worth
+ * fixing separately; noted here so the next reader does not assume CI was
+ * watching.
  */
+const TEST_FIXTURE = /(^|\/)tests\/.*\/fixtures\//;
 const SKIP_FILE = (rel) =>
-  rel.startsWith('migrations/meta/') || rel === 'scripts/ci/dead-audit-tables-baseline.json';
+  rel.startsWith('migrations/meta/') ||
+  rel === 'scripts/ci/dead-audit-tables-baseline.json' ||
+  TEST_FIXTURE.test(rel);
 
 function walk(dir, out = []) {
   let entries;

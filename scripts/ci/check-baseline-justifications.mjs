@@ -2,6 +2,26 @@
 /**
  * Guardrail: tenant-isolation baseline ↔ justification parity.
  *
+ * ── SCOPE, STATED BECAUSE THE NAME OVERSTATES IT (added 2026-09-10) ──────────
+ * This gate covers ONE baseline: docs/reports/tenant-isolation-baseline.json.
+ * The repository has 44. The npm script is `ci:baseline-justifications`, which
+ * reads as a general baseline-governance gate and is not one, and the success
+ * line said "N baseline file(s) all justified" where N counts SOURCE FILES
+ * appearing inside that single baseline — so a reader could reasonably take
+ * "6 baseline file(s)" to mean six of the repo's baselines are governed. None of
+ * the other 43 has a justification-parity check at all.
+ *
+ * That is not a defect in what this gate does — bidirectional parity over one
+ * baseline is exactly right, and it is the model WO-5 proposes extending. It is
+ * a defect in what its name and output let a reader conclude, which is the same
+ * class of thing WO-4 catalogued in the gate layer. Both are corrected here:
+ * the alias `ci:tenant-isolation-justifications` names the real scope, and the
+ * output below says what it counted.
+ *
+ * Extending this discipline to the other 43 baselines is WO-5.
+ */
+/**
+ *
  * Policy (docs/reports/tenant-isolation-justifications.md): every file that
  * appears in the tenant-isolation baseline must have a justification row in
  * the "Justified entries" table, and every row in that table must still
@@ -109,7 +129,9 @@ if (missingJustification.length === 0 && staleJustifications.length === 0) {
     process.exit(0);
   }
   console.log(
-    `[ci:baseline-justifications] OK — ${baselineFiles.size} baseline file(s) all justified, no stale rows.`
+    `[ci:baseline-justifications] OK — tenant-isolation baseline: ` +
+      `${baselineFiles.size} source file(s) all justified, no stale rows. ` +
+      `(SCOPE: this gate covers that ONE baseline, not the repo's 44 — see the header.)`
   );
   process.exit(0);
 }

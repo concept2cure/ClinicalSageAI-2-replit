@@ -691,6 +691,7 @@ export function SubmissionCenter({
         {list.length > 0 && (
           <select
             className="sc-subpick"
+            aria-label="Submission to work on"
             value={sub?.id ?? ''}
             onChange={(e) => setSelSub(Number(e.target.value))}
           >

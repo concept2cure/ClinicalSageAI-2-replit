@@ -1,17 +1,18 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import { parseDraftEnvelope } from './authoring-draft-envelope.js';
 import bcrypt from 'bcryptjs';
 import fs from 'fs';
 import path from 'path';
 // spawn — reserved for future PDF generation pipeline
 import crypto from 'crypto';
 // Lazy load docx to prevent startup failures
-import { PDFDocument } from 'pdf-lib';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { enforceOrgMembership } from '../middleware/orgMembership';
 import { getPool } from '../db';
 import auditService, { writeChainedAuditRow } from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { isSigningAuthorized } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { authedOrgId } from '../utils/authedOrgId';
@@ -150,33 +151,11 @@ router.use((req: Request, res: Response, next: any) => {
   // ~60s cache as authenticateToken.
   return enforceOrgMembership(req, res, next);
 });
-const ALLOWED_UPLOAD_MIME_TYPES = new Set([
-  'application/pdf',
-  'text/plain',
-  'application/json',
-  'application/xml',
-  'text/xml',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-]);
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: '/tmp',
-    filename: (_req, file, cb) => {
-      const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-      cb(null, `${Date.now()}-${safeName}`);
-    },
-  }),
-  limits: {
-    fileSize: 25 * 1024 * 1024,
-    files: 5,
-  },
-  fileFilter: (_req, file, cb) => {
-    if (!ALLOWED_UPLOAD_MIME_TYPES.has(file.mimetype)) {
-      return cb(new Error('Unsupported file type'));
-    }
-    cb(null, true);
-  },
-});
+/* A disk-backed multer instance and its MIME allowlist stood here, attached
+   to no route. The two upload routes this file does serve build their own
+   memory-storage instances further down (imageUpload, docxImport); an unused
+   /tmp writer with a 25MB limit was a configuration nobody could reach and
+   nobody was maintaining. */
 
 // Use centralized database pool
 const pool = getPool();
@@ -766,7 +745,27 @@ const createAuditTrail = async (
     const resourceId = String(sectionId ?? docId ?? '');
 
     if (executor === pool) {
-      void auditService.logAction({
+      /* WO-16C #133. Was `void auditService.logAction({…})`.
+         `logAction` never rejects on a persistence failure, so the discarded
+         AuditWriteResult was the only place a lost row was visible.
+
+         The outcome is NOT plumbed out to callers here, and the reason is
+         specific rather than convenient: `createAuditTrail` has a dozen call
+         sites in this file and what this row is, per the comment above, is the
+         secondary INDEX entry — "the dedicated authoring_audit_trail row above
+         remains the rich record". That row is written on `executor`, which on the
+         transactional path is the caller's BEGIN'd client, so it commits and
+         rolls back with the mutation. Losing THIS row therefore degrades the
+         unified audit_logs query; it does not lose the §11.10(e) record of the
+         change, which is the authoring_audit_trail row.
+
+         That distinction is why this is logged at error severity with what was
+         actually lost, rather than threaded through twelve call sites as a value
+         they would all ignore — an ignored return value is the vacuous
+         conversion this work order keeps finding. If the index entry ever
+         becomes the authoritative record for anything, this decision has to be
+         revisited, which is what this note is for. */
+      const indexRow = await recordAuditRow({
         tenantId,
         userId: actorEmail,
         action,
@@ -776,6 +775,14 @@ const createAuditTrail = async (
         userAgent,
         details: chainDetails,
       });
+      if (!indexRow.persisted) {
+        console.error(
+          '[authoring] audit_logs index entry NOT written for ' +
+            `${action} on ${resourceType} ${resourceId}; the authoritative ` +
+            'authoring_audit_trail row exists, but this event is missing from the ' +
+            'unified audit query',
+        );
+      }
     } else if (!auditOpts.chainedRowWrittenByCaller) {
       /* §11.10(e) — ENLISTED IN THE CALLER'S TRANSACTION.
        *
@@ -3636,35 +3643,14 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
           callerModule: 'authoring-router/generate-draft',
         });
 
-        // Parse the structured envelope tolerantly. On ANY shortfall, fall back to
-        // treating the whole response as the draft with no attributions — the draft
-        // still lands and is attributed by verified quotes + author lineage
-        // (Phase 3). Structured paraphrase is additive; it must never break drafting.
-        let generatedContent = '';
-        let modelAttributions: Array<{ quote: string; src: number }> = [];
-        {
-          const rawResponse = gwResponse.content?.trim() || '';
-          let parsed: any = null;
-          try {
-            const fenced = rawResponse.replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
-            const start = fenced.indexOf('{');
-            const end = fenced.lastIndexOf('}');
-            if (start !== -1 && end > start) parsed = JSON.parse(fenced.slice(start, end + 1));
-          } catch {
-            parsed = null;
-          }
-          if (parsed && typeof parsed.content === 'string' && parsed.content.trim()) {
-            generatedContent = parsed.content.trim();
-            if (Array.isArray(parsed.attributions)) {
-              modelAttributions = parsed.attributions
-                .filter((a: any) => a && typeof a.quote === 'string' && Number.isInteger(Number(a.src)))
-                .map((a: any) => ({ quote: String(a.quote), src: Number(a.src) }));
-            }
-          } else {
-            // No usable structured content — treat the response as plain prose.
-            generatedContent = rawResponse;
-          }
-        }
+        // Parse the structured envelope tolerantly. On ANY shortfall the whole
+        // response becomes the draft with no attributions — the draft still lands
+        // and is attributed by verified quotes + author lineage (Phase 3).
+        // Structured paraphrase is additive; it must never break drafting. The
+        // parser is pure and lives in authoring-draft-envelope.ts so the malformed
+        // shapes it has to survive are unit-testable without the route.
+        const { content: generatedContent, attributions: modelAttributions } =
+          parseDraftEnvelope(gwResponse.content);
         if (generatedContent) {
           // Park the draft + the sources it came from so the accept endpoint can
           // record verified span-level source lineage (Phase 3). Best-effort:
@@ -4403,41 +4389,15 @@ router.get('/stats', async (req: Request, res: Response) => {
   }
 });
 
-// ============= Helper Functions for Step 5 =============
-
-function sha256(obj: any): string {
-  return crypto
-    .createHash('sha256')
-    .update(typeof obj === 'string' ? obj : JSON.stringify(obj))
-    .digest('hex');
-}
-
-// Build DOCX from sections with full 21 CFR Part 11 compliance
-
-function extractPlainText(contentJson: any): string {
-  // Minimal safe extractor; UI remains rich. Improve as needed.
-  try {
-    const walk = (node: any): string => {
-      if (!node) return '';
-      if (Array.isArray(node)) return node.map(walk).join(' ');
-      if (node.type === 'text') return node.text || '';
-      const kids = node.content ? walk(node.content) : '';
-      return kids;
-    };
-    return walk(contentJson) || '';
-  } catch {
-    return '';
-  }
-}
-
-// Build trivial PDF (wrapper) – optional; DOCX is primary
-async function buildPdfFromDocx(docxBuffer: Buffer): Promise<Buffer> {
-  // If you already have a proper PDF renderer, use it instead.
-  // This creates an empty PDF with the DOCX attached as a file (placeholder).
-  const pdf = await PDFDocument.create();
-  const bytes = await pdf.save();
-  return Buffer.from(bytes);
-}
+/* The three "Step 5 helpers" that stood here — sha256(), extractPlainText()
+   and buildPdfFromDocx() — were called by nothing. buildPdfFromDocx was the
+   one worth naming: it took a DOCX buffer, ignored it, and returned an EMPTY
+   PDF, with a comment calling that a placeholder. A helper that answers a
+   request for a rendered document with a blank one is the fabrication this
+   repo refuses; leaving it in place meant the next caller would ship empty
+   exports and see nothing wrong. Hashing goes through sha256Hex / crypto
+   directly at each site, which is where the rest of the file already does it.
+*/
 
 // ============= Step 5 Export, Submit, Sign, Freeze Endpoints =============
 
@@ -5067,7 +5027,10 @@ router.get('/sections/:sectionId/tokens', async (req: Request, res: Response) =>
 // POST /api/authoring/sections/:sectionId/refresh-token - Refresh a specific token
 router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Response) => {
   try {
-    const { sectionId } = req.params;
+    /* :sectionId is addressing only. A citation is identified by cite_id within
+       the caller's tenant, and refreshSourceCitation scopes on the tenant — the
+       section in the path is not a second scope and was never read as one, so
+       it is not bound here rather than bound and ignored. */
     const { cite_id } = req.body;
     const tenantId = getTenantId(req);
 
@@ -6459,6 +6422,165 @@ router.get('/docs/:docId/workflow', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * The last workflow signature has cleared the chain: approve the document and
+ * leave the immutable record that approval means.
+ *
+ * Lifted out of POST /docs/:docId/sign as one named act, because it is one:
+ * the status flip and the freeze must land together or not at all, and at four
+ * blocks deep inside the handler that pairing was something a reader had to
+ * reconstruct. It runs on the CALLER'S transaction client for exactly that
+ * reason — it is not a step that may independently succeed.
+ */
+async function approveAndFreezeDocument(args: {
+  client: Queryable;
+  docId: string;
+  tenantId: number;
+  signerEmail: string;
+  contentHash: string;
+}): Promise<void> {
+  const { client, docId, tenantId, signerEmail, contentHash } = args;
+  await client.query(
+    `UPDATE authoring_documents
+     SET status = 'APPROVED', approved_at = NOW()
+     WHERE id = $1 AND tenant_id = $2`,
+    [docId, tenantId]
+  );
+
+  // Auto-freeze on approval — the final workflow signature approving the
+  // document must leave the same immutable legal record the e-sign
+  // APPROVER path produces. Without this the /sign workflow ended a
+  // document APPROVED with NO frozen_documents row: the approved content
+  // survived only in the editable authoring_sections table, and this
+  // approval signature's covered_freeze_version / covered_content_hash
+  // (bound above to `covered`, the pre-existing snapshot) were null —
+  // an approval that attests to "no snapshot". Mirror the proven e-sign
+  // pattern exactly: capture the FULL {document, sections, approvedBy,
+  // documentHash, frozenAt} snapshot, set content_hash to sha256 of the
+  // SNAPSHOT BYTES (so GET /docs/:docId/frozen's recompute-and-compare
+  // verifies), and INSERT ... ON CONFLICT DO NOTHING on THIS transaction
+  // client so the freeze lands with the status flip or rolls back with it.
+  const approvedDoc = await client.query(
+    'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+    [docId, tenantId]
+  );
+  const approvedSections = await client.query(
+    'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+    [docId, tenantId]
+  );
+  const frozenContent = JSON.stringify({
+    document: approvedDoc.rows[0] ?? null,
+    sections: approvedSections.rows,
+    approvedBy: signerEmail,
+    documentHash: contentHash,
+    frozenAt: new Date().toISOString(),
+  });
+  const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
+
+  await client.query(
+    `INSERT INTO frozen_documents
+     (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
+    [docId, 'approved', frozenContent, frozenContentHash, signerEmail, 'Approved and frozen', tenantId]
+  );
+}
+
+/**
+ * Advance this document's approval workflow on the strength of one signature.
+ *
+ * Only a signer whose VERIFIED roles carry the signature's meaning (or QA /
+ * RA_CMC) decides a step; when that clears the last pending step of a workflow
+ * that actually exists, the document is approved and frozen. Everything runs on
+ * the caller's transaction client, so a signature and the step it approves land
+ * together or not at all.
+ */
+async function advanceWorkflowForSignature(args: {
+  client: Queryable;
+  req: Request;
+  docId: string;
+  tenantId: number;
+  signerEmail: string;
+  meaning: string;
+  reason: string;
+  contentHash: string;
+}): Promise<void> {
+  const { client, req, docId, tenantId, signerEmail, meaning, reason, contentHash } = args;
+  // Update workflow step if applicable. Roles come from the VERIFIED token
+  // (req.user.roles), not from the x-roles header — the header is derived from
+  // claims by this router's JWT middleware, but reading the claim directly
+  // means an approval decision can never depend on a mutable header at all
+  // (ledger C-18).
+  const userRoles = (((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[])
+    .map((r) => String(r).toUpperCase());
+  if (userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC')) {
+    await client.query(
+      `UPDATE authoring_workflow_steps
+       SET status = 'APPROVED', decision_note = $1, decided_at = NOW()
+       WHERE doc_id = $2 AND approver_email = $3 AND status = 'PENDING' AND tenant_id = $4`,
+      [reason, docId, signerEmail, tenantId]
+    );
+
+    /* Are all approvals in — or were there never any?
+       This counted only PENDING steps and treated '0' as "all approved".
+       That count is also '0' when NO STEPS EXIST, and the only thing that
+       creates them is POST /docs/:docId/submit, which has no caller
+       anywhere in the client. So on the ordinary path — a document never
+       submitted for approval — the first APPROVER signature found zero
+       pending steps, concluded the chain was complete, flipped the document
+       to APPROVED and inserted a frozen_documents row. An approval chain
+       that was never required read exactly like one that finished, and the
+       result is the strongest and least reversible transition in this
+       lifecycle: APPROVED is sealed, and the content becomes immutable.
+
+       A check that ran zero assertions must not report a pass. The total is
+       counted alongside the pending, and the flip now requires that an
+       approval workflow actually EXISTED and is complete. A document with
+       no workflow is signed — the signature above is recorded either way —
+       and simply not approved, which is the truth about it. */
+    const stepCounts = await client.query(
+      `SELECT COUNT(*) FILTER (WHERE status = 'PENDING') AS pending,
+              COUNT(*) AS total
+         FROM authoring_workflow_steps
+        WHERE doc_id = $1 AND tenant_id = $2`,
+      [docId, tenantId]
+    );
+    const totalSteps = Number(stepCounts.rows[0]?.total ?? 0);
+    const pendingCount = Number(stepCounts.rows[0]?.pending ?? 0);
+
+    if (totalSteps > 0 && pendingCount === 0) {
+      await approveAndFreezeDocument({ client, docId, tenantId, signerEmail, contentHash });
+    }
+  }
+}
+
+/**
+ * What this signature is bound to: the document's content hash, the frozen
+ * snapshot it attests to, and the digest over both.
+ *
+ * The digest used to hash `new Date().toISOString()`, which made it impossible
+ * for anyone to recompute — a hash nobody can reproduce proves nothing. It
+ * covers only durable columns, including the frozen snapshot (§11.70
+ * signature/record link, C-11 residual 2), which is why the three are computed
+ * in one place rather than assembled at each signing path.
+ */
+async function computeSignatureBinding(
+  docId: string,
+  tenantId: number,
+  signerEmail: string,
+  meaning: string,
+) {
+  const contentHash = await computeDocHash(docId, tenantId);
+  const covered = await currentFrozenSnapshot(docId, tenantId);
+  const signatureDigest = computeSignatureDigest({
+    signerEmail,
+    meaning,
+    contentHash,
+    coveredContentHash: covered?.contentHash ?? null,
+  });
+  return { contentHash, covered, signatureDigest };
+}
+
 // ============= SIGN Operations =============
 
 // POST /api/authoring/docs/:docId/sign - Sign document (21 CFR Part 11)
@@ -6513,20 +6635,12 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid PIN' });
     }
 
-    // Compute document hash
-    const contentHash = await computeDocHash(docId, tenantId);
-
-    // The digest used to hash `new Date().toISOString()`, which made it
-    // impossible for anyone to recompute — a hash nobody can reproduce proves
-    // nothing. It now covers only durable columns, including the frozen snapshot
-    // this signature attests to (§11.70 signature/record link, C-11 residual 2).
-    const covered = await currentFrozenSnapshot(docId, tenantId);
-    const signatureDigest = computeSignatureDigest({
+    const { contentHash, covered, signatureDigest } = await computeSignatureBinding(
+      String(docId),
+      tenantId,
       signerEmail,
       meaning,
-      contentHash,
-      coveredContentHash: covered?.contentHash ?? null,
-    });
+    );
 
     // Store signature
     const signatureId = crypto.randomUUID();
@@ -6563,96 +6677,16 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         ]
       );
 
-      // Update workflow step if applicable. Roles come from the VERIFIED token
-      // (req.user.roles), not from the x-roles header — the header is derived from
-      // claims by this router's JWT middleware, but reading the claim directly
-      // means an approval decision can never depend on a mutable header at all
-      // (ledger C-18).
-      const userRoles = (((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[])
-        .map((r) => String(r).toUpperCase());
-      if (userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC')) {
-        await client.query(
-          `UPDATE authoring_workflow_steps
-           SET status = 'APPROVED', decision_note = $1, decided_at = NOW()
-           WHERE doc_id = $2 AND approver_email = $3 AND status = 'PENDING' AND tenant_id = $4`,
-          [reason, docId, signerEmail, tenantId]
-        );
-
-        /* Are all approvals in — or were there never any?
-           This counted only PENDING steps and treated '0' as "all approved".
-           That count is also '0' when NO STEPS EXIST, and the only thing that
-           creates them is POST /docs/:docId/submit, which has no caller
-           anywhere in the client. So on the ordinary path — a document never
-           submitted for approval — the first APPROVER signature found zero
-           pending steps, concluded the chain was complete, flipped the document
-           to APPROVED and inserted a frozen_documents row. An approval chain
-           that was never required read exactly like one that finished, and the
-           result is the strongest and least reversible transition in this
-           lifecycle: APPROVED is sealed, and the content becomes immutable.
-
-           A check that ran zero assertions must not report a pass. The total is
-           counted alongside the pending, and the flip now requires that an
-           approval workflow actually EXISTED and is complete. A document with
-           no workflow is signed — the signature above is recorded either way —
-           and simply not approved, which is the truth about it. */
-        const stepCounts = await client.query(
-          `SELECT COUNT(*) FILTER (WHERE status = 'PENDING') AS pending,
-                  COUNT(*) AS total
-             FROM authoring_workflow_steps
-            WHERE doc_id = $1 AND tenant_id = $2`,
-          [docId, tenantId]
-        );
-        const totalSteps = Number(stepCounts.rows[0]?.total ?? 0);
-        const pendingCount = Number(stepCounts.rows[0]?.pending ?? 0);
-
-        if (totalSteps > 0 && pendingCount === 0) {
-          // All approved - update document status
-          await client.query(
-            `UPDATE authoring_documents
-             SET status = 'APPROVED', approved_at = NOW()
-             WHERE id = $1 AND tenant_id = $2`,
-            [docId, tenantId]
-          );
-
-          // Auto-freeze on approval — the final workflow signature approving the
-          // document must leave the same immutable legal record the e-sign
-          // APPROVER path produces. Without this the /sign workflow ended a
-          // document APPROVED with NO frozen_documents row: the approved content
-          // survived only in the editable authoring_sections table, and this
-          // approval signature's covered_freeze_version / covered_content_hash
-          // (bound above to `covered`, the pre-existing snapshot) were null —
-          // an approval that attests to "no snapshot". Mirror the proven e-sign
-          // pattern exactly: capture the FULL {document, sections, approvedBy,
-          // documentHash, frozenAt} snapshot, set content_hash to sha256 of the
-          // SNAPSHOT BYTES (so GET /docs/:docId/frozen's recompute-and-compare
-          // verifies), and INSERT ... ON CONFLICT DO NOTHING on THIS transaction
-          // client so the freeze lands with the status flip or rolls back with it.
-          const approvedDoc = await client.query(
-            'SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
-            [docId, tenantId]
-          );
-          const approvedSections = await client.query(
-            'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
-            [docId, tenantId]
-          );
-          const frozenContent = JSON.stringify({
-            document: approvedDoc.rows[0] ?? null,
-            sections: approvedSections.rows,
-            approvedBy: signerEmail,
-            documentHash: contentHash,
-            frozenAt: new Date().toISOString(),
-          });
-          const frozenContentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
-
-          await client.query(
-            `INSERT INTO frozen_documents
-             (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
-             ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
-            [docId, 'approved', frozenContent, frozenContentHash, signerEmail, 'Approved and frozen', tenantId]
-          );
-        }
-      }
+      await advanceWorkflowForSignature({
+        client,
+        req,
+        docId: String(docId),
+        tenantId,
+        signerEmail,
+        meaning,
+        reason,
+        contentHash,
+      });
 
       // Create audit event
       await createAuditEvent(

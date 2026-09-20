@@ -18,11 +18,11 @@ import {
   analyzeDocument as analyzeClaimEvidence,
   analyzeClaimEvidence as analyzeSingle,
 } from './claim-evidence-engine';
-import { analyzeConsistency, extractAssertions, type DocumentSection } from './consistency-engine';
+import { analyzeConsistency, type DocumentSection } from './consistency-engine';
 import { computeDefensibility } from './defensibility-engine';
 import { generateReviewerQuestions } from './reviewer-question-engine';
 import { classifyRisks } from './risk-classification-engine';
-import { evaluateOutput, evaluateIntelligenceOutput } from './evaluation-gate';
+import { evaluateIntelligenceOutput } from './evaluation-gate';
 import type {
   IntelligenceAnalysis,
   RIMSignal,

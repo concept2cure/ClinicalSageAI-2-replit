@@ -34,12 +34,21 @@ const CLAUDE_CAPABILITIES: TaskType[] = [
   'general',
 ];
 
+// `thinkingMode` / `supportsSamplingParams` are declared on every entry here
+// rather than inherited from the first-party entry that shares its weights.
+// A substrate decides what a model ACCEPTS, not its lineage: these run the
+// same Claude, but feature availability on Bedrock and Vertex trails the
+// first-party API, so a flag copied across would promise a private-cloud
+// tenant a request shape their endpoint rejects. When a capability lands on a
+// substrate, flip it here — one entry at a time, with the evidence.
 export const CLOUD_MODELS: ModelConfig[] = [
   // ── AWS Bedrock (private-cloud Claude — primary BAA/ZDR path) ──────────────
   {
     id: 'claude-opus-4-bedrock',
     provider: 'bedrock',
     model: 'anthropic.claude-opus-4-7',
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
     contextWindow: 200000,
     qualityScore: 99,
     costPer1kInput: 0.015,
@@ -51,6 +60,8 @@ export const CLOUD_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4-bedrock',
     provider: 'bedrock',
     model: 'anthropic.claude-sonnet-4-6',
+    thinkingMode: 'budget',
+    supportsSamplingParams: true,
     contextWindow: 200000,
     qualityScore: 97,
     costPer1kInput: 0.003,
@@ -63,6 +74,8 @@ export const CLOUD_MODELS: ModelConfig[] = [
     id: 'claude-opus-4-vertex',
     provider: 'vertex',
     model: 'claude-opus-4-7',
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
     contextWindow: 200000,
     qualityScore: 99,
     costPer1kInput: 0.015,
@@ -75,6 +88,8 @@ export const CLOUD_MODELS: ModelConfig[] = [
     id: 'gpt-4o-azure',
     provider: 'azure',
     model: 'gpt-4o',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 128000,
     qualityScore: 95,
     costPer1kInput: 0.005,
@@ -95,6 +110,8 @@ export const CLOUD_MODELS: ModelConfig[] = [
     id: 'local-default',
     provider: 'local',
     model: 'local-default',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 32000,
     qualityScore: 70,
     costPer1kInput: 0,

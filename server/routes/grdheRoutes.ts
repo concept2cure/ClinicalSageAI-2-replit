@@ -19,16 +19,14 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { grdheService } from '../services/grdhe/grdheService';
+import { grdheService, AuditScopeError } from '../services/grdhe/grdheService';
 import {
   DataRegion,
   TerminologySystem,
   RegulatoryFormat,
   ExportStatus,
-  SignatureMeaning,
   CreateExportJobRequest,
-  CreateAdverseEventRequest,
-  SignatureRequest
+  CreateAdverseEventRequest
 } from '../services/grdhe/types';
 import {
   generateFDA3500AXML,
@@ -914,84 +912,48 @@ router.post('/adverse-events/:eventId/validate', asyncHandler(async (req: Reques
 }));
 
 // =============================================================================
-// ELECTRONIC SIGNATURE ENDPOINTS (21 CFR Part 11)
+// ELECTRONIC SIGNATURE ENDPOINTS (21 CFR Part 11) — retired 2026-09-10
 // =============================================================================
+//
+// WO-16B findings 28 and 29. POST /signatures wrote a signature whose printed
+// name was the user id, whose hash covered no content, and whose
+// authentication was asserted but never performed; GET /signatures/:id/verify
+// answered `valid: true` for every row it found. Both are gone. The routes stay
+// so a caller is told where the one conforming path is, the same way
+// POST /api/auth/enterprise/electronic-signature answers today
+// (server/services/__tests__/signature-write-path-single.test.ts).
 
 /**
- * POST /api/grdhe/signatures
- * Create an electronic signature
+ * POST /api/grdhe/signatures — REMOVED. Sign through /api/esignature/sign.
  */
-router.post('/signatures', asyncHandler(async (req: Request, res: Response) => {
-  const request: SignatureRequest = req.body;
-  
-  // Validate required fields
-  const requiredFields = ['objectType', 'objectId', 'meaning', 'reason', 'userId', 'password'];
-  const missingFields = requiredFields.filter(f => !(request as any)[f]);
-  
-  if (missingFields.length > 0) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'MISSING_FIELDS',
-        message: `Missing required fields: ${missingFields.join(', ')}`
-      }
-    });
-  }
-  
-  // Validate meaning against the canonical SignatureMeaning vocabulary.
-  const validMeanings: SignatureMeaning[] = [
-    'authored',
-    'reviewed',
-    'verified',
-    'approved',
-    'rejected',
-    'acknowledged',
-    'witnessed',
-    'responsible_for_content',
-    'legal_responsibility',
-  ];
-  if (!validMeanings.includes(request.meaning)) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'INVALID_MEANING',
-        message: `Invalid signature meaning. Must be one of: ${validMeanings.join(', ')}`
-      }
-    });
-  }
-  
-  try {
-    const signature = await grdheService.createElectronicSignature(request);
-    
-    res.status(201).json({
-      success: true,
-      data: signature
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      error: {
-        code: 'SIGNATURE_FAILED',
-        message: error.message
-      }
-    });
-  }
-}));
-
-/**
- * GET /api/grdhe/signatures/:signatureId/verify
- * Verify an electronic signature
- */
-router.get('/signatures/:signatureId/verify', asyncHandler(async (req: Request, res: Response) => {
-  const signatureId = String(req.params.signatureId);
-  
-  const result = await grdheService.verifyElectronicSignature(signatureId);
-  
-  res.json({
-    success: true,
-    data: result
+router.post('/signatures', (_req: Request, res: Response) => {
+  res.status(410).json({
+    success: false,
+    error: {
+      code: 'ESIGNATURE_ENDPOINT_REMOVED',
+      message:
+        'This endpoint recorded electronic signatures without verifying the signer and is retired. ' +
+        'Use POST /api/esignature/sign, the single Part 11 signing path (credentials verified, content bound).',
+      canonical: '/api/esignature/sign',
+    },
   });
-}));
+});
+
+/**
+ * GET /api/grdhe/signatures/:signatureId/verify — REMOVED. It verified nothing.
+ */
+router.get('/signatures/:signatureId/verify', (_req: Request, res: Response) => {
+  res.status(410).json({
+    success: false,
+    error: {
+      code: 'ESIGNATURE_ENDPOINT_REMOVED',
+      message:
+        'This endpoint answered valid:true for every signature it found and is retired. ' +
+        'Verify through GET /api/auth/enterprise/electronic-signature/:id/verify.',
+      canonical: '/api/auth/enterprise/electronic-signature/:id/verify',
+    },
+  });
+});
 
 // =============================================================================
 // AUDIT TRAIL ENDPOINTS
@@ -1027,12 +989,66 @@ router.get('/audit/:tableName/:recordId', asyncHandler(async (req: Request, res:
       }
     });
   }
-  
-  const auditLog = await grdheService.getAuditLog(tableName, recordId, {
-    limit: limit ? parseInt(limit as string) : 100,
-    offset: offset ? parseInt(offset as string) : 0
-  });
-  
+
+  /* The allowlist above is an anti-SQL-injection measure — its own comment says
+     so — and an allowlist is not an authorization check. Until 2026-09-10 it was
+     the ONLY check here: recordId came straight off the URL, getAuditLog took no
+     tenant, regulatory_harmonization.audit_log has no tenant column, and that
+     schema carries no RLS policy (the sweep in 20260801_tenant_isolation_sweep.sql
+     is `WHERE c.table_schema = 'public'`, so it cannot reach it). Any
+     authenticated user of any tenant who supplied another tenant's record UUID
+     got that record's full Part 11 before/after trail, old_data and new_data
+     included.
+
+     This is the IDOR shape the assertTenantMatchesAuth header above describes
+     PRs #496-#499 closing elsewhere in this router. This endpoint was missed.
+     Ownership is now proven in the service by joining the audited table, which
+     is where the tenant key actually lives. */
+  const authedTenantUuid =
+    (req as any).user?.organizationUuid ??
+    (req as any).tenantContext?.organizationUuid;
+  if (!authedTenantUuid) {
+    return res.status(403).json({
+      success: false,
+      error: {
+        code: 'TENANT_CONTEXT_REQUIRED',
+        message: 'An audit trail can only be read within a tenant context'
+      }
+    });
+  }
+
+  let auditLog;
+  try {
+    auditLog = await grdheService.getAuditLog(tableName, recordId, String(authedTenantUuid), {
+      limit: limit ? parseInt(limit as string) : 100,
+      offset: offset ? parseInt(offset as string) : 0
+    });
+  } catch (err) {
+    /* Only a deliberate scope refusal answers 409. getAuditLog also runs an
+       EXISTS probe and the audit query itself, and this used to catch EVERY
+       throw — so a transient database error was reported to the caller as "this
+       table cannot be tenant-scoped and is withheld", which is a false claim
+       about the schema produced by an outage, in the same shape a real policy
+       decision takes. A caller cannot retry a 409, and an operator reading it
+       would go looking for a missing tenant column that is not missing.
+
+       Today the refusals are: electronic_signatures (no tenant column at all —
+       serving a Part 11 signature trail that cannot be attributed to a sponsor
+       is the failure this endpoint's fix exists to stop) and any table added to
+       the allowlist above without being classified in AUDITABLE_TABLE_SCOPES.
+       See WO-13. Anything else rethrows to the router's error handler as a
+       500, which is what it is. */
+    if (!(err instanceof AuditScopeError)) throw err;
+
+    return res.status(409).json({
+      success: false,
+      error: {
+        code: err.code,
+        message: `The audit trail for ${tableName} cannot be tenant-scoped and is withheld`
+      }
+    });
+  }
+
   res.json({
     success: true,
     data: auditLog,

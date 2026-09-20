@@ -119,6 +119,29 @@ if (abnormal) {
   console.error(
     combined.split('\n').slice(-40).map((l) => `    ${l}`).join('\n')
   );
+  // A memory-constrained environment (a small container, a cloud dev session)
+  // cannot run this gate at all, and a contributor who cannot run it is the
+  // contributor most likely to push a type error. Say what a scoped check can
+  // and cannot do, because the tempting substitutes are each unsound in a
+  // different way and one of them was shipped from:
+  //   - `tsc --noEmit <file>` on the changed files catches errors WITHIN a
+  //     file (TS2554 arity, TS2345 argument types) and is worth running. It
+  //     does NOT see callers, so it cannot catch a signature change that
+  //     breaks another file. It is not this gate.
+  //   - a narrow tsconfig `include` over just the changed files is WORSE than
+  //     it looks: it loads the global `.d.ts` augmentations partially, so it
+  //     invents TS2717/TS2339 conflicts in files the diff never touched. Those
+  //     are artifacts of the config, not findings.
+  // Neither is a substitute. The gate must still run somewhere with the heap.
+  console.error('');
+  console.error('  If this host cannot supply the heap, the gate has NOT run — do not');
+  console.error('  report the diff as typechecked. Options, in order of soundness:');
+  console.error('    1. Run it on a host with the memory, or in CI.');
+  console.error('    2. Raise/lower the cap: TYPECHECK_HEAP_MB=<mb> npm run ci:typecheck:no-regression');
+  console.error('    3. Scoped, NOT equivalent: npx tsc --noEmit --skipLibCheck <changed files>');
+  console.error('       — catches within-file errors only; blind to callers. A narrow');
+  console.error('       tsconfig include is not a substitute either: it double-loads the');
+  console.error('       global .d.ts augmentations and invents errors in untouched files.');
   process.exit(1);
 }
 

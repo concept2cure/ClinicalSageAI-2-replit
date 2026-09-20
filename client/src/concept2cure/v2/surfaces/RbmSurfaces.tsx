@@ -17,6 +17,7 @@ import { useAgentActivity } from '../useAgentActivity';
 import { useWorkDockVisible } from '../workDock';
 import { shellProgramName } from '../shellProject';
 import { RBM_VOCAB, rbmBand, kriStatusOf, type RbmNavItem } from '../fixtures/rbm-data';
+import { useDialog } from '../useDialog';
 import '../styles/rbm-v2.css';
 
 /* Re-export surfaces so Rbm.tsx imports from one place */
@@ -370,6 +371,10 @@ export function RbmFormModal({
   const set = (k: string, val: string) => setV(s => ({ ...s, [k]: val }));
   const missing = fields.some(f => !f.optional && (v[f.key] === '' || v[f.key] == null));
   const inputType = (t: string) => (t === 'number' ? 'number' : t === 'date' ? 'date' : 'text');
+  /* Escape + focus-on-open + focus-return, and the dialog semantics moved from
+     the scrim onto the panel they describe. */
+  const dialogRef = useDialog(onCancel);
+
   return (
     <div className="rbm-modal-scrim" role="dialog" aria-modal="true" aria-label={title}>
       <div className="rbm-modal">
@@ -463,6 +468,10 @@ export function GovernedApprovalDialog({
       setBusy(false);
     }
   };
+  /* The e-signature panel: it had the role but no Escape and no focus hand-off,
+     so a keyboard user could reach the approval ceremony and not leave it. */
+  const dialogRef = useDialog(onCancel);
+
   return (
     <div className="rbm-modal-scrim" role="dialog" aria-modal="true" aria-label={`Approve ${what}`}>
       <div className="rbm-modal">

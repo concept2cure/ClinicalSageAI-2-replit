@@ -163,3 +163,33 @@ describe('the computed lenses read out of the canonical engines', () => {
     expect(ai.items.length).toBeGreaterThan(5);
   });
 });
+
+/**
+ * The predicate lens must not claim a product-code match it cannot establish.
+ *
+ * `sameProductCode` was `input.productCode ? true : undefined` — the presence of
+ * a code in the CALLER'S QUERY was treated as proof that every returned
+ * precedent shares it. The precedent record was never consulted, and
+ * PrecedentRecord carries no product-code field at all; searchUnifiedPrecedents
+ * filters on submission_type / product_type / device_class / therapeutic_area
+ * only. So a `true` collected the product-code weight toward the adequacy score
+ * for a match never shown to exist — in a file whose own doc comment promises
+ * that unknowable factors are "left unset, and the rubric reports them as
+ * unknown rather than scoring them favourably".
+ */
+describe('predicate lens — product-code sameness is not fabricated from the query', () => {
+  it('scores the same whether or not the caller supplied a product code', () => {
+    const withCode = buildDeviceLenses({ submissionType: '510(k)', productCode: 'BZH' }, CLEARANCES);
+    const withoutCode = buildDeviceLenses({ submissionType: '510(k)' }, CLEARANCES);
+    // Pre-fix these differed: supplying a code alone lifted the adequacy score.
+    expect(withCode.predicate.rate).toBe(withoutCode.predicate.rate);
+    expect(withCode.predicate.items).toEqual(withoutCode.predicate.items);
+  });
+
+  it('never tells the reader the precedents share the queried product code', () => {
+    const text = Object.values(buildDeviceLenses({ submissionType: '510(k)', productCode: 'BZH' }, CLEARANCES))
+      .flatMap((l) => [l.title, l.rate, ...l.items])
+      .join(' | ');
+    expect(text).not.toMatch(/same (FDA )?product code/i);
+  });
+});

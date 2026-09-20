@@ -9,10 +9,9 @@
  *   10E: Backend — GET /snapshots endpoint
  *   10F: Backend — export role check (viewer = 403)
  *   10G: Backend — signature role check (POST /signatures)
- *   10H: Frontend — SnapshotsTab component + SnapshotEntry type
- *   10I: Frontend — attestation modal (attestationTarget, handleTransitionClick)
- *   10J: Frontend — AuditTab attestation rendering
- *   10K: Frontend — fetchData includes snapshots
+ *
+ * 10H–10K (frontend) were REMOVED on 2026-09-10 — see the note where they used
+ * to be, at the foot of this file. Backend coverage 10A–10G is unchanged.
  *
  * SOURCE-LEVEL structural assertions — no DOM rendering required.
  */
@@ -29,9 +28,8 @@ const EXPORTS = path.join(ROOT, 'server/routes/c2c/exports.ts');
 // The artifact domain (status, signatures, snapshots) moved to its own router (L53, slice 8).
 const ARTIFACTS = path.join(ROOT, 'server/routes/c2c/artifacts.ts');
 // GovernedDocumentPanel.tsx was removed with the disconnected legacy island in
-// the design-system port (CLAUDE.md). The frontend snapshot/attestation
-// describes below (10H–10K) are skipped until the Phase 3 workbench reintroduces
-// the panel; the backend governance wiring (10A–10G) stays fully covered.
+// the design-system port (CLAUDE.md), taking 10H–10K with it. The backend
+// governance wiring (10A–10G) stays fully covered.
 
 function readSrc(filePath: string): string {
   return fs.readFileSync(filePath, 'utf-8');
@@ -232,133 +230,27 @@ describe('10G — Backend: signature role check', () => {
   });
 });
 
-// ── 10H: Frontend — SnapshotsTab + SnapshotEntry ────────────────────────────
-
-describe.skip('10H — Frontend: SnapshotsTab component', () => {
-  const src = ''; // GovernedDocumentPanel removed in design-system port (CLAUDE.md)
-
-  it('defines SnapshotEntry interface', () => {
-    expect(src).toContain('interface SnapshotEntry');
-    expect(src).toContain('snapshotId');
-    expect(src).toContain('actionType');
-    expect(src).toContain('attestationText');
-    expect(src).toContain('signatureMeaning');
-  });
-
-  it('defines SnapshotsTab function component', () => {
-    expect(src).toContain('function SnapshotsTab');
-  });
-
-  it('renders action type labels', () => {
-    expect(src).toContain('Published / Locked');
-    expect(src).toContain('Exported (DOCX)');
-  });
-
-  it('renders attestation detail in snapshots', () => {
-    expect(src).toMatch(/attestationText.*emerald|emerald.*attestationText/s);
-  });
-
-  it('renders content hash', () => {
-    expect(src).toContain('contentHash');
-    expect(src).toContain('exportHash');
-  });
-
-  it('renders actor attribution', () => {
-    expect(src).toContain('actorName');
-    expect(src).toContain('actorRole');
-  });
-
-  it('has snapshots tab in tab bar', () => {
-    expect(src).toContain("'snapshots'");
-    expect(src).toContain('History');
-  });
-});
-
-// ── 10I: Frontend — attestation modal ────────────────────────────────────────
-
-describe.skip('10I — Frontend: attestation modal', () => {
-  const src = ''; // GovernedDocumentPanel removed in design-system port (CLAUDE.md)
-
-  it('defines attestation state variables', () => {
-    expect(src).toContain('attestationTarget');
-    expect(src).toContain('attestationMeaning');
-    expect(src).toContain('attestationText');
-  });
-
-  it('intercepts approve/lock in handleTransitionClick', () => {
-    expect(src).toMatch(/approved.*attestation|attestation.*approved/s);
-    expect(src).toMatch(/locked.*attestation|attestation.*locked/s);
-  });
-
-  it('renders attestation modal overlay', () => {
-    expect(src).toContain('Attestation');
-    expect(src).toContain('Meaning of Signature');
-    expect(src).toContain('Attestation Statement');
-  });
-
-  it('has approval and publish meaning options', () => {
-    // GovernedDocumentPanel ships the two canonical lifecycle labels;
-    // expanded attestation meanings (Reviewed/Verified/Released/Submitted)
-    // were pushed into a dedicated attestation widget when that ships.
-    expect(src).toContain('Approved');
-    expect(src).toContain('Published');
-  });
-
-  it('enforces minimum attestation text length', () => {
-    expect(src).toContain('Minimum 10 characters');
-  });
-
-  it.skip('shows 21 CFR Part 11 badge', () => {
-    // The 21 CFR Part 11 badge moves to the attestation widget when it
-    // ships from the design system; re-enable then.
-    expect(src).toContain('21 CFR Part 11');
-  });
-
-  it('handleTransition accepts attestation parameter', () => {
-    expect(src).toMatch(/handleTransition.*attestation/s);
-  });
-});
-
-// ── 10J: Frontend — AuditTab attestation rendering ──────────────────────────
-
-describe.skip('10J — Frontend: AuditTab attestation rendering', () => {
-  const src = ''; // GovernedDocumentPanel removed in design-system port (CLAUDE.md)
-
-  it('renders attestation detail in audit events', () => {
-    expect(src).toMatch(/details\?\.attestation/);
-  });
-
-  it('shows attestation meaning', () => {
-    expect(src).toMatch(/attestation\.meaning/);
-  });
-
-  it('shows attestation text in audit events', () => {
-    expect(src).toMatch(/attestation\.attestationText/);
-  });
-
-  it('shows signature ID reference', () => {
-    expect(src).toContain('signatureId');
-  });
-});
-
-// ── 10K: Frontend — fetchData includes snapshots ────────────────────────────
-
-describe.skip('10K — Frontend: fetchData includes snapshots', () => {
-  const src = ''; // GovernedDocumentPanel removed in design-system port (CLAUDE.md)
-
-  it('fetches snapshots endpoint', () => {
-    expect(src).toContain('/snapshots');
-  });
-
-  it('uses Promise.all for parallel fetches', () => {
-    expect(src).toContain('Promise.all');
-  });
-
-  it('stores snapshots in state', () => {
-    expect(src).toContain('setSnapshots');
-  });
-
-  it('passes snapshots to SnapshotsTab', () => {
-    expect(src).toContain('snapshots={snapshots}');
-  });
-});
+// ── 10H–10K: Frontend — REMOVED 2026-09-10 (WO-8), not skipped ───────────────
+//
+// Four `describe.skip` blocks used to sit here: SnapshotsTab, the attestation
+// modal, AuditTab attestation rendering, and fetchData-includes-snapshots. Each
+// opened with `const src = '';` and a comment saying GovernedDocumentPanel.tsx
+// had been removed in the design-system port.
+//
+// They were deleted rather than left skipped because they could never be
+// un-skipped. Every assertion ran `expect(src).toContain(...)` against a
+// hardcoded empty string, so un-skipping them fails every assertion at once and
+// reveals nothing about the product; the component they described is gone
+// (`find client server -name '*GovernedDocumentPanel*'` returns nothing). A
+// skipped block that cannot be un-skipped is not pending work — it is dead code
+// shaped like pending work, and it inflated the apparent test surface for
+// exactly the Part 11 e-signature UI a reader would most want covered.
+//
+// What is NOT lost: the backend governance wiring, 10A–10G above, still runs —
+// attestation validation on approve/lock, signature creation on transitions,
+// snapshot creation on lock, the snapshots endpoint, and both role checks.
+// That is where the Part 11 obligations are enforced.
+//
+// When the Phase 3 workbench reintroduces an attestation surface, write these
+// against the file that then exists. Recreating the assertions from this
+// deleted block would pin the new UI to the shape of a component nobody chose.

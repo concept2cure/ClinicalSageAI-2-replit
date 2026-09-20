@@ -18,6 +18,18 @@
  * device writes (`requireEditorAccess`, one implementation in
  * middleware/orgMembership) and each writes an audit row against the session's
  * actor. The read stays open.
+ *
+ * WO-16C #133. Each of those three audit writes was
+ * `await auditService.logAction({…})` at statement position, and the
+ * `AuditWriteResult` it resolved was discarded. `logAction` does not reject when
+ * a persistence attempt fails — an audit-trail outage must not break the action
+ * it records — so throwing that value away left a recorded rename and an
+ * unrecorded one, a recorded DELETE and an unrecorded one, answering
+ * byte-identically. All three now go through `recordAuditRow` and the outcome
+ * leaves the handler: the POST and the PUT answer with the `projects` row
+ * itself, so theirs ride in response headers; the DELETE answers with a body
+ * this file builds, so its outcome is a field in that body. No status code
+ * changes.
  */
 
 import { Router, type Request, type Response } from 'express';
@@ -25,7 +37,7 @@ import { and, eq, desc } from 'drizzle-orm';
 import { projects } from '@shared/schema';
 import { db } from '../db';
 import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
-import auditService from '../services/auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 
 const router = Router();
 
@@ -33,6 +45,29 @@ const VALID_DEVICE_CLASSES = ['I', 'II', 'IIa', 'IIb', 'III'];
 const MAX_NAME_LENGTH = 200;
 const MAX_TEXT_LENGTH = 2000;
 const VALID_STATUSES = ['draft', 'active', 'submitted', 'approved', 'archived'];
+
+/**
+ * Report a §11.10(e) audit outcome on a response whose body is a `projects` row.
+ *
+ * WO-16C #133. The POST answers with the inserted row and the PUT with the
+ * updated row, exactly as `.returning()` produced it, and `GET /` answers with
+ * those same rows straight from a select. A key added to the create or update
+ * body would make one representation of a device project carry a field the list
+ * representation of the same row does not, so those two report through headers
+ * and the record stays as it was. The DELETE's body is built by this file, not
+ * read out of the table, and carries its outcome in the body instead.
+ *
+ * `X-Audit-Row-Persisted` is `'true'` or `'false'`; `X-Audit-Row-Code` is set
+ * only on the failure arm and carries `recordAuditRow`'s stable code — never the
+ * store's own error text, which stays in that helper's log line. Same header
+ * pair as server/routes/client-branding.ts, the transparent proxy in
+ * server/routes/predicate-intelligence.ts and the 204 in
+ * server/routes/submissions.ts.
+ */
+function setAuditRowHeaders(res: Response, outcome: AuditRowOutcome): void {
+  res.setHeader('X-Audit-Row-Persisted', String(outcome.persisted));
+  if (!outcome.persisted) res.setHeader('X-Audit-Row-Code', outcome.code);
+}
 
 /** GET /api/device-projects — list device projects scoped to the authenticated user's org */
 router.get('/', async (req: Request, res: Response) => {
@@ -146,7 +181,13 @@ router.post('/', requireEditorAccess, async (req: Request, res: Response) => {
       })
       .returning();
 
-    await auditService.logAction({
+    /* WO-16C #133. The project row is already committed by the insert directly
+       above — `row` is what that insert returned — so this is the §11.10(e) log
+       BESIDE a completed action, not the action itself: a lost audit row is not a
+       reason to delete a device project the tenant can already list. The create
+       stands and the caller is told, in headers rather than in the row body (see
+       `setAuditRowHeaders`). */
+    const auditTrail = await recordAuditRow({
       organizationId: organization_id,
       userId: actorId,
       action: 'DEVICE_PROJECT_CREATED',
@@ -154,6 +195,7 @@ router.post('/', requireEditorAccess, async (req: Request, res: Response) => {
       resourceId: String(row.id),
       details: { name: row.name ?? null },
     });
+    setAuditRowHeaders(res, auditTrail);
 
     console.log('✅ Created device project:', row.id, `(org=${organization_id})`);
     res.status(201).json(row);
@@ -290,7 +332,13 @@ router.put('/:id', requireEditorAccess, async (req: Request, res: Response) => {
       .where(and(eq(projects.id, projectId), eq(projects.organizationId, organization_id)))
       .returning();
 
-    await auditService.logAction({
+    /* WO-16C #133. The column values are already committed by the update
+       directly above — `updated` is what it returned — so this is the §11.10(e)
+       log BESIDE a completed action, not the action itself: a lost audit row is
+       not a reason to put the previous name, status or metadata back. The patch
+       stands and the caller is told, in headers rather than in the row body (see
+       `setAuditRowHeaders`). */
+    const auditTrail = await recordAuditRow({
       organizationId: organization_id,
       userId: actorId,
       action: 'DEVICE_PROJECT_UPDATED',
@@ -298,6 +346,7 @@ router.put('/:id', requireEditorAccess, async (req: Request, res: Response) => {
       resourceId: String(projectId),
       details: { fields: Object.keys(req.body || {}) },
     });
+    setAuditRowHeaders(res, auditTrail);
 
     console.log('✅ Updated device project:', projectId, `(org=${organization_id})`);
     res.json(updated);
@@ -332,7 +381,18 @@ router.delete('/:id', requireEditorAccess, async (req: Request, res: Response) =
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    await auditService.logAction({
+    /* WO-16C #133. The row is already gone — the delete above returned it as
+       `deleted`, and the route's own header says a delete here is not
+       recoverable — so this is the §11.10(e) log BESIDE a completed action, and a
+       lost audit row cannot be answered by putting the project back. The delete
+       stands and the caller is told: this response body is built here rather
+       than being a stored `projects` row, so it carries the outcome as
+       `auditTrail` — `{ persisted: true, chained }`, where `chained: false` means
+       the tamper-proof store holds the row but the retrievable `audit_logs` one
+       does not, or `{ persisted: false, code, message }` when no durable store
+       took it. `success: true` continues to mean what it meant: the delete
+       happened. */
+    const auditTrail = await recordAuditRow({
       organizationId: organization_id,
       userId: actorId,
       action: 'DEVICE_PROJECT_DELETED',
@@ -342,7 +402,7 @@ router.delete('/:id', requireEditorAccess, async (req: Request, res: Response) =
     });
 
     console.log('✅ Deleted device project:', projectId, `(org=${organization_id})`);
-    res.json({ success: true, id: projectId });
+    res.json({ success: true, id: projectId, auditTrail });
   } catch (error: any) {
     console.error('Failed to delete device project:', error);
     res.status(500).json({ error: 'Failed to delete device project' });

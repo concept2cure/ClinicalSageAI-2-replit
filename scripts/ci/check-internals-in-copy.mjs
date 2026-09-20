@@ -209,6 +209,17 @@ const TEXT_ALL = />([^<>]{3,})</g;
 
 function jsxExprLiterals(run) {
   const out = [];
+  /* A generic call presents its own argument list as a "text run", because the
+     TEXT rules anchor on `>` … `<` and `mutateVerbatim<PlacedLeaf>(…)` supplies
+     both. `jsxProse` already rejects that on the leading paren — the generic's
+     `>` sits immediately before it — but this pass, which exists to read the
+     literals jsxProse throws away, never got the same guard.
+     The paren check below is per-expression and asks whether a CALL survives,
+     so `fmt(x)` is skipped and a bare object literal argument is not: it let
+     `mutateVerbatim<PlacedLeaf>('PUT', `/…/leaves`, { documentTable:
+     'vault_documents', … })` report vault_documents as copy on a screen. It is
+     a request payload field; no user sees it. */
+  if (run.replace(/\s+/g, ' ').trim().startsWith('(')) return out;
   EXPR_IN_TEXT.lastIndex = 0;
   let m;
   while ((m = EXPR_IN_TEXT.exec(run)) !== null) {

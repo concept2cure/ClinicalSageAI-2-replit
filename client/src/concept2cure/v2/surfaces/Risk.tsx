@@ -178,7 +178,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
     try {
       const r = rows.find(x => x.id === sel);
       const c2c = (window as any).C2C;
-      if (c2c && r) c2c.setContext({ entityType: 'risk', entityId: r.id, entityLabel: r.id + ' -- ' + (r.hazard || 'risk') });
+      if (c2c && r) c2c.setContext({ entityType: 'risk', entityId: r.id, entityLabel: r.id + ' — ' + (r.hazard || 'risk') });
     } catch { /* swallow */ }
   }, [sel, rows]);
 
@@ -719,7 +719,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
             <div className="rc-row"><span className="rc-k">Harm</span><span className="rc-v">{row.harm}</span></div>
             {row.seq && <div className="rc-row"><span className="rc-k">Sequence of events</span><span className="rc-v">{row.seq}</span></div>}
             <div className="rc-row"><span className="rc-k">Severity</span><span className="rc-v"><span className={`rd-chip tone-${row.sev === 'Critical' || row.sev === 'Catastrophic' ? 'err' : row.sev === 'Serious' ? 'warn' : 'idle'}`}>{row.sev} ({sevI(row.sev) + 1})</span></span></div>
-            <div className="rc-row"><span className="rc-k">Probability</span><span className="rc-v">{row.prob} ({probI(row.prob) + 1}){row.probR && row.probR !== row.prob && <span className="rc-move"> -- {row.probR} <span className="rc-move-tag">after controls</span></span>}</span></div>
+            <div className="rc-row"><span className="rc-k">Probability</span><span className="rc-v">{row.prob} ({probI(row.prob) + 1}){row.probR && row.probR !== row.prob && <span className="rc-move"> — {row.probR} <span className="rc-move-tag">after controls</span></span>}</span></div>
             <div className="rc-row"><span className="rc-k">Strategy</span><span className="rc-v">{(EN.strategy.find(s => s[0] === row.strategy) || [])[1] || row.strategy} / {(EN.source.find(s => s[0] === row.source) || [])[1] || row.source}</span></div>
             <div className="rc-row"><span className="rc-k">Residual risk</span><span className="rc-v"><span className={`rd-chip tone-${row.res === 'Acceptable' ? 'ok' : 'warn'}`}>{row.res}</span></span></div>
             {/* USED TO READ: an em dash whenever `ver` was empty — which is

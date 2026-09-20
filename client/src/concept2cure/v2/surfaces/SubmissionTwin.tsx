@@ -235,9 +235,13 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Submission twin</span><span className="s">Living readiness · drift · reviewer challenges · change impact</span></div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ fontSize: 12, color: 'var(--text-400)' }}>Submission package id</label>
-          <input className="c2c-input" style={{ height: 30, width: 120 }} inputMode="numeric" value={pkgInput}
-            onChange={(e) => setPkgInput(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') applyPkg(); }} aria-label="Package size" placeholder="e.g. 1024" />
+          {/* The visible label read "Submission package id" while the input's
+              aria-label said "Package size", so the one field here was announced
+              as something it is not. The label names it now, and the wrong
+              aria-label is gone rather than corrected in two places. */}
+          <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="twin-pkg-id">Submission package id</label>
+          <input id="twin-pkg-id" className="c2c-input" style={{ height: 30, width: 120 }} inputMode="numeric" value={pkgInput}
+            onChange={(e) => setPkgInput(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') applyPkg(); }} placeholder="e.g. 1024" />
           <button className="nda-open" onClick={applyPkg} disabled={!pkgInput}>{I.search} Load</button>
           {pkg != null && (
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
@@ -266,7 +270,9 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
                   <div>
                     <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>
                       <div><div style={{ fontSize: 30, fontWeight: 700 }}>{readiness.readinessScore}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Readiness</div></div>
-                      <div><div style={{ fontSize: 30, fontWeight: 700, color: readiness.fragilityScore >= 50 ? 'var(--error)' : undefined }}>{readiness.fragilityScore}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Fragility</div></div>
+                      {/* Crossing the alarm threshold turned the number red and said nothing.
+                          The tag states it. */}
+                      <div><div style={{ fontSize: 30, fontWeight: 700, color: readiness.fragilityScore >= 50 ? 'var(--error)' : undefined }}>{readiness.fragilityScore}{readiness.fragilityScore >= 50 && <span className="rd-chip tone-err" style={{ fontSize: 11, marginLeft: 6, verticalAlign: 'middle' }}>elevated</span>}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Fragility</div></div>
                     </div>
                     {readiness.weakZones.length > 0 && (
                       <div>
@@ -319,7 +325,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
                 : <table className="reg-tbl"><thead><tr><th>Type</th><th>Description</th><th>Suggested fix</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
                   <tbody>{drift.map((d) => (
                     <tr key={String(d.id)}>
-                      <td><span className={'rd-chip tone-' + sevTone(d.severity)}>{d.driftType ?? d.severity ?? 'drift'}</span></td>
+                      <td><span className={'rd-chip tone-' + sevTone(d.severity)}>{d.driftType ?? d.severity ?? 'drift'}{d.severity && d.driftType ? ' · ' + d.severity : ''}</span></td>
                       <td>{d.description ?? '—'}</td>
                       <td style={{ color: 'var(--text-400)' }}>{d.suggestedFix ?? ''}</td>
                       <td style={{ textAlign: 'right' }}><button className="nda-open" onClick={() => resolveDrift(d.id)}>{I.check} Resolve</button></td>
@@ -336,7 +342,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
                 : <table className="reg-tbl"><thead><tr><th>Change</th><th>Impact</th><th>Remediation</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
                   <tbody>{impacts.map((im) => (
                     <tr key={String(im.id)}>
-                      <td><span className={'rd-chip tone-' + sevTone(im.impactSeverity)}>{im.changeType ?? 'change'}</span></td>
+                      <td><span className={'rd-chip tone-' + sevTone(im.impactSeverity)}>{im.changeType ?? 'change'}{im.impactSeverity ? ' · ' + im.impactSeverity : ''}</span></td>
                       <td>{im.impactDescription ?? '—'}</td>
                       <td style={{ color: 'var(--text-400)' }}>{im.remediation ?? ''}</td>
                       <td style={{ textAlign: 'right' }}><button className="nda-open" onClick={() => resolveImpact(im.id)}>{I.check} Resolve</button></td>

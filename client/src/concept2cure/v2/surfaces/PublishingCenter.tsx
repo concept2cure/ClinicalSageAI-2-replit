@@ -297,7 +297,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
         </div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ fontSize: 12, color: 'var(--text-400)' }}>eCTD version</label>
-          <select className="c2c-input" style={{ height: 30 }} value={version} onChange={(e) => setVersion(e.target.value as EctdVersion)}>
+          <select aria-label="eCTD version" className="c2c-input" style={{ height: 30 }} value={version} onChange={(e) => setVersion(e.target.value as EctdVersion)}>
             <option value="v4.0">eCTD v4.0 · HL7 RPS</option>
             <option value="v3.2.2">eCTD v3.2.2</option>
           </select>

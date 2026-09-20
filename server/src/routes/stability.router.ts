@@ -2460,47 +2460,24 @@ router.patch('/assignments/:assignId', async (req, res) => {
   }
 });
 
-// POST request signoff  body:{ stage:'LOCKED'|'REVIEWED'|'APPROVED', email, password, reason? }
-router.post('/studies/:id/request-signoff', async (req, res) => {
-  try {
-    const id = req.params.id;
-    const { stage, email, password, reason } = req.body;
-
-    // Check if methods are linked (guard)
-    const { rows: tests } = await pool.query<any>(
-      `
-      select t.name, m.status
-      from stab_tests t
-      left join cmc_methods m on m.id=t.method_id
-      where t.study_id=$1`,
-      [id]
-    );
-
-    const missingMethods = tests.filter(
-      (t: any) =>
-        !t.method_id || !['VALIDATED', 'APPROVED'].includes((t.status || '').toUpperCase())
-    );
-    if (missingMethods.length > 0) {
-      return res.status(412).json({
-        error: 'Cannot sign off - analytical methods not validated',
-        missingMethods: missingMethods.map(t => t.name),
-      });
-    }
-
-    // Create sign-off
-    const { rows } = await pool.query<any>(
-      `
-      insert into stab_signoffs (study_id, stage, signer_name, signer_email, reason, hash, signed_at)
-      values ($1, $2, $3, $4, $5, $6, now()) returning *`,
-      [id, stage, email.split('@')[0], email, reason || '', `${stage}-${Date.now()}`]
-    );
-
-    await audit(id, 'signoff_add', rows[0], req);
-    res.json(rows[0]);
-  } catch (error) {
-    console.error('Error creating sign-off:', error);
-    res.status(500).json({ error: 'Failed to create sign-off' });
-  }
+// POST request signoff — REMOVED 2026-09-10 (WO-16B finding 30).
+//
+// This route demanded a password it never verified, derived the signer's §11.50
+// printed name from the email's local-part, and stored `${stage}-${Date.now()}`
+// as the signature "hash". Every row it wrote was an invented signature. It had
+// no caller in client/ and is outside the orphan scanner's reach
+// (server/src/routes is not walked), so nothing consumed it. A governed study
+// sign-off has to be built on the one Part 11 signing path
+// (server/services/part11/signature-persistence.ts) before it can exist; until
+// then the route says so rather than recording a stand-in. Reads of
+// stab_signoffs (the dependencies view) are untouched and honestly empty.
+router.post('/studies/:id/request-signoff', (_req, res) => {
+  res.status(410).json({
+    error: 'STABILITY_SIGNOFF_REMOVED',
+    message:
+      'Study sign-off through this route is retired: it recorded a signature without verifying the signer. ' +
+      'No sign-off was recorded. A Part 11 sign-off for stability studies is not yet available.',
+  });
 });
 
 // GET /api/stability/studies/:id/dependencies - data flow lineage

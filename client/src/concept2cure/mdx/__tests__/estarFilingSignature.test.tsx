@@ -21,6 +21,8 @@ import { render, cleanup, waitFor, fireEvent, screen } from '@testing-library/re
 
 import { EstarFilingPanel } from '../surfaces/EstarFilingPanel';
 
+const PROGRAM_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+
 const ARTIFACT = {
   documentId: 'a2b4c6d8-0000-4000-8000-000000000002',
   programId: '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70',
@@ -100,7 +102,7 @@ async function signAndFile(reason = 'Filed the cleared 510(k) package with CDRH.
 describe('filing an eSTAR from the panel', () => {
   it('opens a signature form instead of filing on the first click', async () => {
     const patches = stubApi();
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
 
     fireEvent.click(await screen.findByText('Sign and file…'));
 
@@ -110,7 +112,7 @@ describe('filing an eSTAR from the panel', () => {
 
   it('sends the artifact, the reason, the meaning and the credential — and no filing date', async () => {
     const patches = stubApi();
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
 
     await signAndFile();
 
@@ -127,7 +129,7 @@ describe('filing an eSTAR from the panel', () => {
 
   it('will not offer an empty picker when nothing has been retained', async () => {
     const patches = stubApi({ artifacts: [] });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
 
     fireEvent.click(await screen.findByText('Sign and file…'));
 
@@ -138,7 +140,7 @@ describe('filing an eSTAR from the panel', () => {
 
   it("keeps the form open with the server's reason when the credential is refused", async () => {
     stubApi({ patch: { status: 401, body: { error: 'REAUTH_PASSWORD_INVALID' } } });
-    render(<EstarFilingPanel />);
+    render(<EstarFilingPanel programId={PROGRAM_ID} />);
 
     await signAndFile();
 

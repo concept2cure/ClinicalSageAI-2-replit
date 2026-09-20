@@ -38,6 +38,13 @@ vi.mock('node:fs', async (io) => {
   return { ...actual, promises: { ...actual.promises, readFile } };
 });
 
+/* The canonical storage seam. The vault writes bytes through it now, so a row
+   carrying a storage_version_id must be served from HERE and never from disk. */
+const { storageGet } = vi.hoisted(() => ({ storageGet: vi.fn() }));
+vi.mock('../../services/storage/index.js', () => ({
+  getStorageProvider: () => ({ name: 'local', get: storageGet, put: vi.fn(), delete: vi.fn() }),
+}));
+
 import createProjectVaultRoutes from '../c2c/project-vault';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
@@ -90,6 +97,7 @@ beforeEach(() => {
   query.mockReset();
   readFile.mockReset();
   readFile.mockResolvedValue(BYTES);
+  storageGet.mockReset();
 });
 
 describe('scope', () => {
@@ -240,5 +248,115 @@ describe('audit', () => {
     const res = await request(app()).get(url());
     expect(res.status).toBe(404);
     expect(auditInsert()).toBeUndefined();
+  });
+});
+
+/**
+ * The dual read: provider-backed rows and legacy path-backed rows.
+ *
+ * ── Why there are two ────────────────────────────────────────────────────────
+ * The vault used to write bytes straight to uploads/vault/{programId}/{hash}
+ * and keep that relative path in s3_key, bypassing server/services/storage/ —
+ * the seam every other part of the platform stores through. That is why a vault
+ * document cannot be filed as a submission leaf: the eCTD packager fetches
+ * bytes through getStorageProvider().get(versionId, orgId), which resolves a
+ * provider-minted version uuid in a different root and a different key space,
+ * so it could never find one.
+ *
+ * Ingest now writes through the provider and records storage_version_id. No
+ * bytes were moved, so every row written before that keeps its s3_key and must
+ * keep working — a dual read, not a cutover. These pin both halves, and that
+ * the version id WINS when both are present.
+ */
+describe('download — where the bytes come from', () => {
+  const VERSION = 'fa9c1e40-0000-4000-8000-0000000000aa';
+
+  it('serves a provider-backed row from the provider, never from disk', async () => {
+    store(DOC({ storage_version_id: VERSION, s3_key: `vault://7/${PROGRAM}/CSR-201 final.pdf` }));
+    storageGet.mockResolvedValue({
+      bytes: BYTES, sizeBytes: BYTES.length, sha256: HASH,
+      mime: 'application/pdf', filename: 'CSR-201 final.pdf',
+    });
+    const res = await request(app()).get(url());
+    expect(res.status).toBe(200);
+    expect(readFile).not.toHaveBeenCalled();
+  });
+
+  it('passes the caller organization to the provider — the only tenant gate on bytes', async () => {
+    // Object storage sits outside Postgres RLS, so this argument IS the
+    // boundary. A read that forgot it would be a cross-tenant read.
+    store(DOC({ storage_version_id: VERSION }));
+    storageGet.mockResolvedValue({
+      bytes: BYTES, sizeBytes: BYTES.length, sha256: HASH,
+      mime: 'application/pdf', filename: 'CSR-201 final.pdf',
+    });
+    await request(app(7)).get(url());
+    expect(storageGet).toHaveBeenCalledWith(VERSION, 7);
+  });
+
+  it('prefers the version id when the row carries both addresses', async () => {
+    store(DOC({ storage_version_id: VERSION }));  // DOC() also sets a legacy s3_key
+    storageGet.mockResolvedValue({
+      bytes: BYTES, sizeBytes: BYTES.length, sha256: HASH,
+      mime: 'application/pdf', filename: 'CSR-201 final.pdf',
+    });
+    const res = await request(app()).get(url());
+    expect(res.status).toBe(200);
+    expect(storageGet).toHaveBeenCalled();
+    expect(readFile).not.toHaveBeenCalled();
+  });
+
+  it('still serves a legacy row from disk, untouched by the move', async () => {
+    store(DOC());  // no storage_version_id
+    const res = await request(app()).get(url());
+    expect(res.status).toBe(200);
+    expect(readFile).toHaveBeenCalled();
+    expect(storageGet).not.toHaveBeenCalled();
+  });
+
+  it('refuses when the provider has no such version for this organization', async () => {
+    // get() returns null both for "no such version" and "another tenant's" —
+    // the interface refuses to distinguish them, because a 403 on a foreign id
+    // confirms the id exists. Either way there are no bytes to serve.
+    store(DOC({ storage_version_id: VERSION }));
+    storageGet.mockResolvedValue(null);
+    const res = await request(app()).get(url());
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('STORED_FILE_MISSING');
+    expect(readFile).not.toHaveBeenCalled();
+  });
+
+  it('does not fall back to disk when the provider read fails', async () => {
+    // Falling back would serve whatever happens to sit at the legacy path —
+    // for a row whose authoritative bytes are elsewhere. That is the wrong
+    // document under a governed document's identity.
+    store(DOC({ storage_version_id: VERSION }));
+    storageGet.mockRejectedValue(new Error('bucket unreachable'));
+    const res = await request(app()).get(url());
+    expect(res.status).toBe(409);
+    expect(readFile).not.toHaveBeenCalled();
+  });
+
+  it('hash-verifies provider bytes against the record, same as disk bytes', async () => {
+    // content_hash in the database is authoritative. Checking the bytes against
+    // the RECORD catches a store that returned the WRONG OBJECT, which a
+    // provider-reported hash never would.
+    store(DOC({ storage_version_id: VERSION }));
+    const other = Buffer.from('%PDF-1.7 a different document entirely');
+    storageGet.mockResolvedValue({
+      bytes: other, sizeBytes: other.length,
+      sha256: createHash('sha256').update(other).digest('hex'),
+      mime: 'application/pdf', filename: 'CSR-201 final.pdf',
+    });
+    const res = await request(app()).get(url());
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('CONTENT_HASH_MISMATCH');
+  });
+
+  it('refuses a row carrying neither address', async () => {
+    store(DOC({ storage_version_id: null, s3_key: null }));
+    const res = await request(app()).get(url());
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('NO_STORED_FILE');
   });
 });

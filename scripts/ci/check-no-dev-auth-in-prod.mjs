@@ -25,7 +25,11 @@
  *
  * Usage:
  *   node scripts/ci/check-no-dev-auth-in-prod.mjs
- *   node scripts/ci/check-no-dev-auth-in-prod.mjs --strict   # exit 1 on any finding
+ *   node scripts/ci/check-no-dev-auth-in-prod.mjs --strict   # accepted, no effect
+ *
+ * There is no lenient mode: any finding exits 1 either way. `--strict` is kept
+ * only so the existing `ci:no-dev-auth-in-prod:strict` script and the callers
+ * that pass it keep working. See the note above the final process.exit.
  */
 
 import fs from 'node:fs';
@@ -35,8 +39,6 @@ import { requireScanRoots } from './lib/scan-roots.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
-
-const strict = process.argv.includes('--strict');
 
 // We deliberately limit scope to files that actually handle authentication
 // or token issuance. Other NODE_ENV !== 'production' usages (feature flags,
@@ -202,4 +204,15 @@ console.error(
     'NODE_ENV=development AND ALLOW_DEV_AUTH=1.'
 );
 
-process.exit(strict ? 1 : 1);
+// THIS GATE HAS NO LENIENT MODE, BY DESIGN.
+//
+// The ternary that used to stand here read `strict ? 1 : 1` — both branches the
+// same, so `--strict` changed nothing and the flag read as meaningful when it
+// was not. Simplified rather than "fixed" by making non-strict exit 0: a
+// development-auth bypass reachable in production is not a warning, and the two
+// callers that invoke this without --strict (.github/workflows/ci.yml and
+// deploy-aws.yml, the deploy path) are relying on it failing closed.
+//
+// If a lenient mode is ever genuinely wanted, add it deliberately and say so in
+// the flag's help text — do not reintroduce it as a ternary.
+process.exit(1);

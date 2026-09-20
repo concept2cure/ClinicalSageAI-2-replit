@@ -120,8 +120,7 @@ server/
 │   └── cortexAdvisoryRoutes.ts       # API endpoints for advisory
 └── services/
     ├── cognitiveAdvisoryService.ts   # Cognitive advisory brain
-    ├── lumen-cortex-service.ts       # SEC harvesting, signals
-    └── cortexPrimeService.ts         # Unified AI brain service
+    └── lumen-cortex-service.ts       # SEC harvesting, signals
 ```
 
 ---

@@ -460,7 +460,7 @@ async function attachRealContradictionMemo(
       `INSERT INTO contradiction_consequence_log (
         organization_id, finding_id, consequence_type,
         consequence_object_id, consequence_object_type,
-        executed_by, execution_status, execution_notes
+        executed_by, execution_status, notes
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         organizationId,
@@ -547,7 +547,7 @@ async function persistRealEscalation(
       `INSERT INTO contradiction_consequence_log (
         organization_id, finding_id, consequence_type,
         consequence_object_id, consequence_object_type,
-        executed_by, execution_status, execution_notes
+        executed_by, execution_status, notes
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         organizationId,
@@ -592,7 +592,7 @@ async function logConsequences(
           `INSERT INTO contradiction_consequence_log (
             organization_id, finding_id, consequence_type,
             consequence_object_id, consequence_object_type,
-            executed_by, execution_status, execution_notes
+            executed_by, execution_status, notes
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
             organizationId,
@@ -617,7 +617,7 @@ async function logConsequences(
           `INSERT INTO contradiction_consequence_log (
             organization_id, finding_id, consequence_type,
             consequence_object_id, consequence_object_type,
-            executed_by, execution_status, execution_notes
+            executed_by, execution_status, notes
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
             organizationId,

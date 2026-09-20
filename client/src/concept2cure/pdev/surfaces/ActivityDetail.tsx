@@ -132,13 +132,32 @@ export function PdevActivityDetail({
         });
         workflow.refresh();
       } else if (pending.kind === 'workflow-decision') {
-        await workflowDecision.run({
+        const res = await workflowDecision.run({
           runId: pending.runId,
           checkpointId: pending.checkpointId,
           decision: pending.decision,
           reason,
         });
         workflow.refresh();
+        /*
+         * WO-16C #133. The decision itself has committed by this point — an
+         * audit-trail outage deliberately does not block the action it
+         * records. But the server now says whether the 21 CFR Part 11
+         * §11.10(e) row for it actually landed, and a governed approval whose
+         * audit entry is missing must not close as a clean success. The
+         * sheet stays open carrying the server's own sentence; the reason the
+         * store failed is in the server log, not here.
+         */
+        const audit = (res as { data?: { auditTrail?: { persisted?: boolean; message?: string } } })
+          ?.data?.auditTrail;
+        if (audit && audit.persisted === false) {
+          setConfirmError(
+            audit.message ??
+              'The audit entry for this decision could not be written. The decision itself was recorded.',
+          );
+          onMutated();
+          return;
+        }
       }
       setPending(null);
       onMutated();

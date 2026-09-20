@@ -64,11 +64,16 @@ function seed(readiness: number) {
         ],
       }],
     })
-    // 3) live section rows
+    /* 3) live section rows.
+       `document_id` is not decoration: the route reads every document's
+       sections in ONE query and buckets the rows by it, so a row without it
+       lands in no bucket and every section renders as untouched. That is how
+       this fixture drifted from the route — silently, with the sections simply
+       looking never-started. */
     .mockResolvedValueOnce({
       rows: [
-        { section_key: '2.5', status: 'drafted', version: 3, updated_at: null, has_content: true, owner_name: null },
-        { section_key: '2.6', status: 'approved', version: 1, updated_at: null, has_content: true, owner_name: null },
+        { document_id: 'doc1', section_key: '2.5', status: 'drafted', version: 3, updated_at: null, has_content: true, owner_name: null },
+        { document_id: 'doc1', section_key: '2.6', status: 'approved', version: 1, updated_at: null, has_content: true, owner_name: null },
       ],
     })
     // 4+) the derived branches (Module 3 artifacts, vault uploads) — empty

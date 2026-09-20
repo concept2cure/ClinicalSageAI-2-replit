@@ -56,18 +56,63 @@ const JSON_OUT = jsonIdx !== -1 ? args[jsonIdx + 1] : null;
 const BASELINE_PATH = path.join(repoRoot, 'scripts', 'ci', 'duplicate-table-ddl-baseline.json');
 
 /**
- * Paths whose DDL is historical, not deployed.
+ * Paths whose .sql is not migration lineage and must not be compared against it.
  *
- * db/migrations/_consolidated/ is included on evidence, not convention: it has
- * ZERO entries in migrations_manifest.json's executionOrder, none of its
- * tables are in the drizzle-kit push surface, and its files are byte-identical
- * to docs/archive/server-deprecated-migrations/ (verified for
- * 012_document_authoring_schema.sql) — it is a stale copy of an
- * already-archived lineage. See ledger C-11.
+ * HISTORICAL RECORDS. A superseded file naturally defines tables the lineage
+ * that replaced it also defines, so comparing them produces noise rather than
+ * findings. `db/migrations/_consolidated/` is included on evidence, not
+ * convention: it has ZERO entries in migrations_manifest.json's executionOrder,
+ * none of its tables are in the drizzle-kit push surface, and its files are
+ * byte-identical to docs/archive/server-deprecated-migrations/ (verified for
+ * 012_document_authoring_schema.sql) — it is a stale copy of an already-archived
+ * lineage. See ledger C-11.
+ *
+ * TEST FIXTURES (`tests/**\/fixtures/`), added 2026-09-10 (WO-1). Same idea,
+ * different reason. A schema-contract test that CHARACTERISES a collision has to
+ * be able to apply the losing shape, so that DDL must exist somewhere — but it
+ * is applied only to a PGlite instance inside a test, never to a database.
+ * `tests/schema-contract/fixtures/drizzle-shaped-operating-system.sql` is the
+ * case that prompted this: it was migrations/0010_operating_system_foundation.sql
+ * until ADR-0006 retired it, and it stays only so
+ * operating-system-collision.contract.test.ts can keep demonstrating the defect
+ * it guards against. Counting it as a second creator would report the very
+ * duplication the retirement removed.
+ *
+ * Narrow deliberately: only `fixtures/` under `tests/`. A .sql file anywhere
+ * else in the test tree is still scanned, because a migration that drifts into
+ * tests/ is exactly the kind of thing this gate should catch.
+ *
+ * THE VERIFICATION HARNESS BOOTSTRAP (`scripts/db-verify/`), added 2026-09-10
+ * (WO-1). A third fixture, in a directory that does not look like one.
+ * `00_bootstrap_base.sql` defines six tables the lineage also defines —
+ * audit_logs, c2c_ana_actions, clinical_studies, coi_disclosures,
+ * effort_certifications, effort_lines — which is 6 of the 47 collisions this
+ * baseline carried. It is not dead code and must not be archived: three tests
+ * load it by path (qms-vault-audit-atomicity.contract,
+ * esignature-audit-atomicity.contract, governed-action.pglite.integration).
+ * Nothing automated applies it — no package.json script, no workflow, no hook.
+ *
+ * EXCLUDED ONLY BECAUSE THE SHAPES WERE CHECKED FIRST, and the check is the
+ * part worth keeping. An exclusion here would be dangerous in one specific way:
+ * if the bootstrap declared a column the product does not have, the harness
+ * would be verifying against a schema nothing ships, and hiding that behind an
+ * exclusion is how a fixture becomes a second source of truth. So every one of
+ * the six was diffed against a database built from empty by
+ * scripts/db/provision-test-db.sh (install-fresh + deploy-migrate, 1228 tables).
+ * Result: each fixture definition is a strict SUBSET of the live table — it
+ * declares no column the real schema lacks. Several are deliberately minimal
+ * (clinical_studies: 4 columns against 28 live), which is what a bootstrap
+ * should be. Re-run that diff before widening this exclusion.
+ *
+ * Same narrowness rule: `scripts/db-verify/` only. A .sql file elsewhere under
+ * scripts/ is still scanned.
  */
 const ARCHIVED = ['_legacy/', '_deprecated_migrations/', 'docs/archive/', '_consolidated/', 'node_modules/'];
+const TEST_FIXTURE = /(^|\/)tests\/.*\/fixtures\//;
+const DB_VERIFY_BOOTSTRAP = /(^|\/)scripts\/db-verify\//;
 
-const isArchived = (p) => ARCHIVED.some((a) => p.includes(a));
+const isArchived = (p) =>
+  ARCHIVED.some((a) => p.includes(a)) || TEST_FIXTURE.test(p) || DB_VERIFY_BOOTSTRAP.test(p);
 
 /** Recursively collect .sql files under the repo. */
 function collectSql(dir, acc = []) {
@@ -93,9 +138,32 @@ function collectSql(dir, acc = []) {
  * Extract created table names, schema-qualified so that
  * `CREATE TABLE audit.foo` is recorded as `audit.foo` and not as a table named
  * `audit`. Getting this wrong inflates the count dramatically.
+ *
+ * QUOTED IDENTIFIERS COUNT (fixed 2026-09-10, WO-1). The previous pattern
+ * required a bare word right after the optional IF NOT EXISTS, so a leading
+ * double quote failed the match outright — and `drizzle-kit generate` emits
+ * every statement quoted: `CREATE TABLE "concept2cure_artifacts" (`. That made
+ * `migrations/0000_sweet_joseph.sql`, which holds **297 CREATE TABLE
+ * statements** and is the largest migration in the repository, completely
+ * invisible to this guard. It is the drizzle baseline, it sits in the root
+ * `migrations/` tree, and install-fresh's overlay walks it, so those are 297
+ * real definitions on a real applier that this gate counted as zero.
+ *
+ * Two consequences, both of which this guard exists to prevent:
+ *   - the collision count was understated, because a table defined once here
+ *     and once in a hand-written file looked like a single definition;
+ *   - "who else creates this table?" — the question every archive decision in
+ *     WO-1 turns on — could be answered "nobody" while an on-applier creator
+ *     sat unread in the baseline. The `contradiction_links` regression of
+ *     2026-09-10 is exactly that failure, found by a live database rather than
+ *     by this gate.
+ *
+ * `"?` on each identifier segment, matching the pattern already used by
+ * scripts/ci/check-migration-reachability.mjs. It cannot re-open the comment
+ * false positive described below: comments are stripped before this runs.
  */
 const CREATE_TABLE_RE =
-  /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?)/gi;
+  /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z_][a-zA-Z0-9_]*)"?(?:\s*\.\s*"?([a-zA-Z_][a-zA-Z0-9_]*)"?)?/gi;
 
 /**
  * Strip SQL comments before scanning.
@@ -120,7 +188,12 @@ function tablesIn(file) {
     return [];
   }
   const found = new Set();
-  for (const m of stripComments(sql).matchAll(CREATE_TABLE_RE)) found.add(m[1].toLowerCase());
+  // m[1] is the first identifier, m[2] the part after a dot when the name is
+  // schema-qualified. Joining here (rather than capturing the whole thing in one
+  // group) is what lets each segment carry its own optional double quotes.
+  for (const m of stripComments(sql).matchAll(CREATE_TABLE_RE)) {
+    found.add((m[2] ? `${m[1]}.${m[2]}` : m[1]).toLowerCase());
+  }
   return [...found];
 }
 

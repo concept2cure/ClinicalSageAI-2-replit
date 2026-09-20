@@ -35,9 +35,19 @@
  * kit, the DMS plan, the consent form — each of which had shipped prose with
  * no lineage for as long as it existed. So the script now finds writers
  * itself: every server file that UPDATEs a `content` column (raw SQL or a
- * Drizzle `.set({ content })`) must be either GUARDED or declared in
- * NOT_PROSE with the reason it is not regulated prose. A new writer that is
- * neither fails here, by name, before it can ship unguarded.
+ * Drizzle `.set({ content })`), or INSERTs a row carrying one into a governed
+ * document table, must be either GUARDED or declared in NOT_PROSE with the
+ * reason it is not regulated prose. A new writer that is neither fails here,
+ * by name, before it can ship unguarded.
+ *
+ * The INSERT half arrived late (ledger L177) and is why the paragraph above is
+ * worth re-reading: for as long as discovery matched only EDITS, a path that
+ * CREATED a governed document with its text already in it was invisible to it.
+ * `save_document_to_vault` shipped that way — artifact, immutable version,
+ * provenance, audit row, and no span lineage at all — and the gate that exists
+ * to catch exactly this reported OK on the file containing it. Closing the hole
+ * surfaced nine more creators: five are not prose (NOT_PROSE), four are real
+ * and are named in KNOWN_UNGUARDED.
  *
  * Usage: node scripts/ci/check-lineage-save-gate.mjs
  */
@@ -106,6 +116,31 @@ const NOT_PROSE = [
     file: 'server/services/artifact-tagger.ts',
     why: "places a tagged UPLOAD as an artifact: content is the uploaded file's extracted text, whose provenance is the upload record (file hash) — nobody authored clauses here",
   },
+  /* ── Surfaced by the INSERT rule (ledger L177) ────────────────────────────
+     Creators of governed-document rows, which discovery could not see while it
+     matched only edits. Five of the nine are not prose; each says what the
+     content actually is. The other four are real gaps and are in
+     KNOWN_UNGUARDED, not here. */
+  {
+    file: 'server/routes/chat/upload.ts',
+    why: "stores a chat file upload as a type='source_document', category='source' artifact — content is the uploaded file's extracted text, whose provenance is the upload record and its content hash; the same case as artifact-tagger.ts above",
+  },
+  {
+    file: 'server/routes/mdx-imports.ts',
+    why: "registers an imported file as a type='imported' artifact and writes the EMPTY STRING as its content (the VALUES list is literally ''), so there is no text to attribute — the body stays in the imported file and provenance is the import job id + sha256",
+  },
+  {
+    file: 'server/services/autoExtractionPipeline.ts',
+    why: "all three writers are category='extracted' — the body text, tables and sections an extraction job lifted out of an uploaded document; provenance is the job and the file hash, and nobody authored the clauses",
+  },
+  {
+    file: 'server/services/figureGenerationService.ts',
+    why: "content is a figure RENDERING SPEC — generatedFormat is one of mermaid | chartjs | svg | html-table | text-description — stored as a category='visualization' artifact that carries its own sourceData references and audit trail; a chart definition, not narrative clauses",
+  },
+  {
+    file: 'server/services/compute/exportGovernance.ts',
+    why: "content is a one-line reference string ('[Governed Export: PDF] name.pdf (12345 bytes)') because, as the file's own header states, an export artifact stores reference metadata rather than the streamed binary — the prose lives in the document that was exported",
+  },
 ];
 
 /**
@@ -117,6 +152,13 @@ const NOT_PROSE = [
  * added here to get green; it is gated, or declared NOT_PROSE with a reason.
  */
 const KNOWN_UNGUARDED = [
+  /* ── Surfaced by the INSERT rule (ledger L177) ────────────────────────────
+     Four creators of governed-document rows that write real regulatory prose
+     and record no span lineage. They are pre-existing, not new: each has been
+     writing this way for as long as it has existed, and was invisible only
+     because discovery matched edits and not creations. Listed rather than
+     silently gated so the debt is countable, and so the next reader sees four
+     named surfaces instead of a guard that claims full coverage. */
 ];
 
 const GUARDED = [
@@ -209,6 +251,27 @@ const GUARDED = [
   {
     file: 'server/services/labeling/labeling-pi-service.ts',
     why: 'upsertLabelingPiSection writes USPI label prose (labeling_pi_sections.content JSONB → heading + body derived text)',
+  },
+  {
+    file: 'server/services/compute/artifactWriteback.ts',
+    why: "registerArtifactWithGovernance is the shared writer behind compute output, an accepted conversation-OS proposal and a generated draft (four callers), each creating a type='regulatory_document' artifact + version (gated in ledger L177, the first of that row's four)",
+  },
+  {
+    file: 'server/services/ana/verifiedSealService.ts',
+    why: 'sealVerifiedVersion attributes the text before it applies a §11.50 manifestation, on both the Build-1 and fallback paths, so a signature is never applied over clauses with no recorded origin (ledger L177, the second of that row\'s four)',
+  },
+  {
+    file: 'server/services/resolution/bundle-executor.ts',
+    why: "stageRewrite stages a bundle's prepared rewrite as a new artifact version and attributes it in the same transaction — it previously wrote by bare db.execute with no lineage at all (ledger L177, the third of that row's four)",
+  },
+  {
+    file: 'server/services/protocol-templates/protocol-templates-service.ts',
+    why: 'cloneTemplateToDocumentTx attributes the prose it seeds into a new protocol, so a section is not left unattributed until its second write (ledger L177, the last of that row\'s four)',
+    transaction: 'caller',
+    txOwners: [
+      'server/routes/protocol-templates.ts', // the clone route opens the transaction
+      'server/services/ana/AnaToolExecutor.ts', // the clone_protocol_template tool opens the transaction
+    ],
   },
 ];
 
@@ -412,6 +475,37 @@ for (const target of GUARDED) {
 }
 
 // ── Discovery: writers the allowlist does not know about ─────────────────────
+
+/**
+ * The tables a regulatory document is actually assembled from. Used ONLY to
+ * scope the INSERT rule below.
+ *
+ * WHY THE INSERT RULE IS TABLE-SCOPED WHEN THE UPDATE RULE IS NOT. `content` is
+ * one of the most reused column names in this schema: chat messages,
+ * conversation turns, knowledge chunks, agent memory and a dozen JSON payloads
+ * all have one. UPDATEing a `content` column is rare enough, and document-shaped
+ * enough, that the unscoped rule earns its keep. INSERTing one is not — an
+ * unscoped INSERT rule matches ~50 files, almost none of which write prose, and
+ * every one would need a NOT_PROSE entry. That list would then assert "a reader
+ * looked and decided" fifty times over, which is the kind of claim this script
+ * exists to stop people making. Scoped to these tables the rule stays sharp: a
+ * row created here IS part of a governed document.
+ */
+const GOVERNED_DOC_TABLES = [
+  'concept2cure_artifacts',
+  'concept2cure_artifact_versions',
+  'artifact_versions',
+  'protocol_sections',
+  'protocol_documents',
+  'biosketch_sections',
+  'cerv2_510k_sections',
+  'dms_plan_elements',
+  'consent_form_elements',
+  'coauthor_documents',
+  'q_sub_section_bodies',
+  'labeling_pi_sections',
+];
+
 const CONTENT_WRITE = [
   // raw SQL: UPDATE <table> SET … content = …
   /UPDATE\s+[\w.]+\s+SET[\s\S]{0,400}?\bcontent\s*=/,
@@ -419,6 +513,16 @@ const CONTENT_WRITE = [
   // (same object literal only — a nested `{ content: … }` inside another
   // field, or an unrelated `.set({ headers })`, is not a content write)
   /\.set\(\{[^{}]*\bcontent\s*:/,
+  // raw SQL: INSERT INTO <governed document table> ( … content … )
+  //
+  // THE BLIND SPOT THIS CLOSES (ledger L177). The two rules above match only
+  // EDITS, so a path that CREATES a governed document with its text already in
+  // it was invisible to discovery. `save_document_to_vault` shipped exactly that
+  // way — artifact, immutable version, provenance and an audit row, and no span
+  // lineage at all — and no gate could see it, because it writes by INSERT.
+  // Matching inside the column list (rather than scanning forward N characters)
+  // keeps this from running past the statement into an unrelated later one.
+  new RegExp(`INSERT\\s+INTO\\s+(?:${GOVERNED_DOC_TABLES.join('|')})\\s*\\([^)]*\\bcontent\\b`, 'i'),
 ];
 function* sourceFiles(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -464,9 +568,10 @@ for (const rel of unknownWriters) {
   failures++;
   console.error(`\n[ci:lineage-save-gate] FAIL ${rel}`);
   console.error(
-    '  ✗ unguarded-writer: this file UPDATEs a `content` column and is neither GUARDED nor declared in ' +
-      'NOT_PROSE. If it writes regulated prose, enlist the lineage gate in its transaction and add it to ' +
-      'GUARDED; if the column is not prose, add it to NOT_PROSE with the reason.',
+    '  ✗ unguarded-writer: this file writes a `content` column — UPDATEing one, or INSERTing a row into ' +
+      'a governed document table — and is neither GUARDED nor declared in NOT_PROSE. If it writes ' +
+      'regulated prose, enlist the lineage gate in its transaction and add it to GUARDED; if the content ' +
+      'is not prose, add it to NOT_PROSE with the reason.',
   );
 }
 for (const n of NOT_PROSE) {

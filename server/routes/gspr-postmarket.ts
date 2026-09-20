@@ -13,6 +13,19 @@
  *   POST   /api/post-market/documents/:documentId/validate
  *   POST   /api/post-market/documents/:documentId/approve
  *   POST   /api/post-market/documents/:documentId/supersede
+ *
+ * Audit outcomes (WO-16C #133). Every governed write in this router records its
+ * 21 CFR Part 11 §11.10(e) row through `recordAuditRow`, which reports whether
+ * the row reached a durable store — and whether it is retrievable from the
+ * chained `audit_logs` or landed in the tamper-proof store only — instead of
+ * discarding that answer, which is what `void auditService.logAction({…})` did
+ * at every site below. These handlers answer bare bodies rather than the
+ * canonical `{ data, meta }` envelope of server/lib/api-response.ts, so the
+ * outcome rides out as an `auditTrail` key beside the payload's own fields, on
+ * the 2xx and on the 409 the approval gate returns. No mutation is reverted
+ * because its audit row failed: the action stands and the caller is told. The
+ * store's own failure text never enters a body — `recordAuditRow` logs it,
+ * keyed on the action and resource id.
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
@@ -57,7 +70,7 @@ import {
   type PmcfActivityKind,
   type PmcfActivityStatus,
 } from '../../shared/schema/gspr-postmarket';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
@@ -157,7 +170,12 @@ router.post(
         decidedAt: body.decidedAt ?? new Date(),
       });
 
-      void auditService.logAction({
+      // WO-16C #133. The mapping row is committed by upsertMapping above, and
+      // this write was `void`, so the response was byte-identical whether the
+      // §11.10(e) record of the applicability decision existed or not.
+      // `recordAuditRow` never throws and the decision is not reverted over a
+      // lost row — the outcome leaves the handler as `auditTrail`.
+      const auditTrail = await recordAuditRow({
         tenantId: orgId,
         userId: decidedBy,
         action: 'gspr.mapping.upsert',
@@ -172,7 +190,7 @@ router.post(
         },
       });
 
-      res.json(row);
+      res.json({ ...row, auditTrail });
     } catch (err: any) {
       return serverError(res, logger, 'saving mappings', err);
     }
@@ -267,7 +285,10 @@ postMarketRouter.post(
         updatedBy: createdBy,
       });
 
-      void auditService.logAction({
+      // WO-16C #133. createDocument has committed the row above, so the 201
+      // stands; what was unobservable is whether the §11.10(e) record of the
+      // creation exists. It now rides out in `auditTrail`.
+      const auditTrail = await recordAuditRow({
         tenantId: orgId,
         userId: createdBy,
         action: 'post_market.document.create',
@@ -283,7 +304,7 @@ postMarketRouter.post(
         },
       });
 
-      res.status(201).json(doc);
+      res.status(201).json({ ...doc, auditTrail });
     } catch (err: any) {
       return serverError(res, logger, 'loading coverage', err);
     }
@@ -325,7 +346,11 @@ postMarketRouter.post(
         title: typeof body.title === 'string' ? body.title : undefined,
       });
 
-      void auditService.logAction({
+      // WO-16C #133. The draft plan document is persisted by generatePmcfPlan
+      // above; the audit row beside it was `void`-discarded, so a generated
+      // plan with no §11.10(e) record answered like one with it. The document
+      // stands and `auditTrail` reports the record.
+      const auditTrail = await recordAuditRow({
         tenantId: orgId,
         userId: createdBy,
         action: 'post_market.pmcf_plan.generate',
@@ -341,7 +366,7 @@ postMarketRouter.post(
         },
       });
 
-      res.status(201).json(result);
+      res.status(201).json({ ...result, auditTrail });
     } catch (err: any) {
       if (err?.code === 'PMCF_NO_DEVICE') {
         return res.status(422).json({ error: err.message });
@@ -399,7 +424,11 @@ postMarketRouter.post(
         reportingPeriodEnd: parseDate(body.reportingPeriodEnd),
       });
 
-      void auditService.logAction({
+      // WO-16C #133, same shape as the pmcf-plan route above: the draft is
+      // persisted by authorPostMarketDocument, the audit row beside it was
+      // `void`-discarded, and its outcome now leaves the handler in
+      // `auditTrail` rather than only in the server log.
+      const auditTrail = await recordAuditRow({
         tenantId: orgId,
         userId: createdBy,
         action: 'post_market.document.generate',
@@ -416,7 +445,7 @@ postMarketRouter.post(
         },
       });
 
-      res.status(201).json(result);
+      res.status(201).json({ ...result, auditTrail });
     } catch (err: any) {
       if (err?.code === 'PM_NO_DEVICE' || err?.code === 'PM_BAD_TYPE') {
         return res.status(422).json({ error: err.message });
@@ -486,7 +515,10 @@ postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Respo
     });
     if (!updated) return res.status(404).json({ error: 'Document not found' });
 
-    void auditService.logAction({
+    // WO-16C #133. The patch is committed by updateDocument above. A lost
+    // §11.10(e) row for it left no trace outside the server log; the update is
+    // still not rolled back over one, and the caller reads `auditTrail`.
+    const auditTrail = await recordAuditRow({
       tenantId: ctx.orgId,
       userId: updatedBy,
       action: 'post_market.document.update',
@@ -499,7 +531,7 @@ postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Respo
       },
     });
 
-    res.json(updated);
+    res.json({ ...updated, auditTrail });
   } catch (err: any) {
     if (err?.code === 'PM_LOCKED') return res.status(409).json({ error: 'Document is locked' });
     return serverError(res, logger, 'loading coverage', err);
@@ -511,7 +543,12 @@ postMarketRouter.post('/documents/:documentId/validate', async (req: Request, re
   if (!ctx) return;
   const result = validateDocument(ctx.doc);
 
-  void auditService.logAction({
+  // WO-16C #133. Nothing is mutated here — validateDocument is a pure
+  // computation over the document loaded above — but this row is the only
+  // record that a validation was run against this version, and it was
+  // `void`-discarded. The result is still returned, because it is a read the
+  // caller can repeat; `auditTrail` says whether the record of the run exists.
+  const auditTrail = await recordAuditRow({
     tenantId: ctx.orgId,
     userId: userIdFromReq(req) ?? undefined,
     action: 'post_market.document.validate',
@@ -525,7 +562,7 @@ postMarketRouter.post('/documents/:documentId/validate', async (req: Request, re
     },
   });
 
-  res.json(result);
+  res.json({ ...result, auditTrail });
 });
 
 postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res: Response) => {
@@ -546,8 +583,11 @@ postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res
       if (result.error === 'NOT_FOUND') return res.status(404).json({ error: 'Document not found' });
       if (result.error === 'ALREADY_LOCKED') return res.status(409).json({ error: 'Already locked' });
       if (result.error === 'GATE_BLOCKED') {
-        // A blocked approval is itself a Part 11 event — record it.
-        void auditService.logAction({
+        // A blocked approval is itself a Part 11 event — record it. WO-16C
+        // #133: the record of the refusal was `void`-discarded, so the 409 read
+        // the same whether it was written or not. The refusal is unchanged and
+        // the body now carries `auditTrail` beside the validation result.
+        const auditTrail = await recordAuditRow({
           tenantId: ctx.orgId,
           userId: approvedBy,
           action: 'post_market.document.approve.blocked',
@@ -560,10 +600,19 @@ postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res
         return res.status(409).json({
           error: 'Validation gate blocked approval',
           validation: result.validation,
+          auditTrail,
         });
       }
     } else {
-      void auditService.logAction({
+      // WO-16C #133. approveDocument has already set the document to approved,
+      // locked it and published the living-file change by the time this runs,
+      // so the approval stands; the `void` meant a signed-off document with no
+      // §11.10(e) record answered exactly like one with it. This branch now
+      // returns its own response so the outcome can ride out in `auditTrail`;
+      // the `res.json(result)` below is left as it was, and is reached only by
+      // an error arm that none of the checks above matched — the service's
+      // union does not currently contain one.
+      const auditTrail = await recordAuditRow({
         tenantId: ctx.orgId,
         userId: approvedBy,
         action: 'post_market.document.approve',
@@ -575,6 +624,7 @@ postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res
           signatureId: signatureId ?? null,
         },
       });
+      return res.json({ ...result, auditTrail });
     }
     res.json(result);
   } catch (err: any) {
@@ -597,7 +647,10 @@ postMarketRouter.post(
       });
       if (!newDoc) return res.status(404).json({ error: 'Document not found' });
 
-      void auditService.logAction({
+      // WO-16C #133. The new version row is committed by supersedeDocument
+      // above. Whether the §11.10(e) row recording who superseded what was
+      // written is now in `auditTrail` instead of the server log alone.
+      const auditTrail = await recordAuditRow({
         tenantId: ctx.orgId,
         userId: createdBy,
         action: 'post_market.document.supersede',
@@ -611,7 +664,7 @@ postMarketRouter.post(
         },
       });
 
-      res.status(201).json(newDoc);
+      res.status(201).json({ ...newDoc, auditTrail });
     } catch (err: any) {
       return serverError(res, logger, 'loading coverage', err);
     }
@@ -709,7 +762,12 @@ postMarketRouter.post(
 
       // The service deliberately writes no audit row itself; it returns the
       // superseded row so the before/after lands in the chained entry here.
-      void auditService.logAction({
+      // WO-16C #133: that makes a discarded outcome especially costly, because
+      // the upsert UPDATEs the activity row in place, so this entry is the only
+      // record of the prior enrolment figures. The record itself is committed,
+      // so the 200/201 stands and `auditTrail` reports whether the entry was
+      // persisted — and whether it is retrievable from the chained log.
+      const auditTrail = await recordAuditRow({
         tenantId: orgId,
         userId: actorId,
         action: 'post_market.pmcf_enrollment.upsert',
@@ -736,7 +794,7 @@ postMarketRouter.post(
         },
       });
 
-      res.status(result.superseded === null ? 201 : 200).json(result);
+      res.status(result.superseded === null ? 201 : 200).json({ ...result, auditTrail });
     } catch (err: any) {
       if (isPmcfEnrollmentStoreAbsent(err) || err?.message === STORE_ABSENT) {
         return res.status(503).json({ error: 'PMCF enrolment unavailable', detail: STORE_ABSENT });

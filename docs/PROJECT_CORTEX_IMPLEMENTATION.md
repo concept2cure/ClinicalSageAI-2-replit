@@ -83,7 +83,7 @@ The Concept2Cure platform requires a **robust, automated data harvester** that:
 - Health Canada synthetic data generator
 - CSR document indexer
 - SEC 10-K harvesting service (`lumen-cortex-service.ts`)
-- Cortex Prime service (`cortexPrimeService.ts`)
+- ~~Cortex Prime service (`cortexPrimeService.ts`)~~ — retired 2026-09-10 (WO-14, Route B); it never had a working write path
 
 ### 🔄 In Progress
 

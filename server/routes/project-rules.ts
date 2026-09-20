@@ -20,7 +20,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { getPool } from '../db';
-import { getTenantContext, getRequestActor } from '../utils/tenantContext';
+import { getTenantContext } from '../utils/tenantContext';
 import { getRulesEngine } from '../services/rules-engine';
 import type { RuleTriggerEvent } from '../services/rules-engine/types';
 import { asyncHandler } from '../middleware/errorHandler';

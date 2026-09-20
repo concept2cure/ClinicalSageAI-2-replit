@@ -38,9 +38,21 @@ import {
 } from '../../shared/schema';
 import { eq, and, desc, sql, count, inArray, isNull } from 'drizzle-orm';
 import { ai } from '../lib/unified-ai-client';
-import { getOpenAIClient } from './openai-client';
 
-const openai = getOpenAIClient();
+// Removed 2026-09-10 (WO-6): an import of the shared OpenAI client factory and a
+// module-load assignment of its result, which nothing in this file ever used —
+// the binding appeared exactly twice, on those two lines. This module does its
+// inference through the governed `ai` client above.
+//
+// (Described rather than quoted. ci:gateway-bypass greps for the assignment form
+// itself, deliberately, so pasting the removed line here would keep this file
+// flagged as a bypass it no longer is — see that gate's header.)
+//
+// It was not inert. Constructing at module load ran the factory on every import
+// and, with no OPENAI_API_KEY, logged a "features unavailable" warning for a
+// provider this file does not use — so the warning pointed at the wrong module.
+// It also kept the file on the gateway-bypass baseline, where a real bypass
+// arriving later would have been indistinguishable from this one.
 
 // Enum validators + AI-facing result shapes — see submission-twin-model.ts
 import {

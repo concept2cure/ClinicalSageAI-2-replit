@@ -622,8 +622,12 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
               {isDeviceFiling && (
                 <>
                   <div className="npw-field npw-field-wide">
-                    <span className="npw-field-l">Indications for use</span>
+                    {/* A <span> names nothing. The class selector is
+                        `.npw-field-l`, not `span.npw-field-l`, so this carries
+                        its styling over unchanged. */}
+                    <label className="npw-field-l" htmlFor="npw-intended-use">Indications for use</label>
                     <textarea
+                      id="npw-intended-use"
                       className="c2c-input"
                       rows={3}
                       value={intendedUse}

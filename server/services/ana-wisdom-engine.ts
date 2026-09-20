@@ -26,7 +26,7 @@ import {
   type AnaPlatformWisdomEntry,
   type AnaClientObjective,
 } from 'shared/schema/ana-intelligence';
-import { eq, and, desc, sql, gte, inArray } from 'drizzle-orm';
+import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('ana-wisdom-engine');

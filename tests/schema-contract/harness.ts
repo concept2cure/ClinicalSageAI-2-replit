@@ -143,10 +143,23 @@ export class SchemaContractDb {
   }
 }
 
-/** The two colliding operating-system migrations (conflict C-1 / C-2 / C-6). */
+/**
+ * The two colliding operating-system shapes (conflict C-1 / C-2 / C-6).
+ *
+ * ONLY ONE OF THESE IS A MIGRATION. `rawSqlShaped` is the canonical, deployed
+ * lineage per ADR-0007 and is read from the migration tree. `drizzleShaped` is a
+ * TEST FIXTURE: it used to be `migrations/0010_operating_system_foundation.sql`,
+ * which ADR-0007 called dead and ADR-0006 retired on 2026-09-10 (WO-1).
+ *
+ * The fixture is not a leftover. These tests exist to demonstrate that the
+ * surviving schema depended on which shape was applied first — the defect
+ * itself — so the losing shape has to remain available to apply. Keeping it as
+ * a fixture rather than as lineage is what lets the collision be characterised
+ * without a second creator existing on any applier.
+ */
 export const OPERATING_SYSTEM_MIGRATIONS = {
-  /** Drizzle-shaped: matches shared/schema/operating-system.ts */
-  drizzleShaped: 'migrations/0010_operating_system_foundation.sql',
-  /** Raw-SQL-shaped: matches server/services/assumption-registry-service.ts */
+  /** TEST FIXTURE, on no applier. Matches shared/schema/operating-system.ts's retired tables. */
+  drizzleShaped: 'tests/schema-contract/fixtures/drizzle-shaped-operating-system.sql',
+  /** Canonical lineage (ADR-0007). Matches server/services/assumption-registry-service.ts. */
   rawSqlShaped: 'db/migrations/20260323_assumption_decision_contradiction.sql',
 } as const;

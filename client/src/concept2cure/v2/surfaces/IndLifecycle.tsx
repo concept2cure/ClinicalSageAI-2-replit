@@ -865,11 +865,11 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
       <div className="surface-head">
         <div>
           {kicker}
-          <h1>{drug} -- Initial IND</h1>
+          <h1>{drug} — Initial IND</h1>
           <p className="surface-sub">
             {[prog.productName, prog.indication, prog.sponsorName, 'eCTD v4.0 (FDA)']
               .filter(Boolean)
-              .join(' -- ')}
+              .join(' — ')}
           </p>
           {/* Which IND this screen is scoped to, and why — stated whenever the
               answer is not trivially "the only one". The CMC build tab and this
@@ -921,7 +921,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             </>
           ) : R.ready ? (
             <>
-              The {drug} IND is <b>ready to file</b> -- every
+              The {drug} IND is <b>ready to file</b> — every
               required section is approved and all three Module 1 forms are
               complete.
             </>
@@ -1103,7 +1103,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               <h3>
                 2 — Module 1 forms{' '}
                 <span className="indl-h-x">
-                  -- 21 CFR 312.23(a)(1)
+                  — 21 CFR 312.23(a)(1)
                 </span>
               </h3>
               <div className="indl-forms">
@@ -1117,7 +1117,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                     </span>
                     <span className="indl-form-b">
                       <span className="t">
-                        {f.title} -- {f.label}
+                        {f.title} — {f.label}
                       </span>
                       <span className="s">{f.ref}</span>
                     </span>
@@ -1142,7 +1142,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               <h3>
                 3 — Blockers to filing{' '}
                 <span className="indl-h-x">
-                  -- {R.blockers.length} -- ready = assessed with zero blockers
+                  — {R.blockers.length} — ready = assessed with zero blockers
                 </span>
               </h3>
               {R.blockers.length === 0 ? (
@@ -1184,7 +1184,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                         <div className="indl-blk-b">
                           <div className="indl-blk-t">
                             <span className="mono">{b.code}</span>
-                            {sec ? ' -- ' + sec.title : ''}
+                            {sec ? ' — ' + sec.title : ''}
                             {sec ? (
                               <span className="indl-blk-st">
                                 {' '}

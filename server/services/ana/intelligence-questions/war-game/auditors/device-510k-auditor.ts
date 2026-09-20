@@ -8,7 +8,7 @@
  * @module server/services/ana/intelligence-questions/war-game/auditors/device-510k-auditor
  */
 
-import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
+import type { WarGameAuditor, AuditRule } from '../types.js';
 
 const rid = (suffix: string) => 'device510k_' + suffix;
 

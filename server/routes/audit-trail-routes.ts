@@ -7,6 +7,10 @@
  */
 
 import { Router } from 'express';
+import { isVerificationUnavailable, respondVerificationUnavailable } from '../lib/verification-outcome.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('audit-trail-routes');
 import type { Pool } from 'pg';
 import type { Request, Response } from 'express';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
@@ -559,6 +563,14 @@ export function createAuditTrailRoutes(pool: Pool): Router {
       res.setHeader('X-Audit-Row-Count', String(signedExport.manifest.rowCount));
       return res.send(signedExport.data);
     } catch (error) {
+      if (isVerificationUnavailable(error)) {
+        // WO-16B finding 26: the export could not be recorded in the audit
+        // trail, so no export is produced. Not a crash and not a client error.
+        return respondVerificationUnavailable(res, log, 'recording the audit export', error, {
+          code: 'AUDIT_EXPORT_NOT_RECORDED',
+          message: 'The export was refused because it could not be recorded in the audit trail (§11.10(e)). Nothing was exported.',
+        });
+      }
       console.error('Failed to export audit logs:', error);
       return res.status(500).json({ error: 'Failed to export audit logs' });
     }
@@ -606,6 +618,12 @@ export function createAuditTrailRoutes(pool: Pool): Router {
         },
       });
     } catch (error) {
+      if (isVerificationUnavailable(error)) {
+        return respondVerificationUnavailable(res, log, 'recording the audit export', error, {
+          code: 'AUDIT_EXPORT_NOT_RECORDED',
+          message: 'The export was refused because it could not be recorded in the audit trail (§11.10(e)). Nothing was exported.',
+        });
+      }
       console.error('Failed to generate signed audit export:', error);
       return res.status(500).json({ error: 'Failed to generate signed audit export' });
     }

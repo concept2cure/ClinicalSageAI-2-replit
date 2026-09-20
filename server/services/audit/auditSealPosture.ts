@@ -11,6 +11,18 @@
  *      seal is what makes forgery infeasible. This is the "record authenticity"
  *      guarantee expected for 21 CFR Part 11 §11.10(e)/§11.70.
  *
+ * A SECOND key, and the same hole (2026-09-19). AUDIT_HMAC_SECRET signs the
+ * tamper-proof CHAIN in server/lib/tamper-proof-audit.ts, and that constructor
+ * already refuses in production without it — ending its message "Refusing to
+ * start." It is constructed lazily, inside auditService.ensureInitialized(),
+ * whose catch falls back to console logging; so the refusal was caught, one
+ * warning was logged, and the process ran, writing Part 11 records to stdout.
+ * Observed at a real production boot. A refusal that a caller can catch is not
+ * a boot gate, so AUDIT_HMAC_SECRET gets one here, beside the seal key, fired
+ * from the same place. There is no accept-unsealed equivalent: without this
+ * secret the chain cannot be signed at all, so there is no degraded-but-honest
+ * posture to accept.
+ *
  * THE HOLE THIS CLOSES: sealing is opt-in on the presence of AUDIT_HMAC_KEY.
  * chain.ts::computeSeal returns `null` when the key is unset, so audit rows are
  * written with a NULL hmac_seal — i.e. UNSEALED — and the verifier skips them
@@ -132,4 +144,51 @@ export function assertAuditSealPostureForProduction(
   return 'unsealed-accepted';
 }
 
-export default { assertAuditSealPostureForProduction, AUDIT_HMAC_KEY_MIN_LENGTH };
+/**
+ * Production safety assertion for the tamper-proof CHAIN signing secret.
+ *
+ * Separate from the seal assertion above because they protect different things
+ * and fail differently: the seal has a documented accepted-risk posture
+ * (unsealed but honest), while an unsigned chain has none — TamperProofAuditLog
+ * cannot construct without this secret, so the only alternatives are "signed"
+ * and "not running". Non-production is a no-op: the constructor there warns and
+ * uses a development fallback, and no real records are at risk.
+ */
+export function assertAuditChainSecretForProduction(
+  env: NodeJS.ProcessEnv = process.env,
+): void {
+  const isProduction = (env.NODE_ENV ?? '').trim().toLowerCase() === 'production';
+  if (!isProduction) return;
+
+  const raw = env.AUDIT_HMAC_SECRET;
+  const secret = typeof raw === 'string' ? raw.trim() : '';
+
+  if (secret === '') {
+    throw new Error(
+      '[audit-seal-posture] REFUSING TO BOOT: AUDIT_HMAC_SECRET is not configured in ' +
+        'production. It signs the tamper-proof audit chain ' +
+        '(server/lib/tamper-proof-audit.ts); without it that store cannot be ' +
+        'constructed, and the process would otherwise degrade to writing 21 CFR ' +
+        'Part 11 records to the console. Set it to a high-entropy secret held ' +
+        'outside the database (KMS / secrets manager).',
+    );
+  }
+
+  if (secret.length < AUDIT_HMAC_KEY_MIN_LENGTH) {
+    // Same reasoning as the seal key's minimum, and the same number: a
+    // present-but-weak signing secret is a misconfiguration, not a decision.
+    // Do not echo the value; log messages fan out widely.
+    throw new Error(
+      `[audit-seal-posture] REFUSING TO BOOT: AUDIT_HMAC_SECRET is too short ` +
+        `(${secret.length} characters). Minimum is ${AUDIT_HMAC_KEY_MIN_LENGTH}. ` +
+        `Use a cryptographically random value so the tamper-proof audit chain ` +
+        `cannot be forged.`,
+    );
+  }
+}
+
+export default {
+  assertAuditSealPostureForProduction,
+  assertAuditChainSecretForProduction,
+  AUDIT_HMAC_KEY_MIN_LENGTH,
+};

@@ -201,7 +201,11 @@ describe('materializeLeafSources', () => {
     expect(res.unresolved).toHaveLength(1);
     expect(res.unresolved[0].documentTable).toBe('vault_documents');
     expect(res.unresolved[0].documentId).toBe(99);
-    expect(res.unresolved[0].reason).toMatch(/external|S3|not stored locally/i);
+    // Pins that the reason NAMES the blocker rather than merely saying "no".
+    // It used to match /S3/, which was itself wrong — vault rows are written
+    // with s3_bucket='local' and their bytes sit on local disk; nothing about
+    // this path is S3. Asserting a wrong fact is how a wrong fact survives.
+    expect(res.unresolved[0].reason).toMatch(/storage provider|document_id/i);
   });
 
   // A legacy row whose document_table collides with an Object.prototype key.

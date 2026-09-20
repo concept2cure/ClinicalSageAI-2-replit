@@ -261,7 +261,13 @@ export function useIvdGsprMatrix(projectId: string | null): UseIvdGsprResult {
     .filter((r): r is IvdGsprChapter => r !== null)
     .sort((a, b) => ['I', 'II', 'III'].indexOf(a.key) - ['I', 'II', 'III'].indexOf(b.key));
   return {
-    rows: rows.length ? rows : null,
+    /* `rows.length ? rows : null` collapsed "the matrix is open and holds no
+       chapters" into "never asked". That was invisible while a fixture stood
+       in for null; now null renders the idle state, so a device with a program
+       open and an empty matrix was told to "choose or create a program" — the
+       one instruction that cannot help, because it is already done. An empty
+       read is an empty read. */
+    rows,
     overallPercent: typeof data.overallCompliancePercent === 'number' ? data.overallCompliancePercent : null,
     loading,
     error,

@@ -21,6 +21,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { buildAuthHeaders } from './useFetchJson';
 
 export interface ActivityEvent {
   id: string;
@@ -180,12 +181,26 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
     setState((s) => ({ ...s, loading: true, error: null }));
 
     const base = `/api/regulatory-programs/${encodeURIComponent(programId)}`;
+    /* `credentials: 'include'` alone is not authentication here: the global
+       /api gate reads `req.headers.authorization` and has no cookie fallback
+       (server/middleware/auth.ts extractBearerToken), so every one of these
+       eight reads returned 401 and this hook turned all eight into null. The
+       PMA surface then had nothing to show for a programme that has data.
+       buildAuthHeaders is what the rest of this lane uses. */
+    let anyFailed = false;
     const fetchJson = async <T,>(path: string): Promise<T | null> => {
       try {
-        const res = await fetch(base + path, { credentials: 'include' });
-        if (!res.ok) return null;
+        const res = await fetch(base + path, {
+          credentials: 'include',
+          headers: buildAuthHeaders(),
+        });
+        /* A failed read is not an empty one. Returning null for both made a 401
+           or a 500 indistinguishable from a programme with no activity, which is
+           the state the surface renders as "nothing here yet". */
+        if (!res.ok) { anyFailed = true; return null; }
         return (await res.json()) as T;
       } catch {
+        anyFailed = true;
         return null;
       }
     };
@@ -223,7 +238,9 @@ export function useProgramExtras(programId: string | null): UseProgramExtrasResu
           pmaModules:      (mods  as Payload<PmaModule>  | null)?.data ?? null,
           pmaTrialMetrics: (trial as Payload<TrialMetric> | null)?.data ?? null,
           loading: false,
-          error: null,
+          error: anyFailed
+            ? 'Some programme details could not be read. What is shown may be incomplete.'
+            : null,
         });
       })
       .catch((err: unknown) => {

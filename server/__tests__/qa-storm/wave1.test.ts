@@ -1,21 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { clampGraphRagBounds } from '../../routes/graphrag-util';
-import { parseVaultMetadata } from '../../services/vaultService';
 import { generateConsequences } from '../../src/control-plane/document-consequence-engine';
 import { evaluatePublishGate } from '../../src/control-plane/export-publish-gates';
 
-// Fix A — vaultService.parseVaultMetadata: corrupt JSON must not throw.
-describe('parseVaultMetadata (vault corrupt-metadata crash)', () => {
-  it('parses valid metadata', () => {
-    const meta = parseVaultMetadata(JSON.stringify({ storedAt: 'x' }));
-    expect(meta).toEqual({ storedAt: 'x' });
-  });
-  it('returns null on malformed JSON instead of throwing', () => {
-    expect(() => parseVaultMetadata('{ not json')).not.toThrow();
-    expect(parseVaultMetadata('{ not json')).toBeNull();
-    expect(parseVaultMetadata('')).toBeNull();
-  });
-});
+// Fix A — the vault's corrupt-metadata crash MOVED, it was not dropped.
+// It lived on server/services/vaultService.ts, a byte-compatible duplicate of
+// LocalStorageProvider (same VAULT_ROOT, same versions/{id}/ layout, same
+// _meta.json shape). That module was deleted and its consumers migrated onto
+// the canonical provider; the guarantee is now pinned against the real read
+// path in server/services/storage/__tests__/storage-tenant-isolation.test.ts
+// ("returns null on a corrupt sidecar rather than throwing"), which is a
+// stronger test than parsing a string in isolation was.
 
 // Fix B — graphrag clampGraphRagBounds: unbounded traversal -> clamped.
 describe('clampGraphRagBounds (graphrag resource exhaustion)', () => {

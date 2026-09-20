@@ -23,7 +23,7 @@
  * exactly. It never invents 'human' for the zero-contributor case; that
  * asymmetry is the point (see the production comment).
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { commitSectionToFiling } from '../commit-section-to-filing';
 
 /** Records every query; answers the fixed sequence commitSectionToFiling issues. */

@@ -37,6 +37,7 @@ import { stashNavParamsForTarget } from './navParams';
 import { listDemoScripts } from '@shared/navigation/demo-scripts';
 import { applySurfaceAction, validateDriveAction } from './surfaceActions';
 import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
+import { MAX_INTERJECTION_CHARS } from '@shared/ana/run-control-limits';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
@@ -291,7 +292,7 @@ export function Rail({
           type="button"
           className="rail-collapse"
           onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? 'Expand' : 'Collapse'}
+          title={collapsed ? 'Expand' : 'Collapse'} aria-label={collapsed ? 'Expand' : 'Collapse'}
         >
           {I.panelLeft}
         </button>
@@ -583,6 +584,7 @@ export function AnaRail({
   onSteer,
   liveDrive,
   work,
+  onNewThread,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -601,6 +603,12 @@ export function AnaRail({
    *  a conversation or dismissed it — the rail only renders it when present. */
   welcome?: OnboardingWelcome | null;
   onDismissWelcome?: () => void;
+  /** Starts a fresh AnA thread — aborts any in-flight run, clears the rail
+   *  transcript, and drops the thread id so the next send opens a new server
+   *  thread. Prior threads persist and are reachable from the
+   *  conversation-thread surface, so this is non-destructive. An absent handler
+   *  disables the button rather than leaving it inert. */
+  onNewThread?: () => void;
   /**
    * Mid-run control. The server has supported pause / resume / cancel /
    * interject at the agentic loop's round boundaries since run control
@@ -810,7 +818,14 @@ export function AnaRail({
               {I.activity}
             </button>
           )}
-          <button type="button" className="tb-btn" title="New thread">
+          <button
+            type="button"
+            className="tb-btn"
+            title="New thread"
+            aria-label="New thread"
+            onClick={onNewThread}
+            disabled={!onNewThread}
+          >
             {I.plus}
           </button>
           <button
@@ -1162,23 +1177,44 @@ export function AnaRail({
           </div>
         )}
         {/* Mid-run control.
-            Every action here lands at a ROUND BOUNDARY, not instantly — the
-            loop checks between rounds — so the copy says "after this step"
-            rather than implying the tool in flight stops dead. Steering is the
-            reason this exists: a reviewer watching AnA work a question the
-            wrong way could previously only wait for her to finish, while the
-            server has spliced steers into the next round, and recorded them in
-            the decision lineage, all along. */}
+            The three actions have three different scopes, and the copy below
+            says which is which rather than one blanket promise:
+              Stop   cuts the step in flight — the model call and the tools are
+                     aborted, so it is "Stopping…", acknowledged by the server.
+              Pause  holds at the next ROUND BOUNDARY, deliberately: killing a
+                     tool to pause throws the work away and then redoes it, so
+                     "after this step" is the honest label and stays.
+              Steer  applies at the next round.
+            Steering is the reason this exists: a reviewer watching AnA work a
+            question the wrong way could previously only wait for her to finish,
+            while the server has spliced steers into the next round, and
+            recorded them in the decision lineage, all along.
+            Pause and Steer are offered only when the run is durably
+            controllable; Stop is always offered because aborting the request
+            needs no run record. */}
         {streaming && (onPause || onStop || onSteer) && (
           <div className="ana-runctl" role="group" aria-label="Control this run">
             <span className="ana-runctl-state">
               <span
-                className={runStatus === 'paused' ? 'ana-runctl-dot is-paused' : 'ana-runctl-dot'}
+                className={
+                  runStatus === 'paused' || runStatus === 'cancelled'
+                    ? 'ana-runctl-dot is-paused'
+                    : 'ana-runctl-dot'
+                }
                 aria-hidden="true"
               >
                 {runStatus === 'paused' ? I.pause : I.dot}
               </span>
-              {runStatus === 'paused' ? 'Paused after this step' : 'Working'}
+              {/* Pause still lands at a round boundary — deliberately: killing a
+                  tool to pause throws the work away and then redoes it. Stop
+                  now cuts the step in flight, so the copy must stop saying
+                  "after this step" for BOTH, and must not claim stopped before
+                  the server says so. */}
+              {runStatus === 'paused'
+                ? 'Paused after this step'
+                : runStatus === 'cancelled'
+                  ? 'Stopping…'
+                  : 'Working'}
             </span>
 
             {/* ── The box used to empty whether or not the steer was accepted ──

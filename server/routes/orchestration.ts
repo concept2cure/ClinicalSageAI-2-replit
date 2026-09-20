@@ -567,6 +567,11 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
         overallScore: readiness.overallScore,
         status: readiness.status,
         scores: readiness.scores,
+        // `scores.compliance` / `scores.consistency` are null when the engine
+        // had no input to measure them from. The reason travels with them so
+        // the gate panel can say which dimension was not assessed and why,
+        // rather than painting a number nothing computed.
+        unassessedDimensions: readiness.unassessedDimensions,
         blockers: readiness.blockers,
         moduleBreakdown: readiness.moduleBreakdown,
       },

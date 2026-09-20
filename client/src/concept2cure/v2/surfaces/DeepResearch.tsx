@@ -533,7 +533,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
           className={'reg-tab' + (tab === 'connectors' ? ' on' : '')}
           onClick={() => setTab('connectors')}
         >
-          Connectors{connectorsReady ? ' -- ' + connectorCount : ''}
+          Connectors{connectorsReady ? ' — ' + connectorCount : ''}
         </button>
       </div>
 
@@ -661,7 +661,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                 )}
                 <span className="sp-q-s">
                   Parallel fan-out — grounded synthesis
-                  {credits ? ` -- ${credits.remaining < 0 ? 'unlimited' : credits.remaining + '/' + credits.limit} credits` : ''}
+                  {credits ? ` — ${credits.remaining < 0 ? 'unlimited' : credits.remaining + '/' + credits.limit} credits` : ''}
                 </span>
               </div>
             </div>
@@ -684,7 +684,10 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                       </span>
                       <span className="sp-row-b">
                         <span className="sp-row-t">{j.name}</span>
-                        <span className="sp-row-s">
+                        {/* Each fan-out row flips from "querying..." to its
+                            result independently; without a live region the
+                            whole sweep completes in silence. */}
+                        <span className="sp-row-s" role="status" aria-live="polite">
                           {j.state === 'done' ? j.hits + ' results returned' : 'querying...'}
                         </span>
                       </span>
@@ -716,7 +719,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                         <span className="sp-row-b">
                           <span className="sp-row-t">{r.title || r.source || 'Source ' + (i + 1)}</span>
                           <span className="sp-row-s">
-                            {[r.conn || r.source, r.meta, r.date].filter(Boolean).join(' -- ')}
+                            {[r.conn || r.source, r.meta, r.date].filter(Boolean).join(' — ')}
                           </span>
                         </span>
                         {/* Was a chat prompt: "Open source SRC-1: <title>",
@@ -904,9 +907,9 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
         <C2CForm
           config={{
             eyebrow:
-              'Connector -- ' +
+              'Connector — ' +
               (DR_CATS[form.cat] || form.cat) +
-              ' -- ' +
+              ' — ' +
               form.tier +
               ' tier',
             title: 'Configure ' + form.name,

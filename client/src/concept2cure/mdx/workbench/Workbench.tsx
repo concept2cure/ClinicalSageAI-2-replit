@@ -13,15 +13,15 @@
 import * as React from 'react';
 import { I } from '../icons';
 import {
-  SUBMISSIONS,
   SUBMISSION_PIPELINE,
-  TASKS,
   TASKS_COLUMNS,
-  TASKS_METRICS,
-  TEMPLATES,
-  VALIDATION_PROGRAMS,
-  VALIDATION_RULES,
-  VALIDATION_SUMMARY,
+  type Submission,
+  type Task,
+  type TaskMetric,
+  type Template,
+  type ValidationProgram,
+  type ValidationRule,
+  type ValidationSummary,
 } from '../data/workbench';
 import { useSubmissions, useSubmissionDetail } from '../hooks/useSubmissions';
 import {
@@ -32,8 +32,6 @@ import {
   workNotOnTheBoard,
 } from '../hooks/useWorkbench';
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
-import { useSampleRows, useSampleValue, useShowingSample } from '../lib/useSampleRows';
-import { SampleDataBanner } from '../components/SampleDataBanner';
 import { EmptyState } from '../../v2/dataConnect';
 import { downloadCsv } from '../../v2/download';
 
@@ -50,6 +48,84 @@ import { downloadCsv } from '../../v2/download';
  */
 const VALIDATION_COLS =
   '76px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 2fr) 88px';
+
+/**
+ * Empty reads, shared so a panel awaiting its first response renders the same
+ * zero every time instead of allocating a new array each render.
+ *
+ * Each of these replaced an example set reached through sample mode. Three of
+ * the four had no banner, so the surface showed invented tasks, validation
+ * findings and templates as if they were the tenant's own; the fourth is
+ * documented where it was removed. Every panel here has a live endpoint, so
+ * the honest reading before it answers is nothing, not somebody else's work.
+ */
+const NO_TASKS: Task[] = [];
+const NO_TASK_METRICS: TaskMetric[] = [];
+const NO_VALIDATION_RULES: ValidationRule[] = [];
+const NO_VALIDATION_PROGRAMS: ValidationProgram[] = [];
+const NO_VALIDATION_SUMMARY: ValidationSummary[] = [];
+const NO_SUBMISSIONS: Submission[] = [];
+const NO_TEMPLATES: Template[] = [];
+
+/**
+ * The three readings a panel can be in when it is holding no rows: still
+ * fetching, failed, or genuinely empty. They are not the same statement, and
+ * rendering all three as blank space is how a surface comes to tell a user
+ * "you have no work" about a request that never landed.
+ *
+ * Returns null the moment there is anything to show, so it composes in front
+ * of an existing list without wrapping it.
+ */
+function PanelState({
+  rows,
+  loading,
+  error,
+  refresh,
+  icon,
+  title,
+  errorTitle,
+  hint,
+  action,
+  testId,
+}: {
+  rows: readonly unknown[];
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+  icon: React.ReactNode;
+  /** What it means for this panel to be legitimately empty. */
+  title: string;
+  /** What to say when the read FAILED. Deliberately a separate string: a
+   *  failure is a different statement from an emptiness, not a rewording. */
+  errorTitle: string;
+  hint: string;
+  action?: { label: string; onAct: () => void };
+  testId: string;
+}) {
+  if (rows.length > 0) return null;
+  if (error) {
+    return (
+      <EmptyState
+        tone="error"
+        icon={icon}
+        title={errorTitle}
+        hint={error}
+        retry={refresh}
+        testId={`${testId}-error`}
+      />
+    );
+  }
+  return (
+    <EmptyState
+      busy={loading}
+      icon={icon}
+      title={loading ? 'Loading…' : title}
+      hint={loading ? '' : hint}
+      {...(loading ? {} : action ? { action } : {})}
+      testId={testId}
+    />
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tasks
@@ -72,8 +148,19 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
      the page stops silently under-reporting the portfolio. */
   const unified = useUnifiedWork();
   const offBoard = workNotOnTheBoard(unified.summary);
-  const sourceTasks = useSampleRows(live.tasks, TASKS);
-  const sourceMetrics = useSampleRows(live.metrics, TASKS_METRICS);
+  const sourceTasks = live.tasks ?? NO_TASKS;
+  const sourceMetrics = live.metrics ?? NO_TASK_METRICS;
+
+  /* One definition of "new task", shared by the header button and the empty
+     state's CTA — the same reason startNewSubmission below is a callback. Two
+     copies is how a panel comes to name an action differently from the control
+     that performs it. */
+  const newTask = React.useCallback(() => {
+    onAskAna(
+      'Create a new task. Walk me through the fields — program, section, summary, label, due date, assignee, ' +
+                  'and whether an e-signature is required — then file it to the right Kanban column.',
+    );
+  }, [onAskAna]);
 
   const byCol = (id: string) =>
     sourceTasks.filter(t => t.col === id && (owner === 'all' || t.assignee === owner));
@@ -87,6 +174,15 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
           <div className="page-sub">
             Everything assigned across the portfolio — blockers, peer reviews, e-signatures.
           </div>
+          {/* A source whose query failed contributes nothing, so the counts
+              below are a floor. Saying so is the difference between "nothing
+              else is outstanding" and "we could not read everything". */}
+          {unified.summary?.partial === true && (
+            <div className="page-sub">
+              Some work sources could not be read, so these counts are incomplete. The reason has
+              been logged.
+            </div>
+          )}
           {offBoard > 0 && (
             <div className="page-sub">
               {`+${offBoard} not on this board: `}
@@ -105,15 +201,7 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
             <button className="seg-btn" data-on={owner === 'all'} onClick={() => setOwner('all')}>All</button>
             <button className="seg-btn" data-on={owner === 'JC'} onClick={() => setOwner('JC')}>Mine</button>
           </div>
-          <button
-            className="btn primary small"
-            onClick={() =>
-              onAskAna(
-                'Create a new task. Walk me through the fields — program, section, summary, label, due date, assignee, ' +
-                  'and whether an e-signature is required — then file it to the right Kanban column.',
-              )
-            }
-          >
+          <button className="btn primary small" onClick={newTask}>
             {I.plus} New task
           </button>
         </div>
@@ -131,6 +219,19 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
           </div>
         ))}
       </div>
+
+      <PanelState
+        rows={sourceTasks}
+        loading={live.loading}
+        error={live.error}
+        refresh={live.refresh}
+        icon={I.check}
+        title="No tasks assigned"
+        errorTitle="Could not load your tasks"
+        hint="Work assigned across the portfolio appears here — blockers, peer reviews and e-signatures."
+        action={{ label: 'New task', onAct: newTask }}
+        testId="workbench-no-tasks"
+      />
 
       {view === 'board' ? (
         <div className="kanban">
@@ -246,9 +347,9 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
   const programsState = useMdxPrograms();
   const programsList = programsState.programs ?? [];
   const validation = useWorkbenchValidation(programsList);
-  const sourceRules    = useSampleRows(validation.rules, VALIDATION_RULES);
-  const sourcePrograms = useSampleRows(validation.programs, VALIDATION_PROGRAMS);
-  const sourceSummary  = useSampleRows(validation.summary, VALIDATION_SUMMARY);
+  const sourceRules    = validation.rules ?? NO_VALIDATION_RULES;
+  const sourcePrograms = validation.programs ?? NO_VALIDATION_PROGRAMS;
+  const sourceSummary  = validation.summary ?? NO_VALIDATION_SUMMARY;
 
   const rules = sourceRules.filter(
     r =>
@@ -308,6 +409,17 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
           <h2>Readiness by program</h2>
           <span className="section-sub">Column order · errors · warnings · pass</span>
         </div>
+        <PanelState
+          rows={sourcePrograms}
+          loading={validation.loading}
+          error={validation.error}
+          refresh={validation.refresh}
+          icon={I.shieldCheck}
+          title="No programs to validate"
+          errorTitle="Could not load the validation matrix"
+          hint="Each program you run appears here with its error, warning and pass counts."
+          testId="workbench-no-validation-programs"
+        />
         <div className="val-matrix">
           {sourcePrograms.map(p => (
             <button
@@ -399,18 +511,24 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'active' | 'blocked' | 'complete'>('all');
 
-  /* Live submissions from /api/submission-ops/packages. Falls back to the
-     kit fixture during the initial fetch and on error so the pipeline
-     pane doesn't render with zero counts. When live data returns zero,
-     the empty state below is intentional. */
+  /* Live submissions from /api/submission-ops/packages, and nothing else.
+     There used to be a `SUBMISSIONS` example set behind sample mode. Its
+     rows carried `cover: 'signed'`, `esig: true`, a log line reading
+     "Cover letter e-signed (AUD-9104)" — an invented Part 11 signature id —
+     and a "CLEARED · K254481" decision against a clearance-shaped number.
+     Those rows drove the transmission gate rendered below.
+
+     Gating and bannering is the right treatment for example content and the
+     wrong treatment for this: the value of a signature record is that no part
+     of it was authored for display, so an invented one is not a weaker version
+     of the artifact, it is its opposite. The same fabrication was removed from
+     the v2 Submission Center (SC_SUBMISSIONS) and from the pathway audit and
+     approvals panes; this was the third copy, one lane over.
+
+     The pipeline pane now renders zero counts before the first response, which
+     is what is true then, and the empty state below when the answer is zero. */
   const live = useSubmissions();
-  const sourceSubmissions = useSampleRows(live.submissions, SUBMISSIONS);
-  /* Gated correctly and marked nowhere. The fixture rows carry `cover: 'signed'`,
-     `esig: true` and a log line reading "Cover letter e-signed (AUD-9104)" — an
-     invented Part 11 audit id — and they drive the transmission gate rendered
-     below. Sample mode is the only way to reach them, and the user is now told
-     when they have. */
-  const submissionsAreSample = useShowingSample(live.submissions);
+  const sourceSubmissions = live.submissions ?? NO_SUBMISSIONS;
 
   /* One definition of "start a new submission", used by the header button and
      by the empty state's CTA. Two copies of this string is how a panel comes to
@@ -474,12 +592,6 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
           </button>
         </div>
       </div>
-
-      <SampleDataBanner
-        show={submissionsAreSample}
-        loading={live.loading}
-        label="submission packages"
-      />
 
       <section className="section">
         <div className="section-head">
@@ -645,7 +757,9 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
                 {sel.log.map((l, i) => (
                   <div key={i} className="activity-row">
                     <span className="activity-when">{l.when}</span>
-                    <span className="activity-who">{l.who}</span>
+                    {/* An unresolved actor renders '—', the repo's unknown-value
+                        convention (FilesTreePane). Never a stand-in name. */}
+                    <span className="activity-who">{l.who || '—'}</span>
                     <span className="activity-what">{l.what}</span>
                   </div>
                 ))}
@@ -667,7 +781,15 @@ export function TemplatesSurface({ onAskAna }: WorkbenchProps) {
      documentTemplates + ectdTemplates server-side). Falls back to fixture
      during load + on error. */
   const live = useWorkbenchTemplates();
-  const sourceTemplates = useSampleRows(live.templates, TEMPLATES);
+  const sourceTemplates = live.templates ?? NO_TEMPLATES;
+
+  /* Shared by the header button and the empty state's CTA — see newTask. */
+  const newTemplate = React.useCallback(() => {
+    onAskAna(
+      'Create a new org-approved template. Walk me through name, owner, applicable pathways (510(k), PMA, CER), ' +
+                  'tags, and the section skeleton — then version-control it.',
+    );
+  }, [onAskAna]);
   return (
     <>
       <div className="page-header">
@@ -679,19 +801,23 @@ export function TemplatesSurface({ onAskAna }: WorkbenchProps) {
           </div>
         </div>
         <div className="page-actions">
-          <button
-            className="btn primary small"
-            onClick={() =>
-              onAskAna(
-                'Create a new org-approved template. Walk me through name, owner, applicable pathways (510(k), PMA, CER), ' +
-                  'tags, and the section skeleton — then version-control it.',
-              )
-            }
-          >
+          <button className="btn primary small" onClick={newTemplate}>
             {I.plus} New template
           </button>
         </div>
       </div>
+      <PanelState
+        rows={sourceTemplates}
+        loading={live.loading}
+        error={live.error}
+        refresh={live.refresh}
+        icon={I.template}
+        title="No templates yet"
+        errorTitle="Could not load the template library"
+        hint="Org-approved boilerplate appears here once it is published to the library."
+        action={{ label: 'New template', onAct: newTemplate }}
+        testId="workbench-no-templates"
+      />
       <div className="tpl-grid">
         {sourceTemplates.map(t => (
           <button

@@ -6,6 +6,44 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- ═══════════════════════════════════════════════════════════════════════════════
+-- AMENDED IN PLACE 2026-09-11 — WO-15 finding 7. Two columns, no DROP.
+--
+-- RULE 1: this file is in C2C_MIGRATION_FILES (index 42) and re-executes on
+-- every deploy, so schema is removed by amending the creating statement, never
+-- by appending a DROP. Both changes below are to CREATE TABLE IF NOT EXISTS
+-- blocks and so affect only a database where the table does not yet exist.
+--
+-- 1. contradiction_consequence_log.execution_notes  ->  notes
+--
+--    The same table is created by migrations/20260524_contradiction_engine_
+--    schema.sql with the column named `notes`, and THAT file is the one every
+--    real database gets: deploy-migrate refuses an unprovisioned database, so
+--    install-fresh provisions all of them and its step-3 overlay applies all of
+--    migrations/*.sql. This file then runs later against a table that already
+--    exists and no-ops — CREATE TABLE IF NOT EXISTS converges nothing.
+--
+--    So `execution_notes` was a name no provisioned database ever had, and the
+--    four INSERTs in contradiction-resolution-orchestrator.ts that used it
+--    raised 42703 on every database, every time, inside catch blocks that
+--    discard the error. Verified by executing one verbatim against a
+--    canonically provisioned database. Those writes now name `notes`; this file
+--    is amended to agree so the two creators cannot diverge again.
+--
+-- 2. contradiction_findings.detected_by  ->  nullable, no default
+--
+--    Was `TEXT NOT NULL DEFAULT 'system'`; 20260524 declares it plain `TEXT`.
+--    No code in the repository writes this column. A default of 'system' would
+--    therefore stamp every finding with an attribution nothing recorded, which
+--    is exactly the fabrication this codebase forbids. The honest shape is the
+--    nullable one, and ContradictionFinding.detectedBy is retyped
+--    `string | null` to match.
+--
+-- Convergence for any database that took the other path is in
+-- migrations/20260911_contradiction_consequence_log_convergence.sql, since this
+-- amendment alone cannot alter a table that already exists.
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- ═══════════════════════════════════════════════════════════════════════════════
 -- PART 1: ASSUMPTION REGISTRY
 -- ═══════════════════════════════════════════════════════════════════════════════
 
@@ -229,7 +267,7 @@ CREATE TABLE IF NOT EXISTS contradiction_findings (
   consequence_executed BOOLEAN DEFAULT FALSE,
 
   -- Audit
-  detected_by TEXT NOT NULL DEFAULT 'system',
+  detected_by TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -288,7 +326,7 @@ CREATE TABLE IF NOT EXISTS contradiction_consequence_log (
 
   executed_by TEXT NOT NULL,
   execution_status TEXT NOT NULL CHECK (execution_status IN ('pending', 'executed', 'failed')),
-  execution_notes TEXT,
+  notes TEXT,
 
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

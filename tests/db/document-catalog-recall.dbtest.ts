@@ -158,19 +158,28 @@ async function cleanupProbeRows(): Promise<void> {
   } finally {
     client.release();
   }
-  await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${PROBE_CODE}%`]);
+  /* Delete by PROGRAM, not by document_code.
+     The code-prefix delete matched only the documents this suite names itself.
+     `file_chat_upload_to_vault` derives the code from the uploaded FILE NAME,
+     so the document it admits is called `coa-batch-23-104` and survived every
+     run — one orphaned document and its chunks per run, accumulating in any
+     database that is not thrown away afterwards. With the embedding stub
+     returning a constant vector every chunk ties, so after a few runs the
+     leftovers won the similarity ranking and the passage-retrieval case
+     started failing on a reused database while passing in CI. A suite whose
+     own residue breaks its next run is not hermetic; scoping the delete to the
+     programs this suite created covers every document it admits, whatever the
+     admitting path decided to call it. */
   await owner.query(
-    `DELETE FROM cre_evidence_sources WHERE organization_id = $1 AND title LIKE $2`,
-    [orgId, `${PROBE_PREFIX}%`],
+    `DELETE FROM vault.documents
+      WHERE program_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)
+         OR document_code LIKE $2`,
+    [`${PROBE_PREFIX}%`, `${PROBE_CODE}%`],
   );
-  await owner.query(
-    `DELETE FROM project_memory_entries WHERE organization_id = $1`,
-    [orgId],
-  );
-  await owner.query(
-    `DELETE FROM project_ingested_documents WHERE organization_id = $1`,
-    [orgId],
-  );
+  await owner.query(`DELETE FROM cre_evidence_sources WHERE organization_id = $1 AND title LIKE $2`,
+    [orgId, `${PROBE_PREFIX}%`]);
+  await owner.query(`DELETE FROM project_memory_entries WHERE organization_id = $1`, [orgId]);
+  await owner.query(`DELETE FROM project_ingested_documents WHERE organization_id = $1`, [orgId]);
   await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
 }
 

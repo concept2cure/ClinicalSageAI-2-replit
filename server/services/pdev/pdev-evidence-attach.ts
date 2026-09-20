@@ -29,7 +29,7 @@ import { evidenceObjects, evidenceLinks } from '../../../shared/schema/programs'
 import type { EvidenceObject } from '../../../shared/schema/programs';
 import { pdevProgramActivities } from '../../../shared/schema/pdev-workflow';
 import { getActivityByKey } from './pdev-activity-registry';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 
 const logger = createScopedLogger('pdev-evidence-attach');
 
@@ -77,6 +77,26 @@ export class PdevEvidenceAttachService {
     activityStateId: string;
     evidenceLinkId: string;
     evidenceObjectIds: string[];
+    /**
+     * What happened to the 21 CFR Part 11 §11.10(e) audit row for this attach.
+     * Always present: every path that reaches a return here has already written
+     * the evidence_links row, so a row is always attempted and the caller is
+     * always told whether it landed.
+     *
+     * WO-16C finding 133, follow-up review 2026-09-18. This write was
+     * `void auditService.logAction({…})`. `logAction` never rejects on a
+     * persistence failure — by deliberate policy, an audit-trail outage must
+     * not break the action it records — it RESOLVES an AuditWriteResult and
+     * reports what happened in `persisted`. Discarding that value meant the
+     * evidence_links row and the activity's `evidence_linked` state were
+     * committed, the operator's typed reason-for-change was accepted, and
+     * whether any of it was recorded anywhere was unobservable: this result,
+     * the route envelope and the surface were byte-identical either way.
+     *
+     * The outcome shape is the one pdev-clearance and pdev-workflow-bridge
+     * already carry, from the shared ../audit/audit-write-outcome — not a second copy.
+     */
+    audit: AuditRowOutcome;
   }> {
     const activity = getActivityByKey(input.activityKey);
     if (!activity) {
@@ -182,7 +202,7 @@ export class PdevEvidenceAttachService {
       .returning({ id: evidenceLinks.id });
     const linkId = linkRows[0].id;
 
-    void auditService.logAction({
+    const audit = await recordAuditRow({
       tenantId: input.organizationId,
       userId: input.userId,
       action: 'pdev_evidence_attached',
@@ -201,12 +221,21 @@ export class PdevEvidenceAttachService {
     logger.info('Evidence attached to PDEV activity', {
       activityKey: activity.key,
       evidenceObjectId: input.evidenceObjectId,
+      auditRowPersisted: audit.persisted,
     });
 
+    // The evidence_links row and the activity state are already committed, and
+    // unlinking real evidence because its log row failed would be the worse
+    // lie — it would also throw away the operator's reasonForChange, the one
+    // field §11.10(e) most wants kept. The attach stands and the caller is told
+    // what happened to the record. recordAuditRow has already logged the
+    // store's own reason against this action and resource id; it is not
+    // returned, because this result is forwarded to a tenant client.
     return {
       activityStateId,
       evidenceLinkId: linkId,
       evidenceObjectIds: mergedIds,
+      audit,
     };
   }
 
@@ -218,6 +247,20 @@ export class PdevEvidenceAttachService {
     activityStateId: string;
     evidenceObjectIds: string[];
     removedLinks: number;
+    /**
+     * What happened to the 21 CFR Part 11 §11.10(e) audit row for this detach —
+     * `undefined` on the no-activity-state path below, which removes nothing
+     * and attempts no row, so a caller cannot read a persisted record off a
+     * call that never wrote one.
+     *
+     * WO-16C finding 133, follow-up review 2026-09-18. Same defect as `attach`
+     * above: `void auditService.logAction({…})` discarded the only report of
+     * whether the row landed, so a detach that deleted evidence_links rows and
+     * shrank the activity's evidence_object_ids cache with NO record of who
+     * removed what was indistinguishable from a fully recorded one. On a
+     * removal that is the more serious of the two directions.
+     */
+    audit?: AuditRowOutcome;
   }> {
     const activity = getActivityByKey(input.activityKey);
     if (!activity) {
@@ -280,7 +323,7 @@ export class PdevEvidenceAttachService {
       )
       .returning({ id: evidenceLinks.id });
 
-    void auditService.logAction({
+    const audit = await recordAuditRow({
       tenantId: input.organizationId,
       userId: input.userId,
       action: 'pdev_evidence_detached',
@@ -294,10 +337,14 @@ export class PdevEvidenceAttachService {
       },
     });
 
+    // The link rows are already deleted and the cache already rewritten;
+    // re-creating them because the log row failed would invent an attachment
+    // the operator asked to remove. The detach stands and the caller is told.
     return {
       activityStateId: existing[0].id,
       evidenceObjectIds: mergedIds,
       removedLinks: removed.length,
+      audit,
     };
   }
 

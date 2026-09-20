@@ -23,7 +23,7 @@ import {
   listApiKeys,
   getApiKeyUsage,
 } from '../services/api-key-service.js';
-import { API_KEY_SCOPES, type ApiKeyScope } from '../../shared/schema/api-keys.js';
+import { API_KEY_SCOPES } from '../../shared/schema/api-keys.js';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger.js';
 

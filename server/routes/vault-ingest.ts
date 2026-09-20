@@ -30,6 +30,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
+import { requireEditorAccess } from '../middleware/orgMembership.js';
 import multer from 'multer';
 import path from 'node:path';
 import { z } from 'zod';
@@ -77,7 +78,21 @@ const IngestBodySchema = z.object({
 export default function createVaultIngestRoutes(): Router {
   const router = Router();
 
-  router.post('/', upload.single('file'), async (req: Request, res: Response) => {
+  /* ROLE-GATED. This router is mounted with the auth middleware and nothing
+     else (register-inline-routes.ts:860), so before this any member of the
+     organisation could put bytes into the governed vault — including a
+     `viewer`, the one organisation role that exists to not write. Ingest
+     creates a vault.documents row and a Part 11 audit row attributing it to the
+     caller, so a viewer could author an attributable governed record.
+
+     The role was already being READ here — it is stamped into the ingest
+     arguments below — and simply never decided anything. Recording who did
+     something while not checking whether they may is the worst of both.
+
+     Gate BEFORE multer: refusing after the upload has been parsed into memory
+     means a caller who may not write can still make the server buffer a file
+     for them. `requireEditorAccess` is the repo's one governed-write gate. */
+  router.post('/', requireEditorAccess, upload.single('file'), async (req: Request, res: Response) => {
     const fileBuffer: Buffer | undefined = (req as any).file?.buffer;
     if (!fileBuffer || fileBuffer.length === 0) {
       return res.status(400).json({

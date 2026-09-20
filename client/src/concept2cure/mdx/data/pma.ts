@@ -28,17 +28,31 @@ export interface TrialMetric {
   tone?: DueTone;
 }
 
+/**
+ * The PMA pathway's ten phases. The ids and labels are the pathway BY
+ * DEFINITION — real regulatory reference data, correct to ship — and this is
+ * the only thing this constant is.
+ *
+ * It used to carry a position as well: 100/100/100/85/61/40/25/0/0/0, with
+ * 'Module assembly' marked blocked. `derivePhases` in PmaSurface overwrites
+ * every row's pct and status from the active program, so those numbers were
+ * reachable through exactly one path — the no-program branch, which returned
+ * this array verbatim — and on that path the grid drew one specific invented
+ * programme's progress for a user who had selected nothing.
+ *
+ * Taxonomy carries no position. `derivePhases` supplies it, from the program.
+ */
 export const PMA_PHASES: PmaPhase[] = [
-  { id: 'presub',   label: 'Pre-submission',           pct: 100, status: 'complete' },
-  { id: 'preclin',  label: 'Preclinical',              pct: 100, status: 'complete' },
-  { id: 'ide',      label: 'IDE approval',             pct: 100, status: 'complete' },
-  { id: 'mfg',      label: 'Manufacturing validation', pct: 85,  status: 'active'   },
-  { id: 'pivotal',  label: 'Pivotal trial',            pct: 61,  status: 'active'   },
-  { id: 'labeling', label: 'Labeling',                 pct: 40,  status: 'active'   },
-  { id: 'module',   label: 'Module assembly',          pct: 25,  status: 'blocked'  },
-  { id: 'panel',    label: 'Advisory panel',           pct: 0,   status: 'idle'     },
-  { id: 'approval', label: 'Approval',                 pct: 0,   status: 'idle'     },
-  { id: 'postapp',  label: 'Post-approval studies',    pct: 0,   status: 'idle'     },
+  { id: 'presub',   label: 'Pre-submission',           pct: 0, status: 'idle' },
+  { id: 'preclin',  label: 'Preclinical',              pct: 0, status: 'idle' },
+  { id: 'ide',      label: 'IDE approval',             pct: 0, status: 'idle' },
+  { id: 'mfg',      label: 'Manufacturing validation', pct: 0, status: 'idle' },
+  { id: 'pivotal',  label: 'Pivotal trial',            pct: 0, status: 'idle' },
+  { id: 'labeling', label: 'Labeling',                 pct: 0, status: 'idle' },
+  { id: 'module',   label: 'Module assembly',          pct: 0, status: 'idle' },
+  { id: 'panel',    label: 'Advisory panel',           pct: 0, status: 'idle' },
+  { id: 'approval', label: 'Approval',                 pct: 0, status: 'idle' },
+  { id: 'postapp',  label: 'Post-approval studies',    pct: 0, status: 'idle' },
 ];
 
 export const PMA_MODULES: PmaModule[] = [

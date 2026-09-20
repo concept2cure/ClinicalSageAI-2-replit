@@ -122,6 +122,13 @@ beforeAll(async () => {
       placement_confidence TEXT, placement_rationale TEXT,
       placed_by INT, placed_at TIMESTAMPTZ,
       processing_status TEXT, created_by INT,
+      -- The storage-provider handle the ingest now writes alongside the bytes
+      -- (migrations/20260917_vault_documents_storage_version.sql). The vault
+      -- moved off raw uploads/... paths onto server/services/storage/, and the
+      -- INSERT extracted below carries both columns -- omit them and every
+      -- statement here fails 42703 instead of exercising the ON CONFLICT clause.
+      -- (No backticks in this comment: it sits inside a template literal.)
+      storage_version_id TEXT, storage_provider TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW(),
       CONSTRAINT vault_documents_program_doc_version UNIQUE (program_id, document_code, version)

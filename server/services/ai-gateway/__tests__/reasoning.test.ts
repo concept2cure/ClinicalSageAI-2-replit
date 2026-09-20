@@ -193,6 +193,8 @@ describe('resolveTierModel — tier → concrete enabled model', () => {
     costPer1kOutput: 0.005,
     capabilities: ['chat'],
     enabled: true,
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
     ...over,
   });
   const registry = [

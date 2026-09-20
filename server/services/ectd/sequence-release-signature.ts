@@ -64,7 +64,7 @@ import { sql } from 'drizzle-orm';
 import {
   BINDING_BASIS,
   GOVERNED_REVOCATION_SIGNATURE_TYPE,
-  REVOKED_VERIFICATION_STATUS,
+  isSignatureWithdrawn,
   deriveGovernedTargetBinding,
 } from '../part11/signature-persistence.js';
 import type { GovernedSequenceStep } from '../submission-service/submission-service.js';
@@ -154,11 +154,10 @@ async function findReleaseSignatureRows(
  * signature no longer stands.
  */
 function isWithdrawn(row: CandidateRow): boolean {
-  return (
-    String(row.verification_status ?? '') === REVOKED_VERIFICATION_STATUS ||
-    row.superseded_by != null ||
-    row.is_valid === false
-  );
+  // Delegates to the canonical predicate owned by the module that WRITES the
+  // withdrawal, so this path and the governed freeze/transmit gate can never
+  // disagree about what "revoked" means.
+  return isSignatureWithdrawn(row);
 }
 
 /** The manifest digest of the sequence's CURRENT content, or why it is unknown. */

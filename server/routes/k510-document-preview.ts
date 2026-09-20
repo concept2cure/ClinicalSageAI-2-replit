@@ -31,7 +31,7 @@ import {
   fda510kProjects,
 } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -252,7 +252,15 @@ router.get('/:projectIdent/document-preview', async (req: Request, res: Response
   const assembledMarkdown = lines.join('\n');
 
   // Audit the read.
-  void auditService.logAction({
+  /* WO-16C #133. Was `void auditService.logAction({…})` — the discarded
+     AuditWriteResult was the only place a lost row was visible.
+
+     A READ, like the MDX context snapshot: this handler assembles a preview and
+     changes nothing, so the row is the access record for a 510(k) document
+     preview. A lost row costs the evidence that this user saw this assembly, not
+     the record of a change. Reported in `access.auditTrail` rather than
+     discarded. */
+  const auditTrail = await recordAuditRow({
     tenantId: orgId,
     userId: (req as any).user?.id ?? null,
     action: 'k510_workflow.document_preview.read',
@@ -270,6 +278,7 @@ router.get('/:projectIdent/document-preview', async (req: Request, res: Response
   });
 
   res.json({
+    access: { auditTrail },
     projectId: projectRow.id,
     documentTitle: projectRow.title ?? `510(k) Project ${projectRow.id}`,
     projectStatus: projectRow.status ?? 'unknown',

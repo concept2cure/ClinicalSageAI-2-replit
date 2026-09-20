@@ -74,6 +74,7 @@ async function annotatedGatesForSubmission(
         sequenceValidation,
         manifest,
         criticalActions: actions.criticalCount,
+        clinicalHoldEvaluated: clock !== null,
         sequenceStatus: seq.status,
         unauthorizedCrossReferences,
       });

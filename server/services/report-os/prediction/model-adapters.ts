@@ -74,11 +74,13 @@ export async function readinessTwinToTrajectoryInput(
   return {
     kind: 'readiness_trajectory',
     overallScore: Math.round(dashboard.overallScore),
-    // The twin's approvalProbability is already a 0..1 fraction; the assembler
-    // converts to a percentage. Pass it through unscaled.
-    predictedApprovalProbability: dashboard.predictedOutcome.approvalProbability,
-    predictedReviewTimeDays: Math.round(dashboard.predictedOutcome.reviewTimeDays),
-    predictedDeficiencyCount: Math.round(dashboard.predictedOutcome.deficiencyCount),
+    // Null today in every path: the twin no longer derives an approval
+    // probability from the readiness score, and no model replaces it. The
+    // assembler states that rather than printing a number.
+    predictedApprovalProbability: dashboard.assessmentOutlook.approvalProbability,
+    reviewClockDays: dashboard.assessmentOutlook.reviewTimeDays,
+    reviewClockBasis: dashboard.assessmentOutlook.reviewClockBasis,
+    unmetCriteriaCount: dashboard.assessmentOutlook.unmetCriteriaCount,
     trend: trend.length > 0 ? trend : undefined,
   };
 }

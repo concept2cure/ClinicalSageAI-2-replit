@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest';
 import {
   toDataState,
   combineDataStates,
+  gatedOn,
   readyData,
   readyRows,
   type DataState,
@@ -62,6 +63,35 @@ describe('toDataState', () => {
 
   it('treats undefined the same as null (idle, never "empty")', () => {
     expect(toDataState(undefined, false, null).status).toBe('idle');
+  });
+});
+
+describe('gatedOn', () => {
+  const ready = { status: 'ready', data: [1] } as const;
+  const err = { status: 'error', message: 'nope' } as const;
+
+  it('keeps the primary payload when every source is ready', () => {
+    const g = gatedOn(ready, { status: 'ready', data: 'x' } as const);
+    expect(g.status).toBe('ready');
+    expect(g.status === 'ready' && g.data).toEqual([1]);
+  });
+
+  it('reports a secondary failure even though the primary read fine', () => {
+    // The engineering metrics row: summary ready, documents failed. Gating on
+    // the primary alone is what printed "Documents in flight 0" as a result.
+    const g = gatedOn(ready, err);
+    expect(g.status).toBe('error');
+    expect(g.status === 'error' && g.message).toBe('nope');
+  });
+
+  it('does not invent a failure when a secondary is merely empty', () => {
+    const g = gatedOn(ready, { status: 'empty' } as const);
+    expect(g.status).toBe('ready');
+  });
+
+  it('with no secondaries is the primary unchanged', () => {
+    expect(gatedOn(ready)).toEqual(ready);
+    expect(gatedOn(err)).toEqual(err);
   });
 });
 

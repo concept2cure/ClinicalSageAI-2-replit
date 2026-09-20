@@ -20,6 +20,7 @@ import {
 } from '../fixtures/filings-catalog-data';
 import type { FilingItem } from '../fixtures/filings-catalog-data';
 import '../styles/project-home-v2.css';
+import { useDialog } from '../useDialog';
 
 /* ---- Filing detail slide-over ---- */
 
@@ -62,14 +63,27 @@ function FilingDetail({
     ['Execution workflow', wfLabel || 'Document editor (no dedicated workflow)'],
   ];
 
+  /* .fc-detail-bd is position:fixed;inset:0 — a real modal over the catalog.
+     It announced nothing, had no keyboard way out (backdrop click or the icon
+     X only), and left focus behind on the tile that opened it. */
+  const dialogRef = useDialog(onClose);
+
   return (
     <div className="fc-detail-bd" onClick={onClose}>
-      <div className="fc-detail" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="fc-detail"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fc-detail-t"
+        tabIndex={-1}
+        ref={dialogRef}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="fc-detail-top">
-          <div className="fc-detail-crumb">{segLabel}{catLabel ? ' -- ' + catLabel : ''}</div>
+          <div className="fc-detail-crumb">{segLabel}{catLabel ? ' — ' + catLabel : ''}</div>
           <button className="fc-detail-x" aria-label="Close" onClick={onClose}>{I.close}</button>
         </div>
-        <h2 className="fc-detail-t">{it.n}</h2>
+        <h2 className="fc-detail-t" id="fc-detail-t">{it.n}</h2>
         {wfLabel && <div className="fc-detail-wf">{I.gitCompare || I.arrowRight} Routes into the {wfLabel} workflow</div>}
         <p className="fc-detail-d">{it.d}</p>
 
@@ -102,7 +116,7 @@ function FilingDetail({
 
         <div className="fc-detail-actions">
           <button className="fc-detail-go" onClick={onStart}>{hasWf ? 'Open workflow' : 'Start with AnA'} {I.arrowRight}</button>
-          <button className="fc-detail-ask" onClick={() => { onAsk('Tell me about the ' + it.n + ' -- when it\'s required, what it contains, and what evidence I need.'); onClose(); }}>{I.sparkles} Ask AnA</button>
+          <button className="fc-detail-ask" onClick={() => { onAsk('Tell me about the ' + it.n + ' — when it\'s required, what it contains, and what evidence I need.'); onClose(); }}>{I.sparkles} Ask AnA</button>
         </div>
 
         {loop && <>
@@ -211,7 +225,7 @@ export function FilingsCatalog({ onAsk, onNav }: SurfaceViewProps) {
      */
     const surf = FILING_WF_SURFACE[it.wf];
     if (surf && onNav) onNav(surf);
-    else if (onAsk) onAsk('Start a ' + it.n + ' -- set up the document structure and required sections');
+    else if (onAsk) onAsk('Start a ' + it.n + ' — set up the document structure and required sections');
   };
 
   return (

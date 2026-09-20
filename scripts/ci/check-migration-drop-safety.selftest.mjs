@@ -56,16 +56,41 @@ const RECREATOR = fixture(
 );
 // Must NOT trip: a DROP whose object nothing in the set creates (the repo's
 // existing, safe convention — see 20260823_drop_dead_c2c_cmc_changes.sql).
-const ORPHAN_DROP = fixture(
-  'orphan.sql',
-  `DROP TABLE IF EXISTS public.abandoned_demo_table;`
+const ORPHAN_DROP = fixture('orphan.sql', `DROP TABLE IF EXISTS public.abandoned_demo_table;`);
+// The blind spot found 2026-09-19. stripNoise keeps dollar-quoted DO bodies on
+// purpose but strips single-quoted strings, and dynamic DDL inside a DO block
+// HAS to be a string — so every EXECUTE-issued drop was invisible. 16 of the
+// 285 files in the real set do this. A dynamic DROP TABLE destroys rows and must
+// be reasoned about; a dynamic DROP POLICY carries no data and is only counted.
+const DYN_TABLE_DROP = fixture(
+  'dynamic-table.sql',
+  `DO $blind$
+   DECLARE t text;
+   BEGIN
+     FOR t IN SELECT unnest(ARRAY['some_table']) LOOP
+       EXECUTE format('DROP TABLE IF EXISTS public.%I CASCADE', t);
+     END LOOP;
+   END
+   $blind$;`
+);
+const DYN_POLICY_DROP = fixture(
+  'dynamic-policy.sql',
+  `DO $pol$
+   DECLARE t text;
+   BEGIN
+     FOR t IN SELECT unnest(ARRAY['some_table']) LOOP
+       EXECUTE format('DROP POLICY IF EXISTS tenant_isolation_policy ON public.%I', t);
+       EXECUTE format('CREATE POLICY tenant_isolation_policy ON public.%I USING (true)', t);
+     END LOOP;
+   END
+   $pol$;`
 );
 
 /**
  * Run the gate with C2C_MIGRATION_FILES replaced by `files`, via a shim module
  * that re-exports the real set's other bindings.
  */
-function runGate(files, baselineAllow = []) {
+function runGate(files, baselineAllow = [], baselineAllowDynamic = []) {
   const shim = path.join(tmp, `set-${Math.abs(hash(files.join()))}.mjs`);
   fs.writeFileSync(
     shim,
@@ -79,13 +104,19 @@ function runGate(files, baselineAllow = []) {
     .replace("from '../db/migration-set.mjs'", `from ${JSON.stringify(shim)}`);
 
   const baselinePath = path.join(tmp, 'baseline.json');
-  fs.writeFileSync(baselinePath, JSON.stringify({ allow: baselineAllow }));
+  fs.writeFileSync(
+    baselinePath,
+    JSON.stringify({ allow: baselineAllow, allowDynamic: baselineAllowDynamic })
+  );
   const patched = gateSrc.replace(
     /const BASELINE = [^;]+;/,
     `const BASELINE = ${JSON.stringify(baselinePath)};`
   );
 
-  const gatePath = path.join(tmp, `gate-${Math.abs(hash(files.join() + baselineAllow.length))}.mjs`);
+  const gatePath = path.join(
+    tmp,
+    `gate-${Math.abs(hash(files.join() + baselineAllow.length + baselineAllowDynamic.length))}.mjs`
+  );
   fs.writeFileSync(gatePath, patched);
 
   try {
@@ -145,11 +176,30 @@ const cases = [
     expectExit: 0,
     expectIn: ['reviewed exception'],
   },
+  {
+    name: 'dynamic — an EXECUTE-issued DROP TABLE is caught, not silently skipped',
+    files: [DYN_TABLE_DROP],
+    expectExit: 1,
+    expectIn: ['unreviewed dynamic', 'DROP TABLE issued through EXECUTE', 'destroys rows'],
+  },
+  {
+    name: 'dynamic — an EXECUTE-issued DROP POLICY is counted, not failed (carries no data)',
+    files: [DYN_POLICY_DROP],
+    expectExit: 0,
+    expectIn: ['OK', '1 dynamic DROP(s)'],
+  },
+  {
+    name: 'dynamic — a reviewed allowDynamic entry suppresses the data-bearing case',
+    files: [DYN_TABLE_DROP],
+    baselineDynamic: [{ dropper: DYN_TABLE_DROP, object: 'table', reason: 'selftest fixture' }],
+    expectExit: 0,
+    expectIn: ['OK', '1 reviewed'],
+  },
 ];
 
 let failed = 0;
 for (const c of cases) {
-  const { code, out } = runGate(c.files, c.baseline ?? []);
+  const { code, out } = runGate(c.files, c.baseline ?? [], c.baselineDynamic ?? []);
   const missing = c.expectIn.filter(s => !out.includes(s));
   const ok = code === c.expectExit && missing.length === 0;
   console.log(`  ${ok ? '✓' : '✗'} ${c.name}`);
@@ -157,7 +207,12 @@ for (const c of cases) {
     failed++;
     if (code !== c.expectExit) console.log(`      expected exit ${c.expectExit}, got ${code}`);
     for (const s of missing) console.log(`      output did not contain: ${JSON.stringify(s)}`);
-    console.log(out.split('\n').map(l => `      | ${l}`).join('\n'));
+    console.log(
+      out
+        .split('\n')
+        .map(l => `      | ${l}`)
+        .join('\n')
+    );
   }
 }
 
@@ -167,4 +222,6 @@ if (failed) {
   console.error(`\n${TAG} FAIL — ${failed}/${cases.length} case(s) wrong.`);
   process.exit(1);
 }
-console.log(`\n${TAG} OK — ${cases.length}/${cases.length} cases; the gate fires on both replay modes and stays quiet on the two safe shapes.`);
+console.log(
+  `\n${TAG} OK — ${cases.length}/${cases.length} cases; the gate fires on both replay modes and on an EXECUTE-issued table drop, and stays quiet on the safe shapes.`
+);

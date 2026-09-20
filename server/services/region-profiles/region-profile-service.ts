@@ -23,7 +23,15 @@ import {
 } from '../regional-ctd-templates';
 import { REGIONAL_RULES } from '../ectd/ectd-regional-rules';
 
-export type SubmissionRegion = 'fda' | 'eu' | 'jp' | 'cn' | 'kr';
+/**
+ * The regions this module carries a PROFILE for — five of the platform's
+ * thirteen. Named for that, not for "a submission region":
+ * module3-regional-readiness.ts owns the wider set (every canonical region plus
+ * GLOBAL), and one exported noun meaning both is how a reader greps the name
+ * and lands in the module that does not answer their question
+ * (`ci:duplicate-exported-types`).
+ */
+export type ProfiledRegion = 'fda' | 'eu' | 'jp' | 'cn' | 'kr';
 
 /**
  * UI-facing projection of a single regional validation rule. The full
@@ -39,7 +47,7 @@ export interface RegionalRuleSummary {
 }
 
 export interface SubmissionRegionProfile {
-  region: SubmissionRegion;
+  region: ProfiledRegion;
   agency: string; // FDA | EMA | PMDA | NMPA | MFDS
   language: string;
   currency: string;
@@ -55,7 +63,7 @@ export interface SubmissionRegionProfile {
 }
 
 // region → the agency template key + the rule-pack region tokens to match.
-const REGION_MAP: Record<SubmissionRegion, { agency: string; ruleTokens: string[]; pathways: string[] }> = {
+const REGION_MAP: Record<ProfiledRegion, { agency: string; ruleTokens: string[]; pathways: string[] }> = {
   fda: { agency: 'FDA', ruleTokens: ['US', 'FDA'], pathways: ['ectd_v322', 'ectd_v40', 'estar'] },
   eu: { agency: 'EMA', ruleTokens: ['EU', 'EMA'], pathways: ['ectd_v322', 'mdr', 'ivdr', 'ctis'] },
   jp: { agency: 'PMDA', ruleTokens: ['JP', 'PMDA'], pathways: ['ectd_v322'] },
@@ -75,13 +83,13 @@ function rulesFor(tokens: string[]): RegionalRuleSummary[] {
 
 /** Build the unified profile for one submission region, or null if unknown. */
 export function getSubmissionRegionProfile(region: string): SubmissionRegionProfile | null {
-  const map = REGION_MAP[region.toLowerCase() as SubmissionRegion];
+  const map = REGION_MAP[region.toLowerCase() as ProfiledRegion];
   if (!map) return null;
   const template = getRegionalTemplate(map.agency);
   if (!template) return null;
   const validationRules = rulesFor(map.ruleTokens);
   return {
-    region: region.toLowerCase() as SubmissionRegion,
+    region: region.toLowerCase() as ProfiledRegion,
     agency: template.agency,
     language: template.language,
     currency: template.currency,
@@ -96,7 +104,7 @@ export function getSubmissionRegionProfile(region: string): SubmissionRegionProf
 
 /** All submission region profiles (fda, eu, jp, cn, kr), in canonical order. */
 export function getAllSubmissionRegionProfiles(): SubmissionRegionProfile[] {
-  return (['fda', 'eu', 'jp', 'cn', 'kr'] as SubmissionRegion[])
+  return (['fda', 'eu', 'jp', 'cn', 'kr'] as ProfiledRegion[])
     .map((r) => getSubmissionRegionProfile(r))
     .filter((p): p is SubmissionRegionProfile => p !== null);
 }

@@ -50,7 +50,7 @@ import {
   type RegulatoryChangeEvent,
 } from '../services/living-file/change-router.service';
 import { programFreshnessReport } from '../services/living-file/freshness-report.service';
-import auditService from '../services/auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import {
   getFact,
   listProgramFacts,
@@ -446,9 +446,17 @@ router.post(
         dryRun: body.dryRun === true,
       });
 
-      // Persisted runs land in the audit trail; dry runs don't.
+      /* Persisted runs land in the audit trail; dry runs don't.
+
+         WO-16C #133: was `void auditService.logAction({…})`, whose discarded
+         result was the only place a lost §11.10(e) row was visible.
+         `runReviewerSimulation` has already persisted the run by this point (that
+         is what `!dryRun` means here), so the audit row is a log beside it. A dry
+         run persists nothing and writes no row, so it reports none — `auditTrail`
+         is absent rather than a claimed success. */
+      let auditTrail: AuditRowOutcome | undefined;
       if (!body.dryRun) {
-        void auditService.logAction({
+        auditTrail = await recordAuditRow({
           tenantId: orgId,
           userId: triggeredBy,
           action: 'reviewer_simulation.run',
@@ -465,7 +473,7 @@ router.post(
         });
       }
 
-      res.json(result);
+      res.json(auditTrail ? { ...result, auditTrail } : result);
     } catch (err: any) {
       return serverError(res, logger, 'saving reviewer simulation', err);
     }

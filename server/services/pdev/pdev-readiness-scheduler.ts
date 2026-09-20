@@ -30,14 +30,23 @@ const logger = createScopedLogger('pdev-readiness-scheduler');
 export interface PdevScheduledSnapshotResult {
   /** Programs considered (active + have PDEV activity). */
   programsConsidered: number;
-  /** Programs successfully snapshotted. */
+  /**
+   * Programs whose snapshot rows were actually WRITTEN. This used to count any
+   * program whose readiness computed, because the service swallowed its own
+   * insert failure — see the note at the counter.
+   */
   snapshotted: number;
-  /** Per-program outcome (id + overall score, or skip/error reason). */
+  /** Per-program outcome (id + overall score, or skip/error/not-persisted reason). */
   results: Array<{
     programId: string;
     organizationId: number;
     overallReadiness: number | null;
-    status: 'snapshotted' | 'skipped' | 'error';
+    /**
+     * `not_persisted` is its own outcome: readiness computed from live rows, but
+     * nothing reached pdev_readiness_snapshots. It is neither a skip (which
+     * computed nothing) nor an error (which threw).
+     */
+    status: 'snapshotted' | 'skipped' | 'error' | 'not_persisted';
     detail?: string;
   }>;
 }
@@ -88,13 +97,13 @@ export class PdevReadinessScheduler {
     // 3. Snapshot each. One program failing must not abort the batch.
     for (const program of programs) {
       try {
-        const report = await pdevReadinessService.snapshot(
+        const snapshot = await pdevReadinessService.snapshot(
           program.id,
           program.organizationId,
           actorUserId,
           'scheduled'
         );
-        if (!report) {
+        if (!snapshot) {
           results.push({
             programId: program.id,
             organizationId: program.organizationId,
@@ -104,11 +113,34 @@ export class PdevReadinessScheduler {
           });
           continue;
         }
+        /*
+         * Found by the review of the WO-16C #133 conversion: `snapshot()` used
+         * to swallow its own INSERT failure and return the computed report, so
+         * this loop counted `snapshotted += 1` and reported
+         * `status: 'snapshotted'` for programs whose rows never landed. The
+         * batch total was therefore an upper bound presented as a count, and a
+         * total outage would have reported every program snapshotted.
+         *
+         * The program is not re-tried here — the service has already logged the
+         * store's reason against the program id, and one failing program must
+         * not abort the batch, which is why its catch exists at all. What
+         * changes is that the batch says so.
+         */
+        if (!snapshot.persisted) {
+          results.push({
+            programId: program.id,
+            organizationId: program.organizationId,
+            overallReadiness: snapshot.report.overall.readinessScore,
+            status: 'not_persisted',
+            detail: 'readiness computed, but the snapshot rows could not be stored',
+          });
+          continue;
+        }
         snapshotted += 1;
         results.push({
           programId: program.id,
           organizationId: program.organizationId,
-          overallReadiness: report.overall.readinessScore,
+          overallReadiness: snapshot.report.overall.readinessScore,
           status: 'snapshotted',
         });
       } catch (err) {

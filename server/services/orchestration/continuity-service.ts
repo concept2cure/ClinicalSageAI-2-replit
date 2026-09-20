@@ -15,7 +15,7 @@
 
 import { generateUUID } from '../../utils/id-generator';
 import { db } from '../../db';
-import { eq, and, desc, gte, sql } from 'drizzle-orm';
+import { eq, and, desc, gte } from 'drizzle-orm';
 import { regulatoryAuditLogs } from '../../../shared/schema';
 import { assembleCrossObjectPayload } from './cross-object-resolver';
 import { computeReadinessAssessment } from './readiness-engine';

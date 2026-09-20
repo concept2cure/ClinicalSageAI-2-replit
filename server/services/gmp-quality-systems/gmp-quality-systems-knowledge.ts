@@ -39,7 +39,7 @@
 
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 
-import { cite, cites } from './gmp-quality-systems-citations.js';
+import { cites } from './gmp-quality-systems-citations.js';
 import type { Citation } from './gmp-quality-systems-citations.js';
 
 // ════════════════════════════════════════════════════════════════════════════

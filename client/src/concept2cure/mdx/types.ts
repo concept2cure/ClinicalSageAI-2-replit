@@ -134,7 +134,14 @@ export type AuditKind =
   | 'comment'
   | 'attach'
   | 'export'
-  | 'access';
+  | 'access'
+  /** Third state: the recorded action has no category in this vocabulary.
+   *  NOT a kind of event — the absence of a classification. A row that lands
+   *  here renders the action the server recorded, verbatim; it must never be
+   *  folded into `access` (or any other member), because "we did not classify
+   *  this" and "this was a read" are different claims and only one of them is
+   *  ours to make. See hooks/usePathwayTabsData.ts (adaptAudit). */
+  | 'unclassified';
 
 export type AuditTone = 'neutral' | 'warn' | 'success' | 'accent';
 
@@ -159,6 +166,11 @@ export interface AuditEvent {
   id: string;
   when: string;
   kind: AuditKind;
+  /** The action string as the server recorded it (`audit_logs.action`), carried
+   *  through unaltered. `kind` is this client's reading of it and may be
+   *  `'unclassified'`; this is the record. Absent on rows minted in-browser by
+   *  the dossier store, which have no server action. */
+  action?: string;
   actor: string;
   role?: string;
   target: string;

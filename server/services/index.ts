@@ -36,12 +36,6 @@ export * as csr from './csr';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CORTEX PRIME SERVICES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export { default as cortexPrimeService } from './cortexPrimeService';
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // FDA / REGULATORY SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -135,7 +129,7 @@ export const SERVICE_REGISTRY = {
   'documents.ingestion': 'unifiedDocumentIngestion',
 
   // Cortex
-  'cortex.prime': 'cortexPrimeService',
+  // 'cortex.prime': retired 2026-09-10 (WO-14 Route B) — cortexPrimeService is gone.
   'cortex.memory': 'memory-orchestrator',
 
   // FDA

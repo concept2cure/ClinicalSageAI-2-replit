@@ -544,7 +544,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
           </div>
           <div className="pj-card-b">
             {!extract && (
-              <div className="scaf-note">
+              <div role="status" className="scaf-note">
                 Reading document.xml (page + margins), styles.xml + theme (fonts, sizes, colours),
                 header/footer (text, logo, page numbers) and media (logo bytes)...
               </div>
@@ -701,6 +701,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
               <span className="tl-edit-ic">{I.sparkles}</span>
               <input
                 className="tl-edit-in"
+                aria-label="Ask AnA to adjust this template"
                 placeholder={'Ask AnA to adjust this template — e.g. "headings in Calibri 13, 1.15 spacing, accent #1F8A5B"'}
                 value={edit}
                 onChange={(e) => setEdit(e.target.value)}

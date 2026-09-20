@@ -113,11 +113,14 @@ function assessContent(
   leaves: FilingLeaf[],
   qSubTypeOverride?: QSubType,
   deviceFlags?: DeviceFlags,
+  /* nIVD or IVD: the slot registry follows it, so an IVD 510(k) is asked the
+     analytical-performance questions FDA's IVD eSTAR actually contains. */
+  variant: 'device' | 'ivd' = 'device',
 ): NormalizedContent {
   switch (programType) {
     case '510k':
     case 'de_novo': {
-      const r = mapToEstar({ leaves, type: programType as EstarType, flags: deviceFlags });
+      const r = mapToEstar({ leaves, type: programType as EstarType, flags: deviceFlags, variant });
       /* An undetermined section is reported alongside the missing ones: the
          reader needs to know that "not ready" here means a question is
          unanswered, not that a document is absent. */
@@ -237,7 +240,7 @@ export function assessEstarFilingReadiness(
   const registrationMissing = eligibility?.missing ?? [];
 
   // 2. Content readiness (dispatched to the right mapper).
-  const content = assessContent(entry.programType, input.catalogKey, leaves, input.qSubType, input.deviceFlags);
+  const content = assessContent(entry.programType, input.catalogKey, leaves, input.qSubType, input.deviceFlags, input.variant);
 
   // 3. Official-template producibility (passed in; fails closed).
   const templateAvailable = input.templateAvailable ?? false;

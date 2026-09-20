@@ -682,7 +682,11 @@ export class FHIRValidationEngine {
           return this.executeCustomRule(resource, rule);
         
         default:
-          return { passed: true };
+          // Was `{ passed: true }`. An unrecognised ruleType means the rule was
+          // never evaluated, and "not evaluated" is not "satisfied" — the same
+          // mistake as the two catches below, in a different shape. Fail closed,
+          // consistently with the catch immediately below.
+          return { passed: false };
       }
     } catch (error) {
       // Rule execution error = validation failure
@@ -736,8 +740,8 @@ export class FHIRValidationEngine {
     if (!expression) return { passed: true };
 
     const values = this.evaluateFHIRPath(resource, path);
-    
-    try {
+
+    {
       const allowedValues = JSON.parse(expression) as string[];
       return { 
         passed: values.every(v => {
@@ -750,9 +754,12 @@ export class FHIRValidationEngine {
           return false;
         })
       };
-    } catch {
-      return { passed: true };
     }
+    // The `catch { return { passed: true }; }` that was here recorded a rule
+    // that THREW as a rule the resource complied with. executeRule already has
+    // the correct behaviour one level up — "Rule execution error = validation
+    // failure", returning { passed: false } — and catching locally is what kept
+    // the exception from reaching it. Let it propagate.
   }
 
   private checkReference(
@@ -816,7 +823,7 @@ export class FHIRValidationEngine {
     // Slice validation - simplified
     if (!expression) return { passed: true };
 
-    try {
+    {
       const sliceDefinition = JSON.parse(expression) as {
         discriminator: string;
         value: unknown;
@@ -834,9 +841,9 @@ export class FHIRValidationEngine {
       const max = sliceDefinition.max || Infinity;
 
       return { passed: matching.length >= min && matching.length <= max };
-    } catch {
-      return { passed: true };
     }
+    // Same as checkValueSet above: propagate to executeRule's fail-closed catch
+    // rather than reporting an unevaluated rule as satisfied.
   }
 
   private executeCustomRule(

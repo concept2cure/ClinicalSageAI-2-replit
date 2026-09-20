@@ -18,6 +18,25 @@
  *   11N: E2E spec covers browser UI tab rendering
  *
  * SOURCE-LEVEL structural assertions — no DOM or DB required.
+ *
+ * ── WHAT 11A–11E DO NOT PROVE (recorded 2026-09-10, WO-1) ────────────────────
+ * The migration these five read is now at db/migrations/_legacy/, because NO
+ * APPLIER RUNS IT: it is in none of C2C_MIGRATION_FILES (deploy-migrate), the
+ * root migrations/ overlay, PRE_OVERLAY_CREATORS, AUTHORING_SUBSYSTEM_FILES or
+ * the *_gcc_* tree. On a real database `concept2cure_submission_snapshots`,
+ * `concept2cure_review_comments` and the three artifact version columns come
+ * from `shared/schema.ts` via drizzle-kit push, which runs at install-fresh
+ * step 2 — before the overlay — so this file's DDL was always a no-op. Proof:
+ * on a database built from empty by scripts/db/provision-test-db.sh, every
+ * object UNIQUE to this file is absent while all three ALTER-added columns are
+ * present.
+ *
+ * So 11A–11E assert that a file contains text. That is a record of what Phase
+ * 11 intended, and it is worth keeping as one — but it is not evidence that the
+ * schema shipped, and nobody should read a green tick here as such. A test that
+ * wanted to prove the deployed shape would read shared/schema.ts, or query a
+ * provisioned database (see docs/DB_TEST_HARNESS.md). 11F–11N are unaffected:
+ * they read the Playwright spec, which is live.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -27,7 +46,7 @@ import path from 'path';
 const ROOT = path.resolve(__dirname, '..');
 const MIGRATION = path.join(
   ROOT,
-  'db/migrations/20260313_concept2cure_submission_snapshots.sql'
+  'db/migrations/_legacy/20260313_concept2cure_submission_snapshots.sql'
 );
 const E2E_SPEC = path.join(ROOT, 'tests/e2e/governed-lifecycle.e2e.spec.ts');
 

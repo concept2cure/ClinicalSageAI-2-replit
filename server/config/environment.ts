@@ -9,7 +9,10 @@
 
 
 import { assertRlsEnforcementForProduction } from '../db/rlsEnforcement';
-import { assertAuditSealPostureForProduction } from '../services/audit/auditSealPosture';
+import {
+  assertAuditSealPostureForProduction,
+  assertAuditChainSecretForProduction,
+} from '../services/audit/auditSealPosture';
 import { assertAiGovernancePostureForProduction } from '../startup/ai-governance-posture';
 import { assertSensitivePlacementConfiguration } from '../services/ai-gateway/sensitive-placement-policy';
 
@@ -290,6 +293,13 @@ assertRlsEnforcementForProduction();
 // acceptable GA posture. Fires on import (same contract as the asserts above).
 // No-op outside production. See server/services/audit/auditSealPosture.ts.
 assertAuditSealPostureForProduction();
+
+// Audit CHAIN signing secret: the second of the two audit keys. Its refusal was
+// already written — TamperProofAuditLog's constructor throws in production
+// without AUDIT_HMAC_SECRET — but it is constructed lazily behind a catch that
+// falls back to console logging, so the process started anyway and wrote Part 11
+// records to stdout. A refusal a caller can catch is not a boot gate; this is.
+assertAuditChainSecretForProduction();
 
 // AI-governance boot posture: in production the two AI content-safety gates
 // (AI_PII_ENFORCEMENT, AI_GROUNDEDNESS_ENFORCE) default permissive. This warns

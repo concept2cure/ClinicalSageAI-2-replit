@@ -542,7 +542,27 @@ function CorrespondentBlock({
   );
 }
 
-export function EstarFilingPanel() {
+/**
+ * `programId` is REQUIRED, not optional, and that is the fix.
+ *
+ * This panel assessed filing readiness with `{ catalogKey, variant,
+ * useProjectContent: true }` and no programme. The server's
+ * resolveDeviceContentScope takes `programId` to find the programme's governed
+ * document; given none it falls through to `legacy_org_wide` — EVERY
+ * cerv2_510k_sections row in the organisation. So a second device's authored
+ * sections satisfied this device's eSTAR slots, and the completeness figure and
+ * "can file now" verdict were computed over the whole org's content while the
+ * panel sat under one device's header.
+ *
+ * /filing-readiness cannot resolve the anchor itself the way /build and
+ * /official do — resolveProjectAnchor needs an ident that this endpoint's body
+ * does not carry — so the programme has to come from the caller. All three
+ * mounting surfaces (K510Surface, IvdSurface, PmaSurface) already hold it and
+ * already pass it to the sibling OfficialEstarPanel; only this panel was left
+ * out. Making the prop required means the compiler catches the next surface
+ * that forgets, instead of it silently reading org-wide again.
+ */
+export function EstarFilingPanel({ programId }: { programId: string | null }) {
   /*
    * BOTH `error`s were dropped on the floor, and both reads then failed into a
    * sentence that reads like an answer. A registration that could not be read
@@ -583,6 +603,8 @@ export function EstarFilingPanel() {
   const [selectedKey, setSelectedKey] = useState<string>('');
   const [variant, setVariant] = useState<'device' | 'ivd'>('device');
   const [readiness, setReadiness] = useState<FilingReadinessResult | null>(null);
+  /** Why an assessment did not run — shown instead of a verdict nobody computed. */
+  const [assessRefusal, setAssessRefusal] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   const satisfied = registration?.clientRegistration?.satisfied;
@@ -608,8 +630,16 @@ export function EstarFilingPanel() {
       setReadiness(null);
       return;
     }
+    if (!programId) {
+      /* No programme, no assessment. Assessing without one reads every device
+         in the organisation and reports the result under this device's header. */
+      setReadiness(null);
+      setAssessRefusal('Filing readiness needs the device programme, which has not loaded yet.');
+      return;
+    }
+    setAssessRefusal(null);
     setBusy('assess');
-    setReadiness(await assessFilingReadiness({ catalogKey: key, variant, useProjectContent: true }));
+    setReadiness(await assessFilingReadiness({ catalogKey: key, variant, useProjectContent: true, programId }));
     setBusy(null);
   }
   async function onStartTracking() {
@@ -719,6 +749,9 @@ export function EstarFilingPanel() {
           </button>
         </div>
       </div>
+      {assessRefusal && (
+        <div className="section-sub" role="status" data-testid="estar-readiness-refusal">{assessRefusal}</div>
+      )}
       {readiness && (
         <div className="pma-modules">
           <ReadinessCard r={readiness} />

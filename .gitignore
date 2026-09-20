@@ -30,10 +30,19 @@ secrets.json
 secrets.*.json
 *.secret
 
-# Stray runtime artifacts (not part of source)
-tmp/
-uploads/
-logs/
+# Stray runtime artifacts (not part of source).
+#
+# ANCHORED with a leading slash. Unanchored, `uploads/` matches a directory of
+# that name at ANY depth, so `server/services/uploads/` — source — was silently
+# excluded: `git add -A` skipped it without a word, `git status` showed nothing,
+# and the commit shipped a route importing a module that was not in the
+# repository. Local typecheck and tests passed because the file was on disk.
+# These three name runtime directories at the repo root; keep them anchored so a
+# source directory can never inherit the rule by sharing a name.
+/tmp/
+/uploads/
+/logs/
+data/logs/
 bun.lock
 __pycache__/
 *.pyc

@@ -121,6 +121,8 @@ export interface UseWorkbenchTasksResult {
   metrics: TaskMetric[] | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the fetch. A failed read has to offer a way back — UI standards §8. */
+  refresh: () => void;
 }
 
 const WORKLOAD_PATH = '/api/submission-ops/workload';
@@ -131,7 +133,7 @@ const WORKLOAD_PATH = '/api/submission-ops/workload';
  * kit's Task shape (Kanban). Derives 4 KPI cards from the same list.
  */
 export function useWorkbenchTasks(): UseWorkbenchTasksResult {
-  const { data, loading, error } = useFetchJson<WorkloadPayload>(WORKLOAD_PATH);
+  const { data, loading, error, refresh } = useFetchJson<WorkloadPayload>(WORKLOAD_PATH);
   /*
    * `data.data ?? data.workload ?? data.rows ?? []` — `??` only steps past
    * null/undefined, so a `data` field holding `{}` (or a 200 that is a scalar,
@@ -147,6 +149,7 @@ export function useWorkbenchTasks(): UseWorkbenchTasksResult {
     metrics: tasks ? deriveTaskMetrics(tasks) : null,
     loading,
     error: failed,
+    refresh,
   };
 }
 
@@ -203,6 +206,7 @@ export interface UseWorkbenchTemplatesResult {
   templates: Template[] | null;
   loading: boolean;
   error: string | null;
+  refresh: () => void;
 }
 
 /**
@@ -211,7 +215,7 @@ export interface UseWorkbenchTemplatesResult {
  * row into the kit's Template shape.
  */
 export function useWorkbenchTemplates(): UseWorkbenchTemplatesResult {
-  const { data, loading, error } = useFetchJson<TemplatesPayload>('/api/templates');
+  const { data, loading, error, refresh } = useFetchJson<TemplatesPayload>('/api/templates');
   /*
    * Same chain as the task board, plus a spread: `[...(data.ind ?? [])]` throws
    * "is not iterable" the moment `ind` is an object rather than a list, which is
@@ -230,7 +234,7 @@ export function useWorkbenchTemplates(): UseWorkbenchTemplatesResult {
   }, [data]);
   const failed = error ?? (data != null && rows === null ? shapeMismatch('/api/templates') : null);
   const templates = useMemo(() => (rows ? rows.map(adaptTemplate) : null), [rows]);
-  return { templates, loading, error: failed };
+  return { templates, loading, error: failed, refresh };
 }
 
 /* ─── Validation ───────────────────────────────────────────────────── */
@@ -279,6 +283,7 @@ export interface UseWorkbenchValidationResult {
   summary:  ValidationSummary[] | null;
   loading:  boolean;
   error:    string | null;
+  refresh:  () => void;
 }
 
 const BLOCKERS_PATH = '/api/submission-ops/blockers';
@@ -291,7 +296,7 @@ const BLOCKERS_PATH = '/api/submission-ops/blockers';
  * fetch + the supplied program array.
  */
 export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidationResult {
-  const { data, loading, error } = useFetchJson<BlockersPayload>(BLOCKERS_PATH);
+  const { data, loading, error, refresh } = useFetchJson<BlockersPayload>(BLOCKERS_PATH);
   /* `data.data ?? data.blockers ?? data.rows ?? []` again — `{ data: {} }` is a
      truthy non-list that walked the chain and threw at `list.map`, taking the
      validation center down before it drew a single rule. */
@@ -343,7 +348,7 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
     ];
   }, [rules, validationPrograms]);
 
-  return { programs: validationPrograms, rules, summary, loading, error: failed };
+  return { programs: validationPrograms, rules, summary, loading, error: failed, refresh };
 }
 
 /* ─── Unified work (all three tracking systems) ───────────────────────── */
@@ -378,6 +383,13 @@ export interface UnifiedWorkSummaryView {
   done: number;
   /** `board` = the canonical unified_tasks org board, now part of the view. */
   bySource: Record<'schedule' | 'review' | 'correspondence' | 'filing' | 'board', number>;
+  /**
+   * True when at least one of the four source queries could not be read, so
+   * every count here is a floor and not a total. Optional only because a body
+   * from before the field existed has no opinion; the surface renders the
+   * caveat on `true` alone and never infers completeness from its absence.
+   */
+  partial?: boolean;
 }
 
 export interface UseUnifiedWorkResult {

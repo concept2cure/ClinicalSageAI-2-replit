@@ -1,10 +1,30 @@
 /**
  * Schema contract: backed stability tables + views (G-02, tenant-isolated from birth).
  *
- * db/migrations/20260728_stability_backing_tables.sql creates the seven previously
- * unbacked stab_* tables, the shared cmc_methods catalog, and the two v_stab_* views —
- * each tenant-isolated (or, for the global catalog, deliberately not) exactly as the
- * follow-up to the stability security fix requires.
+ * db/migrations/20260728_stability_backing_tables.sql creates six previously unbacked
+ * stab_* tables and the two v_stab_* views; db/migrations/20260730_cmc_evidence_tables.sql
+ * is the canonical creator of stab_signoffs and the shared cmc_methods catalog — each
+ * tenant-isolated (or, for the global catalog, deliberately not) exactly as the follow-up
+ * to the stability security fix requires.
+ *
+ * ── WHY THREE MIGRATIONS AND NOT ONE (2026-09-10, WO-1) ─────────────────────────
+ * Until 2026-09-10, 20260728 ALSO created stab_signoffs and cmc_methods — the second
+ * definition of each, with a different shape. That duplication was removed under
+ * ADR-0006, leaving 20260730 as the single creator, and this suite went red on the two
+ * assertions that reach those tables.
+ *
+ * That red was correct and is the reason the file is applied here rather than the
+ * assertions being relaxed. The tables did not stop existing; their creator moved. A
+ * schema-contract test that asserts on a table must apply whatever creates it, or it
+ * silently stops testing the thing it names — which is exactly how
+ * tests/schema-contract/harness.ts came to be pinned to a migration that was being
+ * retired.
+ *
+ * The three files are applied in C2C_MIGRATION_FILES order, which is NOT filename order:
+ * scripts/db/migration-set.mjs lists 20260730 at :569, the isolation sweep at :696 and
+ * the backing migration at :704. So the creator runs BEFORE both sweeps on the real
+ * applier, and stab_signoffs is not left behind by them. Applying these in filename
+ * order here would test an ordering no environment has.
  *
  * This suite applies the migration to real Postgres (PGlite) and, under a NON-superuser
  * role with app.rls_enforce='on' (RLS is bypassed for superusers/owners), proves:
@@ -21,6 +41,11 @@ import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
 
+/**
+ * In C2C_MIGRATION_FILES order (migration-set.mjs :569, :696, :704) — deliberately not
+ * filename order. See the header.
+ */
+const CMC_EVIDENCE_MIGRATION = 'db/migrations/20260730_cmc_evidence_tables.sql';
 const ISOLATION_MIGRATION = 'db/migrations/20260728_stability_tenant_isolation.sql';
 const MIGRATION = 'db/migrations/20260728_stability_backing_tables.sql';
 let db: PGlite;
@@ -59,12 +84,20 @@ beforeAll(async () => {
     CREATE ROLE stab_app NOLOGIN;
   `);
 
-  // Apply BOTH stability migrations, in the order the applier runs them. The
-  // isolation migration owns the PRE-EXISTING tables (it adds tenant_id, coerces a
-  // TEXT one, and attaches the policy) — including stab_timepoints / stab_conditions,
-  // which the two views read. The backing migration deliberately only touches the
-  // tables it creates, so applying it alone would leave those base tables unisolated
-  // and the view-isolation assertion below would be vacuous.
+  // Apply all THREE stability migrations in the order the applier runs them.
+  //
+  // 20260730 first: it is the canonical creator of stab_signoffs and cmc_methods, and
+  // it carries their tenant_id, RLS and policy in the same file — so creation and
+  // isolation are atomic and do not depend on apply order. That self-containment is
+  // what made removing 20260728's duplicate definitions safe.
+  //
+  // Then the isolation migration, which owns the PRE-EXISTING tables (it adds
+  // tenant_id, coerces a TEXT one, and attaches the policy) — including
+  // stab_timepoints / stab_conditions, which the two views read. The backing migration
+  // deliberately only touches the tables it creates, so applying it alone would leave
+  // those base tables unisolated and the view-isolation assertion below would be
+  // vacuous.
+  await db.exec(fs.readFileSync(path.resolve(CMC_EVIDENCE_MIGRATION), 'utf8'));
   await db.exec(fs.readFileSync(path.resolve(ISOLATION_MIGRATION), 'utf8'));
   await db.exec(fs.readFileSync(path.resolve(MIGRATION), 'utf8'));
 

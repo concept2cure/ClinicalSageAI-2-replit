@@ -338,7 +338,7 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                   )}
                   <button
                     className="qms-chip ghost"
-                    title="Ask AnA about this document"
+                    title="Ask AnA about this document" aria-label="Ask AnA about this document"
                     onClick={() => onAsk(`Summarize ${d.docNumber} ${d.title} and tell me what it needs next.`)}
                   >
                     {I.sparkle}

@@ -64,7 +64,12 @@ import { redactInternals } from '@/lib/queryClient';
 import * as Y from 'yjs';
 import { structuralSignatureFromDom, structuralSignatureFromDoc, signatureDrift, docToPlainText } from './roundTrip';
 
-import { DataOriginsMenu } from '../../lineage';
+import {
+  DataOriginsMenu,
+  DocumentAttributionBar,
+  useAttributionHighlights,
+  type AttributionSpan,
+} from '../../lineage';
 import {
   TrackChanges,
   collectSuggestions,
@@ -452,7 +457,28 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     ref,
   ) {
     const [saveState, setSaveState] = useState<SaveState>('saved');
+    /* Advanced only when a save is CONFIRMED by the server, and used as the
+       attribution bar's refresh token. The figure describes the text as stored,
+       so re-reading on keystrokes would report the previous save against the
+       current buffer — a number wrong in a way the author cannot see. */
+    const [savedRevision, setSavedRevision] = useState(0);
+
     const [dirty, setDirty] = useState(false);
+    /* Inline attribution painting (ledger L179, Phase 6a). The spans come from
+       the bar's read rather than a second fetch of the same thing: two reads
+       can disagree, and the one painted over the words would not be the one the
+       bar counted. */
+    const [attributionSpans, setAttributionSpans] = useState<AttributionSpan[] | null>(null);
+    const lineageRootRef = useRef<HTMLDivElement | null>(null);
+    /* Paused while dirty as a cheap early-out. The real guard is inside the
+       hook (offsetsAreTrustworthy): offsets describe the SAVED text, so the
+       moment the buffer differs they point at the wrong words. */
+    const highlightState = useAttributionHighlights(
+      lineageRootRef.current,
+      lineage?.canonicalText ?? null,
+      attributionSpans,
+      !dirty,
+    );
     const [words, setWords] = useState(0);
     // `words` starts at 0 and is only real once TipTap has parsed the content
     // in onCreate. Reading "0 words" as "this section is empty" before then
@@ -1115,6 +1141,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         setDirty(stillDirty);
         onDirtyChange?.(stillDirty);
         setSaveState(stillDirty ? 'dirty' : 'saved');
+        setSavedRevision((n) => n + 1);
         if (storageKey) {
           try {
             localStorage.removeItem(cacheKeyFor(storageKey));
@@ -2525,14 +2552,53 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 </div>
               )}
               {lineage ? (
-                <DataOriginsMenu
-                  documentTable={lineage.documentTable}
-                  documentId={lineage.documentId}
-                  documentTitle={lineage.documentTitle}
-                  canonicalText={lineage.canonicalText}
-                >
-                  <EditorContent editor={editor} aria-label={ariaLabel} />
-                </DataOriginsMenu>
+                <>
+                  <div ref={lineageRootRef}>
+                    <DataOriginsMenu
+                      documentTable={lineage.documentTable}
+                      documentId={lineage.documentId}
+                      documentTitle={lineage.documentTitle}
+                      canonicalText={lineage.canonicalText}
+                    >
+                      <EditorContent editor={editor} aria-label={ariaLabel} />
+                    </DataOriginsMenu>
+                  </div>
+                  {/* Painting that stops without saying so is indistinguishable
+                      from a document with nothing to paint, and that is the
+                      reading an author would act on. */}
+                  {highlightState.status === 'stale-text' && (
+                    <p
+                      role="status"
+                      style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-400)' }}
+                    >
+                      Attribution highlighting is paused while you edit — it describes the
+                      text as last saved.
+                    </p>
+                  )}
+                  {highlightState.status === 'painted' && highlightState.dropped > 0 && (
+                    <p
+                      role="status"
+                      style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-400)' }}
+                    >
+                      {highlightState.dropped} attributed{' '}
+                      {highlightState.dropped === 1 ? 'span' : 'spans'} could not be located in
+                      the current text and {highlightState.dropped === 1 ? 'is' : 'are'} not
+                      highlighted.
+                    </p>
+                  )}
+                  {/* Data Origins answers for a SELECTION, which only helps an
+                      author who already suspects a gap. This says how much of
+                      the whole section has a recorded origin, without being
+                      asked. */}
+                  <div style={{ marginTop: 12 }}>
+                    <DocumentAttributionBar
+                      documentTable={lineage.documentTable}
+                      documentId={lineage.documentId}
+                      refreshToken={savedRevision}
+                      onSummary={(s) => setAttributionSpans(s ? s.spans : null)}
+                    />
+                  </div>
+                </>
               ) : (
                 <EditorContent editor={editor} aria-label={ariaLabel} />
               )}

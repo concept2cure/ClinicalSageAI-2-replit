@@ -78,6 +78,11 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
       reasonForChange: reason.trim(),
       password: sig ? password : undefined,
       mfaToken: sig && mfaToken ? mfaToken : undefined,
+      // Present only when AnA is holding a turn on this. The server then takes
+      // the command and params from the run row rather than from this body, so
+      // these two are routing information, not the request itself.
+      runId: signoff.runId,
+      toolUseId: signoff.toolUseId,
     });
     if (outcome) onResolved(outcome);
   };

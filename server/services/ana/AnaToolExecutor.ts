@@ -178,10 +178,14 @@ import {
   budgetToolResultsForModel,
   buildAdaptationNote,
   mapWithConcurrency,
+  CANCELLED_TOOL_RESULT,
+  ToolRunCancelled,
+  abortRace,
   type ToolCall,
   type ModelTurn,
   type ToolResultEntry,
   type FailedToolCall,
+  type LoopCheckpoint,
 } from './agentic-loop.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
@@ -203,6 +207,17 @@ export interface ToolContext {
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
+  /**
+   * Aborted when the person stops the run.
+   *
+   * A handler that reaches the network should pass this to its `fetch` so the
+   * request is dropped rather than left to complete into a result nobody will
+   * read. Handlers that ignore it are not broken — the caller races the whole
+   * dispatch against the same signal, so the ROUND stops either way — but an
+   * ignored signal means the work itself carries on in the background. Honour
+   * it wherever there is something to honour.
+   */
+  signal?: AbortSignal;
   /**
    * The active project/program id AS SENT by the client (a regulatory_programs
    * uuid under the v2 shell, a legacy integer otherwise). `projectId` above is
@@ -3700,21 +3715,17 @@ registerToolHandler('approve_rbm_assessment', async (input, ctx) => {
       'A reason for change is required for this governed (21 CFR Part 11) approval — ask the user.'
     );
   }
-  const { getPool } = await import('../../db.js');
-  const { approveAssessment } = await import('../rbm/rbm-actuator.js');
-  const row = await approveAssessment(
-    getPool(),
-    orgId,
-    ctx?.userId ?? null,
-    assessmentId,
-    reason.trim()
+  /* Activating a risk assessment is an electronic signature event. 21 CFR
+     11.200 requires the signer's identity to be re-established at the moment of
+     signing (password + MFA), and §11.10(g) requires that the signer hold
+     signing authority. This path can satisfy neither: it has no credential to
+     re-verify and no signature record to bind the approval to. It nonetheless
+     called the same writer as the signed route, so the ONLY path that could not
+     capture a signature was also the easiest one to reach. It refuses, and
+     hands the user to the route that can sign. */
+  return rbmErr(
+    'Approving a risk assessment applies an electronic signature, so it has to be done on the assessment itself — it needs your password and second factor at the moment of signing (21 CFR 11.200). Open the assessment and approve it there. I can summarise what is still outstanding on it first.',
   );
-  if (!row) return rbmErr('Assessment not found in this tenant.');
-  return JSON.stringify({
-    source: 'AnA RBM · approve_rbm_assessment',
-    governed: true,
-    assessment: row,
-  });
 });
 
 registerToolHandler('approve_rbm_plan', async (input, ctx) => {
@@ -3728,11 +3739,11 @@ registerToolHandler('approve_rbm_plan', async (input, ctx) => {
       'A reason for change is required for this governed (21 CFR Part 11) approval — ask the user.'
     );
   }
-  const { getPool } = await import('../../db.js');
-  const { approvePlan } = await import('../rbm/rbm-actuator.js');
-  const row = await approvePlan(getPool(), orgId, ctx?.userId ?? null, planId, reason.trim());
-  if (!row) return rbmErr('Monitoring plan not found in this tenant.');
-  return JSON.stringify({ source: 'AnA RBM · approve_rbm_plan', governed: true, plan: row });
+  /* Same as approve_rbm_assessment above: no credential to re-verify here, so
+     no signature can be applied. */
+  return rbmErr(
+    'Approving a monitoring plan applies an electronic signature, so it has to be done on the plan itself — it needs your password and second factor at the moment of signing (21 CFR 11.200). Open the plan and approve it there. I can summarise what is still outstanding on it first.',
+  );
 });
 
 // Regulatory-pathway advisor — drug/biologic/device/IVD routes (FDA & EU).
@@ -19422,6 +19433,88 @@ registerDocumentCatalogHandlers(registerToolHandler);
 // Agentic Execution Loop
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Take the operator turns a checkpoint queued, emptying the caller's array.
+ *
+ * `splice`, not a reassignment: the array is CALLER-OWNED, and reassigning a
+ * local would leave theirs full so every steer replayed on every later round.
+ *
+ * Callers splice these in AFTER the tool results. Order matters twice over: the
+ * gateway requires an inline system turn to follow a user turn, and a redirect
+ * read after the evidence is one the model applies to THIS round rather than
+ * one it has already reasoned past. That is the same placement the streaming
+ * route uses, deliberately — a steer landing in a different position on a
+ * different surface would be a different instruction.
+ */
+/**
+ * Run one tool handler, raced against the stop.
+ *
+ * Two halves, and only together do they do anything. The signal placed in the
+ * handler's CONTEXT lets a handler that makes an outbound request abandon it;
+ * the RACE stops the round waiting for one that cannot. Neither truly cancels a
+ * handler — an orphaned call settles into a void, which is why
+ * CANCELLED_TOOL_RESULT never claims the work was undone — but together they
+ * are the difference between a stop that lands in a second and one that waits
+ * out a forty-second search.
+ *
+ * A cancelled tool is deliberately NOT given an `errorMessage`.
+ * `buildAdaptationNote` turns this round's errorMessages into a
+ * course-correction note for the next model turn, and a person pressing stop is
+ * not a failure for the model to adapt around: telling it to try a different
+ * approach would be acting on a decision that said to stop.
+ */
+async function runOneTool(
+  handler: ToolHandler,
+  call: ToolCall,
+  toolContext: ToolContext | undefined,
+  signal: AbortSignal | undefined
+): Promise<{ call: ToolCall; result: string; errorMessage?: string }> {
+  try {
+    const result = await Promise.race([
+      handler(call.input, { ...(toolContext ?? {}), signal } as ToolContext),
+      abortRace(signal),
+    ]);
+    return { call, result };
+  } catch (error: any) {
+    if (error instanceof ToolRunCancelled) {
+      return { call, result: JSON.stringify(CANCELLED_TOOL_RESULT(call.name)) };
+    }
+    return {
+      call,
+      result: JSON.stringify({
+        error: `Tool execution failed: ${error?.message ?? 'unknown error'}`,
+        tool: call.name,
+      }),
+      errorMessage: error?.message ?? 'unknown error',
+    };
+  }
+}
+
+/**
+ * One result per call, each SAYING it was cancelled.
+ *
+ * This replaces `return []`, which handed back ZERO entries for a round that
+ * had N calls. The loop's contract is one ToolResultEntry per ToolCall, and
+ * everything downstream maps over these: the per-result cap, the round budget,
+ * and the grounding corpus, whose whole claim is that it holds exactly what the
+ * model saw. A dropped entry is not a step that produced nothing — it is a step
+ * that VANISHES, and afterwards reads as one nobody ever asked for.
+ *
+ * Uses the same helper as the streaming route so the two surfaces cannot
+ * describe the same event differently.
+ */
+function cancelledRoundEntries(calls: ToolCall[]): ToolResultEntry[] {
+  return calls.map(call => ({
+    tool_use_id: call.id,
+    name: call.name,
+    content: JSON.stringify(CANCELLED_TOOL_RESULT(call.name)),
+  }));
+}
+
+function drainOperatorTurns(queued: GatewayMessage[] | undefined): GatewayMessage[] {
+  return queued && queued.length > 0 ? queued.splice(0, queued.length) : [];
+}
+
 export interface AgenticOptions {
   /** Maximum tool-use rounds before forcing stop */
   maxRounds?: number;
@@ -19438,6 +19531,32 @@ export interface AgenticOptions {
   toolContext?: ToolContext;
   /** Abort signal — when aborted, the loop stops before the next round (barge-in). */
   signal?: AbortSignal;
+  /**
+   * Round-boundary control hook — pause, steer, cancel.
+   *
+   * `runAgenticToolLoop` has accepted one since run control shipped, and this
+   * wrapper never passed it, so every caller that came through here (the
+   * non-streaming chat turn, the intelligence route, background deep
+   * investigations, the realtime namespace) had cancel-only control while the
+   * SSE route had all four. The loop was not missing the capability; the
+   * wrapper was not forwarding it.
+   */
+  checkpoint?: LoopCheckpoint;
+  /**
+   * Operator turns a checkpoint has queued for the next model turn — a steer.
+   *
+   * Caller-owned and drained here, the same shape the streaming route uses.
+   * Without it a checkpoint could pause and cancel but never actually REDIRECT:
+   * `consumeInterjections` drains the run row atomically, so a steer read by a
+   * checkpoint with nowhere to put it is gone from the row AND never reached
+   * the model. The person would watch their redirect be accepted, recorded in
+   * the control lineage, and silently do nothing.
+   *
+   * A mutable array rather than a callback because the checkpoint runs BETWEEN
+   * rounds and the splice happens INSIDE the next one; a callback would have to
+   * reach back into this function's message list anyway.
+   */
+  operatorTurns?: GatewayMessage[];
 }
 
 /**
@@ -19478,7 +19597,13 @@ export async function executeAgenticLoop(
 
   // First model turn. Streaming (when the request carries onStream) and tool
   // selection happen inside the gateway exactly as before.
-  let finalResponse = (await gateway.route(request)) as AnaGatewayResponse;
+  //
+  // The signal reaches the GATEWAY, not just this loop. Without it the abort
+  // checks here were advisory: they stopped us reading the response, while the
+  // model kept generating server-side and the turn was paid for in full. The
+  // streaming route has passed it since stop started landing mid-step; this is
+  // the same fix for the non-SSE callers.
+  let finalResponse = (await gateway.route({ ...request, signal })) as AnaGatewayResponse;
 
   // Fast path: the model answered without asking for any tool.
   if (!finalResponse.toolUses || finalResponse.toolUses.length === 0) {
@@ -19493,9 +19618,19 @@ export async function executeAgenticLoop(
   // ClinicalTrials no longer block each other), firing the per-tool hook in the
   // original call order so callers' telemetry/event streams stay deterministic.
   const executeTools = async (calls: ToolCall[]): Promise<ToolResultEntry[]> => {
-    // Barge-in: don't spend work running this round's tools once cancelled;
-    // callModel sees the abort next and ends the loop.
-    if (signal?.aborted) return [];
+    // Barge-in: don't spend work running this round's tools once cancelled.
+    //
+    // This used to `return []` — ZERO entries for a round that had N calls.
+    // The loop's contract is one ToolResultEntry per ToolCall, and everything
+    // downstream maps over these entries: the per-result cap, the round budget,
+    // and the grounding corpus, whose whole claim is that it holds exactly what
+    // the model saw. A dropped entry is a step that silently vanished, which
+    // reads afterwards as a step nobody ever asked for.
+    //
+    // So a cancelled tool returns a result SAYING it was cancelled, the same
+    // way the streaming path does. Same helper, so the two surfaces cannot
+    // describe the same event differently.
+    if (signal?.aborted) return cancelledRoundEntries(calls);
     const ran = await mapWithConcurrency(
       calls,
       async (call): Promise<{ call: ToolCall; result: string; errorMessage?: string }> => {
@@ -19510,19 +19645,7 @@ export async function executeAgenticLoop(
             errorMessage: 'no handler registered',
           };
         }
-        try {
-          const result = await handler(call.input, options?.toolContext);
-          return { call, result };
-        } catch (error: any) {
-          return {
-            call,
-            result: JSON.stringify({
-              error: `Tool execution failed: ${error?.message ?? 'unknown error'}`,
-              tool: call.name,
-            }),
-            errorMessage: error?.message ?? 'unknown error',
-          };
-        }
+        return runOneTool(handler, call, options?.toolContext, signal);
       },
       4
     );
@@ -19573,10 +19696,19 @@ export async function executeAgenticLoop(
           .join('\n\n') + adaptationSuffix,
     });
 
-    const roundRequest: GatewayRequest = { ...request, messages: loopMessages };
+    // Steers ride AFTER the tool results. See drainOperatorTurns.
+    loopMessages.push(...drainOperatorTurns(options?.operatorTurns));
+
+    const roundRequest: GatewayRequest = { ...request, messages: loopMessages, signal };
     if (!includeTools) {
-      delete roundRequest.tools;
-      delete roundRequest.toolChoice;
+      // Keep the tools array; forbid their use instead. Deleting it changes the
+      // TOOL DEFINITIONS, which is the one change that preserves no cache tier
+      // at all (the prefix renders tools -> system -> messages), so the terminal
+      // round rebuilt the entire prompt cache once per turn. `tool_choice:
+      // 'none'` produces the same grounded answer and preserves the tools and
+      // system caches — it only invalidates the messages tier, which the new
+      // turn was going to invalidate regardless.
+      roundRequest.toolChoice = 'none';
     }
 
     finalResponse = (await gateway.route(roundRequest)) as AnaGatewayResponse;
@@ -19586,8 +19718,8 @@ export async function executeAgenticLoop(
 
   await runAgenticToolLoop(
     { text: finalResponse.content || '', toolCalls: finalResponse.toolUses.map(toToolCall) },
-    { executeTools, callModel },
-    { maxRounds, progressExtension }
+    { executeTools, callModel, ...(options?.checkpoint ? { checkpoint: options.checkpoint } : {}) },
+    { maxRounds, progressExtension },
   );
 
   return finalResponse;
@@ -21082,9 +21214,22 @@ registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
         'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. The predicted approval probability, review time and deficiency count are MODEL ESTIMATES from historical patterns — attribute them as such and never assert them as the likelihood of approval.',
     });
   } catch (err: any) {
-    return JSON.stringify({
-      error: `get_submission_readiness_twin failed: ${err?.message || 'unknown error'}`,
-    });
+    // programBelongsToOrg now THROWS when every program->org source failed to
+    // run, rather than returning false (2026-09-10). Keep that distinction all
+    // the way out to the model: "we could not check" must not be paraphrased
+    // to the user as "no such program", which is what a bare error string
+    // invites. The instruction to withhold a score is the important half —
+    // a readiness figure for an unverified program is an invented answer.
+    if (err?.name === 'GuardUnavailableError') {
+      return JSON.stringify({
+        status: 'ownership_unverifiable',
+        message:
+          'The check that proves this program belongs to this organization could not be run, so no ' +
+          'program data was read. Do NOT report a readiness score, and do NOT tell the user the program ' +
+          'does not exist — neither is known. Say the check is unavailable and stop.',
+      });
+    }
+    return JSON.stringify({ error: `get_submission_readiness_twin failed: ${err?.message || 'unknown error'}` });
   }
 });
 
@@ -24804,6 +24949,36 @@ registerToolHandler('list_vault_documents', async (input, ctx) => {
   }
 });
 
+/**
+ * The `cre_evidence_sources.id` a vault artifact can be cited as, or null.
+ *
+ * A read tool hands the model the TEXT it will quote into a filing section, and
+ * without this it hands it no way to cite that text: a drafting tool can only
+ * record a verified quote against an evidence-source id, so a passage read
+ * without one falls to author lineage and the evidence behind a filed sentence
+ * is unrecoverable. `project_knowledge_search` already resolves this the one
+ * legitimate way; the same resolver is used here rather than a second.
+ *
+ * Resolution verifies existence and tenant ownership. An artifact with no
+ * canonical source resolves to null — never a guessed id, because a citation
+ * nobody can check is worse than no citation — and resolution is additive, so a
+ * read must not fail because attribution prep did. Both absences read as "not
+ * citable", which is true.
+ */
+async function citableSourceIdFor(
+  organizationId: number,
+  artifactKey: string | undefined,
+): Promise<number | null> {
+  if (!artifactKey) return null;
+  try {
+    const { evidenceSourceIdsForRetrieval } = await import('./drafting-source-lineage.js');
+    const resolved = await evidenceSourceIdsForRetrieval(organizationId, [artifactKey]);
+    return resolved.get(artifactKey) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 registerToolHandler('read_vault_document', async (input, ctx) => {
   if (!ctx?.organizationId)
     return JSON.stringify({ error: 'read_vault_document requires tenant context.' });
@@ -24822,16 +24997,24 @@ registerToolHandler('read_vault_document', async (input, ctx) => {
     if (!rows.length)
       return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
     const { content, ...meta } = rows[0];
-    const excerpt = viewExcerpt(
-      typeof content === 'string' ? content : JSON.stringify(content ?? ''),
-      input
+    const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
+
+    const evidenceSourceId = await citableSourceIdFor(
+      Number(ctx.organizationId),
+      (meta as { artifact_id?: string }).artifact_id,
     );
+
     return JSON.stringify({
       ok: true,
       document: meta,
       content: excerpt.content,
       totalChars: excerpt.totalChars,
       truncated: excerpt.truncated,
+      evidence_source_id: evidenceSourceId,
+      citation_hint:
+        evidenceSourceId === null
+          ? 'This document does not resolve to a Data Room source, so nothing quoted from it can be recorded as a citation; text drafted from it is recorded as a draft you wrote, not as evidence.'
+          : `Quoting this document: pass { evidence_source_id: ${evidenceSourceId}, excerpt: "<the passage you quoted>" } in the drafting tool's sources[], so every clause you reproduce verbatim is recorded against this Data Room source rather than as unsourced prose.`,
       ...(excerpt.truncated
         ? {
             message: `Content truncated at ${excerpt.content.length} of ${excerpt.totalChars} characters — raise max_chars to read more.`,

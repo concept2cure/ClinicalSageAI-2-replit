@@ -125,24 +125,50 @@ function assembleDeficiencyRisk(input: DeficiencyRiskInput): ReportSection[] {
 }
 
 function assembleReadinessTrajectory(input: ReadinessTrajectoryInput): ReportSection[] {
-  const approval = toPercent(input.predictedApprovalProbability);
+  /* The executive summary used to read:
+       "Overall readiness scores {N}, implying a predicted approval probability
+        of {P}%."
+     "Implying" was carrying a claim the arithmetic never made — P was the
+     readiness score rescaled, so the sentence asserted that a checklist score
+     implies a probability of regulatory approval. There is no such model, and a
+     report that names one is worse than a report that omits it. */
+  const summaryBlocks: ReportBlock[] = [
+    {
+      kind: 'summary',
+      text:
+        input.predictedApprovalProbability === null
+          ? `Overall readiness scores ${input.overallScore} against the assessed criteria set. ` +
+            `No approval-probability model backs this assessment, so no probability of approval is reported.`
+          : `Overall readiness scores ${input.overallScore}; modelled approval probability ` +
+            `${toPercent(input.predictedApprovalProbability)}%.`,
+    },
+    metric('Overall readiness score', input.overallScore),
+  ];
+  if (input.predictedApprovalProbability !== null) {
+    summaryBlocks.push(
+      metric('Approval probability', toPercent(input.predictedApprovalProbability), '%')
+    );
+  }
 
   const executive: ReportSection = {
     id: 'executive-summary',
     title: 'Executive summary',
-    blocks: [
-      {
-        kind: 'summary',
-        text: `Overall readiness scores ${input.overallScore}, implying a predicted approval probability of ${approval}%.`,
-      },
-      metric('Overall readiness score', input.overallScore),
-      metric('Predicted approval probability', approval, '%'),
-    ],
+    blocks: summaryBlocks,
   };
 
   const detailBlocks: ReportBlock[] = [
-    metric('Predicted review time', input.predictedReviewTimeDays, 'days'),
-    metric('Predicted deficiency count', input.predictedDeficiencyCount),
+    // Named for what each is. "Predicted review time" and "Predicted deficiency
+    // count" both described a forecast; the first is a statutory clock for the
+    // pathway and the second is a count of what this assessment already found.
+    ...(input.reviewClockDays !== null
+      ? [
+          metric('Agency review clock for this pathway', input.reviewClockDays, 'days'),
+          ...(input.reviewClockBasis
+            ? [{ kind: 'summary' as const, text: input.reviewClockBasis }]
+            : []),
+        ]
+      : [{ kind: 'summary' as const, text: 'No statutory review clock is on record for this submission type.' }]),
+    metric('Criteria not met or partially met', input.unmetCriteriaCount),
   ];
   if (input.trend && input.trend.length > 0) {
     detailBlocks.push({

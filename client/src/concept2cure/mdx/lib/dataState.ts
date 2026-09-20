@@ -145,6 +145,31 @@ export function readyData<T>(state: DataState<T>): T | null {
  * the state to the user — otherwise this reintroduces the exact
  * ambiguity this module exists to remove.
  */
+/**
+ * Gate a region on EVERY state it reads, while still rendering from one of
+ * them.
+ *
+ * `combineDataStates` answers "what is the worst thing happening here?" but
+ * deliberately drops the payload, so it cannot be handed to a `<DataGate>`
+ * that needs `children(data)`. That gap is why regions fed by more than one
+ * hook kept being gated on just one of their sources: the engineering metrics
+ * row was gated on `summary` alone while four of its cards counted
+ * `documents`, so a failed documents read printed "Documents in flight 0" as a
+ * ready result — a fault rendered as a finding, one gate away from being
+ * caught.
+ *
+ * `gatedOn(primary, ...also)` keeps `primary`'s data when everything is ready
+ * and otherwise reports the worst status among all of them.
+ */
+export function gatedOn<T>(
+  primary: DataState<T>,
+  ...also: DataState<unknown>[]
+): DataState<T> {
+  const combined = combineDataStates(primary, ...also);
+  if (combined.status === 'ready') return primary;
+  return combined as DataState<T>;
+}
+
 export function readyRows<T>(state: DataState<T[]>): T[] {
   // The Array.isArray check makes the `T[]` return type true rather than
   // nearly true. A hook that marked a non-array payload 'ready' used to hand

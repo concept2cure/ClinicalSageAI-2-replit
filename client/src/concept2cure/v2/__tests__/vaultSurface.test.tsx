@@ -13,7 +13,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -454,5 +454,117 @@ describe('Vault — search', () => {
     // "1 of 340" — implying the page is the whole result set is the failure this
     // avoids.
     await waitFor(() => expect(document.body.textContent).toContain('1 of 340'));
+  });
+});
+
+/**
+ * The filing cabinet is a WINDOW onto the vault, not the vault.
+ *
+ * The server caps the tree read (the vault is unbounded; the read that renders
+ * it used to grow with it). A cap the surface does not mention is worse than
+ * the unbounded read it replaced: a reviewer who searches the cabinet, does not
+ * find a document, and is shown nothing to suggest the cabinet is partial
+ * concludes the document is absent — and in a regulated vault "absent" is a
+ * finding. Same contract as the `unavailable` branches: say what is not shown.
+ */
+describe('Vault — a truncated filing cabinet says so', () => {
+  it('states the window and the real total when the server truncated the page', async () => {
+    mockApi(() =>
+      ok(vaultPayload({ uploadsWindow: { shown: 2000, total: 48213, truncated: true } })),
+    );
+    render(<Vault {...(props() as any)} />);
+    const note = await screen.findByText(/showing the .* most recently updated/i);
+    expect(note.textContent).toMatch(/2,000/);
+    expect(note.textContent).toMatch(/48,213/);
+  });
+
+  it('says nothing when the whole cabinet fits — no note on the common case', async () => {
+    mockApi(() =>
+      ok(vaultPayload({ uploadsWindow: { shown: 12, total: 12, truncated: false } })),
+    );
+    render(<Vault {...(props() as any)} />);
+    // Anchor on the surface having actually loaded the payload (the spine line
+    // comes from it), so "no note" cannot pass merely because nothing rendered.
+    await screen.findByText(/IND · 21 CFR 312/);
+    expect(screen.queryByText(/most recently updated/i)).toBeNull();
+  });
+
+  it('leaves the unfiled queue alone — it is programme-wide, not a page count', async () => {
+    // The server counts unfiled over the whole programme precisely so it stays
+    // right when the page is capped. The surface must not re-derive or qualify
+    // it, or the one number that survived truncation gets caveated into doubt.
+    mockApi(() =>
+      ok(
+        vaultPayload({
+          unfiledCount: 137,
+          uploadsWindow: { shown: 2000, total: 48213, truncated: true },
+        }),
+      ),
+    );
+    render(<Vault {...(props() as any)} />);
+    expect(await screen.findByText(/137 unfiled — needs review/i)).toBeTruthy();
+  });
+});
+
+/**
+ * The control that makes filing reachable.
+ *
+ * The capability landed server-side first — a leaf can name a vault document by
+ * uuid and the packager can fetch its bytes — but a capability with no control
+ * is not something a customer has. This pins the wiring, and specifically the
+ * one thing in it that can silently be wrong: the tree id is `up-<uuid>` and
+ * what a leaf must name is the bare uuid. A leaf carrying "up-…" would be
+ * refused by the server as a malformed uuid, at the end of a filing session
+ * rather than at the click.
+ */
+describe('Vault — placing a document into a submission', () => {
+  const SUBMISSIONS = [
+    { id: 4, title: 'BX-301 NDA', applicationType: 'nda', primaryRegion: 'us', status: 'open' },
+  ];
+  const SEQUENCES = [
+    { id: 9, sequenceNumber: '0000', type: 'original', status: 'draft', region: 'us' },
+  ];
+
+  function mockWithFiling() {
+    const writes: Array<{ method: string; url: string; body: unknown }> = [];
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method !== 'GET') writes.push({ method, url, body });
+      if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload());
+      if (url === '/api/submissions' && method === 'GET') return ok(SUBMISSIONS);
+      if (url === '/api/submissions/4/sequences' && method === 'GET') return ok(SEQUENCES);
+      if (method === 'PUT' && /\/sequences\/\d+\/leaves$/.test(url)) {
+        return ok({ id: 77, sectionCode: '3.2.P.8.3', title: 'stability-summary-24m', lifecycleOp: 'new' });
+      }
+      return ok({});
+    });
+    return writes;
+  }
+
+  it('offers the action on an uploaded document and files it by BARE uuid', async () => {
+    const writes = mockWithFiling();
+    render(<Vault {...(props() as any)} />);
+
+    // Open the upload, then the dialog.
+    fireEvent.click((await screen.findAllByText('stability-summary-24m'))[0]);
+    fireEvent.click(await screen.findByRole('button', { name: /place into submission/i }));
+
+    const sub = await screen.findByLabelText('Target submission');
+    fireEvent.change(sub, { target: { value: '4' } });
+    await screen.findByLabelText('Sequence');
+    fireEvent.change(screen.getByLabelText(/^Section code/), { target: { value: '3.2.P.8.3' } });
+
+    // Scoped to the dialog: the trigger button behind it matches the same name,
+    // and clicking that one would re-open rather than submit.
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: /^place into submission$/i }));
+
+    await waitFor(() => expect(writes.some((w) => w.method === 'PUT')).toBe(true));
+    const put = writes.find((w) => w.method === 'PUT')!;
+    const sent = put.body as Record<string, unknown>;
+    expect(sent.documentTable).toBe('vault_documents');
+    // The tree id is `up-<uuid>`; the leaf must carry the uuid alone.
+    expect(sent.documentUuid).toBe(DOC_ID);
+    expect(String(sent.documentUuid)).not.toMatch(/^up-/);
   });
 });

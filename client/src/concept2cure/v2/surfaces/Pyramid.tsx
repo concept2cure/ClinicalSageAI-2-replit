@@ -28,6 +28,7 @@
  */
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
+import { useDialog } from '../useDialog';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -205,11 +206,11 @@ function PyWorkBreakdown({ pyr, focusPhase, onTask, tasks, onStatus }: {
 // ── Task detail sheet ─────────────────────────────────────────────────────
 
 function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus }: {
-  pyr: PyPyramid; task: PyTask | null; tasks: PyTask[];
+  pyr: PyPyramid; task: PyTask; tasks: PyTask[];
   onClose: () => void; onTask: (id: string) => void;
   onStatus: (id: string, status: string) => void;
 }) {
-  if (!task) return null;
+  const dlgRef = useDialog(onClose);
   const ph = pyr.phases.find(p => p.id === task.phase);
   const deps = task.deps.map(d => tasks.find(t => t.id === d)).filter(Boolean) as PyTask[];
   const dependents = tasks.filter(t => t.deps.includes(task.id));
@@ -218,7 +219,18 @@ function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus }: {
   const g = task.guidance || {};
   return (
     <div className="py-sheet-scrim" onClick={onClose}>
-      <aside className="py-sheet" onClick={e => e.stopPropagation()} role="dialog" aria-label={task.name}>
+      {/* It declared role="dialog" and nothing else: no aria-modal, so a screen
+          reader carried on reading the pyramid behind it; no Escape; and focus
+          never moved off whatever opened it. */}
+      <aside
+        className="py-sheet"
+        ref={dlgRef}
+        tabIndex={-1}
+        onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={task.name}
+      >
         <div className="py-sheet-h">
           <div>
             <div className="py-sheet-crumb">Phase {ph?.order} · {ph?.name}</div>
@@ -229,8 +241,9 @@ function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus }: {
 
         <div className="py-sheet-body">
           <div className="py-sheet-status">
-            <label>Status</label>
-            <select data-tone={PY_STATUS[task.status]?.tone} value={task.status}
+            <label htmlFor="py-sheet-status">Status</label>
+            <select id="py-sheet-status" aria-label={`Status of ${task.name}`}
+              data-tone={PY_STATUS[task.status]?.tone} value={task.status}
               onChange={e => onStatus(task.id, e.target.value)}>
               {Object.entries(PY_STATUS).map(([k, v]) => <option key={k} value={k}>{v.l}</option>)}
             </select>
@@ -313,8 +326,10 @@ function statusRefusal(why: string): string {
   return 'The status was not saved — ' + why.replace(/[.\s]+$/, '') + '. The task is unchanged.';
 }
 
+/* Every loading state in this surface goes through here, so one missing
+   role="status" silenced all of them. */
 const PyLoading = ({ label }: { label: string }) => (
-  <div className="scaf-note" style={{ padding: '18px 10px' }}>{label}</div>
+  <div role="status" aria-busy="true" className="scaf-note" style={{ padding: '18px 10px' }}>{label}</div>
 );
 
 // ── Shell ─────────────────────────────────────────────────────────────────
@@ -679,7 +694,10 @@ export function PyramidShell(_props: SurfaceViewProps) {
 
       {tab === 'global' ? renderGlobalTab() : renderPyramidTab()}
 
-      {pyr && <PyTaskSheet pyr={pyr} task={openObj} tasks={tasks} onClose={() => setOpenTask(null)} onTask={goTask} onStatus={setStatus} />}
+      {/* The guard moved out of PyTaskSheet: useDialog cannot sit behind an
+          early `if (!task) return null`, and hoisting it here is what lets the
+          sheet mount only when there is a task to show. */}
+      {pyr && openObj && <PyTaskSheet pyr={pyr} task={openObj} tasks={tasks} onClose={() => setOpenTask(null)} onTask={goTask} onStatus={setStatus} />}
     </div>
   );
 }

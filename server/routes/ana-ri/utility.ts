@@ -29,6 +29,12 @@ import {
   verifySignerCredentials,
   defaultSignoffDeps,
 } from '../../services/ana-ri/governed-action-signoff.js';
+import {
+  readPendingApproval,
+  recordApprovalDecision,
+} from '../../services/ana/run-control.js';
+import { resolveOrgId } from '../../types/auth-request.js';
+import { getPool } from '../../db.js';
 import { handleSealVerifiedVersion } from './seal-verified.js';
 import auditService from '../../services/auditService.js';
 import { createScopedLogger } from '../../utils/logger.js';
@@ -41,6 +47,112 @@ import {
 } from './shared.js';
 
 const log = createScopedLogger('ana-ri/utility');
+
+/**
+ * Resolve WHAT this request is authorising.
+ *
+ * When the client names a run, the command and params come from the run row,
+ * never from the request body. The body would let a caller show one action in
+ * the sign-off modal and post back another, so a signature the person gave for
+ * "freeze document 7" would execute "freeze document 9" — a tampering window an
+ * electronic signature exists to close, not open.
+ *
+ * The row is looked up with resolveOrgId because that is the resolver beginRun
+ * stamped it with; extractRequestContext, used elsewhere in this route, reads
+ * fewer sources. Two resolvers disagreeing about "which organization is this"
+ * is precisely what breaks run ownership, so if they differ here the lookup
+ * finds nothing and the request fails closed rather than guessing.
+ *
+ * Without a runId this is the original behaviour: the body is the request, as
+ * it has always been for a client re-submitting a blocked chat command.
+ */
+async function resolveAuthorisedAction(
+  req: Request,
+  body: Record<string, any>,
+): Promise<
+  | { error: string; status: number; code: string }
+  | {
+      pendingForRun: Awaited<ReturnType<typeof readPendingApproval>>;
+      runId: string;
+      toolUseId: string;
+      command: string;
+      params: Record<string, unknown>;
+    }
+> {
+  const runId = typeof body.runId === 'string' ? body.runId : '';
+  const toolUseId = typeof body.toolUseId === 'string' ? body.toolUseId : '';
+
+  if (!runId) {
+    return {
+      pendingForRun: null,
+      runId,
+      toolUseId,
+      command: typeof body.command === 'string' ? body.command : '',
+      params: body.params && typeof body.params === 'object' ? body.params : {},
+    };
+  }
+
+  const runOrgId = resolveOrgId(req);
+  const pendingForRun = runOrgId === null ? null : await readPendingApproval(getPool(), runId, runOrgId);
+  if (!pendingForRun) {
+    return {
+      error: 'That run is not waiting on an approval',
+      status: 404,
+      code: 'NO_PENDING_APPROVAL',
+    };
+  }
+  if (pendingForRun.toolUseId !== toolUseId) {
+    // The run moved on, or this decision belongs to a different proposal.
+    // Executing it would apply a person's decision to something they were
+    // never shown.
+    return {
+      error: 'That approval is no longer the one in flight',
+      status: 409,
+      code: 'STALE_APPROVAL',
+    };
+  }
+  return {
+    pendingForRun,
+    runId,
+    toolUseId,
+    command: pendingForRun.command,
+    params: pendingForRun.params,
+  };
+}
+
+/**
+ * Hand a decided approval back to the turn that is waiting on it.
+ *
+ * Best-effort by design: the command has already run and been audited by the
+ * time this is called, so a failure here costs AnA her continuation, not the
+ * person's action or its record. Refusing the whole request at this point would
+ * report a governed action as failed after it had already taken effect, which
+ * is the worse of the two lies.
+ */
+async function releaseWaitingRun(
+  runId: string,
+  toolUseId: string,
+  userId: number,
+  reasonForChange: string,
+  outcome: { result?: unknown; error?: string },
+): Promise<void> {
+  try {
+    await recordApprovalDecision(getPool(), runId, {
+      toolUseId,
+      decided: outcome.error ? 'denied' : 'approved',
+      decidedAt: new Date().toISOString(),
+      byUserId: userId,
+      reasonForChange,
+      ...outcome,
+    });
+  } catch (err: any) {
+    log.error('Approved action ran but the waiting run could not be released', {
+      runId,
+      toolUseId,
+      error: err?.message,
+    });
+  }
+}
 
 /** Register utility endpoints on the given router. */
 export function mountUtilityRoutes(router: Router): void {
@@ -300,9 +412,15 @@ export function mountUtilityRoutes(router: Router): void {
       return sendError(res, 401, 'Authentication and organization context required', null, 'AUTH_REQUIRED');
     }
     const body = req.body ?? {};
-    const command = typeof body.command === 'string' ? body.command : '';
-    const params = body.params && typeof body.params === 'object' ? body.params : {};
     const reasonForChange = typeof body.reasonForChange === 'string' ? body.reasonForChange.trim() : '';
+
+    // What is being authorised. When the client names a run, this is read from
+    // the ROW rather than the body — see resolveAuthorisedAction.
+    const authorised = await resolveAuthorisedAction(req, body);
+    if ('error' in authorised) {
+      return sendError(res, authorised.status, authorised.error, null, authorised.code);
+    }
+    const { pendingForRun, runId, toolUseId, command, params } = authorised;
     const password = typeof body.password === 'string' ? body.password : '';
     const mfaToken = typeof body.mfaToken === 'string' ? body.mfaToken : undefined;
 
@@ -402,8 +520,25 @@ export function mountUtilityRoutes(router: Router): void {
     };
     try {
       const [result] = await executeCommands([{ command, params } as any], ctx);
+      // The execution stays HERE, in the one place that stamps humanConfirmed.
+      // The waiting turn is handed the RESULT, not the right to run the command
+      // itself — a second dispatcher would be a second writer of that flag, and
+      // the partition guard asserts it has exactly one. So AnA resumes with
+      // what a person's decision produced, and there is still one execution,
+      // one signature and one audit row.
+      if (pendingForRun) {
+        await releaseWaitingRun(runId, toolUseId, userId, reasonForChange, { result });
+      }
       return sendSuccess(res, result);
     } catch (error: any) {
+      // A failed execution must still release the run. Otherwise the turn sits
+      // at a gate nobody will ever answer again until the pause ceiling expires
+      // — the person signed, something broke, and AnA is left silent.
+      if (pendingForRun) {
+        await releaseWaitingRun(runId, toolUseId, userId, reasonForChange, {
+          error: error?.message || 'Governed action failed',
+        });
+      }
       return sendError(res, 500, error?.message || 'Governed action failed', null, 'GOVERNED_ACTION_FAILED');
     }
   });

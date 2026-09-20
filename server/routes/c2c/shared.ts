@@ -274,6 +274,40 @@ export interface AuditEntry {
  * @param previousValue - State before change (for updates/deletes)
  * @param newValue - State after change (for creates/updates)
  */
+/**
+ * What became of the `regulatory_audit_logs` row.
+ *
+ * WO-16C #133, in the largest of this repository's void-returning audit
+ * mechanisms: 46 call sites across ten route files, none of which could report an
+ * outcome because there was none. Three genuinely different things happen here:
+ *
+ *   `{ written: true,  attributed: true  }`  the row committed, with a real org
+ *                                            and user.
+ *   `{ written: true,  attributed: false }`  the row committed carrying the
+ *                                            sentinel 0 that this table's NOT NULL
+ *                                            columns force. The warning below has
+ *                                            always said this makes the row "a
+ *                                            dangling reference presented as an
+ *                                            attribution"; the CALLER was never
+ *                                            told, so a governed action recorded
+ *                                            against a non-existent org looked
+ *                                            identical to a real one.
+ *   `{ written: false }`                     the INSERT threw and was swallowed.
+ *
+ * The write policy is deliberately unchanged: best-effort, still writes the
+ * sentinel rather than dropping a governed action out of the trail, still never
+ * throws. Whether an unattributable action should be recorded-as-unknown or
+ * refused outright remains the Part 11 decision for an owner that the comment
+ * below says it is — this does not pre-empt it, it makes it visible to the code
+ * that would have to act on it.
+ */
+export interface AuditEntryOutcome {
+  /** True when the INSERT committed. */
+  written: boolean;
+  /** False when the row carries the sentinel 0 for an unresolved org or user. */
+  attributed: boolean;
+}
+
 export async function logAuditEntry(
   req: Request,
   action: AuditEntry['action'],
@@ -281,8 +315,9 @@ export async function logAuditEntry(
   entityIdRaw: string | string[] | undefined,
   previousValue?: unknown,
   newValue?: unknown
-): Promise<void> {
+): Promise<AuditEntryOutcome> {
   const entityId = Array.isArray(entityIdRaw) ? entityIdRaw[0] ?? '' : entityIdRaw ?? '';
+  let attributed = false;
   try {
     const auditId = `audit_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
     const timestamp = new Date();
@@ -320,7 +355,8 @@ export async function logAuditEntry(
         : req.userId !== undefined
           ? parseInt(String(req.userId), 10)
           : 0;
-    if (resolvedOrg === null || !Number.isFinite(userIdNum) || userIdNum === 0) {
+    attributed = resolvedOrg !== null && Number.isFinite(userIdNum) && userIdNum !== 0;
+    if (!attributed) {
       logger.warn('Audit entry is UNATTRIBUTED — writing sentinel 0 for a non-existent org/user', {
         auditId,
         action,
@@ -351,14 +387,18 @@ export async function logAuditEntry(
     });
 
     logger.debug('Audit entry persisted', { auditId, action, entityType, entityId });
+    return { written: true, attributed };
   } catch (error) {
-    // Never fail the main operation due to audit logging - log and continue
+    // Never fail the main operation due to audit logging - log and continue.
+    // The store's own message stays in this line and is NOT returned: these
+    // routes forward their results to a tenant client (ci:server-error-leaks).
     logger.error('Failed to persist audit entry', {
       error: error instanceof Error ? error.message : 'Unknown error',
       action,
       entityType,
       entityId,
     });
+    return { written: false, attributed };
   }
 }
 

@@ -60,6 +60,7 @@ import {
   type SignedPackageSnapshot,
   type StepRecord,
 } from '../submission-package-orchestrator.js';
+import { isVerificationUnavailable } from '../../lib/verification-outcome.js';
 import { verifySignPayloadSeal, type SealVerdict } from './sign-payload-seal.js';
 import type { ECTDLeaf } from './ectd4-validator.js';
 import crypto from 'crypto';
@@ -86,7 +87,14 @@ export type SignedExportRefusal =
   /** Digest recomputed from the snapshot ≠ the stored digest — content drift. */
   | 'digest-drift'
   /** The signature was superseded or rolled back; no active row remains. */
-  | 'signature-revoked';
+  | 'signature-revoked'
+  /**
+   * The signature lookup could not run (WO-16B finding 14). NOT a statement
+   * about the signature: it may well still stand. Distinct from
+   * 'signature-revoked' because the operator action differs — retry or fix the
+   * store, not re-sign.
+   */
+  | 'signature-unverifiable';
 
 export interface SignedExportRefusalResult {
   ok: false;
@@ -266,10 +274,20 @@ export async function resolveSignedPackageForExport(params: {
   // 6 — an active, non-superseded signature still stands for this digest.
   //     Checked LAST because it is the only DB round-trip beyond getRun; the
   //     cheap in-memory checks above short-circuit the common refusals first.
-  const active = await findActiveReleaseSignature({
-    organizationId,
-    boundPayloadDigest: payload.payloadDigest,
-  });
+  let active: { id: number } | null;
+  try {
+    active = await findActiveReleaseSignature({
+      organizationId,
+      boundPayloadDigest: payload.payloadDigest,
+    });
+  } catch (err) {
+    if (!isVerificationUnavailable(err)) throw err;
+    return refuse(
+      'signature-unverifiable',
+      `Run ${runId}: the release-signature lookup could not run; the failure is in the server log. ` +
+        `Nothing is known about the signature's standing — it has NOT been found revoked. Refusing to export until the check can run.`,
+    );
+  }
   if (!active) {
     return refuse(
       'signature-revoked',
@@ -369,6 +387,11 @@ export function refusalHttpStatus(refusal: SignedExportRefusal): number {
       // Integrity failure. Not a client mistake — surface it distinctly so it
       // can be alerted on separately from ordinary workflow-state refusals.
       return 422;
+    case 'signature-unverifiable':
+      // The check did not run. Same status innovation-routes gives an
+      // ownership check that could not run: not a precondition (409), not an
+      // integrity finding (422), not a crash (500).
+      return 503;
   }
 }
 

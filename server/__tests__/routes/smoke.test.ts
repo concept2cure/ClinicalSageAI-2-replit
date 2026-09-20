@@ -48,26 +48,6 @@ const mockApp = {
 };
 
 describe('Critical API Routes', () => {
-  describe('Cortex Prime Routes', () => {
-    const expectedRoutes = [
-      { method: 'POST', path: '/api/cortex/brain/nodes' },
-      { method: 'GET', path: '/api/cortex/brain/nodes/:nodeId' },
-      { method: 'POST', path: '/api/cortex/brain/search' },
-      { method: 'POST', path: '/api/cortex/threads' },
-      { method: 'GET', path: '/api/cortex/threads/:threadId' },
-      { method: 'POST', path: '/api/cortex/agents' },
-      { method: 'GET', path: '/api/cortex/health' },
-    ];
-
-    it('should define expected route structure', () => {
-      expectedRoutes.forEach(route => {
-        expect(route.method).toBeDefined();
-        expect(route.path).toBeDefined();
-        expect(route.path.startsWith('/api/cortex')).toBe(true);
-      });
-    });
-  });
-
   describe('Compliance Routes', () => {
     const expectedRoutes = [
       { method: 'POST', path: '/api/audit/events' },
@@ -145,12 +125,6 @@ describe('Critical API Routes', () => {
 });
 
 describe('Service Layer Integration', () => {
-  it('should have CortexPrimeService exportable', async () => {
-    // This validates the service can be imported without errors
-    const module = await import('../../services/cortexPrimeService');
-    expect(module.CortexPrimeService).toBeDefined();
-  });
-
   it('should have CortexComplianceService exportable', async () => {
     const module = await import('../../services/cortexComplianceService');
     expect(module.CortexComplianceService).toBeDefined();

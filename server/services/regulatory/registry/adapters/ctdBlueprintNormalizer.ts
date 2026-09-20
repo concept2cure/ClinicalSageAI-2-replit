@@ -14,7 +14,7 @@
  * @module server/services/regulatory/registry/adapters/ctdBlueprintNormalizer
  */
 
-import type { SectionDefinition, SectionBlueprint, DossierStandard } from '../../../../../shared/regulatory/document-taxonomy.js';
+import type { SectionDefinition, SectionBlueprint } from '../../../../../shared/regulatory/document-taxonomy.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

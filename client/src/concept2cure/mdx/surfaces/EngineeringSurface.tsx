@@ -34,9 +34,8 @@ import {
   ENG_RISKS,
   ENG_TRACE,
 } from '../data/engineering';
-import { ENG_DOCUMENTS } from '../data/engineering-docs';
 import { useEngineering, type PanelScope } from '../hooks/useEngineering';
-import { readyRows } from '../lib/dataState';
+import { gatedOn, readyRows } from '../lib/dataState';
 import type { Program } from '../data/programs';
 import type { KitDocument } from '../components/DocumentsPanel';
 
@@ -160,6 +159,10 @@ export function EngineeringSurface({
   /* Document metrics are computed from whatever the documents panel
      actually resolved to — never from a fixture — so the cards and the
      table can never disagree. */
+  /* Every source the blocker feed reads. Its all-clear is only true if all
+     four actually answered. */
+  const blockersState = gatedOn(live.dhf, live.risks, live.ecrs, live.issues);
+
   const documents = readyRows(live.documents) as unknown as KitDocument[];
   const readyCount = documents.filter((d) => d.status === 'ready').length;
   const reviewCount = documents.filter((d) => d.status === 'review').length;
@@ -195,7 +198,11 @@ export function EngineeringSurface({
       </div>
 
       <DataGate
-        state={live.summary}
+        /* Four of these cards count `documents`, not `summary` — "Documents in
+           flight", the ready/review/draft split, blocked/awaiting-signature and
+           average completion. Gated on `summary` alone, a failed documents read
+           printed all four as zeroes under a ready heading. */
+        state={gatedOn(live.summary, live.documents)}
         label="engineering metrics"
         onRetry={live.refresh}
         emptyHint="Metrics appear once this program has design, risk or change records."
@@ -241,7 +248,6 @@ export function EngineeringSurface({
         state={live.documents}
         label="engineering documents"
         onRetry={live.refresh}
-        sample={ENG_DOCUMENTS}
         emptyHint="Design and software deliverables appear here once artifacts exist for this organization."
       >
         {(docs) => (
@@ -264,7 +270,18 @@ export function EngineeringSurface({
             pulled from DHF · risk · change requests · non-conformance
           </span>
         </div>
-        {blockers.length === 0 ? (
+        {/* `blockers` is built from dhf, risks, ecrs and issues through
+            readyRows, which yields [] for a FAILED read exactly as it does for
+            an empty one. Ungated, four failed reads printed "Nothing is
+            blocking your documents · No draft or blocked DHF sections,
+            unverified risks, open change requests or non-conformances were
+            found" — the one positive regulatory claim on this surface, and the
+            sentence the user acts on, asserted over records nobody read. */}
+        {blockersState.status !== 'ready' && blockersState.status !== 'empty' ? (
+          <DataGate state={blockersState} label="blocker sources" onRetry={live.refresh}>
+            {() => null}
+          </DataGate>
+        ) : blockers.length === 0 ? (
           /* The last hand-rolled copy of the empty state `<DataGate>` used to
              draw — it reproduced the gate's `data-gate-inner` / `-copy` /
              `-title` / `-detail` markup by hand, and was the only thing still
@@ -385,7 +402,17 @@ export function EngineeringSurface({
                 </div>
                 {/* The matrix axes are policy constants, not tenant data —
                     they render regardless. Only the cell counts come from
-                    the risk file, and they are zero when it is empty. */}
+                    the risk file, and they are zero when it is empty.
+                    When the risk read FAILED they were also zero, and an
+                    all-zero residual matrix is not a blank: it asserts that no
+                    hazard sits in any severity/probability band, the
+                    unacceptable ones included. That claim needs the read to
+                    have happened. */}
+                {live.risks.status === 'error' ? (
+                  <DataGate state={live.risks} label="the risk file" onRetry={live.refresh}>
+                    {() => null}
+                  </DataGate>
+                ) : (
                 <div className="eng-heat">
                   <div className="eng-heat-corner" />
                   {ENG_RISK_PROB.map((p) => (
@@ -421,13 +448,20 @@ export function EngineeringSurface({
                     </React.Fragment>
                   ))}
                 </div>
+                )}
               </section>
 
               <section>
                 <div className="section-head" style={{ marginTop: 0 }}>
                   <h2 style={{ fontSize: 14 }}>Risk records</h2>
                   <span className="section-sub">
-                    {visibleRisks.length} of {risks.length} shown
+                    {/* `risks` is [] for a failed read as well as an empty one,
+                        so "0 of 0 shown" read as a count of the file rather
+                        than as the absence of one — directly above the gate
+                        that says it could not be loaded. */}
+                    {live.risks.status === 'error'
+                      ? 'not loaded'
+                      : `${visibleRisks.length} of ${risks.length} shown`}
                   </span>
                 </div>
                 <DataGate

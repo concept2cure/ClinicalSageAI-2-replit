@@ -24,12 +24,16 @@ vi.mock('../server/services/legacy-importer/detector', () => ({
 
 import importsRouter from '../server/routes/mdx-imports';
 
-function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
+function makeApp(opts: { withAuth?: boolean; role?: string } = { withAuth: true }) {
   const app = express();
   app.use(express.json());
   if (opts.withAuth) {
     app.use((req, _res, next) => {
-      (req as any).user = { id: 777, organizationId: 99 };
+      /* A role: every governed write on these routers is role-gated
+         (requireEditorAccess). The harness attached none and still passed,
+         which is what it failed to notice. */
+      (req as any).user = { id: 777, organizationId: 99, role: opts.role ?? 'admin' };
+      (req as any).userRole = opts.role ?? 'admin';
       next();
     });
   }
@@ -195,4 +199,65 @@ describe('POST /imports/:id/cancel', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('cancelled');
   });
+});
+
+/**
+ * These routers hold the device and IVD records a submission is assembled from:
+ * UDI entries, IVDR classifications and performance evaluations, CDx pairings
+ * and concordance, and the imports that materialise artifacts into the
+ * registry. Every write was guarded by the caller's org context alone — tenant
+ * scoping, not authorization — so a read-only `viewer` could create and amend
+ * all of them.
+ */
+describe('MDX persistence routers — role gate on every governed write', () => {
+  const WRITES: Array<[string, string]> = [
+    ['post', '/api/mdx/imports'],
+    ['patch', '/api/mdx/imports/1/files/2'],
+    ['post', '/api/mdx/imports/1/approve'],
+    ['post', '/api/mdx/imports/1/cancel'],
+    ['post', '/api/mdx/imports/1/findings/2/resolve'],
+  ];
+
+  it.each(WRITES)('%s %s is refused for a read-only viewer', async (method, url) => {
+    const res = await (request(makeApp({ withAuth: true, role: 'viewer' })) as any)[method](url).send({});
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(queryFn, 'nothing may be written').not.toHaveBeenCalled();
+  });
+
+  it.each(WRITES)('%s %s is not refused for a member', async (method, url) => {
+    const res = await (request(makeApp({ withAuth: true, role: 'member' })) as any)[method](url).send({});
+    expect(res.status, JSON.stringify(res.body)).not.toBe(403);
+  });
+});
+
+/**
+ * The import JOB was proved to be the caller's; the `projectId` it is approved
+ * into was not, and it comes straight from the request body. A caller could
+ * approve their own import into ANOTHER TENANT'S project lineage, taking the
+ * artifacts and the provenance and audit rows that follow them with it.
+ */
+describe('POST /imports/:id/approve — the project must be the caller\'s too', () => {
+  it('404s a projectId outside the tenant, and writes nothing', async () => {
+    const clientQuery = vi.fn()
+      .mockResolvedValueOnce({})                                  // BEGIN
+      .mockResolvedValueOnce({ rows: [{ status: 'ready_for_review' }] }) // import job IS ours
+      .mockResolvedValueOnce({ rows: [] })                        // project is NOT ours
+      .mockResolvedValueOnce({});                                 // ROLLBACK
+    connectFn.mockResolvedValueOnce({ query: clientQuery, release: vi.fn() });
+
+    const res = await request(makeApp()).post('/api/mdx/imports/1/approve').send({ projectId: 4242 });
+    expect(res.status, JSON.stringify(res.body)).toBe(404);
+
+    const statements = clientQuery.mock.calls.map((c) => String(c[0]));
+    expect(statements.some((q) => q.includes('FROM projects')), 'the project was never checked').toBe(true);
+    expect(statements.some((q) => /INSERT INTO/i.test(q)), 'nothing may be written').toBe(false);
+    expect(statements.some((q) => /ROLLBACK/i.test(q))).toBe(true);
+
+    /* Scoped by organization, not merely by id — an id-only check would pass a
+       foreign project that happens to exist. */
+    const projectCall = clientQuery.mock.calls.find((c) => String(c[0]).includes('FROM projects'));
+    expect(String(projectCall?.[0])).toMatch(/organization_id/);
+    expect(projectCall?.[1]).toEqual([4242, 99]);
+  });
+
 });

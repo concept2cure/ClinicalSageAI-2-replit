@@ -116,6 +116,60 @@ describe('demo-analysis provenance', () => {
     expect(evidence.insights.join(' ')).toMatch(/Compared against 2 stored protocol\(s\)/);
   });
 
+  /*
+   * WO-16C #65, follow-up review. The Evidence Base and Risk Assessment
+   * sections were corrected and the FIRST section was left as it was:
+   *
+   *   `Sample size of ${sample_size} participants analyzed against benchmarks`
+   *   `Primary endpoint "${primary_endpoint}" evaluated for statistical robustness`
+   *   `Study duration of ${duration_weeks} weeks compared with similar trials`
+   *
+   * Nothing in this handler holds a benchmark set, evaluates statistical
+   * robustness, or compares duration against anything — the only comparison it
+   * attempts is findSimilarProtocols, whose result the section below already
+   * reports honestly as "no comparison was performed". Three claims of analysis
+   * over one real act: a regex extraction from the submitted text.
+   *
+   * And every one of those fields is `undefined` when its pattern does not
+   * match — analyzeProtocol defaults none of them — so a protocol that states
+   * no sample size produced the literal sentence "Sample size of undefined
+   * participants analyzed against benchmarks".
+   */
+  it('does not claim benchmark, robustness or duration analysis it never performs', async () => {
+    const res = await post();
+    const structure = res.body.wisdom_trace.find(
+      (s: { section: string }) => s.section === 'Protocol Structure',
+    );
+    const text = structure.insights.join(' ');
+
+    expect(text).not.toMatch(/analyzed against benchmarks/i);
+    expect(text).not.toMatch(/evaluated for statistical robustness/i);
+    expect(text).not.toMatch(/compared with similar trials/i);
+    // The real act is an extraction from the submitted text, and it says so.
+    expect(text).toMatch(/extracted/i);
+    expect(text).toMatch(/120 participants/);
+    expect(text).toMatch(/6-minute walk distance/);
+    expect(text).toMatch(/52 weeks/);
+  });
+
+  it('never renders an unmatched field as the word undefined', async () => {
+    // analyzeProtocol returns `undefined` for every pattern that does not
+    // match — a protocol body with none of them is the ordinary case.
+    analyzeProtocol.mockResolvedValue({});
+    const res = await post();
+    const structure = res.body.wisdom_trace.find(
+      (s: { section: string }) => s.section === 'Protocol Structure',
+    );
+    const text = structure.insights.join(' ');
+
+    expect(text).not.toMatch(/undefined/);
+    expect(text).not.toMatch(/\bnull\b/);
+    // An extractor that found nothing says so, once per field it looked for.
+    expect(text).toMatch(/no sample size/i);
+    expect(text).toMatch(/no primary endpoint/i);
+    expect(text).toMatch(/no study duration/i);
+  });
+
   it('claims no statistical-power or representativeness work it does not do', async () => {
     const res = await post();
     const body = JSON.stringify(res.body);

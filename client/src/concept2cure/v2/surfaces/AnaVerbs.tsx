@@ -60,7 +60,7 @@ export function RegistryPicker({ value, onChange, initialSegment, compact, onSeg
     <div className={'rpk' + (compact ? ' rpk-compact' : '')}>
       <div className="rpk-search">
         <span className="ico rpk-search-ic">{I.search}</span>
-        <input value={q} onChange={e => { setQ(e.target.value); if (e.target.value) clearFilters(); }}
+        <input aria-label="Search filing types" value={q} onChange={e => { setQ(e.target.value); if (e.target.value) clearFilters(); }}
           placeholder={'Search ' + registry.length + ' filing types — name, agency, region…'} />
         {q && <button className="tbtn rpk-search-x" aria-label="Clear search" onClick={() => setQ('')}>{I.close}</button>}
       </div>

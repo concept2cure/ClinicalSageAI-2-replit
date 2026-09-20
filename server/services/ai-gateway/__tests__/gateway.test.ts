@@ -20,10 +20,11 @@ import {
   getGateway,
   GatewayPolicyError,
   GatewayNoProviderError,
+  DEFAULT_MODELS,
 } from '../gateway';
 import { GatewayPolicyEngine } from '../policy';
 import { GatewayAuditLogger } from '../audit';
-import type { GatewayRequest, GatewayResponse, GatewayConfig } from '../types';
+import type { GatewayRequest, GatewayConfig, ModelConfig } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test Helpers
@@ -264,44 +265,66 @@ describe('AIGateway', () => {
     });
   });
 
-  // ─── Anthropic param construction (model-aware) ──────────────────────────
+  // ─── Anthropic param construction (capability-driven) ────────────────────
   //
-  // Opus 4.7+ removed the sampling parameters (temperature/top_p/top_k) and the
-  // manual `thinking: {type:"enabled", budget_tokens}` shape — sending either
-  // now returns a 400. These tests guard that the gateway does NOT emit those
-  // for the Opus 4.7/4.8 family while preserving the legacy surface elsewhere.
+  // Reasoning-only models removed the sampling parameters
+  // (temperature/top_p/top_k) and the manual
+  // `thinking: {type:"enabled", budget_tokens}` shape — sending either returns
+  // a 400. Which surface a model accepts is DECLARED on its registry entry
+  // (`thinkingMode`, `supportsSamplingParams`), not inferred from its name: it
+  // used to be read off a regex over the version string, so a model outside
+  // that pattern silently got a surface it rejects, and bumping the registry
+  // to a newer flagship — the move the registry's own comment calls sanctioned
+  // — produced a 400.
 
   describe('anthropic sampling params', () => {
-    const reasoningOnly = (model: string): boolean =>
-      (gateway as any).isReasoningOnlyModel(model);
-
-    const buildParams = (model: string, request: Partial<GatewayRequest>): any => {
+    const buildParams = (
+      caps: Pick<ModelConfig, 'thinkingMode' | 'supportsSamplingParams'>,
+      request: Partial<GatewayRequest>
+    ): any => {
       const req = buildTestRequest(request);
       // Mirror executeAnthropic: max_tokens is set on params before the sampling
       // params are applied, so the legacy thinking-budget clamp can see it.
       const params: any = { max_tokens: req.maxTokens ?? 4096 };
       (gateway as any).applyAnthropicSamplingParams(
         params,
-        { model, provider: 'anthropic' },
+        { model: 'test-wire', provider: 'anthropic', ...caps },
         req
       );
       return params;
     };
 
-    it('classifies Opus 4.7/4.8 (incl. provider-prefixed) as reasoning-only', () => {
-      expect(reasoningOnly('claude-opus-4-7')).toBe(true);
-      expect(reasoningOnly('claude-opus-4-8')).toBe(true);
-      expect(reasoningOnly('anthropic.claude-opus-4-7')).toBe(true);
+    const ADAPTIVE = { thinkingMode: 'adaptive', supportsSamplingParams: false } as const;
+    const LEGACY = { thinkingMode: 'budget', supportsSamplingParams: true } as const;
+
+    // ── Anti-drift: the registry must say what every model accepts ─────────
+    //
+    // Replaces two tests that asserted a regex classified `claude-opus-4-7`
+    // and friends correctly. Testing the regex tested the bug: the question
+    // that matters is not "does the pattern match this name" but "does every
+    // shipped entry declare its surface", which is what makes a model bump
+    // safe.
+
+    it('every registry entry declares the wire surface it accepts', () => {
+      for (const m of DEFAULT_MODELS) {
+        expect(['adaptive', 'budget', 'none'], `${m.id} thinkingMode`).toContain(m.thinkingMode);
+        expect(typeof m.supportsSamplingParams, `${m.id} supportsSamplingParams`).toBe('boolean');
+      }
     });
 
-    it('does not classify Sonnet 4.6, Haiku 4.5, or the dated 4.0 snapshot', () => {
-      expect(reasoningOnly('claude-sonnet-4-6')).toBe(false);
-      expect(reasoningOnly('claude-haiku-4-5-20251001')).toBe(false);
-      expect(reasoningOnly('claude-opus-4-20250514')).toBe(false);
+    it('no adaptive-thinking model also claims to accept sampling params', () => {
+      // The two are mutually exclusive on the wire: a model that self-budgets
+      // its thinking rejects temperature/top_p/top_k with a 400. An entry
+      // claiming both would send a request that cannot succeed.
+      for (const m of DEFAULT_MODELS) {
+        if (m.thinkingMode === 'adaptive') {
+          expect(m.supportsSamplingParams, `${m.id}`).toBe(false);
+        }
+      }
     });
 
-    it('omits temperature for Opus 4.7 (would 400)', () => {
-      const params = buildParams('claude-opus-4-7', { temperature: 0.5 });
+    it('omits temperature for a model that rejects sampling (would 400)', () => {
+      const params = buildParams(ADAPTIVE, { temperature: 0.5 });
       expect(params.temperature).toBeUndefined();
       expect(params.top_p).toBeUndefined();
       expect(params.top_k).toBeUndefined();
@@ -319,6 +342,7 @@ describe('AIGateway', () => {
     // confidently wrong is worse than one that says "not applicable", because
     // only the first gets trusted.
     const auditedTemperature = async (
+      provider: string,
       model: string,
       request: Partial<GatewayRequest>
     ): Promise<number | null | undefined> => {
@@ -327,7 +351,7 @@ describe('AIGateway', () => {
       (gateway as any).auditLogger = { log: async (e: any) => { logged.push(e); } };
       await (gateway as any).logAudit(
         buildTestRequest(request),
-        { requestId: 'r-1', provider: 'anthropic', model, cached: false, deterministic: false,
+        { requestId: 'r-1', provider, model, cached: false, deterministic: false,
           usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 } },
         'quality',
         true
@@ -339,27 +363,42 @@ describe('AIGateway', () => {
       // undefined on the entry; GatewayAuditLogger coalesces to NULL in the
       // column (`entry.temperature ?? null`), so the stored provenance is
       // "not applicable" rather than a number nobody sent.
-      expect(await auditedTemperature('claude-opus-4-7', { temperature: 0.5 })).toBeUndefined();
+      const adaptive = DEFAULT_MODELS.find(m => m.thinkingMode === 'adaptive')!;
+      expect(await auditedTemperature(adaptive.provider, adaptive.model, { temperature: 0.5 }))
+        .toBeUndefined();
     });
 
     it('records the real temperature for a model that does accept sampling', async () => {
-      expect(await auditedTemperature('claude-sonnet-4-6', { temperature: 0.5 })).toBe(0.5);
+      const sampling = DEFAULT_MODELS.find(
+        m => m.provider === 'anthropic' && m.supportsSamplingParams,
+      )!;
+      expect(await auditedTemperature(sampling.provider, sampling.model, { temperature: 0.5 }))
+        .toBe(0.5);
     });
 
-    it('uses adaptive thinking (no budget_tokens) for Opus 4.7', () => {
-      const params = buildParams('claude-opus-4-7', {
+    it('records NO temperature for a model the registry does not know', async () => {
+      // The ledger claims to describe what produced the output. For an
+      // unrecognised model we cannot show a temperature was transmitted, and
+      // by this section's own rule an unverifiable assertion is worse than
+      // "not applicable" — only the confident one gets trusted.
+      expect(await auditedTemperature('anthropic', 'some-unregistered-model', { temperature: 0.5 }))
+        .toBeUndefined();
+    });
+
+    it('uses adaptive thinking (no budget_tokens) on an adaptive model', () => {
+      const params = buildParams(ADAPTIVE, {
         thinking: { enabled: true, budgetTokens: 8000 },
       });
       expect(params.thinking).toEqual({ type: 'adaptive', display: 'summarized' });
       expect(params.temperature).toBeUndefined();
     });
 
-    it('keeps the legacy temperature + budget_tokens surface for Sonnet 4.6', () => {
-      const plain = buildParams('claude-sonnet-4-6', { temperature: 0.3 });
+    it('keeps the legacy temperature + budget_tokens surface on a budget model', () => {
+      const plain = buildParams(LEGACY, { temperature: 0.3 });
       expect(plain.temperature).toBe(0.3);
 
       // Budget passes through unchanged when it fits under max_tokens.
-      const thinking = buildParams('claude-sonnet-4-6', {
+      const thinking = buildParams(LEGACY, {
         maxTokens: 16000,
         thinking: { enabled: true, budgetTokens: 12000 },
       });
@@ -371,7 +410,7 @@ describe('AIGateway', () => {
       // Anthropic requires budget_tokens < max_tokens (thinking shares the
       // output budget). A 12k budget on a 4k-max_tokens turn is clamped so
       // >=1024 tokens remain for the answer.
-      const clamped = buildParams('claude-sonnet-4-6', {
+      const clamped = buildParams(LEGACY, {
         maxTokens: 4096,
         thinking: { enabled: true, budgetTokens: 12000 },
       });

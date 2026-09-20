@@ -14,14 +14,38 @@
  * `npm run db:apply-c2c`), so which one won depended on the environment's
  * history, not on the code.
  *
- * The losing case is not cosmetic: server/workers/enhanced-ingestion-pipeline.ts
- * inserts atom_type, source_path and content_hash, none of which exist in the
- * minimal shape. Ingestion would fail on exactly those databases where the
- * out-of-band script ran first — i.e. fresh preview and deploy databases, which
- * is precisely what that script is for.
+ * The losing case is not cosmetic: the ingestion writer inserted atom_type,
+ * source_path and content_hash, none of which exist in the minimal shape.
+ * Ingestion would fail on exactly those databases where the out-of-band script
+ * ran first — i.e. fresh preview and deploy databases, which is precisely what
+ * that script is for.
  *
  * These tests pin the resolution: one definition, and the apply script orders the
  * canonical prerequisite ahead of the file that depends on it.
+ *
+ * ── 2026-09-18: the pinned-source test was removed ───────────────────────────
+ * A fourth test read `server/workers/enhanced-ingestion-pipeline.ts` and pinned
+ * its INSERT column list against the literal below. That file was deleted as
+ * unreachable (nothing imported it; it was itself the only importer of
+ * server/workers/layout-aware-ingestion.ts, which went with it). A test that
+ * reads a deleted file fails on its own `read()`, so it was removed rather than
+ * re-pinned: there is no remaining writer to pin it to.
+ *
+ * What that leaves, stated plainly rather than left to be discovered:
+ * **`lumen.data_atoms` is now read by live code and written by none.**
+ * server/services/multi-agent-council.ts:864,1070 and
+ * server/services/innovation/auto-traceability-service.ts:371 SELECT from it.
+ * The many live INSERTs (chat/upload.ts, c2c/artifacts.ts, knowledge-sources.ts,
+ * cortexAdvisoryRoutes.ts, …) target `lumen_data_atoms` — a DIFFERENT, public
+ * table, not this one. That split predates the deletion and was not caused by
+ * it: the pipeline had zero importers, so it never ran and those reads already
+ * returned nothing. Deleting it removes the appearance of a writer, not a
+ * writer. Resolving the split belongs to the council/AnA lane; it is recorded
+ * in docs/work-orders/README.md rather than fixed here.
+ *
+ * The shape assertions below are unchanged and still carry C-12: the canonical
+ * definition wins, and it accepts the provenance columns the minimal rival
+ * lacked.
  *
  * @compliance ICH E6(R2) data integrity — ingestion provenance columns must exist
  *             on every deployment path, not just the ones that happened to run
@@ -37,7 +61,6 @@ import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const CANONICAL = 'db/migrations/044b_gcc_lumen_schema_prerequisite.sql';
 const COUNCIL = 'migrations/20260724_lumen_council_provisioning.sql';
-const INGESTION_SOURCE = 'server/workers/enhanced-ingestion-pipeline.ts';
 
 const read = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
 
@@ -112,9 +135,11 @@ describe('c2c apply path — the resulting schema accepts the writes the code ma
     }
   });
 
-  it('accepts the ingestion pipeline\'s exact INSERT column list', async () => {
-    // Mirrors enhanced-ingestion-pipeline.ts (storeAtom). The next test pins
-    // this list against the source so the two cannot drift apart silently.
+  it('accepts a write carrying the provenance columns the minimal shape lacked', async () => {
+    // atom_type / source_path / content_hash are exactly the columns the rival
+    // 5-column definition omitted, so this INSERT succeeds only on the
+    // canonical shape. It is no longer pinned to a source file: the writer it
+    // mirrored has been deleted (see the header note).
     await expect(
       pg.query(
         `INSERT INTO lumen.data_atoms (
@@ -131,26 +156,6 @@ describe('c2c apply path — the resulting schema accepts the writes the code ma
         ],
       ),
     ).resolves.toBeDefined();
-  });
-
-  it('the pinned INSERT column list still matches the ingestion source', () => {
-    const src = read(INGESTION_SOURCE);
-    const insert = src.match(/INSERT INTO lumen\.data_atoms \(([\s\S]*?)\)/);
-    expect(insert, `no lumen.data_atoms INSERT found in ${INGESTION_SOURCE}`).toBeTruthy();
-    const columns = insert![1]
-      .split(',')
-      .map((c) => c.trim())
-      .filter(Boolean);
-    expect(columns).toEqual([
-      'id',
-      'title',
-      'content',
-      'atom_type',
-      'source_path',
-      'metadata',
-      'content_hash',
-      'created_at',
-    ]);
   });
 
   it('the council seed still lands (the file is self-sufficient without its own atoms table)', async () => {

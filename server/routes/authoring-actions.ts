@@ -12,7 +12,10 @@ import { Router, Request, Response } from 'express';
 import {
   resolveGovernedContext,
 } from '../services/concept2cure/governedDocumentContractService.js';
-import auditService from '../services/auditService';
+/* WO-16C #133: both preflight routes below record their §11.10(e) row through
+   the shared `recordAuditRow`, which reports the outcome instead of discarding
+   it. See server/services/audit/audit-write-outcome.ts. */
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 const router = Router();
 
@@ -2311,7 +2314,18 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
       );
     } catch { /* non-blocking */ }
 
-    void auditService.logAction({
+    /* WO-16C #133. `void auditService.logAction({…})` discarded the
+       `AuditWriteResult` this call resolves, so the 200 below was byte-identical
+       whether the §11.10(e) record of who ran this module preflight — and of the
+       verdict it produced — reached a store or not. The preflight is a
+       computation and the formal decision above is its record; this row is the
+       log beside them, so nothing is undone when it fails. `recordAuditRow`
+       neither throws nor blocks: the verdict is returned unchanged and
+       `auditTrail` now says whether the entry was durably recorded, and whether
+       it is retrievable from the chained `audit_logs` or sits in the
+       tamper-proof store only. The store's own reason stays in the log line
+       `recordAuditRow` writes, never in this envelope. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: (req as any).user?.id ?? null,
       action: 'k510_workflow.preflight',
@@ -2334,6 +2348,8 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
       status: 'data', action: 'module_preflight', moduleCode,
       regulatorBody, submissionType, overall, summary,
       sectionResults, counts, majorBlockers, recommendedActions,
+      /* WO-16C #133 — the outcome of this request's own audit row. */
+      auditTrail,
       decisionId: decisionRecord?.id || null,
       decisionStatus: decisionRecord?.status || null,
       authority: decisionRecord?.authority || null,
@@ -2544,7 +2560,15 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
       );
     } catch { /* non-blocking */ }
 
-    void auditService.logAction({
+    /* WO-16C #133, same conversion as /module-preflight above: `void
+       auditService.logAction({…})` threw away the `AuditWriteResult`, so this
+       envelope read the same whether the §11.10(e) record of who ran the dossier
+       roll-up existed or not. The roll-up is a computation and the formal
+       decision above is its record, so a lost audit row undoes nothing — the
+       answer stands and `auditTrail` reports whether the row was durably
+       recorded and whether it is retrievable from the chained `audit_logs`.
+       `recordAuditRow` logs the store's own reason; it is not put on the wire. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId,
       userId: (req as any).user?.id ?? null,
       action: 'k510_workflow.preflight',
@@ -2568,6 +2592,8 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
       signalType: 'module_status_rollup',
       regulatorBody, submissionType, overall, summary,
       moduleResults, counts: dCounts, majorBlockers, recommendedActions,
+      /* WO-16C #133 — the outcome of this request's own audit row. */
+      auditTrail,
       decisionId: decisionRecord?.id || null,
       decisionStatus: decisionRecord?.status || null,
       authority: decisionRecord?.authority || null,

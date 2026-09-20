@@ -27,9 +27,9 @@
  * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5, OWASP LLM Top 10
  */
 
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
-import { createHash, randomBytes } from 'crypto';
+import { createHash } from 'crypto';
 
 // Governed AI gateway — the single audited seam for all council LLM calls
 // (records model, prompt hash, temperature, seed, and fallback chain). It owns

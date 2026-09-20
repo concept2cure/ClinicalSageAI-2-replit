@@ -5,9 +5,9 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { organizations } from '../../shared/schema';
-import { authMiddleware, requireAdminRole } from '../auth';
+import { authMiddleware } from '../auth';
 import { requireOrganizationContext } from '../middleware/tenantContext';
 import { createScopedLogger } from '../utils/logger';
 import { requestDb } from '../db/requestDb';

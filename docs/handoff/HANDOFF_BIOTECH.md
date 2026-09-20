@@ -1088,71 +1088,74 @@ than hoping a natural-language trigger fires: no org → **zero**
 `project_memory_entries` reads issued; org 7 → every read carries
 `organization_id = $2` bound to 7. Revert-proven. Baseline 12 → 10.
 
-### TRUNK IS RED, TWICE, AND NEITHER IS FROM THIS SESSION
+### CORRECTED (2026-09-19) — two of the three "trunk blockers" reported on 2026-09-06 were never real
 
-Both reproduce on a clean checkout with no working-tree changes. Both fail the
-**Lint** job, so every commit on the branch is red.
+This section previously carried two entries insisting trunk was red for reasons
+belonging to other streams. Re-measured on `42a6ccf`, with the record corrected
+rather than quietly deleted:
 
-**1. `ci:eslint-ratchet` — 6597 vs baseline 6596**, all `max-lines-per-function`.
-Offenders pinned at `e36bd6bd3`, all in `server/routes/c2c/project-vault.ts`,
-the file `f53c522f4` ("Audit the vault download before the bytes leave") grew by
-adding audit writes inside the download handlers:
+| Reported | Actual |
+|---|---|
+| `ci:typecheck:no-regression` — 3 × TS2493 in `authoringAiDraftStructured.test.ts` | **Not a defect.** The session container had no `node_modules`. After `npm ci`, tsc reports **0 errors**. The three TS2493s, and a phantom `Vault.tsx(1027,48)` seen later, were both artefacts of the missing install. A typecheck run against an uninstalled tree is not a measurement — install first, then measure. |
+| `ci:eslint-ratchet` — 6597 vs baseline 6596, `max-lines-per-function` in `project-vault.ts` | **Resolved.** Now **6537 against baseline 6549** — twelve *below*. The vault stream paid it down. The four pinned offenders are no longer above the line. |
+| `ci:tenant-isolation` — not previously reported | **Was genuinely red, and it was mine.** Three findings in `project-vault.ts`, all *false positives* of the rule added in the thirtieth entry. Fixed — see the thirty-second entry below. |
 
-```
-554:16  Function 'createProjectVaultRoutes' has too many lines (496)
-561:58  Async arrow function has too many lines (186)
-823:89  Async arrow function has too many lines (115)
-968:64  Async arrow function has too many lines (191)
-```
+The lesson worth keeping is the first row's. Two blockers were reported to other
+streams on the strength of a measurement taken in an environment that could not
+produce a valid one, and the report was confident. Check that dependencies are
+installed before attributing a typecheck or lint failure to anybody.
 
-**2. `ci:typecheck:no-regression` — baseline 0, now 3 errors.** All TS2493 in
-`server/routes/__tests__/authoringAiDraftStructured.test.ts` at L133, L159 and
-L160: `createDraftCandidate.mock.calls[0]` is inferred as the empty tuple `[]`,
-so `call[2]` and `call[7]` have no such index. Test-file only, no behaviour —
-the fix is a cast on the `mock.calls[0]` read, the same class hit and fixed in
-`part11-signatures-by-target.test.ts` the same day.
+### Thirty-second — a gate that flags correct code (2026-09-19)
 
-Both reported rather than changed, per §2: extracting four handlers from a route
-file another stream is actively editing is not the one-line unblock the gateway
-stream took in `aad5583eb`, and the test file belongs to whoever is mid-edit on
-it. If either is still red after several check-ins, the typecheck one is the
-safer of the two to take.
+`ci:tenant-isolation` was failing on trunk with three findings in
+`server/routes/c2c/project-vault.ts`. All three are **correct code**. The file
+builds its predicate once —
 
-Also seen and NOT persistent: Integration Tests failed on runs 11519 and 11520
-and passed again on 11521 with no relevant change. Its log tail is the Postgres
-service container's stderr — full of RLS-probe errors that are the tests
-working — so do not read a failure out of it; use `list_workflow_jobs`.
-
-### For the vault stream — the ESLint ratchet is red on trunk, and Lint is the only failing job
-
-`max-lines-per-function` went 1190 → 1192. It reproduces on a clean checkout with
-no working-tree changes, and it is the ONLY thing failing: on `da2e93fcd`
-(run 11521) Lint is the sole failed job of fourteen. It has been red on every
-commit on the canonical branch since `f53c522f4`.
-
-The offenders, measured at `e36bd6bd3` — all in
-`server/routes/c2c/project-vault.ts`, the file `f53c522f4` ("Audit the vault
-download before the bytes leave") changed by adding audit writes inside the
-download handlers:
-
-```
-554:16  Function 'createProjectVaultRoutes' has too many lines (496)
-561:58  Async arrow function has too many lines (186)
-823:89  Async arrow function has too many lines (115)
-968:64  Async arrow function has too many lines (191)
+```js
+const uploadsWhere = `d.program_id = $1 AND d.deleted_at IS NULL
+  AND EXISTS (SELECT 1 FROM regulatory_programs rp
+               WHERE rp.id = d.program_id AND rp.organization_id = $2 …)`;
 ```
 
-Reported rather than changed, per §2: extracting four handlers out of a route
-file another stream is actively editing is not the one-line unblock the gateway
-stream took in `aad5583eb`, and it would conflict. Two of the four are the
-handlers that commit grew.
+— and writes `WHERE ${uploadsWhere}` in three queries. That is a real,
+unconditional, parent-scoped tenant predicate bound to `$2`. The gate reads one
+string literal at a time, so it saw a WHERE clause with no tenant keyword in it
+and said so three times.
 
-Also seen and NOT persistent: Integration Tests failed on runs 11519 and 11520
-and passed again on 11521 with no relevant change between them. Its log tail is
-the Postgres service container's stderr — full of RLS-probe errors that are the
-tests working — so do not read a failure out of it; use `list_workflow_jobs` and
-read the step list.
+Mine to fix: the rule added in the thirtieth entry is what brought these queries
+into scanning range. **A gate that flags correct code is worse than one rule
+short** — the cost of a false positive is paid in suppression markers and
+baseline rows, and the next reader cannot tell those from the real ones.
 
+`expandLocalInterpolations` resolves `${ident}` from a same-file
+`` const ident = `…` `` before any test runs. One level, same file, template
+literals only — enough for the assemble-a-WHERE-clause idiom without pretending
+to evaluate JavaScript.
+
+**It also made the gate see a query it had been blind to.**
+`module-access-requests.ts` writes `` `${SELECT_REQUEST} WHERE ($1::int IS NULL
+OR r.organization_id = $1)` ``. The literal *begins* with the interpolation, so
+it matched no SQL keyword and was skipped entirely — before the table test,
+before the tenant test, before the optional-predicate rule. Now scanned, and
+correctly flagged as the authorized case (the null appears only under
+`scope=all`, which `denyQueueRead` refuses for anybody but the platform owner).
+Justified, not suppressed.
+
+Baseline 10 → 11: three false positives gone, new fingerprints for the entries
+whose normalized SQL substitution changed, nothing real dropped. All seven files
+justified.
+
+Proven both ways, each seen failing first: removing the expansion brings the
+three false positives back (5 in `project-vault` instead of 2); restoring the
+escape to `clinical-operations-routes.ts` still fails with 4 NEW findings, so
+the rule it exists for did not regress.
+
+### Branch hygiene (2026-09-19)
+
+This session's container came up on `claude/biotech-pharma-issues-d6hs92`, the
+harness-named branch. Per RULE 0 that branch must not exist: work moved to
+`concept2cure-v2` and the local branch was deleted. Worth expecting on any fresh
+container — check `git branch --show-current` before the first commit.
 ### RESOLVED — the ESLint ratchet regression on trunk
 
 Reported here at `ee0c4bc51`: 6598 against a baseline of 6597, all `complexity`,
@@ -1475,6 +1478,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Twenty-ninth — clinical-operations tenancy | A request with no tenant context read EVERY organization's studies, sites, enrollment, monitoring visits and protocol deviations, and could UPDATE another sponsor's study by id; the router gains a gate and all fifteen predicates become unconditional — revert-proven, and the escape swept across the server (4 authorized admin views, 1 recorded) | §1 above |
 | 2026-09-06 | A | Thirtieth — IND + kernel tenancy, and the gate rule | An IND application was listable, readable, updatable and deletable across every sponsor, and the kernel audit trail listable; ci:tenant-isolation gained the optional-tenant-predicate rule that should have caught all three, seen failing on the real defect after a first regex that missed it — baseline 2 → 12, each frozen entry justified in writing | §1 above |
 | 2026-09-06 | A | Thirty-first — AnA context enrichment | Four reads of project_memory_entries that fed a MODEL'S PROMPT stopped falling back to an unscoped read when the caller had no organization; they now behave like the two enrichers in the same file that already refused — revert-proven, baseline 12 → 10 | §1 above |
+| 2026-09-19 | A | Thirty-second — the gate that flagged correct code | ci:tenant-isolation was red on three CORRECT project-vault queries whose tenant predicate lives in an interpolated const; the scanner now resolves same-file `${ident}` before testing, which also surfaced a query it had been blind to entirely — proven both ways; and two of the three "trunk blockers" reported on 09-06 were artefacts of a container with no node_modules, corrected in §1 | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

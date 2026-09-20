@@ -14,7 +14,10 @@ function app() {
   const instance = express();
   instance.use(express.json());
   instance.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as any).user = { id: 42, organizationId: 7 };
+    /* A role: the classification and PER writes are role-gated
+       (requireEditorAccess). This harness attached none and still passed. */
+    (req as any).user = { id: 42, organizationId: 7, role: 'admin' };
+    (req as any).userRole = 'admin';
     next();
   });
   instance.use('/api/mdx', router);

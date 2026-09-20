@@ -15,7 +15,7 @@
  * @module server/bootstrap/register-inline-routes
  */
 
-import express, { type Express, type Request, type Response } from 'express';
+import express, { type Express } from 'express';
 import type { Pool } from 'pg';
 
 import { authMiddleware } from '../auth.js';

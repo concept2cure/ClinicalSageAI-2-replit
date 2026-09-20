@@ -1,7 +1,20 @@
 /**
- * Shadow-review fixture data -- ported from kit app/shadow-review-data.jsx.
- * Reviewer lenses, illustrative findings, and the VERBATIM deterministic
- * risk aggregation from shadow-review-service.ts.
+ * Shadow-review reference data -- ported from kit app/shadow-review-data.jsx.
+ * The reviewer-lens catalog (ids, agencies, gate names, dimensions) and the
+ * severity/dimension display maps the surface renders findings through.
+ *
+ * WO-16C finding 99: this module also carried `shadowAggregateRisk`, a
+ * self-described VERBATIM copy of `aggregateRisk` in
+ * server/services/shadow-review/shadow-review-service.ts, and ShadowReview.tsx
+ * used it to re-derive the RTF/CRL gate percentages from the findings list.
+ * That is a second implementation of a scored verdict, and it disagreed with
+ * the first: the server's `aggregateRisk` is only a FLOOR under the score
+ * runShadowReview persists (`Math.max(model self-report, aggregate)`), so a
+ * complete run with no rtf/format findings painted "0% — low risk" here while
+ * the run's recorded score was far higher. The copy is deleted; the surface now
+ * renders the score the run recorded, carried on the read
+ * (shadow-review-view-assembler). The server function stays canonical, and is
+ * the only implementation.
  */
 
 /* -- Interfaces -- */
@@ -33,26 +46,6 @@ export interface ShadowSequence {
   type: string;
   region: string;
   leaves: number;
-}
-
-export interface ShadowRisk {
-  rtf: number;
-  crl: number;
-}
-
-/* -- VERBATIM aggregateRisk (deterministic, pure) -- */
-
-const SEVERITY_WEIGHT: Record<string, number> = { critical: 1, major: 0.6, minor: 0.25, info: 0 };
-
-export function shadowAggregateRisk(findings: ShadowFinding[]): ShadowRisk {
-  function score(dims: string[]): number {
-    const relevant = (findings || []).filter((f) => dims.indexOf(f.dimension) >= 0);
-    if (relevant.length === 0) return 0;
-    if (relevant.some((f) => f.severity === 'critical')) return 1;
-    const sum = relevant.reduce((acc, f) => acc + (SEVERITY_WEIGHT[f.severity] || 0), 0);
-    return Math.min(1, Number((sum / (relevant.length + 1) + 0.15 * Math.min(relevant.length, 3)).toFixed(3)));
-  }
-  return { rtf: score(['rtf', 'format']), crl: score(['crl', 'nb']) };
 }
 
 /* -- Severity and dimension maps -- */

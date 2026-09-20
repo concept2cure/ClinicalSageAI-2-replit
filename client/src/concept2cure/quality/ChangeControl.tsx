@@ -293,7 +293,7 @@ export function ChangeControl({
                     </button>
                     <button
                       className="qms-chip ghost"
-                      title="Ask AnA about this change"
+                      title="Ask AnA about this change" aria-label="Ask AnA about this change"
                       onClick={() =>
                         onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)
                       }

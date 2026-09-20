@@ -154,6 +154,16 @@ export interface AnaToolUse {
   id: string;
   name: string;
   input: Record<string, unknown>;
+  /**
+   * Set when the model's tool input arrived but could not be reconstructed —
+   * the streamed `input_json_delta` fragments did not parse, or the stream
+   * ended before the block closed. `input` is `{}` in that case, which is
+   * indistinguishable from a tool that legitimately takes no arguments, so the
+   * caller needs this to tell "asked for nothing" from "we lost what was
+   * asked for". A tool use carrying this must NOT be dispatched: report it as
+   * a failed step instead of running the handler on arguments we do not have.
+   */
+  inputParseError?: string;
 }
 
 /** Tool result to send back to Claude */
@@ -183,8 +193,57 @@ export type StreamCallback = (chunk: string, metadata?: {
   thinkingContent?: string;
 }) => void;
 
+/**
+ * A citation the model produced, normalised across the shapes the API emits.
+ *
+ * Anthropic cites by page (a PDF), by character range (a text document), or by
+ * URL (a web-search result). They are one idea — "this claim came from here" —
+ * so callers should not have to branch on five wire types to record provenance.
+ *
+ * This is a stronger claim than anything else AnA returns. `tool-pedigree.ts`
+ * grades model-written content as `model_assisted` — verify before relying — and
+ * a citation is the one case where the span and its source can be checked
+ * directly.
+ */
+export interface GatewayCitation {
+  /** The exact span the model is citing, verbatim from the source. */
+  citedText: string;
+  /** Document title, when the source carried one. */
+  documentTitle?: string;
+  /** 1-indexed page range, for a PDF source. */
+  startPage?: number;
+  endPage?: number;
+  /** Character range, for a plain-text source. */
+  startCharIndex?: number;
+  endCharIndex?: number;
+  /** Source URL, for a web-search result. */
+  url?: string;
+  /** The wire location type, kept so a caller can tell the sources apart. */
+  locationType: string;
+}
+
 /** Claude-enhanced gateway response with thinking and tool use */
 export interface AnaGatewayResponse extends GatewayResponse {
+  /**
+   * Citations the model produced, or undefined when it produced none.
+   *
+   * Undefined rather than `[]` deliberately: an empty array reads as "we looked
+   * and there were none", which for a turn with no cited document is a claim we
+   * cannot make. Undefined says the question does not apply.
+   */
+  citations?: GatewayCitation[];
+  /**
+   * Whether the caller's `jsonSchema` was actually enforced on the wire.
+   *
+   * `false` means the answer may be well-formed by luck rather than by
+   * construction — the resolved model could not constrain it, or no schema was
+   * supplied. Undefined on providers and paths that do not participate.
+   *
+   * This exists because the alternative was silence: the schema was dropped and
+   * the response looked identical either way, so a governed caller could not
+   * tell a guaranteed answer from a fortunate one.
+   */
+  structuredOutputEnforced?: boolean;
   /** Extended thinking output (if enabled) */
   thinking?: string;
   /** Tool use requests from Claude */
@@ -221,6 +280,27 @@ export interface GatewayMessage {
   origin?: 'app' | 'external';
   /** Multi-modal content blocks (images + text) — Claude only */
   contentBlocks?: ContentBlock[];
+  /**
+   * Keep this system message IN `messages[]`, at its position, instead of
+   * hoisting it into the top-level `system` parameter — the OPERATOR CHANNEL.
+   *
+   * A mid-run instruction (a human steering AnA while she works, a mode
+   * switch, injected state) is not the user speaking and is not part of the
+   * persona. Carried as text inside a user turn it is indistinguishable from
+   * anything else that writes into user-visible input — including tool output,
+   * which is the untrusted half of the transcript. Carried as a `role: 'system'`
+   * message it has operator authority and cannot be forged.
+   *
+   * It also preserves the cache. Editing the top-level `system` changes the
+   * prefix ahead of the entire conversation, so every cached turn is
+   * reprocessed; a system message after the history leaves that prefix intact.
+   *
+   * Only honoured on models whose ModelConfig sets `supportsInlineSystem`.
+   * Elsewhere it is folded into the preceding user turn, which is byte-for-byte
+   * what the platform sent before this flag existed.
+   */
+  inlineSystem?: boolean;
+
   /**
    * Mark this message with a prompt-cache breakpoint (Claude only).
    * When `promptCache.enabled` is set on the request, system messages
@@ -274,6 +354,16 @@ export interface GatewayRequest {
 
   /** JSON schema for structured output (requires jsonMode=true) */
   jsonSchema?: Record<string, unknown>;
+
+  /**
+   * The API's `output_config.effort` — how hard the chosen model works, as
+   * opposed to {@link RoutingStrategy}, which is which model gets chosen. The
+   * Composer's Fast/Balanced/Thorough control has always meant both.
+   *
+   * Pin it per turn rather than varying it per round: changing effort
+   * mid-conversation invalidates the messages cache.
+   */
+  apiEffort?: 'low' | 'medium' | 'high' | 'max';
 
   /** Request streaming response */
   stream?: boolean;
@@ -336,13 +426,38 @@ export interface GatewayRequest {
   tools?: AnyAnaTool[];
 
   /** Tool choice behavior */
-  toolChoice?: 'auto' | 'any' | { type: 'tool'; name: string };
+  /**
+   * `'none'` is the one a caller reaches for to end an agentic loop: it forbids
+   * further tool calls while LEAVING THE TOOLS ARRAY IN PLACE. Deleting the
+   * array instead changes the tool definitions, and a tool-definition change is
+   * the only change that preserves no prompt-cache tier at all — so withdrawing
+   * tools to force a final answer rebuilt the whole cache once per turn.
+   *
+   * `'any'` and `{type:'tool'}` are rejected on some current models; `'none'`
+   * is not.
+   */
+  toolChoice?: 'auto' | 'any' | 'none' | { type: 'tool'; name: string };
 
   /** Prompt caching config (Claude only) */
   promptCache?: PromptCacheConfig;
 
   /** Streaming callback for real-time delivery */
   onStream?: StreamCallback;
+
+  /**
+   * Cancel this request. Passed to the provider SDK, so aborting stops
+   * GENERATION rather than only stopping the caller from reading — before
+   * this existed, AnA's stop button dropped the socket and left the model
+   * running to completion at full cost.
+   *
+   * Aborting is terminal and blameless: the gateway raises
+   * `GatewayAbortedError`, which is never retried, never falls back to another
+   * model, and never counts against provider health. An abort that lands
+   * mid-stream is not an error at all — the partial response is returned with
+   * `finishReason: 'aborted'`, because the text the person is already reading
+   * is worth keeping.
+   */
+  signal?: AbortSignal;
 
   /** Multi-modal content blocks (images) — used instead of messages for vision */
   imageContent?: ImageBlock[];
@@ -371,9 +486,9 @@ export interface GatewayResponse {
    * `model` on Anthropic messages).
    *
    * Kept alongside `model` rather than replacing it: `model` is the routing
-   * decision and callers already switch on it (see `isReasoningOnlyModel`),
-   * while this is the fact of which snapshot answered. Undefined when the
-   * provider omits it and on the cached/deterministic paths.
+   * decision and callers switch on it, while this is the fact of which
+   * snapshot answered. Undefined when the provider omits it and on the
+   * cached/deterministic paths.
    */
   resolvedModel?: string;
 
@@ -421,6 +536,17 @@ export interface ProviderConfig {
   models: ModelConfig[];
 }
 
+/**
+ * How a model accepts extended thinking.
+ *
+ *   'adaptive'  the model self-budgets; send `{type:'adaptive'}` and no
+ *               sampling parameters. `budget_tokens` is rejected.
+ *   'budget'    the legacy surface; send `{type:'enabled', budget_tokens}`
+ *               with `temperature: 1`.
+ *   'none'      the model has no extended-thinking surface.
+ */
+export type ThinkingMode = 'adaptive' | 'budget' | 'none';
+
 export interface ModelConfig {
   id: string;
   provider: ProviderName;
@@ -431,6 +557,49 @@ export interface ModelConfig {
   costPer1kOutput: number;
   capabilities: TaskType[];
   enabled: boolean;
+
+  // ── Wire-surface capabilities ────────────────────────────────────────────
+  //
+  // What this model's API actually accepts. These are DATA, deliberately: the
+  // gateway used to infer the reasoning-only surface by running a regex over
+  // the version in `model`, which meant the shape of a request depended on how
+  // a model was NAMED. A model outside the pattern silently fell back to a
+  // surface it rejects with a 400, so bumping the registry to a newer flagship
+  // — the move the registry's own comment calls sanctioned — broke it.
+  //
+  // Declare these per ENTRY, never per family: a Bedrock or Vertex entry runs
+  // the same weights but does not carry the same features, and inheriting a
+  // first-party flag onto a private-cloud entry promises a tenant something
+  // their substrate rejects. Availability, not lineage, decides.
+
+  /** How this model accepts extended thinking. */
+  thinkingMode: ThinkingMode;
+
+  /**
+   * Whether `temperature` / `top_p` / `top_k` may be sent. Reasoning-only
+   * models reject all three with a 400.
+   */
+  supportsSamplingParams: boolean;
+
+  /**
+   * Whether this model constrains its output to a JSON schema via
+   * `output_config.format`. Supported on Opus 5, Opus 4.8, Sonnet 5 and
+   * Haiku 4.5 — notably NOT on Sonnet 4.6, which sits directly below Sonnet 5
+   * on the fallback ladder, so the ladder genuinely has a gap in it. That gap
+   * is why this is data rather than a family rule, and why a caller is told
+   * when the guarantee was not applied instead of being left to infer it.
+   */
+  supportsStructuredOutputs?: boolean;
+
+  /**
+   * Whether this model accepts a `{role: 'system'}` turn inside `messages[]`
+   * — the operator channel (see `GatewayMessage.inlineSystem`). A model
+   * without it answers `role 'system' is not supported on this model` with a
+   * 400, so the gateway folds the instruction into the preceding user turn
+   * instead. Omitted means false: a capability we have not confirmed for an
+   * entry is one we do not use for it.
+   */
+  supportsInlineSystem?: boolean;
 }
 
 export interface PolicyConfig {

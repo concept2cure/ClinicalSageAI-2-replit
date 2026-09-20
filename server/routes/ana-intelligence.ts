@@ -546,7 +546,10 @@ router.post('/agent', async (req: Request, res: Response) => {
           { role: 'user', content: prompt },
         ],
         provider: 'anthropic',
-        model: 'claude-opus-4-7',
+        // Registry alias: resolves to the current Opus. A pinned wire version
+        // stops matching on the next bump and silently falls through to normal
+        // routing.
+        model: 'claude-opus-4',
         maxTokens: 8192,
         tools: DOCUMENT_DRAFTING_TOOLS,
         toolChoice: 'auto',

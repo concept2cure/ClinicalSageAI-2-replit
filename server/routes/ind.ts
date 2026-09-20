@@ -13,6 +13,7 @@
 import { Router, Request, Response } from 'express';
 import { query, transaction } from '../db';
 import { createScopedLogger } from '../utils/logger';
+import { resolveOrgId } from '../types/auth-request';
 import indCopilot from '../services/indCopilot.js';
 
 const router = Router();
@@ -21,12 +22,10 @@ const logger = createScopedLogger('ind-routes');
 // ── helpers ─────────────────────────────────────────────────────────────────
 
 /**
- * The caller's organization, or nothing.
- *
  * ── What `|| null` meant here ───────────────────────────────────────────────
- * This returned null for a request with no tenant on it, and every query in
- * this router appended its tenant clause only `if (organizationId)`. Without a
- * tenant, therefore:
+ * This router resolved its own org and returned null for a request with no
+ * tenant on it, and every query appended its tenant clause only
+ * `if (organizationId)`. Without a tenant, therefore:
  *
  *   GET    /applications      listed EVERY sponsor's IND applications
  *                             (the predicate was left as `WHERE 1=1`)
@@ -40,19 +39,12 @@ const logger = createScopedLogger('ind-routes');
  * 21 CFR 11.10(e) — meticulously audited, and not scoped to a tenant. A
  * conditional tenant predicate is not a predicate; it is a default.
  *
- * The gate below refuses without an organization, so this always returns one
- * and every clause below is unconditional.
+ * The gate below refuses without an organization, so the org is always present
+ * and every clause is unconditional. It asks the CANONICAL resolver: the
+ * router-local copy read the same four places in a different order, and a
+ * second answer to "which organization is this" is a tenant-isolation decision,
+ * not a helper (`ci:tenant-resolvers`).
  */
-function resolveOrgId(req: Request): number | null {
-  const raw =
-    (req as any).tenantId ??
-    (req as any).tenantContext?.organizationId ??
-    (req as any).organizationId ??
-    (req as any).user?.organizationId;
-  if (raw === undefined || raw === null || raw === '') return null;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
 
 /** Where the resolved org is parked for the handlers, once, per request. */
 const IND_ORG = Symbol.for('indRoutes.orgId');

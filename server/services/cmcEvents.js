@@ -48,11 +48,17 @@ async function saveLeafPatch(patch) {
   }
   
   leaf.patches.push(patch.id);
-  
-  // Broadcast to connected SSE clients
-  const { broadcastPatch } = await import('../routes/leaves.js');
-  broadcastPatch(patch.leaf_id, patch);
-  
+
+  // The SSE broadcast that used to run here is gone: server/routes/leaves.js was
+  // deleted on 2026-09-10 (see the retirement note in
+  // server/bootstrap/register-clinical-intel-routes.ts). It had no subscriber in
+  // any deployed configuration — the only caller of emitCMCEvent is
+  // POST /api/cmc/test-event, which 404s when NODE_ENV is production.
+  //
+  // So this function's writes now go to the two global Maps above and nowhere
+  // else. That is what it already did for the leaf record; only the fan-out is
+  // removed. Do not restore the broadcast without a real subscriber.
+
   return patch;
 }
 

@@ -12,6 +12,7 @@
 import { pool } from '../../db';
 import { mergeTemplateSections, type TemplateSectionView } from './protocol-templates-logic';
 import type { ProtocolKind } from '../protocol-development/protocol-development-logic';
+import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -66,10 +67,33 @@ export async function cloneTemplateToDocumentTx(client: Queryable, orgId: number
   );
   const documentId = Number(doc.rows[0].id);
   for (const s of merged) {
-    await client.query(
+    const seeded = await client.query(
       `INSERT INTO protocol_sections (organization_id, protocol_document_id, section_key, title, content, required, status, order_index, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
       [orgId, documentId, s.sectionKey, s.title, s.content, s.required, s.content ? 'draft' : 'not_started', s.orderIndex, userId],
+    );
+    /* Prose gate for seeded text (ledger L177), in the caller's transaction —
+       the same gate protocol-development-service.ts applies when a section is
+       later edited, so a section does not acquire lineage only on its second
+       write.
+
+       Seeded content is not boilerplate that can be waved through:
+       saveDocumentAsTemplateTx (below) snapshots a real protocol's sections INTO
+       a template, so what lands here can be previously-authored prose arriving
+       in a NEW protocol. Recorded as the assertion of the user instantiating the
+       template, because they are who put this text into this document; the
+       template is not a cited source and inventing one would be the dishonesty
+       the attribution subsystem exists to prevent.
+
+       Sections the merge leaves empty (status 'not_started') attribute nothing —
+       enforceAuthorLineage no-ops on empty content rather than recording a span
+       over text that is not there. */
+    await enforceAuthorLineage(
+      client,
+      orgId,
+      { documentTable: 'protocol_sections', documentId: String(seeded.rows[0].id) },
+      s.content ?? null,
+      String(userId),
     );
   }
   return { documentId, sectionsSeeded: merged.length };

@@ -24,7 +24,7 @@
  * failing endpoint across the click.
  */
 import React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());

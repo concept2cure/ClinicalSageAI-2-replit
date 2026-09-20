@@ -6,7 +6,7 @@
  * hosts are also egress-blocked in CI/sandbox).
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { GrantsGovConnector } from '../grants-gov';
 import { SamExclusionsConnector } from '../sam-exclusions';
 import { EllucianBannerConnector } from '../ellucian-banner';

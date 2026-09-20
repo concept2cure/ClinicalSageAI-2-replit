@@ -382,6 +382,8 @@
   scroll-margin-top: 80px;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
+/* role="button" gets no focus ring from a button rule. */
+.mdx-shell .dr-def-card:focus-visible { outline: 2px solid var(--accent-100); outline-offset: 2px; }
 .mdx-shell .dr-def-card.is-active {
   border-color: var(--accent-100);
   box-shadow: 0 0 0 3px var(--accent-000);

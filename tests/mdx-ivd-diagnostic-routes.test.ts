@@ -37,7 +37,11 @@ function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
   app.use(express.json());
   if (opts.withAuth) {
     app.use((req, _res, next) => {
-      (req as any).user = { id: 777, organizationId: 99 };
+      /* A role: every governed write on these routers is role-gated
+         (requireEditorAccess). The harness attached none and still passed,
+         which is what it failed to notice. */
+      (req as any).user = { id: 777, organizationId: 99, role: 'admin' };
+      (req as any).userRole = 'admin';
       next();
     });
   }

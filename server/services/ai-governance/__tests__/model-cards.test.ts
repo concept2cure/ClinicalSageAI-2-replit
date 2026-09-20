@@ -17,7 +17,13 @@ describe('model cards', () => {
 
   it('builds a card carrying pinned version, role, intended use, and limitations', () => {
     const card = buildModelCard(opus, approvedOpus);
-    expect(card.pinnedVersion).toBe('claude-opus-4-8');
+    // Read from the lockfile rather than repeating the version string. Pinning
+    // it here made a model bump fail in two places for one reason, and the
+    // second one taught nothing: the lockfile IS the assertion, guarded by the
+    // drift gate in approved-models.test.ts. What this test is for is that the
+    // card carries the pinned version through — whatever it is.
+    expect(card.pinnedVersion).toBe(approvedOpus!.pinnedVersion);
+    expect(card.pinnedVersion).toBe(opus.model);
     expect(card.role).toBe('primary');
     expect(card.qualityTier).toBe('flagship');
     expect(card.intendedUse).toContain('require human review');

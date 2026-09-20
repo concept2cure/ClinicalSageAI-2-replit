@@ -337,7 +337,7 @@ export function GeneratorTab({
               <div className="actions">
                 <button
                   className="tb-btn"
-                  title="Export CER section status as CSV"
+                  title="Export CER section status as CSV" aria-label="Export CER section status as CSV"
                   onClick={() => downloadSectionsCsv(sourceSections)}
                 >
                   {I.download}

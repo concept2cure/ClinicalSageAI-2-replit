@@ -10,6 +10,8 @@
  *   GET /api/v1/endpoints/recommend      Get endpoint recommendations
  *   GET /api/v1/precedent/search         Search regulatory precedents
  *   GET /api/v1/trial-design/suggest     Get trial design suggestions
+ *   GET /api/v1/documents                List vault document metadata
+ *   GET /api/v1/documents/:id            Fetch one vault document's metadata
  *
  * @module server/routes/public-api
  */
@@ -34,6 +36,15 @@ import { getEndpointRecommenderService } from '../services/endpoint-recommender-
 import { precedentEngine } from '../services/precedent-engine.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { runWithTenantScope } from '../db/tenantStore';
+import { API_KEY_SCOPES } from '../../shared/schema/api-keys.js';
+import {
+  listVaultDocuments,
+  getVaultDocument,
+  isUuid,
+  VaultStoreUnavailableError,
+  VAULT_CLASSIFICATIONS,
+  VAULT_PROCESSING_STATUSES,
+} from '../services/vault/vault-document-index.service.js';
 
 const log = createScopedLogger('public-api');
 
@@ -222,7 +233,7 @@ router.get('/health', (_req: Request, res: Response) => {
     service: 'ClinicalSageAI Public API',
     version: 'v1',
     timestamp: new Date().toISOString(),
-    endpoints: 5,
+    endpoints: 7,
   });
 });
 
@@ -234,7 +245,14 @@ router.get('/docs', (_req: Request, res: Response) => {
       method: 'API Key',
       header: 'X-API-Key',
       format: 'csai_<key>',
-      scopes: ['csr:read', 'regulatory:read', 'endpoints:read', 'precedent:read', 'trial-design:read', 'documents:read'],
+      /* The GRANTABLE list itself, not a copy of it. A hand-maintained copy is
+         how `documents:read` came to be advertised here while no route
+         required it: the two lists could disagree, and nothing compared them.
+         Derived, they cannot — and the test in
+         server/routes/__tests__/public-api-documents.test.ts asserts the
+         remaining half, that every scope advertised here is required by an
+         endpoint listed below. */
+      scopes: [...API_KEY_SCOPES],
     },
     endpoints: [
       {
@@ -293,6 +311,32 @@ router.get('/docs', (_req: Request, res: Response) => {
           indication: { type: 'string', description: 'Disease/condition' },
           phase: { type: 'string', description: 'Trial phase' },
           primaryEndpoint: { type: 'string', description: 'Primary endpoint under consideration' },
+        },
+      },
+      {
+        path: '/api/v1/documents',
+        method: 'GET',
+        scope: 'documents:read',
+        description: 'List vault document metadata for your organization. Metadata only — this endpoint never returns document bytes or extracted text, and never discloses storage addressing.',
+        parameters: {
+          programId: { type: 'string', description: 'Filter to one regulatory program (UUID)' },
+          documentType: { type: 'string', description: 'Filter by document type' },
+          // From the schema enums, not a restated copy: a value documented here
+          // that the column does not accept is a lie in the API's own manual.
+          classification: { type: 'string', enum: VAULT_CLASSIFICATIONS, description: 'Filter by confidentiality classification' },
+          processingStatus: { type: 'string', enum: VAULT_PROCESSING_STATUSES, description: 'Filter by ingest processing status' },
+          ctdSection: { type: 'string', description: 'Filter by assigned CTD section code (e.g. "3.2.P.5")' },
+          limit: { type: 'number', default: 50, description: 'Page size, maximum 200' },
+          offset: { type: 'number', default: 0, description: 'Page offset' },
+        },
+      },
+      {
+        path: '/api/v1/documents/:id',
+        method: 'GET',
+        scope: 'documents:read',
+        description: 'Fetch metadata for one vault document by UUID. Returns 404 both when no such document exists and when it belongs to another organization.',
+        parameters: {
+          id: { type: 'string', description: 'Document UUID (path parameter)' },
         },
       },
     ],
@@ -622,5 +666,157 @@ router.get('/trial-design/suggest', requireApiScope('trial-design:read'), requir
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// ============================================================================
+// DOCUMENTS — VAULT DOCUMENT INDEX (METADATA ONLY)
+// ============================================================================
+
+/**
+ * `documents:read` was grantable, offered in the admin key editor, and listed
+ * in this file's own /docs response — and enforced by NO route. An operator
+ * could tick it, hand the key to an integrator, and reasonably believe
+ * programmatic document access was switched on; the integrator had nothing to
+ * call, and no error explained why, because there was no endpoint to receive
+ * the call. These two routes are what the scope always claimed to grant.
+ *
+ * The read model, the disclosable column list, the tenant predicate and the
+ * reasons behind each are in
+ * server/services/vault/vault-document-index.service.ts. In short: metadata
+ * only — never bytes, never `extracted_text`, never storage addressing — and
+ * tenancy enforced by joining through `regulatory_programs` rather than
+ * trusting the nullable `vault.documents.organization_id`.
+ *
+ * Guarded by the shared fleet-wide requireApiScope plus the legacy local
+ * requireScope (both must pass), matching the treatment of the other sensitive
+ * endpoints on this router.
+ */
+
+function resolveApiOrg(req: ApiRequest, res: Response): number | undefined {
+  const organizationId = req.apiOrganizationId;
+  if (!organizationId) {
+    // requireApiKey always sets this. Refuse rather than run a query whose
+    // tenant predicate would be parameterised with undefined.
+    res.status(403).json({
+      error: 'ORGANIZATION_UNRESOLVED',
+      message: 'No organization is associated with this API key.',
+    });
+    return undefined;
+  }
+  return organizationId;
+}
+
+function meterDocumentRead(req: ApiRequest): void {
+  if (!req.apiOrganizationId) return;
+  recordUsage(req.apiOrganizationId, 0, 'api_documents_list', 1, {
+    apiKeyId: req.apiKeyId,
+  }).catch((err: unknown) => {
+    log.error('[public-api] recordUsage failed (api_documents_list)', {
+      err: err instanceof Error ? err.message : String(err),
+    });
+  });
+}
+
+/** A vault schema this environment never provisioned is a 503, never an empty
+ *  page. Rendering it as `documents: []` would report an infrastructure fault
+ *  as "this organization has no documents". */
+function handleDocumentError(error: unknown, res: Response, label: string): Response {
+  if (error instanceof VaultStoreUnavailableError) {
+    log.error(`[public-api] ${label}: vault store unavailable`, { code: error.code });
+    return res.status(503).json({
+      error: 'VAULT_STORE_UNAVAILABLE',
+      message: 'The document store is not available in this environment. This is not an empty result.',
+    });
+  }
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  log.error(`[public-api] ${label} error:`, message);
+  return res.status(500).json({ error: 'Internal server error' });
+}
+
+router.get(
+  '/documents',
+  requireApiScope('documents:read'),
+  requireScope('documents:read'),
+  requireQuota('api_documents_list'),
+  async (req: ApiRequest, res: Response) => {
+    const organizationId = resolveApiOrg(req, res);
+    if (organizationId === undefined) return res;
+
+    const limit = parsePositiveInt(req.query.limit, 50, 200);
+    const rawOffset = parseInt(String(req.query.offset ?? '0'), 10);
+    const offset = Number.isFinite(rawOffset) && rawOffset > 0 ? Math.min(rawOffset, 1_000_000) : 0;
+
+    // Validate before binding: program_id is uuid and classification/status are
+    // enums, so an unchecked value reaches Postgres as 22P02 and would surface
+    // as a 500 for what is really a client error.
+    const programId = sanitizeQueryParam(req.query.programId);
+    if (programId !== undefined && !isUuid(programId)) {
+      return res.status(400).json({ error: 'INVALID_PARAMETER', parameter: 'programId', message: 'programId must be a UUID.' });
+    }
+    const classification = sanitizeQueryParam(req.query.classification)?.toUpperCase();
+    if (classification !== undefined && !VAULT_CLASSIFICATIONS.includes(classification)) {
+      return res.status(400).json({ error: 'INVALID_PARAMETER', parameter: 'classification', allowed: VAULT_CLASSIFICATIONS });
+    }
+    const procStatus = sanitizeQueryParam(req.query.processingStatus)?.toUpperCase();
+    if (procStatus !== undefined && !VAULT_PROCESSING_STATUSES.includes(procStatus)) {
+      return res.status(400).json({ error: 'INVALID_PARAMETER', parameter: 'processingStatus', allowed: VAULT_PROCESSING_STATUSES });
+    }
+
+    try {
+      const { documents, total } = await listVaultDocuments({
+        organizationId,
+        programId,
+        classification,
+        processingStatus: procStatus,
+        documentType: sanitizeQueryParam(req.query.documentType),
+        ctdSection: sanitizeQueryParam(req.query.ctdSection),
+        limit,
+        offset,
+      });
+
+      meterDocumentRead(req);
+
+      return res.json({
+        documents,
+        // The window is reported so a client can tell a short page from the end
+        // of the cabinet instead of inferring one from the other.
+        page: { limit, offset, returned: documents.length, total },
+        _apiVersion: 'v1',
+      });
+    } catch (error: unknown) {
+      return handleDocumentError(error, res, 'Documents list');
+    }
+  },
+);
+
+router.get(
+  '/documents/:id',
+  requireApiScope('documents:read'),
+  requireScope('documents:read'),
+  requireQuota('api_documents_list'),
+  async (req: ApiRequest, res: Response) => {
+    const organizationId = resolveApiOrg(req, res);
+    if (organizationId === undefined) return res;
+
+    const id = sanitizeQueryParam(req.params.id);
+    if (id === undefined || !isUuid(id)) {
+      return res.status(400).json({ error: 'INVALID_PARAMETER', parameter: 'id', message: 'Document id must be a UUID.' });
+    }
+
+    try {
+      const document = await getVaultDocument(organizationId, id);
+
+      // One 404 for "no such document" and for "not yours" alike: a distinct
+      // response for the second confirms the id exists in another tenant.
+      if (!document) {
+        return res.status(404).json({ error: 'DOCUMENT_NOT_FOUND', id });
+      }
+
+      meterDocumentRead(req);
+      return res.json({ document, _apiVersion: 'v1' });
+    } catch (error: unknown) {
+      return handleDocumentError(error, res, 'Document fetch');
+    }
+  },
+);
 
 export default router;

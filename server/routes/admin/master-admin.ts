@@ -26,8 +26,9 @@
  *   POST  /licensing/tenants/:id/provision  Apply that plan to the tenant
  *
  * Reads use the raw `query()` helper (same precedent as routes/admin/scim-*).
- * The two mutations are written through `auditService` so the 21 CFR Part 11
- * tamper-evident chain records every governed support action.
+ * Every governed mutation records a 21 CFR Part 11 §11.10(e) row through
+ * `recordAuditRow`, and reports in its response body's `auditTrail` whether
+ * that row actually reached a store — see the note on that import below.
  */
 
 import { Router, Request, Response } from 'express';
@@ -35,7 +36,43 @@ import { authMiddleware } from '../../auth';
 import { requirePlatformAdmin } from '../../middleware/requirePlatformAdmin';
 import { query, getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
-import auditService from '../../services/auditService';
+/*
+ * WO-16C #133. The five governed mutations on this router each recorded their
+ * §11.10(e) row with `await auditService.logAction({…})` at statement position,
+ * discarding the value it resolved to. `logAction` never rejects when
+ * persistence fails — deliberate policy: an audit-trail outage must not break
+ * the user action it records — so it RESOLVES an `AuditWriteResult` and says
+ * what happened in `persisted`, and in `chained`, which separates the
+ * retrievable `audit_logs` row from a tamper-proof-only write. Awaiting that
+ * promise and throwing away what it resolved to reports exactly as much as not
+ * awaiting it: each response came back byte-identical whether the record
+ * existed or not, and the only trace of a lost row was a line in the server log.
+ *
+ * The cost is specific here, because this router is also a READ side of the
+ * same record. `GET /audit` below and the `recentAudit` block of
+ * `GET /tenants/:id` both select `FROM audit_logs`, so a row that never reached
+ * the chained store is absent from both. ./licensing-history reads the same
+ * table by the presence of `details.masterAdminAction` — the payload these
+ * calls write — for every action except the two its own NON_LICENSING list
+ * excludes (`user.status_change`, `billing_alert.acknowledge`). An operator who
+ * is told nothing cannot tell "no such action was taken" from "the record of it
+ * was lost".
+ *
+ * The five sites now go through the shared `recordAuditRow` and carry its
+ * outcome to the caller in the response body's `auditTrail`. Each of those five
+ * handlers writes exactly one audit row, so that unqualified key names it
+ * unambiguously; the key is added alongside the columns each response already
+ * returned, and nothing else about the response changed. In all five the
+ * governed write — the `UPDATE … RETURNING` or, for the module toggle,
+ * `writeModuleGrant` — has already returned before the audit write runs, so the
+ * mutation stands whatever happens to the row and is never reverted over it.
+ *
+ * `recordAuditRow` never throws, and its failure arm deliberately carries a
+ * stable code and one sentence rather than the store's own text, which goes
+ * only to its log line keyed on the action and resource id. `auditService` is
+ * reached through that module, so it is no longer imported here directly.
+ */
+import { recordAuditRow } from '../../services/audit/audit-write-outcome';
 import { writeModuleGrant } from '../../services/entitlements/module-grants';
 import masterLicensingRoutes from './master-licensing';
 import licensingTrialsRoutes from './licensing-trials';
@@ -283,7 +320,16 @@ router.patch('/tenants/:id/status', async (req: Request, res: Response) => {
       [status, id]
     );
 
-    await auditService.logAction({
+    /*
+     * WO-16C #133. A log BESIDE an already-committed write: the
+     * `UPDATE organizations … RETURNING` above has returned before this runs.
+     * That UPDATE replaces `status` in place and no table records what it was,
+     * so this audit row is the only place `from` — the status this tenant held
+     * before the operator changed it — and the typed `reason` are written down.
+     * The suspension or reactivation is NOT reverted because its audit row
+     * failed; it stands, and the caller is told in `auditTrail`.
+     */
+    const auditTrail = await recordAuditRow({
       tenantId: id,
       userId: req.userId,
       action: 'data_modify',
@@ -299,7 +345,10 @@ router.patch('/tenants/:id/status', async (req: Request, res: Response) => {
       },
     });
 
-    return res.json(result.rows[0]);
+    /* Every column the updated row already carried, plus whether this
+       decision's §11.10(e) row reached a store and whether it reached the
+       chained `audit_logs` the explorer and ./licensing-history read back. */
+    return res.json({ ...result.rows[0], auditTrail });
   } catch (err) {
     logger.error('Tenant status update failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to update tenant status.' });
@@ -368,7 +417,17 @@ router.patch('/users/:id/status', async (req: Request, res: Response) => {
       [status, id]
     );
 
-    await auditService.logAction({
+    /*
+     * WO-16C #133. A log BESIDE an already-committed write: the
+     * `UPDATE users … RETURNING` above has returned before this runs. That
+     * UPDATE replaces `status` in place and no table records what it was, so
+     * this audit row is the only place `from` — the state this account was in
+     * before the operator changed it — and the typed `reason` are written down.
+     * Locking a person out of the platform, or letting them back in, is NOT
+     * reverted because its audit row failed; it stands, and the caller is told
+     * in `auditTrail`.
+     */
+    const auditTrail = await recordAuditRow({
       tenantId: 0, // platform-level action (not scoped to a single tenant)
       userId: req.userId,
       action: 'data_modify',
@@ -384,7 +443,10 @@ router.patch('/users/:id/status', async (req: Request, res: Response) => {
       },
     });
 
-    return res.json(result.rows[0]);
+    /* Every column the updated row already carried, plus whether this
+       decision's §11.10(e) row reached a store and whether it reached the
+       chained `audit_logs` the explorer reads back. */
+    return res.json({ ...result.rows[0], auditTrail });
   } catch (err) {
     logger.error('User status update failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to update user status.' });
@@ -565,7 +627,15 @@ router.patch('/billing/alerts/:id/acknowledge', async (req: Request, res: Respon
     );
     if (!result.rows.length) return res.status(404).json({ error: 'Not found or already acknowledged.' });
 
-    await auditService.logAction({
+    /*
+     * WO-16C #133. A log BESIDE an already-committed write: the
+     * `UPDATE billing_alerts … RETURNING` above has returned, and its
+     * `acknowledged_by` / `acknowledged_at` columns hold who acknowledged the
+     * alert and when — so this audit row is the Part 11 entry beside that act,
+     * not the only record of it. The acknowledgement is NOT reverted because
+     * its audit row failed; it stands, and the caller is told in `auditTrail`.
+     */
+    const auditTrail = await recordAuditRow({
       tenantId: result.rows[0].organization_id ?? 0,
       userId: req.userId,
       action: 'data_modify',
@@ -575,7 +645,10 @@ router.patch('/billing/alerts/:id/acknowledge', async (req: Request, res: Respon
       userAgent: req.headers['user-agent'] as string,
       details: { masterAdminAction: 'billing_alert.acknowledge' },
     });
-    return res.json(result.rows[0]);
+    /* Every column the updated row already carried, plus whether this action's
+       §11.10(e) row reached a store and whether it reached the chained
+       `audit_logs` the explorer reads back. */
+    return res.json({ ...result.rows[0], auditTrail });
   } catch (err) {
     logger.error('Billing alert acknowledge failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to acknowledge alert.' });
@@ -625,7 +698,17 @@ router.patch('/tenants/:id/modules', async (req: Request, res: Response) => {
       expiresAt: null,
     });
 
-    await auditService.logAction({
+    /*
+     * WO-16C #133. A log BESIDE an already-committed write: `writeModuleGrant`
+     * above has returned the row the database holds. That row records the actor
+     * (`enabled_by` / `disabled_by`) but has no column for a justification, so
+     * this audit row is the only place the operator's typed `reason` for
+     * granting or withdrawing this module is written down. The grant change is
+     * NOT reverted because its audit row failed — withdrawing a capability the
+     * tenant now really does or does not hold would be the worse lie — it
+     * stands, and the caller is told in `auditTrail`.
+     */
+    const auditTrail = await recordAuditRow({
       tenantId: id,
       userId: req.userId,
       action: 'data_modify',
@@ -635,7 +718,10 @@ router.patch('/tenants/:id/modules', async (req: Request, res: Response) => {
       userAgent: req.headers['user-agent'] as string,
       details: { masterAdminAction: 'tenant.module_toggle', moduleId, enabled, reason: reason.trim() },
     });
-    return res.json(row);
+    /* Every field `writeModuleGrant` returned, plus whether this decision's
+       §11.10(e) row reached a store and whether it reached the chained
+       `audit_logs` the explorer and ./licensing-history read back. */
+    return res.json({ ...row, auditTrail });
   } catch (err) {
     logger.error('Module toggle failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to update module entitlement.' });
@@ -682,7 +768,16 @@ router.patch('/feature-flags/:key', async (req: Request, res: Response) => {
       [enabled, key]
     );
 
-    await auditService.logAction({
+    /*
+     * WO-16C #133. A log BESIDE an already-committed write: the
+     * `UPDATE feature_toggles … RETURNING` above has returned before this runs.
+     * That UPDATE replaces `enabled` in place and no table records what it was,
+     * so this audit row is the only place `from` — the state of the flag before
+     * the operator changed it — and the typed `reason` are written down. The
+     * flag change is NOT reverted because its audit row failed; it stands, and
+     * the caller is told in `auditTrail`.
+     */
+    const auditTrail = await recordAuditRow({
       tenantId: 0,
       userId: req.userId,
       action: 'data_modify',
@@ -697,7 +792,10 @@ router.patch('/feature-flags/:key', async (req: Request, res: Response) => {
         reason: reason.trim(),
       },
     });
-    return res.json(result.rows[0]);
+    /* Every column the updated row already carried, plus whether this
+       decision's §11.10(e) row reached a store and whether it reached the
+       chained `audit_logs` the explorer and ./licensing-history read back. */
+    return res.json({ ...result.rows[0], auditTrail });
   } catch (err) {
     logger.error('Feature flag toggle failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to update feature flag.' });

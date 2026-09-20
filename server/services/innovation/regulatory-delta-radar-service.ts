@@ -15,7 +15,6 @@
 
 import { Pool } from 'pg';
 import { ai } from '../../lib/unified-ai-client';
-import { getOpenAIClient } from '../openai-client';
 import crypto from 'crypto';
 import {
   resolveToRegistryEntry,
@@ -1035,6 +1034,44 @@ export class RegulatoryDeltaRadarService {
   /**
    * Generate embedding for text
    */
+  /**
+   * Embed text through the CANONICAL embedding runtime.
+   *
+   * ── WHY THIS NO LONGER RETURNS A ZERO VECTOR ─────────────────────────────
+   * Until 2026-09-10 the catch here was:
+   *
+   *     console.error('...Embedding failed:', error);
+   *     return new Array(1536).fill(0);
+   *
+   * A zero vector is not a null. It is a well-formed value that flows straight
+   * into cosineSimilarity, whose `denominator === 0` guard returns 0 — so a
+   * provider outage did not surface as an error, it surfaced as a SIMILARITY
+   * SCORE OF ZERO against everything, and every requirement scored below
+   * config.semanticThreshold — and the code reads BELOW-THRESHOLD AS A GAP. So
+   * an embedding outage did not produce an error or an empty scan; it produced
+   * a scan reporting EVERY requirement as a regulatory gap. Line 166 also
+   * PERSISTED the vector, writing zeros into the pgvector column, so every
+   * later similarity search against that document returned 0 as well. That part
+   * is durable corruption rather than a transient wrong answer.
+   *
+   * That is the working agreement's "an error is never rendered as an empty
+   * result", in the form that is hardest to notice: the result is not empty, it
+   * is confidently wrong and numerically plausible.
+   *
+   * It now throws. The route handlers are wrapped in asyncHandler, so the caller
+   * is told the scan did not complete instead of being handed a result that
+   * looks complete.
+   *
+   * ── AND WHY IT GOES THROUGH getEmbeddingService ──────────────────────────
+   * WO-6. The direct provider call bypassed the AI gateway's audit trail, and
+   * separately bypassed the corpus policy that
+   * scripts/ci/check-embedding-runtime-canonicality.mjs exists to enforce —
+   * whose own header names the consequence: "the same query against the same
+   * index can return different results depending on which call site embedded
+   * it. That's a silent-retrieval-miss class bug." The canonical service also
+   * honours EMBEDDING_PROVIDER=local, so this path now works air-gapped, and
+   * it does not swallow provider errors.
+   */
   private async generateEmbedding(text: string): Promise<number[]> {
     // Check cache first
     const cacheKey = crypto.createHash('md5').update(text.substring(0, 500)).digest('hex');
@@ -1042,21 +1079,11 @@ export class RegulatoryDeltaRadarService {
       return this.embeddingCache.get(cacheKey)!;
     }
 
-    try {
-      const openai = getOpenAIClient();
-      const response = await openai.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: text.substring(0, 8000), // Limit to model max
-      });
+    const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
+    const result = await getEmbeddingService(this.pool).embed(text.substring(0, 8000));
 
-      const embedding = response.data[0].embedding;
-      this.embeddingCache.set(cacheKey, embedding);
-      return embedding;
-    } catch (error) {
-      console.error('[DeltaRadar] Embedding generation failed:', error);
-      // Return zero vector as fallback
-      return new Array(1536).fill(0);
-    }
+    this.embeddingCache.set(cacheKey, result.embedding);
+    return result.embedding;
   }
 
   /**

@@ -47,10 +47,11 @@ describe('getToolPedigree — name-prefix heuristic', () => {
 });
 
 describe('PEDIGREE_LEVELS', () => {
-  it('has all five keys, each self-consistent with non-empty guidance', () => {
+  it('has all six keys, each self-consistent with non-empty guidance', () => {
     const keys: DeterminismPedigree[] = [
       'deterministic_registry',
       'deterministic_query',
+      'source_cited',
       'rim_learned',
       'external_api_live',
       'model_assisted',
@@ -68,6 +69,36 @@ describe('PEDIGREE_LEVELS', () => {
     expect(PEDIGREE_LEVELS.external_api_live.deterministic).toBe(false);
     expect(PEDIGREE_LEVELS.model_assisted.deterministic).toBe(false);
     expect(PEDIGREE_LEVELS.model_assisted.trust).toBe('requires_verification');
+  });
+});
+
+describe('source_cited — the tier a real citation earns', () => {
+  it('is trusted above model_assisted, because the span can be checked', () => {
+    // "Page 34 says X" and "the model says X" are different claims. Grading a
+    // verifiable quotation the same as an unsourced sentence would make a
+    // reviewer check both the same way, which wastes the citation entirely.
+    expect(PEDIGREE_LEVELS.source_cited.trust).toBe('high');
+    expect(PEDIGREE_LEVELS.model_assisted.trust).toBe('requires_verification');
+  });
+
+  it('is NOT claimed to be deterministic', () => {
+    // The same question can produce a different span. Only the two lookup tiers
+    // are reproducible, and borrowing that word here would overstate it.
+    expect(PEDIGREE_LEVELS.source_cited.deterministic).toBe(false);
+  });
+
+  it('still tells the reader what is left to verify', () => {
+    // A real quotation can be framed wrongly. High trust in the span is not
+    // high trust in the sentence built around it.
+    expect(PEDIGREE_LEVELS.source_cited.guidance).toMatch(/verify/i);
+    expect(PEDIGREE_LEVELS.source_cited.guidance).toMatch(/framed wrongly|says what/i);
+  });
+
+  it('does not outrank a deterministic lookup', () => {
+    // It shares 'high' trust but not determinism — a registry lookup is
+    // reproducible and a citation is not, and the ordering has to keep saying so.
+    expect(PEDIGREE_LEVELS.deterministic_registry.deterministic).toBe(true);
+    expect(PEDIGREE_LEVELS.source_cited.deterministic).toBe(false);
   });
 });
 

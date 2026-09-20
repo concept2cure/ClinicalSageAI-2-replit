@@ -3029,3 +3029,54 @@ needs a different table name and a data move. Until then:
 - Do not add a NOT NULL, a CHECK, or an index naming a column that only one
   shape has, without an `information_schema` guard. The backfill above is the
   worked example.
+
+---
+
+## C-51 — C-48 Stage 1: unify the two org-uuid identity spaces *(architectural — FIXED 2026-09-19)*
+
+The first schema stage of the C-48 plan, built after re-confirming the split still
+exists on the current branch (no backfill existed; only the 9 seed INSERTs in 051/055
+write `identity.organizations`).
+
+`db/migrations/20260919_c48_stage1_identity_org_bridge.sql` makes
+`public.organizations.uuid` — the canonical per-tenant uuid the JWT and
+`app.current_org_id` already carry — a valid PARENT in `identity.organizations`, so a
+single `app.current_org_id` can serve BOTH the COALESCE-family tables (no FK) and the
+identity-FK-bound family (`core.programs`, `ai.*`, `ectd_v4.*`, `innovation.*`, …)
+instead of the two disjoint uuid spaces deny-alling each other. It:
+
+- **Backfills** every public org uuid into `identity.organizations` (idempotent,
+  `ON CONFLICT (id) DO NOTHING`), supplying the two NOT-NULL-without-default columns —
+  `legal_name` from the org name, `business_model` defaulted to `BIO_PHARMA_SPONSOR`
+  (the FK anchor never reads it; `identity.can_access_org()` does not gate on
+  `identity.organizations` membership). This closed the adversarial-caught NOT NULL
+  blocker.
+- Installs a **forward-sync trigger** so every future tenant auto-mirrors.
+- Carries a **fail-closed invariant** (RULE 1): if any public org lacks a mirror after
+  the backfill it `RAISE`s and halts the deploy rather than ship a half-bridge.
+
+Deliberately additive and behaviour-preserving: it does **not** set the GUC or flip
+enforcement (that is Stage 2/3), and it **leaves the 9 seed uuids intact** (no DROP —
+the FK repoint is Stage 4), so seed-keyed child rows keep a valid parent. On a fresh
+DB `public.organizations` is empty, so the backfill is a no-op and the value is the
+sync mechanism; on an estate with real orgs it adds the mirror rows they always should
+have had.
+
+**Verified.** Against real PostgreSQL 16 with the **verbatim 051 `identity.organizations`
+DDL**: 051 applies clean, Stage 1 backfills a seeded public org with every NOT NULL
+column satisfied. Behaviour proven on real PG: forward-sync mirrors a post-migration
+insert; idempotent re-runs backfill 0; the fail-closed invariant **detects** an
+orphan (count 1 with the trigger dropped) and the backfill then **heals** it (→ 0).
+`tests/schema-contract/c48-stage1-identity-org-bridge.contract.test.ts` (6 PGlite
+cases) pins wiring/backfill/seed-preservation/forward-sync/idempotency/invariant;
+`ci:migration-set-order`, `ci:migration-drop-safety`, reachability, security-patterns
+and typecheck all pass; the existing uuid-isolation contract stays green.
+
+**Remaining (Stage 2→4, unchanged from C-48):** reliably populate `app.current_org_id`
+for all scoped paths (C-49 already carries the uuid on `req.user`; wiring it into the
+GUC is safe now that the FK parent set is unified); flip `RLS_ENFORCE=on` per
+environment with the legit cross-org readers on a privileged role; then repoint the
+five identity FKs onto `public.organizations(uuid)`, port `org_relationships`, and
+reduce `identity.organizations` to a synced mirror before retiring the seeds. Also
+still open from C-48: the nullable-`org_id` `IS NULL` arm on `core.programs` (needs the
+write path to stamp `org_id`) and the `public.*` audit.

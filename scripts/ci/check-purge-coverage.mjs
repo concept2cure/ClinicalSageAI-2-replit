@@ -56,10 +56,45 @@ function purgeChildTables() {
     console.error('   Refusing to report success for a list that was never read.');
     process.exit(1);
   }
-  const tables = [...m[1].matchAll(/'([a-z0-9_]+)'/g)].map((x) => x[1]);
-  if (tables.length === 0) {
+  /* Comments FIRST. The entries are heavily annotated and those comments
+     contain apostrophes ("the member's free-text justification"), so a quoted-
+     literal scan over the raw body pairs an apostrophe in one comment with an
+     apostrophe in the next and reads the prose between them as a table name. */
+  const body = m[1].replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
+  const literals = [...body.matchAll(/'([^']+)'/g)].map((x) => x[1]);
+  if (literals.length === 0) {
     console.error('❌ purge-coverage: PURGE_CHILD_TABLES parsed to zero entries — broken scan.');
     process.exit(1);
+  }
+
+  /* Split, rather than filter.
+     The pattern here used to be /'([a-z0-9_]+)'/ — which cannot match a
+     SCHEMA-QUALIFIED entry, so when the vault tables were corrected to
+     'vault.documents' and 'vault.document_chunks' the gate stopped seeing them
+     and said nothing. It happened to change no number, because the residue
+     query below is public-only in both halves and a 'vault.*' seed could never
+     have matched a public relname anyway. But a list entry this gate cannot
+     read must never simply vanish from it: that is how a guard starts measuring
+     a list nobody wrote. Non-public entries are now reported as OUT OF SCOPE,
+     and anything that is neither a bare name nor schema.name fails closed. */
+  const tables = [];
+  const outOfScope = [];
+  for (const lit of literals) {
+    if (/^[a-z0-9_]+$/.test(lit)) { tables.push(lit); continue; }
+    if (/^[a-z0-9_]+\.[a-z0-9_]+$/.test(lit)) { outOfScope.push(lit); continue; }
+    console.error(`❌ purge-coverage: cannot interpret PURGE_CHILD_TABLES entry '${lit}'.`);
+    console.error('   Refusing to measure a list this gate could not fully read.');
+    process.exit(1);
+  }
+  if (tables.length === 0) {
+    console.error('❌ purge-coverage: PURGE_CHILD_TABLES has no public-schema entries — broken scan.');
+    process.exit(1);
+  }
+  if (outOfScope.length > 0) {
+    console.log(
+      `   note: ${outOfScope.length} schema-qualified purge entr(y/ies) are OUTSIDE this gate's ` +
+        `scope (it measures public.* only): ${outOfScope.join(', ')}`,
+    );
   }
   return tables;
 }

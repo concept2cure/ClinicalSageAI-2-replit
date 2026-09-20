@@ -33,6 +33,20 @@ export interface DispatchGateInput {
    * cross-reference register.
    */
   unauthorizedCrossReferences?: number;
+  /**
+   * Whether the 21 CFR 312.42 clinical-hold state was actually EVALUATED for
+   * this sequence.
+   *
+   * `criticalActions` counts the hold only when a regulatory clock was supplied
+   * to deriveIndActionItems — and the routes build that clock from the REQUEST
+   * BODY (`b.clockInput?.receiptDate ? evaluateRegulatoryClock(...) : null`).
+   * Omit clockInput and the clock is null, the hold item is never derived, the
+   * critical count legitimately excludes it, and the gate cleared a sequence
+   * under an active clinical hold. A hold that was never evaluated is not a hold
+   * that is absent, so pass `false` and the gate blocks. Undefined keeps the
+   * prior behaviour for callers that do not model the clock at all.
+   */
+  clinicalHoldEvaluated?: boolean;
 }
 
 export interface DispatchGateVerdict {
@@ -82,6 +96,13 @@ export function evaluateDispatchGate(input: DispatchGateInput): DispatchGateVerd
     blockers.push({
       code: 'MISSING_CHECKSUMS',
       message: `${missingChecksums} leaf/leaves have no checksum (rendered bytes not attached); the eCTD index-md5 would be incomplete.`,
+    });
+  }
+  if (input.clinicalHoldEvaluated === false) {
+    blockers.push({
+      code: 'CLINICAL_HOLD_NOT_EVALUATED',
+      message:
+        'The 21 CFR 312.42 clinical-hold state was not evaluated for this sequence (no regulatory clock was supplied), so a hold cannot be ruled out. An unevaluated hold is not an absent hold.',
     });
   }
   if (criticalActions > 0) {

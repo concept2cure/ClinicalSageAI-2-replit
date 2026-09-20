@@ -24,7 +24,7 @@ import { buildIvdrPackContent } from '../services/ivdrPackContent';
 import { generateIvdrDocx } from '../services/docxGenerator';
 import { renderIvdrPackHtml } from '../services/ivdrPackHtml';
 import { renderHtmlToPdfTracked } from '../export/renderers';
-import { putBytes, isVaultAvailable } from '../services/vaultService';
+import { getStorageProvider } from '../services/storage/index.js';
 import archiver from 'archiver';
 import { runWithSystemTenantScope, runWithTenantScope } from '../db/tenantStore';
 import { shouldProcessTenantInBackground } from '../services/tenant/tenant-lifecycle.js';
@@ -495,7 +495,12 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
 
     // ── Step 7: Upload all artifacts to vault ───────────────────────────────
 
-    if (!isVaultAvailable()) {
+    // The canonical storage seam. This used to call a parallel copy of the
+    // same local layout (server/services/vaultService.ts), which wrote to disk
+    // whatever STORAGE_PROVIDER said — so an IVDR pack ignored the configured
+    // provider and could not follow the platform to S3.
+    const storage = getStorageProvider();
+    if (!(await storage.isAvailable())) {
       throw new Error('IVDR_VAULT_UNAVAILABLE');
     }
 
@@ -503,7 +508,7 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
     const vaultMeta = { packId, packType, packVersion: String(packVersion) };
 
     const [manifestVault, docxVault, pdfVault, zipVault] = await Promise.all([
-      putBytes({
+      storage.put({
         orgId,
         projectId,
         filename: `${baseName}_manifest.json`,
@@ -511,7 +516,7 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
         mime: 'application/json',
         metadata: vaultMeta,
       }),
-      putBytes({
+      storage.put({
         orgId,
         projectId,
         filename: `${baseName}.docx`,
@@ -519,7 +524,7 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
         mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         metadata: vaultMeta,
       }),
-      putBytes({
+      storage.put({
         orgId,
         projectId,
         filename: `${baseName}.pdf`,
@@ -527,7 +532,7 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
         mime: 'application/pdf',
         metadata: vaultMeta,
       }),
-      putBytes({
+      storage.put({
         orgId,
         projectId,
         filename: `${baseName}.zip`,

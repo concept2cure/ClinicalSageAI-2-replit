@@ -22,7 +22,10 @@ import {
 const log = createScopedLogger('preclinical-extractor');
 
 const DEFAULT_MAX_INPUT_CHARS = 60_000;
-const DEFAULT_MODEL = 'claude-opus-4-7';
+// The registry ALIAS, not a wire version: the gateway resolves it to the
+// current Opus, and an unmatched pin would fall through to normal routing
+// without saying so.
+export const DEFAULT_MODEL = 'claude-opus-4';
 
 const SYSTEM_PROMPT = `You are a regulatory toxicology data extractor working on
 ICH M3(R2) / ICH S1B / ICH S2(R1) preclinical study reports for a Module 4

@@ -26,7 +26,7 @@ import {
   type ProjectMemoryEntry,
   type ProjectIngestedDocument,
 } from '../../shared/schema';
-import { eq, and, desc, sql, asc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { getEmbeddingService } from './enhancedEmbeddingService.js';
 import { resolveMemoryEntries } from './memory/llm-extraction.js';
 import {

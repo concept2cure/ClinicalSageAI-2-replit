@@ -107,8 +107,8 @@ function genRecommendations(a: ParsedProtocol, csrs: SimilarProtocol[] = []): st
   } else s += `- **Study Duration:** No study duration was specified. This is a critical parameter and should be defined explicitly.\n\n`;
   if (riskCount) {
     s += `## Risk Mitigation\n\nYour protocol has ${riskCount} identified risk factors (${high.length} high, ${med.length} medium severity).\n\n`;
-    if (high.length) { s += `### High Priority\n`; high.forEach((r, i) => { s += `${i + 1}. **${r.description}**${r.mitigation ? ` -- Suggested mitigation: ${r.mitigation}` : ''}\n`; }); s += `\n`; }
-    if (med.length) { s += `### Medium Priority\n`; med.forEach((r, i) => { s += `${i + 1}. **${r.description}**${r.mitigation ? ` -- Suggested mitigation: ${r.mitigation}` : ''}\n`; }); s += `\n`; }
+    if (high.length) { s += `### High Priority\n`; high.forEach((r, i) => { s += `${i + 1}. **${r.description}**${r.mitigation ? ` — Suggested mitigation: ${r.mitigation}` : ''}\n`; }); s += `\n`; }
+    if (med.length) { s += `### Medium Priority\n`; med.forEach((r, i) => { s += `${i + 1}. **${r.description}**${r.mitigation ? ` — Suggested mitigation: ${r.mitigation}` : ''}\n`; }); s += `\n`; }
   }
   s += `## General Best Practices\n\n- **Documentation:** Ensure clear documentation of inclusion/exclusion criteria with objective measures where possible.\n- **Adaptive Design:** Consider incorporating adaptive design elements to enhance efficiency and flexibility.\n- **Monitoring:** Implement robust data monitoring procedures with predefined stopping rules.\n- **Blinding:** Where applicable, maintain adequate blinding procedures to reduce bias.\n- **Endpoint Selection:** Ensure endpoints are validated, clinically meaningful, and measurable with precision.\n\n`;
   if (csrs.length) {
@@ -122,13 +122,38 @@ function genRecommendations(a: ParsedProtocol, csrs: SimilarProtocol[] = []): st
 function genStatisticalInsights(a: ParsedProtocol): string {
   let s = `# Statistical Analysis Insights\nGenerated: ${new Date().toLocaleString()}\n\n`;
   if (a.sample_size) {
-    s += `## Sample Size and Power\n\n### Power Analysis\nWith your proposed sample size of ${a.sample_size}, estimated power varies by effect size:\n\n`;
-    [{ size: 0.2, desc: 'small' }, { size: 0.5, desc: 'medium' }, { size: 0.8, desc: 'large' }].forEach(e => {
-      const p = Math.min(0.99, 0.4 + ((a.sample_size || 0) * e.size) / 100);
-      s += `- **${e.desc.charAt(0).toUpperCase() + e.desc.slice(1)} effect (${e.size})**: Approximately ${(p * 100).toFixed(1)}% power at alpha=0.05\n`;
-    });
+    /* ── 2026-09-10: this block used to PRINT A POWER FIGURE ──────────────────
+       It read:
+         const p = Math.min(0.99, 0.4 + (sample_size * effectSize) / 100);
+         `Approximately ${(p * 100).toFixed(1)}% power at alpha=0.05`
+       which is linear in n, capped at 99%, and is not a power calculation by
+       any definition — power comes from the noncentral t (or the corresponding
+       binomial / log-rank form), not from a line. It was rendered to one
+       decimal place beside an alpha, which is the notation of a computed
+       result, and the surrounding surface files this document into a real
+       Module 5 document via saveToAuthoring.
+
+       It is not replaced with a better formula, because the inputs a real one
+       needs are not captured here: whether sample_size is total or per-arm, the
+       allocation ratio, the outcome type, and the variance or event rate. Any
+       number derived without those would be the same defect with more digits.
+       So the section now states what is missing and asks for it. */
+    s += `## Sample Size and Power\n\n### Power Analysis\n`;
+    s += `**Not calculated.** This report captured a sample size of ${a.sample_size}, which is not sufficient to compute power.\n\n`;
+    s += `A power calculation needs, in addition:\n\n`;
+    s += `- whether ${a.sample_size} is the total enrolment or the per-arm enrolment, and the allocation ratio;\n`;
+    s += `- the outcome type (continuous, binary, or time-to-event) and its primary analysis;\n`;
+    s += `- the target effect size on that outcome's own scale, with the variance, control-arm proportion, or expected event rate;\n`;
+    s += `- the Type I error rate and whether the test is one- or two-sided.\n\n`;
+    s += `Supply these to your biostatistician, or record them in the protocol, and the calculation can be performed and cited.\n\n`;
+
     const drop = Math.round((a.sample_size || 0) * 0.15);
-    s += `\n### Dropout Considerations\n- Based on typical dropout rates in ${a.indication || 'clinical'} studies, we recommend accounting for approximately 15% participant attrition.\n- Consider enrolling an additional ${drop} participants (total: ${(a.sample_size || 0) + drop}) to maintain statistical power after dropouts.\n\n`;
+    /* The 15% was presented as "typical dropout rates in {indication} studies".
+       No indication-specific dropout data is consulted anywhere in this file —
+       the rate is a hardcoded constant, so the provenance claim was invented
+       even though the number is a common planning default. It is now labelled
+       as the placeholder it is. */
+    s += `### Dropout Considerations\n- **A 15% attrition placeholder is used below. It is not derived from ${a.indication || 'this indication'} — no dropout data is consulted by this report.** Replace it with the observed rate from comparable studies before relying on the adjusted figure.\n- At 15%, an additional ${drop} participants (total: ${(a.sample_size || 0) + drop}) would offset attrition.\n\n`;
   }
   s += `## Study Design Considerations\n\n### Randomization Strategy\n- For your ${a.phase ? `Phase ${a.phase}` : ''} study in ${a.indication || 'this indication'}, consider stratified randomization to balance important prognostic factors.\n- Key stratification variables might include: age groups, disease severity, and baseline biomarkers.\n\n### Interim Analysis\n- We recommend implementing interim analyses at 30% and 60% enrollment to assess safety and conditional power.\n- Consider using O'Brien-Fleming boundaries to control Type I error rate across multiple looks at the data.\n\n### Statistical Model Considerations\n- Consider including the following covariates in your primary analysis: age, sex, disease duration, and baseline scores.\n- For time-to-event outcomes, ensure appropriate censoring mechanisms are defined.\n- For repeated measures, consider mixed-effects models to account for within-subject correlation.\n\n`;
   s += `---\n*These statistical insights are general recommendations and should be reviewed by a qualified biostatistician.*\n`;
@@ -170,20 +195,20 @@ function readinessChecks(a: ParsedProtocol): ReadinessCheck[] {
     {
       read: Boolean(ep),
       passed: Boolean(ep),
-      strength: `**Primary endpoint is stated** -- "${ep}". This reader checks that a single primary endpoint is stated; it does not evaluate whether that endpoint is validated, clinically meaningful, or adequately powered.`,
-      gap: `**Primary endpoint** -- no primary endpoint was read from the text, so the endpoints of this protocol have not been assessed.`,
+      strength: `**Primary endpoint is stated** — "${ep}". This reader checks that a single primary endpoint is stated; it does not evaluate whether that endpoint is validated, clinically meaningful, or adequately powered.`,
+      gap: `**Primary endpoint** — no primary endpoint was read from the text, so the endpoints of this protocol have not been assessed.`,
     },
     {
       read: n > 0,
       passed: n >= SMALL_SAMPLE_N,
-      strength: `**Sample size** -- N=${n}, at or above the ${SMALL_SAMPLE_N} participants below which this reader raises a power risk. This is a threshold check, not a power calculation; the Statistical Insights document carries the power estimates.`,
-      gap: `**Sample size** -- no sample size was read from the text, so no adequacy check could run.`,
+      strength: `**Sample size** — N=${n}, at or above the ${SMALL_SAMPLE_N} participants below which this reader raises a power risk. This is a threshold check, not a power calculation; the Statistical Insights document carries the power estimates.`,
+      gap: `**Sample size** — no sample size was read from the text, so no adequacy check could run.`,
     },
     {
       read: wk > 0,
       passed: wk >= SHORT_DURATION_WK,
-      strength: `**Study duration** -- ${wk} weeks, at or above the ${SHORT_DURATION_WK} weeks below which this reader raises a durability risk.`,
-      gap: `**Study duration** -- no study duration was read from the text, so no follow-up adequacy check could run.`,
+      strength: `**Study duration** — ${wk} weeks, at or above the ${SHORT_DURATION_WK} weeks below which this reader raises a durability risk.`,
+      gap: `**Study duration** — no study duration was read from the text, so no follow-up adequacy check could run.`,
     },
   ];
 }
@@ -262,7 +287,7 @@ function genIndReadiness(a: ParsedProtocol): string {
 
   s += `## Points to Address\n\n`;
   if (risks.length) {
-    risks.forEach((r, i) => { s += `${i + 1}. **${r.description}** (${(r.severity || 'unspecified').toLowerCase()} severity)${r.mitigation ? ` -- Suggested mitigation: ${r.mitigation}` : ''}\n`; });
+    risks.forEach((r, i) => { s += `${i + 1}. **${r.description}** (${(r.severity || 'unspecified').toLowerCase()} severity)${r.mitigation ? ` — Suggested mitigation: ${r.mitigation}` : ''}\n`; });
     s += `\n`;
   } else if (mayReassure(state, coveragePct)) {
     /* The one reassuring sentence in this document, and the only state that may
@@ -280,9 +305,9 @@ function genIndReadiness(a: ParsedProtocol): string {
      deficiency claim around each one is removed. */
   s += `## Not Assessed\n\n`;
   gaps.forEach((c) => { s += `- ${c.gap}\n`; });
-  s += `- **Inclusion/exclusion criteria** -- not read by this analysis.\n`;
-  s += `- **Statistical analysis plan** -- not read by this analysis.\n`;
-  s += `- **Safety monitoring provisions** -- not read by this analysis.\n`;
+  s += `- **Inclusion/exclusion criteria** — not read by this analysis.\n`;
+  s += `- **Statistical analysis plan** — not read by this analysis.\n`;
+  s += `- **Safety monitoring provisions** — not read by this analysis.\n`;
   s += `- **Concomitant medication management** (FDA 21 CFR 312.23(a)(6))\n`;
   s += `- **Interim analysis points** (ICH E9, Section 4.5)\n`;
   s += `- **Data management plan** (ICH E6(R2), Section 5.5)\n`;
@@ -341,7 +366,9 @@ function genGovernedEvidenceReport(kind: string): string {
 
 const DOC_REGISTRY: DocDef[] = [
   { id: 'recommendations', label: 'Design Recommendations', gen: genRecommendations, needsCsr: true, blurb: 'Evidence-based protocol design recommendations vs. similar studies.' },
-  { id: 'statistical', label: 'Statistical Insights', gen: (a) => genStatisticalInsights(a), blurb: 'Power analysis, dropout, randomization and modelling guidance.' },
+  // blurb: no longer promises "power analysis" — the section states the inputs a
+  // power calculation needs rather than printing a figure. See genStatisticalInsights.
+  { id: 'statistical', label: 'Statistical Insights', gen: (a) => genStatisticalInsights(a), blurb: 'What a power calculation still needs, plus dropout, randomization and modelling guidance.' },
   { id: 'ind', label: 'IND Readiness', gen: (a) => genIndReadiness(a), blurb: 'Qualitative IND readiness assessment with regulatory citations.' },
 ];
 
@@ -566,7 +593,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         <AnswerLead
           tone="calm"
           eyebrow={'Your analysis of ' + (a.title || 'the protocol').slice(0, 48) + ' is ready'}
-          headline={<>I read the {a.phase && a.phase !== 'Unknown' ? <>Phase {a.phase} </> : null}{a.indication && a.indication !== 'Unspecified' ? <>{a.indication.toLowerCase()} </> : null}protocol and drafted your <b>{docDef?.label}</b> -- {a.risk_factors.length ? <><b>{a.risk_factors.length} design {a.risk_factors.length === 1 ? 'risk' : 'risks'}</b> to address</> : <>the design looks sound on the parameters I could read</>}.</>}
+          headline={<>I read the {a.phase && a.phase !== 'Unknown' ? <>Phase {a.phase} </> : null}{a.indication && a.indication !== 'Unspecified' ? <>{a.indication.toLowerCase()} </> : null}protocol and drafted your <b>{docDef?.label}</b> — {a.risk_factors.length ? <><b>{a.risk_factors.length} design {a.risk_factors.length === 1 ? 'risk' : 'risks'}</b> to address</> : <>the design looks sound on the parameters I could read</>}.</>}
           body={<>{a.sample_size ? <>At N={a.sample_size}{a.duration_weeks ? <> over {a.duration_weeks} weeks</> : null}, the recommendations and statistical insights are written out below — power estimates, dropout, and comparison to similar studies. {analysis.source === 'local' ? 'Connect the backend to match against the live CSR library.' : `Matched against ${(analysis.similar_protocols || []).length} similar CSRs.`}</> : <>I could not read a sample size from the text — add it and the power analysis will fill in.</>}</>}
           reassure="Everything is drafted as a real document, not a chart — read it, adjust, and send it to the editor."
           action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Re-analyze', onClick: analyze } }}

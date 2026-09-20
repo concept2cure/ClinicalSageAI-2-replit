@@ -27,7 +27,7 @@ import { resolveSignerIdentity } from '../services/part11/resolve-signer-identit
 import bcrypt from 'bcryptjs';
 import { createHash } from 'crypto';
 import { pool } from '../db.js';
-import { verifyToken as verifyMfaToken, isMfaEnabled } from '../services/mfaService.js';
+import { verifyToken as verifyMfaToken } from '../services/mfaService.js';
 import { writeChainedAuditRow } from '../services/auditService';
 import { buildVersionBindingDigest } from '../services/part11/version-binding.js';
 import { isSigningAuthorized } from '../services/part11/signing-authority';

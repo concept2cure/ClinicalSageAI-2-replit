@@ -117,10 +117,24 @@ const LENSES = [
 ];
 
 // Deterministic RTF/CRL aggregation — mirror of aggregateRisk in shadow-review-service.ts.
+//
+// WO-16C #99 follow-up. In the service that function's 0 is only a FLOOR: the
+// run persists max(model's own score, aggregate), so "no relevant finding"
+// never reaches the database as the answer. Here there is no model — 'seed' is
+// the model column — so whatever this returns IS the recorded score.
+//
+// Every finding on the nb_mdr and nb_ivdr lenses carries dimension 'nb', so the
+// RTF dimensions match nothing and this returned 0. The seeded run then said
+// status 'complete', rtf_risk_score 0, and the surface painted "0%", a green
+// band and "low risk" for a gate this lens never assessed — precisely the
+// symptom finding #99 is about, sitting in the demo data a customer is shown.
+//
+// Null, not zero: a gate whose dimensions no finding touches was not assessed,
+// and the surface already renders that third state honestly.
 const SEVERITY_WEIGHT = { critical: 1, major: 0.6, minor: 0.25, info: 0 };
 function scoreDims(findings, dims) {
   const relevant = findings.filter((f) => dims.includes(f.dimension));
-  if (relevant.length === 0) return 0;
+  if (relevant.length === 0) return null;
   if (relevant.some((f) => f.severity === 'critical')) return 1;
   const sum = relevant.reduce((acc, f) => acc + (SEVERITY_WEIGHT[f.severity] ?? 0), 0);
   return Math.min(1, Number((sum / (relevant.length + 1) + 0.15 * Math.min(relevant.length, 3)).toFixed(3)));

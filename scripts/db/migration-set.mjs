@@ -71,6 +71,8 @@ import { ensureJournal, recordApplied } from './migration-journal.mjs';
 export const TENANT_ISOLATION_SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
 export const UUID_TENANT_ISOLATION_NONPUBLIC =
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql';
+export const C48_STAGE1_IDENTITY_ORG_BRIDGE =
+  'db/migrations/20260919_c48_stage1_identity_org_bridge.sql';
 
 export const C2C_MIGRATION_FILES = [
   // ── Golden-journey prerequisites ────────────────────────────────────────────
@@ -374,6 +376,12 @@ export const C2C_MIGRATION_FILES = [
   // guarded (CREATE/ALTER ... IF NOT EXISTS), so idempotent where push already
   // provisioned them.
   'db/migrations/20260725_submission_orchestrator_store_port.sql',
+  /* Immediately after the port, which is the only file on this applier that
+     creates submission_orchestrator_runs with the narrow four-value region
+     CHECK — so the DROP-then-ADD below always has that constraint to replace on
+     a bare database, and never runs before its table exists. The live state on a
+     pushed database is no CHECK at all; see the file's 2026-09-18 header. */
+  'migrations/20260629_orchestrator_region_check_alignment.sql',
   'db/migrations/20260725_esig_gate_columns_port.sql',
   'db/migrations/20260725_users_signing_lockout_columns.sql',
 
@@ -1499,8 +1507,132 @@ export const C2C_MIGRATION_FILES = [
   //     only, via the fail-closed `app.audit_archive_bypass` GUC it already sets
   //     with SET LOCAL on one dedicated connection.
   // Ordered BEFORE the tenant-isolation sweeps, which must remain last (C-33).
+  /* The hash chain the immutability triggers below were meant to protect.
+     Added 2026-09-10; it had been on NO applier — not _gcc_-named so not
+     install-fresh step 6 or the CI psql loop, not in the root migrations/ tree
+     so not the step-3 overlay, not matching db_migrate.sh's 0NN_ glob, and not
+     in this list. Verified against a canonically provisioned database: the
+     three immutability triggers are present and trg_audit_events_hash_chain is
+     absent, as is the audit_events_hash_chain() function.
+
+     So the immutability half of the Part 11 audit design shipped and the
+     integrity half did not, and 20260617_audit_events_hmac_seal.sql below seals
+     rows whose chain columns are never populated. Every chain surface therefore
+     reports 'unverified' on a canonical database — correctly, since no row
+     carries a record_hash (server/services/audit/signedAuditExport.ts counts
+     hashed vs unhashed rather than reporting 'intact' over an unchecked chain).
+
+     Ordered BEFORE the immutability entry because the chain must exist before
+     the table is sealed against modification. Its backfill was REMOVED as part
+     of this change — see the header of that file for why; in short, hashing
+     historical rows from their current contents manufactures an integrity
+     claim, and the UPDATE it used would have raised P0A01 against the
+     already-deployed no-update trigger. */
+  'db/migrations/20260222_audit_events_hash_chain.sql',
+
   'db/migrations/20260222_audit_events_immutability.sql',
   'db/migrations/20260617_audit_logs_immutability.sql',
+
+  /* The charter-domain audit trail's own immutability, added 2026-09-11.
+     Same shape as the two entries above and the hash chain below them: an
+     append-only guarantee that a fresh install had and no replaying applier
+     re-asserted.
+
+     WHAT IS AND IS NOT WRONG HERE — WO-15 finding 3 says the four charter
+     tables "are on no deploy path" and so "may not exist" on a populated
+     database. The second half is WRONG and is corrected in that work order:
+     project_charters, charter_sections, timeline_phases, project_commitments
+     AND charter_audit_events all EXIST on a canonically provisioned database —
+     verified by querying one.
+
+     CORRECTED 2026-09-17: this entry used to add "so drizzle-kit push creates
+     them at install-fresh step 2". That is FALSE. They are declared in
+     shared/schema/project-charter.ts, but drizzle.config.ts names only
+     shared/schema.ts, ana-intelligence.ts and report-os.ts, and
+     project-charter.ts is re-exported from shared/schema/index.ts, which is not
+     an entrypoint and is not reachable from one — the same NOT-re-exported
+     pattern already noted at the two entries above. The charter tables are
+     outside the push surface entirely. They come from install-fresh's step-3
+     overlay: 0012_project_charter_timeline.sql for project_charters, and
+     20260629_charter_tables_rebuild.sql for the other four.
+
+     The fix below is unaffected — it is guarded on the table existing, not on
+     what created it — but the reason it gives was wrong, and a wrong reason is
+     how the next person reaches a wrong conclusion. The consequence of the real
+     mechanism is WO-15 finding 2: project_charters is frozen at 0012's 27
+     columns while the declaration names 48.
+
+     What Drizzle CANNOT express is a trigger. charter_audit_events_no_update
+     and charter_audit_events_no_delete existed only in
+     migrations/20260629_charter_tables_rebuild.sql, which runs on install-
+     fresh's overlay and nowhere else — so a database deploy-migrate maintains
+     has the audit table and none of its protection, and if either trigger is
+     dropped by a restore or a schema tool, nothing puts it back and the charter
+     audit trail silently becomes mutable.
+
+     WHY THE SMALL FILE AND NOT THE REBUILD. Listing 20260629 itself was tried
+     first and is WRONG, for a reason its live-database proof could not reach:
+     the rebuild is NOT self-contained. It has five REFERENCES
+     project_charters(id) clauses and does not create project_charters — that
+     table comes from drizzle push, and nothing in this set creates it.
+     Applying the set in order to a database that has not been pushed dies at
+     the first FK with `relation "project_charters" does not exist`.
+     tests/schema-contract/tenant-isolation-sweep.contract.test.ts C-33 applies
+     the set exactly that way and caught it; the live proof passed only because
+     that database already carried project_charters from install-fresh, so it
+     could not expose a dependency the set does not satisfy.
+
+     And the rebuild's other 367 lines buy nothing: every table it creates is
+     CREATE TABLE IF NOT EXISTS against a table push has already made, so the
+     DDL no-ops on any real database. The function and the two triggers are the
+     whole delta. Carrying the rest would put a second, independent definition
+     of four Drizzle-owned tables on the replaying applier in exchange for
+     nothing. So the triggers are lifted verbatim into the guarded file below
+     and 20260629 stays on install-fresh only.
+
+     NEVER add migrations/20260611_drop_charter_staging_tables.sql to the set.
+     It DROPs project_commitments, charter_sections and timeline_phases — RULE
+     1's create-then-drop hazard exactly: replayed every deploy, it would
+     destroy those tables' contents every time, green.
+
+     Replay-safety: CREATE OR REPLACE FUNCTION is idempotent and each trigger is
+     DROP … IF EXISTS then CREATE in the same file, the idiom
+     check-migration-drop-safety.mjs recognises. The trigger installs are
+     guarded on charter_audit_events existing, so the file is a documented
+     no-op — RAISE NOTICE, no claim of immutability — on a database that lacks
+     the table, which is what makes it self-contained where the rebuild was not.
+
+     NOT claimed: this converges no column. It installs enforcement, nothing
+     else; databases whose shape came from push keep that shape. */
+  'migrations/20260911_charter_audit_immutability.sql',
+
+  /* contradiction_consequence_log / contradiction_findings — column
+     convergence, added 2026-09-11 (WO-15 finding 7).
+
+     db/migrations/20260323_assumption_decision_contradiction.sql (index 42
+     above) was amended in place the same day: its consequence-log column
+     `execution_notes` renamed to `notes`, and a `detected_by TEXT NOT NULL
+     DEFAULT 'system'` reduced to plain `TEXT`. Both sit inside CREATE TABLE IF
+     NOT EXISTS blocks, so the amendment governs only a database that does not
+     yet have the tables. This file is the other half: the ALTERs that reach a
+     database which already does.
+
+     The column name mattered because four INSERTs in
+     contradiction-resolution-orchestrator.ts named `execution_notes` and no
+     provisioned database has ever had that column — deploy-migrate refuses an
+     unprovisioned database, so install-fresh builds them all and its overlay's
+     migrations/20260524_contradiction_engine_schema.sql creates the table with
+     `notes`. 20260323 then runs against an existing table and no-ops. Those
+     four writes raised 42703 every time, into catch blocks that discard the
+     error, on a table nothing ever reads. Confirmed by executing one verbatim
+     against a canonically provisioned database.
+
+     The default mattered because no code writes detected_by, so 'system' would
+     be an attribution nothing recorded.
+
+     Expected to be a no-op on every real database — that is what the guards
+     and the IF NOT EXISTS are for, and why it is safe to carry. */
+  'migrations/20260911_contradiction_consequence_log_convergence.sql',
 
   /* The SAME §11.70 seal column on audit_events, the SIEM/export-facing audit
      table. 20260609 added it to audit_logs and is on the applier; this one was
@@ -1985,6 +2117,132 @@ export const C2C_MIGRATION_FILES = [
   // retention_until), which is the point: the guard has to exist before the
   // clock starts, not after the first record is destroyed.
   'migrations/20260906b_vault_legal_holds.sql',
+  'migrations/20260906c_vault_documents_content_hash_idx.sql',
+  'migrations/20260917_vault_documents_storage_version.sql',
+  'migrations/20260917b_submission_leaf_document_uuid.sql',
+
+  /* vault.evidence_citations — the RAG provenance store, added 2026-09-11
+     (WO-15 finding 8). Placed after the vault chunk store above because its
+     two chunk FKs target it.
+
+     advancedRAGPipeline.ts:1316 INSERTs into this table on every retrieval
+     that requests citation persistence, and the table existed on no
+     provisioned database. Its only creator was
+     db/migrations/_legacy/042_gcc_evidence_vault.sql, which no applier reaches:
+     not this set, and not the *_gcc_* psql loops in install-fresh or CI, both
+     of which are non-recursive and never descend into _legacy/. drizzle-kit
+     push emits no vault DDL either, so the shared/schema/vault.ts declaration
+     created nothing.
+
+     The failure was invisible twice over: the INSERT's 42P01 is caught into a
+     console.warn at advancedRAGPipeline.ts:1533, so the RAG answer returns
+     normally with no provenance recorded; and install-fresh's push-surface
+     check matched only pgTable('name') and queried only table_schema='public',
+     so all six vault tables were outside its view while it reported the surface
+     verified. That half is fixed in scripts/db/lib/declared-tables.mjs.
+
+     Shape taken verbatim from the two existing definitions, which agree with
+     each other. Guarded on vault.documents, RLS-policied through it on the
+     20260905b pattern, idempotent. */
+  'migrations/20260911_vault_evidence_citations.sql',
+
+  /* c2c_template_specs + its doc_types column, added 2026-09-17 (WO-15
+     finding 5). Self-contained: this file creates the base table IF NOT EXISTS
+     (byte-identical to 20260531_template_specs.sql modulo comments — verified)
+     and then ADDs the column, so listing it alone covers both. 20260531 is a
+     strict subset and stays unlisted.
+
+     The table has NO Drizzle definition — zero hits under shared/ — so push
+     creates nothing, and both creators ran on install-fresh's step-3 overlay and
+     nowhere else. The table therefore exists on every freshly provisioned
+     database and was re-asserted on none. A database provisioned BEFORE
+     20260716 was written has the table from 20260531 and no doc_types, and no
+     applier would ever have added it.
+
+     Proven before the fix: dropped doc_types on a canonically provisioned
+     database, ran deploy-migrate, it reported "safe to roll services" and the
+     column did NOT come back.
+
+     The absence is silent rather than loud, which is why it survived: no
+     statement names doc_types (INSERT lists twelve columns without it, UPDATE
+     sets four, reads are SELECT *), so nothing raises 42703 — row.doc_types is
+     undefined and templateStore.ts:47 maps it to []. Every template reports
+     zero document types, indistinguishable from one that has none.
+
+     NOT claimed: that this makes document-type chips appear. Nothing in the
+     repository writes doc_types — the column is inert on every database,
+     with-column or without. Recorded in the work order as its own finding
+     rather than fixed by inventing a writer. */
+  'migrations/20260716_template_doc_types.sql',
+
+  /* project_charters — the 21 declared columns no applier ever created, added
+     2026-09-17 (WO-15 finding 2).
+
+     server/routes/charters.ts issues an unqualified d.select().from(
+     projectCharters), which expands to all 48 columns the declaration names.
+     migrations/0012_project_charter_timeline.sql is the ONLY creator of this
+     table in the repository and makes 27, so that select raised 42703 on every
+     database. server/routes/pma-workflow-routes.ts names pma_config explicitly
+     in raw SQL three times, so the PMA workflow-progress feature could not work
+     anywhere.
+
+     CORRECTION TO AN EARLIER NOTE IN THIS FILE: the charter entry above once
+     said drizzle-kit push creates the charter tables. It does NOT.
+     drizzle.config.ts names shared/schema.ts, ana-intelligence.ts and
+     report-os.ts; shared/schema/project-charter.ts is re-exported only from
+     shared/schema/index.ts, which is not an entrypoint and is not reachable
+     from one. The charter tables are outside the push surface entirely and come
+     from install-fresh's overlay — 0012 for project_charters, 20260629 for the
+     other four. The finding-3 fix above is unaffected (it is guarded on the
+     table existing, not on what created it), but its reasoning is corrected
+     here and in the file itself.
+
+     Additive and idempotent: ADD COLUMN IF NOT EXISTS throughout, guarded on
+     the table. The 27 pre-existing columns' jsonb/timestamp-vs-json/timestamptz
+     divergence from the declaration is NOT touched — that is a retype with data
+     implications and belongs to WO-1. */
+  'migrations/20260917_project_charters_declared_columns.sql',
+
+  /* ── KNOWN_UNLISTED triage, 2026-09-17 ──────────────────────────────────────
+     Ten root migrations creating SIXTEEN tables that reached a database only
+     through install-fresh's step-3 overlay. Every one of the sixteen is: not on
+     the drizzle push surface, created by no other file in this set, present on a
+     canonically provisioned database, and referenced by live non-test code
+     (3-44 references each). Nothing re-asserted any of them, and any later
+     change to these files would have reached new installs only.
+
+     They were exempted from the applier allowlist by KNOWN_UNLISTED in
+     tests/ops/apply-c2c-migrations-manifest.test.mjs, whose stated reason is
+     that such files' "objects come from shared/schema.ts via drizzle-kit push
+     and they carry nothing an existing database additionally needs". Neither
+     half held for any of these ten. That list's own comment sets the rule:
+     "Removing an entry (by listing the file in the applier) is always safe;
+     adding one requires the reason above to actually hold."
+
+     Safe to replay, verified per file rather than assumed: ZERO DROP statements
+     across all ten, every CREATE and ALTER guarded by IF NOT EXISTS, and every
+     table carries organization_id/org_id. Their only external FK targets are
+     `organizations` and `users` — base tables that 39 files already in this set
+     also reference and that the schema-contract harness provisions via
+     FK_PREREQUISITES, so the C-33 bare-database replay is satisfied. (That is
+     the finding-3 trap checked and cleared: project_charters failed it because
+     it is NOT a base table and is not in that prerequisite set.)
+
+     NOT claimed: that these tables gain RLS policies by being listed here. None
+     of the ten defines any, which is the status quo on a provisioned database
+     today — listing them changes nothing about it. The tenant sweep stays the
+     final pair of this set.
+     ─────────────────────────────────────────────────────────────────────────── */
+  'migrations/20260701_protocol_soa.sql', // protocol_soa_assessments, protocol_soa_cells
+  'migrations/20260702_protocol_budget.sql', // protocol_budget_items, protocol_budget_params
+  'migrations/20260703_dmsp.sql', // dms_plans, dms_plan_elements
+  'migrations/20260704_biosketch.sql', // biosketches, biosketch_sections
+  'migrations/20260704_other_support.sql', // other_support_documents, other_support_entries
+  'migrations/20260705_export_control.sql', // export_control_reviews
+  'migrations/20260705_invention_disclosure.sql', // invention_disclosures
+  'migrations/20260705_research_agreements.sql', // research_agreements
+  'migrations/20260728_chat_thread_store.sql', // chat_threads, chat_messages
+  'migrations/20260731c_canonical_documents.sql', // canonical_documents
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
@@ -2040,6 +2298,78 @@ export const C2C_MIGRATION_FILES = [
   // client-supplied date and a free-text tracking number pointing at nothing.
   // Additive, IF NOT EXISTS; a replay is a no-op.
   'migrations/20260908b_estar_submissions_filed_artifact.sql',
+
+  // ── contradiction_links: restore a table this repo stopped creating ───────
+  // Its only creator was migrations/0010_operating_system_foundation.sql, which
+  // is dead on deploy-migrate but was NEVER dead on install-fresh (that overlay
+  // reads every migrations/*.sql). Retiring 0010 in 9a47438b6 therefore removed
+  // the table from every future fresh install, and no repository-only gate saw
+  // it — ci:tables-live-schema caught it against a real provisioned database.
+  // Listed HERE, not restored to the root tree, so RULE 1's replay carries it to
+  // databases that already exist. Must stay ABOVE the sweep so the sweep
+  // policies it — and above the uuid step too, because ci:migration-set-order
+  // pins the FINAL PAIR to the two isolation steps. See ADR-0007 point 6.
+  'db/migrations/20260910_contradiction_links_port.sql',
+
+  // ── ana_runs: a live AnA turn survives the process that started it ───────
+  // Run control lived in a process-local Map with a 30-minute TTL, so pausing
+  // or stopping her 404'd after a restart and, on a second instance without
+  // sticky routing, never bound to the right run at all. public +
+  // organization_id INTEGER NOT NULL, so the sweep below policies it — and
+  // ABOVE that sweep, because a table ordered after it is never swept, ships
+  // with no RLS policy, and the policy COUNT still goes up, which is what makes
+  // the mistake invisible without ci:migration-set-order.
+  'db/migrations/20260917_ana_runs.sql',
+  // ── RBM author attribution, for the Part 11 two-person rule ──────────────
+  // rbm_risk_assessments and rbm_monitoring_plans shipped with approved_by and
+  // no created_by, so the approval path could not ask whether the signer was
+  // the author. Additive and IF NOT EXISTS, so it replays as a no-op; above the
+  // final pair because ci:migration-set-order pins those two last.
+  'migrations/20260918_rbm_author_attribution.sql',
+  // ── CMC playbook: the five tables /api/cmc/blueprint/playbook/* queries ──
+  // The surface is live and unconditionally mounted (register-core-routes.ts:68
+  // → blueprintRoutes.ts:748), and none of its tables existed on any
+  // provisioned database, so every one of its endpoints returned 500. A correct
+  // DDL file already sat at server/database/cmc-playbook-schema.sql on NO
+  // applier — which is exactly why the tables were missing; it is deleted in
+  // the same change rather than left as a second creator. All five are public +
+  // organization_id INTEGER NOT NULL so the sweep below policies them, and
+  // ABOVE that sweep for the reason the ana_runs note gives.
+  'migrations/20260919_cmc_playbook_schema.sql',
+
+  // ── CAPA / complaint / MDR display codes: per program, not global ─────────
+  // complaints_code_uq, mdr_events_code_uq and capa_records_code_uq were each
+  // unique on the code column ALONE, while nextCode() generates those codes per
+  // program (`count(*) WHERE program_id = $1`, formatted CAPA-<year>-0001). The
+  // second program in the deployment to open its first CAPA of a year therefore
+  // got a code that already existed and the insert died 23505 — the normal path,
+  // not a race, and across tenants one customer's numbering blocked another's.
+  // Proven on the live schema: two inserts differing only in program_id, the
+  // second rejected.
+  //
+  // Its creator, migrations/20260504_capa_mdr.sql, was amended in place per
+  // RULE 1 so fresh installs are correct from birth — but that creator is
+  // overlay-only (install-fresh step 3) and is NOT in this set, so it never
+  // re-runs on an already-provisioned database. Hence this companion file, which
+  // IS in the set. Every statement in it is guarded on the LIVE index
+  // definition, so it converts only a still-old index and no-ops on a fresh
+  // install and on every deploy after the first: it cannot fight the amended
+  // creator in either ordering, which is why it is a conversion and not the
+  // recurring DROP rule 1 forbids. Above the final pair because
+  // ci:migration-set-order pins those two last.
+  'migrations/20260919_capa_code_uniqueness_per_program.sql',
+
+  // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
+  // Backfills identity.organizations from public.organizations.uuid (the
+  // canonical per-tenant uuid) + a forward-sync trigger, so a single
+  // app.current_org_id serves both the COALESCE-family tables and the
+  // identity-FK-bound family instead of the two disjoint uuid spaces deny-alling
+  // each other. Additive, idempotent, and a no-op on a fresh DB (public.organizations
+  // is empty); it does NOT set the GUC or flip enforcement (C-48 Stage 2/3). Placed
+  // before the final isolation pair — it is a backfill, not a sweep; prerequisites
+  // (identity.organizations from 051, organizations.uuid from 20260129) are far
+  // earlier in the set.
+  C48_STAGE1_IDENTITY_ORG_BRIDGE,
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

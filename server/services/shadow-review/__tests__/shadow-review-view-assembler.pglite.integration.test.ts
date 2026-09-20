@@ -2,10 +2,16 @@
  * assembleOrgShadowReview — END-TO-END against in-process PGlite.
  *
  * Proves the GA read: reviewer runs persisted in the REAL store (shadow_review_runs +
- * shadow_review_findings) are assembled into exactly the { lens, findings[] } shape the
- * v2 ShadowReview surface renders — latest COMPLETE run per lens, findings severity-
- * ordered and shaped (leaf_ref → leafRef), a reviewed-clean lens kept with [] findings —
- * with no blob, strict org scope, and soft-deletes excluded.
+ * shadow_review_findings) are assembled into exactly the
+ * { lens, runId, rtfRiskScore, crlRiskScore, findings[] } shape the v2 ShadowReview
+ * surface renders — latest COMPLETE run per lens, the gate scores that run RECORDED,
+ * findings severity-ordered and shaped (leaf_ref → leafRef), a reviewed-clean lens kept
+ * with [] findings — with no blob, strict org scope, and soft-deletes excluded.
+ *
+ * WO-16C finding 99 added the recorded scores. They are the run's own verdict
+ * (runShadowReview persists max(model self-report, deterministic aggregate)); the surface
+ * used to re-derive them from the findings alone and so showed 0% for a run that recorded
+ * 0.90. A run that recorded NO score must carry null, not 0.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
@@ -25,7 +31,7 @@ const ORG = 7;
 const OTHER = 9;
 
 const DDL = `
-CREATE TABLE shadow_review_runs (id serial PRIMARY KEY, organization_id int, lens text, status text, created_at timestamptz DEFAULT now(), deleted_at timestamptz);
+CREATE TABLE shadow_review_runs (id serial PRIMARY KEY, organization_id int, lens text, status text, rtf_risk_score real, crl_risk_score real, created_at timestamptz DEFAULT now(), deleted_at timestamptz);
 CREATE TABLE shadow_review_findings (id serial PRIMARY KEY, run_id int, organization_id int, dimension text, severity text, title text, detail text, basis text, recommendation text, leaf_ref text, deleted_at timestamptz);
 `;
 
@@ -33,10 +39,16 @@ beforeAll(async () => { pglite = new PGlite(); await pglite.exec(DDL); }, 60_000
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => { await pglite.exec(`DELETE FROM shadow_review_runs; DELETE FROM shadow_review_findings;`); });
 
-async function run(org: number, lens: string, status = 'complete'): Promise<number> {
+async function run(
+  org: number,
+  lens: string,
+  status = 'complete',
+  scores: { rtf?: number | null; crl?: number | null } = {},
+): Promise<number> {
   const r = await pglite.query(
-    `INSERT INTO shadow_review_runs (organization_id, lens, status) VALUES ($1,$2,$3) RETURNING id`,
-    [org, lens, status],
+    `INSERT INTO shadow_review_runs (organization_id, lens, status, rtf_risk_score, crl_risk_score)
+     VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+    [org, lens, status, scores.rtf ?? null, scores.crl ?? null],
   );
   return (r.rows[0] as { id: number }).id;
 }
@@ -86,6 +98,31 @@ describe('assembleOrgShadowReview', () => {
     const rows = await assembleOrgShadowReview(ORG) as any[];
     expect(rows.map((r) => r.lens)).toEqual(['fda_filing']);          // ema run not complete
     expect(rows[0].findings.map((f: any) => f.title)).toEqual(['Fresh finding']); // latest run only
+  });
+
+  it('carries the gate scores the run RECORDED, with its run id', async () => {
+    const id = await run(ORG, 'fda_filing', 'complete', { rtf: 0.9, crl: 0.55 });
+    // Only a CRL finding: the findings-only recompute this replaced would score rtf 0.
+    await finding(id, ORG, 'crl', 'major', 'Single pivotal trial', '2.5.4');
+
+    const rows = await assembleOrgShadowReview(ORG) as any[];
+    expect(rows[0].runId).toBe(id);
+    expect(rows[0].rtfRiskScore).toBeCloseTo(0.9, 5);
+    expect(rows[0].crlRiskScore).toBeCloseTo(0.55, 5);
+  });
+
+  it('passes an unrecorded score through as null — never as 0', async () => {
+    await run(ORG, 'fda_filing', 'complete', { rtf: null, crl: null });
+    const rows = await assembleOrgShadowReview(ORG) as any[];
+    expect(rows[0]).toHaveProperty('rtfRiskScore', null);
+    expect(rows[0]).toHaveProperty('crlRiskScore', null);
+  });
+
+  it('keeps a recorded 0 as 0 (a real zero is not the missing-score state)', async () => {
+    await run(ORG, 'pmda', 'complete', { rtf: 0, crl: 0 });
+    const rows = await assembleOrgShadowReview(ORG) as any[];
+    expect(rows[0].rtfRiskScore).toBe(0);
+    expect(rows[0].crlRiskScore).toBe(0);
   });
 
   it('returns [] for an org with no runs, and never crosses tenants', async () => {

@@ -504,7 +504,7 @@ export function applyPlanPatch(design: StudyDesign, patch: Partial<StatisticalPl
 
 // ─── Statistical readiness (the list-row summary) ────────────────────────────
 
-export interface ReadinessCheck {
+export interface StatisticalReadinessCheck {
   key: string;
   label: string;
   ok: boolean;
@@ -515,7 +515,7 @@ export interface ReadinessCheck {
 export interface StatisticalReadiness {
   /** 0–100: share of applicable checks that pass. */
   percent: number;
-  checks: ReadinessCheck[];
+  checks: StatisticalReadinessCheck[];
   plannedSampleSize: number | null;
   power: number | null;
   alpha: number | null;
@@ -535,7 +535,7 @@ export function statisticalReadiness(design: StudyDesign): StatisticalReadiness 
   const keySecondaries = (design.endpoints ?? []).filter((e) => e.role === 'key_secondary').length;
   const hasInterims = (plan.interim?.informationFractions ?? []).some((f) => f > 0 && f < 1);
 
-  const checks: (ReadinessCheck | null)[] = [
+  const checks: (StatisticalReadinessCheck | null)[] = [
     { key: 'primary_endpoint', label: 'Primary endpoint declared', ok: Boolean(primary), hint: 'Add an endpoint with role "primary".' },
     { key: 'estimand', label: 'Primary estimand defined (ICH E9(R1))', ok: Boolean(primary && design.estimands?.some((e) => e.endpointName === primary.name)), hint: 'Define the estimand for the primary endpoint.' },
     { key: 'alpha', label: 'Alpha stated', ok: typeof plan.alpha === 'number', hint: 'Set statisticalPlan.alpha.' },
@@ -556,7 +556,7 @@ export function statisticalReadiness(design: StudyDesign): StatisticalReadiness 
       : null,
     { key: 'missing_data', label: 'Missing-data strategy aligned with the estimand', ok: Boolean(plan.missingDataStrategy) && !/locf/i.test(plan.missingDataStrategy ?? ''), hint: 'State a missing-data strategy other than LOCF-as-primary.' },
   ];
-  const applicable = checks.filter((c): c is ReadinessCheck => c !== null);
+  const applicable = checks.filter((c): c is StatisticalReadinessCheck => c !== null);
   const passed = applicable.filter((c) => c.ok).length;
   return {
     percent: applicable.length === 0 ? 0 : Math.round((passed / applicable.length) * 100),

@@ -188,7 +188,14 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
             : <table className="reg-tbl"><thead><tr><th>Plan</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
               <tbody>{plans.map((p) => (
                 <tr key={p.id} data-active={active === p.id || undefined}>
-                  <td style={{ fontWeight: 600, cursor: 'pointer' }} onClick={() => setActive(p.id)}>{p.name}</td>
+                  {/* The plan name opened the row from a <td onClick> with a pointer
+                      cursor — a control no keyboard could reach, offering by mouse
+                      exactly what the row's own View button already does. Clicking
+                      the name is the convention here, so it stays; as a button it
+                      keeps the click target and gains the tab stop. */}
+                  <td>
+                    <button type="button" className="tbl-name-btn" onClick={() => setActive(p.id)}>{p.name}</button>
+                  </td>
                   <td className="mono">{p.version ?? '—'}</td>
                   <td><span className={'rd-chip tone-' + statusTone(p.status)}>{p.status ?? '—'}</span></td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>

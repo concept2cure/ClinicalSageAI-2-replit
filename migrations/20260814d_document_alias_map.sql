@@ -33,6 +33,39 @@
 -- A reverted design that came back one useful-looking column at a time is
 -- exactly the failure this gate exists to make impossible.
 --
+-- ── AMENDED 2026-09-17: the store CHECK is reconciled, not created once ─────
+-- WHAT CHANGED. The vocabulary CHECK was added under
+--   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '...')
+-- and is now an unconditional DROP IF EXISTS + ADD.
+--
+-- WHY. That guard keys on the constraint NAME, not its definition. Every entry
+-- of C2C_MIGRATION_FILES re-executes on every deploy (CLAUDE.md RULE 1), and
+-- RULE 1's remedy for changing shipped schema is to AMEND THE CREATING
+-- MIGRATION IN PLACE — appending a DROP is the thing it forbids. But against
+-- this guard an in-place amendment of the `store IN (...)` list did nothing at
+-- all on any database that already held the constraint: the guard is false, the
+-- ADD is skipped, the old vocabulary survives, and the deploy is GREEN.
+--
+-- So the failure mode was the one this repo keeps writing gates for — a change
+-- that reports success and had no effect. Whoever next extended the vocabulary
+-- would have added their store here, watched the migration pass, and then had
+-- every write for that store rejected in production by a CHECK still carrying
+-- the old six values, with nothing anywhere saying why.
+--
+-- Reconciling unconditionally removes the divergence rather than documenting
+-- it: the constraint is dropped and re-added on every replay, so a database
+-- converges on whatever list this file carries, always. That is the idiom the
+-- repo already proved for reshaping a CHECK across replays
+-- (migrations/20260806b_anda_ide_filing_types.sql:68).
+--
+-- Cost: one re-validation scan of c2c_document_aliases per deploy. The table
+-- holds one narrow row per document per store and the scan is inside the
+-- migration transaction, so this is cheaper than the class of bug it removes.
+--
+-- Pinned by tests/schema-contract/document-alias-store-vocabulary.pglite.test.ts,
+-- which builds a database carrying the OLD vocabulary and asserts this file's
+-- current list reaches it — and which fails against the existence-only guard.
+--
 -- ── KEYS ────────────────────────────────────────────────────────────────────
 --   PRIMARY KEY (store, native_id) — one row per document per store. A store's
 --     native id is that store's own primary key and is therefore already unique
@@ -97,22 +130,28 @@ BEGIN
   -- header. Added separately from CREATE TABLE so re-running against a database
   -- that already has the table (created before this constraint existed) still
   -- acquires it.
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'c2c_document_aliases_store_check'
-  ) THEN
-    EXECUTE $q$
-      ALTER TABLE c2c_document_aliases
-        ADD CONSTRAINT c2c_document_aliases_store_check
-        CHECK (store IN (
-          'authoring_documents',
-          'coauthor_documents',
-          'c2c_documents',
-          'concept2cure_artifacts',
-          'submission_leaves',
-          'unified_documents'
-        ))
-    $q$;
-  END IF;
+  --
+  -- RECONCILED ON EVERY REPLAY, not created once. See the 2026-09-17 note in
+  -- the header: the previous existence-only guard made the in-place amendment
+  -- that CLAUDE.md RULE 1 mandates a silent no-op on any database that already
+  -- held the constraint. DROP IF EXISTS + ADD is the idiom the repo already
+  -- proved for exactly this — reshaping a CHECK across replays — at
+  -- migrations/20260806b_anda_ide_filing_types.sql:68. It is idempotent, it
+  -- converges a database on any vocabulary, and it cannot diverge silently.
+  EXECUTE $q$ALTER TABLE c2c_document_aliases
+    DROP CONSTRAINT IF EXISTS c2c_document_aliases_store_check$q$;
+  EXECUTE $q$
+    ALTER TABLE c2c_document_aliases
+      ADD CONSTRAINT c2c_document_aliases_store_check
+      CHECK (store IN (
+        'authoring_documents',
+        'coauthor_documents',
+        'c2c_documents',
+        'concept2cure_artifacts',
+        'submission_leaves',
+        'unified_documents'
+      ))
+  $q$;
 
   -- Neither key is org-leading, so the tenant predicate on a canonical_id read
   -- has no index to stand on without this.

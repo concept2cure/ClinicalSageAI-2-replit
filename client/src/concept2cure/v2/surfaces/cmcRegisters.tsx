@@ -517,7 +517,7 @@ export function CmQcTesting() {
         const pass = rows.filter((r) => String(r.passFailStatus || '').toLowerCase() === 'pass').length;
         const fail = rows.filter((r) => String(r.passFailStatus || '').toLowerCase() === 'fail').length;
         const awaiting = rows.filter((r) => !r.reviewedBy).length;
-        return `${rows.length} samples -- ${pass} pass / ${fail} fail -- ${awaiting} awaiting review`;
+        return `${rows.length} samples — ${pass} pass / ${fail} fail — ${awaiting} awaiting review`;
       }}
       icon={I.microscope}
       loadingTitle="Loading QC testing records…"
@@ -683,7 +683,7 @@ export function CmComparabilityStudies() {
     <RegisterCard<ComparabilityApiRow>
       path="/api/cmc/comparability-studies"
       title="Comparability assessments"
-      meta={(rows) => `ICH Q5E -- ${rows.length} ${rows.length === 1 ? 'assessment' : 'assessments'}`}
+      meta={(rows) => `ICH Q5E — ${rows.length} ${rows.length === 1 ? 'assessment' : 'assessments'}`}
       icon={I.gitCompare}
       loadingTitle="Loading comparability assessments…"
       emptyTitle="No comparability assessments yet"
@@ -879,7 +879,7 @@ export function CmDrugSubstances() {
     <RegisterCard<DrugSubstanceApiRow>
       path="/api/cmc/drug-substances"
       title="Drug substance"
-      meta={(rows) => `§3.2.S -- ${rows.length} ${rows.length === 1 ? 'substance' : 'substances'}`}
+      meta={(rows) => `§3.2.S — ${rows.length} ${rows.length === 1 ? 'substance' : 'substances'}`}
       icon={I.atom}
       loadingTitle="Loading drug substances…"
       emptyTitle="No drug substances yet"
@@ -959,7 +959,7 @@ export function CmDrugProducts() {
     <RegisterCard<DrugProductApiRow>
       path="/api/cmc/drug-products"
       title="Drug product"
-      meta={(rows) => `§3.2.P -- ${rows.length} ${rows.length === 1 ? 'product' : 'products'}`}
+      meta={(rows) => `§3.2.P — ${rows.length} ${rows.length === 1 ? 'product' : 'products'}`}
       icon={I.beaker}
       loadingTitle="Loading drug products…"
       emptyTitle="No drug products yet"
@@ -1052,7 +1052,7 @@ export function CmContainerClosures() {
       meta={(rows) => {
         const qualified = rows.filter((r) => String(r.status || '').toLowerCase() === 'qualified').length;
         const withEl = rows.filter((r) => r.extractablesLeachables && Object.keys(r.extractablesLeachables).length > 0).length;
-        return `${rows.length} systems -- ${qualified} qualified -- ${withEl} with an E&L study`;
+        return `${rows.length} systems — ${qualified} qualified — ${withEl} with an E&L study`;
       }}
       icon={I.vault}
       loadingTitle="Loading container closure systems…"
@@ -1160,7 +1160,7 @@ export function CmReferenceStandards() {
       meta={(rows) => {
         const qualified = rows.filter((r) => String(r.status || '').toLowerCase() === 'qualified').length;
         const primary = rows.filter((r) => String(r.standardType || '').toLowerCase().includes('primary')).length;
-        return `${rows.length} standards -- ${primary} primary -- ${qualified} qualified`;
+        return `${rows.length} standards — ${primary} primary — ${qualified} qualified`;
       }}
       icon={I.scale}
       loadingTitle="Loading reference standards…"
@@ -1279,7 +1279,7 @@ export function CmImpurityProfiles() {
         const qualified = rows.filter((r) => String(r.status || '').toLowerCase() === 'qualified').length;
         const withBasis = rows.filter((r) => String(r.qualificationBasis || '').trim()).length;
         const noDose = rows.filter((r) => !String(r.maximumDailyDose || '').trim()).length;
-        return `${rows.length} impurities -- ${withBasis} with a qualification basis -- ${qualified} qualified -- ${noDose} with no daily dose recorded`;
+        return `${rows.length} impurities — ${withBasis} with a qualification basis — ${qualified} qualified — ${noDose} with no daily dose recorded`;
       }}
       icon={I.sigma}
       loadingTitle="Loading impurities…"
@@ -1412,7 +1412,7 @@ export function CmDissolutionProfiles() {
       meta={(rows) => {
         const release = rows.filter((r) => String(r.purpose || '') === 'release-specification').length;
         const noUnits = rows.filter((r) => !r.unitsTested).length;
-        return `${rows.length} profiles -- ${release} release specification -- ${noUnits} with no unit count`;
+        return `${rows.length} profiles — ${release} release specification — ${noUnits} with no unit count`;
       }}
       icon={I.barChart}
       loadingTitle="Loading dissolution profiles…"
@@ -1528,7 +1528,7 @@ export function CmMaterialSpecs() {
         const excipients = rows.filter((r) => isExcipientRole(r.materialRole)).length;
         const noOrigin = rows.filter((r) => !String(r.origin || '').trim()).length;
         const novel = rows.filter((r) => r.novelExcipient).length;
-        return `${rows.length} materials -- ${excipients} excipients -- ${novel} novel -- ${noOrigin} with no origin recorded`;
+        return `${rows.length} materials — ${excipients} excipients — ${novel} novel — ${noOrigin} with no origin recorded`;
       }}
       icon={I.atom}
       loadingTitle="Loading materials…"
@@ -1615,7 +1615,7 @@ export function CmFormulationRecords() {
       meta={(rows) => {
         const current = rows.filter((r) => String(r.status || '') === 'current').length;
         const withOverage = rows.filter((r) => (r.components || []).some((c) => String(c.overage || '').trim())).length;
-        return `${rows.length} versions -- ${current} current -- ${withOverage} with a component overage`;
+        return `${rows.length} versions — ${current} current — ${withOverage} with a component overage`;
       }}
       icon={I.clipboardList}
       loadingTitle="Loading formulation records…"
@@ -1706,7 +1706,7 @@ export function CmManufacturingProcesses() {
       meta={(rows) => {
         const validated = rows.filter((r) => String(r.validationStatus || '') === 'validated').length;
         const withSteps = rows.filter((r) => (r.processSteps || []).length > 0).length;
-        return `${rows.length} processes -- ${withSteps} with recorded steps -- ${validated} validated`;
+        return `${rows.length} processes — ${withSteps} with recorded steps — ${validated} validated`;
       }}
       icon={I.workflow}
       loadingTitle="Loading manufacturing processes…"
@@ -1844,7 +1844,7 @@ export function CmCharacterizationStudies() {
             && (String(r.result || '').trim() || String(r.conclusion || '').trim()),
         );
         const answered = ['structural', 'physicochemical', 'biological'].filter(answers).length;
-        return `${live.length} studies -- ${answered} of 3 characterisation questions answered`;
+        return `${live.length} studies — ${answered} of 3 characterisation questions answered`;
       }}
       icon={I.microscope}
       loadingTitle="Loading characterisation studies…"

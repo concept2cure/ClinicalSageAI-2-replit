@@ -3,7 +3,13 @@
     "Reviewed exceptions to the replay-safe-DROP rule (CLAUDE.md RULE 1).",
     "An entry here is a decision on the record, not a snooze: each one names why",
     "the pairing is safe to replay. Adding an entry without a reason is the thing",
-    "this file exists to prevent. See scripts/ci/check-migration-drop-safety.mjs."
+    "this file exists to prevent. See scripts/ci/check-migration-drop-safety.mjs.",
+    "",
+    "`allow` covers DROPs the gate can read literally and pair against a creator.",
+    "`allowDynamic` covers DROPs issued through EXECUTE inside a DO block, where the",
+    "object name is built at apply time and no pairing is possible. Only the two",
+    "data-destroying kinds (table, column) are gated there; index/constraint/policy/",
+    "trigger drops carry no data and are counted in the summary line instead."
   ],
   "allow": [
     {
@@ -17,6 +23,18 @@
       "object": "index:public.cmc_source_objects_project_key_idx",
       "creator": "db/migrations/20260401_cmc_convergence_os.sql",
       "reason": "Same replacement as the entry above, for cmc_source_objects: 20260401 creates the project-scoped unique index, 20260728 replaces it with cmc_source_objects_org_project_key_idx. Same ordering, same convergence, same retirement path."
+    }
+  ],
+  "allowDynamic": [
+    {
+      "dropper": "db/migrations/20260801_atom_identity_existing_db_reconciliation.sql",
+      "object": "table",
+      "reason": "EMPTY-ONLY, and verified as such rather than taken from the header: the loop reads information_schema for the column's current type, CONTINUEs when the table is absent or already the canonical integer shape, and then runs `SELECT NOT EXISTS (SELECT 1 FROM public.%I LIMIT 1)` into is_empty and drops only under `IF is_empty`. A table holding even one row is preserved and counted. Names come from a seven-entry VALUES list in the file, so the set of candidates is fixed and reviewable even though the gate cannot resolve them. TWO residual risks, both accepted and neither hypothetical to paper over: it uses CASCADE, so dependent views/functions/indexes go with the table \u2014 the file asserts the migrations that follow recreate each one in the canonical shape, which is a claim about set ordering that nothing enforces; and the emptiness check and the drop are separate statements, so under READ COMMITTED a row committed between them would be destroyed. Both are bounded by the fact that these seven tables are empty on every applier precisely because their non-canonical key made them unwritable, which is why the reconciliation exists."
+    },
+    {
+      "dropper": "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "object": "table",
+      "reason": "EMPTY-ONLY with the strongest guard set in the repo, verified statement by statement: `SELECT count(*)` into n_rows and a KEEP with a Part 11 NOTICE when n_rows > 0 (its comment states the rule this gate should adopt everywhere \u2014 'an audit table with records is evidence under 21 CFR Part 11 11.10(e), not debris'); an inbound-foreign-key check that keeps the table when any other relation points at it; DROP ... RESTRICT, never CASCADE, so an unanticipated dependent stops the drop instead of being destroyed with it; and an EXCEPTION handler on dependent_objects_still_exist / feature_not_supported / insufficient_privilege that turns a refusal into a counted skip rather than aborting the deploy. A table that is not genuinely dead survives this file and says so in the log. Same TOCTOU note as the entry above and the same reason it is bounded: these tables are dead, so nothing writes them."
     }
   ]
 }

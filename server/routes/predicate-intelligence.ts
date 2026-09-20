@@ -27,18 +27,39 @@ import { db } from '../db.js';
 import { setRequestQuery } from '../utils/expressQuery.js';
 import { regulatoryPrograms } from '../../shared/schema/programs.js';
 import { authenticateToken } from '../middleware/auth.js';
-import auditService from '../services/auditService.js';
+import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome.js';
 
-function logProxyMutation(
+/**
+ * Record the §11.10(e) row for a successful upstream mutation, and report what
+ * happened to it. `undefined` when the upstream call did not succeed, because
+ * then no row is attempted and there is no outcome to report.
+ *
+ * WO-16C #133. Was `void auditService.logAction(…)` in a `void`-returning
+ * function, so the discarded `AuditWriteResult` was the only place a lost row was
+ * visible — and `logAction` never rejects on a persistence failure, so nothing
+ * else could have shown it.
+ *
+ * This site is the sharpest of the single-site conversions. The mutation happens
+ * in the shadow service, and the comment below already says why the row exists:
+ * "Only the BFF knows the calling user". So this row is the ONLY record anywhere
+ * that names WHO made the change — the upstream store has the data, this store
+ * has the actor. A lost row does not lose the mutation; it loses the attribution,
+ * which is the half of §11.10(e) that a BFF is uniquely responsible for.
+ *
+ * The outcome goes in response HEADERS rather than the body: these routes are a
+ * transparent proxy that forwards the upstream payload verbatim, including binary
+ * buffers, so injecting a key would change what the client receives.
+ */
+async function logProxyMutation(
   req: Request,
   result: { status: number },
   spec: { action: string; resourceType: string; resourceId: string; details?: Record<string, unknown> },
-): void {
+): Promise<AuditRowOutcome | undefined> {
   // Only the BFF knows the calling user. Log every successful upstream
   // mutation so the central audit_logs reflects writes even when the data
   // lives upstream in the shadow service.
-  if (result.status < 200 || result.status >= 300) return;
-  void auditService.logAction({
+  if (result.status < 200 || result.status >= 300) return undefined;
+  return recordAuditRow({
     tenantId: (req as any).user?.organizationId ?? null,
     userId: (req as any).user?.id ?? null,
     action: spec.action,
@@ -51,6 +72,16 @@ function logProxyMutation(
       ...(spec.details ?? {}),
     },
   });
+}
+
+/**
+ * Put a proxied mutation's audit outcome where a transparent proxy can carry it.
+ * Set before `sendProxyResponse`, which forwards the upstream body untouched.
+ */
+function setAuditHeaders(res: Response, outcome: AuditRowOutcome | undefined): void {
+  if (!outcome) return;
+  res.set('X-Audit-Row-Persisted', String(outcome.persisted));
+  if (!outcome.persisted) res.set('X-Audit-Row-Code', outcome.code);
 }
 
 const router = Router();
@@ -298,12 +329,12 @@ router.patch(
         method: 'PATCH',
         body: req.body,
       });
-      logProxyMutation(req, result, {
+      setAuditHeaders(res, await logProxyMutation(req, result, {
         action: 'predicate.candidate.status',
         resourceType: 'predicate_candidate',
         resourceId: String(req.params.id),
         details: { status: req.body?.status ?? null },
-      });
+      }));
       sendProxyResponse(res, result);
     } catch (err: any) {
       res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });
@@ -387,12 +418,12 @@ router.patch('/se-matrix/:id', requireConfigured, requireProgramAccess, async (r
       method: 'PATCH',
       body: req.body,
     });
-    logProxyMutation(req, result, {
+    setAuditHeaders(res, await logProxyMutation(req, result, {
       action: 'se_matrix.patch',
       resourceType: 'se_matrix_row',
       resourceId: String(req.params.id),
       details: { fieldsChanged: Object.keys(req.body ?? {}) },
-    });
+    }));
     sendProxyResponse(res, result);
   } catch (err: any) {
     res.status(502).json({ error: 'Shadow service unavailable', detail: 'Service unavailable' });

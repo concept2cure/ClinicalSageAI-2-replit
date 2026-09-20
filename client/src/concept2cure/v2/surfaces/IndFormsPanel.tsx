@@ -373,18 +373,15 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
   return (
     <div>
       {recordFacts && (
-        <section className="indf-record" aria-label="Values read from the program record"
-          style={{ border: '1px solid var(--text-400)', borderRadius: 6, padding: '10px 12px', marginBottom: 12 }}>
-          <div style={{ fontSize: 12, color: 'var(--text-400)', marginBottom: 6 }}>
+        <section className="indf-record" aria-label="Values read from the program record">
+          <div className="indf-record-lead">
             Read from the program record — every form below is filled with these values.
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,max-content))', gap: '6px 24px' }}>
+          <div className="indf-record-grid">
             {recordFacts.map((f) => (
-              <dl key={f.label} className="indf-fact" style={{ margin: 0 }}>
-                <dt style={{ fontSize: 11, color: 'var(--text-400)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{f.label}</dt>
-                <dd style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>
-                  {f.value ?? <span style={{ fontWeight: 400, color: 'var(--text-400)' }}>{f.missing}</span>}
-                </dd>
+              <dl key={f.label} className="indf-fact">
+                <dt>{f.label}</dt>
+                <dd>{f.value ?? <span className="indf-missing">{f.missing}</span>}</dd>
               </dl>
             ))}
           </div>

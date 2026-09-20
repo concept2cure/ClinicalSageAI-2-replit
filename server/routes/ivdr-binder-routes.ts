@@ -18,7 +18,7 @@
 
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
-import { streamVersion } from '../services/vaultService';
+import { getStorageProvider } from '../services/storage/index.js';
 
 export default function createIVDRBinderRoutes(pool: Pool): Router {
   const router = Router();
@@ -950,13 +950,13 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
       if (format === 'manifest') {
         // Try vault first, fall back to snapshot table
         if (pack.manifest_vault_version_id) {
-          const vaultResult = await streamVersion(pack.manifest_vault_version_id);
+          const vaultResult = await getStorageProvider().get(pack.manifest_vault_version_id, orgId);
           if (vaultResult) {
             res.setHeader('Content-Type', vaultResult.mime);
             res.setHeader('Content-Length', String(vaultResult.sizeBytes));
             res.setHeader('Content-Disposition', `attachment; filename="${vaultResult.filename}"`);
             res.setHeader('X-Content-SHA256', vaultResult.sha256);
-            return vaultResult.stream.pipe(res);
+            return res.send(vaultResult.bytes);
           }
         }
 
@@ -994,7 +994,11 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
         });
       }
 
-      const vaultResult = await streamVersion(vaultVersionId);
+      // `get` returns null both for "no such version" and "belongs to another
+      // organization" — the interface refuses to distinguish them, because a
+      // 403 on a foreign id confirms the id exists. Either way there is nothing
+      // to serve, and 404 is the honest answer.
+      const vaultResult = await getStorageProvider().get(vaultVersionId, orgId);
       if (!vaultResult) {
         return res.status(404).json({
           error: `${format.toUpperCase()} artifact file not found in vault`,
@@ -1006,7 +1010,7 @@ export default function createIVDRBinderRoutes(pool: Pool): Router {
       res.setHeader('Content-Length', String(vaultResult.sizeBytes));
       res.setHeader('Content-Disposition', `attachment; filename="${vaultResult.filename}"`);
       res.setHeader('X-Content-SHA256', vaultResult.sha256);
-      return vaultResult.stream.pipe(res);
+      return res.send(vaultResult.bytes);
     } catch (error) {
       return safeError(res, error, 'PACK_DOWNLOAD_FAILED', 'Download pack');
     }

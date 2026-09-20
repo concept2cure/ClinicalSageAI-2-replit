@@ -1,8 +1,9 @@
 # Automated Span-Level Source Attribution — Design
 
-**Status:** Phases 1–4 implemented (the authoring draft-accept path is a live,
-tested span-grain source writer, recording both verified quotes and model-asserted
-paraphrase); Phases 5–6 designed and pending.
+**Status:** Phases 1–6 implemented. The authoring draft-accept path is
+a live, tested span-grain source writer (verified quotes and model-asserted
+paraphrase), the save gate now sees documents that are CREATED as well as edited,
+and an author can see how much of a section has a recorded origin without asking.
 **Author:** platform GA / traceability workstream
 **Scope:** make "which uploaded document backs this generated text" a recorded,
 character-level fact across every document the platform builds, for every client
@@ -262,20 +263,59 @@ lets accept re-verify verbatim against the exact chunks the draft came from.
   tests (the gate + the store), and route tests (SRC-mapping + the plain-prose
   fallback).
 
-**Phase 5 — propagate to every generation surface.**
-Roll the Phase-3 pattern to the other content producers (AnA tool executor,
-CMC/module builders, artifact generation), then add a CI guard mirroring
-`check-lineage-save-gate` / `check-artifact-provenance`: any generation path that
-writes document content from retrieved sources must emit source lineage, with a
-shrinking baseline. This is what makes it a *platform* guarantee across all client
-types rather than one wired path.
+**Phase 5 — propagate to every generation surface. IMPLEMENTED (ledger L177).**
+Rather than a second guard beside `check-lineage-save-gate`, the existing one was
+taught to see the half it was blind to. Its discovery matched only EDITS
+(`UPDATE … SET content =`, Drizzle `.set({ content })`), so a path that CREATES a
+governed document with its text already in it was invisible — which is how
+`save_document_to_vault` shipped an artifact, an immutable version, provenance and
+a §11.10(e) audit row with no span lineage at all while the gate reported `ok` on
+the file containing it.
 
-**Phase 6 — UI affordances (invoke Claude design).**
-The Data Origins panel + PDF already exist. The incremental UI is (a) inline
-source-attribution highlighting in the DocumentAuthoring editor and (b) a
-per-document coverage indicator ("92% of this section traces to a source; 8%
-author-original"). Designed against the real `DocumentAuthoring.tsx` surface with
-the frontend-design skill, honoring the regulated-UX and accessibility skills.
+Discovery now also matches `INSERT INTO <governed document table> ( … content … )`.
+The INSERT rule is TABLE-SCOPED where the UPDATE rule is not, deliberately:
+`content` is one of the most reused column names in the schema, so an unscoped
+rule matches ~50 files that do not write prose and would need fifty NOT_PROSE
+entries — fifty assertions that a reader looked and decided.
+
+It surfaced nine creators. Five are not prose and are declared with what the
+content actually is; four were real gaps and were **gated, not merely recorded**:
+`compute/artifactWriteback.ts`, `ana/verifiedSealService.ts`,
+`resolution/bundle-executor.ts` and `protocol-templates-service.ts`.
+KNOWN_UNGUARDED is empty and the guard reports 20 guarded paths, up from 16.
+
+**Phase 6 — UI affordances. (b) IMPLEMENTED (ledger L179); (a) REMAINS.**
+
+**(b) Per-document coverage indicator — done, and the wording above was wrong.**
+This section used to read *"92% of this section traces to a source; 8%
+author-original"*. Built on the read that existed, that sentence would have been
+false: `getSelectionOrigins.coveragePercent` counts characters carrying ANY
+lineage — an author assertion exactly like a citation — so a section written
+entirely from the author's head is 100% covered by it. Its `counts` are span
+counts besides, which cannot carry a percentage.
+
+So the numbers came first: `summarizeDocumentAttribution` partitions a document BY
+CHARACTER into fromSources / authorAsserted / machineDrafted /
+machineDraftedUnaccepted, de-overlapped and clipped to the current text, with the
+parts summing exactly. `GET /api/data-origins/document` exposes it and reads the
+DENOMINATOR server-side, because whoever supplies the total controls the
+percentage. `DocumentAttributionBar` renders it under the section editor and says
+*"N% of this document has a recorded origin"* — never *traces to a source*.
+Not-read-yet, reading, failed, unsupported and empty are five distinct sentences,
+because rendering any of them as 0% tells an author their document has no
+provenance when the truth is that nobody looked.
+
+**(a) Inline highlighting — IMPLEMENTED.** Painted with the CSS Custom Highlight
+API, not TipTap decorations and not wrapped spans: wrapping mutates a DOM
+ProseMirror owns and rebuilds. `rangeForOffsets` inverts the existing
+`selectionToRange` (same walk, same definition of an offset) and refuses a range
+it cannot locate exactly rather than clamping.
+
+The edit-shifts-every-offset problem is handled by refusing, not by remapping:
+painting requires the rendered text to still equal the text the offsets describe,
+and both refusals are said out loud — "highlighting is paused while you edit" and
+"N spans could not be located" — because painting that stops silently reads as a
+document with nothing to paint.
 
 ---
 

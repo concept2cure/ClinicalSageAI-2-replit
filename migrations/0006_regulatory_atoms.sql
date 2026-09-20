@@ -1,8 +1,11 @@
 -- Migration: 0006_regulatory_atoms.sql
 -- Creates missing regulatory intelligence atom tables identified by system audit.
--- Tables: cmc_comparability_assessments, cmc_batch_records, cmc_process_steps,
---         pv_signal_assessments, document_atom_provenance, meddra_term_reference,
---         biomarker_ontology
+-- Tables: cmc_batch_records, cmc_process_steps, pv_signal_assessments,
+--         document_atom_provenance, meddra_term_reference, biomarker_ontology
+--
+-- cmc_comparability_assessments was in this list until 2026-09-10; its creator
+-- is now migrations/20260907_cmc_comparability_register_reachable.sql alone.
+-- See the amendment note in section 1 below.
 
 -- ============================================================
 -- 1. CMC_COMPARABILITY_ATOM
@@ -27,34 +30,33 @@
 -- to that drop because install-fresh applies every file in migrations/ — this
 -- one included — so a file that re-creates the constraint would undo the drop
 -- on the next run, which is exactly the replay hazard Rule 1 exists to stop.
-CREATE TABLE IF NOT EXISTS cmc_comparability_assessments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id INTEGER NOT NULL REFERENCES organizations(id),
-  project_id UUID NOT NULL,
-  assessment_name TEXT NOT NULL,
-  change_type TEXT,
-  pre_change_state JSONB,
-  post_change_state JSONB,
-  changed_element TEXT,
-  affected_cqas JSONB,
-  affected_process_parameters JSONB,
-  analytical_comparability_evidence JSONB,
-  clinical_bridging_relevance TEXT,
-  regulatory_risk_level TEXT,
-  regulatory_classification TEXT,
-  justification TEXT,
-  impacted_sections JSONB,
-  status TEXT DEFAULT 'draft',
-  reviewed_by TEXT,
-  approved_at TIMESTAMP,
-  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_cmc_comparability_org ON cmc_comparability_assessments(organization_id);
-CREATE INDEX IF NOT EXISTS idx_cmc_comparability_project ON cmc_comparability_assessments(project_id);
-CREATE INDEX IF NOT EXISTS idx_cmc_comparability_status ON cmc_comparability_assessments(status);
-CREATE INDEX IF NOT EXISTS idx_cmc_comparability_change_type ON cmc_comparability_assessments(change_type);
+-- AMENDED IN PLACE 2026-09-10 (CLAUDE.md Rule 1). This file no longer creates
+-- cmc_comparability_assessments at all.
+--
+-- What was removed: the CREATE TABLE for cmc_comparability_assessments and its
+-- four indexes (idx_cmc_comparability_org / _project / _status / _change_type).
+-- Why: the table had TWO creators, and the two appliers disagreed about its
+-- shape. install-fresh applies every migrations/*.sql, so it ran THIS file
+-- first (0006 sorts before 20260907) and created the table with
+-- `organization_id INTEGER NOT NULL REFERENCES organizations(id)`;
+-- deploy-migrate applies only the migration set, where the sole creator is
+-- 20260907_cmc_comparability_register_reachable.sql, which declares
+-- `organization_id INTEGER NOT NULL` with no foreign key. Both are guarded by
+-- IF NOT EXISTS, so the surviving column set was decided by which applier ran,
+-- not by anything in this repository — the exact hazard Rule 1 and ADR-0006
+-- exist to prevent, and it read as the 64th entry against a 63-entry
+-- duplicate-table-ddl baseline.
+-- Which change removed it: this amendment, WO-0.3. The canonical creator is
+-- migrations/20260907_cmc_comparability_register_reachable.sql, whose header
+-- states the canonical shape explicitly ("public schema, organization_id
+-- INTEGER NOT NULL, project_id a plain uuid") and which already carries all
+-- four indexes and the tenant_id column. It sorts after this file, so
+-- install-fresh still creates the table — from the canonical definition.
+--
+-- RESIDUAL, tracked in WO-1: a database provisioned by install-fresh BEFORE
+-- this amendment still carries cmc_comparability_assessments_organization_id_fkey.
+-- Converging those is a DROP against already-provisioned estates and belongs
+-- with the other 63 duplicate reconciliations, not in a restore-green change.
 
 -- ============================================================
 -- 2. CMC_BATCH_ATOM expanded

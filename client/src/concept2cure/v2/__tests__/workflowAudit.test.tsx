@@ -18,7 +18,7 @@ import React from 'react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { getSurface, UI_SURFACES, type UiSurface } from '@shared/constants/ui-surface-registry';
+import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
 import { AuthProvider } from '@/services/portal/authService';
 import { SURFACE_VIEWS } from '../surfaceViews';
 

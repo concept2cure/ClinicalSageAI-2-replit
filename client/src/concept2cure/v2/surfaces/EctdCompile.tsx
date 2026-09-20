@@ -308,6 +308,7 @@ function refusalTitle(code: string): string {
     case 'seal-failed': return 'Integrity failure — the signature seal did not verify';
     case 'awaiting-signature': return 'Awaiting a signer';
     case 'signature-revoked': return 'The signature was superseded or rolled back';
+    case 'signature-unverifiable': return 'The signature could not be checked right now — nothing is known about its standing';
     case 'not-signed': return 'No release signature on this run';
     case 'snapshot-missing': return 'Signed before snapshot persistence';
     default: return 'The signed package could not be read';
@@ -674,12 +675,12 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           </span>
         </div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ fontSize: 12, color: 'var(--text-400)' }}>Region</label>
-          <select className="c2c-input" style={{ height: 30 }} value={region} onChange={(e) => setRegion(e.target.value as any)}>
+          <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-region">Region</label>
+          <select id="ectd-region" className="c2c-input" style={{ height: 30 }} value={region} onChange={(e) => setRegion(e.target.value as any)}>
             {REGIONS.map((r) => <option key={r} value={r}>{r === 'FDA' ? 'US · FDA' : 'EU · EMA'}</option>)}
           </select>
-          <label style={{ fontSize: 12, color: 'var(--text-400)' }}>Submission</label>
-          <select className="c2c-input" style={{ height: 30 }} value={submissionType} onChange={(e) => setSubmissionType(e.target.value as any)}>
+          <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-subtype">Submission</label>
+          <select id="ectd-subtype" className="c2c-input" style={{ height: 30 }} value={submissionType} onChange={(e) => setSubmissionType(e.target.value as any)}>
             {SUB_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>

@@ -134,6 +134,65 @@ describe('mapToEstar', () => {
     expect(slot?.present, `not matched: ${title}`).toBe(true);
   });
 
+  /**
+   * An IVD 510(k) was scored against the NON-IVD slot registry.
+   *
+   * mapToEstar had two registries, both enumerated from the nIVD eSTAR, and no
+   * notion of variant — while /assemble and /filing-readiness accept and echo
+   * `variant: 'ivd'`. Measured on the two vendored templates with listXfaFields:
+   * the nIVD form's PerformanceTesting holds ClinicalTesting, BenchTesting and
+   * AnimalTesting; the IVD form's holds AnalyticalPerformance (140 fields on its
+   * own), ClinicalStudies, ComparisonStudies and ReferenceRange. So an IVD was
+   * never once asked for analytical performance, method comparison or expected
+   * values, and one holding none of them could reach "ready".
+   */
+  describe('IVD 510(k) variant', () => {
+    /** Every nIVD-required section present, and no analytical performance. */
+    const nonIvdComplete = [
+      ['Cover letter', 'cover_letter'], ['MDUFA user fee', 'user_fee'],
+      ['Indications for use', 'indications_for_use'], ['Truthful and accuracy statement', 'truthful_and_accuracy'],
+      ['Device description', 'device_description'], ['Proposed labeling', 'labeling'],
+      ['Risk management file', 'risk_management'], ['Performance testing', 'performance_testing'],
+      ['Biocompatibility', 'biocompatibility'], ['510(k) Summary', '510k_summary'],
+      ['Substantial equivalence', 'substantial_equivalence'],
+    ].map(([title, documentType], i) => ({ sectionCode: `S${i}`, title, documentType, substantive: true })) as never[];
+
+    it('asks an IVD for analytical performance, where the non-IVD registry cannot', () => {
+      const asDevice = mapToEstar({ leaves: nonIvdComplete, type: '510k', variant: 'device' });
+      const asIvd = mapToEstar({ leaves: nonIvdComplete, type: '510k', variant: 'ivd' });
+      expect(asDevice.summary.missingRequired).not.toContain('ivd-analytical-performance');
+      expect(asIvd.summary.missingRequired).toContain('ivd-analytical-performance');
+    });
+
+    it('is satisfied by real analytical performance content', () => {
+      const withAnalytical = [
+        ...nonIvdComplete,
+        { sectionCode: 'AP', title: 'Analytical performance — precision and detection limit', documentType: 'analytical_performance', substantive: true },
+      ] as never[];
+      const r = mapToEstar({ leaves: withAnalytical, type: '510k', variant: 'ivd' });
+      expect(r.summary.missingRequired).not.toContain('ivd-analytical-performance');
+    });
+
+    /* FDA asks each of the others as a yes/no the applicant answers, so they are
+       reported for a human to confirm rather than invented as requirements. */
+    it('reports the rest of FDA\'s IVD performance questions without blocking on them', () => {
+      const r = mapToEstar({ leaves: nonIvdComplete, type: '510k', variant: 'ivd' });
+      for (const id of ['ivd-method-comparison', 'ivd-reference-range', 'ivd-specimen-stability',
+                        'ivd-traceability', 'ivd-clinical-performance']) {
+        expect(r.summary.checkApplicability, `${id} not reported`).toContain(id);
+        expect(r.summary.missingRequired, `${id} must not block`).not.toContain(id);
+      }
+    });
+
+    it('leaves the non-IVD pathway exactly as it was', () => {
+      const ids = mapToEstar({ leaves: [], type: '510k', variant: 'device' }).sections.map((s) => s.id);
+      expect(ids.some((id) => id.startsWith('ivd-'))).toBe(false);
+      // Omitting the variant is the old behaviour, and must stay the old behaviour.
+      const omitted = mapToEstar({ leaves: [], type: '510k' }).sections.map((s) => s.id);
+      expect(omitted).toEqual(ids);
+    });
+  });
+
   it('does not block readiness on what it genuinely cannot decide, but does report it', () => {
     /* EMC turns on whether the device is electrically powered, which is not one
        of the seven flags. Pretending to know would be worse than saying so. */

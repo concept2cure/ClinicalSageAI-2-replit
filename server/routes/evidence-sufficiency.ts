@@ -17,7 +17,7 @@ import {
   getAssessment,
   listProgramAssessments,
 } from '../services/evidence-sufficiency/evidence-sufficiency.service';
-import auditService from '../services/auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import type { SubmissionPathway } from '../../shared/schema/evidence-sufficiency';
 
 const router = Router();
@@ -83,9 +83,18 @@ router.post(
         dryRun: body.dryRun === true,
       });
 
-      // Persisted assessments land in the audit trail; dry runs don't.
+      /* Persisted assessments land in the audit trail; dry runs don't.
+
+         WO-16C #133: was `void auditService.logAction({…})`. `logAction` never
+         rejects on a persistence failure, so discarding its result left a lost
+         §11.10(e) row invisible. `assessSufficiency` has already persisted the
+         assessment row by this point (that is what `!dryRun` means here), so the
+         audit row is a log beside it; the assessment stands and the response says
+         whether the log exists. A dry run persists nothing and writes no row, so
+         it reports none — `auditTrail` is absent rather than a claimed success. */
+      let auditTrail: AuditRowOutcome | undefined;
       if (!body.dryRun) {
-        void auditService.logAction({
+        auditTrail = await recordAuditRow({
           tenantId: orgId,
           userId: triggeredBy,
           action: 'evidence_sufficiency.assess',
@@ -101,7 +110,7 @@ router.post(
         });
       }
 
-      res.json(result);
+      res.json(auditTrail ? { ...result, auditTrail } : result);
     } catch (err: any) {
       res.status(500).json({ error: 'Assessment failed', detail: err?.message });
     }

@@ -67,6 +67,66 @@
 --                      stab_assignments, stab_signoffs, stab_protocols, cmc_methods;
 -- ═══════════════════════════════════════════════════════════════════════════════
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- AMENDED IN PLACE 2026-09-10 (CLAUDE.md Rule 1, WO-1). This file no longer
+-- creates stab_signoffs or cmc_methods.
+--
+-- What was removed: `CREATE TABLE IF NOT EXISTS stab_signoffs (...)` and
+-- `CREATE TABLE IF NOT EXISTS cmc_methods (...)`, plus idx_cmc_methods_status
+-- and idx_stab_signoffs_study which belong with them.
+--
+-- Why: both were ALSO created by db/migrations/20260730_cmc_evidence_tables.sql,
+-- and both files are on the SAME applier — C2C_MIGRATION_FILES, which
+-- applyMigrationFiles replays in full on every deploy. Set position, not the
+-- filename date, decided which won: 20260730 sits at entry 569 and this file at
+-- 704, so the later-dated file created both tables first and the IF NOT EXISTS
+-- here silently no-opped. The two definitions were not equivalent:
+--
+--   cmc_methods    — 20260730 has title TEXT (nullable) and NO created_at;
+--                    this file had title TEXT NOT NULL and created_at TIMESTAMPTZ.
+--   stab_signoffs  — 20260730 has updated_at and every column nullable except
+--                    signed_at/updated_at; this file had study_id, stage,
+--                    signer_name, signer_email and hash NOT NULL, no updated_at,
+--                    and tenant_id NOT NULL DEFAULT
+--                    NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT.
+--
+-- Canonicalised on the 20260730 shape because that is the shape every existing
+-- environment actually carries — changing the definition would not change a
+-- deployed database, it would only move which file lies about it. Verified
+-- sufficient for the runtime: server/src/routes/stability.router.ts reads
+-- status/title from cmc_methods and study_id/stage/signer_name/signer_email/
+-- reason/hash/signed_at from stab_signoffs, all of which 20260730 provides.
+--
+-- ⚠ CORRECTED 2026-09-10, SAME DAY. An earlier revision of this note claimed
+-- the surviving stab_signoffs left every e-signature row untenanted: tenant_id
+-- INTEGER nullable with no default, stability.router.ts:2493 inserting without
+-- naming it, :2521 reading back on study_id with no tenant predicate. The
+-- statements are indeed untenanted in source, but the conclusion was WRONG,
+-- and it was wrong because the note was written against the CREATE TABLE line
+-- alone without reading further down the applier.
+--
+-- db/migrations/20260728_stability_tenant_isolation.sql runs LATER in
+-- C2C_MIGRATION_FILES and sweeps every stab_* base table: it sets
+--   ALTER COLUMN tenant_id SET DEFAULT NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
+-- then ENABLE + FORCE ROW LEVEL SECURITY with tenant_isolation_policy. So on a
+-- deployed database the column DOES carry a request-derived default, the INSERT
+-- that omits tenant_id gets the caller's tenant stamped from the connection,
+-- and the read is filtered by the policy rather than by the statement.
+-- server/src/routes/stability.router.ts:223 reinforces this: its `pool` is a
+-- fail-closed request-scoped facade that throws "Tenant context required"
+-- without a scope, and server/db/rlsEnforcement.ts refuses to boot production
+-- unless RLS_ENFORCE=on.
+--
+-- Residual, which is real but much smaller than first stated: the protection is
+-- one control deep — an RLS policy plus an ambient connection setting — and the
+-- statements carry no tenant predicate of their own. That is a defence-in-depth
+-- item for WO-3, not the untenanted-signature-rows defect this note originally
+-- described.
+--
+-- Which change removed them: WO-1. Canonical creator for both:
+-- db/migrations/20260730_cmc_evidence_tables.sql.
+-- ─────────────────────────────────────────────────────────────────────────────
+
 BEGIN;
 
 -- Reusable tenant key: NOT NULL so an unset context fails closed on INSERT; DEFAULT
@@ -153,18 +213,6 @@ CREATE TABLE IF NOT EXISTS stab_assignments (
 CREATE INDEX IF NOT EXISTS idx_stab_assign_study ON stab_assignments(study_id, status);
 
 -- ── stab_signoffs (Part 11 e-sign records) — reverse-engineered from the router ──
-CREATE TABLE IF NOT EXISTS stab_signoffs (
-  signoff_id    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  study_id      UUID NOT NULL,
-  stage         TEXT NOT NULL,                -- no CHECK: router passes arbitrary stage
-  signer_name   TEXT NOT NULL,
-  signer_email  TEXT NOT NULL,
-  reason        TEXT,
-  hash          TEXT NOT NULL,
-  signed_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-  tenant_id     INTEGER NOT NULL DEFAULT NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-);
-CREATE INDEX IF NOT EXISTS idx_stab_signoffs_study ON stab_signoffs(study_id, signed_at DESC);
 
 -- ── stab_protocols (reusable protocol templates) — legacy 031 ──────────────────
 CREATE TABLE IF NOT EXISTS stab_protocols (
@@ -183,13 +231,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_stab_protocols_name ON stab_protocols(tenan
 -- the repo. Without a tenant column it is invisible to every RLS sweep and stays globally
 -- readable — the correct behavior for reference data. (If a future module writes
 -- tenant-authored methods here, convert to tenant_id + the standard policy.)
-CREATE TABLE IF NOT EXISTS cmc_methods (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title       TEXT NOT NULL,
-  status      TEXT,
-  created_at  TIMESTAMPTZ DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS idx_cmc_methods_status ON cmc_methods(status);
 
 -- ── Views (legacy 033/034): unsampled timepoints joined to their condition ──────
 -- Explicit 6-column projection (NOT select *) so tenant_id never leaks into API JSON.

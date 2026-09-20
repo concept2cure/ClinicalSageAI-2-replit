@@ -545,7 +545,7 @@ export function LiteratureTab({
               <div className="actions">
                 <button
                   className="tb-btn"
-                  title="Refine literature search with AnA"
+                  title="Refine literature search with AnA" aria-label="Refine literature search with AnA"
                   onClick={() =>
                     onAskAna(
                       `Refine the literature search for ${programTitle ?? 'this program'} — tighten the inclusion window, ` +

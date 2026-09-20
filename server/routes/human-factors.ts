@@ -1,6 +1,31 @@
 /**
  * Human factors API (IEC 62366-1) — HFE/UE file completeness and use-related
  * risk analysis. Pure, deterministic; role-gated and Zod-validated.
+ *
+ * WO-16C #133. Three audit writes in this router were
+ * `await auditService.logAction({…})` at statement position. Awaiting a promise
+ * and throwing away what it resolved to reports exactly as much as not awaiting
+ * it: `logAction` does not reject when persistence fails — deliberate policy, an
+ * audit-trail outage must not break the action it records — it RESOLVES an
+ * `AuditWriteResult` and says so in `persisted`. Discarded, the response was
+ * byte-identical whether the §11.10(e) row existed or not, and the only trace of
+ * a lost one was a line in the server log.
+ *
+ * Those three now go through `recordAuditRow`, and each reports its outcome to
+ * the caller in `meta.auditTrail` of the 2xx envelope that immediately follows
+ * it. In each of the three a row is attempted only after the write it records has
+ * returned, and every error arm ahead of that write returns without attempting
+ * one — so those responses have no outcome to carry rather than a dropped one.
+ * Each of the three handlers attempts exactly one row, so one unqualified
+ * `auditTrail` key per envelope names it unambiguously.
+ *
+ * In all three the recorded write has already committed by the time the row is
+ * attempted, so none of them reverts its mutation over a lost log row: the
+ * action stands AND the caller is told.
+ *
+ * A fourth governed write — the scenario INSERT in POST /scenarios — records no
+ * §11.10(e) row at all. That is a different gap from #133 (nothing is discarded
+ * there because nothing is written); see the note at that INSERT.
  */
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
@@ -18,7 +43,7 @@ import {
   HF_ELEMENT_KEYS,
   HfFileValidationError,
 } from '../services/human-factors/hf-files-service';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 const logger = createScopedLogger('human-factors');
 const router = Router();
@@ -111,7 +136,13 @@ router.post('/', async (req: Request, res: Response) => {
       present: b.present,
       createdBy: userId,
     });
-    await auditService.logAction({
+    /* WO-16C #133. Was `await auditService.logAction({…})` at statement position,
+       which discards what that call resolves. `createHfFile` above has already
+       committed the hf_engineering_files row — its id is the `id` in this 201 —
+       so this is a log BESIDE a completed create, not the create itself, and it
+       is not reverted here. What the caller can now see, and could not before, is
+       whether the §11.10(e) record of that create exists: `meta.auditTrail`. */
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'HF_FILE_RECORDED',
@@ -122,6 +153,7 @@ router.post('/', async (req: Request, res: Response) => {
     return res.status(201).json({
       data: { device: file.device, framework: file.framework, present: file.present, scenarios: [] },
       id: file.id,
+      meta: { auditTrail },
     });
   } catch (err) {
     if (err instanceof HfFileValidationError) {
@@ -234,6 +266,12 @@ router.post('/scenarios', async (req: Request, res: Response) => {
     }
     const fileId = file.rows[0].id;
     const id = 'hfs-' + Date.now();
+    /* Census finding from the WO-16C #133 conversion of this file, recorded here
+       rather than fixed: creating a hazard-related use scenario records no
+       §11.10(e) audit row at all, while POST / (the file) and
+       PATCH /scenarios/:id/mitigate (the control on this very row) each record
+       one. Nothing is discarded here because nothing is written; adding a row is
+       not part of a #133 conversion. */
     const { rows } = await pool.query(
       `INSERT INTO c2c_hf_scenarios
          (id, organization_id, file_id, task, use_error, potential_harm_severity, mitigated)
@@ -331,7 +369,22 @@ router.patch('/scenarios/:id/mitigate', async (req: Request, res: Response) => {
       });
     }
     const r = rows[0];
-    await auditService.logAction({
+    /* WO-16C #133. Was `await auditService.logAction({…})` at statement position.
+       The UPDATE above has already flipped `mitigated` to true and returned the
+       row, so this is a log beside a committed risk control and is NOT reverted
+       here — re-clearing the flag because a log row was lost would undo a control
+       a reviewer has recorded. It is reported instead: `meta.auditTrail`.
+
+       This site is the sharpest of the three. c2c_hf_scenarios has no reason
+       column (db/migrations/20260717_human_factors_store.sql: id,
+       organization_id, file_id, task, use_error, potential_harm_severity,
+       mitigated), so the reason for change this route requires is carried in
+       `details` below and nowhere else in any store. A lost row therefore leaves
+       the mitigation standing with no recorded reason for it — the half of
+       §11.10(e) this route exists to capture. The mutation stands;
+       `meta.auditTrail.persisted === false` is how the caller learns the reason
+       did not land. */
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'HF_USE_SCENARIO_MITIGATED',
@@ -355,6 +408,7 @@ router.patch('/scenarios/:id/mitigate', async (req: Request, res: Response) => {
         potentialHarmSeverity: r.potentialHarmSeverity,
         mitigated: r.mitigated === true,
       },
+      meta: { auditTrail },
     });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
@@ -412,7 +466,13 @@ router.patch('/elements', async (req: Request, res: Response) => {
     if (!updated) {
       return res.status(409).json({ error: { code: 'NO_FILE', message: 'The HFE/UE file could not be updated.' } });
     }
-    await auditService.logAction({
+    /* WO-16C #133. Was `await auditService.logAction({…})` at statement position.
+       `setHfFileElements` above has already written the new element map and
+       returned it, so this is a log beside a committed write and is not reverted
+       here. The outcome rides out in `meta.auditTrail`, so a caller can tell a
+       recorded element change from an unrecorded one — the `data` map is
+       identical either way. */
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'HF_FILE_ELEMENT_SET',
@@ -420,7 +480,10 @@ router.patch('/elements', async (req: Request, res: Response) => {
       resourceId: updated.id,
       details: { element, previousPresent: previous, present: nextValue, device: updated.device },
     });
-    return res.json({ data: { device: updated.device, framework: updated.framework, present: updated.present } });
+    return res.json({
+      data: { device: updated.device, framework: updated.framework, present: updated.present },
+      meta: { auditTrail },
+    });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.status(503).json({

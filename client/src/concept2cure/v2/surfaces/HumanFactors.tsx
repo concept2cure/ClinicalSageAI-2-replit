@@ -200,18 +200,18 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
       const res = await apiRequest('PATCH', '/api/human-factors/elements', { element: k, present: next });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        fire('Element not saved -- ' + (hfReason(body) || 'the HFE/UE file did not accept the change') + '. Completeness is unchanged.');
+        fire('Element not saved — ' + (hfReason(body) || 'the HFE/UE file did not accept the change') + '. Completeness is unchanged.');
         return;
       }
       const body = await res.json().catch(() => null);
       const stored = body?.data?.present;
       if (!stored || typeof stored !== 'object') {
-        fire('Element not saved -- unexpected response. Completeness is unchanged.');
+        fire('Element not saved — unexpected response. Completeness is unchanged.');
         return;
       }
       setPresentSaved(stored as Record<string, boolean>);
     } catch (e) {
-      fire('Element not saved -- ' + hfThrownReason(e) + '. Completeness is unchanged.');
+      fire('Element not saved — ' + hfThrownReason(e) + '. Completeness is unchanged.');
     } finally {
       setElBusy(null);
     }
@@ -254,9 +254,9 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
       const ns: HfScenario = { id: String(row.id ?? ''), task: row.task, useError: row.useError || '', potentialHarmSeverity: row.potentialHarmSeverity || 'minor', mitigated: row.mitigated === true, _new: true };
       setAddedScenarios(prev => [...prev, ns]);
       setForm(false);
-      fire('Use scenario added' + (HF_SERIOUS.has(ns.potentialHarmSeverity) && !ns.mitigated ? ' -- unmitigated critical task' : ''));
+      fire('Use scenario added' + (HF_SERIOUS.has(ns.potentialHarmSeverity) && !ns.mitigated ? ' — unmitigated critical task' : ''));
     } catch (e) {
-      fire('Could not add scenario -- ' + (e instanceof Error && e.message ? e.message : 'request failed'));
+      fire('Could not add scenario — ' + (e instanceof Error && e.message ? e.message : 'request failed'));
     }
   };
 
@@ -294,11 +294,11 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
     if (!sc) return;
     const reason = (v.reasonForChange || '').trim();
     if (reason.length < 8) {
-      fire('Mitigation not recorded -- a reason for change of at least 8 characters is required.');
+      fire('Mitigation not recorded — a reason for change of at least 8 characters is required.');
       return;
     }
     if (!sc.id) {
-      fire('Mitigation not recorded -- this scenario has no record id. Reload the HFE/UE file and retry.');
+      fire('Mitigation not recorded — this scenario has no record id. Reload the HFE/UE file and retry.');
       return;
     }
     try {
@@ -308,11 +308,11 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
       );
       const body = await res.json().catch(() => null);
       if (!res.ok) {
-        fire('Mitigation not recorded -- ' + (hfReason(body) || 'the HFE/UE record refused the change') + '. The summative gate is unchanged.');
+        fire('Mitigation not recorded — ' + (hfReason(body) || 'the HFE/UE record refused the change') + '. The summative gate is unchanged.');
         return;
       }
       if (body?.data?.mitigated !== true) {
-        fire('Mitigation not recorded -- unexpected response. The summative gate is unchanged.');
+        fire('Mitigation not recorded — unexpected response. The summative gate is unchanged.');
         return;
       }
       setMitigatedIds(prev => prev.indexOf(sc.id) === -1 ? [...prev, sc.id] : prev);
@@ -320,7 +320,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
       fire('Mitigation recorded against ' + sc.task);
       ask('Draft a risk-control mitigation for: ' + sc.task + ' (' + sc.useError + ')');
     } catch (e) {
-      fire('Mitigation not recorded -- ' + hfThrownReason(e) + '. The summative gate is unchanged.');
+      fire('Mitigation not recorded — ' + hfThrownReason(e) + '. The summative gate is unchanged.');
     }
   };
 
@@ -434,7 +434,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} human factors</div>
           <h1 className="sp-title">Human factors {I.dot} IEC 62366-1</h1>
-          <p className="sp-state">{device} -- use-related risk analysis and HFE/UE file completeness, the gate before summative testing.</p>
+          <p className="sp-state">{device} — use-related risk analysis and HFE/UE file completeness, the gate before summative testing.</p>
         </div>
         <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Add use scenario</button>
       </div>
@@ -454,8 +454,8 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
             ? <>No hazard-related use scenarios are recorded, so no use-related risk analysis has run — nothing here establishes whether critical tasks are controlled.</>
             : <>Every critical task has a documented mitigation. The critical-task gate is clear.</>}
         body={gateUnassessed
-          ? <>The HFE/UE file is <b>{compPct}%</b> complete against IEC 62366-1{hfe.gaps.length ? ` -- ${hfe.gaps.length} element${hfe.gaps.length === 1 ? '' : 's'} still open` : ''}. An empty scenario set is not a finding of “no unmitigated critical tasks”, so nothing is claimed here either way.</>
-          : <>You've analysed <b>{risk.totalScenarios}</b> use scenarios; <b>{risk.criticalTaskCount}</b> {risk.criticalTaskCount === 1 ? 'is a' : 'are'} critical task{risk.criticalTaskCount === 1 ? '' : 's'} (serious or critical harm). The HFE/UE file is <b>{compPct}%</b> complete against IEC 62366-1{hfe.gaps.length ? ` -- ${hfe.gaps.length} element${hfe.gaps.length === 1 ? '' : 's'} still open` : ''}.</>}
+          ? <>The HFE/UE file is <b>{compPct}%</b> complete against IEC 62366-1{hfe.gaps.length ? ` — ${hfe.gaps.length} element${hfe.gaps.length === 1 ? '' : 's'} still open` : ''}. An empty scenario set is not a finding of “no unmitigated critical tasks”, so nothing is claimed here either way.</>
+          : <>You've analysed <b>{risk.totalScenarios}</b> use scenarios; <b>{risk.criticalTaskCount}</b> {risk.criticalTaskCount === 1 ? 'is a' : 'are'} critical task{risk.criticalTaskCount === 1 ? '' : 's'} (serious or critical harm). The HFE/UE file is <b>{compPct}%</b> complete against IEC 62366-1{hfe.gaps.length ? ` — ${hfe.gaps.length} element${hfe.gaps.length === 1 ? '' : 's'} still open` : ''}.</>}
         reassure={gateUnassessed
           ? undefined
           : "I'll draft the mitigation for each critical task, tie it to the risk control, and assemble the HFE/UE report — you approve each one."}
@@ -509,7 +509,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
                 ? <button className="hf-act" onClick={() => setMitigating(s)}
                     disabled={!s.id}
                     title={s.id ? 'Record a mitigation against the HFE/UE record' : 'This scenario has no record id — reload the HFE/UE file'}>{I.penLine} Mitigate</button>
-                : <button className="hf-go" title="Provenance" onClick={() => ask('Show the use-related risk provenance for ' + s.task)}>{I.search}</button>}
+                : <button className="hf-go" title="Provenance" aria-label="Provenance" onClick={() => ask('Show the use-related risk provenance for ' + s.task)}>{I.search}</button>}
             </div>
           );
         })}

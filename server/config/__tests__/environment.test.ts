@@ -141,6 +141,7 @@ describe('getRefreshTokenSecret', () => {
     // Satisfy the production MFA + RLS + audit-seal posture gates so these
     // tests isolate the refresh-secret contract.
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.AUDIT_HMAC_SECRET = 's'.repeat(32);
     process.env.RLS_ENFORCE = 'on';
     process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
     process.env.DATABASE_URL = 'postgres://test';
@@ -286,6 +287,7 @@ describe('assertMfaKeyPosture', () => {
   it('loads in production when a dedicated MFA key is present', async () => {
     process.env.NODE_ENV = 'production';
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.AUDIT_HMAC_SECRET = 's'.repeat(32);
     const { config } = await import('../environment');
     expect(config.isProduction).toBe(true);
   });
@@ -327,6 +329,7 @@ describe('getCurrentEnvironment', () => {
     // suites above/below).
     process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.AUDIT_HMAC_SECRET = 's'.repeat(32);
     process.env.RLS_ENFORCE = 'on';
     process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
   });
@@ -402,6 +405,7 @@ describe('production RLS enforcement posture (fires on config import)', () => {
     process.env.JWT_SECRET_PROD = VALID_SECRET;
     process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.AUDIT_HMAC_SECRET = 's'.repeat(32);
     process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
     process.env.DATABASE_URL = 'postgres://test';
     process.env.DATABASE_URL_DEV = 'postgres://test';
@@ -489,6 +493,7 @@ describe('production audit-seal posture (fires on config import)', () => {
     process.env.JWT_SECRET_PROD = VALID_SECRET;
     process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.AUDIT_HMAC_SECRET = 's'.repeat(32);
     process.env.RLS_ENFORCE = 'on';
     process.env.DATABASE_URL = 'postgres://test';
     process.env.DATABASE_URL_DEV = 'postgres://test';
@@ -516,6 +521,40 @@ describe('production audit-seal posture (fires on config import)', () => {
     process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
     const { config } = await import('../environment');
     expect(config.isProduction).toBe(true);
+  });
+
+  /* The SECOND audit key. AUDIT_HMAC_SECRET signs the tamper-proof chain, and
+     its refusal already existed in TamperProofAuditLog's constructor — but that
+     is constructed lazily behind auditService's fallback-to-console catch, so
+     the process started anyway. These pin the gate at the same place as the
+     seal key's: config load, on import. */
+  it('refuses to load in production when AUDIT_HMAC_SECRET is unset', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
+    delete process.env.AUDIT_HMAC_SECRET;
+    await expect(import('../environment')).rejects.toThrow(
+      /REFUSING TO BOOT: AUDIT_HMAC_SECRET is not configured/,
+    );
+  });
+
+  it('refuses to load in production when AUDIT_HMAC_SECRET is too short', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
+    process.env.AUDIT_HMAC_SECRET = 's'.repeat(16);
+    await expect(import('../environment')).rejects.toThrow(
+      /AUDIT_HMAC_SECRET is too short/,
+    );
+  });
+
+  it('AUDIT_SEAL_ACCEPT_UNSEALED does NOT excuse a missing chain secret', async () => {
+    // The seal has a documented accepted-risk posture; the chain has none,
+    // because without its secret the store cannot be constructed at all.
+    process.env.NODE_ENV = 'production';
+    process.env.AUDIT_SEAL_ACCEPT_UNSEALED = 'true';
+    delete process.env.AUDIT_HMAC_SECRET;
+    await expect(import('../environment')).rejects.toThrow(
+      /REFUSING TO BOOT: AUDIT_HMAC_SECRET is not configured/,
+    );
   });
 
   it('loads (with a warning) when the operator explicitly accepts an unsealed ledger', async () => {

@@ -64,10 +64,30 @@ export interface TrendInfo {
   readonly dataPoints: number;
 }
 
+/**
+ * ── 2026-09-10: every field here used to be non-null and derived ─────────────
+ * When no twin assessment existed the engine filled them in:
+ *   approvalProbability:   Math.min(overallScore + 10, 100)
+ *   estimatedReviewDays:   180
+ *   estimatedDeficiencies: Math.round((100 - overallScore) / 10)
+ * A readiness score plus ten is not a probability of approval, 180 was a
+ * constant, and the deficiency count was a third rescaling of the same score.
+ * They reached a user: ana-ri/context-enrichment.ts renders all three into the
+ * assistant's prompt under "**Predictions:**" and then instructs it to
+ * "Present these scores directly."
+ *
+ * Null now means "not computed" and must be rendered as such. It is never
+ * replaced with a default at the point of use — that just moves the invention.
+ */
 export interface ReadinessPredictions {
-  readonly approvalProbability: number; // 0-100
-  readonly estimatedReviewDays: number;
-  readonly estimatedDeficiencies: number;
+  /** 0-100. Null unless a real model produced it — which nothing does today. */
+  readonly approvalProbability: number | null;
+  /** The agency's review clock for the pathway, not a forecast. Null if unknown. */
+  readonly estimatedReviewDays: number | null;
+  /** Criteria a twin assessment scored unmet. Null when no assessment exists. */
+  readonly estimatedDeficiencies: number | null;
+  /** Why the fields are null, for a caller that has to explain itself. */
+  readonly basis: 'twin_assessment' | 'no_assessment_on_record';
 }
 
 export interface ReadinessContext {
@@ -219,10 +239,13 @@ export async function computeReadinessScore(
   };
 
   // ── Predictions ─────────────────────────────────────────────────────────
+  // No `??` fallbacks: see ReadinessPredictions. A missing twin assessment
+  // yields nulls, not figures derived from overallScore.
   const predictions: ReadinessPredictions = {
-    approvalProbability: twin?.approvalProbability ?? Math.min(overallScore + 10, 100),
-    estimatedReviewDays: twin?.reviewTimeDays ?? 180,
-    estimatedDeficiencies: twin?.deficiencyCount ?? Math.max(0, Math.round((100 - overallScore) / 10)),
+    approvalProbability: twin?.approvalProbability ?? null,
+    estimatedReviewDays: twin?.reviewTimeDays ?? null,
+    estimatedDeficiencies: twin?.deficiencyCount ?? null,
+    basis: twin ? 'twin_assessment' : 'no_assessment_on_record',
   };
 
   return {

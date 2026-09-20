@@ -565,8 +565,11 @@
    ════════════════════════════════════════════════════════════ */
 .mdx-shell .tbl th.cb,
 .mdx-shell .tbl td.cb { width: 36px; padding-left: 14px; padding-right: 4px; }
+/* A <button role="checkbox"> now, not a <span> — reset the UA's padding and
+   font so the 16px box is unchanged. */
 .mdx-shell .cbox {
   width: 16px; height: 16px; border: 1.5px solid var(--border-strong);
+  padding: 0; font: inherit; cursor: pointer;
   border-radius: 3px; background: var(--bg-000);
   display: inline-flex; align-items: center; justify-content: center;
   color: var(--text-000); transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
@@ -1608,6 +1611,17 @@
   border-color: var(--border-strong);
   box-shadow: 0 4px 12px color-mix(in oklab, var(--black) 6%, transparent);
 }
+/* The row-open button. .docs-row was itself a <button>; it is now a plain
+   container so the Ask-AnA chip can be a sibling button rather than an
+   (invalid) nested one. This carries the row's main click and reproduces the
+   flex layout the row had: rail + body, filling the width left of .docs-actions. */
+.mdx-shell .docs-row-main {
+  flex: 1; min-width: 0;
+  display: flex; gap: 0;
+  background: none; border: none; padding: 0; margin: 0;
+  font: inherit; color: inherit; text-align: left;
+  cursor: pointer;
+}
 .mdx-shell .docs-rail { width: 4px; flex-shrink: 0; background: var(--border-200); }
 .mdx-shell .docs-row[data-status="ready"]  .docs-rail { background: var(--success); width: 4px; }
 .mdx-shell .docs-row[data-status="review"] .docs-rail { background: var(--warning); width: 5px; }
@@ -1707,6 +1721,9 @@
 .mdx-shell .docs-action-chip {
   display: inline-flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 999px;
+  /* Now a real <button> (was a role="button" span); reset the default chrome
+     so only the hover fill below paints. */
+  background: none; border: none; padding: 0; font: inherit;
   color: var(--text-400);
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
   cursor: pointer;

@@ -26,6 +26,8 @@ const modelConfig: ModelConfig = {
   costPer1kOutput: 0.0025,
   capabilities: ['chat'],
   enabled: true,
+  thinkingMode: 'none',
+  supportsSamplingParams: true,
 };
 
 function mockClientYielding(chunks: any[]) {

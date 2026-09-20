@@ -797,7 +797,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
         eyebrow={
           'The honest read on your ' +
           applied.submissionType +
-          (applied.indication ? ' -- ' + applied.indication.split('--')[0].trim() : '')
+          (applied.indication ? ' — ' + applied.indication.split('--')[0].trim() : '')
         }
         headline={
           strong ? (
@@ -888,7 +888,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
         <div className="pj-card">
           <div className="pj-card-h">
             <span className="t">Closest precedents</span>
-            <span className="s">{results.length} -- ranked by match</span>
+            <span className="s">{results.length} — ranked by match</span>
           </div>
           <div className="pj-card-b" style={{ padding: 8 }}>
             {results.length === 0 ? (
@@ -941,11 +941,11 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                         className="sp-row-t"
                         style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-200)' }}
                       >
-                        {r.clearanceNumber} -- {r.deviceName}
+                        {r.clearanceNumber} — {r.deviceName}
                       </span>
                       <span className="sp-row-s">
-                        {r.applicant} -- {r.clearanceType}
-                        {r.cycle != null ? ' -- ' + r.cycle + 'd cycle' : ''}
+                        {r.applicant} — {r.clearanceType}
+                        {r.cycle != null ? ' — ' + r.cycle + 'd cycle' : ''}
                       </span>
                     </span>
                     <span className="rd-chip tone-ok">{r.decisionOutcome}</span>
@@ -962,7 +962,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
             <div className="pj-card" style={{ marginBottom: 14 }}>
               <div className="pj-card-h">
                 <span className="t">
-                  {sel.clearanceNumber} -- {sel.deviceName}
+                  {sel.clearanceNumber} — {sel.deviceName}
                 </span>
                 {/* Was `ask('Compare our submission against precedent …')` —
                     it bypassed POST /api/precedent-engine/compare, which runs
@@ -985,7 +985,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                   <div className="tl-spec-row">
                     <span className="tl-spec-k">Decision</span>
                     <span className="tl-spec-v">
-                      {sel.decisionOutcome}{sel.decisionDate ? ' -- ' + sel.decisionDate : ''}
+                      {sel.decisionOutcome}{sel.decisionDate ? ' — ' + sel.decisionDate : ''}
                     </span>
                   </div>
                   <div className="tl-spec-row">
@@ -1104,7 +1104,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                     ) : (
                       <>
                         <b>Recommended:</b> {analysis.recommendation}
-                        {analysis.predicate ? ' -- citing ' + analysis.predicate : ''}
+                        {analysis.predicate ? ' — citing ' + analysis.predicate : ''}
                       </>
                     )}
                   </div>

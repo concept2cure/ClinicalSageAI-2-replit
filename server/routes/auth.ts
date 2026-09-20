@@ -7,7 +7,7 @@
  * @version 2.0.0
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';

@@ -24,16 +24,16 @@
       "digest": "4c3fadcd75fb5a11"
     },
     "server/jobs/retentionCron.ts": {
-      "reason": "DELIBERATELY UNCONDITIONAL. Retention deletion must run FOR non-entitled tenants \u2014 that is its purpose. A suspended or pending-deletion tenant is the primary case, and gating it on entitlement would mean data is never retained out of the tenants whose retention clock is actually running. Its only notification path (notifyAdmins) addresses PLATFORM admins with an estate summary, not tenant users.",
-      "digest": "7dbd57942d60c53a"
+      "reason": "DELIBERATELY UNCONDITIONAL. Retention deletion must run FOR non-entitled tenants \u2014 that is its purpose. A suspended or pending-deletion tenant is the primary case, and gating it on entitlement would mean data is never retained out of the tenants whose retention clock is actually running. Its only notification path (notifyAdmins) addresses PLATFORM admins with an estate summary, not tenant users. RE-READ 2026-09-10 against d32dc3c5f (\"Stop the retention sweep destroying records under legal hold\"), which is what drifted this digest. The justification is unchanged by it: a legal hold is a per-record protection applied across the whole estate, not a tenant-entitlement gate, and the sweep still runs for non-entitled tenants. Two properties worth carrying forward \u2014 loadActiveHolds reads vaultLegalHolds estate-wide and unscoped, which is correct for a platform sweep and must not be 'fixed' into a tenant-scoped read; and it FAILS CLOSED, so an unreadable hold table aborts the sweep having deleted nothing. No tenant-facing notification path was added; notifyAdmins still addresses RETENTION_ADMIN_EMAILS, i.e. platform operators.",
+      "digest": "97b7e066358657db"
     },
     "server/jobs/scheduleOfEventsSweep.ts": {
       "reason": "NO PER-TENANT FAN-OUT at the sweep level: zero organization_id references, runs under a system scope. NOTE \u2014 the RLS burndown lists this as a writer, so if it ever selects per-organization it needs filterTenantsForBackgroundWork like taskDueSweep. The digest below is what forces that re-read.",
       "digest": "bfd4fd54a2a03e88"
     },
     "server/routes/api-keys.ts": {
-      "reason": "FALSE POSITIVE of the shape matcher (matches on the string 'validateApiKey'). This is the session-authenticated router for MANAGING keys, mounted under /api behind the auth boundary, so enforceTenantLifecycle already covers it. It is not itself an alternative-auth surface.",
-      "digest": "2cea38b3e490f332"
+      "reason": "FALSE POSITIVE of the shape matcher (matches on the string 'validateApiKey'). This is the session-authenticated router for MANAGING keys, mounted under /api behind the auth boundary, so enforceTenantLifecycle already covers it. It is not itself an alternative-auth surface. RE-READ 2026-09-10: the digest drifted only because WO-0's lint cleanup removed an unused type-only import (`type ApiKeyScope`), which has no runtime effect. Re-verified against the current file: router.use(authMiddleware) and router.use(requireAdminRole) at :56-57, mounted at /api/api-keys by server/bootstrap/register-document-routes.ts. The justification holds and is now stronger than as first written \u2014 the router is admin-guarded, not merely session-authenticated.",
+      "digest": "f0d2d3958e177b94"
     },
     "server/routes/mdx-admin.ts": {
       "reason": "FALSE POSITIVE (matches on the word 'SCIM' in prose). Mounted at /api/mdx, behind the auth boundary, so the lifecycle guard already covers it.",

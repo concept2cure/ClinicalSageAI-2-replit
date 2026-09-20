@@ -345,25 +345,59 @@ async function assertPurgePermitted(
   return existing;
 }
 
-/** Empty one tenant-owned table. Absent tables are skipped; other errors abort. */
 /**
- * Tenant-owned tables that are NOT keyed by organization_id, with the predicate
- * that scopes them to a tenant instead.
+ * Which vault documents belong to a tenant.
+ *
+ * NOT `organization_id = $1` alone, which is what both vault entries used and
+ * which under-deletes on a GDPR erasure.
+ * `vault.documents.organization_id` is NULLABLE by design — the schema records
+ * that "NULL = unattributable — the program is missing or SOFT-DELETED"
+ * (shared/schema/vault.ts). So a document whose programme has been soft-deleted
+ * carries a NULL there, matches no `organization_id = $1`, and SURVIVED the
+ * purge with its bytes, which is the precise failure an erasure request exists
+ * to prevent. Naming the vault tables correctly fixed the table-level miss; it
+ * left this row-level one behind, in the rows most likely to be old.
+ *
+ * The programme is the authoritative owner — the column is backfilled FROM it
+ * (migrations/20260905_vault_documents_organization_id.sql) — so ownership is
+ * asked of the programme, and the column is kept as a union rather than
+ * replaced: a row the programme cannot attribute but the column can is still
+ * this tenant's, and dropping that clause would trade one under-deletion for
+ * another.
+ *
+ * Deliberately NO `deleted_at IS NULL` on regulatory_programs. A purge must
+ * reach documents on a soft-deleted programme — that is exactly the population
+ * the column cannot attribute, and filtering them out here would reinstate the
+ * bug this predicate exists to fix.
+ */
+const VAULT_DOCUMENT_TENANCY =
+  '(organization_id = $1 OR program_id IN (SELECT id FROM regulatory_programs WHERE organization_id = $1))';
+
+/**
+ * Tenant-owned tables that are NOT purged by the uniform `organization_id = $1`,
+ * with the predicate that scopes them to a tenant instead.
  *
  * `vault.document_chunks` is keyed only by document_id — it inherits its tenancy
- * from the document it belongs to. Purging it with the uniform
- * `WHERE organization_id = $1` raised 42703 (undefined_column), which
- * purgeChildTable treats as "not in this deployment's schema" and skips
- * silently, so a purge left every chunk of every deleted document in place.
+ * from the document it belongs to. Purging it with the uniform predicate raised
+ * 42703 (undefined_column), which purgeChildTable treats as "not in this
+ * deployment's schema" and skips silently, so a purge left every chunk of every
+ * deleted document in place.
  *
  * Frozen and module-local for the same reason the table list is: a purge must
  * never take a predicate derived from request input.
  */
-const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.freeze({
+export const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.freeze({
+  'vault.documents': VAULT_DOCUMENT_TENANCY,
   'vault.document_chunks':
-    'document_id IN (SELECT id FROM vault.documents WHERE organization_id = $1)',
+    // tenant-isolation-safe: the inner SELECT is filtered by
+    // VAULT_DOCUMENT_TENANCY above — `organization_id = $1 OR program_id IN
+    // (… WHERE organization_id = $1)`. The org predicate IS in the statement;
+    // it arrives through the interpolated constant, which a same-statement
+    // text match cannot follow.
+    `document_id IN (SELECT id FROM vault.documents WHERE ${VAULT_DOCUMENT_TENANCY})`,
 });
 
+/** Empty one tenant-owned table. Absent tables are skipped; other errors abort. */
 async function purgeChildTable(
   pool: Pool,
   table: string,
@@ -384,7 +418,17 @@ async function purgeChildTable(
   if (!/^[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)?$/.test(table)) {
     throw new OffboardingStateError('INVALID_PURGE_TABLE', `Unsafe table name: ${table}`);
   }
-  const predicate = PURGE_PARENT_SCOPED[table] ?? 'organization_id = $1';
+  /* OWN-KEY lookup, not a bare index. `PURGE_PARENT_SCOPED[table]` reaches
+     Object.prototype, so a table legitimately named `constructor` or
+     `toString` — both of which the name regex above admits — would yield a
+     FUNCTION as the predicate and interpolate it into the DELETE. This
+     codebase has been bitten by exactly this twice and fixed it the same way
+     each time: see `externalDocumentTableReason` in
+     server/services/ectd/leaf-document-tables.ts and `vaultStatus` in
+     client/src/concept2cure/v2/fixtures/vault-data.ts. */
+  const predicate = Object.prototype.hasOwnProperty.call(PURGE_PARENT_SCOPED, table)
+    ? PURGE_PARENT_SCOPED[table]
+    : 'organization_id = $1';
   try {
     await pool.query(`DELETE FROM ${table} WHERE ${predicate}`, [organizationId]);
   } catch (error) {
@@ -475,6 +519,10 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // the administrator's decision reason. The canonical audit event survives;
   // this tenant-owned working record does not.
   'module_access_requests',
+  // A tenant's AnA run-control records: the pauses, steers and stops their
+  // people issued mid-turn. Tenant-owned working data, not the audit trail —
+  // the Part 11 rows for those actions live elsewhere and outlive the account.
+  'ana_runs',
   // CMC/project workflow payloads are customer plans and assignments. Delete
   // them before their project parents; workflow_tasks cascade where the
   // canonical FK is present, while editions without this table/column are
@@ -545,4 +593,31 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      leaf (its only FKs are to organizations, which a purge updates rather than
      deletes, and users), so its position at the end is free. */
   'rendered_leaf_files',
+  /* The assumptions and decisions register behind the resolution subsystem.
+     Customer content in full: an assumption row carries the value the tenant
+     assumed, their rationale and the source they took it from; a decision row
+     carries the recommendation, who approved it and why it was rejected. Both
+     are org-keyed and both are true leaves — neither declares a foreign key in
+     either direction, which is precisely why a purge could not reach them: with
+     no FK there is no cascade path, so nothing but this list can erase them.
+     Position is therefore free. */
+  'assumption_records',
+  'decision_records',
+  /* The CMC workflow subsystem. All five are org-keyed with organization_id
+     NOT NULL, so every row belongs to exactly one tenant — there is no
+     platform-template population here for a purge to spare. What they hold is
+     the tenant's own work: the commands, drug names and AI results of
+     cmc_ai_tool_executions; the project names, teams and progress of the
+     checklist and workflow instances; the task names, assignees and due dates
+     under them; and the names, descriptions and template_data of cmc_workflows.
+
+     Tasks before instances. cmc_workflow_tasks DOES cascade from
+     cmc_workflow_instances today, so listing the parent alone would reach it —
+     but the deletion then depends on a foreign key staying ON DELETE CASCADE,
+     and this list is the thing that must not quietly stop reaching a table. */
+  'cmc_workflow_tasks',
+  'cmc_workflow_instances',
+  'cmc_checklist_instances',
+  'cmc_ai_tool_executions',
+  'cmc_workflows',
 ]);

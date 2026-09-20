@@ -730,7 +730,9 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
             <div className="bd-prog-track">
               <div className="bd-prog-fill" style={{ width: (selList.length ? Math.round((doneCount / selList.length) * 100) : 0) + '%' }} />
             </div>
-            <span className="bd-prog-txt">
+            {/* The count ticks up for the whole run — "3/12 drafted · 2 in
+                flight" — and was announced to nobody. */}
+            <span className="bd-prog-txt" role="status" aria-live="polite" aria-atomic="true">
               {doneCount}/{selList.length} drafted{draftingCount ? ' · ' + draftingCount + ' in flight' : ''}{acceptedCount ? ' · ' + acceptedCount + ' accepted' : ''}
             </span>
           </div>

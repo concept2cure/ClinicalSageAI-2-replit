@@ -431,7 +431,7 @@ export interface GeneratePlanResult {
 export async function generatePlanFromAssessment(
   exec: Exec,
   organizationId: number,
-  input: { programId: string; title?: string },
+  input: { programId: string; title?: string; createdBy?: number | null },
 ): Promise<GeneratePlanResult> {
   const anyAssessment = (await exec.query(
     `SELECT id, title, overall_risk, status FROM rbm_risk_assessments
@@ -469,8 +469,9 @@ export async function generatePlanFromAssessment(
   const strategy = defaultPlanStrategy(overall);
 
   const plan = (await exec.query(
-    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, metadata)
-     VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`,
+    /* created_by is the author of record for the Part 11 two-person rule. */
+    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, metadata, created_by)
+     VALUES ($1,$2,$3,$4,$5,'draft',$6,$7) RETURNING *`,
     [
       organizationId, input.programId, assessment.id,
       input.title ?? `Monitoring plan — ${assessment.title}`, strategy,
@@ -481,6 +482,7 @@ export async function generatePlanFromAssessment(
         criticalFactors: critical.length,
         enhancedSites: enhanced.length,
       }),
+      input.createdBy ?? null,
     ],
   )).rows[0];
 
@@ -587,23 +589,78 @@ export async function updateAction(exec: Exec, organizationId: number, input: Up
 // ── Governed approvals (21 CFR Part 11 — reason-for-change captured) ──────────
 
 /** Approve + activate a risk assessment, recording the reason-for-change and the
- *  approving user (attribution). Returns null when not found in the tenant. */
+ *  approving user (attribution). Returns null when not found in the tenant.
+ *
+ *  `userId` is `number`, not `number | null`, and that is the point. Both
+ *  writers of this table reach it here, and this one accepted null and wrote
+ *  `approved_by = NULL` — an activated governing risk basis with no identified
+ *  approver, which 21 CFR 11.10(e) and 11.50 exist to make impossible. The HTTP
+ *  route never sent null (it 401s first), but the AnA tool path passed
+ *  `ctx?.userId ?? null` straight through, so the one route with NO signature
+ *  check was also the one that could leave the approver blank.
+ *
+ *  Narrowing the type rather than throwing puts it on the compiler: a caller
+ *  that cannot name the approver cannot reach the UPDATE. The runtime guard
+ *  below covers callers that are not typechecked. */
 export async function approveAssessment(
   exec: Exec,
   organizationId: number,
-  userId: number | null,
+  userId: number,
   assessmentId: number,
   reason: string,
+  /* `authorKnown: false` means the row predates created_by, so the two-person
+     rule could not be applied to it. The signed record says so rather than
+     staying silent: an inspector can then tell an approval that WAS checked
+     against its author from one where no author was ever recorded. The caller
+     is the only thing that knows this, because it reads the row under the same
+     transaction as the UPDATE. */
+  opts: { authorKnown?: boolean } = {},
 ) {
+  if (userId == null) {
+    throw new Error('A risk-assessment approval requires an identified approver (21 CFR 11.10(e)).');
+  }
   const { rows } = await exec.query(
     `UPDATE rbm_risk_assessments
         SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
-            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
+            metadata = COALESCE(metadata, '{}'::jsonb)
+                       || jsonb_build_object('approvalReason', $2::text)
+                       || jsonb_build_object('twoPersonRule', $5::text)
       WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
       RETURNING *`,
-    [userId, reason, assessmentId, organizationId],
+    [
+      userId,
+      reason,
+      assessmentId,
+      organizationId,
+      opts.authorKnown === false ? 'not_applicable_no_author_recorded' : 'enforced',
+    ],
   );
-  return rows[0] ?? null;
+  if (rows.length === 0) return null;
+
+  /* Approving a version supersedes the one it replaces, so a program never has
+     two assessments claiming to be the governing risk basis at once.
+     ──
+     This lived ONLY in the HTTP route, which kept its own copy of the UPDATE
+     above. The AnA tool path came through here instead and archived nothing, so
+     approving a v2 through AnA left v1 active beside it. Readers resolve the
+     governing basis with `ORDER BY (status = 'active') DESC, updated_at DESC
+     LIMIT 1` (see currentAssessment below), which does not error on two — it
+     silently picks the more recently touched one. A monitoring plan generated
+     after that could be built from either.
+     ──
+     The archived row and its items are left otherwise untouched: that is the
+     signed record. Atomicity comes from the caller's `exec` — the route passes
+     its transaction client, so activate+archive still commit or roll back
+     together. */
+  if (rows[0].program_id) {
+    await exec.query(
+      `UPDATE rbm_risk_assessments SET status = 'archived', updated_at = NOW()
+        WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+          AND id <> $3 AND status = 'active'`,
+      [organizationId, rows[0].program_id, assessmentId],
+    );
+  }
+  return rows[0];
 }
 
 /** Approve + activate a monitoring plan, recording the reason-for-change and the
@@ -611,17 +668,31 @@ export async function approveAssessment(
 export async function approvePlan(
   exec: Exec,
   organizationId: number,
-  userId: number | null,
+  userId: number,
   planId: number,
   reason: string,
+  /* See approveAssessment — same contract. */
+  opts: { authorKnown?: boolean } = {},
 ) {
+  /* Same rule as approveAssessment above — see its header. */
+  if (userId == null) {
+    throw new Error('A monitoring-plan approval requires an identified approver (21 CFR 11.10(e)).');
+  }
   const { rows } = await exec.query(
     `UPDATE rbm_monitoring_plans
         SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
-            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
+            metadata = COALESCE(metadata, '{}'::jsonb)
+                       || jsonb_build_object('approvalReason', $2::text)
+                       || jsonb_build_object('twoPersonRule', $5::text)
       WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
       RETURNING *`,
-    [userId, reason, planId, organizationId],
+    [
+      userId,
+      reason,
+      planId,
+      organizationId,
+      opts.authorKnown === false ? 'not_applicable_no_author_recorded' : 'enforced',
+    ],
   );
   return rows[0] ?? null;
 }

@@ -15,13 +15,14 @@
  * continuity note. The DB persistence and route wiring live elsewhere.
  */
 
-import type { HumanControlEvent } from './run-control-registry.js';
+import type { HumanControlEvent } from './run-status.js';
 
 export interface ToolTraceEntry {
   tool: string;
   /** Human-readable step label (from describeToolPlan). */
   label: string;
-  status: 'success' | 'error' | 'not_found';
+  /** 'cancelled' — the person stopped the run before this step finished. */
+  status: 'success' | 'error' | 'not_found' | 'cancelled';
   /** One-line summary of the tool's result. */
   resultSummary: string;
 }

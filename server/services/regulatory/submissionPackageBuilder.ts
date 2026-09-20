@@ -12,8 +12,8 @@ import { getApplicationType } from '../../../shared/regulatory/global-document-r
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap.js';
 import { getRegionProfile } from '../../../shared/regulatory/region-profiles.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
-import { getRequiredArtifacts, type ArtifactRequirement } from './requiredArtifactMatrix.js';
-import type { RegulatoryApplicationType, SectionDefinition } from '../../../shared/regulatory/document-taxonomy.js';
+import { getRequiredArtifacts } from './requiredArtifactMatrix.js';
+import type { RegulatoryApplicationType } from '../../../shared/regulatory/document-taxonomy.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

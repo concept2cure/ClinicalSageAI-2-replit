@@ -21,7 +21,7 @@ import {
   ANL_PACE_24M,
   ANL_REVIEWERS,
 } from '../data/analytics';
-import { ANL_DOC_FRAMEWORKS, ANL_DOCUMENTS } from '../data/analytics-docs';
+import { ANL_DOC_FRAMEWORKS } from '../data/analytics-docs';
 import { useAnalytics, type AnalyticsPathway } from '../hooks/useAnalytics';
 import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
@@ -38,6 +38,9 @@ const PATHWAYS: ReadonlyArray<{ id: AnalyticsPathway; label: string }> = [
   { id: 'cer', label: 'CER' },
 ];
 
+/** Stable identity: an empty list must not churn memo/effect deps. */
+const EMPTY_DOCS: KitDocument[] = [];
+
 export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
   const [pathway, setPathway] = React.useState<AnalyticsPathway>('all');
   const live = useAnalytics(pathway);
@@ -52,8 +55,16 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
   // rendered as real in production while every sibling panel honored the
   // sample gate. Same gate now: live rows would win, sample only in explicit
   // sample mode, honest empty otherwise.
-  const documents = useSampleRows<KitDocument>(null, ANL_DOCUMENTS as unknown as readonly KitDocument[]);
-  const frameworks = useSampleRows<KitDocFramework>(null, ANL_DOC_FRAMEWORKS as unknown as readonly KitDocFramework[]);
+  /* This panel has no live feed, and the rows it used to show under sample
+     mode were fabricated regulatory artifacts — several asserting
+     `esigState: 'signed'` with a named signer and a date (anl-docs.ts).
+     There is no real document list to show here yet, so it shows none:
+     the panel renders its honest empty state instead of example records.
+     Wiring a real read is what fills it. */
+  const documents: KitDocument[] = EMPTY_DOCS;
+  /* The framework list is a real category taxonomy, not tenant data, so it
+     is not sample content and is no longer gated as though it were. */
+  const frameworks = ANL_DOC_FRAMEWORKS as unknown as KitDocFramework[];
 
   const docsReady = documents.filter(
     (d) => d.status === 'ready' || d.status === 'locked',

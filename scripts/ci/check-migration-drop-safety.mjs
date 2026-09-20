@@ -66,11 +66,13 @@ function stripNoise(sql) {
   return sql
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
     .replace(/--[^\n]*/g, ' ')
-    .replace(/\$([A-Za-z_]*)\$[\s\S]*?\$\1\$/g, match =>
-      // Keep dollar-quoted bodies: DO $$ … $$ blocks are where most of this
-      // repo's DDL actually lives. Only their string content is noise, and
-      // single-quoted strings are handled below.
-      match
+    .replace(
+      /\$([A-Za-z_]*)\$[\s\S]*?\$\1\$/g,
+      match =>
+        // Keep dollar-quoted bodies: DO $$ … $$ blocks are where most of this
+        // repo's DDL actually lives. Only their string content is noise, and
+        // single-quoted strings are handled below.
+        match
     )
     .replace(/'(?:[^']|'')*'/g, "''");
 }
@@ -121,7 +123,10 @@ function dropsIn(sql) {
     add('table', qualify(norm(m[1])));
   }
   for (const m of sql.matchAll(
-    new RegExp(String.raw`DROP\s+INDEX\s+(?:CONCURRENTLY\s+)?(?:IF\s+EXISTS\s+)?(${QUALIFIED})`, 'gi')
+    new RegExp(
+      String.raw`DROP\s+INDEX\s+(?:CONCURRENTLY\s+)?(?:IF\s+EXISTS\s+)?(${QUALIFIED})`,
+      'gi'
+    )
   )) {
     add('index', qualify(norm(m[1])));
   }
@@ -146,9 +151,7 @@ function createsIn(sql) {
     )) {
       add('column', `${table}.${norm(c[1])}`);
     }
-    for (const c of m[2].matchAll(
-      new RegExp(String.raw`ADD\s+CONSTRAINT\s+(${IDENT})`, 'gi')
-    )) {
+    for (const c of m[2].matchAll(new RegExp(String.raw`ADD\s+CONSTRAINT\s+(${IDENT})`, 'gi'))) {
       add('constraint', `${table}.${norm(c[1])}`);
     }
   }
@@ -168,12 +171,58 @@ function createsIn(sql) {
   return found;
 }
 
+/**
+ * DDL THIS GATE CANNOT READ.
+ *
+ * `stripNoise` keeps dollar-quoted DO bodies on purpose — its own comment says
+ * that is "where most of this repo's DDL actually lives" — and then strips
+ * single-quoted strings. But dynamic DDL inside a DO block has to be a string:
+ * `EXECUTE format('DROP INDEX IF EXISTS public.%I', t.idx)`. So every drop
+ * issued that way was invisible to the matchers above, in the exact idiom the
+ * stripper went out of its way to preserve. Measured when this was added: 16 of
+ * the 285 files in the set issue a DROP through a string literal, and not one
+ * of them had ever been examined by this gate.
+ *
+ * The object name usually cannot be recovered — it is a `%I` placeholder filled
+ * from a loop variable at apply time — so pairing a dynamic drop against a
+ * creator is not something this gate can do. What it CAN do is stop being
+ * silent about it. So:
+ *
+ *   - every dynamic drop is COUNTED and reported in the summary line, so the
+ *     gate's own coverage is legible rather than implied;
+ *   - a dynamic DROP TABLE or DROP COLUMN — the two that destroy data, which is
+ *     what RULE 1 is about — FAILS unless it carries a reviewed reason in the
+ *     baseline's `allowDynamic`. The others (index, constraint, policy, trigger)
+ *     carry no data, and in this repo are nearly always the
+ *     `DROP … IF EXISTS` + re-create idiom inside one file.
+ *
+ * This is deliberately narrower than the static check. A gate that reports what
+ * it cannot see beats one that reports OK for it.
+ */
+const DYNAMIC_DROP =
+  /\bDROP\s+(TABLE|INDEX|COLUMN|CONSTRAINT|POLICY|TRIGGER|VIEW|MATERIALIZED\s+VIEW|SCHEMA|FUNCTION|TYPE|SEQUENCE)\b/gi;
+/** Drops that can destroy rows, and so must be reasoned about, not counted. */
+const DATA_BEARING = new Set(['table', 'column']);
+
+function dynamicDropsIn(raw) {
+  const noComments = raw.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
+  const kinds = new Set();
+  for (const lit of noComments.match(/'(?:[^']|'')*'/g) ?? []) {
+    for (const m of lit.matchAll(DYNAMIC_DROP)) {
+      kinds.add(m[1].replace(/\s+/g, ' ').toLowerCase());
+    }
+  }
+  return [...kinds].sort();
+}
+
 let baseline = { allow: [] };
 if (fs.existsSync(BASELINE)) {
   baseline = JSON.parse(fs.readFileSync(BASELINE, 'utf8'));
 }
-const allowed = new Set(
-  (baseline.allow ?? []).map(e => `${e.dropper}|${e.object}|${e.creator}`)
+const allowed = new Set((baseline.allow ?? []).map(e => `${e.dropper}|${e.object}|${e.creator}`));
+/** Reviewed dynamic (EXECUTE-issued) data-bearing drops: file -> reason. */
+const allowedDynamic = new Map(
+  (baseline.allowDynamic ?? []).map(e => [`${e.dropper}|${e.object}`, e.reason])
 );
 
 // Read every file once.
@@ -185,8 +234,13 @@ for (const file of C2C_MIGRATION_FILES) {
     missing.push(file);
     continue;
   }
-  const sql = stripNoise(fs.readFileSync(full, 'utf8'));
-  parsed.set(file, { drops: dropsIn(sql), creates: createsIn(sql) });
+  const raw = fs.readFileSync(full, 'utf8');
+  const sql = stripNoise(raw);
+  parsed.set(file, {
+    drops: dropsIn(sql),
+    creates: createsIn(sql),
+    dynamic: dynamicDropsIn(raw),
+  });
 }
 
 /**
@@ -297,9 +351,50 @@ if (violations.length) {
   process.exit(1);
 }
 
+// ── Dynamic (EXECUTE-issued) drops — see dynamicDropsIn ─────────────────────
+const dynamicFindings = [];
+let dynamicTotal = 0;
+for (const [file, { dynamic }] of parsed) {
+  for (const kind of dynamic) {
+    dynamicTotal += 1;
+    if (!DATA_BEARING.has(kind)) continue;
+    if (allowedDynamic.has(`${file}|${kind}`)) continue;
+    dynamicFindings.push({ file, kind });
+  }
+}
+
+if (dynamicFindings.length) {
+  console.error(
+    `${TAG} FAIL — ${dynamicFindings.length} unreviewed dynamic data-bearing DROP(s).\n`
+  );
+  for (const d of dynamicFindings) {
+    console.error(`  DROP ${d.kind.toUpperCase()} issued through EXECUTE`);
+    console.error(`    file : ${d.file}`);
+    console.error(
+      `    why  : the object name is built at apply time, so this gate cannot pair it\n` +
+        `           against a creator the way it does a literal DROP. A dynamic ${d.kind}\n` +
+        `           drop destroys rows, so it needs a reason on the record instead.`
+    );
+    console.error('');
+  }
+  console.error(
+    `${TAG} Record each one in the baseline's \`allowDynamic\` with a written reason —\n` +
+      `  what guarantees it cannot destroy a row that matters (an emptiness check before\n` +
+      `  the drop, RESTRICT rather than CASCADE, a fail-soft handler). An entry without a\n` +
+      `  reason is the thing that file exists to prevent.`
+  );
+  process.exit(1);
+}
+
 console.log(
   `${TAG} OK — ${parsed.size} migrations, ` +
-    `${[...parsed.values()].reduce((n, p) => n + p.drops.size, 0)} DROP(s), none re-created by the set` +
+    `${[...parsed.values()].reduce(
+      (n, p) => n + p.drops.size,
+      0
+    )} DROP(s), none re-created by the set` +
     (allowed.size ? `, ${allowed.size} reviewed exception(s)` : '') +
-    '.'
+    `; ${dynamicTotal} dynamic DROP(s) in ${
+      [...parsed.values()].filter(p => p.dynamic.length).length
+    } file(s) ` +
+    `(names unresolvable — data-bearing kinds gated, ${allowedDynamic.size} reviewed).`
 );

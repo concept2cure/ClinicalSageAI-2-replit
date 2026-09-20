@@ -367,7 +367,7 @@ All agent outputs that affect regulatory decisions are:
 
 | Migration | Purpose |
 |-----------|---------|
-| 073_cortex_prime_unified_brain.sql | Core Cortex Prime schema |
+| ~~073_cortex_prime_unified_brain.sql~~ | Core Cortex Prime schema — **retired 2026-09-10** (WO-14, Route B); archived under `db/migrations/_legacy/` with 079. It was on no applier. |
 | 063_gcc_cognitive_agent_runtime.sql | Cognitive ecosystem schema |
 | 080_gcc_21cfr_part11_compliance.sql | Part 11 compliance schema |
 

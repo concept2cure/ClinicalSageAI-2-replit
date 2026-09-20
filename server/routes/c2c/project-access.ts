@@ -19,6 +19,7 @@ import {
   type ProjectActorRole,
 } from '../../services/project-sharing-access';
 import { getOrganizationId, getUserId } from './shared';
+import { createScopedLogger } from '../../utils/logger';
 
 export function normalizeProjectSettings(settings: unknown): Record<string, unknown> {
   return settings && typeof settings === 'object' ? (settings as Record<string, unknown>) : {};
@@ -80,6 +81,8 @@ export function getActorRole(req: Request): ProjectActorRole {
   const normalized = (req.userRole || 'member').toLowerCase() as ProjectActorRole;
   return normalized || 'member';
 }
+
+const logger = createScopedLogger('c2c-project-access');
 
 export function isMissingTableError(error: unknown): boolean {
   return (
@@ -261,6 +264,36 @@ export async function loadProjectSharingState(
 
 /**
  * Verify project ownership before conversation operations.
+ *
+ * ── A check that could not RUN is not a denial (WO-15 finding 9) ─────────────
+ * This used to end `catch { return false }`, unlogged. `false` is routed by
+ * every caller to `sendError(res, 404, 'Project not found')` —
+ * governance-ops.ts:44, artifacts.ts:378 and four more — and that 404 is
+ * deliberately indistinguishable from a cross-tenant id. So a missing table, a
+ * dropped connection or a cancelled statement produced the same answer as a
+ * legitimate deny: a control that was completely broken looked exactly like a
+ * control that was working, to the caller and to the operator both.
+ *
+ * Four situations were collapsed into one. Only the first two are denials:
+ *
+ *   genuine no-match    zero rows, no error              deny — correct
+ *   caller garbage      unparseable project id           deny — correct
+ *   SCHEMA failure      42P01 / 42703 / 42501 / 3F000    the check DID NOT RUN
+ *   INFRASTRUCTURE      08006 / 53300 / 57014            the check DID NOT RUN
+ *
+ * The last two now log and propagate. Every caller already wraps its handler in
+ * a try/catch that logs and returns 500, so the outcome is an operator-visible
+ * failure rather than a false sentence about this caller's access. Deny-by-
+ * default is the right DIRECTION for a tenant boundary; silence was never part
+ * of it. `innovation-routes.ts` fixed the same defect in `guardQuery` on
+ * 2026-09-10 (GuardUnavailableError) and `moduleEntitlementGate.ts:189` states
+ * the rule this broke: **never silent.**
+ *
+ * Deliberately NOT treated as a denial-with-fallback the way
+ * `loadProjectSharingState` treats `isMissingTableError` further up this file:
+ * that one is reading sharing settings, where defaults are a defensible answer.
+ * This one is the authorization decision, and there is no safe default for
+ * "I could not tell whether you may see this".
  */
 export async function verifyProjectAccess(
   req: Request,
@@ -283,7 +316,13 @@ export async function verifyProjectAccess(
       actorRole,
     });
     return !!projectAccess.project;
-  } catch {
-    return false;
+  } catch (error) {
+    logger.error('project access check could not complete — not answering "no access"', {
+      projectId: typeof projectId === 'string' ? projectId : String(projectId ?? ''),
+      organizationId,
+      code: (error as { code?: string })?.code ?? null,
+      detail: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
   }
 }

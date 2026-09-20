@@ -173,3 +173,31 @@ describe('provisioning migration — idempotency guard', () => {
     expect(C2C_MIGRATION_FILES).toContain('migrations/20260724_ana_deep_investigations.sql');
   });
 });
+
+describe('the staleness window has ONE definition', () => {
+  const SERVICE = readFileSync(
+    new URL('../deep-investigation.ts', import.meta.url),
+    'utf8',
+  );
+
+  it('states no staleness interval as a SQL literal', () => {
+    // This module re-exports STALE_AFTER_MS from run-status.ts rather than
+    // declaring its own, and run-status.ts says why in as many words: so that
+    // "a reaper and a status reporter can never answer the same question
+    // differently". The concurrency cap then wrote `INTERVAL '5 minutes'`
+    // directly into its SQL — a second copy of the number, in the one place
+    // the re-export exists to prevent one.
+    //
+    // It agreed, which is how a pair like that survives long enough to stop
+    // agreeing: change STALE_AFTER_MS and the cap keeps counting the old
+    // window, so it would admit runs the status reporter already calls stale.
+    expect(SERVICE).not.toMatch(/INTERVAL '/);
+  });
+
+  it('derives the window from the shared constant instead', () => {
+    // The same form reapOrphanedRuns uses for the same constant, so the two
+    // queries cannot drift in how they convert it either.
+    expect(SERVICE).toMatch(/make_interval\(secs => \$\d\)/);
+    expect(SERVICE).toMatch(/Math\.round\(STALE_AFTER_MS \/ 1000\)/);
+  });
+});

@@ -9,7 +9,7 @@
  * @module server/services/ana/intelligence-questions/war-game/auditors/cer-auditor
  */
 
-import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
+import type { WarGameAuditor, AuditRule } from '../types.js';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */

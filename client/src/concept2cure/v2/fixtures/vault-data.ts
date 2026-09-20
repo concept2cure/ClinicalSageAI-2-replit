@@ -79,8 +79,38 @@ export const VAULT_STATUS: Record<string, VaultStatus> = {
   unfiled: { label: 'Unfiled', tone: 'warn' },
 };
 
+/**
+ * What a status chip shows when the map does not cover the value.
+ *
+ * NOT `draft`, which is what this fell back to. "Draft" is an authoring claim —
+ * it says a person has started writing this and has not finished — and the note
+ * on `uploaded` above already records that it is never true of an ingested
+ * file. As a fallback it is worse than an omission: an unrecognised value is
+ * rendered with the confidence of a known one, and the two most likely readings
+ * are both wrong. Over a finished record it understates it; over a file with no
+ * authoring lifecycle it invents one.
+ *
+ * "Status unavailable" is true in every case the map does not cover, which is
+ * the only thing a fallback can honestly be.
+ */
+export const UNKNOWN_VAULT_STATUS: VaultStatus = { label: 'Status unavailable', tone: 'idle' };
+
+/**
+ * Resolve a status to its chip.
+ *
+ * OWN-KEY lookup, not `VAULT_STATUS[s]`. A bare index reaches
+ * Object.prototype, so `vaultStatus('constructor')` or `'toString'` returned a
+ * FUNCTION where a `{label, tone}` was expected — the chip would render
+ * `[object Function]` or throw on `.label`, from a value that arrived as
+ * ordinary server data. This codebase has been bitten by exactly this before
+ * and fixed it the same way: see `externalDocumentTableReason` in
+ * server/services/ectd/leaf-document-tables.ts, whose comment explains that a
+ * leaf whose document_table was "toString" classified as an external store and
+ * carried a Function as its reason.
+ */
 export function vaultStatus(s: string): VaultStatus {
-  return VAULT_STATUS[s] || VAULT_STATUS.draft;
+  if (!Object.prototype.hasOwnProperty.call(VAULT_STATUS, s)) return UNKNOWN_VAULT_STATUS;
+  return VAULT_STATUS[s];
 }
 
 /* ── Cross-cutting DMS folders ── */

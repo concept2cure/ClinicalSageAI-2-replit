@@ -36,10 +36,12 @@
  *    customer is a per-tenant act, made deliberately, one tenant at a time.
  *
  * 2. EVERY MUTATION IS GOVERNED. A reason is required (min 3 chars) and every
- *    write goes through auditService, so the Part 11 tamper-evident chain
+ *    write records a 21 CFR Part 11 §11.10(e) row, so the tamper-evident chain
  *    records who changed the commercial model, when, and why. This mirrors
  *    ./master-admin exactly; a licensing change is at least as consequential as
- *    the tenant-status change already governed there.
+ *    the tenant-status change already governed there. Whether that row actually
+ *    reached a store is reported to the caller in each response's `auditTrail`
+ *    — see the note on the `recordAuditRow` import below.
  *
  * The whole router inherits `authMiddleware` + `requirePlatformAdmin` from the
  * mount in ./master-admin — no endpoint here does its own authorization, and
@@ -51,7 +53,37 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
-import auditService from '../../services/auditService';
+/*
+ * WO-16C #133. All five governed mutations on this router recorded their
+ * §11.10(e) row with `await auditService.logAction({…})` at statement position
+ * — the resolved `AuditWriteResult` was dropped on the floor. `logAction` never
+ * rejects when persistence fails (deliberate policy: an audit-trail outage must
+ * not break the user action it records); it RESOLVES and says what happened in
+ * `persisted`, and in `chained`, which separates the retrievable `audit_logs`
+ * row from a tamper-proof-only write. Awaiting that promise and discarding what
+ * it resolved to reports exactly as much as not awaiting it: every response
+ * below came back byte-identical whether the record existed or not, and the only
+ * trace of a lost row was a line in the server log.
+ *
+ * That silence has a specific cost here. ./licensing-history serves
+ * `GET /licensing/history` by selecting `FROM audit_logs` on the presence of
+ * `details.masterAdminAction` — the very payload these five calls write. So a
+ * row that never reached the chained store means the licensing decision is
+ * absent from the history panel, which is the shape that endpoint's own header
+ * calls out as the thing it must not produce: "'no decision was ever made' and
+ * 'we could not read the record' are opposite facts". A caller that is never
+ * told the row was lost cannot tell them apart either.
+ *
+ * Each site now goes through the shared `recordAuditRow` and carries its outcome
+ * out in the response body's `auditTrail`. Every handler here writes exactly one
+ * audit row, so that unqualified key names it unambiguously.
+ *
+ * `recordAuditRow` never throws and returns `{persisted, chained}` or
+ * `{persisted: false, code, message}` — never the store's own text, which goes
+ * to its log line keyed on the action and resource id. `auditService` is reached
+ * through that module, so it is no longer imported here directly.
+ */
+import { recordAuditRow } from '../../services/audit/audit-write-outcome';
 import {
   clearObservations,
   enforcementReport,
@@ -321,7 +353,16 @@ router.patch('/licensing/modules/:moduleId', async (req: Request, res: Response)
       [moduleId],
     );
 
-    await auditService.logAction({
+    /*
+     * WO-16C #133. A log BESIDE an already-committed write: the
+     * `UPDATE available_modules … RETURNING` above has returned before this runs.
+     * That UPDATE replaced `metadata.tiers` in place and no trigger on that table
+     * captures the old value, so this audit row is the only place `previousTier`
+     * — what the packaging was before this operator changed it — is written down.
+     * The re-tiering is NOT reverted because its audit row failed; the new
+     * packaging stands and the caller is told in `auditTrail`.
+     */
+    const auditTrail = await recordAuditRow({
       userId: req.userId,
       action: 'data_modify',
       resourceType: 'module_packaging',
@@ -343,6 +384,11 @@ router.patch('/licensing/modules/:moduleId', async (req: Request, res: Response)
       previousTier,
       /** Existing explicit grants are untouched by a packaging change. */
       unaffectedGrants: grantsRes.rows[0]?.n ?? 0,
+      /**
+       * Whether this decision's §11.10(e) row reached a store, and whether it
+       * reached the chained `audit_logs` that /licensing/history reads back.
+       */
+      auditTrail,
     });
   } catch (err) {
     logger.error('module repackage failed', err as Record<string, unknown>);
@@ -432,7 +478,19 @@ router.post('/licensing/tenants/:id/provision', async (req: Request, res: Respon
 
     const granted = (after.rows[0]?.n ?? 0) - (before.rows[0]?.n ?? 0);
 
-    await auditService.logAction({
+    /*
+     * WO-16C #133. A log BESIDE an already-committed write:
+     * `SELECT provision_org_modules($1)` above has returned, and the
+     * module_subscriptions rows it inserted are committed. Provisioning is not
+     * reverted because its audit row failed — withdrawing capability from a
+     * tenant over a lost log row would be the repossession invariant 1 exists to
+     * prevent. The grants stand and the caller is told in `auditTrail`.
+     *
+     * `granted` is the difference between the two COUNT queries either side of
+     * that call, so it cannot be recomputed once the request is over: a lost row
+     * takes with it the record of how many grants this run actually added.
+     */
+    const auditTrail = await recordAuditRow({
       tenantId: id,
       userId: req.userId,
       action: 'data_modify',
@@ -466,6 +524,11 @@ router.post('/licensing/tenants/:id/provision', async (req: Request, res: Respon
         moduleId: r.module_id,
         name: r.name,
       })),
+      /**
+       * Whether this run's §11.10(e) row reached a store, and whether it reached
+       * the chained `audit_logs` that /licensing/history reads back.
+       */
+      auditTrail,
     });
   } catch (err) {
     logger.error('tenant provisioning failed', err as Record<string, unknown>);
@@ -502,7 +565,15 @@ router.patch('/licensing/tenants/:id/tier', async (req: Request, res: Response) 
       [id, body.tier],
     );
 
-    await auditService.logAction({
+    /*
+     * WO-16C #133. A log BESIDE an already-committed write: the
+     * `UPDATE organizations SET tier = $2 … RETURNING` above has returned. It
+     * overwrote the column in place and no trigger on that table captures the old
+     * value, so this audit row is the only place `previousTier` — the plan this
+     * tenant was on — is written down. The plan change is NOT reverted because its
+     * audit row failed; it stands and the caller is told in `auditTrail`.
+     */
+    const auditTrail = await recordAuditRow({
       tenantId: id,
       userId: req.userId,
       action: 'data_modify',
@@ -532,6 +603,11 @@ router.patch('/licensing/tenants/:id/tier', async (req: Request, res: Response) 
        */
       note: 'Existing module grants are unchanged. Provision the tenant to apply the new plan.',
       provisionPath: `/api/admin/master/licensing/tenants/${id}/provision`,
+      /**
+       * Whether this decision's §11.10(e) row reached a store, and whether it
+       * reached the chained `audit_logs` that /licensing/history reads back.
+       */
+      auditTrail,
     });
   } catch (err) {
     logger.error('tenant tier change failed', err as Record<string, unknown>);
@@ -583,7 +659,19 @@ router.delete('/licensing/enforcement', async (req: Request, res: Response) => {
   const before = enforcementReport(resolved.mode);
   clearObservations();
 
-  await auditService.logAction({
+  /*
+   * WO-16C #133. A log BESIDE an act that has already happened:
+   * `clearObservations()` above has already emptied the buffer. It is still the
+   * rule-2 "log beside" case and not the exception — the clearing itself is the
+   * action, and it succeeded — but with one property worth naming, because it is
+   * why answering an error here would be a lie: the buffer is in-process and is
+   * now empty (see the module note in enforcement-observations.ts), so there is
+   * nothing to put back and no way to report that the evidence survived. The
+   * discarded counts in `details` — how many observations were destroyed, and
+   * the window they covered — exist nowhere else the moment this row is lost.
+   * The caller is told in `auditTrail` instead.
+   */
+  const auditTrail = await recordAuditRow({
     // No tenantId: clearing the buffer is a platform-wide act, not one tenant's.
     userId: req.userId,
     action: 'data_modify',
@@ -599,7 +687,14 @@ router.delete('/licensing/enforcement', async (req: Request, res: Response) => {
     },
   });
 
-  return res.json(enforcementReport(resolved.mode));
+  return res.json({
+    ...enforcementReport(resolved.mode),
+    /**
+     * Whether this clearing's §11.10(e) row reached a store, and whether it
+     * reached the chained `audit_logs` that /licensing/history reads back.
+     */
+    auditTrail,
+  });
 });
 
 // ─── /licensing/enforcement/mode — execute the decision, here ────────────────
@@ -696,7 +791,22 @@ router.patch('/licensing/enforcement/mode', async (req: Request, res: Response) 
       updatedBy: typeof req.userId === 'number' ? req.userId : null,
     });
 
-    await auditService.logAction({
+    /*
+     * WO-16C #133. A log BESIDE an already-committed write: `writeEnforcementMode`
+     * above has run its `INSERT INTO platform_settings … ON CONFLICT DO UPDATE`
+     * and invalidated the cache, so the new mode is in force platform-wide. The
+     * mode change is NOT reverted because its audit row failed; it stands and the
+     * caller is told in `auditTrail`.
+     *
+     * What a lost row costs specifically: `platform_settings` keeps `updated_by`
+     * and `reason` for the CURRENT value only — the ON CONFLICT arm overwrites
+     * both — so the audit row is the sole record of the mode this replaced, and
+     * of `workspacesAtRisk`/`modulesAtRisk` as measured at the moment of the
+     * decision. That is the number this endpoint's header says the question
+     * afterwards will be asked about, and the buffer it came from can be cleared
+     * by the endpoint above.
+     */
+    const auditTrail = await recordAuditRow({
       // No tenantId: this is a platform-wide act, not one tenant's.
       userId: req.userId,
       action: 'data_modify',
@@ -722,6 +832,11 @@ router.patch('/licensing/enforcement/mode', async (req: Request, res: Response) 
       ...modeResponse(resolved),
       previousMode: previous.mode,
       previousSource: previous.source,
+      /**
+       * Whether this decision's §11.10(e) row reached a store, and whether it
+       * reached the chained `audit_logs` that /licensing/history reads back.
+       */
+      auditTrail,
     });
   } catch (err) {
     logger.error('enforcement mode change failed', err as Record<string, unknown>);

@@ -42,14 +42,14 @@ export function getAnthropicClient(): Anthropic {
   return _client;
 }
 
-/** Default Claude models for different use cases */
-export const CLAUDE_MODELS = {
-  /** Highest capability — regulatory review, complex document drafting */
-  opus: 'claude-opus-4-7',
-  /** Best balance of quality and speed — primary workhorse */
-  sonnet: 'claude-sonnet-4-6',
-  /** Fast and cost-effective — simple tasks, classification */
-  haiku: 'claude-haiku-4-5-20251001',
-} as const;
-
-export type ClaudeModel = typeof CLAUDE_MODELS[keyof typeof CLAUDE_MODELS];
+// `CLAUDE_MODELS` (opus / sonnet / haiku) and its `ClaudeModel` type were
+// declared here and imported by nothing. A second model table with no
+// consumers is not harmless: it named opus as `claude-opus-4-7` while the
+// gateway registry said 4.8, so the two disagreed in the repository for as
+// long as both existed, and the first place a reader looks for "which Claude
+// do we use" was the wrong one.
+//
+// The gateway registry (server/services/ai-gateway/gateway.ts, DEFAULT_MODELS)
+// is the only model table, and the approved-models lockfile is what governs
+// changing it. Callers name a stable alias id — `claude-opus-4`,
+// `claude-sonnet-4`, `claude-haiku-4` — never a wire version.

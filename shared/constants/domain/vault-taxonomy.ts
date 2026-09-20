@@ -75,6 +75,56 @@ export const VAULT_INGEST_DOCUMENT_TYPES = [
 ] as const;
 export type VaultIngestDocumentType = (typeof VAULT_INGEST_DOCUMENT_TYPES)[number];
 
+/**
+ * How each ingest type is NAMED to a reader.
+ *
+ * The values above are wire tokens — what the Zod enum accepts and what lands
+ * in `vault.documents.document_type`. They are not English. Without this map
+ * the Vault surface fell back to rendering the token itself, so a regulatory
+ * reviewer saw `MODULE_3` and `CORRESPONDENCE` in the document list: correct
+ * data, and nobody's vocabulary.
+ *
+ * It lives HERE, beside the enum, for the reason the enum's own note gives —
+ * one list, shared, so the picker can never offer a type the server refuses.
+ * A label kept anywhere else is a second list, and the two drift.
+ */
+export const VAULT_INGEST_TYPE_LABEL: Record<VaultIngestDocumentType, string> = {
+  CSR: 'Clinical study report',
+  PROTOCOL: 'Protocol',
+  CER: 'Clinical evaluation report',
+  IB: "Investigator's brochure",
+  DSUR: 'Development safety update report',
+  PSUR: 'Periodic safety update report',
+  SAP: 'Statistical analysis plan',
+  SAR: 'Statistical analysis report',
+  MODULE_2: 'Module 2 · summaries',
+  MODULE_3: 'Module 3 · quality',
+  MODULE_4: 'Module 4 · nonclinical',
+  MODULE_5: 'Module 5 · clinical',
+  SOP: 'Standard operating procedure',
+  REPORT: 'Report',
+  CORRESPONDENCE: 'Agency correspondence',
+  OTHER: 'Other',
+};
+
+/**
+ * The reader-facing name for a stored `document_type`.
+ *
+ * `vault.documents.document_type` is a TEXT column with no CHECK, so a value
+ * outside the enum is representable — from an older row, another writer, or a
+ * type added to the enum and not to the map. An unrecognised value is returned
+ * AS ITSELF rather than replaced with "Other": the token is ugly but true,
+ * while "Other" would be a classification nobody made.
+ *
+ * Own-key lookup, not a bare index: a bare one reaches Object.prototype, so a
+ * document_type of "constructor" or "toString" would return a Function.
+ */
+export function vaultIngestTypeLabel(documentType: string): string {
+  return Object.prototype.hasOwnProperty.call(VAULT_INGEST_TYPE_LABEL, documentType)
+    ? VAULT_INGEST_TYPE_LABEL[documentType as VaultIngestDocumentType]
+    : documentType;
+}
+
 export type VaultDocKind =
   | 'protocol'      // clinical/nonclinical study protocols + amendments
   | 'csr'           // clinical study reports (ICH E3)
@@ -250,6 +300,7 @@ export default {
   VAULT_FILING_TYPES,
   VAULT_FOLDER_PRESETS,
   docKindsForView,
+  vaultIngestTypeLabel,
   filingTypesForView,
   foldersForView,
   isVaultViewId,

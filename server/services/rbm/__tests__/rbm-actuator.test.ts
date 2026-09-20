@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   addCtqFactor, defineKri, recordKriReading, setQtl, raiseSignal, triageSignal,
-  draftPlan, generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment,
+  draftPlan, generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment, approvePlan,
   inferSecondaryLimit, type Exec,
 } from '../rbm-actuator';
 
@@ -148,13 +148,86 @@ describe('rbm-actuator — inference', () => {
     const { exec, calls } = mockExec([[{ id: 1, status: 'active' }]]);
     const row = await approveAssessment(exec, ORG, 7, 1, 'Risk review complete');
     expect(row).toEqual({ id: 1, status: 'active' });
-    expect(calls[0].args).toEqual([7, 'Risk review complete', 1, ORG]);
+    // The approval now also stamps whether the two-person rule could be applied
+    // (see the attestation cases below); default is enforced.
+    expect(calls[0].args).toEqual([7, 'Risk review complete', 1, ORG, 'enforced']);
   });
 
   it('approveAssessment returns null when not found in tenant', async () => {
     const { exec } = mockExec([[]]);
     const row = await approveAssessment(exec, ORG, 7, 999, 'reason');
     expect(row).toBeNull();
+  });
+
+  /* Both writers of rbm_risk_assessments reach this function, and it used to
+     take `userId: number | null` and write `approved_by = NULL` — an activated
+     governing risk basis with nobody named as its approver, which 21 CFR
+     11.10(e) and 11.50 exist to make impossible.
+
+     The HTTP route never sent null (it 401s on an unauthenticated signer). The
+     AnA tool path did: it had no signature check at all and passed
+     `ctx?.userId ?? null` straight through, so the one route with no password
+     and no MFA was also the one that could leave the approver blank.
+
+     The type is `number` now, so a caller that cannot name the approver does
+     not compile. These two cases cover the callers TypeScript does not see. */
+  /* The supersede lived only in the HTTP route, which kept its own copy of the
+     approval UPDATE. The AnA tool path came through the actuator instead and
+     archived nothing, so approving a v2 through AnA left v1 active beside it —
+     two rows claiming to be the same program's governing risk basis. Readers
+     resolve that with ORDER BY (status='active') DESC, updated_at DESC LIMIT 1,
+     which does not error on two; it silently picks one. */
+  it('archives the version it supersedes, so a program has one governing basis', async () => {
+    const { exec, calls } = mockExec([[{ id: 2, status: 'active', program_id: 'prog-uuid' }], []]);
+    const row = await approveAssessment(exec, ORG, 7, 2, 'v2 approved');
+    expect(row).toMatchObject({ id: 2 });
+    expect(calls).toHaveLength(2);
+    // Scoped to the tenant and the program, and never archives the row it just
+    // activated.
+    expect(calls[1].sql).toMatch(/status = 'archived'/);
+    expect(calls[1].args).toEqual([ORG, 'prog-uuid', 2]);
+  });
+
+  it('does not archive anything when the assessment has no program', async () => {
+    const { exec, calls } = mockExec([[{ id: 3, status: 'active', program_id: null }]]);
+    await approveAssessment(exec, ORG, 7, 3, 'standalone');
+    expect(calls).toHaveLength(1);
+  });
+
+  /* The signed record has to say whether the two-person rule was actually
+     applied. A row written before created_by existed has no author to compare
+     against, and those approvals are allowed rather than stranded — so without
+     this an inspector could not tell an approval that WAS checked against its
+     author from one where no author was ever recorded. */
+  it('records that the two-person rule was enforced', async () => {
+    const { exec, calls } = mockExec([[{ id: 4, status: 'active', program_id: null }]]);
+    await approveAssessment(exec, ORG, 7, 4, 'reviewed', { authorKnown: true });
+    expect(calls[0].args[4]).toBe('enforced');
+  });
+
+  it('records when there was no author to check against', async () => {
+    const { exec, calls } = mockExec([[{ id: 5, status: 'active', program_id: null }]]);
+    await approveAssessment(exec, ORG, 7, 5, 'legacy row', { authorKnown: false });
+    expect(calls[0].args[4]).toBe('not_applicable_no_author_recorded');
+    // It must not claim the rule was enforced when it could not be.
+    expect(calls[0].args[4]).not.toBe('enforced');
+  });
+
+  it('refuses to approve an assessment it cannot attribute', async () => {
+    const { exec, calls } = mockExec([[{ id: 1, status: 'active' }]]);
+    await expect(
+      approveAssessment(exec, ORG, null as unknown as number, 1, 'reason'),
+    ).rejects.toThrow(/identified approver/i);
+    // Nothing was written: the refusal is before the UPDATE, not after it.
+    expect(calls).toHaveLength(0);
+  });
+
+  it('refuses to approve a monitoring plan it cannot attribute', async () => {
+    const { exec, calls } = mockExec([[{ id: 2, status: 'active' }]]);
+    await expect(
+      approvePlan(exec, ORG, null as unknown as number, 2, 'reason'),
+    ).rejects.toThrow(/identified approver/i);
+    expect(calls).toHaveLength(0);
   });
 });
 

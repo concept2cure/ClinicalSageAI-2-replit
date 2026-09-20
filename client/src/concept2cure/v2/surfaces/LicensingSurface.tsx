@@ -337,16 +337,17 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         </div>
         {model === 'b2b' && (
           <div className="lic-arch">
-            <label>Archetype</label>
-            <select value={arch} onChange={(e) => setArch(e.target.value)}>
+            <label htmlFor="lic-arch">Archetype</label>
+            <select id="lic-arch" value={arch} onChange={(e) => setArch(e.target.value)}>
               {LIC_ARCHETYPES.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.label}
                 </option>
               ))}
             </select>
-            <label style={{ marginLeft: 10 }}>Seats</label>
+            <label style={{ marginLeft: 10 }} htmlFor="lic-seats">Seats</label>
             <input
+              id="lic-seats"
               type="number"
               min="1"
               value={seats}

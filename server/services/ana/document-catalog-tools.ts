@@ -38,138 +38,85 @@
  */
 
 import type { ToolContext } from './AnaToolExecutor.js';
+import type { ProjectDocumentPage } from '../vault/document-catalog.service.js';
+import {
+  CHAT_UPLOAD_ID,
+  requireCatalog,
+  unknownDocumentRefusal,
+  withCaughtErrors,
+  type CatalogService,
+  type RegisterFn,
+} from './document-tools-shared.js';
+import { registerDocumentPlacementHandlers } from './document-placement-tools.js';
+import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DISABLED_MESSAGE =
-  'The document catalog is not enabled for this organization (feature ana.document_catalog). ' +
-  'Say so plainly; do not simulate a listing.';
-
-type CatalogService = typeof import('../vault/document-catalog.service.js');
 
 /**
- * A chat upload's file_id, as minted by the chat-upload route
- * (`file_<epoch>_<rand>`). Vault documents are UUIDs, so the two id spaces are
- * distinguishable on sight.
- */
-const CHAT_UPLOAD_ID = /^file_[0-9]+_[a-z0-9]+$/i;
-
-/**
- * The refusal for a document id the vault does not hold.
+ * The message AnA reads off a listing.
  *
- * "Not found" was the only answer here, and it was wrong in the one case that
- * matters most: list_project_documents returns the org's chat uploads beside
- * its vault documents, each with the file_id that reopens it, so the obvious
- * next call carries an id these tools do not take. Answering that with
- * absence — for a file we had just listed — is the failure this whole surface
- * exists to prevent, and under the persona's client-files rule AnA would relay
- * it to the client as "your document isn't there".
- *
- * So the two cases are told apart: an id shaped like a chat upload is in the
- * wrong STORE (say which tool reads it), and anything else genuinely is not a
- * vault document this organization holds.
+ * Every number here comes from the PAGE's scope counts, never from the rows in
+ * hand. The rows are capped at 100 by default and 200 at most, so the old
+ * `docs.length` told a client with 340 documents that it had 200 — and told a
+ * client with 340 documents of which 300 were never studied that 200 were
+ * "not yet studied", a figure that is wrong in both directions at once.
  */
-function unknownDocumentRefusal(documentId: string, toolName: string): string {
-  if (CHAT_UPLOAD_ID.test(documentId)) {
-    return JSON.stringify({
-      ok: false,
-      error:
-        `${documentId} is a chat-uploaded file, not a vault document, so ${toolName} cannot take it. ` +
-        'Read it with read_uploaded_document (or inspect_uploaded_document first, for a large one) using that same file_id. ' +
-        'The file exists — do not report it as missing. Durable catalog records live on vault documents; ' +
-        'file_chat_upload_to_vault files this one into the project vault so it gains one.',
-      idSpace: 'chat_upload',
-    });
-  }
-  return JSON.stringify({
-    ok: false,
-    error:
-      `No vault document with id ${documentId} is in your organization's programs. ` +
-      'Call list_project_documents to see what the project folder actually holds — vault documents carry UUID ids.',
-    idSpace: 'unknown',
-  });
-}
-
-/** Shared preamble: tenant present + feature on, else the honest refusal. */
-async function requireCatalog(
-  ctx: ToolContext | undefined,
-  toolName: string,
-): Promise<{ svc: CatalogService; orgId: number } | { refusal: string }> {
-  if (!ctx?.organizationId) {
-    return { refusal: `${toolName} requires an organization context.` };
-  }
-  const svc = await import('../vault/document-catalog.service.js');
-  if (!(await svc.isDocumentCatalogEnabled(ctx.organizationId))) {
-    return { refusal: DISABLED_MESSAGE };
-  }
-  return { svc, orgId: ctx.organizationId };
-}
-
-function listMessage(docs: Array<{ catalogStatus: string }>): string {
-  if (docs.length === 0) return 'No documents in the vault for this scope.';
-  const unstudied = docs.filter(
-    d => d.catalogStatus === 'extracted' || d.catalogStatus === 'uncataloged',
-  ).length;
-  const failed = docs.filter(d => d.catalogStatus === 'extraction_failed').length;
+function listMessage(page: ProjectDocumentPage): string {
+  if (page.total === 0) return 'No documents in the vault for this scope.';
+  const shown =
+    page.withheld > 0
+      ? `${page.total} document(s); ${page.documents.length} listed here, ${page.withheld} not ` +
+        `returned (raise limit, or narrow with program_id, or use search_project_documents). ` +
+        `Do not answer "no such document" from this page.`
+      : `${page.total} document(s) — all of them are listed here.`;
   return (
-    `${docs.length} document(s).` +
-    (unstudied > 0
-      ? ` ${unstudied} not yet studied — read each with read_project_document (all of it) and record it with catalog_project_document.`
+    shown +
+    (page.notYetStudied > 0
+      ? ` ${page.notYetStudied} not yet studied — read each with read_project_document (all of it) and record it with catalog_project_document.`
       : '') +
-    (failed > 0
-      ? ` ${failed} with failed extraction — their recorded reasons are in extractionError; report those honestly.`
+    (page.extractionFailed > 0
+      ? ` ${page.extractionFailed} with failed extraction — their recorded reasons are in extractionError; report those honestly.`
+      : '') +
+    (page.unfiled > 0
+      ? ` ${page.unfiled} unfiled — place_project_document gives a document its folder.`
       : '')
   );
 }
 
-/** A chat-uploaded file from the evidence spine, with the file_id that reopens it. */
-interface ChatUploadDigest {
-  sourceId: number;
-  fileId: string | null;
-  fileName: string;
-  version: string | null;
-  extractionStatus: string;
-  dossier: unknown;
-  programId: string | null;
-  uploadedAt: string;
-}
-
 /**
- * Current (non-superseded) chat uploads via the canonical evidence-spine
- * listing. `fileId` comes from the source's recorded provenance — it is what
- * inspect_uploaded_document / read_uploaded_document take, so a file attached
- * in a past conversation is reachable again.
+ * The chat-upload half of a listing, resolved to the three things the response
+ * needs: the rows, whether more exist, and — when the spine is unreachable —
+ * the reason, SAID rather than rendered as "no chat uploads" (some installs
+ * have no evidence-spine tables).
  */
-async function listChatUploadDigests(
+async function chatUploadsFor(
+  svc: CatalogService,
   orgId: number,
   programId: string | null,
-  limit: number,
-): Promise<ChatUploadDigest[]> {
-  const { listClientDocuments } = await import(
-    '../clinical-regulatory-evidence/evidence-spine.service.js'
+  limit: number | undefined,
+): Promise<{
+  uploads: Awaited<ReturnType<CatalogService['listChatUploads']>>['uploads'] | null;
+  hasMore: boolean;
+  error: string | null;
+}> {
+  try {
+    const page = await svc.listChatUploads(orgId, programId, Math.min(200, limit ?? 100));
+    return { uploads: page.uploads, hasMore: page.hasMore, error: null };
+  } catch (err) {
+    return { uploads: null, hasMore: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/** The one sentence about chat uploads that rides on the documents message. */
+function chatUploadNote(uploads: { length: number } | null, hasMore: boolean): string {
+  if (!uploads || uploads.length === 0) return '';
+  return (
+    ` Plus ${uploads.length}${hasMore ? '+' : ''} chat-uploaded file(s) — ` +
+    'reopen one with read_uploaded_document using its fileId.'
   );
-  const sources = await listClientDocuments(orgId, {
-    programId: programId ?? undefined,
-    includeUnscoped: true,
-    currentOnly: true,
-    limit,
-  });
-  return sources.map(s => {
-    const prov = (s.provenance ?? {}) as Record<string, unknown>;
-    const meta = (s.metadata ?? {}) as Record<string, unknown>;
-    return {
-      sourceId: s.id,
-      fileId: typeof prov.fileUploadId === 'string' ? prov.fileUploadId : null,
-      fileName: typeof meta.originalName === 'string' ? meta.originalName : (s.title ?? 'document'),
-      version: s.version ?? null,
-      extractionStatus: s.extractionStatus,
-      dossier: meta.dossier ?? null,
-      programId: s.clientProgramId ?? null,
-      uploadedAt: String(s.createdAt),
-    };
-  });
 }
 
 async function handleListProjectDocuments(
@@ -185,32 +132,25 @@ async function handleListProjectDocuments(
     programId = await svc.resolveProgramForProject(ctx.projectId, orgId);
   }
   const limit = typeof input.limit === 'number' ? input.limit : undefined;
-  const docs = await svc.listProjectDocuments(orgId, { programId, limit });
-
-  // Chat uploads ride along; a failure to list them is SAID, never rendered
-  // as "no chat uploads" (some installs have no evidence-spine tables).
-  let chatUploads: ChatUploadDigest[] | null = null;
-  let chatUploadsError: string | null = null;
-  try {
-    chatUploads = await listChatUploadDigests(orgId, programId, Math.min(200, limit ?? 100));
-  } catch (err) {
-    chatUploadsError = err instanceof Error ? err.message : String(err);
-  }
+  const page = await svc.listProjectDocuments(orgId, { programId, limit });
+  const chat = await chatUploadsFor(svc, orgId, programId, limit);
 
   return JSON.stringify({
     ok: true,
     scope: programId ? { programId } : { organizationWide: true },
-    count: docs.length,
-    documents: docs,
-    chatUploads,
-    ...(chatUploadsError
-      ? { chatUploadsError: `Chat uploads could not be listed: ${chatUploadsError}` }
-      : {}),
-    message:
-      listMessage(docs) +
-      (chatUploads && chatUploads.length > 0
-        ? ` Plus ${chatUploads.length} chat-uploaded file(s) — reopen one with read_uploaded_document using its fileId.`
-        : ''),
+    // `returned` is the page; `total` is the scope. They were one field named
+    // `count`, which made the page the answer to both questions.
+    returned: page.documents.length,
+    total: page.total,
+    withheld: page.withheld,
+    notYetStudied: page.notYetStudied,
+    extractionFailed: page.extractionFailed,
+    unfiled: page.unfiled,
+    documents: page.documents,
+    chatUploads: chat.uploads,
+    ...(chat.hasMore ? { chatUploadsTruncated: true } : {}),
+    ...(chat.error ? { chatUploadsError: `Chat uploads could not be listed: ${chat.error}` } : {}),
+    message: listMessage(page) + chatUploadNote(chat.uploads, chat.hasMore),
   });
 }
 
@@ -310,6 +250,27 @@ function coverageMessage(
   }. catalog_project_document will refuse until coverage is complete.`;
 }
 
+/**
+ * Say so when the text was recognised rather than read.
+ *
+ * OCR output is a reading of pixels, not the document's own characters: a
+ * digit can come back wrong and the sentence around it still scans. The
+ * persona requires a scan to be treated as a document, which it is — but a
+ * quoted figure from a 71%-confidence recognition needs to be checked against
+ * the page, and nothing said so before.
+ */
+function ocrCaveat(catalog: { extractionMethod: string | null; extractionConfidence: number | null }): string {
+  if (catalog.extractionMethod !== 'pdf-ocr' && catalog.extractionMethod !== 'image-ocr') return '';
+  const confidence =
+    typeof catalog.extractionConfidence === 'number'
+      ? ` at ${Math.round(catalog.extractionConfidence)}% mean confidence`
+      : '';
+  return (
+    ` This text was produced by OCR${confidence}, not read from a text layer — treat exact figures, ` +
+    'identifiers and dates as needing confirmation against the page before you quote them as fact.'
+  );
+}
+
 async function handleReadProjectDocument(
   input: Record<string, unknown>,
   ctx?: ToolContext,
@@ -348,12 +309,36 @@ async function handleReadProjectDocument(
   });
   const coverage = await svc.getReadCoverage(doc.id, doc.contentHash, charCount);
 
+  /* What was already learned about this document, handed back with the text.
+     The comprehension record was written by a previous read and then never
+     returned by anything, so every re-read started from zero — the client's
+     own figures re-derived from scratch, which is exactly the re-explaining
+     the catalog exists to end. Present only when the record exists; a
+     not-yet-studied document says nothing here rather than an empty shape. */
+  const comprehension =
+    doc.catalog!.status === 'cataloged'
+      ? {
+          documentKind: doc.catalog!.documentKind,
+          purpose: doc.catalog!.purpose,
+          summary: doc.catalog!.summary,
+          keyData: doc.catalog!.keyData ?? null,
+          catalogedAt: doc.catalog!.catalogedAt,
+        }
+      : undefined;
+
   return JSON.stringify({
     ok: true,
     documentId: doc.id,
     fileName: doc.fileName,
     documentTitle: doc.documentTitle,
     extractionMethod: doc.catalog!.extractionMethod,
+    ...(comprehension ? { comprehension } : {}),
+    /* An OCR'd scan is not the same evidence as a born-digital text layer, and
+       the method alone does not say how well it read. The mean confidence
+       travels with the window so a low-confidence recognition is qualified
+       rather than quoted as if it were typed. Null for methods that do not
+       produce one (utf8, pdf-text, docx, xlsx). */
+    extractionConfidence: doc.catalog!.extractionConfidence,
     window: { start: offset, end, text: text.slice(offset, end) },
     totalChars: charCount,
     coverage: {
@@ -361,7 +346,8 @@ async function handleReadProjectDocument(
       complete: coverage.complete,
       uncoveredRanges: coverage.uncovered.slice(0, 10),
     },
-    message: coverageMessage(coverage, charCount, end),
+    message:
+      coverageMessage(coverage, charCount, end) + ocrCaveat(doc.catalog!),
   });
 }
 
@@ -614,28 +600,11 @@ async function handleFileChatUploadToVault(
   });
 }
 
-/** Errors become structured tool results, matching the house handler style. */
-function withCaughtErrors(
-  name: string,
-  handler: (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>,
-) {
-  return async (input: Record<string, unknown>, ctx?: ToolContext): Promise<string> => {
-    try {
-      return await handler(input, ctx);
-    } catch (err) {
-      return JSON.stringify({
-        error: `${name} failed: ${err instanceof Error ? err.message : String(err)}`,
-      });
-    }
-  };
-}
-
-type RegisterFn = (
-  name: string,
-  handler: (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>,
-) => void;
-
 export function registerDocumentCatalogHandlers(register: RegisterFn): void {
+  // Placement lives in its own module (see document-tools-shared.ts) but is
+  // registered here, so the catalog stack still has one entry point.
+  registerDocumentPlacementHandlers(register);
+  registerDocumentPassageHandlers(register);
   register(
     'file_chat_upload_to_vault',
     withCaughtErrors('file_chat_upload_to_vault', handleFileChatUploadToVault),

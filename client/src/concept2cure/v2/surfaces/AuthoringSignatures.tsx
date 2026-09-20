@@ -258,7 +258,11 @@ function SignatureManifest({ docId }: { docId: string | null }) {
     );
   }
   if (state === 'loading') {
-    return <div className="scaf-note" style={{ padding: 12 }}>Reading the signature record…</div>;
+    /* The other three branches here use EmptyState, which carries role/aria-live
+       and aria-busy. Only loading was a bare div, so a screen-reader user opening
+       the §11.50 signature manifestation heard nothing while it fetched — silence
+       indistinguishable from "this document has no signatures". */
+    return <EmptyState icon={I.clock} title="Reading the signature record…" busy />;
   }
   if (state === 'error') {
     return (

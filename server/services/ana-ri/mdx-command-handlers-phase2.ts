@@ -12,6 +12,11 @@
  * (assess + reviewer_simulation are persisted-side-effect runs, so
  * they DO require confirm + reason despite being analysis actions).
  *
+ * Audit rows: every handler below writes its `agent.ana.<verb>` 21 CFR Part 11
+ * §11.10(e) row through `recordAuditRow`, and the OUTCOME of that write reaches
+ * the caller in `data.agentAuditTrail` and as a clause on `message` — see
+ * `auditNote` below and WO-16C finding 133.
+ *
  * Tools NOT yet wired (gated on external work, not laziness):
  *   - correspondence.ingest — needs Brief #2 surface for AnA-driven
  *     ingestion to make sense. Direct service call without UI is
@@ -22,7 +27,7 @@
  *     we wire the shadow's tool surface.
  */
 
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import {
   upsertMapping,
 } from '../gspr-postmarket/gspr.service';
@@ -46,6 +51,56 @@ import { requireGovernedToolGate, mapServiceError, agentAuditDetails } from './m
 // ─── Local helpers ──────────────────────────────────────────────────────────
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The clause a handler appends to its own message when the 21 CFR Part 11
+ * §11.10(e) row for its `agent.ana.<verb>` action did not reach a durable
+ * store.
+ *
+ * WO-16C finding 133. Every handler in this file wrote its audit row with
+ * `void auditService.logAction({…})`. `logAction` never rejects when
+ * persistence fails — that is deliberate policy, an audit-trail outage must not
+ * break the user action it records — it RESOLVES an `AuditWriteResult` and
+ * reports what happened in `persisted`. Discarding that value left each handler
+ * with two possible outcomes and one observable result: the `CommandResult`, the
+ * AnA turn built from it and the sentence read back to the regulated user were
+ * byte-identical whether the agent-initiated record existed or did not.
+ *
+ * Seven of the nine rows sit beside a mutation that had ALREADY COMMITTED by the
+ * time the audit write was attempted. The other two do not, and saying "the
+ * mutation underneath had already committed" of all nine — as an earlier version
+ * of this docstring did — is false, and contradicted 450 lines below by this
+ * file's own notes at the two sites: the approve-refusal row records an ATTEMPT
+ * that mutated nothing (`approveDocument` returns NOT_FOUND / ALREADY_LOCKED /
+ * GATE_BLOCKED before its UPDATE), and the validate row records an INSPECTION
+ * that mutates nothing (`getDocument` reads and `validateDocument` is pure). A
+ * reviewer caught the contradiction; the correction is left visible because which
+ * of the two a site is decides whether a lost row is a lost log or a lost record.
+ *
+ * So the outcome travels twice, because this surface has two kinds of reader:
+ * `data.agentAuditTrail` for anything parsing the structure, and this clause in
+ * `message` for the conversational turn. On the TOOL dispatch path that clause is
+ * what the model is handed and told to report verbatim
+ * (AnaToolExecutor.ts:5069-5077). On the chat action-block path it is not: the
+ * turn is built from the model's own prose and the handler's `message` travels
+ * only inside `post_done.executedCommands`, whose one client consumer skips
+ * every result but a signature-required one — so an earlier version of this
+ * docstring calling the clause "the only part a chat user ever sees" overstated
+ * one path's guarantee onto both. The mutation is never reverted — reverting a committed governed
+ * write because its log row was lost is the worse lie — and the store's own
+ * error text never appears here: `recordAuditRow` has already logged it against
+ * the action and resource id.
+ *
+ * The field is `agentAuditTrail`, matching the sibling AnA PDEV handlers, so
+ * this agent-initiated row is never confused with an `auditTrail` a spread
+ * service result reports for a row of its own. Each handler here writes exactly
+ * one audit row per invocation, so one key per response is unambiguous:
+ * `post_market.document.approve` writes either its `…approve.blocked` row or
+ * its `…approve` row, never both, and the two never appear in one result.
+ */
+function auditNote(outcome: AuditRowOutcome): string {
+  return outcome.persisted ? '' : ` ${outcome.message}`;
+}
 
 // ─── GSPR mapping upsert ────────────────────────────────────────────────────
 
@@ -80,7 +135,13 @@ export async function gsprMappingUpsert(
       decidedAt: new Date(),
     });
 
-    void auditService.logAction({
+    // WO-16C #133: was `void auditService.logAction({…})`, so a GSPR
+    // applicability decision already written to gspr_program_mappings by
+    // `upsertMapping` above reported `success: true` with no way to tell a
+    // recorded decision from an unrecorded one. The mapping row stands — this
+    // is a log beside a committed mutation — and the outcome now leaves in
+    // `data.agentAuditTrail` and in the message clause.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.gspr.mapping.upsert',
@@ -97,8 +158,8 @@ export async function gsprMappingUpsert(
     return {
       success: true,
       action,
-      data: row as Record<string, unknown>,
-      message: `Upserted GSPR mapping (${requirementId} → ${applicability}) on program ${programId}.`,
+      data: { ...(row as Record<string, unknown>), agentAuditTrail },
+      message: `Upserted GSPR mapping (${requirementId} → ${applicability}) on program ${programId}.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -142,7 +203,11 @@ export async function postMarketDocumentCreate(
       updatedBy: `ana:${ctx.userId}`,
     });
 
-    void auditService.logAction({
+    // WO-16C #133: was `void auditService.logAction({…})`. The document row is
+    // already INSERTed by `createDocument` above, so this is a log beside a
+    // committed mutation: the draft stands and the outcome of its §11.10(e) row
+    // now reaches the caller instead of only the server log.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.post_market.document.create',
@@ -160,8 +225,8 @@ export async function postMarketDocumentCreate(
     return {
       success: true,
       action,
-      data: doc as Record<string, unknown>,
-      message: `Created post-market document ${code} (${documentType}).`,
+      data: { ...(doc as Record<string, unknown>), agentAuditTrail },
+      message: `Created post-market document ${code} (${documentType}).${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -191,7 +256,13 @@ export async function postMarketDocumentApprove(
 
     if ('error' in (result as any)) {
       const code = (result as any).error;
-      void auditService.logAction({
+      // WO-16C #133: was `void auditService.logAction({…})`. No document was
+      // mutated on this path — `approveDocument` returns NOT_FOUND,
+      // ALREADY_LOCKED or GATE_BLOCKED before its UPDATE — so this
+      // `…approve.blocked` row is the only record that the agent attempted the
+      // approval. The refusal is already answered as an error; what is new is
+      // that the refusal now also says whether it was recorded.
+      const agentAuditTrail = await recordAuditRow({
         tenantId: ctx.organizationId,
         userId: ctx.userId,
         action: 'agent.ana.post_market.document.approve.blocked',
@@ -202,13 +273,18 @@ export async function postMarketDocumentApprove(
       return {
         success: false,
         action,
-        message: `Approve refused: ${code}.`,
+        message: `Approve refused: ${code}.${auditNote(agentAuditTrail)}`,
         error: code === 'NOT_FOUND' ? 'NOT_FOUND' : 'GATE_BLOCKED',
-        data: result as unknown as Record<string, unknown>,
+        data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
       };
     }
 
-    void auditService.logAction({
+    // WO-16C #133: was `void auditService.logAction({…})`. `approveDocument`
+    // above has already set the document to approved and locked, and published
+    // the downstream regulatory-change event, so this is a log beside a
+    // committed mutation. The approval stands whether or not its §11.10(e) row
+    // was written — and the caller is now told which.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.post_market.document.approve',
@@ -223,8 +299,8 @@ export async function postMarketDocumentApprove(
     return {
       success: true,
       action,
-      data: result as unknown as Record<string, unknown>,
-      message: `Approved post-market document ${documentId}.`,
+      data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
+      message: `Approved post-market document ${documentId}.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -278,7 +354,12 @@ export async function evidenceSufficiencyAssess(
       dryRun: false,
     });
 
-    void auditService.logAction({
+    // WO-16C #133: was `void auditService.logAction({…})`. `assessSufficiency`
+    // runs with `dryRun: false`, so the assessment row is already INSERTed into
+    // evidence_sufficiency_assessments before this line; a log beside a
+    // committed write. The assessment stands and its §11.10(e) row's outcome
+    // now travels with the verdict.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.evidence_sufficiency.assess',
@@ -297,8 +378,8 @@ export async function evidenceSufficiencyAssess(
       success: true,
       action,
       // Serialization boundary: a typed SufficiencyResult is a plain JSON object.
-      data: result as unknown as Record<string, unknown>,
-      message: `Assessed evidence sufficiency: verdict=${(result as any)?.verdict}.`,
+      data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
+      message: `Assessed evidence sufficiency: verdict=${(result as any)?.verdict}.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -341,7 +422,12 @@ export async function reviewerSimulationRun(
       dryRun: false,
     });
 
-    void auditService.logAction({
+    // WO-16C #133: was `void auditService.logAction({…})`.
+    // `runReviewerSimulation` runs with `dryRun: false`, so the run row is
+    // already INSERTed into reviewer_simulation_runs before this line; a log
+    // beside a committed write. The run stands and the outcome of its
+    // §11.10(e) row now reaches the caller.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.reviewer_simulation.run',
@@ -358,8 +444,8 @@ export async function reviewerSimulationRun(
       success: true,
       action,
       // Serialization boundary: a typed SimulatorResult is a plain JSON object.
-      data: result as unknown as Record<string, unknown>,
-      message: `Ran reviewer simulation on program ${programId}.`,
+      data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
+      message: `Ran reviewer simulation on program ${programId}.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -395,7 +481,11 @@ export async function postMarketDocumentUpdate(
       return { success: false, action, message: 'Document not found.', error: 'NOT_FOUND' };
     }
 
-    void auditService.logAction({
+    // WO-16C #133: was `void auditService.logAction({…})`. The patch is already
+    // committed by `updateDocument` above — a log beside a committed mutation —
+    // so the update stands and the caller now sees whether the §11.10(e) row
+    // naming the changed fields exists.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.post_market.document.update',
@@ -410,8 +500,8 @@ export async function postMarketDocumentUpdate(
     return {
       success: true,
       action,
-      data: updated as Record<string, unknown>,
-      message: `Updated post-market document ${documentId}.`,
+      data: { ...(updated as Record<string, unknown>), agentAuditTrail },
+      message: `Updated post-market document ${documentId}.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -423,10 +513,14 @@ export async function postMarketDocumentValidate(
   params: Record<string, unknown>,
 ): Promise<CommandResult> {
   const action = 'post_market.document.validate';
-  // Validation is read-only-ish (returns findings; no mutation), but it
-  // PERSISTS via downstream side effects in some pathways. Gate it
-  // lightly: confirm + reason still required, since the act of running
-  // a validation against a tenant's document is itself an audit event.
+  // Validation mutates nothing and persists nothing on this path: `getDocument`
+  // selects the row and `validateDocument` is a pure synchronous function over it,
+  // with no call after them. (This comment used to say it "PERSISTS via downstream
+  // side effects in some pathways"; a reviewer checked and there are none, and the
+  // claim contradicted the note at the audit row below, which is the fact that
+  // decides whether a lost row here is a lost log or the only lost persistence.)
+  // Gate it anyway: the act of running a validation against a tenant's document is
+  // itself the audit event, which is why this handler writes a row at all.
   const gate = requireGovernedToolGate(action, ctx, params);
   if (!gate.ok) return gate.result;
 
@@ -442,7 +536,14 @@ export async function postMarketDocumentValidate(
     }
     const result = validateDocument(doc);
 
-    void auditService.logAction({
+    // WO-16C #133: was `void auditService.logAction({…})`. Nothing is mutated
+    // on this path — `getDocument` reads the row and `validateDocument` is a
+    // pure function over it — so this §11.10(e) row is the only write the
+    // handler makes, and the findings returned below are genuine whether or not
+    // it reached a store. The result therefore stays a success, and the row's
+    // outcome travels with it so a lost record of the validation event is
+    // visible rather than silent.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.post_market.document.validate',
@@ -459,10 +560,10 @@ export async function postMarketDocumentValidate(
       success: true,
       action,
       // Serialization boundary: a typed PostMarketValidationResult is a plain JSON object.
-      data: result as unknown as Record<string, unknown>,
+      data: { ...(result as unknown as Record<string, unknown>), agentAuditTrail },
       message: `Validated post-market document ${documentId}: ${
         (result as any)?.valid ? 'pass' : 'findings present'
-      }.`,
+      }.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);
@@ -491,7 +592,12 @@ export async function postMarketDocumentSupersede(
       return { success: false, action, message: 'Document not found.', error: 'NOT_FOUND' };
     }
 
-    void auditService.logAction({
+    // WO-16C #133: was `void auditService.logAction({…})`. `supersedeDocument`
+    // above has already INSERTed the new version and set the old document to
+    // `superseded`, so this is a log beside a committed mutation. The new
+    // version stands and the outcome of its §11.10(e) row now reaches the
+    // caller.
+    const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.post_market.document.supersede',
@@ -507,8 +613,8 @@ export async function postMarketDocumentSupersede(
     return {
       success: true,
       action,
-      data: newDoc as Record<string, unknown>,
-      message: `Superseded post-market document ${documentId}.`,
+      data: { ...(newDoc as Record<string, unknown>), agentAuditTrail },
+      message: `Superseded post-market document ${documentId}.${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     return mapServiceError(action, err);

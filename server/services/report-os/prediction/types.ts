@@ -44,15 +44,30 @@ export interface DeficiencyRiskInput {
 }
 
 /**
- * Normalized projection of the submission-readiness twin: a gap-based
- * heuristic that scores readiness and derives advisory trajectory figures.
+ * Normalized projection of the submission-readiness twin: a gap-based heuristic
+ * that scores readiness against a criteria set.
+ *
+ * ── 2026-09-10: it no longer carries a predicted approval probability ────────
+ * It used to, and the twin computed it as `(overallScore / 100) * 0.8 -
+ * criticalGaps * 0.05`. No approval outcome is consulted anywhere in that
+ * service, so the figure was the readiness score rescaled. The field is kept
+ * only so the assembler can state that no such model exists, and it is null in
+ * every code path today.
  */
 export interface ReadinessTrajectoryInput {
   kind: 'readiness_trajectory';
   overallScore: number;
-  predictedApprovalProbability: number;
-  predictedReviewTimeDays: number;
-  predictedDeficiencyCount: number;
+  /** Null whenever no approval-probability model backs the number. Always, today. */
+  predictedApprovalProbability: number | null;
+  /**
+   * The AGENCY's statutory / user-fee review clock for the submission type —
+   * reference data about the pathway, not a forecast about this program.
+   * Null when the submission type is not one of the recognised pathways.
+   */
+  reviewClockDays: number | null;
+  reviewClockBasis: string | null;
+  /** Criteria this assessment scored not_met or partially_met. A present-state count. */
+  unmetCriteriaCount: number;
   trend?: Array<{ asOf: string; score: number }>;
 }
 

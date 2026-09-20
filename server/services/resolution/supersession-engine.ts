@@ -9,7 +9,7 @@
  */
 
 import { db } from '../../db';
-import { eq, and, or, desc } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import {
   supersessionRecords,
   type SupersessionRecord,

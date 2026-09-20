@@ -437,7 +437,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
         key: 'studyId', label: 'Study', type: 'select', required: true,
         options: liveStudies.rows
           .filter((st) => st.studyId)
-          .map((st) => ({ value: st.studyId, label: st.id + (st.phase ? ' -- Phase ' + st.phase : '') })),
+          .map((st) => ({ value: st.studyId, label: st.id + (st.phase ? ' — Phase ' + st.phase : '') })),
       },
       {
         key: 'category', label: 'Category', type: 'seg', default: 'minor', half: true,
@@ -461,10 +461,10 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
   const recordDeviation = async (v: Record<string, string>) => {
     if (devSaving) return;
     const studyId = (v.studyId || '').trim();
-    if (!studyId) { fireToast('Not recorded -- choose the study this deviation belongs to.', 'error'); return; }
+    if (!studyId) { fireToast('Not recorded — choose the study this deviation belongs to.', 'error'); return; }
     const site = (v.site || '').trim();
     const description =
-      (site ? 'Site ' + site + ' -- ' : '') + (v.title || '').trim() +
+      (site ? 'Site ' + site + ' — ' : '') + (v.title || '').trim() +
       ((v.detail || '').trim() ? '\n\n' + (v.detail || '').trim() : '');
     setDevSaving(true);
     try {
@@ -477,7 +477,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
       });
       if (r.error || !r.data) {
         // Never "added to the board" when nothing was written.
-        fireToast('Not recorded -- the clinical-operations service did not accept the deviation. Nothing was saved.', 'error');
+        fireToast('Not recorded — the clinical-operations service did not accept the deviation. Nothing was saved.', 'error');
         return;
       }
       setDevForm(false);
@@ -597,7 +597,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
           : sites.length === 0
           ? <>No site-risk scores yet — the risk-based-monitoring engine has not scored this organisation&rsquo;s sites.</>
           : enhanced.length
-          ? <><b>{enhanced.length}</b> of <b>{sites.length}</b> study sites are enhanced-tier and need on-site monitoring{worst.name ? <> -- {worst.name} leads at composite <b>{worst.composite ?? '—'}</b></> : null}. Central monitoring holds the rest.</>
+          ? <><b>{enhanced.length}</b> of <b>{sites.length}</b> study sites are enhanced-tier and need on-site monitoring{worst.name ? <> — {worst.name} leads at composite <b>{worst.composite ?? '—'}</b></> : null}. Central monitoring holds the rest.</>
           : <>All <b>{sites.length}</b> sites are at standard or reduced monitoring — no enhanced visits required.</>
       }
       starters={[
@@ -611,7 +611,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
         // Derived from the live roster; dropped when there's no site data so the
         // queue never interpolates an "undefined" site.
         ...(worst.name
-          ? [{ ico: 'alertTriangle', title: worst.name + ' -- ' + worst.tier + ' tier', sub: 'composite ' + (worst.composite ?? '—') + (worst.driver ? ' -- ' + worst.driver : ''), tone: 'warn', action: 'Review', cmd: 'Explain the drivers behind the highest-risk site and the monitoring it needs.' }]
+          ? [{ ico: 'alertTriangle', title: worst.name + ' — ' + worst.tier + ' tier', sub: 'composite ' + (worst.composite ?? '—') + (worst.driver ? ' — ' + worst.driver : ''), tone: 'warn', action: 'Review', cmd: 'Explain the drivers behind the highest-risk site and the monitoring it needs.' }]
           : []),
         /* ── Two invented items are gone ──────────────────────────────────
            "Prep the next DSMB data package" and "Review open protocol
@@ -669,7 +669,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
                   <div key={i} className="sp-row">
                     <span className="sp-tag">Site {s.n}</span>
                     <span className="sp-row-b">
-                      <span className="sp-row-t">{s.name}{s.composite != null ? ` -- composite ${s.composite}` : ''}</span>
+                      <span className="sp-row-t">{s.name}{s.composite != null ? ` — composite ${s.composite}` : ''}</span>
                       <span className="sp-row-s">{s.driver}</span>
                     </span>
                     <span className="sp-sev" data-s="high">enhanced</span>
@@ -706,7 +706,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
                   <span className="sp-tag">{s.id}</span>
                   <span className="sp-tag2">Ph {s.phase}</span>
                   <span className="sp-row-b">
-                    <span className="sp-row-t">{s.design ? `${s.design} -- ` : ''}N={s.n}/{s.target}</span>
+                    <span className="sp-row-t">{s.design ? `${s.design} — ` : ''}N={s.n}/{s.target}</span>
                     <span className="sp-row-s">{s.note}</span>
                   </span>
                   {pill(s.status)}
@@ -745,7 +745,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
                   <span className="sp-tag">Site {s.n}</span>
                   <span className="sp-tag2">{s.country}</span>
                   <span className="sp-row-b">
-                    <span className="sp-row-t">{s.name}{s.composite != null ? ` -- composite ${s.composite}` : ''}</span>
+                    <span className="sp-row-t">{s.name}{s.composite != null ? ` — composite ${s.composite}` : ''}</span>
                     <span className="sp-row-s">{s.driver}</span>
                   </span>
                   <span className="sp-sev" data-s={s.tier === 'enhanced' ? 'high' : s.tier === 'standard' ? 'med' : 'low'}>{s.tier}</span>
@@ -785,7 +785,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
               shows is the record; a partial or failed read is never rendered as
               an empty one, because "no deviations" is a clearance claim. */}
           {devState.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Reading protocol deviations…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Reading protocol deviations…</div>
           ) : devState.error ? (
             <EmptyState
               tone="error"
@@ -815,7 +815,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
                     <span className="sp-row-t">{d.description}</span>
                     <span className="sp-row-s">
                       {d.detectedDate ? 'detected ' + d.detectedDate : 'detection date not recorded'}
-                      {d.correctiveAction ? ' -- ' + d.correctiveAction : ''}
+                      {d.correctiveAction ? ' — ' + d.correctiveAction : ''}
                     </span>
                   </span>
                   {pill(d.status)}

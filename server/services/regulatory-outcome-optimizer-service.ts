@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { eq, and, like, sql, desc, count } from 'drizzle-orm';
+import { eq, and, like, sql, desc } from 'drizzle-orm';
 import {
   regulatoryOutcomes,
   designParameterCorrelations,

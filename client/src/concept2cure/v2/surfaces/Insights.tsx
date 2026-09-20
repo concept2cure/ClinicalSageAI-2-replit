@@ -388,7 +388,7 @@ function roSuggestForClient(p: ProgramCtx, seg: string) {
   const pduBit = p.pdufa ? ` with a target action date of ${p.pdufa}` : '';
   return {
     headline: 'Build any governed report or dashboard — describe what you need.',
-    body: `${rBit}${pduBit}. The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} -- it is not picked from the readiness figure above.`,
+    body: `${rBit}${pduBit}. The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} — it is not picked from the readiness figure above.`,
     preset,
     prompts: [
       `Build the ${preset.label}`,
@@ -509,7 +509,7 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
   if (name === 'compare_regions') {
     const markets = roMarketsIn(utterance);
     if (markets.length < 2) return { tool: name, question: true, text: `Which markets should be compared for ${p.code}? Pick at least two.`, chips: [['FDA vs EMA', `Compare FDA and EMA for ${p.code}`], ['FDA vs EMA vs PMDA', `Compare FDA, EMA and PMDA for ${p.code}`], ['FDA vs NMPA', `Compare FDA and NMPA for ${p.code}`]], report: null, dashboard: null };
-    return { tool: name, text: `Comparing ${markets.join(', ')} for ${p.code}. A market with no governed value yet shows as missing rather than estimated.`, dashboard: { kind: 'compare', label: `Regional comparison -- ${p.code}`, why: markets.join(' -- '), markets, program: p }, report: null };
+    return { tool: name, text: `Comparing ${markets.join(', ')} for ${p.code}. A market with no governed value yet shows as missing rather than estimated.`, dashboard: { kind: 'compare', label: `Regional comparison — ${p.code}`, why: markets.join(' — '), markets, program: p }, report: null };
   }
   if (name === 'explain_blockers') {
     const rep = c.report;
@@ -542,7 +542,7 @@ function roProv(refs?: { sourceTable: string; sourceField?: string; recordId?: s
   return 'Derived from ' + refs.map(r => {
     const f = r.sourceField ? '.' + r.sourceField : '';
     const rec = r.recordId !== undefined ? ' #' + r.recordId : '';
-    const tr = r.transformation ? ' -- ' + r.transformation : '';
+    const tr = r.transformation ? ' — ' + r.transformation : '';
     return r.sourceTable + f + rec + tr;
   }).join('; ');
 }
@@ -585,7 +585,7 @@ function ROChart({ chartType, spec }: { chartType: string; spec: Record<string, 
           <polyline points={line} fill="none" stroke="var(--accent-200)" strokeWidth="2" strokeDasharray="3 3" />
           {pts.map((p, i) => <circle key={i} cx={x(i)} cy={y(p[1])} r="2.5" fill="var(--accent-200)" />)}
         </svg>
-        <div className="ro-svg-cap">{(s.label as string) || 'Trajectory'} -- advisory band (model not validated)</div>
+        <div className="ro-svg-cap">{(s.label as string) || 'Trajectory'} — advisory band (model not validated)</div>
       </div>
     );
   }
@@ -602,7 +602,7 @@ function ROChart({ chartType, spec }: { chartType: string; spec: Record<string, 
     if (!rows.length) return <div className="ro-svg-cap">No series data — connect the live provider.</div>;
     return <div className="ro-bars">{rows.map((r, i) => (<div key={i} className="ro-bar-row"><span className="ro-bar-lbl">{r.label}</span><span className="ro-bar-track"><span className="ro-bar-fill" style={{ width: ((Number(r.value) || 0) / max * 100) + '%' }} /></span><span className="ro-bar-val">{r.value}</span></div>))}</div>;
   }
-  return <div className="ro-svg-cap">Chart -- {chartType}</div>;
+  return <div className="ro-svg-cap">Chart — {chartType}</div>;
 }
 
 /* ── ROBlock ── */
@@ -612,7 +612,7 @@ function ROBlock({ block }: { block: ROBlockData }) {
     case 'narrative': return (
       <div className="ro-narr">
         <p className="ro-narr-body">{block.text}</p>
-        <p className="ro-narr-tag" title={block.disclosure}>AI-generated narrative -- {block.disclosure}</p>
+        <p className="ro-narr-tag" title={block.disclosure}>AI-generated narrative — {block.disclosure}</p>
       </div>
     );
     case 'metric': {
@@ -653,7 +653,7 @@ function ROBlock({ block }: { block: ROBlockData }) {
       <div className="ro-disc" role="note">
         <div className="ro-disc-h">Method disclosure</div>
         <div className="ro-disc-m">{block.method}</div>
-        <div className="ro-disc-s">{block.validated ? 'Validated' : 'Not validated'}{block.confidence !== undefined ? ` -- confidence ${(block.confidence * 100).toFixed(0)}%` : ''}</div>
+        <div className="ro-disc-s">{block.validated ? 'Validated' : 'Not validated'}{block.confidence !== undefined ? ` — confidence ${(block.confidence * 100).toFixed(0)}%` : ''}</div>
         <div className="ro-disc-n">{block.note}</div>
       </div>
     );
@@ -686,7 +686,7 @@ function ROReport({ report, onExport, compact }: { report: RenderedReport; onExp
         <div className="ro-rep-eyebrow">{fam.label || 'Governed report'}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
         <h2 className="ro-rep-title">{report.reportTypeLabel || report.reportTypeId}</h2>
         <div className="ro-rep-meta">
-          <span>{report.scopeType} -- {report.scopeId}</span>
+          <span>{report.scopeType} — {report.scopeId}</span>
           <span className={'ro-status st-' + stTone}>{report.status}</span>
           <span className="ro-gen">generated {new Date(report.generatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
         </div>
@@ -782,7 +782,7 @@ function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tie
               <div className="ro-pack-fam">{fam.label}</div>
               <div className="ro-pack-title">{t.label}</div>
               <div className="ro-lock"><span className="ro-lock-chip">{I.lock || I.shield} {(RO_TIERS.find(x => x.id === dec.requiredTier) || { label: '' }).label} plan</span></div>
-              <div className="ro-pack-sub">{RO_FEATURE_LABEL[dec.feature]} -- unlock to include in this pack.</div>
+              <div className="ro-pack-sub">{RO_FEATURE_LABEL[dec.feature]} — unlock to include in this pack.</div>
             </div>
           );
           // Tiles no longer pre-generate a report client-side (that was the mock
@@ -1087,7 +1087,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
            them. -- */}
       <div className="rc-ana">
         <div className="rc-ana-head">
-          <div className="rc-ana-id"><span className="rc-ana-mark">*</span><div><div className="nm">Report builder</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' -- ')}</div></div></div>
+          <div className="rc-ana-id"><span className="rc-ana-mark">*</span><div><div className="nm">Report builder</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' — ')}</div></div></div>
         </div>
 
         <div className="rc-ana-scroll" ref={scrollRef}>
@@ -1125,7 +1125,10 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
               </div>
             </div>
           )}
-          {busy && <div className="rc-msg rc-ana-msg"><span className="rc-ana-mark sm">*</span><div className="rc-ana-body"><div className="rc-typing"><span /><span /><span /></div></div></div>}
+          {/* Three empty coloured dots and nothing else — the whole report is
+              being composed and a screen reader was told nothing at all. The
+              dots are decoration; the sentence beside them is the status. */}
+          {busy && <div className="rc-msg rc-ana-msg" role="status"><span className="rc-ana-mark sm" aria-hidden="true">*</span><div className="rc-ana-body"><div className="rc-typing" aria-hidden="true"><span /><span /><span /></div><span className="sr-only">Preparing your report…</span></div></div>}
         </div>
 
         {/* Composer + tier */}
@@ -1135,7 +1138,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
           </div>
           <div className="rc-input">
-            <textarea rows={1} value={draft} placeholder={`Describe the report or dashboard you need for ${p.code}...`}
+            <textarea rows={1} aria-label="Describe the report or dashboard you need" value={draft} placeholder={`Describe the report or dashboard you need for ${p.code}...`}
               onChange={e => setDraft(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <button className="rc-send" disabled={!draft.trim() || busy} onClick={() => send()} aria-label="Send">{I.arrowUp || I.right}</button>

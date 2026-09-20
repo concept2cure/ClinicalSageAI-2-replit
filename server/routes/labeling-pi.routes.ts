@@ -14,6 +14,10 @@
  *   POST /api/labeling-pi → record/author a section (upsert on org + section_no;
  *                           the real write path). Audited.
  *
+ * Every POST here that writes a §11.10(e) audit row reports on its success
+ * response whether that row reached a durable store, in `meta.auditTrail`
+ * (WO-16C #133 — see the note above the `recordAuditRow` import).
+ *
  * Org scoped; 403 without org context; GET fails to an empty list on 42P01 so an
  * unprovisioned store never 500s.
  */
@@ -26,7 +30,34 @@ import {
 import {
   generateSplXml, validateSplStructure, type SplGenerationInput,
 } from '../services/labeling/spl-generation-service';
-import auditService from '../services/auditService';
+/*
+ * WO-16C #133. The three audit writes in this router were
+ * `await auditService.logAction({…})` at statement position, which awaits the
+ * call and then throws away the `AuditWriteResult` it resolves. `logAction`
+ * never rejects when persistence fails — deliberately, an audit-trail outage
+ * must not break the user action it records — so the discarded value was the
+ * only place a lost §11.10(e) row was visible: the 201/200 envelope came back
+ * byte-identical whether the record existed or not.
+ *
+ * They now go through the shared `recordAuditRow`, and each of the three
+ * handlers that writes one (POST /, POST /:sectionNo/accept-agency-text,
+ * POST /spl) carries its outcome out in that response's `meta.auditTrail`.
+ * Each of those three writes exactly one audit row, so one unqualified
+ * `auditTrail` key names it unambiguously in each envelope. The outcome is on
+ * the success response only, and no error arm drops one: in each of the three
+ * handlers the audit write is the last statement before the success response,
+ * and every error arm — each pre-check return and each branch of the `catch` —
+ * is entered from a step that runs before it, on a throw `recordAuditRow`
+ * itself cannot raise (it never throws).
+ *
+ * None of the three reverts anything over a lost log row — see the note at each
+ * call for what had already committed (or, for /spl, that nothing had).
+ *
+ * `recordAuditRow` never returns the store's own error text; that goes to its
+ * own log line, keyed on the action and resource id. `auditService` is reached
+ * through that module, so it is no longer imported here.
+ */
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 /**
  * USPI section → SPL LOINC section, per 21 CFR 201.57's numbering and the NLM
@@ -125,7 +156,11 @@ router.post('/', async (req: Request, res: Response) => {
       negotiation: b.negotiation,
       createdBy: userId,
     });
-    await auditService.logAction({
+    /* WO-16C #133. A log BESIDE an already-committed write: the section row and
+       its author lineage committed together inside `upsertLabelingPiSection`
+       above, so a lost audit row is not a reason to undo them — the section
+       stands and the caller is told instead, in `meta.auditTrail`. */
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'LABELING_PI_SECTION_RECORDED',
@@ -133,7 +168,7 @@ router.post('/', async (req: Request, res: Response) => {
       resourceId: row.id,
       details: { sectionNo: row.section_no, status: row.status, flag: row.flag },
     });
-    return res.status(201).json({ data: toView(row), id: row.id });
+    return res.status(201).json({ data: toView(row), id: row.id, meta: { auditTrail } });
   } catch (err) {
     if (err instanceof LabelingPiValidationError) {
       return res.status(400).json({ error: { code: 'VALIDATION', message: err.message } });
@@ -177,7 +212,19 @@ router.post('/:sectionNo/accept-agency-text', async (req: Request, res: Response
 
   try {
     const { row, previousContent } = await acceptAgencyText(orgId, String(req.params.sectionNo), { userId });
-    await auditService.logAction({
+    /* WO-16C #133. A log BESIDE an already-committed write: `acceptAgencyText`
+       above replaced the section's content, set it to 'approved' and
+       re-attributed its lineage in one committed transaction, so a lost audit
+       row is not a reason to undo the adoption — it stands and the caller is
+       told, in `meta.auditTrail`.
+       What a failed row does cost is specific and worth naming: the section row
+       carries the adopted text but no `reason_for_change` column, so
+       `reasonForChange` below is held in this audit entry and nowhere else in
+       the schema. When `auditTrail.persisted` is false, the label change has
+       happened with no recorded reason for it — the thing the docstring above
+       calls "not an audit trail" — and the response now says so instead of
+       reporting the accept as fully recorded. */
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: userId ?? undefined,
       action: 'LABELING_PI_AGENCY_TEXT_ACCEPTED',
@@ -194,7 +241,7 @@ router.post('/:sectionNo/accept-agency-text', async (req: Request, res: Response
         negotiationCycle: row.negotiation?.cycle ?? null,
       },
     });
-    return res.json({ data: toView(row) });
+    return res.json({ data: toView(row), meta: { auditTrail } });
   } catch (err) {
     if (err instanceof LabelingPiValidationError) {
       return res.status(400).json({ error: { code: 'VALIDATION', message: err.message } });
@@ -309,7 +356,15 @@ router.post('/spl', async (req: Request, res: Response) => {
     // structural check, rather than handing back XML labelled "generated".
     const validation = validateSplStructure(result.xml);
 
-    await auditService.logAction({
+    /* WO-16C #133. Not a log beside a write — this handler persists nothing.
+       `generateSplXml` and `validateSplStructure` are pure (no store is reached
+       from either) and `listLabelingPiSections` above is a read, so there is no
+       committed mutation here to revert or to keep: the audit row is the only
+       record anywhere that this organization's label was rendered to SPL. The
+       generated XML itself reaches the caller in this same response either way,
+       so a lost row does not make the response untrue once the response says the
+       row is missing — which `meta.auditTrail` now does. */
+    const auditTrail = await recordAuditRow({
       organizationId: orgId,
       userId: getUserId(req) ?? undefined,
       action: 'LABELING_SPL_GENERATED',
@@ -322,7 +377,10 @@ router.post('/spl', async (req: Request, res: Response) => {
         valid: validation.valid,
       },
     });
-    return res.json({ data: { xml: result.xml, sectionCount: result.sectionCount, validation } });
+    return res.json({
+      data: { xml: result.xml, sectionCount: result.sectionCount, validation },
+      meta: { auditTrail },
+    });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
       return res.status(409).json({

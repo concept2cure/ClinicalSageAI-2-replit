@@ -395,15 +395,54 @@ export interface ProjectDocumentListing {
 }
 
 /**
+ * One page of project documents, plus what the page does NOT contain.
+ *
+ * The counts are computed over the WHOLE scope, in the same query, by window
+ * aggregates — never over `documents`, which is a page. That distinction is
+ * the point of this type: `documents.length` is how many rows came back and
+ * `total` is how many exist, and a caller that conflates them tells the model
+ * an organization has exactly as many files as the listing happened to fit.
+ */
+export interface ProjectDocumentPage {
+  documents: ProjectDocumentListing[];
+  /** Live documents in scope. Not the page size. */
+  total: number;
+  /** `total - documents.length`: rows the limit left out. Zero means the page IS the scope. */
+  withheld: number;
+  /** Scope-wide, not page-wide: no catalog row, or extracted but never studied. */
+  notYetStudied: number;
+  /** Scope-wide: extraction recorded a failure, so there is no text to have read. */
+  extractionFailed: number;
+  /** Scope-wide: admitted to the vault with no filed location. */
+  unfiled: number;
+}
+
+/**
  * Every live document across the given programs (or all programs the org
  * owns), each with its filed location and catalog state. A document with no
  * catalog row is reported as 'uncataloged' — an honest "not assessed", never
  * hidden and never presented as assessed-and-empty.
+ *
+ * ── Why this returns a page and not an array ────────────────────────────────
+ * It always applied `LIMIT` — 100 by default, 200 at most — and returned a
+ * bare array, so every caller's only available answer to "how many files does
+ * this client have?" was `rows.length`, which is the limit whenever the client
+ * has more files than the limit. The AnA tool reported it as `count`, and
+ * session recall took the newest twelve and listed them under a heading that
+ * reads as the complete set. An organization with forty files was told it had
+ * twelve, and the twenty-eight it was not told about were the OLDEST ones —
+ * precisely the files nobody has looked at in a while, which is the recall
+ * this catalog exists to provide.
+ *
+ * A truncated list rendered as a total is a fabricated count, so the totals
+ * now come back with the page and the callers are obliged to handle them. They
+ * are window aggregates over the same scan (`COUNT(*) OVER ()`), evaluated
+ * before `LIMIT`, so honesty costs no extra round trip.
  */
 export async function listProjectDocuments(
   organizationId: number,
   opts: { programId?: string | null; limit?: number } = {},
-): Promise<ProjectDocumentListing[]> {
+): Promise<ProjectDocumentPage> {
   const limit = Math.min(200, Math.max(1, opts.limit ?? 100));
   const params: unknown[] = [organizationId, limit];
   let programFilter = '';
@@ -415,7 +454,15 @@ export async function listProjectDocuments(
     `SELECT d.id, d.program_id, rp.name AS program_name, d.document_code, d.document_title,
             d.document_type, d.file_name, d.folder_id, d.ctd_section, d.evidence_kind,
             d.placement_status, d.created_at,
-            c.catalog_status, c.document_kind, c.purpose, c.extraction_error, c.char_count
+            c.catalog_status, c.document_kind, c.purpose, c.extraction_error, c.char_count,
+            COUNT(*) OVER () AS scope_total,
+            COUNT(*) FILTER (
+              WHERE c.catalog_status IS NULL OR c.catalog_status = 'extracted'
+            ) OVER () AS scope_not_studied,
+            COUNT(*) FILTER (WHERE c.catalog_status = 'extraction_failed')
+              OVER () AS scope_extraction_failed,
+            COUNT(*) FILTER (WHERE d.placement_status = 'unfiled')
+              OVER () AS scope_unfiled
        FROM vault.documents d
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
@@ -424,7 +471,7 @@ export async function listProjectDocuments(
       LIMIT $2`,
     params,
   );
-  return res.rows.map((r: any) => ({
+  const documents = res.rows.map((r: any) => ({
     id: r.id,
     programId: r.program_id,
     programName: r.program_name,
@@ -445,6 +492,19 @@ export async function listProjectDocuments(
     charCount: r.char_count,
     createdAt: String(r.created_at),
   }));
+  // With no matching rows there is no row to carry the window, so the scope is
+  // empty — which is what an empty page means here, not an unknown total.
+  const first = res.rows[0] as Record<string, unknown> | undefined;
+  const count = (key: string): number => (first ? Number(first[key] ?? 0) : 0);
+  const total = count('scope_total');
+  return {
+    documents,
+    total,
+    withheld: Math.max(0, total - documents.length),
+    notYetStudied: count('scope_not_studied'),
+    extractionFailed: count('scope_extraction_failed'),
+    unfiled: count('scope_unfiled'),
+  };
 }
 
 /** Resolve the program UUID a numeric workspace project is anchored to, org-checked. */
@@ -473,25 +533,111 @@ export interface VaultDocDigest {
   purpose: string | null;
 }
 
+/** A chat-uploaded file from the evidence spine, with the file_id that reopens it. */
+export interface ChatUploadDigest {
+  sourceId: number;
+  fileId: string | null;
+  fileName: string;
+  version: string | null;
+  extractionStatus: string;
+  dossier: unknown;
+  programId: string | null;
+  uploadedAt: string;
+}
+
+/** A page of chat uploads, and whether the limit hid any. */
+export interface ChatUploadPage {
+  uploads: ChatUploadDigest[];
+  /** True when the spine held more than `limit` — established by asking for one extra row. */
+  hasMore: boolean;
+}
+
 /**
- * Compact digest of the org's project files for session-start recall — the
- * piece that makes AnA REMEMBER a file exists, where it is filed, and what it
- * is for, without being asked. Bounded; newest first.
+ * Current (non-superseded) chat uploads, via the canonical evidence-spine
+ * listing. `fileId` comes from the source's recorded provenance — it is what
+ * inspect_uploaded_document / read_uploaded_document take, so a file attached
+ * in a past conversation is reachable again.
+ *
+ * Shared by the discovery tool and the session-start digest: two callers, one
+ * definition of "the chat uploads this organization currently has".
+ *
+ * The spine's listing is a plain `LIMIT` with no total, so a saturated page is
+ * indistinguishable from a complete one — the same lie `listProjectDocuments`
+ * used to tell. One row beyond the limit is requested and dropped, which
+ * settles "is there more" exactly rather than guessing from `rows.length`, and
+ * needs nothing from the spine service.
  */
+export async function listChatUploads(
+  orgId: number,
+  programId: string | null,
+  limit: number,
+): Promise<ChatUploadPage> {
+  const { listClientDocuments } = await import(
+    '../clinical-regulatory-evidence/evidence-spine.service.js'
+  );
+  const want = Math.max(1, limit);
+  const sources = await listClientDocuments(orgId, {
+    programId: programId ?? undefined,
+    includeUnscoped: true,
+    currentOnly: true,
+    limit: want + 1,
+  });
+  const hasMore = sources.length > want;
+  const uploads = (hasMore ? sources.slice(0, want) : sources).map(s => {
+    const prov = (s.provenance ?? {}) as Record<string, unknown>;
+    const meta = (s.metadata ?? {}) as Record<string, unknown>;
+    return {
+      sourceId: s.id,
+      fileId: typeof prov.fileUploadId === 'string' ? prov.fileUploadId : null,
+      fileName: typeof meta.originalName === 'string' ? meta.originalName : (s.title ?? 'document'),
+      version: s.version ?? null,
+      extractionStatus: s.extractionStatus,
+      dossier: meta.dossier ?? null,
+      programId: s.clientProgramId ?? null,
+      uploadedAt: String(s.createdAt),
+    };
+  });
+  return { uploads, hasMore };
+}
+
+/**
+ * What session recall needs: a bounded SAMPLE of the org's project files, and
+ * the scope-wide numbers that say what the sample leaves out.
+ *
+ * Both halves matter. Without the sample AnA starts cold on a file the client
+ * uploaded last week; without the counts she starts confident on twelve files
+ * and answers "there is no such document" about the thirteenth.
+ */
+export interface CatalogBootstrapDigest {
+  files: VaultDocDigest[];
+  total: number;
+  withheld: number;
+  notYetStudied: number;
+  extractionFailed: number;
+  unfiled: number;
+}
+
 export async function getCatalogBootstrapDigest(
   organizationId: number,
   limit = 12,
-): Promise<VaultDocDigest[]> {
-  const rows = await listProjectDocuments(organizationId, { limit });
-  return rows.map(r => ({
-    fileName: r.fileName,
-    documentTitle: r.documentTitle,
-    programName: r.programName,
-    folderId: r.location.folderId,
-    ctdSection: r.location.ctdSection,
-    placementStatus: r.location.placementStatus,
-    catalogStatus: r.catalogStatus,
-    documentKind: r.documentKind,
-    purpose: r.purpose,
-  }));
+): Promise<CatalogBootstrapDigest> {
+  const page = await listProjectDocuments(organizationId, { limit });
+  return {
+    files: page.documents.map(r => ({
+      fileName: r.fileName,
+      documentTitle: r.documentTitle,
+      programName: r.programName,
+      folderId: r.location.folderId,
+      ctdSection: r.location.ctdSection,
+      placementStatus: r.location.placementStatus,
+      catalogStatus: r.catalogStatus,
+      documentKind: r.documentKind,
+      purpose: r.purpose,
+    })),
+    total: page.total,
+    withheld: page.withheld,
+    notYetStudied: page.notYetStudied,
+    extractionFailed: page.extractionFailed,
+    unfiled: page.unfiled,
+  };
 }

@@ -12,6 +12,7 @@
 import type { ResolutionTestState } from './resolution-test-state';
 import { SupersessionDriver } from './supersession-driver';
 import { ArtifactDriver } from './artifact-driver';
+import { sqlText } from './drizzle-sql-text';
 
 export function createMockDb(state: ResolutionTestState) {
   /** Monotonic id source for persisted execution receipts. */
@@ -198,71 +199,107 @@ export function createMockDb(state: ResolutionTestState) {
    * A StringChunk holds its text in `.value` as a string[]; params are separate
    * chunks and contribute no text.
    */
-  function sqlText(query: any): string {
-    const chunks: any[] = query?.queryChunks ?? [];
-    if (chunks.length === 0) return String(query?.sql ?? '');
-    return chunks
-      .map(c => (Array.isArray(c?.value) ? c.value.join('') : typeof c === 'string' ? c : ''))
-      .join(' ');
-  }
+  let versionSeq = 0;
 
-  function mockExecute(query: any): Promise<{ rows: any[] }> {
-    const queryStr = sqlText(query);
+  /**
+   * Which statement gets which rows, IN ORDER — the first `when` that matches
+   * answers. Order is load-bearing and is why this is one ordered list rather
+   * than a lookup: stageRewrite issues INSERT … SELECT … FROM
+   * concept2cure_artifacts, which contains both 'concept2cure_artifacts' and
+   * 'SELECT', so the artifact-status route below would answer it with a status
+   * row if it came first.
+   */
+  const ROUTES: Array<{ when: (q: string) => boolean; rows: () => { rows: any[] } }> = [
+    {
+      /* Staged rewrite version insert (ledger L177). stageRewrite now reads
+         RETURNING id and treats zero rows as "no such artifact in this tenant" —
+         it used to return true regardless, reporting a rewrite the database
+         never took. So this models the match honestly: a row comes back only
+         when the scenario actually has an artifact. */
+      when: (q) => q.includes('INSERT INTO concept2cure_artifact_versions'),
+      rows: () => {
+        versionSeq += 1;
+        return state.artifacts.length > 0 ? { rows: [{ id: `mock-version-${versionSeq}` }] } : { rows: [] };
+      },
+    },
+    {
+      /* Span lineage (ledger L177). stageRewrite attributes the rewritten text
+         in the same transaction, and the span writer reads rows[0].id.
 
-    // Artifact status lookup
-    if (queryStr.includes('concept2cure_artifacts') && queryStr.includes('SELECT')) {
-      if (state.artifacts.length > 0) {
-        return Promise.resolve({ rows: [{ status: state.artifacts[0].status }] });
-      }
-      return Promise.resolve({ rows: [] });
-    }
-
-    // Document status lookup
-    if (queryStr.includes('unified_documents') && queryStr.includes('SELECT')) {
-      if (state.documents.length > 0) {
-        return Promise.resolve({ rows: [{ status: state.documents[0].status }] });
-      }
-      return Promise.resolve({ rows: [] });
-    }
-
-    // Assumption supersession check
-    if (queryStr.includes('supersession_records') && queryStr.includes('SELECT') && queryStr.includes('confirmed')) {
-      const confirmed = state.supersessions.find(s => s.state === 'confirmed');
-      return Promise.resolve(confirmed
+         A STUB, not a model — in the spirit of the catch-all at the bottom of
+         this list: these are decision-matrix tests, not storage tests. The
+         insert hands back an id, and the coverage read reports one span wide
+         enough to satisfy assertLineageCoversContent. What the gate actually
+         records is proven against the real schema in the PGlite lineage tests. */
+      when: (q) => q.includes('document_span_lineage') && q.includes('INSERT'),
+      rows: () => ({ rows: [{ id: 'mock-span' }] }),
+    },
+    {
+      when: (q) => q.includes('document_span_lineage') && q.includes('char_start'),
+      rows: () => ({ rows: [{ char_start: 0, char_end: 1_000_000 }] }),
+    },
+    {
+      when: (q) => q.includes('document_span_lineage'),
+      rows: () => ({ rows: [] }),
+    },
+    {
+      // Artifact status lookup
+      when: (q) => q.includes('concept2cure_artifacts') && q.includes('SELECT'),
+      rows: () =>
+        state.artifacts.length > 0 ? { rows: [{ status: state.artifacts[0].status }] } : { rows: [] },
+    },
+    {
+      // Document status lookup
+      when: (q) => q.includes('unified_documents') && q.includes('SELECT'),
+      rows: () =>
+        state.documents.length > 0 ? { rows: [{ status: state.documents[0].status }] } : { rows: [] },
+    },
+    {
+      // Assumption supersession check
+      when: (q) => q.includes('supersession_records') && q.includes('SELECT') && q.includes('confirmed'),
+      rows: () => (state.supersessions.some((x) => x.state === 'confirmed')
         ? { rows: [{ state: 'confirmed' }] }
-        : { rows: [] }
-      );
-    }
+        : { rows: [] }),
+    },
+    {
+      /* Execution receipt persistence (ADR-0009).
 
-    // Execution receipt persistence (ADR-0009).
-    //
-    // receipt-store.persistExecutionReceipt does INSERT … RETURNING id and reads
-    // inserted[0].id. The catch-all below returns { rows: [] }, so that read threw
-    // and bundle-executor — which treats an unpersistable receipt as a FAILED
-    // execution, deliberately — surfaced it as 8 orchestrator failures.
-    //
-    // The executor's behaviour is correct and is NOT relaxed here: effects that
-    // are durable but unproven must not be reported as a completed correction.
-    // What was wrong is this mock, which did not model the table the code writes.
-    if (queryStr.includes('bundle_execution_receipts')) {
-      if (queryStr.includes('INSERT')) {
+         receipt-store.persistExecutionReceipt does INSERT … RETURNING id and
+         reads inserted[0].id. The catch-all below returns { rows: [] }, so that
+         read threw and bundle-executor — which treats an unpersistable receipt
+         as a FAILED execution, deliberately — surfaced it as 8 orchestrator
+         failures. The executor's behaviour is correct and is NOT relaxed here:
+         effects that are durable but unproven must not be reported as a
+         completed correction. What was wrong is this mock, which did not model
+         the table the code writes. */
+      when: (q) => q.includes('bundle_execution_receipts') && q.includes('INSERT'),
+      rows: () => {
         receiptSeq += 1;
         const id = `mock-receipt-${receiptSeq}`;
         state.receipts.push({ id });
-        return Promise.resolve({ rows: [{ id }] });
-      }
+        return { rows: [{ id }] };
+      },
+    },
+    {
       // Verifier reads (matches-snapshot / changed-since-execution) have no
       // stored rows to find in a mock run.
-      return Promise.resolve({ rows: [] });
-    }
+      when: (q) => q.includes('bundle_execution_receipts'),
+      rows: () => ({ rows: [] }),
+    },
+  ];
 
-    // All other queries succeed silently.
-    //
-    // NOTE: this catch-all is the same hazard the schema-contract tier exists to
-    // close — a mock that accepts any statement and returns an empty result set
-    // cannot tell a working query from a nonexistent table. It is tolerable here
-    // only because these are decision-matrix tests, not storage tests.
-    return Promise.resolve({ rows: [] });
+  /**
+   * All other queries succeed silently.
+   *
+   * NOTE: that catch-all is the same hazard the schema-contract tier exists to
+   * close — a mock that accepts any statement and returns an empty result set
+   * cannot tell a working query from a nonexistent table. It is tolerable here
+   * only because these are decision-matrix tests, not storage tests.
+   */
+  function mockExecute(query: any): Promise<{ rows: any[] }> {
+    const queryStr = sqlText(query);
+    const route = ROUTES.find((r) => r.when(queryStr));
+    return Promise.resolve(route ? route.rows() : { rows: [] });
   }
 
   // ─────────────────────────────────────────────────────────
@@ -277,6 +314,11 @@ export function createMockDb(state: ResolutionTestState) {
         return createUpdateChain(tName);
       },
       execute: mockExecute,
+      /* stageRewrite wraps its version write and its lineage in one transaction
+         (ledger L177). The mock has no real transaction to give it, so the
+         callback runs against the same execute — enough for these
+         decision-matrix tests, which assert outcomes rather than atomicity. */
+      transaction: async (fn: (tx: any) => any) => fn({ execute: mockExecute }),
     },
     drivers: {
       supersession: supersessionDriver,

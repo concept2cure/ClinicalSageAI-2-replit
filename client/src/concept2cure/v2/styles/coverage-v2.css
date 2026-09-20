@@ -943,7 +943,7 @@
 }
 .c2c-v2 .vd-search input::placeholder{ color:var(--text-400); }
 .c2c-v2 .vd-search input:hover{ border-color:var(--border-strong, var(--border)); }
-.c2c-v2 .vd-search input:focus-visible{ outline:2px solid var(--focus, var(--accent)); outline-offset:1px; border-color:transparent; }
+.c2c-v2 .vd-search input:focus-visible{ outline:2px solid var(--accent-200); outline-offset:1px; border-color:transparent; }
 @media (prefers-reduced-motion: reduce){ .c2c-v2 .vd-search input{ transition:none; } }
 .c2c-v2 .vd-crumb.cur{ color:var(--text-100); font-weight:600; cursor:default; }
 .c2c-v2 .vd-crumb svg{ width:13px; height:13px; }
@@ -1394,7 +1394,10 @@
 .c2c-v2 .dl-badge svg{ width:11px; height:11px; }
 .c2c-v2 .dl-badge.gxp{ background:color-mix(in srgb,var(--accent-200) 12%,transparent); color:var(--accent-200); }
 .c2c-v2 .dl-badge.cfr{ background:color-mix(in srgb,var(--ai) 11%,transparent); color:var(--ai); }
-.c2c-v2 .dl-badge.sig.signed{ background:color-mix(in srgb,var(--success) 14%,transparent); color:var(--success); }
+/* WO-16C #70: there is no 'signed' state on this surface — nothing here reads a
+   signature store. A record whose signature was not checked reads as unchecked,
+   in the neutral tone that carries. */
+.c2c-v2 .dl-badge.sig.not_assessed{ background:color-mix(in srgb,var(--text-400) 12%,transparent); color:var(--text-300); }
 .c2c-v2 .dl-badge.sig.pending{ background:color-mix(in srgb,var(--warning) 15%,transparent); color:var(--warning); }
 .c2c-v2 .dl-badge.sig.rejected{ background:color-mix(in srgb,var(--error) 13%,transparent); color:var(--error); }
 .c2c-v2 .dl-badge.hash{ font-family:ui-monospace,"JetBrains Mono",SFMono-Regular,Menlo,Consolas,monospace; font-size:9.5px; color:var(--text-400); background:transparent; border:1px solid var(--border); }
@@ -1418,7 +1421,13 @@
 .c2c-v2 .dl-fw-hd{ font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--text-400); margin-bottom:9px; }
 .c2c-v2 .dl-fw{ display:flex; gap:9px; align-items:flex-start; padding:6px 0; border-top:1px solid var(--border); }
 .c2c-v2 .dl-fw:first-of-type{ border-top:none; }
-.c2c-v2 .dl-fw-check{ flex:none; color:var(--success); display:inline-flex; margin-top:1px; }
+.c2c-v2 .dl-fw-check{ flex:none; color:var(--text-400); display:inline-flex; margin-top:1px; }
+.c2c-v2 .dl-fw-check.st-compliant{ color:var(--success); }
+.c2c-v2 .dl-fw-check.st-review-required{ color:var(--error); }
+.c2c-v2 .dl-fw-check.st-unverifiable,
+.c2c-v2 .dl-fw-check.st-not-assessed{ color:var(--text-400); }
+.c2c-v2 .dl-fw-st{ font-size:10px; color:var(--text-300); line-height:1.4; }
+.c2c-v2 .dl-fw-none{ font-size:11px; color:var(--text-400); line-height:1.5; }
 .c2c-v2 .dl-fw-check svg{ width:13px; height:13px; }
 .c2c-v2 .dl-fw-main{ display:flex; flex-direction:column; gap:1px; }
 .c2c-v2 .dl-fw-name{ font-size:11.5px; font-weight:600; color:var(--text-100); }

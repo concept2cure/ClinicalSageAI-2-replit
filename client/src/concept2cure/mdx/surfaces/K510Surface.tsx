@@ -414,7 +414,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                         instead of it — the operator needs both the refusal and
                         the state the form is still in. */}
                     {deviceProfile.saveFailure && (
-                      <span style={{ marginLeft: 6, color: 'var(--danger-100, var(--text-200))' }}>
+                      <span style={{ marginLeft: 6, color: 'var(--error)' }}>
                         {describeSaveFailure(deviceProfile.saveFailure)}
                       </span>
                     )}
@@ -436,14 +436,14 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               <div className="actions">
                 <button
                   className={`tb-btn${showSelectedOnly ? ' on' : ''}`}
-                  title={showSelectedOnly ? 'Show all candidates' : 'Show selected only'}
+                  title={showSelectedOnly ? 'Show all candidates' : 'Show selected only'} aria-label={showSelectedOnly ? 'Show all candidates' : 'Show selected only'}
                   onClick={() => setShowSelectedOnly(s => !s)}
                 >
                   {I.filter}
                 </button>
                 <button
                   className="tb-btn"
-                  title="Refine query with AnA"
+                  title="Refine query with AnA" aria-label="Refine query with AnA"
                   onClick={() =>
                     onAskAna(
                       `Refine the predicate search for ${subjectName}. ` +
@@ -473,16 +473,29 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                   const isSel = selected.has(p.k);
                   return (
                     <tr key={p.k} className={isSel ? 'multi-selected' : ''} onClick={() => toggle(p.k)}>
-                      <td
-                        className="cb"
-                        onClick={e => {
-                          e.stopPropagation();
-                          toggle(p.k);
-                        }}
-                      >
-                        <span className="cbox" data-on={isSel}>
+                      {/* Selecting the predicates a 510(k) claims substantial
+                          equivalence against was mouse-only: this "checkbox" was
+                          a <span> with a data-on attribute, inside a <td> and a
+                          <tr> that both carried click handlers and nothing else.
+                          No input, no role, no tab stop — there was no keyboard
+                          path to the selection at all. The cell's own handler is
+                          gone with it; the control now IS the control, and still
+                          stops the row handler from toggling a second time. */}
+                      <td className="cb">
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={isSel}
+                          aria-label={`Select predicate ${p.k}`}
+                          className="cbox"
+                          data-on={isSel}
+                          onClick={e => {
+                            e.stopPropagation();
+                            toggle(p.k);
+                          }}
+                        >
                           {I.check}
-                        </span>
+                        </button>
                       </td>
                       <td>
                         <span className="k-num">{p.k}</span>
@@ -588,7 +601,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               <div className="actions">
                 <button
                   className="tb-btn"
-                  title="Export SE matrix as CSV"
+                  title="Export SE matrix as CSV" aria-label="Export SE matrix as CSV"
                   onClick={() => {
                     const headers = multi
                       ? ['Attribute', 'Subject', ...selectedList.map(p => p.k)]
@@ -679,7 +692,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
               <div className="actions">
                 <button
                   className="tb-btn"
-                  title="Run pre-flight validation"
+                  title="Run pre-flight validation" aria-label="Run pre-flight validation"
                   onClick={() =>
                     onAskAna(
                       `Run pre-flight RTA validation on the 510(k) eSTAR module for ${program?.code ?? 'this project'}. ` +
@@ -732,8 +745,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
       <OfficialEstarPanel program={program} type={officialEstarTypeFor(program)} variant={officialEstarVariantFor(program)} />
 
       {/* eSTAR filing journey — register → assess → produce-gate → track,
-          org-scoped from the session. eSTAR covers 510(k)/De Novo too. */}
-      <EstarFilingPanel />
+          scoped to THIS programme — without programId the readiness verdict
+          is computed over every device in the organisation. eSTAR covers 510(k)/De Novo too. */}
+      <EstarFilingPanel programId={program?.id ?? null} />
     </>
   );
 

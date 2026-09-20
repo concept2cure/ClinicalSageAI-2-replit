@@ -108,3 +108,75 @@ export async function downloadDataOriginsPdf(q: SelectionQuery): Promise<void> {
     await res.blob(),
   );
 }
+
+/**
+ * How much of a whole document has a recorded origin, and of what kind.
+ *
+ * Deliberately NOT the selection report over [0, length): that report's
+ * `coveragePercent` counts characters carrying ANY lineage — an author
+ * assertion exactly like a citation — which is right for a selection and false
+ * as a document-level claim that text traces to a source. These figures are
+ * characters, partitioned by kind, and the four parts sum to `attributedChars`.
+ */
+export interface DocumentAttributionSummary {
+  documentTable: string;
+  documentId: string;
+  contentLength: number;
+  attributedChars: number;
+  unattributedChars: number;
+  byKind: {
+    fromSources: number;
+    authorAsserted: number;
+    machineDrafted: number;
+    machineDraftedUnaccepted: number;
+  };
+  /** Subset of byKind.fromSources whose source changed after it was cited. */
+  staleChars: number;
+  /**
+   * The spans themselves, clipped to the current text and in document order,
+   * for painting attribution over the words (useAttributionHighlights). A
+   * projection of the rows, not the rows: no checksums, no actor ids.
+   */
+  spans: Array<{
+    charStart: number;
+    charEnd: number;
+    provenanceKind: string;
+    usage: string;
+    sourceTitle: string | null;
+    stale: boolean;
+  }>;
+  generatedAt: string;
+}
+
+/** Raised when the route refuses to answer for this document table at all. */
+export class AttributionUnsupportedError extends Error {}
+
+/**
+ * GET, not POST: only identifiers travel, so there is no document text to keep
+ * out of a URL. The content length is NOT sent — the server reads it, because
+ * whoever supplies the denominator of a coverage figure controls the figure.
+ */
+export async function fetchDocumentAttribution(q: {
+  documentTable: string;
+  documentId: string;
+}): Promise<DocumentAttributionSummary> {
+  const params = new URLSearchParams({
+    documentTable: q.documentTable,
+    documentId: q.documentId,
+  });
+  const res = await fetch(`/api/data-origins/document?${params.toString()}`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const message = serverMessage(body) || `Attribution request failed (${res.status})`;
+    // A refusal is not a failure to be retried — it is an answer the surface
+    // should render as "not available here" rather than as an error.
+    if ((body as any)?.error?.code === 'UNSUPPORTED_DOCUMENT_TABLE') {
+      throw new AttributionUnsupportedError(message);
+    }
+    throw new Error(message);
+  }
+  const body = await res.json();
+  return body.summary as DocumentAttributionSummary;
+}

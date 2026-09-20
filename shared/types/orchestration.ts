@@ -384,8 +384,30 @@ export interface Recommendation {
     actionType: AIActionType | WorkflowTemplateId;
     payload: Record<string, unknown>;
   };
-  /** Confidence in this recommendation (0-1). */
-  confidence: number;
+  /**
+   * How this recommendation was produced. Every recommendation from
+   * `server/services/orchestration/recommendation-engine.ts` is `rules_based`:
+   * a deterministic filter over project state, which either matched or did not.
+   * Mirrors the same field on the sibling engine
+   * (`server/services/intelligence/recommendation-engine.ts`).
+   */
+  sourceType: 'rules_based' | 'ai_inferred';
+  /**
+   * Confidence in this recommendation (0-1), or `null` when nothing computed
+   * one.
+   *
+   * `null` for every `rules_based` recommendation: a rule that fires on a
+   * matched condition has no score to report, and a per-rule constant printed
+   * as a percentage is a fabricated one. (WO-16C finding 124: the orchestration
+   * engine used to stamp 0.95 / 0.9 / 0.85 / 0.8 / 0.7 literals here and the
+   * AnA Command surface painted them as unlabeled confidence chips.) Only an
+   * `ai_inferred` recommendation may carry a number — the same convention the
+   * sibling engine documents as "0-100, null for rules_based".
+   *
+   * Consumers must handle `null` explicitly; `confidence || 0` renders "0%",
+   * which is a fabricated score, not an absent one.
+   */
+  confidence: number | null;
   /** Module context. */
   module?: string;
   /** When this recommendation was generated. */
@@ -423,24 +445,59 @@ export type ReadinessStatus =
   | 'ready'
   | 'submitted';
 
+/** A readiness dimension the engine could not assess, and why. */
+export interface UnassessedReadinessDimension {
+  /** Which subscore is `null`. */
+  dimension: 'compliance' | 'consistency';
+  /** Operator-facing reason, e.g. "no validations and no CMC signals on this project". */
+  reason: string;
+}
+
 /** Readiness assessment for a project or module. */
 export interface ReadinessAssessment {
   /** Scope of assessment. */
   projectId: number;
   organizationId: number;
   module?: string;
-  /** Overall readiness score 0-100. */
+  /**
+   * Overall readiness score 0-100 — the weighted average over the dimensions
+   * that were actually assessed, with the weights renormalised across them.
+   * A dimension listed in `unassessedDimensions` contributes nothing and
+   * costs nothing; it is not folded in as a neutral 50 (WO-16C finding 58)
+   * and it is not folded in as a 0 either. A project with nothing in it
+   * therefore scores 0 / `not_started`.
+   */
   overallScore: number;
   /** Status derived from score and blockers. */
   status: ReadinessStatus;
-  /** Subscores. */
+  /**
+   * Subscores.
+   *
+   * `compliance` and `consistency` are `number | null`: each has an input
+   * precondition, and when it is not met the engine measured nothing.
+   * (WO-16C finding 58: both returned a bare `50` — "Unknown = neutral" —
+   * which the pre-submission gate panel rendered as a labelled subscore
+   * indistinguishable from a measured one, and which carried 20% and 10%
+   * weight into `overallScore`.) `null` always comes with a reason in
+   * `unassessedDimensions`.
+   *
+   * Consumers must handle `null` explicitly; `compliance ?? 0` prints "0%"
+   * and `compliance || 50` reintroduces the defect. Both are fabricated
+   * scores, not absent ones.
+   */
   scores: {
     completeness: number;       // Document/artifact coverage
     quality: number;            // Validation scores
-    consistency: number;        // Cross-reference alignment
-    compliance: number;         // Regulatory compliance
+    consistency: number | null; // Cross-reference alignment; null when no check applied
+    compliance: number | null;  // Regulatory compliance; null when nothing was validated
     routing: number;            // Module placement completeness
   };
+  /**
+   * The dimensions in `scores` that are `null`, each with the reason it could
+   * not be assessed. Empty when everything was measured. Same rule as
+   * `server/lib/verification-outcome.ts`: the third state always says why.
+   */
+  unassessedDimensions: UnassessedReadinessDimension[];
   /** Per-module breakdown. */
   moduleBreakdown: ModuleReadinessItem[];
   /** Document readiness inventory. */
@@ -460,6 +517,12 @@ export interface ModuleReadinessItem {
   score: number;
   status: ReadinessStatus;
   documentCount: number;
+  /**
+   * Heuristic default, NOT a submission-type requirement: the engine's own
+   * per-module constant (3/5/4/3/4, 3 for anything else). Present so a reader
+   * can see the denominator behind `score`; do not present it to a user as the
+   * number of documents a submission requires.
+   */
   expectedDocumentCount: number;
   validatedCount: number;
   routedCount: number;

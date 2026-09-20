@@ -4,7 +4,7 @@
  */
 import { Router } from 'express';
 import { desc, eq, and } from 'drizzle-orm';
-import { cerv2SectionVersions, cerv2510kSections } from '../../shared/schema';
+import { cerv2SectionVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { db } from '../db';
 

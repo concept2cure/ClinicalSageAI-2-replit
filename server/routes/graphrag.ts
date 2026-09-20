@@ -23,6 +23,7 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
+import { aiComplete } from '../lib/unified-ai-client';
 import { clampGraphRagBounds } from './graphrag-util.js';
 import { getPool } from '../db';
 import { getSecureOrgId } from '../utils/tenantContext';
@@ -190,51 +191,97 @@ Also extract relationships between entities:
 
 Return as JSON: { "entities": [...], "relationships": [...] }`;
 
+/**
+ * How a node or edge in the knowledge graph came to exist.
+ *
+ * Persisted into knowledge_graph_nodes.metadata / _edges.metadata (both JSONB),
+ * because the two extraction paths are not interchangeable and the graph could
+ * not previously tell them apart:
+ *
+ *   model    the entity-extraction prompt, over the document text
+ *   lexicon  fallbackEntityExtraction() — a HARDCODED list of 15 drug names,
+ *            14 disease names and 16 gene symbols. It cannot find an entity
+ *            outside those 45 strings and it finds no relationships at all.
+ *
+ * Before 2026-09-10 a lexicon hit was written with confidence 0.8 while a real
+ * model extraction defaulted to 0.7 — so a keyword match on the literal string
+ * "aspirin" outranked everything the model actually read, and nothing recorded
+ * which was which. For a regulatory knowledge graph on customer data that is a
+ * fabrication risk, not a quality one: a downstream reader ranking by
+ * confidence would systematically prefer the keyword matches.
+ */
+type ExtractionMethod = 'model' | 'lexicon';
+
+/**
+ * Lexicon confidence. Deliberately LOW and deliberately below every model
+ * default: a substring match against a 45-word list is evidence that a token
+ * appeared, not that an entity was identified in context. "aspirin" in
+ * "patient denies aspirin use" scores the same as a real mention.
+ */
+const LEXICON_CONFIDENCE = 0.35;
+
 async function extractEntities(
   text: string
-): Promise<{ entities: Partial<GraphEntity>[]; relationships: Partial<GraphRelationship>[] }> {
+): Promise<{
+  entities: Partial<GraphEntity>[];
+  relationships: Partial<GraphRelationship>[];
+  method: ExtractionMethod;
+}> {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      // Fallback: basic regex-based NER
+    // Routed through the governed AI gateway (WO-6). This used to POST
+    // straight to the OpenAI chat-completions endpoint with up to 8,000
+    // characters of INGESTED REGULATORY DOCUMENT TEXT, reading its own
+    // OPENAI_API_KEY: the gateway's PII/PHI classifier never saw the body, and
+    // no audit row recorded which model answered.
+    //
+    // (The provider URL is described rather than quoted on purpose.
+    // ci:gateway-bypass greps for the literal host, deliberately — see its
+    // header on why it does not narrow the pattern — so spelling it out here
+    // would keep this file flagged as a bypass it no longer is.)
+    const raw = await aiComplete({
+      messages: [
+        { role: 'system', content: ENTITY_EXTRACTION_PROMPT },
+        { role: 'user', content: text.substring(0, 8000) }, // token budget
+      ],
+      max_tokens: 4096,
+      temperature: 0.1,
+      response_format: { type: 'json_object' },
+    });
+
+    // A non-200 from the provider used to land here as a JSON body with no
+    // `choices`, and `|| '{"entities":[],"relationships":[]}'` turned that into
+    // a successful extraction that found nothing — no error, no fallback, an
+    // empty graph write. An unusable response is a FAILED extraction.
+    let parsed: { entities?: unknown[]; relationships?: unknown[] };
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      console.error('[GraphRAG] Entity extraction returned unparseable JSON; using lexicon');
+      return fallbackEntityExtraction(text);
+    }
+    if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.entities)) {
+      console.error('[GraphRAG] Entity extraction returned no entities array; using lexicon');
       return fallbackEntityExtraction(text);
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: ENTITY_EXTRACTION_PROMPT },
-          { role: 'user', content: text.substring(0, 8000) }, // Token budget
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.1,
-      }),
-    });
-
-    const data = (await response.json()) as any;
-    const parsed = JSON.parse(
-      data.choices?.[0]?.message?.content || '{"entities":[],"relationships":[]}'
-    );
     return {
-      entities: (parsed.entities || []).map((e: any) => ({
+      method: 'model',
+      entities: (parsed.entities as any[]).map((e: any) => ({
         id: uuidv4(),
         entityType: e.type,
         name: e.name,
         aliases: e.aliases || [],
         confidence: e.confidence || 0.7,
-        metadata: {},
+        metadata: { extraction: 'model' as ExtractionMethod },
         createdAt: new Date(),
       })),
-      relationships: (parsed.relationships || []).map((r: any) => ({
+      relationships: ((parsed.relationships as any[]) || []).map((r: any) => ({
         id: uuidv4(),
         relationshipType: r.type,
         weight: r.confidence || 0.5,
         evidence: [r.evidence || ''],
         confidence: r.confidence || 0.5,
-        metadata: {},
+        metadata: { extraction: 'model' as ExtractionMethod },
         createdAt: new Date(),
       })),
     };
@@ -247,6 +294,7 @@ async function extractEntities(
 function fallbackEntityExtraction(text: string): {
   entities: Partial<GraphEntity>[];
   relationships: Partial<GraphRelationship>[];
+  method: ExtractionMethod;
 } {
   const entities: Partial<GraphEntity>[] = [];
   const drugPattern =
@@ -263,8 +311,8 @@ function fallbackEntityExtraction(text: string): {
       entityType: 'drug',
       name: match[0],
       aliases: [],
-      confidence: 0.8,
-      metadata: {},
+      confidence: LEXICON_CONFIDENCE,
+      metadata: { extraction: 'lexicon' as ExtractionMethod },
       createdAt: new Date(),
     });
   }
@@ -274,8 +322,8 @@ function fallbackEntityExtraction(text: string): {
       entityType: 'disease',
       name: match[0],
       aliases: [],
-      confidence: 0.8,
-      metadata: {},
+      confidence: LEXICON_CONFIDENCE,
+      metadata: { extraction: 'lexicon' as ExtractionMethod },
       createdAt: new Date(),
     });
   }
@@ -285,8 +333,8 @@ function fallbackEntityExtraction(text: string): {
       entityType: 'gene',
       name: match[0],
       aliases: [],
-      confidence: 0.8,
-      metadata: {},
+      confidence: LEXICON_CONFIDENCE,
+      metadata: { extraction: 'lexicon' as ExtractionMethod },
       createdAt: new Date(),
     });
   }
@@ -300,7 +348,7 @@ function fallbackEntityExtraction(text: string): {
     return true;
   });
 
-  return { entities: deduped, relationships: [] };
+  return { entities: deduped, relationships: [], method: 'lexicon' };
 }
 
 // ---------------------------------------------------------------------------
@@ -720,7 +768,7 @@ router.post('/ingest', async (req: Request, res: Response) => {
     const startTime = Date.now();
 
     // Extract entities and relationships from document
-    const { entities, relationships } = await extractEntities(body.content);
+    const { entities, relationships, method: extractionMethod } = await extractEntities(body.content);
 
     // Store entities in knowledge_graph_nodes
     let nodesCreated = 0;
@@ -787,6 +835,12 @@ router.post('/ingest', async (req: Request, res: Response) => {
         nodesCreated,
         relationshipsExtracted: relationships.length,
         edgesCreated,
+        // Reported so the caller can tell an extraction from a keyword sweep.
+        // 'lexicon' means the model path was unavailable and what landed in the
+        // graph is substring matches against a 45-word list — a very different
+        // artefact from an ingest that reports 'model', and one an ingest UI
+        // should say so about rather than showing the same success state.
+        extractionMethod,
         elapsedMs,
       },
     });
@@ -1007,5 +1061,15 @@ router.get('/health', async (req: Request, res: Response) => {
     },
   });
 });
+
+/**
+ * Test-only surface, same convention as server/services/securityHealth.ts.
+ *
+ * extractEntities decides whether what lands in the knowledge graph is a model
+ * extraction or a 45-word keyword sweep, and the difference is invisible from
+ * the route response alone. Exercising it through POST /ingest would need a
+ * live pool and a real graph write; the branch itself is pure.
+ */
+export const __testing = { extractEntities, fallbackEntityExtraction, LEXICON_CONFIDENCE };
 
 export default router;

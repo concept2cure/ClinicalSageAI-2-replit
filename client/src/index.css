@@ -385,11 +385,9 @@
   --color-gray-300: #d6d3c8;
   --color-gray-400: #b0aea5;
   --color-gray-500: #8a8880;
-  --color-bg: #faf9f5;
   --color-surface: #ffffff;
 
   /* Text */
-  --color-text-primary: #141413;
   --color-text-secondary: #4a4a46;
   --color-text-tertiary: #6b6963;
   /* --color-text-code is deliberately GONE. It was #141413, and the rule it fed
@@ -478,8 +476,13 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  color: var(--color-text-primary);
-  background: var(--color-bg);
+  /* The canonical themed tokens, not the two literal --color-* ones that used
+     to sit here (#141413 / #faf9f5, referenced nowhere else in the repo). Body
+     is above the shell in the tree, so V2App marks BODY with the dark class as
+     well — without that these still resolve light, which is exactly how the
+     old pair went unnoticed. */
+  color: var(--text-100);
+  background: var(--bg-000);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 

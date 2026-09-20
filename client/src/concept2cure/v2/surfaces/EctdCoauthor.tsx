@@ -808,7 +808,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
             loading / error / empty ternary above, not a branch of it, so they
             rendered on every pass. While the tree body directly above said
             "Loading eCTD documents…" or "Couldn't load eCTD documents.", this
-            footer printed "Documents 0 -- Approved 0 -- eCTD readiness 0%" in the
+            footer printed "Documents 0 — Approved 0 — eCTD readiness 0%" in the
             vocabulary of a measurement: a specific, computed readiness figure
             for a backbone that had not been read, and a confirmed zero
             document count when the count was unknown.

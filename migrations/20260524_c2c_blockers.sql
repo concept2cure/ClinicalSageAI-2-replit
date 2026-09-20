@@ -1,51 +1,54 @@
 -- ============================================================================
--- c2c_blockers — submission blocker registry (backfill for drizzle table)
+-- c2c_blockers — RIVAL DEFINITION REMOVED 2026-09-10 (WO-1, ADR-0006)
 -- ============================================================================
 --
--- c2cBlockers is defined in shared/schema.ts and queried by
--- server/routes/submission-ops.ts (GET /api/submission-ops/blockers, which
--- the MDX Validation surface consumes), but drizzle-kit push does not
--- reliably materialize it here, so the endpoint 500s with a failed query.
--- This idempotent migration creates the table with the column set + indexes
--- from the drizzle definition. Foreign-key constraints are intentionally
--- omitted: this is a reliability backfill (the canonical constrained version
--- is owned by the drizzle schema), and several FK targets are not guaranteed
--- to exist in every environment. The SELECT path only needs the columns.
+-- WHAT THIS FILE USED TO DO
+-- This created c2c_blockers with the 29 columns of the drizzle definition and
+-- four of its indexes, deliberately WITHOUT the foreign keys. Its header called
+-- that a "reliability backfill", on the stated premise that "drizzle-kit push
+-- does not reliably materialize it here, so the endpoint 500s with a failed
+-- query" (server/routes/submission-ops.ts, GET /api/submission-ops/blockers).
+--
+-- WHY IT IS GONE
+-- It could never fire, and if it ever had it would have made things worse.
+--
+--   1. It could never fire. On the only applier that runs this file —
+--      install-fresh's raw migrations/ overlay — `drizzle-kit push` has already
+--      run at STEP 2, before the overlay, and creates c2c_blockers from
+--      shared/schema.ts:6967. Even if push had not,
+--      migrations/0002_phase15_submission_ops.sql creates the table at overlay
+--      sort position 2 — forty-four positions ahead of this file, at #46 — with
+--      the FULL constrained shape. By the time this statement is reached the
+--      table exists twice over and CREATE TABLE IF NOT EXISTS is a no-op.
+--
+--      Measured, not inferred: on a database built from empty by
+--      scripts/db/provision-test-db.sh, c2c_blockers carries 11 foreign keys and
+--      12 indexes, and every FK is named in drizzle's convention
+--      (c2c_blockers_org_id_organizations_id_fk), not PostgreSQL's (_fkey).
+--      Raw SQL would have produced _fkey. Push created this table.
+--
+--   2. If it had fired it would have been a divergence, not a rescue. This
+--      shape has NO referential integrity: no org_id -> organizations, no
+--      project_id -> projects ON DELETE CASCADE, none of the nine others. It
+--      also declares four of the nine indexes, omitting the ones on
+--      blocker_type, status, severity, owner_user_id and due_at. A backfill that
+--      produces a DIFFERENT shape is not a safety net — it is a second source
+--      of truth that activates precisely when nobody is watching, and
+--      CREATE TABLE IF NOT EXISTS means the wrong shape can never be corrected
+--      afterwards by re-running anything.
+--
+-- WHAT PROTECTS THE ENDPOINT NOW
+-- The same two things that already did: shared/schema.ts via drizzle-kit push,
+-- and migrations/0002_phase15_submission_ops.sql at overlay position 2, which
+-- creates c2c_blockers alongside its ten siblings with the constraints intact.
+--
+-- CLAUDE.md RULE 1 is satisfied by amending in place rather than appending a
+-- DROP. This file is not in C2C_MIGRATION_FILES, so it never replays against a
+-- populated database; and no column, constraint or index is being removed from
+-- any database, only a second copy of a definition that never executed.
+--
+-- The file is kept, empty, so the reasoning is not rediscovered and the mirror
+-- is not re-added. If push really does prove unreliable for this table, the fix
+-- is to make 0002 more robust or to put a creator on C2C_MIGRATION_FILES — not
+-- a third shape.
 -- ============================================================================
-
-CREATE TABLE IF NOT EXISTS c2c_blockers (
-    id                  SERIAL PRIMARY KEY,
-    blocker_id          TEXT NOT NULL UNIQUE,
-    org_id              INTEGER NOT NULL,
-    project_id          INTEGER NOT NULL,
-    package_db_id       INTEGER,
-    section_db_id       INTEGER,
-    artifact_id         INTEGER,
-    thread_id           INTEGER,
-    task_id             INTEGER,
-    blocker_type        TEXT NOT NULL,
-    document_family     TEXT,
-    owner_function      TEXT,
-    owner_user_id       INTEGER,
-    owner_name          TEXT,
-    ownership_type      TEXT,
-    severity            TEXT NOT NULL DEFAULT 'medium',
-    title               TEXT NOT NULL,
-    description         TEXT,
-    next_action         TEXT,
-    breached_policy_id  INTEGER,
-    escalation_status   TEXT DEFAULT 'none',
-    escalated_at        TIMESTAMPTZ,
-    milestone_db_id     INTEGER,
-    status              TEXT NOT NULL DEFAULT 'open',
-    due_at              TIMESTAMPTZ,
-    resolved_at         TIMESTAMPTZ,
-    resolved_by_id      INTEGER,
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS c2c_blocker_org_project_idx ON c2c_blockers (org_id, project_id);
-CREATE INDEX IF NOT EXISTS c2c_blocker_package_idx     ON c2c_blockers (package_db_id);
-CREATE INDEX IF NOT EXISTS c2c_blocker_section_idx     ON c2c_blockers (section_db_id);
-CREATE INDEX IF NOT EXISTS c2c_blocker_artifact_idx    ON c2c_blockers (artifact_id);

@@ -881,8 +881,9 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                           fontSize: 13,
                         }}
                       >
-                        <label>Seats</label>
+                        <label htmlFor="ob-seats">Seats</label>
                         <input
+                          id="ob-seats"
                           className="ob-seats"
                           type="number"
                           min="1"
@@ -987,6 +988,8 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                   {invites.map((inv, i) => (
                     <div key={i} className="ob-invite">
                       <input
+                        id={`ob-invite-email-${i}`}
+                        aria-label={`Email for invitee ${i + 1}`}
                         className="ob-in"
                         style={{ flex: 1, margin: 0 }}
                         placeholder="name@org.com"
@@ -996,6 +999,8 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                         }
                       />
                       <select
+                        id={`ob-invite-role-${i}`}
+                        aria-label={`Role for invitee ${i + 1}`}
                         value={inv.role}
                         onChange={(e) =>
                           setInvite(i, 'role', e.target.value)

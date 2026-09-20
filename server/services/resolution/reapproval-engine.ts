@@ -11,7 +11,7 @@
  */
 
 import { db } from '../../db';
-import { eq, and, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import type {
   AffectedObject,
   ReapprovalDetermination,

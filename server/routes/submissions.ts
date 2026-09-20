@@ -194,6 +194,14 @@ const upsertLeafSchema = z.object({
     .refine(isPlaceableDocumentTable, (v) => ({ message: unplaceableDocumentTableMessage(v) }))
     .optional(),
   documentId: z.coerce.number().int().positive().optional(),
+  /* The uuid half of the polymorphic reference, for uuid-keyed stores
+     (vault.documents). Validated as a uuid HERE so a malformed value is a 400
+     naming the field, rather than reaching the ::uuid cast in the verifier and
+     surfacing as a generic refusal. Which of the two a given table requires —
+     and that a leaf carries one, not both — is enforced once, in upsertLeaf,
+     against the table vocabulary; duplicating that rule here is how the two
+     would drift. */
+  documentUuid: z.string().uuid().optional(),
   documentType: z.string().max(64).optional(),
   parentLeafId: z.coerce.number().int().positive().optional(),
 });
@@ -934,7 +942,23 @@ router.delete('/sequences/:seqId/leaves/:leafId', limiter, requireRole(AUTHOR), 
     return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence or leaf id.' } });
   }
   try {
-    await removeLeaf(leafId, seqId, ctx);
+    /* WO-16C #133. `removeLeaf` now reports what became of its §11.10(e) row,
+       and this route answered 204 No Content — which has no body to put it in, so
+       the service's outcome was arriving here and being dropped. That is the
+       vacuous conversion this work order keeps finding: a value produced,
+       returned, and discarded one layer up.
+
+       A 204 can carry headers, so it does. The status is deliberately unchanged:
+       the leaf really was soft-deleted, and turning a successful removal into a
+       200-with-body to make room for an audit field would change a contract for
+       reporting's sake. Same reason and same shape as the predicate-intelligence
+       proxy, which forwards an upstream body verbatim and therefore also reports
+       through headers. */
+    const removal = await removeLeaf(leafId, seqId, ctx);
+    res.set('X-Audit-Row-Persisted', String(removal.auditTrail.persisted));
+    if (!removal.auditTrail.persisted) {
+      res.set('X-Audit-Row-Code', removal.auditTrail.code);
+    }
     res.status(204).end();
   } catch (err) {
     fail(res, err);

@@ -19,6 +19,9 @@ import { pool } from '../../db.js';
 /** Anything that can run a query — the pool, or a client inside a transaction. */
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 import { recordGovernedAction } from '../../routes/c2c/actions.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('task-audit');
 
 export type TaskAuditCommand =
   | 'task.create'
@@ -62,8 +65,38 @@ function defaultReason(command: TaskAuditCommand): string {
 }
 
 /**
- * Write one task-mutation lineage record. Never throws — a failed or skipped
- * write degrades to a console warning so the task mutation still succeeds.
+ * What became of the task-mutation lineage record.
+ *
+ * WO-16C #133, in the second of this repository's audit-writing mechanisms. This
+ * function returned `Promise<void>`, so its fifteen callers could not report an
+ * outcome even if they wanted to — a deeper defect than a discarded one, because
+ * there was nothing to discard. Three genuinely different things happened behind
+ * that one signature:
+ *
+ *   `{ recorded: true }`                      the row committed
+ *   `{ recorded: false, 'NOT_ATTRIBUTABLE' }` orgId / userId / taskId was missing,
+ *                                             so no row was written — the policy
+ *                                             is deliberate (never write an
+ *                                             attributionless lineage row) and the
+ *                                             silence about it was not
+ *   `{ recorded: false, 'WRITE_FAILED' }`     the owned transaction rolled back
+ *
+ * `enlisted` says which transaction wrote it, because the two branches have
+ * different and deliberate failure policies: an enlisted write lets the failure
+ * PROPAGATE, since the caller's rollback is the correct outcome and "the task
+ * changed and its lineage says so" should be one fact. Only the owned branch is
+ * best-effort.
+ */
+export type TaskAuditOutcome =
+  | { recorded: true; enlisted: boolean }
+  | { recorded: false; reason: 'NOT_ATTRIBUTABLE' | 'WRITE_FAILED'; enlisted: boolean };
+
+/**
+ * Write one task-mutation lineage record and REPORT what happened to it.
+ *
+ * Never throws on the owned-transaction path — a failed write degrades so the task
+ * mutation still succeeds — but the caller is told, which it was not before. An
+ * enlisted write still throws, deliberately; see `TaskAuditOutcome`.
  */
 export async function auditTaskAction(
   params: AuditTaskActionParams,
@@ -74,14 +107,31 @@ export async function auditTaskAction(
    * "the task changed and its lineage says so" one fact rather than two.
    */
   executor?: Queryable,
-): Promise<void> {
+): Promise<TaskAuditOutcome> {
   const { orgId, userId, command, taskId, payload = {}, reason } = params;
 
-  // Lineage requires a real tenant + actor + target; skip silently otherwise so
-  // we never write an attributionless audit row.
-  if (!Number.isFinite(orgId) || orgId <= 0) return;
-  if (!userId || !Number.isFinite(userId) || userId <= 0) return;
-  if (!taskId) return;
+  /* Lineage requires a real tenant + actor + target, and an attributionless row is
+     worse than none — that policy is unchanged. What changed is that the skip is
+     no longer SILENT: it was indistinguishable from a committed row, so a task
+     mutation whose actor could not be resolved produced no lineage and no signal
+     to say so. */
+  const enlisted = executor !== undefined;
+  if (
+    !Number.isFinite(orgId) ||
+    orgId <= 0 ||
+    !userId ||
+    !Number.isFinite(userId) ||
+    userId <= 0 ||
+    !taskId
+  ) {
+    logger.warn('Task lineage SKIPPED — no attributable tenant, actor or target', {
+      orgId,
+      hasUserId: Boolean(userId),
+      taskId: taskId || null,
+      command,
+    });
+    return { recorded: false, reason: 'NOT_ATTRIBUTABLE', enlisted };
+  }
 
   const row = {
     orgId,
@@ -124,7 +174,7 @@ export async function auditTaskAction(
     // error failed the Lint job, which Test/Build/Integration Tests all declare
     // `needs: lint` on — so one dead catch block was skipping the suite.
     await recordGovernedAction(executor, row);
-    return;
+    return { recorded: true, enlisted: true };
   }
 
   const client = await pool.connect();
@@ -132,11 +182,15 @@ export async function auditTaskAction(
     await client.query('BEGIN');
     await recordGovernedAction(client, row);
     await client.query('COMMIT');
+    return { recorded: true, enlisted: false };
   } catch (err: any) {
     await client.query('ROLLBACK').catch(() => undefined);
     // Best-effort lineage — never break the task mutation on an audit failure.
-    // The ROLLBACK above is what keeps a failure from leaving half a pair.
+    // The ROLLBACK above is what keeps a failure from leaving half a pair. The
+    // store's own message stays in this log line and is NOT returned: several
+    // callers forward their result to a tenant client (ci:server-error-leaks).
     console.warn('[tasking] audit lineage write failed (non-fatal):', err?.message);
+    return { recorded: false, reason: 'WRITE_FAILED', enlisted: false };
   } finally {
     client.release();
   }

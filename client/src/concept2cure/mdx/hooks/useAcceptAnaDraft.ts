@@ -14,6 +14,8 @@
  */
 
 import { useCallback, useState } from 'react';
+import { buildAuthHeaders } from './useFetchJson';
+import { serverMessage } from '@/lib/queryClient';
 
 interface AcceptArgs {
   /** Optional refined content. When omitted the draft is accepted as-is. */
@@ -46,7 +48,10 @@ export function useAcceptAnaDraft(
           {
             method:      'POST',
             credentials: 'include',
-            headers:     { 'Content-Type': 'application/json' },
+            /* Cookies alone 401 at the global /api gate — it reads
+               `req.headers.authorization` with no cookie fallback — so this
+               accept could never succeed, on any section, for any user. */
+            headers:     { 'Content-Type': 'application/json', ...buildAuthHeaders() },
             body: JSON.stringify({
               refined_content: args.refinedContent,
               status:          args.status ?? 'ready_for_review',
@@ -54,10 +59,11 @@ export function useAcceptAnaDraft(
           },
         );
         if (!res.ok) {
-          const detail = await res.text().catch(() => '');
-          throw new Error(
-            `HTTP ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`,
-          );
+          /* The raw body was rendered to the user, so a refusal arrived as
+             `HTTP 401: {"error":{"code":"AUTH_001",…}}`. serverMessage keeps a
+             sentence the server meant for a reader and drops an enum token. */
+          const raw = await res.json().catch(() => null);
+          throw new Error(serverMessage(raw) ?? `Could not accept the draft (HTTP ${res.status}).`);
         }
         onAccepted?.();
         return true;

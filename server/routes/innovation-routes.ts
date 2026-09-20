@@ -107,37 +107,133 @@ const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => P
 // to the authenticated user instead.
 
 /**
- * Run a parameterized ownership query. The check must see all rows
- * regardless of the connection's RLS session state (tenant scoping is
- * enforced explicitly by the WHERE clauses), so RLS is bypassed only for
- * the duration of the transaction. Any failure (missing table in this
- * environment, no pool, bad cast) is treated as "no match" — deny by
- * default.
+ * Raised when an ownership check could not be COMPLETED — as distinct from
+ * completing and finding no match.
+ *
+ * ── WHY THIS TYPE EXISTS (2026-09-10) ────────────────────────────────────────
+ * `guardQuery` used to end `catch { ...; return null; }` with no binding and no
+ * logging, and its own header said so: "Any failure (missing table in this
+ * environment, no pool, bad cast) is treated as 'no match' — deny by default."
+ *
+ * Deny-by-default is the right DIRECTION for a tenant boundary. Silence is not.
+ * Four different situations were collapsed into one answer:
+ *
+ *   genuine no-match      no error, zero rows          -> deny. Correct.
+ *   caller garbage        22P02 invalid uuid           -> deny. Correct.
+ *   SCHEMA failure        42703 / 42P01 / 42501 / 3F000-> the check DID NOT RUN
+ *   INFRASTRUCTURE        08006 / 53300 / 57014 / no pool -> the check DID NOT RUN
+ *
+ * The last two are the problem. The route answers 404 "Program not found",
+ * which is deliberately indistinguishable from a cross-tenant id (see the
+ * comment above), so a control that is completely broken looks exactly like a
+ * control that is working. Nothing logged, no metric, no distinguishing return
+ * value — an operator could not tell, and neither could a test.
+ *
+ * It is not even reliably fail-CLOSED. `programBelongsToOrg` ORs three sources;
+ * with one broken the verdict is decided by whichever sources still parse, so
+ * the outcome is "whatever happens to work" rather than a decision.
+ *
+ * `server/middleware/moduleEntitlementGate.ts:189` already states the invariant
+ * this broke. It fails OPEN, which is the opposite direction — right for a
+ * billing gate, wrong for a tenant boundary — but its rule is the one that
+ * generalises: **"Never silent."**
+ *
+ * The third state was already reserved in the old signature
+ * (`Record[] | null`) and discarded at every call site. This makes it explicit.
  */
-async function guardQuery(text: string, params: unknown[]): Promise<Record<string, unknown>[] | null> {
+export class GuardUnavailableError extends Error {
+  constructor(readonly detail: string) {
+    super(`ownership check could not be completed: ${detail}`);
+    this.name = 'GuardUnavailableError';
+  }
+}
+
+/** Outcome of an ownership query: it ran and returned rows, or it did not run. */
+type GuardOutcome =
+  | { ran: true; rows: Record<string, unknown>[] }
+  | { ran: false; reason: string };
+
+/**
+ * Run a parameterized ownership query. The check must see all rows regardless
+ * of the connection's RLS session state (tenant scoping is enforced explicitly
+ * by the WHERE clauses), so RLS is bypassed only for the duration of the
+ * transaction.
+ *
+ * Returns `{ran: false}` — never a silent empty result — when the query could
+ * not be executed. Callers decide what that means; none of them may treat it as
+ * "no match".
+ */
+async function guardQuery(text: string, params: unknown[]): Promise<GuardOutcome> {
   const pool = guardPool ?? (sharedPool as Pool | null);
-  if (!pool) return null;
+  if (!pool) {
+    logger.error('ownership check skipped — no database pool available', { sql: text });
+    return { ran: false, reason: 'no database pool available' };
+  }
   let client;
   try {
     client = await pool.connect();
-  } catch {
-    return null;
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    logger.error('ownership check skipped — could not acquire a connection', { sql: text, detail });
+    return { ran: false, reason: `could not acquire a connection: ${detail}` };
   }
   try {
     await client.query('BEGIN');
     await client.query("SET LOCAL app.bypass_rls = 'true'");
     const result = await client.query(text, params);
     await client.query('COMMIT');
-    return result.rows;
-  } catch {
+    return { ran: true, rows: result.rows };
+  } catch (err) {
     try {
       await client.query('ROLLBACK');
     } catch {
       /* connection already broken — nothing to roll back */
     }
-    return null;
+    const code = (err as { code?: string })?.code;
+    const detail = err instanceof Error ? err.message : String(err);
+
+    // 22P02 is caller-supplied garbage that survived the ::text casts. The
+    // caller's own input cannot prove ownership, so a deny is the honest
+    // answer and the check genuinely did run.
+    if (code === '22P02') return { ran: true, rows: [] };
+
+    logger.error('ownership check FAILED TO RUN — not treating this as "no match"', {
+      sql: text,
+      code,
+      detail,
+    });
+    return { ran: false, reason: `${code ?? 'unknown'}: ${detail}` };
   } finally {
     client.release();
+  }
+}
+
+/** Rows from a single-source check, or a throw when it could not be run. */
+function rowsOrThrow(outcome: GuardOutcome, what: string): Record<string, unknown>[] {
+  if (!outcome.ran) throw new GuardUnavailableError(`${what}: ${outcome.reason}`);
+  return outcome.rows;
+}
+
+/**
+ * Wrap an assert*InOrg body so a check that could not run answers 503 rather
+ * than 404. A 404 here means "we looked and it is not yours"; 503 means "we
+ * could not look", and the two must not be spelled the same way.
+ */
+async function guarded(res: Response, fn: () => Promise<boolean>): Promise<boolean> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err instanceof GuardUnavailableError) {
+      logger.error('denying a request because the ownership check was unavailable', {
+        detail: err.detail,
+      });
+      res.status(503).json({
+        success: false,
+        error: 'Ownership could not be verified right now. This is not a permission decision.',
+      });
+      return false;
+    }
+    throw err;
   }
 }
 
@@ -157,9 +253,43 @@ const PROGRAM_ORG_SOURCES: readonly string[] = [
  * before anything is read for it.
  */
 export async function programBelongsToOrg(programId: string, orgId: number): Promise<boolean> {
+  const failures: string[] = [];
+  let anySourceRan = false;
+
   for (const source of PROGRAM_ORG_SOURCES) {
-    const rows = await guardQuery(source, [programId, String(orgId)]);
-    if (rows && rows.length > 0) return true;
+    const outcome = await guardQuery(source, [programId, String(orgId)]);
+    if (!outcome.ran) {
+      failures.push(outcome.reason);
+      continue;
+    }
+    anySourceRan = true;
+    if (outcome.rows.length > 0) return true;
+  }
+
+  // A `false` from here must mean "at least one registry was consulted and
+  // none of them claims this program for this org". If EVERY source failed to
+  // run, we know nothing, and returning false would be inventing the verdict.
+  //
+  // This is not hypothetical for source 2: on a database where install-fresh's
+  // gcc step was skipped, core.programs exists without org_id and that query
+  // raises 42703 (WO-15 finding 1). Before this change it was swallowed, and
+  // the route answered "Program not found".
+  if (!anySourceRan) {
+    throw new GuardUnavailableError(
+      `all ${PROGRAM_ORG_SOURCES.length} program->org sources failed: ${failures.join(' | ')}`,
+    );
+  }
+
+  // Some sources may legitimately be absent in a given environment — the three
+  // registries are not all provisioned everywhere — so a partial failure is
+  // still a usable verdict. It is worth knowing about, though: a source that
+  // is permanently broken narrows the check silently.
+  if (failures.length > 0) {
+    logger.warn('program->org check ran on a reduced source set', {
+      ran: PROGRAM_ORG_SOURCES.length - failures.length,
+      total: PROGRAM_ORG_SOURCES.length,
+      failures,
+    });
   }
   return false;
 }
@@ -173,11 +303,13 @@ async function assertProgramInOrg(res: Response, programId: unknown, orgId: numb
     res.status(400).json({ success: false, error: 'programId is required' });
     return false;
   }
-  if (!(await programBelongsToOrg(programId, orgId))) {
-    res.status(404).json({ success: false, error: 'Program not found' });
-    return false;
-  }
-  return true;
+  return guarded(res, async () => {
+    if (!(await programBelongsToOrg(programId, orgId))) {
+      res.status(404).json({ success: false, error: 'Program not found' });
+      return false;
+    }
+    return true;
+  });
 }
 
 // Child-id -> program_id resolvers (innovation schema only; parameterized).
@@ -226,13 +358,15 @@ async function assertChildInOrg(
     res.status(400).json({ success: false, error: `${label} id is required` });
     return false;
   }
-  const rows = await guardQuery(resolveSql, [id]);
-  const programId = rows?.[0]?.program_id;
-  if (programId == null || !(await programBelongsToOrg(String(programId), orgId))) {
-    res.status(404).json({ success: false, error: `${label} not found` });
-    return false;
-  }
-  return true;
+  return guarded(res, async () => {
+    const rows = rowsOrThrow(await guardQuery(resolveSql, [id]), `${label} -> program resolution`);
+    const programId = rows[0]?.program_id;
+    if (programId == null || !(await programBelongsToOrg(String(programId), orgId))) {
+      res.status(404).json({ success: false, error: `${label} not found` });
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -244,16 +378,21 @@ async function assertTemplateInOrg(res: Response, templateId: unknown, orgId: nu
     res.status(400).json({ success: false, error: 'templateId is required' });
     return false;
   }
-  const rows = await guardQuery(
-    `SELECT 1 FROM innovation.learning_templates
+  return guarded(res, async () => {
+    const rows = rowsOrThrow(
+      await guardQuery(
+        `SELECT 1 FROM innovation.learning_templates
      WHERE id::text = $1 AND (org_id IS NULL OR org_id::text = $2) LIMIT 1`,
-    [templateId, String(orgId)]
-  );
-  if (!rows || rows.length === 0) {
-    res.status(404).json({ success: false, error: 'Template not found' });
-    return false;
-  }
-  return true;
+        [templateId, String(orgId)]
+  ),
+      'template ownership',
+    );
+    if (rows.length === 0) {
+      res.status(404).json({ success: false, error: 'Template not found' });
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -264,16 +403,21 @@ async function assertRuleInOrg(res: Response, ruleId: unknown, orgId: number): P
     res.status(400).json({ success: false, error: 'ruleId is required' });
     return false;
   }
-  const rows = await guardQuery(
-    `SELECT 1 FROM innovation.guardrail_rules
+  return guarded(res, async () => {
+    const rows = rowsOrThrow(
+      await guardQuery(
+        `SELECT 1 FROM innovation.guardrail_rules
      WHERE id::text = $1 AND (org_id IS NULL OR org_id::text = $2) LIMIT 1`,
-    [ruleId, String(orgId)]
-  );
-  if (!rows || rows.length === 0) {
-    res.status(404).json({ success: false, error: 'Rule not found' });
-    return false;
-  }
-  return true;
+        [ruleId, String(orgId)]
+  ),
+      'rule ownership',
+    );
+    if (rows.length === 0) {
+      res.status(404).json({ success: false, error: 'Rule not found' });
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -284,16 +428,21 @@ async function assertProfileInOrg(res: Response, profileId: unknown, orgId: numb
     res.status(400).json({ success: false, error: 'profileId is required' });
     return false;
   }
-  const rows = await guardQuery(
-    `SELECT 1 FROM innovation.guardrail_profiles
+  return guarded(res, async () => {
+    const rows = rowsOrThrow(
+      await guardQuery(
+        `SELECT 1 FROM innovation.guardrail_profiles
      WHERE id::text = $1 AND (org_id IS NULL OR org_id::text = $2) LIMIT 1`,
-    [profileId, String(orgId)]
-  );
-  if (!rows || rows.length === 0) {
-    res.status(404).json({ success: false, error: 'Profile not found' });
-    return false;
-  }
-  return true;
+        [profileId, String(orgId)]
+  ),
+      'profile ownership',
+    );
+    if (rows.length === 0) {
+      res.status(404).json({ success: false, error: 'Profile not found' });
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -754,11 +903,23 @@ router.post('/workspace/analytics/action', asyncHandler(async (req: Request, res
   if (typeof sessionId !== 'string' || sessionId.trim() === '') {
     return res.status(400).json({ success: false, error: 'sessionId is required' });
   }
-  const sessionRows = await guardQuery(
+  const sessionOutcome = await guardQuery(
     'SELECT user_id FROM innovation.workspace_analytics WHERE session_id::text = $1 LIMIT 1',
     [sessionId]
   );
-  const sessionUserId = sessionRows?.[0]?.user_id;
+  // Same rule as the org guards: a lookup that could not run is not a
+  // not-found. This one binds to the authenticated user rather than an org,
+  // but answering 404 for an unavailable check would be the same lie.
+  if (!sessionOutcome.ran) {
+    logger.error('denying a session write because the ownership lookup was unavailable', {
+      detail: sessionOutcome.reason,
+    });
+    return res.status(503).json({
+      success: false,
+      error: 'Session ownership could not be verified right now. This is not a permission decision.',
+    });
+  }
+  const sessionUserId = sessionOutcome.rows[0]?.user_id;
   const self = authedUserId(req);
   if (sessionUserId == null || !self || String(sessionUserId) !== self) {
     return res.status(404).json({ success: false, error: 'Session not found' });

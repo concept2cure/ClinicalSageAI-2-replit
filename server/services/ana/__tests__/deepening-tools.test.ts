@@ -118,12 +118,32 @@ describe('get_submission_readiness_twin', () => {
     const out = JSON.parse(
       await call({ program_id: '00000000-0000-4000-8000-000000000000' }, { organizationId: 101 }),
     );
-    // Either the tenant proof fails (no such program here) or the environment
-    // has no innovation schema at all. Neither may yield a readiness number.
-    expect(['not_found', 'error']).toContain(out.status ?? 'error');
+    // Three outcomes are acceptable, and the third is the point:
+    //   not_found              — the tenant proof RAN and this org does not own it
+    //   ownership_unverifiable — the proof COULD NOT RUN (no innovation schema
+    //                            in this environment), added when the ownership
+    //                            guard stopped reporting verdicts it had not
+    //                            computed. It is not a denial and not an
+    //                            allowance; see GuardUnavailableError in
+    //                            server/routes/innovation-routes.ts.
+    //   error                  — anything else went wrong
+    // What unites them is the assertion below: none may yield a readiness
+    // number. This list previously held only the first and last, so the honest
+    // third state read as a failure here.
+    expect(['not_found', 'ownership_unverifiable', 'error']).toContain(out.status ?? 'error');
     expect(out.dashboard).toBeUndefined();
     if (out.status === 'not_found') {
       expect(out.message).toMatch(/Do not report a readiness score/);
+    }
+    if (out.status === 'ownership_unverifiable') {
+      // It must say the CHECK could not run, and must steer the model off both
+      // wrong conclusions — not "no score" (an allowance) and not "no such
+      // program" (a denial). Note the message legitimately contains the phrase
+      // "does not exist" while instructing the model NOT to say it, so this
+      // asserts on the instruction rather than on the absence of the words.
+      expect(out.message).toMatch(/could not be run/i);
+      expect(out.message).toMatch(/do NOT report a readiness score/i);
+      expect(out.message).toMatch(/do NOT tell the user the program does not exist/i);
     }
   });
 });

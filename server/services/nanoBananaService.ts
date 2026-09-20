@@ -21,6 +21,7 @@ import {
   type Part,
 } from '@google/generative-ai';
 import { generatePptxBuffer } from './pptxGenerator';
+import { aiComplete } from '../lib/unified-ai-client';
 
 // ─── Singleton ────────────────────────────────────────────────────────────────
 
@@ -174,16 +175,26 @@ export async function generateImage(
 export async function generatePresentation(
   req: NanoBananaPresentationRequest
 ): Promise<NanoBananaPresentationResult> {
-  const client = getClient();
   const slideCount = req.slideCount || 5;
   const audience = req.audience || 'scientific';
 
-  // Step 1: Use Gemini to generate slide content as markdown
-  const textModel = client.getGenerativeModel({
-    model: 'gemini-2.0-flash',
-    safetySettings: SAFETY_SETTINGS,
-  });
-
+  // Step 1: generate the slide content as markdown.
+  //
+  // ── THROUGH THE GATEWAY (WO-6, 2026-09-10) ────────────────────────────────
+  // This used to call gemini-2.0-flash directly through the module-level
+  // GoogleGenerativeAI client, with SAFETY_SETTINGS relaxing all four of
+  // Google's harm categories to BLOCK_ONLY_HIGH and no compensating policy
+  // pass. It is plain text inference, so it goes through aiComplete: policy
+  // evaluation, the fail-closed PII/PHI screen, provider placement and the
+  // ai.gateway_audit_log row. Only the IMAGE paths still use the raw client,
+  // because the gateway has no image surface.
+  //
+  // ── AND THE PROMPT NO LONGER ASKS FOR INVENTED NUMBERS ────────────────────
+  // The old instruction ended "Include data points, percentages, and specific
+  // metrics where relevant." The model has no data here — the only input is a
+  // topic string — so that sentence asked it to make up percentages and put
+  // them on a slide for a life-sciences audience, in a deck the user then
+  // downloads as a .pptx. Replaced with the opposite instruction.
   const contentPrompt = `You are a presentation expert for the life sciences / pharma / regulatory industry.
 Create a ${slideCount}-slide presentation about: "${req.topic}"
 Target audience: ${audience}
@@ -197,10 +208,25 @@ Format each slide using this markdown convention:
 - Separate slides with ---
 
 Keep text concise and presentation-ready. Use industry-appropriate terminology.
-Include data points, percentages, and specific metrics where relevant.`;
 
-  const contentResult = await textModel.generateContent(contentPrompt);
-  const markdownContent = contentResult.response.text();
+Do NOT invent data. You have been given a topic and nothing else, so you have no
+trial results, enrolment figures, market shares, approval dates or percentages to
+report. Do not write any. Where a slide would carry a figure, describe what figure
+belongs there and leave it to be filled in — for example "[insert enrolment to
+date]" — rather than supplying a plausible number. A deck that names its gaps is
+useful; one with invented metrics is worse than no deck.`;
+
+  const markdownContent = await aiComplete({
+    messages: [{ role: 'user', content: contentPrompt }],
+    max_tokens: 4096,
+  });
+
+  if (!markdownContent || markdownContent.trim().length === 0) {
+    throw new Error(
+      'AI gateway returned no slide content for the presentation. Building an empty deck ' +
+        'would hand the user a file that looks generated and is not.'
+    );
+  }
 
   // Step 2: Generate a cover image if requested
   let coverImage: { base64: string; mimeType: string } | undefined;
@@ -247,7 +273,8 @@ export async function chatWithNanoBanana(
   pptxBuffer?: Buffer;
   pptxFilename?: string;
 }> {
-  const client = getClient();
+  // No raw client here any more: the text branch below goes through the
+  // gateway, and the image/presentation branches obtain their own.
 
   // Detect intent
   const lowerMsg = message.toLowerCase();
@@ -297,20 +324,25 @@ export async function chatWithNanoBanana(
     images.push(...result.images);
     text = `Here's the image I generated (${result.model}, ${result.generationTimeMs}ms). Let me know if you'd like me to adjust anything.`;
   } else {
-    // Text-only response using Gemini
-    const textModel = client.getGenerativeModel({
-      model: 'gemini-2.0-flash',
-      safetySettings: SAFETY_SETTINGS,
-    });
-
+    // Text-only response. Through the gateway (WO-6, 2026-09-10) — this used to
+    // open a gemini-2.0-flash chat session on the raw GoogleGenerativeAI client
+    // with all four harm categories relaxed to BLOCK_ONLY_HIGH, carrying the
+    // caller's whole conversation history to the provider with no audit row and
+    // no PII/PHI screen. It is plain multi-turn text, which aiComplete handles
+    // directly; only the image branches above still need the raw client.
     const history = conversationHistory.map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content,
     }));
 
-    const chat = textModel.startChat({ history });
-    const result = await chat.sendMessage(message);
-    text = result.response.text();
+    text = await aiComplete({
+      messages: [...history, { role: 'user', content: message }],
+      max_tokens: 2048,
+    });
+
+    if (!text || text.trim().length === 0) {
+      throw new Error('AI gateway returned an empty response for the nano-banana chat turn.');
+    }
   }
 
   return { text, images, pptxBuffer, pptxFilename };

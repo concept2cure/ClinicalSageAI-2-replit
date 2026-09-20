@@ -7,6 +7,7 @@
 **Version:** 1.0.0-DRAFT  
 **Classification:** GxP Critical  
 **Status:** ⚠️ DRAFT - REQUIRES VALIDATION REVIEW BEFORE PRODUCTION USE
+**Superseded:** 2026-09-10 — the subsystem this protocol was drafted to qualify was retired before qualification (WO-14, Route B, product decision). Its router was unmounted, `cortexPrimeService.ts` archived, and migrations 073 and 079 moved to `db/migrations/_legacy/`. This document never left DRAFT and was never approved, so nothing is retracted; it is kept as the record of an intention. Do not execute it.
 
 ---
 

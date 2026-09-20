@@ -87,6 +87,61 @@ const EXIT_NOT_PROVISIONED = 3;
 const BASE_SCHEMA_SENTINELS = ['organizations', 'users', 'c2c_documents', 'regulatory_programs'];
 
 /**
+ * Objects that exist ONLY if install-fresh's governed-content step completed.
+ *
+ * ── WHY THIS CHECK EXISTS (2026-09-10, WO-15 finding 1) ──────────────────────
+ * install-fresh applies the `db/migrations/*_gcc_*.sql` tree — 43 files, ~167
+ * tables — at STEP 6, by shelling out to psql. Step 6 is the ONLY non-fatal
+ * step in that script: if `psql --version` fails it records the shortfall and
+ * RETURNS. install-fresh is honest about it and exits 1 with
+ * "❌ Install INCOMPLETE — not reporting success."
+ *
+ * But steps 2-3 have already created every one of BASE_SCHEMA_SENTINELS. So
+ * `deploy-migrate` ran next, preflight passed, all 262 migrations applied, and
+ * this script printed "✅ Schema migration complete — safe to roll services."
+ * on a database install-fresh had just refused to bless. Reproduced end to end
+ * by hiding psql behind a PATH shim.
+ *
+ * What that database actually holds, measured:
+ *   - `core.programs` created by 044b (C2C index 11) with 7 columns instead of
+ *     10, permanently: CREATE TABLE IF NOT EXISTS can never repair it.
+ *   - `core.programs` with **RLS DISABLED and zero policies**, because
+ *     20260801_uuid_tenant_isolation_nonpublic.sql SKIPS a declared table whose
+ *     tenant column is missing — one uncounted NOTICE in a 500-line log.
+ *     A cross-tenant readable table.
+ *   - `core.get_program_org_id`, the resolver every `vault.documents` RLS
+ *     policy authorizes through, raising 42703 at first execution. It applies
+ *     green because 20260828_program_org_resolution_canonical.sql:41 chose
+ *     plpgsql precisely so relations resolve at call time, not CREATE time.
+ *
+ * A per-table convergence migration was designed for this and REFUSED on
+ * review: with `org_id` present but unbackfilled (069's backfill is gcc-only
+ * too), the isolation sweep attaches a policy whose third arm is
+ * `OR org_id IS NULL` — it would have admitted 100% of rows while the deploy
+ * log read as fixed. And it would have addressed 1 table of ~167.
+ *
+ * So the check belongs HERE, at the boundary where the lie is told. Three
+ * sentinels, each with exactly one creator and all of them gcc-only (both
+ * files are `indexOf === -1` in C2C_MIGRATION_FILES), covering schema, table
+ * and column granularity:
+ *
+ *   identity.organizations    051_gcc_multi_tenant_identity.sql   (schema+table)
+ *   core.program_ownerships   069_gcc_multitenant_rls_expansion.sql (table)
+ *   core.programs.org_id      069_gcc_multitenant_rls_expansion.sql (column)
+ *
+ * Queried through pg_class/pg_namespace/pg_attribute rather than
+ * information_schema, which is privilege-filtered and would fail OPEN — the
+ * review demonstrated the same role reading `false` from information_schema and
+ * `true` from pg_class for the same table. `to_regclass` is not a substitute
+ * either: it throws when schema permission is denied.
+ */
+const GOVERNED_CONTENT_SENTINELS = [
+  { kind: 'table', schema: 'identity', name: 'organizations' },
+  { kind: 'table', schema: 'core', name: 'program_ownerships' },
+  { kind: 'column', schema: 'core', name: 'programs', column: 'org_id' },
+];
+
+/**
  * Advisory-lock key. Two ECS deploy tasks racing (a redeploy issued while the
  * previous one is still applying) would interleave DDL. `pg_advisory_lock` is
  * session-scoped and released when this process's connection closes, including
@@ -183,6 +238,61 @@ async function verifyReadinessContract(client) {
   if (unpolicied.length) {
     throw new Error(
       `authoring tables without tenant_isolation_policy — cross-tenant readable under RLS_ENFORCE=on: ${unpolicied.join(', ')}`,
+    );
+  }
+
+  await verifyGovernedContentApplied(client);
+}
+
+/**
+ * The governed-content tree ran. See GOVERNED_CONTENT_SENTINELS for why this is
+ * checked at deploy time rather than trusted from the installer.
+ */
+async function verifyGovernedContentApplied(client) {
+  const absent = [];
+  for (const s of GOVERNED_CONTENT_SENTINELS) {
+    const q =
+      s.kind === 'table'
+        ? {
+            text: `SELECT 1 FROM pg_class c
+                     JOIN pg_namespace n ON n.oid = c.relnamespace
+                    WHERE n.nspname = $1 AND c.relname = $2 AND c.relkind IN ('r','p')`,
+            values: [s.schema, s.name],
+          }
+        : {
+            text: `SELECT 1 FROM pg_attribute a
+                     JOIN pg_class c ON c.oid = a.attrelid
+                     JOIN pg_namespace n ON n.oid = c.relnamespace
+                    WHERE n.nspname = $1 AND c.relname = $2
+                      AND a.attname = $3 AND a.attnum > 0 AND NOT a.attisdropped`,
+            values: [s.schema, s.name, s.column],
+          };
+    const res = await client.query(q.text, q.values);
+    if (res.rowCount === 0) {
+      absent.push(s.kind === 'table' ? `${s.schema}.${s.name}` : `${s.schema}.${s.name}.${s.column}`);
+    }
+  }
+
+  log(
+    `  governed-content tree: ${GOVERNED_CONTENT_SENTINELS.length - absent.length}/${GOVERNED_CONTENT_SENTINELS.length} sentinel(s) present`,
+  );
+
+  if (absent.length) {
+    throw new Error(
+      `the governed-content tree (db/migrations/*_gcc_*.sql) did not run on this database — ` +
+        `missing: ${absent.join(', ')}.\n` +
+        `  install-fresh applies those 43 files at step 6 by shelling out to psql, and step 6 is its\n` +
+        `  ONLY non-fatal step: with psql absent it records the shortfall and returns, exiting 1 with\n` +
+        `  "Install INCOMPLETE". Every base-schema sentinel this script preflights on is created\n` +
+        `  earlier, so without this check the deploy would report success on that database.\n` +
+        `  What it would be reporting success about: core.programs stuck at 7 columns forever\n` +
+        `  (CREATE TABLE IF NOT EXISTS cannot repair it), with RLS DISABLED and no policy because\n` +
+        `  the isolation sweep skips a declared table whose tenant column is absent, and\n` +
+        `  core.get_program_org_id — the resolver every vault.documents RLS policy authorizes\n` +
+        `  through — raising 42703 at first call.\n` +
+        `  FIX: install the postgresql client and re-run install-fresh, or apply the tree by hand:\n` +
+        `    for f in $(ls db/migrations/*_gcc_*.sql | sort); do \\\n` +
+        `      psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done`,
     );
   }
 }

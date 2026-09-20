@@ -3,7 +3,7 @@ import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('kernel-beta-readiness');
 
-export interface ReadinessCheck {
+export interface KernelBetaReadinessCheck {
   name: string;
   passed: boolean;
   detail: string;
@@ -12,7 +12,7 @@ export interface ReadinessCheck {
 export interface KernelBetaReadiness {
   score: number;
   status: 'red' | 'yellow' | 'green';
-  checks: ReadinessCheck[];
+  checks: KernelBetaReadinessCheck[];
   generatedAt: string;
 }
 
@@ -23,7 +23,7 @@ export function statusFromScore(score: number): 'red' | 'yellow' | 'green' {
 }
 
 export async function getKernelBetaReadiness(): Promise<KernelBetaReadiness> {
-  const checks: ReadinessCheck[] = [];
+  const checks: KernelBetaReadinessCheck[] = [];
   const requiredTables = [
     'ai_kernel_decision_records',
     'ai_kernel_policy_outcomes',

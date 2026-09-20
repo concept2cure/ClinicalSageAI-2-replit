@@ -33,13 +33,8 @@ import {
   type OriginRow,
   type SelectionQuery,
 } from './dataOriginsApi';
+import { INK, MUTED, RULE, OK, WARN, PANEL_BG } from './palette';
 
-const INK = 'var(--text-100)';
-const MUTED = 'var(--text-400)';
-const RULE = 'var(--border)';
-const OK = '#047857';
-const WARN = '#b45309';
-const PANEL_BG = 'var(--bg-000)';
 
 const USAGE_LABEL: Record<string, string> = {
   quoted: 'Quoted verbatim',

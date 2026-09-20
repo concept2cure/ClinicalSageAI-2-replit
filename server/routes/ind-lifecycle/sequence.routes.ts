@@ -84,6 +84,7 @@ async function computeGateForSequence(seqId: number, b: any, ctx: Ctx) {
     sequenceValidation,
     manifest,
     criticalActions: actionItems.criticalCount,
+    clinicalHoldEvaluated: clock !== null,
     sequenceStatus: sequence.status,
     unauthorizedCrossReferences,
   });

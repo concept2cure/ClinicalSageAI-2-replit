@@ -48,9 +48,22 @@ import type {
   PathwayTabsBundle,
 } from '../types';
 
-/* The audit endpoint emits free-form `action` strings; map the common ones onto
-   the kit's closed AuditKind enum. Unknown actions fall through to `access` (the
-   pane still labels them via AUDIT_KIND_META's neutral default). */
+/* The audit endpoint emits the action string the writer recorded, verbatim
+   (mdx-audit.ts reads `audit_logs.action` straight through). This table maps the
+   handful of bare verbs the kit's closed AuditKind enum has a member for.
+
+   Everything else is `'unclassified'` — NOT `'access'`, which is what this
+   fell through to until WO-16C finding 107. The server's canonical vocabulary
+   (auditService ACTIONS: data_modify, signature_apply, generate_document,
+   user_login …) and its per-route strings (esignature.sign, section.delete,
+   mdx.qms.change.delete, c2c.project.create …) share NOT ONE key with this
+   table, so in practice every real row was chipped "Access" — a read — inside
+   the tab headed "21 CFR Part 11", with the action nowhere on the screen. A
+   deletion and an applied signature looked like someone opening a page.
+
+   `'unclassified'` is the third state, and `action` carries the record: the
+   pane shows the recorded string verbatim (data/pathwayTabs.ts auditChipMeta)
+   rather than a category this client made up for it. */
 const ACTION_TO_KIND: Record<string, AuditKind> = {
   edit: 'section.edit', update: 'section.edit', create: 'section.edit', write: 'section.edit',
   lock: 'section.lock', unlock: 'section.unlock',
@@ -63,12 +76,14 @@ const ACTION_TO_KIND: Record<string, AuditKind> = {
 
 function adaptAudit(events: SvcAuditEvent[]): AuditEvent[] {
   return events.map((e) => {
-    const kind = ACTION_TO_KIND[(e.action || '').toLowerCase()] ?? 'access';
-    const signed = kind === 'sign';
+    const action = (e.action || '').trim();
+    const kind = ACTION_TO_KIND[action.toLowerCase()] ?? 'unclassified';
     return {
       id: e.id,
       when: e.when,
       kind,
+      /* The record itself, unaltered. `kind` is this client's reading of it. */
+      action: action || undefined,
       actor: e.actorName || e.actor || 'system',
       role: e.role || undefined,
       target: e.target || e.resource || '',
@@ -80,8 +95,15 @@ function adaptAudit(events: SvcAuditEvent[]): AuditEvent[] {
          it. The server reads both from the real columns; see mdx-audit.ts. */
       chain: e.chain as AuditEvent['chain'],
       prevAvailable: e.prevAvailable,
-      sig: signed ? e.sha : undefined,
-      signed,
+      /* NO `sig` / `signed`. Both used to be derived from the guessed kind:
+         `signed = kind === 'sign'`, `sig = e.sha`. `e.sha` is the row's
+         `sha256_chain` link — tamper evidence, not a signature — and the detail
+         pane renders `sig` under "Signature … · WP-21 CFR Part 11". An audit row
+         does not know whether anyone signed anything; that claim belongs to a
+         real signature record (server/services/part11/signature-persistence.ts)
+         and reaches this pane through no field this feed populates. It is
+         carried by the chain fields above, under their own heading, and by
+         nothing else. */
     };
   });
 }

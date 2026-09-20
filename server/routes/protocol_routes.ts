@@ -371,32 +371,87 @@ router.post('/analyze-file', upload.single('file'), async (req, res) => {
     const filePath = req.file.path;
     const fileExtension = path.extname(req.file.originalname).toLowerCase();
 
-    // Extract text based on file type
-    let text = '';
-
-    if (fileExtension === '.txt') {
-      text = fs.readFileSync(filePath, 'utf8');
-    } else if (fileExtension === '.pdf' || fileExtension === '.docx' || fileExtension === '.doc') {
-      // For PDF/DOCX/DOC files, we'd use appropriate extraction libraries
-      // This is a simplified placeholder
-      text = `Extracted text from ${req.file.originalname}. In a real implementation, 
-              we would use proper libraries for extraction from ${fileExtension} files.`;
-    } else {
+    if (!['.txt', '.pdf', '.docx', '.doc'].includes(fileExtension)) {
+      try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
       return res.status(400).json({
         success: false,
         message: 'Unsupported file type. Please upload a .txt, .pdf, .doc, or .docx file',
       });
     }
 
+    /* ── 2026-09-10: a PDF or DOCX upload used to be REPLACED, not read ───────
+       This branch read, in full:
+
+         } else if (ext === '.pdf' || ext === '.docx' || ext === '.doc') {
+           // For PDF/DOCX/DOC files, we'd use appropriate extraction libraries
+           // This is a simplified placeholder
+           text = `Extracted text from ${name}. In a real implementation,
+                   we would use proper libraries for extraction from ${ext} files.`;
+         }
+
+       ...and that sentence was then handed to analyzeProtocol(), which returns
+       a complete, plausible protocol for any non-empty string. So a customer
+       uploaded their real Phase 2 protocol and received an analysis — sample
+       size, endpoints, arms, design, an FDA/EMA compliance verdict — of a
+       placeholder about placeholders, with nothing in the response marking it.
+       The .txt branch read the file properly, so the defect was invisible to
+       anyone testing with a text file.
+
+       The extraction is real now, and it uses THIS FILE'S OWN helpers —
+       extractTextFromPdf / extractTextFromDocx at the bottom of the module,
+       pdf-parse and mammoth respectively. Those already exist and are already
+       used by POST /upload-and-optimize and POST /full-analysis in exactly this
+       shape, including the 422 on failure. This route was simply missed when
+       they were introduced: their own header note says "Previously this
+       returned a hardcoded constant string, so every route that uploaded a PDF
+       was analysing fake text regardless of the file." */
+    let text = '';
+    try {
+      if (fileExtension === '.txt') {
+        text = fs.readFileSync(filePath, 'utf8');
+      } else if (fileExtension === '.pdf') {
+        text = await extractTextFromPdf(fs.readFileSync(filePath));
+      } else {
+        text = await extractTextFromDocx(fs.readFileSync(filePath));
+      }
+    } catch (extractError) {
+      log.error('Protocol file extraction error:', extractError);
+      try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
+      return res.status(422).json({
+        success: false,
+        message: `Could not extract text from the ${fileExtension} file`,
+      });
+    }
+
+    try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
+
+    // A parse that SUCCEEDS but yields nothing — a scanned PDF with no text
+    // layer is the common case — must not fall through either. analyzeProtocol
+    // throws on an empty string, but relying on that would make the error
+    // message about the analyser rather than about the file.
+    if (!text.trim()) {
+      return res.status(422).json({
+        success: false,
+        error: {
+          code: 'NO_TEXT_EXTRACTED',
+          message:
+            `No text could be extracted from ${req.file.originalname}. The file may be a scanned ` +
+            `image with no text layer, or an unsupported legacy format. No analysis was ` +
+            `performed — this is not a finding about the protocol.`,
+        },
+      });
+    }
+
     // Analyze the protocol text
     const protocol = await protocolAnalyzerService.analyzeProtocol(text);
-
-    // Clean up uploaded file
-    fs.unlinkSync(filePath);
 
     return res.json({
       success: true,
       protocol,
+      extraction: {
+        filename: req.file.originalname,
+        charactersExtracted: text.length,
+      },
     });
   } catch (error: any) {
     log.error('Error processing protocol file:', error);
@@ -785,65 +840,38 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
 });
 
 // Deep optimize protocol
-router.post('/optimize-deep', express.json(), async (req, res) => {
-  try {
-    const { protocol, prediction, benchmarks } = req.body;
-
-    if (!protocol || typeof protocol !== 'object') {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid protocol data is required',
-      });
-    }
-
-    // Generate optimization recommendations
-    const recommendations = [
-      {
-        field: 'sample_size',
-        current: protocol.sample_size || 100,
-        suggested: (protocol.sample_size || 100) * 1.15,
-        rationale:
-          'Increasing sample size to improve statistical power based on similar successful trials.',
-        impact: 'high',
-      },
-      {
-        field: 'duration_weeks',
-        current: protocol.duration_weeks || 24,
-        suggested: (protocol.duration_weeks || 24) + 4,
-        rationale: 'Extended study duration allows for better assessment of sustained effects.',
-        impact: 'medium',
-      },
-      {
-        field: 'dropout_rate',
-        current: protocol.dropout_rate || 0.2,
-        suggested: Math.max(0.1, (protocol.dropout_rate || 0.2) - 0.05),
-        rationale: 'Implementing improved retention strategies based on benchmark data.',
-        impact: 'high',
-      },
-    ];
-
-    // Create optimized protocol
-    const optimizedProtocol = {
-      ...protocol,
-      sample_size:
-        recommendations.find(r => r.field === 'sample_size')?.suggested || protocol.sample_size,
-      duration_weeks:
-        recommendations.find(r => r.field === 'duration_weeks')?.suggested ||
-        protocol.duration_weeks,
-      dropout_rate:
-        recommendations.find(r => r.field === 'dropout_rate')?.suggested || protocol.dropout_rate,
-      is_optimized: true,
-      optimization_date: new Date().toISOString(),
-    };
-
-    return res.json({
-      optimizedProtocol,
-      recommendations,
-    });
-  } catch (error: any) {
-    log.error('Error in deep optimization:', error);
-    return serverError(res, log, 'saving optimize deep', error);
-  }
+router.post('/optimize-deep', express.json(), async (_req, res) => {
+  // DISABLED (501) on 2026-09-10, for the same reason POST /generate below was.
+  //
+  // This route produced three "optimization recommendations" by arithmetic on
+  // whatever it was handed, or on a default when it was handed nothing:
+  //   sample_size    (protocol.sample_size  || 100) * 1.15
+  //   duration_weeks (protocol.duration_weeks || 24) + 4
+  //   dropout_rate   max(0.1, (protocol.dropout_rate || 0.2) - 0.05)
+  // Each carried a rationale asserting evidence that was never consulted —
+  // "based on similar successful trials", "based on benchmark data" — and the
+  // handler destructured `prediction` and `benchmarks` from the request body
+  // and then referenced neither. It returned the result as `optimizedProtocol`
+  // with `is_optimized: true`.
+  //
+  // So a caller supplying no sample size received a recommendation to enrol 115
+  // participants, justified by trials nobody looked at. Multiplying an invented
+  // number by 1.15 is not an optimisation.
+  //
+  // No client calls this route. POST /api/protocol/optimize is the real path:
+  // it queries matched CSRs and academic references and routes through
+  // protocolOptimizerService.
+  return res.status(501).json({
+    success: false,
+    error: {
+      code: 'not_implemented',
+      message:
+        'Deep optimization is not available. The prior implementation returned fixed ' +
+        'arithmetic on default values, with rationales citing trial and benchmark ' +
+        'evidence it never read. Use POST /api/protocol/optimize for real ' +
+        'CSR-backed protocol analysis.',
+    },
+  });
 });
 
 // Generate full protocol

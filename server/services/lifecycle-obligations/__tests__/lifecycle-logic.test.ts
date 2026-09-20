@@ -8,6 +8,8 @@ import {
   OBLIGATION_CLASSIFICATIONS,
   classificationPathway,
   generateOccurrences,
+  reportingAllowanceDays,
+  periodicReportKind,
   obligationUrgency,
   summarizeCalendar,
   authorityForRegion,
@@ -112,5 +114,59 @@ describe('renewal-cycle projection', () => {
     const out = projectRenewalObligations(rows, '2026-06-10');
     expect(out[0].due).toBe('2027-01-01');
     expect(out[1].due).toBe('—');
+  });
+});
+
+/**
+ * The reporting allowance is not one number.
+ *
+ * `generateOccurrences` dated EVERY periodic occurrence at period end + 70 days,
+ * with the docstring "we use 70 days". That is the ICH E2C(R2) / EU GVP VII
+ * figure for a PSUR covering 12 months or less. It is wrong for two cases the
+ * same function generates:
+ *
+ *  - ICH E2F DSUR: due 60 days after the DSUR data lock point. A flat 70 dated
+ *    every DSUR occurrence TEN DAYS LATE, and `obligationUrgency` then bucketed
+ *    a report that was ALREADY OVERDUE as on-track — a fail-open on a filing
+ *    deadline.
+ *  - A PSUR interval longer than 12 months, where the allowance is 90 days.
+ *
+ * An unidentified classification keeps 70 and is deliberately NOT extended to
+ * 90: lengthening a deadline for a report nobody has identified is the unsafe
+ * direction.
+ */
+describe('reportingAllowanceDays / generateOccurrences — per-kind deadlines', () => {
+  it('a DSUR is due 60 days after the period end, not 70', () => {
+    expect(reportingAllowanceDays('dsur', 12)).toBe(60);
+    const [first] = generateOccurrences('2026-01-01', 12, 1, 'DSUR');
+    expect(first.periodEnd).toBe('2027-01-01');
+    expect(first.dueDate).toBe('2027-03-02'); // 2027-01-01 + 60 days
+  });
+
+  it('the DSUR date is EARLIER than the flat-70 date it replaces', () => {
+    const dsur = generateOccurrences('2026-01-01', 12, 1, 'DSUR')[0];
+    const flat70 = generateOccurrences('2026-01-01', 12, 1, 'PSUR')[0];
+    expect(dsur.dueDate < flat70.dueDate).toBe(true);
+  });
+
+  it('a PSUR over 12 months carries the 90-day allowance', () => {
+    expect(reportingAllowanceDays('psur', 18)).toBe(90);
+    expect(reportingAllowanceDays('psur', 12)).toBe(70);
+  });
+
+  it('classification text is matched case-insensitively and within a longer label', () => {
+    expect(periodicReportKind('dsur')).toBe('dsur');
+    expect(periodicReportKind('Annual DSUR (ICH E2F)')).toBe('dsur');
+    expect(periodicReportKind('PBRER')).toBe('psur');
+    expect(periodicReportKind(null)).toBe('unknown');
+    expect(periodicReportKind('something else')).toBe('unknown');
+  });
+
+  it('an unidentified report keeps 70 and is never extended to 90', () => {
+    expect(reportingAllowanceDays('unknown', 6)).toBe(70);
+    expect(reportingAllowanceDays('unknown', 24)).toBe(70);
+    // Unchanged from the pre-fix behaviour for callers passing no classification.
+    const [o] = generateOccurrences('2026-01-01', 6, 1);
+    expect(o.dueDate).toBe(generateOccurrences('2026-01-01', 6, 1, null)[0].dueDate);
   });
 });
