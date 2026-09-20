@@ -13,6 +13,50 @@
  *   - Responsible role
  *   - AI drafting capability flag
  *
+ * ── 2026-09-20: `required` reconciled with the product's own IND outline ────
+ * `required` means "required for an initial IND filing" (see the interface),
+ * and `getRequiredSections()` returns those nodes. Two production surfaces
+ * treat that set as definitive: `validateSequenceLeaves({filingType:'initial'})`,
+ * whose every miss becomes a hard blocker in `evaluateDispatchGate` — the
+ * "authoritative go/no-go", written to an append-only Part 11 record — and
+ * `evaluateIndReadiness`, which raises a `required_section` blocker per miss.
+ *
+ * 28 nodes were marked required that the `ind:fda` ich-m4-v2.2 rule pack
+ * (migrations/20260902_ind_fda_outline_v2_2_initial_ind_flags.sql) does not
+ * require. That pack is what `/api/ectd-compile/:ident/status` reports against,
+ * so a sequence could be complete by the compile status and hard-blocked by the
+ * dispatch gate at the same moment — two gates, two verdicts, one sequence, and
+ * the blocking one is the one that reached the audit trail.
+ *
+ * Those 28 are now `required: false`. They remain in the tree — they are real
+ * CTD sections, several are required for a marketing application, and
+ * `requiredForAmendment` is untouched. Three groups, by why:
+ *
+ *   m1.3.3  Debarment Certification — 21 USC 335a / 21 CFR 314.50(a)(5)(iv) is
+ *           a MARKETING-application requirement and 21 CFR 312.23 does not ask
+ *           an IND for one. The rule pack has no 1.3.3 node at all, and three
+ *           other models here already agreed: regional-ctd-templates
+ *           (`requiredFor: ['nda','bla','anda']`), ctd-module-structure
+ *           (`required: false`, "marketing applications"), and the header of
+ *           ectd/required-sections.ts, which names this very defect. So does
+ *           `requiredModule1Codes`, the gate that actually blocks freeze and
+ *           transmit, whose comment reads "a debarment certification for a
+ *           marketing application".
+ *   m1.3.1  Contact/Agent Information — the pack marks it mandatory:false
+ *           ("post-initial changes"); initial contact details travel on Form
+ *           1571 (regional-ctd-templates says so too).
+ *   the rest — granularity and genuinely-optional content: 2.3.S.x / 2.3.P.x
+ *           are sections WITHIN the Quality Overall Summary, which the pack
+ *           files as the single nodes 2.3.S and 2.3.P; 2.6.3/.5/.7 are the
+ *           tabulated summaries; 3.2.S.5, 3.2.P.2, 4.2.1.2 and 4.2.2.1-.5 are
+ *           marked optional by the pack for an initial IND.
+ *
+ * Pinned by tests/regulatory/ind-required-set-agrees-with-rule-pack.test.ts,
+ * which reads BOTH sides from their sources, so neither can drift alone. The
+ * pack's own `uncertainties` field records that its flags are 21 CFR 312.23
+ * defaults not reviewed by a regulatory professional; this change makes the two
+ * models agree, it does not independently certify either.
+ *
  * Reference documents:
  *   - 21 CFR 312.23(a) — Content and format of an IND
  *   - ICH M4 — The Common Technical Document
@@ -239,7 +283,7 @@ const MODULE_1: INDSection = {
           module: 'M1',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'form',
@@ -275,7 +319,7 @@ const MODULE_1: INDSection = {
           module: 'M1',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'form',
@@ -589,7 +633,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'ai_draft',
@@ -607,7 +651,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'ai_draft',
@@ -625,7 +669,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'ai_draft',
@@ -643,7 +687,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'ai_draft',
@@ -661,7 +705,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'manual',
@@ -679,7 +723,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'manual',
@@ -697,7 +741,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'data_import',
@@ -735,7 +779,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'ai_draft',
@@ -753,7 +797,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'ai_draft',
@@ -771,7 +815,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'ai_draft',
@@ -789,7 +833,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'manual',
@@ -807,7 +851,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'ai_draft',
@@ -843,7 +887,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'manual',
@@ -861,7 +905,7 @@ const MODULE_2: INDSection = {
               module: 'M2',
               depth: 3,
               pyramidTaskId: null,
-              required: true,
+              required: false,
               requiredForAmendment: false,
               format: 'pdf',
               authoringMode: 'data_import',
@@ -957,7 +1001,7 @@ const MODULE_2: INDSection = {
           module: 'M2',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'ai_draft',
@@ -993,7 +1037,7 @@ const MODULE_2: INDSection = {
           module: 'M2',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'data_import',
@@ -1029,7 +1073,7 @@ const MODULE_2: INDSection = {
           module: 'M2',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'data_import',
@@ -1066,7 +1110,7 @@ const MODULE_2: INDSection = {
           module: 'M2',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'data_import',
@@ -1224,7 +1268,7 @@ const MODULE_3: INDSection = {
           module: 'M3',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'manual',
@@ -1317,7 +1361,7 @@ const MODULE_3: INDSection = {
           module: 'M3',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'ai_draft',
@@ -1546,7 +1590,7 @@ const MODULE_4: INDSection = {
           module: 'M4',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'data_import',
@@ -1620,7 +1664,7 @@ const MODULE_4: INDSection = {
           module: 'M4',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'data_import',
@@ -1638,7 +1682,7 @@ const MODULE_4: INDSection = {
           module: 'M4',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'data_import',
@@ -1656,7 +1700,7 @@ const MODULE_4: INDSection = {
           module: 'M4',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'data_import',
@@ -1674,7 +1718,7 @@ const MODULE_4: INDSection = {
           module: 'M4',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'data_import',
@@ -1692,7 +1736,7 @@ const MODULE_4: INDSection = {
           module: 'M4',
           depth: 2,
           pyramidTaskId: null,
-          required: true,
+          required: false,
           requiredForAmendment: false,
           format: 'pdf',
           authoringMode: 'data_import',

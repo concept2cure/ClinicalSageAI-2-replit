@@ -1,5 +1,5 @@
 // server/routes/analytics-routes.ts
-import { Router } from 'express';
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import multer from 'multer';
 import fs from 'fs';
 import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
@@ -687,8 +687,41 @@ function generateStatisticalInsights(analysis: ProtocolAnalysisResult): string {
   return insights;
 }
 
+/**
+ * Production gate for the demo endpoint below (ledger L167).
+ *
+ * L171 fixed what `/demo-analysis` SAYS — the minted DOIs and the three claimed
+ * analyses are gone. It left what L171's own row records: the route "is mounted
+ * live by register-project-routes with no NODE_ENV gate and no client caller".
+ *
+ * That exposure is not only cosmetic. `analyticsRoutes` is mounted with no
+ * middleware at all — the sibling `mountAll` for quality management passes
+ * requireTenantContext, the analytics one passes nothing — and this file
+ * installs no router-level auth, so the handler answered unauthenticated and
+ * without tenant context on a real deployment, wrote caller-supplied text under
+ * `exports/`, and spent a model call, for a route no client calls.
+ *
+ * 404 rather than 403, and the same body as the precedent in
+ * server/routes/seed-demo.ts ("SECURITY: Block demo seeding in production"): a
+ * route that should not exist in production should not advertise that it does.
+ *
+ * Applied to this ONE route, not via `router.use`, because the rest of this file
+ * is real analytics that production needs.
+ *
+ * Read per request, not captured at module load. server/routes/sso.ts records
+ * why: a constant frozen at import "cannot be exercised by a test that sets the
+ * env after importing the router, and it silently ignores any later change to
+ * the process environment". The check is one comparison.
+ */
+function blockInProduction(_req: Request, res: Response, next: NextFunction) {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  next();
+}
+
 // Add the critical demo-analysis endpoint with global regulatory knowledge and citations
-router.post('/demo-analysis', async (req, res) => {
+router.post('/demo-analysis', blockInProduction, async (req, res) => {
   try {
     const { content, session_id } = req.body;
 
