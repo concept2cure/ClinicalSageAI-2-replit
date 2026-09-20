@@ -484,6 +484,23 @@ export const C2C_MIGRATION_FILES = [
   // All idempotent (IF NOT EXISTS / DROP CONSTRAINT IF EXISTS + re-ADD /
   // to_regclass guards).
   'db/migrations/20260224_ai_trace_chain.sql',
+
+  /* verifier_flags on ai_claims — written by the chat send-message path
+     (`INSERT INTO ai_claims (… verifier_flags)`) and read by the IVDR pack
+     manifest's flagged-claim counts. The column was on no applier, so both
+     raised 42703 on every deployed database: claim persistence failed and the
+     manifest could not count flags. Measured 2026-09-20 against a database
+     built by install-fresh plus the whole set. Immediately after its creator so
+     the replay order is create-then-widen (CLAUDE.md RULE 1); guarded and
+     idempotent. */
+  'db/migrations/20260224_ai_claims_verifier_flags.sql',
+
+  /* source_type / source_atom_id / source_retrieval_chunk_id on
+     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
+     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
+     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
+     that fell off the applier together; same measurement. */
+  'db/migrations/20260224_binder_evidence_source_types.sql',
   'db/migrations/20260730_cmc_projects_reconstruction.sql',
   'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
   'db/migrations/20260730_fk_delete_policies_port.sql',
@@ -611,6 +628,14 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260206_phase5_evidence_fabric.sql',
   'db/migrations/20260207_phase6_6_predicate_intelligence.sql',
   'db/migrations/20260223_ivdr_binder_packs.sql',
+
+  /* The artifact hashes, sizes and warnings ivdr-pack-worker writes in its
+     final promotion step (`UPDATE ivdr_packs SET … manifest_sha256 … zip_sha256,
+     has_warnings, warnings_jsonb`). Ten columns, all absent because this file
+     was on no applier — so every IVDR pack build did its whole job and then
+     failed 42703 at the last statement. Same date, same measurement, same
+     create-then-widen ordering. */
+  'db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql',
   'db/migrations/20260306_chat_tool_runs.sql',
   'db/migrations/20260317_global_regulatory_compliance.sql',
   'db/migrations/20260322_regulatory_precedent_intelligence.sql',
