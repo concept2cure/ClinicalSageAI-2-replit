@@ -31,11 +31,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const selectResult = vi.fn();
 const computeVersionBindingDigest = vi.fn();
 
+const whereClauses: unknown[] = [];
 vi.mock('../../db', () => ({
   db: {
     select: () => ({
       from: () => ({
-        where: () => ({ limit: () => selectResult() }),
+        where: (clause: unknown) => {
+          whereClauses.push(clause);
+          return { limit: () => selectResult() };
+        },
       }),
     }),
   },
@@ -98,7 +102,38 @@ function signatureRow(over: Record<string, unknown> = {}) {
 beforeEach(() => {
   selectResult.mockReset();
   computeVersionBindingDigest.mockReset();
+  whereClauses.length = 0;
 });
+
+const ORG = 7;
+
+/**
+ * The columns a captured Drizzle condition actually REFERENCES.
+ *
+ * Walks `queryChunks` only — never arbitrary object properties. The first
+ * version of this helper walked the whole object graph, reached the pgTable
+ * through `column.table`, and so found every sibling column including
+ * organization_id: it passed against the unscoped `eq(id, …)` it was written to
+ * catch. A test that cannot fail is worse than no test, so this traverses the
+ * clause structure and picks out only chunks that are columns (a `name` plus a
+ * `table` back-reference). Verified to discriminate: eq(id,1) -> ["id"];
+ * and(eq(id,1), eq(organizationId,7)) -> ["id","organization_id"].
+ */
+function columnsOf(clause: unknown): string[] {
+  const names: string[] = [];
+  const walk = (node: unknown) => {
+    const chunks = (node as { queryChunks?: unknown[] } | null)?.queryChunks;
+    if (!Array.isArray(chunks)) return;
+    for (const c of chunks) {
+      if (!c || typeof c !== 'object') continue;
+      const cc = c as { name?: unknown; table?: unknown; queryChunks?: unknown[] };
+      if (typeof cc.name === 'string' && cc.table) names.push(cc.name);
+      else if (Array.isArray(cc.queryChunks)) walk(c);
+    }
+  };
+  walk(clause);
+  return names;
+}
 
 describe('verifySignatureIntegrity — §11.70 content binding', () => {
   it('REGRESSION: a document rewritten since signing is not valid', async () => {
@@ -106,7 +141,7 @@ describe('verifySignatureIntegrity — §11.70 content binding', () => {
     // The signed version's content now digests to something else.
     computeVersionBindingDigest.mockResolvedValueOnce('d'.repeat(64));
 
-    const res = await verifySignatureIntegrity(1);
+    const res = await verifySignatureIntegrity(1, ORG);
 
     // The old implementation returned true here: nothing it hashed could move.
     expect(res.valid).toBe(false);
@@ -119,7 +154,7 @@ describe('verifySignatureIntegrity — §11.70 content binding', () => {
     selectResult.mockResolvedValueOnce([signatureRow()]);
     computeVersionBindingDigest.mockResolvedValueOnce(BOUND_DIGEST);
 
-    const res = await verifySignatureIntegrity(1);
+    const res = await verifySignatureIntegrity(1, ORG);
 
     expect(res.valid).toBe(true);
     expect(res.bindingVerified).toBe(true);
@@ -131,7 +166,7 @@ describe('verifySignatureIntegrity — §11.70 content binding', () => {
     // This is what POST /api/auth/enterprise/electronic-signature writes today.
     selectResult.mockResolvedValueOnce([signatureRow({ boundPayloadDigest: '' })]);
 
-    const res = await verifySignatureIntegrity(1);
+    const res = await verifySignatureIntegrity(1, ORG);
 
     // Not tampered — it never recorded what it was approving. The distinction
     // is the whole point: a bare valid:true here is the misleading answer.
@@ -145,7 +180,7 @@ describe('verifySignatureIntegrity — §11.70 content binding', () => {
     selectResult.mockResolvedValueOnce([signatureRow()]);
     computeVersionBindingDigest.mockResolvedValueOnce(null);
 
-    const res = await verifySignatureIntegrity(1);
+    const res = await verifySignatureIntegrity(1, ORG);
 
     expect(res.valid).toBe(false);
     expect(res.details.contentBinding).toBe('BROKEN');
@@ -156,7 +191,7 @@ describe('verifySignatureIntegrity — §11.70 content binding', () => {
     selectResult.mockResolvedValueOnce([signatureRow({ signatureHash: 'f'.repeat(64) })]);
     computeVersionBindingDigest.mockResolvedValueOnce(BOUND_DIGEST);
 
-    const res = await verifySignatureIntegrity(1);
+    const res = await verifySignatureIntegrity(1, ORG);
 
     expect(res.valid).toBe(false);
     expect(res.details.hashIntegrity).toBe('COMPROMISED');
@@ -166,15 +201,127 @@ describe('verifySignatureIntegrity — §11.70 content binding', () => {
     selectResult.mockResolvedValueOnce([signatureRow({ isValid: false })]);
     computeVersionBindingDigest.mockResolvedValueOnce(BOUND_DIGEST);
 
-    const res = await verifySignatureIntegrity(1);
+    const res = await verifySignatureIntegrity(1, ORG);
 
     expect(res.valid).toBe(false);
   });
 
   it('reports not found rather than guessing', async () => {
     selectResult.mockResolvedValueOnce([]);
-    const res = await verifySignatureIntegrity(999);
+    const res = await verifySignatureIntegrity(999, ORG);
     expect(res.valid).toBe(false);
     expect(res.error).toMatch(/not found/i);
+  });
+});
+
+
+describe('verifySignatureIntegrity — binding basis decides what can be re-derived', () => {
+  /*
+   * There are eleven binding bases (BINDING_BASIS in part11/signature-persistence)
+   * and `computeVersionBindingDigest` can re-derive exactly ONE of them:
+   * DOCUMENT_VERSION_CONTENT, the sha256 of a document version's content. The
+   * verifier used to re-derive whenever `versionId` was set and pass `null`
+   * otherwise, which made it answer about a digest of something else entirely:
+   *
+   *   • a governed-action row carries the audit sha256 CHAIN HASH (the basis says
+   *     so, and says it "is NOT a content hash and must never be presented as
+   *     one") with versionId NULL -> current=null -> "content is no longer
+   *     available", reported as contentBinding BROKEN;
+   *   • a submission-release row carries the RELEASE PACKAGE digest with
+   *     versionId SET -> compared against a re-derived document-version digest it
+   *     can never equal -> "changed since signing (tamper detected)".
+   *
+   * Both are untampered signatures reported as broken, on the one endpoint that
+   * answers an inspector's central question. These tests fail against that
+   * implementation.
+   */
+  it('does not report a governed-action signature as tampered', async () => {
+    selectResult.mockResolvedValueOnce([
+      signatureRow({
+        versionId: null,
+        documentId: null,
+        signedTarget: 'submission:42',
+        bindingBasis: 'governed-action-sha256-chain',
+      }),
+    ]);
+
+    const res = await verifySignatureIntegrity(1, ORG);
+
+    // Nothing is wrong with this signature.
+    expect(res.valid).toBe(true);
+    expect(res.details.contentBinding).not.toBe('BROKEN');
+    // But it must not claim the content was checked, and the basis is explicitly
+    // not a content hash — so it attests to no content at all.
+    expect(res.bindingVerified).toBe(false);
+    expect(res.attestsToContent).toBe(false);
+    // And it must not have tried to re-derive a document version it has none of.
+    expect(computeVersionBindingDigest).not.toHaveBeenCalled();
+  });
+
+  it('does not compare a release-package digest against document-version content', async () => {
+    selectResult.mockResolvedValueOnce([
+      signatureRow({ bindingBasis: 'submission-release-payload-sha256' }),
+    ]);
+
+    const res = await verifySignatureIntegrity(1, ORG);
+
+    expect(computeVersionBindingDigest).not.toHaveBeenCalled();
+    expect(res.valid).toBe(true);
+    expect(res.details.contentBinding).not.toBe('BROKEN');
+    expect(res.bindingVerified).toBe(false);
+    // This basis IS a digest of content — of the release package — so unlike the
+    // ledger basis it does attest to content; this verifier just cannot re-derive it.
+    expect(res.attestsToContent).toBe(true);
+    expect(res.details.bindingBasis).toBe('submission-release-payload-sha256');
+  });
+
+  it('still re-derives, and still detects tampering, for a document-version basis', async () => {
+    selectResult.mockResolvedValueOnce([
+      signatureRow({ bindingBasis: 'document-version-content-sha256' }),
+    ]);
+    computeVersionBindingDigest.mockResolvedValueOnce('d'.repeat(64));
+
+    const res = await verifySignatureIntegrity(1, ORG);
+
+    expect(computeVersionBindingDigest).toHaveBeenCalledWith(100);
+    expect(res.valid).toBe(false);
+    expect(res.details.contentBinding).toBe('BROKEN');
+  });
+});
+
+describe('verifySignatureIntegrity — tenant boundary', () => {
+  /*
+   * electronic_signatures.id is a SERIAL, and the live route
+   * (GET /api/auth/enterprise/electronic-signature/:id/verify) passed
+   * parseInt(req.params.id) straight in. The read selected on that id ALONE, so
+   * any authenticated user of any tenant could count upwards and read another
+   * tenant's signer_name, signed_at, signature_type and signature_meaning.
+   */
+  it('constrains the read to the organization', async () => {
+    selectResult.mockResolvedValueOnce([signatureRow()]);
+    computeVersionBindingDigest.mockResolvedValueOnce(BOUND_DIGEST);
+
+    await verifySignatureIntegrity(1, ORG);
+
+    expect(whereClauses).toHaveLength(1);
+    expect(columnsOf(whereClauses[0])).toContain('organization_id');
+  });
+
+  it('refuses without organization context rather than reading across tenants', async () => {
+    const res = await verifySignatureIntegrity(1, null);
+
+    expect(res.valid).toBe(false);
+    expect(res.error).toMatch(/organization/i);
+    // Fails closed: no query is issued at all.
+    expect(whereClauses).toHaveLength(0);
+    expect(selectResult).not.toHaveBeenCalled();
+  });
+
+  it('refuses a non-numeric signature id rather than querying on NaN', async () => {
+    const res = await verifySignatureIntegrity(Number.NaN, ORG);
+
+    expect(res.valid).toBe(false);
+    expect(res.error).toMatch(/signature id/i);
+    expect(selectResult).not.toHaveBeenCalled();
   });
 });
