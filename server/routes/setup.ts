@@ -19,6 +19,7 @@ import { validatePasswordPolicy } from '../services/auth-security-service';
 import { config } from '../config/environment';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
+import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
 
 const logger = createScopedLogger('setup');
 const router = Router();
@@ -117,6 +118,13 @@ router.post('/initialize', setupLimiter, async (req: Request, res: Response) => 
       await tx.insert(organizationUsers).values({ organizationId: org.id, userId: user.id, role: 'admin' });
       return { org, user };
     });
+
+    // Launch catalog on by default (docs/LAUNCH_DEFINITION_OF_DONE.md, D2).
+    // Outside the transaction on purpose: the grant writer holds its own
+    // connection, and an organisation that fails to provision must still
+    // exist so an administrator can provision it by hand. Failures are
+    // logged by the service and returned; they do not fail the signup.
+    await provisionLaunchModules(result.org.id, { actorEmail: null });
 
     logger.info('First-run setup completed', { orgId: result.org.id });
 

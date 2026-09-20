@@ -53,6 +53,9 @@ import {
   type ModuleCatalogEntry,
 } from '../license-manager.js';
 import { createScopedLogger } from '../../utils/logger.js';
+import { UI_SURFACES } from '../../../shared/constants/ui-surface-registry';
+import { LAUNCH_SCOPE_SOURCE, isLaunchSurface } from '../../../shared/constants/launch-scope';
+import { launchScopeEnforced } from './launch-scope.js';
 
 const logger = createScopedLogger('navigation-entitlements');
 
@@ -85,7 +88,12 @@ export type NavEntitlementSource =
   | 'included'
   | 'disabled'
   | 'tier'
-  | 'industry';
+  | 'industry'
+  /** Outside the launch catalog (shared/constants/launch-scope.ts) while
+   *  LAUNCH_SCOPE_ENFORCE is on. Not a licence: no plan, toggle or request
+   *  changes it, and the platform owner is not exempt — it is a release
+   *  boundary, not a grant. */
+  | typeof LAUNCH_SCOPE_SOURCE;
 
 export interface NavSurfaceEntitlement {
   /** Module id — the SAME id space as the shell's surfaces (see
@@ -113,8 +121,17 @@ export interface NavEntitlements {
    * one is worse than none.
    */
   resolved: boolean;
-  /** One verdict per licensable module. Ids absent here are not licensable. */
+  /** One verdict per licensable module. Ids absent here are not licensable —
+   *  except under launch scope, where every registered surface outside the
+   *  catalog is listed with source 'launch-scope' so the client has a verdict
+   *  for it. */
   surfaces: NavSurfaceEntitlement[];
+  /**
+   * Whether LAUNCH_SCOPE_ENFORCE is on for this deployment. The client renders
+   * launch-scope locks only from verdicts, never from this flag alone; the
+   * flag is here so the Apps catalog can say "in this release" truthfully.
+   */
+  launchScope: { enforced: boolean };
 }
 
 /**
@@ -179,6 +196,7 @@ export async function resolveNavEntitlements(
     masterAdmin: opts.masterAdmin,
     resolved: false,
     surfaces: [],
+    launchScope: { enforced: launchScopeEnforced() },
   };
 
   let license: Awaited<ReturnType<typeof getLicenseInfo>> = null;
@@ -207,14 +225,54 @@ export async function resolveNavEntitlements(
   }
 
   const tier = license?.tier ?? null;
+  const enforced = launchScopeEnforced();
+  const surfaces = catalog.map((entry) =>
+    decideNavEntitlement(entry, { masterAdmin: opts.masterAdmin, tier }),
+  );
   return {
     organizationId,
     tier,
     industryMode: license?.industryMode ?? null,
     masterAdmin: opts.masterAdmin,
     resolved: true,
-    surfaces: catalog.map((entry) =>
-      decideNavEntitlement(entry, { masterAdmin: opts.masterAdmin, tier }),
-    ),
+    surfaces: enforced ? applyLaunchScope(surfaces) : surfaces,
+    launchScope: { enforced },
   };
+}
+
+/**
+ * PURE: overlay the launch boundary on a set of verdicts.
+ *
+ * Two effects, both fail-closed:
+ *   1. A catalog verdict for a module outside the launch scope becomes a
+ *      'launch-scope' lock whatever the licence said — a bought module that
+ *      is not in this release is still not in this release.
+ *   2. Every registered surface (UI_SURFACES) outside the scope that has NO
+ *      catalog row gets a verdict too. Without this the client's rule "an
+ *      unknown id is not licensable ⇒ unconditionally available" would open
+ *      exactly the contextual, un-catalogued surfaces the boundary exists to
+ *      close.
+ *
+ * Launch-scope surfaces keep their catalog verdict untouched: the boundary
+ * never widens anything.
+ */
+export function applyLaunchScope(surfaces: NavSurfaceEntitlement[]): NavSurfaceEntitlement[] {
+  const out: NavSurfaceEntitlement[] = surfaces.map((v) =>
+    isLaunchSurface(v.id)
+      ? v
+      : { ...v, entitled: false, source: LAUNCH_SCOPE_SOURCE, requiredTier: null },
+  );
+  const seen = new Set(out.map((v) => v.id));
+  for (const s of UI_SURFACES) {
+    if (seen.has(s.id) || isLaunchSurface(s.id)) continue;
+    seen.add(s.id);
+    out.push({
+      id: s.id,
+      label: s.label,
+      entitled: false,
+      source: LAUNCH_SCOPE_SOURCE,
+      requiredTier: null,
+    });
+  }
+  return out;
 }

@@ -46,6 +46,7 @@ import { useLiveData } from './dataConnect';
 import { NavEntitlementsProvider } from './navEntitlements';
 import { welcomeFor } from './onboardingWelcome';
 import { SurfaceBoundary } from './SurfaceScaffold';
+import { LaunchScopeGate } from './LaunchScopeGate';
 import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
@@ -820,7 +821,13 @@ export function V2App() {
           onAsk={ask}
         />
         <div className={isFull ? 'page page-full' : 'page'}>
-          <SurfaceBoundary resetKey={bodyKey}>{body}</SurfaceBoundary>
+          <SurfaceBoundary resetKey={bodyKey}>
+            {/* A deep link to a surface outside the launch scope renders the
+                honest panel, from the same verdict the rail and catalog read. */}
+            <LaunchScopeGate surfaceId={activeId} surface={ctxSurface}>
+              {body}
+            </LaunchScopeGate>
+          </SurfaceBoundary>
         </div>
       </main>
       {!ownsConversation && (

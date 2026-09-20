@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-20T18:33:19.228Z",
+  "generatedAt": "2026-09-20T18:45:17.559Z",
   "git": {
-    "sha": "77ea59846935f1d7e87edeb8c806ac379724b54e",
+    "sha": "6d76367cb820be521654dbb2409db998d2927d3b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 204,
+    "duplicateBasenames": 205,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
@@ -1328,6 +1328,14 @@
         ]
       },
       {
+        "basename": "launch-scope",
+        "count": 2,
+        "paths": [
+          "server/services/entitlements/launch-scope.ts",
+          "shared/constants/launch-scope.ts"
+        ]
+      },
+      {
         "basename": "ldt",
         "count": 2,
         "paths": [
@@ -1988,7 +1996,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 154364
+        "bytes": 155300
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2162,7 +2170,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3488
+        "lines": 3503
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2282,7 +2290,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2155
+        "lines": 2163
       },
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
@@ -2353,12 +2361,12 @@
         "lines": 1917
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
-        "lines": 1912
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1913
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1907
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
+        "lines": 1912
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
@@ -2518,7 +2526,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 395,
+      "duplicateGroups": 396,
       "largeByBytes": 33,
       "largeByLines": 81
     },
@@ -2530,7 +2538,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 74,
+      "duplicateGroups": 75,
       "largeByBytes": 3,
       "largeByLines": 1
     },

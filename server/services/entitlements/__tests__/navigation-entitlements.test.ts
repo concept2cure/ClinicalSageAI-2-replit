@@ -59,6 +59,7 @@ function entry(overrides: Partial<ModuleCatalogEntry> = {}): ModuleCatalogEntry 
     subscriptionState: 'none' as ModuleSubscriptionState,
     isAvailable: true,
     requiredTier: 'standard',
+  launchScope: 'launch',
     sortOrder: 10,
     // Perpetual by default — the ordinary case these defaults describe. A test
     // about a lapsed trial overrides both.
