@@ -12,33 +12,46 @@
 
 BEGIN;
 
--- ── 1. Schema additions ────────────────────────────────────────────────────────
+-- to_regclass-guarded, like every file this set applies: a bare ALTER raises
+-- 42P01 on a lineage without the table. The file's own transaction is kept —
+-- a DO block runs inside it fine. Wired into C2C_MIGRATION_FILES on 2026-09-20
+-- after these columns were measured ABSENT on a database built by install-fresh
+-- plus the whole set, while the IVDR pack manifest SELECTs all three and the
+-- evidence route INSERTs source_type.
+DO $$
+BEGIN
+  IF to_regclass('public.ivdr_binder_evidence') IS NULL THEN
+    RAISE NOTICE 'ivdr_binder_evidence not present in this schema; skipping.';
+    RETURN;
+  END IF;
 
--- source_type column (default 'vault' for backward compat with existing rows)
-ALTER TABLE ivdr_binder_evidence
+  -- ── 1. Schema additions ────────────────────────────────────────────────────────
+
+  -- source_type column (default 'vault' for backward compat with existing rows)
+  ALTER TABLE ivdr_binder_evidence
   ADD COLUMN IF NOT EXISTS source_type TEXT NOT NULL DEFAULT 'vault'
     CHECK (source_type IN ('vault', 'atom'));
 
--- Atom-specific nullable columns
-ALTER TABLE ivdr_binder_evidence
+  -- Atom-specific nullable columns
+  ALTER TABLE ivdr_binder_evidence
   ADD COLUMN IF NOT EXISTS source_atom_id TEXT NULL;
 
-ALTER TABLE ivdr_binder_evidence
+  ALTER TABLE ivdr_binder_evidence
   ADD COLUMN IF NOT EXISTS source_retrieval_chunk_id UUID NULL;
 
--- Make vault columns nullable (required only when source_type='vault')
-ALTER TABLE ivdr_binder_evidence
+  -- Make vault columns nullable (required only when source_type='vault')
+  ALTER TABLE ivdr_binder_evidence
   ALTER COLUMN vault_file_id DROP NOT NULL;
 
-ALTER TABLE ivdr_binder_evidence
+  ALTER TABLE ivdr_binder_evidence
   ALTER COLUMN vault_version_id DROP NOT NULL;
 
 
--- ── 2. Normalize existing data BEFORE adding constraints ───────────────────────
+  -- ── 2. Normalize existing data BEFORE adding constraints ───────────────────────
 
--- Fix pre-fix rows that stuffed "atom:..." / "unversioned:..." into vault columns
-UPDATE ivdr_binder_evidence
-SET
+  -- Fix pre-fix rows that stuffed "atom:..." / "unversioned:..." into vault columns
+  UPDATE ivdr_binder_evidence
+  SET
   source_type = 'atom',
   source_atom_id = CASE
     WHEN vault_file_id LIKE 'atom:%' THEN SUBSTRING(vault_file_id FROM 6)
@@ -47,30 +60,30 @@ SET
   -- We can't recover retrieval_chunk_id from old data; leave NULL temporarily
   vault_file_id = NULL,
   vault_version_id = NULL
-WHERE vault_file_id LIKE 'atom:%'
+  WHERE vault_file_id LIKE 'atom:%'
    OR vault_file_id LIKE 'unversioned:%';
 
--- Ensure atom rows have vault fields cleared
-UPDATE ivdr_binder_evidence
-SET vault_file_id = NULL,
+  -- Ensure atom rows have vault fields cleared
+  UPDATE ivdr_binder_evidence
+  SET vault_file_id = NULL,
     vault_version_id = NULL
-WHERE source_type = 'atom'
+  WHERE source_type = 'atom'
   AND (vault_file_id IS NOT NULL OR vault_version_id IS NOT NULL);
 
--- Ensure vault rows have atom fields cleared
-UPDATE ivdr_binder_evidence
-SET source_atom_id = NULL,
+  -- Ensure vault rows have atom fields cleared
+  UPDATE ivdr_binder_evidence
+  SET source_atom_id = NULL,
     source_retrieval_chunk_id = NULL
-WHERE source_type = 'vault'
+  WHERE source_type = 'vault'
   AND (source_atom_id IS NOT NULL OR source_retrieval_chunk_id IS NOT NULL);
 
 
--- ── 3. Tightened CHECK constraint (strict mutual exclusivity) ──────────────────
+  -- ── 3. Tightened CHECK constraint (strict mutual exclusivity) ──────────────────
 
-ALTER TABLE ivdr_binder_evidence
+  ALTER TABLE ivdr_binder_evidence
   DROP CONSTRAINT IF EXISTS chk_binder_evidence_source_integrity;
 
-ALTER TABLE ivdr_binder_evidence
+  ALTER TABLE ivdr_binder_evidence
   ADD CONSTRAINT chk_binder_evidence_source_integrity
   CHECK (
     CASE source_type
@@ -89,17 +102,18 @@ ALTER TABLE ivdr_binder_evidence
   );
 
 
--- ── 4. Indexes ─────────────────────────────────────────────────────────────────
+  -- ── 4. Indexes ─────────────────────────────────────────────────────────────────
 
-CREATE INDEX IF NOT EXISTS idx_ivdr_binder_evidence_source_type
+  CREATE INDEX IF NOT EXISTS idx_ivdr_binder_evidence_source_type
   ON ivdr_binder_evidence(source_type);
 
-CREATE INDEX IF NOT EXISTS idx_ivdr_binder_evidence_atom
+  CREATE INDEX IF NOT EXISTS idx_ivdr_binder_evidence_atom
   ON ivdr_binder_evidence(source_atom_id)
   WHERE source_type = 'atom';
 
-CREATE INDEX IF NOT EXISTS idx_ivdr_binder_evidence_chunk
+  CREATE INDEX IF NOT EXISTS idx_ivdr_binder_evidence_chunk
   ON ivdr_binder_evidence(source_retrieval_chunk_id)
   WHERE source_retrieval_chunk_id IS NOT NULL;
+END $$;
 
 COMMIT;
