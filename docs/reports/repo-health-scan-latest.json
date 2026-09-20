@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-20T17:50:38.137Z",
+  "generatedAt": "2026-09-20T18:33:19.228Z",
   "git": {
-    "sha": "8568f7f8708dc7def7e292bad32a15c555869a7a",
+    "sha": "77ea59846935f1d7e87edeb8c806ac379724b54e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 99
+    "largeFilesByLines": 98
   },
   "findings": {
     "duplicateBasenames": [
@@ -2497,10 +2497,6 @@
         "lines": 1532
       },
       {
-        "file": "server/routes/analytics-routes.ts",
-        "lines": 1521
-      },
-      {
         "file": "server/routes/c2c/project-vault.ts",
         "lines": 1503
       },
@@ -2510,13 +2506,21 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "contentDuplicateGroups": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": -1
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 395,
       "largeByBytes": 33,
-      "largeByLines": 82
+      "largeByLines": 81
     },
     {
       "owner": "Unassigned (TBD)",
