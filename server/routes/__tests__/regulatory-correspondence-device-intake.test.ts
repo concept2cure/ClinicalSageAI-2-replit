@@ -168,6 +168,41 @@ describe('POST /correspondence/intake classifies by the submission it is about',
     expect(r.body.data.parserMetadata.issueTaxonomy).toBe('device:denovo');
   });
 
+  it('persists what the parser extracted, not just its category', async () => {
+    /* `structured_extraction` and `subcategory` were written nowhere: the
+       column did not exist and the INSERT did not name either, so the section
+       candidates and the regulator's actual evidence ask lived in this response
+       and were gone by the time a response package was compiled. Every package
+       then fell back to the generic 'Issue evidence attachment'. */
+    const r = await intake();
+    expect(r.status).toBe(201);
+
+    const inserts = pool.query.mock.calls.filter((c) =>
+      /INSERT INTO c2c_correspondence_issues/.test(String(c[0])),
+    );
+    // The letter raises several topics, so there are several inserts; the
+    // first is whichever rule matched first, not a chosen one.
+    expect(inserts.length, 'no issue was persisted').toBeGreaterThan(0);
+    const insert = inserts[0];
+    const sql = String(insert![0]);
+    expect(sql).toMatch(/subcategory/);
+    expect(sql).toMatch(/structured_extraction/);
+
+    const params = insert![1] as unknown[];
+    // The placeholder count must match the bound values, or Postgres rejects it.
+    const placeholders = new Set(sql.match(/\$\d+/g) ?? []);
+    expect(placeholders.size).toBe(params.length);
+
+    const extraction = JSON.parse(String(params[params.length - 1]));
+    expect(extraction.evidenceNeeds?.length).toBeGreaterThan(0);
+    expect(extraction.sectionCandidates?.length).toBeGreaterThan(0);
+    // And the device topics reached the rows — across every issue the letter
+    // raised, not just whichever matched first.
+    const subcategories = inserts.map((c) => (c[1] as unknown[])[3]);
+    expect(subcategories).toContain('biocompatibility');
+    expect(subcategories).toContain('cybersecurity');
+  });
+
   it('a drug submission still gets the CTD taxonomy', async () => {
     submission.type = 'nda';
     const r = await intake();
