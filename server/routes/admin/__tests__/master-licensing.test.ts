@@ -146,6 +146,7 @@ describe('the admin console agrees with the customer rail', () => {
       subscriptionState,
       isAvailable,
       requiredTier: minTier,
+      launchScope: 'launch',
       sortOrder: 0,
       // Perpetual: these cases are about packaging, not about time-limited
       // grants. A grant with no expiry behaves exactly as it did before the
