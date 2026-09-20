@@ -134,6 +134,57 @@ export function regionForGatewaySlug(slug: string): CanonicalRegion | undefined 
   return undefined;
 }
 
+/** Reverse lookup: validation-corpus rule region → canonical region ('eu' → 'EU'). */
+export function regionForRuleRegion(rule: string): CanonicalRegion | undefined {
+  for (const id of Object.values(REGION_IDENTITY)) {
+    if (id.ruleRegion === rule) return id.code;
+  }
+  return undefined;
+}
+
+/**
+ * Resolve a region written in ANY of the platform's vocabularies to its
+ * canonical code, or undefined when it belongs to none of them.
+ *
+ * ── Why a resolver and not a comparison ───────────────────────────────────────
+ * The four vocabularies this module reconciles do not merely differ in case:
+ * the same jurisdiction is 'EU' as a taxonomy Region, 'ema' as a gateway slug,
+ * 'EMA' as a market name and 'eu' as a rule region. Two subsystems can
+ * therefore hold the SAME region and compare unequal, or hold DIFFERENT regions
+ * and compare equal after a careless toLowerCase(). Anything that compares two
+ * regions across a subsystem boundary has to resolve both first, and this is
+ * where that belongs — beside the table it reads, not as a fifth private copy.
+ *
+ * Order is by specificity, and each vocabulary is tried whole rather than
+ * guessed at: canonical code, gateway slug, rule region, agency name.
+ * `undefined` means "not a region this platform knows", which callers must
+ * treat as unknown — never as "different from" the region they hold.
+ */
+export function canonicalRegionOf(value: string | null | undefined): CanonicalRegion | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (trimmed === '') return undefined;
+  const upper = trimmed.toUpperCase();
+  const lower = trimmed.toLowerCase();
+  if (isCanonicalRegion(upper)) return upper as CanonicalRegion;
+  return (
+    regionForGatewaySlug(lower) ??
+    regionForRuleRegion(lower) ??
+    // Agency names are mixed-case in the registry ('Health_Canada'), so this
+    // one is matched case-insensitively rather than upper-cased into a miss.
+    regionForAgencyInsensitive(trimmed)
+  );
+}
+
+/** regionForAgency, but tolerant of case ('health_canada' → 'CA'). */
+function regionForAgencyInsensitive(agency: string): CanonicalRegion | undefined {
+  const want = agency.toLowerCase();
+  for (const id of Object.values(REGION_IDENTITY)) {
+    if (String(id.agency).toLowerCase() === want) return id.code;
+  }
+  return undefined;
+}
+
 /** Every canonical region code, in registry order. */
 export function listCanonicalRegions(): CanonicalRegion[] {
   return Object.keys(REGION_IDENTITY) as CanonicalRegion[];
@@ -150,5 +201,7 @@ export default {
   m1BackbonePath,
   regionForAgency,
   regionForGatewaySlug,
+  regionForRuleRegion,
+  canonicalRegionOf,
   listCanonicalRegions,
 };
