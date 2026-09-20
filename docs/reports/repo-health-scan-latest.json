@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-20T17:50:38.137Z",
+  "generatedAt": "2026-09-20T18:46:05.696Z",
   "git": {
-    "sha": "8568f7f8708dc7def7e292bad32a15c555869a7a",
+    "sha": "1359c829ff353fd9f1a00c542f7a98da0ad02581",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,11 +12,11 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 204,
+    "duplicateBasenames": 205,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 99
+    "largeFilesByLines": 98
   },
   "findings": {
     "duplicateBasenames": [
@@ -1328,6 +1328,14 @@
         ]
       },
       {
+        "basename": "launch-scope",
+        "count": 2,
+        "paths": [
+          "server/services/entitlements/launch-scope.ts",
+          "shared/constants/launch-scope.ts"
+        ]
+      },
+      {
         "basename": "ldt",
         "count": 2,
         "paths": [
@@ -1988,7 +1996,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 154364
+        "bytes": 155300
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2162,7 +2170,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3488
+        "lines": 3503
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2282,7 +2290,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2155
+        "lines": 2163
       },
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
@@ -2353,12 +2361,12 @@
         "lines": 1917
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
-        "lines": 1912
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1913
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1907
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
+        "lines": 1912
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
@@ -2497,10 +2505,6 @@
         "lines": 1532
       },
       {
-        "file": "server/routes/analytics-routes.ts",
-        "lines": 1521
-      },
-      {
         "file": "server/routes/c2c/project-vault.ts",
         "lines": 1503
       },
@@ -2514,9 +2518,9 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 395,
+      "duplicateGroups": 396,
       "largeByBytes": 33,
-      "largeByLines": 82
+      "largeByLines": 81
     },
     {
       "owner": "Unassigned (TBD)",
@@ -2526,7 +2530,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 74,
+      "duplicateGroups": 75,
       "largeByBytes": 3,
       "largeByLines": 1
     },

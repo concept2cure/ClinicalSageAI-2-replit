@@ -1526,6 +1526,9 @@ interface LiveModuleEntry {
   subscriptionState?: 'enabled' | 'disabled' | 'none';
   isAvailable: boolean;
   requiredTier: string | null;
+  /** 'later' ⇒ outside the launch catalog; locks only while the payload's
+   *  launchScope.enforced is true. Optional: an older server omits it. */
+  launchScope?: 'launch' | 'later';
   sortOrder: number;
 }
 
@@ -1621,8 +1624,18 @@ function tierBandLabel(m: LiveModuleEntry): string {
  * administrator costs a conversation; being wrongly told to upgrade sells
  * somebody a plan that changes nothing.
  */
-function moduleVerdict(m: LiveModuleEntry, orgTier: string | null): NavSurfaceEntitlement | null {
+function moduleVerdict(
+  m: LiveModuleEntry,
+  orgTier: string | null,
+  launchScopeEnforced: boolean,
+): NavSurfaceEntitlement | null {
   const base = { id: m.moduleId, label: m.name, requiredTier: m.requiredTier };
+  /* The release boundary comes first and ignores the licence: a module the
+     org has bought or been granted is still not in this release. The server
+     applies the same order (applyLaunchScope), so the card and the rail agree. */
+  if (launchScopeEnforced && m.launchScope === 'later') {
+    return { ...base, entitled: false, source: 'launch-scope', requiredTier: null };
+  }
   const state = m.subscriptionState ?? (m.isEnabled ? 'enabled' : 'none');
   if (state === 'enabled') return null; // 'subscribed'
   if (state === 'disabled') return { ...base, entitled: false, source: 'disabled' };
@@ -1649,7 +1662,7 @@ const ROLE_AGNOSTIC = { isOrgAdmin: false } as const;
  * has already rejected anything that is not the contract, so `[]` here means
  * the catalog is genuinely empty — the honest empty state, never a failure.
  */
-function mapLiveCatalog(payload: unknown, orgTier: string | null): AppGroup[] {
+function mapLiveCatalog(payload: unknown, orgTier: string | null, launchScopeEnforced: boolean): AppGroup[] {
   if (!isCatalogPayload(payload)) return [];
   const rows = payload.modules.filter(isLiveModuleEntry);
   const byCat = new Map<string, LiveModuleEntry[]>();
@@ -1673,12 +1686,14 @@ function mapLiveCatalog(payload: unknown, orgTier: string | null): AppGroup[] {
         tier: tierBandLabel(m),
         on: m.isEnabled,
         desc: m.description || m.name,
-        lock: moduleVerdict(m, orgTier),
+        lock: moduleVerdict(m, orgTier, launchScopeEnforced),
         /* canAccessModule() allows the write when the module is already in the
            org's enabled set OR its tier and industry match — so an org that
            downgraded can still switch OFF a module it is currently running,
            and nothing else outside the plan can be switched at all. */
-        toggleable: m.isAvailable || m.isEnabled,
+        /* No switch for a module the release excludes: a toggle that writes a
+           grant nothing honours is a dead control. */
+        toggleable: (m.isAvailable || m.isEnabled) && !(launchScopeEnforced && m.launchScope === 'later'),
       })),
     };
   });
@@ -1716,7 +1731,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   const open = (id: string) => onNav(id);
   // Fixture-free live reads. Both endpoints return a bare (non-enveloped) object,
   // so useLiveData yields the payload directly ({ modules } / the license object).
-  const catState = useLiveData<{ modules: LiveModuleEntry[] }>(
+  const catState = useLiveData<{ modules: LiveModuleEntry[]; launchScope?: { enforced: boolean } }>(
     '/api/module-subscriptions/catalog',
     ['/api/module-subscriptions/catalog'],
     // A 200 that is not the catalog contract belongs in the error branch below,
@@ -1731,7 +1746,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   // object so a re-fetch that returns the same tier does not re-seed below.
   const orgTier = lic?.tier || null;
   const liveGroups = useMemo(
-    () => mapLiveCatalog(catState.data, orgTier),
+    () => mapLiveCatalog(catState.data, orgTier, catState.data?.launchScope?.enforced === true),
     [catState.data, orgTier],
   );
   // Editable copy for optimistic toggles, re-seeded whenever the live mapping

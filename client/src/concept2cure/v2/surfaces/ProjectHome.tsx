@@ -5,6 +5,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
+import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
 import { useChatUpload, attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
 import '../styles/project-home-v2.css';
@@ -877,6 +878,8 @@ function AuthorWorkspace({
   wsState: DataState<{ workstreams: WorkstreamRow[] }>;
   draftsState: DataState<{ drafts: DraftRow[] }>;
 }) {
+  /* Launch-scope verdicts, for the workspace tool grid below. */
+  const { verdictFor } = useNavEntitlements();
   /* The program's own AnA threads — REAL. Threads carry the program they were
      started in (chat_threads.metadata.programId, written when the stream
      mints the thread), so this lists exactly the conversations held on this
@@ -897,7 +900,19 @@ function AuthorWorkspace({
         {/* Workspace tools — canonical registry navigation (not data) */}
         <section className="pj-sec">
           <div className="pj-sec-h"><h2>Workspace</h2><span className="sec-sub">Every capability, scoped to this project</span></div>
-          {getSegmentModules(seg).map((grp: { label: string; items: string[] }) => (
+          {getSegmentModules(seg)
+            /* Tools outside the launch scope are not offered here: this grid
+               is "what you can do in this project", and a card that opens a
+               "not in this release" panel is not a thing you can do. The
+               Apps catalog remains the honest full list. A group left empty
+               by the filter is dropped rather than rendered as a heading
+               over nothing. */
+            .map((grp: { label: string; items: string[] }) => ({
+              label: grp.label,
+              items: grp.items.filter((id: string) => !isLaunchScopeLocked(verdictFor(id))),
+            }))
+            .filter((grp) => grp.items.length > 0)
+            .map((grp: { label: string; items: string[] }) => (
             <div key={grp.label} className="pj-toolgrp">
               <div className="pj-toolgrp-l">{grp.label}</div>
               <div className="pj-tools">

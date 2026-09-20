@@ -23,6 +23,7 @@ import { pool } from '../db.js';
 import auditService from './auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
 import type { Request, Response, NextFunction } from 'express';
+import { LAUNCH_MODULE_IDS } from '../../shared/constants/launch-scope';
 
 const logger = createScopedLogger('license-manager');
 
@@ -127,6 +128,14 @@ export interface ModuleCatalogEntry {
   subscriptionState: ModuleSubscriptionState;
   isAvailable: boolean; // true if tier + industry match
   requiredTier: string | null; // lowest tier that includes this module
+  /**
+   * 'launch' when the module is in the launch catalog
+   * (shared/constants/launch-scope.ts), 'later' otherwise. Static per module;
+   * whether 'later' locks anything is the deployment's LAUNCH_SCOPE_ENFORCE,
+   * reported separately as `launchScope.enforced` on the payloads that carry
+   * this entry. A 'later' row with enforcement off is an ordinary module.
+   */
+  launchScope: 'launch' | 'later';
   sortOrder: number;
   /**
    * The grant's expiry instant as an ISO string, or null when the row is
@@ -295,6 +304,7 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
               : 'none',
         isAvailable: tierMatch && industryMatch,
         requiredTier: lowestTier,
+        launchScope: LAUNCH_MODULE_IDS.includes(m.module_id) ? 'launch' : 'later',
         sortOrder: m.sort_order || 0,
         grantExpiresAt: toIsoOrNull(m.grant_expires_at),
         grantExpired,

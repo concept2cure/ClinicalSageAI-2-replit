@@ -1,0 +1,2 @@
+✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation
+✅ selftest: gate passes on the real tree

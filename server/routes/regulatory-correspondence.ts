@@ -36,6 +36,10 @@ import {
   createCanonicalTasksForIssue,
 } from '../services/regulatory-correspondence/operating-layer';
 import { compileGovernedResponseAssembly } from '../services/regulatory-correspondence/response-package-compiler';
+import {
+  issueRowsToCorrespondenceIssues,
+  type CorrespondenceIssueRow,
+} from '../services/regulatory-correspondence/issue-row-mapper';
 import { recordGovernedAction } from './c2c/actions';
 
 const router = Router();
@@ -609,13 +613,20 @@ router.post('/correspondence/intake', async (req, res) => {
     const downstreamActions: Array<Record<string, unknown>> = [];
     for (const issue of extracted) {
       await pool!.query(
+        /* `subcategory` and `structured_extraction` are written because the
+           response-package compiler reads them and nothing persisted either:
+           the parser's section candidates, evidence needs, owner function and
+           confidence trace lived in the intake response and were gone by the
+           time a package was compiled, which is why every package fell back to
+           the generic 'Issue evidence attachment'. */
         `INSERT INTO c2c_correspondence_issues
-          (id, correspondence_id, category, severity, blocker, response_required, source_excerpt, confidence, human_review_status, mapped_ctd_sections, mapped_artifact_ids, resolution_status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb,$12)`,
+          (id, correspondence_id, category, subcategory, severity, blocker, response_required, source_excerpt, confidence, human_review_status, mapped_ctd_sections, mapped_artifact_ids, resolution_status, structured_extraction)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12::jsonb,$13,$14::jsonb)`,
         [
           issue.id,
           issue.correspondenceId,
           issue.category,
+          issue.subcategory || null,
           issue.severity,
           issue.blocker,
           issue.responseRequired,
@@ -625,6 +636,7 @@ router.post('/correspondence/intake', async (req, res) => {
           JSON.stringify(issue.mappedCtdSections || []),
           JSON.stringify(issue.mappedArtifactIds || []),
           issue.resolutionStatus,
+          JSON.stringify(issue.structuredExtraction || {}),
         ]
       );
 
@@ -940,7 +952,7 @@ router.post('/response-packages', async (req, res) => {
   });
   const compiledAssembly = compileGovernedResponseAssembly({
     correspondenceId: pack.sourceCorrespondenceId,
-    issues: issueRows.rows as any,
+    issues: issueRowsToCorrespondenceIssues(issueRows.rows as CorrespondenceIssueRow[]),
     revisedArtifactIds: pack.revisedArtifactIds,
   });
 
