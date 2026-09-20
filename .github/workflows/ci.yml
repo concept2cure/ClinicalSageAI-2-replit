@@ -255,6 +255,18 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:surface-discoverability
 
+      # Two more that the note above missed: both still lived only in
+      # pr-checks.yml on 2026-09-20, so neither had run on the trunk either.
+      # fixture-fallback is the "no fixture data in governed paths" rule from
+      # CLAUDE.md; ana-surface-context is what keeps AnA grounded on the screen.
+      - name: Guardrails — no ungated fixture fallback in client surfaces
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:fixture-fallback
+
+      - name: Guardrails — every routable surface publishes screen state to AnA
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:ana-surface-context
+
       - name: Guardrails — no API route or table name in user-visible copy
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:internals-in-copy
