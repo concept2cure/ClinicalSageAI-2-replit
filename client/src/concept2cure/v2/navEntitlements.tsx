@@ -41,7 +41,10 @@ export type NavEntitlementSource =
   | 'included'
   | 'disabled'
   | 'tier'
-  | 'industry';
+  | 'industry'
+  /** Outside this release's launch catalog (shared/constants/launch-scope.ts).
+   *  Not a licence: no plan, toggle or access request changes it. */
+  | 'launch-scope';
 
 export interface NavSurfaceEntitlement {
   id: string;
@@ -58,6 +61,9 @@ export interface NavEntitlementsPayload {
   masterAdmin: boolean;
   /** False ⇒ the server computed no verdicts; render no lock state. */
   resolved: boolean;
+  /** Whether the deployment enforces the launch catalog. Optional so an
+   *  older server payload still validates; locks come from verdicts only. */
+  launchScope?: { enforced: boolean };
   surfaces: NavSurfaceEntitlement[];
 }
 
@@ -264,8 +270,15 @@ export function currentRequestFor(
  * and anyone hovering, were told a different — and wrong — reason from the one
  * the panel gave them on activation.
  */
+/** True for the one lock nothing on the customer's side can lift. */
+export function isLaunchScopeLocked(verdict: NavSurfaceEntitlement | null): boolean {
+  return !!verdict && !verdict.entitled && verdict.source === 'launch-scope';
+}
+
 export function lockShortReason(verdict: NavSurfaceEntitlement): string {
   switch (verdict.source) {
+    case 'launch-scope':
+      return 'not in this release';
     case 'disabled':
       return 'turned off for this workspace';
     case 'industry':
@@ -296,6 +309,16 @@ export function lockNotice(
   opts: { isOrgAdmin: boolean },
 ): LockNotice {
   switch (verdict.source) {
+    case 'launch-scope':
+      /* Nothing to buy, switch on or request: the app exists and is not in
+         this release. Saying so beats offering a plan that changes nothing. */
+      return {
+        status: 'Not in this release',
+        body: 'This app is built but is not part of the current release. It is not a plan or permission matter — no upgrade, setting or request enables it.',
+        ctaLabel: null,
+        ctaTarget: null,
+        requestable: false,
+      };
     case 'disabled':
       return {
         status: 'Turned off for this workspace',
