@@ -1090,12 +1090,18 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               vault?.unavailable?.find((u) => u.branch === 'Data room')?.reason ?? null
             }
           />
-          <UploadsLane
-            cabinet={cabinet}
-            window={vault?.uploadsWindow}
-            status={st}
-            onOpen={openUpload}
-          />
+          {/* The lane is a BROWSE aid — every upload in the programme. While a
+              search is running it would sit above the results listing files the
+              search excluded, contradicting the very list the person asked for,
+              so it steps aside until the search is cleared. */}
+          {!searching && (
+            <UploadsLane
+              cabinet={cabinet}
+              window={vault?.uploadsWindow}
+              status={st}
+              onOpen={openUpload}
+            />
+          )}
           {filingNote && (
             <div
               className="scaf-note"
