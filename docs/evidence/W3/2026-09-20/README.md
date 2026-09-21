@@ -28,6 +28,26 @@ Server: `npx tsx server/index.ts` with `NODE_ENV=development ALLOW_DEV_AUTH=1 PO
 
 Requirements (TM-001): 67 — 43 pass, 2 partial, 7 fail, 15 open, 0 uncovered.
 
+### Counts after the corrective actions — full re-execution 2026-09-21 16:26–16:31 UTC (control tower, trunk ad69500f + the OQ-VAULT-08b protocol correction)
+
+| Protocol | Steps | Pass | Fail | Deviation | Not executed |
+|---|---|---|---|---|---|
+| IQ-001 (WD, 01:02 UTC) | 15 | 10 | 0 | 5 | 0 |
+| OQ-001 Projects | 16 | 16 | 0 | 0 | 0 |
+| OQ-002 Vault | 12 | 12 | 0 | 0 | 0 |
+| OQ-003 Authoring | 24 | 22 | 1 | 1 | 0 |
+| OQ-004 Submission Center | 15 | 15 | 0 | 0 | 0 |
+| OQ-005 Submission Readiness | 9 | 9 | 0 | 0 | 0 |
+| OQ-006 QMS | 20 | 20 | 0 | 0 | 0 |
+| **OQ total** | **96** | **94** | **1** | **1** | **0** |
+
+Requirements (TM-001, regenerated): 67 — 65 pass, 1 partial, 1 fail, 0 open, 0 uncovered.
+The one fail is OQ-AUTH-17b (F-6, two review stores — a design decision, not fixed). The one
+deviation is OQ-AUTH-16 (no AI provider; nothing simulated). Credentialed steps ran with the
+local second signer (WF); staging execution with a real second account is still owed. The
+findings this baseline surfaced (F-1 … F-12, IQ-DEV-001) and their dispositions are in
+VSR-001 §4, §8, §9 and §10.
+
 ## Deviations (nothing was faked; each is recorded where it happened)
 
 - **IQ-DEV-001 — open, blocks acceptance.** The runtime role `c2c` cannot read 264 tables (183 `public` tables owned by `postgres`). Symptoms: section creation in Authoring (→ 11 steps not executed), vault read model and Vault surface, QMS change control, program journey, contradiction scan all answer 500. The corrective `GRANT` is an owner-role action; the session attempted it and was **refused by the permission gate**, so it was not applied. `IQ/db-grants-before.txt` and `IQ/db-role-denied-tables.json` are the inventory.

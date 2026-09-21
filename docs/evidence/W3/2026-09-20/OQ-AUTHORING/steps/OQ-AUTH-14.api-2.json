@@ -1,0 +1,36 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/signatures",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 7,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "signatures": [
+        {
+          "id": "7b44b5d1-135b-4cdc-a340-048534605190",
+          "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
+          "signer_email": "jonmichaelpsmith@gmail.com",
+          "signer_name": "JM Smith",
+          "meaning": "REVIEWER",
+          "reason": "OQ-003 step 14: reviewed for validation",
+          "method": "PIN",
+          "content_hash": "c2f09ccb3ab88796c1142308f5a9ea4a83015442b4eeb2d6d3542c38424e1ccf",
+          "signature_digest": "55ec1f5efea1da7010a04f4bb06332008bae45c0bb00bf97ae83fb3112e01898",
+          "covered_freeze_version": "1.0",
+          "covered_content_hash": "cdfeb64386ffff1856d05256803271fe7550097161e7edde0312a4af8eca3f07",
+          "pin_verified": true,
+          "signed_at": "2026-09-21T16:27:04.493Z",
+          "tenant_id": 2
+        }
+      ]
+    }
+  }
+}

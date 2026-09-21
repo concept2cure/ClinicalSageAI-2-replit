@@ -1,8 +1,9 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/submissions/sequences/16/transition",
+    "url": "http://localhost:5200/api/submissions/sequences/26/transition",
     "anonymous": false,
+    "identity": null,
     "body": {
       "status": "assembling"
     }
@@ -10,11 +11,11 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 20,
+    "durationMs": 17,
     "rateLimitRetries": 0,
     "body": {
-      "id": 16,
-      "submissionId": 31,
+      "id": 26,
+      "submissionId": 64,
       "region": "fda",
       "sequenceNumber": "0000",
       "type": "original",
@@ -24,8 +25,8 @@
       "frozenAt": null,
       "organizationId": 2,
       "createdBy": 1,
-      "createdAt": "2026-09-21T00:23:20.083Z",
-      "updatedAt": "2026-09-21T00:23:21.415Z",
+      "createdAt": "2026-09-21T16:27:22.050Z",
+      "updatedAt": "2026-09-21T16:27:23.373Z",
       "deletedAt": null,
       "auditTrail": {
         "persisted": true,

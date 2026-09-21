@@ -1,8 +1,9 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/submissions/sequences/16/transition",
+    "url": "http://localhost:5200/api/submissions/sequences/26/transition",
     "anonymous": false,
+    "identity": null,
     "body": {
       "status": "frozen"
     }

@@ -3,8 +3,9 @@
     "method": "POST",
     "url": "http://localhost:5200/api/c2c/actions/sign",
     "anonymous": false,
+    "identity": null,
     "body": {
-      "target": "ectd-sequence:16",
+      "target": "ectd-sequence:26",
       "reason": "OQ-004 step 07 signature without re-auth"
     }
   },

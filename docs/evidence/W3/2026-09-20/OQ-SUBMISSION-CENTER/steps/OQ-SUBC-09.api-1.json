@@ -3,12 +3,13 @@
     "method": "GET",
     "url": "http://localhost:5200/api/submissions/capabilities",
     "anonymous": false,
+    "identity": null,
     "body": null
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 15,
+    "durationMs": 11,
     "rateLimitRetries": 0,
     "body": {
       "environment": "production",

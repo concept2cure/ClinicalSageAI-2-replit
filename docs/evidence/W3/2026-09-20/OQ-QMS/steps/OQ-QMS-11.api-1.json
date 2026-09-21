@@ -1,11 +1,11 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5900/api/mdx/qms/changes",
+    "url": "http://localhost:5200/api/mdx/qms/changes",
     "anonymous": false,
     "identity": null,
     "body": {
-      "changeNumber": "CC-OQ-20260921014742",
+      "changeNumber": "CC-OQ-20260921162811",
       "title": "OQ-006 change",
       "reason": "validation exercise"
     }
@@ -13,13 +13,13 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 20,
+    "durationMs": 17,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": 3,
+        "id": 6,
         "organization_id": 2,
-        "change_number": "CC-OQ-20260921014742",
+        "change_number": "CC-OQ-20260921162811",
         "title": "OQ-006 change",
         "description": null,
         "change_type": "other",
@@ -41,8 +41,8 @@
         "closed_at": null,
         "qms_document_id": null,
         "metadata": {},
-        "created_at": "2026-09-21T01:47:52.299Z",
-        "updated_at": "2026-09-21T01:47:52.299Z",
+        "created_at": "2026-09-21T16:28:20.797Z",
+        "updated_at": "2026-09-21T16:28:20.797Z",
         "deleted_at": null
       },
       "meta": {

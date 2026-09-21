@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5900/api/authoring/docs/7aa154e6-07ca-4469-a1e4-c8e6952a32ab/frozen",
+    "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/frozen",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,28 +9,28 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 20,
+    "durationMs": 17,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "version": "1.0",
-      "contentHash": "e510b7fb5b17599b05b5ea9f9b6454042f80700e13afb8c6e362e70df884b532",
-      "frozenAt": "2026-09-21T01:44:36.759Z",
+      "contentHash": "cdfeb64386ffff1856d05256803271fe7550097161e7edde0312a4af8eca3f07",
+      "frozenAt": "2026-09-21T16:27:02.026Z",
       "frozenBy": "jonmichaelpsmith@gmail.com",
       "content": {
         "document": {
-          "id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
-          "title": "OQ-003 Clinical Overview 20260921014427",
+          "id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
+          "title": "OQ-003 Clinical Overview 20260921162653",
           "module": "M2",
           "product_code": null,
           "locale": "en-US",
           "status": "IN_REVIEW",
-          "created_at": "2026-09-21T01:44:28.928Z",
-          "updated_at": "2026-09-21T01:44:28.928Z",
+          "created_at": "2026-09-21T16:26:54.301Z",
+          "updated_at": "2026-09-21T16:26:54.301Z",
           "created_by": "1",
           "template_id": null,
-          "submitted_at": "2026-09-21T01:44:33.777Z",
-          "current_workflow_id": "1135e7b7-1988-44fe-8661-5b57aab35468",
+          "submitted_at": "2026-09-21T16:26:59.201Z",
+          "current_workflow_id": "ae0b4a57-de93-40d5-b448-8bc63ef0d6eb",
           "approved_at": null,
           "frozen_at": null,
           "locked_at": null,
@@ -40,31 +40,31 @@
         },
         "sections": [
           {
-            "id": "b9cb188a-a468-4956-b8d8-5b931fed9062",
-            "doc_id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
+            "id": "12d601ed-b37e-40ed-afde-ade6e34795a7",
+            "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
             "code": "2.5",
             "title": "Clinical Overview",
             "content": "<p>Initial 2.5 text.</p>",
             "order_index": 0,
             "track_changes": false,
-            "created_at": "2026-09-21T01:44:29.493Z",
-            "updated_at": "2026-09-21T01:44:31.645Z",
+            "created_at": "2026-09-21T16:26:54.865Z",
+            "updated_at": "2026-09-21T16:26:57.007Z",
             "tenant_id": 2
           },
           {
-            "id": "b1d4ed2a-a251-49c7-9bd3-528a8aa0be7b",
-            "doc_id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
+            "id": "9dadb0c2-f23e-4e85-b16d-99197dbede7b",
+            "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
             "code": "2.7",
             "title": "Clinical Summary",
             "content": "<p>Initial 2.7 text.</p>",
             "order_index": 1,
             "track_changes": false,
-            "created_at": "2026-09-21T01:44:29.207Z",
-            "updated_at": "2026-09-21T01:44:29.207Z",
+            "created_at": "2026-09-21T16:26:54.577Z",
+            "updated_at": "2026-09-21T16:26:54.577Z",
             "tenant_id": 2
           }
         ],
-        "frozenAt": "2026-09-21T01:44:36.759Z"
+        "frozenAt": "2026-09-21T16:27:02.025Z"
       }
     }
   }

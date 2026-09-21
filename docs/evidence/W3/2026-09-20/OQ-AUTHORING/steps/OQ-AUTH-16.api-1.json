@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5900/api/authoring/sections/b1d4ed2a-a251-49c7-9bd3-528a8aa0be7b/ai/draft",
+    "url": "http://localhost:5200/api/authoring/sections/9dadb0c2-f23e-4e85-b16d-99197dbede7b/ai/draft",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -9,26 +9,16 @@
     }
   },
   "response": {
-    "status": 200,
+    "status": 503,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 30,
+    "durationMs": 25,
     "rateLimitRetries": 0,
     "body": {
       "success": false,
-      "degraded": true,
-      "source": "template",
-      "draft": {
-        "content": "QUALITY OVERALL SUMMARY - Clinical Summary\n\n1. INTRODUCTION\nThis section provides comprehensive quality information for the product in accordance with FDA regulatory requirements.\n\n2. DRUG SUBSTANCE\n[Detailed information about the drug substance, including nomenclature, structure, general properties, and manufacture]\n\n3. DRUG PRODUCT\n[Comprehensive details about the drug product formulation, pharmaceutical development, manufacture, and control]\n\n4. QUALITY CONTROL\n[Description of specifications, analytical procedures, validation, and batch analyses]\n\n5. STABILITY\n[Stability protocol, data, and conclusions supporting the proposed shelf life]\n\n6. CONCLUSION\nThe quality information presented demonstrates that the product meets all FDA regulatory standards for pharmaceutical quality.",
-        "metadata": {
-          "tone": "professional",
-          "region": "FDA",
-          "generated_at": "2026-09-21T01:44:35.132Z",
-          "model": "template-based",
-          "source": "template",
-          "degraded": true
-        }
-      },
-      "message": "AI generation was unavailable; returned a hardcoded section template (not model-generated)."
+      "error": {
+        "code": "GATEWAY_UNAVAILABLE",
+        "message": "No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed."
+      }
     }
   }
 }

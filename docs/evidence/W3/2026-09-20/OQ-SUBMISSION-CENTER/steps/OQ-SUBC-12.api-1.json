@@ -1,14 +1,15 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/submissions/sequences/16/transmit",
+    "url": "http://localhost:5200/api/submissions/sequences/26/transmit",
     "anonymous": false,
+    "identity": null,
     "body": {}
   },
   "response": {
     "status": 400,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 9,
+    "durationMs": 8,
     "rateLimitRetries": 0,
     "body": {
       "error": {

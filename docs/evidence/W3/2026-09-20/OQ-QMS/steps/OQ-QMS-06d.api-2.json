@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5900/api/part11/signatures/by-target?target=qms-document%3A27",
+    "url": "http://localhost:5200/api/part11/signatures/by-target?target=qms-document%3A37",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -15,10 +15,10 @@
       "success": true,
       "data": [
         {
-          "id": 7,
+          "id": 10,
           "document_id": null,
           "version_id": null,
-          "signed_target": "qms-document:27",
+          "signed_target": "qms-document:37",
           "signature_type": "qms-document-approval",
           "signature_purpose": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
           "signer_id": 42,
@@ -26,11 +26,11 @@
           "signer_title": "Chief Science Officer",
           "signer_email": "oq-signer@validation.local",
           "signature_meaning": "APPROVED",
-          "signature_hash": "f7549cb10c887440b8ba1f4f79b4b3b9d0f63f72291a3d10a98df7122c1fcfa8",
+          "signature_hash": "e6d06480120c997299e7d587cfb92d112d98e4f3b0e25bffb93dcaeaad625cba",
           "binding_basis": "qms-document-version-content-sha256",
           "second_factor_verified": false,
           "is_valid": true,
-          "signed_at": "2026-09-21T01:47:50.183Z",
+          "signed_at": "2026-09-21T16:28:18.691Z",
           "ip_address": "127.0.0.1"
         }
       ]

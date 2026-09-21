@@ -3,6 +3,7 @@
     "method": "GET",
     "url": "http://localhost:5200/api/submissions",
     "anonymous": true,
+    "identity": null,
     "body": null
   },
   "response": {

@@ -3,8 +3,9 @@
     "method": "POST",
     "url": "http://localhost:5200/api/c2c/projects",
     "anonymous": false,
+    "identity": null,
     "body": {
-      "name": "OQ-004 Submission program 20260921002317",
+      "name": "OQ-004 Submission program 20260921162719",
       "programType": "ind",
       "primaryAgency": "FDA",
       "indication": "Validation exercise",
@@ -14,14 +15,14 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 54,
+    "durationMs": 48,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": "6191805f-e83d-4327-af00-aa2c6f4d43b0",
-        "title": "OQ-004 Submission program 20260921002317",
+        "id": "344000e3-8420-4ddf-8434-b1c0d253933e",
+        "title": "OQ-004 Submission program 20260921162719",
         "ws": "Biotech",
-        "code": "OSP2-4S2D",
+        "code": "OSP2-KJ9P",
         "stage": "Planning",
         "readiness": 0,
         "status": "active",
@@ -32,9 +33,9 @@
       },
       "meta": {
         "created": true,
-        "documentId": "doc_253421fa309b4ffbb9a7d165abcb7e66",
+        "documentId": "doc_50c208470c4e49bb94f85fc18293d73b",
         "scaffoldedSections": 92,
-        "submissionId": 30,
+        "submissionId": 63,
         "submissionCreated": true,
         "projectAnchorId": null,
         "projectAnchorSkipped": "NO_CLIENT_WORKSPACE",

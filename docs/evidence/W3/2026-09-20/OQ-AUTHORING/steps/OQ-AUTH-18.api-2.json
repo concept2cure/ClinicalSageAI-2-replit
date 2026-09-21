@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5900/api/authoring/templates",
+    "url": "http://localhost:5200/api/authoring/templates",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,7 +9,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 12,
+    "durationMs": 13,
     "rateLimitRetries": 0,
     "body": {
       "success": true,

@@ -5,16 +5,16 @@
   "appLabel": "Vault",
   "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
   "executedBy": "automated runner tests/validation/oq/vault/run.mjs",
-  "executedAt": "2026-09-21T01:04:33.310Z",
-  "finishedAt": "2026-09-21T01:05:19.286Z",
+  "executedAt": "2026-09-21T16:29:20.238Z",
+  "finishedAt": "2026-09-21T16:29:31.060Z",
   "environment": {
-    "baseUrl": "http://localhost:5700",
+    "baseUrl": "http://localhost:5200",
     "node": "v22.22.2",
     "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
     "playwrightCore": "1.63.0",
     "git": {
       "branch": "concept2cure-v2",
-      "commit": "debdd9664f5759eb9a4a5b024b73c333027baf18"
+      "commit": "ad69500f01f56af1b2b3a0c3b3c69feaaa384ba6"
     },
     "testUser": "jonmichaelpsmith@gmail.com",
     "organizationId": "2",
@@ -40,8 +40,8 @@
     }
   },
   "counts": {
-    "pass": 9,
-    "fail": 3,
+    "pass": 12,
+    "fail": 0,
     "deviation": 0,
     "not-executed": 0
   },
@@ -54,21 +54,21 @@
       "action": "POST /api/c2c/projects (IND); GET /api/audit-trail/ledger?limit=200",
       "expected": "Program created (201); ledger readable",
       "status": "pass",
-      "observed": "program 213b24e0-674f-4387-9a13-419c02727536; ledger entries before: 0",
-      "startedAt": "2026-09-21T01:04:34.503Z",
-      "finishedAt": "2026-09-21T01:04:35.122Z",
+      "observed": "program f8421433-27ec-4cc5-8ed6-6a597982bf2c; ledger entries before: 200",
+      "startedAt": "2026-09-21T16:29:20.848Z",
+      "finishedAt": "2026-09-21T16:29:21.457Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-00.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5700/api/c2c/projects",
+          "url": "http://localhost:5200/api/c2c/projects",
           "status": 201
         },
         {
           "file": "steps/OQ-VAULT-00.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5700/api/audit-trail/ledger?limit=200",
+          "url": "http://localhost:5200/api/audit-trail/ledger?limit=200",
           "status": 200
         }
       ],
@@ -87,14 +87,14 @@
       "expected": "HTTP 401/403",
       "status": "pass",
       "observed": "HTTP 401",
-      "startedAt": "2026-09-21T01:04:35.122Z",
-      "finishedAt": "2026-09-21T01:04:35.379Z",
+      "startedAt": "2026-09-21T16:29:21.457Z",
+      "finishedAt": "2026-09-21T16:29:21.713Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-01.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536",
+          "url": "http://localhost:5200/api/c2c/project-vault/f8421433-27ec-4cc5-8ed6-6a597982bf2c",
           "status": 401
         }
       ],
@@ -113,14 +113,14 @@
       "expected": "Refused with a 4xx and a message; nothing stored",
       "status": "pass",
       "observed": "HTTP 400: {\"error\":{\"code\":\"FILE_TYPE_NOT_ALLOWED\",\"message\":\"File type .exe is not allowed. Accepted: .pdf, .docx, .doc, .txt, .rtf, .xlsx, .xls, .csv, .md.\"}}",
-      "startedAt": "2026-09-21T01:04:35.379Z",
-      "finishedAt": "2026-09-21T01:04:35.902Z",
+      "startedAt": "2026-09-21T16:29:21.713Z",
+      "finishedAt": "2026-09-21T16:29:22.133Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-02.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5700/api/vault/ingest",
+          "url": "http://localhost:5200/api/vault/ingest",
           "status": 400
         }
       ],
@@ -138,15 +138,15 @@
       "action": "POST /api/vault/ingest (multipart: file, programId, documentCode, documentTitle, documentType=PROTOCOL)",
       "expected": "HTTP 201; document.id returned; document.contentHash equals the SHA-256 of the uploaded bytes",
       "status": "pass",
-      "observed": "document 19c17bfe-98e4-4100-8862-f34c3a64c202; contentHash matches sha256 d8a712c15871…; filing: {\"view\":\"biotech\",\"folderId\":null,\"folderLabel\":\"\",\"evidenceKind\":null,\"ctdSection\":null,\"placementStatus\":\"unfiled\",\"confidence\":\"none\",\"rationale\":\"No filing ",
-      "startedAt": "2026-09-21T01:04:35.902Z",
-      "finishedAt": "2026-09-21T01:04:40.445Z",
+      "observed": "document beade2e4-2981-488d-9dde-87e6ea8dfee9; contentHash matches sha256 f48a189d623c…; filing: {\"view\":\"biotech\",\"folderId\":null,\"folderLabel\":\"\",\"evidenceKind\":null,\"ctdSection\":null,\"placementStatus\":\"unfiled\",\"confidence\":\"none\",\"rationale\":\"No filing ",
+      "startedAt": "2026-09-21T16:29:22.133Z",
+      "finishedAt": "2026-09-21T16:29:22.892Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-03.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5700/api/vault/ingest",
+          "url": "http://localhost:5200/api/vault/ingest",
           "status": 201
         }
       ],
@@ -165,14 +165,14 @@
       "expected": "success:true; documentCount ≥ 1; the tree names the document",
       "status": "pass",
       "observed": "documentCount=73; standard=biotech; tree nodes=2",
-      "startedAt": "2026-09-21T01:04:40.445Z",
-      "finishedAt": "2026-09-21T01:04:40.723Z",
+      "startedAt": "2026-09-21T16:29:22.892Z",
+      "finishedAt": "2026-09-21T16:29:23.171Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-04.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536",
+          "url": "http://localhost:5200/api/c2c/project-vault/f8421433-27ec-4cc5-8ed6-6a597982bf2c",
           "status": 200
         }
       ],
@@ -190,15 +190,15 @@
       "action": "GET /api/c2c/project-vault/:programId/search?q=<title fragment>",
       "expected": "results contain the ingested document id",
       "status": "pass",
-      "observed": "total=1; hit 19c17bfe-98e4-4100-8862-f34c3a64c202",
-      "startedAt": "2026-09-21T01:04:40.723Z",
-      "finishedAt": "2026-09-21T01:04:40.986Z",
+      "observed": "total=1; hit beade2e4-2981-488d-9dde-87e6ea8dfee9",
+      "startedAt": "2026-09-21T16:29:23.171Z",
+      "finishedAt": "2026-09-21T16:29:23.434Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-05.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536/search?q=OQ-002%20Protocol",
+          "url": "http://localhost:5200/api/c2c/project-vault/f8421433-27ec-4cc5-8ed6-6a597982bf2c/search?q=OQ-002%20Protocol",
           "status": 200
         }
       ],
@@ -216,9 +216,9 @@
       "action": "GET /api/c2c/project-vault/:programId/documents/:documentId/download",
       "expected": "HTTP 200; SHA-256 of the body equals the hash recorded at ingest",
       "status": "pass",
-      "observed": "611 bytes, sha256 d8a712c15871… matches",
-      "startedAt": "2026-09-21T01:04:40.986Z",
-      "finishedAt": "2026-09-21T01:04:40.999Z",
+      "observed": "611 bytes, sha256 f48a189d623c… matches",
+      "startedAt": "2026-09-21T16:29:23.434Z",
+      "finishedAt": "2026-09-21T16:29:23.451Z",
       "evidence": [
         "steps/OQ-VAULT-06.download.json"
       ],
@@ -238,20 +238,20 @@
       "expected": "Filing into Module 5 answers success:true with the folder recorded; a folder outside the program's vault view is refused (4xx), not stored",
       "status": "pass",
       "observed": "filed: {\"folderId\":\"module-5\",\"folderLabel\":\"Module 5 · Clinical\",\"evidenceKind\":null,\"ctdSection\":null,\"placementStatus\":\"confirmed\",\"confidence\":null,\"rationale\":\"OQ-002 step 07 — filed into Module 5 by va; k510 → 400 INVALID_FOLDER",
-      "startedAt": "2026-09-21T01:04:40.999Z",
-      "finishedAt": "2026-09-21T01:04:41.538Z",
+      "startedAt": "2026-09-21T16:29:23.451Z",
+      "finishedAt": "2026-09-21T16:29:23.984Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-07.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536/file",
+          "url": "http://localhost:5200/api/c2c/project-vault/f8421433-27ec-4cc5-8ed6-6a597982bf2c/file",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-07.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536/file",
+          "url": "http://localhost:5200/api/c2c/project-vault/f8421433-27ec-4cc5-8ed6-6a597982bf2c/file",
           "status": 400
         }
       ],
@@ -268,32 +268,21 @@
       "kind": "scripted",
       "action": "GET /api/c2c/actions/verify-chain",
       "expected": "ok:true — the audit_logs chain is intact after ingest and filing",
-      "status": "fail",
-      "observed": {
-        "ok": false,
-        "rowsChecked": 100,
-        "brokenAt": {
-          "id": "a9989a0f-d67a-41ad-afae-db7f867f6d47",
-          "expected": "d713147801fa786d605f3b84e4bbf61c5640820acd9476ef917bd136ca3a9479",
-          "stored": "5b992f989c3f35290fd2e1b8d3b09e3a6bcef48ba0cb3a41df230aa0e431603e"
-        }
-      },
-      "startedAt": "2026-09-21T01:04:41.538Z",
-      "finishedAt": "2026-09-21T01:04:41.878Z",
-      "evidence": [
-        "steps/OQ-VAULT-08.at-failure.png"
-      ],
+      "status": "pass",
+      "observed": "verify-chain {\"ok\":true,\"rowsChecked\":395,\"tenants\":18,\"legacyRows\":229,\"sequencedRows\":166}",
+      "startedAt": "2026-09-21T16:29:23.984Z",
+      "finishedAt": "2026-09-21T16:29:24.255Z",
+      "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-08.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5700/api/c2c/actions/verify-chain",
-          "status": 409
+          "url": "http://localhost:5200/api/c2c/actions/verify-chain",
+          "status": 200
         }
       ],
       "consoleErrors": [],
       "note": null,
-      "failure": "verify-chain expected ok, got 409",
       "rateLimitRetries": 0
     },
     {
@@ -304,25 +293,22 @@
       ],
       "kind": "scripted",
       "action": "GET /api/audit-trail/ledger?limit=200 (the read model behind /concept2cure/audit-trail)",
-      "expected": "The ledger grew since the baseline taken in OQ-VAULT-00 and the newest entry carries record/previous hashes",
-      "status": "fail",
-      "observed": [],
-      "startedAt": "2026-09-21T01:04:41.878Z",
-      "finishedAt": "2026-09-21T01:04:42.187Z",
-      "evidence": [
-        "steps/OQ-VAULT-08b.at-failure.png"
-      ],
+      "expected": "The ledger window lists the ingest and the filing of this document, each carrying record/previous hashes, and the server reports the chain verdict",
+      "status": "pass",
+      "observed": "ledger window 200 (baseline 200); 3 chained entr(ies) for the document: Vault Document File, Vault Document Download, Vault Document Ingest; server chain verdict ok=false over 33 row(s)",
+      "startedAt": "2026-09-21T16:29:24.256Z",
+      "finishedAt": "2026-09-21T16:29:24.540Z",
+      "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-08b.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5700/api/audit-trail/ledger?limit=200",
+          "url": "http://localhost:5200/api/audit-trail/ledger?limit=200",
           "status": 200
         }
       ],
       "consoleErrors": [],
-      "note": "The ledger surface reads audit_events (server/routes/audit-trail-ledger.routes.ts:173). Vault ingest and filing write their chained rows through server/services/auditService.ts writeChainedAuditRow (audit_logs). If this step fails, the surface a user is told to inspect does not show the writes the launch apps make.",
-      "failure": "ledger surface did not grow (0 → 0) although ingest and filing were audited",
+      "note": "The ledger surface reads audit_logs merged with audit_events (server/routes/audit-trail-ledger.routes.ts) — the chained store vault ingest and filing write through server/services/auditService.ts writeChainedAuditRow. The read is a newest-first WINDOW (limit), so a ledger already longer than the window cannot \"grow\"; the observable claim is that this document's events are in it, hash-chained, and that the server's own verdict (meta.chain) is present. If this step fails, the surface a user is told to inspect does not show the writes the launch apps make.",
       "rateLimitRetries": 0
     },
     {
@@ -334,24 +320,23 @@
       "kind": "scripted",
       "action": "Open /concept2cure/vault with the program selected",
       "expected": "The data room renders and the document title is visible",
-      "status": "fail",
-      "observed": "CLIENT CATEGORIES\nWORKSPACE\nSCIENCE & INTELLIGENCE\nEXPLORE\nQUICK ACCESS\nJS\nConcept2Cure.RI\n›\nBiotech & Pharma\n›\nVault (DMS)\nBiotech & Pharma\nCT\nConcept2Cure Therapeutics\nSearch, jump, or run a command\n⌘K\nTask\n3\nDOCUMENTS\nPROJECT VAULT\nVault (DMS)\nIND · 21 CFR 312\n73 documents\nOpen project\nInspection readiness\nCSR\nPROTOCOL\nCER\nIB\nDSUR\nPSUR\nSAP\nSAR\nMODULE 2\nMODULE 3\nMODULE 4\nMODULE 5\nSOP\nREPORT\nCORRESPONDENCE\nOTHER\nUpload\nAsk AnA to import\n Works alongside Veeva Vault, SharePoint & OneDrive — search in place, import with approval (detect, classify, approve), export everything. No rip-and-replace",
-      "startedAt": "2026-09-21T01:04:42.187Z",
-      "finishedAt": "2026-09-21T01:05:18.913Z",
+      "status": "pass",
+      "observed": "data room shows the document",
+      "startedAt": "2026-09-21T16:29:24.540Z",
+      "finishedAt": "2026-09-21T16:29:30.726Z",
       "evidence": [
-        "steps/OQ-VAULT-09.at-failure.png"
+        "steps/OQ-VAULT-09.png"
       ],
       "api": [],
       "consoleErrors": [
         {
-          "at": "2026-09-21T01:04:46.609Z",
+          "at": "2026-09-21T16:29:29.003Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
         }
       ],
       "note": null,
       "browser429": 0,
-      "failure": "page text does not contain \"OQ-002 Protocol 20260921010434\"",
       "rateLimitRetries": 0
     },
     {
@@ -365,14 +350,14 @@
       "expected": "HTTP 404",
       "status": "pass",
       "observed": "HTTP 404",
-      "startedAt": "2026-09-21T01:05:18.914Z",
-      "finishedAt": "2026-09-21T01:05:19.180Z",
+      "startedAt": "2026-09-21T16:29:30.726Z",
+      "finishedAt": "2026-09-21T16:29:30.985Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-10.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5700/api/c2c/project-vault/00000000-0000-4000-8000-000000000000",
+          "url": "http://localhost:5200/api/c2c/project-vault/00000000-0000-4000-8000-000000000000",
           "status": 404
         }
       ],

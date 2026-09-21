@@ -36,7 +36,7 @@ IQ-001 executed; the test identity can create programs (OQ-VAULT-00 creates one 
 | OQ-VAULT-06 | URS-VAULT-006 | scripted | Download the document | 200; SHA-256 of the body equals the ingest hash |
 | OQ-VAULT-07 | URS-VAULT-007 | scripted | File into `module-5`; then attempt `k510` | Filing recorded with `folderId`; cross-modality folder refused (4xx) |
 | OQ-VAULT-08 | URS-VAULT-008 | scripted | `GET /api/c2c/actions/verify-chain` | `ok:true` |
-| OQ-VAULT-08b | URS-VAULT-008 | scripted | `GET /api/audit-trail/ledger` | Grew since baseline; newest entry hash-chained |
+| OQ-VAULT-08b | URS-VAULT-008 | scripted | `GET /api/audit-trail/ledger` | The window lists this document's ingest and filing, each hash-chained; the server's chain verdict (`meta.chain`) is present (v0.2: a windowed read cannot be asserted to "grow") |
 | OQ-VAULT-09 | URS-VAULT-009 | unscripted (browser) | Open `/concept2cure/vault` with the program selected | Document title visible in the data room; screenshot |
 | OQ-VAULT-10 | URS-VAULT-010 | scripted | Read a random program id | 404 |
 

@@ -1,10 +1,11 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/c2c/projects",
+    "url": "http://localhost:5200/api/c2c/projects",
     "anonymous": false,
+    "identity": null,
     "body": {
-      "name": "OQ-001 IND program 20260921010239",
+      "name": "OQ-001 IND program 20260921162551",
       "programType": "ind",
       "primaryAgency": "FDA",
       "indication": "Validation exercise — OQ-001",
@@ -14,14 +15,14 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 74,
+    "durationMs": 217,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": "bd9b4c1c-4560-4482-a561-2b6bd1c22ea4",
-        "title": "OQ-001 IND program 20260921010239",
+        "id": "2e0bc313-c6db-4db9-b70a-9db466b681a5",
+        "title": "OQ-001 IND program 20260921162551",
         "ws": "Biotech",
-        "code": "OIP2-JL4P",
+        "code": "OIP2-ITW7",
         "stage": "Planning",
         "readiness": 0,
         "status": "active",
@@ -32,9 +33,9 @@
       },
       "meta": {
         "created": true,
-        "documentId": "doc_15b38481822a41c09fe4f32902daa18d",
+        "documentId": "doc_4556fbaf0a7042a683e57fa46b64ed41",
         "scaffoldedSections": 92,
-        "submissionId": 38,
+        "submissionId": 60,
         "submissionCreated": true,
         "projectAnchorId": null,
         "projectAnchorSkipped": "NO_CLIENT_WORKSPACE",

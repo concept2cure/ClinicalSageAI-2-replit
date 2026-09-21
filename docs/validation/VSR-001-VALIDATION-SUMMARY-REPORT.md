@@ -198,3 +198,63 @@ Observation (no disposition needed): after a controlled revision (OQ-QMS-07) the
 Item 1's local clause is done for OQ-003/005/006 at the protocol level; the staging executions, items 2–6 and the dispositions of F-1, F-2, F-6, F-10, F-11 and now F-12 remain. OQ-AUTH-13/14 are unqualified until F-12 is fixed and OQ-003 re-executed. Model-dependent steps (OQ-AUTH-16, the OQ-SRDY-03 narrative) remain unexecuted without a provider; none was simulated.
 
 Prepared by Claude session WF (drafting only; cannot sign). No result was edited after execution.
+
+## 10. Addendum 2026-09-21 — full re-execution on the corrected trunk (control tower)
+
+Every corrective action from §8 and §9 was landed on `concept2cure-v2` (WA F-1/F-2,
+WB F-3/F-9, WC F-4/F-5/F-7/F-8, WD IQ-DEV-001, WE F-10/F-11, F-12 in the authoring
+object-authorization middleware) and all six OQ protocols were run once more, in order,
+against one server (port 5200, no AI provider, `OQ_SIGNER_*` set to the local second
+signer of §9) on a working tree with nothing uncommitted.
+
+### 10.1 Protocol correction
+
+OQ-VAULT-08b asserted that the ledger "grew" since OQ-VAULT-00. The ledger read is a
+newest-first window (`limit`), so on a database whose ledger already exceeds the window
+the count cannot change although the writes are present and chained — the step failed on
+that arithmetic alone (the document's ingest and filing were the newest three entries,
+each with `hash`/`prevHash`). The step now asserts what is observable: the window lists
+this document's ingest and filing, each hash-chained, and the server's own chain verdict
+(`meta.chain`, one verifier over the tenant's whole chain, added with F-2's follow-up) is
+present. OQ-002 v0.2 records the change.
+
+### 10.2 Results
+
+| Protocol | Steps | Pass | Fail | Deviation | Not executed |
+|---|---|---|---|---|---|
+| OQ-001 Projects | 16 | 16 | 0 | 0 | 0 |
+| OQ-002 Vault | 12 | 12 | 0 | 0 | 0 |
+| OQ-003 Authoring | 24 | 22 | 1 | 1 | 0 |
+| OQ-004 Submission Center | 15 | 15 | 0 | 0 | 0 |
+| OQ-005 Submission Readiness | 9 | 9 | 0 | 0 | 0 |
+| OQ-006 QMS | 20 | 20 | 0 | 0 | 0 |
+| **Total** | **96** | **94** | **1** | **1** | **0** |
+
+TM-001 regenerated: 67 requirements — 65 pass, 1 partial, 1 fail, 0 open, 0 uncovered
+(baseline §5: 43 / 2 / 7 / 15 / 0).
+
+### 10.3 Dispositions
+
+| Finding | State |
+|---|---|
+| F-1, F-2 | Fixed (WA): chain per tenant with `chain_seq`; ledger reads `audit_logs`; OQ-PROJ-06/06b, OQ-VAULT-08/08b pass. Verify on staging with `npm run ops:verify-audit-chain`. |
+| F-3 | Fixed (WB), verified locally with a credentialed signer (§9); verify on staging. |
+| F-4, F-5, F-7, F-8 | Fixed (WC); OQ-VAULT-02, OQ-PROJ-10, OQ-SUBC-10/13, OQ-SRDY-07 pass. |
+| F-6 | **Open — design decision.** Two review stores (`authoring_reviews`/`authoring_workflow_steps` vs `document_workflows`/`workflow_approvals`). OQ-AUTH-17b fails; URS-AUTH-017 reads fail in TM-001. Requires the founder's choice of the one canonical lifecycle before code changes. |
+| F-9 | Fixed (WB); OQ-SRDY-03 passes with the deterministic verdict; the model narrative path is unexecuted without a provider. |
+| F-10, F-11 | Fixed (WE); OQ-AUTH-15 and OQ-VAULT-09 pass. |
+| F-12 | Fixed (middleware classifies `e-sign` as an approval action); OQ-AUTH-13/14 pass. |
+| IQ-DEV-001 | Fixed (WD); IQ-07 passes. |
+| P-1, P-2 | Closed by protocol change (§9); staging execution with a real second account owed. |
+| OQ-AUTH-16 | Deviation — no PQ-passed provider configured; nothing simulated. |
+
+### 10.4 What the package still owes before signature
+
+Staging execution of IQ-001 and all six OQ protocols with the production image, a real
+second signer account, and a configured PQ-passed provider for OQ-AUTH-16; the F-6
+decision and its re-execution; signatures (founder and one qualified contractor).
+
+Prepared by the control-tower Claude session (drafting only; cannot sign). No result was
+edited after execution; the runner regenerated every record under
+`docs/evidence/W3/2026-09-20/`.
+

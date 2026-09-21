@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5900/api/authoring/sections/b9cb188a-a468-4956-b8d8-5b931fed9062/history/verify",
+    "url": "http://localhost:5200/api/authoring/sections/12d601ed-b37e-40ed-afde-ade6e34795a7/history/verify",
     "anonymous": false,
     "identity": null,
     "body": null

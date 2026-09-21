@@ -1,17 +1,18 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536/file",
+    "url": "http://localhost:5200/api/c2c/project-vault/f8421433-27ec-4cc5-8ed6-6a597982bf2c/file",
     "anonymous": false,
+    "identity": null,
     "body": {
-      "documentId": "19c17bfe-98e4-4100-8862-f34c3a64c202",
+      "documentId": "beade2e4-2981-488d-9dde-87e6ea8dfee9",
       "folderId": "k510"
     }
   },
   "response": {
     "status": 400,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 17,
+    "durationMs": 14,
     "rateLimitRetries": 0,
     "body": {
       "success": false,

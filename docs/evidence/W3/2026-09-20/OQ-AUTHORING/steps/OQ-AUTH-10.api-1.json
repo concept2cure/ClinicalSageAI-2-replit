@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5900/api/authoring/docs/7aa154e6-07ca-4469-a1e4-c8e6952a32ab/audit",
+    "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/audit",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,14 +9,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 8,
+    "durationMs": 11,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "events": [
         {
-          "id": "0414e0d8-4253-446e-a5fe-b4baa04716aa",
-          "doc_id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
+          "id": "a78b8111-99c8-4b5c-84a8-ee4aa3e78a59",
+          "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
           "section_id": null,
           "event_type": "comment_added",
           "actor": "jonmichaelpsmith@gmail.com",
@@ -25,33 +25,33 @@
           "content_hash_before": null,
           "content_hash_after": null,
           "metadata": {
-            "comment_id": "42aeade3-368c-4a91-b58a-cc7c46ad17b3",
-            "section_id": "b9cb188a-a468-4956-b8d8-5b931fed9062"
+            "comment_id": "4fe1b27a-86eb-4b04-8ae2-f2de69bc2a16",
+            "section_id": "12d601ed-b37e-40ed-afde-ade6e34795a7"
           },
-          "created_at": "2026-09-21T01:44:32.459Z",
+          "created_at": "2026-09-21T16:26:57.810Z",
           "tenant_id": 2
         },
         {
-          "id": "807c6e7b-41fa-4be6-b4c6-d4ae5e6a2fb5",
-          "doc_id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
-          "section_id": "b9cb188a-a468-4956-b8d8-5b931fed9062",
+          "id": "13755875-53d7-4ad2-89f2-0b371442607d",
+          "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
+          "section_id": "12d601ed-b37e-40ed-afde-ade6e34795a7",
           "event_type": "REVERT",
           "actor": "jonmichaelpsmith@gmail.com",
           "actor_role": "unknown",
-          "change_reason": "Reverted to revision 6eaf4dfe-f572-46d9-be0b-c1f9f0084aeb",
+          "change_reason": "Reverted to revision 3b26b79d-b791-48af-85a0-d003c79df218",
           "content_hash_before": "5f2aa1c0c7f6ce423a26acc9c5219b729b5f6601b73128f399231ff7fd36b1c4",
           "content_hash_after": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
           "metadata": {
-            "revisionId": "6eaf4dfe-f572-46d9-be0b-c1f9f0084aeb",
-            "revisionCreatedAt": "2026-09-21T01:44:29.502Z"
+            "revisionId": "3b26b79d-b791-48af-85a0-d003c79df218",
+            "revisionCreatedAt": "2026-09-21T16:26:54.873Z"
           },
-          "created_at": "2026-09-21T01:44:31.661Z",
+          "created_at": "2026-09-21T16:26:57.019Z",
           "tenant_id": 2
         },
         {
-          "id": "e6507725-ec0f-4012-9872-d873d096322e",
-          "doc_id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
-          "section_id": "b9cb188a-a468-4956-b8d8-5b931fed9062",
+          "id": "22d4a32f-a343-4709-bfd9-d02622b3e352",
+          "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
+          "section_id": "12d601ed-b37e-40ed-afde-ade6e34795a7",
           "event_type": "UPDATE",
           "actor": "jonmichaelpsmith@gmail.com",
           "actor_role": "unknown",
@@ -61,13 +61,13 @@
           "metadata": {
             "titleChanged": false
           },
-          "created_at": "2026-09-21T01:44:30.044Z",
+          "created_at": "2026-09-21T16:26:55.408Z",
           "tenant_id": 2
         },
         {
-          "id": "45a27991-f57a-43e2-b21d-2ca5620b4d1f",
-          "doc_id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
-          "section_id": "b9cb188a-a468-4956-b8d8-5b931fed9062",
+          "id": "3b3f6892-b6fa-441d-8360-299ed20ac4bb",
+          "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
+          "section_id": "12d601ed-b37e-40ed-afde-ade6e34795a7",
           "event_type": "CREATE",
           "actor": "jonmichaelpsmith@gmail.com",
           "actor_role": "unknown",
@@ -78,13 +78,13 @@
             "code": "2.5",
             "title": "Clinical Overview"
           },
-          "created_at": "2026-09-21T01:44:29.503Z",
+          "created_at": "2026-09-21T16:26:54.874Z",
           "tenant_id": 2
         },
         {
-          "id": "224efa95-1206-45dc-b613-b3084b41bc9f",
-          "doc_id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
-          "section_id": "b1d4ed2a-a251-49c7-9bd3-528a8aa0be7b",
+          "id": "11659ac7-7cc1-46a8-b7cc-7c087dbefaa4",
+          "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
+          "section_id": "9dadb0c2-f23e-4e85-b16d-99197dbede7b",
           "event_type": "CREATE",
           "actor": "jonmichaelpsmith@gmail.com",
           "actor_role": "unknown",
@@ -95,7 +95,7 @@
             "code": "2.7",
             "title": "Clinical Summary"
           },
-          "created_at": "2026-09-21T01:44:29.220Z",
+          "created_at": "2026-09-21T16:26:54.595Z",
           "tenant_id": 2
         }
       ],

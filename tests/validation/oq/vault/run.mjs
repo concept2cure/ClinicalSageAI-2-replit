@@ -195,17 +195,20 @@ await step(
     urs: ['URS-VAULT-008'],
     title: 'Ingest and filing appear on the organisation audit ledger surface',
     action: 'GET /api/audit-trail/ledger?limit=200 (the read model behind /concept2cure/audit-trail)',
-    expected: 'The ledger grew since the baseline taken in OQ-VAULT-00 and the newest entry carries record/previous hashes',
+    expected: 'The ledger window lists the ingest and the filing of this document, each carrying record/previous hashes, and the server reports the chain verdict',
     dependsOn: ['OQ-VAULT-07'],
-    note: 'The ledger surface reads audit_events (server/routes/audit-trail-ledger.routes.ts:173). Vault ingest and filing write their chained rows through server/services/auditService.ts writeChainedAuditRow (audit_logs). If this step fails, the surface a user is told to inspect does not show the writes the launch apps make.',
+    note: 'The ledger surface reads audit_logs merged with audit_events (server/routes/audit-trail-ledger.routes.ts) — the chained store vault ingest and filing write through server/services/auditService.ts writeChainedAuditRow. The read is a newest-first WINDOW (limit), so a ledger already longer than the window cannot "grow"; the observable claim is that this document\'s events are in it, hash-chained, and that the server\'s own verdict (meta.chain) is present. If this step fails, the surface a user is told to inspect does not show the writes the launch apps make.',
   },
   async ({ api, expect }) => {
     const l = await api('GET', '/api/audit-trail/ledger?limit=200');
     const rows = l.json?.data ?? [];
-    expect(rows.length > state.ledgerBefore, `ledger surface did not grow (${state.ledgerBefore} → ${rows.length}) although ingest and filing were audited`, rows.slice(0, 3));
-    const newest = rows[0];
-    expect(newest?.hash && newest?.prevHash, 'newest entry lacks chain hashes', newest);
-    return `ledger ${state.ledgerBefore} → ${rows.length}; newest: ${newest.event} (${newest.kind})`;
+    const mine = rows.filter((r) => String(r.target ?? '').includes(state.doc.id));
+    expect(mine.length >= 2, `ledger window does not list this document\'s ingest and filing (${mine.length} entr(ies) for ${state.doc.id} in ${rows.length})`, rows.slice(0, 3));
+    const unchained = mine.filter((r) => !(r.hash && r.prevHash));
+    expect(unchained.length === 0, 'an entry for this document lacks chain hashes', unchained);
+    const chain = l.json?.meta?.chain;
+    expect(chain && typeof chain.ok === 'boolean', 'the ledger carried no server chain verdict (meta.chain)', l.json?.meta);
+    return `ledger window ${rows.length} (baseline ${state.ledgerBefore}); ${mine.length} chained entr(ies) for the document: ${mine.map((r) => r.event).join(', ')}; server chain verdict ok=${chain.ok} over ${chain.rowsChecked} row(s)`;
   },
 );
 

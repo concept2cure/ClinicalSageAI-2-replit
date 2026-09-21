@@ -1,93 +1,93 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-09-21T01:07:58.651Z",
+  "generatedAt": "2026-09-21T16:29:42.222Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-20",
   "summary": {
     "requirements": 67,
-    "pass": 53,
+    "pass": 65,
     "partial": 1,
-    "fail": 10,
-    "open": 3,
+    "fail": 1,
+    "open": 0,
     "uncovered": 0
   },
   "byApp": {
     "Projects": {
       "requirements": 9,
-      "pass": 8,
+      "pass": 9,
       "partial": 0,
-      "fail": 1,
+      "fail": 0,
       "open": 0,
       "uncovered": 0
     },
     "Vault": {
       "requirements": 10,
-      "pass": 8,
+      "pass": 10,
       "partial": 0,
-      "fail": 2,
+      "fail": 0,
       "open": 0,
       "uncovered": 0
     },
     "Authoring": {
       "requirements": 15,
-      "pass": 10,
-      "partial": 0,
-      "fail": 3,
-      "open": 2,
-      "uncovered": 0
-    },
-    "Submission Center": {
-      "requirements": 12,
-      "pass": 10,
+      "pass": 13,
       "partial": 1,
       "fail": 1,
       "open": 0,
       "uncovered": 0
     },
+    "Submission Center": {
+      "requirements": 12,
+      "pass": 12,
+      "partial": 0,
+      "fail": 0,
+      "open": 0,
+      "uncovered": 0
+    },
     "Submission Readiness": {
       "requirements": 8,
-      "pass": 7,
+      "pass": 8,
       "partial": 0,
-      "fail": 1,
+      "fail": 0,
       "open": 0,
       "uncovered": 0
     },
     "QMS controlled documents": {
       "requirements": 13,
-      "pass": 10,
+      "pass": 13,
       "partial": 0,
-      "fail": 2,
-      "open": 1,
+      "fail": 0,
+      "open": 0,
       "uncovered": 0
     }
   },
   "stepTotals": {
-    "pass": 73,
-    "fail": 12,
-    "deviation": 2,
-    "not-executed": 3,
-    "steps": 90
+    "pass": 94,
+    "fail": 1,
+    "deviation": 1,
+    "not-executed": 0,
+    "steps": 96
   },
   "protocols": [
     {
       "protocolId": "OQ-003",
       "app": "Authoring",
-      "executedAt": "2026-09-21T01:05:19.359Z",
+      "executedAt": "2026-09-21T16:26:52.611Z",
       "counts": {
-        "pass": 16,
-        "fail": 3,
+        "pass": 22,
+        "fail": 1,
         "deviation": 1,
-        "not-executed": 2
+        "not-executed": 0
       },
       "evidence": "docs/evidence/W3/2026-09-20/OQ-AUTHORING/"
     },
     {
       "protocolId": "OQ-001",
       "app": "Projects",
-      "executedAt": "2026-09-21T01:02:36.322Z",
+      "executedAt": "2026-09-21T16:25:49.411Z",
       "counts": {
-        "pass": 14,
-        "fail": 2,
+        "pass": 16,
+        "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
@@ -96,23 +96,23 @@
     {
       "protocolId": "OQ-006",
       "app": "QMS controlled documents",
-      "executedAt": "2026-09-21T01:07:03.022Z",
+      "executedAt": "2026-09-21T16:28:10.701Z",
       "counts": {
-        "pass": 13,
-        "fail": 2,
+        "pass": 20,
+        "fail": 0,
         "deviation": 0,
-        "not-executed": 1
+        "not-executed": 0
       },
       "evidence": "docs/evidence/W3/2026-09-20/OQ-QMS/"
     },
     {
       "protocolId": "OQ-004",
       "app": "Submission Center",
-      "executedAt": "2026-09-21T00:23:17.145Z",
+      "executedAt": "2026-09-21T16:27:19.126Z",
       "counts": {
-        "pass": 13,
-        "fail": 1,
-        "deviation": 1,
+        "pass": 15,
+        "fail": 0,
+        "deviation": 0,
         "not-executed": 0
       },
       "evidence": "docs/evidence/W3/2026-09-20/OQ-SUBMISSION-CENTER/"
@@ -120,10 +120,10 @@
     {
       "protocolId": "OQ-005",
       "app": "Submission Readiness",
-      "executedAt": "2026-09-21T01:05:45.948Z",
+      "executedAt": "2026-09-21T16:27:46.394Z",
       "counts": {
-        "pass": 8,
-        "fail": 1,
+        "pass": 9,
+        "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
@@ -132,10 +132,10 @@
     {
       "protocolId": "OQ-002",
       "app": "Vault",
-      "executedAt": "2026-09-21T01:04:33.310Z",
+      "executedAt": "2026-09-21T16:29:20.238Z",
       "counts": {
-        "pass": 9,
-        "fail": 3,
+        "pass": 12,
+        "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
@@ -256,14 +256,14 @@
         {
           "protocol": "OQ-001",
           "step": "OQ-PROJ-06",
-          "status": "fail",
+          "status": "pass",
           "evidenceDir": "OQ-PROJECTS",
           "title": "Program creation is attributable in the activity feed and the hash-chained audit log verifies"
         },
         {
           "protocol": "OQ-001",
           "step": "OQ-PROJ-06b",
-          "status": "fail",
+          "status": "pass",
           "evidenceDir": "OQ-PROJECTS",
           "title": "Program creation appears on the organisation audit ledger surface"
         }
@@ -274,7 +274,7 @@
         "assurance": "scripted",
         "rationale": "activity feed, chain verifier, ledger surface each checked"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     {
       "id": "URS-PROJ-005",
@@ -610,14 +610,14 @@
         {
           "protocol": "OQ-002",
           "step": "OQ-VAULT-08",
-          "status": "fail",
+          "status": "pass",
           "evidenceDir": "OQ-VAULT",
           "title": "The hash-chained audit log verifies after the governed writes"
         },
         {
           "protocol": "OQ-002",
           "step": "OQ-VAULT-08b",
-          "status": "fail",
+          "status": "pass",
           "evidenceDir": "OQ-VAULT",
           "title": "Ingest and filing appear on the organisation audit ledger surface"
         }
@@ -628,7 +628,7 @@
         "assurance": "scripted",
         "rationale": "chain verifier and ledger read model"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-009",
@@ -641,7 +641,7 @@
         {
           "protocol": "OQ-002",
           "step": "OQ-VAULT-09",
-          "status": "fail",
+          "status": "pass",
           "evidenceDir": "OQ-VAULT",
           "title": "Vault surface renders the data room with the document"
         }
@@ -652,7 +652,7 @@
         "assurance": "unscripted",
         "rationale": "screenshot; observed state recorded"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-010",
@@ -850,6 +850,20 @@
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
           "title": "Comment on a section"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-11a",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Freeze is refused while a review comment is unresolved (negative case)"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-11b",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Resolve the review comment through the comment-resolution API; the resolution is audited"
         }
       ],
       "ra": {
@@ -874,6 +888,13 @@
           "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
           "title": "Document audit trail records the operations with actor and hashes"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-11b",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Resolve the review comment through the comment-resolution API; the resolution is audited"
         }
       ],
       "ra": {
@@ -894,10 +915,17 @@
       "steps": [
         {
           "protocol": "OQ-003",
-          "step": "OQ-AUTH-11",
-          "status": "fail",
+          "step": "OQ-AUTH-11a",
+          "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
-          "title": "Freeze the document into an immutable snapshot"
+          "title": "Freeze is refused while a review comment is unresolved (negative case)"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-11",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Freeze the settled document into an immutable snapshot"
         }
       ],
       "ra": {
@@ -906,7 +934,7 @@
         "assurance": "scripted",
         "rationale": "freeze, retrieve, second freeze refused"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     {
       "id": "URS-AUTH-010",
@@ -926,14 +954,14 @@
         {
           "protocol": "OQ-003",
           "step": "OQ-AUTH-13",
-          "status": "not-executed",
+          "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
           "title": "E-signature refuses a wrong PIN and an invalid meaning"
         },
         {
           "protocol": "OQ-003",
           "step": "OQ-AUTH-14",
-          "status": "not-executed",
+          "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
           "title": "Apply a REVIEWER e-signature bound to the frozen snapshot"
         }
@@ -944,7 +972,7 @@
         "assurance": "scripted",
         "rationale": "wrong PIN, wrong meaning, valid signature listed with `pin_verified` and covered hash"
       },
-      "verdict": "open"
+      "verdict": "pass"
     },
     {
       "id": "URS-AUTH-011",
@@ -957,7 +985,7 @@
         {
           "protocol": "OQ-003",
           "step": "OQ-AUTH-14",
-          "status": "not-executed",
+          "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
           "title": "Apply a REVIEWER e-signature bound to the frozen snapshot"
         }
@@ -968,7 +996,7 @@
         "assurance": "scripted (positive only locally)",
         "rationale": "negative case needs a second identity on staging"
       },
-      "verdict": "open"
+      "verdict": "pass"
     },
     {
       "id": "URS-AUTH-012",
@@ -981,7 +1009,7 @@
         {
           "protocol": "OQ-003",
           "step": "OQ-AUTH-15",
-          "status": "fail",
+          "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
           "title": "AI drafting fails closed when no provider is configured"
         },
@@ -999,7 +1027,7 @@
         "assurance": "scripted (fail-closed) / deviation (drafting)",
         "rationale": "provider absent locally; drafting re-executed with a PQ-passed model"
       },
-      "verdict": "fail"
+      "verdict": "partial"
     },
     {
       "id": "URS-AUTH-013",
@@ -1263,9 +1291,9 @@
         {
           "protocol": "OQ-004",
           "step": "OQ-SUBC-08",
-          "status": "deviation",
+          "status": "pass",
           "evidenceDir": "OQ-SUBMISSION-CENTER",
-          "title": "Freeze the sequence under a Part 11 e-signature"
+          "title": "CREDENTIALED: sign the sequence under a Part 11 e-signature; freeze is then decided by the composed gate, not by the signature alone"
         }
       ],
       "ra": {
@@ -1274,7 +1302,7 @@
         "assurance": "scripted (negative) / deviation (positive)",
         "rationale": "the positive case requires a password the runner does not hold"
       },
-      "verdict": "partial"
+      "verdict": "pass"
     },
     {
       "id": "URS-SUBC-008",
@@ -1311,7 +1339,7 @@
         {
           "protocol": "OQ-004",
           "step": "OQ-SUBC-10",
-          "status": "fail",
+          "status": "pass",
           "evidenceDir": "OQ-SUBMISSION-CENTER",
           "title": "Dossier map for the open program"
         }
@@ -1322,7 +1350,7 @@
         "assurance": "scripted",
         "rationale": "id-space consistency between shell and route is the risk"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     {
       "id": "URS-SUBC-010",
@@ -1464,7 +1492,7 @@
           "step": "OQ-SRDY-03",
           "status": "pass",
           "evidenceDir": "OQ-SUBMISSION-READINESS",
-          "title": "Dispatch QC records the gate outcome from the tamper-proof assessment"
+          "title": "Dispatch QC returns the deterministic gate verdict; the model only narrates"
         }
       ],
       "ra": {
@@ -1558,7 +1586,7 @@
         {
           "protocol": "OQ-005",
           "step": "OQ-SRDY-07",
-          "status": "fail",
+          "status": "pass",
           "evidenceDir": "OQ-SUBMISSION-READINESS",
           "title": "Dispatch Readiness surface renders the sequence readiness"
         }
@@ -1569,7 +1597,7 @@
         "assurance": "scripted",
         "rationale": "sequence number visible for the open program"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     {
       "id": "URS-SRDY-008",
@@ -1653,7 +1681,7 @@
           "step": "OQ-QMS-06a",
           "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "Create a second SOP (fixture for the approval-credential, training, review-due and retire steps)"
+          "title": "Create a second SOP (fixture for the credential refusals, training, review-due and retire steps)"
         }
       ],
       "ra": {
@@ -1699,9 +1727,16 @@
         {
           "protocol": "OQ-006",
           "step": "OQ-QMS-05",
-          "status": "fail",
+          "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "Approve the SOP; approver and time are stamped and audited"
+          "title": "CREDENTIALED: a second identity approves SOP A as an electronic signature; the approval is stamped, audited and signed; a second approval is refused"
+        },
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-06d",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "CREDENTIALED: the signer approves SOP B (fixture — an effective document for the review-due and retire steps)"
         }
       ],
       "ra": {
@@ -1710,7 +1745,7 @@
         "assurance": "scripted",
         "rationale": "approve, re-approve refused"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     {
       "id": "URS-QMS-005",
@@ -1722,10 +1757,38 @@
       "steps": [
         {
           "protocol": "OQ-006",
+          "step": "OQ-QMS-05",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "CREDENTIALED: a second identity approves SOP A as an electronic signature; the approval is stamped, audited and signed; a second approval is refused"
+        },
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-05b",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Exactly one electronic_signatures row is bound to the approval; the §11.70 content digest recomputes from the stored document"
+        },
+        {
+          "protocol": "OQ-006",
           "step": "OQ-QMS-06",
           "status": "pass",
           "evidenceDir": "OQ-QMS",
-          "title": "Approval of a controlled document requires an electronic-signature credential"
+          "title": "Approval without any signature component is refused"
+        },
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-06b",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "CREDENTIALED: a wrong password is refused and nothing is signed"
+        },
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-06c",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "CREDENTIALED: the author cannot approve their own document (two-person rule)"
         }
       ],
       "ra": {
@@ -1747,7 +1810,7 @@
         {
           "protocol": "OQ-006",
           "step": "OQ-QMS-07",
-          "status": "not-executed",
+          "status": "pass",
           "evidenceDir": "OQ-QMS",
           "title": "Open a controlled revision (reason required; major version bump; back to draft)"
         }
@@ -1758,7 +1821,7 @@
         "assurance": "scripted",
         "rationale": "422 then positive"
       },
-      "verdict": "open"
+      "verdict": "pass"
     },
     {
       "id": "URS-QMS-007",
@@ -1819,7 +1882,7 @@
         {
           "protocol": "OQ-006",
           "step": "OQ-QMS-09",
-          "status": "fail",
+          "status": "pass",
           "evidenceDir": "OQ-QMS",
           "title": "Review-due report lists effective documents approaching review"
         }
@@ -1830,7 +1893,7 @@
         "assurance": "scripted",
         "rationale": "positive"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     {
       "id": "URS-QMS-010",

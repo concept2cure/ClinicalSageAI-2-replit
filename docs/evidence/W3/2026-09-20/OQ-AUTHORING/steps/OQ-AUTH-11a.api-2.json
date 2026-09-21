@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5900/api/authoring/docs/7aa154e6-07ca-4469-a1e4-c8e6952a32ab/frozen",
+    "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/frozen",
     "anonymous": false,
     "identity": null,
     "body": null

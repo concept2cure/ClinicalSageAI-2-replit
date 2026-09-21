@@ -5,16 +5,16 @@
   "appLabel": "Submission Readiness",
   "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
   "executedBy": "automated runner tests/validation/oq/submission-readiness/run.mjs",
-  "executedAt": "2026-09-21T01:42:18.775Z",
-  "finishedAt": "2026-09-21T01:42:47.213Z",
+  "executedAt": "2026-09-21T16:27:46.394Z",
+  "finishedAt": "2026-09-21T16:28:10.625Z",
   "environment": {
-    "baseUrl": "http://localhost:5900",
+    "baseUrl": "http://localhost:5200",
     "node": "v22.22.2",
     "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
     "playwrightCore": "1.63.0",
     "git": {
       "branch": "concept2cure-v2",
-      "commit": "d05e88140d8de00266f01c1c02b4f7b662b6d952"
+      "commit": "ad69500f01f56af1b2b3a0c3b3c69feaaa384ba6"
     },
     "testUser": "jonmichaelpsmith@gmail.com",
     "organizationId": "2",
@@ -54,39 +54,39 @@
       "action": "POST projects / vault ingest / submissions / sequences / leaves",
       "expected": "All created through the public API",
       "status": "pass",
-      "observed": "program ab461c6b-4bd5-481f-9f78-755869f3e20b; submission 52; sequence 23; leaf m5.3.5",
-      "startedAt": "2026-09-21T01:42:19.660Z",
-      "finishedAt": "2026-09-21T01:42:24.484Z",
+      "observed": "program 60431ee1-8abc-4e18-be07-fae7f2d10ce5; submission 65; sequence 27; leaf m5.3.5",
+      "startedAt": "2026-09-21T16:27:47.009Z",
+      "finishedAt": "2026-09-21T16:27:48.846Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-00.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5900/api/c2c/projects",
+          "url": "http://localhost:5200/api/c2c/projects",
           "status": 201
         },
         {
           "file": "steps/OQ-SRDY-00.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5900/api/vault/ingest",
+          "url": "http://localhost:5200/api/vault/ingest",
           "status": 201
         },
         {
           "file": "steps/OQ-SRDY-00.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5900/api/submissions/52",
+          "url": "http://localhost:5200/api/submissions/65",
           "status": 200
         },
         {
           "file": "steps/OQ-SRDY-00.api-4.json",
           "method": "POST",
-          "url": "http://localhost:5900/api/submissions/52/sequences",
+          "url": "http://localhost:5200/api/submissions/65/sequences",
           "status": 201
         },
         {
           "file": "steps/OQ-SRDY-00.api-5.json",
           "method": "PUT",
-          "url": "http://localhost:5900/api/submissions/sequences/23/leaves",
+          "url": "http://localhost:5200/api/submissions/sequences/27/leaves",
           "status": 200
         }
       ],
@@ -105,14 +105,14 @@
       "expected": "HTTP 401/403",
       "status": "pass",
       "observed": "HTTP 401",
-      "startedAt": "2026-09-21T01:42:24.484Z",
-      "finishedAt": "2026-09-21T01:42:24.740Z",
+      "startedAt": "2026-09-21T16:27:48.846Z",
+      "finishedAt": "2026-09-21T16:27:49.102Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-01.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5900/api/submissions/sequences/23/dispatch-readiness",
+          "url": "http://localhost:5200/api/submissions/sequences/27/dispatch-readiness",
           "status": 401
         }
       ],
@@ -131,14 +131,14 @@
       "expected": "HTTP 200 with numeric validationErrors / unacknowledgedShadowCriticals and an explicit ready/blocked verdict with reasons",
       "status": "pass",
       "observed": "gate.cleared=false; validationErrors=1; shadowCriticals=0; releaseSignature=unsigned; blockers: 1 open error-severity validation finding(s) must be resolved before dispatch. | No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting. | Dispatch is blocked because this submission type requires a 21 CFR Par",
-      "startedAt": "2026-09-21T01:42:24.740Z",
-      "finishedAt": "2026-09-21T01:42:25.062Z",
+      "startedAt": "2026-09-21T16:27:49.102Z",
+      "finishedAt": "2026-09-21T16:27:49.401Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-02.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5900/api/submissions/sequences/23/dispatch-readiness",
+          "url": "http://localhost:5200/api/submissions/sequences/27/dispatch-readiness",
           "status": 200
         }
       ],
@@ -157,20 +157,20 @@
       "expected": "HTTP 200 with { clearedToDispatch, blockers, warnings, checklist, verdictSource:\"assess-dispatch-readiness\", narrative, narrativeUnavailable }; clearedToDispatch and blockers EQUAL the GET dispatch-readiness gate (client-supplied zeros do not override it); with no provider narrative is null and narrativeUnavailable.code is PROVIDER_UNAVAILABLE — the verdict is a pass without a provider, the narrative is recorded as not executed",
       "status": "pass",
       "observed": "clearedToDispatch=false == gate.cleared; 3 blockers identical to the gate; verdictSource=assess-dispatch-readiness; checklist 7 items; narrative: not executed — no provider (narrativeUnavailable.code PROVIDER_UNAVAILABLE); the verdict did not need one",
-      "startedAt": "2026-09-21T01:42:25.062Z",
-      "finishedAt": "2026-09-21T01:42:25.615Z",
+      "startedAt": "2026-09-21T16:27:49.401Z",
+      "finishedAt": "2026-09-21T16:27:49.940Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-03.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5900/api/submissions/52/dispatch-qc",
+          "url": "http://localhost:5200/api/submissions/65/dispatch-qc",
           "status": 200
         },
         {
           "file": "steps/OQ-SRDY-03.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5900/api/submissions/sequences/23/dispatch-readiness",
+          "url": "http://localhost:5200/api/submissions/sequences/27/dispatch-readiness",
           "status": 200
         }
       ],
@@ -189,20 +189,20 @@
       "expected": "submission_readiness_review listed with 5 steps; execute without projectId → 400",
       "status": "pass",
       "observed": "template present (5 steps); execute w/o projectId → 400",
-      "startedAt": "2026-09-21T01:42:25.616Z",
-      "finishedAt": "2026-09-21T01:42:26.133Z",
+      "startedAt": "2026-09-21T16:27:49.940Z",
+      "finishedAt": "2026-09-21T16:27:50.457Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-04.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5900/api/orchestration/templates",
+          "url": "http://localhost:5200/api/orchestration/templates",
           "status": 200
         },
         {
           "file": "steps/OQ-SRDY-04.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5900/api/orchestration/execute",
+          "url": "http://localhost:5200/api/orchestration/execute",
           "status": 400
         }
       ],
@@ -220,21 +220,21 @@
       "action": "POST /api/orchestration/execute {templateId:\"submission_readiness_review\", projectId}; GET /executions/:id",
       "expected": "Execution starts (2xx) and its status is readable; steps are orchestrator_logic (no model call)",
       "status": "pass",
-      "observed": "execution 52551655-6cac-4ec2-afc4-d5ec66079fba: {\"executionId\":\"52551655-6cac-4ec2-afc4-d5ec66079fba\",\"templateId\":\"submission_readiness_review\",\"status\":\"completed\",\"projectId\":\"ab461c6b-4bd5-481f-9f78-755869f3e20b\",\"organizationId\":2,\"module\":\"ind\",\"steps\":[{\"stepId\":\"inspect_project_state\",\"name\":\"Inspect project state\",\"status\":\"completed\",\"s",
-      "startedAt": "2026-09-21T01:42:26.133Z",
-      "finishedAt": "2026-09-21T01:42:28.210Z",
+      "observed": "execution 290cb020-f8b7-4c26-abdd-d1a069366944: {\"executionId\":\"290cb020-f8b7-4c26-abdd-d1a069366944\",\"templateId\":\"submission_readiness_review\",\"status\":\"completed\",\"projectId\":\"60431ee1-8abc-4e18-be07-fae7f2d10ce5\",\"organizationId\":2,\"module\":\"ind\",\"steps\":[{\"stepId\":\"inspect_project_state\",\"name\":\"Inspect project state\",\"status\":\"completed\",\"s",
+      "startedAt": "2026-09-21T16:27:50.457Z",
+      "finishedAt": "2026-09-21T16:27:52.503Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-05.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5900/api/orchestration/execute",
+          "url": "http://localhost:5200/api/orchestration/execute",
           "status": 200
         },
         {
           "file": "steps/OQ-SRDY-05.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5900/api/orchestration/executions/52551655-6cac-4ec2-afc4-d5ec66079fba",
+          "url": "http://localhost:5200/api/orchestration/executions/290cb020-f8b7-4c26-abdd-d1a069366944",
           "status": 200
         }
       ],
@@ -253,14 +253,14 @@
       "expected": "HTTP 200 with a deterministic scan result (possibly zero findings)",
       "status": "pass",
       "observed": "{\"findings\":[],\"summary\":{\"total\":0,\"bySeverity\":{},\"byType\":{}}}",
-      "startedAt": "2026-09-21T01:42:28.210Z",
-      "finishedAt": "2026-09-21T01:42:28.488Z",
+      "startedAt": "2026-09-21T16:27:52.503Z",
+      "finishedAt": "2026-09-21T16:27:52.767Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-06.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5900/api/governed-intelligence/contradictions/scan/1",
+          "url": "http://localhost:5200/api/governed-intelligence/contradictions/scan/1",
           "status": 200
         }
       ],
@@ -279,15 +279,15 @@
       "expected": "The surface shows the open program's sequence (number 0000) and its gate verdict",
       "status": "pass",
       "observed": "sequence 0000 visible",
-      "startedAt": "2026-09-21T01:42:28.488Z",
-      "finishedAt": "2026-09-21T01:42:34.890Z",
+      "startedAt": "2026-09-21T16:27:52.767Z",
+      "finishedAt": "2026-09-21T16:27:58.743Z",
       "evidence": [
         "steps/OQ-SRDY-07.png"
       ],
       "api": [],
       "consoleErrors": [
         {
-          "at": "2026-09-21T01:42:32.965Z",
+          "at": "2026-09-21T16:27:57.179Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
         }
@@ -307,8 +307,8 @@
       "expected": "Both render (screenshots); an unavailable store is shown as an error/empty state, never as data",
       "status": "pass",
       "observed": "rendered",
-      "startedAt": "2026-09-21T01:42:34.890Z",
-      "finishedAt": "2026-09-21T01:42:47.127Z",
+      "startedAt": "2026-09-21T16:27:58.743Z",
+      "finishedAt": "2026-09-21T16:28:10.544Z",
       "evidence": [
         "steps/OQ-SRDY-08.orchestration.png",
         "steps/OQ-SRDY-08.inconsistency.png"
@@ -316,32 +316,32 @@
       "api": [],
       "consoleErrors": [
         {
-          "at": "2026-09-21T01:42:39.289Z",
+          "at": "2026-09-21T16:28:03.112Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
         },
         {
-          "at": "2026-09-21T01:42:40.549Z",
+          "at": "2026-09-21T16:28:04.059Z",
           "kind": "console.error",
           "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
         },
         {
-          "at": "2026-09-21T01:42:40.550Z",
+          "at": "2026-09-21T16:28:04.076Z",
           "kind": "console.error",
           "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
         },
         {
-          "at": "2026-09-21T01:42:45.448Z",
+          "at": "2026-09-21T16:28:09.098Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
         },
         {
-          "at": "2026-09-21T01:42:46.544Z",
+          "at": "2026-09-21T16:28:09.953Z",
           "kind": "console.error",
           "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
         },
         {
-          "at": "2026-09-21T01:42:46.545Z",
+          "at": "2026-09-21T16:28:09.954Z",
           "kind": "console.error",
           "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
         }

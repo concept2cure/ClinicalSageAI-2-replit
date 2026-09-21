@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5900/api/authoring/users/pin",
+    "url": "http://localhost:5200/api/authoring/users/pin",
     "anonymous": false,
     "identity": null,
     "body": {

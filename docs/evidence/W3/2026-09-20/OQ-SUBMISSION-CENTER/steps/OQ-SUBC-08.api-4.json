@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/submissions/sequences/26/freeze",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "signatureActionId": "act_29473ffd90ec438da3c9c0e087088058"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 10,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "INVALID_STATE",
+        "message": "Cannot transition sequence from assembling to frozen."
+      }
+    }
+  }
+}

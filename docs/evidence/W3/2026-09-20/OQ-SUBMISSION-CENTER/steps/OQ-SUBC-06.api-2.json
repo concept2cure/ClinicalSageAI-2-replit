@@ -1,8 +1,9 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/submissions/sequences/16/freeze",
+    "url": "http://localhost:5200/api/submissions/sequences/26/freeze",
     "anonymous": false,
+    "identity": null,
     "body": {}
   },
   "response": {

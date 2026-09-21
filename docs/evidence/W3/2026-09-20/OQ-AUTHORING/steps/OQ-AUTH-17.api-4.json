@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5900/api/authoring/docs/7aa154e6-07ca-4469-a1e4-c8e6952a32ab/workflow",
+    "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/workflow",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -9,22 +9,22 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 12,
+    "durationMs": 9,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
-      "workflowId": "1135e7b7-1988-44fe-8661-5b57aab35468",
+      "workflowId": "ae0b4a57-de93-40d5-b448-8bc63ef0d6eb",
       "steps": [
         {
-          "workflow_id": "1135e7b7-1988-44fe-8661-5b57aab35468",
-          "doc_id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
+          "workflow_id": "ae0b4a57-de93-40d5-b448-8bc63ef0d6eb",
+          "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
           "step_no": 1,
           "role": "QA",
           "approver_email": "jonmichaelpsmith@gmail.com",
           "status": "PENDING",
           "decision_note": null,
           "decided_at": null,
-          "created_at": "2026-09-21T01:44:33.775Z",
+          "created_at": "2026-09-21T16:26:59.198Z",
           "tenant_id": 2
         }
       ]

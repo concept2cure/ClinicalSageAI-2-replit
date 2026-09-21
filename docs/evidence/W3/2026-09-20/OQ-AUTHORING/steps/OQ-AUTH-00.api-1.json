@@ -1,11 +1,11 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5900/api/c2c/projects",
+    "url": "http://localhost:5200/api/c2c/projects",
     "anonymous": false,
     "identity": null,
     "body": {
-      "name": "OQ-003 Authoring program 20260921014427",
+      "name": "OQ-003 Authoring program 20260921162653",
       "programType": "ind",
       "primaryAgency": "FDA",
       "indication": "Validation exercise",
@@ -15,14 +15,14 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 92,
+    "durationMs": 53,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": "623828eb-0c14-49f0-8723-8b5b2b7b9c61",
-        "title": "OQ-003 Authoring program 20260921014427",
+        "id": "71aef2b9-4b03-4a9e-b097-b2278f59b7d4",
+        "title": "OQ-003 Authoring program 20260921162653",
         "ws": "Biotech",
-        "code": "OAP2-15TE",
+        "code": "OAP2-JYQW",
         "stage": "Planning",
         "readiness": 0,
         "status": "active",
@@ -33,9 +33,9 @@
       },
       "meta": {
         "created": true,
-        "documentId": "doc_6e9da0c1f8d1413a92a9f36b27e30efa",
+        "documentId": "doc_147b2996f3304a28bbf2fc58a700a30d",
         "scaffoldedSections": 92,
-        "submissionId": 53,
+        "submissionId": 62,
         "submissionCreated": true,
         "projectAnchorId": null,
         "projectAnchorSkipped": "NO_CLIENT_WORKSPACE",
