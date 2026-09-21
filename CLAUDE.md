@@ -142,6 +142,18 @@ rows, D1–D10, each with named evidence. Until every row is green:
 
 ## Working agreement
 
+- **Deleting a user-facing capability requires the reachable replacement, by path.**
+  Five editor generations were built and deleted in this repository between
+  2026-06 and 2026-08 (`git log --all --diff-filter=D -- 'client/**/*Editor*'
+  'client/**/*Canvas*'`), each removed as "unreachable" by a session that did not
+  know the previous one existed, each rebuilt by the next. Before removing a
+  surface, component, tool or route: run that history search; name, in the
+  commit message, the file that now delivers the same user outcome and the test
+  or CI gate that proves it is reachable; if no such file exists, the deletion
+  is a product decision for the founder, not a cleanup. The AnA-draft → canvas →
+  editor → vault path is pinned by `docs/design/ANA_DOCUMENT_CANVAS.md` and its
+  gate; a change that breaks that gate is not a refactor.
+
 - **Zero duplication.** One canonical implementation per capability. A parallel
   path is migrated onto the canonical one and deleted in the same change.
 - **Fail closed, never fabricate.** No simulated agency responses outside dev,
