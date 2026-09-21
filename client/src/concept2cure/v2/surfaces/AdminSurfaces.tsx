@@ -892,6 +892,58 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
   );
 }
 
+/** The ledger route's `meta.chain` (server/routes/audit-trail-ledger.routes.ts
+ *  AuditLedgerChainVerdict), reduced to what the banner and AnA state. */
+type ChainVerdictView = {
+  verdict: 'intact' | 'broken' | 'unverified';
+  rowsChecked: number;
+  legacyRows: number;
+  sequencedRows: number;
+  brokenAt: { id: string; segment: string; commitsTo: string | null } | null;
+};
+
+function readChainVerdict(meta: Record<string, unknown> | undefined): ChainVerdictView {
+  const c = meta?.chain as
+    | {
+        ok?: unknown;
+        rowsChecked?: unknown;
+        legacyRows?: unknown;
+        sequencedRows?: unknown;
+        brokenAt?: { id?: unknown; segment?: unknown; commitsTo?: unknown } | null;
+      }
+    | undefined;
+  const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+  if (!c || typeof c.ok !== 'boolean') {
+    return { verdict: 'unverified', rowsChecked: 0, legacyRows: 0, sequencedRows: 0, brokenAt: null };
+  }
+  const b = c.brokenAt;
+  return {
+    verdict: c.ok ? 'intact' : 'broken',
+    rowsChecked: n(c.rowsChecked),
+    legacyRows: n(c.legacyRows),
+    sequencedRows: n(c.sequencedRows),
+    brokenAt:
+      b && typeof b.id === 'string'
+        ? { id: b.id, segment: String(b.segment ?? ''), commitsTo: typeof b.commitsTo === 'string' ? b.commitsTo : null }
+        : null,
+  };
+}
+
+function chainTone(v: ChainVerdictView): string {
+  return v.verdict === 'intact' ? 'var(--success)' : v.verdict === 'broken' ? 'var(--error)' : 'var(--warning)';
+}
+
+function chainSummary(v: ChainVerdictView): string {
+  if (v.verdict === 'unverified') {
+    return 'The server returned no chain verdict on this read, so the chain is not verified here';
+  }
+  const span = `${v.rowsChecked} chained entry(ies) verified server-side (${v.sequencedRows} sequenced, ${v.legacyRows} legacy)`;
+  if (v.verdict === 'intact') return `Hash chain verifies intact over ${span}`;
+  return `Hash chain breaks at entry ${v.brokenAt?.id ?? 'unknown'} (${v.brokenAt?.segment ?? 'unknown'} segment, ${
+    v.brokenAt?.commitsTo ? `commits to ${v.brokenAt.commitsTo}` : 'content does not derive from any predecessor'
+  }) over ${span}`;
+}
+
 /* ════════════ Audit trail — immutable hash-chain viewer (ss11.10(e)) ════════════
    Live-anchored to GET /api/audit-trail/ledger (mounted in
    server/bootstrap/register-regulatory-routes.ts, router
@@ -952,7 +1004,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
   // Real hash-chained ledger. useLiveRows unwraps the { success, data } envelope,
   // returns a fresh [] while loading / on error (rendered directly, so no seed
   // loop), and sets `error` only on a genuine fetch failure.
-  const { rows: entries, loading, error } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
+  const { rows: entries, loading, error, meta } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
 
   const log = entries.filter(
     (e) =>
@@ -993,19 +1045,14 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
     setExporting(false);
   };
 
-  /* Hash-chain integrity check (visual) */
-  const chainStatus = (() => {
-    const all = entries;
-    let valid = 0;
-    for (let i = 0; i < all.length; i++) {
-      if (i === all.length - 1) {
-        if (all[i].prevHash === 'genesis') valid++;
-        continue;
-      }
-      if (all[i].prevHash === all[i + 1].hash) valid++;
-    }
-    return { total: all.length, valid, intact: valid === all.length };
-  })();
+  /* Hash-chain verdict — the SERVER's (route meta.chain, computed by the one
+     verifier over the tenant's whole audit_logs chain). This surface used to
+     count prevHash === next.hash over the rows on screen; that window merges
+     two stores, is cut by `limit`, and since the chain became per tenant a
+     legacy row may legitimately link to the global head — so the count was
+     not a verdict. No verdict from the server is reported as exactly that,
+     never as "intact". */
+  const chainStatus = readChainVerdict(meta);
 
   /* What AnA can see of this screen.
      A FAILED read publishes the failure, and on this surface that is not a
@@ -1035,8 +1082,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       summary:
         `Audit trail: ${entries.length} hash-chained entry(ies)` +
         (filtered ? `, filtered to ${log.length} by kind "${kind}"${term ? ` and the search "${q}"` : ''}` : '') +
-        `. Hash chain ${chainStatus.intact ? 'verifies intact' : `has ${chainStatus.total - chainStatus.valid} link(s) that do not verify`}` +
-        ` over ${chainStatus.total} entry(ies).` +
+        `. ${chainSummary(chainStatus)}` +
         (entry ? ` Entry ${entry.id} is open.` : ''),
       facts: {
         totalEntries: entries.length,
@@ -1044,7 +1090,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
         kindFilter: kind,
         searchTerm: term || null,
         entriesByKind: Object.fromEntries(kindCounts.map((k) => [k.id, k.n])),
-        hashChain: { total: chainStatus.total, verified: chainStatus.valid, intact: chainStatus.intact },
+        hashChain: chainStatus,
         hashChainViewOpen: chainView,
         // Enough to name an event back to the user, not the whole ledger.
         // `actor` (an individual's name, or an email via the server's
@@ -1137,31 +1183,31 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
           gap: 12,
           padding: '10px 14px',
           borderRadius: 8,
-          background: chainStatus.intact
-            ? 'color-mix(in srgb,var(--success) 10%,transparent)'
-            : 'color-mix(in srgb,var(--error) 10%,transparent)',
-          border:
-            '1px solid ' + (chainStatus.intact ? 'var(--success)' : 'var(--error)'),
+          background: `color-mix(in srgb,${chainTone(chainStatus)} 10%,transparent)`,
+          border: `1px solid ${chainTone(chainStatus)}`,
           marginBottom: 16,
           maxWidth: 680,
         }}
       >
         <span style={{ fontSize: 18 }}>
-          {chainStatus.intact ? I.shieldCheck : I.alertTriangle}
+          {chainStatus.verdict === 'intact' ? I.shieldCheck : I.alertTriangle}
         </span>
         <div style={{ flex: 1 }}>
           <div
             style={{
               fontWeight: 600,
               fontSize: 13,
-              color: chainStatus.intact ? 'var(--success)' : 'var(--error)',
+              color: chainTone(chainStatus),
             }}
           >
-            {chainStatus.intact ? 'Hash chain intact' : 'Chain verification failed'}
+            {chainStatus.verdict === 'intact'
+              ? 'Hash chain intact'
+              : chainStatus.verdict === 'broken'
+                ? 'Chain verification failed'
+                : 'Chain not verified'}
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--text-400)', marginTop: 2 }}>
-            {chainStatus.total} entries — {chainStatus.valid}/{chainStatus.total} links
-            verified — SHA-256 — append-only ledger
+            {chainSummary(chainStatus)} — SHA-256 — append-only ledger
           </div>
         </div>
         <span className="mono" style={{ fontSize: 10, color: 'var(--text-400)' }}>

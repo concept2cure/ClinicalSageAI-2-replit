@@ -65,7 +65,12 @@ import type { Pool, PoolClient } from 'pg';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context.js';
-import { AUDIT_CHAIN_HEAD_ORDER_SQL, AUDIT_CHAIN_ORDER_ASC_SQL } from '../services/audit/chain.js';
+import {
+  AUDIT_CHAIN_HEAD_ORDER_SQL,
+  AUDIT_CHAIN_ORDER_ASC_SQL,
+  verifyAuditChain,
+  type ChainVerificationResult,
+} from '../services/audit/chain.js';
 
 const logger = createScopedLogger('audit-trail-ledger-routes');
 
@@ -287,11 +292,25 @@ const AUDIT_EVENTS_SQL = `
    ORDER BY sequence_number DESC NULLS LAST, id DESC
    LIMIT $2`;
 
+/**
+ * The server's verdict on this tenant's audit_logs chain, computed by the one
+ * verifier (services/audit/chain.ts) over EVERY chained row of the tenant —
+ * not the window in `data`. The surface renders this and nothing it derives
+ * itself: a client-side prevHash === next.hash count over a merged window of
+ * two stores, with legacy rows that may link to a global head, is not a
+ * verdict. audit_events has its own per-organisation chain and is not covered
+ * here (`store` says so).
+ */
+export interface AuditLedgerChainVerdict extends Omit<ChainVerificationResult, 'tenants'> {
+  store: 'audit_logs';
+}
+
 export interface AuditLedgerResponse {
   success: true;
   data: AuditLedgerEntry[];
   /** How many entries each store contributed to `data`. */
   sources: Record<AuditLedgerSource, number>;
+  meta: { chain: AuditLedgerChainVerdict };
 }
 
 /**
@@ -315,7 +334,17 @@ export async function readAuditLedger(
     .slice(0, limit);
   const sources: Record<AuditLedgerSource, number> = { audit_logs: 0, audit_events: 0 };
   for (const e of merged) sources[e.source] += 1;
-  return { success: true, data: merged, sources };
+  // Same transaction, same tenant stamp, whole chain (not the window).
+  const v = await verifyAuditChain(client as PoolClient, { tenantId: orgId });
+  const chain: AuditLedgerChainVerdict = {
+    store: 'audit_logs',
+    ok: v.ok,
+    rowsChecked: v.rowsChecked,
+    legacyRows: v.legacyRows,
+    sequencedRows: v.sequencedRows,
+    ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
+  };
+  return { success: true, data: merged, sources, meta: { chain } };
 }
 
 // ─── Router Factory ───────────────────────────────────────────────────────────

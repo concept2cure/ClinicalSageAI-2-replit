@@ -117,6 +117,9 @@ describe('GET /api/audit-trail/ledger', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.sources).toEqual({ audit_logs: 2, audit_events: 0 });
+    // The verdict is the server verifier's, over the tenant's whole chain.
+    expect(res.body.meta.chain).toMatchObject({ store: 'audit_logs', ok: true, rowsChecked: 2, sequencedRows: 2, legacyRows: 0 });
+    expect(res.body.meta.chain.brokenAt).toBeUndefined();
     const data: AuditLedgerEntry[] = res.body.data;
     expect(data).toHaveLength(2);
 
@@ -189,6 +192,8 @@ describe('GET /api/audit-trail/ledger', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(2);
     expect(res.body.sources).toEqual({ audit_logs: 2, audit_events: 0 });
+    // The verdict covers the whole chain, not the two-row window.
+    expect(res.body.meta.chain).toMatchObject({ ok: true, rowsChecked: 3 });
   });
 
   it('refuses without tenant context (403) rather than reading anything', async () => {
