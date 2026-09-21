@@ -25,7 +25,7 @@
  *                GET /api/submissions/shadow-review/:runId/findings
  *   Cross-region POST /api/submissions/:id/cross-region
  *   Dispatch     GET /api/submissions/sequences/:seqId/dispatch-readiness
- *                POST /api/submissions/:id/dispatch-qc  (AI advisory)
+ *                POST /api/submissions/:id/dispatch-qc  (deterministic verdict; model narrates)
  */
 import React from 'react';
 import { I } from '../icons';
@@ -1044,13 +1044,25 @@ export function CrossRegionWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow }
 
 /* ═══ Dispatch — the deterministic gate + governed freeze/dispatch ══════════ */
 
-// POST /:id/dispatch-qc → runDispatchQc (AI advisory; server recomputes the
-// gate inputs from the sequence when sequenceId is supplied).
+// POST /:id/dispatch-qc → runDispatchQc. Since 2026-09-21 (VSR-001 F-9) the
+// verdict is the deterministic dispatch gate — with sequenceId, the SAME
+// composed gate the assessment above and freeze/dispatch enforce — and the
+// model, when a provider exists, only narrates it. `narrative` is prose;
+// nothing in it is a verdict.
 interface DispatchQcResult {
   clearedToDispatch: boolean;
   blockers: string[];
   warnings: string[];
   checklist: Array<{ item: string; pass: boolean }>;
+  verdictSource: 'assess-dispatch-readiness' | 'dispatch-gate';
+  narrative: {
+    source: 'model';
+    label: string;
+    promptVersion: string;
+    summary: string;
+    observations: string[];
+  } | null;
+  narrativeUnavailable: { code: string; message: string } | null;
 }
 
 export function DispatchWorkspace({
@@ -1217,33 +1229,53 @@ export function DispatchWorkspace({
                 onClick={runQc}
               >
                 {I.shieldCheck}{' '}
-                {qc.phase === 'running' ? 'Running dispatch QC…' : 'Run dispatch QC (AI advisory)'}
+                {qc.phase === 'running' ? 'Running dispatch QC…' : 'Run dispatch QC'}
               </button>
             </div>
             {qc.phase === 'error' && (
               <div className="sc-verdict tone-err sc-mt" role="status">
-                The dispatch QC advisory did not complete — {qc.error}. The deterministic gate
-                above is unaffected.
+                Dispatch QC did not complete — {qc.error}. The deterministic gate above is
+                unaffected.
               </div>
             )}
             {qc.phase === 'done' && qc.data && (
               <div className="sc-mt">
-                {/* The advisory's verdict is floored on the STRUCTURAL gate only —
-                    not the shadow-presence or external-validation gates the
-                    deterministic assessment merges in — so it could sit green
-                    under "Dispatch blocked" with no qualifier. It never outranks
-                    the gate, and says so; under a blocked gate it is never green. */}
+                {/* With a sequence the QC verdict IS the composed dispatch gate
+                    (verdictSource 'assess-dispatch-readiness'); it cannot disagree
+                    with the assessment above. The counts-only fallback covers
+                    less and says so in its warnings. Either way the tone follows
+                    the gate, never a model. */}
                 <div
                   className={`sc-verdict ${qc.data.clearedToDispatch && a?.gate.cleared ? 'tone-ok' : 'tone-warn'}`}
                   role="status"
                 >
-                  QC advisory: {qc.data.clearedToDispatch ? 'cleared to dispatch' : 'not cleared'}
+                  Dispatch QC: {qc.data.clearedToDispatch ? 'cleared to dispatch' : 'not cleared'}
                   {qc.data.blockers.length > 0 ? ` — ${qc.data.blockers.join(' ')}` : ''}
                   {qc.data.warnings.length > 0 ? ` Warnings: ${qc.data.warnings.join(' ')}` : ''}
                   {a && !a.gate.cleared
-                    ? ' The deterministic gate above still blocks dispatch; this advisory does not override it.'
-                    : ' Advisory only — the deterministic gate above decides.'}
+                    ? ' The deterministic gate above still blocks dispatch; this verdict does not override it.'
+                    : qc.data.verdictSource === 'dispatch-gate'
+                      ? ' Verdict from the count-based gate only; the sequence-level checks above were not part of it.'
+                      : ' Verdict from the deterministic sequence dispatch gate.'}
                 </div>
+                {qc.data.narrative ? (
+                  <div className="sc-verdict sc-mt" role="note">
+                    <span className="sp-row-s">{qc.data.narrative.label}</span>
+                    <p>{qc.data.narrative.summary}</p>
+                    {qc.data.narrative.observations.length > 0 && (
+                      <ul>
+                        {qc.data.narrative.observations.map((o, i) => (
+                          <li key={i}>{o}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ) : qc.data.narrativeUnavailable ? (
+                  <div className="sc-verdict sc-mt" role="note">
+                    No model narrative: {qc.data.narrativeUnavailable.message} The verdict above is
+                    unaffected.
+                  </div>
+                ) : null}
                 <div className="sp-list">
                   {qc.data.checklist.map((c, i) => (
                     <div key={i} className="sp-row">
