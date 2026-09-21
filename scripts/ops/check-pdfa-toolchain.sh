@@ -152,15 +152,19 @@ else
 fi
 
 # ── B. The product's own argument list (pdfa-pipeline.ts) ────────────────────
+# Mirrors convertToPdfA1bWithGhostscript exactly: since 2026-09-21 that list
+# carries the sRGB OutputIntent prelude (the same pdfmark sequence as A) and
+# --permit-file-read for the profile. Keep this block and that function in
+# step — a drift here is what section B exists to catch.
 outB="$work/pdfa-pipeline-args.pdf"
 if "$GS" -dPDFA=1 -sColorConversionStrategy=RGB -dPDFACompatibilityPolicy=1 \
      -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH \
-     -sOutputFile="$outB" "$src" >/dev/null 2>&1 && [ -s "$outB" ]; then
+     --permit-file-read="$ICC" -sOutputFile="$outB" "$prelude" "$src" >/dev/null 2>&1 && [ -s "$outB" ]; then
   reportB="$("$VERAPDF" --flavour 1b --format text "$outB" 2>&1)"; rcB=$?
   if [ $rcB -eq 0 ] && printf '%s' "$reportB" | grep -q '^PASS'; then
     ok "pipeline arguments (pdfa-pipeline.ts convertToPdfA1bWithGhostscript) produce a file veraPDF PASSes"
   else
-    msg="pipeline arguments (pdfa-pipeline.ts convertToPdfA1bWithGhostscript) produce a file veraPDF REJECTS for PDF/A-1b: the list has no OutputIntent (clause 6.2.3.3). The packager records converted:true on such a leaf. Product defect, not a toolchain gap — add an sRGB OutputIntent prelude to that argument list."
+    msg="pipeline arguments (pdfa-pipeline.ts convertToPdfA1bWithGhostscript, as mirrored above) produce a file veraPDF REJECTS for PDF/A-1b. The packager records converted:true on such a leaf. Product defect, not a toolchain gap — check the OutputIntent prelude and --permit-file-read in that argument list."
     if [ "$STRICT_PIPELINE" = "1" ]; then bad "$msg"; else warn "$msg"; fi
   fi
 else

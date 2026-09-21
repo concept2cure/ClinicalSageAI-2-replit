@@ -74,7 +74,7 @@ RUN set -eu; \
 # do this is not built. See scripts/ops/check-pdfa-toolchain.sh.
 COPY scripts/ops/check-pdfa-toolchain.sh /usr/local/bin/check-pdfa-toolchain
 RUN chmod 0755 /usr/local/bin/check-pdfa-toolchain && \
-    VERAPDF_EXPECTED_VERSION="${VERAPDF_VERSION}" check-pdfa-toolchain
+    PDFA_CHECK_STRICT_PIPELINE_ARGS=1 VERAPDF_EXPECTED_VERSION="${VERAPDF_VERSION}" check-pdfa-toolchain
 
 # Copy package files and npm config
 COPY package*.json .npmrc ./
