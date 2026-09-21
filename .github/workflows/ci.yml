@@ -276,6 +276,18 @@ jobs:
           npm run ci:launch-scope:selftest
           npm run ci:launch-scope
 
+      # D4's URS documents cite the code each requirement is implemented by.
+      # `validation:traceability` joins those rows to the executed OQ results;
+      # it cannot notice that a cited file was deleted, because a deleted file
+      # simply stops being mentioned and the row still renders. This gate makes
+      # the citation load-bearing. The selftest shows each refusal on a
+      # constructed case before the gate is trusted.
+      - name: Guardrails — validation traceability resolves (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:validation-traceability:selftest
+          npm run ci:validation-traceability
+
       - name: Guardrails — no API route or table name in user-visible copy
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:internals-in-copy
