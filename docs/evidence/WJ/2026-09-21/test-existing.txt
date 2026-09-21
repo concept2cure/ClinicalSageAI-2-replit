@@ -1,0 +1,3571 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+[database] Database connection successful
+
+stdout | server/services/__tests__/ana-ri.test.ts
+{
+  "timestamp": "2026-09-21T17:51:32.733Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:32.734Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts
+{
+  "timestamp": "2026-09-21T17:51:32.735Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-ri.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/__tests__/ana-ri.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-ri.test.ts
+{
+  "timestamp": "2026-09-21T17:51:34.830Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+{
+  "timestamp": "2026-09-21T17:51:35.990Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts
+{
+  "timestamp": "2026-09-21T17:51:36.149Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:36.150Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts
+{
+  "timestamp": "2026-09-21T17:51:36.151Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+{
+  "timestamp": "2026-09-21T17:51:36.283Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:36.284Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available
+{
+  "timestamp": "2026-09-21T17:51:36.285Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts
+Loaded 0 academic documents
+
+stderr | tests/routes/chat-upload-source-identity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/chat-upload-source-identity.test.ts
+{
+  "timestamp": "2026-09-21T17:51:36.581Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+[database] Database connection test failed { error: 'Database connection not available' }
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+[database] Initial connection test failed: Database connection not available
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+{
+  "timestamp": "2026-09-21T17:51:37.171Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+{
+  "timestamp": "2026-09-21T17:51:37.186Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:37.186Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable
+{
+  "timestamp": "2026-09-21T17:51:37.186Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns healthy when DB and gateway are available 5996ms
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+[database] Database connection test failed { error: 'Database ping failed' }
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+[database] Initial connection test failed: Database ping failed
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+{
+  "timestamp": "2026-09-21T17:51:37.466Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+{
+  "timestamp": "2026-09-21T17:51:37.474Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:37.474Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists
+{
+  "timestamp": "2026-09-21T17:51:37.474Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects audit intent from reviewer language 5ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects improve intent from rewrite language 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects risk intent from rejection language 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects strategy intent from pathway language 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > detects compare intent from comparison language 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectIntent > returns auto for generic messages 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects IND from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects 510(k) from message 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects NDA from message 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects BLA from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects CER from message 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > detects eCTD from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > detectSubmissionType > returns null for generic message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > intent lens changes affect orchestration output 22ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > explicit intent overrides auto-detection 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > role changes affect system prompt 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > submission type injects deficiency context 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > conversation history builds continuity context 10ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > detects an active workstream and injects it into the prompt 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > routes deficiency-heavy messages into the deficiency response workstream 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > detects a workstream handoff when the thread pivots from strategy into drafting 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > continuity context does not inject conflicting submission type 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > continuity concern patterns require problem context, not just mention 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Orchestrator > orchestrate > suggested actions match intent lens 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > penalizes hedging language in writing quality 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > rewards evidence labels in evidence discipline 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > detects document consequence in responses 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Evaluation > assigns correct grade thresholds 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for IND submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for 510k submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for PMA submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for De Novo submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns deficiencies for CER submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns critical deficiencies 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > finds deficiency by ID 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Deficiency Taxonomy > returns category summary 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers CEO role from title 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers RA lead from title 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers medical writer from screen name 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > infers CMC lead from screen name 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > returns general for unknown signals 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > builds role-specific output structure for CEO 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > builds role-specific output structure for medical writer 4ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Adapter > builds role-specific output structure for investor 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Document Actions > returns all actions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Document Actions > filters actions by audit lens 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Document Actions > filters actions by improve lens 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > includes evidence discipline instructions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > includes document consequence mandate 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > adapts for different roles 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects intent lens overlay 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects workstream context when provided 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects workstream handoff context when provided 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > leaves the prompt unchanged for English (default language) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects a localized response-language overlay for non-English 7ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > keeps regulatory identifiers canonical while localizing prose 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects market-specific cultural awareness for each non-English market 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > does not add any cultural overlay for English 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects an English market brief when the target agency is non-US 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects the dedicated Japan regulatory deep-dive whenever Japan is in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > does not add the Japan deep-dive when Japan is not in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > injects the dedicated EU regulatory deep-dive whenever the EU is in scope 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > does not add the EU deep-dive when the EU is not in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > covers additional non-US target markets by agency name 7ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > skips the market brief when the language overlay already covers that market 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona > adds no market brief for FDA or unknown agencies 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > intent detection edge cases > handles empty string without crashing 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > intent detection edge cases > handles very long messages 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > intent detection edge cases > resolves ties deterministically — highest score wins 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > submission type edge cases > returns null for empty string 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > submission type edge cases > detects de novo from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > submission type edge cases > detects PMA from message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > orchestrator edge cases > handles empty conversation history 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > orchestrator edge cases > handles single-message history 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > evaluation edge cases > handles empty response 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Edge Cases > evaluation edge cases > calculateDimensionScore boundary: exactly 3 signals = score 3 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Artifact Generator > returns all 8 artifact types with titles 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Artifact Generator > includes all expected action types 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateResponseStructure > passes structured response with required sections 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateResponseStructure > fails unstructured response 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateResponseStructure > detects evidence labels 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > checkEvidenceDiscipline > flags substantive response without evidence labels 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > checkEvidenceDiscipline > passes response with evidence labels 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > checkEvidenceDiscipline > passes short casual responses without labels 0ms
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > handles narrative slash commands without unhandled markers
+{
+  "timestamp": "2026-09-21T17:51:37.510Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB and gateway are unavailable 355ms
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic preflight slash enrichment
+{
+  "timestamp": "2026-09-21T17:51:37.515Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+[database] Database connection successful
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic preflight slash enrichment
+{
+  "timestamp": "2026-09-21T17:51:37.517Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > with a project, an @app mention also attempts the app's data enrichment, by any handle, anywhere in the text
+{
+  "timestamp": "2026-09-21T17:51:37.549Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic draft slash enrichment
+{
+  "timestamp": "2026-09-21T17:51:37.550Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.555Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.555Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.556Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.556Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.557Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.558Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.559Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.559Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.560Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:104:8
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:182:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Live recommendations failed, falling back to memory: __vite_ssr_import_0__.db.select is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.580Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:104:8
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:182:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Live recommendations failed, falling back to memory: __vite_ssr_import_0__.db.select is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.583Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.584Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.585Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.585Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:104:8
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.587Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:182:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Live recommendations failed, falling back to memory: __vite_ssr_import_0__.db.select is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.588Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.589Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.590Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Cross-module analysis failed: __vite_ssr_import_0__.db.execute is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.591Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.592Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.592Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > passes high-quality artifact 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > rejects too-short artifact 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > flags generic AI filler 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > validateArtifactQuality > flags missing structure 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > buildArtifactContract > builds complete contract with all required fields 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > generation observability > logs and retrieves generation events 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enforcement Layer > generation observability > tracks generation stats 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > has all 27 commands registered 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > every command has name, description, parameters, and example 9ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > includes all critical workflow commands 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > COMMAND_REGISTRY completeness > has no duplicate command names 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > buildCommandContextForPrompt > returns a string with command list 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Command System > buildCommandContextForPrompt > includes command format instructions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > handles narrative slash commands without unhandled markers 6ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic preflight slash enrichment 6ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > reads an @app mention with NO project — the front-door composer — into the block and the rewrite 28ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > with a project, an @app mention also attempts the app's data enrichment, by any handle, anywhere in the text 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > supports deterministic draft slash enrichment 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > detects every supported slash command token 3ms
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.607Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:104:8
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.608Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:182:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 1)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Live recommendations failed, falling back to memory: __vite_ssr_import_0__.db.select is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.609Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.610Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.610Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.610Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.611Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.611Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.612Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.613Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.613Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.614Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.614Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.614Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.615Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.615Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.616Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.616Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.619Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.619Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.620Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.621Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.621Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.621Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.622Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.622Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.622Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.623Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.623Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.624Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[recommendation-engine] Document completeness generator failed: TypeError: __vite_ssr_import_1__.db.select is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:104:8
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.625Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:182:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+[recommendation-engine] Generator failed: TypeError: __vite_ssr_import_1__.db.execute is not a function
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:232:29
+    at /home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:28
+    at Array.map (<anonymous>)
+    at generateRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/recommendation-engine.ts:300:17)
+    at generateNextActions (/home/user/ClinicalSageAI-2-replit/server/services/intelligence/next-best-action-engine.ts:68:5)
+    at enrichWithRecommendations (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:516:31)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 2)
+    at Module.enrichContextForChat (/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/context-enrichment.ts:1362:21)
+    at /home/user/ClinicalSageAI-2-replit/server/services/__tests__/ana-ri.test.ts:1262:22
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+[enrichment] Live recommendations failed, falling back to memory: __vite_ssr_import_0__.db.select is not a function
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.627Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.627Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.629Z",
+  "level": "warn",
+  "message": "[enrichment] Live readiness failed, falling back to memory",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.630Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.631Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.631Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.632Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.632Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.633Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.633Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.633Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.634Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.636Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.638Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.639Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.639Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.639Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.642Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.643Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.643Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.646Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.647Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.647Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.649Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.651Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.651Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.653Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.653Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.654Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.657Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.658Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.659Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.661Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.662Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.662Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.663Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled)
+{
+  "timestamp": "2026-09-21T17:51:37.663Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Enrichment > ensures every backend slash command has a handler (no slash_unhandled) 109ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > gives AnA a distinct character (Who You Are) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > licenses polite, grounded pushback (Constructive Dissent) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > makes AnA aware of her wayfinding, wisdom, and challenge reflexes 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > carries an always-on empathy posture (Meet the human) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > keeps the reconciled regulatory breadth index in the live prompt 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Persona — character & dissent > stays inside the design-system voice (no emoji, no exclamation) in the new copy 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > covers all three segments plus cross-cutting wisdom 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > every heuristic is pattern -> consequence -> veteran move, with a basis 4ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > infers segment from submission type 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > infers segment and stage from free text 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > selectWisdom always includes cross-cutting heuristics for a segment 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > builds a non-empty wisdom block for any segment 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Industry Wisdom Pack > keeps wisdom copy inside the design-system voice (no emoji, no exclamation) 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > provides journeys for all three segments 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > every use case names first moves and a pitfall to watch 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > builds an orientation that asks to place the user when segment is unknown 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > builds a segment-specific tour-guide block 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Use-Case Playbooks > keeps playbook copy inside the design-system voice (no emoji, no exclamation) 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > covers all three segments plus cross-cutting challenges 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > every pattern has a claim, triggers, risk, challenge, reframe, and basis 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > linked heuristics resolve to real wisdom entries 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > fires on representative risky assertions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > does not fire on neutral questions 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > builds a polite-challenge block that invokes the dissent doctrine 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > returns empty when nothing is challengeable 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Constructive-Challenge Library > keeps challenge copy inside the design-system voice (no emoji, no exclamation) 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > covers all three segments plus cross-cutting frameworks 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > every framework states the trade-off, both tilt sets, and how to decide 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > fires on representative trade-off questions 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > does not fire on a plain factual question 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > builds a framework block that refuses to decide for the user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > forceGeneric makes an explicit /decide always do work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > returns empty for a non-trade-off message without forceGeneric 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Decision-Frameworks Pack > keeps framework copy inside the design-system voice 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > covers meeting prep, response strategy, and posture 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > every tactic states the move, why, watch-out, and basis 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > fires on meeting-prep and response-letter situations 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > can narrow by kind 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > does not fire on an unrelated drafting request 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > builds a tactics block, and forceGeneric always does work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Agency-Tactics Pack > keeps tactics copy inside the design-system voice 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > covers reading precedent, positioning, and differentiation 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > every play states the insight, move, watch-out, and basis 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > fires on precedent and positioning situations 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > does not fire on an unrelated drafting request 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > builds a block, and forceGeneric always does work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Competitive-Strategy Pack > keeps competitive copy inside the design-system voice 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > every state has a reading, attune, leadWith, and avoid 1ms
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > handles /align via enrichment and proactively detects stakeholder tension
+{
+  "timestamp": "2026-09-21T17:51:37.709Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > handles /align via enrichment and proactively detects stakeholder tension
+{
+  "timestamp": "2026-09-21T17:51:37.710Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+{
+  "timestamp": "2026-09-21T17:51:37.717Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > proactively injects the grounding guard on a high-stakes claim
+{
+  "timestamp": "2026-09-21T17:51:37.733Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+{
+  "timestamp": "2026-09-21T17:51:37.725Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:37.725Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled
+{
+  "timestamp": "2026-09-21T17:51:37.725Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > does not inject the guard on a plain orientation request
+{
+  "timestamp": "2026-09-21T17:51:37.743Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — capabilities command > grounds a "what can you do" request in the capability catalogue
+{
+  "timestamp": "2026-09-21T17:51:37.753Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+{
+  "timestamp": "2026-09-21T17:51:37.753Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — composer integration > preserves legacy join when no budget is requested
+{
+  "timestamp": "2026-09-21T17:51:37.762Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — composer integration > engages the composer and emits a trace when a budget is set
+{
+  "timestamp": "2026-09-21T17:51:37.763Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns degraded when DB ping fails even if pool exists 267ms
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > proactively injects the scope guard on a determination request
+{
+  "timestamp": "2026-09-21T17:51:37.770Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > does not inject the guard on a normal drafting request
+{
+  "timestamp": "2026-09-21T17:51:37.771Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+[database] Database connection successful
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /wisdom as a first-class slash command
+{
+  "timestamp": "2026-09-21T17:51:37.778Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /guide as a first-class slash command
+{
+  "timestamp": "2026-09-21T17:51:37.779Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > surfaces industry wisdom from a natural-language pitfall question
+{
+  "timestamp": "2026-09-21T17:51:37.782Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /challenge as a first-class slash command
+{
+  "timestamp": "2026-09-21T17:51:37.783Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively challenges a risky assertion mid-conversation
+{
+  "timestamp": "2026-09-21T17:51:37.784Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /decide as a first-class slash command
+{
+  "timestamp": "2026-09-21T17:51:37.786Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively frames a trade-off the user is weighing
+{
+  "timestamp": "2026-09-21T17:51:37.786Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /meeting as a first-class slash command
+{
+  "timestamp": "2026-09-21T17:51:37.787Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively coaches an agency-interaction situation
+{
+  "timestamp": "2026-09-21T17:51:37.788Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > applies a role lens when a role is supplied and a pack fired
+{
+  "timestamp": "2026-09-21T17:51:37.789Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /position as a first-class slash command
+{
+  "timestamp": "2026-09-21T17:51:37.790Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively reads the landscape on a positioning question
+{
+  "timestamp": "2026-09-21T17:51:37.790Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > reads a client in crisis and steadies the delivery
+{
+  "timestamp": "2026-09-21T17:51:37.791Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+stderr | server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > does not apply a role lens for the general role
+{
+  "timestamp": "2026-09-21T17:51:37.792Z",
+  "level": "warn",
+  "message": "[enrichment] Query failed",
+  "context": {
+    "error": "__vite_ssr_import_0__.db.select is not a function"
+  }
+}
+
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > reads the salient state from a message 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > crisis outranks a co-occurring softer state 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > returns null on a neutral, unemotional message 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > builds an attunement directive scoped to delivery, not truth 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > exposes a lookup by state 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Client Attunement > keeps attunement copy inside the design-system voice (no emoji, no exclamation) 5ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > covers cross-functional, commercial, executive, and partner axes 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > every alignment play states tension, insight, move, watch-out, and basis 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > fires on representative internal-tension situations 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > does not fire on a plain regulatory question 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > builds an alignment block, and forceGeneric always does work 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > ties the internal tension to regulatory consequence and leaves the call to the client 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > keeps stakeholder-alignment copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Stakeholder-Alignment Pack > handles /align via enrichment and proactively detects stakeholder tension 17ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > every claim check has a label, directive, and triggers 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > detects each high-stakes claim category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > does not fire on a plain conversational message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > builds a non-negotiable grounding directive scoped to the claims present 4ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > returns empty when there is nothing groundable 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > can scan AnA's drafted answer as a self-check, not only the user message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > exposes a lookup by category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > keeps claim-grounding copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Claim-Grounding Guard > persona declares the claim-grounding discipline 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > proactively injects the grounding guard on a high-stakes claim 9ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > grounds a high-stakes claim for a project-less user 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — claim-grounding integration > does not inject the guard on a plain orientation request 7ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > every capability has commands, a description, and a category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > command lookups resolve in both directions 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > lists capabilities by category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > has no duplicate command across capabilities 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > ANTI-DRIFT: every registered capability command is a wired slash command 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > ANTI-DRIFT: every judgment-pack slash command is catalogued here 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > builds a grounded catalogue that is not a recite-this menu 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Capability Registry > keeps capability copy inside the design-system voice 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — capabilities command > grounds a "what can you do" request in the capability catalogue 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — capabilities command > grounds capabilities for a project-less user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > tokenizes, drops stopwords, and keeps regulatory tokens like 510(k) 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > approxTokens scales with length and is always positive 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > BM25 ranks the block that shares query terms highest 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > returns all-zero relevance for an empty or stopword-only query 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > lexical similarity is high for near-duplicates, low for unrelated text 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > composes within budget, dropping the lowest-value block when it cannot fit 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > always keeps pinned blocks regardless of relevance 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > de-duplicates near-identical blocks via MMR under tight budget 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > is a no-op (keeps everything) when budget is generous 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > handles the empty candidate set 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > emits an explainable trace for every candidate 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Context Composer > maps source priorities and slash-command aliases to pack weights 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — composer integration > preserves legacy join when no budget is requested 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — composer integration > engages the composer and emits a trace when a budget is set 2ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > returns the prior exactly when there are no samples 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > rewards an all-accepted source above an all-rejected one 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > treats edited as partial credit (between accepted and rejected) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > shrinks low-sample sources toward the prior (small-sample safety) 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > maps rewards to bounded multipliers centered on 1.0 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > builds a multiplier map only for sources with stats 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > applyAdaptivePriority scales and clamps, and is a no-op for unknown sources 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Adaptive Priority > learned multipliers can reorder composer selection under tight budget 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > every scope check has a label, mode, directive, and triggers 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > detects each scope-sensitive category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > flags data-integrity requests as requiring refusal, not just handoff 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > does not fire on a normal in-scope request 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > builds a hand-off directive that keeps AnA useful, not stonewalling 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > builds an integrity-boundary directive on a data-integrity ask 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > returns empty when the request is fully in scope 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > exposes a lookup by category 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > keeps scope-guard copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Scope Guard > persona declares the know-your-limits discipline 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > proactively injects the scope guard on a determination request 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > injects the integrity boundary for a project-less data-integrity ask 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — scope-guard integration > does not inject the guard on a normal drafting request 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Lens > produces a distinct audience lens for each non-general role 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Lens > returns empty for the general role and reports lens availability 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Role Lens > keeps lens copy inside the design-system voice 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > provides a first-session tour for every segment plus a generic fallback 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > builds a segment-specific welcome from the message 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > keeps onboarding copy inside the design-system voice 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > every use-case command resolves to a registered slash command (no drift) 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Onboarding Tour & Pack Integrity > every mdx use-case surface resolves to a known MDX surface key (no drift) 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /wisdom as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /guide as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > orients a project-less (new) user from a wayfinding question 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > surfaces industry wisdom from a natural-language pitfall question 3ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /challenge as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively challenges a risky assertion mid-conversation 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > challenges a risky assertion from a project-less user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > welcomes a project-less new user with a first-session tour 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /decide as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively frames a trade-off the user is weighing 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > frames a trade-off for a project-less user 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /meeting as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively coaches an agency-interaction situation 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > applies a role lens when a role is supplied and a pack fired 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > handles /position as a first-class slash command 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > proactively reads the landscape on a positioning question 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > reads a client in crisis and steadies the delivery 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > attunes to an overwhelmed project-less newcomer 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Enrichment — wisdom & wayfinding > does not apply a role lens for the general role 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Diff Service Integration > diffText produces correct results for simple changes 15ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Diff Service Integration > diffText handles identical content 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Diff Service Integration > diffText handles empty strings 0ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Quality Gate Regression > dynamic maxScore: depth types get 12, others get 10 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Quality Gate Regression > semantic depth gate rewards root cause + evidence + action 1ms
+ ✓ server/services/__tests__/ana-ri.test.ts > AnA RI Quality Gate Regression > filler patterns are detected correctly 0ms
+(node:8597) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+{
+  "timestamp": "2026-09-21T17:51:37.918Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013097753_io706d",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+{
+  "timestamp": "2026-09-21T17:51:37.981Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013097753_io706d",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+{
+  "timestamp": "2026-09-21T17:51:37.984Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+{
+  "timestamp": "2026-09-21T17:51:37.985Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013097984_p8thk5",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+{
+  "timestamp": "2026-09-21T17:51:37.987Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+{
+  "timestamp": "2026-09-21T17:51:37.987Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013097984_p8thk5",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+{
+  "timestamp": "2026-09-21T17:51:37.988Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+{
+  "timestamp": "2026-09-21T17:51:37.989Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013097988_cqxw18",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+{
+  "timestamp": "2026-09-21T17:51:37.990Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013097988_cqxw18",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide
+{
+  "timestamp": "2026-09-21T17:51:37.996Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide
+{
+  "timestamp": "2026-09-21T17:51:37.997Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013097996_q37mmg",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide
+{
+  "timestamp": "2026-09-21T17:51:37.998Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013097996_q37mmg",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+{
+  "timestamp": "2026-09-21T17:51:37.999Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+{
+  "timestamp": "2026-09-21T17:51:37.999Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013097999_82x7jp",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending
+{
+  "timestamp": "2026-09-21T17:51:38.000Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013097999_82x7jp",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+{
+  "timestamp": "2026-09-21T17:51:38.004Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+{
+  "timestamp": "2026-09-21T17:51:38.005Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013098004_lickys",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+{
+  "timestamp": "2026-09-21T17:51:38.006Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013098004_lickys",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "timestamp": "2026-09-21T17:51:38.010Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "timestamp": "2026-09-21T17:51:38.011Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013098010_t91s2d",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "timestamp": "2026-09-21T17:51:38.012Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013098010_t91s2d",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "timestamp": "2026-09-21T17:51:38.013Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "timestamp": "2026-09-21T17:51:38.014Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013098013_dlotw2",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "timestamp": "2026-09-21T17:51:38.014Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013098013_dlotw2",
+    "sourceId": 1,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+{
+  "timestamp": "2026-09-21T17:51:38.015Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+{
+  "timestamp": "2026-09-21T17:51:38.016Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013098015_mwrplp",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+{
+  "timestamp": "2026-09-21T17:51:38.017Z",
+  "level": "info",
+  "message": "[chat-upload] Upload resolved to an existing source identity",
+  "context": {
+    "fileId": "file_1790013098015_mwrplp",
+    "sourceId": 777,
+    "checksum": "24c4b0744d5513ad21eab9705faa50770abaee8da0dfcd2968dad1880e8f6150"
+  }
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+{
+  "timestamp": "2026-09-21T17:51:37.998Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:37.998Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers
+{
+  "timestamp": "2026-09-21T17:51:37.998Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors
+{
+  "timestamp": "2026-09-21T17:51:38.020Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors
+{
+  "timestamp": "2026-09-21T17:51:38.021Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013098020_vfbb7m",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors
+{
+  "timestamp": "2026-09-21T17:51:38.023Z",
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "cre tables missing",
+    "fileId": "file_1790013098020_vfbb7m",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id
+{
+  "timestamp": "2026-09-21T17:51:38.024Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id
+{
+  "timestamp": "2026-09-21T17:51:38.025Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013098024_as6utw",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+{
+  "timestamp": "2026-09-21T17:51:38.026Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+{
+  "timestamp": "2026-09-21T17:51:38.027Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013098026_7khdae",
+    "method": "utf8",
+    "chars": 68
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+{
+  "timestamp": "2026-09-21T17:51:38.028Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013098026_7khdae",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+{
+  "timestamp": "2026-09-21T17:51:38.032Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "SAP_v2.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+{
+  "timestamp": "2026-09-21T17:51:38.036Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013098032_ua8cd3",
+    "method": "utf8",
+    "chars": 24
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+{
+  "timestamp": "2026-09-21T17:51:38.037Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013098032_ua8cd3",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+{
+  "timestamp": "2026-09-21T17:51:38.038Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "brochure.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+{
+  "timestamp": "2026-09-21T17:51:38.038Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013098038_bomitk",
+    "method": "utf8",
+    "chars": 54
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+{
+  "timestamp": "2026-09-21T17:51:38.040Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013098038_bomitk",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+{
+  "timestamp": "2026-09-21T17:51:38.042Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol_v9.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+{
+  "timestamp": "2026-09-21T17:51:38.044Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013098042_l10mtu",
+    "method": "utf8",
+    "chars": 46
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+{
+  "timestamp": "2026-09-21T17:51:38.045Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013098042_l10mtu",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+{
+  "timestamp": "2026-09-21T17:51:38.045Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > does not degrade when provider health API returns empty list but providers are enabled 259ms
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+{
+  "timestamp": "2026-09-21T17:51:38.046Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013098045_7rlvh6",
+    "method": "utf8",
+    "chars": 20
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+{
+  "timestamp": "2026-09-21T17:51:38.047Z",
+  "level": "info",
+  "message": "[chat-upload] Upload superseded an existing source identity",
+  "context": {
+    "fileId": "file_1790013098045_7rlvh6",
+    "sourceId": 4242,
+    "supersededId": 300
+  }
+}
+
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id 233ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace 5ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > keeps an unscoped chat attachment tenant-private, not project-wide 7ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored and read, not left pending 5ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload 9ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > does not fail the upload when identity resolution errors 5ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id 2ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none 8ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too 2ms
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+[database] Database connection successful
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+{
+  "timestamp": "2026-09-21T17:51:38.254Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+{
+  "timestamp": "2026-09-21T17:51:38.260Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:38.260Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available
+{
+  "timestamp": "2026-09-21T17:51:38.260Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > reports healthy in deterministic mode even without providers 267ms
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+[database] Database connection successful
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+{
+  "timestamp": "2026-09-21T17:51:38.461Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+{
+  "timestamp": "2026-09-21T17:51:38.478Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:38.478Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers
+{
+  "timestamp": "2026-09-21T17:51:38.478Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > returns command list from /commands when dependencies are available 243ms
+ ✓ tests/routes/ana-ri-health.test.ts > AnA RI health/commands endpoints > allows /stream in deterministic mode even without enabled providers 299ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > reports compliance and consistency as unassessed for an empty project 4ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > scores an empty project 0 / not_started rather than 15 / in_progress 0ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > renormalises the weights over the assessed dimensions only 1ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > still reports a number for a dimension that really was measured 1ms
+ ✓ server/services/orchestration/__tests__/readiness-engine.unassessed-dimensions.test.ts > readiness engine — a dimension nothing measured is null, not 50 > marks only the dimension that was not assessed 0ms
+stdout | tests/routes/chat-upload-wiring.test.ts
+{
+  "timestamp": "2026-09-21T17:51:39.775Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:39.778Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts
+{
+  "timestamp": "2026-09-21T17:51:39.778Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts
+Loaded 0 academic documents
+
+stdout | tests/routes/chat-upload-to-memory.test.ts
+{
+  "timestamp": "2026-09-21T17:51:40.149Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:40.150Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts
+{
+  "timestamp": "2026-09-21T17:51:40.150Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/chat-upload-wiring.test.ts
+{
+  "timestamp": "2026-09-21T17:51:40.218Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts
+Loaded 0 academic documents
+
+stderr | tests/routes/chat-upload-to-memory.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/chat-upload-to-memory.test.ts
+{
+  "timestamp": "2026-09-21T17:51:40.551Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/ana-ri-resilience.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ana-ri-resilience.test.ts
+{
+  "timestamp": "2026-09-21T17:51:40.667Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
+{
+  "timestamp": "2026-09-21T17:51:40.864Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/ana-ri-resilience.test.ts
+{
+  "timestamp": "2026-09-21T17:51:40.828Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:40.829Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-ri-resilience.test.ts
+{
+  "timestamp": "2026-09-21T17:51:40.829Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+(node:8691) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
+{
+  "timestamp": "2026-09-21T17:51:40.887Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013100863_9jmvep",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
+{
+  "timestamp": "2026-09-21T17:51:40.901Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013100863_9jmvep",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero
+{
+  "timestamp": "2026-09-21T17:51:40.912Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero
+{
+  "timestamp": "2026-09-21T17:51:40.913Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013100912_qflk1z",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero
+{
+  "timestamp": "2026-09-21T17:51:40.914Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013100912_qflk1z",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > refuses a request carrying no file rather than recording a phantom document
+{
+  "timestamp": "2026-09-21T17:51:40.926Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — no file bytes received",
+  "context": {
+    "hasFile": false,
+    "contentType": "application/json"
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > writes nothing at all when it refuses
+{
+  "timestamp": "2026-09-21T17:51:40.931Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — no file bytes received",
+  "context": {
+    "hasFile": false,
+    "contentType": "application/json"
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > does not accept a filename and size in place of a file
+{
+  "timestamp": "2026-09-21T17:51:40.936Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — no file bytes received",
+  "context": {
+    "hasFile": false,
+    "contentType": "application/json"
+  }
+}
+
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends 69ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero 9ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > refuses a request carrying no file rather than recording a phantom document 11ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > writes nothing at all when it refuses 5ms
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-09-21T17:51:40.941Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-09-21T17:51:40.941Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013100941_pzzh4q",
+    "method": "utf8",
+    "chars": 20
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-09-21T17:51:40.942Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013100941_pzzh4q",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-09-21T17:51:40.946Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "csr.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-09-21T17:51:40.946Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013100945_t704ie",
+    "method": "utf8",
+    "chars": 44
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-09-21T17:51:40.947Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013100945_t704ie",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-09-21T17:51:40.953Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "first-name.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-09-21T17:51:40.953Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013100953_iqua0o",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-09-21T17:51:40.954Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013100953_iqua0o",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-09-21T17:51:40.959Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "renamed-copy.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-09-21T17:51:40.959Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013100959_z8vkqo",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-09-21T17:51:40.959Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013100959_z8vkqo",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible
+{
+  "timestamp": "2026-09-21T17:51:40.969Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible
+{
+  "timestamp": "2026-09-21T17:51:40.969Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013100969_41gsqo",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible
+{
+  "timestamp": "2026-09-21T17:51:40.970Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1790013100969_41gsqo",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > does not accept a filename and size in place of a file 4ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums 12ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename 12ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible 12ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > the parser enforces its limits > rejects a file type outside the allowlist with 415, not 500 5ms
+stderr | tests/routes/ana-ri-resilience.test.ts > AnA RI resilience > returns degraded mode response when gateway is unavailable
+[AnA RI] AI Gateway initialization failed: no gateway
+
+ ✓ tests/routes/ana-ri-resilience.test.ts > AnA RI resilience > returns degraded mode response when gateway is unavailable 29ms
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+{
+  "timestamp": "2026-09-21T17:51:41.196Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "enrollment.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+(node:8704) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+{
+  "timestamp": "2026-09-21T17:51:41.230Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013101196_0q5f9f",
+    "method": "utf8",
+    "chars": 69
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+{
+  "timestamp": "2026-09-21T17:51:41.244Z",
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790013101196_0q5f9f",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+{
+  "timestamp": "2026-09-21T17:51:41.255Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "note.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+{
+  "timestamp": "2026-09-21T17:51:41.256Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013101255_2oqbau",
+    "method": "utf8",
+    "chars": 44
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+{
+  "timestamp": "2026-09-21T17:51:41.259Z",
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790013101255_2oqbau",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact)
+{
+  "timestamp": "2026-09-21T17:51:41.260Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "org.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact)
+{
+  "timestamp": "2026-09-21T17:51:41.262Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013101260_5ggw9i",
+    "method": "utf8",
+    "chars": 40
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact)
+{
+  "timestamp": "2026-09-21T17:51:41.263Z",
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790013101260_5ggw9i",
+    "orgId": 5
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "timestamp": "2026-09-21T17:51:41.278Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "scan.png",
+    "reason": "clamav_not_configured"
+  }
+}
+
+ × tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom 61ms
+   → expected "vi.fn()" to be called with arguments: [ 4242 ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   4242,
++   "4242",
+  ]
+
+
+Number of calls: 1
+
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text 5ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no artifact) 4ms
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no fabricated clinical statistics > PMA "clin" fallback: no bare fabricated stats, has catchable placeholders, and validateSectionServer flags it incomplete 4ms
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no fabricated clinical statistics > PMA "risk" fallback: no bare fabricated stats, has catchable placeholders, and validateSectionServer flags it incomplete 2ms
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no fabricated clinical statistics > CER "benefitrisk" fallback: no bare fabricated stats, has catchable placeholders, and validateSectionServer flags it incomplete 1ms
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no fabricated clinical statistics > placeholder tokens used by the fallback are actually matched by PLACEHOLDER_REGEX (regression guard against too-short tokens like "[N]") 2ms
+ ✓ server/routes/__tests__/cerv2-ai-fallback-honesty.test.ts > CERV2 AI analyze-section fallback — no fabricated clinical statistics > ctx-derived deviceName is still interpolated, unlike the bracketed statistical unknowns 0ms
+(node:8704) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "timestamp": "2026-09-21T17:51:41.794Z",
+  "level": "info",
+  "message": "[tesseract-ocr] OCR completed",
+  "context": {
+    "languages": "eng",
+    "chars": 24,
+    "confidence": 95,
+    "durationMs": 142
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "timestamp": "2026-09-21T17:51:41.794Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013101278_7lf2nn",
+    "method": "image-ocr",
+    "chars": 23
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "timestamp": "2026-09-21T17:51:41.795Z",
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'id')",
+    "fileId": "file_1790013101278_7lf2nn",
+    "orgId": 5
+  }
+}
+
+ × tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory 537ms
+   → expected "vi.fn()" to be called with arguments: [ 77 ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   77,
++   "77",
+  ]
+
+
+Number of calls: 1
+
+stdout | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-09-21T17:51:42.073Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:42.074Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-09-21T17:51:42.074Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-personality-core.test.ts
+[database] Database connection successful
+
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > cerv2_510k/se asserts no conclusion and stays catchably incomplete 4ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > cerv2_510k/concl asserts no conclusion and stays catchably incomplete 1ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > cerv2_pma/risk asserts no conclusion and stays catchably incomplete 1ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > cerv2_cer/benefitrisk asserts no conclusion and stays catchably incomplete 1ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > cerv2_cer/gspr asserts no conclusion and stays catchably incomplete 1ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > 510(k) SE conclusion leaves the determination to FDA as a placeholder 0ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 AI fallback — no fabricated regulatory conclusions (enhancedMockContent) > CER GSPR table no longer pre-fills a compliant status for every requirement 0ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_510k/se template asserts no conclusion 0ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_510k/se_discussion template asserts no conclusion 1ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_510k/concl template asserts no conclusion 3ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_510k/conclusion template asserts no conclusion 0ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_pma/risk template asserts no conclusion 0ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_pma/risk_analysis template asserts no conclusion 0ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/benefitrisk template asserts no conclusion 0ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/residual_risks template asserts no conclusion 0ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/gspr template asserts no conclusion 0ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/gspr_overview template asserts no conclusion 0ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/concl template asserts no conclusion 0ms
+ ✓ server/routes/__tests__/cerv2-ai-conclusion-honesty.test.ts > cerv2 section templates — no fabricated regulatory conclusions > cerv2_cer/overall_conclusion template asserts no conclusion 0ms
+stdout | server/services/ana-ri/__tests__/personality-coverage.test.ts
+{
+  "timestamp": "2026-09-21T17:51:42.312Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:42.313Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/personality-coverage.test.ts
+{
+  "timestamp": "2026-09-21T17:51:42.314Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/personality-coverage.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'kind'" trait 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'warm / empathetic'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'intellectual'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'lightly humorous'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > defines the "'self-reflective'" trait 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_CORE > holds the guardrails that keep warmth from becoming performance 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > is a compression of the core, carrying the same named traits 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > stays short enough for a prompt already carrying a strict schema 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > ANA_PERSONALITY_BRIEF > subordinates itself to the output contract 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the RI system prompt embeds the full core block 1ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the RI system prompt keeps her personality under every role overlay 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the submission-chat prompt carries the brief 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the streaming submission-chat prompt carries the brief 0ms
+ ✓ server/services/ana-ri/__tests__/personality-coverage.test.ts > every AnA surface carries her personality > the submission-chat prompts still state their output contract 0ms
+stdout | server/services/__tests__/ana-personality-core.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-personality-core.test.ts
+{
+  "timestamp": "2026-09-21T17:51:42.766Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > defines the requested traits 2ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the AnA RI system prompt 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > is composed into the cortex prompts (single source of truth) 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > injects relational context when provided 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > AnA Personality Core > renders nothing when no relational notes exist yet 0ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > injects the pre-fetched relational overlay and external intel block 12ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Orchestrator — relational + external intelligence injection > omits both blocks when not provided 7ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > fires on emotional and corrective signals 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > Relational reflection signal detection > stays quiet on neutral turns 1ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses RSS 2.0 items 2ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > parses Atom entries 2ms
+ ✓ server/services/__tests__/ana-personality-core.test.ts > External intelligence — feed parsing & registry > registry covers regulatory agencies and knowledge centers (incl. SCDM) 1ms
+stderr | server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > does not report blocked:false when a blocker source did not run
+[authoring-actions] promotion-blockers: readiness check did not run: readiness engine exploded
+
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > does not report blocked:false when a blocker source did not run 35ms
+stderr | server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > names every source that failed, not just a count
+[authoring-actions] promotion-blockers: contradiction scan did not run: scan failed
+
+stderr | server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > names every source that failed, not just a count
+[authoring-actions] promotion-blockers: readiness check did not run: readiness engine exploded
+
+stdout | server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > builds the readiness payload with the canonical resolver, org-scoped
+{
+  "timestamp": "2026-09-21T17:51:43.893Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:43.893Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > builds the readiness payload with the canonical resolver, org-scoped
+{
+  "timestamp": "2026-09-21T17:51:43.893Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > names every source that failed, not just a count 76ms
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > gives a real verdict when every source ran 7ms
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > builds the readiness payload with the canonical resolver, org-scoped 51ms
+ ✓ server/routes/__tests__/promotionBlockersHonestGate.test.ts > GET /promotion-blockers > actually collects readiness blockers now that the call succeeds 7ms
+stdout | testConnection (/home/user/ClinicalSageAI-2-replit/server/db.js:185:13)
+[database] Database connection successful
+
+stderr | new TamperProofAuditLog (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:311:15)
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | Object.error (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:118:13)
+{
+  "timestamp": "2026-09-21T17:51:43.944Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/chat-governed-upload.test.ts
+{
+  "timestamp": "2026-09-21T17:51:44.112Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:44.113Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/chat-governed-upload.test.ts
+{
+  "timestamp": "2026-09-21T17:51:44.113Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > converts a gateway failure into a recoverable CouncilError and audits it
+{
+  "timestamp": "2026-09-21T17:51:44.184Z",
+  "level": "error",
+  "message": "[multi-agent-council] [Council:corr-1] SYNTHESIZER: LLM call failed via gateway: all providers down",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > delegates to the gateway and maps the response to CouncilLLMResult 3ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > routes prose agents as document_drafting (jsonMode off) 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > routes JSON agents as structured_output (jsonMode on) 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > threads correlationId + operation into the gateway audit metadata 1ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > throws SERVICE_DEGRADED (without calling the gateway) when the feature is gated off 2ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > converts a gateway failure into a recoverable CouncilError and audits it 3ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > prepends the intelligence prefix to the system turn when org/project context is present 0ms
+ ✓ server/services/__tests__/multi-agent-council.test.ts > MultiAgentCouncilService — gateway integration > does not fetch an intelligence prefix when no org/project context is given 0ms
+stdout | server/services/__tests__/ana-proactive-blocks.test.ts
+{
+  "timestamp": "2026-09-21T17:51:44.326Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:44.327Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/ana-proactive-blocks.test.ts
+{
+  "timestamp": "2026-09-21T17:51:44.327Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-proactive-blocks.test.ts
+[database] Database connection successful
+
+stdout | tests/routes/chat-governed-upload.test.ts
+Loaded 0 academic documents
+
+stderr | tests/routes/chat-governed-upload.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/chat-governed-upload.test.ts
+{
+  "timestamp": "2026-09-21T17:51:44.469Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/__tests__/ana-proactive-blocks.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/__tests__/ana-proactive-blocks.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/ana-proactive-blocks.test.ts
+{
+  "timestamp": "2026-09-21T17:51:44.932Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/routes/chat-governed-upload.test.ts > chat upload governance > returns GOVERNED_CONTRACT_INVALID when governed context fails
+{
+  "timestamp": "2026-09-21T17:51:45.030Z",
+  "level": "warn",
+  "message": "[chat-upload] Virus scan bypassed",
+  "context": {
+    "fileName": "source.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+(node:8782) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/routes/chat-governed-upload.test.ts > chat upload governance > returns GOVERNED_CONTRACT_INVALID when governed context fails
+{
+  "timestamp": "2026-09-21T17:51:45.065Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1790013105029_7n4tvs",
+    "method": "utf8",
+    "chars": 3
+  }
+}
+
+ ✓ tests/routes/chat-governed-upload.test.ts > chat upload governance > returns GOVERNED_CONTRACT_INVALID when governed context fails 43ms
+stdout | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+{
+  "timestamp": "2026-09-21T17:51:45.205Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:45.206Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+{
+  "timestamp": "2026-09-21T17:51:45.206Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "evidence labels" doctrine 1ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "no fabrication" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "constructive dissent" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "context clarity (no hallucinated context)" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "document consequence" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "proactive foresight" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "know your limits / hand off" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > core prompt retains the "response grounding mode" doctrine 0ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > keeps the tone floor (no cheerleading: no exclamation marks, no emoji) 1ms
+ ✓ server/services/__tests__/ana-doctrine-guard.test.ts > AnA core persona — doctrine guard > every core doctrine survives into the assembled system prompt 0ms
+ ✓ server/services/__tests__/ana-proactive-blocks.test.ts > orchestrator proactive block injection > injects the deadline radar block when provided 13ms
+ ✓ server/services/__tests__/ana-proactive-blocks.test.ts > orchestrator proactive block injection > injects the session briefing block when provided 7ms
+ ✓ server/services/__tests__/ana-proactive-blocks.test.ts > orchestrator proactive block injection > is a no-op when the blocks are empty 2ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > expanded role inference > routes biostatistician signals 2ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > expanded role inference > routes pharmacovigilance signals 0ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > expanded role inference > routes quality/QA signals (no longer collapsed into cmc) 0ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > expanded role inference > falls back to general when no signal matches 1ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > new role overlays reach the system prompt > biostatistician overlay mentions estimand/E9(R1) 1ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > new role overlays reach the system prompt > pharmacovigilance overlay mentions reporting clocks 0ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > new role overlays reach the system prompt > quality overlay mentions CAPA / 21 CFR 210/211 0ms
+ ✓ server/services/__tests__/ana-role-expansion.test.ts > role-adaptive output structure covers new roles > emits tailored structure for each new role 1ms
+stdout | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+Loaded 0 academic documents
+
+ ✓ server/services/__tests__/ana-proactive-foresight.test.ts > AnA proactive foresight directive > core prompt contains the Proactive Foresight section 1ms
+ ✓ server/services/__tests__/ana-proactive-foresight.test.ts > AnA proactive foresight directive > directs proactive deadline + deficiency surfacing with no fabrication 1ms
+ ✓ server/services/__tests__/ana-proactive-foresight.test.ts > AnA proactive foresight directive > the directive flows into the assembled system prompt 1ms
+stderr | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts
+{
+  "timestamp": "2026-09-21T17:51:45.728Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > open findings render into contradictionWatchBlock, org-scoped 4ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > no open findings → empty block (quiet orgs pay no tokens) 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > prefetch carries the contradiction-watch block > no org context → the query is never made 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the orchestrator injects _contradictionWatchBlock into the system prompt 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the live route hands the prefetched block to the orchestrator 1ms
+ ✓ server/services/ana-ri/__tests__/contradiction-watch-wiring.test.ts > the block flows through to the system prompt on the live route > the chat-context-builder orchestrator input carries it too 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the artifact and embedded memory atom
+AssertionError: expected "vi.fn()" to be called with arguments: [ 4242 ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   4242,
++   "4242",
+  ]
+
+
+Number of calls: 1
+
+ ❯ tests/routes/chat-upload-to-memory.test.ts:199:27
+    197|
+    198|     // The atom was embedded with the id the insert returned.
+    199|     expect(mockEmbedAtom).toHaveBeenCalledWith(4242);
+       |                           ^
+    200|   });
+    201|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+AssertionError: expected "vi.fn()" to be called with arguments: [ 77 ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   77,
++   "77",
+  ]
+
+
+Number of calls: 1
+
+ ❯ tests/routes/chat-upload-to-memory.test.ts:256:29
+    254|       const atomContent = (atomInsert![1][3] as string).toLowerCase();
+    255|       expect(atomContent).toContain('adverse event narrative');
+    256|       expect(mockEmbedAtom).toHaveBeenCalledWith(77);
+       |                             ^
+    257|     },
+    258|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 18 passed (19)
+      Tests  2 failed | 389 passed (391)
+   Start at  17:51:30
+   Duration  16.31s (transform 13.91s, setup 425ms, import 33.69s, tests 9.59s, environment 2ms)
+

@@ -501,7 +501,7 @@ export async function assembleSystemPrompt(
     }
 
 ### How to Address This User:
-- Greet them as "${u.greetingName}" on first message
+- They go by "${u.greetingName}"; use it the way a colleague would, not as a ritual
 - ${
       expertise === 'expert'
         ? 'Skip basic explanations — they know regulatory science deeply. Focus on nuanced analysis and strategic implications.'
@@ -511,10 +511,10 @@ export async function assembleSystemPrompt(
     }
 - ${
       style === 'concise'
-        ? 'Keep responses focused and brief. Use bullet points heavily. Skip unnecessary preambles.'
+        ? 'Keep responses focused and brief. Skip preambles.'
         : style === 'academic'
         ? 'Be thorough and cite sources. Use formal regulatory language. Include guideline references in-line.'
-        : 'Use a professional yet approachable tone. Structured responses with clear headings.'
+        : 'Use a professional yet approachable tone.'
     }`);
   } else if (context.userName || context.userRole) {
     parts.push(`
