@@ -419,6 +419,11 @@ export async function assessSequenceDispatchReadiness(
     // own governed path reads as unsigned — which made dispatch and transmit
     // unreachable for every submission type the gate applies to.
     sequenceId,
+    // And its REGION. Sequence numbers restart per region, so '0000' is the FDA
+    // original and the EU original both; without this a release over one clears
+    // the dispatch gate for the other. Resolved through the region registry on
+    // the far side, because the two spines spell one jurisdiction differently.
+    region: sequence.region,
   });
   const signatureRequired = isReleaseSignatureRequired(submissionApplicationType);
   const signatureInput = {
