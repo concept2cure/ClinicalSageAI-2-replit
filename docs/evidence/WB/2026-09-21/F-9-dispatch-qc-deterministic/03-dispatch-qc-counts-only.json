@@ -1,0 +1,40 @@
+{
+    "step": "03-dispatch-qc-counts-only",
+    "method": "POST",
+    "path": "/api/submissions/37/dispatch-qc",
+    "request": {
+        "region": "fda",
+        "validationErrors": 0,
+        "unresolvedShadowCriticals": 0,
+        "leaves": [
+            {
+                "sectionCode": "m5.3.5",
+                "operation": "new"
+            }
+        ]
+    },
+    "status": 200,
+    "response": {
+        "clearedToDispatch": true,
+        "blockers": [],
+        "warnings": [
+            "Sequence-level checks (structural validation of the stored leaves, Shadow Review presence, external validation, release signature) were not run because no sequence assessment was supplied; this verdict covers only the supplied counts. Use the sequence dispatch-readiness assessment for the full gate."
+        ],
+        "checklist": [
+            {
+                "item": "No open error-severity validation findings",
+                "pass": true
+            },
+            {
+                "item": "No unacknowledged Shadow Review criticals",
+                "pass": true
+            }
+        ],
+        "verdictSource": "dispatch-gate",
+        "narrative": null,
+        "narrativeUnavailable": {
+            "code": "PROVIDER_UNAVAILABLE",
+            "message": "No AI provider is configured; the deterministic verdict stands without a narrative."
+        }
+    }
+}
