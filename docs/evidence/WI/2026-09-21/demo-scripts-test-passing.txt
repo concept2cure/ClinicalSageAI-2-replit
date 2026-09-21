@@ -1,0 +1,12 @@
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the registered scripts (the totality gate) > every script fits the demo drive budgets (a plan the budget cuts off is a defect here, not at runtime) 5ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the three scripts exist 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > every navigate stop lands on a launch surface (never "Not in this release") 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > every act operates a registered action whose screen is a launch surface 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the orientation walks all six launch apps and ends at the audit trail 0ms
+ ✓ shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > submission day runs Vault → Authoring → Submission Center → Readiness → Part 11 0ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  17:42:04
+   Duration  474ms (transform 257ms, setup 87ms, import 217ms, tests 18ms, environment 0ms)
+

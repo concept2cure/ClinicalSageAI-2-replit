@@ -50,6 +50,16 @@ export interface AnaChatAction {
    */
   actionId?: string;
   surfaceId?: string;
+  /**
+   * Present only when `actionType === 'start_demo'`: the demonstration script
+   * id (shared/navigation/demo-scripts) that `start_product_demo` fetched on a
+   * turn WITHOUT Live Drive. The rail renders it as a "Start demonstration"
+   * chip that calls the same `startDemo` the Control menu calls — one
+   * mechanism, one consent (the toggle turns on visibly), one take-over.
+   */
+  demoId?: string;
+  /** The script's title, for the demo ask the shell composes. */
+  demoTitle?: string;
 }
 /** A tool invocation surfaced for transparency/auditability during a turn. */
 export interface AnaToolCall {

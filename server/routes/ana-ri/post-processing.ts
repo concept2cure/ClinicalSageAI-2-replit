@@ -38,6 +38,8 @@ import { upsertDocumentArtifactVersion } from '../../services/ana/artifactVersio
 import {
   toNavigationActions,
   toSurfaceActionChips,
+  toDemoStartChips,
+  type DemoStartDirective,
 } from '../../services/ana-ri/navigation-actions.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
@@ -82,6 +84,12 @@ export interface StreamPostProcessingContext {
    * performed client-side through the one surface-action bus when activated.
    */
   collectedSurfaceActions?: SurfaceActionDirective[];
+  /**
+   * Demonstrations `start_product_demo` fetched WITHOUT Live Drive this turn.
+   * Surfaced on `post_done` as `actionType: 'start_demo'` chips — the client
+   * runs the rail's own one-click start when the person activates one.
+   */
+  collectedDemoStarts?: DemoStartDirective[];
   /** Document drafts emitted this turn — persisted to the governed artifact version history. */
   collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
   /** Gateway message history built for the turn (for working-memory write-back). */
@@ -245,6 +253,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     collectedProvenance,
     collectedNavigation,
     collectedSurfaceActions,
+    collectedDemoStarts,
     collectedDrafts,
     messages,
     model,
@@ -293,6 +302,12 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // transcript record and the re-run affordance.)
     if (collectedSurfaceActions && collectedSurfaceActions.length > 0) {
       executedActions = [...executedActions, ...toSurfaceActionChips(collectedSurfaceActions)];
+    }
+
+    // Demonstration starts — a script fetched without Live Drive becomes the
+    // "Start demonstration" chip; the same offered-not-performed contract.
+    if (collectedDemoStarts && collectedDemoStarts.length > 0) {
+      executedActions = [...executedActions, ...toDemoStartChips(collectedDemoStarts)];
     }
 
     // Command executor — execute operational commands (create project, artifact, task, etc.)

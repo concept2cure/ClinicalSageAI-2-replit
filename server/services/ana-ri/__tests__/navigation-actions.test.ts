@@ -9,11 +9,15 @@ import { describe, expect, it } from 'vitest';
 
 import {
   MAX_NAVIGATION_ACTIONS,
+  demoStartFromToolResult,
+  demoStartLabel,
   directiveFromToolResult,
   surfaceActionFromToolResult,
+  toDemoStartChips,
   toNavigationActions,
   toSurfaceActionChips,
 } from '../navigation-actions';
+import { findDemoScript } from '../../../../shared/navigation/demo-scripts';
 import { resolveNavigation, NAVIGATION_TARGETS } from '../../../../shared/navigation/index';
 import { resolveSurfaceAction } from '../../../../shared/navigation/surface-actions';
 
@@ -177,5 +181,73 @@ describe('toSurfaceActionChips', () => {
 
   it('omits params entirely when there are none', () => {
     expect(toSurfaceActionChips([actionDirective('vault.search')])[0]).not.toHaveProperty('params');
+  });
+});
+
+/* "Show me the system" with Live Drive OFF: start_product_demo says the moves
+   are offered, and the offer has to be one click — a chip that runs the
+   rail's own start. Only an OFFERED (driven: false) demo_ready result may
+   become one; anything else is a refusal or an already-running demo. */
+describe('demoStartFromToolResult', () => {
+  const script = findDemoScript('sales-flagship')!;
+  const ready = (driven: boolean | undefined) =>
+    JSON.stringify({ status: 'demo_ready', ...(driven === undefined ? {} : { driven }), script });
+
+  it('reads an OFFERED demonstration out of a demo_ready result', () => {
+    const d = demoStartFromToolResult('start_product_demo', ready(false));
+    expect(d).toEqual({ demoId: 'sales-flagship', title: script.title });
+  });
+
+  it('returns null for a DRIVEN demonstration — it is already playing, a start chip would restart it', () => {
+    expect(demoStartFromToolResult('start_product_demo', ready(true))).toBeNull();
+  });
+
+  it('returns null for an older result that does not say whether it drove', () => {
+    expect(demoStartFromToolResult('start_product_demo', ready(undefined))).toBeNull();
+  });
+
+  it('returns null for refusals — unknown, invalid or missing demo', () => {
+    for (const status of ['unknown_demo', 'invalid_demo', 'needs_parameters']) {
+      expect(
+        demoStartFromToolResult('start_product_demo', JSON.stringify({ status, driven: false, script })),
+      ).toBeNull();
+    }
+  });
+
+  it('returns null for any other tool, and for unparseable or half-formed output', () => {
+    expect(demoStartFromToolResult('list_demo_scripts', ready(false))).toBeNull();
+    expect(demoStartFromToolResult('start_product_demo', 'not json')).toBeNull();
+    expect(
+      demoStartFromToolResult('start_product_demo', JSON.stringify({ status: 'demo_ready', driven: false })),
+    ).toBeNull();
+    expect(
+      demoStartFromToolResult(
+        'start_product_demo',
+        JSON.stringify({ status: 'demo_ready', driven: false, script: { id: 'x' } }),
+      ),
+    ).toBeNull();
+  });
+});
+
+describe('toDemoStartChips', () => {
+  it('produces the chip the rail renders: start_demo, the shared label, id and title', () => {
+    const [chip] = toDemoStartChips([{ demoId: 'sales-flagship', title: 'Sales demonstration' }]);
+    expect(chip).toEqual({
+      actionType: 'start_demo',
+      label: demoStartLabel('Sales demonstration'),
+      demoId: 'sales-flagship',
+      demoTitle: 'Sales demonstration',
+      executed: true,
+    });
+    expect(chip.label).toBe('Start demonstration: Sales demonstration');
+  });
+
+  it('dedupes by script and caps at the chip budget', () => {
+    const many = Array.from({ length: MAX_NAVIGATION_ACTIONS + 3 }, (_, i) => ({
+      demoId: `d${i}`,
+      title: `D${i}`,
+    }));
+    expect(toDemoStartChips([many[0], many[0], many[0]])).toHaveLength(1);
+    expect(toDemoStartChips(many)).toHaveLength(MAX_NAVIGATION_ACTIONS);
   });
 });

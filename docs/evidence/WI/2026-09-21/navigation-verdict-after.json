@@ -1,0 +1,43 @@
+{
+  "navigationAfter": {
+    "resolved": true,
+    "launchScope": {
+      "enforced": true
+    },
+    "masterAdmin": true,
+    "verdicts": 101,
+    "bySource": {
+      "master_admin": 22,
+      "launch-scope": 79
+    },
+    "protocolDev": {
+      "id": "protocol-dev",
+      "label": "Protocol development",
+      "requiredTier": "standard",
+      "entitled": true,
+      "source": "master_admin"
+    }
+  },
+  "catalogRow": {
+    "moduleId": "protocol-dev",
+    "name": "Protocol development",
+    "category": "Author & assemble",
+    "launchScope": "launch",
+    "isEnabled": true,
+    "isAvailable": true
+  },
+  "catalogLaunchScope": {
+    "enforced": true
+  },
+  "protocolDevRead": {
+    "id": "1",
+    "title": "[Demo · Biotech] WI smoke protocol",
+    "sections": 12,
+    "objectives": 2,
+    "eligibility": 3,
+    "soaVisits": 3,
+    "soaAssessments": 2,
+    "risks": 2,
+    "milestones": 2
+  }
+}

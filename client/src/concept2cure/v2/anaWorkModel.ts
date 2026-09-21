@@ -115,7 +115,9 @@ function draftNote(m: AnaChatMessage): string {
 
 function actionRows(m: AnaChatMessage, i: number): OutputRow[] {
   return (m.executedActions ?? [])
-    .filter((a) => a.actionType !== 'navigate' && a.actionType !== 'surface_action')
+    .filter(
+      (a) => a.actionType !== 'navigate' && a.actionType !== 'surface_action' && a.actionType !== 'start_demo',
+    )
     .map((a) => ({
       key: `a-${i}-${a.label}`,
       icon: a.error ? 'alertTriangle' : 'zap',

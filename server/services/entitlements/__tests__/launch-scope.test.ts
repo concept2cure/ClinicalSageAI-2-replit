@@ -50,6 +50,24 @@ describe('the scope list itself', () => {
     expect(LAUNCH_APPS).toHaveLength(6);
     for (const a of LAUNCH_APPS) for (const s of a.surfaces) expect(isLaunchSurface(s)).toBe(true);
   });
+  it('protocol development is in the Authoring app — founder decision, 2026-09-21', () => {
+    const authoring = LAUNCH_APPS.find((a) => a.id === 'authoring')!;
+    expect(authoring.surfaces).toContain('protocol-dev');
+    expect(authoring.modules).toContain('protocol-dev');
+    // The verdict the rail and deep link read: never overwritten to launch-scope.
+    const [out] = applyLaunchScope([v('protocol-dev', { source: 'master_admin' })]);
+    expect(out.entitled).toBe(true);
+    expect(out.source).toBe('master_admin');
+  });
+  it('the authoring engine explainer is outside the scope — swapped out for protocol development', () => {
+    expect(isLaunchSurface('authoring-engine')).toBe(false);
+    const authoring = LAUNCH_APPS.find((a) => a.id === 'authoring')!;
+    expect(authoring.modules).not.toContain('authoring-engine');
+    // A bought row is still not in this release.
+    const [out] = applyLaunchScope([v('authoring-engine', { source: 'subscribed' })]);
+    expect(out.entitled).toBe(false);
+    expect(out.source).toBe('launch-scope');
+  });
   it('keeps the two Part 11 surfaces the catalog may never gate', () => {
     expect(LAUNCH_SURFACE_IDS.has('audit-trail')).toBe(true);
     expect(LAUNCH_SURFACE_IDS.has('part11-console')).toBe(true);

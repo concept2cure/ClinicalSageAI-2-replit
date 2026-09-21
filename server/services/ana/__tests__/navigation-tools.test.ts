@@ -134,6 +134,13 @@ describe('demo tools', () => {
     expect(noDrive.script.id).toBe('sales-flagship');
     expect(noDrive.script.steps.length).toBeGreaterThan(3);
     expect(noDrive.instruction).toContain('NOT on');
+    // The result says it did NOT drive, which is what turns it into the
+    // "Start demonstration" chip (services/ana-ri/navigation-actions), and the
+    // instruction tells the model the chip is there instead of narrating stops
+    // it never made.
+    expect(noDrive.driven).toBe(false);
+    expect(noDrive.instruction).toContain('Start demonstration: Sales demonstration');
+    expect(noDrive.instruction).toContain('do not narrate the stops as if you had made them');
 
     const driving = JSON.parse(
       await getToolHandler('start_product_demo')!(
@@ -142,6 +149,7 @@ describe('demo tools', () => {
       ),
     );
     expect(driving.status).toBe('demo_ready');
+    expect(driving.driven).toBe(true);
     expect(driving.instruction).toContain('stop by stop');
   });
 

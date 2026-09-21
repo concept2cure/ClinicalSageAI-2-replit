@@ -58,12 +58,25 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     label: 'Authoring',
     surfaces: [
       'document-authoring',
-      'authoring-engine',
       'template-library',
       'review',
       'regulatory-workspace',
+      // Protocol development joined the launch catalog by founder decision on
+      // 2026-09-21 (docs/evidence/WI/2026-09-21). It is the clinical protocol
+      // authoring workspace — sections, objectives, eligibility, schedule of
+      // assessments and the governed registers — read from protocol_documents
+      // and its child tables; the catalog row protocol-dev is seeded by
+      // db/migrations/20260810_reconcile_module_catalog.sql.
+      //
+      // It takes the place of authoring-engine, removed the same day: that
+      // surface (surfaces/AuthoringEngine.tsx) is a static explainer built from
+      // inline constants — no editor, no authoring API — and a launch app
+      // promises real work. The component stays in the tree behind the flag.
+      // (No quoted ids in these comments: ci:launch-scope reads the array
+      // text and would count one.)
+      'protocol-dev',
     ],
-    modules: ['document-authoring', 'authoring-engine', 'template-library', 'review'],
+    modules: ['document-authoring', 'template-library', 'review', 'protocol-dev'],
   },
   {
     id: 'submission-center',

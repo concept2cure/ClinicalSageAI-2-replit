@@ -56,6 +56,8 @@ import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import {
   directiveFromToolResult,
   surfaceActionFromToolResult,
+  demoStartFromToolResult,
+  type DemoStartDirective,
 } from '../../services/ana-ri/navigation-actions.js';
 import {
   resolveDriveState,
@@ -1138,6 +1140,10 @@ export function mountStreamRoute(router: Router): void {
       // same carrier contract: offered as chips by post-processing, applied
       // live under Drive within the mode's action budget.
       const collectedSurfaceActions: SurfaceActionDirective[] = [];
+      // Demonstrations fetched WITHOUT Live Drive this turn — the moves can only
+      // be offered, so the start itself is offered as a chip that runs the same
+      // one-click start as the rail's Control menu (navigation-actions.ts).
+      const collectedDemoStarts: DemoStartDirective[] = [];
       // Live Drive: how many directives were emitted for immediate application
       // this turn, per kind. Budgets come from the shared per-mode policy
       // (assist = the chip budget, so driving can never move a person more
@@ -1778,6 +1784,8 @@ export function mountStreamRoute(router: Router): void {
                     );
                   }
                 }
+                const demoStart = demoStartFromToolResult(toolUse.name, resultStr);
+                if (demoStart) collectedDemoStarts.push(demoStart);
                 if (parsed?.status === 'intelligence_question' && parsed.question) {
                   res.write(
                     `data: ${JSON.stringify({
@@ -2229,6 +2237,7 @@ export function mountStreamRoute(router: Router): void {
         collectedProvenance,
         collectedNavigation,
         collectedSurfaceActions,
+        collectedDemoStarts,
         collectedDrafts,
         messages,
         model: gwResponse.model,

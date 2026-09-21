@@ -65,3 +65,17 @@ Live numbers from the run: 86 catalog cards, 20 on, 66 not in this release;
 - Same run against staging once D1 lands (W2).
 - `regulatory-workspace` has no catalog row and is reached only through AnA;
   it is in scope by the shell rule, not by a grant.
+
+## Addendum 2026-09-21 (WI) — protocol development joins the catalog
+
+By founder decision the Authoring app now includes `protocol-dev`
+(`shared/constants/launch-scope.ts`, surfaces and modules). The surface was
+already registered (`ui-surface-registry.ui-v2.ts`), routable and licensable;
+only the scope list gated it. In the same change `authoring-engine` left the
+Authoring app: `surfaces/AuthoringEngine.tsx` is a static explainer from
+inline constants with no editor and no authoring API, and under enforcement
+it now shows the "Not in this release" gate (verdict before / after filed).
+Verdicts, the gate failing first on an unregistered id, the org-2
+re-provisioning and the live screenshots are in
+`docs/evidence/WI/2026-09-21/`. Live numbers: 41 launch surfaces, 21 modules
+(one id swapped); navigation payload 21 `master_admin` / 80 `launch-scope`.

@@ -1,0 +1,15 @@
+{
+  "resolved": true,
+  "launchScope": {
+    "enforced": true
+  },
+  "masterAdmin": true,
+  "verdicts": 101,
+  "protocolDev": {
+    "id": "protocol-dev",
+    "label": "Protocol development",
+    "requiredTier": null,
+    "entitled": false,
+    "source": "launch-scope"
+  }
+}

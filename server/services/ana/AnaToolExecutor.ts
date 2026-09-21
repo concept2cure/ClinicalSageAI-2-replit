@@ -17046,12 +17046,17 @@ registerToolHandler('start_product_demo', async (input: Record<string, unknown>,
         defects,
       });
     }
+    const driven = ctx?.liveDrive === true;
     return JSON.stringify({
       status: 'demo_ready',
+      // Read by services/ana-ri/navigation-actions demoStartFromToolResult:
+      // an OFFERED demonstration (driven: false) becomes a "Start
+      // demonstration" chip on the answer; a driven one is already playing.
+      driven,
       script,
-      instruction: ctx?.liveDrive
+      instruction: driven
         ? `Run the demonstration now, stop by stop and briskly: for each step, narrate its "say" talking point in your own words (adapted to the user's real data on screen — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). A step without pinned params (e.g. which program to open) is filled from the on-screen context; if the workspace has no programs yet, narrate from the portfolio and offer to set one up together instead. Answer any question the user asks mid-demo, then resume from the next stop. If the turn ends before the script does, say which stop you reached so you can continue from the next one.`
-        : `Live Drive is NOT on for this turn, so the moves below can only be OFFERED as chips, not performed. Tell the user a demonstration works best with Live Drive on (AnA rail → Control → Live Drive, or the Run a demonstration button) and offer to proceed chip-by-chip if they prefer.`,
+        : `Live Drive is NOT on for this turn, so the moves below can only be OFFERED as chips, not performed — do not narrate the stops as if you had made them. This answer carries a "Start demonstration: ${script.title}" chip: tell the user that pressing it starts the demonstration with you driving (Live Drive switches on visibly and they can take over at any time), and offer to proceed chip-by-chip instead if they prefer. Give a one-paragraph preview of what the demonstration covers (${script.steps.length} stops, about ${script.minutes} minutes) and stop there.`,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `start_product_demo failed: ${err?.message || 'unknown error'}` });

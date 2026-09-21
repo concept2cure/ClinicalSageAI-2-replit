@@ -526,6 +526,64 @@ function projectLabel(): string | null {
     return null;
   }
 }
+/**
+ * AnA Live Drive bridge as the rail receives it (V2App owns the state
+ * machine). `locked` carries the server's honest entitlement deny from the last
+ * attempted turn — the control stays enabled with the real required tier
+ * named, never a disabled, reasonless button (the Locked-never-dead rule).
+ */
+export interface AnaRailLiveDrive {
+  on: boolean;
+  locked: { reason: string; requiredTier?: string | null } | null;
+  setOn: (v: boolean) => void;
+  /** One-click guided tour: enables Live Drive and (once the toggle has
+   *  actually committed) sends the tour ask. Owned by the shell — see the
+   *  race note at the menu button. */
+  onStartTour?: () => void;
+  /** One-click demonstration (training/sales, from the shared script
+   *  registry): enables Live Drive in demo mode and sends the demo ask —
+   *  same commit-then-send sequencing as the tour. */
+  onStartDemo?: (demoId: string, title: string) => void;
+}
+
+/**
+ * The executed-action chips that are neither a navigation nor a surface-action
+ * offer: the "Start demonstration" offer, and the inert record of everything
+ * else. Split from the rail's chip map so each branch stays under the
+ * complexity gate.
+ *
+ * "Show me the system" with Live Drive OFF: the server fetched the script and
+ * offers its start. The button is the SAME entry point as the Control menu's
+ * Demonstrations list — `onStartDemo` turns the toggle on visibly, commits
+ * demo mode and sends the ask — so consent, budgets and take-over are one
+ * machine, not a second one. A locked workspace gets no button: the menu
+ * hides its demonstrations there too, and a chip that opens a refusal is a
+ * dead affordance. A chip that cannot name its script stays inert.
+ */
+function ExecutedActionTail({ action: a, liveDrive }: { action: AnaChatAction; liveDrive?: AnaRailLiveDrive }) {
+  const canStart = Boolean(liveDrive && !liveDrive.locked && liveDrive.onStartDemo);
+  if (a.actionType === 'start_demo' && a.demoId && canStart) {
+    const demoId = a.demoId;
+    return (
+      <button
+        type="button"
+        className="ana-exec-chip is-nav"
+        onClick={() => liveDrive?.onStartDemo?.(demoId, a.demoTitle || a.label)}
+      >
+        {I.play} {a.label}
+      </button>
+    );
+  }
+  return (
+    <span
+      className={`ana-exec-chip${a.executed ? ' is-done' : ''}${a.error ? ' is-err' : ''}`}
+      title={a.error || a.label}
+    >
+      {a.error ? I.alertTriangle : a.executed ? I.check : I.zap} {a.label}
+    </span>
+  );
+}
+
 export function AnaRail({
   open,
   setOpen,
@@ -598,19 +656,7 @@ export function AnaRail({
    * control stays enabled with the real required tier named, never a
    * disabled, reasonless button (the platform's Locked-never-dead rule).
    */
-  liveDrive?: {
-    on: boolean;
-    locked: { reason: string; requiredTier?: string | null } | null;
-    setOn: (v: boolean) => void;
-    /** One-click guided tour: enables Live Drive and (once the toggle has
-     *  actually committed) sends the tour ask. Owned by the shell — see the
-     *  race note at the menu button. */
-    onStartTour?: () => void;
-    /** One-click demonstration (training/sales, from the shared script
-     *  registry): enables Live Drive in demo mode and sends the demo ask —
-     *  same commit-then-send sequencing as the tour. */
-    onStartDemo?: (demoId: string, title: string) => void;
-  };
+  liveDrive?: AnaRailLiveDrive;
   /**
    * The live work dock (AnaWorkPanel): the raw chat turns, not the adapted
    * `messages` above, because the panel reads the progress record, tool
@@ -623,6 +669,7 @@ export function AnaRail({
   };
 }) {
   const [draft, setDraft] = React.useState('');
+
   /* The steer field is separate from `draft` on purpose: a steer joins the
      RUNNING turn, a draft starts the next one, and sharing one buffer would
      make it ambiguous which a half-typed sentence was about to do. */
@@ -1054,14 +1101,9 @@ export function AnaRail({
                           {I.zap} {a.label}
                         </button>
                       ) : (
-                      <span
-                        key={i}
-                        className={`ana-exec-chip${a.executed ? ' is-done' : ''}${a.error ? ' is-err' : ''}`}
-                        title={a.error || a.label}
-                      >
-                        {a.error ? I.alertTriangle : a.executed ? I.check : I.zap} {a.label}
-                      </span>
-                    ))}
+                        <ExecutedActionTail key={i} action={a} liveDrive={liveDrive} />
+                      ),
+                    )}
                   </div>
                 )}
               {m.role === 'ana' &&

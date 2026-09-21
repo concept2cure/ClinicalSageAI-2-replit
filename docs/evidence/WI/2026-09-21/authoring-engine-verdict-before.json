@@ -1,0 +1,28 @@
+{
+  "launchScope": {
+    "enforced": true
+  },
+  "verdicts": 101,
+  "bySource": {
+    "master_admin": 22,
+    "launch-scope": 79
+  },
+  "authoringEngine": {
+    "id": "authoring-engine",
+    "label": "AnA Authoring Engine",
+    "requiredTier": "free",
+    "entitled": true,
+    "source": "master_admin"
+  },
+  "protocolDev": {
+    "id": "protocol-dev",
+    "label": "Protocol development",
+    "requiredTier": "standard",
+    "entitled": true,
+    "source": "master_admin"
+  },
+  "catalogRowAuthoringEngine": {
+    "launchScope": "launch",
+    "isEnabled": true
+  }
+}
