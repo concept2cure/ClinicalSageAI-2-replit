@@ -1,0 +1,123 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://127.0.0.1:5400/api/audit-trail/ledger?limit=6",
+    "auth": "Bearer (dev-login jonmichaelpsmith@gmail.com, organizationId 2)",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": "AUD-d89dca71-eda0-453f-89d6-83a602a46332",
+          "when": "2026-09-21 01:27",
+          "at": "2026-09-21T01:27:31.091Z",
+          "actor": "JM Smith",
+          "event": "C2c Project Create",
+          "target": "regulatory_program:ea1c10ad-91fa-41b7-bd98-407179fc921d",
+          "kind": "admin",
+          "sig": false,
+          "hash": "fbdd90e854ca44266ed478c99730e9b1c19156a5067ce33abb9b2faa637478bf",
+          "prevHash": "d8bb3fb18d35c8a200405d90a352ba8222859f6a1bac5188fbe22bfb4d922f3f",
+          "ip": "",
+          "reason": null,
+          "meaning": null,
+          "source": "audit_logs",
+          "seq": 37
+        },
+        {
+          "id": "AUD-bab7226c-e619-43c4-b04d-164798fa9c16",
+          "when": "2026-09-21 01:27",
+          "at": "2026-09-21T01:27:31.070Z",
+          "actor": "JM Smith",
+          "event": "C2c Work Transition",
+          "target": "document:doc_330991d40f154f8dab24c86c90fe36d6",
+          "kind": "admin",
+          "sig": false,
+          "hash": "d8bb3fb18d35c8a200405d90a352ba8222859f6a1bac5188fbe22bfb4d922f3f",
+          "prevHash": "21eb59294d5636dd05054693a8303b0460b749b5fe156da1138222b1476b5a26",
+          "ip": "",
+          "reason": "Project created \u2014 document scaffolded from rule pack",
+          "meaning": null,
+          "source": "audit_logs",
+          "seq": 36
+        },
+        {
+          "id": "AUD-085c2c3a-b162-489f-a5c0-8f60a6d3f4e9",
+          "when": "2026-09-21 01:07",
+          "at": "2026-09-21T01:07:58.784Z",
+          "actor": "JM Smith",
+          "event": "Leaf Created",
+          "target": "submission_leaf:19",
+          "kind": "submission",
+          "sig": false,
+          "hash": "21eb59294d5636dd05054693a8303b0460b749b5fe156da1138222b1476b5a26",
+          "prevHash": "677c1d6601846e80ac7bc8d4fee6a1267d3a2fcfe050db30895a47e60eb09eb1",
+          "ip": "",
+          "reason": null,
+          "meaning": null,
+          "source": "audit_logs",
+          "seq": 35
+        },
+        {
+          "id": "AUD-2621abdc-18e1-4246-a323-55d3a75055f1",
+          "when": "2026-09-21 01:07",
+          "at": "2026-09-21T01:07:58.484Z",
+          "actor": "JM Smith",
+          "event": "Sequence Created",
+          "target": "ectd_sequence:20",
+          "kind": "submission",
+          "sig": false,
+          "hash": "677c1d6601846e80ac7bc8d4fee6a1267d3a2fcfe050db30895a47e60eb09eb1",
+          "prevHash": "8e67f1bb5fce190115c6028e9c907db4181b424d78f6cfe3e50726cb64e136b8",
+          "ip": "",
+          "reason": null,
+          "meaning": null,
+          "source": "audit_logs",
+          "seq": 34
+        },
+        {
+          "id": "AUD-9729384f-3f3d-410e-822a-8d720593062a",
+          "when": "2026-09-21 01:07",
+          "at": "2026-09-21T01:07:57.759Z",
+          "actor": "JM Smith",
+          "event": "Vault Document Ingest",
+          "target": "vault_document:29fd0417-eef7-4cb5-a939-5e9a5c50d34a",
+          "kind": "vault",
+          "sig": false,
+          "hash": "8e67f1bb5fce190115c6028e9c907db4181b424d78f6cfe3e50726cb64e136b8",
+          "prevHash": "34cdab137b2d116d4a336345b2d157fd8f8f2e41926d752342c376227a127786",
+          "ip": "127.0.0.1",
+          "reason": null,
+          "meaning": null,
+          "source": "audit_logs",
+          "seq": 33
+        },
+        {
+          "id": "AUD-ea5b852c-759a-4d93-bed7-502afa433005",
+          "when": "2026-09-21 01:07",
+          "at": "2026-09-21T01:07:50.984Z",
+          "actor": "JM Smith",
+          "event": "C2c Project Create",
+          "target": "regulatory_program:084011b4-e829-45c0-94c3-0a645aa5ab5b",
+          "kind": "admin",
+          "sig": false,
+          "hash": "34cdab137b2d116d4a336345b2d157fd8f8f2e41926d752342c376227a127786",
+          "prevHash": "853a07221b41c825c54f0216a9344c694ba68f29c8ce98f936ec4c715ec329a3",
+          "ip": "",
+          "reason": null,
+          "meaning": null,
+          "source": "audit_logs",
+          "seq": 32
+        }
+      ],
+      "sources": {
+        "audit_logs": 6,
+        "audit_events": 0
+      }
+    }
+  },
+  "note": "F-2: the launch apps' governed writes (audit_logs) now appear on the ledger, newest first, labelled source=audit_logs, with the real sha256_chain / predecessor hash of the tenant's chain and the trigger-assigned chain_seq."
+}

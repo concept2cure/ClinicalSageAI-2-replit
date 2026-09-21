@@ -103,6 +103,12 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260604_shadow_review.sql',
   'migrations/20260609_audit_hmac_seal.sql',
+  // audit_logs chain order key (WA 2026-09-21, VSR-001 F-1 / row D5): adds
+  // chain_seq + the BEFORE INSERT trigger that assigns it for writers that
+  // announce a chain position, so the sha256 chain has an order key of its own
+  // and is one chain per tenant. Depends on sha256_chain/occurred_at from
+  // mutation_primitives, so it follows the seal file; additive and idempotent.
+  'migrations/20260921_audit_logs_chain_seq.sql',
   // ── End golden-journey prerequisites ────────────────────────────────────────
 
   // ── The canonical submission core ───────────────────────────────────────────
