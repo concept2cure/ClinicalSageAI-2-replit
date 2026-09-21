@@ -1,0 +1,8 @@
+  111 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (document-authoring, ectd-coauthor, rbm) — surfaces that own the
+  conversation are grounded on that channel, because the shell draws no rail there.
+  122 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router
+  rewrites before the shell has an active id, so they are not routable and cannot be
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (77 surface file(s) hold a call).
+

@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5800/api/vault/ingest",
+    "body": "[multipart/form-data]"
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "body": {
+      "success": true,
+      "document": {
+        "id": "4c7aa54f-0801-4d66-bcc1-a2183cc243a4",
+        "programId": "02ed9f66-2ef6-4a21-a164-eab03a2dcdf6",
+        "documentCode": "WE F-11 Protocol 20260921015253.pdf",
+        "documentTitle": "WE F-11 Protocol 20260921015253",
+        "documentType": "PROTOCOL",
+        "version": "1.0",
+        "fileName": "WE-F-11-Protocol-20260921015253.pdf",
+        "fileSize": 612,
+        "mimeType": "application/pdf",
+        "contentHash": "ed37d47eb94df86e7c2d1778f3ab9e5ad37449ef0911c8bbfc914bd8f538ac2b",
+        "processingStatus": "PENDING",
+        "hasExtractedText": true,
+        "wordCount": 9,
+        "createdAt": "2026-09-21T01:52:54.039Z",
+        "updatedAt": "2026-09-21T01:52:54.039Z"
+      },
+      "filing": {
+        "view": "biotech",
+        "folderId": null,
+        "folderLabel": "",
+        "evidenceKind": null,
+        "ctdSection": null,
+        "placementStatus": "unfiled",
+        "confidence": "none",
+        "rationale": "No filing rule matched the name, title, or document text — needs a person to file it.",
+        "needsReview": true
+      }
+    }
+  }
+}

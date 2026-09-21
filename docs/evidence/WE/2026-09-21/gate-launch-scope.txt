@@ -1,0 +1,2 @@
+[ci:launch-scope] 6 apps · 41 surfaces · 21 modules · 36 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free

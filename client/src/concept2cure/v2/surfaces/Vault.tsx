@@ -278,8 +278,9 @@ function DataRoomLane({
       </div>
       {block.sources.length === 0 && (
         <div className="vd-dr-empty">
-          Nothing captured for this project yet. Files attached in AnA chat, dropped on
-          Project home, or uploaded here all pass through the data room.
+          Nothing captured for this project yet. Files attached in AnA chat or dropped on
+          Project home pass through the data room; files uploaded on this page go straight to
+          the filing cabinet and are listed under Uploaded files.
         </div>
       )}
       {rows.length > 0 && (
@@ -307,6 +308,110 @@ function DataRoomLane({
             </div>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Uploaded files lane — every vault.documents row the read carried ──
+   The tree browses ONE folder at a time and opens on its first node, the
+   governed CTD spine. The filing cabinet — where every upload and every
+   document filed through the API lives — is the LAST node, so its leaves
+   rendered nowhere on the page until a person found and clicked the branch.
+   OQ-VAULT-09 opened the surface after filing a document and did not find its
+   title (VSR-001 §8 F-11); OQ-VAULT-04 had already shown the read model
+   carried it. A reviewer reads "not on the page" as "not in the vault".
+
+   This lane is a projection of the SAME read (the cabinet branch of
+   GET /api/c2c/project-vault/:id), not a second store or a second request:
+   what it lists is exactly what the tree holds, flattened, with the cabinet
+   folder each row sits in — which is its filing decision. The count is the
+   server's programme-wide total, never the rows shown, so a capped window
+   cannot understate the cabinet. A row opens its folder and selects it. */
+const UPLOADS_LANE_ROWS = 8;
+
+function UploadsLane({
+  cabinet,
+  window: win,
+  status,
+  onOpen,
+}: {
+  /** The read model's filing-cabinet branch. Absent when the read carried
+   *  none, which the server reports under `unavailable` (rendered above). */
+  cabinet: VaultFolder | null;
+  window?: { shown: number; total: number; truncated: boolean };
+  status: (s: string) => { tone: string; label: string };
+  /** Open the cabinet folder a row sits in and, when given, select the row. */
+  onOpen: (folderId: string, docId: string | null) => void;
+}) {
+  const [showAll, setShowAll] = useState(false);
+  if (!cabinet) return null;
+  const rows: Array<{ doc: VaultDoc; folder: VaultFolder }> = [];
+  for (const child of cabinet.children) {
+    if (isVaultDoc(child)) {
+      rows.push({ doc: child as VaultDoc, folder: cabinet });
+      continue;
+    }
+    const folder = child as VaultFolder;
+    for (const doc of flattenDocs(folder.children)) rows.push({ doc, folder });
+  }
+  const total = win?.total ?? rows.length;
+  const visible = showAll ? rows : rows.slice(0, UPLOADS_LANE_ROWS);
+  return (
+    <div className="vd-dr" data-testid="vault-uploads-lane">
+      <div className="vd-dr-head">
+        <span className="vd-dr-title">{I.folder} Uploaded files</span>
+        <span className="vd-dr-meta">
+          {total} uploaded file{total === 1 ? '' : 's'} in this programme
+          {win?.truncated ? ` · ${win.shown} in this window` : ''}
+        </span>
+        <button className="vd-dr-toggle" onClick={() => onOpen(cabinet.id, null)}>
+          Open filing cabinet
+        </button>
+      </div>
+      {rows.length === 0 && (
+        <div className="vd-dr-empty">
+          No files uploaded to this programme yet. A file uploaded here, or filed through the
+          API, is listed here and in the filing cabinet.
+        </div>
+      )}
+      {visible.length > 0 && (
+        <div className="vd-dr-rows">
+          {visible.map(({ doc, folder }) => (
+            <div key={doc.id} className="vd-dr-row">
+              <span className="vd-dr-kind">{doc.type}</span>
+              {/* The title is the point of this lane. `.vd-dr-name` caps at 32%
+                  of its container, which inside a shrink-wrapped button is a
+                  few characters — so the cap moves to the button, a flex item
+                  of the row, and the name fills it. */}
+              <button
+                type="button"
+                className="vd-crumb"
+                style={{ minWidth: 0, maxWidth: '45%', flexShrink: 1 }}
+                title={doc.preview || doc.title}
+                onClick={() => onOpen(folder.id, doc.id)}
+              >
+                <span className="vd-dr-name" style={{ maxWidth: 'none' }}>
+                  {doc.title}
+                </span>
+              </button>
+              <span className="vd-dr-detail">
+                {doc.sizeLabel ? `${doc.sizeLabel} · ` : ''}
+                {doc.updated}
+                {doc.owner && doc.owner !== '—' ? ` · ${doc.owner}` : ''}
+              </span>
+              <span className="vd-dr-suggest">→ {folder.label}</span>
+              <span className={'rd-chip tone-' + status(doc.status).tone}>
+                {status(doc.status).label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      {rows.length > visible.length && (
+        <button className="vd-dr-toggle" onClick={() => setShowAll(true)}>
+          Show all {rows.length} in this window
+        </button>
       )}
     </div>
   );
@@ -529,15 +634,21 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
+  /* The read model's filing-cabinet branch: every upload and every document
+     filed through the API. One lookup, shared by the uploads lane and the
+     "Move to…" folder list below. */
+  const cabinet = useMemo(
+    () => (tree.find((f) => f.id === 'cabinet') as VaultFolder | undefined) ?? null,
+    [tree],
+  );
   /* Folder options for "Move to…" — derived from the server's cabinet (the
      program's real view taxonomy), never a client-side folder list. */
   const cabinetFolders = useMemo(() => {
-    const cab = tree.find((f) => f.id === 'cabinet');
-    if (!cab) return [] as Array<{ id: string; label: string }>;
-    return cab.children
+    if (!cabinet) return [] as Array<{ id: string; label: string }>;
+    return cabinet.children
       .filter((c): c is VaultFolder => !isVaultDoc(c) && (c as VaultFolder).id !== 'cab-unfiled')
       .map((c) => ({ id: c.id.replace(/^cab-/, ''), label: c.label }));
-  }, [tree]);
+  }, [cabinet]);
   const [moveTarget, setMoveTarget] = useState('');
 
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
@@ -546,6 +657,15 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const [selId, setSel] = useState<string | null>(null);
   const toggle = (id: string) =>
     setExpanded((e) => ({ ...e, [id]: e[id] === false ? true : false }));
+  /* From the uploads lane: browse the cabinet folder the row sits in (with the
+     cabinet un-collapsed down to it) and select the row — the same state the
+     tree's own controls drive, so the list, breadcrumb and detail pane agree. */
+  const openUpload = (folderId: string, docId: string | null) => {
+    setQ('');
+    setActiveFolder(folderId);
+    setExpanded((e) => ({ ...e, cabinet: true, [folderId]: true }));
+    if (docId) setSel(docId);
+  };
 
   const findFolder = (
     nodes: (VaultDoc | VaultFolder)[],
@@ -969,6 +1089,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
             unavailableReason={
               vault?.unavailable?.find((u) => u.branch === 'Data room')?.reason ?? null
             }
+          />
+          <UploadsLane
+            cabinet={cabinet}
+            window={vault?.uploadsWindow}
+            status={st}
+            onOpen={openUpload}
           />
           {filingNote && (
             <div

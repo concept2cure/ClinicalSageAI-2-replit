@@ -1,0 +1,1 @@
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).

@@ -3608,12 +3608,35 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       console.warn('[Authoring] Data Room retrieval failed (non-fatal):', retrievalError);
     }
 
-    // Generate with AI Gateway (Claude primary)
-    try {
-      const { getGateway } = await import('../services/ai-gateway/gateway.js');
-      const gw = getGateway();
-      if (gw.getEnabledProviders().length > 0) {
-        const prompt = `Generate professional ${region} regulatory content for:
+    // ── Generate with the AI gateway. There is no other source of a draft. ──
+    //
+    // This route used to fall through to a hardcoded section skeleton when no
+    // provider was enabled or the model call failed, answering HTTP 200
+    // `success:false, degraded:true, source:'template'` with a full template
+    // body — and the client rendered it as a draft (VSR-001 §8 F-10). A
+    // deployment with no enabled provider is refused with 503
+    // GATEWAY_UNAVAILABLE, the same code AnA answers with, and NO draft body;
+    // a gateway failure is refused with its own classified code; a fault of
+    // ours is a 500. Nothing on this path fabricates content (URS-AUTH-012;
+    // working agreement: fail closed, never fabricate).
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const { GATEWAY_ERROR_HTTP_STATUS, classifyGatewayError, isGatewayError } = await import(
+      '../services/ai-gateway/gateway-error-map.js'
+    );
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      logger.warn('ai/draft refused: no AI provider is enabled on the gateway', { sectionId });
+      return res.status(503).json({
+        success: false,
+        error: {
+          code: 'GATEWAY_UNAVAILABLE',
+          message:
+            'No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed.',
+        },
+      });
+    }
+
+    const prompt = `Generate professional ${region} regulatory content for:
 Module: ${section.module}
 Section: ${section.code} - ${section.title}
 Product: ${section.product_code || 'Medical Product'}
@@ -3629,268 +3652,169 @@ Return ONLY a JSON object of this exact shape:
 - Omit sentences that are your own analysis or not based on a provided source. Never cite a src not shown above.
 Provide detailed, compliance-ready content following ${region} guidelines.`;
 
-        const gwResponse = await gw.route({
-          taskType: 'document_drafting',
-          messages: [{ role: 'user', content: prompt }],
-          maxTokens: 3000,
-          temperature: 0.3,
-          // Structured envelope so the model can report which sentences it derived
-          // from which source (source-attribution Phase 4). On the default
-          // Anthropic provider jsonMode is prompt-instructed; the parse below is
-          // tolerant and degrades to plain prose so a malformed response can never
-          // break drafting.
-          jsonMode: true,
-          callerModule: 'authoring-router/generate-draft',
-        });
-
-        // Parse the structured envelope tolerantly. On ANY shortfall the whole
-        // response becomes the draft with no attributions — the draft still lands
-        // and is attributed by verified quotes + author lineage (Phase 3).
-        // Structured paraphrase is additive; it must never break drafting. The
-        // parser is pure and lives in authoring-draft-envelope.ts so the malformed
-        // shapes it has to survive are unit-testable without the route.
-        const { content: generatedContent, attributions: modelAttributions } =
-          parseDraftEnvelope(gwResponse.content);
-        if (generatedContent) {
-          // Park the draft + the sources it came from so the accept endpoint can
-          // record verified span-level source lineage (Phase 3). Best-effort:
-          // attribution prep must never break drafting, so any failure just omits
-          // draftId and the client falls back to a plain save (author lineage).
-          let draftId: string | undefined;
-          let attributableSources = 0;
-          try {
-            const rawSourceIds = [
-              ...new Set(
-                retrievedChunks
-                  .map((c) => c.sourceId)
-                  .filter((s): s is string => typeof s === 'string' && s.length > 0),
-              ),
-            ];
-            let evidenceByRaw = new Map<string, number>();
-            if (rawSourceIds.length > 0) {
-              const { resolveEvidenceSourceIdsByArtifact } = await import(
-                '../services/clinical-regulatory-evidence/retrieval-source-link.js'
-              );
-              // tenantId is the numeric org id (getTenantId → authedOrgId), exactly
-              // what the resolver and the lineage writers require.
-              evidenceByRaw = await resolveEvidenceSourceIdsByArtifact(tenantId, rawSourceIds);
-            }
-            const candidateSources = retrievedChunks
-              .filter((c) => c.sourceId && evidenceByRaw.has(c.sourceId))
-              .map((c) => ({
-                evidenceSourceId: evidenceByRaw.get(c.sourceId as string) as number,
-                content: c.content,
-                title: c.title || null,
-              }));
-            attributableSources = new Set(candidateSources.map((s) => s.evidenceSourceId)).size;
-
-            // Resolve the model's [SRC-n] paraphrase claims to canonical source
-            // ids. SRC-n is the 1-based position in retrievedChunks (the order the
-            // evidence block showed the model); keep only a claim whose chunk
-            // resolved to a canonical cre_evidence_sources.id — an unresolved or
-            // out-of-range src is dropped, never guessed at. The accept gate
-            // re-checks each id is one that was retrieved before recording it.
-            const assertions = modelAttributions
-              .map((a) => {
-                const chunk = retrievedChunks[a.src - 1];
-                const esid = chunk && chunk.sourceId ? evidenceByRaw.get(chunk.sourceId) : undefined;
-                return esid && a.quote.trim() ? { quote: a.quote, sourceId: esid } : null;
-              })
-              .filter((x): x is { quote: string; sourceId: number } => x !== null);
-
-            const { createDraftCandidate } = await import(
-              '../services/clinical-regulatory-evidence/draft-candidate-store.js'
-            );
-            const candidate = await createDraftCandidate(
-              tenantId,
-              String(sectionId),
-              generatedContent,
-              candidateSources,
-              getActorId(req),
-              undefined,
-              /* What produced this draft, parked with the source chunks rather
-                 than round-tripped through the client — "which model wrote
-                 this" must not be a forgeable claim. The prompt is composed
-                 inline here, so there is no version to name and a digest of
-                 the bytes actually sent is the honest identifier. */
-              {
-                model: gwResponse.model ?? null,
-                provider: gwResponse.provider ?? null,
-                promptSha256: crypto.createHash('sha256').update(prompt).digest('hex'),
-                generatedAt: new Date().toISOString(),
-              },
-              assertions,
-            );
-            draftId = candidate.id;
-          } catch (attrErr: any) {
-            console.warn(
-              '[Authoring] draft-candidate creation failed (non-fatal):',
-              attrErr?.message,
-            );
-          }
-
-          return res.json({
-            success: true,
-            draft: {
-              content: generatedContent,
-              // Present when the draft was parked for attributed acceptance; POST
-              // …/ai/draft/accept with this id records source + author lineage.
-              draftId,
-              metadata: {
-                tone,
-                region,
-                generated_at: new Date().toISOString(),
-                model: gwResponse.model,
-                provider: gwResponse.provider,
-                sourcesRetrieved,
-                attributableSources,
-                /* Carried so a reader can tell an ungrounded draft from a
-                   grounded one, and a retrieval outage from an empty corpus. */
-                retrievalStatus,
-                retrievalError,
-              },
-            },
-            message:
-              sourcesRetrieved > 0
-                ? `AI draft generated with ${sourcesRetrieved} Data Room source${
-                    sourcesRetrieved !== 1 ? 's' : ''
-                  }`
-                : retrievalStatus === 'failed'
-                  ? 'AI draft generated WITHOUT Data Room evidence — retrieval failed, so this draft is ungrounded and its claims are unverified'
-                  : 'AI draft generated with no Data Room sources above the relevance threshold',
-          });
-        }
-      }
+    let gwResponse: Awaited<ReturnType<typeof gw.route>>;
+    try {
+      gwResponse = await gw.route({
+        taskType: 'document_drafting',
+        messages: [{ role: 'user', content: prompt }],
+        maxTokens: 3000,
+        temperature: 0.3,
+        // Structured envelope so the model can report which sentences it derived
+        // from which source (source-attribution Phase 4). On the default
+        // Anthropic provider jsonMode is prompt-instructed; the parse below is
+        // tolerant and degrades to plain prose so a malformed response can never
+        // break drafting.
+        jsonMode: true,
+        callerModule: 'authoring-router/generate-draft',
+      });
     } catch (aiError) {
-      console.error('AI Gateway error:', aiError);
-      // Fall back to template-based generation
+      /* A gateway refusal (rate limit, overload, too large, no provider that
+         could serve it) answers with its classified code and status; a fault of
+         ours is a 500. Neither ever answers with content. */
+      if (isGatewayError(aiError)) {
+        const { code, message } = classifyGatewayError(aiError);
+        logger.warn('ai/draft refused: the AI gateway declined the request', { code, sectionId });
+        return res
+          .status(GATEWAY_ERROR_HTTP_STATUS[code])
+          .json({ success: false, error: { code, message } });
+      }
+      return serverError(res, logger, 'drafting AI', aiError);
     }
 
-    // Fallback: Template-based content generation
-    const templates: Record<string, Record<string, string>> = {
-      M3: {
-        default: `QUALITY OVERALL SUMMARY - ${section.title}
+    // Parse the structured envelope tolerantly. On ANY shortfall the whole
+    // response becomes the draft with no attributions — the draft still lands
+    // and is attributed by verified quotes + author lineage (Phase 3).
+    // Structured paraphrase is additive; it must never break drafting. The
+    // parser is pure and lives in authoring-draft-envelope.ts so the malformed
+    // shapes it has to survive are unit-testable without the route.
+    const { content: generatedContent, attributions: modelAttributions } =
+      parseDraftEnvelope(gwResponse.content);
+    if (!generatedContent) {
+      /* The provider answered and said nothing usable. That is not a draft and
+         it is not an outage; it is refused as an invalid response. */
+      logger.warn('ai/draft refused: the provider returned no draft content', {
+        sectionId,
+        model: gwResponse.model ?? null,
+      });
+      return res.status(GATEWAY_ERROR_HTTP_STATUS.INVALID_AI_RESPONSE).json({
+        success: false,
+        error: {
+          code: 'INVALID_AI_RESPONSE',
+          message:
+            'The AI provider returned no draft content, so nothing was drafted. Nothing was changed.',
+        },
+      });
+    }
+    // Park the draft + the sources it came from so the accept endpoint can
+    // record verified span-level source lineage (Phase 3). Best-effort:
+    // attribution prep must never break drafting, so any failure just omits
+    // draftId and the client falls back to a plain save (author lineage).
+    let draftId: string | undefined;
+    let attributableSources = 0;
+    try {
+      const rawSourceIds = [
+        ...new Set(
+          retrievedChunks
+            .map((c) => c.sourceId)
+            .filter((s): s is string => typeof s === 'string' && s.length > 0),
+        ),
+      ];
+      let evidenceByRaw = new Map<string, number>();
+      if (rawSourceIds.length > 0) {
+        const { resolveEvidenceSourceIdsByArtifact } = await import(
+          '../services/clinical-regulatory-evidence/retrieval-source-link.js'
+        );
+        // tenantId is the numeric org id (getTenantId → authedOrgId), exactly
+        // what the resolver and the lineage writers require.
+        evidenceByRaw = await resolveEvidenceSourceIdsByArtifact(tenantId, rawSourceIds);
+      }
+      const candidateSources = retrievedChunks
+        .filter((c) => c.sourceId && evidenceByRaw.has(c.sourceId))
+        .map((c) => ({
+          evidenceSourceId: evidenceByRaw.get(c.sourceId as string) as number,
+          content: c.content,
+          title: c.title || null,
+        }));
+      attributableSources = new Set(candidateSources.map((s) => s.evidenceSourceId)).size;
 
-1. INTRODUCTION
-This section provides comprehensive quality information for ${
-          section.product_code || 'the product'
-        } in accordance with ${region} regulatory requirements.
+      // Resolve the model's [SRC-n] paraphrase claims to canonical source
+      // ids. SRC-n is the 1-based position in retrievedChunks (the order the
+      // evidence block showed the model); keep only a claim whose chunk
+      // resolved to a canonical cre_evidence_sources.id — an unresolved or
+      // out-of-range src is dropped, never guessed at. The accept gate
+      // re-checks each id is one that was retrieved before recording it.
+      const assertions = modelAttributions
+        .map((a) => {
+          const chunk = retrievedChunks[a.src - 1];
+          const esid = chunk && chunk.sourceId ? evidenceByRaw.get(chunk.sourceId) : undefined;
+          return esid && a.quote.trim() ? { quote: a.quote, sourceId: esid } : null;
+        })
+        .filter((x): x is { quote: string; sourceId: number } => x !== null);
 
-2. DRUG SUBSTANCE
-[Detailed information about the drug substance, including nomenclature, structure, general properties, and manufacture]
+      const { createDraftCandidate } = await import(
+        '../services/clinical-regulatory-evidence/draft-candidate-store.js'
+      );
+      const candidate = await createDraftCandidate(
+        tenantId,
+        String(sectionId),
+        generatedContent,
+        candidateSources,
+        getActorId(req),
+        undefined,
+        /* What produced this draft, parked with the source chunks rather
+           than round-tripped through the client — "which model wrote
+           this" must not be a forgeable claim. The prompt is composed
+           inline here, so there is no version to name and a digest of
+           the bytes actually sent is the honest identifier. */
+        {
+          model: gwResponse.model ?? null,
+          provider: gwResponse.provider ?? null,
+          promptSha256: crypto.createHash('sha256').update(prompt).digest('hex'),
+          generatedAt: new Date().toISOString(),
+        },
+        assertions,
+      );
+      draftId = candidate.id;
+    } catch (attrErr: any) {
+      console.warn(
+        '[Authoring] draft-candidate creation failed (non-fatal):',
+        attrErr?.message,
+      );
+    }
 
-3. DRUG PRODUCT
-[Comprehensive details about the drug product formulation, pharmaceutical development, manufacture, and control]
-
-4. QUALITY CONTROL
-[Description of specifications, analytical procedures, validation, and batch analyses]
-
-5. STABILITY
-[Stability protocol, data, and conclusions supporting the proposed shelf life]
-
-6. CONCLUSION
-The quality information presented demonstrates that ${
-          section.product_code || 'the product'
-        } meets all ${region} regulatory standards for pharmaceutical quality.`,
-
-        '3.2.S': `DRUG SUBSTANCE - ${section.title}
-
-3.2.S.1 GENERAL INFORMATION
-• Nomenclature
-• Structure
-• General Properties
-
-3.2.S.2 MANUFACTURE
-• Manufacturer(s)
-• Description of Manufacturing Process and Process Controls
-• Control of Materials
-• Controls of Critical Steps and Intermediates
-• Process Validation and/or Evaluation
-
-3.2.S.3 CHARACTERIZATION
-• Elucidation of Structure
-• Impurities
-
-3.2.S.4 CONTROL OF DRUG SUBSTANCE
-• Specification
-• Analytical Procedures
-• Validation of Analytical Procedures
-• Batch Analyses
-• Justification of Specification
-
-3.2.S.5 REFERENCE STANDARDS
-• Reference Standards or Materials
-
-3.2.S.6 CONTAINER CLOSURE SYSTEM
-
-3.2.S.7 STABILITY
-• Stability Summary and Conclusions
-• Post-approval Stability Protocol
-• Stability Data`,
-      },
-      M5: {
-        default: `CLINICAL STUDY REPORT - ${section.title}
-
-1. TITLE PAGE
-Protocol Title: ${section.title}
-Protocol Number: ${section.code}
-${region} Submission
-
-2. SYNOPSIS
-[Brief overview of the clinical study design, objectives, and key results]
-
-3. STUDY OBJECTIVES
-Primary Objective:
-• [Primary endpoint and hypothesis]
-
-Secondary Objectives:
-• [Secondary endpoints]
-
-4. INVESTIGATIONAL PLAN
-Study Design:
-• Type: [Randomized, controlled, open-label, etc.]
-• Duration: [Study duration]
-• Population: [Target patient population]
-
-5. STUDY RESULTS
-[Detailed presentation of efficacy and safety results]
-
-6. SAFETY EVALUATION
-[Comprehensive safety analysis including adverse events]
-
-7. DISCUSSION AND CONCLUSIONS
-[Interpretation of results and clinical significance]`,
-      },
-    };
-
-    const moduleTemplates = templates[section.module] || templates['M3'];
-    const template = moduleTemplates[section.code] || moduleTemplates['default'];
-
-    // HONESTY: this is the hardcoded-template fallback, reached only when no AI
-    // provider produced content. It must NOT masquerade as a model-generated
-    // draft. Returning success:true / "generated successfully" here told the
-    // caller a model wrote a compliance-ready section when in fact it returned a
-    // static skeleton with bracketed placeholders. Flag the degradation and the
-    // source explicitly so the UI can present it as a starting scaffold, not as
-    // generated content. The draft body is still returned so a caller may adopt
-    // the skeleton knowingly.
-    res.json({
-      success: false,
-      degraded: true,
-      source: 'template',
+    return res.json({
+      success: true,
+      /* The only source a draft can have. Declared so a reader of the envelope
+         never has to infer from the absence of a `degraded` flag. */
+      source: 'model',
       draft: {
-        content: template,
+        content: generatedContent,
+        // Present when the draft was parked for attributed acceptance; POST
+        // …/ai/draft/accept with this id records source + author lineage.
+        draftId,
         metadata: {
           tone,
           region,
           generated_at: new Date().toISOString(),
-          model: 'template-based',
-          source: 'template',
-          degraded: true,
+          model: gwResponse.model,
+          provider: gwResponse.provider,
+          source: 'model',
+          sourcesRetrieved,
+          attributableSources,
+          /* Carried so a reader can tell an ungrounded draft from a
+             grounded one, and a retrieval outage from an empty corpus. */
+          retrievalStatus,
+          retrievalError,
         },
       },
       message:
-        'AI generation was unavailable; returned a hardcoded section template (not model-generated).',
+        sourcesRetrieved > 0
+          ? `AI draft generated with ${sourcesRetrieved} Data Room source${
+              sourcesRetrieved !== 1 ? 's' : ''
+            }`
+          : retrievalStatus === 'failed'
+            ? 'AI draft generated WITHOUT Data Room evidence — retrieval failed, so this draft is ungrounded and its claims are unverified'
+            : 'AI draft generated with no Data Room sources above the relevance threshold',
     });
   } catch (error) {
     console.error('Error generating AI draft:', error);

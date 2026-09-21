@@ -1,0 +1,7 @@
+[ci:eslint-warning-ratchet] --since HEAD (26c65e2ea) -- 13 lintable file(s) changed; linting both versions of each...
+
+    +1  server/routes/audit-trail-ledger.routes.ts  (0 -> 1)
+         server/routes/audit-trail-ledger.routes.ts:338:20  @typescript-eslint/no-unused-vars  '_tenants' is assigned a value but never used.
+    -2  server/routes/authoring.router.ts  (43 -> 41)
+
+[ci:eslint-warning-ratchet] net -1 warning(s) across the files changed since HEAD.
