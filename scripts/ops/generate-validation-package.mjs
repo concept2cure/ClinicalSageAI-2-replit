@@ -202,7 +202,7 @@ discharged by inspection, and the gate refuses a registry that tries.
 function renderUrs(app, reqs, resultsById) {
   const rows = reqs.map((r) => {
     const ex = resultsById.get(r.id) ?? {};
-    return `| ${cell(r.id)} | ${cell(r.statement)} | ${cell(r.csaImpact)} | ${cell(r.assuranceLevel)} | ${cell(ex.result ?? RESULT.NOT_EXECUTED)} |`;
+    return `| ${cell(r.id)} | ${cell(r.statement)} | ${cell(r.csaImpact)} | ${cell(r.assuranceLevel)} | ${cell(r.assuranceTarget ? `→ ${r.assuranceTarget}` : '—')} | ${cell(ex.result ?? RESULT.NOT_EXECUTED)} |`;
   });
   const detail = reqs.map((r) => {
     const ex = resultsById.get(r.id) ?? {};
@@ -218,7 +218,17 @@ function renderUrs(app, reqs, resultsById) {
 
 **If it fails.** ${r.failureMode}
 
-**CSA impact.** ${r.csaImpact} · **assurance level** ${r.assuranceLevel}
+**CSA impact.** ${r.csaImpact} · **assurance level achieved** ${r.assuranceLevel}${
+      r.assuranceTarget
+        ? `
+
+> **Not yet qualified to the level this risk deserves.** The evidence cited
+> below supports **${r.assuranceLevel}** assurance; the risk deserves
+> **${r.assuranceTarget}**. Owed: ${r.evidenceOwed} Until that exists this
+> requirement is declared and partially evidenced, not qualified, and
+> VSR-LAUNCH-001 counts it against the package.`
+        : ''
+    }
 
 **Implemented by**
 ${(r.codeRefs ?? []).map((p) => `  - \`${p}\``).join('\n')}
@@ -240,8 +250,8 @@ Surfaces in scope: ${(app.surfaces ?? []).map((s) => `\`${s}\``).join(', ') || '
 ${IMPACT_NOTE}
 ## Requirements
 
-| ID | Requirement | Impact | Assurance | Result |
-|---|---|---|---|---|
+| ID | Requirement | Impact | Assurance | Owed | Result |
+|---|---|---|---|---|---|
 ${rows.join('\n')}
 
 ## Requirement detail
@@ -258,7 +268,7 @@ function renderRisk(registry, resultsById) {
   const rows = reqs.map((r) => {
     const ex = resultsById.get(r.id) ?? {};
     const methods = (r.verification ?? []).map((v) => v.method).join(', ');
-    return `| ${cell(r.id)} | ${cell(r.appId)} | ${cell(r.failureMode)} | ${cell(r.csaImpact)} | ${cell(r.assuranceLevel)} | ${cell(methods)} | ${cell(ex.result ?? RESULT.NOT_EXECUTED)} |`;
+    return `| ${cell(r.id)} | ${cell(r.appId)} | ${cell(r.failureMode)} | ${cell(r.csaImpact)} | ${cell(r.assuranceLevel)} | ${cell(r.assuranceTarget ?? '—')} | ${cell(methods)} | ${cell(ex.result ?? RESULT.NOT_EXECUTED)} |`;
   });
   const counts = reqs.reduce((acc, r) => {
     acc[r.assuranceLevel] = (acc[r.assuranceLevel] ?? 0) + 1;
@@ -297,8 +307,8 @@ ${IMPACT_NOTE}
 
 ## Assessment
 
-| ID | App | Failure mode | Impact | Assurance | Verification | Result |
-|---|---|---|---|---|---|---|
+| ID | App | Failure mode | Impact | Achieved | Deserves | Verification | Result |
+|---|---|---|---|---|---|---|---|
 ${rows.join('\n')}
 `;
 }
@@ -335,7 +345,7 @@ ${rows.join('\n')}
 `;
 }
 
-function renderSummary(registry, resultsById, verdict, tally, executed) {
+function renderSummary(registry, resultsById, verdict, tally, executed, owed) {
   const failing = registry.requirements
     .filter((r) => (resultsById.get(r.id)?.result ?? RESULT.NOT_EXECUTED) !== RESULT.PASS)
     .map((r) => {
@@ -349,8 +359,8 @@ function renderSummary(registry, resultsById, verdict, tally, executed) {
 **${verdict}**
 
 ${verdict === 'COMPLETE'
-    ? 'Every requirement in the registry has at least one verification that was executed and passed in this run.'
-    : 'At least one requirement has no executed, passing verification. The package is not complete, and the list below is what is outstanding. This verdict is the point of the document: a summary report that could only ever say COMPLETE would evidence nothing.'}
+    ? 'Every requirement in the registry has at least one verification that was executed and passed in this run, and no requirement carries an unclosed assurance shortfall.'
+    : 'The package is not complete. Either a requirement has no executed, passing verification, or a requirement is not yet qualified to the assurance level its risk deserves. Both lists are below. This verdict is the point of the document: a summary report that could only ever say COMPLETE would evidence nothing.'}
 
 | | Count |
 |---|---|
@@ -360,6 +370,7 @@ ${verdict === 'COMPLETE'
 | Executed and failed | ${tally[RESULT.FAIL] ?? 0} |
 | Could not be executed (ERROR) | ${tally[RESULT.ERROR] ?? 0} |
 | Not executed in this run | ${tally[RESULT.NOT_EXECUTED] ?? 0} |
+| **Not yet qualified to the level the risk deserves** | ${owed.length} |
 
 Verification was ${executed ? 'executed' : '**not** executed'} in this run${executed ? '' : ' (run with `--run`)'}.
 
@@ -368,6 +379,19 @@ Verification was ${executed ? 'executed' : '**not** executed'} in this run${exec
 ${failing.length === 0
     ? 'Nothing. Every requirement passed.'
     : `| ID | App | Result | Observed |\n|---|---|---|---|\n${failing.join('\n')}`}
+
+## Not yet qualified to the level the risk deserves
+
+These requirements are implemented and partially evidenced. The evidence that
+exists supports a lower assurance level than the requirement's risk justifies,
+so they are **declared, not qualified**, and the package cannot read COMPLETE
+while any of them stands. Each names the work that would close it.
+
+${owed.length === 0
+    ? 'None. Every requirement is evidenced to the level its risk deserves.'
+    : `| ID | App | Achieved | Deserves | Evidence owed |\n|---|---|---|---|---|\n${owed
+        .map((r) => `| ${cell(r.id)} | ${cell(r.appId)} | ${cell(r.assuranceLevel)} | ${cell(r.assuranceTarget)} | ${cell(r.evidenceOwed)} |`)
+        .join('\n')}`}
 
 ## What this report does not cover
 
@@ -454,7 +478,14 @@ async function main() {
 
   const tally = {};
   for (const [, v] of resultsById) tally[v.result] = (tally[v.result] ?? 0) + 1;
-  const verdict = RUN && (tally[RESULT.PASS] ?? 0) === registry.requirements.length ? 'COMPLETE' : 'INCOMPLETE';
+  /* A requirement whose evidence is weaker than its risk deserves is not
+     qualified, however green its tests are, so the shortfall list gates the
+     verdict exactly as a failing suite does. */
+  const owed = registry.requirements.filter((r) => r.assuranceTarget);
+  const verdict =
+    RUN && (tally[RESULT.PASS] ?? 0) === registry.requirements.length && owed.length === 0
+      ? 'COMPLETE'
+      : 'INCOMPLETE';
 
   fs.mkdirSync(rel(OUT_DIR), { recursive: true });
   const written = [];
@@ -467,7 +498,7 @@ async function main() {
   const more = [
     [`${OUT_DIR}/RA-LAUNCH-001-RISK-ASSESSMENT.md`, renderRisk(registry, resultsById)],
     [`${OUT_DIR}/TM-LAUNCH-001-TRACEABILITY-MATRIX.md`, renderTraceability(registry, resultsById, appById)],
-    [`${OUT_DIR}/VSR-LAUNCH-001-SUMMARY-REPORT.md`, renderSummary(registry, resultsById, verdict, tally, RUN)],
+    [`${OUT_DIR}/VSR-LAUNCH-001-SUMMARY-REPORT.md`, renderSummary(registry, resultsById, verdict, tally, RUN, owed)],
   ];
   for (const [file, body] of more) { fs.writeFileSync(rel(file), body); written.push(file); }
 
@@ -480,6 +511,7 @@ async function main() {
   } else {
     say(`\nwrote ${written.length} document(s) to ${OUT_DIR}/`);
     for (const [k, v] of Object.entries(tally)) say(`  ${k}: ${v}`);
+    if (owed.length) say(`  not yet qualified to the level the risk deserves: ${owed.length}`);
     say(`\nVerdict: ${verdict}`);
     if (verdict !== 'COMPLETE' && !RUN) say('(nothing was executed — run with --run)');
   }

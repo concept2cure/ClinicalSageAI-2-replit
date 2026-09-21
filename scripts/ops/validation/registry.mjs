@@ -159,6 +159,33 @@ export function validateRegistry(registry, root = repoRoot) {
       fail('impact-assurance', id, 'a direct-impact requirement cannot carry low assurance');
     }
 
+    /* An honest shortfall, declared rather than hidden.
+     *
+     * The assurance rule above is deliberately strict, and the temptation it
+     * creates is to write down whatever level the existing evidence happens to
+     * satisfy. That converts a real gap — "this requirement deserves an
+     * integration test and has only a unit test" — into a document that reads
+     * fully qualified. So `assuranceLevel` is what the cited evidence actually
+     * supports, and `assuranceTarget` is what the risk deserves. Where they
+     * differ the requirement is NOT qualified, `evidenceOwed` names the test
+     * that would close it, and VSR-LAUNCH-001 lists it and refuses to report
+     * COMPLETE. The gate keeps checking the level that is claimed; it simply
+     * also refuses a target with no work item attached to it. */
+    if (r.assuranceTarget !== undefined) {
+      const levels = ['low', 'medium', 'high'];
+      const have = levels.indexOf(r.assuranceLevel);
+      const want = levels.indexOf(r.assuranceTarget);
+      if (want < 0) fail('target', id, 'assuranceTarget must be high, medium or low');
+      else if (want <= have) {
+        fail('target-pointless', id, `assuranceTarget "${r.assuranceTarget}" is not above assuranceLevel "${r.assuranceLevel}" — drop it`);
+      }
+      if (typeof r.evidenceOwed !== 'string' || r.evidenceOwed.trim().length < 15) {
+        fail('owed', id, 'an assuranceTarget without evidenceOwed is a gap with nobody to close it');
+      }
+    } else if (r.evidenceOwed !== undefined) {
+      fail('owed-orphan', id, 'evidenceOwed without an assuranceTarget says nothing about what is missing');
+    }
+
     for (const ref of refsOf(r)) {
       if (!fs.existsSync(path.join(root, ref))) {
         fail('dangling-ref', id, `cited path does not exist: ${ref}`);

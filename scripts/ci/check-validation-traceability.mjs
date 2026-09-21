@@ -146,6 +146,42 @@ function selfTest() {
       () => { const r = clean(); r.requirements[0].codeRefs = []; return r; },
       1,
     ],
+    /* The honest-shortfall rules. A declared gap is allowed; a declared gap with
+       nobody to close it, or one that claims to be a gap while asking for
+       nothing more than it already has, is not. */
+    [
+      'control — a declared assurance shortfall with the work named',
+      () => {
+        const r = clean();
+        r.requirements[0].assuranceLevel = 'medium';
+        r.requirements[0].verification = [{ method: 'unit', refs: ['server/__tests__/real.test.ts'] }];
+        r.requirements[0].assuranceTarget = 'high';
+        r.requirements[0].evidenceOwed = 'an integration test that drives the real route against a database';
+        return r;
+      },
+      0,
+    ],
+    [
+      'an assurance target with no evidence owed — a gap with nobody to close it',
+      () => {
+        const r = clean();
+        r.requirements[0].assuranceLevel = 'medium';
+        r.requirements[0].verification = [{ method: 'unit', refs: ['server/__tests__/real.test.ts'] }];
+        r.requirements[0].assuranceTarget = 'high';
+        return r;
+      },
+      1,
+    ],
+    [
+      'an assurance target no higher than the level already achieved',
+      () => { const r = clean(); r.requirements[0].assuranceTarget = 'high'; r.requirements[0].evidenceOwed = 'nothing at all, really'; return r; },
+      1,
+    ],
+    [
+      'evidence owed with no target — says nothing about what is missing',
+      () => { const r = clean(); r.requirements[0].evidenceOwed = 'some test somebody should write'; return r; },
+      1,
+    ],
   ];
 
   let failures = 0;
