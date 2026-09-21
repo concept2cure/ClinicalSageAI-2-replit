@@ -3,13 +3,26 @@
  *
  * Registry id: `review`
  *
- * Review queue, threaded comments, reject-with-reason, delegate-step,
- * multi-step approval workflows.
+ * Review queue over the AUTHORING review store, threaded comments, approve /
+ * request changes with a reason / decline, the document's approval chain.
  *
- * NOTE: this surface records review decisions locally. It does NOT apply a
- * 21 CFR §11.50 electronic signature — see ESignModal below. Binding signatures
- * are applied from the authoring workspace (server/routes/authoring.router.ts),
- * PIN-verified and sealed against a frozen document version.
+ * ── One store (VSR-001 F-6, decided 2026-09-21) ──────────────────────────────
+ * The queue is GET /api/review/board, a read model over the tables the
+ * Authoring launch app writes through: review requests and verdicts
+ * (POST /api/authoring/documents/:id/request-review, POST .../review), the
+ * approval chain (POST /api/authoring/docs/:id/submit, advanced by the §11.50
+ * signature route), and comments. Every act recorded here is one of the
+ * authoring workflow's OWN transitions, called directly:
+ *   approve / request changes / decline → POST /api/authoring/documents/:id/review
+ *   comment                             → POST /api/authoring/sections/:sectionId/comment
+ *   resolve                             → PATCH /api/authoring/comments/:commentId
+ * There is no delegate: the authoring workflow has no such transition (a
+ * reviewer is added with request-review), and this board invents no state.
+ *
+ * NOTE: this surface records review verdicts. It does NOT apply a 21 CFR §11.50
+ * electronic signature — see DecisionModal below. Binding signatures are applied
+ * from the authoring workspace (server/routes/authoring.router.ts), PIN-verified
+ * and sealed against a frozen document version.
  */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
@@ -19,15 +32,16 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { useDialog } from '../useDialog';
-import type { ReviewItem, ReviewComment, ReviewWorkflow, WorkflowStep } from '../fixtures/review-data';
-import { STATUS_TONE, ESIGN_MEANINGS } from '../fixtures/review-data';
+import type { ReviewItem, ReviewComment, ReviewWorkflow } from '../fixtures/review-data';
+import { STATUS_TONE } from '../fixtures/review-data';
 import { assessmentStateFor, hasAnswer } from '../assessmentState';
+import { readShellProject } from '../shellProject';
 import { ReviewThreadsPane } from './ReviewThreads';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
 /** Sub-headline shared by the surface header and its honest empty/error states. */
-const REVIEW_SUB = 'Review queue, threaded comments, reject-with-reason, delegate a step.';
+const REVIEW_SUB = 'Reviews requested in Authoring: approve, request changes with a reason, or decline.';
 
 /**
  * The render contract of GET /api/review/board (server/routes/review-board-routes.ts),
@@ -39,6 +53,25 @@ interface ReviewBoardData {
   workflows: Record<string, ReviewWorkflow>;
   thread: ReviewComment[];
 }
+
+type Scope = 'all' | 'mine' | 'requested';
+const SCOPES: Array<{ id: Scope; label: string }> = [
+  { id: 'mine', label: 'Awaiting my review' },
+  { id: 'requested', label: 'Requested by me' },
+  { id: 'all', label: 'All open' },
+];
+
+/** The authoring verdicts POST /documents/:id/review takes. */
+type Verdict = 'approved' | 'changes_requested' | 'rejected';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const REVIEW_STATUS_LABEL: Record<string, string> = {
+  pending: 'Pending',
+  approved: 'Approved',
+  changes_requested: 'Changes requested',
+  rejected: 'Declined',
+};
 
 /* ── Inline helpers (kit shared bits) ── */
 
@@ -64,58 +97,79 @@ function Pill({ tone, children }: { tone: string; children: React.ReactNode }) {
   return <span className={`rd-chip tone-${tone}`}>{children}</span>;
 }
 
-/* ── E-sign modal (21 CFR Part 11) ── */
+/** Scope + program switch, rendered above the queue and in the empty state. */
+function ScopeBar({ scope, onScope, program, onlyProgram, onOnlyProgram }: {
+  scope: Scope;
+  onScope: (s: Scope) => void;
+  program: { id: string; title: string } | null;
+  onlyProgram: boolean;
+  onOnlyProgram: (v: boolean) => void;
+}) {
+  const on = { fontWeight: 600, background: 'var(--bg-050)' } as const;
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginBottom: 12 }}>
+      {SCOPES.map((s) => (
+        <button
+          key={s.id}
+          className="btn ghost"
+          aria-pressed={scope === s.id}
+          data-on={scope === s.id || undefined}
+          style={scope === s.id ? on : undefined}
+          onClick={() => onScope(s.id)}
+        >
+          {s.label}
+        </button>
+      ))}
+      {program && (
+        <button
+          className="btn ghost"
+          aria-pressed={onlyProgram}
+          data-on={onlyProgram || undefined}
+          style={{ marginLeft: 'auto', ...(onlyProgram ? on : {}) }}
+          onClick={() => onOnlyProgram(!onlyProgram)}
+          title={onlyProgram ? 'Showing this program only' : 'Show this program only'}
+        >
+          {I.gitBranch} {onlyProgram ? 'Only ' : 'All programs · '}{program.title}
+        </button>
+      )}
+    </div>
+  );
+}
 
-function ESignModal({ onClose, item, onSigned }: {
+/* ── Review-decision modal ── */
+
+function DecisionModal({ onClose, item, onRecorded }: {
   onClose: () => void;
   item: ReviewItem;
-  /** Fires only after the server confirms the write, with what it recorded. */
-  onSigned?: (result: { workflowStatus?: string; approvalStatus?: string }) => void;
+  /** Fires only after the server confirms the write, with the verdict it recorded. */
+  onRecorded?: (verdict: Verdict) => void;
 }) {
   /**
-   * This dialog does NOT apply an electronic signature, and no longer claims to.
+   * This dialog does NOT apply an electronic signature, and does not claim to.
    *
-   * What it used to do: collect a password and a TOTP into component state, use
-   * NEITHER, write `window.C2C_SIGNED` (read nowhere in the repository), make
-   * zero network calls, attribute the signature to the hardcoded string
-   * 'Jordan Chen' — a fixture identity from v2/fixtures/admin-data.ts — and tell
-   * the user "Manifestation recorded per 21 CFR §11.50".
-   *
-   * Every part of that is a problem, and the credential fields are the worst of
-   * them: a control that asks for a password and discards it teaches users to
-   * type their password into things that do nothing, and is indistinguishable
-   * from a harvesting UI. They are gone.
+   * It records the reviewer's VERDICT through the authoring workflow's own
+   * transition — POST /api/authoring/documents/:id/review — the same row the
+   * author's review panel and GET /documents/:id/reviews read. It used to POST
+   * to a board-only route that wrote a second store nobody else read.
    *
    * A §11.50 signature manifestation has to record the signer's printed name,
    * the date and time of execution, and the meaning of the signing — bound to
-   * the signed record. None of that can come from the browser's say-so. The real
-   * implementation exists: server/routes/authoring.router.ts applies a
-   * PIN-verified signature into `authoring_signatures`, bound to a frozen
-   * document version. This surface is not wired to it.
-   *
-   * Until it is, the honest thing is a local review decision that says so.
+   * the signed record. None of that happens here. The real implementation
+   * exists: server/routes/authoring.router.ts applies a PIN-verified signature
+   * bound to a frozen document version, from the authoring workspace.
    */
-  const [meaning, setMeaning] = useState('APPROVER');
-  const [decision, setDecision] = useState<'approve' | 'reject'>('approve');
+  const [decision, setDecision] = useState<Verdict>('approved');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  /* ── This used to be `onSigned ? onSigned() : onClose()` ───────────────────
-     A reviewer picked a meaning of signature, clicked "Record decision", and
-     the queue row flipped to "Review decision recorded" — in that browser tab,
-     until the next refresh. No request was made. The approval step stayed
-     pending forever and the next reviewer was never unblocked.
+  const needsReason = decision !== 'approved';
+  const reasonOk = !needsReason || reason.trim().length >= 8;
 
-     It now POSTs the decision to the governed router, which completes the
-     reviewer's approval row, advances the workflow to the next pending step (or
-     completes it when this was the last), and records the act with its 21 CFR
-     11.50 meaning in workflow_history. A rejection rejects the workflow and
-     requires a reason — the next author has to act on something. */
-  const recordDecision = async () => {
+  const record = async () => {
     if (busy) return;
-    if (decision === 'reject' && reason.trim().length < 8) {
-      setErr('A rejection needs a reason of at least 8 characters — it is what the author has to act on.');
+    if (!reasonOk) {
+      setErr('A change request or a rejection needs a reason of at least 8 characters — it is what the author has to act on.');
       return;
     }
     setBusy(true);
@@ -123,28 +177,32 @@ function ESignModal({ onClose, item, onSigned }: {
     try {
       const res = await apiRequest(
         'POST',
-        '/api/review/workflows/' + encodeURIComponent(String(item?.id ?? '')) + '/decision',
-        { decision, meaning, reason: reason.trim() || undefined },
+        '/api/authoring/documents/' + encodeURIComponent(String(item?.id ?? '')) + '/review',
+        { review_status: decision, review_comments: reason.trim() || undefined },
       );
       const body = await res.json().catch(() => null);
-      const payload = body as { success?: boolean; data?: { workflowStatus?: string; approvalStatus?: string } } | null;
+      const payload = body as { success?: boolean } | null;
       if (!res.ok || payload?.success !== true) {
         setErr(serverMessage(body) ?? 'The decision was not recorded (HTTP ' + res.status + '). Nothing changed.');
         return;
       }
-      onSigned?.(payload.data ?? {});
+      onRecorded?.(decision);
     } catch (e) {
       const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      setErr(known && (e as Error).message ? (e as Error).message : 'Could not reach the review service. Nothing changed.');
+      setErr(known && (e as Error).message ? (e as Error).message : 'Could not reach the authoring service. Nothing changed.');
     } finally {
       setBusy(false);
     }
   };
 
-  /* Escape, focus-on-open and focus-return. This is the dialog that records a
-     review decision under an electronic signature, and it shipped with no way
-     out for a keyboard user and no announcement that a dialog had opened. */
+  /* Escape, focus-on-open and focus-return: a governed decision dialog must
+     have a way out for a keyboard user and announce that it opened. */
   const dialogRef = useDialog(onClose);
+
+  const submitLabel =
+    decision === 'approved' ? 'Record approval'
+    : decision === 'changes_requested' ? 'Record change request'
+    : 'Record rejection';
 
   return (
     <div className="esign-bd" onClick={onClose}>
@@ -173,42 +231,34 @@ function ESignModal({ onClose, item, onSigned }: {
             <select
               id="rv-decision"
               value={decision}
-              onChange={(e) => setDecision(e.target.value as 'approve' | 'reject')}
+              onChange={(e) => setDecision(e.target.value as Verdict)}
             >
-              <option value="approve">Approve this step</option>
-              <option value="reject">Reject — send the document back</option>
-            </select>
-          </div>
-          <div className="esign-field">
-            <label htmlFor="rv-meaning">Meaning of signature</label>
-            <select id="rv-meaning" value={meaning} onChange={(e) => setMeaning(e.target.value)}>
-              {ESIGN_MEANINGS.map((m) => (
-                <option key={m} value={m}>{m.replace(/_/g, ' ')}</option>
-              ))}
+              <option value="approved">Approve</option>
+              <option value="changes_requested">Request changes — send it back with a reason</option>
+              <option value="rejected">Decline — reject this document</option>
             </select>
           </div>
           <div className="esign-field">
             <label htmlFor="rv-reason">
-              {decision === 'reject' ? 'Reason (required)' : 'Note for the thread (optional)'}
+              {needsReason ? 'Reason (required)' : 'Note for the thread (optional)'}
             </label>
             <textarea
               id="rv-reason"
               rows={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder={decision === 'reject'
+              placeholder={needsReason
                 ? 'What has to change before this can be approved'
-                : 'Anything the next reviewer should know'}
+                : 'Anything the author or the next reviewer should know'}
             />
           </div>
           {err && <div className="esign-err" role="alert">{err}</div>}
           <div className="esign-manifest">
-            This records a review decision of <b>{meaning.replace(/_/g, ' ')}</b> against
-            this workflow step: the step is completed, the workflow advances or
-            closes, and the act is written to the review history with that meaning.
-            It is <b>not</b> a 21 CFR §11.50 signature manifestation — no signer
-            identity is re-verified here and nothing is sealed against a frozen
-            document version. Apply a binding signature from the authoring
+            This records your review verdict — <b>{REVIEW_STATUS_LABEL[decision]}</b> — on
+            the document in the authoring workflow, where the author and the other
+            reviewers see it. It is <b>not</b> a 21 CFR §11.50 signature manifestation —
+            no signer identity is re-verified here and nothing is sealed against a
+            frozen document version. Apply a binding signature from the authoring
             workspace, where it is PIN-verified and sealed.
           </div>
         </div>
@@ -217,10 +267,10 @@ function ESignModal({ onClose, item, onSigned }: {
           <button
             className="btn primary"
             style={{ flex: 1, justifyContent: 'center' }}
-            onClick={recordDecision}
-            disabled={busy || (decision === 'reject' && reason.trim().length < 8)}
+            onClick={record}
+            disabled={busy || !reasonOk}
           >
-            {I.shieldCheck} {busy ? 'Recording…' : decision === 'reject' ? 'Record rejection' : 'Record approval'}
+            {I.shieldCheck} {busy ? 'Recording…' : submitLabel}
           </button>
         </div>
       </div>
@@ -228,25 +278,24 @@ function ESignModal({ onClose, item, onSigned }: {
   );
 }
 
-/* ── Approve & sign button ── */
+/* ── Record-decision button ── */
 
-function ApproveSign({ item, onApproved }: {
+function RecordDecision({ item, onRecorded }: {
   item: ReviewItem;
-  onApproved?: (result: { workflowStatus?: string; approvalStatus?: string }) => void;
+  onRecorded?: (verdict: Verdict) => void;
 }) {
   const [open, setOpen] = useState(false);
 
-  /* The "Review decision recorded" chip used to be a local `done` flag set on
-     a click that wrote nothing. It is now driven by the row's state, which
-     comes back from the board after the decision is written — so the chip is a
-     statement about the record rather than about this tab. */
-  if (item.state === 'approved' || item.state === 'rejected') {
+  /* The chip is driven by the caller's OWN review row as the board returned it
+     after the write — a statement about the record, not about this tab. */
+  if (item.myReviewStatus && item.myReviewStatus !== 'pending') {
+    const tone = item.myReviewStatus === 'approved' ? 'ok' : item.myReviewStatus === 'rejected' ? 'err' : 'warn';
     return (
       <span
-        className={'rd-chip tone-' + (item.state === 'approved' ? 'ok' : 'err')}
+        className={'rd-chip tone-' + tone}
         style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}
       >
-        {I.shieldCheck} Review decision recorded — {item.state}
+        {I.shieldCheck} Your decision recorded — {REVIEW_STATUS_LABEL[item.myReviewStatus] ?? item.myReviewStatus}
       </span>
     );
   }
@@ -255,12 +304,12 @@ function ApproveSign({ item, onApproved }: {
     <>
       <button className="btn primary" onClick={() => setOpen(true)}>{I.shieldCheck} Record review decision</button>
       {open && (
-        <ESignModal
+        <DecisionModal
           item={item}
           onClose={() => setOpen(false)}
-          onSigned={(result) => {
+          onRecorded={(verdict) => {
             setOpen(false);
-            onApproved?.(result);
+            onRecorded?.(verdict);
           }}
         />
       )}
@@ -271,74 +320,90 @@ function ApproveSign({ item, onApproved }: {
 /* ════ Review & Approval surface ════ */
 
 export function Review({ onAsk, onNav }: SurfaceViewProps) {
-  /* `useAuth` used to be read here for one purpose: attributing comments this
-     surface appended to its OWN local thread. Nothing is appended locally any
-     more — every comment, delegation and decision is written and then re-read —
-     so the author on screen is the author the SERVER recorded, which is the
-     only one that can be trusted. The hook is gone with the code that needed
-     it. */
-
   const [queue, setQueue] = useState<ReviewItem[]>([]);
   const [sel, setSel] = useState('');
+  /* The row whose thread the board should carry. Set only by an explicit
+     selection (a click, "Open the queue", AnA's select-document) — never by the
+     seeding effect below — so a board load does not re-request itself. */
+  const [threadFor, setThreadFor] = useState('');
   const [thread, setThread] = useState<ReviewComment[]>([]);
   const [reply, setReply] = useState('');
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
-  const [delegating, setDelegating] = useState(false);
-  const [delTo, setDelTo] = useState('');
-  const [delReason, setDelReason] = useState('');
-  // Change-request write state. `requesting` guards a double submit; `requestErr`
-  // is what makes a failure visible instead of the dialog silently staying open.
+  // Write state. `requesting` guards a double submit; `requestErr` is what makes
+  // a failure visible instead of the form silently staying open.
   const [requesting, setRequesting] = useState(false);
   const [requestErr, setRequestErr] = useState('');
+  const [scope, setScope] = useState<Scope>('all');
+  const [onlyProgram, setOnlyProgram] = useState(false);
   const [toast, fireToast] = useToast();
   /** The queue column — "Open the queue" scrolls to it and focuses the row it selected. */
   const queueRef = useRef<HTMLDivElement>(null);
+
+  /* The program the shell has open, when it is a regulatory program (UUID).
+     A program-less shell, or a numeric project id, offers no program filter
+     rather than a filter that could never match. */
+  const program = useMemo(() => {
+    const p = readShellProject();
+    if (!p || !UUID_RE.test(String(p.id))) return null;
+    return { id: String(p.id), title: p.title || p.code || p.product || String(p.id) };
+  }, []);
 
   // Live, org-scoped review board — GET /api/review/board → { success, data }.
   // useLiveData unwraps the success envelope, so `board` is the render contract
   // itself ({ queue, workflows, thread }). There is no fixture: a tenant with
   // nothing in review renders an honest empty board, and a failed load renders
   // an honest error — never a fabricated queue behind a "sample" pill.
-  /* Bumped after every confirmed write so the board is RE-READ. Each of the
-     writes below used to end in `setThread`/`setQueue` and stop there, which is
-     how a review comment could exist on screen and nowhere else. Re-reading is
-     what makes the surface show the record rather than a memory of what was
-     clicked. */
+  //
+  // The scope is explicit in the URL so the server never guesses it; the
+  // selected item is passed so its thread is the one that comes back; and
+  // `boardEpoch` is bumped after every confirmed write so the board is RE-READ.
+  // Re-reading is what makes the surface show the record rather than a memory
+  // of what was clicked.
   const [boardEpoch, setBoardEpoch] = useState(0);
-  const boardState = useLiveData<ReviewBoardData>('/api/review/board', [
-    '/api/review/board',
-    boardEpoch,
-  ]);
+  const boardUrl =
+    '/api/review/board?scope=' + scope +
+    (onlyProgram && program ? '&programId=' + encodeURIComponent(program.id) : '') +
+    (threadFor ? '&itemId=' + encodeURIComponent(threadFor) : '');
+  const boardState = useLiveData<ReviewBoardData>(boardUrl, [boardUrl, boardEpoch]);
   const board = boardState.data;
   const workflows: Record<string, ReviewWorkflow> = board?.workflows ?? {};
 
-  // Seed the editable queue + thread from the real board exactly once, the first
-  // time it resolves — so later in-session edits (reply, resolve, delegate) are
-  // never clobbered by the effect re-running.
-  const seededRef = useRef(-1);
+  // Seed the queue + thread from every board that resolves: nothing is edited
+  // locally any more (every act is written and then re-read), so the record is
+  // always the newest board.
   useEffect(() => {
-    if (seededRef.current === boardEpoch || boardState.loading || !board) return;
-    seededRef.current = boardEpoch;
+    if (boardState.loading || !board) return;
     const q = (board.queue ?? []).map((r) => ({ ...r }));
     setQueue(q);
-    setSel((prev) => (q.some((r) => r.id === prev) ? prev : q[0] ? q[0].id : prev));
+    setSel((prev) => (q.some((r) => r.id === prev) ? prev : q[0] ? q[0].id : ''));
     setThread((board.thread ?? []).map((c) => ({ ...c })));
-  }, [boardState.loading, board, boardEpoch]);
+  }, [boardState.loading, board]);
 
   /** Re-read the board from the server after a confirmed write. */
   const refreshBoard = () => setBoardEpoch((e) => e + 1);
 
+  /** Select a row: the detail pane AND the thread the next board read carries. */
+  const selectRow = (id: string) => {
+    setSel(id);
+    setThreadFor(id);
+    setRejecting(false);
+    setRequestErr('');
+  };
+
+  const changeScope = (s: Scope) => {
+    setScope(s);
+    setRejecting(false);
+    setRequestErr('');
+  };
+
   /* Jump to the next document still awaiting a decision — ONE path shared by
      the AnswerLead's "Open the queue" button and AnA's review.open-queue
-     action, so the two can never drift. Selecting the row is the part that
-     matters; bringing it into view is a courtesy (`scrollIntoView` is absent
-     in jsdom and some embedded webviews, and an unguarded call there throws
-     out of the handler — taking the selection with it). */
+     action, so the two can never drift. */
   const openQueue = (): ReviewItem | null => {
     const next = queue.find((r) => r.state !== 'approved') ?? null;
-    if (next) setSel(next.id);
-    setRejecting(false);
+    if (next) selectRow(next.id);
+    else setRejecting(false);
     try {
       queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       queueRef.current?.querySelector<HTMLButtonElement>('.lrow[data-on]')?.focus();
@@ -348,16 +413,13 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
   /* ── AnA's hands on this screen — the surface-action bus ──────────────────
      Registered under 'review' (identity-mapped nav target). View selection
-     ONLY: recording a decision, requesting changes, delegating, commenting,
-     and resolving stay governed human acts, untouched by this registration.
-     Both handlers refuse — with the real reason — while a form holding a
-     person's in-progress justification is open: setSel does not clear those
-     forms, so an AnA-driven selection change would silently re-target a
-     half-typed reason at a DIFFERENT document. */
+     ONLY: recording a verdict, requesting changes, commenting and resolving
+     stay governed human acts, untouched by this registration. Both handlers
+     refuse — with the real reason — while a form holding a person's
+     in-progress justification is open. */
   const reviewBusyGuard = (): { ok: false; reason: string } | null => {
     if (requesting) return { ok: false, reason: 'A review write is in flight — wait for it to finish.' };
     if (rejecting) return { ok: false, reason: 'The request-changes form is open — close it first.' };
-    if (delegating) return { ok: false, reason: 'The delegate form is open — close it first.' };
     return null;
   };
   useSurfaceActionHandlers('review', {
@@ -368,14 +430,8 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       if (!wanted) return { ok: false, reason: 'No document named.' };
       if (boardState.error && queue.length === 0)
         return { ok: false, reason: 'The review board could not be read.' };
-      // Not-ready, not failed: the bus holds the directive and re-attempts on
-      // the ready signal below — the navigate→act gap.
       if (boardState.loading && queue.length === 0)
         return { ok: false, reason: 'The review board is still loading.', retry: true };
-      /* Was an unconditional 'Nothing is in review.' — the same unearned claim
-         the empty-queue panel used to make, spoken into AnA's channel instead
-         of onto the screen: a settled response that carried no board leaves the
-         queue empty without anything having been read. */
       if (queue.length === 0)
         return {
           ok: false,
@@ -396,9 +452,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
               : `No document named "${params.document}" in the review queue.`,
         };
       }
-      setSel(match.id);
-      setRejecting(false);
-      setDelegating(false);
+      selectRow(match.id);
       return { ok: true, detail: `Selected ${match.doc}` };
     },
     'review.open-queue': () => {
@@ -427,13 +481,9 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   }, [boardState.loading]);
 
   /* The approval-board slice of AnA's screen context. NOT published here:
-     ReviewThreadsPane (always mounted by this surface, in both the empty and
-     the loaded branch) is the ONE 'review' publisher — two publishers on one
-     id fight for the store, which surfaceContextIds.test.ts refuses. The
-     board facts travel to the pane as a prop and are merged into its context,
-     so AnA sees the queue AND the threads in one truthful block. A FAILED
-     read ships the failure: "0 documents in review" over an outage would make
-     her confidently wrong about the whole approval workload. */
+     ReviewThreadsPane (always mounted by this surface) is the ONE 'review'
+     publisher. The board facts travel to the pane as a prop. A FAILED read
+     ships the failure. */
   const boardContext = useMemo(() => {
     if (boardState.loading && queue.length === 0) {
       return { state: 'loading' as const };
@@ -465,11 +515,16 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     } catch { /* noop */ }
   }, [sel, queue]);
 
+  const scopeBar = (
+    <ScopeBar scope={scope} onScope={changeScope} program={program} onlyProgram={onlyProgram} onOnlyProgram={setOnlyProgram} />
+  );
+
   // ── The three honest states, before any row is dereferenced. No fixture ──
   if (boardState.loading && queue.length === 0) {
     return (
       <div className="page-inner">
         <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        {scopeBar}
         <EmptyState title="Loading the review board…" icon={I.clock} />
       </div>
     );
@@ -478,6 +533,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     return (
       <div className="page-inner">
         <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        {scopeBar}
         <EmptyState
           tone="error"
           title="Couldn't load the review board"
@@ -488,30 +544,27 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     );
   }
   if (queue.length === 0) {
-    /* "Nothing is in review" is a CLAIM — no document in this organization is
-       waiting on a decision — and it used to be the only branch an empty queue
-       could reach once the two above had been ruled out. Those two cover a read
-       that is in flight and a read that failed; they do not cover the third way
-       `queue` is empty: the request SETTLED WITHOUT A BOARD. `useLiveData`
-       reports a null/204 payload as `data: null` with no error, the seeding
-       effect below returns early on `!board`, and the queue stays at its
-       initial `[]` — so a response that carried no board at all rendered as a
-       positive statement about the organization's approval workload.
-
-       The board's own queue array is the positive evidence that the board was
-       read: a real board with nothing on it comes back as `queue: []`, which is
-       an array. No array means nothing was read, and the honest copy says that
-       instead of reassuring. */
+    /* "Nothing is in review" is a CLAIM. The board's own queue array is the
+       positive evidence that the board was read: a real board with nothing on
+       it comes back as `queue: []`. No array means nothing was read, and the
+       honest copy says that instead of reassuring. */
     const boardRead = Array.isArray(board?.queue);
+    const emptyTitle =
+      scope === 'mine' ? 'Nothing awaits your review'
+      : scope === 'requested' ? 'You have not requested a review'
+      : 'Nothing is in review';
+    const emptyHint =
+      scope === 'mine'
+        ? 'When a colleague requests your review on a document in Authoring, or a document reaches your sign-off step, it appears here.'
+        : scope === 'requested'
+          ? 'Reviews you request from the authoring workspace appear here with each reviewer’s verdict.'
+          : 'When a review is requested on a document in Authoring, or a document is submitted for sign-off, it appears here with its reviewers, approval chain and comments.';
     return (
       <div className="page-inner">
         <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
+        {scopeBar}
         {boardRead ? (
-          <EmptyState
-            title="Nothing is in review"
-            hint="When a document for your organization enters an approval workflow, it appears here with its queue, threaded comments and multi-step sign-off."
-            icon={I.shieldCheck}
-          />
+          <EmptyState title={emptyTitle} hint={emptyHint} icon={I.shieldCheck} />
         ) : (
           <EmptyState
             tone="error"
@@ -530,50 +583,37 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
   const item = queue.find((r) => r.id === sel) || queue[0];
   const wf: ReviewWorkflow | null = workflows[item.id] || null;
-  const curStep = wf ? wf.steps.find((s) => s.status === 'current') : null;
 
   const openEditor = () => {
     onNav('document-authoring');
   };
 
   /**
-   * Request changes — POST /api/review/workflows/:workflowId/change-request.
+   * Request changes — the authoring verdict `changes_requested`, through
+   * POST /api/authoring/documents/:id/review with the reason as the review
+   * comment. `item.id` IS the authoring document id the route takes.
    *
-   * This used to set local state, append a local thread entry, and fire the
-   * toast "Changes requested · author notified". Nothing was written and nobody
-   * was notified; the disclosure directly under the textarea said so, which made
-   * the toast a claim the surface itself contradicted.
-   *
-   * `item.id` IS the document_workflows id the route takes — the board is built
-   * from that table (server/routes/review-board-routes.ts). The route derives
-   * the document from the workflow server-side, so the change request cannot be
-   * pointed at a document the reviewer is not reviewing.
-   *
-   * The row is moved and the thread entry added ONLY after the write returns.
-   * The approval step stays pending, which is what the server does and what the
-   * copy now says: `approval_status` has no "changes requested" member, and
-   * writing 'rejected' would terminate the workflow the reviewer is trying to
-   * keep alive.
+   * The row is moved and the thread entry added ONLY after the write returns
+   * and the board is re-read.
    */
-  const doReject = async () => {
+  const doRequestChanges = async () => {
     const text = reason.trim();
     if (!text || requesting) return;
+    if (text.length < 8) {
+      setRequestErr('A change request needs a reason of at least 8 characters — it is what the author has to act on.');
+      return;
+    }
     setRequesting(true);
     setRequestErr('');
     try {
       const res = await apiRequest(
         'POST',
-        '/api/review/workflows/' + encodeURIComponent(item.id) + '/change-request',
-        { reason: text },
+        '/api/authoring/documents/' + encodeURIComponent(item.id) + '/review',
+        { review_status: 'changes_requested', review_comments: text },
       );
       const body = await res.json().catch(() => null);
-      const payload = body as { success?: boolean; error?: string } | null;
+      const payload = body as { success?: boolean } | null;
       if (!res.ok || !payload || payload.success !== true) {
-        // `payload.error` was read first, so an envelope of the shape
-        // { error: 'WORKFLOW_NOT_PENDING', message: '<a real sentence>' } put the
-        // enum token in the banner. serverMessage prefers the sentence and
-        // refuses codes and infrastructure text; the domain fallback stays
-        // because it names the action that did not happen.
         setRequestErr(
           serverMessage(body) ?? 'Could not record the change request (HTTP ' + res.status + ').',
         );
@@ -584,12 +624,9 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       refreshBoard();
       fireToast('Change request recorded on the document');
     } catch (e) {
-      // Only ApiRequestError carries a message that has already been reduced to
-      // safe copy. Any other throw is the browser's own — "Failed to fetch" —
-      // which this used to render verbatim.
       const known = (e as { name?: unknown })?.name === 'ApiRequestError';
       setRequestErr(
-        known && (e as Error).message ? (e as Error).message : 'Could not reach the review service.',
+        known && (e as Error).message ? (e as Error).message : 'Could not reach the authoring service.',
       );
     } finally {
       setRequesting(false);
@@ -597,58 +634,14 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   /**
-   * Delegate this step — POST /api/review/workflows/:workflowId/delegate.
-   *
-   * This used to push one line into local thread state and toast "Approval
-   * delegated to <name>". Nobody was delegated to, the step stayed assigned to
-   * the delegator, and the line vanished on reload. The route REPLACES the
-   * step's assignment (a delegation that leaves the delegator assigned has not
-   * delegated anything) and records who and why.
-   */
-  const doDelegate = async () => {
-    const to = delTo.trim();
-    const why = delReason.trim();
-    if (!to || requesting) return;
-    if (why.length < 8) {
-      setRequestErr('A delegation needs a reason of at least 8 characters.');
-      return;
-    }
-    setRequesting(true);
-    setRequestErr('');
-    try {
-      const res = await apiRequest(
-        'POST',
-        '/api/review/workflows/' + encodeURIComponent(item.id) + '/delegate',
-        { to, reason: why },
-      );
-      const body = await res.json().catch(() => null);
-      if (!res.ok || (body as { success?: boolean } | null)?.success !== true) {
-        setRequestErr(serverMessage(body) ?? 'The step was not delegated (HTTP ' + res.status + '). Nothing changed.');
-        return;
-      }
-      setDelegating(false);
-      setDelTo('');
-      setDelReason('');
-      refreshBoard();
-      fireToast('"' + (curStep ? curStep.name : 'This approval') + '" is now assigned to ' + to + '.');
-    } catch (e) {
-      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      setRequestErr(known && (e as Error).message ? (e as Error).message : 'Could not reach the review service. Nothing changed.');
-    } finally {
-      setRequesting(false);
-    }
-  };
-
-  /**
-   * Resolve a review comment — PATCH /api/review/comments/:id/resolve.
-   * Was `setThread(... state: 'resolved')`: the comment was open again for
-   * everyone, including the same reviewer, after a reload.
+   * Resolve a review comment — PATCH /api/authoring/comments/:id {status}.
+   * Optimistic on screen, reverted when the record did not change.
    */
   const resolveCmt = async (id: string) => {
     const prev = thread;
     setThread((t) => t.map((c) => (c.id === id ? { ...c, state: 'resolved' } : c)));
     try {
-      const res = await apiRequest('PATCH', '/api/review/comments/' + encodeURIComponent(id) + '/resolve', { resolved: true });
+      const res = await apiRequest('PATCH', '/api/authoring/comments/' + encodeURIComponent(id), { status: 'resolved' });
       const body = await res.json().catch(() => null);
       if (!res.ok || (body as { success?: boolean } | null)?.success !== true) {
         setThread(prev); // the record did not change, so neither does the thread
@@ -661,19 +654,24 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   /**
-   * Post a review comment — POST /api/review/workflows/:workflowId/comments.
-   * Was `setThread([...t, …])` and nothing else: the comment was never saved,
-   * never seen by anyone else, and gone on refresh.
+   * Post a review comment — POST /api/authoring/sections/:sectionId/comment.
+   * Authoring comments are anchored to a section; a board-level comment goes
+   * on the document's first section. A document with no section yet cannot
+   * take one, and the box says so rather than posting nowhere.
    */
   const postReply = async () => {
     const text = reply.trim();
     if (!text || requesting) return;
+    if (!item.firstSectionId) {
+      fireToast('This document has no section yet, so a comment has nothing to attach to.', 'error');
+      return;
+    }
     setRequesting(true);
     try {
       const res = await apiRequest(
         'POST',
-        '/api/review/workflows/' + encodeURIComponent(item.id) + '/comments',
-        { content: text },
+        '/api/authoring/sections/' + encodeURIComponent(item.firstSectionId) + '/comment',
+        { body: text, doc_id: item.id },
       );
       const body = await res.json().catch(() => null);
       if (!res.ok || (body as { success?: boolean } | null)?.success !== true) {
@@ -690,110 +688,57 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const openCmts = thread.filter((c) => c.state === 'open').length;
-  /**
-   * "0 open" beside the Comments heading is a claim that nothing on this
-   * document is outstanding, and it was printed off `thread.length` alone.
-   * `thread` is seeded from the board, so it is empty both when the document
-   * genuinely has no open comments AND when the board came back without a
-   * thread at all (the seed reads `board.thread ?? []`) or a refresh failed
-   * before it could be re-read. The board carrying a thread ARRAY is the
-   * positive evidence that the comments were read; a count of open comments is
-   * still shown whenever there is one, since that is a fact in its own right.
-   */
+  /* "0 open" is a claim that nothing on this document is outstanding. The board
+     carrying a thread ARRAY is the positive evidence the comments were read. */
   const threadState = assessmentStateFor(boardState, {
     scopeExists: true,
     findingCount: openCmts,
     assessmentRan: Array.isArray(board?.thread),
   });
 
-  /* ---- AnswerLead derivation ---- */
-
-  /** The approval steps this board actually returned for a queue row. */
-  const stepsFor = (r: ReviewItem): WorkflowStep[] => {
-    const w = workflows[r.id];
-    return Array.isArray(w?.steps) ? w.steps : [];
-  };
-  /* "N documents are at YOUR sign-off step" — the board is read with the
-     default scope=all, so this counted every sign-off step in the org as the
-     reader's. Ownership is decided server-side (assignedTo vs. the caller) and
-     is now sent per item as `mine`; only those steps are attributed to you. */
-  const signSteps = queue.filter((r) => {
-    if (r.mine !== true) return false;
-    const cs = stepsFor(r).find((s) => s.status === 'current');
-    return Boolean(cs && (cs.requiredActions ?? []).includes('sign'));
-  });
-  /**
-   * POSITIVE evidence that the approval chain behind this queue was READ: how
-   * many documents in the queue came back with their approval steps attached.
-   *
-   * It is deliberately NOT `signSteps.length === 0` — that is the emptiness the
-   * headline below used to mistake for an answer. A workflow can legitimately
-   * return `steps: []` (the board builds each entry from the approval rows it
-   * finds, and finds none when a workflow has no steps recorded yet), and
-   * `workflows` is `{}` outright whenever the board itself is unread, so a zero
-   * here means the sign-off question was never evaluated rather than answered.
-   */
-  const rowsWithStepsRead = queue.filter((r) => stepsFor(r).length > 0).length;
-  const dueToday = queue.filter((r) => r.due === 'Today').length;
+  /* ---- AnswerLead derivation ----
+     Ownership is decided SERVER-SIDE per row, from the authoring store:
+     `awaitingMyReview` (a pending review request names the caller) and
+     `atMySignOff` (the current approval step's approver is the caller). The
+     claim "nothing is waiting on you" is only spoken over a board that came
+     back with a queue array; a failed or empty re-read withdraws it. */
+  const awaitingMe = queue.filter((r) => r.awaitingMyReview === true);
+  const signMe = queue.filter((r) => r.atMySignOff === true);
   const stillMoving = queue.filter((r) => r.state !== 'approved').length;
 
-  /* ── What is waiting on your approval — the four states it may speak from ──
-     `tone` and `headline` were one conditional on `signSteps.length`: non-zero
-     said which documents are at your sign-off step, and ZERO said
-
-        "Nothing is blocked on your signature — N documents still moving
-         through review."
-
-     `signSteps` is derived from `workflows`, which is `board?.workflows ?? {}`.
-     It is therefore also zero in three states that are not "nothing is waiting
-     on you":
-
-       · a REFRESH IS IN FLIGHT after a write — the surface keeps rendering the
-         seeded queue (the loading guard above only fires while the queue is
-         empty), so the reassurance was spoken over a board mid-read;
-       · a REFRESH FAILED — `useLiveData` sets `data: null`, `workflows`
-         collapses to `{}` while the stale queue below stays on screen, and the
-         reviewer was told nothing needed their signature by a screen that had
-         just failed to read the approval chain;
-       · the board CAME BACK WITH ROWS BUT NO STEPS — nothing was evaluated.
-
-     Clearance here is the claim "no document in this queue is at a step that
-     requires your signature", so it now needs the steps to have been read. */
   const signState = assessmentStateFor(boardState, {
     scopeExists: queue.length > 0,
-    findingCount: signSteps.length,
-    assessmentRan: rowsWithStepsRead > 0,
+    findingCount: awaitingMe.length + signMe.length,
+    assessmentRan: Array.isArray(board?.queue),
   });
+  const n = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
   const signHeadline =
     signState === 'loading'
-      ? <>Reading the approval steps for the {queue.length} document{queue.length === 1 ? '' : 's'} in review…</>
+      ? <>Reading the review queue…</>
       : signState === 'unreadable'
-        ? <>The approval steps could not be read. The queue below is the last board that loaded, and nothing here tells you whether a sign-off is waiting on you.</>
+        ? <>The review queue could not be re-read. The queue below is the last board that loaded, and nothing here tells you whether a review is waiting on you.</>
         : signState === 'not-assessed'
-          ? <>No approval steps came back for the documents in review, so this screen cannot say whether one is waiting on your sign-off. The queue is below.</>
+          ? <>No review queue came back, so this screen cannot say whether a review is waiting on you. The queue below is the last board that loaded.</>
           : signState === 'assessed-with-findings'
-            ? <><b>{signSteps.length}</b> document{signSteps.length === 1 ? '' : 's'} {signSteps.length === 1 ? 'is' : 'are'} at your <b>sign-off step</b> and {signSteps.length === 1 ? 'needs' : 'need'} your sign-off{dueToday ? <> — <b>{dueToday}</b> due today</> : null}.</>
-            : <>Nothing is blocked on your signature — <b>{stillMoving}</b> document{stillMoving === 1 ? '' : 's'} still moving through review.</>;
-  /* An unread answer may not carry an action or reassurance: a next step over
-     an unread approval chain invites work on a premise nobody has checked. */
+            ? (
+              awaitingMe.length > 0
+                ? <><b>{awaitingMe.length}</b> {awaitingMe.length === 1 ? 'document awaits' : 'documents await'} your review{signMe.length > 0 ? <>, and <b>{n(signMe.length, 'is', 'are')}</b> at your sign-off step — sign from the authoring workspace</> : null}.</>
+                : <><b>{signMe.length}</b> {signMe.length === 1 ? 'document is' : 'documents are'} at your <b>sign-off step</b> — sign from the authoring workspace.</>
+            )
+            : <>Nothing is waiting on you — <b>{stillMoving}</b> document{stillMoving === 1 ? '' : 's'} still moving through review.</>;
+  const first = awaitingMe[0] ?? signMe[0];
   const signAction =
-    signState === 'assessed-with-findings'
-      ? { label: 'Review ' + signSteps[0].doc, onClick: () => setSel(signSteps[0].id) }
-      /* Was `onClick: () => {}` — the most prominent button on the screen,
-         doing nothing at all. It now selects the first document still moving
-         through review and brings the queue into view; when everything is
-         approved it says so instead of pretending there is a queue to open. */
+    signState === 'assessed-with-findings' && first
+      ? { label: 'Review ' + first.doc, onClick: () => selectRow(first.id) }
       : hasAnswer(signState) && stillMoving > 0
-        ? {
-            label: 'Open the queue',
-            /* The ONE openQueue path — shared with AnA's review.open-queue
-               surface action, so the button and the action cannot drift. */
-            onClick: () => { openQueue(); },
-          }
-        /* Every document is approved, or the board was not read. There is no
-           queue to open, so no button is offered — a button that reports a
-           state is not a button. */
+        ? { label: 'Open the queue', onClick: () => { openQueue(); } }
         : undefined;
+
+  const ownership = (r: ReviewItem): string =>
+    r.awaitingMyReview ? 'Awaiting your review'
+    : r.atMySignOff ? 'At your sign-off'
+    : r.requestedByMe ? 'Requested by you'
+    : '';
 
   return (
     <div className="page-inner">
@@ -810,34 +755,33 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
       <AnswerLead
         tone={signState === 'assessed-with-findings' ? 'urgent' : 'calm'}
-        eyebrow="What is waiting on your approval right now"
+        eyebrow="What is waiting on your review right now"
         headline={signHeadline}
-        body={<>Each document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.</>}
-        /* Reassurance is the one thing an unanswered read can never justify:
-           this promise used to be printed under a headline that had just failed
-           to read the approval chain. */
+        body={<>Each document carries the reviews requested in Authoring and its approval chain; you approve, request changes with a reason, or decline. Verdicts recorded here are not electronic signatures — apply a binding signature from the authoring workspace.</>}
         reassure={
           hasAnswer(signState) && signState !== 'not-assessed'
-            ? "I'll surface exactly which step you own and pre-read the document so your sign-off is one informed click."
+            ? "I'll surface exactly which review you own and pre-read the document so your verdict is one informed click."
             : undefined
         }
         action={signAction}
         secondary="Or work the queue below."
       />
 
+      {scopeBar}
+
       <div className="split">
         <div className="split-list" ref={queueRef}>
           {queue.map((r) => (
-            <button key={r.id} className="lrow" data-on={sel === r.id || undefined} onClick={() => { setSel(r.id); setRejecting(false); }}>
+            <button key={r.id} className="lrow" data-on={sel === r.id || undefined} onClick={() => selectRow(r.id)}>
               <div className="lrow-top">
-                <span className="mono">{r.prog}</span>
+                <span className="mono">{r.prog ?? r.module ?? ''}</span>
                 <Pill tone={STATUS_TONE[r.state] || 'warn'}>{r.state}</Pill>
               </div>
               <div className="lrow-title">{r.doc}</div>
-              <div className="lrow-meta"><span>{r.reviewer} · {r.role}</span></div>
+              <div className="lrow-meta"><span>{r.reviewer}{r.role ? ' · ' + r.role : ''}</span></div>
               <div className="lrow-foot">
                 <span className="gates"><span className="g warn">{r.comments} cmt</span></span>
-                <span className="lrow-due" style={{ color: `var(--${r.tone === 'err' ? 'error' : r.tone === 'warn' ? 'warning' : 'text-400'})` }}>{r.due}</span>
+                <span className="lrow-due" style={{ color: r.mine ? 'var(--warning)' : 'var(--text-400)' }}>{ownership(r)}</span>
               </div>
             </button>
           ))}
@@ -846,41 +790,45 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
         <div className="split-detail">
           <div className="dt-head">
             <div>
-              <div className="dt-eyebrow">{item.prog} · {item.role}</div>
+              <div className="dt-eyebrow">{item.prog ?? item.module ?? ''}{item.role ? ' · ' + item.role : ''}</div>
               <h3 className="dt-title">{item.doc}</h3>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              {item.state === 'approved'
-                ? <span className="rd-chip tone-ok" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.shieldCheck} Review decision recorded</span>
-                : item.state === 'changes-requested'
-                  ? <span className="rd-chip tone-warn" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.alertTriangle} Changes requested</span>
-                  : <>
-                    <button className="btn ghost" onClick={() => { setDelegating((v) => !v); setRejecting(false); }}>{I.user} Delegate...</button>
-                    <button className="btn ghost" onClick={() => { setRejecting((v) => !v); setDelegating(false); }}>{I.close} Request changes...</button>
-                    <ApproveSign
+              {item.awaitingMyReview
+                ? <>
+                    <button className="btn ghost" onClick={() => { setRejecting((v) => !v); setRequestErr(''); }}>{I.close} Request changes...</button>
+                    <RecordDecision
                       item={item}
-                      onApproved={(result) => {
+                      onRecorded={(verdict) => {
                         refreshBoard();
                         fireToast(
-                          result.approvalStatus === 'rejected'
-                            ? 'Rejection recorded — the workflow is closed and the author has your reason.'
-                            : result.workflowStatus === 'completed'
-                              ? 'Approval recorded — that was the last step, so the review is complete.'
-                              : 'Approval recorded — the workflow has moved to the next step.',
-                          result.approvalStatus === 'rejected' ? 'error' : 'ok',
+                          verdict === 'rejected'
+                            ? 'Rejection recorded — the author has your reason.'
+                            : verdict === 'changes_requested'
+                              ? 'Change request recorded — the author has your reason.'
+                              : 'Approval recorded on the document.',
+                          verdict === 'rejected' ? 'error' : 'ok',
                         );
                       }}
                     />
                   </>
+                : item.myReviewStatus && item.myReviewStatus !== 'pending'
+                  ? <RecordDecision item={item} />
+                  : item.atMySignOff
+                    ? <button className="btn primary" onClick={openEditor}>{I.lock} Sign in the authoring workspace</button>
+                    : item.state === 'approved'
+                      ? <span className="rd-chip tone-ok" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.shieldCheck} Approved</span>
+                      : item.state === 'changes-requested'
+                        ? <span className="rd-chip tone-warn" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.alertTriangle} Changes requested</span>
+                        : item.state === 'rejected'
+                          ? <span className="rd-chip tone-err" style={{ height: 32, display: 'inline-flex', alignItems: 'center', padding: '0 12px' }}>{I.close} Declined</span>
+                          : null
               }
             </div>
           </div>
 
           {rejecting && (
             <div className="rv-reject">
-              {/* The reason a reviewer is sending work back — a governed
-                  record, and the only thing naming it was a placeholder, which
-                  a screen reader drops the moment the user types. */}
               <textarea
                 className="rv-reject-ta"
                 aria-label="Reason for requesting changes"
@@ -889,24 +837,13 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                 onChange={(e) => setReason(e.target.value)}
                 autoFocus
               />
-              {/* WIRED — POST /api/review/workflows/:workflowId/change-request.
-                  It is still NOT wired to POST /api/approval-workflows/:id/reject,
-                  which is real and mounted but calls processApproval({ action:
-                  'reject' }) and TERMINATES the workflow. Nor to the concept2cure
-                  reviews/submit route, which does have an explicit
-                  'request_changes' decision but addresses an artifact inside a
-                  project — a different id space from the document_workflows /
-                  unified_documents ids this board is built from.
-
-                  The note below states the two things that are true and would
-                  otherwise be assumed away: the approval step stays pending
-                  (approval_status is an enum of pending|approved|rejected — there
-                  is no changes-requested member, and 'rejected' would end the
-                  workflow), and there is still no notification. */}
+              {/* WIRED — the authoring verdict `changes_requested` on
+                  POST /api/authoring/documents/:id/review: the same row the
+                  author's review panel reads. The author is not notified
+                  automatically. */}
               <div className="rv-reject-note">
-                Recorded as a comment on the document and in the workflow history.
-                Your approval step stays pending — it is a request to revise, not a
-                decision. The author is not notified automatically.
+                Recorded as your verdict on the document in the authoring workflow,
+                with this reason. The author is not notified automatically.
               </div>
               {requestErr && (
                 <div className="rv-reject-note" role="alert" style={{ color: 'var(--danger, #b42318)' }}>
@@ -915,56 +852,63 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
               )}
               <div className="rv-reject-row">
                 <button className="btn ghost" disabled={requesting} onClick={() => { setRejecting(false); setReason(''); setRequestErr(''); }}>Cancel</button>
-                <button className="btn primary" disabled={!reason.trim() || requesting} onClick={() => { void doReject(); }}>
+                <button className="btn primary" disabled={!reason.trim() || requesting} onClick={() => { void doRequestChanges(); }}>
                   {I.close} {requesting ? 'Recording…' : requestErr ? 'Retry' : 'Request changes'}
                 </button>
               </div>
             </div>
           )}
 
-          {delegating && (
-            <div className="rv-reject">
-              <input
-                className="rv-reject-ta"
-                style={{ minHeight: 0 }}
-                placeholder="Delegate this step to (name or role)..."
-                value={delTo}
-                onChange={(e) => setDelTo(e.target.value)}
-                autoFocus
-              />
-              <textarea
-                className="rv-reject-ta"
-                placeholder="Reason for delegation (recorded on the workflow)..."
-                value={delReason}
-                onChange={(e) => setDelReason(e.target.value)}
-              />
-              {requestErr && (
-                <div className="rv-reject-note" role="alert" style={{ color: 'var(--danger, #b42318)' }}>
-                  Not delegated — {requestErr}
+          {/* The review requests on this document — who was asked, by whom,
+              and what each has said. Same rows the author's review panel reads. */}
+          <div className="rv-wf">
+            <div className="rv-wf-h">
+              <span className="rv-wf-l">{I.user} Review requests</span>
+              {/* A board row served before this read model carried the
+                  document's status (or by a server that could not read it)
+                  has none. Rendering nothing there is honest; crashing the
+                  surface on it blanked the whole board. */}
+              {item.docStatus && (
+                <span className="rv-wf-tid mono">{item.docStatus.toLowerCase().replace(/_/g, ' ')}</span>
+              )}
+            </div>
+            <div className="rv-wf-steps">
+              {(item.reviews ?? []).length === 0 && (
+                <div className="rv-wf-step" data-status="pending">
+                  <div className="rv-wf-body">
+                    <div className="rv-wf-nm">No review requested yet</div>
+                    <div className="rv-wf-meta mono">The document was submitted for sign-off without a named reviewer.</div>
+                  </div>
                 </div>
               )}
-              <div className="rv-reject-row">
-                <button className="btn ghost" onClick={() => { setDelegating(false); setDelTo(''); setDelReason(''); setRequestErr(''); }}>Cancel</button>
-                <button
-                  className="btn primary"
-                  disabled={requesting || !delTo.trim() || delReason.trim().length < 8}
-                  title={delReason.trim().length < 8 ? 'A reason of at least 8 characters is recorded with the delegation' : undefined}
-                  onClick={doDelegate}
-                >
-                  {I.user} {requesting ? 'Delegating…' : 'Delegate approval'}
-                </button>
-              </div>
+              {(item.reviews ?? []).map((rv, i) => (
+                <div key={rv.id} className="rv-wf-step" data-status={rv.status === 'approved' ? 'approved' : rv.status === 'pending' ? 'current' : 'pending'}>
+                  <span className="rv-wf-dot">{rv.status === 'approved' ? I.check : (i + 1)}</span>
+                  <div className="rv-wf-body">
+                    <div className="rv-wf-nm">
+                      {rv.reviewer}
+                      <span className={'rv-wf-tag tone-' + (rv.status === 'approved' ? 'ok' : rv.status === 'pending' ? 'warn' : rv.status === 'rejected' ? 'err' : 'warn')}>
+                        {REVIEW_STATUS_LABEL[rv.status] ?? rv.status}
+                      </span>
+                    </div>
+                    <div className="rv-wf-meta mono">
+                      {rv.requestedBy ? 'requested by ' + rv.requestedBy : 'requested'}
+                      {rv.reviewedAt ? ' · decided ' + new Date(rv.reviewedAt).toLocaleDateString() : ''}
+                      {rv.comments ? ' · ' + rv.comments : ''}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
 
-          {/* Was `{wf && (…)}` — with no workflow the whole approval chain
-              vanished silently, and an absent section reads as "this document
-              has no approval steps". `workflows` is `{}` whenever the board is
-              unread, so that is exactly what a failed refresh looked like: a
-              document under review with its governed chain quietly gone. */}
+          {/* The approval chain — authoring_workflow_steps for the current
+              submission. Absent when the author has not submitted for sign-off:
+              that is a fact about the document (same read as the queue), not an
+              unread chain. */}
           {!wf && (
             <div className="esign-banner">
-              <span className="ico">{I.alertTriangle}</span> The approval chain for this document did not come back with the board. That is not a statement that it has no approval steps — it has not been read.
+              <span className="ico">{I.gitBranch}</span> Not yet submitted for sign-off. The approval chain appears here once the author submits the document from the authoring workspace.
             </div>
           )}
           {wf && (
@@ -980,8 +924,8 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                     <div className="rv-wf-body">
                       <div className="rv-wf-nm">
                         {s.name}
-                        <span className={'rv-wf-tag tone-' + (s.status === 'approved' ? 'ok' : s.status === 'current' ? 'warn' : 'idle')}>
-                          {s.status === 'approved' ? 'Approved' : s.status === 'current' ? 'Awaiting' : 'Pending'}
+                        <span className={'rv-wf-tag tone-' + (s.status === 'approved' ? 'ok' : s.status === 'current' ? 'warn' : s.status === 'rejected' ? 'err' : 'idle')}>
+                          {s.status === 'approved' ? 'Signed' : s.status === 'current' ? 'Awaiting signature' : s.status === 'rejected' ? 'Rejected' : 'Pending'}
                         </span>
                       </div>
                       <div className="rv-wf-meta mono">
@@ -1009,8 +953,8 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
             </div>
             <div className="rv-doc-page">
               <div className="rv-doc-sec">{item.doc}</div>
-              <p className="rv-doc-text">{item.passage}</p>
-              <div className="rv-doc-prov">{I.lock} {item.prov}</div>
+              <p className="rv-doc-text">{item.passage || 'No section content yet.'}</p>
+              {item.prov && <div className="rv-doc-prov">{I.lock} {item.prov}</div>}
             </div>
           </div>
 
@@ -1037,7 +981,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
             {thread.map((c) => (
               <div key={c.id} className="cmt" data-ai={c.ai || undefined} data-resolved={c.state === 'resolved' || undefined}>
                 <div className="cmt-meta">
-                  <span className="cmt-av">{c.ai ? '*' : c.author.split(' ').map((x) => x[0]).join('')}</span>
+                  <span className="cmt-av">{c.ai ? '*' : c.author.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join('').toUpperCase()}</span>
                   <b>{c.author}</b>
                   <span className="cmt-role">{c.role}</span>
                   <span className="cmt-when">· {c.when}</span>
@@ -1057,12 +1001,13 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           <div className="rv-reply">
             <input
               className="rv-reply-in"
-              placeholder="Add a comment..."
+              placeholder={item.firstSectionId ? 'Add a comment...' : 'No section to comment on yet'}
               value={reply}
+              disabled={!item.firstSectionId}
               onChange={(e) => setReply(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); postReply(); } }}
             />
-            <button className="btn ghost" disabled={!reply.trim()} onClick={postReply}>{I.send} Comment</button>
+            <button className="btn ghost" disabled={!reply.trim() || !item.firstSectionId} onClick={postReply}>{I.send} Comment</button>
           </div>
         </div>
       </div>

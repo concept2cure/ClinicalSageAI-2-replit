@@ -1,0 +1,7 @@
+
+> concept2cure-riai@1.0.0 ci:launch-scope
+> node scripts/ci/check-launch-scope.mjs
+
+[ci:launch-scope] 6 apps · 41 surfaces · 21 modules · 36 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+launch-scope exit 0
