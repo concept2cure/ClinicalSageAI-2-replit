@@ -1,0 +1,2 @@
+TM-001: 67 requirements — pass 53, partial 1, fail 10, open 3, uncovered 0; 90 OQ steps → docs/validation/TM-001-TRACEABILITY-MATRIX.md
+exit=0

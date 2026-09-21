@@ -36,7 +36,14 @@ import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import type { PoolClient } from 'pg';
 import { pool } from '../../db.js';
-import { computeAuditChainSealed, hashPayload, verifyAuditChain } from '../../services/audit/chain.js';
+import {
+  computeAuditChainSealed,
+  hashPayload,
+  verifyAuditChain,
+  AuditChainPartialViewError,
+  AuditChainSchemaMissingError,
+} from '../../services/audit/chain.js';
+import { withTenantConnection } from '../../db/withTenantConnection.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { verifyToken as verifyMfaToken } from '../../services/mfaService.js';
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
@@ -311,6 +318,7 @@ export async function recordGovernedAction(
   const targetId     = target.slice(targetType.length + 1);
 
   const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
+    tenant_id:    orgId,
     action:       `c2c.work.${command}`,
     actor_id:     userId,
     target,
@@ -645,6 +653,12 @@ function makeHandler(command: Command) {
 // This is the verification counterpart to computeAuditChain — without it the
 // tamper-evident chain is written but never checked. Returns only a verdict +
 // the id/hashes of the first break (no audit record content is exposed).
+//
+// The chain is one chain per tenant (see services/audit/chain.ts), and this
+// verifies EVERY tenant's chain. A pooled connection under RLS_ENFORCE=on
+// carries no tenant and would see no rows — a false pass — so the walk runs
+// on a super-admin-scoped connection (the pattern system jobs use), and the
+// verifier itself refuses a tenant-scoped view (AuditChainPartialViewError).
 
 router.get('/verify-chain', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -653,15 +667,19 @@ router.get('/verify-chain', async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'AUTH_REQUIRED' });
   }
 
-  const client = await pool.connect();
   try {
-    const result = await verifyAuditChain(client);
+    const result = await withTenantConnection(
+      { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'c2c/actions/verify-chain' },
+      (client) => verifyAuditChain(client),
+    );
     return res.status(result.ok ? 200 : 409).json(result);
   } catch (err: any) {
+    if (err instanceof AuditChainPartialViewError || err instanceof AuditChainSchemaMissingError) {
+      // The chain could not be verified — say so; never an empty "ok".
+      return res.status(503).json({ error: err.code, detail: err.message });
+    }
     console.error('[c2c/actions/verify-chain]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  } finally {
-    client.release();
   }
 });
 

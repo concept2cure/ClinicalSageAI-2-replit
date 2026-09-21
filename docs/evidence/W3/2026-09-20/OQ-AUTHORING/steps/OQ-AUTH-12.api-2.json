@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5700/api/authoring/users/pin",
+    "anonymous": false,
+    "body": {
+      "pin": "[REDACTED]",
+      "old_pin": "[REDACTED]"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 210,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "message": "PIN set successfully"
+    }
+  }
+}

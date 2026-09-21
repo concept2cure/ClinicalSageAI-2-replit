@@ -1,0 +1,522 @@
+{
+  "protocolId": "OQ-006",
+  "protocolTitle": "Operational Qualification — QMS controlled documents",
+  "app": "QMS",
+  "appLabel": "QMS controlled documents",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "automated runner tests/validation/oq/qms/run.mjs",
+  "executedAt": "2026-09-21T01:07:03.022Z",
+  "finishedAt": "2026-09-21T01:07:25.326Z",
+  "environment": {
+    "baseUrl": "http://localhost:5700",
+    "node": "v22.22.2",
+    "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    "playwrightCore": "1.63.0",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "debdd9664f5759eb9a4a5b024b73c333027baf18"
+    },
+    "testUser": "jonmichaelpsmith@gmail.com",
+    "organizationId": "2",
+    "readyz": {
+      "status": 503,
+      "body": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / KIMI_API_KEY) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE."
+      }
+    }
+  },
+  "counts": {
+    "pass": 13,
+    "fail": 2,
+    "deviation": 0,
+    "not-executed": 1
+  },
+  "steps": [
+    {
+      "id": "OQ-QMS-01",
+      "title": "Anonymous access refused",
+      "urs": [
+        "URS-QMS-001"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/mdx/qms/documents without Authorization",
+      "expected": "HTTP 401/403",
+      "status": "pass",
+      "observed": "HTTP 401",
+      "startedAt": "2026-09-21T01:07:04.191Z",
+      "finishedAt": "2026-09-21T01:07:04.449Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-01.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/mdx/qms/documents",
+          "status": 401
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-02",
+      "title": "Controlled document creation validates its inputs",
+      "urs": [
+        "URS-QMS-002"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/mdx/qms/documents {docNumber, title} without docType",
+      "expected": "HTTP 422 with field errors",
+      "status": "pass",
+      "observed": "HTTP 422: {\"error\":\"Invalid body\",\"details\":{\"docType\":[\"Required\"]}}",
+      "startedAt": "2026-09-21T01:07:04.449Z",
+      "finishedAt": "2026-09-21T01:07:04.718Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-02.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/mdx/qms/documents",
+          "status": 422
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-03",
+      "title": "Create an SOP; it is draft at version 1.0 and audited",
+      "urs": [
+        "URS-QMS-002",
+        "URS-QMS-003"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/mdx/qms/documents {docNumber, title, docType:\"sop\", nextReviewDate:+10d}; GET list; GET detail",
+      "expected": "HTTP 201; status draft, version 1.0; meta.auditTrail reports the §11.10(e) row; listed and readable",
+      "status": "pass",
+      "observed": "doc 18 SOP-OQ-20260921010704 draft v1.0; auditTrail={\"persisted\":true,\"chained\":true}",
+      "startedAt": "2026-09-21T01:07:04.718Z",
+      "finishedAt": "2026-09-21T01:07:05.523Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-03.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/mdx/qms/documents",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-QMS-03.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/mdx/qms/documents",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-QMS-03.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/mdx/qms/documents/18",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-04",
+      "title": "Duplicate document number refused",
+      "urs": [
+        "URS-QMS-002"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/mdx/qms/documents with the same docNumber",
+      "expected": "HTTP 409",
+      "status": "pass",
+      "observed": "HTTP 409",
+      "startedAt": "2026-09-21T01:07:05.523Z",
+      "finishedAt": "2026-09-21T01:07:05.797Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-04.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/mdx/qms/documents",
+          "status": 409
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-05",
+      "title": "Approve the SOP; approver and time are stamped and audited",
+      "urs": [
+        "URS-QMS-004"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/mdx/qms/documents/:id/approve; then approve again",
+      "expected": "HTTP 200: status effective, approver_id = actor, approved_at set, meta.auditTrail present; second approve → 409",
+      "status": "fail",
+      "observed": {
+        "error": "Approval is an electronic signature and requires a password, the signature meaning 'APPROVED' and a reason for change; missing or invalid: password, meaning, reason",
+        "details": {
+          "code": "ESIGNATURE_COMPONENT_MISSING",
+          "fieldErrors": {
+            "password": [
+              "Required"
+            ],
+            "meaning": [
+              "Signature meaning must be 'APPROVED' (21 CFR Part 11 §11.50)"
+            ],
+            "reason": [
+              "Required"
+            ]
+          }
+        }
+      },
+      "startedAt": "2026-09-21T01:07:05.797Z",
+      "finishedAt": "2026-09-21T01:07:06.145Z",
+      "evidence": [
+        "steps/OQ-QMS-05.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-05.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/mdx/qms/documents/18/approve",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "failure": "expected 200, got 400",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-06a",
+      "title": "Create a second SOP (fixture for the approval-credential, training, review-due and retire steps)",
+      "urs": [
+        "URS-QMS-002"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/mdx/qms/documents {docNumber SOP-OQ-B-…, docType:\"sop\", nextReviewDate:+5d}",
+      "expected": "HTTP 201, draft v1.0",
+      "status": "pass",
+      "observed": "doc 20 SOP-OQ-B-20260921010704 draft v1.0",
+      "startedAt": "2026-09-21T01:07:06.145Z",
+      "finishedAt": "2026-09-21T01:07:06.414Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-06a.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/mdx/qms/documents",
+          "status": 201
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-06",
+      "title": "Approval of a controlled document requires an electronic-signature credential",
+      "urs": [
+        "URS-QMS-005"
+      ],
+      "kind": "scripted",
+      "action": "POST /documents/:docB/approve with NO credential (no pin, no password, no meaning)",
+      "expected": "Refused — an approval is a signing act (§11.50, §11.200(a)(1)) and must verify a credential and record a meaning",
+      "status": "pass",
+      "observed": "HTTP 400",
+      "startedAt": "2026-09-21T01:07:06.414Z",
+      "finishedAt": "2026-09-21T01:07:06.680Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-06.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/mdx/qms/documents/20/approve",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-07",
+      "title": "Open a controlled revision (reason required; major version bump; back to draft)",
+      "urs": [
+        "URS-QMS-006"
+      ],
+      "kind": "scripted",
+      "action": "POST /revise {} then POST /revise {reason}",
+      "expected": "Without reason → 422; with reason → version 2.0, status draft, prior approval cleared, audited",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-QMS-05 did not pass",
+      "startedAt": "2026-09-21T01:07:06.680Z",
+      "finishedAt": "2026-09-21T01:07:06.680Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-QMS-08",
+      "title": "Training acknowledgement is recorded against the document version",
+      "urs": [
+        "URS-QMS-008"
+      ],
+      "kind": "scripted",
+      "action": "POST /documents/:id/training-ack {method:\"attestation\"}; GET /api/mdx/qms/training/compliance",
+      "expected": "HTTP 201 with document_version; compliance report HTTP 200",
+      "status": "pass",
+      "observed": "ack for v1.0; compliance: {\"data\":[{\"id\":3,\"doc_number\":\"SOP-OQ-B-20260921000339\",\"title\":\"OQ-006 Second SOP 20260921000339\",\"current\":0,\"of\":2,\"last_cycle\":null},{\"id\":6,\"doc_number\":\"S",
+      "startedAt": "2026-09-21T01:07:06.680Z",
+      "finishedAt": "2026-09-21T01:07:07.228Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-08.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/mdx/qms/documents/20/training-ack",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-QMS-08.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/mdx/qms/training/compliance",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-09",
+      "title": "Review-due report lists effective documents approaching review",
+      "urs": [
+        "URS-QMS-009"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/mdx/qms/documents/review-due?within=30 (docB is effective with nextReviewDate +5d)",
+      "expected": "docB listed with overdue=false",
+      "status": "fail",
+      "observed": [
+        "SOP-OQ-B-20260921000339",
+        "SOP-OQ-B-20260921001430",
+        "SOP-OQ-B-20260921002559",
+        "SOP-OQ-B-20260921003037"
+      ],
+      "startedAt": "2026-09-21T01:07:07.228Z",
+      "finishedAt": "2026-09-21T01:07:07.556Z",
+      "evidence": [
+        "steps/OQ-QMS-09.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-09.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/mdx/qms/documents/review-due?within=30",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "failure": "docB not listed as review-due",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-10",
+      "title": "Retire a document with a recorded reason",
+      "urs": [
+        "URS-QMS-007"
+      ],
+      "kind": "scripted",
+      "action": "POST /documents/:id/retire {reason}",
+      "expected": "HTTP 200; status retired; the reason is kept",
+      "status": "pass",
+      "observed": "retired; metadata: {\"retired\":{\"at\":\"2026-09-21T01:07:07.814326+00:00\",\"by\":1,\"reason\":\"OQ-006 step 10: superseded by validation\"}}",
+      "startedAt": "2026-09-21T01:07:07.556Z",
+      "finishedAt": "2026-09-21T01:07:07.826Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-10.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/mdx/qms/documents/20/retire",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-11",
+      "title": "Change control: raise and list a change",
+      "urs": [
+        "URS-QMS-010"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/mdx/qms/changes {changeNumber, title, reason}; GET /api/mdx/qms/changes; GET /changes/summary",
+      "expected": "HTTP 201 and the change is listed",
+      "status": "pass",
+      "observed": "change 1 listed (1)",
+      "startedAt": "2026-09-21T01:07:07.826Z",
+      "finishedAt": "2026-09-21T01:07:08.376Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-11.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/mdx/qms/changes",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-QMS-11.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/mdx/qms/changes",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-12",
+      "title": "Quality Management Plan create and list",
+      "urs": [
+        "URS-QMS-011"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/quality/plans {name, description}; GET /api/quality/plans",
+      "expected": "HTTP 201; plan listed with status draft",
+      "status": "pass",
+      "observed": "plan 6 status draft; 6 plans listed",
+      "startedAt": "2026-09-21T01:07:08.376Z",
+      "finishedAt": "2026-09-21T01:07:08.964Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-12.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/quality/plans",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-QMS-12.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/quality/plans",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-13",
+      "title": "Quality-system templates are served",
+      "urs": [
+        "URS-QMS-013"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/mdx/qms/templates",
+      "expected": "HTTP 200 with a non-empty template family",
+      "status": "pass",
+      "observed": "9 templates",
+      "startedAt": "2026-09-21T01:07:08.964Z",
+      "finishedAt": "2026-09-21T01:07:09.227Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-QMS-13.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/mdx/qms/templates",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-14",
+      "title": "Quality surface renders the SOP register and the Change control tab",
+      "urs": [
+        "URS-QMS-012"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/quality; find the SOP number; click the \"Change control\" tab",
+      "expected": "SOP register shows the created SOP; Change control tab renders (an unavailable store is an honest error state)",
+      "status": "pass",
+      "observed": "SOP register shows the SOP; change control tab captured",
+      "startedAt": "2026-09-21T01:07:09.227Z",
+      "finishedAt": "2026-09-21T01:07:17.648Z",
+      "evidence": [
+        "steps/OQ-QMS-14.sop-register.png",
+        "steps/OQ-QMS-14.change-control.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T01:07:13.769Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-QMS-15",
+      "title": "QMP surface renders the plan",
+      "urs": [
+        "URS-QMS-011",
+        "URS-QMS-012"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/qmp",
+      "expected": "The plan name is visible",
+      "status": "pass",
+      "observed": "plan visible",
+      "startedAt": "2026-09-21T01:07:17.648Z",
+      "finishedAt": "2026-09-21T01:07:25.201Z",
+      "evidence": [
+        "steps/OQ-QMS-15.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T01:07:22.156Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    }
+  ]
+}

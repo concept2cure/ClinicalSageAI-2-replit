@@ -6,15 +6,48 @@
  * sizes, and Redis connection tuning). Centralizing them here removes drift and
  * makes the operational envelope auditable in one place.
  *
- * IMPORTANT: this module is a pure refactor. Every value below is the EXACT
- * value that previously lived inline in the consuming file. Where the original
- * code read from an environment variable (e.g. NODE_ENV-dependent auth limits),
- * that branching is preserved here so behaviour is unchanged.
+ * IMPORTANT: this module began as a pure refactor — every value was the EXACT
+ * value that previously lived inline in the consuming file, and where the
+ * original code read from an environment variable (e.g. NODE_ENV-dependent
+ * auth limits) that branching is preserved. The identity-keyed ceilings below
+ * are the one deliberate addition, dated and explained in the next note.
  *
  * NOTE: the memory-store and the (older) in-memory `rateLimiter.ts` middleware
  * were authored independently and use DIFFERENT quotas from the newer
  * Redis-backed `redisRateLimiter.ts`. Those differences are intentional and are
  * preserved verbatim — see `LEGACY_RATE_LIMITS` vs `RATE_LIMITS`.
+ *
+ * ── Identity-keyed ceilings (VSR-001 F-5, 2026-09-21) ────────────────────────
+ * Both limiters keyed EVERY request by client IP. One browser session opening
+ * two or three launch surfaces makes more than 60 calls a minute across the
+ * routers that mount the legacy limiter (they share one store) and more than
+ * 100 through the Redis limiter on /api, so a single user tripped both during
+ * ordinary use, and an office behind one NAT address shares the bucket.
+ *
+ * Each bucket may now carry, beside `maxRequests` (the per-IP ceiling, which
+ * still applies to every request that presents no identity):
+ *
+ *   maxRequestsAuthenticated       — the ceiling for ONE identity: a verified
+ *                                    user id where the limiter runs after auth
+ *                                    (legacy limiter), or the hash of the bearer
+ *                                    credential where it runs before auth
+ *                                    (Redis limiter on /api).
+ *   maxRequestsPerIpAuthenticated  — Redis limiter only: the ceiling for all
+ *                                    CREDENTIALED traffic from one IP. An
+ *                                    unverified credential can be minted per
+ *                                    request, so without this guard a client
+ *                                    could escape the IP bucket by rotating
+ *                                    tokens; with it, rotation is bounded at a
+ *                                    NAT-sized number.
+ *
+ * Numbers: an interactive session was measured at 60–100 reads a minute while
+ * surfaces load (VSR-001 F-5 evidence), so ONE identity gets 600/min — six
+ * times that, room for a busy user, still a hard cap — and one address gets
+ * 3,000/min of credentialed traffic, fifty such users. The resource-priced
+ * buckets (ai, documents, validation, upload) keep their ceilings: they exist
+ * for cost, not for source attribution, and per-identity keying alone already
+ * stops one user's quota from being consumed by a colleague. `auth` declares
+ * no authenticated ceiling: a login carries no credential and stays IP-keyed.
  *
  * @module server/config/platform-limits
  */
@@ -63,10 +96,13 @@ export const RATE_LIMITS = {
       : 'Too many authentication attempts. Please wait briefly and try again.',
   },
 
-  /** General API endpoints. */
+  /** General API endpoints. Per IP for anonymous traffic; per identity (600)
+   *  and per credentialed IP (3,000) for authenticated traffic — see header. */
   api: {
     windowMs: ONE_MINUTE_MS,
     maxRequests: 100,
+    maxRequestsAuthenticated: 600,
+    maxRequestsPerIpAuthenticated: 3000,
     message: 'Too many requests. Please slow down.',
   },
 
@@ -85,10 +121,13 @@ export const RATE_LIMITS = {
     message: 'Too many document requests. Please wait.',
   },
 
-  /** Concept2Cure-specific API. */
+  /** Concept2Cure-specific API. Same shape as `api`: the launch surfaces
+   *  (Vault, Projects, program reads) live under /api/c2c. */
   concept2cure: {
     windowMs: ONE_MINUTE_MS,
     maxRequests: 100,
+    maxRequestsAuthenticated: 600,
+    maxRequestsPerIpAuthenticated: 3000,
     message: 'Rate limit exceeded for Concept2Cure API.',
   },
 
@@ -131,10 +170,14 @@ export const LEGACY_RATE_LIMITS = {
     message: 'Too many authentication attempts, please try again later.',
   },
 
-  /** General API endpoints — 60 requests / minute. */
+  /** General API endpoints — 60 requests / minute per IP for anonymous
+   *  traffic; 600 / minute per verified user. Eleven routers mount this
+   *  limiter and share ONE store, so this is the ceiling for a user's traffic
+   *  across all of them (submissions, tasks, QMS, …), not per router. */
   api: {
     windowMs: ONE_MINUTE_MS,
     maxRequests: 60,
+    maxRequestsAuthenticated: 600,
     message: 'Too many requests, please slow down.',
   },
 

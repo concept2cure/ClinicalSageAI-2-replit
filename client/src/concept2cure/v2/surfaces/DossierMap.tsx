@@ -10,6 +10,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { readShellProject } from '../shellProject';
 import '../styles/project-home-v2.css';
 
 /* ── Read contract (rolled up from the real project_sections store) ── */
@@ -57,17 +58,26 @@ function PageHead({ eyebrow, title, sub, actions }: {
 
 /* ════ Dossier Map surface ════ */
 
-/* The project currently in context — set on the window by the projects surface,
-   the same grounding source the shell reads for ANA (V2App.readShellProjectId).
-   The dossier map is a project-readiness view, so it is scoped to THIS project and
-   never falls back to an org-wide roll-up that would mix programs' readiness. */
+/* The program currently in context, through `readShellProject` — the ONE reader
+   of window.C2C_PROJECT (v2/shellProject.ts). This surface used to hand-roll its
+   own copy of that reader, which is how readers drift. The id it carries is the
+   regulatory_programs UUID; the route resolves it (VSR-001 F-7) — it is sent
+   verbatim and never parsed as a number here or there. The dossier map is a
+   project-readiness view, so it is scoped to THIS program and never falls back
+   to an org-wide roll-up that would mix programs' readiness. */
 function readShellProjectId(): string | undefined {
-  try {
-    const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
-    return p && p.id != null ? String(p.id) : undefined;
-  } catch {
-    return undefined;
-  }
+  const p = readShellProject();
+  return p ? String(p.id) : undefined;
+}
+
+/**
+ * The route's answer for a real program that has no PM-spine anchor
+ * (`meta.anchored === false`, reason PROGRAM_UNANCHORED). The store this map is
+ * assembled from does not exist for the program — which is not the same as the
+ * program's sections being unauthored, and must not be rendered as such.
+ */
+function isUnanchoredProgram(meta: Record<string, unknown> | undefined): boolean {
+  return meta?.anchored === false;
 }
 
 export function DossierMap({ onAsk }: SurfaceViewProps) {
@@ -77,10 +87,11 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
      project). Renders the real rows, an honest empty state when the project tracks no
      CTD sections yet, or an honest error — never a fixture, never org-wide. */
   const projectId = readShellProjectId();
-  const { rows: modules, loading, error, empty } = useLiveRows<DossierModule>(
+  const { rows: modules, loading, error, empty, meta } = useLiveRows<DossierModule>(
     projectId ? `/api/dossier-map?projectId=${encodeURIComponent(projectId)}` : null,
     [projectId],
   );
+  const unanchored = !loading && !error && isUnanchoredProgram(meta);
 
   /* What AnA can see of this screen. "What is the critical path to filing?" is
      the question this surface's own button sends her, and it is unanswerable
@@ -108,6 +119,14 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
           'The dossier map could not be read, so this screen is showing no module completeness because of ' +
           'a failure, not because the program has none.',
         availableActions: ['Retry the dossier-map read'],
+      };
+    }
+    if (unanchored) {
+      return {
+        summary:
+          `Dossier map for program ${projectId}: this program has no CTD section-tracking store (no PM-spine ` +
+          'project anchor), so there is no module map to show — this is not the same as its sections being unauthored.',
+        facts: { projectId, anchored: false, modules: [] },
       };
     }
     if (empty) {
@@ -142,7 +161,7 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
         'Read which CTD sections each module rolls up (listed in this context)',
       ],
     };
-  }, [projectId, loading, error, empty, modules]);
+  }, [projectId, loading, error, empty, unanchored, modules]);
   usePublishSurfaceContext('dossier-map', anaContext);
 
   return (
@@ -172,6 +191,12 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
           icon={I.alertTriangle}
           title="Couldn't load the dossier map"
           hint="The CTD / eCTD module map didn't respond. It's this project's per-module (M1–M5) completeness and readiness — sign in and retry, or check the service is reachable."
+        />
+      ) : unanchored ? (
+        <EmptyState
+          icon={I.fileText}
+          title="This program has no CTD section-tracking store yet"
+          hint="Section tracking is keyed by a PM-spine project, and this program was created without one (its organisation has no client workspace to anchor it to). No module completeness can be shown until the anchor exists — nothing here is a statement about the program's sections."
         />
       ) : empty ? (
         <EmptyState

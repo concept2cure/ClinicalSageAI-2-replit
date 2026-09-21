@@ -1,0 +1,17 @@
+{
+    "step": "09-re-approve-409",
+    "method": "POST",
+    "path": "/api/mdx/qms/documents/16/approve",
+    "request": {
+        "password": "<redacted: local evidence credential>",
+        "meaning": "APPROVED",
+        "reason": "WB evidence: an effective document cannot be approved twice"
+    },
+    "status": 409,
+    "response": {
+        "error": "Document is effective; only a draft or in_review document can be approved.",
+        "details": {
+            "code": "QMS_INVALID_STATE"
+        }
+    }
+}

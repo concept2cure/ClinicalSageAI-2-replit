@@ -9,11 +9,15 @@ import {
 
 const MD5 = 'd41d8cd98f00b204e9800998ecf8427e'; // valid 32-hex md5
 
-const IND_REQUIRED = [
-  'm1.1', 'm1.2', 'm1.5', 'm1.6', 'm1.7', 'm1.9',
-  'm2.3', 'm2.4', 'm2.6', 'm3.2.S', 'm3.2.P',
-  'm4.2.1', 'm4.2.2', 'm4.2.3', 'm5.3.5',
-];
+/* Derived, not transcribed. This was a copied literal that still carried the
+   pre-2026-09-21 Module 1 numbering — m1.5/m1.6/m1.7/m1.9, whose comments named
+   a table of contents, the general investigational plan, the Investigator's
+   Brochure and an environmental assessment, while those FDA codes are
+   Application Status, Meetings, (absent) and Pediatric Administrative
+   Information. The fixture therefore pinned the defect in place. Reading the
+   required set from the validator keeps this suite testing behaviour rather
+   than re-asserting a list. */
+const IND_REQUIRED = quickValidate([], 'IND').missing;
 
 const leaf = (over: Partial<ECTDLeaf> & { sectionCode: string }): ECTDLeaf => ({
   title: over.title ?? over.sectionCode,
@@ -72,9 +76,15 @@ describe('quickValidate', () => {
     // An empty NDA is missing its OWN required sections (21 CFR 314.50 / ICH M4),
     // not IND's — so IND-only sections must never be flagged on an NDA.
     const r = quickValidate([], 'NDA');
-    expect(r.missing).not.toContain('m1.6'); // IND general investigational plan
-    expect(r.missing).not.toContain('m1.7'); // IND investigator's brochure
-    expect(r.missing).not.toContain('m1.9'); // IND environmental assessment
+    /* IND-only Module 1 homes, at their real FDA codes. (1.12.14
+       environmental analysis is NOT one of them — 21 CFR 25 applies to an NDA
+       too, and the profile requires it of both.) */
+    expect(r.missing).not.toContain('m1.20'); // general investigational plan
+    expect(r.missing).not.toContain('m1.14.4.1'); // investigator's brochure
+    expect(r.missing).not.toContain('m1.14.4.2'); // investigational drug labeling
+    // …and the converse: an NDA owes a debarment certification, an IND does not.
+    expect(r.missing).toContain('m1.3.3');
+    expect(quickValidate([], 'IND').missing).not.toContain('m1.3.3');
     // NDA-specific required sections that are absent are correctly flagged.
     expect(r.missing).toContain('m2.5'); // Clinical Overview
     expect(r.missing).toContain('m1.14'); // Labeling
@@ -88,9 +98,9 @@ describe('validatePackage — submission type', () => {
       .filter(f => f.code === 'MISSING_REQUIRED_SECTION')
       .map(f => f.sectionCode);
     // IND-only sections are not part of the NDA profile, so they're never missing…
-    expect(missing).not.toContain('m1.6');
-    expect(missing).not.toContain('m1.7');
-    expect(missing).not.toContain('m1.9');
+    expect(missing).not.toContain('m1.20'); // general investigational plan
+    expect(missing).not.toContain('m1.14.4.1'); // investigator's brochure
+    expect(missing).not.toContain('m1.14.4.2'); // investigational drug labeling
     // …while an absent NDA-specific required section is flagged.
     expect(missing).toContain('m2.5');
   });

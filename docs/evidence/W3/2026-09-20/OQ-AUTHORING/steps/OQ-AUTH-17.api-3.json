@@ -1,0 +1,31 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/submit",
+    "anonymous": false,
+    "body": {
+      "workflow_steps": [
+        {
+          "role": "QA",
+          "approver_email": "jonmichaelpsmith@gmail.com"
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 30,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "message": "Document submitted for review",
+      "workflowId": "d78c129d-c2bc-4397-8a9b-c36acf65e5cd",
+      "steps": 1,
+      "canonical": {
+        "bridged": false,
+        "reason": "no project context — authoring document is not project-scoped"
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+▶ grant audit on clinicalsage as postgres; auditing role c2c (from DATABASE_URL)
+  role c2c: superuser=false bypassrls=false login=true; 1263 application relations audited
+  denied: 0
+  excess beyond the audit ceiling (non-owned relations): 0
+  note: 16 override-schema relation(s) are owned by c2c (ownership, not a grant; not counted as excess)
+  written: docs/evidence/WD/2026-09-21/grant-audit-after.json
+
+✓ runtime role c2c holds the recipe posture on all 1263 relations.
+exit=0

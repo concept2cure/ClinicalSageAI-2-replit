@@ -1,0 +1,10 @@
+# 2026-09-20T19:18:42Z
+▶ 0/4 Connections
+
+✗ Owner and app connection strings name different databases.
+  owner: postgres@127.0.0.1:5432/clinicalsage_novector
+  app:   app_service@127.0.0.1:5432/clinicalsage_fresh
+  Provisioning one database and verifying another would report readiness
+  for a database this run never touched. Point both at the same host and
+  database name.
+exit=2

@@ -8,26 +8,39 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { computeAuditChainSealed, type ChainRow, type PoolClient } from '../chain';
 import { verifyAuditIntegrity } from '../audit-integrity-service';
 import { randomUUID } from 'crypto';
 
+const CHAIN_SEQ_MIGRATION = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../../../../migrations/20260921_audit_logs_chain_seq.sql',
+);
+
 let pglite: PGlite;
 const KEY = 'test-audit-hmac-key';
+const TENANT = 7;
 
+/** The real writer inside a transaction, as every governed route runs it. */
 async function appendRow(row: ChainRow): Promise<void> {
-  const { sha256Chain, hmacSeal } = await computeAuditChainSealed(pglite as unknown as PoolClient, row);
-  await pglite.query(
-    `INSERT INTO audit_logs (id, action, actor_id, target, payload_hash, occurred_at, sha256_chain, hmac_seal)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-    [randomUUID(), row.action, row.actor_id, row.target, row.payload_hash, row.occurred_at, sha256Chain, hmacSeal],
-  );
+  await pglite.transaction(async (tx) => {
+    const { sha256Chain, hmacSeal } = await computeAuditChainSealed(tx as unknown as PoolClient, row);
+    await tx.query(
+      `INSERT INTO audit_logs (id, tenant_id, action, actor_id, target, payload_hash, occurred_at, sha256_chain, hmac_seal)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [randomUUID(), TENANT, row.action, row.actor_id, row.target, row.payload_hash, row.occurred_at, sha256Chain, hmacSeal],
+    );
+  });
 }
 
 beforeAll(async () => {
   pglite = new PGlite();
   await pglite.exec(AUDIT_LOGS_PGLITE_DDL);
+  await pglite.exec(fs.readFileSync(CHAIN_SEQ_MIGRATION, 'utf8'));
 });
 afterAll(async () => {
   await pglite.close();
@@ -44,6 +57,7 @@ function row(i: number): ChainRow {
     target: `case:${i}`,
     payload_hash: 'a'.repeat(64),
     occurred_at: new Date(Date.UTC(2026, 0, 1, 0, 0, i)).toISOString(),
+    tenant_id: TENANT,
   };
 }
 

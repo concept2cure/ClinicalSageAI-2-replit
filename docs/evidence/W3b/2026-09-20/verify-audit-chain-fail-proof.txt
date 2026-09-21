@@ -1,0 +1,39 @@
+row counts before: { a: '0', b: '0', c: '0' }
+row counts inside transaction: { a: '3', b: '3', c: '3' }
+
+=== intact ===
+verify-audit-chain @ 2026-09-20T23:56:28.821Z
+verdict: OK
+
+audit.tamper_proof_log: OK
+  rows: 3
+  chainedRows: 3
+  signedRows: 3
+  secretSource: AUDIT_HMAC_SECRET
+  lastChainHash: 27943433cfa35381ed1f7033107128a2a55f89f2b76a9820825039b10250e24e
+public.audit_logs: OK
+  rows: 3
+  chainedRows: 3
+  sealedRows: 3
+  sealsVerified: 3
+public.audit_events: OK
+  rows: 3
+  chainedRows: 3
+  unchainedRows: 0
+  sealedRows: 0
+
+=== corrupted one row in audit.tamper_proof_log ===
+verdict: BROKEN exitCode=1
+audit.tamper_proof_log: BROKEN firstBreak={"sequence":2,"reason":"Content tampered: content_hash mismatch at sequence 2"}
+
+=== corrupted one row in public.audit_logs ===
+verdict: BROKEN exitCode=1
+public.audit_logs: BROKEN firstBreak={"id":"97a63479-00b2-486f-a130-951e2ec492b6","reason":"sha256_chain mismatch","expected":"c30593504a6542673d64c1a5de8b950fbb35c3d1ad59e3c24ff46ba30c4b4850","stored":"7d6761e3837737e69340efb6b3bdf06020c9046aabf7e1f3ee25046858c0fc7a"}
+
+=== corrupted one row in public.audit_events ===
+verdict: BROKEN exitCode=1
+public.audit_events: BROKEN firstBreak={"id":2,"organizationId":1,"sequence":2,"reason":"record_hash mismatch"}
+
+after rolling each corruption back to its savepoint: OK
+
+ROLLBACK issued. row counts after: { a: '0', b: '0', c: '0' }

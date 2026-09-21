@@ -1,0 +1,348 @@
+{
+  "protocolId": "OQ-005",
+  "protocolTitle": "Operational Qualification — Submission Readiness",
+  "app": "SUBMISSION-READINESS",
+  "appLabel": "Submission Readiness",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "automated runner tests/validation/oq/submission-readiness/run.mjs",
+  "executedAt": "2026-09-21T01:14:33.096Z",
+  "finishedAt": "2026-09-21T01:14:57.994Z",
+  "environment": {
+    "baseUrl": "http://localhost:5600",
+    "node": "v22.22.2",
+    "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    "playwrightCore": "1.63.0",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "debdd9664f5759eb9a4a5b024b73c333027baf18"
+    },
+    "testUser": "jonmichaelpsmith@gmail.com",
+    "organizationId": "2",
+    "readyz": {
+      "status": 503,
+      "body": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / KIMI_API_KEY) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE."
+      }
+    }
+  },
+  "counts": {
+    "pass": 9,
+    "fail": 0,
+    "deviation": 0,
+    "not-executed": 0
+  },
+  "steps": [
+    {
+      "id": "OQ-SRDY-00",
+      "title": "Prerequisite: program, vault document, submission, sequence with one leaf",
+      "urs": [],
+      "kind": "scripted",
+      "action": "POST projects / vault ingest / submissions / sequences / leaves",
+      "expected": "All created through the public API",
+      "status": "pass",
+      "observed": "program 3b81a304-8411-4766-8477-328a59985e4b; submission 48; sequence 22; leaf m5.3.5",
+      "startedAt": "2026-09-21T01:14:33.869Z",
+      "finishedAt": "2026-09-21T01:14:35.745Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-00.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/c2c/projects",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/vault/ingest",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/submissions/48",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-4.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/submissions/48/sequences",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-SRDY-00.api-5.json",
+          "method": "PUT",
+          "url": "http://localhost:5600/api/submissions/sequences/22/leaves",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-01",
+      "title": "Anonymous access refused",
+      "urs": [
+        "URS-SRDY-001"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/submissions/sequences/:id/dispatch-readiness without Authorization",
+      "expected": "HTTP 401/403",
+      "status": "pass",
+      "observed": "HTTP 401",
+      "startedAt": "2026-09-21T01:14:35.745Z",
+      "finishedAt": "2026-09-21T01:14:36.000Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-01.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/submissions/sequences/22/dispatch-readiness",
+          "status": 401
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-02",
+      "title": "Deterministic dispatch-readiness assessment for a sequence",
+      "urs": [
+        "URS-SRDY-002"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/submissions/sequences/:id/dispatch-readiness",
+      "expected": "HTTP 200 with numeric validationErrors / unacknowledgedShadowCriticals and an explicit ready/blocked verdict with reasons",
+      "status": "pass",
+      "observed": "gate.cleared=false; validationErrors=1; shadowCriticals=0; releaseSignature=unsigned; blockers: 1 open error-severity validation finding(s) must be resolved before dispatch. | No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting. | Dispatch is blocked because this submission type requires a 21 CFR Par",
+      "startedAt": "2026-09-21T01:14:36.000Z",
+      "finishedAt": "2026-09-21T01:14:36.281Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-02.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/submissions/sequences/22/dispatch-readiness",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-03",
+      "title": "Dispatch QC records the gate outcome from the tamper-proof assessment",
+      "urs": [
+        "URS-SRDY-003"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/submissions/:id/dispatch-qc {region, sequenceId, validationErrors:0, unresolvedShadowCriticals:0, leaves}",
+      "expected": "HTTP 200; the result uses the server-side assessment (client-supplied zeros do not override it); the verdict is deterministic (no model in the loop)",
+      "status": "pass",
+      "observed": "{\"clearedToDispatch\":false,\"blockers\":[\"1 open error-severity validation finding(s) must be resolved before dispatch.\",\"No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.\",\"Dispatch is blocked because th",
+      "startedAt": "2026-09-21T01:14:36.281Z",
+      "finishedAt": "2026-09-21T01:14:36.554Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-03.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/submissions/48/dispatch-qc",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "If the route answers with an AI-gateway error code, the QC verdict depends on a model call — a CLAUDE.md Rule 2 observation (a verdict must come from a deterministic engine) — and the step is a deviation for the missing provider.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-04",
+      "title": "Readiness review template is registered and execute validates inputs",
+      "urs": [
+        "URS-SRDY-004"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/orchestration/templates; POST /api/orchestration/execute {templateId} without projectId",
+      "expected": "submission_readiness_review listed with 5 steps; execute without projectId → 400",
+      "status": "pass",
+      "observed": "template present (5 steps); execute w/o projectId → 400",
+      "startedAt": "2026-09-21T01:14:36.554Z",
+      "finishedAt": "2026-09-21T01:14:37.071Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-04.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/orchestration/templates",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SRDY-04.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/orchestration/execute",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-05",
+      "title": "Execute the readiness review for the program",
+      "urs": [
+        "URS-SRDY-005"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/orchestration/execute {templateId:\"submission_readiness_review\", projectId}; GET /executions/:id",
+      "expected": "Execution starts (2xx) and its status is readable; steps are orchestrator_logic (no model call)",
+      "status": "pass",
+      "observed": "execution c2d7bc68-285e-49fb-ac4e-a3f005f28f28: {\"executionId\":\"c2d7bc68-285e-49fb-ac4e-a3f005f28f28\",\"templateId\":\"submission_readiness_review\",\"status\":\"completed\",\"projectId\":\"3b81a304-8411-4766-8477-328a59985e4b\",\"organizationId\":2,\"module\":\"ind\",\"steps\":[{\"stepId\":\"inspect_project_state\",\"name\":\"Inspect project state\",\"status\":\"completed\",\"s",
+      "startedAt": "2026-09-21T01:14:37.071Z",
+      "finishedAt": "2026-09-21T01:14:39.135Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-05.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/orchestration/execute",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-SRDY-05.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/orchestration/executions/c2d7bc68-285e-49fb-ac4e-a3f005f28f28",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-06",
+      "title": "Contradiction (inconsistency) scan for a project",
+      "urs": [
+        "URS-SRDY-006"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/governed-intelligence/contradictions/scan/1",
+      "expected": "HTTP 200 with a deterministic scan result (possibly zero findings)",
+      "status": "pass",
+      "observed": "{\"findings\":[],\"summary\":{\"total\":0,\"bySeverity\":{},\"byType\":{}}}",
+      "startedAt": "2026-09-21T01:14:39.135Z",
+      "finishedAt": "2026-09-21T01:14:39.395Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-SRDY-06.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/governed-intelligence/contradictions/scan/1",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-07",
+      "title": "Dispatch Readiness surface renders the sequence readiness",
+      "urs": [
+        "URS-SRDY-007"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/dispatch-readiness with the program selected",
+      "expected": "The surface shows the open program's sequence (number 0000) and its gate verdict",
+      "status": "pass",
+      "observed": "sequence 0000 visible",
+      "startedAt": "2026-09-21T01:14:39.395Z",
+      "finishedAt": "2026-09-21T01:14:45.853Z",
+      "evidence": [
+        "steps/OQ-SRDY-07.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T01:14:43.855Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": "VSR-001 F-8 (2026-09-20): DispatchReadiness.tsx took the FIRST submission in the organisation, not the open program's. Since 2026-09-21 the surface resolves the open program (shell id → GET /api/c2c/projects/:id), picks its submission by the platform's program↔submission identity convention, and gates that submission's latest sequence; OQ-SRDY-00 builds the sequence on the program's own submission so this step exercises exactly that. The surface prints the sequence NUMBER (0000) beside the row id.",
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-SRDY-08",
+      "title": "Orchestration and Inconsistency surfaces render",
+      "urs": [
+        "URS-SRDY-008"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/orchestration and /concept2cure/inconsistency",
+      "expected": "Both render (screenshots); an unavailable store is shown as an error/empty state, never as data",
+      "status": "pass",
+      "observed": "rendered",
+      "startedAt": "2026-09-21T01:14:45.853Z",
+      "finishedAt": "2026-09-21T01:14:57.890Z",
+      "evidence": [
+        "steps/OQ-SRDY-08.orchestration.png",
+        "steps/OQ-SRDY-08.inconsistency.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T01:14:50.313Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        },
+        {
+          "at": "2026-09-21T01:14:51.578Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "at": "2026-09-21T01:14:51.578Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+        },
+        {
+          "at": "2026-09-21T01:14:56.353Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        },
+        {
+          "at": "2026-09-21T01:14:57.254Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+        },
+        {
+          "at": "2026-09-21T01:14:57.261Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    }
+  ]
+}

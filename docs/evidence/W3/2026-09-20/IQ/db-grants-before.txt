@@ -1,0 +1,64 @@
+# Pre-correction observation, 2026-09-20T19:10:35Z
+runtime role from .env DATABASE_URL: c2c
+postgres|t|t
+c2c|f|f
+-- tables in public by owner
+c2c|788
+postgres|183
+-- schemas
+adversarial
+agent_runtime
+ai
+audit
+clinical_ops
+cognitive_audit
+common_standards
+core
+cortex
+discovery
+ectd
+ectd_v4
+evidence
+extensions
+fhir
+global_dossier
+identity
+innovation
+intelligence
+intelligent_docs
+labeling
+lumen
+manufacturing
+precedent
+predicate
+product_master
+prose
+public
+registry
+regulatory
+regulatory_harmonization
+regulatory_intel
+signing
+site_intel
+truth
+vault
+-- has_table_privilege(c2c) on launch-relevant tables
+platform_settings: f
+qms_change_controls: f
+program_journeys: f
+artifacts: f
+assumption_records: f
+contradiction_links: f
+decision_records: f
+ectd_submissions: f
+qms_documents: t
+regulatory_programs: t
+submissions: t
+authoring_documents: t
+unified_tasks: t
+-- server log evidence
+182:[ai-provenance-ledger] [AI Gateway Audit] AI provenance ledger unusable: probe failed: permission denied for schema ai. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) 
+337:{"level":50,"time":"2026-09-20T19:06:17.126Z","pid":2043,"hostname":"vm","context":{"summary":"jwt_secret_strength=pass jwt_rotation_status=pass csp_middleware_active=pass clamav_connectivity=skipped(CLAMAV_HOST not set — virus scan bypassed (intentional
+484:⚠️ Regulatory template seeding failed (non-blocking): permission denied for schema intelligence
+524:{"level":50,"time":"2026-09-20T19:06:56.069Z","pid":2043,"hostname":"vm","context":{"servingMode":"off","deploymentMode":"off","usedPreviousResolution":false,"err":"permission denied for table platform_settings"},"msg":"[enforcement-mode] could not read th
+646:{"level":50,"time":"2026-09-20T19:06:56.374Z","pid":2043,"hostname":"vm","context":{"err":"permission denied for table qms_change_controls","correlationId":"1483df74-cf08-4bee-9c6b-0e183cca71d9","code":"42501"},"msg":"[mdx-qms] change-list failed"}

@@ -273,12 +273,16 @@ export async function writeChainedAuditRow(
   const newValues = entry.details ?? entry.metadata ?? null;
   const target = `${entry.resourceType ?? entry.tableName ?? 'unknown'}:${recordId}`;
   const payloadHash = hashPayload(newValues ?? { action: entry.action, target });
+  // The chain is per tenant (services/audit/chain.ts): the position is taken
+  // for the tenant_id this INSERT writes, and the audit_logs trigger refuses
+  // the row if the two ever differ.
   const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
     action: entry.action,
     actor_id: actorId,
     target,
     payload_hash: payloadHash,
     occurred_at: occurredAt,
+    tenant_id: tenantId,
   });
   await client.query(
     `INSERT INTO audit_logs

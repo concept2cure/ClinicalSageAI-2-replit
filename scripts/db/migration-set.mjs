@@ -103,6 +103,12 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260604_shadow_review.sql',
   'migrations/20260609_audit_hmac_seal.sql',
+  // audit_logs chain order key (WA 2026-09-21, VSR-001 F-1 / row D5): adds
+  // chain_seq + the BEFORE INSERT trigger that assigns it for writers that
+  // announce a chain position, so the sha256 chain has an order key of its own
+  // and is one chain per tenant. Depends on sha256_chain/occurred_at from
+  // mutation_primitives, so it follows the seal file; additive and idempotent.
+  'migrations/20260921_audit_logs_chain_seq.sql',
   // ── End golden-journey prerequisites ────────────────────────────────────────
 
   // ── The canonical submission core ───────────────────────────────────────────
@@ -2368,6 +2374,17 @@ export const C2C_MIGRATION_FILES = [
   // recurring DROP rule 1 forbids. Above the final pair because
   // ci:migration-set-order pins those two last.
   'migrations/20260919_capa_code_uniqueness_per_program.sql',
+
+  // ── Claude connector (D8): OAuth 2.1 clients, PKCE codes, refresh tokens ──
+  // server/mcp/ is an MCP resource server that must also act as the OAuth
+  // authorization server (the platform had none). Two of the three tables are
+  // public + organization_id INTEGER NOT NULL so the sweep below policies them,
+  // and each grant row also cascades from the organization_users membership
+  // that authorised it, so removing a member revokes their connector grants
+  // and tenant off-boarding purges them through the cascade ci:purge-coverage
+  // measures. Above the final pair because ci:migration-set-order pins those
+  // two last. Additive and IF NOT EXISTS throughout.
+  'migrations/20260920_mcp_oauth.sql',
 
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the

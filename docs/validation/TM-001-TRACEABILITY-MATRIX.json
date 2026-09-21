@@ -1,0 +1,1947 @@
+{
+  "documentId": "TM-001",
+  "generatedAt": "2026-09-21T01:07:58.651Z",
+  "generator": "scripts/validation/build-traceability.mjs",
+  "runDate": "2026-09-20",
+  "summary": {
+    "requirements": 67,
+    "pass": 53,
+    "partial": 1,
+    "fail": 10,
+    "open": 3,
+    "uncovered": 0
+  },
+  "byApp": {
+    "Projects": {
+      "requirements": 9,
+      "pass": 8,
+      "partial": 0,
+      "fail": 1,
+      "open": 0,
+      "uncovered": 0
+    },
+    "Vault": {
+      "requirements": 10,
+      "pass": 8,
+      "partial": 0,
+      "fail": 2,
+      "open": 0,
+      "uncovered": 0
+    },
+    "Authoring": {
+      "requirements": 15,
+      "pass": 10,
+      "partial": 0,
+      "fail": 3,
+      "open": 2,
+      "uncovered": 0
+    },
+    "Submission Center": {
+      "requirements": 12,
+      "pass": 10,
+      "partial": 1,
+      "fail": 1,
+      "open": 0,
+      "uncovered": 0
+    },
+    "Submission Readiness": {
+      "requirements": 8,
+      "pass": 7,
+      "partial": 0,
+      "fail": 1,
+      "open": 0,
+      "uncovered": 0
+    },
+    "QMS controlled documents": {
+      "requirements": 13,
+      "pass": 10,
+      "partial": 0,
+      "fail": 2,
+      "open": 1,
+      "uncovered": 0
+    }
+  },
+  "stepTotals": {
+    "pass": 73,
+    "fail": 12,
+    "deviation": 2,
+    "not-executed": 3,
+    "steps": 90
+  },
+  "protocols": [
+    {
+      "protocolId": "OQ-003",
+      "app": "Authoring",
+      "executedAt": "2026-09-21T01:05:19.359Z",
+      "counts": {
+        "pass": 16,
+        "fail": 3,
+        "deviation": 1,
+        "not-executed": 2
+      },
+      "evidence": "docs/evidence/W3/2026-09-20/OQ-AUTHORING/"
+    },
+    {
+      "protocolId": "OQ-001",
+      "app": "Projects",
+      "executedAt": "2026-09-21T01:02:36.322Z",
+      "counts": {
+        "pass": 14,
+        "fail": 2,
+        "deviation": 0,
+        "not-executed": 0
+      },
+      "evidence": "docs/evidence/W3/2026-09-20/OQ-PROJECTS/"
+    },
+    {
+      "protocolId": "OQ-006",
+      "app": "QMS controlled documents",
+      "executedAt": "2026-09-21T01:07:03.022Z",
+      "counts": {
+        "pass": 13,
+        "fail": 2,
+        "deviation": 0,
+        "not-executed": 1
+      },
+      "evidence": "docs/evidence/W3/2026-09-20/OQ-QMS/"
+    },
+    {
+      "protocolId": "OQ-004",
+      "app": "Submission Center",
+      "executedAt": "2026-09-21T00:23:17.145Z",
+      "counts": {
+        "pass": 13,
+        "fail": 1,
+        "deviation": 1,
+        "not-executed": 0
+      },
+      "evidence": "docs/evidence/W3/2026-09-20/OQ-SUBMISSION-CENTER/"
+    },
+    {
+      "protocolId": "OQ-005",
+      "app": "Submission Readiness",
+      "executedAt": "2026-09-21T01:05:45.948Z",
+      "counts": {
+        "pass": 8,
+        "fail": 1,
+        "deviation": 0,
+        "not-executed": 0
+      },
+      "evidence": "docs/evidence/W3/2026-09-20/OQ-SUBMISSION-READINESS/"
+    },
+    {
+      "protocolId": "OQ-002",
+      "app": "Vault",
+      "executedAt": "2026-09-21T01:04:33.310Z",
+      "counts": {
+        "pass": 9,
+        "fail": 3,
+        "deviation": 0,
+        "not-executed": 0
+      },
+      "evidence": "docs/evidence/W3/2026-09-20/OQ-VAULT/"
+    }
+  ],
+  "iq": {
+    "executedAt": "2026-09-21T01:02:35.782Z",
+    "counts": {
+      "pass": 10,
+      "fail": 0,
+      "deviation": 5,
+      "not-executed": 0
+    }
+  },
+  "requirements": [
+    {
+      "id": "URS-PROJ-001",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "Only an authenticated user of an organisation can read or create programs; an anonymous request is refused with 401/403 and no data. Interactive login is via `/concept2cure/login`; in a development install a Demo Access control may substitute the password factor and must be absent when `NODE_ENV=production`.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-01",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Anonymous access refused"
+        },
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-02",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Login page and Demo Access (dev-login) in the browser"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Gate every program read/write behind an authenticated organisation member",
+        "risk": "high — unauthenticated access would expose or alter regulated records",
+        "assurance": "scripted",
+        "rationale": "Part 11 §11.10(d); anonymous negative test plus browser login"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-002",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "Program creation validates its inputs: `name` and `programType` are required, `programType` must be in the controlled vocabulary, and the product class is derived from the filing type and may not be contradicted by the client; invalid input is refused with 400 naming the field.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-03",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Program creation validates its inputs"
+        },
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-04",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Create an IND program"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Refuse malformed program intake",
+        "risk": "medium — bad vocabulary produces a mis-classified filing, visible at review",
+        "assurance": "scripted",
+        "rationale": "deterministic validation, cheap to script both negatives"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-003",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "A created program is persisted under the creating organisation with a UUID id, is listed for that organisation and readable by id, and the intake reports what else it created (scaffolded document, canonical submission).",
+      "part11": "none",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-04",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Create an IND program"
+        },
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-05",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Program is listed and readable for the organisation"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Persist and list the program",
+        "risk": "high — the program is the root of every downstream record",
+        "assurance": "scripted",
+        "rationale": "create → list → read round trip"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-004",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "Program creation is attributable: the activity feed shows who created it and when, the write is entered in the hash-chained audit log, and the organisation's audit ledger surface shows governed writes.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-06",
+          "status": "fail",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Program creation is attributable in the activity feed and the hash-chained audit log verifies"
+        },
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-06b",
+          "status": "fail",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Program creation appears on the organisation audit ledger surface"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Attribute program creation and keep it in the chained log",
+        "risk": "high — unattributable creation breaks ALCOA \"attributable\"",
+        "assurance": "scripted",
+        "rationale": "activity feed, chain verifier, ledger surface each checked"
+      },
+      "verdict": "fail"
+    },
+    {
+      "id": "URS-PROJ-005",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "The Projects and Project Home surfaces render the organisation's programs and the open program without runtime errors.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-02",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Login page and Demo Access (dev-login) in the browser"
+        },
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-07",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Projects surface renders the program"
+        },
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-08",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Project home renders for the open program"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Render Projects and Project Home",
+        "risk": "medium — a non-rendering surface stops work but corrupts nothing",
+        "assurance": "unscripted",
+        "rationale": "rendering check with screenshot; observed state recorded"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-006",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "A task can be created with a title, module and priority; it is persisted for the organisation, listed on the task board and its creation is written to the governed ledger.",
+      "part11": "§11.10(e)",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-09",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Create a task and see it on the task board"
+        },
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-10",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Tasks surface renders the task"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Raise and list tasks, ledgered",
+        "risk": "medium — tasks drive but do not constitute the filing",
+        "assurance": "scripted",
+        "rationale": "create → board → surface"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-007",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "The Program Journey read model and the Filings Catalog surface answer honestly for a new organisation (empty state or explained unavailability; never fixture data, never a silent 500).",
+      "part11": "none",
+      "risk": "low",
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-11",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Program journey read model answers"
+        },
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-12",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Filings catalog surface renders"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Honest empty/unavailable states for journey and catalog",
+        "risk": "low — informational",
+        "assurance": "ad-hoc",
+        "rationale": "render and record; no fixture data may appear"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-008",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "With launch scope enforced, the navigation payload marks every out-of-catalog surface as not entitled with source `launch-scope`, the six launch apps are entitled, and a deep link to an out-of-catalog surface renders the \"not in this release\" gate rather than the surface.",
+      "part11": "§11.10(d)",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-13",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Launch scope is enforced in the navigation verdicts"
+        },
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-14",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Deep link to an out-of-scope surface shows the launch-scope gate"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Enforce the launch boundary",
+        "risk": "medium — an out-of-scope surface reachable in production would expose unvalidated functions",
+        "assurance": "scripted",
+        "rationale": "payload verdicts plus deep-link gate"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-009",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "A program id that does not belong to the caller's organisation (or does not exist) answers 404 — never 200 with another tenant's data, never 500.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-15",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "A program id the organisation does not own is not readable"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Refuse foreign/unknown program ids",
+        "risk": "high — cross-tenant read",
+        "assurance": "scripted",
+        "rationale": "negative test; full RLS under D3"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-VAULT-001",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "Vault read, search, download, ingest and filing endpoints require an authenticated organisation member; anonymous requests are refused.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-01",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "Anonymous access refused"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Gate vault endpoints",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "Part 11 §11.10(d)"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-VAULT-002",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "Ingest accepts a multipart upload with `programId` (UUID of a program the organisation owns), `documentCode`, `documentTitle` and `documentType` from the controlled vocabulary, stores one `vault.documents` row with the file's SHA-256 (`contentHash`) and answers 201 with the document and its initial filing.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-03",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "Ingest a PDF into the program vault"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Ingest a document with a recorded SHA-256",
+        "risk": "high — the hash is the identity of the evidence",
+        "assurance": "scripted",
+        "rationale": "hash recomputed locally and compared"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-VAULT-003",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "Ingest refuses a file whose extension is outside the allowed set (`.pdf .docx .doc .txt .rtf .xlsx .xls .csv .md`) and files over 50 MB with a 4xx and a message; nothing is stored.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-02",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "Disallowed file type refused at ingest"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Refuse disallowed file types",
+        "risk": "medium — a refused upload is visible; an accepted executable is a security defect",
+        "assurance": "scripted",
+        "rationale": "negative test with `.exe`"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-VAULT-004",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "The program's vault read model lists every stored document under its folder tree with an honest `documentCount`; every field is derived from a stored column (no fabricated folders or counts).",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-04",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "Vault read model lists the document"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Honest read model of the data room",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "documentCount and tree membership"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-VAULT-005",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "Search within a program finds documents by title/file name; an empty query is not treated as \"match everything\".",
+      "part11": "none",
+      "risk": "low",
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-05",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "Search finds the document by title"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Search by title",
+        "risk": "low",
+        "assurance": "scripted",
+        "rationale": "cheap to script; one positive query"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-VAULT-006",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "Download returns the stored bytes unchanged: the SHA-256 of the response body equals the `contentHash` recorded at ingest.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-06",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "Download returns the stored bytes unchanged"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Return bytes unchanged",
+        "risk": "high — ALCOA \"original\"",
+        "assurance": "scripted",
+        "rationale": "byte-level SHA-256 comparison"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-VAULT-007",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person confirms the filing decision (folder, evidence kind, CTD section, note); the placement is recorded and audited; a folder from another modality's tree is refused, not stored.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-07",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "A person confirms the filing decision"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Human-confirmed filing decision, audited, modality-guarded",
+        "risk": "high — a wrong placement lands the document in the wrong CTD slot",
+        "assurance": "scripted",
+        "rationale": "positive placement and cross-modality negative"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-VAULT-008",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "Ingest and filing are written to the hash-chained audit log, the chain verifies after the writes, and the organisation's audit ledger surface shows them.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-08",
+          "status": "fail",
+          "evidenceDir": "OQ-VAULT",
+          "title": "The hash-chained audit log verifies after the governed writes"
+        },
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-08b",
+          "status": "fail",
+          "evidenceDir": "OQ-VAULT",
+          "title": "Ingest and filing appear on the organisation audit ledger surface"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Chained audit of ingest/filing; chain verifies; ledger surface shows it",
+        "risk": "high — Part 11 §11.10(e)",
+        "assurance": "scripted",
+        "rationale": "chain verifier and ledger read model"
+      },
+      "verdict": "fail"
+    },
+    {
+      "id": "URS-VAULT-009",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "The Vault surface renders the program's data room with the stored documents, the upload control and the filing control.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-09",
+          "status": "fail",
+          "evidenceDir": "OQ-VAULT",
+          "title": "Vault surface renders the data room with the document"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Render the data room",
+        "risk": "medium",
+        "assurance": "unscripted",
+        "rationale": "screenshot; observed state recorded"
+      },
+      "verdict": "fail"
+    },
+    {
+      "id": "URS-VAULT-010",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A program the organisation does not own answers 404 on the vault read model; no cross-tenant listing.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-002",
+          "step": "OQ-VAULT-10",
+          "status": "pass",
+          "evidenceDir": "OQ-VAULT",
+          "title": "A program the organisation does not own is not readable"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Refuse foreign program ids",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "negative test"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-AUTH-001",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "Authoring endpoints require an authenticated actor; identity for every write comes from the verified JWT, never from a header or the body.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-01",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Anonymous access refused"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Gate authoring; identity from JWT only",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "anonymous negative; identity rule is code-reviewed and exercised implicitly by every write"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-AUTH-002",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "A document is created with a title (required, 400 otherwise), a module and an optional program binding (`client_program_id`, validated as UUID); a template that cannot be honoured refuses before anything is written.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-02",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Document creation requires a title"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-03",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Create a Module 2 document bound to the program"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Create a document with validated inputs",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "one negative, one positive"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-AUTH-003",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "Sections are created under a document with a CTD code and title and are read back in filing order; duplicate codes and order ties are reported as structure issues.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-04",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Create sections and read them back in order"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Sections in filing order",
+        "risk": "medium — wrong order assembles a wrong dossier, visible at review",
+        "assurance": "scripted",
+        "rationale": "order and structure issues read back"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-AUTH-004",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "Editing a section with a reason for change writes a revision carrying the content SHA-256 and the author; a save against a stale `expectedUpdatedAt` is refused with 409 and nothing is overwritten.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-05",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Edit a section with a reason for change; a revision is recorded"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-07",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "A stale save is refused, nothing overwritten"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Revisions with reason; no silent overwrite",
+        "risk": "high — a lost edit or silent overwrite is a data-integrity failure",
+        "assurance": "scripted",
+        "rationale": "edit, history, stale-save 409"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-AUTH-005",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "The revision ledger of a section is a hash chain that the server can recompute from stored content and report intact or broken.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-06",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Revision ledger hash chain verifies"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Revision hash chain verifies",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "server recomputation"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-AUTH-006",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "A section can be reverted to a chosen prior revision; the content is restored and the revert is itself recorded as a revision.",
+      "part11": "§11.10(e)",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-08",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Revert to a prior revision"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Revert is itself recorded",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "content restored and history grows"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-AUTH-007",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "A comment can be recorded on a section and listed under the document, attributed to the actor.",
+      "part11": "none",
+      "risk": "low",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-09",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Comment on a section"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Comments attributed",
+        "risk": "low",
+        "assurance": "scripted",
+        "rationale": "trivially scriptable"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-AUTH-008",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "The document's audit trail lists every operation with type, actor, timestamp, reason and before/after content hashes.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-10",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Document audit trail records the operations with actor and hashes"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Document audit trail complete",
+        "risk": "high — §11.10(e)",
+        "assurance": "scripted",
+        "rationale": "events, actors, hashes"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-AUTH-009",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "Freezing a document stores an immutable snapshot with a content hash and a version; a frozen record is retrievable and hash-verified; a second freeze is refused.",
+      "part11": "§11.70",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-11",
+          "status": "fail",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Freeze the document into an immutable snapshot"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Freeze into an immutable, hash-verified snapshot",
+        "risk": "high — §11.70 record binding",
+        "assurance": "scripted",
+        "rationale": "freeze, retrieve, second freeze refused"
+      },
+      "verdict": "fail"
+    },
+    {
+      "id": "URS-AUTH-010",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "An electronic signature requires the actor's PIN (a second component held only by the signer, enrolled and rotated only by the signer with the current PIN), a meaning from {AUTHOR, REVIEWER, APPROVER} and an intent; a wrong PIN answers 401 and an invalid meaning 400 with nothing stored; a valid signature stores signer, meaning, digest and the covered freeze version/hash and is listed with `pin_verified`.",
+      "part11": "§11.50 §11.70 §11.200",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-12",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Enrol the signing PIN for the authenticated actor"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-13",
+          "status": "not-executed",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "E-signature refuses a wrong PIN and an invalid meaning"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-14",
+          "status": "not-executed",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Apply a REVIEWER e-signature bound to the frozen snapshot"
+        }
+      ],
+      "ra": {
+        "intendedUse": "PIN-based e-signature with meaning and intent; refusals; binding to the frozen snapshot",
+        "risk": "high — §11.50/§11.70/§11.200",
+        "assurance": "scripted",
+        "rationale": "wrong PIN, wrong meaning, valid signature listed with `pin_verified` and covered hash"
+      },
+      "verdict": "open"
+    },
+    {
+      "id": "URS-AUTH-011",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "Only a role with signing authority may apply a signature (403 `ESIGNATURE_NO_AUTHORITY` otherwise).",
+      "part11": "§11.10(g)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-14",
+          "status": "not-executed",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Apply a REVIEWER e-signature bound to the frozen snapshot"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Signing authority by role",
+        "risk": "high — §11.10(g)",
+        "assurance": "scripted (positive only locally)",
+        "rationale": "negative case needs a second identity on staging"
+      },
+      "verdict": "open"
+    },
+    {
+      "id": "URS-AUTH-012",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "AI drafting runs only through the governed gateway; with no provider configured the request fails closed with an error and never returns draft text; with a PQ-passed provider it returns a candidate for human acceptance with provenance.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-15",
+          "status": "fail",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "AI drafting fails closed when no provider is configured"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-16",
+          "status": "deviation",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "AI drafting produces a governed draft candidate"
+        }
+      ],
+      "ra": {
+        "intendedUse": "AI drafting fails closed without a provider; governed candidate with one",
+        "risk": "high — fabricated content in a filing",
+        "assurance": "scripted (fail-closed) / deviation (drafting)",
+        "rationale": "provider absent locally; drafting re-executed with a PQ-passed model"
+      },
+      "verdict": "fail"
+    },
+    {
+      "id": "URS-AUTH-013",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "A review can be requested from named reviewers and the document submitted into an approval workflow whose steps name their approver; the document moves to IN_REVIEW; a reviewer sees the pending review on the Review surface and records a decision with a meaning.",
+      "part11": "§11.10(e)",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-17",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Request review and submit the document into its approval workflow (before freeze — submit requires DRAFT)"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-17b",
+          "status": "fail",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "The reviewer sees the pending review on the Review surface"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-20",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Review surface renders"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Review request, workflow submit, reviewer visibility, decision with meaning",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "request, submit negatives/positive, board visibility"
+      },
+      "verdict": "fail"
+    },
+    {
+      "id": "URS-AUTH-014",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "Template stores (organisation templates and the global regulatory reference store) answer; an empty organisation store is reported honestly.",
+      "part11": "none",
+      "risk": "low",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-18",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Template stores answer"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Template stores answer",
+        "risk": "low",
+        "assurance": "ad-hoc",
+        "rationale": "two GETs"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-AUTH-015",
+      "app": "Authoring",
+      "doc": "URS-003-AUTHORING.md",
+      "requirement": "The Document Authoring and Review surfaces render the program's documents and the review board without runtime errors.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-19",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Document Authoring surface renders the document"
+        },
+        {
+          "protocol": "OQ-003",
+          "step": "OQ-AUTH-20",
+          "status": "pass",
+          "evidenceDir": "OQ-AUTHORING",
+          "title": "Review surface renders"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Render authoring and review surfaces",
+        "risk": "medium",
+        "assurance": "unscripted",
+        "rationale": "screenshots"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-001",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "Submission endpoints require an authenticated actor holding the regulatory-author role; anonymous requests are refused.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-01",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Anonymous access refused"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Gate submissions behind the author role",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "anonymous negative"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-002",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "Submission creation validates title, application type, client type and region against the controlled vocabularies (400 `VALIDATION` with field details otherwise) and records a §11.10(e) audit row whose outcome is reported to the caller.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-02",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Submission creation validates its inputs"
+        },
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-03",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Create a submission and its first sequence"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Validated submission creation, audited",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "region negative, positive with audit outcome"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-003",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "A sequence is created under a submission with a region and a four-digit sequence number (`0000` …) and a type; it is listed with status `draft`.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-03",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Create a submission and its first sequence"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Sequence creation",
+        "risk": "high — the sequence is what is transmitted",
+        "assurance": "scripted",
+        "rationale": "create and list"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-004",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "A leaf is placed in a sequence by section code and a document reference; the document table must be a placeable leaf source (`vault_documents`, `coauthor_documents`, …) and anything else is refused at the write boundary with the allowed list.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-04",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Place a vault document as an eCTD leaf"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Leaf placement with a closed source vocabulary",
+        "risk": "high — a leaf pointing at an un-resolvable source cannot be assembled",
+        "assurance": "scripted",
+        "rationale": "positive placement and refused table"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-005",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "Sequence status follows the lifecycle draft → assembling → validated → frozen → dispatched; a transition the state machine does not allow is refused and the status is unchanged.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-05",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Sequence lifecycle follows the state machine"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Lifecycle state machine",
+        "risk": "high — an illegal transition could dispatch an unvalidated sequence",
+        "assurance": "scripted",
+        "rationale": "allowed and disallowed transitions"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-006",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "`frozen` and `dispatched` cannot be reached through the generic transition endpoint (`GOVERNED_REQUIRED`); the governed endpoints require a `signatureActionId`.",
+      "part11": "§11.10(e) §11.200",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-06",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Freeze and dispatch are governed transitions only"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Freeze/dispatch only via governed e-signature",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "generic transition refused; freeze without signature refused"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-007",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "The governed `sign` action on a sequence is high-risk: it requires re-authentication (password, optionally TOTP), a reason of ≥ 8 characters and a target the organisation owns; without re-authentication it is refused and no action id, ledger pair or `electronic_signatures` row is created; with it, the signature and the chained ledger rows land in one transaction.",
+      "part11": "§11.50 §11.70 §11.200",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-07",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Governed e-signature demands re-authentication"
+        },
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-08",
+          "status": "deviation",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Freeze the sequence under a Part 11 e-signature"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Re-authenticated sign with ledger + `electronic_signatures` in one transaction",
+        "risk": "high — §11.200",
+        "assurance": "scripted (negative) / deviation (positive)",
+        "rationale": "the positive case requires a password the runner does not hold"
+      },
+      "verdict": "partial"
+    },
+    {
+      "id": "URS-SUBC-008",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "The capabilities endpoint reports each agency gateway (ESG, CESP, …) as configured only when credentials exist; nothing is claimed as configured on an installation without them.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-09",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Gateway capabilities are reported honestly"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Honest gateway capabilities",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "all `configured:false` locally"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-009",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "The dossier map answers per-module (M1–M5) completeness for the program open in the shell.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-10",
+          "status": "fail",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Dossier map for the open program"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Dossier map for the open program",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "id-space consistency between shell and route is the risk"
+      },
+      "verdict": "fail"
+    },
+    {
+      "id": "URS-SUBC-010",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "eCTD compile for a program answers with a spine/status or an explained refusal; it never answers 500.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-11",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "eCTD compile answers for the program"
+        }
+      ],
+      "ra": {
+        "intendedUse": "eCTD compile answers or refuses, never 500",
+        "risk": "medium",
+        "assurance": "unscripted",
+        "rationale": "observation of compile and status"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-011",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "The Submission Center, eCTD Compile and Publishing surfaces render the organisation's submissions and the open program's sequence.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-13",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Submission Center surface renders the submission"
+        },
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-14",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "eCTD compile and publishing surfaces render"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Render submission surfaces",
+        "risk": "medium",
+        "assurance": "unscripted",
+        "rationale": "screenshots"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SUBC-012",
+      "app": "Submission Center",
+      "doc": "URS-004-SUBMISSION-CENTER.md",
+      "requirement": "Transmit requires a signature action id and a dispatched, gate-clear sequence; without a configured gateway it reports `transmitted:false` with the reason and never fabricates an acknowledgement.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-004",
+          "step": "OQ-SUBC-12",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-CENTER",
+          "title": "Transmit cannot run without a signature and a configured gateway"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Transmit never fabricates an acknowledgement",
+        "risk": "high",
+        "assurance": "scripted (negative)",
+        "rationale": "signature-less transmit refused; real transport under D7"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SRDY-001",
+      "app": "Submission Readiness",
+      "doc": "URS-005-SUBMISSION-READINESS.md",
+      "requirement": "Readiness endpoints require an authenticated regulatory author; anonymous requests are refused.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-005",
+          "step": "OQ-SRDY-01",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-READINESS",
+          "title": "Anonymous access refused"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Gate readiness endpoints",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "anonymous negative"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SRDY-002",
+      "app": "Submission Readiness",
+      "doc": "URS-005-SUBMISSION-READINESS.md",
+      "requirement": "The dispatch-readiness assessment of a sequence is computed server-side from stored facts and returns numeric `validationErrors` and `unacknowledgedShadowCriticals`, the release-signature verdict and a `gate.cleared` boolean with the list of blockers; a never-validated, never-shadow-reviewed, unsigned sequence is not cleared.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-005",
+          "step": "OQ-SRDY-02",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-READINESS",
+          "title": "Deterministic dispatch-readiness assessment for a sequence"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Deterministic dispatch gate with blockers",
+        "risk": "high — a false \"cleared\" dispatches an unready sequence",
+        "assurance": "scripted",
+        "rationale": "fresh sequence must be blocked with reasons"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SRDY-003",
+      "app": "Submission Readiness",
+      "doc": "URS-005-SUBMISSION-READINESS.md",
+      "requirement": "Dispatch QC uses the server-side assessment for the sequence (client-supplied counts do not override it) and returns a deterministic QC record without a model in the decision path.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-005",
+          "step": "OQ-SRDY-03",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-READINESS",
+          "title": "Dispatch QC records the gate outcome from the tamper-proof assessment"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Dispatch QC uses server assessment; no model in the decision",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "client zeros vs server assessment; provider absence exposes any model dependency"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SRDY-004",
+      "app": "Submission Readiness",
+      "doc": "URS-005-SUBMISSION-READINESS.md",
+      "requirement": "The `submission_readiness_review` orchestration template is registered with its five orchestrator-logic steps; execution validates that a project id is supplied.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-005",
+          "step": "OQ-SRDY-04",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-READINESS",
+          "title": "Readiness review template is registered and execute validates inputs"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Readiness review template registered; input validation",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "template inventory, missing projectId"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SRDY-005",
+      "app": "Submission Readiness",
+      "doc": "URS-005-SUBMISSION-READINESS.md",
+      "requirement": "Executing the readiness review for a program starts an execution whose status and steps are readable.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-005",
+          "step": "OQ-SRDY-05",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-READINESS",
+          "title": "Execute the readiness review for the program"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Readiness review executes and is readable",
+        "risk": "medium",
+        "assurance": "unscripted",
+        "rationale": "execution observed and recorded"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SRDY-006",
+      "app": "Submission Readiness",
+      "doc": "URS-005-SUBMISSION-READINESS.md",
+      "requirement": "A contradiction scan for a project returns a deterministic result (possibly zero findings) from the assumption and decision registries.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-005",
+          "step": "OQ-SRDY-06",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-READINESS",
+          "title": "Contradiction (inconsistency) scan for a project"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Contradiction scan deterministic",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "one scan call"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-SRDY-007",
+      "app": "Submission Readiness",
+      "doc": "URS-005-SUBMISSION-READINESS.md",
+      "requirement": "The Dispatch Readiness surface shows the open program's newest sequence and its gate verdict — the sequence the user is working on, not another submission's.",
+      "part11": "none",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-005",
+          "step": "OQ-SRDY-07",
+          "status": "fail",
+          "evidenceDir": "OQ-SUBMISSION-READINESS",
+          "title": "Dispatch Readiness surface renders the sequence readiness"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Surface shows the open program's sequence",
+        "risk": "high — gating the wrong sequence misleads a dispatch decision",
+        "assurance": "scripted",
+        "rationale": "sequence number visible for the open program"
+      },
+      "verdict": "fail"
+    },
+    {
+      "id": "URS-SRDY-008",
+      "app": "Submission Readiness",
+      "doc": "URS-005-SUBMISSION-READINESS.md",
+      "requirement": "The Orchestration and Inconsistency surfaces render; an unavailable store is shown as an error or empty state, never as data.",
+      "part11": "none",
+      "risk": "low",
+      "steps": [
+        {
+          "protocol": "OQ-005",
+          "step": "OQ-SRDY-08",
+          "status": "pass",
+          "evidenceDir": "OQ-SUBMISSION-READINESS",
+          "title": "Orchestration and Inconsistency surfaces render"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Orchestration / Inconsistency render honestly",
+        "risk": "low",
+        "assurance": "ad-hoc",
+        "rationale": "screenshots"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-QMS-001",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "QMS endpoints require an authenticated organisation member; anonymous requests are refused.",
+      "part11": "§11.10(d)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-01",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Anonymous access refused"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Gate QMS endpoints",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "anonymous negative"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-QMS-002",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "A controlled document is created with a document number (unique per organisation — 409 on duplicate), title and a document type from the controlled vocabulary; invalid input answers 422 with field errors; creation records a §11.10(e) audit row whose outcome is reported.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-02",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Controlled document creation validates its inputs"
+        },
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-03",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Create an SOP; it is draft at version 1.0 and audited"
+        },
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-04",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Duplicate document number refused"
+        },
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-06a",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Create a second SOP (fixture for the approval-credential, training, review-due and retire steps)"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Validated, unique, audited document creation",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "422, 201 with audit outcome, 409 duplicate"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-QMS-003",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "A new document is `draft` at version `1.0`, is listed for the organisation and readable by id; another organisation's document is not found.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-03",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Create an SOP; it is draft at version 1.0 and audited"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Draft v1.0, listed, readable, tenant-scoped",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "list and detail"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-QMS-004",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "Approval moves a draft/in-review document to `effective`, stamps approver and approval time, sets the effective date, records an audit row, and is refused (409) for a document not in an approvable state.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-05",
+          "status": "fail",
+          "evidenceDir": "OQ-QMS",
+          "title": "Approve the SOP; approver and time are stamped and audited"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Approval stamps approver/time, audited, state-guarded",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "approve, re-approve refused"
+      },
+      "verdict": "fail"
+    },
+    {
+      "id": "URS-QMS-005",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "Approval of a controlled document is an electronic signature: it verifies a credential the approver alone holds (PIN or password re-authentication), records the signature meaning, and is refused without them.",
+      "part11": "§11.50 §11.200",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-06",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Approval of a controlled document requires an electronic-signature credential"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Approval is an electronic signature (credential + meaning)",
+        "risk": "high — §11.50/§11.200: an SOP made binding without a verified signer",
+        "assurance": "scripted (negative)",
+        "rationale": "approve with no credential must be refused"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-QMS-006",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "Opening a revision requires a reason for change (422 otherwise), bumps the major version, returns the document to `draft`, clears the prior approval and records the reason in the audit trail.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-07",
+          "status": "not-executed",
+          "evidenceDir": "OQ-QMS",
+          "title": "Open a controlled revision (reason required; major version bump; back to draft)"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Revision requires reason; major bump; back to draft",
+        "risk": "high",
+        "assurance": "scripted",
+        "rationale": "422 then positive"
+      },
+      "verdict": "open"
+    },
+    {
+      "id": "URS-QMS-007",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "Retiring a document records the reason, the actor and the time; the document reads `retired`.",
+      "part11": "§11.10(e)",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-10",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Retire a document with a recorded reason"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Retire with reason",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "positive"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-QMS-008",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "A training acknowledgement is recorded against the document's current version with the method and an expiry, and the compliance report answers.",
+      "part11": "§11.10(e)",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-08",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Training acknowledgement is recorded against the document version"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Training acknowledgement against version",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "positive plus compliance report"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-QMS-009",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "The review-due report lists effective documents whose next review falls within the window and flags overdue ones.",
+      "part11": "none",
+      "risk": "low",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-09",
+          "status": "fail",
+          "evidenceDir": "OQ-QMS",
+          "title": "Review-due report lists effective documents approaching review"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Review-due report",
+        "risk": "low",
+        "assurance": "scripted",
+        "rationale": "positive"
+      },
+      "verdict": "fail"
+    },
+    {
+      "id": "URS-QMS-010",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "Change control: a change record is raised with a number, title, classification and reason, listed and summarised.",
+      "part11": "§11.10(e)",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-11",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Change control: raise and list a change"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Change control raise/list/summary",
+        "risk": "medium",
+        "assurance": "scripted",
+        "rationale": "positive create and list"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-QMS-011",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "A Quality Management Plan is created with a name (≥ 3 chars) and listed for the organisation with status `draft`.",
+      "part11": "none",
+      "risk": "low",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-12",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Quality Management Plan create and list"
+        },
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-15",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "QMP surface renders the plan"
+        }
+      ],
+      "ra": {
+        "intendedUse": "QMP create/list",
+        "risk": "low",
+        "assurance": "scripted",
+        "rationale": "positive"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-QMS-012",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "The Quality surface renders the SOP register with the organisation's documents and the Change control tab; the QMP surface renders the organisation's plans.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-14",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Quality surface renders the SOP register and the Change control tab"
+        },
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-15",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "QMP surface renders the plan"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Render Quality and QMP surfaces",
+        "risk": "medium",
+        "assurance": "unscripted",
+        "rationale": "screenshots with the created records visible"
+      },
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-QMS-013",
+      "app": "QMS controlled documents",
+      "doc": "URS-006-QMS.md",
+      "requirement": "The server-curated quality-system template family is served.",
+      "part11": "none",
+      "risk": "low",
+      "steps": [
+        {
+          "protocol": "OQ-006",
+          "step": "OQ-QMS-13",
+          "status": "pass",
+          "evidenceDir": "OQ-QMS",
+          "title": "Quality-system templates are served"
+        }
+      ],
+      "ra": {
+        "intendedUse": "Templates served",
+        "risk": "low",
+        "assurance": "ad-hoc",
+        "rationale": "one GET"
+      },
+      "verdict": "pass"
+    }
+  ],
+  "problems": []
+}

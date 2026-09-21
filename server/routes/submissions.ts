@@ -1031,11 +1031,14 @@ router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) 
   }
 });
 
-// ── Dispatch QC gate (AI; does NOT transmit) ─────────────────────────────────
-// When `sequenceId` is supplied the gate inputs are computed SERVER-SIDE from the
-// canonical core (never the client numbers) — the AI advisory then floors on real
-// values. Without a sequenceId it falls back to the supplied numbers (advisory
-// only); prefer GET /sequences/:seqId/dispatch-readiness for the tamper-proof gate.
+// ── Dispatch QC (deterministic verdict + optional model narrative; does NOT transmit)
+// VSR-001 F-9: the verdict is computed by the platform's deterministic gates and
+// the model, when configured, only narrates under `narrative` (null without a
+// provider — never a 502). When `sequenceId` is supplied the full server-side
+// assessment (assessSequenceDispatchReadiness — the gate freeze/dispatch enforce)
+// IS the verdict and the client numbers are ignored. Without one the verdict is
+// the hard gate over the supplied counts, with a warning naming what was not
+// checked; prefer GET /sequences/:seqId/dispatch-readiness for the full gate.
 const dispatchQcSchema = z.object({
   region: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
   sequenceId: z.number().int().positive().optional(),
@@ -1053,13 +1056,14 @@ router.post('/:id/dispatch-qc', limiter, requireRole(AUTHOR), async (req, res) =
   try {
     await getSubmission(id, ctx);
     let input = parsed.data;
+    let assessment = null;
     if (parsed.data.sequenceId) {
       // Authoritative, tamper-proof gate inputs from server state.
       const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
-      const a = await assessSequenceDispatchReadiness({ sequenceId: parsed.data.sequenceId, organizationId: ctx.organizationId });
-      input = { ...parsed.data, validationErrors: a.validationErrors, unresolvedShadowCriticals: a.unacknowledgedShadowCriticals };
+      assessment = await assessSequenceDispatchReadiness({ sequenceId: parsed.data.sequenceId, organizationId: ctx.organizationId });
+      input = { ...parsed.data, validationErrors: assessment.validationErrors, unresolvedShadowCriticals: assessment.unacknowledgedShadowCriticals };
     }
-    res.json(await runDispatchQc(input, { ...ctx, submissionId: id }));
+    res.json(await runDispatchQc(input, { ...ctx, submissionId: id }, { assessment }));
   } catch (err) {
     fail(res, err);
   }

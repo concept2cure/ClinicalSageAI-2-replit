@@ -1,0 +1,28 @@
+# Files changed by worker WC (2026-09-21), by finding. No git command was run; this list is hand-recorded.
+
+## F-4 — vault ingest refuses a disallowed type with 400, not 500
+server/routes/vault-ingest.ts
+server/routes/__tests__/vault-ingest-refusal-status.test.ts        (new)
+
+## F-5 — rate limiting keyed by identity for authenticated traffic
+server/config/platform-limits.ts
+server/middleware/rateLimiter.ts
+server/middleware/redisRateLimiter.ts
+server/middleware/__tests__/rateLimiter-identity-key.test.ts       (new)
+server/middleware/__tests__/redisRateLimiter-identity-key.test.ts  (new)
+
+## F-7 — dossier map resolves the program UUID; never parseInt
+server/routes/dossier-map.routes.ts
+server/routes/__tests__/dossier-map-read.test.ts                   (extended)
+client/src/concept2cure/v2/surfaces/DossierMap.tsx
+client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx (new)
+
+## F-8 — dispatch readiness gates the open program's sequence
+client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx
+client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx (new)
+client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx   (seeds the open program)
+tests/validation/lib/fixtures.mjs                                  (createProgram carries spineSubmissionId; createSubmissionWithSequence accepts submissionId)
+tests/validation/oq/submission-readiness/run.mjs                   (OQ-SRDY-00 builds the sequence on the program's own submission)
+
+## Evidence
+docs/evidence/WC/2026-09-21/**

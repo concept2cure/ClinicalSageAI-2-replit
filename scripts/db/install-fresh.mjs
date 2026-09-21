@@ -38,7 +38,9 @@
  *      schema and Part-11 tamper-proof audit tables — then re-run the canonical
  *      tenant-isolation sweep, because that tree creates tenant-keyed tables
  *      AFTER 0021 swept in step 5 and they would otherwise carry no policy.
- *   7. Provision the non-superuser runtime role (opt-in, APP_SERVICE_DB_PASSWORD).
+ *   7. The runtime role: mint app_service (APP_SERVICE_DB_PASSWORD) or refresh
+ *      grants for an existing runtime role identified from RUNTIME_DB_ROLE /
+ *      APP_DATABASE_URL (2026-09-21, IQ-DEV-001); single-role installs skip it.
  *   8. Verify: table count, pg_policies count, the core route tables and the
  *      authoring subsystem, the required-object contract (columns, primary keys,
  *      foreign keys, indexes and RLS posture per capability, each reported with
@@ -87,7 +89,7 @@ import {
   AUTHORING_SUBSYSTEM_TABLES,
 } from './authoring-subsystem.mjs';
 import { resolveDatabaseUrl, sslFor, INSTALL_URL_VARS } from './connection.mjs';
-import { provisionAppServiceRole, resolveAppServiceRole } from './provision-app-role.mjs';
+import { ensureRuntimeRole } from './provision-app-role.mjs';
 import { declaredTableEntries, unresolvedSchemaReceivers } from './lib/declared-tables.mjs';
 
 dotenv.config();
@@ -117,6 +119,9 @@ const url = CHECK_SCHEMA_ENTRYPOINTS
   ? 'postgresql://schema-check:unused@127.0.0.1:1/schema-check'
   : resolveDatabaseUrl(INSTALL_URL_VARS);
 const pool = new Pool({ connectionString: url, ssl: sslFor(url) });
+
+/** Step 7's verdict on the runtime role, read by step 8's posture check. */
+let runtimeRoleResult = null;
 
 /**
  * `--allow-incomplete` — finish and exit 0 even when part of the install did
@@ -1572,7 +1577,7 @@ async function main() {
 
   recordSchemaSource('governed content (db/migrations/*_gcc_*)', await snapshotPublicTables());
 
-  await step('7/8 Runtime role — non-superuser app_service grants', async () => {
+  await step('7/8 Runtime role — non-superuser grants', async () => {
     // The RLS unlock. Everything above ran as the owner/admin (DATABASE_URL),
     // which is a superuser on most managed providers — a connection RLS never
     // filters. Mint a dedicated NOSUPERUSER / NOBYPASSRLS LOGIN role and grant
@@ -1581,15 +1586,17 @@ async function main() {
     //
     // This runs LAST among the schema steps so `GRANT ... ON ALL TABLES` reaches
     // every table the prior steps created; ALTER DEFAULT PRIVILEGES (inside the
-    // helper) covers tables future migrations add. It is a NO-OP unless
-    // APP_SERVICE_DB_PASSWORD is set, so an install that has not opted into the
-    // split role behaves exactly as before.
-    const result = await provisionAppServiceRole(pool, {
+    // helper) covers tables future migrations add. ensureRuntimeRole mints when
+    // APP_SERVICE_DB_PASSWORD is set, refreshes grants for any other runtime
+    // role identifiable from RUNTIME_DB_ROLE / APP_DATABASE_URL (a role this
+    // script did not mint still needs the grants — IQ-DEV-001), and is a NO-OP
+    // on a single-role install (runtime = owner), which behaves exactly as before.
+    runtimeRoleResult = await ensureRuntimeRole(pool, {
       log: (m) => console.log(m),
     });
-    if (result.skipped) {
+    if (runtimeRoleResult.mode === 'single-role') {
       console.log(
-        `  • ${result.role} not provisioned (APP_SERVICE_DB_PASSWORD unset). Production boot ` +
+        `  • no runtime role distinct from the owner (${runtimeRoleResult.owner}). Production boot ` +
           'will FAIL CLOSED if it connects as a superuser under RLS_ENFORCE=on — set ' +
           'APP_SERVICE_DB_PASSWORD here and APP_DATABASE_URL for the runtime before going live.',
       );
@@ -1762,14 +1769,14 @@ async function main() {
       );
     }
 
-    // Runtime role posture — only asserted when the split role was requested
-    // (APP_SERVICE_DB_PASSWORD set). Confirms the role exists and is genuinely
-    // least-privilege (not a superuser, no BYPASSRLS) and can actually read a
-    // core tenant table — so a green install can never hand over a role that
-    // would fail the production boot posture check or be locked out of its
-    // tables. Mirrors server/db/rlsEnforcement.ts → assertRlsCatalogPosture.
-    if (process.env.APP_SERVICE_DB_PASSWORD) {
-      const role = resolveAppServiceRole();
+    // Runtime role posture — asserted whenever step 7 minted or granted a
+    // runtime role. Confirms the role exists and is genuinely least-privilege
+    // (not a superuser, no BYPASSRLS) and can actually read a core tenant
+    // table — so a green install can never hand over a role that would fail
+    // the production boot posture check or be locked out of its tables.
+    // Mirrors server/db/rlsEnforcement.ts → assertRlsCatalogPosture.
+    if (runtimeRoleResult && !runtimeRoleResult.skipped) {
+      const role = runtimeRoleResult.role;
       const roleRow = (
         await pool.query(
           'SELECT rolsuper, rolbypassrls, rolcanlogin FROM pg_roles WHERE rolname = $1',

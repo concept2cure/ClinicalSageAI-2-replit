@@ -1,0 +1,36 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536/search?q=OQ-002%20Protocol",
+    "anonymous": false,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 12,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "query": "OQ-002 Protocol",
+        "total": 1,
+        "limit": 25,
+        "offset": 0,
+        "results": [
+          {
+            "id": "19c17bfe-98e4-4100-8862-f34c3a64c202",
+            "title": "OQ-002 Protocol 20260921010434",
+            "fileName": "OQ-002-Protocol-20260921010434.pdf",
+            "documentType": "PROTOCOL",
+            "size": "611 B",
+            "folderId": null,
+            "ctdSection": null,
+            "placementStatus": "unfiled",
+            "snippet": "<b>OQ</b><b>-002</b> <b>Protocol</b>"
+          }
+        ]
+      }
+    }
+  }
+}

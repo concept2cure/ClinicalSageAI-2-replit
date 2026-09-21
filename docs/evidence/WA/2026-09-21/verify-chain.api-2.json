@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://127.0.0.1:5400/api/c2c/actions/verify-chain",
+    "auth": "Bearer (dev-login jonmichaelpsmith@gmail.com, organizationId 2)",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ok": true,
+      "rowsChecked": 264,
+      "tenants": 18,
+      "legacyRows": 227,
+      "sequencedRows": 37
+    }
+  },
+  "note": "After the live governed write: 264 chained rows across 18 tenants verify; 227 legacy rows (pre-fix recipe, dual-view rule) + 37 sequenced rows."
+}

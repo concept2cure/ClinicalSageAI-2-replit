@@ -1,0 +1,2584 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > 403 without org context 58ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > 400 when projectId is missing — a project-readiness read requires it, no org-wide fallback 7ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > 400 when projectId is not a positive integer 3ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > returns the real-store module map for the acting org + project, source = project_sections 6ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > honest empty list when the project tracks no CTD sections — no fallback data 4ms
+ × server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > resolves a program UUID through the anchor lookup — never parseInt — and reads the anchored project (F-7) 12ms
+   → expected "vi.fn()" to not be called with arguments: [ 7, 6191805 ]
+
+Received:
+
+  1st vi.fn() call:
+
+Compared values have no visual difference.
+
+
+Number of calls: 1
+
+ × server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > a program in the org with no PM-spine anchor answers an honest empty map that SAYS it is unanchored (F-7) 7ms
+   → expected 500 to be 200 // Object.is equality
+ × server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > a program UUID that is not in the acting org answers 404, and nothing is read for it (F-7) 4ms
+   → expected 500 to be 404 // Object.is equality
+ × server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > an id that parseInt would truncate ("12abc") is 400, never project 12 (F-7) 12ms
+   → expected 500 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > fails closed to an honest empty list when the store is not provisioned (42P01) 4ms
+ × server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > platform numbers: api and concept2cure carry an authenticated ceiling above the per-IP one, and a per-IP guard above that 12ms
+   → actual value must be number or bigint, received "undefined"
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > no credential: the per-IP bucket trips at exactly the per-IP ceiling 57ms
+ × server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > bearer credential: not tripped at the per-IP ceiling, tripped at the credential ceiling 35ms
+   → expected 429 to be 200 // Object.is equality
+ × server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > two credentials behind one address have their own buckets; anonymous traffic from it keeps its own 45ms
+   → expected false to be true // Object.is equality
+ × server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > rotating credentials from one address is bounded by the per-IP credentialed guard 104ms
+   → expected false to be true // Object.is equality
+ × server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > a verified identity wins over the credential: two tokens for one user share the user bucket 39ms
+   → expected false to be true // Object.is equality
+ × server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > the headers name the ceiling that applied 12ms
+   → expected 5 to be 12 // Object.is equality
+ × server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > documents an authenticated ceiling above the per-IP one 8ms
+   → expected 'undefined' to be 'number' // Object.is equality
+stderr | server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > unauthenticated: the per-IP bucket still trips at exactly the per-IP ceiling
+{
+  "timestamp": "2026-09-21T00:59:07.339Z",
+  "level": "warn",
+  "message": "Rate limit exceeded for api",
+  "context": {
+    "ip": "10.0.0.1",
+    "path": "/api/things",
+    "count": 60,
+    "limit": 60,
+    "remainingMs": 59872
+  }
+}
+
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > unauthenticated: the per-IP bucket still trips at exactly the per-IP ceiling 145ms
+stderr | server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > authenticated: one user is NOT tripped by ordinary shell traffic beyond the per-IP ceiling
+{
+  "timestamp": "2026-09-21T00:59:07.457Z",
+  "level": "warn",
+  "message": "Rate limit exceeded for api",
+  "context": {
+    "ip": "10.0.0.2",
+    "path": "/api/things",
+    "count": 60,
+    "limit": 60,
+    "remainingMs": 59888
+  }
+}
+
+ × server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > authenticated: one user is NOT tripped by ordinary shell traffic beyond the per-IP ceiling 120ms
+   → expected 429 to be 200 // Object.is equality
+ × server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > authenticated: the per-user ceiling still exists and trips at exactly that number 4ms
+   → expected [] to have a length of 1 but got +0
+ × server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > two users behind one NAT address do not share a bucket, and anonymous traffic from it keeps its own 4ms
+   → expected 200 to be 429 // Object.is equality
+ × server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > the 429 and the headers name the ceiling that applied 3ms
+   → expected 60 to be undefined // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > does NOT clear an unreviewed sequence the server blocks 60ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > clears only when the SERVER says every composed gate is clear 18ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > treats a response carrying no gate as UNANSWERED, never as cleared 16ms
+stderr | server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses a .exe with 400 FILE_TYPE_NOT_ALLOWED and stores nothing (F-4)
+{
+  "timestamp": "2026-09-21T00:59:08.472Z",
+  "level": "error",
+  "message": "[error-handler] Server error in POST /api/vault/ingest",
+  "context": {
+    "statusCode": 500,
+    "error": "File type .exe is not allowed",
+    "stack": "Error: File type .exe is not allowed\n    at fileFilter (/home/user/ClinicalSageAI-2-replit/server/routes/vault-ingest.ts:53:10)\n    at wrappedFileFilter (/home/user/ClinicalSageAI-2-replit/node_modules/multer/index.js:134:7)\n    at Multipart.<anonymous> (/home/user/ClinicalSageAI-2-replit/node_modules/multer/lib/make-middleware.js:344:7)\n    at Multipart.emit (node:events:519:28)\n    at HeaderParser.cb (/home/user/ClinicalSageAI-2-replit/node_modules/busboy/lib/types/multipart.js:358:14)\n    at HeaderParser.push (/home/user/ClinicalSageAI-2-replit/node_modules/busboy/lib/types/multipart.js:162:20)\n    at SBMH.ssCb [as _cb] (/home/user/ClinicalSageAI-2-replit/node_modules/busboy/lib/types/multipart.js:394:37)\n    at feed (/home/user/ClinicalSageAI-2-replit/node_modules/streamsearch/lib/sbmh.js:219:14)\n    at SBMH.push (/home/user/ClinicalSageAI-2-replit/node_modules/streamsearch/lib/sbmh.js:104:16)\n    at Multipart._write (/home/user/ClinicalSageAI-2-replit/node_modules/busboy/lib/types/multipart.js:567:19)"
+  }
+}
+
+stderr | server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses an upload under the wrong field name with 400, not 500 (multer LIMIT_UNEXPECTED_FILE)
+{
+  "timestamp": "2026-09-21T00:59:08.498Z",
+  "level": "error",
+  "message": "[error-handler] Server error in POST /api/vault/ingest",
+  "context": {
+    "statusCode": 500,
+    "error": "Unexpected file field",
+    "stack": "MulterError: Unexpected file field\n    at wrappedFileFilter (/home/user/ClinicalSageAI-2-replit/node_modules/multer/index.js:123:19)\n    at Multipart.<anonymous> (/home/user/ClinicalSageAI-2-replit/node_modules/multer/lib/make-middleware.js:344:7)\n    at Multipart.emit (node:events:519:28)\n    at HeaderParser.cb (/home/user/ClinicalSageAI-2-replit/node_modules/busboy/lib/types/multipart.js:358:14)\n    at HeaderParser.push (/home/user/ClinicalSageAI-2-replit/node_modules/busboy/lib/types/multipart.js:162:20)\n    at SBMH.ssCb [as _cb] (/home/user/ClinicalSageAI-2-replit/node_modules/busboy/lib/types/multipart.js:394:37)\n    at feed (/home/user/ClinicalSageAI-2-replit/node_modules/streamsearch/lib/sbmh.js:219:14)\n    at SBMH.push (/home/user/ClinicalSageAI-2-replit/node_modules/streamsearch/lib/sbmh.js:104:16)\n    at Multipart._write (/home/user/ClinicalSageAI-2-replit/node_modules/busboy/lib/types/multipart.js:567:19)\n    at writeOrBuffer (node:internal/streams/writable:572:12)"
+  }
+}
+
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses a .exe with 400 FILE_TYPE_NOT_ALLOWED and stores nothing (F-4) 57ms
+   → expected 500 to be 400 // Object.is equality
+ × server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses an upload under the wrong field name with 400, not 500 (multer LIMIT_UNEXPECTED_FILE) 11ms
+   → expected 500 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > still admits an allowed type to the governed ingest (the happy path is untouched) 9ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > gates the open program's sequence, not the organisation's first submission 5075ms
+   → expected 'AnA · dispatch gate · proven, not gen…' to match /Sequence 9/
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dr2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-head"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-eyebrow"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-kicker"[39m
+            [36m>[39m
+              [0mAnA · dispatch gate · proven, not generated[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"dr2-title"[39m
+          [36m>[39m
+            [0mCleared to dispatch?[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-sub"[39m
+          [36m>[39m
+            [0mSequence [0m
+            [0m7[0m
+            [0m · region [0m
+            [0mFDA[0m
+            [0m · [0m
+            [0m1[0m
+            [0m leaves · status [0m
+            [0mdraft[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-verdict blocked"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-verdict-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-lock"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"11"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mry[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"18"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"11"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-verdict-t"[39m
+          [36m>[39m
+            [0mDispatch blocked[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-lead tone-urgent"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-lead-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rocket"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"dr2-lead-h"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m blocker[0m
+              [0m stand[0m
+              [0ms[0m
+              [0m between you and dispatch.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"dr2-lead-b"[39m
+            [36m>[39m
+              [0mThis is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-gates"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-x"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18 6 6 18"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m6 6 12 12"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mStructural validation[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0m1 open error-severity finding[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0meCTD technical validation over the canonical core[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate warn"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 9v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 17h.01"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mShadow Review criticals[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0mNo Shadow Review has run — dispatch permitted but never adversarially reviewed.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0mOpen critical Shadow Review findings for this sequence[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate muted"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [0m–[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mAgency-grade validator[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0mNo external eValidator configured (default-off).[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0mExternal (eValidator) gate — fail-closed only under ECTD_REQUIRE_EVALIDATOR[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-blockers"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-blockers-hd"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-lock"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"11"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mry[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"18"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"11"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m What must close before dispatch[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-blocker"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-blocker-n"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-blocker-t"[39m
+            [36m>[39m
+              [0m1 open error-severity validation finding.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-readiness"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-readiness-hd"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-readiness-t"[39m
+            [36m>[39m
+              [0mStructural validation[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-readiness-s"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count err"[39m
+              [36m>[39m
+                [0m1[0m
+                [0m error[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count warn"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m warning[0m
+                [0ms[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count idle"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m info[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-foot"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-label[39m=[32m"Determinism pedigree: Registry. High trust. Pure rule/registry lookup — no LLM, no network. Reproducible and bulletproof; may be cited directly as a deterministic fact (confirm against the governing citation it returns)."[39m
+            [33mclass[39m=[32m"ped"[39m
+            [33mdata-l[39m=[32m"deterministic_registry"[39m
+            [33mrole[39m=[32m"img"[39m
+            [33mtitle[39m=[32m"Pure rule/registry lookup — no LLM, no network. Reproducible and bulletproof; may be cited directly as a deterministic fact (confirm against the governing citation it returns)."[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mRegistry[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-foot-note"[39m
+          [36m>[39m
+            [0mEvery gate input is computed from server state — a client cannot pass[0m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"mono"[39m
+            [36m>[39m
+              [0mvalidationErrors:0[0m
+            [36m</span>[39m
+            [0m to talk the gate down. The AI dispatch-QC task advises; this gate[0m
+            [0m [0m
+            [36m<b>[39m
+              [0menforces[0m
+            [36m</b>[39m
+            [0m. Bound to the governed dispatch-readiness gate; the wire transmit stays behind a Part-11 e-signature.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program whose submission has no sequence yet is an honest empty state — never another program's gate 17ms
+   → expected 'AnA · dispatch gate · proven, not gen…' not to match /Sequence 7/
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program with no submission at all says so, naming the program 13ms
+   → expected 'AnA · dispatch gate · proven, not gen…' to match /OQ-005 Readiness program/
+ ✓ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > asks for the open program by its UUID, verbatim, and renders the anchored map 64ms
+ × client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > an unanchored program is shown as "no section store", not as an empty dossier 5026ms
+   → expected 'Project · submissionDossier mapCTD / …' to match /section-tracking store/i
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mProject · submission[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mDossier map[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mCTD / eCTD module map with completeness and readiness overlay.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-file-text"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 9H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 13H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 17H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo dossier map yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mThis project isn't tracking any CTD sections yet. Once its M1–M5 sections are being authored, they appear here with their section readiness overlay.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ✓ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > a program whose anchored project tracks no sections keeps the genuine empty state 10ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > with no program open, nothing is fetched and the surface says so 7ms
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > with no program open the gate is not run against anything 5008ms
+   → expected 'AnA · dispatch gate · proven, not gen…' to match /Open a program/i
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dr2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-head"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-eyebrow"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-kicker"[39m
+            [36m>[39m
+              [0mAnA · dispatch gate · proven, not generated[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"dr2-title"[39m
+          [36m>[39m
+            [0mCleared to dispatch?[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-sub"[39m
+          [36m>[39m
+            [0mSequence [0m
+            [0m7[0m
+            [0m · region [0m
+            [0mFDA[0m
+            [0m · [0m
+            [0m1[0m
+            [0m leaves · status [0m
+            [0mdraft[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-verdict blocked"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-verdict-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-lock"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"11"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mry[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"18"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"11"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-verdict-t"[39m
+          [36m>[39m
+            [0mDispatch blocked[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-lead tone-urgent"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-lead-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rocket"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"dr2-lead-h"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m blocker[0m
+              [0m stand[0m
+              [0ms[0m
+              [0m between you and dispatch.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"dr2-lead-b"[39m
+            [36m>[39m
+              [0mThis is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-gates"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-x"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18 6 6 18"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m6 6 12 12"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mStructural validation[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0m1 open error-severity finding[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0meCTD technical validation over the canonical core[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate warn"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 9v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 17h.01"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mShadow Review criticals[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0mNo Shadow Review has run — dispatch permitted but never adversarially reviewed.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0mOpen critical Shadow Review findings for this sequence[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate muted"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [0m–[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mAgency-grade validator[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0mNo external eValidator configured (default-off).[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0mExternal (eValidator) gate — fail-closed only under ECTD_REQUIRE_EVALIDATOR[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-blockers"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-blockers-hd"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-lock"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"11"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mry[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"18"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"11"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m What must close before dispatch[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-blocker"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-blocker-n"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-blocker-t"[39m
+            [36m>[39m
+              [0m1 open error-severity validation finding.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-readiness"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-readiness-hd"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-readiness-t"[39m
+            [36m>[39m
+              [0mStructural validation[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-readiness-s"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count err"[39m
+              [36m>[39m
+                [0m1[0m
+                [0m error[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count warn"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m warning[0m
+                [0ms[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count idle"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m info[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-foot"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-label[39m=[32m"Determinism pedigree: Registry. High trust. Pure rule/registry lookup — no LLM, no network. Reproducible and bulletproof; may be cited directly as a deterministic fact (confirm against the governing citation it returns)."[39m
+            [33mclass[39m=[32m"ped"[39m
+            [33mdata-l[39m=[32m"deterministic_registry"[39m
+            [33mrole[39m=[32m"img"[39m
+            [33mtitle[39m=[32m"Pure rule/registry lookup — no LLM, no network. Reproducible and bulletproof; may be cited directly as a deterministic fact (confirm against the governing citation it returns)."[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mRegistry[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-foot-note"[39m
+          [36m>[39m
+            [0mEvery gate input is computed from server state — a client cannot pass[0m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"mono"[39m
+            [36m>[39m
+              [0mvalidationErrors:0[0m
+            [36m</span>[39m
+            [0m to talk the gate down. The AI dispatch-QC task advises; this gate[0m
+            [0m [0m
+            [36m<b>[39m
+              [0menforces[0m
+            [36m</b>[39m
+            [0m. Bound to the governed dispatch-readiness gate; the wire transmit stays behind a Part-11 e-signature.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a failed discovery is an error, not an empty state 5008ms
+   → expected 'AnA · dispatch gate · proven, not gen…' to match /Couldn't compute the dispatch gate/i
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dr2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-head"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-eyebrow"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-kicker"[39m
+            [36m>[39m
+              [0mAnA · dispatch gate · proven, not generated[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"dr2-title"[39m
+          [36m>[39m
+            [0mCleared to dispatch?[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rocket"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo submission sequence to gate yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mThe dispatch gate runs against your newest eCTD sequence. Create a submission and build a sequence, then AnA can prove whether it's cleared to transmit.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > documents an authenticated ceiling above the per-IP one
+AssertionError: expected 'undefined' to be 'number' // Object.is equality
+
+Expected: "number"
+Received: "undefined"
+
+ ❯ server/middleware/__tests__/rateLimiter-identity-key.test.ts:61:29
+     59| describe('legacy rateLimiter — identity key for authenticated traffic …
+     60|   it('documents an authenticated ceiling above the per-IP one', () => {
+     61|     expect(typeof PER_USER).toBe('number');
+       |                             ^
+     62|     expect(PER_USER as number).toBeGreaterThan(PER_IP);
+     63|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/23]⎯
+
+ FAIL  server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > authenticated: one user is NOT tripped by ordinary shell traffic beyond the per-IP ceiling
+AssertionError: expected 429 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 429
+
+ ❯ server/middleware/__tests__/rateLimiter-identity-key.test.ts:77:23
+     75|     // Pre-fix: the 61st request from this IP answered 429 — the VSR's
+     76|     // "Tasks, Vault and Submission Center rendered their error state".
+     77|     expect(s[PER_IP]).toBe(200);
+       |                       ^
+     78|     expect(s.every((x) => x === 200)).toBe(true);
+     79|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/23]⎯
+
+ FAIL  server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > authenticated: the per-user ceiling still exists and trips at exactly that number
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/middleware/__tests__/rateLimiter-identity-key.test.ts:84:40
+     82|     const a = app(() => 8);
+     83|     const s = await burst(a, '10.0.0.3', (PER_USER as number) + 1);
+     84|     expect(s.filter((x) => x === 429)).toHaveLength(1);
+       |                                        ^
+     85|     expect(s[PER_USER as number]).toBe(429);
+     86|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/23]⎯
+
+ FAIL  server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > two users behind one NAT address do not share a bucket, and anonymous traffic from it keeps its own
+AssertionError: expected 200 to be 429 // Object.is equality
+
+- Expected
++ Received
+
+- 429
++ 200
+
+ ❯ server/middleware/__tests__/rateLimiter-identity-key.test.ts:97:30
+     95|     expect(first.every((x) => x === 200)).toBe(true);
+     96|     const exhausted = await request(a).get('/api/things').set('X-Forwa…
+     97|     expect(exhausted.status).toBe(429);
+       |                              ^
+     98|     // Their colleague on the same address is unaffected.
+     99|     const other = await request(a).get('/api/things').set('X-Forwarded…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/23]⎯
+
+ FAIL  server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > the 429 and the headers name the ceiling that applied
+AssertionError: expected 60 to be undefined // Object.is equality
+
+- Expected:
+undefined
+
++ Received:
+60
+
+ ❯ server/middleware/__tests__/rateLimiter-identity-key.test.ts:111:52
+    109|     const r = await request(a).get('/api/things').set('X-Forwarded-For…
+    110|     expect(r.status).toBe(200);
+    111|     expect(Number(r.headers['x-ratelimit-limit'])).toBe(PER_USER);
+       |                                                    ^
+    112|     const b = app();
+    113|     const r2 = await request(b).get('/api/things').set('X-Forwarded-Fo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/23]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > platform numbers: api and concept2cure carry an authenticated ceiling above the per-IP one, and a per-IP guard above that
+TypeError: actual value must be number or bigint, received "undefined"
+ ❯ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts:87:45
+     85|         maxRequestsPerIpAuthenticated?: number;
+     86|       };
+     87|       expect(rule.maxRequestsAuthenticated).toBeGreaterThan(rule.maxRe…
+       |                                             ^
+     88|       expect(rule.maxRequestsPerIpAuthenticated).toBeGreaterThan(rule.…
+     89|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/23]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > bearer credential: not tripped at the per-IP ceiling, tripped at the credential ceiling
+AssertionError: expected 429 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 429
+
+ ❯ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts:103:23
+    101|     const s = await burst(app(), '10.1.0.2', PER_CREDENTIAL + 1, beare…
+    102|     // Pre-fix: s[PER_IP] was 429 — the request was keyed by IP regard…
+    103|     expect(s[PER_IP]).toBe(200);
+       |                       ^
+    104|     expect(s.slice(0, PER_CREDENTIAL).every((x) => x === 200)).toBe(tr…
+    105|     expect(s[PER_CREDENTIAL]).toBe(429);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/23]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > two credentials behind one address have their own buckets; anonymous traffic from it keeps its own
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts:112:43
+    110|     const NAT = '10.1.0.3';
+    111|     const first = await burst(a, NAT, PER_CREDENTIAL, bearer('token-B'…
+    112|     expect(first.every((x) => x === 200)).toBe(true);
+       |                                           ^
+    113|     expect((await burst(a, NAT, 1, bearer('token-B')))[0]).toBe(429);
+    114|     expect((await burst(a, NAT, 1, bearer('token-C')))[0]).toBe(200);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/23]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > rotating credentials from one address is bounded by the per-IP credentialed guard
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts:125:76
+    123|       statuses.push((await burst(a, '10.1.0.4', 1, bearer(`minted-${i}…
+    124|     }
+    125|     expect(statuses.slice(0, PER_IP_CREDENTIALED).every((x) => x === 2…
+       |                                                                            ^
+    126|     expect(statuses[PER_IP_CREDENTIALED]).toBe(429);
+    127|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/23]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > a verified identity wins over the credential: two tokens for one user share the user bucket
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts:132:40
+    130|     const a = app({ verifiedUserId: () => 42 });
+    131|     const s1 = await burst(a, '10.1.0.5', PER_CREDENTIAL - 1, bearer('…
+    132|     expect(s1.every((x) => x === 200)).toBe(true);
+       |                                        ^
+    133|     const s2 = await burst(a, '10.1.0.5', 2, bearer('session-2'));
+    134|     expect(s2).toEqual([200, 429]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/23]⎯
+
+ FAIL  server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > the headers name the ceiling that applied
+AssertionError: expected 5 to be 12 // Object.is equality
+
+- Expected
++ Received
+
+- 12
++ 5
+
+ ❯ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts:142:55
+    140|     expect(Number(anon.headers['x-ratelimit-limit'])).toBe(PER_IP);
+    141|     const cred = await request(a).get('/api/things').set('X-Forwarded-…
+    142|     expect(Number(cred.headers['x-ratelimit-limit'])).toBe(PER_CREDENT…
+       |                                                       ^
+    143|   });
+    144| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/23]⎯
+
+ FAIL  server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > resolves a program UUID through the anchor lookup — never parseInt — and reads the anchored project (F-7)
+AssertionError: expected "vi.fn()" to not be called with arguments: [ 7, 6191805 ]
+
+Received:
+
+  1st vi.fn() call:
+
+Compared values have no visual difference.
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/dossier-map-read.test.ts:107:43
+    105|     expect(res.status).toBe(200);
+    106|     // Pre-fix: assembleProjectDossierMap(7, 6191805) — an unrelated i…
+    107|     expect(assembleProjectDossierMap).not.toHaveBeenCalledWith(7, 6191…
+       |                                           ^
+    108|     expect(assembleProjectDossierMap).toHaveBeenCalledWith(7, 42);
+    109|     expect(resolveProgramProjectAnchor).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/23]⎯
+
+ FAIL  server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > a program in the org with no PM-spine anchor answers an honest empty map that SAYS it is unanchored (F-7)
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ server/routes/__tests__/dossier-map-read.test.ts:119:24
+    117|     resolveProgramProjectAnchor.mockResolvedValueOnce(null);
+    118|     const res = await request(appWith(7)).get(`/api/dossier-map?projec…
+    119|     expect(res.status).toBe(200);
+       |                        ^
+    120|     expect(res.body.data).toEqual([]);
+    121|     expect(res.body.meta).toMatchObject({ count: 0, programId: PROGRAM…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/23]⎯
+
+ FAIL  server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > a program UUID that is not in the acting org answers 404, and nothing is read for it (F-7)
+AssertionError: expected 500 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 500
+
+ ❯ server/routes/__tests__/dossier-map-read.test.ts:128:24
+    126|     poolQuery.mockResolvedValueOnce({ rows: [] });
+    127|     const res = await request(appWith(7)).get(`/api/dossier-map?projec…
+    128|     expect(res.status).toBe(404);
+       |                        ^
+    129|     expect(res.body.error.code).toBe('PROGRAM_NOT_FOUND');
+    130|     expect(resolveProgramProjectAnchor).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/23]⎯
+
+ FAIL  server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > an id that parseInt would truncate ("12abc") is 400, never project 12 (F-7)
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/dossier-map-read.test.ts:136:24
+    134|   it('an id that parseInt would truncate ("12abc") is 400, never proje…
+    135|     const res = await request(appWith(7)).get('/api/dossier-map?projec…
+    136|     expect(res.status).toBe(400);
+       |                        ^
+    137|     expect(assembleProjectDossierMap).not.toHaveBeenCalled();
+    138|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/23]⎯
+
+ FAIL  server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses a .exe with 400 FILE_TYPE_NOT_ALLOWED and stores nothing (F-4)
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/vault-ingest-refusal-status.test.ts:74:24
+     72|     );
+     73|     // Pre-fix: 500 { error: { code: 'SERVER_ERROR', message: 'File ty…
+     74|     expect(res.status).toBe(400);
+       |                        ^
+     75|     expect(res.body.error.code).toBe('FILE_TYPE_NOT_ALLOWED');
+     76|     expect(res.body.error.message).toMatch(/\.exe/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/23]⎯
+
+ FAIL  server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses an upload under the wrong field name with 400, not 500 (multer LIMIT_UNEXPECTED_FILE)
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ server/routes/__tests__/vault-ingest-refusal-status.test.ts:87:24
+     85|       { filename: 'protocol.pdf', contentType: 'application/pdf' },
+     86|     );
+     87|     expect(res.status).toBe(400);
+       |                        ^
+     88|     expect(res.body.error.code).toBe('UPLOAD_INVALID');
+     89|     expect(typeof res.body.error.message).toBe('string');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/23]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > gates the open program's sequence, not the organisation's first submission
+AssertionError: expected 'AnA · dispatch gate · proven, not gen…' to match /Sequence 9/
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dr2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-head"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-eyebrow"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-kicker"[39m
+            [36m>[39m
+              [0mAnA · dispatch gate · proven, not generated[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"dr2-title"[39m
+          [36m>[39m
+            [0mCleared to dispatch?[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-sub"[39m
+          [36m>[39m
+            [0mSequence [0m
+            [0m7[0m
+            [0m · region [0m
+            [0mFDA[0m
+            [0m · [0m
+            [0m1[0m
+            [0m leaves · status [0m
+            [0mdraft[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-verdict blocked"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-verdict-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-lock"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"11"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mry[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"18"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"11"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-verdict-t"[39m
+          [36m>[39m
+            [0mDispatch blocked[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-lead tone-urgent"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-lead-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rocket"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"dr2-lead-h"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m blocker[0m
+              [0m stand[0m
+              [0ms[0m
+              [0m between you and dispatch.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"dr2-lead-b"[39m
+            [36m>[39m
+              [0mThis is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-gates"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-x"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18 6 6 18"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m6 6 12 12"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mStructural validation[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0m1 open error-severity finding[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0meCTD technical validation over the canonical core[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate warn"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 9v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 17h.01"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mShadow Review criticals[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0mNo Shadow Review has run — dispatch permitted but never adversarially reviewed.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0mOpen critical Shadow Review findings for this sequence[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate muted"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [0m–[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mAgency-grade validator[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0mNo external eValidator configured (default-off).[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0mExternal (eValidator) gate — fail-closed only under ECTD_REQUIRE_EVALIDATOR[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-blockers"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-blockers-hd"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-lock"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"11"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mry[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"18"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"11"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m What must close before dispatch[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-blocker"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-blocker-n"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-blocker-t"[39m
+            [36m>[39m
+              [0m1 open error-severity validation finding.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-readiness"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-readiness-hd"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-readiness-t"[39m
+            [36m>[39m
+              [0mStructural validation[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-readiness-s"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count err"[39m
+              [36m>[39m
+                [0m1[0m
+                [0m error[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count warn"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m warning[0m
+                [0ms[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count idle"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m info[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-foot"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-label[39m=[32m"Determinism pedigree: Registry. High trust. Pure rule/registry lookup — no LLM, no network. Reproducible and bulletproof; may be cited directly as a deterministic fact (confirm against the governing citation it returns)."[39m
+            [33mclass[39m=[32m"ped"[39m
+            [33mdata-l[39m=[32m"deterministic_registry"[39m
+            [33mrole[39m=[32m"img"[39m
+            [33mtitle[39m=[32m"Pure rule/registry lookup — no LLM, no network. Reproducible and bulletproof; may be cited directly as a deterministic fact (confirm against the governing citation it returns)."[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mRegistry[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-foot-note"[39m
+          [36m>[39m
+            [0mEvery gate input is computed from server state — a client cannot pass[0m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"mono"[39m
+            [36m>[39m
+              [0mvalidationErrors:0[0m
+            [36m</span>[39m
+            [0m to talk the gate down. The AI dispatch-QC task advises; this gate[0m
+            [0m [0m
+            [36m<b>[39m
+              [0menforces[0m
+            [36m</b>[39m
+            [0m. Bound to the governed dispatch-readiness gate; the wire transmit stays behind a Part-11 e-signature.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+/Sequence 9/
+
++ Received:
+"AnA · dispatch gate · proven, not generatedCleared to dispatch?Sequence 7 · region FDA · 1 leaves · status draftDispatch blocked1 blocker stands between you and dispatch.This is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check.Structural validation1 open error-severity findingeCTD technical validation over the canonical coreShadow Review criticalsNo Shadow Review has run — dispatch permitted but never adversarially reviewed.Open critical Shadow Review findings for this sequence–Agency-grade validatorNo external eValidator configured (default-off).External (eValidator) gate — fail-closed only under ECTD_REQUIRE_EVALIDATOR What must close before dispatch11 open error-severity validation finding.Structural validation1 error0 warnings0 infoRegistryEvery gate input is computed from server state — a client cannot pass validationErrors:0 to talk the gate down. The AI dispatch-QC task advises; this gate enforces. Bound to the governed dispatch-readiness gate; the wire transmit stays behind a Part-11 e-signature."
+
+ ❯ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx:96:40
+     94|     serve();
+     95|     render(<DispatchReadiness {...props()} />);
+     96|     await waitFor(() => expect(text()).toMatch(/Sequence 9/));
+       |                                        ^
+     97|     // Pre-fix: subs[0] → submission 3 → "Sequence 7", another program…
+     98|     expect(text()).not.toMatch(/Sequence 7/);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/23]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program whose submission has no sequence yet is an honest empty state — never another program's gate
+AssertionError: expected 'AnA · dispatch gate · proven, not gen…' not to match /Sequence 7/
+
+- Expected:
+/Sequence 7/
+
++ Received:
+"AnA · dispatch gate · proven, not generatedCleared to dispatch?Sequence 7 · region FDA · 1 leaves · status draftDispatch blocked1 blocker stands between you and dispatch.This is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check.Structural validation1 open error-severity findingeCTD technical validation over the canonical coreShadow Review criticalsNo Shadow Review has run — dispatch permitted but never adversarially reviewed.Open critical Shadow Review findings for this sequence–Agency-grade validatorNo external eValidator configured (default-off).External (eValidator) gate — fail-closed only under ECTD_REQUIRE_EVALIDATOR What must close before dispatch11 open error-severity validation finding.Structural validation1 error0 warnings0 infoRegistryEvery gate input is computed from server state — a client cannot pass validationErrors:0 to talk the gate down. The AI dispatch-QC task advises; this gate enforces. Bound to the governed dispatch-readiness gate; the wire transmit stays behind a Part-11 e-signature."
+
+ ❯ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx:109:24
+    107|     await waitFor(() => expect(text()).toMatch(/no .*sequence/i));
+    108|     // Pre-fix: this rendered "Sequence 7" — the other program's seque…
+    109|     expect(text()).not.toMatch(/Sequence 7/);
+       |                        ^
+    110|     expect(text()).toMatch(/OQ-005 Readiness program/);
+    111|     const urls = apiRequest.mock.calls.map((c) => String(c[1]));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/23]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program with no submission at all says so, naming the program
+AssertionError: expected 'AnA · dispatch gate · proven, not gen…' to match /OQ-005 Readiness program/
+
+- Expected:
+/OQ-005 Readiness program/
+
++ Received:
+"AnA · dispatch gate · proven, not generatedCleared to dispatch?Sequence 7 · region FDA · 1 leaves · status draftDispatch blocked1 blocker stands between you and dispatch.This is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check.Structural validation1 open error-severity findingeCTD technical validation over the canonical coreShadow Review criticalsNo Shadow Review has run — dispatch permitted but never adversarially reviewed.Open critical Shadow Review findings for this sequence–Agency-grade validatorNo external eValidator configured (default-off).External (eValidator) gate — fail-closed only under ECTD_REQUIRE_EVALIDATOR What must close before dispatch11 open error-severity validation finding.Structural validation1 error0 warnings0 infoRegistryEvery gate input is computed from server state — a client cannot pass validationErrors:0 to talk the gate down. The AI dispatch-QC task advises; this gate enforces. Bound to the governed dispatch-readiness gate; the wire transmit stays behind a Part-11 e-signature."
+
+ ❯ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx:119:20
+    117|     render(<DispatchReadiness {...props()} />);
+    118|     await waitFor(() => expect(text()).toMatch(/no submission/i));
+    119|     expect(text()).toMatch(/OQ-005 Readiness program/);
+       |                    ^
+    120|     expect(text()).not.toMatch(/Sequence 7/);
+    121|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/23]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > with no program open the gate is not run against anything
+AssertionError: expected 'AnA · dispatch gate · proven, not gen…' to match /Open a program/i
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dr2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-head"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-eyebrow"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-kicker"[39m
+            [36m>[39m
+              [0mAnA · dispatch gate · proven, not generated[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"dr2-title"[39m
+          [36m>[39m
+            [0mCleared to dispatch?[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-sub"[39m
+          [36m>[39m
+            [0mSequence [0m
+            [0m7[0m
+            [0m · region [0m
+            [0mFDA[0m
+            [0m · [0m
+            [0m1[0m
+            [0m leaves · status [0m
+            [0mdraft[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-verdict blocked"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-verdict-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-lock"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"11"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mry[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"18"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"11"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-verdict-t"[39m
+          [36m>[39m
+            [0mDispatch blocked[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-lead tone-urgent"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-lead-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rocket"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"dr2-lead-h"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m blocker[0m
+              [0m stand[0m
+              [0ms[0m
+              [0m between you and dispatch.[0m
+            [36m</p>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"dr2-lead-b"[39m
+            [36m>[39m
+              [0mThis is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-gates"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate block"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-x"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M18 6 6 18"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m6 6 12 12"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mStructural validation[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0m1 open error-severity finding[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0meCTD technical validation over the canonical core[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate warn"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-triangle-alert"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 9v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M12 17h.01"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mShadow Review criticals[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0mNo Shadow Review has run — dispatch permitted but never adversarially reviewed.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0mOpen critical Shadow Review findings for this sequence[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-gate muted"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-top"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-dot"[39m
+              [36m>[39m
+                [0m–[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-gate-label"[39m
+              [36m>[39m
+                [0mAgency-grade validator[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-detail"[39m
+            [36m>[39m
+              [0mNo external eValidator configured (default-off).[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"dr2-gate-basis"[39m
+            [36m>[39m
+              [0mExternal (eValidator) gate — fail-closed only under ECTD_REQUIRE_EVALIDATOR[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-blockers"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-blockers-hd"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-lock"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<rect[39m
+                [33mheight[39m=[32m"11"[39m
+                [33mrx[39m=[32m"2"[39m
+                [33mry[39m=[32m"2"[39m
+                [33mwidth[39m=[32m"18"[39m
+                [33mx[39m=[32m"3"[39m
+                [33my[39m=[32m"11"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m What must close before dispatch[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-blocker"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-blocker-n"[39m
+            [36m>[39m
+              [0m1[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-blocker-t"[39m
+            [36m>[39m
+              [0m1 open error-severity validation finding.[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-readiness"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-readiness-hd"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-readiness-t"[39m
+            [36m>[39m
+              [0mStructural validation[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-readiness-s"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count err"[39m
+              [36m>[39m
+                [0m1[0m
+                [0m error[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count warn"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m warning[0m
+                [0ms[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"dr2-count idle"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m info[0m
+              [36m</span>[39m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-foot"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-label[39m=[32m"Determinism pedigree: Registry. High trust. Pure rule/registry lookup — no LLM, no network. Reproducible and bulletproof; may be cited directly as a deterministic fact (confirm against the governing citation it returns)."[39m
+            [33mclass[39m=[32m"ped"[39m
+            [33mdata-l[39m=[32m"deterministic_registry"[39m
+            [33mrole[39m=[32m"img"[39m
+            [33mtitle[39m=[32m"Pure rule/registry lookup — no LLM, no network. Reproducible and bulletproof; may be cited directly as a deterministic fact (confirm against the governing citation it returns)."[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mRegistry[0m
+          [36m</span>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"dr2-foot-note"[39m
+          [36m>[39m
+            [0mEvery gate input is computed from server state — a client cannot pass[0m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"mono"[39m
+            [36m>[39m
+              [0mvalidationErrors:0[0m
+            [36m</span>[39m
+            [0m to talk the gate down. The AI dispatch-QC task advises; this gate[0m
+            [0m [0m
+            [36m<b>[39m
+              [0menforces[0m
+            [36m</b>[39m
+            [0m. Bound to the governed dispatch-readiness gate; the wire transmit stays behind a Part-11 e-signature.[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+/Open a program/i
+
++ Received:
+"AnA · dispatch gate · proven, not generatedCleared to dispatch?Sequence 7 · region FDA · 1 leaves · status draftDispatch blocked1 blocker stands between you and dispatch.This is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check.Structural validation1 open error-severity findingeCTD technical validation over the canonical coreShadow Review criticalsNo Shadow Review has run — dispatch permitted but never adversarially reviewed.Open critical Shadow Review findings for this sequence–Agency-grade validatorNo external eValidator configured (default-off).External (eValidator) gate — fail-closed only under ECTD_REQUIRE_EVALIDATOR What must close before dispatch11 open error-severity validation finding.Structural validation1 error0 warnings0 infoRegistryEvery gate input is computed from server state — a client cannot pass validationErrors:0 to talk the gate down. The AI dispatch-QC task advises; this gate enforces. Bound to the governed dispatch-readiness gate; the wire transmit stays behind a Part-11 e-signature."
+
+ ❯ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx:127:40
+    125|     serve();
+    126|     render(<DispatchReadiness {...props()} />);
+    127|     await waitFor(() => expect(text()).toMatch(/Open a program/i));
+       |                                        ^
+    128|     expect(text()).not.toMatch(/Sequence 7/);
+    129|     const urls = apiRequest.mock.calls.map((c) => String(c[1]));
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/23]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a failed discovery is an error, not an empty state
+AssertionError: expected 'AnA · dispatch gate · proven, not gen…' to match /Couldn't compute the dispatch gate/i
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"dr2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"dr2-head"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"dr2-eyebrow"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"dr2-kicker"[39m
+            [36m>[39m
+              [0mAnA · dispatch gate · proven, not generated[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"dr2-title"[39m
+          [36m>[39m
+            [0mCleared to dispatch?[0m
+          [36m</h1>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-rocket"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo submission sequence to gate yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mThe dispatch gate runs against your newest eCTD sequence. Create a submission and build a sequence, then AnA can prove whether it's cleared to transmit.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+/Couldn't compute the dispatch gate/i
+
++ Received:
+"AnA · dispatch gate · proven, not generatedCleared to dispatch?No submission sequence to gate yetThe dispatch gate runs against your newest eCTD sequence. Create a submission and build a sequence, then AnA can prove whether it's cleared to transmit."
+
+ ❯ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx:136:40
+    134|     serve({ failSubmissions: true });
+    135|     render(<DispatchReadiness {...props()} />);
+    136|     await waitFor(() => expect(text()).toMatch(/Couldn't compute the d…
+       |                                        ^
+    137|     // Pre-fix: a failed /api/submissions read silently rendered "No s…
+    138|     // sequence to gate yet" — an error shown as an empty result.
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/23]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > an unanchored program is shown as "no section store", not as an empty dossier
+AssertionError: expected 'Project · submissionDossier mapCTD / …' to match /section-tracking store/i
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mProject · submission[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mDossier map[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mCTD / eCTD module map with completeness and readiness overlay.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-file-text"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 2v4a2 2 0 0 0 2 2h4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 9H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 13H8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 17H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo dossier map yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mThis project isn't tracking any CTD sections yet. Once its M1–M5 sections are being authored, they appear here with their section readiness overlay.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected:
+/section-tracking store/i
+
++ Received:
+"Project · submissionDossier mapCTD / eCTD module map with completeness and readiness overlay. Ask AnANo dossier map yetThis project isn't tracking any CTD sections yet. Once its M1–M5 sections are being authored, they appear here with their section readiness overlay."
+
+ ❯ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx:74:40
+     72|     );
+     73|     render(<DossierMap {...props()} />);
+     74|     await waitFor(() => expect(text()).toMatch(/section-tracking store…
+       |                                        ^
+     75|     // Pre-fix this rendered the generic "No dossier map yet", which c…
+     76|     // program tracks sections and none are authored — neither is esta…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/23]⎯
+
+
+ Test Files  6 failed | 1 passed (7)
+      Tests  23 failed | 15 passed (38)
+   Start at  00:59:05
+   Duration  17.56s (transform 1.49s, setup 624ms, import 3.18s, tests 21.13s, environment 2.35s)
+

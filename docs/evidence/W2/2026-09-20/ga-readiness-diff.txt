@@ -1,0 +1,30 @@
+2c2
+< Generated 2026-09-20T19:07:03.188Z   NODE_ENV=development
+---
+> Generated 2026-09-20T23:58:38.255Z   NODE_ENV=development
+125,128c125,128
+<         observed: ICSR_GATEWAY_URL not set, credentials not set — NOTE: credentials alone do not unblock this; the transport client itself is not implemented
+<         gate:     server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — throws "transport client is not implemented" whenever a gateway IS configured
+<         owner:    Engineering (build the AS2/SFTP client) + Regulatory Ops (credentials)
+<         unblock:  Implement the ICSR transport client, THEN provision ICSR_GATEWAY_URL + password/cert.
+---
+>         observed: ICSR_GATEWAY_URL not set, credentials not set (protocol https) — missing: ICSR_GATEWAY_URL, ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD
+>         gate:     server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — configured ⇒ real AS2/HTTPS call (transmitted only on an accepting 2xx); unconfigured ⇒ IcsrGatewayNotConfiguredError in production
+>         owner:    Regulatory Ops (agency gateway account + AS2 identity/certs) + Ops (secrets manager)
+>         unblock:  Provision ICSR_GATEWAY_URL + (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_CERT_PATH, ICSR_GATEWAY_KEY_PATH, ICSR_GATEWAY_AS2_TO) for AS2, or (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD) for an HTTPS upload endpoint; then round-trip one ICSR in the agency test environment.
+211,213c211,213
+<   [ ] advisory  AI content-safety gates (AI_PII_ENFORCEMENT=block, AI_GROUNDEDNESS_ENFORCE=1)
+<         observed: AI_PII_ENFORCEMENT="audit (default)", AI_GROUNDEDNESS_ENFORCE="(unset)"
+<         gate:     server/startup/ai-governance-posture.ts assertAiGovernancePostureForProduction (fails closed only under AI_GOVERNANCE_REQUIRE_ENFORCE=true)
+---
+>   [x] advisory  AI content-safety gates strict in production (AI_PII_ENFORCEMENT=block, AI_GROUNDEDNESS_ENFORCE=1)
+>         observed: AI_PII_ENFORCEMENT="(unset) → block (production default)", AI_GROUNDEDNESS_ENFORCE="(unset → enforced, production default)"
+>         gate:     server/startup/ai-governance-posture.ts assertAiGovernancePostureForProduction (production default strict; explicit permissive refuses to boot without AI_GOVERNANCE_ACCEPT_PERMISSIVE=true; AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses regardless)
+215c215
+<         unblock:  Set both gates to enforcing before any real-PHI tenant; then set AI_GOVERNANCE_REQUIRE_ENFORCE=true so the posture is boot-checked.
+---
+>         unblock:  Unset or set strict both gates and clear AI_GOVERNANCE_ACCEPT_PERMISSIVE; then set AI_GOVERNANCE_REQUIRE_ENFORCE=true so the posture cannot regress.
+231c231
+< 4/40 ready · 18 blocker(s) outstanding · 18 advisory item(s) outstanding
+---
+> 5/40 ready · 18 blocker(s) outstanding · 17 advisory item(s) outstanding

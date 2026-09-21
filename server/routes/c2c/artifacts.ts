@@ -43,15 +43,11 @@ import {
   logConcept2cureError,
   paramStr,
   sanitizeContent,
-  sanitizeObject,
   sendError,
   sendSuccess,
   verifyIntegrityChain,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
-import { isSigningAuthorized } from '../../services/part11/signing-authority.js';
-import { reverifySigner } from '../../services/part11/reverify-signer.js';
-import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
 
 const logger = createScopedLogger('concept2cure-artifacts');
 const router = Router();
@@ -63,10 +59,6 @@ router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
 
 /* ── Helpers this domain owns ─────────────────────────────────────────────── */
-
-function calculateSignatureHash(payload: Record<string, unknown>): string {
-  return crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
-}
 
 /**
  * Emit a provenance event for an artifact.
@@ -196,23 +188,6 @@ const createArtifactSchema = z.object({
     .optional(),
 });
 
-/* `authenticationMethod` and `secondFactorVerified` are DELIBERATELY ABSENT.
-   They used to be accepted here — a free string and a boolean, taken from the
-   request body and persisted verbatim onto the Part 11 signature row. That is an
-   assertion by the party being authenticated, and it is the exact defect POST
-   /api/part11/signatures was deleted for (see routes/part11-compliance.ts:359-380).
-   Both are now DERIVED from what reverifySigner actually checked. */
-const createSignatureSchema = z.object({
-  signatureType: z.string().min(1).max(50).optional(),
-  signaturePurpose: z.string().min(1).max(500),
-  signatureMeaning: z.string().max(500).optional(),
-  /** Re-authenticated server-side at the moment of signing (§11.200). */
-  password: z.string().min(1),
-  /** Required when the signer has MFA enrolled; verified server-side. */
-  mfaToken: z.string().optional(),
-  signatureManifest: z.record(z.any()).optional(),
-  version: z.number().int().min(1).optional(),
-});
 
 async function getArtifactsFromDb(projectId: number, organizationId: number): Promise<Artifact[]> {
   const dbArtifacts = await db
@@ -1518,164 +1493,20 @@ router.get(
   }
 );
 
-/**
- * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
- * Create an electronic signature for an artifact version (21 CFR Part 11).
- */
-router.post(
-  '/projects/:projectId/artifacts/:artifactId/signatures',
-  async (req: Request, res: Response) => {
-    try {
-      const organizationId = getOrganizationId(req);
-      const userId = getUserId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-
-      if (!hasAccess) {
-        return sendError(res, 404, 'Project not found');
-      }
-
-      /* §11.10(g) — identity is not authority. This used to inline
-         ['admin','approver','reviewer'], which is the DEFAULT of the shared
-         policy but ignores the ESIGNATURE_SIGNING_ROLES override, so a
-         deployment that narrowed its signing roles was still wide open here. */
-      const signerRole = (req.userRole || 'user').toLowerCase();
-      if (!isSigningAuthorized(signerRole)) {
-        return sendError(
-          res,
-          403,
-          'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-        );
-      }
-
-      const data = createSignatureSchema.parse(req.body);
-
-      /* §11.200(a)(1) — re-verify the signer HERE, at the moment of signing,
-         against stored credentials. The route previously reached the INSERT with
-         nothing but a role check. */
-      const reverified = await reverifySigner(
-        userId,
-        { password: data.password, mfaToken: data.mfaToken },
-        signerReverificationDeps(),
-      );
-      if (!reverified.ok) {
-        return sendError(res, reverified.status, reverified.error);
-      }
-
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
-
-      if (!artifact) {
-        return sendError(res, 404, 'Artifact not found');
-      }
-
-      const targetVersion = data.version ?? artifact.version;
-      const [versionRow] = await db
-        .select()
-        .from(concept2cureArtifactVersions)
-        .where(
-          and(
-            eq(concept2cureArtifactVersions.artifactId, artifact.id),
-            eq(concept2cureArtifactVersions.version, targetVersion)
-          )
-        )
-        .limit(1);
-
-      if (!versionRow) {
-        return sendError(res, 404, 'Artifact version not found');
-      }
-
-      const signedAt = new Date();
-      const signatureId = `sig_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-      const signatureType = data.signatureType ?? 'approval';
-      const signaturePurpose = sanitizeContent(data.signaturePurpose);
-      const signatureMeaning = data.signatureMeaning
-        ? sanitizeContent(data.signatureMeaning)
-        : null;
-      const signatureManifest = data.signatureManifest
-        ? sanitizeObject(data.signatureManifest)
-        : null;
-
-      const signatureHash = calculateSignatureHash({
-        signatureId,
-        artifactId: artifact.artifactId,
-        version: targetVersion,
-        contentHash: versionRow.contentHash,
-        signerId: userId,
-        signatureType,
-        signaturePurpose,
-        signatureMeaning,
-        signedAt: signedAt.toISOString(),
-      });
-
-      const signerName = (req as any).userName || req.userEmail || 'unknown';
-      const signerEmail = req.userEmail || 'unknown';
-
-      const [signature] = await db
-        .insert(concept2cureSignatures)
-        .values({
-          organizationId,
-          signatureId,
-          artifactId: artifact.id,
-          artifactVersionId: versionRow.id,
-          signatureType,
-          signaturePurpose,
-          signatureMeaning,
-          signerId: userId,
-          signerName,
-          signerEmail,
-          signerRole: req.userRole || 'user',
-          // Server-derived from the re-verification above — never a client value.
-          authenticationMethod: reverified.authenticationMethod,
-          authenticationTimestamp: signedAt,
-          secondFactorVerified: reverified.secondFactorVerified,
-          signatureHash,
-          signatureManifest,
-          ipAddress: getClientIp(req),
-          deviceInfo: null,
-          status: 'active',
-          signedAt,
-        })
-        .returning();
-
-      await logAuditEntry(req, 'CREATE', 'signature', signatureId, null, {
-        artifactId: paramStr(req.params.artifactId),
-        version: targetVersion,
-        signatureType,
-        signaturePurpose,
-        signatureHash,
-      });
-
-      res.status(201);
-      return sendSuccess(res, {
-        id: signature.signatureId,
-        artifactId: paramStr(req.params.artifactId),
-        version: targetVersion,
-        signatureType,
-        signaturePurpose,
-        signatureMeaning,
-        signerId: userId,
-        signerName,
-        signerEmail,
-        signedAt: signature.signedAt,
-        signatureHash,
-      });
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        return sendError(res, 400, 'Validation failed', error.errors);
-      }
-      logConcept2cureError('create signature', error, { artifactId: req.params.artifactId });
-      return sendError(res, 500, 'Failed to create signature');
-    }
-  }
-);
+/* POST /projects/:projectId/artifacts/:artifactId/signatures — REMOVED 2026-09-20.
+   It was the second signature substrate: it wrote `concept2cure_signatures`
+   with its own hash recipe (sha256 over a locally assembled object), no
+   §11.70 binding basis, no supersession chain, and a signer name taken from
+   `req.userName || req.userEmail || 'unknown'`. VAULT_DATA_ROOM_ASSESSMENT
+   _2026-09-05.md §4.3 named it; the 2026-09-05 fix put reverifySigner in
+   front of it but left the second write path in place. Zero duplication: the
+   ONE signing substrate is `electronic_signatures` through
+   server/services/part11/signature-persistence.ts, reached by
+   POST /api/esignature/sign (documents) and POST /api/c2c/actions/sign
+   (governed typed targets, e.g. `document:<id>`). No client called this
+   route (grep client/src for the path: none). The GET below stays: rows
+   already written are §11.70 history and must remain readable.
+   Pinned by server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts. */
 
 /**
  * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures

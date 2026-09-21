@@ -764,6 +764,7 @@ router.post('/', async (req: Request, res: Response) => {
       };
       const payloadHash = hashPayload(auditDetails);
       const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client, {
+        tenant_id: orgId,
         action: 'c2c.project.create',
         actor_id: userId,
         target,

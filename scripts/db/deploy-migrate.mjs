@@ -41,11 +41,18 @@
  *      tables. See scripts/db/authoring-subsystem.mjs.
  *   4. The out-of-band migration set — scripts/db/migration-set.mjs, one
  *      transaction per file, STOPPING at the first failure.
- *   5. Refresh the non-superuser runtime role's grants (app_service) so tables
- *      this deploy created are reachable by the request-serving pool. No-op
- *      unless APP_SERVICE_DB_PASSWORD is set. See scripts/db/provision-app-role.mjs.
- *   6. Verify the readiness contract /readyz enforces at boot, so a deploy can
- *      never report success while leaving the state that fails readiness.
+ *   5. Refresh the runtime role's grants so tables this deploy created are
+ *      reachable by the request-serving pool. Mints/aligns app_service when
+ *      APP_SERVICE_DB_PASSWORD is set; otherwise refreshes grants for any
+ *      runtime role identifiable from RUNTIME_DB_ROLE, APP_DATABASE_URL, or
+ *      DATABASE_URL when DATABASE_OWNER_URL made a different role the owner
+ *      (2026-09-21, IQ-DEV-001: the password-only gate left every unminted
+ *      split-role estate with 183 unreadable public tables). Single-role
+ *      estates (runtime = owner) are untouched. See scripts/db/provision-app-role.mjs.
+ *   6. Verify the readiness contract /readyz enforces at boot — including, for
+ *      an identified runtime role, the grant audit: every application relation
+ *      reachable, nothing beyond append-only on the audit store — so a deploy
+ *      can never report success while leaving the state that fails readiness.
  *
  * Every step is idempotent; re-running a successful migration is a no-op.
  *
@@ -55,6 +62,8 @@
  * than disabling verification.
  *
  * Usage:  DATABASE_URL='postgres://…' node scripts/db/deploy-migrate.mjs
+ *         DATABASE_OWNER_URL='postgres://owner@…' DATABASE_URL='postgres://runtime@…' \
+ *           node scripts/db/deploy-migrate.mjs      # split roles: migrate as owner, grant runtime
  * Exit:   0 success · 1 migration/verification failure · 3 not provisioned
  */
 
@@ -68,7 +77,8 @@ import {
 } from './authoring-subsystem.mjs';
 import { C2C_MIGRATION_FILES, applyMigrationFiles } from './migration-set.mjs';
 import { resolveDatabaseUrl, sslFor, APPLY_URL_VARS } from './connection.mjs';
-import { provisionAppServiceRole } from './provision-app-role.mjs';
+import { ensureRuntimeRole } from './provision-app-role.mjs';
+import { verifyReadinessContract as verifyCoreReadinessContract } from './readiness-contract.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -191,7 +201,23 @@ async function preflight(client) {
  * probe — the failure surfaces in the migration job, where it is diagnosable,
  * rather than as an opaque rollback.
  */
-async function verifyReadinessContract(client) {
+async function verifyReadinessContract(client, { runtimeRole = null } = {}) {
+  // The core of the contract — required schemas, the `vector` extension,
+  // CRITICAL_TABLES, SECURITY_CRITICAL_TABLES and audit.tamper_proof_log —
+  // shared with scripts/db/provision.mjs through readiness-contract.mjs. Until
+  // 2026-09-20 this step verified only the authoring half below, so a run
+  // could print "safe to roll services" on a database whose boot would record
+  // `security-critical tables missing: licenses` — the file that creates
+  // public.licenses (20260730_licensing_ip_tables.sql) is in THIS set, so the
+  // gap was invisible from install-fresh and only ever surfaced at /readyz.
+  // `runtimeRole` (step 4's identified role, if any) adds the grant audit: the
+  // role the server will connect as must reach every relation this deploy left
+  // behind, and hold nothing beyond append-only on the audit store.
+  const core = await verifyCoreReadinessContract(client, { log, runtimeRole });
+  if (!core.ok) {
+    throw new Error(`readiness contract not met — /readyz would report schema: down.\n    ${core.failures.join('\n    ')}`);
+  }
+
   const missing = await missingTables(client, AUTHORING_SUBSYSTEM_TABLES);
   log(
     `  authoring subsystem: ${AUTHORING_SUBSYSTEM_TABLES.length - missing.length}/${AUTHORING_SUBSYSTEM_TABLES.length} tables present`,
@@ -345,19 +371,23 @@ async function main() {
     // one pass sufficient. Reproduced and verified against PostgreSQL 16.
     log('\n▶ 4/5 Runtime role — required schemas + refresh non-superuser grants');
     await client.query('CREATE SCHEMA IF NOT EXISTS extensions');
-    // Re-apply the app_service grants so any table this deploy just created is
-    // reachable by the request-serving pool. GRANT ... ON ALL TABLES only
+    // Re-apply the runtime role's grants so any table this deploy just created
+    // is reachable by the request-serving pool. GRANT ... ON ALL TABLES only
     // covers tables that existed when it ran, so a role provisioned by a prior
     // install would otherwise be locked out of every new table until the next
-    // full provisioning. No-op unless APP_SERVICE_DB_PASSWORD is set. Runs as
-    // the owner (this connection), which is what GRANT requires.
-    const roleResult = await provisionAppServiceRole(client, { log });
-    if (roleResult.skipped) {
-      log(`  • ${roleResult.role} grants not refreshed (APP_SERVICE_DB_PASSWORD unset)`);
+    // full provisioning. Runs as the owner (this connection), which is what
+    // GRANT requires. ensureRuntimeRole mints app_service when
+    // APP_SERVICE_DB_PASSWORD is set, refreshes grants for any other
+    // identifiable runtime role, and does nothing on a single-role estate.
+    const roleResult = await ensureRuntimeRole(client, { log });
+    if (roleResult.mode === 'single-role') {
+      log(`  • grants not refreshed: the runtime is the owner (${roleResult.owner}); single-role posture`);
+    } else {
+      log(`  ✓ runtime role ${roleResult.role} ${roleResult.mode} (identified from ${roleResult.source})`);
     }
 
-    log('\n▶ 5/5 Verify readiness contract');
-    await verifyReadinessContract(client);
+    log('\n▶ 5/5 Verify readiness contract' + (roleResult.role ? ` (incl. grant audit for ${roleResult.role})` : ''));
+    await verifyReadinessContract(client, { runtimeRole: roleResult.role });
 
     log('\n✅ Schema migration complete — safe to roll services.');
   } catch (err) {

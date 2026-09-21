@@ -1,0 +1,30 @@
+
+> concept2cure-riai@1.0.0 typecheck:fast
+> NODE_OPTIONS="--max-old-space-size=24576" tsc --noEmit -p tsconfig.check.json
+
+server/services/signature/__tests__/kms-signer.test.ts(17,44): error TS2345: Argument of type 'typeof import("/home/user/ClinicalSageAI-2-replit/node_modules/@aws-sdk/client-kms/dist-types/index")' is not assignable to parameter of type 'KmsSdkLike'.
+  Types of property 'SignCommand' are incompatible.
+    Type 'typeof SignCommand' is not assignable to type 'new (input: Record<string, unknown>) => unknown'.
+      Types of parameters 'input' and 'input' are incompatible.
+        Type 'Record<string, unknown>' is missing the following properties from type 'SignCommandInput': KeyId, Message, SigningAlgorithm
+server/services/signature/__tests__/kms-signer.test.ts(28,44): error TS2345: Argument of type 'typeof import("/home/user/ClinicalSageAI-2-replit/node_modules/@aws-sdk/client-kms/dist-types/index")' is not assignable to parameter of type 'KmsSdkLike'.
+  Types of property 'SignCommand' are incompatible.
+    Type 'typeof SignCommand' is not assignable to type 'new (input: Record<string, unknown>) => unknown'.
+      Types of parameters 'input' and 'input' are incompatible.
+        Type 'Record<string, unknown>' is missing the following properties from type 'SignCommandInput': KeyId, Message, SigningAlgorithm
+server/services/signature/__tests__/kms-signer.test.ts(40,44): error TS2345: Argument of type 'typeof import("/home/user/ClinicalSageAI-2-replit/node_modules/@aws-sdk/client-kms/dist-types/index")' is not assignable to parameter of type 'KmsSdkLike'.
+  Types of property 'SignCommand' are incompatible.
+    Type 'typeof SignCommand' is not assignable to type 'new (input: Record<string, unknown>) => unknown'.
+      Types of parameters 'input' and 'input' are incompatible.
+        Type 'Record<string, unknown>' is missing the following properties from type 'SignCommandInput': KeyId, Message, SigningAlgorithm
+server/services/signature/__tests__/kms-signer.test.ts(49,44): error TS2345: Argument of type 'typeof import("/home/user/ClinicalSageAI-2-replit/node_modules/@aws-sdk/client-kms/dist-types/index")' is not assignable to parameter of type 'KmsSdkLike'.
+  Types of property 'SignCommand' are incompatible.
+    Type 'typeof SignCommand' is not assignable to type 'new (input: Record<string, unknown>) => unknown'.
+      Types of parameters 'input' and 'input' are incompatible.
+        Type 'Record<string, unknown>' is missing the following properties from type 'SignCommandInput': KeyId, Message, SigningAlgorithm
+server/services/signature/__tests__/kms-signer.test.ts(54,71): error TS2345: Argument of type 'typeof import("/home/user/ClinicalSageAI-2-replit/node_modules/@aws-sdk/client-kms/dist-types/index")' is not assignable to parameter of type 'KmsSdkLike'.
+  Types of property 'SignCommand' are incompatible.
+    Type 'typeof SignCommand' is not assignable to type 'new (input: Record<string, unknown>) => unknown'.
+      Types of parameters 'input' and 'input' are incompatible.
+        Type 'Record<string, unknown>' is missing the following properties from type 'SignCommandInput': KeyId, Message, SigningAlgorithm
+exit=2

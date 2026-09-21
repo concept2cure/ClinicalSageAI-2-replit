@@ -1,0 +1,30 @@
+ id |  signed_target  |    signature_type     | signature_meaning | authentication_method | second_factor_verified |            binding_basis            |                       bound_payload_digest                       | signer_id |       signer_email        | ip_address |        signed_at        | is_valid 
+----+-----------------+-----------------------+-------------------+-----------------------+------------------------+-------------------------------------+------------------------------------------------------------------+-----------+---------------------------+------------+-------------------------+----------
+  1 | qms-document:16 | qms-document-approval | APPROVED          | password              | f                      | qms-document-version-content-sha256 | 2510bf27e9c3f69e4e4e5e04887dd36f170820c31fd60c4e3a928961aaf8068b |         4 | jm.smith@concept2cure.pro | 127.0.0.1  | 2026-09-21 01:00:27.853 | t
+(1 row)
+
+ signature_rows_for_document 
+-----------------------------
+                           1
+(1 row)
+
+                  id                  |      action      |     target      |                            reason                             | actor_id |      chain       |        occurred_at         
+--------------------------------------+------------------+-----------------+---------------------------------------------------------------+----------+------------------+----------------------------
+ 50d1df4a-3366-4317-b844-13ad03a23ae6 | c2c.work.approve | qms-document:16 | Reviewed against 21 CFR 820.40; approved for release as v1.0. |        4 | 102eee27e5146388 | 2026-09-21 01:00:27.855+00
+(1 row)
+
+                  id                  | command |     target      | risk |  state   |                        decision_reason                        
+--------------------------------------+---------+-----------------+------+----------+---------------------------------------------------------------
+ act_11673f1aa8964beb847feb834e70cb3a | approve | qms-document:16 | low  | executed | Reviewed against 21 CFR 820.40; approved for release as v1.0.
+(1 row)
+
+ id |      doc_number       |  status   | approver_id |        approved_at         | effective_date |                                                                                                                                                          approval                                                                                                                                                           
+----+-----------------------+-----------+-------------+----------------------------+----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 16 | SOP-WB-20260921010026 | effective |           4 | 2026-09-21 01:00:27.853+00 | 2026-09-21     | {"at": "2026-09-21T01:00:27.853+00:00", "by": 4, "reason": "Reviewed against 21 CFR 820.40; approved for release as v1.0.", "meaning": "APPROVED", "bindingBasis": "qms-document-version-content-sha256", "contentDigest": "2510bf27e9c3f69e4e4e5e04887dd36f170820c31fd60c4e3a928961aaf8068b", "twoPersonRule": "enforced"}
+(1 row)
+
+ signature_rows_for_refused_documents 
+--------------------------------------
+                                    0
+(1 row)
+

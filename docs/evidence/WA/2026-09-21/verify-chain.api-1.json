@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://127.0.0.1:5400/api/c2c/actions/verify-chain",
+    "auth": "Bearer (dev-login jonmichaelpsmith@gmail.com, organizationId 2)",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "ok": true,
+      "rowsChecked": 262,
+      "tenants": 18,
+      "legacyRows": 227,
+      "sequencedRows": 35
+    }
+  },
+  "note": "Before the live governed write below; server on port 5400 running the fixed chain.ts. AUDIT_HMAC_KEY unset locally: the chain is unsealed (IQ-DEV-002); nothing here claims a seal."
+}

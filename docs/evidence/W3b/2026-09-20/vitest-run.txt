@@ -1,0 +1,384 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ server/services/signature/__tests__/payload-signer.test.ts > signPayloadDigest > returns null under dev/hmac (the seal alone is the record) 29ms
+ ✓ server/services/signature/__tests__/payload-signer.test.ts > signPayloadDigest > in kms mode produces an envelope carrying algorithm, resolved key id, and the exact signed input 30ms
+ ✓ server/services/signature/__tests__/payload-signer.test.ts > signPayloadDigest > refuses a malformed digest and propagates a KMS failure (never sealed-but-unsigned) 49ms
+ ✓ server/services/signature/__tests__/payload-signer.test.ts > verifyPayloadSignature (KMS Verify API path) > ok for a genuine envelope; unsigned when none is stored 111ms
+ ✓ server/services/signature/__tests__/payload-signer.test.ts > verifyPayloadSignature (KMS Verify API path) > verifies against the key the POSTURE names, not the key the envelope names 71ms
+ ✓ server/services/signature/__tests__/payload-signer.test.ts > verifyPayloadSignature (KMS Verify API path) > detects a tampered digest, org, signature, or signedInput 25ms
+ ✓ server/services/signature/__tests__/payload-signer.test.ts > verifyPayloadSignature (KMS Verify API path) > KMS unavailable at verify time → failed, not ok 38ms
+ ✓ server/services/signature/__tests__/payload-signer.test.ts > verifyPayloadSignature (KMS Verify API path) > a malformed or foreign-algorithm envelope fails closed 28ms
+ ✓ server/services/signature/__tests__/payload-signer.test.ts > verifyPayloadSignature (KMS Verify API path) > an envelope exists but the posture is no longer kms → failed (unverifiable is not accepted) 45ms
+ ✓ server/services/signature/__tests__/payload-signer.test.ts > verifyPayloadSignatureOffline (published public key, no KMS) > ok with the right public key; failed with the wrong one or a tampered envelope 100ms
+ ✓ server/services/signature/__tests__/kms-signer.test.ts > kmsOpsFromSdk > sign sends SignCommand with MessageType DIGEST and returns the resolved key ARN 38ms
+ ✓ server/services/signature/__tests__/kms-signer.test.ts > kmsOpsFromSdk > verify round-trips through VerifyCommand and rejects a flipped bit 15ms
+ ✓ server/services/signature/__tests__/kms-signer.test.ts > kmsOpsFromSdk > getPublicKey returns the DER SPKI KMS holds 40ms
+ ✓ server/services/signature/__tests__/kms-signer.test.ts > kmsOpsFromSdk > a KMS failure is a KmsSignerError, never a null signature 21ms
+ ✓ server/services/signature/__tests__/kms-signer.test.ts > kmsOpsFromSdk > a response without a signature is refused 1ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > hmac posture: seal only, no envelope, and an absent envelope is "unsigned" 8ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: the envelope is written BESIDE the seal and both verify 69ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: a tampered envelope, or one from another org, fails closed 57ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a stored envelope with the posture downgraded to hmac is "failed", never accepted 58ms
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a malformed posture throws (the boot gate, seen from the seam) 1ms
+[esignature] sign transaction failed: audit sink down
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > CRITICAL: rolls the signature back and 500s when the audit write throws 61ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > signs successfully (201) when password verifies and the audit write succeeds 8ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > writes the audit row on the SAME client as the signature (atomicity) 7ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > §11.50: ignores a client-supplied signerTitle and persists the server-resolved one 6ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > rejects a reserved/unknown signatureType (allowlist) 7ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > accepts an allowed signatureType (witness) 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > 403s when the signer role lacks signing authority (§11.10(g)) 3ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > 401s when the password fails re-verification (§11.200) 9ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > fails closed (400) requiring mfaToken when MFA is enabled but none supplied 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50 signer attribution > REGRESSION: refuses to sign when the signer is not attributable in the org 5ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > the component helper produces a byte-identical digest to the wrapper (no signature invalidated) 2ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > full sign-prep → persist(JSON) → resume cycle reproduces the digest (the integrity-guard invariant) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > computeBoundPayloadDigest refactor > depends only on (leaves, validatorOutcome, identity) — deep-cloned components hash the same; a tampered leaf does not 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > HYDRATES the signed snapshot (no re-derive) — a run whose source cannot reproduce the package still signs 4ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > stays awaiting-signature (no drift) when the snapshot is intact but no signature exists yet 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed when the persisted snapshot no longer matches its signed digest 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > fails closed (not throw) on a structurally-malformed snapshot 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > flags a resume whose identity differs from the signed snapshot (not mislabeled as corruption) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — snapshot hydration > legacy runs without a snapshot fall back to re-derive + drift-check 289ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > completes when the persisted seal is valid 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed when the seal does not verify (forged snapshot+digest, no valid seal) 1ms
+ ✓ server/services/__tests__/sign-payload-snapshot.test.ts > resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured) > fails closed (downgrade) when a snapshot-bearing run has its seal STRIPPED under a sealed posture 1ms
+stdout | server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not
+    "mode": "off"
+  }
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > review routes live in one router > the reviews router answers every review path, and the main router none of them 2909ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > notification, work-item and escalation routes live in one router > the notifications router answers every one of them, and the main router none 1ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the Communication Center routes live in one router > the communication-center router answers them, and the main router does not 584ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > project task routes live in one router > the tasks router answers every one of them, and the main router none 25ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > conversation mutations live in one router > the conversations router answers every one of them, and the main router none 13ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the export family lives in one router > the exports router answers every export path, and the main router none 37ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures — removed (single e-signature write path) > is not routed: the signing entry point no longer exists 42ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures — removed (single e-signature write path) > the Part 11 router never INSERTs into electronic_signatures (no phantom columns) 2ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures — removed (single e-signature write path) > keeps the read/verification surface that serves BOTH write paths 4ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures/:signatureId/revoke — removed (single revocation path) > is not routed 5ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures/:signatureId/revoke — removed (single revocation path) > no revoke route survives on the Part 11 router 1ms
+ ✓ server/routes/__tests__/part11-signature-post-removed.test.ts > POST /api/part11/signatures/:signatureId/revoke — removed (single revocation path) > the router never claims a revocation it did not perform 0ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > an intact chain verifies, with every signature counted 6ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > an empty table is valid with zero entries 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > names a content edit 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > names a broken link (previous_hash) 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > names a recomputed-but-unsigned forgery (chain_hash consistent, signature under the wrong secret) 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > a deleted row breaks the row after it 0ms
+ ✓ server/lib/__tests__/tamper-proof-audit-rows-verifier.test.ts > verifyTamperProofLogRows > accepts the pre-canonicalization legacy content hash 0ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > passes the organization from the verified request, not the signature id alone 24ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > refuses when the request carries no organization 17ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > cannot be told which organization to read — the caller does not get a vote 4ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > rejects a non-numeric id instead of querying on NaN 3ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the artifact domain lives in one router > the artifacts router answers every artifact path, and the main router none 816ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > AI editing lives in one router > the ai-editing router answers every /ai path, and the main router none 52ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > HAQ session persistence lives in one router > the haq-sessions router answers every HAQ path, and the main router none 23ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the program twin and project-context reads live in one router > the program-twin router answers every one of them, and the main router none 39ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the context-integrity and intelligence endpoints live in one router > the context-intelligence router answers every one of them, and the main router none 90ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > verifies an untampered entry written WITH ip_address and user_agent 5ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > detects tampering with ip_address (now covered by the content hash) 2ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > still verifies an entry written WITHOUT optional client context 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > verifies an entry whose details keys are reordered by jsonb storage 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > detects tampering with details even though key order is normalized 1ms
+ ✓ server/lib/__tests__/tamper-proof-audit-content-hash.test.ts > TamperProofAuditLog content-hash symmetry > verifies nested objects regardless of the order jsonb returns them in 1ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the project knowledge, activity and linked-project routes live in one router > the project-knowledge router answers every one of them, and the main router none 26ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the governance and platform-operations routes live in one router > the governance-ops router answers every one of them, and the main router none 18ms
+ ✓ server/routes/c2c/__tests__/c2c-router.parity.test.ts > the connected-app and knowledge-document routes live in one router > the knowledge-sources router answers every one of them, and the main router none 75ms
+stdout | server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs survivability checks
+[CIRCUIT_BREAKER] ============================================================
+[CIRCUIT_BREAKER] Testing Circuit Breaker - Kimi Primary / OpenAI Secondary
+[CIRCUIT_BREAKER] ============================================================
+[CircuitBreaker:Kimi-AI] Initialized with threshold=5, resetTimeout=30000ms
+[CircuitBreaker:OpenAI] Initialized with threshold=5, resetTimeout=30000ms
+  ✓ Kimi breaker starts CLOSED
+  ✓ OpenAI breaker starts CLOSED
+  ✓ Kimi breaker allows requests initially
+  ✓ Best available provider is Kimi (primary)
+stdout | server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs survivability checks
+  ✓ Circuit breaker executes successful operations
+  ✓ Kimi metrics show CLOSED state
+  ✓ Primary (Kimi) is available
+  ✓ Fallback (OpenAI) is available
+[CIRCUIT_BREAKER] Simulating Kimi failures to test failover...
+[CircuitBreaker:TestBreaker] Initialized with threshold=3, resetTimeout=1000ms
+[CircuitBreaker:TestBreaker] Failure #1: Simulated Kimi API failure
+[CircuitBreaker:TestBreaker] Failure #2: Simulated Kimi API failure
+stdout | server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs survivability checks
+[CircuitBreaker:TestBreaker] State transition: CLOSED → OPEN (Failure threshold (3) exceeded)
+[CircuitBreaker:TestBreaker] Next retry scheduled at 2026-09-21T00:02:54.387Z
+[CircuitBreaker:TestBreaker] Failure #3: Simulated Kimi API failure
+stdout | server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs survivability checks
+  ✓ Circuit opens after threshold failures
+  ✓ Open circuit blocks requests
+[CIRCUIT_BREAKER] ✓ All circuit breaker tests passed
+stdout | server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs survivability checks
+[PROMPT_INJECTION] ============================================================
+[PROMPT_INJECTION] Testing Prompt Injection Protection
+[PROMPT_INJECTION] ============================================================
+  ✓ Clean medical device content passes
+  ✓ Clean content is not blocked
+  ✓ Clean pharma content passes
+  ✓ Returns detection list
+  ✓ Returns risk score
+  ✓ Returns detections for role manipulation input
+  ✓ Returns blocked flag
+  ✓ Returns detections for prompt extraction input
+  ✓ Returns detections for exfiltration input
+  ✓ Returns blocked flag for exfiltration input
+  ✓ Returns detections for encoding input
+  ✓ Encapsulation adds boundaries
+  ✓ Encapsulation includes safety instructions
+  ✓ Clean output passes validation
+  ✓ Encapsulation completed without blocking
+[PROMPT_INJECTION] ✓ All prompt injection protection tests passed
+[PromptInjection] Detected 3 issues, risk score: 16, blocked: true
+[PromptInjection] Detected 1 issues, risk score: 4, blocked: false
+[PromptInjection] Detected 1 issues, risk score: 4, blocked: false
+stdout | server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs survivability checks
+[RATE_LIMITING] ============================================================
+[RATE_LIMITING] Testing Rate Limiting - Multi-Tier Protection
+[RATE_LIMITING] ============================================================
+  ✓ Standard limiter allowed some requests (got 105)
+  ✓ Standard limiter processed requests without errors (blocked 0)
+  ✓ Auth limiter allowed some requests (got 12)
+  ✓ Heavy limiter allowed some requests (got 12)
+  ✓ Result has allowed property
+  ✓ Result has remaining count
+  ✓ Result has resetTime timestamp
+[RATE_LIMITING] ✓ All rate limiting tests passed
+[RateLimit] 192.168.1.101 has 3 violations, applying 180s penalty
+[RateLimit] 192.168.1.102 has 3 violations, applying 180s penalty
+stdout | server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs survivability checks
+[GRACEFUL_DEGRADATION] ============================================================
+[GRACEFUL_DEGRADATION] Testing Graceful Degradation - Feature Availability
+[GRACEFUL_DEGRADATION] ============================================================
+  ✓ Initial degradation level is FULL
+  ✓ COUNCIL_DRAFTING available at FULL
+  ✓ ENTITY_EXTRACTION available at FULL
+  ✓ SEMANTIC_SEARCH available at FULL
+  ✓ DOCUMENT_UPLOAD available at FULL
+  ✓ HEALTH_CHECK available at FULL
+[Degradation] Manual override set to DEGRADED: Testing degradation
+[Degradation] Level changed: FULL → DEGRADED (Manual override to DEGRADED)
+  ✓ Can set DEGRADED level
+  ✓ Manual flag is set
+  ✓ Feature availability returns boolean
+  ✓ HEALTH_CHECK available at DEGRADED
+[Degradation] Manual override cleared, returning to automatic mode
+[Degradation] Level changed: DEGRADED → FULL (All services healthy)
+  ✓ Manual override cleared
+  ✓ Returns array of available features
+  ✓ HEALTH_CHECK always in available features
+[GRACEFUL_DEGRADATION] ✓ All graceful degradation tests passed
+stdout | server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs client scenarios
+[CLIENT_SCENARIOS] ============================================================
+[CLIENT_SCENARIOS] Testing Client-Specific Regulatory Scenarios
+[CLIENT_SCENARIOS] ============================================================
+[CLIENT_SCENARIOS] 
+--- MEDICAL DEVICE (510(k)) SCENARIO ---
+  ✓ 510(k) content not blocked
+[CLIENT_SCENARIOS] 510(k) content analysis: Risk score 0
+[CLIENT_SCENARIOS] 
+--- IVD DIAGNOSTIC SCENARIO ---
+  ✓ IVD content not blocked
+[CLIENT_SCENARIOS] IVD content analysis: Risk score 0
+[CLIENT_SCENARIOS] 
+--- PHARMA (IND) SCENARIO ---
+  ✓ IND content not blocked
+[CLIENT_SCENARIOS] IND content analysis: Risk score 0
+[CLIENT_SCENARIOS] 
+--- BIOTECH (BLA) SCENARIO ---
+  ✓ BLA content not blocked
+[CLIENT_SCENARIOS] BLA content analysis: Risk score 0
+[CLIENT_SCENARIOS] 
+--- ACADEMIC RESEARCH (IRB) SCENARIO ---
+  ✓ IRB content not blocked
+[CLIENT_SCENARIOS] IRB content analysis: Risk score 0
+[CLIENT_SCENARIOS] 
+--- MALICIOUS ATTEMPT DETECTION ---
+  ✓ Detects malicious content in regulatory context
+  ✓ High risk score for mixed malicious content
+[CLIENT_SCENARIOS] Malicious content detected: INSTRUCTION_OVERRIDE, ROLE_MANIPULATION
+[CLIENT_SCENARIOS] ✓ All client scenario tests passed
+[PromptInjection] Detected 2 issues, risk score: 16, blocked: true
+stdout | server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs full pipeline
+[FULL_PIPELINE] ============================================================
+[FULL_PIPELINE] Testing Full Survivability Pipeline
+[FULL_PIPELINE] ============================================================
+[FULL_PIPELINE] 
+1. Rate Limiting Check
+  ✓ Request allowed by rate limiter
+[FULL_PIPELINE] Remaining: 99
+[FULL_PIPELINE] 
+2. Degradation Level Check
+[Degradation] Manual override cleared, returning to automatic mode
+  ✓ System at FULL capability
+[FULL_PIPELINE] 
+3. Feature Availability Check
+  ✓ Council drafting feature available
+[FULL_PIPELINE] 
+4. Input Sanitization
+  ✓ User input passes sanitization
+[FULL_PIPELINE] 
+5. Circuit Breaker Check
+[CircuitBreaker:Kimi-AI] Initialized with threshold=5, resetTimeout=30000ms
+[CircuitBreaker:OpenAI] Initialized with threshold=5, resetTimeout=30000ms
+  ✓ Primary provider (Kimi) selected
+  ✓ Circuit breaker allows requests
+[FULL_PIPELINE] 
+6. Prompt Encapsulation
+  ✓ Prompt properly encapsulated
+[FULL_PIPELINE] 
+7. Circuit Metrics
+[FULL_PIPELINE] Kimi: CLOSED, OpenAI: CLOSED
+  ✓ Primary LLM available
+[FULL_PIPELINE] 
+✓ Full pipeline test completed successfully
+ ✓ server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs survivability checks 17ms
+ ✓ server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs client scenarios 3ms
+ ✓ server/lib/__tests__/survivability-layer.test.ts > Survivability Layer > runs full pipeline 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > returns the printed name, email and title from the membership record 3ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > constrains the lookup on organization_users, bound to the signing org 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > REGRESSION: refuses rather than synthesising when the signer is not a member 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > REGRESSION: refuses a row with no email rather than writing an empty string 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > falls back to the email as the printed name, but never past it 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > refuses a non-finite or non-positive id without querying at all 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > resolveSignerIdentity > does not disclose whether the user exists in another tenant 5ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/services/ana/submission-chat-apply-rewrite.ts resolves the signer instead of defaulting one 6ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/services/ana/verifiedSealService.ts resolves the signer instead of defaulting one 1ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/services/DocumentOrchestrationService.ts resolves the signer instead of defaulting one 0ms
+ ✓ server/services/part11/__tests__/resolve-signer-identity.test.ts > SOURCE: the writers that used to fabricate no longer can > server/routes/esignature.ts resolves the signer instead of defaulting one 0ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > buildVersionBindingDigest > is a stable, re-derivable sha256 over the canonical version tuple 2ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > buildVersionBindingDigest > changes when the signed content changes (the whole point of §11.70) 1ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > buildVersionBindingDigest > changes when the version identity changes 1ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > buildVersionBindingDigest > treats a null versionNumber as null (unversioned) deterministically 0ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > buildVersionBindingDigest > fails closed on empty or absent content — never sign nothing 1ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > evaluateBindingVerification (§11.70 read-side check) > verifies a signature whose signed content is unchanged 0ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > evaluateBindingVerification (§11.70 read-side check) > detects tampering when the signed content changed after signing 0ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > evaluateBindingVerification (§11.70 read-side check) > is INVALID when the signed version content is gone (unverifiable) 0ms
+ ✓ server/services/part11/__tests__/version-binding.test.ts > evaluateBindingVerification (§11.70 read-side check) > reports a legacy (unbound) signature as valid but NOT binding-verified 1ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > readSignerMode > unset/blank → undefined 3ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > readSignerMode > accepts the three canonical literals 1ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > readSignerMode > refuses a non-canonical case and an unknown literal, in every environment 1ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > readSignerMode > refuses the retired .env.example literals by name, with the remedy 9ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > non-production posture > unset → dev (the behaviour every laptop has always had) 0ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > non-production posture > hmac still needs a usable key — asking for hmac and getting nothing is a misconfiguration 0ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > non-production posture > kms needs a key id and a region (either signer-specific or AWS_REGION) 1ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > non-production posture > an unsupported KMS signing algorithm is refused 0ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > production boot refusal (mirrors assertRlsEnforcementForProduction) > unset → REFUSING TO BOOT 1ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > production boot refusal (mirrors assertRlsEnforcementForProduction) > dev → REFUSING TO BOOT 5ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > production boot refusal (mirrors assertRlsEnforcementForProduction) > hmac without the explicit acceptance → REFUSING TO BOOT; with it → boots as hmac 1ms
+ ✓ server/services/signature/__tests__/signer-mode.test.ts > production boot refusal (mirrors assertRlsEnforcementForProduction) > kms without key id / region / seal key → REFUSING TO BOOT; complete → boots as kms 1ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > a live signature is not withdrawn 2ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > verification_status = revoked withdraws it 6ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > a superseded_by pointer withdraws it (the §11.70 append-only marker) 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > is_valid = false withdraws it (the older flag) 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > exactly the columns persistGovernedSignatureRevocation writes 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > isSignatureWithdrawn — any one of the three columns takes a signature out of force > does not treat missing fields as withdrawn (absence is not revocation) 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > governedSignatureRefusal — Gate 1 observes withdrawal > selects the three withdrawal columns from electronic_signatures 3ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > governedSignatureRefusal — Gate 1 observes withdrawal > applies the canonical predicate rather than restating it 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > governedSignatureRefusal — Gate 1 observes withdrawal > refuses with a message naming revocation 0ms
+ ✓ server/services/part11/__tests__/revoked-signature-authorizes-nothing.test.ts > the withdrawal rule has exactly one definition > sequence-release-signature delegates instead of keeping a second copy 0ms
+ ✓ server/services/part11/__tests__/signer-org-scope.test.ts > the signer lookup is scoped by org membership > constrains the lookup on organization_users, bound to the signing org 5ms
+ ✓ server/services/part11/__tests__/signer-org-scope.test.ts > the signer lookup is scoped by org membership > does not scope on default_organization_id 8ms
+ ✓ server/services/part11/__tests__/signer-org-scope.test.ts > the signer lookup is scoped by org membership > refuses to sign when the signer is not a member of the signing org 2ms
+ ✓ server/services/part11/__tests__/signer-org-scope.test.ts > the signer lookup is scoped by org membership > says nothing about whether the user exists elsewhere 1ms
+    "op": "pool.query",
+    "caller": "server/lib/__tests__/health-check.rls.test.ts:87:21",
+    "queryPreview": "SELECT 1 as check, NOW() as time",
+    "enforcement": "on"
+  }
+ ✓ server/lib/__tests__/health-check.rls.test.ts > HealthCheckService database probe under RLS_ENFORCE=on > reports the database healthy from outside any tenant scope 4ms
+ ✓ server/lib/__tests__/health-check.rls.test.ts > HealthCheckService database probe under RLS_ENFORCE=on > the pre-fix aliased probe would fail closed on the same pool (mutation record) 14ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when no password is supplied 4ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses an empty password rather than treating it as absent-but-fine 2ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses a non-string password (a JSON object cannot be bcrypt-compared) 4ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when the password does not match 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses a signer with no stored hash, and never calls compare 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > first factor > refuses when the comparison itself throws, rather than propagating a 500 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > accepts password alone when the signer has no MFA enrolled 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > requires a token when MFA is enrolled 2ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > rejects a token that is not six digits before spending a verify call 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > refuses when the token does not verify 3ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > refuses when verification throws 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > REFUSES when the MFA enrolment state cannot be read 3ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > second factor > accepts and reports password+mfa when both factors verify 1ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > what gets persisted is what was checked > never reports a second factor that was not verified 0ms
+ ✓ server/services/part11/__tests__/reverify-signer.test.ts > what gets persisted is what was checked > takes no authentication claim from its caller 0ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > REGRESSION: a document rewritten since signing is not valid 6ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > an unchanged document verifies, and says the content was checked 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > a signature with no bound digest says it attests to nothing 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > reports unverifiable when the signed version content is gone 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > still fails a row whose identifier hash was altered 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > a revoked signature is not valid even with intact content 0ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — §11.70 content binding > reports not found rather than guessing 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — binding basis decides what can be re-derived > does not report a governed-action signature as tampered 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — binding basis decides what can be re-derived > does not compare a release-package digest against document-version content 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — binding basis decides what can be re-derived > still re-derives, and still detects tampering, for a document-version basis 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — tenant boundary > constrains the read to the organization 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — tenant boundary > refuses without organization context rather than reading across tenants 1ms
+ ✓ server/services/__tests__/signature-content-verification.test.ts > verifySignatureIntegrity — tenant boundary > refuses a non-numeric signature id rather than querying on NaN 1ms
+ ✓ server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts > POST /projects/:projectId/artifacts/:artifactId/signatures — removed > is not routed: a fully formed signing request gets 404 and touches no store 45ms
+ ✓ server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts > POST /projects/:projectId/artifacts/:artifactId/signatures — removed > the GET (§11.70 history) survives; the POST does not 2ms
+ ✓ server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts > POST /projects/:projectId/artifacts/:artifactId/signatures — removed > the router has no local signature-hash recipe and no re-auth wiring left behind 1ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > authorizes the default signing roles (admin/approver/reviewer) 2ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > is case-insensitive 0ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > fails closed for non-signing, empty, and absent roles 1ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > respects an explicit allowlist argument 0ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > honors the ESIGNATURE_SIGNING_ROLES env override 1ms
+ ✓ server/services/part11/__tests__/signing-authority.test.ts > Part 11 signing-authority policy > falls back to the default policy when the override is blank 0ms
+ ✓ server/lib/__tests__/project-id.test.ts > parseIntegerProjectId > accepts a plain integer id and the proj_ prefix form 2ms
+ ✓ server/lib/__tests__/project-id.test.ts > parseIntegerProjectId > REJECTS a regulatory_programs UUID instead of truncating it to a wrong row 1ms
+ ✓ server/lib/__tests__/project-id.test.ts > parseIntegerProjectId > rejects NaN, non-positive, non-integer, and junk 0ms
+ ✓ server/lib/__tests__/project-id.test.ts > parseIntegerProjectId > looksLikeProgramUuid distinguishes a program UUID from an integer id 0ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > attributes to the real user and adds no email at all 3ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > names the component when the user is 0 2ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > names the component when the user is -1 0ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > names the component when the user is NaN 0ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > names the component when the user is null 0ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > names the component when the user is undefined 0ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > never produces the person-shaped forms the fabricated-identity gate rejects 1ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > refuses a component name that is not a stable kebab-case identifier 1ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > does not mistake a person for a system actor 1ms
+ ✓ server/services/part11/__tests__/governed-actor.test.ts > governedActor > is what resolveGovernedContext reads: the user id, or the named actor 3ms
+ ✓ server/services/ectd/__tests__/sign-payload-seal.test.ts > sign-payload-seal > seals + verifies a digest under a configured key 2ms
+ ✓ server/services/ectd/__tests__/sign-payload-seal.test.ts > sign-payload-seal > is deterministic (same digest+org+key → same seal) 0ms
+ ✓ server/services/ectd/__tests__/sign-payload-seal.test.ts > sign-payload-seal > binds the digest — a forged digest does NOT verify against the real seal 0ms
+ ✓ server/services/ectd/__tests__/sign-payload-seal.test.ts > sign-payload-seal > binds the org — a different org does NOT verify 0ms
+ ✓ server/services/ectd/__tests__/sign-payload-seal.test.ts > sign-payload-seal > a seal made under a different key does NOT verify (rotation fails closed) 1ms
+ ✓ server/services/ectd/__tests__/sign-payload-seal.test.ts > sign-payload-seal > no key configured → sealing disabled (null) and an absent seal is "unsealed" 0ms
+ ✓ server/services/ectd/__tests__/sign-payload-seal.test.ts > sign-payload-seal > a stored seal with the key now ABSENT fails closed (unverifiable, not accepted) 0ms
+ ✓ server/services/ectd/__tests__/sign-payload-seal.test.ts > sign-payload-seal > a malformed (non-hex / wrong-length) stored seal fails closed 0ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > answers a missing-relation error without naming the relation 2ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > rejects the other driver-error shapes, not just the one that was reported 1ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > still gives the operator everything needed to find the real error 3ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > sends a code the client will not display and a sentence it will 1ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > omits the reference rather than inventing one when no request id was set 0ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > is falsifiable: the pre-fix behaviour would fail these assertions 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > returns the signed manifest when every control verifies 5ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — accepts an intact signed package > accepts an unsealed run under an unsealed posture 2ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a leaf was swapped after signing (digest drift) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the digest was forged to match a tampered manifest (seal failure) 2ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when a seal exists but the key is gone (unverifiable control) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES when the signature was superseded or rolled back 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES as signature-unverifiable — NOT revoked — when the signature lookup could not run (WO-16B finding 14) 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses tampered packages > REFUSES a change to the identity tuple (org swap) even with intact leaves 1ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses an unknown or cross-tenant run 2ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run with no package.sign step 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a run still awaiting a signature 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a skipped signature gate rather than treating it as signed 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > resolveSignedPackageForExport — refuses unsigned / incomplete states > refuses a legacy run signed before snapshot persistence 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > passes when rendered bytes hash to the signed checksums 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > fails closed on a missing leaf rather than passing it 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > verifyLeafBytes > reports a leaf whose bytes do not match the signed checksum 0ms
+ ✓ server/services/ectd/__tests__/signed-package-export.test.ts > refusalHttpStatus > maps integrity failures to 422, distinct from workflow-state 409s 0ms
+ ✓ server/services/__tests__/signature-write-path-single.test.ts > single electronic-signature write path > auth-security-service no longer defines a signature writer 3ms
+ ✓ server/services/__tests__/signature-write-path-single.test.ts > single electronic-signature write path > auth-security-service never inserts into electronic_signatures 1ms
+ ✓ server/services/__tests__/signature-write-path-single.test.ts > single electronic-signature write path > the enterprise signing route answers 410 and names the canonical one 1ms
+ ✓ server/services/__tests__/signature-write-path-single.test.ts > single electronic-signature write path > the enterprise router imports no signature writer 1ms
+ ✓ server/services/__tests__/signature-write-path-single.test.ts > single electronic-signature write path > part11ComplianceService no longer holds the second INSERT (ledger L37) 1ms
+ ✓ server/services/__tests__/signature-write-path-single.test.ts > single electronic-signature write path > the canonical INSERT still exists, and records the binding fields 0ms
+ ✓ server/services/__tests__/signature-write-path-single.test.ts > single electronic-signature write path > the verification endpoint survives — deleting the writer must not blind the reader 0ms
+ Test Files  27 passed (27)
+      Tests  219 passed (219)
+   Start at  00:02:48
+   Duration  8.86s (transform 5.81s, setup 669ms, import 13.51s, tests 6.46s, environment 3ms)

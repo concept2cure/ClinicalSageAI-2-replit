@@ -1,5 +1,5 @@
 /**
- * provision-app-role.mjs — provision the NON-SUPERUSER runtime database role.
+ * provision-app-role.mjs — the runtime database role: mint it, grant it, audit it.
  *
  * ── Why this exists (the RLS unlock) ──────────────────────────────────────────
  * PostgreSQL Row-Level Security only filters rows for a role that is neither a
@@ -18,12 +18,38 @@
  * so it cannot sidestep RLS even without FORCE. Migrations keep running as the
  * owner (DATABASE_URL); only the request-serving pool downgrades.
  *
- * ── Backward compatibility (opt-in) ───────────────────────────────────────────
- * This is a NO-OP unless APP_SERVICE_DB_PASSWORD is set. A deployment that has
- * not split the roles yet provisions nothing and keeps connecting as the owner —
- * exactly today's behavior. The split activates only when an operator sets
- * APP_SERVICE_DB_PASSWORD here (to mint the role) AND points the runtime at it
- * with APP_DATABASE_URL.
+ * ── The grant recipe is ONE function, called from every path ─────────────────
+ * `grantRuntimeRolePrivileges` is the single definition of what the runtime
+ * role may do. It is reached three ways:
+ *
+ *   provisionAppServiceRole   APP_SERVICE_DB_PASSWORD set → mint/align the role,
+ *                             then the recipe (install-fresh 7/8, deploy-migrate 4/5).
+ *   refreshRuntimeRoleGrants  a runtime role that already EXISTS and is
+ *                             identifiable (see resolveRuntimeRole) → the recipe
+ *                             only. No password is needed to grant.
+ *   ensureRuntimeRole         the entry point the installers call: picks one of
+ *                             the two above, or reports the single-role posture.
+ *
+ * ── Why refresh without a password (2026-09-21, IQ-DEV-001) ──────────────────
+ * Until this change grants were refreshed ONLY when APP_SERVICE_DB_PASSWORD was
+ * set. Every other split-role estate — an owner that migrates and a distinct
+ * runtime role that the operator never asked this script to mint — got no
+ * grants at all: after install-fresh + deploy-migrate as the owner, the runtime
+ * role (`c2c` locally, measured 2026-09-20) lacked SELECT/INSERT on 183 public
+ * tables the owner had created, section creation in Authoring answered 500, and
+ * every Part 11 step behind it could not execute. The password gate was meant
+ * to keep single-role deployments untouched; it also kept every unminted
+ * split-role deployment broken. The gate now is "is a runtime role identifiable
+ * and distinct from the owner" — a role that this connection did not create
+ * can still be granted to, and must be.
+ *
+ * ── Never widen the audit store ──────────────────────────────────────────────
+ * The recipe grants `audit` SELECT, INSERT only. `auditRuntimeRoleGrants` is
+ * the check the deploy verifies with: it fails on any relation the role cannot
+ * reach AND on any privilege beyond the append-only ceiling that the role holds
+ * on an audit relation it does not own — a PUBLIC grant or a hand GRANT of
+ * UPDATE on audit.tamper_proof_log fails the deploy; the recipe never grants
+ * it and never will.
  *
  * ── Idempotency ───────────────────────────────────────────────────────────────
  * Safe to re-run. The role is created or aligned; grants and default privileges
@@ -32,8 +58,8 @@
  * every incremental deploy migration; ALTER DEFAULT PRIVILEGES covers tables the
  * owner creates in the future.
  *
- * MUST run on a connection with rights to CREATE ROLE and GRANT (the owner/admin
- * URL the installers already use).
+ * MUST run on a connection with rights to GRANT (and, for minting, CREATE ROLE):
+ * the owner/admin URL the installers already use.
  */
 
 /** A single, unqualified PostgreSQL identifier: no quoting metacharacters. */
@@ -80,6 +106,26 @@ export const SCHEMA_PRIVILEGE_OVERRIDES = Object.freeze({
 export const DEFAULT_TABLE_PRIVILEGES = Object.freeze(['SELECT', 'INSERT', 'UPDATE', 'DELETE']);
 
 /**
+ * Relations the runtime role must NEVER own and never hold more than the
+ * schema override on. Ownership confers every privilege, so a runtime role that
+ * owns the Part 11 store can rewrite it no matter what was granted; the audit
+ * reports that as a failure, not an observation.
+ */
+export const APPEND_ONLY_TABLES = Object.freeze([{ schema: 'audit', name: 'tamper_proof_log' }]);
+
+/** System schemas the recipe and the audit never touch. */
+const SYSTEM_SCHEMA_FILTER = `nspname NOT IN ('pg_catalog', 'information_schema') AND nspname !~ '^pg_'`;
+
+function assertRoleName(name, origin) {
+  if (!ROLE_NAME_RE.test(name)) {
+    throw new Error(
+      `${origin} "${name}" is not a valid PostgreSQL identifier (must match ^[a-z_][a-z0-9_]*$).`,
+    );
+  }
+  return name;
+}
+
+/**
  * Resolve and validate the runtime role name (APP_SERVICE_DB_ROLE, default
  * `app_service`). Validated against a strict identifier grammar because it is
  * interpolated into DDL after being quoted by Postgres — the regex is a second
@@ -87,20 +133,146 @@ export const DEFAULT_TABLE_PRIVILEGES = Object.freeze(['SELECT', 'INSERT', 'UPDA
  */
 export function resolveAppServiceRole(env = process.env) {
   const name = (env.APP_SERVICE_DB_ROLE || 'app_service').trim();
-  if (!ROLE_NAME_RE.test(name)) {
-    throw new Error(
-      `APP_SERVICE_DB_ROLE "${name}" is not a valid PostgreSQL identifier ` +
-        '(must match ^[a-z_][a-z0-9_]*$).',
-    );
+  return assertRoleName(name, 'APP_SERVICE_DB_ROLE');
+}
+
+/**
+ * The login role named in a connection string, or null when the string names
+ * none. Accepts the `psql '…'` wrapper operators paste from consoles (as
+ * connection.mjs does) and falls back to a plain scheme://user[:pw]@ scan for
+ * URLs the WHATWG parser rejects (unencoded characters in the password).
+ */
+export function roleFromUrl(url) {
+  if (!url) return null;
+  const cleaned = String(url).replace(/^psql\s+'?/i, '').replace(/'?\s*$/, '');
+  try {
+    const u = new URL(cleaned);
+    return u.username ? decodeURIComponent(u.username) : null;
+  } catch {
+    const m = /^[a-z][a-z0-9+.-]*:\/\/([^:@/?#]+)(?::[^@]*)?@/i.exec(cleaned);
+    return m ? decodeURIComponent(m[1]) : null;
   }
-  return name;
+}
+
+/**
+ * Identify the runtime (request-serving) role from the environment, or null
+ * when the estate is single-role (the runtime IS the owner).
+ *
+ * Precedence — first identifiable wins:
+ *   1. RUNTIME_DB_ROLE           explicit; what scripts/db/provision.mjs hands
+ *                                its children so they never see the app URL.
+ *   2. APP_SERVICE_DB_PASSWORD   the mint path; the role is APP_SERVICE_DB_ROLE.
+ *   3. APP_DATABASE_URL          the role the server will connect as.
+ *   4. DATABASE_URL              when DATABASE_OWNER_URL made a different role
+ *                                the owner, DATABASE_URL is the runtime's.
+ *
+ * A candidate equal to `ownerRole` (the role this connection runs as, i.e. the
+ * one that owns what it creates) is the single-role posture and yields null:
+ * an owner needs no grants on its own tables.
+ *
+ * @param {Record<string, string|undefined>} env
+ * @param {{ownerRole?: string|null}} [opts]
+ * @returns {{role: string, source: string} | null}
+ */
+export function resolveRuntimeRole(env = process.env, { ownerRole = null } = {}) {
+  let candidate = null;
+  if (env.RUNTIME_DB_ROLE && env.RUNTIME_DB_ROLE.trim()) {
+    candidate = { role: assertRoleName(env.RUNTIME_DB_ROLE.trim(), 'RUNTIME_DB_ROLE'), source: 'RUNTIME_DB_ROLE' };
+    if (env.APP_SERVICE_DB_PASSWORD) {
+      const minted = resolveAppServiceRole(env);
+      if (minted !== candidate.role) {
+        throw new Error(
+          `RUNTIME_DB_ROLE=${candidate.role} conflicts with the role APP_SERVICE_DB_PASSWORD would mint ` +
+            `(${minted}, from APP_SERVICE_DB_ROLE). The runtime would connect as one role while the other ` +
+            'is granted. Set them to the same name.',
+        );
+      }
+    }
+  } else if (env.APP_SERVICE_DB_PASSWORD) {
+    candidate = { role: resolveAppServiceRole(env), source: 'APP_SERVICE_DB_PASSWORD' };
+  } else if (env.APP_DATABASE_URL && env.APP_DATABASE_URL.trim()) {
+    const role = roleFromUrl(env.APP_DATABASE_URL);
+    if (!role) throw new Error('APP_DATABASE_URL names no login role — cannot identify the runtime role.');
+    candidate = { role: assertRoleName(role, 'APP_DATABASE_URL role'), source: 'APP_DATABASE_URL' };
+  } else if (env.DATABASE_URL && env.DATABASE_URL.trim()) {
+    const role = roleFromUrl(env.DATABASE_URL);
+    if (role) candidate = { role: assertRoleName(role, 'DATABASE_URL role'), source: 'DATABASE_URL' };
+  }
+  if (!candidate) return null;
+  if (ownerRole && candidate.role === ownerRole) return null;
+  return candidate;
 }
 
 /** The immutable attribute set for the runtime role — the security contract. */
 const ROLE_ATTRIBUTES = 'LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION';
 
 /**
+ * THE grant recipe. Grants the runtime role, on every application schema
+ * present: USAGE; the per-schema table privileges; USAGE, SELECT on sequences;
+ * EXECUTE on functions; and the same as DEFAULT PRIVILEGES for objects the
+ * connecting role (the owner) creates later. Grants only — it never REVOKEs,
+ * so the owner's own privileges on relations it happens to own are untouched.
+ *
+ * Runs inside the caller's transaction. `roleIdent` must come from quote_ident.
+ *
+ * @returns {Promise<string[]>} the schemas granted, as `schema(PRIVS)`.
+ */
+async function grantRuntimeRolePrivileges(db, roleIdent, { log = () => {} } = {}) {
+  const dbIdent = (await db.query('SELECT quote_ident(current_database()) AS db_ident')).rows[0].db_ident;
+  await db.query(`GRANT CONNECT ON DATABASE ${dbIdent} TO ${roleIdent}`);
+
+  // Discover every application schema present and grant on ALL of them, so no
+  // schema the runtime uses can be silently left ungranted. System schemas
+  // (pg_catalog, pg_toast, pg_temp_*, information_schema) are excluded.
+  const schemaRows = (
+    await db.query(`SELECT nspname FROM pg_namespace WHERE ${SYSTEM_SCHEMA_FILTER} ORDER BY nspname`)
+  ).rows;
+
+  const grantedSchemas = [];
+  for (const { nspname: schema } of schemaRows) {
+    const privs = SCHEMA_PRIVILEGE_OVERRIDES[schema] || DEFAULT_TABLE_PRIVILEGES;
+
+    const schemaIdentRes = await db.query('SELECT quote_ident($1) AS s', [schema]);
+    const schemaIdent = schemaIdentRes.rows[0].s;
+    const privList = privs.join(', ');
+
+    await db.query(`GRANT USAGE ON SCHEMA ${schemaIdent} TO ${roleIdent}`);
+    await db.query(`GRANT ${privList} ON ALL TABLES IN SCHEMA ${schemaIdent} TO ${roleIdent}`);
+    await db.query(`GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA ${schemaIdent} TO ${roleIdent}`);
+    // Functions too, not just tables: functions default to PUBLIC EXECUTE, so
+    // this looked redundant — until 069_gcc_multitenant_rls_expansion.sql
+    // REVOKEd PUBLIC on core.can_access_program/can_write_program and granted
+    // them back to nobody. Every RLS policy that calls those helpers then
+    // fails for the runtime role with "permission denied for function", which
+    // means every INSERT/UPDATE on the policied tables fails. The runtime
+    // role must be able to execute application functions; the functions
+    // themselves enforce their own logic.
+    await db.query(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA ${schemaIdent} TO ${roleIdent}`);
+    // Forward coverage: tables/sequences the OWNER (the role running this)
+    // creates later inherit the same grants, so a new migration never locks
+    // the runtime out of a table it needs.
+    await db.query(
+      `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaIdent} GRANT ${privList} ON TABLES TO ${roleIdent}`,
+    );
+    await db.query(
+      `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaIdent} GRANT USAGE, SELECT ON SEQUENCES TO ${roleIdent}`,
+    );
+    await db.query(
+      `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaIdent} GRANT EXECUTE ON FUNCTIONS TO ${roleIdent}`,
+    );
+    grantedSchemas.push(`${schema}(${privList})`);
+  }
+
+  log(`  ✓ grants applied on: ${grantedSchemas.join('; ') || '(no known schemas present)'}`);
+  log(`  ✓ default privileges set — future owner-created tables auto-grant to ${roleIdent}`);
+  return grantedSchemas;
+}
+
+/**
  * Create-or-align the non-superuser runtime role and (re)apply its grants.
+ * No-op (returns { skipped: true }) unless APP_SERVICE_DB_PASSWORD is set — the
+ * mint path needs a password; an estate whose runtime role already exists uses
+ * refreshRuntimeRoleGrants (or ensureRuntimeRole, which chooses).
  *
  * @param {{query: Function}} db  A pg Pool or Client on an owner/admin connection.
  * @param {{env?: object, log?: (msg: string) => void}} [opts]
@@ -112,9 +284,9 @@ export async function provisionAppServiceRole(db, { env = process.env, log = () 
 
   if (!password) {
     log(
-      `  • APP_SERVICE_DB_PASSWORD not set — skipping ${role} provisioning. ` +
-        'The runtime will connect as the owner (DATABASE_URL); set APP_SERVICE_DB_PASSWORD ' +
-        'and point the app at APP_DATABASE_URL to enforce RLS as a non-superuser.',
+      `  • APP_SERVICE_DB_PASSWORD not set — not minting ${role}. ` +
+        'Set it to mint or rotate the role; an existing runtime role is granted without it ' +
+        '(ensureRuntimeRole).',
     );
     return { skipped: true, role };
   }
@@ -133,7 +305,6 @@ export async function provisionAppServiceRole(db, { env = process.env, log = () 
   );
   const roleIdent = quoted.rows[0].role_ident;
   const pwdLit = quoted.rows[0].pwd_lit;
-  const dbIdent = quoted.rows[0].db_ident;
 
   await db.query('BEGIN');
   try {
@@ -150,63 +321,183 @@ export async function provisionAppServiceRole(db, { env = process.env, log = () 
       log(`  ✓ role ${role} created (LOGIN · NOSUPERUSER · NOBYPASSRLS)`);
     }
 
-    await db.query(`GRANT CONNECT ON DATABASE ${dbIdent} TO ${roleIdent}`);
-
-    // Discover every application schema present and grant on ALL of them, so no
-    // schema the runtime uses can be silently left ungranted. System schemas
-    // (pg_catalog, pg_toast, pg_temp_*, information_schema) are excluded.
-    const schemaRows = (
-      await db.query(
-        `SELECT nspname FROM pg_namespace
-          WHERE nspname NOT IN ('pg_catalog', 'information_schema')
-            AND nspname !~ '^pg_'
-          ORDER BY nspname`,
-      )
-    ).rows;
-
-    const grantedSchemas = [];
-    for (const { nspname: schema } of schemaRows) {
-      const privs = SCHEMA_PRIVILEGE_OVERRIDES[schema] || DEFAULT_TABLE_PRIVILEGES;
-
-      const schemaIdentRes = await db.query('SELECT quote_ident($1) AS s', [schema]);
-      const schemaIdent = schemaIdentRes.rows[0].s;
-      const privList = privs.join(', ');
-
-      await db.query(`GRANT USAGE ON SCHEMA ${schemaIdent} TO ${roleIdent}`);
-      await db.query(`GRANT ${privList} ON ALL TABLES IN SCHEMA ${schemaIdent} TO ${roleIdent}`);
-      await db.query(
-        `GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA ${schemaIdent} TO ${roleIdent}`,
-      );
-      // Functions too, not just tables: functions default to PUBLIC EXECUTE, so
-      // this looked redundant — until 069_gcc_multitenant_rls_expansion.sql
-      // REVOKEd PUBLIC on core.can_access_program/can_write_program and granted
-      // them back to nobody. Every RLS policy that calls those helpers then
-      // fails for the runtime role with "permission denied for function", which
-      // means every INSERT/UPDATE on the policied tables fails. The runtime
-      // role must be able to execute application functions; the functions
-      // themselves enforce their own logic.
-      await db.query(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA ${schemaIdent} TO ${roleIdent}`);
-      // Forward coverage: tables/sequences the OWNER (the role running this)
-      // creates later inherit the same grants, so a new migration never locks
-      // the runtime out of a table it needs.
-      await db.query(
-        `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaIdent} GRANT ${privList} ON TABLES TO ${roleIdent}`,
-      );
-      await db.query(
-        `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaIdent} GRANT USAGE, SELECT ON SEQUENCES TO ${roleIdent}`,
-      );
-      await db.query(
-        `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaIdent} GRANT EXECUTE ON FUNCTIONS TO ${roleIdent}`,
-      );
-      grantedSchemas.push(`${schema}(${privList})`);
-    }
+    const schemas = await grantRuntimeRolePrivileges(db, roleIdent, { log });
 
     await db.query('COMMIT');
-    log(`  ✓ grants applied on: ${grantedSchemas.join('; ') || '(no known schemas present)'}`);
-    log(`  ✓ default privileges set — future owner-created tables auto-grant to ${role}`);
-    return { skipped: false, role, schemas: grantedSchemas };
+    return { skipped: false, role, schemas };
   } catch (err) {
     await db.query('ROLLBACK').catch(() => {});
     throw err;
   }
+}
+
+/**
+ * Re-apply the grant recipe to a runtime role that already exists. This is the
+ * path for every estate whose runtime role this script did not mint: the role
+ * is identified (resolveRuntimeRole), it must exist — a role that does not is
+ * a fail-closed error, because the request-serving pool could not connect as
+ * it either — and the recipe runs as-is. No password, no ALTER ROLE.
+ *
+ * @param {{query: Function}} db  owner/admin connection
+ * @param {{role: string, log?: (msg: string) => void}} opts
+ * @returns {Promise<{skipped: false, role: string, schemas: string[], attrs: object}>}
+ */
+export async function refreshRuntimeRoleGrants(db, { role, log = () => {} }) {
+  assertRoleName(role, 'runtime role');
+  const attrsRes = await db.query(
+    'SELECT rolname, rolsuper, rolbypassrls, rolcanlogin FROM pg_roles WHERE rolname = $1',
+    [role],
+  );
+  if (attrsRes.rowCount === 0) {
+    throw new Error(
+      `runtime role ${role} does not exist on this server — nothing to grant to, and the ` +
+        'request-serving pool would fail to connect as it. Mint it by setting ' +
+        'APP_SERVICE_DB_PASSWORD (scripts/db/provision-app-role.mjs), or correct ' +
+        'RUNTIME_DB_ROLE / APP_DATABASE_URL / DATABASE_URL.',
+    );
+  }
+  const attrs = attrsRes.rows[0];
+  if (attrs.rolsuper || attrs.rolbypassrls) {
+    log(
+      `  ⚠ runtime role ${role} is ${attrs.rolsuper ? 'a superuser' : 'BYPASSRLS'} — grants are moot ` +
+        'and every tenant_isolation_policy is inert on it; the readiness contract refuses it.',
+    );
+  }
+  const roleIdent = (await db.query('SELECT quote_ident($1) AS role_ident', [role])).rows[0].role_ident;
+
+  await db.query('BEGIN');
+  try {
+    log(`  • refreshing grants for existing runtime role ${role} (not minted here; no password needed)`);
+    const schemas = await grantRuntimeRolePrivileges(db, roleIdent, { log });
+    await db.query('COMMIT');
+    return { skipped: false, role, schemas, attrs };
+  } catch (err) {
+    await db.query('ROLLBACK').catch(() => {});
+    throw err;
+  }
+}
+
+/**
+ * The installers' entry point. Decides, on this owner connection, which path
+ * the runtime role takes:
+ *
+ *   APP_SERVICE_DB_PASSWORD set        → provisionAppServiceRole  (mode 'minted')
+ *   a distinct runtime role identified → refreshRuntimeRoleGrants (mode 'refreshed')
+ *   neither                            → nothing                  (mode 'single-role')
+ *
+ * @param {{query: Function}} db  owner/admin connection
+ * @param {{env?: object, log?: (msg: string) => void}} [opts]
+ * @returns {Promise<{skipped: boolean, mode: 'minted'|'refreshed'|'single-role', role: string|null, owner: string, source?: string, schemas?: string[]}>}
+ */
+export async function ensureRuntimeRole(db, { env = process.env, log = () => {} } = {}) {
+  const owner = (await db.query('SELECT current_user AS role')).rows[0].role;
+  const identified = resolveRuntimeRole(env, { ownerRole: owner });
+
+  if (env.APP_SERVICE_DB_PASSWORD) {
+    const minted = await provisionAppServiceRole(db, { env, log });
+    return { ...minted, mode: 'minted', owner, source: 'APP_SERVICE_DB_PASSWORD' };
+  }
+  if (!identified) {
+    log(
+      `  • single-role posture: no runtime role distinct from the owner (${owner}) is identifiable ` +
+        '(RUNTIME_DB_ROLE / APP_SERVICE_DB_PASSWORD / APP_DATABASE_URL / DATABASE_URL). Nothing to grant.',
+    );
+    return { skipped: true, mode: 'single-role', role: null, owner };
+  }
+  log(`  • runtime role ${identified.role} identified from ${identified.source} (owner is ${owner})`);
+  const refreshed = await refreshRuntimeRoleGrants(db, { role: identified.role, log });
+  return { ...refreshed, mode: 'refreshed', owner, source: identified.source };
+}
+
+/**
+ * Audit what `role` can actually do against the recipe, relation by relation.
+ *
+ * For every table, partitioned table, view, materialized view and foreign
+ * table in every application schema:
+ *   - `denied`  — the role lacks USAGE on the schema or a privilege the recipe
+ *                 requires there (full DML, or the schema's override);
+ *   - `excess`  — on a relation in an override schema that the role does NOT
+ *                 own, it holds a privilege beyond the override (UPDATE/DELETE
+ *                 on an audit table). The recipe never grants those; a PUBLIC
+ *                 grant or a hand GRANT did.
+ *   - `ownedAppendOnly` — the role owns an APPEND_ONLY_TABLES relation, which
+ *                 confers every privilege regardless of grants.
+ * Relations in an override schema that the role owns (a single-role history:
+ * `c2c` owns most of `audit` locally) are counted in `ownedInOverrideSchemas`
+ * and not reported as excess — ownership is not a grant this recipe made or
+ * can take away.
+ *
+ * Runs on any connection: pg_class and the privilege functions are readable by
+ * every role, so the app connection can audit itself and the owner can audit
+ * the app role.
+ *
+ * @param {{query: Function}} db
+ * @param {string} role
+ */
+export async function auditRuntimeRoleGrants(db, role) {
+  assertRoleName(role, 'runtime role');
+  const attrsRes = await db.query(
+    'SELECT rolname, rolsuper, rolbypassrls, rolcanlogin FROM pg_roles WHERE rolname = $1',
+    [role],
+  );
+  const empty = { role, exists: false, attrs: null, relations: 0, denied: [], excess: [], ownedAppendOnly: [], ownedInOverrideSchemas: 0, schemasWithoutUsage: [] };
+  if (attrsRes.rowCount === 0) return empty;
+
+  // OID forms of the privilege functions: they never throw on a schema the
+  // role lacks USAGE on (the text form can), and need no quoting.
+  const rows = (
+    await db.query(
+      `SELECT n.nspname AS schema, c.relname AS name, c.relkind,
+              pg_get_userbyid(c.relowner) = $1 AS owned,
+              has_schema_privilege($1, n.oid, 'USAGE') AS schema_usage,
+              has_table_privilege($1, c.oid, 'SELECT') AS can_select,
+              has_table_privilege($1, c.oid, 'INSERT') AS can_insert,
+              has_table_privilege($1, c.oid, 'UPDATE') AS can_update,
+              has_table_privilege($1, c.oid, 'DELETE') AS can_delete
+         FROM pg_class c
+         JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relkind IN ('r', 'p', 'v', 'm', 'f')
+          AND n.nspname NOT IN ('pg_catalog', 'information_schema') AND n.nspname !~ '^pg_'
+        ORDER BY 1, 2`,
+      [role],
+    )
+  ).rows;
+
+  const denied = [];
+  const excess = [];
+  const ownedAppendOnly = [];
+  const schemasWithoutUsage = new Set();
+  let ownedInOverrideSchemas = 0;
+  const appendOnly = new Set(APPEND_ONLY_TABLES.map((t) => `${t.schema}.${t.name}`));
+
+  for (const r of rows) {
+    const relation = `${r.schema}.${r.name}`;
+    const override = SCHEMA_PRIVILEGE_OVERRIDES[r.schema];
+    const required = override || DEFAULT_TABLE_PRIVILEGES;
+    const held = DEFAULT_TABLE_PRIVILEGES.filter((p) => r[`can_${p.toLowerCase()}`]);
+    if (!r.schema_usage) schemasWithoutUsage.add(r.schema);
+    const missing = [...(r.schema_usage ? [] : ['USAGE']), ...required.filter((p) => !held.includes(p))];
+    if (missing.length) denied.push({ relation, missing });
+    if (override) {
+      if (r.owned) {
+        if (appendOnly.has(relation)) ownedAppendOnly.push(relation);
+        else ownedInOverrideSchemas += 1;
+      } else {
+        const beyond = held.filter((p) => !override.includes(p));
+        if (beyond.length) excess.push({ relation, held: beyond });
+      }
+    }
+  }
+
+  return {
+    role,
+    exists: true,
+    attrs: attrsRes.rows[0],
+    relations: rows.length,
+    denied,
+    excess,
+    ownedAppendOnly,
+    ownedInOverrideSchemas,
+    schemasWithoutUsage: [...schemasWithoutUsage],
+  };
 }
