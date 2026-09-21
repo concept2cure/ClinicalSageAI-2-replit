@@ -316,6 +316,16 @@ export interface AnaChatMessage {
      */
     artifactId?: string;
     version?: number;
+    /**
+     * Set when the draft was persisted as an AUTHORING DOCUMENT (the
+     * `draft_authoring_document` tool; docs/design/ANA_DOCUMENT_CANVAS.md).
+     * The thread then renders the document canvas for it — `DocumentCanvas`
+     * over `authoring_documents` — instead of a side-panel artifact card, and
+     * "Open full editor" expands into the one editor on that id. `programId`
+     * is the regulatory_programs UUID the tool filed it under.
+     */
+    authoringDocId?: string;
+    programId?: string;
   };
   /**
    * Tools AnA invoked this turn, shown as calm status rows for transparency

@@ -155,6 +155,8 @@
     "ci:migration-drop-safety:selftest": "node scripts/ci/check-migration-drop-safety.selftest.mjs",
     "ci:launch-scope": "node scripts/ci/check-launch-scope.mjs",
     "ci:launch-scope:selftest": "node scripts/ci/check-launch-scope.selftest.mjs",
+    "ci:canvas-path": "node scripts/ci/check-canvas-path.mjs",
+    "ci:canvas-path:selftest": "node scripts/ci/check-canvas-path.selftest.mjs",
     "ops:provision-launch-modules": "tsx scripts/ops/provision-launch-modules.ts",
     "ops:verify-audit-chain": "tsx scripts/ops/verify-audit-chain.mjs",
     "ci:migration-prefix-collisions": "node scripts/ci/check-migration-prefix-collisions.mjs",

@@ -42,15 +42,39 @@
  *  A sender that holds a section but cannot name a family in THIS vocabulary
  *  says so by passing `docType: null` — see below. */
 export const EDITOR_TARGET_DOC_TYPES = ['k510', 'pma', 'cer', 'ivdr'] as const;
-export type EditorTargetDocType = (typeof EDITOR_TARGET_DOC_TYPES)[number];
+/** The four mdx families — the ones with a label in EDITOR_TARGET_DOC_LABELS. */
+export type EditorTargetMdxDocType = (typeof EDITOR_TARGET_DOC_TYPES)[number];
+/**
+ * Any registry document type, or null.
+ *
+ * Widened from the four mdx families on 2026-09-21 (docs/design/ANA_DOCUMENT_CANVAS.md):
+ * an AnA-drafted authoring document is a Module 2.5, an IB, a protocol — types
+ * the mdx vocabulary never named. A sender that holds a document TYPE says so
+ * in whatever spelling the registry uses; the editor labels the four mdx
+ * families through EDITOR_TARGET_DOC_LABELS and any other spelling as itself.
+ * `null` keeps its meaning: a real section with no family claimed.
+ */
+export type EditorTargetDocType = string;
 
 /** How each family reads on screen, for toasts and honest-miss notices. */
-export const EDITOR_TARGET_DOC_LABELS: Readonly<Record<EditorTargetDocType, string>> = {
+export const EDITOR_TARGET_DOC_LABELS: Readonly<Record<EditorTargetMdxDocType, string>> = {
   k510: '510(k)',
   pma: 'PMA',
   cer: 'CER',
   ivdr: 'IVD',
 };
+
+/** How a target's family reads on screen: the mdx label when it is one of
+ *  the four, otherwise the registry spelling uppercased (a `module-2.5` reads
+ *  as `MODULE-2.5`, never as a guessed family). */
+export function editorTargetDocLabel(docType: string | null | undefined): string | null {
+  if (!docType) return null;
+  const key = docType.trim().toLowerCase();
+  if ((EDITOR_TARGET_DOC_TYPES as readonly string[]).includes(key)) {
+    return EDITOR_TARGET_DOC_LABELS[key as EditorTargetMdxDocType];
+  }
+  return docType.trim().toUpperCase();
+}
 
 /** What a sender knows about the section it is opening. `code` is the section
  *  identifier in the sender's own numbering (an eSTAR row number, an outline
@@ -86,8 +110,22 @@ export interface EditorTarget {
    *  documents — a near-miss open is worse than an honest miss. */
   programId: string | null;
   programTitle: string | null;
+  /**
+   * Where the editor should offer to go back to, when the sender was a
+   * conversation. The Authoring surface renders "Back to conversation" from
+   * this and nothing else — a target without it came from a workbench, and a
+   * back control that led nowhere in particular would be a fabricated route.
+   */
+  returnTo: EditorReturnTo | null;
   /** Epoch ms the target was written. Entries older than the TTL are dead. */
   setAt: number;
+}
+
+/** The one return route a sender can name today: the conversation thread the
+ *  document was drafted in. */
+export interface EditorReturnTo {
+  surface: 'conversation-thread';
+  conversationId: string;
 }
 
 /** How long a target stays honourable. Set → navigate → mount is immediate;
@@ -116,18 +154,30 @@ export function setEditorTarget(
     docId?: string | null;
     programId?: string | null;
     programTitle?: string | null;
+    returnTo?: EditorReturnTo | null;
   },
 ): void {
   if (typeof window === 'undefined') return;
   window.C2C_EDITOR_TARGET = {
-    docType: target.docType ?? null,
+    docType: str(target.docType),
     docId: str(target.docId),
     sectionCode: str(target.code),
     sectionLabel: str(target.label),
     programId: str(target.programId),
     programTitle: str(target.programTitle),
+    returnTo: normalizeReturnTo(target.returnTo),
     setAt: Date.now(),
   };
+}
+
+/** A return route is honoured only when it names the one surface this channel
+ *  knows how to return to AND carries a conversation id; anything else is
+ *  null, never a partial claim. */
+function normalizeReturnTo(v: unknown): EditorReturnTo | null {
+  if (!v || typeof v !== 'object') return null;
+  const r = v as Partial<EditorReturnTo>;
+  const id = str(r.conversationId);
+  return r.surface === 'conversation-thread' && id ? { surface: 'conversation-thread', conversationId: id } : null;
 }
 
 /** Drop any pending target. Senders call this on a plain "open the editor"
@@ -153,12 +203,11 @@ export function peekEditorTarget(now: number = Date.now()): EditorTarget | null 
   const raw = window.C2C_EDITOR_TARGET;
   if (!raw || typeof raw !== 'object') return null;
   const t = raw as Partial<EditorTarget>;
-  // A named family must be one this vocabulary knows; an ABSENT family (null /
-  // undefined) is a legitimate target that simply claims less. Garbage — a
-  // number, an unknown spelling — is still refused outright.
-  if (t.docType != null &&
-      (typeof t.docType !== 'string' ||
-       !(EDITOR_TARGET_DOC_TYPES as readonly string[]).includes(t.docType))) {
+  // A named family is any registry spelling (see EditorTargetDocType); an
+  // ABSENT family (null / undefined) is a legitimate target that simply claims
+  // less. Garbage — a number, an object, an empty string — is still refused
+  // outright: a family that is not a string is not a claim this channel made.
+  if (t.docType != null && (typeof t.docType !== 'string' || t.docType.trim().length === 0)) {
     return null;
   }
   if (typeof t.setAt !== 'number' || !Number.isFinite(t.setAt)) return null;
@@ -166,12 +215,13 @@ export function peekEditorTarget(now: number = Date.now()): EditorTarget | null 
   // clock that cannot be trusted) — either way, no claim is honoured.
   if (now - t.setAt > EDITOR_TARGET_TTL_MS || t.setAt - now > EDITOR_TARGET_TTL_MS) return null;
   return {
-    docType: (t.docType ?? null) as EditorTargetDocType | null,
+    docType: str(t.docType),
     docId: str(t.docId),
     sectionCode: str(t.sectionCode),
     sectionLabel: str(t.sectionLabel),
     programId: str(t.programId),
     programTitle: str(t.programTitle),
+    returnTo: normalizeReturnTo(t.returnTo),
     setAt: t.setAt,
   };
 }

@@ -277,7 +277,13 @@ export function hydrateToolTrace(
     const label = typeof t.label === 'string' && t.label ? t.label : toolLabel(name);
     const humanStep = label.charAt(0).toLowerCase() + label.slice(1);
     if (t.status === 'success') {
-      calls.push({ name, label, status: 'success' });
+      // The persisted result summary rides along as the call's `result`: it
+      // is the server's capped copy of what the tool returned, and it is how
+      // a reopened thread still knows which authoring document a
+      // draft_authoring_document step produced (ConversationThread reads the
+      // ids out of it). Absent when the trace carried none.
+      const result = typeof t.resultSummary === 'string' && t.resultSummary ? t.resultSummary : undefined;
+      calls.push({ name, label, status: 'success', ...(result ? { result } : {}) });
     } else if (t.status === 'not_found') {
       calls.push({
         name,
@@ -1145,11 +1151,32 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               const title: string = event.title || 'Generated document';
               const content: string = event.content || '';
               const documentType: string | undefined = event.documentType;
-              if (content) {
+              // A draft persisted as an authoring document carries its id and
+              // program (docs/design/ANA_DOCUMENT_CANVAS.md); the thread reads
+              // the document itself from the authoring store, so such a draft
+              // is recorded even when the event carries no inline content.
+              const authoringDocId: string | undefined =
+                typeof event.authoringDocId === 'string' && event.authoringDocId.trim()
+                  ? event.authoringDocId.trim()
+                  : undefined;
+              const programId: string | undefined =
+                typeof event.programId === 'string' && event.programId.trim()
+                  ? event.programId.trim()
+                  : undefined;
+              if (content || authoringDocId) {
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
-                      ? { ...m, generatedDraft: { title, content, documentType } }
+                      ? {
+                          ...m,
+                          generatedDraft: {
+                            title,
+                            content,
+                            documentType,
+                            ...(authoringDocId ? { authoringDocId } : {}),
+                            ...(programId ? { programId } : {}),
+                          },
+                        }
                       : m
                   )
                 );

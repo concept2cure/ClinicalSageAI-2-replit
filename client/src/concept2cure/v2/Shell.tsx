@@ -32,7 +32,7 @@ import { AnaActivity, type AnaActivityProps } from './AnaActivity';
 import { AnaWorkPanel } from './AnaWorkPanel';
 import { useAgentActivity } from './useAgentActivity';
 import { useWorkDockVisible } from './workDock';
-import { shellProgramName } from './shellProject';
+import { segmentForShellProject, shellProgramName, useShellProject } from './shellProject';
 import { stashNavParamsForTarget } from './navParams';
 import { listDemoScripts } from '@shared/navigation/demo-scripts';
 import { applySurfaceAction, validateDriveAction } from './surfaceActions';
@@ -404,14 +404,21 @@ export function TopBar({
     .toUpperCase();
   const tier = NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[surface.id] ?? 'biopharma'));
   const [segOpen, setSegOpen] = React.useState(false);
-  const seg = getSegment(segment) ?? SEGMENTS[0];
+  /* The segment the label shows follows the OPEN PROGRAM's product type (or
+     the workstream it was opened from) and falls back to the stored preference
+     when no program is open. A 510(k) IVD program used to sit under a
+     "Biotech & Pharma" label because the preference was the only input
+     (MDX demo pack, 2026-09-21, finding F9). */
+  const openProject = useShellProject();
+  const effectiveSegment = segmentForShellProject(openProject) ?? segment;
+  const seg = getSegment(effectiveSegment) ?? SEGMENTS[0];
   const secondary = SEGMENTS.filter((s) => !s.primary);
   const segOpt = (s: (typeof SEGMENTS)[number]) => (
     <button
       key={s.id}
       type="button"
       className="tb-dom-opt"
-      data-on={s.id === segment}
+      data-on={s.id === seg.id}
       onClick={() => {
         onSegment(s.id);
         setSegOpen(false);
@@ -422,7 +429,7 @@ export function TopBar({
         <span className="tdo-l">{s.label}</span>
         <span className="tdo-p">{s.pathways.join(' · ')}</span>
       </span>
-      {s.id === segment && <span className="ico tdo-chk">{I.check}</span>}
+      {s.id === seg.id && <span className="ico tdo-chk">{I.check}</span>}
     </button>
   );
   return (

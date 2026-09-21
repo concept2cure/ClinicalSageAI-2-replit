@@ -197,6 +197,27 @@ function ownedSurfaceIsGrounded(relFile) {
   const full = path.join(repoRoot, relFile);
   if (!fs.existsSync(full)) return false;
   const src = fs.readFileSync(full, 'utf8');
+  if (hasGroundedAnaChat(src)) return true;
+  /* A child component can ground for its parent — the same rule the
+     publisher scan states in its header. `document-authoring` mounts
+     `../editor/DocumentWorkbench`, which owns the surface's `useAnaChat`
+     (2026-09-21, docs/design/ANA_DOCUMENT_CANVAS.md): the surface file lists
+     documents, the workbench runs the conversation. Followed ONE level, for
+     the relative modules the surface imports, so a grounded call two hops
+     away — which nobody reading the surface would find — still does not
+     count. */
+  const dir = path.dirname(full);
+  for (const m of src.matchAll(/from\s*['"](\.\.?\/[^'"]+)['"]/g)) {
+    for (const candidate of [`${m[1]}.tsx`, `${m[1]}.ts`]) {
+      const child = path.resolve(dir, candidate);
+      if (!fs.existsSync(child)) continue;
+      if (hasGroundedAnaChat(fs.readFileSync(child, 'utf8'))) return true;
+    }
+  }
+  return false;
+}
+
+function hasGroundedAnaChat(src) {
   for (const call of src.matchAll(/useAnaChat\(\s*\{[\s\S]{0,800}?\}\s*\)/g)) {
     if (/\bmoduleContext\b/.test(call[0])) return true;
   }

@@ -156,6 +156,22 @@ export interface RichSectionEditorHandle {
    *  not render — the browser's own find works on a plain textarea. */
   openFind: (query?: string) => boolean;
   focus: () => void;
+  /**
+   * Insert a citation node of `sourceId` at the caret — the SAME command the
+   * toolbar's citation picker runs, so a citation placed from the Project
+   * files rail (a vault document that is in the data room) numbers, resolves
+   * and records its section→source link exactly as a typed one does. False
+   * in source mode, on a read-only section, or when the source is not in the
+   * live library; nothing is inserted in any of those cases.
+   */
+  insertCitation: (sourceId: string, locator?: string | null) => boolean;
+  /**
+   * Insert plain reference text at the caret (a vault document's title and
+   * content hash, for a document that is NOT a citable data-room source).
+   * Same refusals as insertCitation. Deliberately text, not a citation node:
+   * a node claims a source the reference list can resolve, and this cannot.
+   */
+  insertReference: (text: string) => boolean;
 }
 
 export interface RichSectionEditorProps {
@@ -1398,8 +1414,30 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         },
         openFind,
         focus: () => editor?.commands.focus(),
+        insertCitation: (sourceId: string, locator?: string | null) => {
+          if (!editor || editor.isDestroyed) return false;
+          if (boot.mode !== 'rich' || !editor.isEditable) return false;
+          const id = String(sourceId ?? '').trim();
+          if (!id) return false;
+          const inserted = editor
+            .chain()
+            .focus()
+            .insertCitation({ source: id, locator: locator ?? null })
+            .run();
+          if (!inserted) return false;
+          /* The same section→source record the picker keeps — see applyCite. */
+          void citationsApi?.onCite?.(id);
+          return true;
+        },
+        insertReference: (text: string) => {
+          if (!editor || editor.isDestroyed) return false;
+          if (boot.mode !== 'rich' || !editor.isEditable) return false;
+          const clean = String(text ?? '').trim();
+          if (!clean) return false;
+          return editor.chain().focus().insertContent(clean).run();
+        },
       }),
-      [doSave, editor, boot.mode, sourceText, serialize, openFind],
+      [doSave, editor, boot.mode, sourceText, serialize, openFind, citationsApi],
     );
 
     /* Mirror the plugin's matches into the counter — on every transaction

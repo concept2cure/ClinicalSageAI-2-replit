@@ -276,6 +276,19 @@ jobs:
           npm run ci:launch-scope:selftest
           npm run ci:launch-scope
 
+      # The AnA-draft → canvas → editor → vault path (docs/design/ANA_DOCUMENT_CANVAS.md).
+      # Five editor generations were built and deleted as "unreachable" before
+      # this gate existed (CLAUDE.md, "Deleting a user-facing capability"); it
+      # fails the build when the thread stops mounting the canvas, the canvas
+      # or the Authoring surface stops mounting the one workbench, the AnA tool
+      # is unregistered, the vault read or the file-to-vault route is cut. The
+      # selftest shows each cut refused before the gate is trusted.
+      - name: Guardrails — AnA document canvas path is wired (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:canvas-path:selftest
+          npm run ci:canvas-path
+
       # D4's URS documents cite the code each requirement is implemented by.
       # `validation:traceability` joins those rows to the executed OQ results;
       # it cannot notice that a cited file was deleted, because a deleted file
