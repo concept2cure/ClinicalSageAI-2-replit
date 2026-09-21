@@ -83,7 +83,7 @@ import { runWithSystemTenantScope } from '../db/tenantStore';
  * That set is both satisfiable and load-bearing, so the probe now means
  * something in both directions.
  */
-const SECURITY_CRITICAL_TABLES = [
+export const SECURITY_CRITICAL_TABLES = [
   'organization_users',
   'platform_role_grants',
   'revoked_tokens',

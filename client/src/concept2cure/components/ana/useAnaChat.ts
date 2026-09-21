@@ -705,7 +705,21 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         });
 
         if (!res.ok || !res.body) {
-          throw new Error(`Stream request failed: ${res.status}`);
+          /* Carry the server's own reason. A 503 GATEWAY_UNAVAILABLE means the
+             deployment has no AI provider configured — nothing about the
+             network or the user's connection — and the message below must
+             say that, not "unreachable". */
+          let code: string | undefined;
+          try {
+            const j = (await res.clone().json()) as { error?: { code?: string } };
+            code = j?.error?.code;
+          } catch {
+            /* not JSON: keep the status-only error */
+          }
+          const e = new Error(`Stream request failed: ${res.status}`) as Error & { code?: string; status?: number };
+          e.code = code;
+          e.status = res.status;
+          throw e;
         }
 
         const reader = res.body.getReader();
@@ -1277,7 +1291,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 text:
                   m.text.length > 0
                     ? m.text
-                    : 'AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved.',
+                    : (err as { code?: string } | undefined)?.code === 'GATEWAY_UNAVAILABLE'
+                      ? 'No AI provider is configured for this deployment, so AnA cannot answer. This is a server setting, not your connection. Prior turns are preserved.'
+                      : 'AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved.',
                 streaming: false,
                 statusPhase: undefined,
                 completedAt: Date.now(),

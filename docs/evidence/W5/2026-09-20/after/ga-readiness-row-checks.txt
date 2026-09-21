@@ -1,0 +1,55 @@
+# ga-readiness-report.mjs row behaviour, exercised in fail and pass states (2026-09-20)
+
+## icsr-gateway — nothing set (expected: blocked, missing all)
+  [ ] advisory  E2B(R3) ICSR gateway
+        observed: ICSR_GATEWAY_URL not set, credentials not set (protocol https) — missing: ICSR_GATEWAY_URL, ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD
+        gate:     server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — configured ⇒ real AS2/HTTPS call (transmitted only on an accepting 2xx); unconfigured ⇒ IcsrGatewayNotConfiguredError in production
+        owner:    Regulatory Ops (agency gateway account + AS2 identity/certs) + Ops (secrets manager)
+        unblock:  Provision ICSR_GATEWAY_URL + (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_CERT_PATH, ICSR_GATEWAY_KEY_PATH, ICSR_GATEWAY_AS2_TO) for AS2, or (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD) for an HTTPS upload endpoint; then round-trip one ICSR in the agency test environment.
+
+
+## icsr-gateway — AS2 selected by cert but key/AS2-To absent (expected: blocked, names ICSR_GATEWAY_KEY_PATH, ICSR_GATEWAY_AS2_TO)
+  [ ] advisory  E2B(R3) ICSR gateway
+        observed: ICSR_GATEWAY_URL set, credentials set (protocol as2) — missing: ICSR_GATEWAY_KEY_PATH, ICSR_GATEWAY_AS2_TO
+        gate:     server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — configured ⇒ real AS2/HTTPS call (transmitted only on an accepting 2xx); unconfigured ⇒ IcsrGatewayNotConfiguredError in production
+        owner:    Regulatory Ops (agency gateway account + AS2 identity/certs) + Ops (secrets manager)
+        unblock:  Provision ICSR_GATEWAY_URL + (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_CERT_PATH, ICSR_GATEWAY_KEY_PATH, ICSR_GATEWAY_AS2_TO) for AS2, or (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD) for an HTTPS upload endpoint; then round-trip one ICSR in the agency test environment.
+
+
+## icsr-gateway — AS2 complete (expected: ready)
+  [x] advisory  E2B(R3) ICSR gateway
+        observed: ICSR_GATEWAY_URL set, credentials set (protocol as2) — all 5 vars set
+        gate:     server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — configured ⇒ real AS2/HTTPS call (transmitted only on an accepting 2xx); unconfigured ⇒ IcsrGatewayNotConfiguredError in production
+        owner:    Regulatory Ops (agency gateway account + AS2 identity/certs) + Ops (secrets manager)
+        unblock:  Provision ICSR_GATEWAY_URL + (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_CERT_PATH, ICSR_GATEWAY_KEY_PATH, ICSR_GATEWAY_AS2_TO) for AS2, or (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD) for an HTTPS upload endpoint; then round-trip one ICSR in the agency test environment.
+
+
+## icsr-gateway — HTTPS complete (expected: ready)
+  [x] advisory  E2B(R3) ICSR gateway
+        observed: ICSR_GATEWAY_URL set, credentials set (protocol https) — all 3 vars set
+        gate:     server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — configured ⇒ real AS2/HTTPS call (transmitted only on an accepting 2xx); unconfigured ⇒ IcsrGatewayNotConfiguredError in production
+        owner:    Regulatory Ops (agency gateway account + AS2 identity/certs) + Ops (secrets manager)
+        unblock:  Provision ICSR_GATEWAY_URL + (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_CERT_PATH, ICSR_GATEWAY_KEY_PATH, ICSR_GATEWAY_AS2_TO) for AS2, or (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD) for an HTTPS upload endpoint; then round-trip one ICSR in the agency test environment.
+
+
+## gateway:fda:esg — FDA_ESG_TRANSPORT=rest fully provisioned (expected: BLOCKED with unverified-contract reason, never ready)
+  [ ] BLOCKER   FDA ESG (AS2/SFTP) — transport: rest (NextGen)
+        observed: all 4 REST credential vars set — but the ESG NextGen wire contract is unverified; transmit raises UnverifiedTransportError (transmitted:false) until FDA UAT completes
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Set FDA_ESG_TRANSPORT=as2 with the AS2 credentials for the verified path, or complete the ESG NextGen REST UAT and replace transmitViaNextGenRest in fda-esg.ts.
+  [ ] advisory  EMA CESP
+
+## gateway:fda:esg — FDA_ESG_TRANSPORT=webtrader (expected: blocked, configuration error)
+  [ ] BLOCKER   FDA ESG (AS2/SFTP)
+        observed: FDA_ESG_TRANSPORT='webtrader' is not 'as2' or 'rest'; the gateway refuses every transmit as a configuration error
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)
+        unblock:  Register with the agency, obtain the credentials, load them into the production secrets manager.
+  [ ] advisory  EMA CESP
+
+## gateway:fda:esg — AS2 vars all set (expected: ready; unchanged behaviour)
+  [x] BLOCKER   FDA ESG (AS2/SFTP)
+        observed: all 5 credential vars set
+        gate:     server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()
+        owner:    Regulatory Ops (agency account) + Ops (secrets manager)

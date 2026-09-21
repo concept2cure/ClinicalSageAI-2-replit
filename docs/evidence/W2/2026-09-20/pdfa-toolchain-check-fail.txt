@@ -1,0 +1,7 @@
+# 2026-09-20T19:20:08Z VERAPDF_BINARY=/nonexistent/verapdf
+▶ PDF/A toolchain check (binaries the eCTD pipeline invokes)
+  ✓ ghostscript: /usr/bin/gs — version 10.02.1
+  ✗ verapdf binary '/nonexistent/verapdf' not found on PATH (see Dockerfile.optimized for the pinned install)
+  ✓ xmllint: /usr/bin/xmllint — xmllint: using libxml version 20914
+✗ PDF/A toolchain INCOMPLETE — ECTD_REQUIRE_PDFA=true would block every production eCTD package here.
+exit=1

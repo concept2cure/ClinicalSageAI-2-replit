@@ -1,0 +1,58 @@
+
+> concept2cure-riai@1.0.0 qualify:ectd
+> tsx scripts/ectd/qualify-ectd.ts
+
+
+eCTD qualification — 2026-09-20T19:18:27.473Z
+Reports: /home/user/ClinicalSageAI-2-replit/qualification-reports
+
+[PASS] v3.2.2-fda  (FDA v3.2.2)
+        · xmllint well-formed (index.xml): ok
+        · backbone DOCTYPE (index.xml): ok
+        · xmllint well-formed (m1/us/us-regional.xml): ok
+        · backbone DOCTYPE (m1/us/us-regional.xml): ok
+        · dtd-checksum-manifest: ok
+        · stf-cross-linking: ok
+        · cross-references: ok
+        · checksums: 8 verified, 0 mismatch(es)
+        · lifecycle (append/delete/replace): ok
+[PASS] v3.2.2-ema  (EMA v3.2.2)
+        · xmllint well-formed (index.xml): ok
+        · backbone DOCTYPE (index.xml): ok
+        · xmllint well-formed (m1/eu/eu-regional.xml): ok
+        · backbone DOCTYPE (m1/eu/eu-regional.xml): ok
+        · dtd-checksum-manifest: ok
+        · stf-cross-linking: ok
+        · cross-references: ok
+        · checksums: 7 verified, 0 mismatch(es)
+        · lifecycle (append/delete/replace): ok
+[PASS] v3.2.2-pmda  (PMDA v3.2.2)
+        · xmllint well-formed (index.xml): ok
+        · backbone DOCTYPE (index.xml): ok
+        · xmllint well-formed (m1/jp/jp-regional.xml): ok
+        · backbone DOCTYPE (m1/jp/jp-regional.xml): ok
+        · dtd-checksum-manifest: ok
+        · stf-cross-linking: ok
+        · cross-references: ok
+        · checksums: 7 verified, 0 mismatch(es)
+        · lifecycle (append/delete/replace): ok
+[PASS] v3.2.2-ca  (CA v3.2.2)
+        · xmllint well-formed (index.xml): ok
+        · backbone DOCTYPE (index.xml): ok
+        · xmllint well-formed (m1/ca/ca-regional.xml): ok
+        · backbone DOCTYPE (m1/ca/ca-regional.xml): ok
+        · dtd-checksum-manifest: ok
+        · stf-cross-linking: ok
+        · cross-references: ok
+        · checksums: 7 verified, 0 mismatch(es)
+        · lifecycle (append/delete/replace): ok
+[PASS] v4.0-fda  (FDA v4.0)
+        · rps-model-validator: ok
+        · xmllint well-formed (submissionUnit.xml): ok
+        · schema-checksum-manifest: ok
+        · checksums: 3 verified, 0 mismatch(es)
+        · lifecycle (revise): ok
+
+Overall: PASS
+
+exit=0

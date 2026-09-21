@@ -654,8 +654,28 @@ router.get(
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const signatureId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const result = await verifySignatureIntegrity(parseInt(signatureId, 10));
+      const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const signatureId = Number.parseInt(String(raw), 10);
+      if (!Number.isInteger(signatureId)) {
+        // Previously parseInt('abc') -> NaN went straight into the query.
+        return res.status(400).json({ error: 'Invalid signature id' });
+      }
+
+      /* The organization comes from the VERIFIED JWT — authMiddleware sets
+         req.user.organizationId from the token claim and re-checks that the
+         membership row still exists — never from the request, so a caller cannot
+         widen its own scope by asking for another tenant's signature id.
+         electronic_signatures.id is a serial, and this read used to select on it
+         alone: any authenticated user could count upwards and read another
+         tenant's signer_name, signed_at, signature_type and signature_meaning. */
+      const orgRaw = (req as unknown as { user?: { organizationId?: unknown } }).user
+        ?.organizationId;
+      const organizationId = Number.isFinite(Number(orgRaw)) ? Number(orgRaw) : null;
+      if (organizationId === null) {
+        return res.status(403).json({ error: 'Organization context required' });
+      }
+
+      const result = await verifySignatureIntegrity(signatureId, organizationId);
       res.json(result);
     } catch (error) {
       console.error('[Enterprise Auth] signature verification error:', error);

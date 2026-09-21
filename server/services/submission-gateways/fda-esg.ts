@@ -31,9 +31,42 @@
  * that lands; SFTP is the nearer-term real path (and requires ssh2-sftp-client,
  * currently absent from package.json).
  *
- * Both transports require credentials in the platform secrets store; the gateway
- * flags presence + emits CredentialError when missing rather than silently
- * failing.
+ *   3. ESG NextGen REST API (`FDA_ESG_TRANSPORT=rest`; W5 2026-09-20, runbook
+ *      B16 / competitive delta §3): FDA retired WebTrader in April 2025 and
+ *      offers a REST API beside AS2. The adapter resolves its credentials from
+ *      the environment and sits behind the same SubmissionGateway interface,
+ *      but its wire contract (upload endpoint, auth exchange, response shape)
+ *      has NOT been verified against FDA's ESG NextGen API documentation and
+ *      pre-production environment, so `transmit` raises the typed
+ *      `UnverifiedTransportError` BEFORE any transmittal row exists — never a
+ *      stub that pretends. Replace `transmitViaNextGenRest` with the real call
+ *      only after the contract is verified in FDA's UAT.
+ *
+ * ── Environment variables ─────────────────────────────────────────────────
+ * Production reads `FDA_ESG_*`; staging reads `FDA_ESG_STAGING_*` (same suffixes).
+ *
+ *   FDA_ESG_TRANSPORT        'as2' (default) | 'rest'. Which transport
+ *                            `transmit` uses; bundles > 1 GB fall to SFTP on the
+ *                            AS2 path. Any other value is refused as a
+ *                            configuration error.
+ *   AS2 / SFTP path:
+ *   FDA_ESG_URL              FDA AS2 endpoint (https://…)
+ *   FDA_ESG_AS2_FROM         Sponsor AS2 id assigned by FDA
+ *   FDA_ESG_AS2_TO           FDA AS2 id (default 'FDA-CESUB')
+ *   FDA_ESG_CERT_PATH        mTLS client certificate (PEM path)
+ *   FDA_ESG_KEY_PATH         mTLS private key (PEM path)
+ *   FDA_ESG_FDA_CERT_PATH    FDA's certificate (PEM path) — TLS trust anchor
+ *   FDA_ESG_SFTP_HOST / FDA_ESG_SFTP_USER / FDA_ESG_SFTP_KEY_PATH  SFTP fallback
+ *   REST (NextGen) path:
+ *   FDA_ESG_REST_URL         ESG NextGen API base URL (https://…)
+ *   FDA_ESG_REST_CLIENT_ID   API client id issued with the ESG NextGen account
+ *   FDA_ESG_REST_CLIENT_SECRET  matching client secret
+ *   FDA_ESG_REST_SUBMITTER_ID   the ESG account / submitter identifier FDA
+ *                            files submissions under
+ *
+ * Every transport requires credentials in the platform secrets store; the
+ * gateway flags presence + emits CredentialError naming the missing variables
+ * rather than silently failing.
  *
  * Acks:
  *   ack1 — receipt-of-transmission (FDA gateway received the bytes)
@@ -42,15 +75,14 @@
  */
 
 import { promises as fs } from 'fs';
-import { createHash, randomUUID, createSign } from 'crypto';
-import * as https from 'node:https';
-import { URL } from 'url';
+import { randomUUID } from 'crypto';
 import { pool } from '../../db';
 import { readVerifiedBundle } from './bundle-integrity';
 import { platformTransmittalRecord } from './acknowledgement';
+import { buildAs2Headers, signAs2Body, postAs2, parseMdn, mdnRefusal } from './as2-transport';
 import {
-  CredentialError, GatewayError, TransportError,
-  resolveToRegistryEntry, getSubmissionTypeLabel,
+  CredentialError, GatewayError, TransportError, UnverifiedTransportError,
+  resolveToRegistryEntry,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
   requiredAgencyMetadata,
@@ -132,24 +164,85 @@ async function loadFdaCredentials(
   };
 }
 
+/* ─── Transport selection + ESG NextGen REST credentials ────────── */
+
+export type FdaEsgConfiguredTransport = 'as2' | 'rest';
+
+function envVarName(environment: 'staging' | 'production', suffix: string): string {
+  return `FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_${suffix}`;
+}
+
+/**
+ * Which transport this environment is configured for. Unset means AS2 (the
+ * path every existing deployment and test exercises). Any value other than
+ * 'as2' / 'rest' is a configuration error and is refused as a CredentialError
+ * naming the variable — silently falling back to AS2 would put bytes on a
+ * transport the operator did not choose.
+ */
+export function resolveFdaEsgTransport(environment: 'staging' | 'production'): FdaEsgConfiguredTransport {
+  const raw = (envFor(environment, 'TRANSPORT') ?? 'as2').trim().toLowerCase();
+  if (raw === 'as2' || raw === '') return 'as2';
+  if (raw === 'rest') return 'rest';
+  throw new CredentialError('fda', 'esg', environment, [
+    `${envVarName(environment, 'TRANSPORT')} (must be 'as2' or 'rest'; got '${raw}')`,
+  ]);
+}
+
+interface FdaEsgRestCredentials {
+  baseUrl:      string;
+  clientId:     string;
+  clientSecret: string;
+  submitterId:  string;
+}
+
+/** ESG NextGen REST credentials. Missing → CredentialError naming each variable. */
+export function loadFdaRestCredentials(environment: 'staging' | 'production'): FdaEsgRestCredentials {
+  const missing: string[] = [];
+  const baseUrl      = envFor(environment, 'REST_URL');
+  const clientId     = envFor(environment, 'REST_CLIENT_ID');
+  const clientSecret = envFor(environment, 'REST_CLIENT_SECRET');
+  const submitterId  = envFor(environment, 'REST_SUBMITTER_ID');
+  if (!baseUrl)      missing.push(envVarName(environment, 'REST_URL'));
+  if (!clientId)     missing.push(envVarName(environment, 'REST_CLIENT_ID'));
+  if (!clientSecret) missing.push(envVarName(environment, 'REST_CLIENT_SECRET'));
+  if (!submitterId)  missing.push(envVarName(environment, 'REST_SUBMITTER_ID'));
+  if (missing.length > 0) throw new CredentialError('fda', 'esg', environment, missing);
+  return { baseUrl: baseUrl!, clientId: clientId!, clientSecret: clientSecret!, submitterId: submitterId! };
+}
+
+/**
+ * The ESG NextGen REST transmit. A no-op unless FDA_ESG_TRANSPORT=rest selects
+ * it. Credentials are resolved (so an unprovisioned environment still reports
+ * exactly which variables are missing) and then the call is REFUSED with the typed UnverifiedTransportError: the platform holds
+ * no verified copy of FDA's ESG NextGen API contract, and a request shaped from
+ * a guess would either be rejected by FDA or — worse — accepted for something
+ * other than what was intended. No transmittal row, no identifier.
+ *
+ * When the contract is verified (FDA ESG NextGen API documentation + a
+ * pre-production round trip in `docs/runbooks/fda-esg-production-uat.md`),
+ * replace the throw with the real request and record the response verbatim
+ * on the transmittal row, as the AS2 path records the MDN.
+ */
+function transmitViaNextGenRest(
+  environment: 'staging' | 'production',
+): void {
+  if (resolveFdaEsgTransport(environment) !== 'rest') return;
+  const creds = loadFdaRestCredentials(environment);
+  throw new UnverifiedTransportError(
+    'fda', 'esg', 'rest',
+    `Endpoint ${creds.baseUrl} (submitter ${creds.submitterId}) is configured, but the ESG NextGen ` +
+    'upload/auth/response contract has not been verified against FDA documentation or exercised in ' +
+    "FDA's pre-production environment. Use FDA_ESG_TRANSPORT=as2 for the verified AS2 path, or complete " +
+    'the NextGen UAT and replace transmitViaNextGenRest.',
+  );
+}
+
 /* ─── AS2 envelope (RFC 4130) ────────────────────────────────────── */
 
-/* Hand-rolled AS2 framing. Real AS2 production traffic typically also
-   uses CMS/PKCS#7 envelope wrapping for signing + encryption; we frame
-   the message + sign with the client key here, and use TLS for the
-   encryption (FDA accepts TLS-protected AS2). Adding full PKCS#7
-   encryption is a follow-up: routine to add but takes the AS2 piece from
-   ~120 LoC to ~400 LoC and pulls in node-forge or @peculiar/asn1-cms.
-   Flagged in docs/runbooks/fda-esg-setup.md. */
-
-interface As2Message {
-  messageId:   string;
-  from:        string;
-  to:          string;
-  contentType: string;
-  body:        Buffer;
-  signaturePem: string;
-}
+/* Envelope framing, body signing, the mTLS POST and MDN interpretation live
+   in ./as2-transport.ts, shared with the E2B(R3) ICSR transport so there is
+   exactly one AS2 implementation. The PKCS#7 conformance gap is documented
+   there and at the top of this file. */
 
 /** The agency application number the SFTP path is filed under; refused when absent. */
 function sftpApplicationId(req: GatewayTransmitRequest): string {
@@ -159,65 +252,6 @@ function sftpApplicationId(req: GatewayTransmitRequest): string {
     throw new ValidationError('FDA ESG SFTP transmit requires the agency application number; nothing is sent without it.', []);
   }
   return applicationId;
-}
-
-/**
- * What a synchronous MDN says about the message it acknowledges. RFC 3798 /
- * AS2: `Disposition: <mode>; <type>[/<modifier>: text]` — only a `processed`
- * type without an `error` or `failure` modifier is an acceptance.
- */
-function parseMdn(raw: string): { originalMessageId: string | null; accepted: boolean; disposition: string | null } {
-  const field = (name: string): string | null => {
-    const m = raw.match(new RegExp(`^${name}:[ \\t]*(.+?)[ \\t]*$`, 'im'));
-    return m ? m[1] : null;
-  };
-  const disposition = field('Disposition');
-  const afterMode = disposition ? disposition.slice(disposition.indexOf(';') + 1).trim().toLowerCase() : '';
-  const accepted = disposition !== null && disposition.includes(';')
-    && afterMode.startsWith('processed') && !/\b(error|failure|failed)\b/.test(afterMode);
-  return { originalMessageId: field('Original-Message-ID'), accepted, disposition };
-}
-
-/**
- * Why a 2xx MDN is not an acceptance of `messageId`, or null when it is. A 2xx
- * used to be recorded as received on its own: an MDN whose disposition was
- * `failed` or `processed/error`, one for a different message, or a body with
- * no disposition at all all went into the row as the agency's acceptance.
- */
-function mdnRefusal(mdn: ReturnType<typeof parseMdn>, messageId: string): string | null {
-  if (mdn.disposition === null) return 'Agency returned success with no MDN disposition in the body.';
-  if (!mdn.accepted) return `Agency MDN did not accept the message: ${mdn.disposition}`;
-  const norm = (v: string) => v.trim().replace(/^<|>$/g, '').toLowerCase();
-  if (mdn.originalMessageId !== null && norm(mdn.originalMessageId) !== norm(messageId)) {
-    return `Agency MDN acknowledges a different message (${mdn.originalMessageId}).`;
-  }
-  return null;
-}
-
-function buildAs2Headers(msg: As2Message): Record<string, string> {
-  return {
-    'Message-ID':                msg.messageId,
-    'AS2-From':                  msg.from,
-    'AS2-To':                    msg.to,
-    'AS2-Version':               '1.2',
-    'Disposition-Notification-To': msg.from,
-    'Disposition-Notification-Options': 'signed-receipt-protocol=optional, pkcs7-signature; signed-receipt-micalg=optional, sha-256',
-    'Receipt-Delivery-Option':   'sync',  /* synchronous MDN — easier to wire */
-    'Content-Type':              msg.contentType,
-    'Content-Disposition':       'attachment; filename="ectd.zip"',
-    'Content-Length':            String(msg.body.length),
-    'User-Agent':                'concept2cure-mdx/1.0',
-  };
-}
-
-function signAs2Body(body: Buffer, privateKeyPem: string): string {
-  /* Detached SHA-256 signature over the body. FDA's MDN signing
-     verification expects the signature in the MDN; the request-side
-     signature is the sponsor's proof of origin. Production uses CMS
-     SignedData; this scaffolds the path. */
-  const signer = createSign('RSA-SHA256');
-  signer.update(body);
-  return signer.sign(privateKeyPem, 'base64');
 }
 
 /* ─── Transmittal helpers ────────────────────────────────────────── */
@@ -280,47 +314,6 @@ async function updateTransmittal(
     `UPDATE submission_transmittals SET ${setFrags.join(', ')} WHERE id = $${args.length}`,
     args,
   );
-}
-
-/* ─── HTTPS POST helper (with mTLS) ──────────────────────────────── */
-
-interface As2Response {
-  httpStatus: number;
-  headers:    Record<string, string | string[] | undefined>;
-  body:       Buffer;
-}
-
-function postAs2(
-  endpoint: string, headers: Record<string, string>, body: Buffer,
-  cert: string, key: string, fdaCert: string,
-): Promise<As2Response> {
-  return new Promise((resolve, reject) => {
-    const url = new URL(endpoint);
-    const req = https.request({
-      hostname: url.hostname,
-      port:     url.port ? Number(url.port) : 443,
-      path:     url.pathname + url.search,
-      method:   'POST',
-      headers,
-      cert,
-      key,
-      ca:       fdaCert,  /* trust FDA's cert */
-      rejectUnauthorized: true,
-      timeout:  60_000,
-    }, (res) => {
-      const chunks: Buffer[] = [];
-      res.on('data', (c: Buffer) => chunks.push(c));
-      res.on('end', () => resolve({
-        httpStatus: res.statusCode ?? 0,
-        headers:    res.headers as Record<string, string | string[] | undefined>,
-        body:       Buffer.concat(chunks),
-      }));
-    });
-    req.on('error', (err) => reject(new TransportError(`ESG AS2 POST failed: ${err.message}`, err)));
-    req.on('timeout', () => { req.destroy(); reject(new TransportError('ESG AS2 POST timeout')); });
-    req.write(body);
-    req.end();
-  });
 }
 
 /* ─── SFTP fallback ──────────────────────────────────────────────── */
@@ -388,6 +381,14 @@ export class FdaEsgGateway implements SubmissionGateway {
 
   async isConfigured(organizationId: number, environment: 'staging' | 'production'): Promise<boolean> {
     try {
+      if (resolveFdaEsgTransport(environment) === 'rest') {
+        // Configured means credentials resolve. It does NOT mean the REST
+        // transport can transmit — see transmitViaNextGenRest — and
+        // gatewayConfigurationStatus() reports the transport so a surface can
+        // say which one.
+        loadFdaRestCredentials(environment);
+        return true;
+      }
       await loadFdaCredentials(organizationId, environment);
       return true;
     } catch {
@@ -407,6 +408,11 @@ export class FdaEsgGateway implements SubmissionGateway {
     const normalizedReq: GatewayTransmitRequest = resolvedEntry
       ? { ...req, submissionType: resolvedEntry.applicationType }
       : req;
+
+    /* Operator-selected transport. When FDA_ESG_TRANSPORT=rest the NextGen
+       adapter refuses with a typed error before a transmittal row exists — see
+       transmitViaNextGenRest; otherwise this is a no-op and AS2/SFTP follows. */
+    transmitViaNextGenRest(req.environment);
 
     /* Bundles larger than 1 GB go via SFTP; smaller can use AS2. The
        FDA ESG AS2 path has a documented 1 GB message limit. */
@@ -469,10 +475,11 @@ export class FdaEsgGateway implements SubmissionGateway {
         signaturePem: signAs2Body(body, creds.clientKeyPem),
       });
 
-      const response = await postAs2(
-        creds.endpointUrl, headers, body,
-        creds.clientCertPem, creds.clientKeyPem, creds.fdaCertPem,
-      );
+      const response = await postAs2({
+        endpoint: creds.endpointUrl, headers, body,
+        clientCertPem: creds.clientCertPem, clientKeyPem: creds.clientKeyPem,
+        agencyCertPem: creds.fdaCertPem, errorPrefix: 'ESG AS2 POST',
+      });
       // The MDN's own Message-ID when FDA sends one; otherwise the AS2 message
       // the MDN is verified (below) to acknowledge.
       const mdnId =

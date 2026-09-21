@@ -1,0 +1,15 @@
+# tsc --noEmit over the W5-changed files and their transitive imports (2026-09-20)
+total errors in the transitive closure (pre-existing, other files): 7
+errors in W5-changed files: 0
+
+## errors attributed to W5 files (expected: none)
+(none)
+
+## first 15 pre-existing errors elsewhere in the closure, for the record
+server/services/concept2cure/governedDocumentContractService.ts(254,66): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(551,38): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(551,60): error TS2339: Property 'userEmail' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(608,30): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(674,30): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.

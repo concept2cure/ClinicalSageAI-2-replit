@@ -214,6 +214,12 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
         region: 'fda', applicationId: 'IND000009', sequence: '0000', submissionType: 'IND',
         sponsorId: 'IND000009', sponsorName: 'Sponsor', productName: 'Product',
         outputDir: path.join(work, 'out'), environment: 'staging',
+        // The manifest md5 is of the SHIPPED bytes. With Ghostscript on the
+        // host the PDF/A pass rewrites them and md5(pdf('general')) no longer
+        // matches — the packager is right and this assertion would be wrong.
+        // Skip conversion so raw == shipped; the checksum-of-shipped-bytes
+        // behaviour under conversion is the "stale leaf.md5" case below.
+        skipPdfaConversion: true,
         leaves: [{
           ctdSection: '3.2.S.1', operation: 'new', sourcePath: docPath, fileName: 'general.pdf',
           title: 'Drug Substance — General Information', md5: md5(pdf('general')),
@@ -352,6 +358,9 @@ describe('package layout — Module 1 leaves reach the regional backbone', () =>
         fda: { applicationType: 'ind' },
         sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
         environment: 'staging',
+        // Same reason as the manifest case: this test asserts the input md5
+        // appears in the backbone, which only holds when shipped == raw.
+        skipPdfaConversion: true,
         leaves: [
           // Exactly what the forms panel writes for a sponsor-completed form.
           { ctdSection: 'm1.1', fileName: 'form-fda-1571.pdf', title: 'Form FDA 1571', operation: 'new', sourcePath: formPath, md5: md5(formBytes) },

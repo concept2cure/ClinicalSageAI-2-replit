@@ -1,0 +1,145 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 2 — raw MDN persistence > persists the raw MDN body on the AS2 receipt UPDATE 7ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 2 — raw MDN persistence > downloadAcknowledgment returns the persisted raw MDN verbatim when present 3ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 2 — raw MDN persistence > falls back to a LABELLED platform record for pre-fix rows (mdn_raw=NULL) 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > checkStatus — says where the status came from > reports source=stored: FDA ESG re-reads its own row and does not ask the agency 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > SFTP path — the application number is required, never invented > refuses an over-1GB bundle with no application number before any transmittal row exists 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > SFTP path — the application number is required, never invented > refuses an UNASSIGNED placeholder application number 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > a failed disposition records the transmittal rejected, keeps the raw MDN, and throws 3ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > processed/error is a refusal; processed/warning is an acceptance 14ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an MDN for a different message is refused 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > a body with no disposition at all is refused 3ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 6 — rollbackTransmittal governed action > flips status to rolled_back AND records a transmittal_rollback governed action 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 6 — rollbackTransmittal governed action > refuses with RollbackNotPermittedError when the row has not shipped (pending) 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 6 — rollbackTransmittal governed action > refuses with RollbackNotPermittedError when the row is already rolled_back 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 7 — findActiveTransmittal lookup > returns the existing active row for (org, package_id, bundle_sha256) 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 7 — findActiveTransmittal lookup > returns null when no active row exists in THIS tenant (cross-tenant double-transmit allowed) 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > FIX 7 — findActiveTransmittal lookup > returns null when no packageId is supplied (lock surface only covers packaged transmits) 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > refuses to transmit a not-ready message (readiness gating) in any env 6ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > refuses a not-ready message even in production 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > throws in production with no gateway configured (never fakes an ACK) 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > audits a production refusal as not-configured 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > returns a deterministic simulated receipt outside production 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > does not use Date.now() for the asserted timestamp (injectable clock) 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport fail-closed > with a gateway configured, no longer refuses as not-implemented: the real call is attempted 4ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > puts the E2B message on the wire as a signed AS2 envelope and reports transmitted only on an accepting MDN 23ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > signs the body with the sponsor key (a real RSA-SHA256 signature, verifiable with the public key) 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses — typed, audited — when the agency answers non-2xx 3ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses a 2xx whose MDN rejects the message — a 200 is not an acceptance 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses a 2xx whose MDN acknowledges a different message 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > refuses a 2xx with no MDN disposition at all 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > surfaces a socket failure as a transport-stage refusal, audited 2ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — AS2 (configured gateway attempts the real transport) > with an AS2 config missing its key or agency AS2 id, refuses BEFORE any network call and names the variables 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > is selected when only a password is configured, sends Basic auth, and reports the gateway receipt id 1ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > refuses a 2xx that carries no receipt identifier — delivery it cannot cite is not recorded 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > refuses a non-2xx 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > ICSR gateway transport — HTTPS Basic upload > a password config with no username refuses before the wire and names the variable 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns null when no URL is set 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns null when a URL is set but no credentials 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns config when URL + password are present 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > returns config when URL + cert path are present 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > carries the AS2 identity variables and an explicit protocol override 0ms
+ ✓ server/services/ind-lifecycle/__tests__/icsr-gateway-transport.test.ts > resolveGatewayConfig > ignores an unrecognised protocol value rather than guessing a third transport 0ms
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts > executeGovernedTransmit — the sign is an electronic signature > writes the electronic_signatures row inside the ledger transaction with the declared meaning and the bundle digest 11ms
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts > executeGovernedTransmit — the sign is an electronic signature > records the weaker factors honestly when only a password was verified 1ms
+ ✓ server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts > executeGovernedTransmit — the sign is an electronic signature > rolls the ledger transaction back and reports ledgerWriteFailed when the signature row cannot be written 4ms
+stdout | server/services/submission-gateways/__tests__/transmit-authorization.test.ts
+{
+  "timestamp": "2026-09-20T23:54:34.027Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-20T23:54:34.028Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/transmit-authorization.test.ts
+{
+  "timestamp": "2026-09-20T23:54:34.029Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/submission-gateways/__tests__/transmit-authorization.test.ts
+[database] Database connection successful
+
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > resolveFdaEsgTransport > defaults to AS2 when unset (every existing deployment) 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > resolveFdaEsgTransport > selects REST when asked, case-insensitively, per environment prefix 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > resolveFdaEsgTransport > refuses an unrecognised value instead of falling back to AS2 silently 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > loadFdaRestCredentials > names every missing REST variable 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > loadFdaRestCredentials > uses the staging prefix for staging 0ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > no credentials → CredentialError naming the REST variables; nothing inserted, no socket 2ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > credentials present → typed UnverifiedTransportError, transmitted:false, no row, no socket, no identifier 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > the staging environment reads the FDA_ESG_STAGING_* REST variables 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-rest-transport.test.ts > FdaEsgGateway with FDA_ESG_TRANSPORT=rest > with the variable unset the AS2 path is still the one taken (CredentialError names the AS2 vars) 5ms
+stderr | server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > lets a properly authorized request through the guard to the gateway
+{
+  "timestamp": "2026-09-20T23:54:34.343Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/submission-gateways/fda-esg.ts:263:31",
+    "queryPreview": "INSERT INTO submission_transmittals ( organization_id, program_id, package_id, region, gateway, format, submission_type, transport, bundle_path, bundle_sha25...",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > does not gate the read-only operations
+{
+  "timestamp": "2026-09-20T23:54:34.344Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/submission-gateways/fda-esg.ts:549:33",
+    "queryPreview": "SELECT transmission_id, status, ack_received_at FROM submission_transmittals WHERE id = $1 AND region = 'fda' AND gateway = 'esg'",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses a transmit with no authorization at all 2ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > explains why, and points at the governed route 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses every region, not only FDA 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses an authorization of an unrecognised kind 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses governed-http without a reason, an actor, or a verified re-auth time 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > refuses governed-signature without a signature id 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > lets a properly authorized request through the guard to the gateway 13ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the transmit authorization guard > does not gate the read-only operations 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > is labelled as a platform record, not an agency acknowledgement 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > names who generated it and says it is not proof of receipt 5ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > never heads itself "<Agency> Acknowledgement" — the old shape 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > still carries the agency-issued identifiers it legitimately holds 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > the platform transmittal record > is honest about a transmission the gateway never acknowledged 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > acknowledgement filenames > marks a platform record in the filename, which outlives the page 0ms
+ ✓ server/services/submission-gateways/__tests__/transmit-authorization.test.ts > acknowledgement filenames > names a genuine agency artefact as one 0ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 2025ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 5ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 3ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 4ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace 1ms
+ ✓ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled 1ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts > FdaEsgGateway SFTP transmit — no fabricated ACK > reports in_transit (not received) and a null ack after a bare SFTP upload 4ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-sftp-ack.test.ts > FdaEsgGateway SFTP transmit — no fabricated ACK > does not stamp an ack_received_at on the transmittal row at upload time 2ms
+
+ Test Files  7 passed (7)
+      Tests  81 passed (81)
+   Start at  23:54:31
+   Duration  3.51s (transform 4.42s, setup 294ms, import 6.04s, tests 2.46s, environment 1ms)
+
+exit=0

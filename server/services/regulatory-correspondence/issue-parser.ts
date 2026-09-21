@@ -1,5 +1,11 @@
 import crypto from 'node:crypto';
 import type { CorrespondenceIssue } from '@shared/types/regulatory-correspondence';
+import {
+  DEVICE_ISSUE_TAXONOMY,
+  devicePathwayFor,
+  isDeviceSubmissionType,
+  type DeviceIssueRule,
+} from './device-issue-taxonomy';
 
 export const ISSUE_PARSER_RESPONSE_CONTRACT = 'governed_heuristic_mode_v1' as const;
 export const ISSUE_PARSER_VERSION = 'governed-parser-pipeline-v1' as const;
@@ -180,15 +186,66 @@ export function resolveIssueParserGovernanceConfig(env: NodeJS.ProcessEnv): Issu
   };
 }
 
-export function runGovernedIssueParser(text: string, correspondenceId: string): IssueExtractionResult {
+/**
+ * What the letter is ABOUT, so the right half of the taxonomy answers it.
+ *
+ * Optional, and omitting it reproduces the pre-2026-09-20 behaviour exactly:
+ * the drug/CTD taxonomy, unchanged. Every existing caller therefore keeps its
+ * results byte-for-byte until it opts in.
+ */
+export interface IssueParserContext {
+  /** `c2c_submissions.submission_type` — '510k', 'de_novo', 'pma', 'nda' … */
+  submissionType?: string | null;
+}
+
+/**
+ * A device rule projected onto the shape the extractor already consumes, with
+ * its section candidates resolved for THIS submission's pathway.
+ *
+ * A device pathway with no seeded rule pack (PMA, IDE, Q-Sub, 513(g)) resolves
+ * to no candidates rather than borrowing 510(k)'s — the keys collide across
+ * packs (510(k) D5 is shelf life; De Novo D5 is cybersecurity), so a borrowed
+ * key is not an approximation, it is a different section.
+ */
+function deviceRuleToMatch(rule: DeviceIssueRule, pathway: ReturnType<typeof devicePathwayFor>) {
+  return {
+    pattern: rule.pattern,
+    category: rule.category,
+    severity: rule.severity,
+    blocker: rule.blocker,
+    regulatorAskType: rule.regulatorAskType,
+    impactedSubmissionComponent: rule.impactedSubmissionComponent,
+    sectionCandidates: (pathway && rule.sections[pathway]) || [],
+    ownerFunction: rule.ownerFunction,
+    responsePackageType: rule.responsePackageType,
+    evidenceNeeds: rule.evidenceNeeds,
+    subcategory: rule.topic,
+  };
+}
+
+export function runGovernedIssueParser(
+  text: string,
+  correspondenceId: string,
+  context: IssueParserContext = {},
+): IssueExtractionResult {
   const normalized = text || '';
   const sourceTextDigest = crypto.createHash('sha256').update(normalized).digest('hex');
-  const matches = KEYWORD_TAXONOMY.filter(rule => rule.pattern.test(normalized));
+  /* ONE parser, two taxonomies, selected by what the letter is about — not two
+     parsers. A device letter run through the CTD rules produced sections a
+     510(k) does not have (measured: a CDRH AI letter returned CTD 2.5 / 2.7.4
+     and nothing else), and a drug letter run through the device rules would do
+     the mirror image. */
+  const device = isDeviceSubmissionType(context.submissionType);
+  const pathway = device ? devicePathwayFor(context.submissionType) : null;
+  const taxonomy = device
+    ? DEVICE_ISSUE_TAXONOMY.map(r => deviceRuleToMatch(r, pathway))
+    : KEYWORD_TAXONOMY;
+  const matches = taxonomy.filter(rule => rule.pattern.test(normalized));
   const deterministicSignals = matches.map(
     m => `${m.category}:${m.regulatorAskType}:${m.impactedSubmissionComponent}`
   );
 
-  const issues = (!matches.length
+  const issues: CorrespondenceIssue[] = (!matches.length
     ? [{
         id: crypto.randomUUID(),
         correspondenceId,
@@ -213,34 +270,48 @@ export function runGovernedIssueParser(text: string, correspondenceId: string): 
           humanReviewRequired: true,
         },
       }]
-    : matches.map(match => ({
-        id: crypto.randomUUID(),
-        correspondenceId,
-        category: match.category,
-        severity: match.severity,
-        blocker: match.blocker,
-        responseRequired: true,
-        sourceExcerpt: normalized.slice(0, 280),
-        confidence: match.blocker ? 0.78 : 0.63,
-        humanReviewStatus: 'pending' as const,
-        mappedCtdSections: match.sectionCandidates,
-        mappedArtifactIds: [],
-        resolutionStatus: 'open' as const,
-        owner: match.ownerFunction,
-        structuredExtraction: {
-          regulatorAskType: match.regulatorAskType,
-          impactedSubmissionComponent: match.impactedSubmissionComponent,
-          sectionCandidates: match.sectionCandidates,
-          recommendedOwnerFunction: match.ownerFunction,
-          recommendedResponsePackageType: match.responsePackageType,
-          evidenceNeeds: match.evidenceNeeds,
-          confidenceTrace: [
-            { signal: `rule_match:${match.category}`, score: 0.6, deterministic: true },
-            { signal: `severity:${match.severity}`, score: 0.2, deterministic: true },
-          ],
-          humanReviewRequired: true,
-        },
-      }))) satisfies CorrespondenceIssue[];
+    : matches.map(match => {
+        // `in`-narrowing across the union `taxonomy` resolves to after the
+        // device/keyword ternary and `.filter` loses precision on
+        // `match.subcategory`'s type (only DEVICE_ISSUE_TAXONOMY rows carry
+        // one), so TS could not tell this spread's value apart from `{}`. A
+        // `typeof` guard on an explicitly-typed local sidesteps that and
+        // changes nothing at runtime — device rows still contribute their
+        // topic, keyword rows still contribute nothing.
+        const subcategory: string | undefined =
+          'subcategory' in match && typeof match.subcategory === 'string'
+            ? match.subcategory
+            : undefined;
+        return {
+          id: crypto.randomUUID(),
+          correspondenceId,
+          category: match.category,
+          ...(subcategory !== undefined ? { subcategory } : {}),
+          severity: match.severity,
+          blocker: match.blocker,
+          responseRequired: true,
+          sourceExcerpt: normalized.slice(0, 280),
+          confidence: match.blocker ? 0.78 : 0.63,
+          humanReviewStatus: 'pending' as const,
+          mappedCtdSections: match.sectionCandidates,
+          mappedArtifactIds: [],
+          resolutionStatus: 'open' as const,
+          owner: match.ownerFunction,
+          structuredExtraction: {
+            regulatorAskType: match.regulatorAskType,
+            impactedSubmissionComponent: match.impactedSubmissionComponent,
+            sectionCandidates: match.sectionCandidates,
+            recommendedOwnerFunction: match.ownerFunction,
+            recommendedResponsePackageType: match.responsePackageType,
+            evidenceNeeds: match.evidenceNeeds,
+            confidenceTrace: [
+              { signal: `rule_match:${match.category}`, score: 0.6, deterministic: true },
+              { signal: `severity:${match.severity}`, score: 0.2, deterministic: true },
+            ],
+            humanReviewRequired: true,
+          },
+        };
+      }));
 
   return {
     issues,

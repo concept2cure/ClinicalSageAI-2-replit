@@ -1,0 +1,106 @@
+
+=== 510k-device ← eSTAR-510k-non-ivd.pdf (5280666 bytes, sha256 73de2f1e89546654cdb5cb4203c86e6368fccfcb975dd6e637f399072f0edb92)
+Trying to parse invalid object: {"line":3,"column":16,"offset":16})
+Invalid object ref: 272 0 R
+Trying to parse invalid object: {"line":11,"column":16,"offset":576})
+Invalid object ref: 273 0 R
+Trying to parse invalid object: {"line":19,"column":16,"offset":831})
+Invalid object ref: 274 0 R
+Trying to parse invalid object: {"line":27,"column":16,"offset":1342})
+Invalid object ref: 275 0 R
+Trying to parse invalid object: {"line":61,"column":16,"offset":4641})
+Invalid object ref: 276 0 R
+Trying to parse invalid object: {"line":77,"column":16,"offset":7125})
+Invalid object ref: 277 0 R
+pdf-lib: AcroForm present: false | NeedsRendering: n/a | /XFA present: false
+Trying to parse invalid object: {"line":3,"column":16,"offset":16})
+Invalid object ref: 272 0 R
+Trying to parse invalid object: {"line":11,"column":16,"offset":576})
+Invalid object ref: 273 0 R
+Trying to parse invalid object: {"line":19,"column":16,"offset":831})
+Invalid object ref: 274 0 R
+Trying to parse invalid object: {"line":27,"column":16,"offset":1342})
+Invalid object ref: 275 0 R
+Trying to parse invalid object: {"line":61,"column":16,"offset":4641})
+Invalid object ref: 276 0 R
+Trying to parse invalid object: {"line":77,"column":16,"offset":7125})
+Invalid object ref: 277 0 R
+pdf-lib listAcroFields(): 0 AcroForm fields
+isDynamicXfaPdf(): true
+listXfaFields(): 1318 XFA fields declared; 522 present in datasets skeleton
+field map: 20 canonical keys
+fillXfaDatasets: filled=20 skipped=0 warnings=0
+  OK   deviceTradeName                  root.AdministrativeDocumentation.PMNSummary.SSTextField220 [declared] "Device Trade Name"
+  OK   deviceCommonName                 root.AdministrativeDocumentation.PMNSummary.SSTextField230 [declared] "Common Name"
+  OK   deviceClassificationName         root.AdministrativeDocumentation.PMNSummary.SSTextField240 [declared] "Classification Name"
+  OK   regulationNumber                 root.AdministrativeDocumentation.PMNSummary.SSTextField250 [declared] "Regulation Number"
+  OK   productCodes                     root.AdministrativeDocumentation.PMNSummary.SSTextField260 [declared] "Product Code(s)"
+  OK   productCodes                     root.Classification.USAKnownClassification.DDDropDownList517 [declared] "Product Code(s)"
+  OK   associatedProductCodes           root.Classification.USAKnownClassification.DDTextField517a [declared] "Associated Product Code(s)"
+  OK   applicantCompanyName             root.AdministrativeInformation.ApplicantInformation.ADTextField210 [declared] "Company Name"
+  OK   applicantContactEmail            root.AdministrativeInformation.ApplicantInformation.ADTextField160 [declared] "Email"
+  OK   applicantContactTelephone        root.AdministrativeDocumentation.PMNSummary.SSTextField130 [declared] "Applicant Contact Telephone"
+  OK   applicantSummaryEmail            root.AdministrativeDocumentation.PMNSummary.SSTextField150 [declared] "Applicant Contact Email"
+  OK   correspondentCompanyName         root.AdministrativeInformation.CorrespondentInformation.ADTextField410 [declared] "Company Name"
+  OK   correspondentContactEmail        root.AdministrativeInformation.CorrespondentInformation.ADTextField360 [declared] "Email"
+  OK   correspondentTelephone           root.AdministrativeDocumentation.PMNSummary.SSTextField180 [declared] "Correspondent Contact Telephone"
+  OK   correspondentSummaryEmail        root.AdministrativeDocumentation.PMNSummary.SSTextField200 [declared] "Correspondent Contact Email"
+  OK   predicateSubmissionNumber        root.PredicatesSE.PredicateReference.ADTextField830 [declared] "Predicate Submission Number (e.g., K210001)"
+  OK   predicateDeviceTradeName         root.PredicatesSE.PredicateReference.ADTextField840 [declared] "Predicate Device Trade Name"
+  OK   declarationCompanyName           root.AdministrativeDocumentation.DoC.DCTextField120 [declared] "Company Name"
+  OK   declarationCompanyAddress        root.AdministrativeDocumentation.DoC.DCTextField130 [declared] "Company Address"
+  OK   declarationDeviceTradeName       root.AdministrativeDocumentation.DoC.DCTextField140 [declared] "Device Trade Name"
+  OK   declarationDeviceTradeName       root.DeviceDescription.Devices.Device.TradeName [declared] "Device Trade Name"
+  OK   indicationsForUseCitation        root.Labeling.SpecificLabeling.LBTextField130 [declared] "Please specifically cite the attachment and page number where the Indications for Use ex"
+read-back: 22 paths match, 0 mismatches; original template bytes preserved as prefix: true; output 5285100 bytes
+
+=== 510k-ivd ← eSTAR-510k-ivd.pdf (5525244 bytes, sha256 90d936495e415f6f63f9202c0db15ecffb041df60c5faecc57bc468559c1594f)
+Trying to parse invalid object: {"line":3,"column":16,"offset":16})
+Invalid object ref: 319 0 R
+Trying to parse invalid object: {"line":11,"column":16,"offset":576})
+Invalid object ref: 320 0 R
+Trying to parse invalid object: {"line":17,"column":16,"offset":831})
+Invalid object ref: 321 0 R
+Trying to parse invalid object: {"line":55,"column":16,"offset":4194})
+Invalid object ref: 322 0 R
+Trying to parse invalid object: {"line":79,"column":16,"offset":6710})
+Invalid object ref: 323 0 R
+pdf-lib: AcroForm present: false | NeedsRendering: n/a | /XFA present: false
+Trying to parse invalid object: {"line":3,"column":16,"offset":16})
+Invalid object ref: 319 0 R
+Trying to parse invalid object: {"line":11,"column":16,"offset":576})
+Invalid object ref: 320 0 R
+Trying to parse invalid object: {"line":17,"column":16,"offset":831})
+Invalid object ref: 321 0 R
+Trying to parse invalid object: {"line":55,"column":16,"offset":4194})
+Invalid object ref: 322 0 R
+Trying to parse invalid object: {"line":79,"column":16,"offset":6710})
+Invalid object ref: 323 0 R
+pdf-lib listAcroFields(): 0 AcroForm fields
+isDynamicXfaPdf(): true
+listXfaFields(): 1577 XFA fields declared; 606 present in datasets skeleton
+field map: 19 canonical keys
+fillXfaDatasets: filled=19 skipped=0 warnings=0
+  OK   deviceTradeName                  root.AdministrativeDocumentation.PMNSummary.SSTextField220 [declared] "Device Trade Name"
+  OK   deviceCommonName                 root.AdministrativeDocumentation.PMNSummary.SSTextField230 [declared] "Common Name"
+  OK   deviceClassificationName         root.AdministrativeDocumentation.PMNSummary.SSTextField240 [declared] "Classification Name"
+  OK   regulationNumber                 root.AdministrativeDocumentation.PMNSummary.SSTextField250 [declared] "Regulation Number"
+  OK   productCodes                     root.AdministrativeDocumentation.PMNSummary.SSTextField260 [declared] "Product Code(s)"
+  OK   productCodes                     root.Classification.USAKnownClassification.DDDropDownList517 [declared] "Product Code(s)"
+  OK   associatedProductCodes           root.Classification.USAKnownClassification.DDTextField517a [declared] "Associated Product Code(s)"
+  OK   applicantCompanyName             root.AdministrativeInformation.ApplicantInformation.ADTextField210 [declared] "Company Name"
+  OK   applicantContactEmail            root.AdministrativeInformation.ApplicantInformation.ADTextField160 [declared] "Email"
+  OK   applicantContactTelephone        root.AdministrativeDocumentation.PMNSummary.SSTextField130 [declared] "Applicant Contact Telephone"
+  OK   applicantSummaryEmail            root.AdministrativeDocumentation.PMNSummary.SSTextField150 [declared] "Applicant Contact Email"
+  OK   correspondentCompanyName         root.AdministrativeInformation.CorrespondentInformation.ADTextField410 [declared] "Company Name"
+  OK   correspondentContactEmail        root.AdministrativeInformation.CorrespondentInformation.ADTextField360 [declared] "Email"
+  OK   correspondentTelephone           root.AdministrativeDocumentation.PMNSummary.SSTextField180 [declared] "Correspondent Contact Telephone"
+  OK   correspondentSummaryEmail        root.AdministrativeDocumentation.PMNSummary.SSTextField200 [declared] "Correspondent Contact Email"
+  OK   predicateSubmissionNumber        root.PredicatesSE.PredicateReference.ADTextField830 [declared] "Predicate Submission Number (e.g., K210001)"
+  OK   predicateDeviceTradeName         root.PredicatesSE.PredicateReference.ADTextField840 [declared] "Predicate Device Trade Name"
+  OK   declarationCompanyName           root.AdministrativeDocumentation.DoC.DCTextField120 [declared] "Company Name"
+  OK   declarationCompanyAddress        root.AdministrativeDocumentation.DoC.DCTextField130 [declared] "Company Address"
+  OK   declarationDeviceTradeName       root.AdministrativeDocumentation.DoC.DCTextField140 [declared] "Device Trade Name"
+  OK   declarationDeviceTradeName       root.DeviceDescription.Devices.Device.TradeName [declared] "Device Trade Name"
+read-back: 21 paths match, 0 mismatches; original template bytes preserved as prefix: true; output 5530062 bytes
+exit=0

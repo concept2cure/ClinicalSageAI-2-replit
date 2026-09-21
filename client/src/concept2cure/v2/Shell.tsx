@@ -61,6 +61,7 @@ import {
 } from './registryModel';
 import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
 import {
+  isLaunchScopeLocked,
   isLocked,
   lockShortReason,
   useNavEntitlements,
@@ -206,8 +207,13 @@ export function Rail({
    * rendered at all — not greyed out, not present-but-empty. A visible entry for
    * a capability the deployment does not have is worse than no entry.
    */
-  const railVisible = (s: { id: string }) =>
-    s.id === 'crl-library' ? isClinicalRegulatoryGraphEnabled() : true;
+  const railVisible = (s: { id: string; target?: string }) => {
+    if (s.id === 'crl-library' && !isClinicalRegulatoryGraphEnabled()) return false;
+    /* Launch scope is a release boundary, not a licence: a greyed rail entry
+       for an app nobody can enable is a dead affordance. The entry is not
+       rendered; the Apps catalog still lists the app with the reason. */
+    return !isLaunchScopeLocked(verdictFor(s.target ?? s.id));
+  };
   const navItem = (s: { id: string; label: string; icon: string; badge?: string; count?: number; target?: string }) => {
     const target = s.target ?? s.id;
     /* Entitlement is keyed on the DESTINATION, not the rail entry: "Recent
@@ -296,15 +302,15 @@ export function Rail({
           ))}
         </div>
         <div className="rail-section">Workspace</div>
-        <div className="rail-nav">{RAIL_CORE.map(navItem)}</div>
+        <div className="rail-nav">{RAIL_CORE.filter(railVisible).map(navItem)}</div>
         <div className="rail-section">Science &amp; intelligence</div>
         {/* `crl-library` is gated by ENABLE_CLINICAL_REGULATORY_GRAPH — flag off
             and the rail entry is absent entirely, not disabled or empty. */}
         <div className="rail-nav">{RAIL_SPECIALIST.filter(railVisible).map(navItem)}</div>
         <div className="rail-section">Explore</div>
-        <div className="rail-nav">{RAIL_EXPLORE.map(navItem)}</div>
+        <div className="rail-nav">{RAIL_EXPLORE.filter(railVisible).map(navItem)}</div>
         <div className="rail-section">Quick access</div>
-        <div className="rail-nav">{RAIL_QUICK.map(navItem)}</div>
+        <div className="rail-nav">{RAIL_QUICK.filter(railVisible).map(navItem)}</div>
       </div>
       <div className="rail-foot">
         <button

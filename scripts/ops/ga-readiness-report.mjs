@@ -453,36 +453,66 @@ for (const [id, label, varName, module] of [
 // ── 3. Agency credentials ───────────────────────────────────────────────────
 
 for (const gw of GATEWAY_CREDENTIALS) {
-  const missing = missingVars(gw.vars);
+  // W5 2026-09-20 (B16): FDA ESG has a second transport option. With
+  // FDA_ESG_TRANSPORT=rest the gateway reads the REST (NextGen) variables, and
+  // even fully provisioned it REFUSES to transmit (UnverifiedTransportError)
+  // until the NextGen wire contract is verified in FDA's UAT — so that
+  // configuration is reported blocked, with the reason, never ready.
+  const esgTransport = gw.key === 'fda:esg' ? (process.env.FDA_ESG_TRANSPORT ?? 'as2').trim().toLowerCase() : null;
+  const restSelected = esgTransport === 'rest';
+  const vars = restSelected
+    ? ['FDA_ESG_REST_URL', 'FDA_ESG_REST_CLIENT_ID', 'FDA_ESG_REST_CLIENT_SECRET', 'FDA_ESG_REST_SUBMITTER_ID']
+    : gw.vars;
+  const missing = missingVars(vars);
+  const badTransport = esgTransport !== null && esgTransport !== 'as2' && esgTransport !== 'rest';
   record({
     id: `gateway:${gw.key}`,
     group: 'Agency gateway credentials (production)',
-    label: gw.label,
-    status: missing.length === 0 ? 'ready' : 'blocked',
+    label: restSelected ? `${gw.label} — transport: rest (NextGen)` : gw.label,
+    status: missing.length === 0 && !restSelected && !badTransport ? 'ready' : 'blocked',
     // Only FDA ESG is on a GA critical path; the rest are per-market expansion.
     severity: gw.key === 'fda:esg' ? 'blocker' : 'advisory',
-    observed: missing.length === 0 ? `all ${gw.vars.length} credential vars set` : `missing: ${missing.join(', ')}`,
+    observed: badTransport
+      ? `FDA_ESG_TRANSPORT='${esgTransport}' is not 'as2' or 'rest'; the gateway refuses every transmit as a configuration error`
+      : missing.length === 0
+        ? (restSelected
+            ? `all ${vars.length} REST credential vars set — but the ESG NextGen wire contract is unverified; transmit raises UnverifiedTransportError (transmitted:false) until FDA UAT completes`
+            : `all ${vars.length} credential vars set`)
+        : `missing: ${missing.join(', ')}`,
     gate: 'server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()',
     owner: 'Regulatory Ops (agency account) + Ops (secrets manager)',
-    unblock: 'Register with the agency, obtain the credentials, load them into the production secrets manager.',
+    unblock: restSelected
+      ? 'Set FDA_ESG_TRANSPORT=as2 with the AS2 credentials for the verified path, or complete the ESG NextGen REST UAT and replace transmitViaNextGenRest in fda-esg.ts.'
+      : 'Register with the agency, obtain the credentials, load them into the production secrets manager.',
   });
 }
 
 {
+  // W5 2026-09-20 (runbook B7): the transport client IS implemented now —
+  // transmitIcsr attempts the real AS2 (shared as2-transport) or HTTPS Basic
+  // call whenever a gateway is configured, and refuses (typed) otherwise. This
+  // row therefore reads like the other credential rows: present ⇒ ready.
   const url = isSet('ICSR_GATEWAY_URL');
-  const creds = isSet('ICSR_GATEWAY_PASSWORD') || isSet('ICSR_GATEWAY_CERT_PATH');
+  const cert = isSet('ICSR_GATEWAY_CERT_PATH');
+  const password = isSet('ICSR_GATEWAY_PASSWORD');
+  const protocol = (process.env.ICSR_GATEWAY_PROTOCOL ?? '').trim().toLowerCase() || (cert ? 'as2' : 'https');
+  const needed = protocol === 'as2'
+    ? ['ICSR_GATEWAY_URL', 'ICSR_GATEWAY_USERNAME', 'ICSR_GATEWAY_CERT_PATH', 'ICSR_GATEWAY_KEY_PATH', 'ICSR_GATEWAY_AS2_TO']
+    : ['ICSR_GATEWAY_URL', 'ICSR_GATEWAY_USERNAME', 'ICSR_GATEWAY_PASSWORD'];
+  const missing = missingVars(needed);
   record({
     id: 'icsr-gateway',
     group: 'Agency gateway credentials (production)',
     label: 'E2B(R3) ICSR gateway',
-    status: 'blocked',
+    status: missing.length === 0 ? 'ready' : 'blocked',
     severity: 'advisory',
     observed:
-      `ICSR_GATEWAY_URL ${url ? 'set' : 'not set'}, credentials ${creds ? 'set' : 'not set'} — ` +
-      'NOTE: credentials alone do not unblock this; the transport client itself is not implemented',
-    gate: 'server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — throws "transport client is not implemented" whenever a gateway IS configured',
-    owner: 'Engineering (build the AS2/SFTP client) + Regulatory Ops (credentials)',
-    unblock: 'Implement the ICSR transport client, THEN provision ICSR_GATEWAY_URL + password/cert.',
+      `ICSR_GATEWAY_URL ${url ? 'set' : 'not set'}, credentials ${cert || password ? 'set' : 'not set'} ` +
+      `(protocol ${protocol}) — ` +
+      (missing.length === 0 ? `all ${needed.length} vars set` : `missing: ${missing.join(', ')}`),
+    gate: 'server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — configured ⇒ real AS2/HTTPS call (transmitted only on an accepting 2xx); unconfigured ⇒ IcsrGatewayNotConfiguredError in production',
+    owner: 'Regulatory Ops (agency gateway account + AS2 identity/certs) + Ops (secrets manager)',
+    unblock: 'Provision ICSR_GATEWAY_URL + (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_CERT_PATH, ICSR_GATEWAY_KEY_PATH, ICSR_GATEWAY_AS2_TO) for AS2, or (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD) for an HTTPS upload endpoint; then round-trip one ICSR in the agency test environment.',
   });
 }
 
@@ -679,19 +709,34 @@ record({
 }
 
 {
-  const pii = flag('AI_PII_ENFORCEMENT') || 'audit (default)';
-  const grounded = flag('AI_GROUNDEDNESS_ENFORCE');
-  const ok = pii === 'block' && (grounded === '1' || grounded === 'true');
+  // Resolved the way the PRODUCTION boot resolves it (2026-09-20): unset is
+  // strict for both gates; an explicit permissive value refuses to boot unless
+  // AI_GOVERNANCE_ACCEPT_PERMISSIVE=true records the accepted risk. This row
+  // therefore reads the configured values through that rule, not the raw text.
+  const piiRaw = (flag('AI_PII_ENFORCEMENT') || '').toLowerCase();
+  const piiConfigured = ['off', 'audit', 'block'].includes(piiRaw) ? piiRaw : undefined;
+  const groundedRaw = flag('AI_GROUNDEDNESS_ENFORCE') || '';
+  const groundedOff = ['0', 'false', 'off'].includes(groundedRaw.toLowerCase());
+  const accepted = (flag('AI_GOVERNANCE_ACCEPT_PERMISSIVE') || '').toLowerCase() === 'true';
+  const piiPermissive = piiConfigured !== undefined && piiConfigured !== 'block';
+  const permissive = piiPermissive || groundedOff;
   record({
     id: 'ai-governance-posture',
     group: 'Observability & operational posture',
-    label: 'AI content-safety gates (AI_PII_ENFORCEMENT=block, AI_GROUNDEDNESS_ENFORCE=1)',
-    status: ok ? 'ready' : 'blocked',
+    label: 'AI content-safety gates strict in production (AI_PII_ENFORCEMENT=block, AI_GROUNDEDNESS_ENFORCE=1)',
+    status: permissive ? 'blocked' : 'ready',
     severity: 'advisory',
-    observed: `AI_PII_ENFORCEMENT="${pii}", AI_GROUNDEDNESS_ENFORCE="${grounded || '(unset)'}"`,
-    gate: 'server/startup/ai-governance-posture.ts assertAiGovernancePostureForProduction (fails closed only under AI_GOVERNANCE_REQUIRE_ENFORCE=true)',
+    observed:
+      `AI_PII_ENFORCEMENT="${piiConfigured ?? `${piiRaw || '(unset)'} → block (production default)`}", ` +
+      `AI_GROUNDEDNESS_ENFORCE="${groundedRaw || '(unset → enforced, production default)'}"` +
+      (permissive
+        ? accepted
+          ? ' — permissive, accepted via AI_GOVERNANCE_ACCEPT_PERMISSIVE=true (boots with a warning)'
+          : ' — permissive and NOT accepted: production REFUSES TO BOOT on this configuration'
+        : ''),
+    gate: 'server/startup/ai-governance-posture.ts assertAiGovernancePostureForProduction (production default strict; explicit permissive refuses to boot without AI_GOVERNANCE_ACCEPT_PERMISSIVE=true; AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses regardless)',
     owner: 'Ops + AI governance owner',
-    unblock: 'Set both gates to enforcing before any real-PHI tenant; then set AI_GOVERNANCE_REQUIRE_ENFORCE=true so the posture is boot-checked.',
+    unblock: 'Unset or set strict both gates and clear AI_GOVERNANCE_ACCEPT_PERMISSIVE; then set AI_GOVERNANCE_REQUIRE_ENFORCE=true so the posture cannot regress.',
   });
 }
 
