@@ -23,6 +23,7 @@
  * @module server/services/signature/kms-signer
  */
 
+import type { GetPublicKeyCommandInput, SignCommandInput, VerifyCommandInput } from '@aws-sdk/client-kms';
 import type { KmsSigningAlgorithm } from './signer-mode.js';
 
 export class KmsSignerError extends Error {
@@ -66,11 +67,16 @@ export interface KmsOps {
   getPublicKey(keyId: string): Promise<KmsPublicKey>;
 }
 
-/** The subset of @aws-sdk/client-kms this adapter needs. Structural, so tests can pass the real module. */
+/**
+ * The subset of @aws-sdk/client-kms this adapter needs. Structural, so tests
+ * can pass the real module; the command inputs are the SDK's own types (a
+ * type-only import, erased at runtime) so the request shape a live KMS
+ * receives is checked at compile time rather than at the first signature.
+ */
 export interface KmsSdkLike {
-  SignCommand: new (input: Record<string, unknown>) => unknown;
-  VerifyCommand: new (input: Record<string, unknown>) => unknown;
-  GetPublicKeyCommand: new (input: Record<string, unknown>) => unknown;
+  SignCommand: new (input: SignCommandInput) => unknown;
+  VerifyCommand: new (input: VerifyCommandInput) => unknown;
+  GetPublicKeyCommand: new (input: GetPublicKeyCommandInput) => unknown;
 }
 
 export interface KmsClientLike {
