@@ -1,0 +1,19 @@
+# 2026-09-20T23:58:00Z host: Linux 6.18.44-fc-v37 x86_64; gs 10.02.1; java 21.0.10 (openjdk)
+# verapdf on PATH = wrapper: java -jar cli-1.30.2.jar (Maven Central org.verapdf.apps:cli:1.30.2, sha256 287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332 — matches the vendor sidecar cli-1.30.2.jar.sha256; same install the Dockerfile performs)
+▶ PDF/A toolchain check (binaries the eCTD pipeline invokes)
+  ✓ ghostscript: /usr/bin/gs — version 10.02.1
+  ✓ verapdf: /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/e53791ae-6a3a-59c5-8827-5906a64a34f6/scratchpad/bin/verapdf — veraPDF 1.30.2
+  ✓ xmllint: /usr/bin/xmllint — xmllint: using libxml version 20914
+  ✓ sRGB ICC profile: /usr/share/color/icc/ghostscript/srgb.icc
+  ✓ rendered probe PDF (2355 bytes)
+  ✓ toolchain capability: gs (+sRGB OutputIntent) → veraPDF PDF/A-1b PASS
+  ✓ validator is discriminating: the unconverted source is rejected (FAIL)
+  ⚠ pipeline arguments (pdfa-pipeline.ts convertToPdfA1bWithGhostscript) produce a file veraPDF REJECTS for PDF/A-1b: the list has no OutputIntent (clause 6.2.3.3). The packager records converted:true on such a leaf. Product defect, not a toolchain gap — add an sRGB OutputIntent prelude to that argument list.
+✅ PDF/A toolchain present and working (gs + veraPDF + xmllint). ECTD_REQUIRE_PDFA=true is safe on this host once the pipeline-argument warning above (if any) is fixed.
+exit=0
+
+# strict mode (PDFA_CHECK_STRICT_PIPELINE_ARGS=1) turns the pipeline-argument warning into a failure:
+  ✓ validator is discriminating: the unconverted source is rejected (FAIL)
+  ✗ pipeline arguments (pdfa-pipeline.ts convertToPdfA1bWithGhostscript) produce a file veraPDF REJECTS for PDF/A-1b: the list has no OutputIntent (clause 6.2.3.3). The packager records converted:true on such a leaf. Product defect, not a toolchain gap — add an sRGB OutputIntent prelude to that argument list.
+✗ PDF/A check FAILED (see above)
+exit=1

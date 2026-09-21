@@ -23,6 +23,16 @@ WORKDIR /app
 
 # Install LibreOffice headless for DOCX-to-PDF conversion, and ocrmypdf for
 # scanned-PDF OCR (pulls in tesseract-ocr, qpdf, unpaper as dependencies).
+#
+# PDF/A toolchain (runbook blocker B15, 2026-09-20). server/services/ectd/
+# pdfa-pipeline.ts shells out to `gs` (convert to PDF/A-1b) and `verapdf`
+# (validate), and xml-validator.ts to `xmllint`; each degrades to a silent
+# no-op when its binary is absent, which is exactly what ECTD_REQUIRE_PDFA=true
+# then turns into a hard production block. ghostscript was already here;
+# libxml2-utils provides xmllint; default-jre-headless is the JRE veraPDF runs
+# on (veraPDF is Java; the CLI jar below targets Java 8+). ca-certificates is
+# explicit because curl's TLS trust is only a Recommends under
+# --no-install-recommends.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       libreoffice-common \
@@ -32,7 +42,39 @@ RUN apt-get update && \
       ocrmypdf \
       tesseract-ocr \
       curl \
+      ca-certificates \
+      default-jre-headless \
+      libxml2-utils \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# veraPDF, pinned. The veraPDF Consortium publishes the CLI as a self-contained
+# jar on Maven Central (org.verapdf.apps:cli — Main-Class
+# org.verapdf.apps.GreenfieldCliWrapper). The checksum is the value published
+# beside the artifact (cli-<version>.jar.sha256 on Maven Central), verified
+# against the downloaded bytes on 2026-09-20; a build whose download does not
+# match it FAILS rather than shipping an unverified validator. Bump the version
+# and checksum together. /usr/local/bin/verapdf is the launcher pdfa-pipeline.ts
+# (VERAPDF_BINARY, default `verapdf`) and pilot-go-no-go.mjs (VERAPDF_COMMAND)
+# both resolve from PATH.
+ARG VERAPDF_VERSION=1.30.2
+ARG VERAPDF_SHA256=287cc9c9757f99dcff4a2d39b68268245b48103fb6af443162d5a29df2afa332
+RUN set -eu; \
+    mkdir -p /opt/verapdf; \
+    curl -fsSL -o /opt/verapdf/verapdf-cli.jar \
+      "https://repo1.maven.org/maven2/org/verapdf/apps/cli/${VERAPDF_VERSION}/cli-${VERAPDF_VERSION}.jar"; \
+    echo "${VERAPDF_SHA256}  /opt/verapdf/verapdf-cli.jar" | sha256sum -c -; \
+    printf '#!/bin/sh\nexec java -Djava.awt.headless=true -jar /opt/verapdf/verapdf-cli.jar "$@"\n' \
+      > /usr/local/bin/verapdf; \
+    chmod 0755 /usr/local/bin/verapdf
+
+# Build-time proof that the toolchain the pipeline invokes is present AND works:
+# gs --version / verapdf --version / xmllint, then a real render → PDF/A-1b
+# conversion → veraPDF PASS round-trip (and a FAIL on the unconverted source,
+# so a validator that passes everything cannot pass this). An image that cannot
+# do this is not built. See scripts/ops/check-pdfa-toolchain.sh.
+COPY scripts/ops/check-pdfa-toolchain.sh /usr/local/bin/check-pdfa-toolchain
+RUN chmod 0755 /usr/local/bin/check-pdfa-toolchain && \
+    VERAPDF_EXPECTED_VERSION="${VERAPDF_VERSION}" check-pdfa-toolchain
 
 # Copy package files and npm config
 COPY package*.json .npmrc ./

@@ -301,11 +301,14 @@ assertAuditSealPostureForProduction();
 // records to stdout. A refusal a caller can catch is not a boot gate; this is.
 assertAuditChainSecretForProduction();
 
-// AI-governance boot posture: in production the two AI content-safety gates
-// (AI_PII_ENFORCEMENT, AI_GROUNDEDNESS_ENFORCE) default permissive. This warns
-// loudly (or, opt-in via AI_GOVERNANCE_REQUIRE_ENFORCE=true, fails closed) so a
-// silently-permissive posture is VISIBLE — without changing either gate's
-// runtime behaviour. No-op outside production. See
+// AI-governance boot posture (runbook B19/B20, 2026-09-20): in production the
+// two AI content-safety gates default STRICT — AI_PII_ENFORCEMENT unset means
+// 'block', AI_GROUNDEDNESS_ENFORCE unset means enforced. An explicit permissive
+// value refuses to boot unless the operator records the accepted risk with
+// AI_GOVERNANCE_ACCEPT_PERMISSIVE=true (the AUDIT_SEAL_ACCEPT_UNSEALED shape),
+// and AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses regardless of acceptance. The
+// ordering of the three variables is documented in the module header. Fires on
+// import (same contract as the asserts above). No-op outside production. See
 // server/startup/ai-governance-posture.ts.
 assertAiGovernancePostureForProduction();
 assertSensitivePlacementConfiguration();

@@ -1,0 +1,26 @@
+# GET http://127.0.0.1:5100/readyz — 2026-09-20T19:18:19Z
+# server: npx tsx server/index.ts, NODE_ENV=development, PORT=5100, SKIP_DB_STARTUP_TEST=true, ALLOW_DEV_AUTH=1
+# DATABASE_URL=APP_DATABASE_URL=postgresql://app_service:***@127.0.0.1:5432/clinicalsage_fresh (runtime role, NOT the owner)
+# HTTP 503
+{
+    "ready": false,
+    "failed": [
+        "ana"
+    ],
+    "dependencies": {
+        "database": "ok",
+        "schema": "ok",
+        "ana": "down",
+        "redis": "skipped",
+        "worker": "skipped"
+    },
+    "schemaState": "ready",
+    "anaState": "no_provider",
+    "capabilityRegistry": "seeded",
+    "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / KIMI_API_KEY) \u2014 without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE."
+}
+
+# runtime role posture (pg_roles):
+app_service|f|f|f
+# boot log readiness line:
+320:✅ Database readiness verified (3 schemas, 972 tables, authoring subsystem present)

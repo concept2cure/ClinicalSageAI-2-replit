@@ -69,6 +69,7 @@ import {
 import { C2C_MIGRATION_FILES, applyMigrationFiles } from './migration-set.mjs';
 import { resolveDatabaseUrl, sslFor, APPLY_URL_VARS } from './connection.mjs';
 import { provisionAppServiceRole } from './provision-app-role.mjs';
+import { verifyReadinessContract as verifyCoreReadinessContract } from './readiness-contract.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -192,6 +193,19 @@ async function preflight(client) {
  * rather than as an opaque rollback.
  */
 async function verifyReadinessContract(client) {
+  // The core of the contract — required schemas, the `vector` extension,
+  // CRITICAL_TABLES, SECURITY_CRITICAL_TABLES and audit.tamper_proof_log —
+  // shared with scripts/db/provision.mjs through readiness-contract.mjs. Until
+  // 2026-09-20 this step verified only the authoring half below, so a run
+  // could print "safe to roll services" on a database whose boot would record
+  // `security-critical tables missing: licenses` — the file that creates
+  // public.licenses (20260730_licensing_ip_tables.sql) is in THIS set, so the
+  // gap was invisible from install-fresh and only ever surfaced at /readyz.
+  const core = await verifyCoreReadinessContract(client, { log });
+  if (!core.ok) {
+    throw new Error(`readiness contract not met — /readyz would report schema: down.\n    ${core.failures.join('\n    ')}`);
+  }
+
   const missing = await missingTables(client, AUTHORING_SUBSYSTEM_TABLES);
   log(
     `  authoring subsystem: ${AUTHORING_SUBSYSTEM_TABLES.length - missing.length}/${AUTHORING_SUBSYSTEM_TABLES.length} tables present`,
