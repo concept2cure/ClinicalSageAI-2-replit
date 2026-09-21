@@ -1,0 +1,120 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5900/api/submissions/sequences/23/dispatch-readiness",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 22,
+    "rateLimitRetries": 0,
+    "body": {
+      "sequenceId": 23,
+      "region": "fda",
+      "sequenceStatus": "draft",
+      "validationErrors": 1,
+      "unacknowledgedShadowCriticals": 0,
+      "shadowReviewRunCount": 0,
+      "externalValidation": {
+        "configured": false,
+        "ran": false,
+        "errorCount": 0,
+        "cleared": true,
+        "blockers": []
+      },
+      "shadowReviewMissing": true,
+      "releaseSignature": {
+        "required": true,
+        "verdict": "unsigned",
+        "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:23",
+        "cleared": false
+      },
+      "gate": {
+        "cleared": false,
+        "blockers": [
+          "1 open error-severity validation finding(s) must be resolved before dispatch.",
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+          "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:23)."
+        ]
+      },
+      "freezeGate": {
+        "cleared": false,
+        "blockers": [
+          "1 open error-severity validation finding(s) must be resolved before dispatch.",
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+        ]
+      },
+      "readiness": {
+        "errors": 1,
+        "warnings": 9,
+        "infos": 0,
+        "findings": [
+          {
+            "severity": "error",
+            "code": "UNRESOLVED_DOCUMENT",
+            "sectionCode": "m5.3.5",
+            "message": "Leaf \"Protocol\" (m5.3.5) has no resolvable document — it cannot be assembled into the package."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.1",
+            "message": "Required section 1.1 has no leaf in this sequence."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.2",
+            "message": "Required section 1.2 has no leaf in this sequence."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.3",
+            "message": "Required section 1.3 has no leaf in this sequence."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.12.14",
+            "message": "Required section 1.12.14 has no leaf in this sequence."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.14",
+            "message": "Required section 1.14 has no leaf in this sequence."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.14.4",
+            "message": "Required section 1.14.4 has no leaf in this sequence."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.14.4.1",
+            "message": "Required section 1.14.4.1 has no leaf in this sequence."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.14.4.2",
+            "message": "Required section 1.14.4.2 has no leaf in this sequence."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.20",
+            "message": "Required section 1.20 has no leaf in this sequence."
+          }
+        ]
+      },
+      "leafCount": 1
+    }
+  }
+}

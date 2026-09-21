@@ -1,14 +1,15 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/governed-intelligence/contradictions/scan/1",
+    "url": "http://localhost:5900/api/governed-intelligence/contradictions/scan/1",
     "anonymous": false,
+    "identity": null,
     "body": {}
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 13,
+    "durationMs": 26,
     "rateLimitRetries": 0,
     "body": {
       "findings": [],

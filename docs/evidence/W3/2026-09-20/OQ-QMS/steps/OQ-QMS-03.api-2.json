@@ -1,14 +1,15 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5700/api/mdx/qms/documents",
+    "url": "http://localhost:5900/api/mdx/qms/documents",
     "anonymous": false,
+    "identity": null,
     "body": null
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 17,
+    "durationMs": 18,
     "rateLimitRetries": 0,
     "body": {
       "data": [
@@ -174,6 +175,64 @@
           "deleted_at": null
         },
         {
+          "id": 21,
+          "organization_id": 2,
+          "doc_number": "SOP-OQ-20260921014247",
+          "title": "OQ-006 Document control SOP 20260921014247",
+          "doc_type": "sop",
+          "category": "validation",
+          "version": "2.0",
+          "status": "draft",
+          "effective_date": "2026-09-21T00:00:00.000Z",
+          "next_review_date": "2026-10-01T00:00:00.000Z",
+          "author_id": 1,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "approval": {
+              "at": "2026-09-21T01:42:50.252+00:00",
+              "by": 42,
+              "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "5ce85adfda6b7369418940f07536b312ba6699511a3a4d12505944cdd83813c3",
+              "twoPersonRule": "enforced"
+            },
+            "lastRevision": {
+              "at": "2026-09-21T01:42:56.271898+00:00",
+              "by": 1,
+              "from": "1.0",
+              "reason": "OQ-006 step 07: periodic review found an obsolete reference"
+            }
+          },
+          "created_at": "2026-09-21T01:42:48.785Z",
+          "updated_at": "2026-09-21T01:42:56.271Z",
+          "deleted_at": null
+        },
+        {
+          "id": 25,
+          "organization_id": 2,
+          "doc_number": "SOP-OQ-20260921014742",
+          "title": "OQ-006 Document control SOP 20260921014742",
+          "doc_type": "sop",
+          "category": "validation",
+          "version": "1.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-10-01T00:00:00.000Z",
+          "author_id": 1,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {},
+          "created_at": "2026-09-21T01:47:43.590Z",
+          "updated_at": "2026-09-21T01:47:43.590Z",
+          "deleted_at": null
+        },
+        {
           "id": 3,
           "organization_id": 2,
           "doc_number": "SOP-OQ-B-20260921000339",
@@ -285,6 +344,90 @@
           "deleted_at": null
         },
         {
+          "id": 20,
+          "organization_id": 2,
+          "doc_number": "SOP-OQ-B-20260921010704",
+          "title": "OQ-006 Second SOP 20260921010704",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "retired",
+          "effective_date": null,
+          "next_review_date": "2026-09-26T00:00:00.000Z",
+          "author_id": 1,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "retired": {
+              "at": "2026-09-21T01:07:07.814326+00:00",
+              "by": 1,
+              "reason": "OQ-006 step 10: superseded by validation"
+            }
+          },
+          "created_at": "2026-09-21T01:07:06.403Z",
+          "updated_at": "2026-09-21T01:07:07.814Z",
+          "deleted_at": null
+        },
+        {
+          "id": 23,
+          "organization_id": 2,
+          "doc_number": "SOP-OQ-B-20260921014247",
+          "title": "OQ-006 Second SOP 20260921014247",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "retired",
+          "effective_date": "2026-09-21T00:00:00.000Z",
+          "next_review_date": "2026-09-26T00:00:00.000Z",
+          "author_id": 1,
+          "approver_id": 42,
+          "approved_at": "2026-09-21T01:42:55.478Z",
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {
+            "retired": {
+              "at": "2026-09-21T01:42:57.334407+00:00",
+              "by": 1,
+              "reason": "OQ-006 step 10: superseded by validation"
+            },
+            "approval": {
+              "at": "2026-09-21T01:42:55.478+00:00",
+              "by": 42,
+              "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+              "meaning": "APPROVED",
+              "bindingBasis": "qms-document-version-content-sha256",
+              "contentDigest": "088e7fa43315875e85be20a7ce5ef6187775220fc5168055d1bd648c5953b893",
+              "twoPersonRule": "enforced"
+            }
+          },
+          "created_at": "2026-09-21T01:42:51.700Z",
+          "updated_at": "2026-09-21T01:42:57.334Z",
+          "deleted_at": null
+        },
+        {
+          "id": 24,
+          "organization_id": 2,
+          "doc_number": "SOP-OQ-C-20260921014247",
+          "title": "OQ-006 Self-approval SOP 20260921014247",
+          "doc_type": "sop",
+          "category": null,
+          "version": "1.0",
+          "status": "draft",
+          "effective_date": null,
+          "next_review_date": "2026-10-21T00:00:00.000Z",
+          "author_id": 42,
+          "approver_id": null,
+          "approved_at": null,
+          "superseded_by_id": null,
+          "artifact_id": null,
+          "metadata": {},
+          "created_at": "2026-09-21T01:42:53.637Z",
+          "updated_at": "2026-09-21T01:42:53.637Z",
+          "deleted_at": null
+        },
+        {
           "id": 16,
           "organization_id": 2,
           "doc_number": "SOP-WB-20260921010026",
@@ -338,7 +481,7 @@
         }
       ],
       "meta": {
-        "count": 13
+        "count": 18
       }
     }
   }

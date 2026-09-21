@@ -1,17 +1,18 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5700/api/submissions/sequences/19/dispatch-readiness",
+    "url": "http://localhost:5900/api/submissions/sequences/23/dispatch-readiness",
     "anonymous": false,
+    "identity": null,
     "body": null
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 57,
+    "durationMs": 67,
     "rateLimitRetries": 0,
     "body": {
-      "sequenceId": 19,
+      "sequenceId": 23,
       "region": "fda",
       "sequenceStatus": "draft",
       "validationErrors": 1,
@@ -28,7 +29,7 @@
       "releaseSignature": {
         "required": true,
         "verdict": "unsigned",
-        "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:19",
+        "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:23",
         "cleared": false
       },
       "gate": {
@@ -36,7 +37,7 @@
         "blockers": [
           "1 open error-severity validation finding(s) must be resolved before dispatch.",
           "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
-          "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:19)."
+          "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:23)."
         ]
       },
       "freezeGate": {

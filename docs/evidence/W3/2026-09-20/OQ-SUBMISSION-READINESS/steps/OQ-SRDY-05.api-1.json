@@ -1,24 +1,25 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/orchestration/execute",
+    "url": "http://localhost:5900/api/orchestration/execute",
     "anonymous": false,
+    "identity": null,
     "body": {
       "templateId": "submission_readiness_review",
-      "projectId": "c89ba4c8-96c4-4379-b181-1c287787b4d6",
+      "projectId": "ab461c6b-4bd5-481f-9f78-755869f3e20b",
       "module": "ind"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 71,
+    "durationMs": 63,
     "rateLimitRetries": 0,
     "body": {
-      "executionId": "0531f814-aca3-44cb-abe9-68af6c76c8c2",
+      "executionId": "52551655-6cac-4ec2-afc4-d5ec66079fba",
       "templateId": "submission_readiness_review",
       "status": "completed",
-      "projectId": "c89ba4c8-96c4-4379-b181-1c287787b4d6",
+      "projectId": "ab461c6b-4bd5-481f-9f78-755869f3e20b",
       "organizationId": 2,
       "module": "ind",
       "steps": [
@@ -26,7 +27,7 @@
           "stepId": "inspect_project_state",
           "name": "Inspect project state",
           "status": "completed",
-          "startedAt": "2026-09-21T01:06:09.118Z",
+          "startedAt": "2026-09-21T01:42:26.421Z",
           "result": {
             "projectName": "Project",
             "projectStatus": "active",
@@ -37,28 +38,28 @@
             "taskCount": 0,
             "moduleCount": 0
           },
-          "completedAt": "2026-09-21T01:06:09.123Z",
-          "durationMs": 5
+          "completedAt": "2026-09-21T01:42:26.425Z",
+          "durationMs": 4
         },
         {
           "stepId": "inventory_documents",
           "name": "Inventory documents and artifacts",
           "status": "completed",
-          "startedAt": "2026-09-21T01:06:09.123Z",
+          "startedAt": "2026-09-21T01:42:26.425Z",
           "result": {
             "total": 0,
             "byStatus": {},
             "unrouted": 0,
             "unvalidated": 0
           },
-          "completedAt": "2026-09-21T01:06:09.124Z",
-          "durationMs": 1
+          "completedAt": "2026-09-21T01:42:26.427Z",
+          "durationMs": 2
         },
         {
           "stepId": "identify_gaps",
           "name": "Identify gaps and weaknesses",
           "status": "completed",
-          "startedAt": "2026-09-21T01:06:09.124Z",
+          "startedAt": "2026-09-21T01:42:26.427Z",
           "result": {
             "overallScore": 0,
             "status": "not_started",
@@ -73,17 +74,17 @@
             "blockers": [],
             "moduleBreakdown": []
           },
-          "completedAt": "2026-09-21T01:06:09.127Z",
-          "durationMs": 3
+          "completedAt": "2026-09-21T01:42:26.429Z",
+          "durationMs": 2
         },
         {
           "stepId": "compute_readiness",
           "name": "Compute readiness assessment",
           "status": "completed",
-          "startedAt": "2026-09-21T01:06:09.127Z",
+          "startedAt": "2026-09-21T01:42:26.429Z",
           "result": {
             "readiness": {
-              "projectId": "c89ba4c8-96c4-4379-b181-1c287787b4d6",
+              "projectId": "ab461c6b-4bd5-481f-9f78-755869f3e20b",
               "organizationId": 2,
               "module": "ind",
               "overallScore": 0,
@@ -110,11 +111,11 @@
               "blockers": [],
               "recommendations": [
                 {
-                  "id": "0b673163-8d57-4314-a4e5-0ac899f0fb53",
+                  "id": "8ca9916f-1e6a-4ef5-a06d-410e80c2f6e1",
                   "recommendationType": "next_best_action",
                   "severity": "info",
                   "targetObjectType": "project",
-                  "targetObjectId": "c89ba4c8-96c4-4379-b181-1c287787b4d6",
+                  "targetObjectId": "ab461c6b-4bd5-481f-9f78-755869f3e20b",
                   "targetObjectTitle": "Project",
                   "reason": "No critical issues found. Run a readiness review to confirm submission preparedness.",
                   "evidence": [
@@ -124,33 +125,33 @@
                   "actionPayload": {
                     "actionType": "submission_readiness_review",
                     "payload": {
-                      "projectId": "c89ba4c8-96c4-4379-b181-1c287787b4d6"
+                      "projectId": "ab461c6b-4bd5-481f-9f78-755869f3e20b"
                     }
                   },
                   "sourceType": "rules_based",
                   "confidence": null,
-                  "generatedAt": "2026-09-21T01:06:09.130Z"
+                  "generatedAt": "2026-09-21T01:42:26.430Z"
                 }
               ],
-              "assessedAt": "2026-09-21T01:06:09.130Z"
+              "assessedAt": "2026-09-21T01:42:26.430Z"
             }
           },
-          "completedAt": "2026-09-21T01:06:09.130Z",
-          "durationMs": 3
+          "completedAt": "2026-09-21T01:42:26.430Z",
+          "durationMs": 1
         },
         {
           "stepId": "generate_recommendations",
           "name": "Generate recommendations",
           "status": "completed",
-          "startedAt": "2026-09-21T01:06:09.131Z",
+          "startedAt": "2026-09-21T01:42:26.430Z",
           "result": {
             "recommendations": [
               {
-                "id": "1b0f78a3-e907-4593-bf6a-6cd9309bcb8a",
+                "id": "144da8e9-059d-46a8-ac90-2cc12d8e4429",
                 "recommendationType": "next_best_action",
                 "severity": "info",
                 "targetObjectType": "project",
-                "targetObjectId": "c89ba4c8-96c4-4379-b181-1c287787b4d6",
+                "targetObjectId": "ab461c6b-4bd5-481f-9f78-755869f3e20b",
                 "targetObjectTitle": "Project",
                 "reason": "No critical issues found. Run a readiness review to confirm submission preparedness.",
                 "evidence": [
@@ -160,12 +161,12 @@
                 "actionPayload": {
                   "actionType": "submission_readiness_review",
                   "payload": {
-                    "projectId": "c89ba4c8-96c4-4379-b181-1c287787b4d6"
+                    "projectId": "ab461c6b-4bd5-481f-9f78-755869f3e20b"
                   }
                 },
                 "sourceType": "rules_based",
                 "confidence": null,
-                "generatedAt": "2026-09-21T01:06:09.132Z"
+                "generatedAt": "2026-09-21T01:42:26.432Z"
               }
             ],
             "summary": {
@@ -177,113 +178,113 @@
               "total": 1
             }
           },
-          "completedAt": "2026-09-21T01:06:09.132Z",
-          "durationMs": 1
+          "completedAt": "2026-09-21T01:42:26.432Z",
+          "durationMs": 2
         }
       ],
       "currentStepIndex": 4,
       "progressPercent": 100,
-      "startedAt": "2026-09-21T01:06:09.079Z",
+      "startedAt": "2026-09-21T01:42:26.390Z",
       "requestedBy": {
         "userId": 1,
         "userName": "jonmichaelpsmith@gmail.com"
       },
       "auditTrail": [
         {
-          "timestamp": "2026-09-21T01:06:09.079Z",
+          "timestamp": "2026-09-21T01:42:26.390Z",
           "action": "workflow_started",
           "detail": "Started workflow: Submission Readiness Review",
           "userId": 1
         },
         {
-          "timestamp": "2026-09-21T01:06:09.118Z",
+          "timestamp": "2026-09-21T01:42:26.421Z",
           "stepId": "inspect_project_state",
           "action": "step_started",
           "detail": "Step 1: Inspect project state",
           "userId": 1
         },
         {
-          "timestamp": "2026-09-21T01:06:09.123Z",
+          "timestamp": "2026-09-21T01:42:26.425Z",
           "stepId": "inspect_project_state",
           "action": "step_completed",
           "detail": "Step completed: Inspect project state",
           "userId": 1
         },
         {
-          "timestamp": "2026-09-21T01:06:09.123Z",
+          "timestamp": "2026-09-21T01:42:26.425Z",
           "stepId": "inventory_documents",
           "action": "step_started",
           "detail": "Step 2: Inventory documents and artifacts",
           "userId": 1
         },
         {
-          "timestamp": "2026-09-21T01:06:09.124Z",
+          "timestamp": "2026-09-21T01:42:26.427Z",
           "stepId": "inventory_documents",
           "action": "step_completed",
           "detail": "Step completed: Inventory documents and artifacts",
           "userId": 1
         },
         {
-          "timestamp": "2026-09-21T01:06:09.124Z",
+          "timestamp": "2026-09-21T01:42:26.427Z",
           "stepId": "identify_gaps",
           "action": "step_started",
           "detail": "Step 3: Identify gaps and weaknesses",
           "userId": 1
         },
         {
-          "timestamp": "2026-09-21T01:06:09.127Z",
+          "timestamp": "2026-09-21T01:42:26.429Z",
           "stepId": "identify_gaps",
           "action": "step_completed",
           "detail": "Step completed: Identify gaps and weaknesses",
           "userId": 1
         },
         {
-          "timestamp": "2026-09-21T01:06:09.127Z",
+          "timestamp": "2026-09-21T01:42:26.429Z",
           "stepId": "compute_readiness",
           "action": "step_started",
           "detail": "Step 4: Compute readiness assessment",
           "userId": 1
         },
         {
-          "timestamp": "2026-09-21T01:06:09.131Z",
+          "timestamp": "2026-09-21T01:42:26.430Z",
           "stepId": "compute_readiness",
           "action": "step_completed",
           "detail": "Step completed: Compute readiness assessment",
           "userId": 1
         },
         {
-          "timestamp": "2026-09-21T01:06:09.131Z",
+          "timestamp": "2026-09-21T01:42:26.430Z",
           "stepId": "generate_recommendations",
           "action": "step_started",
           "detail": "Step 5: Generate recommendations",
           "userId": 1
         },
         {
-          "timestamp": "2026-09-21T01:06:09.132Z",
+          "timestamp": "2026-09-21T01:42:26.432Z",
           "stepId": "generate_recommendations",
           "action": "step_completed",
           "detail": "Step completed: Generate recommendations",
           "userId": 1
         },
         {
-          "timestamp": "2026-09-21T01:06:09.134Z",
+          "timestamp": "2026-09-21T01:42:26.433Z",
           "action": "workflow_completed",
           "detail": "Workflow completed: Workflow \"submission_readiness_review\" completed: 5/5 steps succeeded.",
           "userId": 1
         }
       ],
-      "completedAt": "2026-09-21T01:06:09.132Z",
-      "totalDurationMs": 53,
+      "completedAt": "2026-09-21T01:42:26.432Z",
+      "totalDurationMs": 42,
       "result": {
         "summary": "Workflow \"submission_readiness_review\" completed: 5/5 steps succeeded.",
         "blockers": [],
         "recommendations": [
           {
-            "id": "46e5282f-0c12-49a1-9f8a-bdabde7b26cf",
+            "id": "71250800-70c3-4cc6-982e-5d83689fd373",
             "recommendationType": "next_best_action",
             "severity": "info",
             "targetObjectType": "project",
-            "targetObjectId": "c89ba4c8-96c4-4379-b181-1c287787b4d6",
+            "targetObjectId": "ab461c6b-4bd5-481f-9f78-755869f3e20b",
             "targetObjectTitle": "Project",
             "reason": "No critical issues found. Run a readiness review to confirm submission preparedness.",
             "evidence": [
@@ -293,12 +294,12 @@
             "actionPayload": {
               "actionType": "submission_readiness_review",
               "payload": {
-                "projectId": "c89ba4c8-96c4-4379-b181-1c287787b4d6"
+                "projectId": "ab461c6b-4bd5-481f-9f78-755869f3e20b"
               }
             },
             "sourceType": "rules_based",
             "confidence": null,
-            "generatedAt": "2026-09-21T01:06:09.134Z"
+            "generatedAt": "2026-09-21T01:42:26.433Z"
           }
         ],
         "readiness": {

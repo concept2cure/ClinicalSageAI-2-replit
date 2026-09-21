@@ -2,7 +2,8 @@
  * OQ-004 — Operational Qualification: Submission Center.
  * Protocol: docs/validation/OQ-004-SUBMISSION-CENTER.md. Requirements: docs/validation/URS-004-SUBMISSION-CENTER.md.
  */
-import { createRun, helpers } from '../../lib/harness.mjs';
+import { createRun, devLogin, helpers } from '../../lib/harness.mjs';
+import { requireSigner } from '../../lib/credentials.mjs';
 import { createProgram, ingestPdf, createSubmissionWithSequence } from '../../lib/fixtures.mjs';
 
 const run = await createRun({
@@ -169,15 +170,37 @@ await step(
   {
     id: 'OQ-SUBC-08',
     urs: ['URS-SUBC-007'],
-    title: 'Freeze the sequence under a Part 11 e-signature',
-    action: 'POST /api/c2c/actions/sign with reauth {password} then POST /sequences/:id/freeze {signatureActionId}',
-    expected: 'Signature persisted in electronic_signatures and the ledger; sequence status frozen',
+    title: 'CREDENTIALED: sign the sequence under a Part 11 e-signature; freeze is then decided by the composed gate, not by the signature alone',
+    action: 'dev-login as OQ_SIGNER_EMAIL; POST /api/c2c/actions/sign {target:"ectd-sequence:<id>", reason, payload:{intent:"freeze"}, reauth:{password}}; GET /api/part11/signatures/by-target; POST /sequences/:id/freeze {signatureActionId} as the signer',
+    expected:
+      'Sign: HTTP 200 with actionId; exactly one electronic_signatures row on ectd-sequence:<id> by the signer. Freeze on this never-validated sequence (status assembling after OQ-SUBC-04): refused 409 INVALID_STATE by the sequence state machine (a valid e-signature is necessary, not sufficient); the sequence status is unchanged. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
     dependsOn: ['OQ-SUBC-03'],
+    note: 'The sign action re-authenticates with the account password (verifyReauth) and applies separation of duties (the signer must not be the sequence\'s creator — the run identity). freezeSequence checks the state machine, then the signature, then the deterministic gate; a frozen outcome needs a validated, shadow-reviewed sequence, which this protocol\'s fixture is not. What is qualified here is the signature persistence and that a signature alone does not freeze.',
   },
-  async ({ deviation }) => {
-    deviation(
-      'Tester holds no password credential for the dev-login identity (dev-login bypasses the password factor by design; the runner never guesses credentials). Re-execute with a real user account and its password.',
-    );
+  async (ctx) => {
+    const { api, apiAs, expect, auth, baseUrl, state } = ctx;
+    const signer = await requireSigner(ctx, devLogin, baseUrl, auth.user.email);
+    const asSigner = apiAs(signer.session);
+    const target = `ectd-sequence:${state.sequence.id}`;
+    const sign = await asSigner('POST', '/api/c2c/actions/sign', {
+      target,
+      reason: 'OQ-004 step 08: e-signature to freeze sequence 0000 for validation',
+      payload: { intent: 'freeze' },
+      reauth: { password: signer.password },
+    });
+    expect(sign.status === 200 && sign.json?.actionId, `sign expected 200 with actionId, got ${sign.status}`, sign.json);
+    const rows = await api('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(target)}`);
+    expect(rows.status === 200, `signature read expected 200, got ${rows.status}`, rows.json);
+    const mine = (rows.json?.data ?? []).filter((r) => String(r.signer_id) === String(signer.session.user.id));
+    expect(mine.length === 1, `expected exactly 1 signature row by the signer on ${target}, got ${mine.length}`, rows.json?.data);
+    const before = await api('GET', `/api/submissions/${state.submission.id}/sequences`);
+    const pick = (r) => (Array.isArray(r.json) ? r.json : r.json?.data ?? []).find((x) => x.id === state.sequence.id);
+    const statusBefore = pick(before)?.status;
+    const freeze = await asSigner('POST', `/api/submissions/sequences/${state.sequence.id}/freeze`, { signatureActionId: sign.json.actionId });
+    expect(freeze.status === 409 && freeze.json?.error?.code === 'INVALID_STATE', `freeze on a never-validated sequence expected 409 INVALID_STATE, got ${freeze.status}`, freeze.json);
+    const after = pick(await api('GET', `/api/submissions/${state.submission.id}/sequences`));
+    expect(after && after.status === statusBefore && after.status !== 'frozen', `sequence status changed (${statusBefore} → ${after?.status}) although the freeze was refused`, after);
+    return `sign → actionId ${sign.json.actionId} (${sign.json.state}); 1 electronic_signatures row (id ${mine[0].id}, ${mine[0].signature_meaning ?? mine[0].signature_type}); freeze → 409 INVALID_STATE (${freeze.json.error.message}); sequence status ${after.status} unchanged`;
   },
 );
 

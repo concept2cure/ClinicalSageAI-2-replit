@@ -1,22 +1,23 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5700/api/authoring/documents/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/comments",
+    "url": "http://localhost:5900/api/authoring/documents/7aa154e6-07ca-4469-a1e4-c8e6952a32ab/comments",
     "anonymous": false,
+    "identity": null,
     "body": null
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 12,
+    "durationMs": 11,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "comments": [
         {
-          "id": "c9a2989e-b2ec-4445-8185-d5e4ad34b137",
-          "doc_id": "2d2a545d-aca6-474e-bfcb-fa3cc1080fc7",
-          "section_id": "be0137e6-f86d-481c-8039-d3b35a422d40",
+          "id": "42aeade3-368c-4a91-b58a-cc7c46ad17b3",
+          "doc_id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
+          "section_id": "b9cb188a-a468-4956-b8d8-5b931fed9062",
           "body": "OQ-003 step 09 review comment",
           "anchor": null,
           "status": "open",
@@ -28,8 +29,8 @@
           "resolution_note": null,
           "resolved_by": null,
           "resolved_at": null,
-          "created_at": "2026-09-21T01:05:24.925Z",
-          "updated_at": "2026-09-21T01:05:24.925Z",
+          "created_at": "2026-09-21T01:44:32.456Z",
+          "updated_at": "2026-09-21T01:44:32.456Z",
           "tenant_id": 2,
           "author_name": "jonmichaelpsmith@gmail.com",
           "author_email": "jonmichaelpsmith@gmail.com",

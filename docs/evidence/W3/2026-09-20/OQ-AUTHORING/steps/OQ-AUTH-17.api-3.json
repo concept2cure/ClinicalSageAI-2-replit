@@ -1,8 +1,9 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/submit",
+    "url": "http://localhost:5900/api/authoring/docs/7aa154e6-07ca-4469-a1e4-c8e6952a32ab/submit",
     "anonymous": false,
+    "identity": null,
     "body": {
       "workflow_steps": [
         {
@@ -15,12 +16,12 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 30,
+    "durationMs": 21,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "message": "Document submitted for review",
-      "workflowId": "d78c129d-c2bc-4397-8a9b-c36acf65e5cd",
+      "workflowId": "1135e7b7-1988-44fe-8661-5b57aab35468",
       "steps": 1,
       "canonical": {
         "bridged": false,

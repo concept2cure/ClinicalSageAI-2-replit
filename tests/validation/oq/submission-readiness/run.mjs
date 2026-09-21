@@ -90,13 +90,14 @@ await step(
   {
     id: 'OQ-SRDY-03',
     urs: ['URS-SRDY-003'],
-    title: 'Dispatch QC records the gate outcome from the tamper-proof assessment',
-    action: 'POST /api/submissions/:id/dispatch-qc {region, sequenceId, validationErrors:0, unresolvedShadowCriticals:0, leaves}',
-    expected: 'HTTP 200; the result uses the server-side assessment (client-supplied zeros do not override it); the verdict is deterministic (no model in the loop)',
+    title: 'Dispatch QC returns the deterministic gate verdict; the model only narrates',
+    action: 'POST /api/submissions/:id/dispatch-qc {region, sequenceId, validationErrors:0, unresolvedShadowCriticals:0, leaves}; GET /sequences/:id/dispatch-readiness',
+    expected:
+      'HTTP 200 with { clearedToDispatch, blockers, warnings, checklist, verdictSource:"assess-dispatch-readiness", narrative, narrativeUnavailable }; clearedToDispatch and blockers EQUAL the GET dispatch-readiness gate (client-supplied zeros do not override it); with no provider narrative is null and narrativeUnavailable.code is PROVIDER_UNAVAILABLE — the verdict is a pass without a provider, the narrative is recorded as not executed',
     dependsOn: ['OQ-SRDY-02'],
-    note: 'If the route answers with an AI-gateway error code, the QC verdict depends on a model call — a CLAUDE.md Rule 2 observation (a verdict must come from a deterministic engine) — and the step is a deviation for the missing provider.',
+    note: 'VSR-001 F-9 (fixed 2026-09-21, docs/evidence/WB/2026-09-21/): the QC verdict is computeDispatchQcVerdict over the server-side assessment — the same composed gate freeze/dispatch enforce — and the model\'s own verdict field is never read. A gateway error on this route is now a FAIL (the verdict must not depend on a model), not a deviation.',
   },
-  async ({ api, expect, deviation }) => {
+  async ({ api, expect }) => {
     const r = await api('POST', `/api/submissions/${state.submission.id}/dispatch-qc`, {
       region: 'fda',
       sequenceId: state.sequence.id,
@@ -104,11 +105,25 @@ await step(
       unresolvedShadowCriticals: 0,
       leaves: [{ sectionCode: 'm5.3.5', operation: 'new' }],
     });
-    if (r.status >= 500 && /AI|GATEWAY|PROVIDER/i.test(JSON.stringify(r.json))) {
-      deviation(`AnA unavailable: no provider configured — the dispatch-QC route calls the model (${r.json?.error?.code}). OBSERVATION for review: a dispatch QC verdict routed through a model is not a deterministic gate (CLAUDE.md Rule 2).`, r.json);
+    expect(r.status === 200, `expected 200, got ${r.status} (a gateway/provider error here means the verdict depends on a model — CLAUDE.md Rule 2)`, r.json);
+    const j = r.json ?? {};
+    expect(typeof j.clearedToDispatch === 'boolean' && Array.isArray(j.blockers) && Array.isArray(j.warnings) && Array.isArray(j.checklist), 'response lacks the deterministic verdict shape', Object.keys(j));
+    expect(j.verdictSource === 'assess-dispatch-readiness', `verdictSource is ${j.verdictSource}, not the server-side sequence assessment`, j);
+    const g = await api('GET', `/api/submissions/sequences/${state.sequence.id}/dispatch-readiness`);
+    expect(g.status === 200, `dispatch-readiness expected 200, got ${g.status}`, g.json);
+    const gate = g.json?.gate ?? {};
+    expect(j.clearedToDispatch === gate.cleared, `QC verdict ${j.clearedToDispatch} differs from the gate ${gate.cleared}`, { qc: j.clearedToDispatch, gate });
+    expect(JSON.stringify(j.blockers) === JSON.stringify(gate.blockers), 'QC blockers differ from the gate blockers', { qc: j.blockers, gate: gate.blockers });
+    expect(j.clearedToDispatch === false, 'client-supplied zeros cleared a never-validated sequence', j);
+    let narrative;
+    if (j.narrative === null && j.narrativeUnavailable?.code === 'PROVIDER_UNAVAILABLE') {
+      narrative = 'narrative: not executed — no provider (narrativeUnavailable.code PROVIDER_UNAVAILABLE); the verdict did not need one';
+    } else if (typeof j.narrative === 'string' && j.narrative.length > 0 && j.narrativeUnavailable === null) {
+      narrative = `narrative: model prose returned (${j.narrative.length} chars) under the advisory label; verdict unchanged by it`;
+    } else {
+      expect(false, 'narrative/narrativeUnavailable is neither a provider-unavailable null nor advisory prose', { narrative: j.narrative, narrativeUnavailable: j.narrativeUnavailable });
     }
-    expect(r.status === 200, `expected 200, got ${r.status}`, r.json);
-    return JSON.stringify(r.json).slice(0, 300);
+    return `clearedToDispatch=${j.clearedToDispatch} == gate.cleared; ${j.blockers.length} blockers identical to the gate; verdictSource=${j.verdictSource}; checklist ${j.checklist.length} items; ${narrative}`;
   },
 );
 

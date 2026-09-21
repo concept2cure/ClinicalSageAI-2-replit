@@ -1,8 +1,9 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/submit",
+    "url": "http://localhost:5900/api/authoring/docs/7aa154e6-07ca-4469-a1e4-c8e6952a32ab/submit",
     "anonymous": false,
+    "identity": null,
     "body": {
       "workflow_steps": [
         {
@@ -14,7 +15,7 @@
   "response": {
     "status": 400,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 11,
+    "durationMs": 15,
     "rateLimitRetries": 0,
     "body": {
       "error": "Workflow step 1 has no approver_email; every step needs the approver it will be matched against"

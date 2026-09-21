@@ -2,7 +2,9 @@
  * OQ-006 — Operational Qualification: QMS controlled documents.
  * Protocol: docs/validation/OQ-006-QMS.md. Requirements: docs/validation/URS-006-QMS.md.
  */
-import { createRun, helpers } from '../../lib/harness.mjs';
+import { createRun, devLogin, helpers } from '../../lib/harness.mjs';
+import { requireSigner } from '../../lib/credentials.mjs';
+import { computeQmsDocumentContentDigest, qmsDocumentDigestInput } from '../../lib/qms-digest.mjs';
 
 const run = await createRun({
   app: 'QMS',
@@ -90,23 +92,115 @@ await step(
   },
 );
 
+const APPROVE_HEX64 = /^[0-9a-f]{64}$/;
+const BINDING_BASIS = 'qms-document-version-content-sha256';
+/** The mdx-qms error envelope is { error: <message>, details: { code, fieldErrors? } } (server/lib/api-response.ts clientError). */
+const errCode = (r) => r.json?.details?.code ?? r.json?.error?.code ?? null;
+/** The approval stamps the route commits to: effective, approver = signer, approved_at set. */
+const isEffectiveBy = (d, userId) => d?.status === 'effective' && String(d?.approver_id) === String(userId) && Boolean(d?.approved_at);
+/** meta.signature as the signed approve returns it (docs/evidence/WB/2026-09-21/README.md). */
+const isApprovalSignature = (sig) =>
+  Boolean(sig && sig.id && sig.meaning === 'APPROVED' && APPROVE_HEX64.test(String(sig.boundPayloadDigest)) && sig.bindingBasis === BINDING_BASIS);
+/** The electronic_signatures row GET /api/part11/signatures/by-target returns for a QMS approval. */
+const isApprovalRow = (row, signerId) =>
+  String(row.signer_id) === String(signerId) &&
+  row.signature_meaning === 'APPROVED' &&
+  row.signature_type === 'qms-document-approval' &&
+  row.binding_basis === BINDING_BASIS &&
+  row.is_valid === true;
+
+/**
+ * A signed approval by the credentialed signer (the second identity). Shared by
+ * the positive step (05) and the fixture approval of SOP B (06d). Asserts the
+ * response shape the product commits to (docs/evidence/WB/2026-09-21/README.md).
+ */
+async function approveSigned(ctx, docId, reason) {
+  const { expect } = ctx;
+  const signer = ctx.state.signer;
+  const asSigner = ctx.apiAs(signer.session);
+  const r = await asSigner('POST', `/api/mdx/qms/documents/${docId}/approve`, {
+    password: signer.password,
+    meaning: 'APPROVED',
+    reason,
+    effectiveDate: inDays(0),
+  });
+  expect(r.status === 200, `signed approve expected 200, got ${r.status}`, r.json);
+  const d = r.json?.data ?? {};
+  const meta = r.json?.meta ?? {};
+  expect(isEffectiveBy(d, signer.session.user.id), 'approval stamps wrong (status/approver/approved_at)', d);
+  expect(meta.auditTrail?.persisted === true, 'meta.auditTrail not reported as persisted', meta);
+  const sig = meta.signature;
+  expect(isApprovalSignature(sig), 'meta.signature lacks id / meaning APPROVED / sha256 boundPayloadDigest / bindingBasis', sig);
+  const approval = d.metadata?.approval ?? {};
+  expect(approval.contentDigest === sig.boundPayloadDigest, 'document metadata.approval.contentDigest differs from the signature digest', { approval, sig });
+  return { response: r, document: d, signature: sig };
+}
+
 await step(
   {
     id: 'OQ-QMS-05',
-    urs: ['URS-QMS-004'],
-    title: 'Approve the SOP; approver and time are stamped and audited',
-    action: 'POST /api/mdx/qms/documents/:id/approve; then approve again',
-    expected: 'HTTP 200: status effective, approver_id = actor, approved_at set, meta.auditTrail present; second approve → 409',
+    urs: ['URS-QMS-004', 'URS-QMS-005'],
+    title: 'CREDENTIALED: a second identity approves SOP A as an electronic signature; the approval is stamped, audited and signed; a second approval is refused',
+    action: 'dev-login as OQ_SIGNER_EMAIL; POST /api/mdx/qms/documents/:docA/approve {password, meaning:"APPROVED", reason, effectiveDate}; approve again',
+    expected:
+      'HTTP 200: status effective, approver_id = signer (≠ author), approved_at set, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.approval.contentDigest equals the signature digest; second approve → 409 QMS_INVALID_STATE. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
     dependsOn: ['OQ-QMS-03'],
+    note: 'VSR-001 §8.3 P-2 / F-3: approval is a signing act (§11.50, §11.200); the runner\'s dev-login session holds no password, so the signer is a tester-supplied identity (tests/validation/lib/credentials.mjs). The two-person rule (§11.10(d)) means the signer must not be the author of SOP A (the run identity).',
   },
-  async ({ api, expect, auth }) => {
-    const r = await api('POST', `/api/mdx/qms/documents/${state.docA.id}/approve`, { effectiveDate: inDays(0) });
-    expect(r.status === 200, `expected 200, got ${r.status}`, r.json);
-    const d = r.json?.data;
-    expect(d?.status === 'effective' && String(d?.approver_id) === String(auth.user.id) && d?.approved_at, 'approval stamps wrong', d);
-    const again = await api('POST', `/api/mdx/qms/documents/${state.docA.id}/approve`, {});
-    expect(again.status === 409, `second approve expected 409, got ${again.status}`, again.json);
-    return `effective; approver ${d.approver_id} at ${d.approved_at}; auditTrail=${JSON.stringify(r.json.meta?.auditTrail)}; re-approve → 409`;
+  async (ctx) => {
+    const { expect, auth, baseUrl } = ctx;
+    const signer = await requireSigner(ctx, devLogin, baseUrl, auth.user.email);
+    expect(signer.session.user.email !== auth.user.email, 'signer session resolved to the author identity', signer.session.user.email);
+    ctx.state.signer = signer;
+    const { response, document: d, signature: sig } = await approveSigned(ctx, ctx.state.docA.id, 'OQ-006 step 05: SOP approved for validation (signed)');
+    ctx.state.docA = d;
+    ctx.state.signatureA = sig;
+    const asSigner = ctx.apiAs(signer.session);
+    const again = await asSigner('POST', `/api/mdx/qms/documents/${d.id}/approve`, {
+      password: signer.password,
+      meaning: 'APPROVED',
+      reason: 'OQ-006 step 05: second approval must be refused',
+    });
+    expect(again.status === 409 && errCode(again) === 'QMS_INVALID_STATE', `second approve expected 409 QMS_INVALID_STATE, got ${again.status}`, again.json);
+    return `effective; author ${d.author_id} (${auth.user.email}) ≠ approver ${d.approver_id} (${signer.session.user.email}) at ${d.approved_at}; signature ${sig.id} meaning ${sig.meaning}, ${sig.authenticationMethod}, digest ${String(sig.boundPayloadDigest).slice(0, 12)}…; auditTrail=${JSON.stringify(response.json.meta.auditTrail)}; re-approve → 409 QMS_INVALID_STATE`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-QMS-05b',
+    urs: ['URS-QMS-005'],
+    title: 'Exactly one electronic_signatures row is bound to the approval; the §11.70 content digest recomputes from the stored document',
+    action: 'GET /api/part11/signatures/by-target?target=qms-document:<docA>; GET /api/mdx/qms/documents/:docA; recompute sha256(canonicalJson(version content)) (tests/validation/lib/qms-digest.mjs — a re-implementation of computeQmsDocumentContentDigest)',
+    expected: 'One row: signer_id = signer, signature_meaning APPROVED, signature_type qms-document-approval, binding_basis qms-document-version-content-sha256, is_valid true; the recomputed digest equals meta.signature.boundPayloadDigest and metadata.approval.contentDigest',
+    dependsOn: ['OQ-QMS-05'],
+  },
+  async ({ api, expect, state, attach }) => {
+    const target = `qms-document:${state.docA.id}`;
+    const s = await api('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(target)}`);
+    expect(s.status === 200, `signature read expected 200, got ${s.status}`, s.json);
+    const rows = s.json?.data ?? [];
+    expect(rows.length === 1, `expected exactly 1 signature row for ${target}, got ${rows.length}`, rows);
+    const row = rows[0];
+    expect(isApprovalRow(row, state.signer.session.user.id), 'signature row attributes wrong', row);
+    expect(String(row.id) === String(state.signatureA.id), 'the stored row is not the signature the approval reported', { row: row.id, reported: state.signatureA.id });
+    const g = await api('GET', `/api/mdx/qms/documents/${state.docA.id}`);
+    expect(g.status === 200, `document read expected 200, got ${g.status}`, g.json);
+    const stored = g.json?.data ?? {};
+    const recomputed = computeQmsDocumentContentDigest(stored);
+    const storedOnDocument = stored.metadata?.approval?.contentDigest ?? null;
+    const report = {
+      method: 'tests/validation/lib/qms-digest.mjs — re-implementation of server/services/qms/document-approval-signature.ts computeQmsDocumentContentDigest (canonical JSON: sorted keys, undefined→null, Date→ISO; sha256 hex)',
+      digestInput: qmsDocumentDigestInput(stored),
+      recomputed,
+      reportedBySignature: state.signatureA.boundPayloadDigest,
+      storedOnDocument,
+      match: recomputed === state.signatureA.boundPayloadDigest && recomputed === storedOnDocument,
+      signatureRow: row,
+    };
+    attach('digest-recomputation.json', report);
+    expect(report.match, 'recomputed §11.70 digest does not match the signature / the stored document', report);
+    return `1 row (id ${row.id}) by signer ${row.signer_id}, ${row.signature_meaning}, ${row.binding_basis}; recomputed digest ${recomputed.slice(0, 12)}… == signature == document (match true)`;
   },
 );
 
@@ -114,7 +208,7 @@ await step(
   {
     id: 'OQ-QMS-06a',
     urs: ['URS-QMS-002'],
-    title: 'Create a second SOP (fixture for the approval-credential, training, review-due and retire steps)',
+    title: 'Create a second SOP (fixture for the credential refusals, training, review-due and retire steps)',
     action: 'POST /api/mdx/qms/documents {docNumber SOP-OQ-B-…, docType:"sop", nextReviewDate:+5d}',
     expected: 'HTTP 201, draft v1.0',
   },
@@ -130,15 +224,91 @@ await step(
   {
     id: 'OQ-QMS-06',
     urs: ['URS-QMS-005'],
-    title: 'Approval of a controlled document requires an electronic-signature credential',
-    action: 'POST /documents/:docB/approve with NO credential (no pin, no password, no meaning)',
-    expected: 'Refused — an approval is a signing act (§11.50, §11.200(a)(1)) and must verify a credential and record a meaning',
+    title: 'Approval without any signature component is refused',
+    action: 'POST /documents/:docB/approve {} (no password, no meaning, no reason)',
+    expected: 'HTTP 400 ESIGNATURE_COMPONENT_MISSING; fieldErrors name password, meaning and reason; docB stays draft',
     dependsOn: ['OQ-QMS-06a'],
   },
   async ({ api, expect }) => {
     const r = await api('POST', `/api/mdx/qms/documents/${state.docB.id}/approve`, {});
-    expect(r.status >= 400, `approval accepted without any signature credential (HTTP ${r.status}); server/routes/mdx-qms.ts:463-501 verifies no PIN/password and records no meaning`, r.json);
-    return `HTTP ${r.status}`;
+    expect(r.status === 400 && errCode(r) === 'ESIGNATURE_COMPONENT_MISSING', `expected 400 ESIGNATURE_COMPONENT_MISSING, got ${r.status}`, r.json);
+    const fields = Object.keys(r.json?.details?.fieldErrors ?? {});
+    expect(['password', 'meaning', 'reason'].every((f) => fields.includes(f)), 'fieldErrors do not name password, meaning and reason', r.json);
+    const g = await api('GET', `/api/mdx/qms/documents/${state.docB.id}`);
+    expect(g.json?.data?.status === 'draft', 'docB left draft state on a refused approval', g.json?.data);
+    return `HTTP 400 ESIGNATURE_COMPONENT_MISSING (fieldErrors: ${fields.join(', ')}); docB still draft`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-QMS-06b',
+    urs: ['URS-QMS-005'],
+    title: 'CREDENTIALED: a wrong password is refused and nothing is signed',
+    action: 'as the signer, POST /documents/:docB/approve {password:<wrong>, meaning:"APPROVED", reason}',
+    expected: 'HTTP 401 PASSWORD_INVALID; docB stays draft; no signature row for docB',
+    dependsOn: ['OQ-QMS-05', 'OQ-QMS-06a'],
+  },
+  async ({ api, apiAs, expect, state }) => {
+    const asSigner = apiAs(state.signer.session);
+    const r = await asSigner('POST', `/api/mdx/qms/documents/${state.docB.id}/approve`, {
+      password: `not-the-password-${stamp}`,
+      meaning: 'APPROVED',
+      reason: 'OQ-006 step 06b: wrong password must be refused',
+    });
+    expect(r.status === 401, `expected 401, got ${r.status}`, r.json);
+    const g = await api('GET', `/api/mdx/qms/documents/${state.docB.id}`);
+    expect(g.json?.data?.status === 'draft', 'docB changed state on a refused credential', g.json?.data);
+    const s = await api('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(`qms-document:${state.docB.id}`)}`);
+    expect(s.status === 200 && (s.json?.data ?? []).length === 0, 'a signature row exists for a refused approval', s.json);
+    return `HTTP 401 ${errCode(r) ?? ''}; docB still draft; 0 signature rows`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-QMS-06c',
+    urs: ['URS-QMS-005'],
+    title: 'CREDENTIALED: the author cannot approve their own document (two-person rule)',
+    action: 'as the signer, POST /api/mdx/qms/documents (SOP C, authored by the signer); then approve it with the signer\'s own valid password',
+    expected: 'HTTP 403 QMS_SELF_APPROVAL; SOP C stays draft; no signature row',
+    dependsOn: ['OQ-QMS-05'],
+  },
+  async ({ apiAs, expect, state }) => {
+    const asSigner = apiAs(state.signer.session);
+    const c = await asSigner('POST', '/api/mdx/qms/documents', { docNumber: `SOP-OQ-C-${stamp}`, title: `OQ-006 Self-approval SOP ${stamp}`, docType: 'sop', nextReviewDate: inDays(30) });
+    expect(c.status === 201, `create expected 201, got ${c.status}`, c.json);
+    const docC = c.json.data;
+    expect(String(docC.author_id) === String(state.signer.session.user.id), 'SOP C is not attributed to the signer', docC);
+    const r = await asSigner('POST', `/api/mdx/qms/documents/${docC.id}/approve`, {
+      password: state.signer.password,
+      meaning: 'APPROVED',
+      reason: 'OQ-006 step 06c: self-approval must be refused',
+    });
+    expect(r.status === 403 && errCode(r) === 'QMS_SELF_APPROVAL', `expected 403 QMS_SELF_APPROVAL, got ${r.status}`, r.json);
+    const g = await asSigner('GET', `/api/mdx/qms/documents/${docC.id}`);
+    expect(g.json?.data?.status === 'draft', 'SOP C changed state on the refused self-approval', g.json?.data);
+    const s = await asSigner('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(`qms-document:${docC.id}`)}`);
+    expect(s.status === 200 && (s.json?.data ?? []).length === 0, 'a signature row exists for the refused self-approval', s.json);
+    return `SOP C ${docC.id} authored by ${docC.author_id}; self-approve → HTTP 403 QMS_SELF_APPROVAL; still draft; 0 signature rows`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-QMS-06d',
+    urs: ['URS-QMS-004'],
+    title: 'CREDENTIALED: the signer approves SOP B (fixture — an effective document for the review-due and retire steps)',
+    action: 'as the signer, POST /documents/:docB/approve {password, meaning:"APPROVED", reason}',
+    expected: 'HTTP 200 effective with meta.signature; one signature row for docB',
+    dependsOn: ['OQ-QMS-05', 'OQ-QMS-06a'],
+  },
+  async (ctx) => {
+    const { document: d, signature: sig } = await approveSigned(ctx, ctx.state.docB.id, 'OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture');
+    ctx.state.docB = d;
+    const s = await ctx.api('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(`qms-document:${d.id}`)}`);
+    ctx.expect(s.status === 200 && (s.json?.data ?? []).length === 1, `expected 1 signature row for docB, got ${(s.json?.data ?? []).length}`, s.json);
+    return `docB effective; signature ${sig.id} (${sig.meaning}); 1 row`;
   },
 );
 
@@ -187,7 +357,7 @@ await step(
     title: 'Review-due report lists effective documents approaching review',
     action: 'GET /api/mdx/qms/documents/review-due?within=30 (docB is effective with nextReviewDate +5d)',
     expected: 'docB listed with overdue=false',
-    dependsOn: ['OQ-QMS-06a'],
+    dependsOn: ['OQ-QMS-06d'],
   },
   async ({ api, expect }) => {
     const r = await api('GET', '/api/mdx/qms/documents/review-due?within=30');

@@ -1,14 +1,15 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5700/api/authoring/sections/be0137e6-f86d-481c-8039-d3b35a422d40/history/verify",
+    "url": "http://localhost:5900/api/authoring/sections/b9cb188a-a468-4956-b8d8-5b931fed9062/history/verify",
     "anonymous": false,
+    "identity": null,
     "body": null
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 13,
+    "durationMs": 8,
     "rateLimitRetries": 0,
     "body": {
       "success": true,

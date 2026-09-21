@@ -1,14 +1,15 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5700/api/authoring/docs",
+    "url": "http://localhost:5900/api/authoring/docs",
     "anonymous": true,
+    "identity": null,
     "body": null
   },
   "response": {
     "status": 401,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 7,
+    "durationMs": 6,
     "rateLimitRetries": 0,
     "body": {
       "error": "Bearer token required"

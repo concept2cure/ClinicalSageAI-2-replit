@@ -1,8 +1,9 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/mdx/qms/documents/20/retire",
+    "url": "http://localhost:5900/api/mdx/qms/documents/27/retire",
     "anonymous": false,
+    "identity": null,
     "body": {
       "reason": "OQ-006 step 10: superseded by validation"
     }
@@ -10,34 +11,43 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 18,
+    "durationMs": 20,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": 20,
+        "id": 27,
         "organization_id": 2,
-        "doc_number": "SOP-OQ-B-20260921010704",
-        "title": "OQ-006 Second SOP 20260921010704",
+        "doc_number": "SOP-OQ-B-20260921014742",
+        "title": "OQ-006 Second SOP 20260921014742",
         "doc_type": "sop",
         "category": null,
         "version": "1.0",
         "status": "retired",
-        "effective_date": null,
+        "effective_date": "2026-09-21T00:00:00.000Z",
         "next_review_date": "2026-09-26T00:00:00.000Z",
         "author_id": 1,
-        "approver_id": null,
-        "approved_at": null,
+        "approver_id": 42,
+        "approved_at": "2026-09-21T01:47:50.183Z",
         "superseded_by_id": null,
         "artifact_id": null,
         "metadata": {
           "retired": {
-            "at": "2026-09-21T01:07:07.814326+00:00",
+            "at": "2026-09-21T01:47:52.027002+00:00",
             "by": 1,
             "reason": "OQ-006 step 10: superseded by validation"
+          },
+          "approval": {
+            "at": "2026-09-21T01:47:50.183+00:00",
+            "by": 42,
+            "reason": "OQ-006 step 06d: SOP B approved (signed) as the review-due / retire fixture",
+            "meaning": "APPROVED",
+            "bindingBasis": "qms-document-version-content-sha256",
+            "contentDigest": "aa5433bc231c6eef47c2f5ba408cb61d6d62d10662ac11a24dc6af9c5f069bc5",
+            "twoPersonRule": "enforced"
           }
         },
-        "created_at": "2026-09-21T01:07:06.403Z",
-        "updated_at": "2026-09-21T01:07:07.814Z",
+        "created_at": "2026-09-21T01:47:46.488Z",
+        "updated_at": "2026-09-21T01:47:52.027Z",
         "deleted_at": null
       },
       "meta": {

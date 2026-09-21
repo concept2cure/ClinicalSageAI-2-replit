@@ -1,8 +1,9 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/authoring/sections/94f2c61c-d468-4d29-900d-bf988e1aa4ca/ai/draft",
+    "url": "http://localhost:5900/api/authoring/sections/b1d4ed2a-a251-49c7-9bd3-528a8aa0be7b/ai/draft",
     "anonymous": false,
+    "identity": null,
     "body": {
       "prompt": "Draft a one-paragraph summary."
     }
@@ -10,7 +11,7 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 35,
+    "durationMs": 30,
     "rateLimitRetries": 0,
     "body": {
       "success": false,
@@ -21,7 +22,7 @@
         "metadata": {
           "tone": "professional",
           "region": "FDA",
-          "generated_at": "2026-09-21T01:05:28.643Z",
+          "generated_at": "2026-09-21T01:44:35.132Z",
           "model": "template-based",
           "source": "template",
           "degraded": true

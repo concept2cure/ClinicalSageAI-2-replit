@@ -1,23 +1,24 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/quality/plans",
+    "url": "http://localhost:5900/api/quality/plans",
     "anonymous": false,
+    "identity": null,
     "body": {
-      "name": "OQ-006 QMP 20260921010704",
+      "name": "OQ-006 QMP 20260921014742",
       "description": "Validation exercise"
     }
   },
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 37,
+    "durationMs": 31,
     "rateLimitRetries": 0,
     "body": {
-      "id": 6,
+      "id": 8,
       "organizationId": 2,
       "clientWorkspaceId": null,
-      "name": "OQ-006 QMP 20260921010704",
+      "name": "OQ-006 QMP 20260921014742",
       "description": "Validation exercise",
       "version": "1.0",
       "status": "draft",
@@ -34,8 +35,8 @@
       "metadata": {
         "allowWaivers": false
       },
-      "createdAt": "2026-09-21T01:07:08.657Z",
-      "updatedAt": "2026-09-21T01:07:08.657Z"
+      "createdAt": "2026-09-21T01:47:52.848Z",
+      "updatedAt": "2026-09-21T01:47:52.848Z"
     }
   }
 }

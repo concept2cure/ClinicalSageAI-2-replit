@@ -1,8 +1,9 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5700/api/orchestration/templates",
+    "url": "http://localhost:5900/api/orchestration/templates",
     "anonymous": false,
+    "identity": null,
     "body": null
   },
   "response": {

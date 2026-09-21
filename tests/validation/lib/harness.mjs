@@ -167,7 +167,7 @@ function logSince(from) {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const PACE_MS = Number(process.env.VALIDATION_PACE_MS || 250);
 
-export function createApiClient({ baseUrl, accessToken, onRecord }) {
+export function createApiClient({ baseUrl, accessToken, onRecord, identity = null }) {
   return async function api(method, apiPath, body, opts = {}) {
     const url = `${baseUrl}${apiPath}`;
     const headers = { Origin: baseUrl, Accept: 'application/json' };
@@ -214,6 +214,9 @@ export function createApiClient({ baseUrl, accessToken, onRecord }) {
         method,
         url,
         anonymous: !!opts.anonymous,
+        // Which identity sent it. Null = the run's dev-login identity; a
+        // credentialed step (OQ-QMS-05, OQ-SUBC-08) names the second signer.
+        identity,
         body: body instanceof FormData ? '[multipart/form-data]' : redact(body ?? null),
       },
       response: {
@@ -362,23 +365,40 @@ export async function createRun({ app, appLabel, protocolId, protocolTitle, need
     let apiCounter = 0;
     const denied = new Set();
     let rateLimitRetries = 0;
-    const api = createApiClient({
-      baseUrl: BASE_URL,
-      accessToken: auth.accessToken,
-      onRecord: (record) => {
-        apiCounter += 1;
-        const file = `${id}.api-${apiCounter}.json`;
-        fs.writeFileSync(path.join(stepsDir, file), JSON.stringify(record, null, 2));
-        rec.api.push({ file: `steps/${file}`, method: record.request.method, url: record.request.url, status: record.response.status });
-        rateLimitRetries += record.response.rateLimitRetries ?? 0;
-        for (const d of record.serverLogExcerpt?.denied ?? []) denied.add(d);
-      },
-    });
+    const onRecord = (record) => {
+      apiCounter += 1;
+      const file = `${id}.api-${apiCounter}.json`;
+      fs.writeFileSync(path.join(stepsDir, file), JSON.stringify(record, null, 2));
+      rec.api.push({
+        file: `steps/${file}`,
+        method: record.request.method,
+        url: record.request.url,
+        status: record.response.status,
+        ...(record.request.identity ? { identity: record.request.identity } : {}),
+      });
+      rateLimitRetries += record.response.rateLimitRetries ?? 0;
+      for (const d of record.serverLogExcerpt?.denied ?? []) denied.add(d);
+    };
+    const api = createApiClient({ baseUrl: BASE_URL, accessToken: auth.accessToken, onRecord });
     const ctx = {
       api,
       state,
       auth,
       baseUrl: BASE_URL,
+      /**
+       * A client for a SECOND authenticated identity (the result of
+       * `devLogin(baseUrl, email)`), recorded on this step exactly like `api`.
+       * Used by the credentialed steps: the two-person rule (§11.10(d)) means the
+       * approver/signer can never be the identity that authored the fixture.
+       */
+      apiAs(otherAuth) {
+        return createApiClient({
+          baseUrl: BASE_URL,
+          accessToken: otherAuth.accessToken,
+          onRecord,
+          identity: otherAuth.user?.email ?? null,
+        });
+      },
       get page() {
         return page;
       },

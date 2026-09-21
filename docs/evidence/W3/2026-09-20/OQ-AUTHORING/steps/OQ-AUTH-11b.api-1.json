@@ -1,0 +1,41 @@
+{
+  "request": {
+    "method": "PATCH",
+    "url": "http://localhost:5900/api/authoring/comments/42aeade3-368c-4a91-b58a-cc7c46ad17b3",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "status": "resolved",
+      "resolution_note": "OQ-003 step 11b: reviewer query answered; resolved before freeze"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 14,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "comment": {
+        "id": "42aeade3-368c-4a91-b58a-cc7c46ad17b3",
+        "section_id": "b9cb188a-a468-4956-b8d8-5b931fed9062",
+        "doc_id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
+        "body": "OQ-003 step 09 review comment",
+        "anchor": null,
+        "status": "resolved",
+        "created_by": "1",
+        "tenant_id": 2,
+        "created_at": "2026-09-21T01:44:32.456Z",
+        "user_name": "jonmichaelpsmith@gmail.com",
+        "user_email": "jonmichaelpsmith@gmail.com",
+        "parent_comment_id": null,
+        "position_data": null,
+        "resolved_by": "jonmichaelpsmith@gmail.com",
+        "resolved_at": "2026-09-21T01:44:35.970Z",
+        "resolution_note": "OQ-003 step 11b: reviewer query answered; resolved before freeze",
+        "updated_at": "2026-09-21T01:44:35.970Z"
+      },
+      "message": "Comment updated successfully"
+    }
+  }
+}

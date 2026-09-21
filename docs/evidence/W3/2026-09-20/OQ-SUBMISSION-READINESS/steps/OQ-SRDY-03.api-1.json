@@ -1,11 +1,12 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/submissions/42/dispatch-qc",
+    "url": "http://localhost:5900/api/submissions/52/dispatch-qc",
     "anonymous": false,
+    "identity": null,
     "body": {
       "region": "fda",
-      "sequenceId": 19,
+      "sequenceId": 23,
       "validationErrors": 0,
       "unresolvedShadowCriticals": 0,
       "leaves": [
@@ -19,14 +20,14 @@
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 31,
+    "durationMs": 23,
     "rateLimitRetries": 0,
     "body": {
       "clearedToDispatch": false,
       "blockers": [
         "1 open error-severity validation finding(s) must be resolved before dispatch.",
         "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
-        "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:19)."
+        "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:23)."
       ],
       "warnings": [
         "Required section 1.1 has no leaf in this sequence.",

@@ -202,7 +202,9 @@ await step(
     expect(r.status < 300, `expected 2xx, got ${r.status}`, r.json);
     const c = await api('GET', `/api/authoring/documents/${state.docId}/comments`);
     expect(JSON.stringify(c.json).includes('OQ-003 step 09'), 'comment not listed', c.json);
-    return 'comment recorded and listed';
+    state.comment = r.json?.comment ?? null;
+    expect(state.comment?.id && state.comment?.status === 'open', 'comment id/status not returned as open', r.json);
+    return `comment ${state.comment.id} recorded (status ${state.comment.status}) and listed`;
   },
 );
 
@@ -273,12 +275,98 @@ await step(
 
 await step(
   {
+    id: 'OQ-AUTH-15',
+    urs: ['URS-AUTH-012'],
+    title: 'AI drafting fails closed when no provider is configured',
+    action: 'POST /api/authoring/sections/:id/ai/draft {prompt}',
+    expected: 'No draft content is returned; the request is refused with a provider-unavailable status (5xx) — never a fabricated draft',
+    dependsOn: ['OQ-AUTH-04'],
+    note: 'Executed BEFORE the freeze (OQ-AUTH-11a/11): once the document is FROZEN every edit-class route is refused 409 AUTHORING_DOCUMENT_IMMUTABLE, which would answer this step for the wrong reason and mask F-10.',
+  },
+  async ({ api, expect }) => {
+    const r = await api('POST', `/api/authoring/sections/${state.sectionOther.id}/ai/draft`, { prompt: 'Draft a one-paragraph summary.' });
+    const txt = JSON.stringify(r.json ?? r.text);
+    expect(r.status !== 200 || !/draft|content/i.test(txt), 'a draft was returned without a provider', r.json);
+    expect(r.status >= 400, `expected a refusal, got ${r.status}`, r.json);
+    expect(r.status !== 409, 'refused by the document-immutability guard, not by the provider check — the step ran in the wrong state', r.json);
+    return `HTTP ${r.status}: ${txt.slice(0, 200)}`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-AUTH-16',
+    urs: ['URS-AUTH-012'],
+    title: 'AI drafting produces a governed draft candidate',
+    action: 'POST /api/authoring/sections/:id/ai/draft with a configured provider',
+    expected: 'A draft candidate with provenance is returned for human acceptance',
+    dependsOn: ['OQ-AUTH-04'],
+  },
+  async ({ api, deviation }) => {
+    const r = await api('POST', `/api/authoring/sections/${state.sectionOther.id}/ai/draft`, { prompt: 'Draft a one-paragraph summary.' });
+    if (r.status >= 500 || r.status === 503) {
+      deviation('AnA unavailable: no provider configured (ANTHROPIC_API_KEY / OPENAI_API_KEY unset in this environment). Re-execute with a PQ-passed model configured.', r.json);
+    }
+    deviation('AnA unavailable: no provider configured; unexpected non-5xx answer recorded for review.', r.json);
+  },
+);
+
+await step(
+  {
+    id: 'OQ-AUTH-11a',
+    urs: ['URS-AUTH-009', 'URS-AUTH-007'],
+    title: 'Freeze is refused while a review comment is unresolved (negative case)',
+    action: 'POST /api/authoring/docs/:id/freeze {reason, version:"1.0"} while the OQ-AUTH-09 comment is open; GET /docs/:id/frozen',
+    expected: 'HTTP 409 DOCUMENT_NOT_SETTLED naming 1 unresolved comment; nothing frozen (no content hash retrievable)',
+    dependsOn: ['OQ-AUTH-09'],
+    note: 'VSR-001 §8.3 P-1: the baseline protocol froze over an open comment and recorded the refusal as a failure. The refusal is the required fail-closed behaviour; this step keeps it as the negative case. The "acknowledgeUnresolved" confirm flag is deliberately NOT used as the happy path.',
+  },
+  async ({ api, expect }) => {
+    const r = await api('POST', `/api/authoring/docs/${state.docId}/freeze`, { reason: 'OQ-003 step 11a: freeze attempted over an open comment', version: '1.0' });
+    expect(r.status === 409 && r.json?.error?.code === 'DOCUMENT_NOT_SETTLED', `expected 409 DOCUMENT_NOT_SETTLED, got ${r.status}`, r.json);
+    expect((r.json?.unresolved?.openComments ?? 0) >= 1, 'refusal does not count the open comment', r.json);
+    const f = await api('GET', `/api/authoring/docs/${state.docId}/frozen`);
+    expect(!/content_hash|contentHash/.test(JSON.stringify(f.json ?? '')), 'a frozen record exists despite the refusal', f.json);
+    return `HTTP 409 DOCUMENT_NOT_SETTLED (openComments=${r.json.unresolved.openComments}, pendingEdits=${r.json.unresolved.pendingEdits}); frozen read → HTTP ${f.status}, no content hash`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-AUTH-11b',
+    urs: ['URS-AUTH-007', 'URS-AUTH-008'],
+    title: 'Resolve the review comment through the comment-resolution API; the resolution is audited',
+    action: 'PATCH /api/authoring/comments/:id {status:"resolved", resolution_note}; GET /documents/:id/comments; GET /docs/:id/audit',
+    expected: 'HTTP 200; comment status resolved with resolved_by = actor and resolved_at set; the audit trail carries a comment_resolved event naming the comment',
+    dependsOn: ['OQ-AUTH-09'],
+  },
+  async ({ api, expect, auth }) => {
+    const r = await api('PATCH', `/api/authoring/comments/${state.comment.id}`, {
+      status: 'resolved',
+      resolution_note: 'OQ-003 step 11b: reviewer query answered; resolved before freeze',
+    });
+    expect(r.status === 200 && r.json?.success === true, `expected 200, got ${r.status}`, r.json);
+    const c = r.json?.comment ?? {};
+    expect(c.status === 'resolved' && c.resolved_at, 'comment not marked resolved with a timestamp', c);
+    expect(String(c.resolved_by) === auth.user.email || String(c.resolved_by) === String(auth.user.id), 'resolved_by is not the actor', c);
+    const list = await api('GET', `/api/authoring/documents/${state.docId}/comments`);
+    const listed = JSON.stringify(list.json ?? '');
+    expect(listed.includes(String(state.comment.id)), 'resolved comment no longer listed under the document', list.json);
+    const a = await api('GET', `/api/authoring/docs/${state.docId}/audit`);
+    const ev = (a.json?.events ?? []).find((e) => e.event_type === 'comment_resolved' && JSON.stringify(e).includes(String(state.comment.id)));
+    expect(ev, 'no comment_resolved audit event for this comment', (a.json?.events ?? []).map((e) => e.event_type));
+    return `comment ${state.comment.id} resolved by ${c.resolved_by} at ${c.resolved_at}; audit event comment_resolved by ${ev.actor}`;
+  },
+);
+
+await step(
+  {
     id: 'OQ-AUTH-11',
     urs: ['URS-AUTH-009'],
-    title: 'Freeze the document into an immutable snapshot',
-    action: 'POST /api/authoring/docs/:id/freeze {reason, version:"1.0"}; GET /docs/:id/frozen',
+    title: 'Freeze the settled document into an immutable snapshot',
+    action: 'POST /api/authoring/docs/:id/freeze {reason, version:"1.0"} after the comment is resolved; GET /docs/:id/frozen',
     expected: 'HTTP 200; a frozen record with content_hash is retrievable; a second freeze is refused',
-    dependsOn: ['OQ-AUTH-04'],
+    dependsOn: ['OQ-AUTH-04', 'OQ-AUTH-11b'],
   },
   async ({ api, expect }) => {
     const r = await api('POST', `/api/authoring/docs/${state.docId}/freeze`, { reason: 'OQ-003 step 11 freeze', version: '1.0' });
@@ -357,42 +445,6 @@ await step(
     expect(sig.signer_email === auth.user.email && sig.meaning === 'REVIEWER' && sig.pin_verified === true, 'signature attributes wrong', sig);
     expect(sig.signature_digest && sig.covered_content_hash, 'signature not bound to a frozen snapshot', sig);
     return `signature ${sig.id} by ${sig.signer_email}, meaning ${sig.meaning}, covers freeze v${sig.covered_freeze_version} (${String(sig.covered_content_hash).slice(0, 12)}…)`;
-  },
-);
-
-await step(
-  {
-    id: 'OQ-AUTH-15',
-    urs: ['URS-AUTH-012'],
-    title: 'AI drafting fails closed when no provider is configured',
-    action: 'POST /api/authoring/sections/:id/ai/draft {prompt}',
-    expected: 'No draft content is returned; the request is refused with a provider-unavailable status (5xx) — never a fabricated draft',
-    dependsOn: ['OQ-AUTH-04'],
-  },
-  async ({ api, expect }) => {
-    const r = await api('POST', `/api/authoring/sections/${state.sectionOther.id}/ai/draft`, { prompt: 'Draft a one-paragraph summary.' });
-    const txt = JSON.stringify(r.json ?? r.text);
-    expect(r.status !== 200 || !/draft|content/i.test(txt), 'a draft was returned without a provider', r.json);
-    expect(r.status >= 400, `expected a refusal, got ${r.status}`, r.json);
-    return `HTTP ${r.status}: ${txt.slice(0, 200)}`;
-  },
-);
-
-await step(
-  {
-    id: 'OQ-AUTH-16',
-    urs: ['URS-AUTH-012'],
-    title: 'AI drafting produces a governed draft candidate',
-    action: 'POST /api/authoring/sections/:id/ai/draft with a configured provider',
-    expected: 'A draft candidate with provenance is returned for human acceptance',
-    dependsOn: ['OQ-AUTH-04'],
-  },
-  async ({ api, deviation }) => {
-    const r = await api('POST', `/api/authoring/sections/${state.sectionOther.id}/ai/draft`, { prompt: 'Draft a one-paragraph summary.' });
-    if (r.status >= 500 || r.status === 503) {
-      deviation('AnA unavailable: no provider configured (ANTHROPIC_API_KEY / OPENAI_API_KEY unset in this environment). Re-execute with a PQ-passed model configured.', r.json);
-    }
-    deviation('AnA unavailable: no provider configured; unexpected non-5xx answer recorded for review.', r.json);
   },
 );
 

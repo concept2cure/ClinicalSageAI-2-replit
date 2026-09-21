@@ -35,7 +35,7 @@ IQ-001 executed; OQ-SUBC-00 creates a program and ingests one PDF to serve as a 
 | OQ-SUBC-05 | URS-SUBC-005 | scripted | draft→assembling; assembling→dispatched | 200; refused; status `assembling` |
 | OQ-SUBC-06 | URS-SUBC-006 | scripted | generic transition to `frozen`; freeze without signature | `GOVERNED_REQUIRED`; 400 |
 | OQ-SUBC-07 | URS-SUBC-007 | scripted | `POST /api/c2c/actions/sign` without `reauth` | 4xx; no `actionId` |
-| OQ-SUBC-08 | URS-SUBC-007 | scripted → deviation locally | sign with password re-auth; freeze with `signatureActionId` | signature + ledger rows; status frozen |
+| OQ-SUBC-08 | URS-SUBC-007 | **credentialed** (`OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD`, as OQ-006 §1; deviation *not executed — credential not supplied* when absent) | as the signer: `POST /api/c2c/actions/sign {target:"ectd-sequence:<id>", reason, payload:{intent:"freeze"}, reauth:{password}}`; read signatures by target; `POST /sequences/:id/freeze {signatureActionId}` | sign 200 with `actionId`; exactly one `electronic_signatures` row by the signer; freeze of the never-validated sequence (status `assembling` after OQ-SUBC-04) refused 409 `INVALID_STATE` by the state machine — a valid signature is necessary, not sufficient; status unchanged. A frozen outcome needs a validated, shadow-reviewed sequence and is outside this fixture |
 | OQ-SUBC-09 | URS-SUBC-008 | scripted | `GET /capabilities` | every gateway `configured:false` |
 | OQ-SUBC-10 | URS-SUBC-009 | scripted | `GET /api/dossier-map?projectId=<program uuid>` | 200 with per-module data |
 | OQ-SUBC-11 | URS-SUBC-010 | unscripted | compile FDA initial; status | <500; observation recorded |
@@ -45,7 +45,7 @@ IQ-001 executed; OQ-SUBC-00 creates a program and ingests one PDF to serve as a 
 
 ## 4. Acceptance
 
-As OQ-001 §4. The positive governed sign (OQ-SUBC-08) is executed on staging by a tester holding the identity's password.
+As OQ-001 §4. OQ-SUBC-08 is executed by a tester holding a second identity's password (`OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD`; the signer must not be the sequence's creator — separation of duties). Protocol text updated 2026-09-21 (WF) to the credentialed form and the honest freeze expectation; the step was exercised locally into a scratchpad evidence root (`docs/evidence/WF/2026-09-21/oq-subc-scratch.transcript.txt`: sign 200, one signature row, freeze 409 `INVALID_STATE`, status `assembling` unchanged — 15 pass) but the OQ-004 record under `docs/evidence/W3/` was **not** regenerated in that session; the record below is the baseline.
 
 ## 5. Result of the local execution (2026-09-21)
 

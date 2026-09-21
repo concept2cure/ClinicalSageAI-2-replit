@@ -1,14 +1,15 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5700/api/mdx/qms/templates",
+    "url": "http://localhost:5900/api/mdx/qms/templates",
     "anonymous": false,
+    "identity": null,
     "body": null
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 8,
+    "durationMs": 9,
     "rateLimitRetries": 0,
     "body": {
       "data": [

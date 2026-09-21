@@ -1,33 +1,34 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/authoring/sections/be0137e6-f86d-481c-8039-d3b35a422d40/revert",
+    "url": "http://localhost:5900/api/authoring/sections/b9cb188a-a468-4956-b8d8-5b931fed9062/revert",
     "anonymous": false,
+    "identity": null,
     "body": {
-      "rev_id": "21fc5a0b-5f53-47a8-b45a-4323a8ffc3b7"
+      "rev_id": "6eaf4dfe-f572-46d9-be0b-c1f9f0084aeb"
     }
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 62,
+    "durationMs": 38,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
       "section": {
-        "id": "be0137e6-f86d-481c-8039-d3b35a422d40",
-        "doc_id": "2d2a545d-aca6-474e-bfcb-fa3cc1080fc7",
+        "id": "b9cb188a-a468-4956-b8d8-5b931fed9062",
+        "doc_id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
         "code": "2.5",
         "title": "Clinical Overview",
         "content": "<p>Initial 2.5 text.</p>",
         "order_index": 0,
         "track_changes": false,
         "tenant_id": 2,
-        "created_at": "2026-09-21T01:05:21.900Z",
-        "updated_at": "2026-09-21T01:05:24.086Z"
+        "created_at": "2026-09-21T01:44:29.493Z",
+        "updated_at": "2026-09-21T01:44:31.645Z"
       },
-      "message": "Section reverted to revision 21fc5a0b-5f53-47a8-b45a-4323a8ffc3b7",
-      "reverted_from": "2026-09-21T01:05:21.916Z"
+      "message": "Section reverted to revision 6eaf4dfe-f572-46d9-be0b-c1f9f0084aeb",
+      "reverted_from": "2026-09-21T01:44:29.502Z"
     }
   }
 }

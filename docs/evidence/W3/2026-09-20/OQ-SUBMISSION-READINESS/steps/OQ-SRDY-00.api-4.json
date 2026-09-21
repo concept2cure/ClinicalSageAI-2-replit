@@ -1,8 +1,9 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5700/api/submissions/42/sequences",
+    "url": "http://localhost:5900/api/submissions/52/sequences",
     "anonymous": false,
+    "identity": null,
     "body": {
       "region": "fda",
       "sequenceNumber": "0000",
@@ -12,11 +13,11 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 18551,
-    "rateLimitRetries": 1,
+    "durationMs": 32,
+    "rateLimitRetries": 0,
     "body": {
-      "id": 19,
-      "submissionId": 42,
+      "id": 23,
+      "submissionId": 52,
       "region": "fda",
       "sequenceNumber": "0000",
       "type": "original",
@@ -26,8 +27,8 @@
       "frozenAt": null,
       "organizationId": 2,
       "createdBy": 1,
-      "createdAt": "2026-09-21T01:06:07.146Z",
-      "updatedAt": "2026-09-21T01:06:07.146Z",
+      "createdAt": "2026-09-21T01:42:24.154Z",
+      "updatedAt": "2026-09-21T01:42:24.154Z",
       "deletedAt": null,
       "auditTrail": {
         "persisted": true,

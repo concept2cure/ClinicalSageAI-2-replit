@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5900/api/authoring/docs/7aa154e6-07ca-4469-a1e4-c8e6952a32ab/frozen",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 8,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "No frozen version found"
+    }
+  }
+}
