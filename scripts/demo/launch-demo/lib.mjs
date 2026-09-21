@@ -39,24 +39,30 @@ export { makePdfBuffer, sha256 };
  */
 export async function connect({ baseUrl, email, token, onRecord } = {}) {
   const base = (baseUrl || process.env.DEMO_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
-  let accessToken = token || process.env.DEMO_SEED_TOKEN || null;
-  let identity = { email: null, userId: null, organizationId: null };
-  if (!accessToken) {
-    const who = email || process.env.DEMO_SEED_EMAIL || 'jonmichaelpsmith@gmail.com';
-    const auth = await devLogin(base, who);
-    accessToken = auth.accessToken;
-    identity = { email: who, userId: auth.user?.id ?? null, organizationId: auth.user?.organizationId ?? auth.organizationId ?? null };
-  }
-  const api = createApiClient({ baseUrl: base, accessToken, onRecord: onRecord || (() => {}) });
+  const auth = await bearerFor(base, { email, token });
+  const api = createApiClient({ baseUrl: base, accessToken: auth.accessToken, onRecord: onRecord || (() => {}) });
   const me = await api('GET', '/api/auth/me');
-  if (me.status !== 200) throw new Error(`could not resolve the signed-in user (${me.status}): ${me.text?.slice(0, 200)}`);
-  const u = me.json?.user ?? me.json?.data ?? me.json ?? {};
-  identity = {
-    email: u.email ?? identity.email,
-    userId: u.id ?? identity.userId,
-    organizationId: u.organizationId ?? u.organization_id ?? u.defaultOrganizationId ?? identity.organizationId,
+  if (me.status !== 200) throw new Error(`could not resolve the signed-in user (${me.status}): ${String(me.text ?? '').slice(0, 200)}`);
+  return { api, baseUrl: base, identity: identityOf(me.json, auth.identity) };
+}
+
+/** A bearer token: the one given (DEMO_SEED_TOKEN) or a local dev-login. */
+async function bearerFor(base, { email, token }) {
+  const given = token || process.env.DEMO_SEED_TOKEN || null;
+  if (given) return { accessToken: given, identity: {} };
+  const who = email || process.env.DEMO_SEED_EMAIL || 'jonmichaelpsmith@gmail.com';
+  const auth = await devLogin(base, who);
+  return { accessToken: auth.accessToken, identity: { email: who } };
+}
+
+/** The signed-in identity from /api/auth/me, whichever envelope the route uses. */
+function identityOf(body, fallback) {
+  const u = body?.user ?? body?.data ?? body ?? {};
+  return {
+    email: u.email ?? fallback.email ?? null,
+    userId: u.id ?? null,
+    organizationId: u.organizationId ?? u.organization_id ?? u.defaultOrganizationId ?? null,
   };
-  return { api, baseUrl: base, identity };
 }
 
 /** Throw with the response when a call did not answer one of the accepted statuses. */

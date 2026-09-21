@@ -36,18 +36,18 @@ if (list.length === 0) {
 }
 
 const ctx = await connect({ baseUrl: opt('base-url'), email: opt('email') });
-console.log(`Signed in as ${ctx.identity.email} (user ${ctx.identity.userId}, organisation ${ctx.identity.organizationId}) at ${ctx.baseUrl}`);
+console.info(`Signed in as ${ctx.identity.email} (user ${ctx.identity.userId}, organisation ${ctx.identity.organizationId}) at ${ctx.baseUrl}`);
 
 let failed = false;
 for (const pack of list) {
   const run = makeRun(pack);
   const mod = await import(`./packs/${pack}.mjs`);
-  console.log(`\n=== ${flag('purge') ? 'purge' : 'seed'}: ${pack} ===`);
+  console.info(`\n=== ${flag('purge') ? 'purge' : 'seed'}: ${pack} ===`);
   try {
     if (flag('purge')) await mod.purge({ ...ctx, run });
     else await mod.seed({ ...ctx, run });
     const where = run.write();
-    console.log(`manifest → ${where}`);
+    console.info(`manifest → ${where}`);
   } catch (err) {
     failed = true;
     console.error(`✗ ${pack}: ${err.message}`);
