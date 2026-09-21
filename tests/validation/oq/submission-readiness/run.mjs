@@ -25,9 +25,16 @@ await step(
   async ({ api, expect }) => {
     const p = await createProgram(api, expect, `OQ-005 Readiness program ${stamp}`);
     state.programId = p.id;
-    state.programName = p.name;
+    state.programName = p.title ?? p.name;
     const ing = await ingestPdf(api, expect, { programId: p.id, title: `OQ-005 Protocol ${stamp}` });
-    const { submission, sequence } = await createSubmissionWithSequence(api, expect, { title: `OQ-005 IND ${stamp}` });
+    // The sequence goes on the PROGRAM's canonical submission (intake's spine),
+    // so OQ-SRDY-07 exercises "the open program's sequence" rather than a
+    // submission the program does not own (VSR-001 F-8).
+    expect(p.spineSubmissionId != null, 'intake reported no canonical submission for the program', p);
+    const { submission, sequence } = await createSubmissionWithSequence(api, expect, {
+      title: `OQ-005 IND ${stamp}`,
+      submissionId: p.spineSubmissionId,
+    });
     state.submission = submission;
     state.sequence = sequence;
     const leaf = await api('PUT', `/api/submissions/sequences/${sequence.id}/leaves`, {
@@ -171,7 +178,7 @@ await step(
     action: 'Open /concept2cure/dispatch-readiness with the program selected',
     expected: 'The surface shows the open program\'s sequence (number 0000) and its gate verdict',
     dependsOn: ['OQ-SRDY-00'],
-    note: 'DispatchReadiness.tsx:79-84 reads GET /api/submissions and takes the FIRST submission in the organisation, not the one belonging to the program open in the shell. In an organisation with more than one submission the surface can gate a different sequence from the one the user is looking at.',
+    note: 'VSR-001 F-8 (2026-09-20): DispatchReadiness.tsx took the FIRST submission in the organisation, not the open program\'s. Since 2026-09-21 the surface resolves the open program (shell id → GET /api/c2c/projects/:id), picks its submission by the platform\'s program↔submission identity convention, and gates that submission\'s latest sequence; OQ-SRDY-00 builds the sequence on the program\'s own submission so this step exercises exactly that. The surface prints the sequence NUMBER (0000) beside the row id.',
   },
   async (ctx) => {
     await ctx.newPage({ id: state.programId, name: state.programName });

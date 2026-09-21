@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5600/api/c2c/project-vault/ac97f9db-c0fe-46de-ad90-d0bc6b7bbf12",
+    "anonymous": true,
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 7,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Bearer token required"
+    }
+  }
+}

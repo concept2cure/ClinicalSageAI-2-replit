@@ -1,0 +1,9 @@
+Per-rule warning counts in files modified in this working tree by OTHER sessions during WC's run (server/services/submission-ai/*, server/db/__tests__/*) — none are WC's files:
+     46 no-console
+      5 no-undef
+      2 prefer-const
+      1 no-useless-assignment
+      1 no-empty
+      1 max-lines-per-function
+
+
