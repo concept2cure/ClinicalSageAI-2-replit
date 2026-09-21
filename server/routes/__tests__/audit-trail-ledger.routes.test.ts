@@ -26,6 +26,8 @@ vi.mock('../../db', () => ({
 
 import { writeChainedAuditRow } from '../../services/auditService';
 import createAuditTrailLedgerRoutes, { readAuditLedger, type AuditLedgerEntry } from '../audit-trail-ledger.routes';
+import { verifyAuditChain } from '../../services/audit/chain';
+import type { PoolClient } from 'pg';
 
 const MIGRATION = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -70,13 +72,24 @@ function poolOverPglite(): Pick<Pool, 'connect'> {
   };
 }
 
+function pgliteClient(): PoolClient {
+  return { query: (sql: string, params?: unknown[]) => pglite.query(sql, params) } as unknown as PoolClient;
+}
+
 function appFor(user: { organizationId?: number } | null) {
   const app = express();
   app.use((req, _res, next) => {
     if (user) (req as express.Request & { user?: unknown }).user = { id: 11, ...user };
     next();
   });
-  app.use('/api/audit-trail', createAuditTrailLedgerRoutes(poolOverPglite()));
+  app.use(
+    '/api/audit-trail',
+    createAuditTrailLedgerRoutes(poolOverPglite(), {
+      // The route verifies on a super-admin scope; over PGlite one client
+      // sees every tenant, which is what that scope means here.
+      verifyTenantChain: (orgId) => verifyAuditChain(pgliteClient(), { tenantId: orgId }),
+    }),
+  );
   return app;
 }
 
@@ -211,5 +224,31 @@ describe('GET /api/audit-trail/ledger', () => {
     } finally {
       await scratch.close();
     }
+  });
+});
+
+describe('GET /api/audit-trail/ledger — the verdict sees cross-tenant legacy links', () => {
+  it("verifies a legacy row that linked to ANOTHER tenant's head (the pre-fix global recipe)", async () => {
+    // Two legacy rows written by the old recipe on an unscoped connection:
+    // tenant 8 first, then tenant 7 deriving from tenant 8's hash (the global
+    // head it saw). A one-tenant verdict for 7 must accept that link — the
+    // ledger surface was showing "Chain verification failed" on exactly this.
+    // The walker's own derivation keeps the fixture honest to the recipe.
+    const { deriveChainHash } = await import('../../services/audit/chain');
+    const { GENESIS_PREVIOUS_HASH } = await import('../../services/audit/audit-hmac-seal');
+    const a = { id: 'legacy-a', tenant_id: OTHER_ORG, action: 'x.a', actor_id: 1, target: 't:a', payload_hash: 'p-a', occurred_at: '2026-01-01T00:00:00.000Z' };
+    const b = { id: 'legacy-b', tenant_id: ORG, action: 'x.b', actor_id: 1, target: 't:b', payload_hash: 'p-b', occurred_at: '2026-01-01T00:00:01.000Z' };
+    const hashA = deriveChainHash(a as never, GENESIS_PREVIOUS_HASH);
+    const hashB = deriveChainHash(b as never, hashA);
+    for (const [r, h] of [[a, hashA], [b, hashB]] as const) {
+      await pglite.query(
+        `INSERT INTO audit_logs (id, tenant_id, user_id, action, table_name, record_id, actor_id, target, payload_hash, sha256_chain, occurred_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+        [r.id, r.tenant_id, 11, r.action, 'audit_test', r.id, r.actor_id, r.target, r.payload_hash, h, r.occurred_at],
+      );
+    }
+    const res = await request(appFor({ organizationId: ORG })).get('/api/audit-trail/ledger');
+    expect(res.status).toBe(200);
+    expect(res.body.meta.chain).toMatchObject({ ok: true, legacyRows: 1, rowsChecked: 1 });
   });
 });

@@ -317,10 +317,28 @@ export interface AuditLedgerResponse {
  * Read both stores for one tenant and merge newest-first. Exported so the
  * read-model is testable against a real (PGlite) database without HTTP.
  */
+/**
+ * The verdict must see the WHOLE chain a legacy row could have linked to,
+ * which crosses tenants (see services/audit/chain.ts readChainRows): it runs
+ * on a super-admin scoped connection filtered to this tenant — the pattern
+ * verify-chain uses — never on the request's tenant-scoped client, which
+ * would report every cross-linked legacy row as a break.
+ */
+export type TenantChainVerifier = (orgId: number) => Promise<ChainVerificationResult>;
+
+async function verifyOnSuperAdminScope(orgId: number): Promise<ChainVerificationResult> {
+  const { withTenantConnection } = await import('../db/withTenantConnection.js');
+  return withTenantConnection(
+    { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'audit-trail-ledger/verdict' },
+    (c) => verifyAuditChain(c, { tenantId: orgId }),
+  );
+}
+
 export async function readAuditLedger(
   client: Pick<PoolClient, 'query'>,
   orgId: number,
   limit: number,
+  verifyTenantChain: TenantChainVerifier = verifyOnSuperAdminScope,
 ): Promise<AuditLedgerResponse> {
   const [logs, events] = await Promise.all([
     client.query(AUDIT_LOGS_SQL, [orgId, limit]),
@@ -334,8 +352,8 @@ export async function readAuditLedger(
     .slice(0, limit);
   const sources: Record<AuditLedgerSource, number> = { audit_logs: 0, audit_events: 0 };
   for (const e of merged) sources[e.source] += 1;
-  // Same transaction, same tenant stamp, whole chain (not the window).
-  const v = await verifyAuditChain(client as PoolClient, { tenantId: orgId });
+  // Whole chain (not the window), on a scope that can see cross-tenant legacy links.
+  const v = await verifyTenantChain(orgId);
   const chain: AuditLedgerChainVerdict = {
     store: 'audit_logs',
     ok: v.ok,
@@ -353,8 +371,12 @@ export async function readAuditLedger(
  * Mount: app.use('/api/audit-trail', authenticateToken, createAuditTrailLedgerRoutes(pool));
  * The mount supplies authenticateToken (populating req.user) and the shared pg Pool.
  */
-export default function createAuditTrailLedgerRoutes(pool: Pick<Pool, 'connect'>): Router {
+export default function createAuditTrailLedgerRoutes(
+  pool: Pick<Pool, 'connect'>,
+  opts: { verifyTenantChain?: TenantChainVerifier } = {},
+): Router {
   const router = Router();
+  const verifyTenantChain = opts.verifyTenantChain ?? verifyOnSuperAdminScope;
 
   /**
    * GET /api/audit-trail/ledger?limit=200
@@ -379,7 +401,7 @@ export default function createAuditTrailLedgerRoutes(pool: Pick<Pool, 'connect'>
       client = await pool.connect();
       await client.query('BEGIN');
       await setTenantContextTx(client, guard.orgId);
-      const ledger = await readAuditLedger(client, guard.orgId, limit);
+      const ledger = await readAuditLedger(client, guard.orgId, limit, verifyTenantChain);
       await client.query('COMMIT');
       return res.json(ledger);
     } catch (error) {

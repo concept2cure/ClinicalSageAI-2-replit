@@ -136,11 +136,12 @@ export class AuditChainSchemaMissingError extends Error {
 /** The connection is tenant-scoped, so a cross-tenant verification would see a subset. */
 export class AuditChainPartialViewError extends Error {
   readonly code = 'AUDIT_CHAIN_PARTIAL_VIEW';
-  constructor() {
+  constructor(detail?: string) {
     super(
-      'audit chain: this connection is scoped to one tenant (app.rls_enforce=on without ' +
-        'app_super_admin), so a verification of every tenant would silently check a subset. ' +
-        'Verify one tenant ({ tenantId }) or use a super-admin scope.',
+      detail ??
+        'audit chain: this connection is scoped to one tenant (app.rls_enforce=on without ' +
+          'app_super_admin), so a verification of every tenant would silently check a subset. ' +
+          'Verify one tenant ({ tenantId }) or use a super-admin scope.',
     );
   }
 }
@@ -376,6 +377,12 @@ export interface ChainWalkRow extends ChainRow {
   sha256_chain: string;
   hmac_seal?: string | null;
   chain_seq?: number | string | bigint | null;
+  /**
+   * A row of ANOTHER tenant loaded only so a one-tenant walk can see the
+   * global head a legacy writer could have linked to. It is never verified
+   * or counted; it only takes part in "what was the last hash written".
+   */
+  context?: boolean;
 }
 
 export interface ChainBreak {
@@ -501,6 +508,12 @@ function walkLegacyRows(state: WalkState): void {
 
   for (const row of state.rows) {
     const t = tenantKey(row);
+    if (row.context) {
+      // Another tenant's legacy row: it moved the global head, nothing else.
+      lastTenant.set(t, row.sha256_chain);
+      lastGlobal = row.sha256_chain;
+      continue;
+    }
     if (isSequenced(row)) {
       state.sequencedRows += 1;
       const head = state.lastLegacyTenant.get(t);
@@ -597,7 +610,7 @@ export function walkAuditChain(input: ChainWalkRow[]): ChainWalk {
   return {
     ok: !state.brokenAt,
     rowsChecked: state.verified + (state.brokenAt ? 1 : 0),
-    tenants: new Set(rows.map(tenantKey)).size,
+    tenants: new Set(rows.filter((r) => !r.context).map(tenantKey)).size,
     legacyRows: state.legacyRows,
     sequencedRows: state.sequencedRows,
     ...(state.brokenAt ? { brokenAt: state.brokenAt } : {}),
@@ -615,17 +628,11 @@ async function readChainRows(
   opts: VerifyAuditChainOptions = {},
 ): Promise<ChainWalkRow[]> {
   const tenantId = asTenantNumber(opts.tenantId);
-  if (tenantId == null) {
+  const scoped = await connectionIsTenantScoped(client);
+  if (tenantId == null && scoped) {
     // A cross-tenant walk on a tenant-scoped connection would verify a subset
     // and call it the chain. Refuse rather than report a false pass.
-    const view = await client.query(
-      `SELECT NULLIF(current_setting('app.rls_enforce', true), '') AS rls_enforce,
-              NULLIF(current_setting('app.current_user_role', true), '') AS role`,
-    );
-    const v = view.rows[0] ?? {};
-    if (v.rls_enforce === 'on' && v.role !== 'app_super_admin') {
-      throw new AuditChainPartialViewError();
-    }
+    throw new AuditChainPartialViewError();
   }
   const ordered = await chainOrderColumnPresent(client);
   const res = await client.query(
@@ -636,7 +643,7 @@ async function readChainRows(
       ORDER BY occurred_at ASC, id ASC`,
     tenantId == null ? [] : [tenantId],
   );
-  return res.rows.map((r) => ({
+  const rows: ChainWalkRow[] = res.rows.map((r) => ({
     id:           String(r.id),
     tenant_id:    (r.tenant_id as number | null) ?? null,
     action:       r.action as string,
@@ -648,6 +655,52 @@ async function readChainRows(
     hmac_seal:    (r.hmac_seal as string | null) ?? null,
     chain_seq:    (r.chain_seq as number | string | null) ?? null,
   }));
+  if (tenantId == null || !rows.some((r) => !isSequenced(r))) return rows;
+
+  // One tenant, with legacy rows. A legacy writer linked to whichever head it
+  // saw — the tenant's or the GLOBAL one — so the walk needs the other
+  // tenants' legacy hashes as context. A tenant-scoped connection cannot see
+  // them (RLS), and would report every cross-linked legacy row as a break:
+  // refuse instead of guessing.
+  if (scoped) {
+    throw new AuditChainPartialViewError(
+      `audit chain: tenant ${tenantId} has legacy (unsequenced) rows that may link to other ` +
+        "tenants' rows, which this tenant-scoped connection cannot see. Verify on a super-admin scope.",
+    );
+  }
+  const ctx = await client.query(
+    `SELECT id, tenant_id, occurred_at, sha256_chain
+       FROM audit_logs
+      WHERE sha256_chain IS NOT NULL AND tenant_id IS DISTINCT FROM $1
+        ${ordered ? 'AND chain_seq IS NULL' : ''}
+      ORDER BY occurred_at ASC, id ASC`,
+    [tenantId],
+  );
+  for (const r of ctx.rows) {
+    rows.push({
+      id:           String(r.id),
+      tenant_id:    (r.tenant_id as number | null) ?? null,
+      action:       '',
+      actor_id:     null,
+      target:       null,
+      payload_hash: null,
+      occurred_at:  r.occurred_at as string | Date,
+      sha256_chain: r.sha256_chain as string,
+      chain_seq:    null,
+      context:      true,
+    });
+  }
+  return rows;
+}
+
+/** app.rls_enforce=on without app_super_admin: the connection sees one tenant. */
+async function connectionIsTenantScoped(client: PoolClient): Promise<boolean> {
+  const view = await client.query(
+    `SELECT NULLIF(current_setting('app.rls_enforce', true), '') AS rls_enforce,
+            NULLIF(current_setting('app.current_user_role', true), '') AS role`,
+  );
+  const v = view.rows[0] ?? {};
+  return v.rls_enforce === 'on' && v.role !== 'app_super_admin';
 }
 
 /**
