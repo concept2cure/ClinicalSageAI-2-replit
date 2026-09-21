@@ -91,7 +91,7 @@ export interface StreamPostProcessingContext {
    */
   collectedDemoStarts?: DemoStartDirective[];
   /** Document drafts emitted this turn — persisted to the governed artifact version history. */
-  collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
+  collectedDrafts: CollectedDraft[];
   /** Gateway message history built for the turn (for working-memory write-back). */
   messages: GatewayMessage[];
   model: string | undefined;
@@ -112,15 +112,36 @@ export interface StreamPostProcessingContext {
    version history — no project context, an unchanged content hash, and a
    database failure — are indistinguishable to the client, so what this function
    does and does NOT announce is the whole contract. */
+export interface CollectedDraft {
+  title: string;
+  content: string;
+  documentType?: string;
+  reasonForChange?: string;
+  /**
+   * Set when the draft is ALREADY an authoring document (the
+   * draft_authoring_document tool wrote authoring_documents/authoring_sections
+   * with provenance in the same transaction). The authoring store is the one
+   * document store for the launch catalog (docs/design/ANA_DOCUMENT_CANVAS.md),
+   * so such a draft is never written into concept2cure_artifacts as well —
+   * report canvases and the legacy generate_document path are unchanged.
+   */
+  authoringDocId?: string;
+  programId?: string;
+}
+
 export async function persistCollectedDrafts(args: {
   res: Response;
   orgId: string | number | null | undefined;
   streamProjectId: string | number | null | undefined;
   userId: number | undefined;
   threadId: string | undefined;
-  collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
+  collectedDrafts: CollectedDraft[];
 }): Promise<void> {
-  const { res, orgId, streamProjectId, userId, threadId, collectedDrafts } = args;
+  const { res, orgId, streamProjectId, userId, threadId } = args;
+  /* A draft that already IS an authoring document needs no artifact version
+     and must not draw the "could not be saved" caveat either: it was saved,
+     durably, by the tool that produced it. Filtered before any project logic. */
+  const collectedDrafts = args.collectedDrafts.filter((d) => !d.authoringDocId);
   if (!orgId || !threadId || collectedDrafts.length === 0) {
     return;
   }

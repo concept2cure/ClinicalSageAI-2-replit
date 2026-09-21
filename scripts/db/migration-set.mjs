@@ -346,6 +346,14 @@ export const C2C_MIGRATION_FILES = [
   // inventing a regulatory class for a past record would be worse than leaving
   // it unbound.
   'migrations/20260728_authoring_document_governed_binding.sql',
+  // Provenance for authoring documents (WM, 2026-09-21): a nullable JSONB
+  // column that says whether AnA drafted the document (source 'ana' with the
+  // conversation/turn and the model the gateway reported), a seed produced it,
+  // or it was imported; NULL keeps meaning "a person authored it". Guarded on
+  // to_regclass like the program-scope ALTER above, so it lands for real once
+  // the authoring bundle is provisioned and no-ops with a NOTICE otherwise.
+  // Additive, idempotent, no backfill.
+  'migrations/20260921_authoring_document_provenance.sql',
   // Reconcile lumen_data_atoms embeddings onto 1536 dimensions (audit P0c). The
   // superseded db/migrations/20260125_add_atom_embeddings.sql declared the column
   // and the search_atoms_* functions at vector(3072) and was never in this set, so
@@ -2385,6 +2393,7 @@ export const C2C_MIGRATION_FILES = [
   // measures. Above the final pair because ci:migration-set-order pins those
   // two last. Additive and IF NOT EXISTS throughout.
   'migrations/20260920_mcp_oauth.sql',
+
 
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the

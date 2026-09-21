@@ -1159,6 +1159,11 @@ export function mountStreamRoute(router: Router): void {
         content: string;
         documentType?: string;
         reasonForChange?: string;
+        /** Set when the draft was persisted as an authoring document
+            (draft_authoring_document) — post-processing then leaves
+            concept2cure_artifacts alone; the authoring store holds it. */
+        authoringDocId?: string;
+        programId?: string;
       }[] = [];
 
       // Stream via gateway
@@ -1834,6 +1839,19 @@ export function mountStreamRoute(router: Router): void {
                   parsed.content.length > 0
                 ) {
                   const draftTitle: string = parsed.title || 'Generated document';
+                  /* An authoring document (draft_authoring_document): the draft
+                     already lives in the editor's store under this id, in this
+                     program. The event carries both so the client renders the
+                     document canvas over that id instead of an artifact card,
+                     and post-processing does not write a second copy. */
+                  const authoringDocId: string | undefined =
+                    typeof parsed.authoringDocId === 'string' && parsed.authoringDocId
+                      ? parsed.authoringDocId
+                      : undefined;
+                  const authoringProgramId: string | undefined =
+                    authoringDocId && typeof parsed.programId === 'string' && parsed.programId
+                      ? parsed.programId
+                      : undefined;
                   // Record for durable version-history persistence in post-processing.
                   collectedDrafts.push({
                     title: draftTitle,
@@ -1844,6 +1862,7 @@ export function mountStreamRoute(router: Router): void {
                       typeof parsed.reasonForChange === 'string'
                         ? parsed.reasonForChange
                         : undefined,
+                    ...(authoringDocId ? { authoringDocId, programId: authoringProgramId } : {}),
                   });
                   res.write(
                     `data: ${JSON.stringify({
@@ -1852,6 +1871,7 @@ export function mountStreamRoute(router: Router): void {
                       content: parsed.content,
                       documentType: parsed.documentType,
                       source: toolUse.name,
+                      ...(authoringDocId ? { authoringDocId, programId: authoringProgramId } : {}),
                     })}\n\n`
                   );
                 }

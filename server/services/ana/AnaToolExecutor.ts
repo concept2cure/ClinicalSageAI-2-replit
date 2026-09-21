@@ -215,6 +215,15 @@ export interface ToolContext {
    * interview session unbound to the program it was run for.
    */
   projectRef?: string | null;
+  /**
+   * The conversation this turn belongs to, its turn id and the model the
+   * gateway is answering with — recorded as provenance by tools that create a
+   * document (draft_authoring_document). Optional: the stream's dispatch does
+   * not pass them yet, and a tool never claims a model it was not told about.
+   */
+  threadId?: string | null;
+  turnId?: string | null;
+  model?: string | null;
   /** Tenant UUID — required to scope project_knowledge_search retrieval. */
   organizationUuid?: string | null;
   /** Active UI surface/screen (e.g. 'nonclinical', 'cmc', 'sponsored_programs') — situational context. */
@@ -19557,6 +19566,20 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
   } catch (err) {
     return JSON.stringify({ error: `save_document_to_vault failed: ${err instanceof Error ? err.message : String(err)}` });
   }
+});
+
+/* draft_authoring_document — an AnA-built document IS an authoring document
+   (docs/design/ANA_DOCUMENT_CANVAS.md, WM 2026-09-21). The body lives in
+   services/authoring/authoring-draft-tool.ts so it is testable through this
+   handler without a model turn; it refuses verbatim without an open project,
+   exactly like save_document_to_vault above, and writes through the same
+   service POST /api/authoring/docs/from-draft uses. */
+registerToolHandler('draft_authoring_document', async (input, ctx) => {
+  const [{ getPool }, { draftAuthoringDocumentTool }] = await Promise.all([
+    import('../../db.js'),
+    import('../authoring/authoring-draft-tool.js'),
+  ]);
+  return draftAuthoringDocumentTool(getPool(), input, ctx);
 });
 
 registerToolHandler('update_vault_document', async (input, ctx) => {

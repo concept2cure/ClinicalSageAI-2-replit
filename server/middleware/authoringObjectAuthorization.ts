@@ -111,6 +111,11 @@ function targetForRequest(req: Request, tenantId: number, path: string): ObjectT
   // 20260727_authoring_object_permissions.sql atomically grants its creator
   // OWNER + AUTHOR permissions.
   if (req.method === 'POST' && path === '/docs') return null;
+  // POST /docs/from-draft creates a document too (WM, 2026-09-21: a drafted
+  // document becomes an authoring document in one transaction). Without this
+  // line the docMatch below read `from-draft` as a document id and answered
+  // 404 AUTHORING_OBJECT_NOT_FOUND for every call. Same grant on creation.
+  if (req.method === 'POST' && path === '/docs/from-draft') return null;
 
   // Creating a section is a document mutation; the parent id comes from the
   // existing authoring contract.
