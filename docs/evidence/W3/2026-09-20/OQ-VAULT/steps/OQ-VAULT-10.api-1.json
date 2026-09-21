@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/00000000-0000-4000-8000-000000000000",
+    "anonymous": false,
+    "body": null
+  },
+  "response": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 9,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "NOT_FOUND"
+    }
+  }
+}

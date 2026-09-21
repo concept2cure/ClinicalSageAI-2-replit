@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents",
+    "anonymous": false,
+    "body": {
+      "docNumber": "SOP-BAD-20260921003124",
+      "title": "no type"
+    }
+  },
+  "response": {
+    "status": 422,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 9,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Invalid body",
+      "details": {
+        "docType": [
+          "Required"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,601 @@
+{
+  "protocolId": "OQ-003",
+  "protocolTitle": "Operational Qualification — Authoring",
+  "app": "AUTHORING",
+  "appLabel": "Authoring",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "automated runner tests/validation/oq/authoring/run.mjs",
+  "executedAt": "2026-09-21T00:22:57.098Z",
+  "finishedAt": "2026-09-21T00:23:17.083Z",
+  "environment": {
+    "baseUrl": "http://localhost:5200",
+    "node": "v22.22.2",
+    "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    "playwrightCore": "1.63.0",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "25a793e0f5fadc325ecb8d56065da95014dcdc65"
+    },
+    "testUser": "jonmichaelpsmith@gmail.com",
+    "organizationId": "2",
+    "readyz": {
+      "status": 503,
+      "body": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / KIMI_API_KEY) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE."
+      }
+    }
+  },
+  "counts": {
+    "pass": 9,
+    "fail": 1,
+    "deviation": 1,
+    "not-executed": 11
+  },
+  "steps": [
+    {
+      "id": "OQ-AUTH-00",
+      "title": "Prerequisite: a program",
+      "urs": [],
+      "kind": "scripted",
+      "action": "POST /api/c2c/projects",
+      "expected": "201",
+      "status": "pass",
+      "observed": "program f8750a35-e81e-4dbd-bbeb-c51d1de60808",
+      "startedAt": "2026-09-21T00:22:57.777Z",
+      "finishedAt": "2026-09-21T00:22:58.102Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-00.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/c2c/projects",
+          "status": 201
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-AUTH-01",
+      "title": "Anonymous access refused",
+      "urs": [
+        "URS-AUTH-001"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/authoring/docs without Authorization",
+      "expected": "HTTP 401/403",
+      "status": "pass",
+      "observed": "HTTP 401",
+      "startedAt": "2026-09-21T00:22:58.102Z",
+      "finishedAt": "2026-09-21T00:22:58.358Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-01.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/authoring/docs",
+          "status": 401
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-AUTH-02",
+      "title": "Document creation requires a title",
+      "urs": [
+        "URS-AUTH-002"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/authoring/docs {module:\"M2\"} (no title)",
+      "expected": "HTTP 400 naming the title",
+      "status": "pass",
+      "observed": "HTTP 400: Document title is required",
+      "startedAt": "2026-09-21T00:22:58.358Z",
+      "finishedAt": "2026-09-21T00:22:58.619Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-02.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/authoring/docs",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-AUTH-03",
+      "title": "Create a Module 2 document bound to the program",
+      "urs": [
+        "URS-AUTH-002"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/authoring/docs {title, module:\"M2\", client_program_id}",
+      "expected": "HTTP 200/201 with a document id (UUID)",
+      "status": "pass",
+      "observed": "document 1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9",
+      "startedAt": "2026-09-21T00:22:58.619Z",
+      "finishedAt": "2026-09-21T00:22:58.917Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-03.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/authoring/docs",
+          "status": 201
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-AUTH-04",
+      "title": "Create sections and read them back in order",
+      "urs": [
+        "URS-AUTH-003"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/authoring/sections ×2 (codes 2.7, then 2.5); GET /api/authoring/docs/:id/sections",
+      "expected": "Two sections returned; order follows the CTD code (2.5 before 2.7) or the stored order_index",
+      "status": "deviation",
+      "observed": {
+        "a": {
+          "success": false,
+          "error": {
+            "code": "LINEAGE_REQUIRED",
+            "message": "The section was not created: its data lineage could not be recorded. Saving content without provenance is not permitted."
+          }
+        },
+        "b": {
+          "success": false,
+          "error": {
+            "code": "LINEAGE_REQUIRED",
+            "message": "The section was not created: its data lineage could not be recorded. Saving content without provenance is not permitted."
+          }
+        }
+      },
+      "startedAt": "2026-09-21T00:22:58.917Z",
+      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "evidence": [
+        "steps/OQ-AUTH-04.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-04.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/authoring/sections",
+          "status": 500
+        },
+        {
+          "file": "steps/OQ-AUTH-04.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/authoring/sections",
+          "status": 500
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "deviationReason": "IQ-DEV-001: runtime role lacks privileges (table document_span_lineage) in this environment; the route answered 500 (server log excerpt attached). Underlying check: section create failed (500, 500). Re-execute after the grant is applied.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-AUTH-05",
+      "title": "Edit a section with a reason for change; a revision is recorded",
+      "urs": [
+        "URS-AUTH-004"
+      ],
+      "kind": "scripted",
+      "action": "PATCH /api/authoring/sections/:id {content, changeReason}; GET history",
+      "expected": "HTTP 200; history lists ≥1 revision carrying content_sha256 and created_by",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-AUTH-04 did not pass",
+      "startedAt": "2026-09-21T00:22:59.547Z",
+      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-AUTH-06",
+      "title": "Revision ledger hash chain verifies",
+      "urs": [
+        "URS-AUTH-005"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/authoring/sections/:id/history/verify",
+      "expected": "success:true, revisionCount ≥ 1, chain verdict intact",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-AUTH-05 did not pass",
+      "startedAt": "2026-09-21T00:22:59.547Z",
+      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-AUTH-07",
+      "title": "A stale save is refused, nothing overwritten",
+      "urs": [
+        "URS-AUTH-004"
+      ],
+      "kind": "scripted",
+      "action": "PATCH section with expectedUpdatedAt from before the previous edit",
+      "expected": "HTTP 409 SECTION_CHANGED; content unchanged",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-AUTH-05 did not pass",
+      "startedAt": "2026-09-21T00:22:59.547Z",
+      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-AUTH-08",
+      "title": "Revert to a prior revision",
+      "urs": [
+        "URS-AUTH-006"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/authoring/sections/:id/revert {rev_id: <first revision>}",
+      "expected": "HTTP 200; section content equals that revision; history grows (the revert is itself recorded)",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-AUTH-05 did not pass",
+      "startedAt": "2026-09-21T00:22:59.547Z",
+      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-AUTH-09",
+      "title": "Comment on a section",
+      "urs": [
+        "URS-AUTH-007"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/authoring/sections/:id/comment {body, doc_id}",
+      "expected": "HTTP 200/201; comment listed under the document",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-AUTH-04 did not pass",
+      "startedAt": "2026-09-21T00:22:59.547Z",
+      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-AUTH-10",
+      "title": "Document audit trail records the operations with actor and hashes",
+      "urs": [
+        "URS-AUTH-008"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/authoring/docs/:id/audit",
+      "expected": "Events for CREATE and UPDATE (and REVERT) with actor email, timestamps and content hashes",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-AUTH-08 did not pass",
+      "startedAt": "2026-09-21T00:22:59.547Z",
+      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-AUTH-17",
+      "title": "Request review and submit the document into its approval workflow (before freeze — submit requires DRAFT)",
+      "urs": [
+        "URS-AUTH-013"
+      ],
+      "kind": "scripted",
+      "action": "POST /documents/:id/request-review {reviewers:[self]}; POST /docs/:id/submit {workflow_steps:[{role:\"QA\", approver_email:self}]}; GET /docs/:id/workflow",
+      "expected": "Review request recorded (pending, reviewer = self); submit refused without approver_email; with it the document moves to IN_REVIEW and the workflow lists a PENDING step",
+      "status": "pass",
+      "observed": "review pending for jonmichaelpsmith@gmail.com; submit w/o approver → 400; workflow: {\"success\":true,\"workflowId\":\"d74b1e4d-ea61-4323-a2b2-5720955da39e\",\"steps\":[{\"workflow_id\":\"d74b1e4d-ea61-4323-a2b2-5720955da39e\",\"doc_id\":\"1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9\",\"step_no\":1,\"role\":\"Q",
+      "startedAt": "2026-09-21T00:22:59.547Z",
+      "finishedAt": "2026-09-21T00:23:00.680Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-17.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/authoring/documents/1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9/request-review",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-AUTH-17.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/authoring/docs/1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9/submit",
+          "status": 400
+        },
+        {
+          "file": "steps/OQ-AUTH-17.api-3.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/authoring/docs/1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9/submit",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-AUTH-17.api-4.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/authoring/docs/1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9/workflow",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-AUTH-17b",
+      "title": "The reviewer sees the pending review on the Review surface",
+      "urs": [
+        "URS-AUTH-013"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/review/board (the read model behind /concept2cure/review) after the request-review and submit above",
+      "expected": "The queue lists the document for the reviewer",
+      "status": "fail",
+      "observed": {
+        "scope": "all",
+        "total": 0,
+        "threadItemId": null,
+        "threadDocumentId": null,
+        "generatedAt": "2026-09-21T00:23:00.970Z"
+      },
+      "startedAt": "2026-09-21T00:23:00.680Z",
+      "finishedAt": "2026-09-21T00:23:01.020Z",
+      "evidence": [
+        "steps/OQ-AUTH-17b.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-17b.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/review/board",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "The Review board reads document_workflows / workflow_approvals (server/routes/review-board-routes.ts); authoring reviews are stored in authoring_reviews and authoring_workflow_steps (server/routes/authoring.router.ts:3476, 6259). If this step fails, a review requested in Authoring is not visible where a reviewer is told to look.",
+      "failure": "authoring review request is not on the Review board queue",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-AUTH-11",
+      "title": "Freeze the document into an immutable snapshot",
+      "urs": [
+        "URS-AUTH-009"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/authoring/docs/:id/freeze {reason, version:\"1.0\"}; GET /docs/:id/frozen",
+      "expected": "HTTP 200; a frozen record with content_hash is retrievable; a second freeze is refused",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-AUTH-04 did not pass",
+      "startedAt": "2026-09-21T00:23:01.020Z",
+      "finishedAt": "2026-09-21T00:23:01.020Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-AUTH-12",
+      "title": "Enrol the signing PIN for the authenticated actor",
+      "urs": [
+        "URS-AUTH-010"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/authoring/users/pin {pin}",
+      "expected": "HTTP 200/201 on first enrolment (identity from the JWT, never from the body); once a PIN exists, a change without the current PIN is refused (400) and succeeds only with old_pin",
+      "status": "pass",
+      "observed": "PIN already enrolled: change without old_pin → 400 (\"Current PIN is required to change it\"); rotation with old_pin → HTTP 200",
+      "startedAt": "2026-09-21T00:23:01.021Z",
+      "finishedAt": "2026-09-21T00:23:01.756Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-12.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/authoring/users/pin",
+          "status": 400
+        },
+        {
+          "file": "steps/OQ-AUTH-12.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/authoring/users/pin",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "On a database where this identity already holds a PIN (a previous run), the refusal-without-old_pin branch is exercised and the PIN is then rotated with the current value.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-AUTH-13",
+      "title": "E-signature refuses a wrong PIN and an invalid meaning",
+      "urs": [
+        "URS-AUTH-010"
+      ],
+      "kind": "scripted",
+      "action": "POST /docs/:id/e-sign with (a) wrong pin, (b) meaning \"WHATEVER\"",
+      "expected": "(a) HTTP 401 Invalid PIN; (b) HTTP 400 Invalid signature meaning; no signature stored",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-AUTH-11 did not pass",
+      "startedAt": "2026-09-21T00:23:01.756Z",
+      "finishedAt": "2026-09-21T00:23:01.756Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-AUTH-14",
+      "title": "Apply a REVIEWER e-signature bound to the frozen snapshot",
+      "urs": [
+        "URS-AUTH-010",
+        "URS-AUTH-011"
+      ],
+      "kind": "scripted",
+      "action": "POST /docs/:id/e-sign {pin, meaning:\"REVIEWER\", intent}; GET /docs/:id/signatures",
+      "expected": "HTTP 200; one signature with signer_email = actor, meaning REVIEWER, pin_verified true, signature_digest and covered_content_hash present",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-AUTH-13 did not pass",
+      "startedAt": "2026-09-21T00:23:01.756Z",
+      "finishedAt": "2026-09-21T00:23:01.756Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-AUTH-15",
+      "title": "AI drafting fails closed when no provider is configured",
+      "urs": [
+        "URS-AUTH-012"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/authoring/sections/:id/ai/draft {prompt}",
+      "expected": "No draft content is returned; the request is refused with a provider-unavailable status (5xx) — never a fabricated draft",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-AUTH-04 did not pass",
+      "startedAt": "2026-09-21T00:23:01.756Z",
+      "finishedAt": "2026-09-21T00:23:01.756Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-AUTH-16",
+      "title": "AI drafting produces a governed draft candidate",
+      "urs": [
+        "URS-AUTH-012"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/authoring/sections/:id/ai/draft with a configured provider",
+      "expected": "A draft candidate with provenance is returned for human acceptance",
+      "status": "not-executed",
+      "observed": "prerequisite step OQ-AUTH-04 did not pass",
+      "startedAt": "2026-09-21T00:23:01.756Z",
+      "finishedAt": "2026-09-21T00:23:01.756Z",
+      "evidence": [],
+      "api": [],
+      "consoleErrors": [],
+      "note": null
+    },
+    {
+      "id": "OQ-AUTH-18",
+      "title": "Template stores answer",
+      "urs": [
+        "URS-AUTH-014"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/templates (organisation); GET /api/authoring/templates (global reference)",
+      "expected": "Both HTTP 200 with list payloads (empty organisation store is honest for a new organisation)",
+      "status": "pass",
+      "observed": "org templates: 0; global templates: 0",
+      "startedAt": "2026-09-21T00:23:01.756Z",
+      "finishedAt": "2026-09-21T00:23:02.282Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-18.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/c2c/templates",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-AUTH-18.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/authoring/templates",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-AUTH-19",
+      "title": "Document Authoring surface renders the document",
+      "urs": [
+        "URS-AUTH-015"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/document-authoring with the program selected",
+      "expected": "The surface renders and the document title is visible",
+      "status": "pass",
+      "observed": "document visible",
+      "startedAt": "2026-09-21T00:23:02.282Z",
+      "finishedAt": "2026-09-21T00:23:10.756Z",
+      "evidence": [
+        "steps/OQ-AUTH-19.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T00:23:06.676Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-AUTH-20",
+      "title": "Review surface renders",
+      "urs": [
+        "URS-AUTH-013",
+        "URS-AUTH-015"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/review",
+      "expected": "Review board renders (screenshot)",
+      "status": "pass",
+      "observed": "rendered",
+      "startedAt": "2026-09-21T00:23:10.756Z",
+      "finishedAt": "2026-09-21T00:23:17.004Z",
+      "evidence": [
+        "steps/OQ-AUTH-20.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T00:23:15.172Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/sections",
+    "anonymous": false,
+    "body": {
+      "doc_id": "1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9",
+      "code": "2.5",
+      "title": "Clinical Overview",
+      "content": "<p>Initial 2.5 text.</p>"
+    }
+  },
+  "response": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 20,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "LINEAGE_REQUIRED",
+        "message": "The section was not created: its data lineage could not be recorded. Saving content without provenance is not permitted."
+      }
+    }
+  },
+  "serverLogExcerpt": {
+    "denied": [
+      "table document_span_lineage"
+    ],
+    "excerpt": [
+      "{\"level\":50,\"time\":\"2026-09-21T00:22:59.456Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"sectionId\":\"b27c63c3-c662-45b0-ae4a-540230773624\",\"tenantId\":2,\"err\":\"permission denied for table document_span_lineage\"},\"msg\":\"[authoring-router] Section create refused — content and lineage rolled back together\"}",
+      "{\"level\":50,\"time\":\"2026-09-21T00:22:59.457Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"requestId\":\"996b133a-d97b-487b-bf8e-fe0280b64ef2\",\"method\":\"POST\",\"path\":\"/api/authoring/sections\",\"statusCode\":500,\"durationMs\":16,\"kernelDecision\":\"allow\",\"kernelScore\":100,\"flags\":[]},\"msg\":\"[http] request_failed\"}"
+    ]
+  }
+}

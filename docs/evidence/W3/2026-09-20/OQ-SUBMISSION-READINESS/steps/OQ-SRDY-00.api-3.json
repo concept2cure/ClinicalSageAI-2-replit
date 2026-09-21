@@ -1,0 +1,39 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/submissions",
+    "anonymous": false,
+    "body": {
+      "title": "OQ-005 IND 20260921002943",
+      "productName": "OQ-005 IND 20260921002943",
+      "applicationType": "IND",
+      "clientType": "biotech",
+      "primaryRegion": "fda"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 20,
+    "rateLimitRetries": 0,
+    "body": {
+      "id": 37,
+      "title": "OQ-005 IND 20260921002943",
+      "productName": "OQ-005 IND 20260921002943",
+      "applicationType": "IND",
+      "clientType": "biotech",
+      "primaryRegion": "fda",
+      "status": "planning",
+      "lifecycleStage": "planning",
+      "organizationId": 2,
+      "createdBy": 1,
+      "createdAt": "2026-09-21T00:29:44.530Z",
+      "updatedAt": "2026-09-21T00:29:44.530Z",
+      "deletedAt": null,
+      "auditTrail": {
+        "persisted": true,
+        "chained": true
+      }
+    }
+  }
+}

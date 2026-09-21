@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents/13/approve",
+    "anonymous": false,
+    "body": {}
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 8,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Document not found, or not in draft/in_review state"
+    }
+  }
+}

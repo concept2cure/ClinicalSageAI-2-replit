@@ -1,0 +1,45 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/projects",
+    "anonymous": false,
+    "body": {
+      "name": "OQ-001 IND program 20260921002714",
+      "programType": "ind",
+      "primaryAgency": "FDA",
+      "indication": "Validation exercise — OQ-001",
+      "priority": "medium"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 51,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": "a7748673-60be-4187-a10a-01f82073bb0a",
+        "title": "OQ-001 IND program 20260921002714",
+        "ws": "Biotech",
+        "code": "OIP2-9XZO",
+        "stage": "Planning",
+        "readiness": 0,
+        "status": "active",
+        "lead": "JM Smith",
+        "blocker": null,
+        "due": "—",
+        "activity": "Updated Sep 21"
+      },
+      "meta": {
+        "created": true,
+        "documentId": "doc_f21b34c839324fa1996365bf656e13be",
+        "scaffoldedSections": 92,
+        "submissionId": 34,
+        "submissionCreated": true,
+        "projectAnchorId": null,
+        "projectAnchorSkipped": "NO_CLIENT_WORKSPACE",
+        "projectAnchorDetail": "This organization has no client workspace, and projects.client_workspace_id is NOT NULL. The program was created; it carries no PM-spine anchor until a workspace exists."
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/57d2417a-3764-477a-aa51-1cdbc3a57d79",
+    "anonymous": false,
+    "body": null
+  },
+  "response": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 22,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "Failed to build project vault"
+    }
+  },
+  "serverLogExcerpt": {
+    "denied": [
+      "table cre_evidence_sources"
+    ],
+    "noise": [],
+    "excerpt": [
+      "{\"level\":50,\"time\":\"2026-09-21T00:28:59.432Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"err\":\"permission denied for table cre_evidence_sources\"},\"msg\":\"[c2c-project-vault-routes] project vault read error\"}",
+      "{\"level\":50,\"time\":\"2026-09-21T00:28:59.433Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"requestId\":\"70ca4015-51aa-4bb3-902a-f4ae8be61c89\",\"method\":\"GET\",\"path\":\"/api/c2c/project-vault/57d2417a-3764-477a-aa51-1cdbc3a57d79\",\"statusCode\":500,\"durationMs\":18,\"kernelDecision\":\"allow\",\"kernelScore\":100,\"flags\":[]},\"msg\":\"[http] request_failed\"}"
+    ]
+  }
+}

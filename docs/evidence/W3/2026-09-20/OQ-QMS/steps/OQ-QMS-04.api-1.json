@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents",
+    "anonymous": false,
+    "body": {
+      "docNumber": "SOP-OQ-20260921003124",
+      "title": "dup",
+      "docType": "sop"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 9,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "A document with that number already exists in this org"
+    }
+  }
+}

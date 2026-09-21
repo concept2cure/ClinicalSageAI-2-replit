@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/actions/verify-chain",
+    "anonymous": false,
+    "body": null
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 10,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": false,
+      "rowsChecked": 100,
+      "brokenAt": {
+        "id": "a9989a0f-d67a-41ad-afae-db7f867f6d47",
+        "expected": "d713147801fa786d605f3b84e4bbf61c5640820acd9476ef917bd136ca3a9479",
+        "stored": "5b992f989c3f35290fd2e1b8d3b09e3a6bcef48ba0cb3a41df230aa0e431603e"
+      }
+    }
+  }
+}

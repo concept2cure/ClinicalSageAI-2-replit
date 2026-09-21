@@ -1,0 +1,29 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/mdx/qms/changes",
+    "anonymous": false,
+    "body": null
+  },
+  "response": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 14,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "INTERNAL_ERROR",
+      "message": "Something went wrong while change-list. The problem has been logged. Quote the reference below if you contact support.",
+      "correlationId": "fcd93fe2-f4fe-4798-89e5-bde23ceb20c3"
+    }
+  },
+  "serverLogExcerpt": {
+    "denied": [
+      "table qms_change_controls"
+    ],
+    "noise": [],
+    "excerpt": [
+      "{\"level\":50,\"time\":\"2026-09-21T00:31:42.189Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"err\":\"permission denied for table qms_change_controls\",\"correlationId\":\"fcd93fe2-f4fe-4798-89e5-bde23ceb20c3\",\"code\":\"42501\"},\"msg\":\"[mdx-qms] change-list failed\"}",
+      "{\"level\":50,\"time\":\"2026-09-21T00:31:42.190Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"requestId\":\"fcd93fe2-f4fe-4798-89e5-bde23ceb20c3\",\"method\":\"GET\",\"path\":\"/api/mdx/qms/changes\",\"statusCode\":500,\"durationMs\":11,\"kernelDecision\":\"allow\",\"kernelScore\":100,\"flags\":[]},\"msg\":\"[http] request_failed\"}"
+    ]
+  }
+}

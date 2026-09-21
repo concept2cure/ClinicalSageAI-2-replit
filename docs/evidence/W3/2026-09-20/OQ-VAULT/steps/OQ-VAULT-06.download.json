@@ -1,0 +1,7 @@
+{
+  "status": 200,
+  "contentType": "application/pdf",
+  "bytes": 611,
+  "sha256": "947bfca32a35d91ab46391433f74d342d364ab0cfbdb446ad90a64d19af4f7c8",
+  "expected": "947bfca32a35d91ab46391433f74d342d364ab0cfbdb446ad90a64d19af4f7c8"
+}

@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/changes",
+    "anonymous": false,
+    "body": {
+      "changeNumber": "CC-OQ-20260921003124",
+      "title": "OQ-006 change",
+      "reason": "validation exercise"
+    }
+  },
+  "response": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 8,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "INTERNAL_ERROR",
+      "message": "Something went wrong while change-create. The problem has been logged. Quote the reference below if you contact support.",
+      "correlationId": "ab1d7d86-6de3-4449-ab92-14deaa932fd7"
+    }
+  },
+  "serverLogExcerpt": {
+    "denied": [
+      "table qms_change_controls"
+    ],
+    "noise": [],
+    "excerpt": [
+      "{\"level\":50,\"time\":\"2026-09-21T00:31:41.924Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"err\":\"permission denied for table qms_change_controls\",\"correlationId\":\"ab1d7d86-6de3-4449-ab92-14deaa932fd7\",\"code\":\"42501\"},\"msg\":\"[mdx-qms] change-create failed\"}",
+      "{\"level\":50,\"time\":\"2026-09-21T00:31:41.925Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"requestId\":\"ab1d7d86-6de3-4449-ab92-14deaa932fd7\",\"method\":\"POST\",\"path\":\"/api/mdx/qms/changes\",\"statusCode\":500,\"durationMs\":6,\"kernelDecision\":\"allow\",\"kernelScore\":100,\"flags\":[]},\"msg\":\"[http] request_failed\"}"
+    ]
+  }
+}

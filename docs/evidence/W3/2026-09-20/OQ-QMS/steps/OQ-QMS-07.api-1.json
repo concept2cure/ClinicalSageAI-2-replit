@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents/13/revise",
+    "anonymous": false,
+    "body": {}
+  },
+  "response": {
+    "status": 422,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 7,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "A reason for change is required to open a revision"
+    }
+  }
+}

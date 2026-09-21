@@ -1,0 +1,15 @@
+{
+  "denied": [
+    "table cre_evidence_sources"
+  ],
+  "noise": [
+    "table platform_settings"
+  ],
+  "excerpt": [
+    "{\"level\":50,\"time\":\"2026-09-21T00:29:06.418Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"err\":\"permission denied for table cre_evidence_sources\"},\"msg\":\"[c2c-project-vault-routes] project vault read error\"}",
+    "{\"level\":50,\"time\":\"2026-09-21T00:29:06.419Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"requestId\":\"39b51d08-9588-4aff-8801-e03285bbbac4\",\"method\":\"GET\",\"path\":\"/api/c2c/project-vault/57d2417a-3764-477a-aa51-1cdbc3a57d79\",\"statusCode\":500,\"durationMs\":19,\"kernelDecision\":\"allow\",\"kernelScore\":100,\"flags\":[]},\"msg\":\"[http] request_failed\"}",
+    "{\"level\":50,\"time\":\"2026-09-21T00:29:06.439Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"err\":\"permission denied for table cre_evidence_sources\"},\"msg\":\"[c2c-project-vault-routes] project vault read error\"}",
+    "{\"level\":50,\"time\":\"2026-09-21T00:29:06.440Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"requestId\":\"53249606-8b17-4268-b3d4-813c9b04121e\",\"method\":\"GET\",\"path\":\"/api/c2c/project-vault/57d2417a-3764-477a-aa51-1cdbc3a57d79\",\"statusCode\":500,\"durationMs\":18,\"kernelDecision\":\"allow\",\"kernelScore\":100,\"flags\":[]},\"msg\":\"[http] request_failed\"}",
+    "{\"level\":50,\"time\":\"2026-09-21T00:29:26.159Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"servingMode\":\"off\",\"deploymentMode\":\"off\",\"usedPreviousResolution\":true,\"err\":\"permission denied for table platform_settings\"},\"msg\":\"[enforcement-mode] could not read the stored enforcement mode — serving a fail-safe value\"}"
+  ]
+}

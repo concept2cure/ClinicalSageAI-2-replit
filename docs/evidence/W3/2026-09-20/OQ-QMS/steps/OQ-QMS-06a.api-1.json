@@ -1,0 +1,48 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents",
+    "anonymous": false,
+    "body": {
+      "docNumber": "SOP-OQ-B-20260921003124",
+      "title": "OQ-006 Second SOP 20260921003124",
+      "docType": "sop",
+      "nextReviewDate": "2026-09-26"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 20,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": 15,
+        "organization_id": 2,
+        "doc_number": "SOP-OQ-B-20260921003124",
+        "title": "OQ-006 Second SOP 20260921003124",
+        "doc_type": "sop",
+        "category": null,
+        "version": "1.0",
+        "status": "draft",
+        "effective_date": null,
+        "next_review_date": "2026-09-26T00:00:00.000Z",
+        "author_id": 1,
+        "approver_id": null,
+        "approved_at": null,
+        "superseded_by_id": null,
+        "artifact_id": null,
+        "metadata": {},
+        "created_at": "2026-09-21T00:31:39.733Z",
+        "updated_at": "2026-09-21T00:31:39.733Z",
+        "deleted_at": null
+      },
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": true
+        }
+      }
+    }
+  }
+}
