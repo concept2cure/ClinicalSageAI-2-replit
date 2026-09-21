@@ -54,7 +54,10 @@ const read = (p) => fs.readFileSync(p, 'utf8');
 // ── 1. The scope file, parsed structurally (no TS evaluation in CI) ────────
 const scopeSrc = read(SCOPE);
 const appBlocks = [...scopeSrc.matchAll(/\{\s*id:\s*'([^']+)',\s*label:[^]*?surfaces:\s*\[([^\]]*)\][^]*?modules:\s*\[([^\]]*)\]/g)];
-const ids = (s) => [...s.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+// Strip comments before collecting ids: a note such as `// removed 'authoring-engine'`
+// inside the array must not count as a member (found 2026-09-21 by WI).
+const stripComments = (s) => s.replace(/\/\*[^]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+const ids = (s) => [...stripComments(s).matchAll(/'([^']+)'/g)].map((m) => m[1]);
 const apps = appBlocks.map((m) => ({ id: m[1], surfaces: ids(m[2]), modules: ids(m[3]) }));
 const shellBlock = scopeSrc.match(/LAUNCH_SHELL_SURFACES[^=]*=\s*\{([^]*?)\n\};/);
 const shellIds = shellBlock ? [...shellBlock[1].matchAll(/^\s*'?([a-z0-9-]+)'?:\s*'/gm)].map((m) => m[1]) : [];
