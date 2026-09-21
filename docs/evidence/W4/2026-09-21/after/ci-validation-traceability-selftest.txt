@@ -1,22 +1,22 @@
-  ✓ control — a well-formed registry
-  ✓ a cited implementation file that does not exist
-  ✓ a cited test file that does not exist
-  ✓ a requirement nothing verifies
-  ✓ high assurance satisfied only by inspection
-  ✓ a direct-impact requirement carrying low assurance
-  ✓ two requirements sharing one id
-  ✓ a requirement written as a description rather than an obligation
-  ✓ a launch app with no requirements at all
-  ✓ a requirement pointing at an app that is not in the launch catalog
-  ✓ a requirement with no implementing code cited
-  ✓ control — a declared assurance shortfall with the work named
-  ✓ an assurance target with no evidence owed — a gap with nobody to close it
-  ✓ an assurance target no higher than the level already achieved
-  ✓ evidence owed with no target — says nothing about what is missing
-  ✓ control — a declared unverified requirement, anchored in real code
-  ✓ an unverified requirement pointing at code that does not exist
-  ✓ an unverified requirement reusing the id of a verified one
-  ✓ an unverified requirement with no reason given
+  ✓ control — a full path that exists
+  ✓ control — a bare filename matching exactly one file
+  ✓ a cited path that does not exist
+  ✓ a bare filename that matches nothing
+  ✓ a bare filename that matches several files
+  ✓ a requirement citing no implementing file at all
+  ✓ a URS document declaring no requirements
+  ✓ one good row and one broken row — the broken one is still caught
+  ✓ prose in backticks is not mistaken for a missing file
 
-✓ self-test: 19 cases, every mutation caught and the control clean
-✓ validation traceability: 59 requirements across 6 launch apps, every citation resolves; 20 further requirement(s) declared with no verification yet
+✓ self-test: 9 cases, every mutation caught and the controls clean
+
+--- against the canonical package, before the citation fixes ---
+✗ validation traceability: 11 finding(s)
+
+  [ambiguous] URS-SUBC-001 … URS-SRDY-003 (10 rows): "submissions.ts" matches 3 files
+     (server/routes/biopharma/submissions.ts, server/routes/submissions.ts,
+      shared/schema/submissions.ts) — a reviewer cannot follow it
+  [dangling]  URS-SRDY-004: cited path does not exist: templates/submission-readiness-review.ts
+
+--- after ---
+✓ validation traceability: every file cited by 6 URS document(s) resolves
