@@ -398,8 +398,47 @@ export async function deriveGovernedTargetBinding(
   try {
     switch (prefix) {
       case 'ectd-sequence': {
+        /* ── `status` is deliberately NOT bound (amended 2026-09-21) ──────────
+           It used to be in this SELECT, and that made a signature destroy
+           itself through the act it authorized. applyGovernedSequenceTransition
+           signs for 'dispatch' while the sequence is frozen and then UPDATEs
+           status to 'dispatched'. Gate 1 never sees it, because each signature
+           is verified BEFORE its own transition. The release-signature gate
+           re-derives that same dispatch signature at TRANSMIT time, after the
+           status has moved, so the digest could not match: verdict 'invalid' —
+           the TAMPERING verdict, which blocks unconditionally — reported as
+           "the sequence changed after it was signed" when no content had
+           changed at all. Transmit was unreachable for every submission type
+           that requires a release signature. Reproduced against the real
+           migrations in sequence-release-signature.pglite.integration.test.ts
+           ("survives the dispatch it authorized").
+
+           What remains is identity and content: the sequence's id, submission,
+           region, number and type, plus its ordered leaf manifest below. That
+           is what the basis name and note have always claimed
+           (`ectd-sequence-leaf-manifest-sha256`), and what a §11.70 signature
+           is for — a signature that stops verifying the moment it is used is
+           not durable evidence of anything. The workflow state it was signed
+           under is still recorded, on the governed action and the audit chain,
+           which is where an event belongs rather than inside a content hash.
+           `frozen_at`, `dispatch_status` and `updated_at` were already
+           excluded on the same reasoning; `status` was the one mutable column
+           left in.
+
+           NOTE: a signature taken before this change binds the old digest and
+           will now be refused — honestly, by Gate 1, with "re-sign the current
+           content". The dispatch-intent signatures it affects were already
+           unverifiable the instant they were used, so nothing that worked
+           stops working.
+
+           The `document:` and `section:` branches below select a `status`
+           column of their own and have the same shape, but no caller
+           re-derives either binding after a status transition (the only two
+           consumers of this function, sequence-release-signature.ts:181 and
+           submission-service.ts:503, are both ectd-sequence). They are left
+           alone rather than changed on an unproven hunch. */
         const seq = await client.query(
-          `SELECT id, submission_id, region, sequence_number, type, status
+          `SELECT id, submission_id, region, sequence_number, type
              FROM ectd_sequences
             WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
             LIMIT 1`,
@@ -417,7 +456,7 @@ export async function deriveGovernedTargetBinding(
         return {
           digest: sha256Hex(payload),
           basis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST,
-          note: `sha256 over the ectd_sequences row and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id) at signing time.`,
+          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id) at signing time.`,
         };
       }
       case 'document': {
