@@ -30,7 +30,7 @@
  * Needs a live server with ALLOW_DEV_AUTH=1 (see scripts/run-e2e-smoke.mjs).
  */
 import { test, expect } from '@playwright/test';
-import { authenticateViaDevLogin } from '../dev-auth-helper';
+import { authenticateViaDevLogin } from './dev-auth-helper';
 
 /**
  * One surface per launch application, plus the two compliance surfaces that
