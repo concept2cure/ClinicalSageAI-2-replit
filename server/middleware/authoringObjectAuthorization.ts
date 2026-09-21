@@ -28,7 +28,11 @@ function relativeAuthoringPath(req: Request): string | null {
 
 function actionFromPath(path: string): AuthoringPermissionAction {
   const lower = path.toLowerCase();
-  if (/(?:^|\/)(?:freeze|sign|submit|approve|approval)(?:\/|$)/.test(lower)) return 'approve';
+  // `e-sign` (POST /docs/:id/e-sign, the §11.50 signature bound to the frozen
+  // snapshot) is an approval-class action like `sign` and `freeze`. It was not
+  // in this list, fell through to `edit`, and an edit of a FROZEN document is
+  // refused — so no signature could ever be applied (VSR-001 F-12).
+  if (/(?:^|\/)(?:freeze|sign|e-sign|esign|submit|approve|approval)(?:\/|$)/.test(lower)) return 'approve';
   if (/(?:^|\/)(?:review|tracked-change|tracked_changes|decision)(?:\/|$)/.test(lower)) {
     return 'review';
   }
