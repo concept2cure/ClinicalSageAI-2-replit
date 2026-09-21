@@ -1,0 +1,22 @@
+  ✓ control — a well-formed registry
+  ✓ a cited implementation file that does not exist
+  ✓ a cited test file that does not exist
+  ✓ a requirement nothing verifies
+  ✓ high assurance satisfied only by inspection
+  ✓ a direct-impact requirement carrying low assurance
+  ✓ two requirements sharing one id
+  ✓ a requirement written as a description rather than an obligation
+  ✓ a launch app with no requirements at all
+  ✓ a requirement pointing at an app that is not in the launch catalog
+  ✓ a requirement with no implementing code cited
+  ✓ control — a declared assurance shortfall with the work named
+  ✓ an assurance target with no evidence owed — a gap with nobody to close it
+  ✓ an assurance target no higher than the level already achieved
+  ✓ evidence owed with no target — says nothing about what is missing
+  ✓ control — a declared unverified requirement, anchored in real code
+  ✓ an unverified requirement pointing at code that does not exist
+  ✓ an unverified requirement reusing the id of a verified one
+  ✓ an unverified requirement with no reason given
+
+✓ self-test: 19 cases, every mutation caught and the control clean
+✓ validation traceability: 59 requirements across 6 launch apps, every citation resolves; 20 further requirement(s) declared with no verification yet

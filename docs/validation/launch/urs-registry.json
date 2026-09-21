@@ -1,0 +1,1714 @@
+{
+  "$comment": "Generated from a code survey and an independent adversarial review; see docs/evidence/W4/. Edit deliberately \u2014 scripts/ci/check-validation-traceability.mjs enforces the rules.",
+  "revision": "1.0.0",
+  "apps": [
+    {
+      "id": "projects",
+      "label": "Projects",
+      "intendedUse": "The regulatory programme and its filings, tasks and journey: where a sponsor's work is organised and where readiness is reported.",
+      "surfaces": [
+        "projects",
+        "project-home",
+        "program-journey",
+        "filings-catalog",
+        "tasks"
+      ]
+    },
+    {
+      "id": "vault",
+      "label": "Vault",
+      "intendedUse": "The controlled store for source and generated documents, their versions and their downloads.",
+      "surfaces": [
+        "vault",
+        "artifacts-center"
+      ]
+    },
+    {
+      "id": "authoring",
+      "label": "Authoring",
+      "intendedUse": "Drafting, review and approval of regulatory content, including the governed transitions that make a draft an approved record.",
+      "surfaces": [
+        "document-authoring",
+        "authoring-engine",
+        "template-library",
+        "review",
+        "regulatory-workspace"
+      ]
+    },
+    {
+      "id": "submission-center",
+      "label": "Submission Center",
+      "intendedUse": "Assembly, publishing and transmission of a submission sequence to an agency.",
+      "surfaces": [
+        "submission-center",
+        "dossier-map",
+        "ectd-compile",
+        "ectd-coauthor",
+        "ectd-publishing",
+        "gateway-transmittals"
+      ]
+    },
+    {
+      "id": "submission-readiness",
+      "label": "Submission Readiness",
+      "intendedUse": "Whether a sequence may be dispatched, and, when it may not, exactly which requirement is unmet.",
+      "surfaces": [
+        "dispatch-readiness",
+        "orchestration",
+        "inconsistency"
+      ]
+    },
+    {
+      "id": "qms",
+      "label": "QMS controlled documents",
+      "intendedUse": "Controlled documents, their lifecycle and the records that evidence their control.",
+      "surfaces": [
+        "quality",
+        "qmp"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "URS-AUTHORING-01",
+      "appId": "authoring",
+      "statement": "The system shall accept requests to the authoring store only from a caller presenting a verified access-class bearer token whose organization membership is re-checked live, and shall derive the acting identity, roles and tenant solely from that token, discarding any caller-supplied x-roles, x-user-email or x-tenant-id header before any handler runs.",
+      "intendedUse": "A regulatory author, reviewer or approver signs in and every act they perform on a CTD/eCTD document is attributed to them and confined to their organization; attribution on the resulting record is what a Part 11 inspection traces back to a person.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "A client that asserts its own roles, email or tenant in HTTP headers edits, approves or exports another organization's governed document, and the audit trail names whoever the request claimed to be. A regulator would then believe a named individual authored or approved content they never touched.",
+      "codeRefs": [
+        "server/routes/authoring.router.ts",
+        "server/middleware/orgMembership.ts",
+        "server/utils/jwtVerify.ts"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "tests/schema-contract/authoring-role-gate.contract.test.ts"
+          ]
+        },
+        {
+          "method": "unit",
+          "refs": [
+            "server/middleware/__tests__/orgMembership-degraded-enrichment.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-AUTHORING-02",
+      "appId": "authoring",
+      "statement": "The system shall decide every edit, comment, review, approve and manage-permissions MUTATION request against the document's own permission grants (OWNER, AUTHOR, REVIEWER, APPROVER, VIEWER) plus a platform-admin allowlist, refusing an unknown object with 404, an immutable document with 409 and an unauthorized principal with 403, and shall record every grant and revoke as an audit row whose write outcome is reported to the caller; read requests (GET/HEAD/OPTIONS) are scoped by tenant only and are not decided against the object's grants.",
+      "intendedUse": "A document owner controls who may draft, review or approve a specific regulatory document; the record of who held which authority, and when, is the evidence that an approval was applied by someone entitled to apply it.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "A VIEWER or an unrelated organization member edits or approves a governed document because the decision was made on a global role rather than on the object's grants, or a permission change is lost silently so the authority history cannot be reconstructed.",
+      "codeRefs": [
+        "server/services/authoring/authoring-permissions.ts",
+        "server/routes/authoring-permissions.ts"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-AUTHORING-03",
+      "appId": "authoring",
+      "statement": "The system shall record every change to authored section content as an append-only revision carrying the content SHA-256, the previous chain hash, the author, the write path that produced it and the citation set in force \u2014 written inside the content transaction on the interactive save, revert and template-apply paths, and written after the content has already committed on the AI-draft-accept path (where a failure is logged and tolerated) and on section create \u2014 shall refuse UPDATE, DELETE and TRUNCATE on the revision table at the database engine, and shall expose a verification endpoint that recomputes every hash and reports the exact revision at which the chain breaks.",
+      "intendedUse": "A reviewer or inspector opens a section's history to establish what the text said at each point, who wrote it and that no revision has been altered or removed since \u2014 the 21 CFR 11.10(e) audit trail for the document's content.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "A revision is edited or deleted in place, or a new revision is written unchained, and the history still reads as complete. An inspector would believe the displayed history is the whole record of how the filed text came to say what it says.",
+      "codeRefs": [
+        "server/services/authoring/revision-ledger.ts",
+        "server/routes/authoring.router.ts",
+        "db/migrations/20260817_doc_revisions_immutable_ledger.sql"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "server/routes/__tests__/authoring-ledger.pglite.integration.test.ts",
+            "server/routes/__tests__/authoring-attribution.pglite.integration.test.ts"
+          ]
+        },
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/authoring/__tests__/revision-ledger.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-AUTHORING-04",
+      "appId": "authoring",
+      "statement": "The system shall refuse every mutation of section content on a document whose status is FROZEN or APPROVED or whose lock timestamp is set, applying one canonical guard \u2014 read on the connection pool immediately before the write, not inside the write's transaction \u2014 to the interactive save, revert and AI-draft-accept paths via a single prefix middleware, and an equivalent inline parent-status check to section create, and shall refuse the write when the document's status or the section's parent cannot be read.",
+      "intendedUse": "Once a document is sealed under a content hash or covered by an approval signature, its content is part of the signed record; an author must be told to create a new version rather than being allowed to change sealed text.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "Text is typed into and saved onto a document the toolbar shows as Frozen, so the freeze snapshot's content hash and any signature applied over it certify content that has since changed \u2014 the seal becomes a claim the system cannot support.",
+      "codeRefs": [
+        "server/services/authoring/document-lock.ts",
+        "server/routes/authoring.router.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/authoring/__tests__/document-lock.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance. The reviewer named these as likely candidates: server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts."
+    },
+    {
+      "id": "URS-AUTHORING-05",
+      "appId": "authoring",
+      "statement": "The system shall apply an electronic signature to a document only when the signer is the token-verified principal, holds an organization role on the signing-authority allowlist (checked before the credential so the endpoint cannot act as a PIN oracle), supplies a reason and a meaning drawn from the closed signature-meaning vocabulary, and passes bcrypt PIN re-authentication; and shall persist the signature, its content hash, the frozen snapshot it covers, the workflow-step advance and the hash-chained audit row in one transaction that rolls back entirely on any failure.",
+      "intendedUse": "An approver signs off a regulatory document; the stored signature is the 21 CFR 11.50/11.70 manifestation that binds a named, authorized person and a stated meaning to a specific immutable version of that record.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "An authenticated member without signing authority applies an APPROVER signature, or a signature is stored while the workflow step or the audit row it depends on was never written, leaving a signed record with no traceable approval act or a meaning outside the governed vocabulary.",
+      "codeRefs": [
+        "server/routes/authoring.router.ts",
+        "server/services/part11/signing-authority.ts",
+        "server/services/part11/resolve-signer-role.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/authoring-signing-authority.test.ts",
+            "server/routes/__tests__/authoringSigningPinControls.test.ts",
+            "server/routes/__tests__/authoring-atomic-mutations.test.ts",
+            "server/services/part11/__tests__/signing-authority.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-AUTHORING-06",
+      "appId": "authoring",
+      "statement": "The system shall refuse with 409 any export of an authoring document that is not sealed (status FROZEN or APPROVED, or an explicit lock timestamp), shall attribute the export to the token-verified principal with no request-body fallback, and shall record a hash of the delivered artifact bytes on the export-history row.",
+      "intendedUse": "An exported DOCX/PDF leaves the platform as a filing artifact carrying the 11.50 signature manifest; only a sealed record has an immutable snapshot and certified signatures behind it to justify that presentation.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "A DRAFT or IN_REVIEW document exports byte-for-byte like an approved one with reviewer signatures appended, so unapproved, still-editable content circulates as a certified record, attributed to whoever the request body named.",
+      "codeRefs": [
+        "server/routes/authoring.router.ts",
+        "server/export/authoring-section-content.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts",
+            "server/routes/__tests__/authoringExportSignatureManifest.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance. The reviewer named these as likely candidates: server/routes/__tests__/authoringExportDocx.test.ts, server/routes/__tests__/authoringExportHistory.test.ts."
+    },
+    {
+      "id": "URS-AUTHORING-08",
+      "appId": "authoring",
+      "statement": "The system shall record author, source and machine provenance spans for every authored-content write inside the same transaction as the content, shall roll the content write back when the recorded spans do not cover the saved text, and shall attribute machine-generated clauses to the machine author \u2014 as accepted-by-actor where a human accepted them and as unasserted machine draft where none did \u2014 rather than to the human actor.",
+      "intendedUse": "Every sentence of a regulatory document must trace to where it came from \u2014 a cited source, the named human author, or a model draft a human accepted \u2014 which is what a reviewer relies on when asked to stand behind a claim in a filing.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "Text generated by a model is persisted attributed to the human whose session saved it, or content commits while its provenance write fails, so a filing contains claims whose origin the organization cannot reconstruct or, worse, attributes to a person who never asserted them.",
+      "codeRefs": [
+        "server/services/clinical-regulatory-evidence/lineage-gate.ts",
+        "server/routes/authoring.router.ts",
+        "server/services/authoring/revision-ledger.ts"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "server/services/clinical-regulatory-evidence/__tests__/lineage-gate.pglite.integration.test.ts",
+            "server/services/clinical-regulatory-evidence/__tests__/machine-draft-unaccepted.pglite.integration.test.ts"
+          ]
+        },
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/authoring/__tests__/accepted-machine-text.test.ts",
+            "server/services/authoring/__tests__/machine-contributors.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-AUTHORING-09",
+      "appId": "authoring",
+      "statement": "The system shall refuse with 409 a section save that supplies an expected-last-modified timestamp which does not match the stored row, changing nothing and returning the current timestamp; the check is opt-in, so a save that supplies no parseable timestamp still replaces the section's content unconditionally.",
+      "intendedUse": "Two people commonly work the same CTD section during a review round; a writer must be told their basis moved and be able to reload rather than discover later that a colleague's paragraphs are gone.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "The later save overwrites the whole section, the overwrite enters the hash-chained revision ledger as an ordinary authored revision, and nothing downstream shows that a collision occurred \u2014 the chain verifies and the content is wrong.",
+      "codeRefs": [
+        "server/routes/authoring.router.ts",
+        "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "tests/db/authoring-section-concurrency.dbtest.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-AUTHORING-10",
+      "appId": "authoring",
+      "statement": "The system shall the Document Authoring surface shall render a failed read as a failure to read and never as an absence of data, showing distinct states for loading, failed and genuinely empty on the document list, the section list, the revision history, the comment thread, the sources rail and the audit rail, and shall state on a failed audit-trail read that no conclusion about governed acts can be drawn.",
+      "intendedUse": "A reviewer opens the audit rail or the revision history of a governed document to confirm what was done to it; the screen must never let a service outage read as evidence that nothing happened.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "The audit rail shows 'No audit events yet' and the history rail shows 'No prior revisions' because the GET returned 500, and a reviewer or inspector concludes that no governed acts or revisions exist for a record whose Part 11 trail was in fact written correctly and merely unreadable.",
+      "codeRefs": [
+        "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "client/src/concept2cure/v2/dataConnect.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/documentAuthoringHonestReads.test.tsx",
+            "client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-AUTHORING-12",
+      "appId": "authoring",
+      "statement": "The system shall the Document Authoring surface shall obtain a stated reason for change from the author before the first save of an editing session on a section and send it with each governed save, and shall never substitute a default or generated reason for an author's own content edit; the one save the author does not perform \u2014 applying a comment anchor \u2014 carries a fixed system reason naming that mechanism instead.",
+      "intendedUse": "21 CFR 11.10(d)/(e) asks why a governed record changed; the reason captured here is what the document's version ledger and audit trail record alongside the content hash before and after.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "Saves reach the governed store with no reason, so the audit trail records only that a change happened and not why, or the client invents a reason and the record attributes a justification to an author who never gave one.",
+      "codeRefs": [
+        "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "server/routes/authoring.router.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/authoringReasonForChange.test.tsx",
+            "client/src/concept2cure/v2/__tests__/authoringUnsavedWork.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-AUTHORING-90",
+      "appId": "authoring",
+      "statement": "The system shall return a visitor with no session from the Authoring surface `review` to sign-in, and shall render that surface only once a session is established.",
+      "intendedUse": "A regulatory user reaches Authoring through an authenticated session. The record this surface exposes is a regulated one, so an unauthenticated visitor must be returned to sign-in rather than shown any part of it.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "The surface renders for a visitor with no session, exposing a regulated record to an unidentified person and breaking the attribution every audit entry depends on.",
+      "codeRefs": [
+        "client/src/concept2cure/router/ZenRouter.tsx"
+      ],
+      "verification": [
+        {
+          "method": "e2e",
+          "refs": [
+            "tests/e2e/oq/launch-surface-access-control.oq.spec.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-PROJECTS-01",
+      "appId": "projects",
+      "statement": "The system shall return the regulatory programme portfolio only for the organisation resolved from the caller's authenticated request context, refuse with 403 when no organisation context is present, and clamp every page to at most 200 rows.",
+      "intendedUse": "A regulatory lead opens Projects to see every programme their sponsor organisation runs. This list is the index from which the programme workspace, its vault, its evidence and its tasks are reached, so a row that appears here is asserted to belong to the reader's organisation.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "If the organisation id were taken from a client-supplied value or defaulted when absent, another sponsor's programme names, codes, filing types and target submission dates would render inside this tenant's workspace, and the reader would believe those programmes are theirs. An unbounded ?limit would additionally let one request drain the whole table.",
+      "codeRefs": [
+        "server/routes/c2c/projects.ts",
+        "client/src/concept2cure/v2/surfaces/Projects.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/c2c/__tests__/projects-list.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-PROJECTS-04",
+      "appId": "projects",
+      "statement": "The system shall write the programme insert, its document scaffold where a rule pack maps the filing type, its submission spine where the filing type is a drug application, its project anchor where the organisation has exactly one workspace, and a hash-chained, HMAC-sealed audit_logs entry for action c2c.project.create, all inside one database transaction, and shall roll the whole creation back if any of them, including the audit entry, cannot be written.",
+      "intendedUse": "A regulated tenant defending a submission must be able to show who created each programme, when, with what filing type and agency, and with what linked submission. A programme that exists without that entry is a record the tenant cannot defend.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "Without the shared transaction a failure between the insert and the audit write leaves a regulated programme with no creation entry in the governed ledger \u2014 or, in the other direction, an audit entry asserting a programme that does not exist. Either way the activity feed and an inspector's reconstruction of the record disagree with the database.",
+      "codeRefs": [
+        "server/routes/c2c/projects.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/c2c/__tests__/projects-create.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-PROJECTS-05",
+      "appId": "projects",
+      "statement": "The system shall create no submission dossier when the chosen filing type maps to no document class or no rule pack, shall return the reason in the creation response as meta.scaffoldSkipped with a human detail, and the wizard shall display that reason and keep the user on the portfolio rather than navigating into an empty workspace.",
+      "intendedUse": "Thirty-three registry filing types (EU CTAs to Health Canada, NMPA, TGA and PMDA, bare MDR/IVDR device files) have no rule pack in the product. Declining to scaffold is the correct regulatory outcome; telling the user that it was declined is what makes it honest.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "Guessing a pathway would file a Canadian clinical trial application or an EU MDR Class IIb technical file against the 71-section US NDA outline. Staying silent about the skip instead drops the customer into a permanently empty Vault with no indication anything was declined \u2014 they conclude the product is broken, or worse, that the dossier is simply not started yet.",
+      "codeRefs": [
+        "server/services/c2c/scaffold-project-documents.ts",
+        "server/routes/c2c/projects.ts",
+        "client/src/concept2cure/v2/surfaces/Projects.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/c2c/__tests__/projects-create.test.ts",
+            "client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-PROJECTS-06",
+      "appId": "projects",
+      "statement": "The system shall report each programme's readiness percentage as the share of that programme's governed document sections whose status is approved or locked, computed per request and scoped to the caller's organisation, falling back to the stored regulatory_programs.progress_percent value (and logging the failure) only when the governed document store cannot be read.",
+      "intendedUse": "A portfolio owner reads the readiness figure to decide where to put effort before a filing date. The figure must be a measurement of the governed record, produced by the same predicate that maintains document readiness, not a stored number.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "regulatory_programs.progress_percent is written exactly once, as the literal 0 in the creation INSERT, and no UPDATE of it exists in the server. Reporting it would show 0% for a fully drafted and approved IND forever \u2014 a figure that looks measured and can never move, read by its audience as 'no progress' rather than 'not computed'.",
+      "codeRefs": [
+        "server/routes/c2c/projects.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/c2c/__tests__/projects-readiness.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-PROJECTS-07",
+      "appId": "projects",
+      "statement": "The system shall when a read backing a Projects surface fails, the system shall render an assertive role=\"alert\" failure panel \u2014 with a recovery control on the portfolio list \u2014 and shall suppress every derived figure (programme count, mean readiness, blocked count, near-term filings) behind an em dash, rather than presenting the failure as an empty list, a zero or a balanced state.",
+      "intendedUse": "This is the honest-failure behaviour a validation package exists to evidence. A director reading the portfolio header during an outage must learn that the read failed, not that they run zero programmes and have nothing blocked.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "The row array is empty both when the organisation genuinely has no programmes and when the query threw. Computing the header from it yields a settled '0 active programmes, 0 blocked' and, with the || 1 divisor, a clean '0% mean readiness' over an outage. The same substitution on Project Home's data room would present a failed source read as a project with no evidence, and on the task board as a team with no work.",
+      "codeRefs": [
+        "client/src/concept2cure/v2/dataConnect.tsx",
+        "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "client/src/concept2cure/v2/surfaces/TaskBoard.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx",
+            "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-PROJECTS-08",
+      "appId": "projects",
+      "statement": "The system shall permit pinning and unpinning a programme's evidence only to that programme's lead or to a member holding an organisation management role, shall answer 404 (never 403) for a programme outside the caller's organisation, and shall record the pinning user on every pin together with the reason when one is supplied.",
+      "intendedUse": "Pinned evidence is the set the AI generation path reads when drafting regulated content for the programme. Changing it changes what the product will write into a submission, so it is a mutation of the programme's regulatory input and not something org membership alone entitles a user to.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "Any member of the organisation silently repins another team's evidence; the next generated section is grounded in a document the programme's owners never approved, and the drafted regulated text carries provenance nobody authorised. A 403 for an out-of-org programme would additionally confirm that programme's existence to a stranger.",
+      "codeRefs": [
+        "server/routes/c2c/projects.ts",
+        "server/services/c2c/program-access.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/c2c/__tests__/projects-authorization.test.ts",
+            "server/services/c2c/__tests__/program-access.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-PROJECTS-10",
+      "appId": "projects",
+      "statement": "The system shall require, before moving an approval-gated task to completed, a verified signing PIN, a signature meaning drawn from the approved list and a reason of at least three characters \u2014 answering 428 ESIGN_REQUIRED when no signature is supplied and 503 when the PIN store is unreachable \u2014 and shall persist only the signer's printed name, meaning, reason, timestamp and method, never the PIN.",
+      "intendedUse": "A task carrying an approval checkpoint is a quality-system sign-off. 21 CFR 11.50 requires the signed record to carry the signer's printed name, the date and time of signing, and the meaning of the signature; 21 CFR 11.200 requires the signing to use at least one component the signer alone controls.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "Without the gate any caller PATCHes an approval-gated task to completed with no identity check and no record, and the 'approval checkpoint' chip on the board has nothing behind it. If the PIN were echoed into the manifestation or the audit payload, the sole signing component would be readable by anyone with ledger access, invalidating every signature in the tenant.",
+      "codeRefs": [
+        "server/services/tasking/task-signoff.ts",
+        "server/routes/unifiedTasks.routes.ts",
+        "server/routes/taskManagement.routes.ts",
+        "server/services/part11/pin-verification.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/tasking/__tests__/task-signoff.test.ts",
+            "server/routes/__tests__/unifiedTasks.routes.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-PROJECTS-12",
+      "appId": "projects",
+      "statement": "The system shall serve the program-journey spine only for the caller's organisation, refusing with 403 without organisation context, shall reject a segment, lifecycle stage or stage status outside its declared vocabulary with 400, shall write an audit entry for every journey record and every stage advance, and shall return an empty list rather than a 500 when the store is not provisioned.",
+      "intendedUse": "The Program Journey surface is the organisation's concept-to-submission arc \u2014 which lifecycle stage each programme has reached, its CTD readiness, its review clock and its blockers. Advancing a stage is a statement about programme progress that other teams plan against.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "An unvalidated stage id or status would persist a lifecycle state no reader can interpret and no overlay can render, while an unaudited advance would move a programme's recorded stage with no trace of who moved it. An unprovisioned store returning 500 would take the surface down rather than showing an honest empty spine.",
+      "codeRefs": [
+        "server/routes/program-journey.routes.ts",
+        "server/services/program-journey/program-journey-service.ts",
+        "client/src/concept2cure/v2/surfaces/BiopharmaJourney.tsx"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "server/services/program-journey/__tests__/program-journey-service.pglite.integration.test.ts"
+          ]
+        },
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/program-journey-read.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-PROJECTS-90",
+      "appId": "projects",
+      "statement": "The system shall return a visitor with no session from the Projects surface `projects` to sign-in, and shall render that surface only once a session is established.",
+      "intendedUse": "A regulatory user reaches Projects through an authenticated session. The record this surface exposes is a regulated one, so an unauthenticated visitor must be returned to sign-in rather than shown any part of it.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "The surface renders for a visitor with no session, exposing a regulated record to an unidentified person and breaking the attribution every audit entry depends on.",
+      "codeRefs": [
+        "client/src/concept2cure/router/ZenRouter.tsx"
+      ],
+      "verification": [
+        {
+          "method": "e2e",
+          "refs": [
+            "tests/e2e/oq/launch-surface-access-control.oq.spec.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-QMS-01",
+      "appId": "qms",
+      "statement": "The system shall serve and write controlled-document, training and change-control records only within the caller's organization, refusing any request that carries no organization context with HTTP 403.",
+      "intendedUse": "A quality lead opens the SOP register and the change-control log for their own company. Every controlled document, training acknowledgment and change record is a regulated record whose owner must be unambiguous; a cross-tenant read would put another company's effective SOPs and approvals in front of an auditor as though they were this company's.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "An unscoped or mis-scoped request returns another organization's qms_documents / qms_change_controls rows. The register then shows effective SOPs, approvers and training counts that belong to a different company, and an inspector or a QA decision treats them as this tenant's quality system.",
+      "codeRefs": [
+        "server/routes/mdx-qms.ts",
+        "server/services/qms/changeControl.service.ts",
+        "migrations/20260511_qms_and_labeling.sql",
+        "db/migrations/20260724_qms_change_control_store.sql"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/qms-changes.test.ts",
+            "tests/mdx-qms-labeling-search-analytics-routes.test.ts",
+            "server/routes/__tests__/mdx-qms-readiness.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-QMS-04",
+      "appId": "qms",
+      "statement": "The system shall write a 21 CFR Part 11 \u00a711.10(e) audit row for every governed write in the /api/mdx/qms router and report in that response's meta.auditTrail whether the row persisted, rather than returning an identical response whether or not the record exists.",
+      "intendedUse": "Creating, editing, approving, revising, retiring a controlled document, acknowledging training, and raising, transitioning or linking a change are all audit-trail subjects. The caller and the surface must be able to tell a recorded governed action from an unrecorded one.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "The audit write fails (auditService.logAction resolves rather than rejecting on persistence failure) and the outcome is discarded. The document is approved, the change is transitioned, and the response is byte-identical to the audited case \u2014 so the only trace of the missing \u00a711.10(e) record is a server log line, and the Part 11 export is silently incomplete.",
+      "codeRefs": [
+        "server/routes/mdx-qms.ts",
+        "server/services/audit/audit-write-outcome.ts"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "server/services/ana/__tests__/qms-vault-audit-atomicity.contract.test.ts"
+          ]
+        },
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/qms-governed-writes-audited.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-QMS-05",
+      "appId": "qms",
+      "statement": "The system shall advance a change control only along the declared lifecycle (proposed \u2192 under assessment \u2192 approved/rejected \u2192 in implementation \u2192 verification \u2192 closed, with verification also returnable to in implementation, and cancellation from proposed, under assessment, approved or in implementation) and shall refuse an undeclared transition with HTTP 409 rather than silently ignoring it.",
+      "intendedUse": "A change-control coordinator moves a change through ICH Q10 / EU GMP Annex 15 stages. The lifecycle is the control: a change must not reach implementation without assessment and approval, and a terminal change must not be reopened.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "A change is moved from 'closed' back to 'approved', or from 'proposed' straight to 'in_implementation'. The change-control log then shows an implemented change that was never impact-assessed or independently approved, and the stamps (approved_by, implemented_at, verified_at) no longer describe what happened.",
+      "codeRefs": [
+        "server/services/qms/changeControl.service.ts",
+        "server/routes/mdx-qms.ts"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "server/services/qms/__tests__/changeControl.pglite.integration.test.ts"
+          ]
+        },
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/qms-changes.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-QMS-06",
+      "appId": "qms",
+      "statement": "The system shall refuse, with HTTP 422, any change-control approval performed by the same user who proposed the change, and shall stamp approved_by and approved_at only on an accepted approval.",
+      "intendedUse": "Independent review is the segregation-of-duties control ICH Q10 and Part 11 expect on a change approval. The person who raised the change may not be the person who approves it.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "A proposer approves their own change. The change-control record then carries approved_by equal to proposed_by, and an inspection finds a governed change that passed no independent review while the record asserts that it did.",
+      "codeRefs": [
+        "server/services/qms/changeControl.service.ts",
+        "server/routes/mdx-qms.ts"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "server/services/qms/__tests__/changeControl.pglite.integration.test.ts"
+          ]
+        },
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/qms-changes.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-QMS-07",
+      "appId": "qms",
+      "statement": "The system shall record cross-references from a change control to its deviations, CAPAs, validation records, SOPs and controlled documents and shall serve them on GET /api/mdx/qms/changes/:id and /changes/:id/links; the change-control log's expanded row renders links only when the rows it was given carry them, which the register read does not supply.",
+      "intendedUse": "A change is only defensible with the deviations that triggered it, the CAPAs it addresses and the validation it requires attached to it. A reviewer expands a change in the log to see exactly those, without leaving the surface.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "A link is dropped or an expanded change renders no cross-references although rows exist. A reviewer concludes the change touches no validated process, and an implemented change ships with its revalidation obligation invisible.",
+      "codeRefs": [
+        "server/services/qms/changeControl.service.ts",
+        "server/routes/mdx-qms.ts",
+        "client/src/concept2cure/quality/ChangeControl.tsx",
+        "client/src/concept2cure/quality/changeHooks.ts"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "server/services/qms/__tests__/changeControl.pglite.integration.test.ts"
+          ]
+        },
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/qms-changes.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-QMS-09",
+      "appId": "qms",
+      "statement": "The system shall report an unreadable QMS read as unavailable and never as an empty result: the change-control KPI row shall render \"Change-log totals are unavailable\" in place of zeroes, the quality-plan register shall render a distinct error state separate from \"no quality plans yet\", the state published to AnA shall say the change log could not be read rather than that it is empty, and an AnA open-change directive shall be refused while the read is failed and held (not failed) while it is still loading.",
+      "intendedUse": "A quality lead must never read a failed fetch as an all-clear. \"Zero open changes\" and \"the change log did not load\" lead to opposite decisions before an inspection, and AnA must not assert an empty register on the strength of a failed read.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "A 500, an expired token or a body the client cannot adapt renders as a row of zeroes and an empty register. The lead reports \"nothing overdue, nothing awaiting approval\" to management, and AnA repeats it, while the real register is unread.",
+      "codeRefs": [
+        "client/src/concept2cure/quality/ChangeControl.tsx",
+        "client/src/concept2cure/quality/App.tsx",
+        "client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx",
+        "client/src/concept2cure/quality/hooks.ts",
+        "client/src/concept2cure/quality/changeHooks.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/anaDrivesWave4.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-QMS-10",
+      "appId": "qms",
+      "statement": "The system shall never substitute example QMS content for tenant data: fixture SOPs, training-completion counts and change records shall appear only when sample mode is explicitly enabled, which is force-disabled in production builds; the standing 'Sample data \u2014 not your project' marker is rendered from the document/change register's own source, so a panel whose own source is empty can render its fixture while the marker is suppressed.",
+      "intendedUse": "An effective-SOP list and a read-and-understood training record are exactly what an auditor asks to see. A user must always be able to tell canonical example content from their own regulated data.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "An empty tenant, an expired token or a failed fetch causes fixture rows asserting status 'effective' with effective dates, and training counts such as \"47 of 47\", to render unmarked. A filing or inspection-readiness decision is taken against example data presented as the company's own.",
+      "codeRefs": [
+        "client/src/concept2cure/mdx/lib/useSampleRows.ts",
+        "client/src/concept2cure/mdx/components/SampleDataBanner.tsx",
+        "client/src/concept2cure/quality/SopRegister.tsx",
+        "client/src/concept2cure/quality/App.tsx",
+        "client/src/concept2cure/quality/ChangeControl.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/mdx/lib/__tests__/useSampleRows.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-QMS-12",
+      "appId": "qms",
+      "statement": "The system shall list, create and activate quality-management plans against the organization-scoped quality API behind a tenant-context gate, and shall show a selected plan's completeness, section gate-level split and factor risk profile only when the full dashboard payload is present.",
+      "intendedUse": "A QMP defines the gate levels and risk factors every other governed document is validated against, so a quality lead needs to see which plan is active and what it enforces before activating it.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "A partial dashboard body renders as a populated panel, so a freshly created plan with no sections shows \"0 hard gates\" as though it enforced nothing, and a lead activates it believing the gates are configured.",
+      "codeRefs": [
+        "client/src/concept2cure/v2/surfaces/QmpWorkspace.tsx",
+        "server/routes/quality-management-api.ts",
+        "server/bootstrap/register-project-routes.ts",
+        "client/src/concept2cure/v2/surfaceViews.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/qmpWorkspace.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-QMS-90",
+      "appId": "qms",
+      "statement": "The system shall return a visitor with no session from the QMS controlled documents surface `quality` to sign-in, and shall render that surface only once a session is established.",
+      "intendedUse": "A regulatory user reaches QMS controlled documents through an authenticated session. The record this surface exposes is a regulated one, so an unauthenticated visitor must be returned to sign-in rather than shown any part of it.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "The surface renders for a visitor with no session, exposing a regulated record to an unidentified person and breaking the attribution every audit entry depends on.",
+      "codeRefs": [
+        "client/src/concept2cure/router/ZenRouter.tsx"
+      ],
+      "verification": [
+        {
+          "method": "e2e",
+          "refs": [
+            "tests/e2e/oq/launch-surface-access-control.oq.spec.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-02",
+      "appId": "submission-center",
+      "statement": "The system shall distinguish a read that failed from a read that returned nothing on every Submission Center surface that reports on the record: a failed submission or sequence read renders an explicit error state (\"Couldn't load the submissions\", and an error rather than \"No submission selected\" in the per-sequence workspaces), a failed compilation-history read is never rendered as \"No compilations yet\", and the eCTD Co-Author backbone footer withholds its document, approved and readiness figures unless documents were actually read.",
+      "intendedUse": "A regulatory director checks whether a submission exists, whether a sequence was ever compiled, and how complete an eCTD backbone is. Each of those readings is a statement about the regulated record, and an outage must be reported as an outage rather than as an answer of \"none\" or \"0%\".",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "A 401/500/malformed response collapses to an empty array and the surface renders \"No submissions yet\", \"No compilations yet\" or a computed \"0% eCTD readiness\"; the user concludes that a filing, a compilation history or an assembled dossier does not exist when the system simply could not read it, and proceeds (or reports to an agency) on that basis.",
+      "codeRefs": [
+        "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+        "client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx",
+        "client/src/concept2cure/v2/dataConnect.tsx",
+        "client/src/concept2cure/v2/assessmentState.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/submissionCenterHonesty.test.tsx",
+            "client/src/concept2cure/v2/__tests__/ectdCompileHistoryHonesty.test.tsx",
+            "client/src/concept2cure/v2/__tests__/ectdCoauthorHonesty.test.tsx",
+            "client/src/concept2cure/v2/__tests__/submissionCenterNoFixtures.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-03",
+      "appId": "submission-center",
+      "statement": "The system shall refuse a request to move an eCTD sequence to `frozen` or `dispatched` through the ordinary lifecycle-transition endpoint with GOVERNED_REQUIRED, and shall produce either state only through the governed applier, which requires an executed Part 11 `sign` action recorded on the exact `ectd-sequence:<id>` target by the same actor and declaring that step's own intent.",
+      "intendedUse": "Freezing and dispatching are the irreversible, outward-facing acts of a filing. A regulatory operations lead performs them from the Dispatch workspace only through the Part 11 e-signature dialog, and the platform must be able to show an inspector the signature that authorized each one.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "A caller (or the UI) posts status='frozen' to the generic transition endpoint and the sequence becomes frozen or dispatched with no electronic signature; the submission record then carries an irreversible state change with no attributable human authorization, which a Part 11 inspection would read as an unsigned approval of a regulatory submission.",
+      "codeRefs": [
+        "server/services/submission-service/submission-service.ts",
+        "server/routes/submissions.ts",
+        "server/routes/c2c/actions.ts",
+        "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "tests/golden-journeys/drug-nda-ectd.journey.test.ts"
+          ]
+        },
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-04",
+      "appId": "submission-center",
+      "statement": "The system shall refuse a governed freeze, dispatch or transmit whose signature declares a different step's intent, has already authorized a governed transition, has been revoked, is not bound to the sequence's leaf manifest, or whose bound digest no longer equals the current leaf-manifest digest \u2014 requiring the sequence to be signed again for its current content.",
+      "intendedUse": "Each irreversible step of a filing carries its own meaning under 21 CFR Part 11 \u00a711.50, and \u00a711.70 requires the signature to be linked to the content it signed. A publisher who edits a leaf after signing must re-sign before the sequence can be frozen or sent.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "One signature is replayed to freeze, dispatch and transmit, or a leaf is swapped after signing and the altered dossier is frozen under a signature applied to different bytes; the platform would then attest that a named human approved content they never saw, and the signature manifest in the record would be false.",
+      "codeRefs": [
+        "server/services/submission-service/submission-service.ts",
+        "server/routes/c2c/actions.ts"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "tests/golden-journeys/drug-nda-ectd.journey.test.ts",
+            "tests/schema-contract/esig-gate-columns.contract.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-05",
+      "appId": "submission-center",
+      "statement": "The system shall compute the dispatch gate's inputs server-side from the sequence's own leaves and its open critical Shadow Review findings (never from client-supplied counts), refuse a freeze or dispatch with DISPATCH_BLOCKED while the gate for that step is not cleared, and render the server's blockers verbatim in the Dispatch workspace \u2014 offering no freeze or dispatch control while the gate blocks or while the readiness read fails, and offering the Part 11 e-signature-gated control only when the gate is clear and the sequence holds the required state.",
+      "intendedUse": "Before a sequence is frozen or dispatched, a submission manager reads the gate to see exactly what still blocks the filing \u2014 structural validation errors, unacknowledged critical shadow-review findings, a missing release signature \u2014 and the gate, not the user, decides whether the act may proceed.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "A client passes validationErrors: 0, or the surface offers the freeze button while the server gate blocks, and a sequence with unresolved structural errors or open critical findings is frozen and dispatched \u2014 a defective dossier reaches the agency and the platform's own record shows it as cleared.",
+      "codeRefs": [
+        "server/services/ectd/assess-dispatch-readiness.ts",
+        "server/services/ectd/dispatch-gate.ts",
+        "server/routes/submissions.ts",
+        "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts",
+            "server/services/ectd/__tests__/dispatch-gate.test.ts",
+            "client/src/concept2cure/v2/__tests__/submissionCenterGovernedWorkspaces.test.tsx"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-06",
+      "appId": "submission-center",
+      "statement": "The system shall refuse to create, update or delete a submission leaf on a frozen or dispatched sequence, and shall refuse at the write boundary any leaf whose section code is not a well-formed CTD section code (a bare module number, a module outside 1-5 or an unparseable value is refused; the code is not checked against the published ICH/FDA heading tables), whose document table is not a placeable document store, or whose key space (integer document_id versus uuid document_uuid) does not match that store.",
+      "intendedUse": "The Builder workspace is where a document is placed into a CTD section of a sequence. The placement decides where the document appears in the assembled package, so an unresolvable or misfiled pointer is a defect in the submission's content, and a frozen sequence's contents must not change.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "A mistyped section code becomes a literal folder name in the package, or a misspelled document table is stored, audited as a placement and reported dispatch-clear, and the leaf only fails to resolve at assembly \u2014 at the end of a filing window; or a leaf is edited after freeze, so the frozen dossier is not the one that was signed.",
+      "codeRefs": [
+        "server/services/submission-service/submission-service.ts",
+        "server/services/ectd/leaf-document-tables.ts",
+        "server/routes/submissions.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/submission-service/__tests__/leaf-document-table-allowlist.test.ts",
+            "server/services/submission-service/__tests__/leaf-section-code.test.ts",
+            "server/services/submission-service/__tests__/leaf-source-pin.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance. The reviewer named these as likely candidates: tests/golden-journeys/drug-nda-ectd.journey.test.ts."
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-08",
+      "appId": "submission-center",
+      "statement": "The system shall require, for every agency-gateway transmit and every rollback, a reason of at least eight characters and a server-verified \u00a711 re-authentication, record the governed action and electronic signature with only the authentication factors actually verified, and surface the server's refusals \u2014 401 re-auth failed, 409 an active transmittal holds the lock, 412 gateway credentials not configured, 422 structural gate with its findings \u2014 in the server's own words without claiming anything was sent.",
+      "intendedUse": "Gateway Transmittals is the last screen before bytes leave for FDA ESG, EMA CESP, PMDA and the other regional gateways. The operator re-authenticates and states a reason, and every refusal has to be legible so they know whether the submission left the platform.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "A transmit runs without verified re-authentication or without a recorded reason, or a refusal is rendered as a generic failure; the platform then holds no attributable authorization for a filing that reached an agency, or an operator re-sends a package that is already in flight because the 409 lock was reported as an ordinary error.",
+      "codeRefs": [
+        "server/routes/mdx-submission-gateway.ts",
+        "server/services/submission-gateways/governed-transmit.ts",
+        "client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx",
+            "tests/mdx-submission-gateway-routes.test.ts",
+            "server/services/submission-gateways/__tests__/governed-transmit-signature.test.ts",
+            "server/services/submission-gateways/__tests__/transmit-authorization.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-09",
+      "appId": "submission-center",
+      "statement": "The system shall state the provenance of every downloaded transmittal acknowledgement in the document's heading, its filename and the X-Ack-Provenance response header \u2014 agency bytes only where the gateway returned them (the FDA AS2 MDN), and otherwise this platform's own record of what it sent \u2014 and the surface shall tell the user which of the two arrived.",
+      "intendedUse": "A sponsor archives a gateway acknowledgement as evidence that an agency received a submission on a given date. The archived file must be self-describing, because it will be read long after the screen that served it is gone.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "A text file composed by the platform from its own transmittal row is downloaded as \"ack-<id>.txt\" and archived as agency correspondence; in a filing-date dispute or an inspection the sponsor is shown to have represented a self-authored document as an agency receipt, and holds no agency receipt at all.",
+      "codeRefs": [
+        "server/services/submission-gateways/acknowledgement.ts",
+        "server/routes/mdx-submission-gateway.ts",
+        "client/src/concept2cure/v2/surfaces/GatewayTransmittals.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/submission-gateways/__tests__/transmit-authorization.test.ts",
+            "client/src/concept2cure/v2/__tests__/gatewayTransmittals.test.tsx"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance. The reviewer named these as likely candidates: tests/mdx-submission-gateway-routes.test.ts."
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-10",
+      "appId": "submission-center",
+      "statement": "The system shall refuse a sequence transmit that names no target environment or no agency application number rather than defaulting to production or writing an invented identifier into the backbone, and shall block the transmit with DISPATCH_BLOCKED, naming every leaf, when any leaf's source cannot be materialized into the package; where the organization holds no gateway credentials for the chosen environment it shall report transmitted:false with reason gateway_not_configured rather than reporting a send.",
+      "intendedUse": "Transmit is the one irreversible act in the platform. The operator chooses staging or production explicitly, and the package that goes must physically contain every document the backbone references.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "An omitted environment defaults to production and a test package is filed to the live agency endpoint; or a sequence transmits with an \"UNASSIGNED-SEQ-<id>\" application number in the regional backbone; or a leaf whose bytes live in external storage is silently dropped from the ZIP and the agency receives a dossier missing a document its own index.xml lists.",
+      "codeRefs": [
+        "server/services/submission-service/submission-service.ts",
+        "server/services/ectd/assemble-from-core.ts",
+        "server/routes/submissions.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/submission-service/__tests__/transmit-refusals.test.ts",
+            "server/services/submission-gateways/__tests__/transmit-authorization.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-11",
+      "appId": "submission-center",
+      "statement": "The system shall compile through the real package generator only where the programme resolves to a canonical submission spine with placed leaves, and shall otherwise emit a draft backbone whose every leaf carries rendered=\"false\" with no file path and no checksum, reporting submissionReady only when submissionBlockers is empty and otherwise stating, from the spine's actual state, exactly why no leaf file exists.",
+      "intendedUse": "The eCTD Compile surface tells a publisher whether the programme can produce a submittable package and hands them the backbone XML it produced. The artifact and the verdict are what the publisher acts on.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "The draft backbone declares <ectd:file-path> entries for files that were never written and checksums that were never computed, and the response says \"Submission-ready\" beside a download button; a publisher downloads and forwards a backbone that references non-existent leaf files as if it were an assembled package.",
+      "codeRefs": [
+        "server/routes/ectd-compile.ts",
+        "client/src/concept2cure/v2/surfaces/EctdCompile.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "tests/routes/ectd-backbone-leaf-honesty.test.ts",
+            "tests/routes/ectd-compile-spine.test.ts",
+            "tests/routes/ectd-compile-ident.test.ts",
+            "client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-12",
+      "appId": "submission-center",
+      "statement": "The system shall render the eCTD qualification spec versions and the controlled-vocabulary lists on the Publishing Center only from a response that matches the declared shape \u2014 routing a malformed or wrong-shaped 200 to the error state rather than to an empty one, and distinguishing the pre-read idle frame from an empty result \u2014 and shall offer no freeze, dispatch, transmit or publish action from that surface.",
+      "intendedUse": "A publisher checks which exact ICH/FDA eCTD specification versions a package is qualified against and which controlled-vocabulary codes and OIDs apply, before building a v3.2.2 or v4.0 submission. It is a reference and validation view only.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "low",
+      "failureMode": "A proxy or version skew returns a plausible but wrong body and the panel renders \"No spec versions\" or \"No codes\"; the publisher concludes the package is qualified against nothing, or that a controlled vocabulary has no codes, and selects an attribute value the agency's validator will reject.",
+      "codeRefs": [
+        "client/src/concept2cure/v2/surfaces/PublishingCenter.tsx",
+        "server/routes/ectd-v4.ts",
+        "client/src/concept2cure/v2/dataConnect.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/publishingCenterHonestReads.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-SUBMISSIONCENTER-90",
+      "appId": "submission-center",
+      "statement": "The system shall return a visitor with no session from the Submission Center surface `submission-center` to sign-in, and shall render that surface only once a session is established.",
+      "intendedUse": "A regulatory user reaches Submission Center through an authenticated session. The record this surface exposes is a regulated one, so an unauthenticated visitor must be returned to sign-in rather than shown any part of it.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "The surface renders for a visitor with no session, exposing a regulated record to an unidentified person and breaking the attribution every audit entry depends on.",
+      "codeRefs": [
+        "client/src/concept2cure/router/ZenRouter.tsx"
+      ],
+      "verification": [
+        {
+          "method": "e2e",
+          "refs": [
+            "tests/e2e/oq/launch-surface-access-control.oq.spec.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-SUBMISSIONREADINESS-90",
+      "appId": "submission-readiness",
+      "statement": "The system shall return a visitor with no session from the Submission Readiness surface `dispatch-readiness` to sign-in, and shall render that surface only once a session is established.",
+      "intendedUse": "A regulatory user reaches Submission Readiness through an authenticated session. The record this surface exposes is a regulated one, so an unauthenticated visitor must be returned to sign-in rather than shown any part of it.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "The surface renders for a visitor with no session, exposing a regulated record to an unidentified person and breaking the attribution every audit entry depends on.",
+      "codeRefs": [
+        "client/src/concept2cure/router/ZenRouter.tsx"
+      ],
+      "verification": [
+        {
+          "method": "e2e",
+          "refs": [
+            "tests/e2e/oq/launch-surface-access-control.oq.spec.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-SUBRDY-01",
+      "appId": "submission-readiness",
+      "statement": "The system shall present the dispatch verdict for an eCTD sequence exactly as the server composed it, and shall treat a response that carries no verdict as unanswered rather than as cleared.",
+      "intendedUse": "A regulatory operations user opens Submission Readiness to learn whether a given eCTD sequence may be transmitted to the agency. The verdict is the product's safety claim about a regulated submission record, so it must be the one the server computed from tenant-scoped database state, never a number the browser re-derived.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "The surface recomputes the verdict from raw inputs using fewer gates than the server composes (it previously merged only two of four), so a sequence the server blocks renders as 'Cleared to dispatch' and publishes facts.cleared=true to the assistant. A regulator or sponsor would then believe a dossier had passed every pre-transmit control when the authoritative gate refused it.",
+      "codeRefs": [
+        "server/routes/submissions.ts",
+        "server/services/ectd/assess-dispatch-readiness.ts",
+        "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx",
+            "server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts",
+            "server/services/ectd/__tests__/dispatch-gate.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-SUBRDY-02",
+      "appId": "submission-readiness",
+      "statement": "The system shall refuse to clear a sequence for dispatch until at least one Shadow Review run has completed against it, and shall state that refusal as a named blocker.",
+      "intendedUse": "Prevents an adversarially-unreviewed dossier from being reported as fit to transmit. A reviewer uses the blocker list to know what must close before the sequence can leave the building.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "Zero open critical findings is read as 'clean' when it actually means 'nothing ever looked'. A sequence with no completed Shadow Review run clears the gate, and a dossier that was never adversarially reviewed is transmitted to the agency carrying a cleared verdict.",
+      "codeRefs": [
+        "server/services/ectd/assess-dispatch-readiness.ts",
+        "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts",
+            "client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance. The reviewer named these as likely candidates: server/services/ectd/__tests__/release-signature-gate.test.ts."
+    },
+    {
+      "id": "URS-SUBRDY-05",
+      "appId": "submission-readiness",
+      "statement": "The system shall block a production dispatch when an agency-grade external validator is required but could not be run or reported error-severity findings, and shall treat an unrecognised NODE_ENV as production for that rule.",
+      "intendedUse": "Where a sponsor licenses an external eValidator and enables the requirement, the platform must not allow a package to be dispatched on the strength of its own internal checks alone. Whether the rule is enforced must not depend on a misspelled environment variable.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "A misconfigured or unset NODE_ENV is treated as non-production, so the fail-closed rule silently switches off and a package the agency validator would have rejected is cleared and dispatched.",
+      "codeRefs": [
+        "server/services/ectd/external-validator/gate.ts",
+        "server/services/ectd/assess-dispatch-readiness.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/ectd/external-validator/__tests__/external-validator.test.ts",
+            "server/services/ectd/__tests__/assess-dispatch-readiness.gates.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-SUBRDY-07",
+      "appId": "submission-readiness",
+      "statement": "The system shall not present a failed (non-2xx or unreachable) read of the approval-checkpoint store as zero pending approval gates \u2014 the Awaiting-approval count shall render as unread and the panel shall offer a control that re-issues the failed request; where the store is not provisioned the read route answers 200 with an empty set and meta.pendingStore, which this surface presently renders as zero.",
+      "intendedUse": "Honest failure behaviour on the Orchestration surface. A reviewer scanning the metrics strip for outstanding sign-offs must be able to tell 'none are pending' from 'we could not ask'.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "The checkpoints read fails, the mapped value stays an empty array, and the Awaiting-approval tile settles on 0. A reviewer who trusts it walks away from approval gates that are actually pending, and the surface's error copy tells them to retry with nothing on screen to retry with.",
+      "codeRefs": [
+        "client/src/concept2cure/v2/surfaces/Orchestration.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/orchestrationFailureRetry.test.tsx",
+            "client/src/concept2cure/v2/__tests__/orchestrationMapping.test.ts",
+            "server/routes/__tests__/orchestration-checkpoints.routes.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-SUBRDY-09",
+      "appId": "submission-readiness",
+      "statement": "The system shall report the inconsistency submission gate as not assessed, and shall withhold every clearance statement, unless positive evidence exists that a contradiction assessment actually ran against the program.",
+      "intendedUse": "Clearance is a positive claim about a filing. The board persists detected contradictions and not the set of cross-references it verified, so absence of findings carries no information about whether anything was checked; the narrative must say so.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "A program the engine never scanned renders 'Submission gate \u2014 CLEAR' and 'no contradictions', because the empty-list branch and the nothing-found branch are the same expression. That is the most expensive sentence the surface can say to a regulatory director.",
+      "codeRefs": [
+        "client/src/concept2cure/v2/assessmentState.ts",
+        "client/src/concept2cure/v2/surfaces/Inconsistency.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/inconsistencySubmissionGate.test.tsx",
+            "client/src/concept2cure/v2/__tests__/inconsistencyHonesty.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-SUBRDY-10",
+      "appId": "submission-readiness",
+      "statement": "The system shall change a governed assumption's value only on receipt of a reason for change of at least eight characters, shall issue the replacement record and the supersession of the original within a single request and, if the supersession does not apply, shall refuse with an error naming the orphan replacement so it can be resolved, shall attempt best-effort (non-blocking) propagation marking downstream objects stale, and shall leave the stored value unchanged and say so when it refuses.",
+      "intendedUse": "Changing a governed assumption moves the dossier. The reason for change is what a reviewer reads to understand why, and the supersession chain is what makes the change auditable as one fact changing rather than two unrelated records.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "The two writes are issued separately and the second fails, leaving the old and new assumptions both live; or the client reports a change that was refused, so the user believes the dossier moved while the governed record still holds the previous value and nothing downstream was invalidated.",
+      "codeRefs": [
+        "server/routes/assumption-decision-contradiction.ts",
+        "server/services/assumption-registry-service.ts",
+        "client/src/concept2cure/v2/surfaces/Inconsistency.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/inconsistencyGovernedChange.test.tsx"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-SUBRDY-11",
+      "appId": "submission-readiness",
+      "statement": "The system shall reject a contradiction scan whose detector set did not run to completion, rather than returning the partial findings it did collect as a completed result.",
+      "intendedUse": "The Re-scan control on the inconsistency surface runs the real detection engine. A scan whose detectors crashed is an unknown result, and reporting it as a low finding count feeds a 'ready to promote' preflight verdict built on detectors that never executed.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "A detector catches its own read error, logs a warning and resolves with a partial array, so the response lists every detector as having run and returns a short total. A preflight verdict then reads 'zero blocking contradictions' for a dossier four detectors never examined.",
+      "codeRefs": [
+        "server/services/contradiction-engine-service.ts",
+        "server/routes/assumption-decision-contradiction.ts",
+        "client/src/concept2cure/v2/surfaces/Inconsistency.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/__tests__/contradiction-scan-failclosed.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-SUBRDY-12",
+      "appId": "submission-readiness",
+      "statement": "The system shall verify that a workflow execution belongs to the caller's organization before cancelling it, shall perform that check before any cancellation takes effect, and shall answer not-found rather than forbidden for a run in another organization.",
+      "intendedUse": "The Cancel control on the Orchestration surface reaches a destructive route. Tenant isolation must hold on it as it does on the corresponding read, and the identifier space must not become an oracle that confirms another sponsor's run exists.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "Any authenticated user who knows an execution id cancels another sponsor's in-flight governed workflow, or learns from a 403 that the run exists. The other tenant's orchestration run is terminated with no trace of who did it in their organization's records.",
+      "codeRefs": [
+        "server/routes/orchestration.ts",
+        "client/src/concept2cure/v2/surfaces/Orchestration.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/orchestration-cancel-tenant.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-VAULT-02",
+      "appId": "vault",
+      "statement": "The system shall render a failed vault read as an explicit failure \u2014 an error state for the whole tree, and a named per-branch 'unavailable' notice with its reason for any branch the server could not serve \u2014 and shall not present a failed branch read as an empty folder or an empty data room; where the document store itself is not provisioned the read returns an empty tree flagged pendingStore, which the surface renders as 'No documents in this project's vault yet' qualified by a store-not-provisioned hint rather than as an error.",
+      "intendedUse": "A reviewer uses the Vault to establish what is and is not in the dossier. 'No documents' is a regulatory conclusion; the surface must only state it when the store actually answered and answered empty.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "The vault read (or the uploads / Module 3 / data-room branch) errors and the surface shows 'No documents in this project's vault yet' or an empty folder, so a reviewer concludes a required document was never filed when it exists but could not be read.",
+      "codeRefs": [
+        "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "server/routes/c2c/project-vault.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx",
+            "server/routes/c2c/__tests__/project-vault-branches.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-VAULT-04",
+      "appId": "vault",
+      "statement": "The system shall refuse, with nothing changed, any upload that would overwrite an existing vault record: different bytes at the same program/document-code/version are rejected as VERSION_CONTENT_CONFLICT, and identical bytes already recorded in the program under another document code are rejected as DUPLICATE_CONTENT.",
+      "intendedUse": "A governed document store must preserve the record of what was admitted and when; a user re-uploading a file must be told to mint a new version rather than silently replacing the hash the audit trail says was checked.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "Uploading a revised file under the same free-text version (client default '1.0', document_code defaulting to the raw filename) replaces s3_key, content_hash, file_size and extracted_text on the existing row, destroying the record of the previously admitted document while the audit trail still cites its hash.",
+      "codeRefs": [
+        "server/services/vault/vault-ingest.service.ts"
+      ],
+      "verification": [
+        {
+          "method": "integration",
+          "refs": [
+            "server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-VAULT-05",
+      "appId": "vault",
+      "statement": "The system shall classify an ingested document only as a proposal \u2014 recording placement_status 'suggested' with a confidence and a non-empty rationale \u2014 and shall place a document the rules cannot classify in a visible Unfiled queue with needsReview set, never in a guessed folder; a re-ingest shall not overwrite a placement a person has confirmed.",
+      "intendedUse": "Auto-filing into a CTD / eSTAR / IVDR / TMF dossier is a regulatory judgment. The platform may propose it, but the record must show it as a machine suggestion until a person accepts it, and a human decision must outrank any later machine suggestion.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "A low-confidence guess is stored as a settled filing, or a re-upload silently moves a document a reviewer had already confirmed into the classifier's folder, so the dossier shows a placement nobody decided.",
+      "codeRefs": [
+        "server/services/vault/vault-filing.service.ts",
+        "server/services/vault/vault-ingest.service.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/services/vault/__tests__/vault-filing.service.test.ts",
+            "client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-VAULT-08",
+      "appId": "vault",
+      "statement": "The system shall recompute the SHA-256 of the bytes it is about to serve and compare it to the content_hash recorded on the vault document, refusing the download with HTTP 409 on mismatch, on unreadable stored bytes, or on a record carrying no storage address, and shall return the recorded hash on the response so the recipient can verify its copy.",
+      "intendedUse": "A copy of a regulatory document leaving the platform must be provably the copy the vault recorded; a superseded or altered file must not leave the building silently.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "Bytes that were altered in place (or the wrong object returned by object storage) are served as the recorded document \u2014 a same-length tamper is invisible to every check except the hash \u2014 and the recipient treats a corrupted file as the governed record.",
+      "codeRefs": [
+        "server/routes/c2c/project-vault.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/c2c/__tests__/vault-download-integrity.test.ts",
+            "server/routes/__tests__/vault-download.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-VAULT-09",
+      "appId": "vault",
+      "statement": "The system shall write the hash-chained download audit entry \u2014 naming the actor, the document, and the content hash of the bytes served \u2014 before sending any byte, and shall refuse the download with AUDIT_WRITE_FAILED if that entry cannot be written, sending nothing.",
+      "intendedUse": "An inspector asking who has had a given controlled document must not be answered with a gap; a read that cannot be recorded is not permitted to happen.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "The audit write fails under load and the file is served anyway, so a controlled document leaves the platform with no record of who took it or which edition they took.",
+      "codeRefs": [
+        "server/routes/c2c/project-vault.ts",
+        "server/services/auditService.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/vault-download.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-VAULT-10",
+      "appId": "vault",
+      "statement": "The system shall answer a vault search from the server over document titles, filenames and extracted text scoped to the program, shall treat an empty query as an explicit EMPTY_QUERY non-result rather than matching everything, and shall report a failed search to the user as a failure that searched nothing rather than as zero matches.",
+      "intendedUse": "A reviewer who cannot find a document concludes it is absent, and in a regulated vault absence is a finding \u2014 so the surface must distinguish 'searched and found nothing' from 'could not search'.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "The search query errors (or a stray character makes tsquery raise) and the screen shows zero results, so the reviewer records that a required document is not in the dossier when it is.",
+      "codeRefs": [
+        "server/routes/c2c/project-vault.ts",
+        "client/src/concept2cure/v2/surfaces/Vault.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/vault-search.test.ts",
+            "client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-VAULT-11",
+      "appId": "vault",
+      "statement": "The system shall bound the filing-cabinet page it returns for the vault tree, shall report the window it returned (shown, total, truncated) so the surface can state it is showing part of a larger cabinet, and shall compute the unfiled review count and each data-room source's 'filed' stage over the whole program rather than over the returned page.",
+      "intendedUse": "The Vault is intended to hold a data-room-scale document set; counts a reviewer acts on (the unfiled queue, whether a captured source has been filed) must describe the vault, not the page that happened to render.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "Past the page cap the unfiled review queue shrinks as the backlog grows and filed data-room sources report as unfiled, so a user believes the filing backlog is cleared and that captured evidence never reached the vault.",
+      "codeRefs": [
+        "server/routes/c2c/project-vault.ts",
+        "client/src/concept2cure/v2/surfaces/Vault.tsx"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/vault-tree-bounded.test.ts",
+            "client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-VAULT-12",
+      "appId": "vault",
+      "statement": "The system shall the /api/artifacts-center read shall return, for each governed artifact, the version the newest active signature covers and whether that version differs from the artifact's current version, reporting that staleness as null rather than asserting it when either version cannot be resolved; and the Artifacts Center surface shall state each artifact's cited-source count and whether a human review has been recorded, while its e-signature badge remains unqualified by signature staleness.",
+      "intendedUse": "A reviewer scanning the cross-project artifact gallery uses the signature badge to decide what has been approved; an e-signature must not appear to cover content it never saw.",
+      "csaImpact": "indirect",
+      "assuranceLevel": "medium",
+      "failureMode": "An artifact signed at v3 and edited to v7 shows an unqualified 'signed' badge, so a reviewer treats unapproved content as approved and carries it into a submission.",
+      "codeRefs": [
+        "server/routes/artifacts-center-routes.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/artifacts-center-signature-staleness.test.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "URS-VAULT-13",
+      "appId": "vault",
+      "statement": "The system shall release a governed artifact file from the Artifacts Center only when persisted state shows an approve decision covering the artifact's current version or an active signature on it, refusing with HUMAN_REVIEW_REQUIRED otherwise wherever the export-review gate is enforced, shall refuse an artifact with no content rather than emitting an empty file, and shall stamp every released file and response with the draft / not-agency-validated notice and the authorization basis.",
+      "intendedUse": "Regulatory content leaving the platform must carry a persisted human decision and must not be mistakable for an agency-accepted document.",
+      "csaImpact": "direct",
+      "assuranceLevel": "medium",
+      "failureMode": "An unreviewed AI-drafted artifact is downloaded and circulated without the draft notice, or a caller-asserted approval flag substitutes for a persisted decision, so a document nobody approved is read as an approved regulatory record.",
+      "codeRefs": [
+        "server/routes/artifacts-center-routes.ts",
+        "server/services/export/exportReviewGate.ts"
+      ],
+      "verification": [
+        {
+          "method": "unit",
+          "refs": [
+            "server/routes/__tests__/artifacts-center-export-governance.test.ts"
+          ]
+        }
+      ],
+      "assuranceTarget": "high",
+      "evidenceOwed": "an integration or end-to-end test that exercises this behaviour against the real route; the evidence cited today supports only medium assurance."
+    },
+    {
+      "id": "URS-VAULT-90",
+      "appId": "vault",
+      "statement": "The system shall return a visitor with no session from the Vault surface `vault` to sign-in, and shall render that surface only once a session is established.",
+      "intendedUse": "A regulatory user reaches Vault through an authenticated session. The record this surface exposes is a regulated one, so an unauthenticated visitor must be returned to sign-in rather than shown any part of it.",
+      "csaImpact": "direct",
+      "assuranceLevel": "high",
+      "failureMode": "The surface renders for a visitor with no session, exposing a regulated record to an unidentified person and breaking the attribution every audit entry depends on.",
+      "codeRefs": [
+        "client/src/concept2cure/router/ZenRouter.tsx"
+      ],
+      "verification": [
+        {
+          "method": "e2e",
+          "refs": [
+            "tests/e2e/oq/launch-surface-access-control.oq.spec.ts"
+          ]
+        }
+      ]
+    }
+  ],
+  "awaitingEvidence": [
+    {
+      "id": "URS-AUTHORING-07",
+      "appId": "authoring",
+      "statement": "The system shall refuse to freeze a document that still carries open reviewer comments or pending tracked-change insertions/deletions unless the caller explicitly acknowledges the outstanding work, shall count those using the same parser the export uses, shall record the acknowledgement in the freeze reason and the audit trail, and shall reject a second freeze of an already sealed document regardless of status casing.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/authoring.router.ts",
+        "server/export/authoring-section-content.ts"
+      ],
+      "candidateTests": [
+        "tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts",
+        "client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx"
+      ]
+    },
+    {
+      "id": "URS-AUTHORING-11",
+      "appId": "authoring",
+      "statement": "The system shall permit an approve, reject, delegate or request-changes act on a review workflow only by a caller the workflow currently has a pending step assigned to within their organization, shall require a substantive reason for a rejection, a delegation and a change request, shall refuse self-delegation, and shall persist each act to the workflow history, to the caller's pending approval step for approve, reject and delegate (a change request leaves the approval row untouched), and to the document comment thread whenever a reason was stated.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/review-board-routes.ts",
+        "client/src/concept2cure/v2/surfaces/Review.tsx"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-PROJECTS-02",
+      "appId": "projects",
+      "statement": "The system shall refuse programme creation, before any row is written, for a caller with no resolved user identity and for a caller whose organisation role is explicitly read-only (viewer, readonly, read_only, guest).",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/services/c2c/program-access.ts",
+        "server/routes/c2c/projects.ts"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-PROJECTS-03",
+      "appId": "projects",
+      "statement": "The system shall derive the persisted product class from the chosen filing type when the client omits it, and shall reject with 400 any creation request that would record a device-family filing (510(k), De Novo, PMA, HDE, IDE, MDR, CER, IVDR) as a non-device product class, whatever product class the client submitted.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/c2c/projects.ts",
+        "shared/constants/domain/product-types.ts",
+        "client/src/concept2cure/v2/surfaces/Projects.tsx"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-PROJECTS-09",
+      "appId": "projects",
+      "statement": "The system shall build the programme activity feed from the tenant-scoped audit_logs table, matching entries by record_id or by new_values->>'project_id', verify programme membership of the caller's organisation first, and answer with an error status when the read fails rather than an empty activity array.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/c2c/projects.ts",
+        "client/src/concept2cure/v2/surfaces/ProjectHome.tsx"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-PROJECTS-11",
+      "appId": "projects",
+      "statement": "The system shall provide archiving as the only removal verb for a task, stamping deleted_at (and deleted_by when the actor's user id is resolvable) on the row within the caller's organisation, retaining the row and writing an audited task.delete entry with the supplied reason, and shall exclude archived rows from every task read model.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/taskManagement.routes.ts",
+        "server/routes/taskBoard.routes.ts"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-QMS-02",
+      "appId": "qms",
+      "statement": "The system shall make a controlled document effective only from draft or under-review state, recording the approver identity and approval timestamp on the document row, and shall refuse approval from any other state with HTTP 409.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/mdx-qms.ts",
+        "server/services/ana/AnaToolExecutor.ts"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-QMS-03",
+      "appId": "qms",
+      "statement": "The system shall refuse to open a controlled revision of a document without a reason for change, and on acceptance shall bump the version, return the document to draft and clear the prior approval so it must be re-reviewed and re-approved.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/mdx-qms.ts",
+        "server/services/ana/AnaToolExecutor.ts"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-QMS-08",
+      "appId": "qms",
+      "statement": "The system shall perform no governed QMS mutation from the Quality and Assurance screens; approving, revising, retiring, recording training and raising or advancing a change shall be handed as a grounded prompt to the AnA conversation, whose tools run the transition and commit the Part 11 audit row in the same transaction, requiring a caller-supplied reason for change on a document revision and a change-control transition only, substituting a generated reason on create, approve and retire, and capturing no electronic signature.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "client/src/concept2cure/quality/SopRegister.tsx",
+        "client/src/concept2cure/quality/ChangeControl.tsx",
+        "client/src/concept2cure/quality/App.tsx",
+        "server/services/ana/AnaToolExecutor.ts"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-QMS-11",
+      "appId": "qms",
+      "statement": "The system shall present the controlled-document register with each document's number, title, type, version, lifecycle status, effective date and next review date, shall filter it by status from both the register's own chips and an AnA directive driving the same state, and shall flag documents past their next review date.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "client/src/concept2cure/quality/SopRegister.tsx",
+        "client/src/concept2cure/quality/App.tsx",
+        "client/src/concept2cure/quality/hooks.ts",
+        "client/src/concept2cure/quality/registerGrid.ts",
+        "server/routes/mdx-qms.ts"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-01",
+      "appId": "submission-center",
+      "statement": "The system shall resolve the organization and user for every Submission Center request from the authenticated session only, never from the request body or parameters, reject with 401 any /api/submissions request whose session carries no valid positive-integer organization, restrict submission and sequence reads and writes to holders of the AUTHOR role, and require an explicit projectId for the Dossier Map (refusing PROJECT_REQUIRED without one) so a readiness view is never an org-wide roll-up; the Dossier Map read scopes to whatever organization claim it can parse as a finite number, a weaker check than the submissions router's.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/submissions.ts",
+        "server/routes/dossier-map.routes.ts",
+        "server/services/submission-service/submission-service.ts",
+        "client/src/concept2cure/v2/surfaces/DossierMap.tsx"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-SUBMISSION-CENTER-07",
+      "appId": "submission-center",
+      "statement": "The system shall apply every sequence status change \u2014 governed and non-governed alike \u2014 only while the row still holds the status the transition was evaluated against, and report a lost race as INVALID_STATE naming the state it expected; for the governed transitions (freeze, dispatch and the transmit resolution) it shall commit the state change and its hash-chained audit row in one transaction or neither, while the reversible non-governed transition commits its state change first and reports the outcome of its audit write to the caller.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/services/submission-service/submission-service.ts"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-SUBRDY-03",
+      "appId": "submission-readiness",
+      "statement": "The system shall distinguish, on the dispatch readiness surface, a failed readiness read from an organization that has no sequence to gate, and shall render neither as a verdict.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx",
+        "server/routes/submissions.ts"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-SUBRDY-04",
+      "appId": "submission-readiness",
+      "statement": "The system shall permit a governed freeze or dispatch of an eCTD sequence only when a valid, unspent Part 11 electronic signature bound to that sequence's current leaf manifest is presented together with a clear step-specific gate, and shall apply the state change and its hash-chained audit entry in a single transaction predicated on the status that was authorised.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/submissions.ts",
+        "server/services/submission-service/submission-service.ts",
+        "server/services/ectd/release-signature-status.ts"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-SUBRDY-06",
+      "appId": "submission-readiness",
+      "statement": "The system shall record a human-in-the-loop approval decision only from an approver holding one of the gate's required roles, shall refuse a second decision from the same approver, shall close the gate only when the distinct approving count reaches the required quorum, shall stamp the decision time from the database clock, shall write the decision and its audit entry in one transaction, and shall state in both that the decision is not a 21 CFR 11.50 electronic signature.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/orchestration-checkpoints.ts",
+        "client/src/concept2cure/v2/surfaces/Orchestration.tsx"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-SUBRDY-08",
+      "appId": "submission-readiness",
+      "statement": "The system shall refuse to serve the cross-document inconsistency board with an empty findings set when the contradiction findings store could not be read, answering with an explicit service-unavailable error, and the surface shall render that failure as an error state rather than a clean board.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/governed-intelligence-inconsistency-routes.ts",
+        "client/src/concept2cure/v2/surfaces/Inconsistency.tsx"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-VAULT-01",
+      "appId": "vault",
+      "statement": "The system shall serve a project's vault tree, search results and document downloads only after re-proving that the requested regulatory program belongs to the acting user's organization, reporting a program owned by another organization as absent rather than as forbidden.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/c2c/project-vault.ts",
+        "server/services/vault/vault-placement.service.ts"
+      ],
+      "candidateTests": [
+        "server/routes/__tests__/vault-search.test.ts",
+        "server/routes/__tests__/vault-download.test.ts"
+      ]
+    },
+    {
+      "id": "URS-VAULT-03",
+      "appId": "vault",
+      "statement": "The system shall admit an uploaded document into the vault only after verifying its magic bytes against the declared MIME type and completing an antivirus scan that is fail-closed in production, computing the SHA-256 of the bytes, and successfully persisting those bytes through the canonical storage provider; if the byte write fails, no vault record is created.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/services/vault/vault-ingest.service.ts",
+        "server/middleware/uploadSafety.ts",
+        "server/routes/vault-ingest.ts"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-VAULT-06",
+      "appId": "vault",
+      "statement": "The system shall permit a filing decision (POST /api/c2c/project-vault/:id/file) only to a caller holding a governed-write organization role, shall take the document row FOR UPDATE, and shall commit the placement change and its hash-chained 21 CFR Part 11 audit row \u2014 recording actor, from/to folder and status, and rationale \u2014 in a single transaction, while leaving vault reads open to viewers.",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/routes/c2c/project-vault.ts",
+        "server/services/vault/vault-placement.service.ts",
+        "server/middleware/orgMembership.ts"
+      ],
+      "candidateTests": []
+    },
+    {
+      "id": "URS-VAULT-07",
+      "appId": "vault",
+      "statement": "The system shall refuse a filing decision naming a folder that does not exist in the program's own vault taxonomy view (INVALID_FOLDER), shall accept an explicit unfile (folderId null) as a legitimate recorded decision, and shall refuse a request that names neither a target nor a confirmation (NO_TARGET).",
+      "reason": "no cited test exercises this behaviour",
+      "codeRefs": [
+        "server/services/vault/vault-placement.service.ts",
+        "shared/constants/domain/vault-taxonomy.ts"
+      ],
+      "candidateTests": []
+    }
+  ]
+}

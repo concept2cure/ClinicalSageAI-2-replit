@@ -47,8 +47,9 @@
  */
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { readRegistry, validateRegistry, repoRoot, REGISTRY_PATH } from './validation/registry.mjs';
 
 const ARGS = process.argv.slice(2);
@@ -69,34 +70,70 @@ const RESULT = { PASS: 'PASS', FAIL: 'FAIL', NOT_EXECUTED: 'NOT EXECUTED', ERROR
 /* ── execution ───────────────────────────────────────────────────────────── */
 
 /**
- * Run one vitest invocation over a set of files. One invocation per requirement
- * rather than one for the whole registry: a requirement's result has to be its
- * own, or a single unrelated failure marks every requirement failed and the
- * matrix stops distinguishing them.
+ * Execute every cited vitest file in ONE run and read the per-file outcome from
+ * its JSON report.
+ *
+ * The obvious shape — one `npx vitest` per cited file — was the first cut, and
+ * it does not survive contact with a real registry: dozens of citations means
+ * dozens of cold starts, and a run nobody will wait for is a run nobody
+ * executes. Batching costs nothing in precision because the JSON reporter
+ * reports per FILE, so a requirement's result is still its own; a failure in
+ * one suite does not mark the others failed.
+ *
+ * Returns a Map from repo-relative path to {result, detail}. A file the report
+ * does not mention was not executed, and says so.
  */
-function runVitest(files) {
+function runVitestBatch(files, config = 'vitest.config.ts') {
+  const results = new Map();
+  if (files.length === 0) return results;
+  const reportPath = path.join(
+    fs.mkdtempSync(path.join(os.tmpdir(), 'urs-vitest-')),
+    'report.json',
+  );
+  const r = spawnSync(
+    'npx',
+    ['vitest', 'run', '--config', config, '--reporter=json', `--outputFile=${reportPath}`, ...files],
+    { cwd: repoRoot, encoding: 'utf8', timeout: 60 * 60_000, maxBuffer: 256 * 1024 * 1024 },
+  );
+  let report = null;
   try {
-    const out = execFileSync(
-      'npx',
-      ['vitest', 'run', '--config', 'vitest.config.ts', '--reporter=dot', ...files],
-      { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 15 * 60_000 },
-    );
-    return { result: RESULT.PASS, detail: summariseVitest(out) };
-  } catch (error) {
-    const out = `${error.stdout ?? ''}${error.stderr ?? ''}`;
-    /* A suite that never started is not a failed control — it is an absent
-       observation, and calling it FAIL would put a false finding in a signed
-       document just as surely as calling it PASS would hide a real one. */
-    if (!/Test Files|Tests\s+\d/.test(out)) {
-      return { result: RESULT.ERROR, detail: `vitest did not run: ${out.trim().split('\n').slice(-2).join(' ').slice(0, 200)}` };
-    }
-    return { result: RESULT.FAIL, detail: summariseVitest(out) };
+    report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+  } catch {
+    report = null;
   }
-}
-
-function summariseVitest(out) {
-  const line = out.split('\n').find((l) => /Tests\s+\d|Tests\s+\w/.test(l));
-  return (line ?? out.split('\n').filter(Boolean).slice(-1)[0] ?? '').trim().slice(0, 160);
+  if (!report) {
+    /* A run that produced no report is an ABSENT observation, not a set of
+       failed controls. Calling these FAIL would put false findings in a signed
+       document just as surely as calling them PASS would hide real ones. */
+    const tail = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim().split('\n').slice(-3).join(' ');
+    for (const f of files) {
+      results.set(f, { result: RESULT.ERROR, detail: `vitest produced no report: ${tail.slice(0, 200)}` });
+    }
+    return results;
+  }
+  for (const suite of report.testResults ?? []) {
+    const abs = suite.name ?? '';
+    const key = files.find((f) => abs.endsWith(f)) ?? path.relative(repoRoot, abs);
+    const assertions = suite.assertionResults ?? [];
+    const passed = assertions.filter((a) => a.status === 'passed').length;
+    const failed = assertions.filter((a) => a.status === 'failed').length;
+    /* A suite that executed zero assertions exits green. That is the
+       control-that-reports-success-while-doing-nothing shape, so it is ERROR. */
+    if (passed + failed === 0) {
+      results.set(key, { result: RESULT.ERROR, detail: 'the suite ran no tests' });
+      continue;
+    }
+    results.set(key, {
+      result: failed > 0 || suite.status === 'failed' ? RESULT.FAIL : RESULT.PASS,
+      detail: `${passed} passed, ${failed} failed`,
+    });
+  }
+  for (const f of files) {
+    if (!results.has(f)) {
+      results.set(f, { result: RESULT.ERROR, detail: 'the report did not mention this file — it was not executed' });
+    }
+  }
+  return results;
 }
 
 /**
@@ -345,7 +382,7 @@ ${rows.join('\n')}
 `;
 }
 
-function renderSummary(registry, resultsById, verdict, tally, executed, owed) {
+function renderSummary(registry, resultsById, verdict, tally, executed, owed, awaiting) {
   const failing = registry.requirements
     .filter((r) => (resultsById.get(r.id)?.result ?? RESULT.NOT_EXECUTED) !== RESULT.PASS)
     .map((r) => {
@@ -371,13 +408,18 @@ ${verdict === 'COMPLETE'
 | Could not be executed (ERROR) | ${tally[RESULT.ERROR] ?? 0} |
 | Not executed in this run | ${tally[RESULT.NOT_EXECUTED] ?? 0} |
 | **Not yet qualified to the level the risk deserves** | ${owed.length} |
+| **Declared with no verification at all** | ${awaiting.length} |
 
 Verification was ${executed ? 'executed' : '**not** executed'} in this run${executed ? '' : ' (run with `--run`)'}.
 
-## Outstanding
+## Requirements whose verification did not pass
+
+This section answers one question only — did the cited verification execute and
+pass. It is **not** the list of what is outstanding for the package; the two
+sections below it are, and they can be long while this one is empty.
 
 ${failing.length === 0
-    ? 'Nothing. Every requirement passed.'
+    ? 'None. Every requirement in the registry has an executed, passing verification.'
     : `| ID | App | Result | Observed |\n|---|---|---|---|\n${failing.join('\n')}`}
 
 ## Not yet qualified to the level the risk deserves
@@ -391,6 +433,24 @@ ${owed.length === 0
     ? 'None. Every requirement is evidenced to the level its risk deserves.'
     : `| ID | App | Achieved | Deserves | Evidence owed |\n|---|---|---|---|---|\n${owed
         .map((r) => `| ${cell(r.id)} | ${cell(r.appId)} | ${cell(r.assuranceLevel)} | ${cell(r.assuranceTarget)} | ${cell(r.evidenceOwed)} |`)
+        .join('\n')}`}
+
+## Declared, with no verification at all
+
+These requirements describe behaviour that is in the product — the implementing
+code is cited and resolves — but no test in the repository was found to exercise
+them. They are listed rather than omitted: the behaviour exists, a reviewer will
+ask about it, and a package that quietly left it out would read as though the
+surface had nothing further to validate. A declared gap is evidence; a silent one
+is a misrepresentation.
+
+They are not counted as requirements above, and the package cannot read COMPLETE
+while any of them stands.
+
+${awaiting.length === 0
+    ? 'None.'
+    : `| ID | App | Requirement | Why nothing counts yet | Candidate tests to assess |\n|---|---|---|---|---|\n${awaiting
+        .map((a) => `| ${cell(a.id)} | ${cell(a.appId)} | ${cell(a.statement)} | ${cell(a.reason)} | ${cell((a.candidateTests ?? []).map((t) => `\`${t}\``).join(', ') || '— none identified')} |`)
         .join('\n')}`}
 
 ## What this report does not cover
@@ -447,6 +507,32 @@ async function main() {
   ];
   const e2eResults = RUN && !NO_E2E ? await executeE2e(e2eSpecs) : new Map();
 
+  /* The vitest tier is collected the same way and executed once. See
+     runVitestBatch on why one invocation per citation was the wrong shape. */
+  const vitestFiles = [
+    ...new Set(
+      registry.requirements.flatMap((r) =>
+        (r.verification ?? [])
+          .filter((v) => v.method === 'unit' || v.method === 'integration')
+          .flatMap((v) => v.refs),
+      ),
+    ),
+  ];
+  /* `*.dbtest.ts` lives in its own vitest project. vitest.config.ts installs a
+     process-wide `vi.mock('pg')` and EXCLUDES those files, so running them
+     under the default config executes nothing and the report never mentions
+     them — which this generator correctly reported as ERROR rather than as a
+     pass, and which is fixed here by running them under the config they belong
+     to (vitest.db.config.ts, which needs a real DATABASE_URL). */
+  const dbFiles = vitestFiles.filter((f) => f.endsWith('.dbtest.ts'));
+  const plainFiles = vitestFiles.filter((f) => !f.endsWith('.dbtest.ts'));
+  if (RUN && plainFiles.length) say(`  executing ${plainFiles.length} vitest file(s) in one run…`);
+  const vitestResults = RUN ? runVitestBatch(plainFiles) : new Map();
+  if (RUN && dbFiles.length) {
+    say(`  executing ${dbFiles.length} database-backed vitest file(s) under vitest.db.config.ts…`);
+    for (const [k, v] of runVitestBatch(dbFiles, 'vitest.db.config.ts')) vitestResults.set(k, v);
+  }
+
   for (const r of registry.requirements) {
     const runs = [];
     for (const v of r.verification ?? []) {
@@ -463,8 +549,11 @@ async function main() {
           runs.push({ ref, method: v.method, ...got });
           continue;
         }
-        say(`  ▸ ${r.id} ${ref}`);
-        runs.push({ ref, method: v.method, ...runVitest([ref]) });
+        runs.push({
+          ref,
+          method: v.method,
+          ...(vitestResults.get(ref) ?? { result: RESULT.NOT_EXECUTED, detail: '' }),
+        });
       }
     }
     /* A requirement passes when at least one executed verification passed and
@@ -482,8 +571,12 @@ async function main() {
      qualified, however green its tests are, so the shortfall list gates the
      verdict exactly as a failing suite does. */
   const owed = registry.requirements.filter((r) => r.assuranceTarget);
+  const awaiting = registry.awaitingEvidence ?? [];
   const verdict =
-    RUN && (tally[RESULT.PASS] ?? 0) === registry.requirements.length && owed.length === 0
+    RUN &&
+    (tally[RESULT.PASS] ?? 0) === registry.requirements.length &&
+    owed.length === 0 &&
+    awaiting.length === 0
       ? 'COMPLETE'
       : 'INCOMPLETE';
 
@@ -498,7 +591,7 @@ async function main() {
   const more = [
     [`${OUT_DIR}/RA-LAUNCH-001-RISK-ASSESSMENT.md`, renderRisk(registry, resultsById)],
     [`${OUT_DIR}/TM-LAUNCH-001-TRACEABILITY-MATRIX.md`, renderTraceability(registry, resultsById, appById)],
-    [`${OUT_DIR}/VSR-LAUNCH-001-SUMMARY-REPORT.md`, renderSummary(registry, resultsById, verdict, tally, RUN, owed)],
+    [`${OUT_DIR}/VSR-LAUNCH-001-SUMMARY-REPORT.md`, renderSummary(registry, resultsById, verdict, tally, RUN, owed, awaiting)],
   ];
   for (const [file, body] of more) { fs.writeFileSync(rel(file), body); written.push(file); }
 
@@ -512,6 +605,7 @@ async function main() {
     say(`\nwrote ${written.length} document(s) to ${OUT_DIR}/`);
     for (const [k, v] of Object.entries(tally)) say(`  ${k}: ${v}`);
     if (owed.length) say(`  not yet qualified to the level the risk deserves: ${owed.length}`);
+    if (awaiting.length) say(`  declared with no verification at all: ${awaiting.length}`);
     say(`\nVerdict: ${verdict}`);
     if (verdict !== 'COMPLETE' && !RUN) say('(nothing was executed — run with --run)');
   }

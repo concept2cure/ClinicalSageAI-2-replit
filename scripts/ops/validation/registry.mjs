@@ -196,6 +196,40 @@ export function validateRegistry(registry, root = repoRoot) {
     }
   }
 
+  /* Requirements that are implemented but that NOTHING yet verifies.
+   *
+   * These cannot sit in `requirements`, because every entry there must carry a
+   * verification and the whole value of that rule is that it has no exceptions.
+   * Leaving them out of the registry altogether was the other option, and it is
+   * worse: the behaviour is in the product, a reviewer will ask about it, and a
+   * package that simply omits it reads as though the surface has nothing else to
+   * validate. So they are declared here, with the implementing code and the
+   * reason no test counts yet, and VSR-LAUNCH-001 reports them. A declared gap
+   * is evidence; a silent one is a misrepresentation. */
+  const awaiting = Array.isArray(registry.awaitingEvidence) ? registry.awaitingEvidence : [];
+  for (const a of awaiting) {
+    const id = a.id ?? '-';
+    if (!ID_RE.test(String(a.id ?? ''))) fail('awaiting-id', id, 'id must look like URS-<APP>-NN');
+    if (seen.has(id)) fail('awaiting-dup', id, 'this id is already a verified requirement');
+    if (!appIds.has(a.appId)) fail('awaiting-app', id, `appId "${a.appId}" is not a declared app`);
+    for (const field of ['statement', 'reason']) {
+      if (typeof a[field] !== 'string' || a[field].trim().length < 10) {
+        fail('awaiting-field', id, `${field} is missing or too short to mean anything`);
+      }
+    }
+    /* The code must still resolve. An unverified requirement pointing at a file
+       that does not exist is not a gap, it is a fiction. */
+    if (!Array.isArray(a.codeRefs) || a.codeRefs.length === 0) {
+      fail('awaiting-no-code', id, 'no implementing code cited — nothing establishes the behaviour exists');
+    }
+    for (const ref of a.codeRefs ?? []) {
+      if (!fs.existsSync(path.join(root, ref))) fail('awaiting-dangling', id, `cited path does not exist: ${ref}`);
+    }
+    for (const ref of a.candidateTests ?? []) {
+      if (!fs.existsSync(path.join(root, ref))) fail('awaiting-dangling', id, `candidate test does not exist: ${ref}`);
+    }
+  }
+
   /* Every launch app must carry requirements. An app with none reads as "in
      scope and fully satisfied" in the rendered matrix, which is the inverse of
      the truth. */

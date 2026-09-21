@@ -42,7 +42,11 @@ function checkRepo() {
   if (findings.length === 0) {
     const count = registry.requirements.length;
     const apps = registry.apps.length;
-    console.log(`✓ validation traceability: ${count} requirements across ${apps} launch apps, every citation resolves`);
+    const awaiting = (registry.awaitingEvidence ?? []).length;
+    console.log(
+      `✓ validation traceability: ${count} requirements across ${apps} launch apps, every citation resolves` +
+        (awaiting ? `; ${awaiting} further requirement(s) declared with no verification yet` : ''),
+    );
     return 0;
   }
   console.error(`✗ validation traceability: ${findings.length} finding(s)\n`);
@@ -180,6 +184,64 @@ function selfTest() {
     [
       'evidence owed with no target — says nothing about what is missing',
       () => { const r = clean(); r.requirements[0].evidenceOwed = 'some test somebody should write'; return r; },
+      1,
+    ],
+    /* awaitingEvidence: a declared gap must still be anchored in real code, and
+       must not quietly shadow a requirement that IS verified. */
+    [
+      'control — a declared unverified requirement, anchored in real code',
+      () => {
+        const r = clean();
+        r.awaitingEvidence = [{
+          id: 'URS-VAULT-04', appId: 'vault',
+          statement: 'The system shall reject a second document carrying identical bytes.',
+          reason: 'no cited test exercises this behaviour',
+          codeRefs: ['server/real.ts'],
+          candidateTests: ['server/__tests__/real.test.ts'],
+        }];
+        return r;
+      },
+      0,
+    ],
+    [
+      'an unverified requirement pointing at code that does not exist',
+      () => {
+        const r = clean();
+        r.awaitingEvidence = [{
+          id: 'URS-VAULT-04', appId: 'vault',
+          statement: 'The system shall reject a second document carrying identical bytes.',
+          reason: 'no cited test exercises this behaviour',
+          codeRefs: ['server/ghost.ts'],
+        }];
+        return r;
+      },
+      1,
+    ],
+    [
+      'an unverified requirement reusing the id of a verified one',
+      () => {
+        const r = clean();
+        r.awaitingEvidence = [{
+          id: 'URS-VAULT-01', appId: 'vault',
+          statement: 'The system shall do something else entirely.',
+          reason: 'no cited test exercises this behaviour',
+          codeRefs: ['server/real.ts'],
+        }];
+        return r;
+      },
+      1,
+    ],
+    [
+      'an unverified requirement with no reason given',
+      () => {
+        const r = clean();
+        r.awaitingEvidence = [{
+          id: 'URS-VAULT-04', appId: 'vault',
+          statement: 'The system shall reject a second document carrying identical bytes.',
+          codeRefs: ['server/real.ts'],
+        }];
+        return r;
+      },
       1,
     ],
   ];

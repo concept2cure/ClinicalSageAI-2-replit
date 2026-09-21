@@ -1,0 +1,10 @@
+  booting the application for 1 browser spec(s)…
+  ▸ tests/e2e/oq/launch-surface-access-control.oq.spec.ts
+  executing 84 vitest file(s) in one run…
+  executing 1 database-backed vitest file(s) under vitest.db.config.ts…
+wrote 9 document(s) to docs/validation/launch/
+  PASS: 59
+  not yet qualified to the level the risk deserves: 21
+  declared with no verification at all: 20
+Verdict: INCOMPLETE
+EXIT=1
