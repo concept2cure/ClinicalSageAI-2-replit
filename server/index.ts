@@ -75,6 +75,7 @@ import {
   mountApiCatchAll,
 } from './startup/services';
 import { setupFrontendServing } from './startup/frontend';
+import { createMcpRouter } from './mcp';
 
 // ── Early validation (may process.exit on missing required vars) ───────────
 validateEnvironment();
@@ -109,6 +110,13 @@ applyTelemetryMiddleware(app);
 // Fast-path health endpoints BEFORE security/rate-limit — they need to
 // short-circuit without any middleware cost.
 mountFastPathHealthEndpoints(app, pool);
+
+// Concept2Cure connector for Claude (remote MCP server, D8). Mounted at the
+// root, ahead of the core stack, because its OAuth token/registration
+// endpoints are server-to-server calls that the production CSRF guard would
+// refuse (no Origin, no Bearer); the router carries its own parsing, CORS,
+// headers and rate limits, and /mcp itself is Bearer-only. See server/mcp/index.ts.
+if (process.env.MCP_ENABLED === 'true') app.use(createMcpRouter());
 
 applyCoreMiddleware(app, debugLog);
 

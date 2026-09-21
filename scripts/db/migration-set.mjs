@@ -2369,6 +2369,17 @@ export const C2C_MIGRATION_FILES = [
   // ci:migration-set-order pins those two last.
   'migrations/20260919_capa_code_uniqueness_per_program.sql',
 
+  // ── Claude connector (D8): OAuth 2.1 clients, PKCE codes, refresh tokens ──
+  // server/mcp/ is an MCP resource server that must also act as the OAuth
+  // authorization server (the platform had none). Two of the three tables are
+  // public + organization_id INTEGER NOT NULL so the sweep below policies them,
+  // and each grant row also cascades from the organization_users membership
+  // that authorised it, so removing a member revokes their connector grants
+  // and tenant off-boarding purges them through the cascade ci:purge-coverage
+  // measures. Above the final pair because ci:migration-set-order pins those
+  // two last. Additive and IF NOT EXISTS throughout.
+  'migrations/20260920_mcp_oauth.sql',
+
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the
   // canonical per-tenant uuid) + a forward-sync trigger, so a single
