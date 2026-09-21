@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-20T18:46:05.696Z",
+  "generatedAt": "2026-09-21T00:08:09.434Z",
   "git": {
-    "sha": "1359c829ff353fd9f1a00c542f7a98da0ad02581",
+    "sha": "25a793e0f5fadc325ecb8d56065da95014dcdc65",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1988,7 +1988,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 178549
+        "bytes": 172815
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2007,12 +2007,12 @@
         "bytes": 148269
       },
       {
-        "file": "server/storage.ts",
-        "bytes": 145402
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 146764
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 145015
+        "file": "server/storage.ts",
+        "bytes": 145402
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2154,7 +2154,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4644
+        "lines": 4475
       },
       {
         "file": "server/storage.ts",
@@ -2174,7 +2174,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3360
+        "lines": 3398
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
