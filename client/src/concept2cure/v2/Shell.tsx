@@ -69,6 +69,7 @@ import {
 } from './navEntitlements';
 import { NavUnlockPanel } from './NavUnlockPanel';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
+import { renderSafeMarkdown } from '../components/ana/renderSafeMarkdown';
 
 export interface ShellSurfaceRef {
   id: string;
@@ -986,7 +987,17 @@ export function AnaRail({
                   {m.sample ? ' · sample' : ''}
                 </div>
               )}
-              <div className="bd">{m.body}</div>
+              {/* AnA's text is markdown (the response register allows headers
+                  only in artifacts, bold for a term, lists when enumerable).
+                  Rendered through the codebase's one audited markdown path —
+                  renderSafeMarkdown (marked → DOMPurify) — so a header is a
+                  heading and not a literal "##". The person's own text stays
+                  plain: it is never parsed as markup. */}
+              {m.role === 'ana' ? (
+                <div className="bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(m.body ?? '') }} />
+              ) : (
+                <div className="bd">{m.body}</div>
+              )}
               {/* Caveats sit directly under the answer they qualify, above the
                   work record and never inside it. `useAnaChat` records a
                   server degraded-mode signal, and a timeout, on the message —
