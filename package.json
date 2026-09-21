@@ -268,6 +268,7 @@
     "db:sync-manifest": "node scripts/db/sync-migration-manifest.mjs",
     "db:sync-manifest:check": "node scripts/db/sync-migration-manifest.mjs --check",
     "db:audit-grants": "node scripts/db/audit-runtime-grants.mjs",
+    "demo:seed": "node scripts/demo/launch-demo/seed.mjs",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build -o storybook-static",
     "storybook:test": "test-storybook",
