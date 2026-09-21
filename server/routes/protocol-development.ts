@@ -2,10 +2,14 @@
  * Protocol Development API — Capability C2C-17
  *
  * Governed protocol authoring: create a document (auto-seeded sections), edit
- * sections, add objectives / eligibility / schedule visits / study team, snapshot
- * versions, read completeness, and finalize behind the deterministic completeness
- * gate. Every mutation runs BEGIN → Tx → recordGovernedAction → COMMIT, org-scoped.
- * Mounted at /api/protocol-development.
+ * the cover page (title / number / phase / sponsor / PI), edit sections (with
+ * an optional updated_at concurrency token), add objectives / eligibility /
+ * schedule visits (rename, remove) / study team, remove a schedule-of-
+ * assessments row, snapshot versions, read completeness, and finalize behind
+ * the deterministic completeness gate. Every mutation runs BEGIN → Tx →
+ * recordGovernedAction → COMMIT, org-scoped. Routes added 2026-09-21 run on
+ * the request-scoped connection (governedScoped). Mounted at
+ * /api/protocol-development.
  *
  * @module server/routes/protocol-development
  */
@@ -13,14 +17,19 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
+import { requestPgClient } from '../db/requestDb';
 import { recordGovernedAction } from './c2c/actions';
 import {
   createProtocolDocumentTx,
   updateSynopsisTx,
+  updateDocumentHeaderTx,
   updateSectionTx,
   addObjectiveTx,
   addEligibilityCriterionTx,
   addVisitTx,
+  updateVisitTx,
+  removeVisitTx,
+  removeSoaAssessmentTx,
   addTeamMemberTx,
   getCompleteness,
   snapshotVersionTx,
@@ -48,7 +57,7 @@ function resolveOrgId(req: Request): number | null {
   const n = raw == null ? NaN : typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
 }
-const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400 };
+const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400, SECTION_CHANGED: 409 };
 function fail(res: Response, err: unknown): void {
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) {
@@ -89,6 +98,50 @@ async function governed(
   }
 }
 
+/**
+ * Same ceremony as `governed`, on the REQUEST-SCOPED connection (`req.dbClient`,
+ * installed at the auth boundary with the tenant session variables applied)
+ * instead of a fresh shared-pool checkout. This is the path the requestDb
+ * adoption ratchet (scripts/ci/audit-requestdb-coverage.mjs) expects new
+ * tenant-facing writes to take; the routes added on 2026-09-21 (header,
+ * visit rename/remove, assessment remove) use it. Fails closed: a request
+ * with no tenant-scoped client is refused, never served from the pool.
+ * The connection's lifecycle is the middleware's (released on response end),
+ * so nothing here calls release().
+ */
+async function governedScoped(
+  req: Request,
+  res: Response,
+  command: string,
+  reasonText: string,
+  run: (client: any, orgId: number, userId: number) => Promise<{ target: string; payload?: Record<string, unknown>; body: Record<string, unknown> }>,
+): Promise<void> {
+  const userId = resolveUserId(req);
+  const orgId = resolveOrgId(req);
+  if (!userId || !orgId) {
+    res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+    return;
+  }
+  let client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+  try {
+    client = requestPgClient(req);
+  } catch {
+    res.status(500).json({ error: { code: 'REQUEST_DB_CONTEXT_REQUIRED', message: 'No tenant-scoped database context on this request; nothing was written.' } });
+    return;
+  }
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, orgId);
+    const { target, payload, body } = await run(client, orgId, userId);
+    const gov = await recordGovernedAction(client, { orgId, userId, command, target, reason: reasonText, payload, domain: 'protocol_development' });
+    await client.query('COMMIT');
+    res.status(201).json({ ...body, ...gov });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    fail(res, err);
+  }
+}
+
 // ─── Documents ───────────────────────────────────────────────────────────────
 
 const docSchema = z.object({
@@ -100,6 +153,8 @@ const docSchema = z.object({
   therapeuticArea: z.string().max(120).optional(),
   linkedProtocolId: z.number().int().positive().optional(),
   synopsis: z.string().max(8000).optional(),
+  sponsor: z.string().max(300).optional(),
+  principalInvestigator: z.string().max(300).optional(),
   reason,
 });
 router.post('/documents', async (req, res) => {
@@ -150,9 +205,35 @@ router.patch('/documents/:id/synopsis', async (req, res) => {
   });
 });
 
+/* Cover page: title / protocol number / phase / sponsor / PI. Every field is
+   optional and only the keys present are written (an empty string clears).
+   Request-scoped connection (see governedScoped). */
+const headerSchema = z.object({
+  title: z.string().max(500).optional(),
+  protocolNumber: z.string().max(120).optional(),
+  phase: z.string().max(40).optional(),
+  sponsor: z.string().max(300).optional(),
+  principalInvestigator: z.string().max(300).optional(),
+  reason,
+}).strict();
+router.patch('/documents/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = headerSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  const { reason: reasonText, ...fields } = parsed.data;
+  if (Object.keys(fields).length === 0) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Nothing to change — send at least one cover-page field.' } });
+  await governedScoped(req, res, 'update', reasonText, async (client, orgId) => {
+    await updateDocumentHeaderTx(client, orgId, id, fields);
+    return { target: `protocol-document:${id}`, payload: { fields: Object.keys(fields) }, body: { id, updated: Object.keys(fields) } };
+  });
+});
+
 // ─── Sections ────────────────────────────────────────────────────────────────
 
-const sectionSchema = z.object({ content: z.string().max(50000).optional(), status: z.enum(['not_started', 'draft', 'complete']).optional(), reason });
+/* `expectedUpdatedAt` is the section's updated_at the editor loaded; the
+   service refuses with SECTION_CHANGED (409) when the row has moved since. */
+const sectionSchema = z.object({ content: z.string().max(50000).optional(), status: z.enum(['not_started', 'draft', 'complete']).optional(), expectedUpdatedAt: z.string().max(64).optional(), reason });
 router.patch('/sections/:id', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
@@ -161,7 +242,8 @@ router.patch('/sections/:id', async (req, res) => {
   await governed(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
     await updateSectionTx(client, orgId, id, parsed.data, userId);
     recordProtocolSectionUpdated();
-    return { target: `protocol-section:${id}`, payload: { status: parsed.data.status }, body: { id } };
+    const after = await client.query(`SELECT updated_at, status FROM protocol_sections WHERE id = $1 AND organization_id = $2`, [id, orgId]);
+    return { target: `protocol-section:${id}`, payload: { status: parsed.data.status }, body: { id, updatedAt: after.rows[0]?.updated_at ?? null, status: after.rows[0]?.status ?? null } };
   });
 });
 
@@ -203,6 +285,52 @@ router.post('/documents/:id/visits', async (req, res) => {
     const { id: vid } = await addVisitTx(client, orgId, userId, id, parsed.data);
     recordProtocolVisitAdded();
     return { target: `protocol-document:${id}`, payload: { visitId: vid }, body: { documentId: id, visitId: vid } };
+  });
+});
+
+/* Rename a visit / set its timepoint. Request-scoped connection. */
+const visitPatchSchema = z.object({ visitName: z.string().min(1).max(200).optional(), timepoint: z.string().max(120).optional(), reason });
+router.patch('/documents/:id/visits/:visitId', async (req, res) => {
+  const id = Number(req.params.id);
+  const visitId = Number(req.params.visitId);
+  if (!Number.isInteger(id) || !Number.isInteger(visitId)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = visitPatchSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (parsed.data.visitName === undefined && parsed.data.timepoint === undefined) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Nothing to change — send visitName and/or timepoint.' } });
+  await governedScoped(req, res, 'update', parsed.data.reason, async (client, orgId) => {
+    await updateVisitTx(client, orgId, id, visitId, parsed.data);
+    return { target: `protocol-visit:${visitId}`, payload: { documentId: id }, body: { documentId: id, visitId } };
+  });
+});
+
+/* Remove a visit (soft delete). A POST with a reason rather than a bodiless
+   DELETE, because the governed ledger needs the reason and the shared HTTP
+   client does not send a body on DELETE. */
+router.post('/documents/:id/visits/:visitId/remove', async (req, res) => {
+  const id = Number(req.params.id);
+  const visitId = Number(req.params.visitId);
+  if (!Number.isInteger(id) || !Number.isInteger(visitId)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = z.object({ reason }).safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governedScoped(req, res, 'update', parsed.data.reason, async (client, orgId) => {
+    await removeVisitTx(client, orgId, id, visitId);
+    return { target: `protocol-visit:${visitId}`, payload: { documentId: id, removed: true }, body: { documentId: id, visitId, removed: true } };
+  });
+});
+
+/* Remove a schedule-of-assessments row (protocol_soa_assessments, soft
+   delete). Lives here rather than on /api/protocol-soa because that router
+   has no remove and this one is where the tenant-scoped writes are being
+   added; the create stays on /api/protocol-soa (one creator per register). */
+router.post('/documents/:id/assessments/:assessmentId/remove', async (req, res) => {
+  const id = Number(req.params.id);
+  const assessmentId = Number(req.params.assessmentId);
+  if (!Number.isInteger(id) || !Number.isInteger(assessmentId)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = z.object({ reason }).safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governedScoped(req, res, 'update', parsed.data.reason, async (client, orgId) => {
+    await removeSoaAssessmentTx(client, orgId, id, assessmentId);
+    return { target: `protocol-soa-assessment:${assessmentId}`, payload: { documentId: id, removed: true }, body: { documentId: id, assessmentId, removed: true } };
   });
 });
 

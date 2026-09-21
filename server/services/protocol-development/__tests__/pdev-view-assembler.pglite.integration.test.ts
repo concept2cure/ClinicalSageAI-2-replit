@@ -26,12 +26,12 @@ const OTHER = 9;
 
 // Minimal DDL — only the columns the assembler reads (mirrors the migrations/protocol_* set).
 const DDL = `
-CREATE TABLE protocol_documents (id serial PRIMARY KEY, organization_id int, protocol_kind text, protocol_number text, title text, design_type text, phase text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
-CREATE TABLE protocol_sections (id serial PRIMARY KEY, organization_id int, protocol_document_id int, section_key text, title text, content text, required boolean, status text, order_index int, deleted_at timestamptz);
+CREATE TABLE protocol_documents (id serial PRIMARY KEY, organization_id int, protocol_kind text, protocol_number text, title text, design_type text, phase text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz, sponsor text, principal_investigator text);
+CREATE TABLE protocol_sections (id serial PRIMARY KEY, organization_id int, protocol_document_id int, section_key text, title text, content text, required boolean, status text, order_index int, deleted_at timestamptz, updated_at timestamptz DEFAULT now());
 CREATE TABLE protocol_objectives (id serial PRIMARY KEY, organization_id int, protocol_document_id int, objective_type text, objective text, endpoint text, timepoint text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_eligibility_criteria (id serial PRIMARY KEY, organization_id int, protocol_document_id int, kind text, criterion text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_schedule_visits (id serial PRIMARY KEY, organization_id int, protocol_document_id int, visit_name text, timepoint text, order_index int, deleted_at timestamptz);
-CREATE TABLE protocol_risks (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, likelihood text, impact text, mitigation text, residual_likelihood text, residual_impact text, status text, deleted_at timestamptz);
+CREATE TABLE protocol_risks (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, likelihood text, impact text, mitigation text, residual_likelihood text, residual_impact text, status text, deleted_at timestamptz, owner text);
 CREATE TABLE protocol_milestones (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, milestone_type text, target_date date, actual_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, amendment_number text, title text, affects_consent boolean, submitted_date date, decided_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendment_changes (id serial PRIMARY KEY, amendment_id int, section_ref text, change_description text, previous_text text, proposed_text text);
@@ -39,10 +39,13 @@ CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, pr
 CREATE TABLE protocol_capa_actions (id serial PRIMARY KEY, deviation_id int, action text, status text);
 CREATE TABLE protocol_budget_items (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, unit_cost numeric, quantity_per_subject numeric, deleted_at timestamptz);
 CREATE TABLE protocol_budget_params (id serial PRIMARY KEY, organization_id int, protocol_document_id int, target_enrollment int, sponsor_payment_per_subject numeric, indirect_rate_pct numeric);
-CREATE TABLE protocol_review_assignments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, reviewer_name text, role text, status text, deleted_at timestamptz);
+CREATE TABLE protocol_review_assignments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, reviewer_name text, role text, status text, deleted_at timestamptz, disposition text, due_date date);
 CREATE TABLE protocol_review_comments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, section_ref text, comment text, severity text CHECK (severity IN ('blocking','major','minor','info')), resolved boolean, deleted_at timestamptz);
 CREATE TABLE protocol_soa_assessments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, category text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_soa_cells (id serial PRIMARY KEY, organization_id int, protocol_document_id int, assessment_id int, visit_id int, required boolean);
+CREATE TABLE protocol_team_members (id serial PRIMARY KEY, organization_id int, protocol_document_id int, member_name text, role text, responsibilities text, deleted_at timestamptz);
+CREATE TABLE consent_forms (id serial PRIMARY KEY, organization_id int, protocol_document_id int, title text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
+CREATE TABLE consent_form_elements (id serial PRIMARY KEY, organization_id int, consent_form_id int, element_key text, title text, required boolean, present boolean, order_index int);
 `;
 
 beforeAll(async () => {

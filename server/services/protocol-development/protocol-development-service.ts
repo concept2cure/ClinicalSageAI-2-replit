@@ -30,7 +30,7 @@ interface Queryable {
 }
 
 export class ProtocolDevError extends Error {
-  constructor(public code: 'NOT_FOUND' | 'INVALID_STATE' | 'BAD_INPUT', message: string) {
+  constructor(public code: 'NOT_FOUND' | 'INVALID_STATE' | 'BAD_INPUT' | 'SECTION_CHANGED', message: string) {
     super(message);
     this.name = 'ProtocolDevError';
   }
@@ -49,15 +49,20 @@ export interface ProtocolDocInput {
   therapeuticArea?: string | null;
   linkedProtocolId?: number | null;
   synopsis?: string | null;
+  /** Cover-page sponsor (ICH M11 §1). Column added 2026-09-21. */
+  sponsor?: string | null;
+  /** Cover-page principal investigator. The roster (protocol_team_members) is
+   *  the governed team; this is the document's own title-page value. */
+  principalInvestigator?: string | null;
 }
 
 /** Create a protocol document and seed it with the kind's templated sections. */
 export async function createProtocolDocumentTx(client: Queryable, orgId: number, userId: number, input: ProtocolDocInput): Promise<{ id: number; sectionsSeeded: number }> {
   if (!KINDS.includes(input.protocolKind)) throw new ProtocolDevError('BAD_INPUT', `Invalid protocol_kind "${input.protocolKind}".`);
   const { rows } = await client.query(
-    `INSERT INTO protocol_documents (organization_id, protocol_kind, linked_protocol_id, protocol_number, title, design_type, phase, therapeutic_area, version, status, synopsis, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'0.1','draft',$9,$10) RETURNING id`,
-    [orgId, input.protocolKind, input.linkedProtocolId ?? null, input.protocolNumber ?? null, input.title, input.designType ?? null, input.phase ?? null, input.therapeuticArea ?? null, input.synopsis ?? null, userId],
+    `INSERT INTO protocol_documents (organization_id, protocol_kind, linked_protocol_id, protocol_number, title, design_type, phase, therapeutic_area, version, status, synopsis, created_by, sponsor, principal_investigator)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'0.1','draft',$9,$10,$11,$12) RETURNING id`,
+    [orgId, input.protocolKind, input.linkedProtocolId ?? null, input.protocolNumber ?? null, input.title, input.designType ?? null, input.phase ?? null, input.therapeuticArea ?? null, input.synopsis ?? null, userId, input.sponsor ?? null, input.principalInvestigator ?? null],
   );
   const id = Number(rows[0].id);
   const template = templateFor(input.protocolKind);
@@ -93,17 +98,62 @@ export async function updateSynopsisTx(client: Queryable, orgId: number, docId: 
   await enforceAuthorLineage(client, orgId, { documentTable: 'protocol_documents', documentId: String(docId) }, synopsis, String(actorUserId));
 }
 
+export interface ProtocolHeaderInput {
+  title?: string | null;
+  protocolNumber?: string | null;
+  phase?: string | null;
+  sponsor?: string | null;
+  principalInvestigator?: string | null;
+}
+
+/**
+ * Cover-page edit: title, protocol number, phase, sponsor, principal
+ * investigator. Every field is COALESCEd so an absent key leaves the column
+ * as it is; an empty string is a deliberate clearing and is stored as NULL.
+ * Refused on a finalized/superseded document like every other edit.
+ */
+export async function updateDocumentHeaderTx(client: Queryable, orgId: number, docId: number, input: ProtocolHeaderInput): Promise<void> {
+  const doc = await loadDoc(client, orgId, docId);
+  assertEditable(doc.status);
+  const nul = (v: string | null | undefined): string | null => (v == null ? null : v.trim() === '' ? null : v.trim());
+  const has = (k: keyof ProtocolHeaderInput) => Object.prototype.hasOwnProperty.call(input, k);
+  if (has('title') && !nul(input.title)) throw new ProtocolDevError('BAD_INPUT', 'A protocol title cannot be blank.');
+  await client.query(
+    `UPDATE protocol_documents SET
+        title = CASE WHEN $3::boolean THEN $4 ELSE title END,
+        protocol_number = CASE WHEN $5::boolean THEN $6 ELSE protocol_number END,
+        phase = CASE WHEN $7::boolean THEN $8 ELSE phase END,
+        sponsor = CASE WHEN $9::boolean THEN $10 ELSE sponsor END,
+        principal_investigator = CASE WHEN $11::boolean THEN $12 ELSE principal_investigator END,
+        updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [docId, orgId, has('title'), nul(input.title), has('protocolNumber'), nul(input.protocolNumber), has('phase'), nul(input.phase), has('sponsor'), nul(input.sponsor), has('principalInvestigator'), nul(input.principalInvestigator)],
+  );
+}
+
 // ─── Sections ────────────────────────────────────────────────────────────────
 
-export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; status?: string; sources?: RetrievedSource[] }, actorUserId: number): Promise<SourceAndAuthorLineageResult | null> {
+export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; status?: string; sources?: RetrievedSource[]; expectedUpdatedAt?: string | null }, actorUserId: number): Promise<SourceAndAuthorLineageResult | null> {
   if (input.status && !['not_started', 'draft', 'complete'].includes(input.status)) throw new ProtocolDevError('BAD_INPUT', `Invalid status "${input.status}".`);
   const sec = await client.query(
-    `SELECT s.id, d.status AS doc_status, d.id AS doc_id FROM protocol_sections s JOIN protocol_documents d ON d.id = s.protocol_document_id
+    `SELECT s.id, s.updated_at, d.status AS doc_status, d.id AS doc_id FROM protocol_sections s JOIN protocol_documents d ON d.id = s.protocol_document_id
       WHERE s.id = $1 AND s.organization_id = $2 AND s.deleted_at IS NULL LIMIT 1`,
     [sectionId, orgId],
   );
   if (sec.rows.length === 0) throw new ProtocolDevError('NOT_FOUND', 'Section not found for this organization.');
   assertEditable(sec.rows[0].doc_status);
+  // Concurrency token (same contract as PATCH /api/authoring/sections/:id):
+  // the caller sends the updated_at it loaded; a row that has moved since is
+  // refused with SECTION_CHANGED (409) instead of a blind last-write-wins that
+  // would record a reviewer's overwrite of a writer's save as an ordinary edit.
+  if (input.expectedUpdatedAt) {
+    const expected = new Date(input.expectedUpdatedAt).getTime();
+    const current = new Date(String(sec.rows[0].updated_at)).getTime();
+    if (!Number.isFinite(expected)) throw new ProtocolDevError('BAD_INPUT', 'expectedUpdatedAt is not a timestamp.');
+    if (Number.isFinite(current) && Math.abs(current - expected) > 1) {
+      throw new ProtocolDevError('SECTION_CHANGED', 'This section was changed by someone else since you opened it. Reload to see the current text; your draft was not saved.');
+    }
+  }
   await client.query(
     `UPDATE protocol_sections SET content = COALESCE($3, content), status = COALESCE($4, status), updated_at = now() WHERE id = $1 AND organization_id = $2`,
     [sectionId, orgId, input.content ?? null, input.status ?? null],
@@ -159,6 +209,44 @@ export async function addVisitTx(client: Queryable, orgId: number, userId: numbe
     [orgId, docId, input.visitName, input.timepoint ?? null, input.procedures ?? null, userId],
   );
   return { id: Number(rows[0].id) };
+}
+
+export async function updateVisitTx(client: Queryable, orgId: number, docId: number, visitId: number, input: { visitName?: string | null; timepoint?: string | null }): Promise<void> {
+  const doc = await loadDoc(client, orgId, docId);
+  assertEditable(doc.status);
+  const name = input.visitName == null ? null : input.visitName.trim();
+  if (name !== null && name === '') throw new ProtocolDevError('BAD_INPUT', 'A visit name cannot be blank.');
+  const r = await client.query(
+    `UPDATE protocol_schedule_visits SET visit_name = COALESCE($4, visit_name), timepoint = COALESCE($5, timepoint), updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND protocol_document_id = $3 AND deleted_at IS NULL RETURNING id`,
+    [visitId, orgId, docId, name, input.timepoint ?? null],
+  );
+  if (r.rows.length === 0) throw new ProtocolDevError('NOT_FOUND', 'Visit not found on this protocol for this organization.');
+}
+
+/** Soft-remove a visit. Its SoA cells stay as rows (the join is not a record
+ *  with its own history); the assembler and the matrix read only live visits. */
+export async function removeVisitTx(client: Queryable, orgId: number, docId: number, visitId: number): Promise<void> {
+  const doc = await loadDoc(client, orgId, docId);
+  assertEditable(doc.status);
+  const r = await client.query(
+    `UPDATE protocol_schedule_visits SET deleted_at = now(), updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND protocol_document_id = $3 AND deleted_at IS NULL RETURNING id`,
+    [visitId, orgId, docId],
+  );
+  if (r.rows.length === 0) throw new ProtocolDevError('NOT_FOUND', 'Visit not found on this protocol for this organization.');
+}
+
+/** Soft-remove a schedule-of-assessments row (protocol_soa_assessments). */
+export async function removeSoaAssessmentTx(client: Queryable, orgId: number, docId: number, assessmentId: number): Promise<void> {
+  const doc = await loadDoc(client, orgId, docId);
+  assertEditable(doc.status);
+  const r = await client.query(
+    `UPDATE protocol_soa_assessments SET deleted_at = now(), updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND protocol_document_id = $3 AND deleted_at IS NULL RETURNING id`,
+    [assessmentId, orgId, docId],
+  );
+  if (r.rows.length === 0) throw new ProtocolDevError('NOT_FOUND', 'Assessment not found on this protocol for this organization.');
 }
 
 export async function addTeamMemberTx(client: Queryable, orgId: number, userId: number, docId: number, input: { memberName: string; role?: string; personnelId?: number | null; userId?: number | null; responsibilities?: string | null }): Promise<{ id: number }> {

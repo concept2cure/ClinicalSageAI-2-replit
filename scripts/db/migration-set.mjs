@@ -2394,6 +2394,13 @@ export const C2C_MIGRATION_FILES = [
   // two last. Additive and IF NOT EXISTS throughout.
   'migrations/20260920_mcp_oauth.sql',
 
+  // ── Protocol documents: sponsor + principal investigator (WO, 2026-09-21) ─
+  // Two nullable TEXT columns on protocol_documents, ADD COLUMN IF NOT EXISTS,
+  // no DROP. The creator (migrations/20260621_protocol_development.sql) is on
+  // the install-fresh overlay only, so the ALTER is guarded on to_regclass and
+  // NOTICE-skips on a database the set alone provisioned. Above the final pair
+  // because ci:migration-set-order pins those two last.
+  'migrations/20260921_protocol_documents_sponsor_pi.sql',
 
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the
