@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-21T17:56:33.529Z",
+  "generatedAt": "2026-09-21T18:01:19.554Z",
   "git": {
-    "sha": "efe9139de0bef2b5fee8a9a8d193a1db0075bfd3",
+    "sha": "94e4d72d53368c648a439987d5720f1c06503ab7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -714,6 +714,15 @@
           "server/routes/rim.ts",
           "server/services/intelligence/rim.ts",
           "shared/schema/rim.ts"
+        ]
+      },
+      {
+        "basename": "run-eval",
+        "count": 3,
+        "paths": [
+          "server/eval/doc-quality/run-eval.ts",
+          "server/eval/rag/run-eval.ts",
+          "server/eval/register/run-eval.ts"
         ]
       },
       {
@@ -1765,14 +1774,6 @@
         ]
       },
       {
-        "basename": "run-eval",
-        "count": 2,
-        "paths": [
-          "server/eval/doc-quality/run-eval.ts",
-          "server/eval/rag/run-eval.ts"
-        ]
-      },
-      {
         "basename": "runtime",
         "count": 2,
         "paths": [
@@ -2101,7 +2102,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 119467
+        "bytes": 119840
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
@@ -2259,7 +2260,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2791
+        "lines": 2796
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2559,7 +2560,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 407,
+      "duplicateGroups": 408,
       "largeByBytes": 33,
       "largeByLines": 81
     },
