@@ -20,7 +20,15 @@ describe('readPiiEnforcement (non-production — unchanged contract)', () => {
   });
 
   it('is the same resolver pii-screen.ts uses (imported, not duplicated)', () => {
-    for (const e of [{}, { AI_PII_ENFORCEMENT: 'off' }, { NODE_ENV: 'production' }, { NODE_ENV: 'production', AI_PII_ENFORCEMENT: 'audit' }]) {
+    // Annotated because each literal infers its own shape with the other key as
+    // `?: undefined`, and that union does not satisfy env()'s Record<string, string>.
+    const cases: Record<string, string>[] = [
+      {},
+      { AI_PII_ENFORCEMENT: 'off' },
+      { NODE_ENV: 'production' },
+      { NODE_ENV: 'production', AI_PII_ENFORCEMENT: 'audit' },
+    ];
+    for (const e of cases) {
       expect(readPiiEnforcement(env(e))).toBe(resolvePiiEnforcement(env(e)).effective);
     }
   });
