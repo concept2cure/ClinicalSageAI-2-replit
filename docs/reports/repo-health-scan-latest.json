@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-21T16:22:17.468Z",
+  "generatedAt": "2026-09-21T17:56:33.529Z",
   "git": {
-    "sha": "ad69500f01f56af1b2b3a0c3b3c69feaaa384ba6",
+    "sha": "efe9139de0bef2b5fee8a9a8d193a1db0075bfd3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1985,7 +1985,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1036698
+        "bytes": 1037248
       },
       {
         "file": "shared/schema.ts",
@@ -2125,7 +2125,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 113608
+        "bytes": 114145
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2163,7 +2163,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20093
+        "lines": 20098
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2291,7 +2291,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2360
+        "lines": 2369
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2386,6 +2386,10 @@
         "lines": 2000
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1955
+      },
+      {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1927
       },
@@ -2396,10 +2400,6 @@
       {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1917
-      },
-      {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1913
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
