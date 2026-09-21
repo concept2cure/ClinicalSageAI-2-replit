@@ -95,6 +95,10 @@ describe('corpus ↔ gate cross-reference invariant', () => {
       { leaves: [leaf()], opts: { sequenceNumber: 'nope' } }, // SEQUENCE_NUMBER_FORMAT
       { leaves: [leaf({ lifecycleOp: 'frobnicate' })] }, // INVALID_LIFECYCLE_OP
       { leaves: [leaf({ documentTable: null, documentId: null })] }, // UNRESOLVED_DOCUMENT
+      // DOCUMENT_CONTENT_MISMATCH — the DB-bound resolver's verdict rides in on
+      // `document`; a pin that no longer matches the stored content is its own
+      // error, never a silent pass.
+      { leaves: [leaf({ document: { status: 'content_changed', keyKind: 'integer', documentTable: 'coauthor_documents', documentId: 1, documentUuid: null, pinnedSha256: 'a'.repeat(64), storedSha256: 'b'.repeat(64), pin: 'mismatch', reason: null } })] },
       { leaves: [leaf({ documentTable: 'coauthor_doccuments' })] }, // UNPLACEABLE_DOCUMENT_TABLE
       // EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE has NO scenario, because as of
       // 2026-09-17 it cannot be emitted: `vault_documents` was the only member
@@ -128,6 +132,8 @@ describe('corpus ↔ gate cross-reference invariant', () => {
     // producible input while EXTERNAL_DOCUMENT_TABLES is empty (see the battery
     // above). Lowered with that reason rather than left to fail, and it is a
     // floor — a rule that stops firing for any OTHER reason still trips it.
-    expect(emitted.size).toBeGreaterThanOrEqual(8);
+    // 9 since 2026-09-21: DOCUMENT_CONTENT_MISMATCH (a resolved document whose
+    // pinned content hash no longer matches) joined the battery.
+    expect(emitted.size).toBeGreaterThanOrEqual(9);
   });
 });

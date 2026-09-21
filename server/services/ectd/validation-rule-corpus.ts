@@ -223,6 +223,18 @@ export const RULE_CORPUS: ValidationRule[] = [
     findingCode: 'UNRESOLVED_DOCUMENT',
   },
   {
+    id: 'DOCUMENT_CONTENT_MISMATCH',
+    title: 'Every leaf\u2019s source document still carries the content it was filed with',
+    category: 'integrity',
+    regions: ['ich'],
+    severity: 'high',
+    rationale:
+      'When a leaf is placed, the SHA-256 of its source document\u2019s content is pinned on the leaf (submission_leaves.document_content_sha256). A source edited, re-uploaded or emptied after placement no longer matches that pin, so the package would carry content the placement record never attested to. The mismatch is reported under its own code rather than passed silently or folded into "unresolved": the document exists, it is simply not what was filed.',
+    source: ICH_SPEC,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'DOCUMENT_CONTENT_MISMATCH',
+  },
+  {
     id: 'UNPLACEABLE_DOCUMENT_TABLE',
     title: 'Every non-delete leaf points at a document table the assembler can materialize',
     category: 'integrity',

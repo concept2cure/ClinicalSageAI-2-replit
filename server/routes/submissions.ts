@@ -904,13 +904,24 @@ router.post('/sequences/:seqId/transition', limiter, requireRole(AUTHOR), async 
 });
 
 // ── Builder leaves ──────────────────────────────────────────────────────────
+// Each leaf carries `sourceDocument`: what the leaf's document pointer resolves
+// to in this organization, from the SAME resolver the dispatch-readiness
+// assessment (and so the freeze / dispatch gate) uses. The Builder used to
+// decide "linked" on the client from `documentId != null`, which is null for
+// every vault leaf (uuid-keyed) — six leaves the platform had just filed read
+// "Source document: unlinked" (MDX demo pack, 2026-09-21, finding F5). The
+// resolution is computed here, once, so the column and the gate cannot
+// disagree.
 router.get('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   try {
-    res.json(await listLeaves(seqId, ctx));
+    const leaves = await listLeaves(seqId, ctx);
+    const { resolveLeafDocuments } = await import('../services/ectd/leaf-document-resolver');
+    const sourceDocuments = await resolveLeafDocuments(leaves, ctx.organizationId);
+    res.json(leaves.map((leaf, i) => ({ ...leaf, sourceDocument: sourceDocuments[i] })));
   } catch (err) {
     fail(res, err);
   }

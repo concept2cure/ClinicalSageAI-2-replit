@@ -25,6 +25,7 @@ import {
   requiredModule1CodesForRegion,
 } from '../region-profiles/region-profile-service';
 import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
+import { resolveLeafDocuments } from './leaf-document-resolver';
 import {
   evaluateDispatchGate,
   mergeDispatchGates,
@@ -306,14 +307,26 @@ export async function assessSequenceDispatchReadiness(
       )
     );
 
+  // 2b. Resolve every leaf's document pointer — by whichever key its table is
+  //     addressed by (integer document_id, or document_uuid for the vault) —
+  //     in this organization, and compare the content hash pinned at filing
+  //     with what the store holds now. ONE resolver, shared with the Builder's
+  //     read model; the freeze / dispatch / transmit gates compose this
+  //     assessment, so they cannot disagree with it. Until 2026-09-21 the
+  //     validator was handed the integer column alone and every vault-backed
+  //     leaf read UNRESOLVED_DOCUMENT (MDX demo pack, finding F5).
+  const documents = await resolveLeafDocuments(leaves, organizationId);
+
   // 3. Deterministic structural validation over the canonical core.
   const readiness = computeDispatchReadiness(
-    leaves.map(l => ({
+    leaves.map((l, i) => ({
       sectionCode: l.sectionCode,
       title: l.title,
       lifecycleOp: l.lifecycleOp,
       documentTable: l.documentTable,
       documentId: l.documentId,
+      documentUuid: l.documentUuid,
+      document: documents[i],
     })),
     {
       requiredSections: requiredModule1Codes(sequence.region, submissionApplicationType),

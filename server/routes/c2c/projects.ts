@@ -363,6 +363,79 @@ function allowProgramMutation(
  *  and none bucket into MDX / Biotech / Pharma (the surface's filter tabs). */
 const WS_CASE = workstreamSqlCase('p.program_type');
 
+// ── The program DETAIL — one projection, one serializer ──────────────────────
+//
+// GET /api/c2c/projects/:id and the create's 201 both answer through these, so
+// the read returns what the write stored by construction. Until 2026-09-21 the
+// read projected none of the device taxonomy intake had just written —
+// device_class, regulatory_path, product_code, predicate_devices, product_type,
+// and the metadata-held reviewPanel / regulationNumber / deviceFlags — so a
+// 510(k) IVD program's home showed no class, product code or predicate, and the
+// shell could not tell a device program from a drug one (MDX demo pack, F9).
+//
+// Columns verified against migrations/20260524_program_workbench_schema.sql
+// (the previous projection referenced sponsor_name / lead_indication /
+// filing_date / pdufa_date / completion_percentage, none of which exist on
+// regulatory_programs — the read 500'd with 42703 on a real schema).
+// application_number: migrations/20260907_regulatory_programs_application_number.sql.
+// sponsor_name is the organisation's name — the sponsor of record in this
+// data model (the same join biopharma/programs.ts makes).
+const PROGRAM_DETAIL_SQL = `
+  SELECT
+    p.id, p.code, p.name, p.program_type, p.status, p.phase, p.priority,
+    p.description, p.product_name, p.indication, p.intended_use,
+    p.primary_agency, p.target_agencies,
+    p.target_submission_date, p.actual_submission_date, p.approval_date,
+    p.progress_percent, p.lead_user_id, p.team_members,
+    p.created_at, p.updated_at,
+    p.application_number,
+    p.product_type, p.device_class, p.regulatory_path, p.product_code,
+    p.predicate_devices, p.metadata,
+    o.name AS sponsor_name
+  FROM regulatory_programs p
+  LEFT JOIN organizations o ON o.id = p.organization_id
+  WHERE p.id = $1 AND p.organization_id = $2 AND p.deleted_at IS NULL
+  LIMIT 1`;
+
+/** A json/jsonb column as the driver hands it back — parsed, or still a string. */
+function jsonColumn(v: unknown): unknown {
+  if (typeof v !== 'string') return v;
+  try { return JSON.parse(v); } catch { return null; }
+}
+
+/** The detail read model: the stored row plus the device fields intake keeps in
+ *  `metadata`, lifted to first-class keys. Nothing is invented: a program
+ *  without a device taxonomy answers null for each field, and `metadata` itself
+ *  is not exposed (it holds internal provenance such as createdVia). */
+export function serializeProgramDetail(row: Record<string, unknown>): Record<string, unknown> {
+  const { metadata: rawMetadata, predicate_devices: rawPredicates, ...rest } = row;
+  const metadata = jsonColumn(rawMetadata);
+  const meta = metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+    ? (metadata as Record<string, unknown>)
+    : {};
+  const predicates = jsonColumn(rawPredicates);
+  const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v : null);
+  return {
+    ...rest,
+    product_type: str(rest.product_type),
+    device_class: str(rest.device_class),
+    regulatory_path: str(rest.regulatory_path),
+    product_code: str(rest.product_code),
+    predicate_devices: Array.isArray(predicates) ? predicates : [],
+    review_panel: str(meta.reviewPanel),
+    regulation_number: str(meta.regulationNumber),
+    device_flags: Array.isArray(meta.deviceFlags)
+      ? meta.deviceFlags.filter((f): f is string => typeof f === 'string')
+      : null,
+  };
+}
+
+/** The detail row for one program in one organization, or null. */
+async function readProgramDetail(id: string, orgId: number): Promise<Record<string, unknown> | null> {
+  const { rows } = await pool.query(PROGRAM_DETAIL_SQL, [id, orgId]);
+  return rows.length ? serializeProgramDetail(rows[0] as Record<string, unknown>) : null;
+}
+
 // ── GET /api/c2c/projects ─────────────────────────────────────────────────────
 //
 // Portfolio list shaped to the v2 Projects surface's display contract
@@ -811,8 +884,14 @@ router.post('/', async (req: Request, res: Response) => {
         WHERE p.id = $1 AND p.organization_id = $2`,
       [newId, orgId],
     );
+    // The stored program through the SAME projection and serializer the read
+    // uses — so a client that just created a 510(k) sees its class, product
+    // code and predicate without a second round trip, and the create can never
+    // return a field the read then omits.
+    const program = await readProgramDetail(newId, orgId);
     return res.status(201).json({
       data: rows[0],
+      program,
       meta: {
         created: true,
         documentId: scaffold.documentId,
@@ -855,32 +934,11 @@ router.get('/:id', async (req: Request, res: Response) => {
   if (!UUID_RE.test(id)) return send404(res);
 
   try {
-    // Columns verified against migrations/20260524_program_workbench_schema.sql
-    // (the previous projection referenced sponsor_name / lead_indication /
-    // filing_date / pdufa_date / completion_percentage, none of which exist on
-    // regulatory_programs — the read 500'd with 42703 on a real schema).
-    // application_number: migrations/20260907_regulatory_programs_application_number.sql.
-    // sponsor_name is the organisation's name — the sponsor of record in this
-    // data model (the same join biopharma/programs.ts makes).
-    const { rows } = await pool.query(
-      `SELECT
-         p.id, p.code, p.name, p.program_type, p.status, p.phase, p.priority,
-         p.description, p.product_name, p.indication, p.intended_use,
-         p.primary_agency, p.target_agencies,
-         p.target_submission_date, p.actual_submission_date, p.approval_date,
-         p.progress_percent, p.lead_user_id, p.team_members,
-         p.created_at, p.updated_at,
-         p.application_number,
-         o.name AS sponsor_name
-       FROM regulatory_programs p
-       LEFT JOIN organizations o ON o.id = p.organization_id
-       WHERE p.id = $1 AND p.organization_id = $2 AND p.deleted_at IS NULL
-       LIMIT 1`,
-      [id, orgId],
-    );
-
-    if (rows.length === 0) return send404(res);
-    return res.json(rows[0]);
+    // One projection and one serializer, shared with the create's 201 — see
+    // PROGRAM_DETAIL_SQL / serializeProgramDetail above.
+    const program = await readProgramDetail(id, orgId);
+    if (!program) return send404(res);
+    return res.json(program);
   } catch (err: unknown) {
     return serverError(res, logger, 'loading the project', err, { programId: String(req.params.id) });
   }

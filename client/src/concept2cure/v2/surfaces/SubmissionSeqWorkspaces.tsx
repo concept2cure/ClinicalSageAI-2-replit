@@ -224,7 +224,70 @@ interface LeafRow {
   lifecycleOp: string; // new|replace|append|delete
   documentTable: string | null;
   documentId: number | null;
+  /** The uuid half of the polymorphic reference — set for uuid-keyed stores
+   *  (vault_documents), where documentId is null. */
+  documentUuid?: string | null;
   documentType: string | null;
+  /** What the leaf's pointer resolves to, computed by the server from the SAME
+   *  resolver the dispatch gate uses (server/services/ectd/leaf-document-resolver).
+   *  Absent on a server that predates it; the column then falls back to the
+   *  pointer alone. */
+  sourceDocument?: LeafSourceResolution | null;
+}
+
+interface LeafSourceResolution {
+  status: 'resolved' | 'no_pointer' | 'unplaceable_table' | 'missing' | 'content_changed';
+  keyKind: 'integer' | 'uuid' | null;
+  pinnedSha256: string | null;
+  storedSha256: string | null;
+  pin: 'match' | 'mismatch' | 'unpinned' | 'unverifiable';
+  reason: string | null;
+}
+
+/* The Builder's "Source document" cell. "unlinked" is reserved for a leaf that
+   carries NO pointer. A leaf that carries one is named by its store and key —
+   a vault leaf by its uuid (documentId is null there; the column used to test
+   documentId alone, and six vault leaves the platform had just filed read
+   "unlinked": MDX demo pack, 2026-09-21, finding F5) — and, when the server
+   has resolved it, by the verdict: the pin verified, no pin taken, the content
+   changed since filing, or the document not found. Server words, never a
+   client guess. */
+const SOURCE_VERDICT: Record<LeafSourceResolution['status'], { chip: string; tone: string } | null> = {
+  resolved: null, // the pin verdict says it
+  no_pointer: null,
+  unplaceable_table: { chip: 'store not placeable', tone: 'tone-err' },
+  missing: { chip: 'not found in this organization', tone: 'tone-err' },
+  content_changed: { chip: 'content changed since filing', tone: 'tone-warn' },
+};
+function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
+  const key = leaf.documentUuid ?? (leaf.documentId != null ? String(leaf.documentId) : null);
+  if (!leaf.documentTable || key == null) return <>unlinked</>;
+  const isUuid = leaf.documentUuid != null;
+  /* The source row, named rather than related. The key stays — it is how an
+     auditor ties this leaf to its source — but it is qualified by a store name
+     a reader can act on instead of by a relation name (documentSourceLabel).
+     A uuid is shown short with the full value on hover. */
+  const label = documentSourceLabel(leaf.documentTable, isUuid ? `${key.slice(0, 8)}…` : key);
+  const r = leaf.sourceDocument ?? null;
+  const verdict = r
+    ? SOURCE_VERDICT[r.status] ??
+      (r.pin === 'match'
+        ? { chip: 'source verified', tone: 'tone-ok' }
+        : r.pin === 'unpinned'
+          ? { chip: 'no content pin', tone: 'tone-idle' }
+          : null)
+    : null;
+  return (
+    <>
+      <span className="sc-mono" title={isUuid ? key : undefined}>{label}</span>
+      {verdict && (
+        <>
+          {' '}
+          <span className={`rd-chip ${verdict.tone}`} title={r?.reason ?? undefined}>{verdict.chip}</span>
+        </>
+      )}
+    </>
+  );
 }
 
 // GET /api/coauthor/documents → { documents } (coauthor_documents rows).
@@ -424,15 +487,7 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
                   </td>
                   <td>{l.granularity ?? '—'}</td>
                   <td>
-                    {l.documentTable && l.documentId != null ? (
-                      /* The source row, named rather than related. The id stays —
-                         it is how an auditor ties this leaf to its source — but
-                         it is qualified by a store name a reader can act on
-                         instead of by a relation name (documentSourceLabel). */
-                      <span className="sc-mono">{documentSourceLabel(l.documentTable, l.documentId)}</span>
-                    ) : (
-                      'unlinked'
-                    )}
+                    <LeafSourceCell leaf={l} />
                   </td>
                 </tr>
               ))}

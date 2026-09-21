@@ -895,6 +895,14 @@ export interface SubmissionLeaf {
   // list went stale, so it is deliberately not restated.
   documentTable?: string | null;
   documentId?: number | null; // polymorphic id within documentTable
+  // The uuid key for a uuid-keyed store (vault_documents), written by
+  // upsertLeaf and carried by the drizzle table since
+  // migrations/20260917b_submission_leaf_document_uuid.sql. It was absent
+  // here for the same reason documentContentSha256 was, with the same
+  // consequence: every caller of listLeaves saw a leaf with no uuid, so the
+  // dispatch-readiness resolver could not reach a vault document and called
+  // every vault-filed leaf unresolvable.
+  documentUuid?: string | null;
   documentType?: string | null; // classifier hint for pathway leaf→slot matching
   leafGuid?: string | null;
   parentLeafId?: number | null;
