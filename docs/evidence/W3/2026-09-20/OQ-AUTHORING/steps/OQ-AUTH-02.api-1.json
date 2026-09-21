@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/authoring/docs",
+    "url": "http://localhost:5700/api/authoring/docs",
     "anonymous": false,
     "body": {
       "module": "M2"
@@ -10,7 +10,7 @@
   "response": {
     "status": 400,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 11,
+    "durationMs": 15,
     "rateLimitRetries": 0,
     "body": {
       "success": false,

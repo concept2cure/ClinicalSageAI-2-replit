@@ -1,43 +1,29 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/mdx/qms/documents/13/approve",
+    "url": "http://localhost:5700/api/mdx/qms/documents/18/approve",
     "anonymous": false,
     "body": {
       "effectiveDate": "2026-09-21"
     }
   },
   "response": {
-    "status": 200,
+    "status": 400,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 27,
+    "durationMs": 11,
     "rateLimitRetries": 0,
     "body": {
-      "data": {
-        "id": 13,
-        "organization_id": 2,
-        "doc_number": "SOP-OQ-20260921003124",
-        "title": "OQ-006 Document control SOP 20260921003124",
-        "doc_type": "sop",
-        "category": "validation",
-        "version": "1.0",
-        "status": "effective",
-        "effective_date": "2026-09-21T00:00:00.000Z",
-        "next_review_date": "2026-10-01T00:00:00.000Z",
-        "author_id": 1,
-        "approver_id": 1,
-        "approved_at": "2026-09-21T00:31:39.198Z",
-        "superseded_by_id": null,
-        "artifact_id": null,
-        "metadata": {},
-        "created_at": "2026-09-21T00:31:25.620Z",
-        "updated_at": "2026-09-21T00:31:39.198Z",
-        "deleted_at": null
-      },
-      "meta": {
-        "auditTrail": {
-          "persisted": true,
-          "chained": true
+      "error": "Approval is an electronic signature and requires a password, the signature meaning 'APPROVED' and a reason for change; missing or invalid: password, meaning, reason",
+      "details": {
+        "code": "ESIGNATURE_COMPONENT_MISSING",
+        "fieldErrors": {
+          "password": "[REDACTED]",
+          "meaning": [
+            "Signature meaning must be 'APPROVED' (21 CFR Part 11 §11.50)"
+          ],
+          "reason": [
+            "Required"
+          ]
         }
       }
     }

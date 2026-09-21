@@ -1,0 +1,44 @@
+## eslint --no-ignore on changed script/test files
+  1866:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1867:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1868:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1869:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1870:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1871:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1872:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1873:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1874:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1875:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1876:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  1907:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/home/user/ClinicalSageAI-2-replit/scripts/db/provision-app-role.mjs
+  177:8  warning  Function 'resolveRuntimeRole' has a complexity of 18. Maximum allowed is 15  complexity
+
+/home/user/ClinicalSageAI-2-replit/scripts/db/provision.mjs
+  235:1  warning  Async function 'preflight' has too many lines (130). Maximum allowed is 100  max-lines-per-function
+  235:1  warning  Async function 'preflight' has a complexity of 23. Maximum allowed is 15     complexity
+  414:1  warning  Async function 'main' has too many lines (109). Maximum allowed is 100       max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/scripts/db/readiness-contract.mjs
+  139:8  warning  Async function 'verifyReadinessContract' has too many lines (107). Maximum allowed is 100  max-lines-per-function
+  139:8  warning  Async function 'verifyReadinessContract' has a complexity of 27. Maximum allowed is 15     complexity
+
+/home/user/ClinicalSageAI-2-replit/server/db/__tests__/readiness-contract.test.ts
+  57:40  warning  Arrow function has too many lines (181). Maximum allowed is 100  max-lines-per-function
+
+✖ 106 problems (0 errors, 106 warnings)
+
+eslint exit=0
+
+## npm run ci:migration-set-order
+[ci:migration-set-order] OK — 291 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+exit=0
+
+## npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 291 migrations, 33 DROP(s), none re-created by the set, 2 reviewed exception(s); 16 dynamic DROP(s) in 16 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit=0
+
+## npm run db:sync-manifest:check
+Manifest is in sync.
+exit=0

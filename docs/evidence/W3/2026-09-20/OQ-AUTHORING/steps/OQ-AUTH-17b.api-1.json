@@ -1,14 +1,14 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/review/board",
+    "url": "http://localhost:5700/api/review/board",
     "anonymous": false,
     "body": null
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 41,
+    "durationMs": 51,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
@@ -21,7 +21,7 @@
           "total": 0,
           "threadItemId": null,
           "threadDocumentId": null,
-          "generatedAt": "2026-09-21T00:23:00.970Z"
+          "generatedAt": "2026-09-21T01:05:26.831Z"
         }
       }
     }

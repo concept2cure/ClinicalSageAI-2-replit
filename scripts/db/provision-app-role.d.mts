@@ -23,8 +23,31 @@ export declare const SCHEMA_PRIVILEGE_OVERRIDES: Readonly<Record<string, string[
 /** Full DML — the default granted on every application schema without an override. */
 export declare const DEFAULT_TABLE_PRIVILEGES: readonly string[];
 
+/** Relations the runtime role must never own nor hold more than the override on. */
+export declare const APPEND_ONLY_TABLES: readonly { schema: string; name: string }[];
+
 /** Resolve and validate the runtime role name (APP_SERVICE_DB_ROLE, default app_service). */
 export declare function resolveAppServiceRole(env?: Record<string, string | undefined>): string;
+
+/** The login role named in a connection string, or null. */
+export declare function roleFromUrl(url: string | undefined | null): string | null;
+
+export interface RuntimeRoleIdentity {
+  role: string;
+  source: 'RUNTIME_DB_ROLE' | 'APP_SERVICE_DB_PASSWORD' | 'APP_DATABASE_URL' | 'DATABASE_URL';
+}
+
+/**
+ * Identify the runtime role from the environment (RUNTIME_DB_ROLE →
+ * APP_SERVICE_DB_PASSWORD → APP_DATABASE_URL → DATABASE_URL), or null when it
+ * equals `ownerRole` / nothing names one (single-role posture).
+ */
+export declare function resolveRuntimeRole(
+  env?: Record<string, string | undefined>,
+  opts?: { ownerRole?: string | null },
+): RuntimeRoleIdentity | null;
+
+type QueryFn = (sql: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount: number | null }>;
 
 export interface ProvisionAppServiceRoleOptions {
   env?: Record<string, string | undefined>;
@@ -43,6 +66,52 @@ export interface ProvisionAppServiceRoleResult {
  * Must run on an owner/admin connection (rights to CREATE ROLE and GRANT).
  */
 export declare function provisionAppServiceRole(
-  db: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount: number }> },
+  db: { query: QueryFn },
   options?: ProvisionAppServiceRoleOptions,
 ): Promise<ProvisionAppServiceRoleResult>;
+
+export interface RefreshRuntimeRoleGrantsResult {
+  skipped: false;
+  role: string;
+  schemas: string[];
+  attrs: { rolname: string; rolsuper: boolean; rolbypassrls: boolean; rolcanlogin: boolean };
+}
+
+/** Re-apply the grant recipe to an EXISTING runtime role; throws if it does not exist. */
+export declare function refreshRuntimeRoleGrants(
+  db: { query: QueryFn },
+  opts: { role: string; log?: (message: string) => void },
+): Promise<RefreshRuntimeRoleGrantsResult>;
+
+export interface EnsureRuntimeRoleResult {
+  skipped: boolean;
+  mode: 'minted' | 'refreshed' | 'single-role';
+  role: string | null;
+  owner: string;
+  source?: string;
+  schemas?: string[];
+}
+
+/** Installers' entry point: mint (password set), refresh (role identified), or single-role. */
+export declare function ensureRuntimeRole(
+  db: { query: QueryFn },
+  options?: ProvisionAppServiceRoleOptions,
+): Promise<EnsureRuntimeRoleResult>;
+
+export interface RuntimeRoleGrantAudit {
+  role: string;
+  exists: boolean;
+  attrs: { rolname: string; rolsuper: boolean; rolbypassrls: boolean; rolcanlogin: boolean } | null;
+  relations: number;
+  denied: { relation: string; missing: string[] }[];
+  excess: { relation: string; held: string[] }[];
+  ownedAppendOnly: string[];
+  ownedInOverrideSchemas: number;
+  schemasWithoutUsage: string[];
+}
+
+/** Audit `role` against the recipe on every application relation. */
+export declare function auditRuntimeRoleGrants(
+  db: { query: QueryFn },
+  role: string,
+): Promise<RuntimeRoleGrantAudit>;

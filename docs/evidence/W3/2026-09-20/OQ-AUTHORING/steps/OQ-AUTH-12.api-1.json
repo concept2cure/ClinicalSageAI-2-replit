@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/authoring/users/pin",
+    "url": "http://localhost:5700/api/authoring/users/pin",
     "anonymous": false,
     "body": {
       "pin": "[REDACTED]"
@@ -10,7 +10,7 @@
   "response": {
     "status": 400,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 14,
+    "durationMs": 9,
     "rateLimitRetries": 0,
     "body": {
       "error": "Current PIN is required to change it"

@@ -18,10 +18,14 @@ export declare const SECURITY_CRITICAL_TABLES: readonly string[];
 export declare const REQUIRED_NON_PUBLIC_TABLES: readonly { schema: string; name: string }[];
 export declare const BASE_SCHEMA_SENTINELS: readonly string[];
 
+import type { RuntimeRoleGrantAudit } from './provision-app-role.mjs';
+
 export interface ReadinessContractOptions {
   log?: (message: string) => void;
   authoringTables?: readonly string[];
   asRuntimeRole?: boolean;
+  /** Verify this role (from an owner connection) instead of the connection's own. */
+  runtimeRole?: string | null;
 }
 
 export interface ReadinessContractResult {
@@ -30,6 +34,10 @@ export interface ReadinessContractResult {
   role: string;
   roleIsSuperuser: boolean;
   roleBypassesRls: boolean;
+  /** The role whose reach was verified, or null when neither option asked for one. */
+  runtimeRole: string | null;
+  /** The grant audit for that role, or null. */
+  grantAudit: RuntimeRoleGrantAudit | null;
 }
 
 export declare function verifyReadinessContract(

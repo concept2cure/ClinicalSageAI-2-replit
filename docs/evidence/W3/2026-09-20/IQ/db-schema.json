@@ -23,6 +23,6 @@
     "revoked_tokens",
     "users"
   ],
-  "publicTableCount": 793,
-  "migrationJournalRows": null
+  "publicTableCount": 977,
+  "migrationJournalRows": 291
 }

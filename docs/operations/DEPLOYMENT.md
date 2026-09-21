@@ -17,12 +17,19 @@ node scripts/db/provision.mjs        # npm run db:provision
 ```
 
 Runs install-fresh then deploy-migrate as the OWNER, mints the non-superuser
-`app_service` role, and verifies the `/readyz` schema contract **as the app
-role**. Refuses — before the first write — when pgvector is not available on
+`app_service` role (or, without `APP_SERVICE_DB_PASSWORD`, grants an existing
+runtime role named by `APP_DATABASE_URL` / `RUNTIME_DB_ROLE` — it is never left
+ungranted, 2026-09-21 IQ-DEV-001), and verifies the `/readyz` schema contract
+**as the app role**, including the grant audit over every application relation
+(reachable, and append-only on the audit store). Refuses — before the first write — when pgvector is not available on
 the server (exit 4, names the apt package), when the owner cannot CREATE ROLE /
 CREATE EXTENSION (exit 5), or when the two URLs name different databases
 (exit 2). Full contract, exit codes, roles and proof:
-`docs/operations/DB_READINESS.md`. Every later deploy runs deploy-migrate only.
+`docs/operations/DB_READINESS.md`. Every later deploy runs deploy-migrate only
+— as the owner (`DATABASE_OWNER_URL`, else `DATABASE_URL`); it refreshes the
+runtime role's grants and refuses to report success while the role cannot reach
+a table or holds more than append-only on `audit.tamper_proof_log`.
+`node scripts/db/audit-runtime-grants.mjs` re-checks that at any time.
 
 Runs from a repository checkout (install-fresh needs `drizzle-kit`, a
 devDependency the image prunes). In AWS that is the one-off provisioning task;

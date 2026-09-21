@@ -1,0 +1,20 @@
+# IQ-07 inventory AFTER the fix — 2026-09-21T01:00:43Z
+# database clinicalsage on 127.0.0.1:5432, queried as postgres, after: DATABASE_OWNER_URL=postgres… DATABASE_URL=c2c… node scripts/db/deploy-migrate.mjs (deploy-migrate-clinicalsage.transcript.txt)
+# same query as denied-before.txt
+denied total: 0
+denied in public: 0
+public tables by owner: c2c=789, postgres=183
+audit.tamper_proof_log privileges for c2c: SELECT=true INSERT=true UPDATE=false DELETE=false
+tamper_proof_log owner: postgres
+default privileges set by postgres for c2c (schemas): 37
+# launch-relevant tables IQ-DEV-001 named, SELECT/INSERT for c2c:
+public.platform_settings: SELECT=true INSERT=true
+public.qms_change_controls: SELECT=true INSERT=true
+public.program_journeys: SELECT=true INSERT=true
+public.assumption_records: SELECT=true INSERT=true
+public.contradiction_links: SELECT=true INSERT=true
+public.decision_records: SELECT=true INSERT=true
+public.cre_evidence_sources: SELECT=true INSERT=true
+public.document_span_lineage: SELECT=true INSERT=true
+ai.gateway_audit_log: SELECT=true INSERT=true
+intelligence.document_templates: SELECT=true INSERT=true

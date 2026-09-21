@@ -1,10 +1,10 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/c2c/projects",
+    "url": "http://localhost:5700/api/c2c/projects",
     "anonymous": false,
     "body": {
-      "name": "OQ-005 Readiness program 20260921002943",
+      "name": "OQ-005 Readiness program 20260921010546",
       "programType": "ind",
       "primaryAgency": "FDA",
       "indication": "Validation exercise",
@@ -14,14 +14,14 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 58,
+    "durationMs": 56,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": "1d967acc-d6c5-4b0a-a978-7531b0838215",
-        "title": "OQ-005 Readiness program 20260921002943",
+        "id": "c89ba4c8-96c4-4379-b181-1c287787b4d6",
+        "title": "OQ-005 Readiness program 20260921010546",
         "ws": "Biotech",
-        "code": "ORP2-D1BP",
+        "code": "ORP2-NEV1",
         "stage": "Planning",
         "readiness": 0,
         "status": "active",
@@ -32,9 +32,9 @@
       },
       "meta": {
         "created": true,
-        "documentId": "doc_6af4acb547e247c2b597bc890addec60",
+        "documentId": "doc_26ea5768a7484394a029ecdf0a57786b",
         "scaffoldedSections": 92,
-        "submissionId": 36,
+        "submissionId": 41,
         "submissionCreated": true,
         "projectAnchorId": null,
         "projectAnchorSkipped": "NO_CLIENT_WORKSPACE",

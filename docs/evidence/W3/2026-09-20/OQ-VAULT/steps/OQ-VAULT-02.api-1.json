@@ -1,36 +1,20 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/vault/ingest",
+    "url": "http://localhost:5700/api/vault/ingest",
     "anonymous": false,
     "body": "[multipart/form-data]"
   },
   "response": {
-    "status": 500,
+    "status": 400,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 224,
+    "durationMs": 271,
     "rateLimitRetries": 0,
     "body": {
       "error": {
-        "code": "SERVER_ERROR",
-        "message": "File type .exe is not allowed",
-        "path": "/api/vault/ingest",
-        "timestamp": "2026-09-21T00:28:58.294Z",
-        "requestId": "d1498dfb-8c12-472c-9aa6-751d5a60faab",
-        "kernelDecision": "allow",
-        "kernelEnforcedDecision": "allow",
-        "kernelFlags": [],
-        "policyBundleId": "ana-1-0-ri-core",
-        "policyBundleVersion": "1.3.0"
+        "code": "FILE_TYPE_NOT_ALLOWED",
+        "message": "File type .exe is not allowed. Accepted: .pdf, .docx, .doc, .txt, .rtf, .xlsx, .xls, .csv, .md."
       }
     }
-  },
-  "serverLogExcerpt": {
-    "denied": [],
-    "noise": [],
-    "excerpt": [
-      "{\"level\":50,\"time\":\"2026-09-21T00:28:58.294Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"errorName\":\"Error\",\"errorMessage\":\"File type .exe is not allowed\",\"stack\":\"Error: File type .exe is not allowed\\n    at fileFilter (/home/user/ClinicalSageAI-2-replit/server/routes/vault-ingest.ts:53:10)\\n    at wrappedFileFilter (/home/user/ClinicalSageAI-2-replit/node_modules/multer/index.js:134:7)\\n    at Mult",
-      "{\"level\":50,\"time\":\"2026-09-21T00:28:58.295Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"requestId\":\"d1498dfb-8c12-472c-9aa6-751d5a60faab\",\"method\":\"POST\",\"path\":\"/api/vault/ingest\",\"statusCode\":500,\"durationMs\":217,\"kernelDecision\":\"allow\",\"kernelScore\":100,\"flags\":[]},\"msg\":\"[http] request_failed\"}"
-    ]
   }
 }

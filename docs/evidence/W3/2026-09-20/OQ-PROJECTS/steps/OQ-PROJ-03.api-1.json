@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/c2c/projects",
+    "url": "http://localhost:5700/api/c2c/projects",
     "anonymous": false,
     "body": {
       "programType": "ind"
@@ -10,7 +10,7 @@
   "response": {
     "status": 400,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 12,
+    "durationMs": 20,
     "rateLimitRetries": 0,
     "body": {
       "error": "name is required"

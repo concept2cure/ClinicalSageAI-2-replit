@@ -41,6 +41,46 @@ one list while the boot demands another.
   NOBYPASSRLS `app_service` role (`scripts/db/provision-app-role.mjs`) and
   verify the contract as it. The server must run with `APP_DATABASE_URL` set to
   this role; the provisioner prints that in its "Next" block.
+- **`APP_DATABASE_URL` without `APP_SERVICE_DB_PASSWORD`** (2026-09-21,
+  IQ-DEV-001): a runtime role that already exists is **not minted but is still
+  granted**. The provisioner identifies the runtime role — `RUNTIME_DB_ROLE` if
+  set, else the `APP_DATABASE_URL` login — refuses at preflight if it does not
+  exist, hands it to `install-fresh` and `deploy-migrate` as `RUNTIME_DB_ROLE`,
+  and both refresh its grants through the one recipe
+  (`provision-app-role.mjs` → `ensureRuntimeRole`). Step 4 then verifies the
+  contract **as that role**, including the grant audit below. Before this, the
+  grant refresh was gated on the password, so an unminted split-role estate
+  (owner `postgres`, runtime `c2c`) came out of a green provisioning with 183
+  public tables the runtime could not read (`docs/evidence/WD/2026-09-21/`).
+- **Single-role** (no `APP_DATABASE_URL`, or it names the owner): nothing is
+  granted, exactly as before — the owner needs no grants on its own tables.
+
+### The grant recipe and the grant audit
+
+One function defines what the runtime role may do
+(`scripts/db/provision-app-role.mjs`): on every application schema present,
+`USAGE`; `SELECT, INSERT, UPDATE, DELETE` on tables (**`audit`: `SELECT,
+INSERT` only — append-only; `extensions`: `SELECT`**); `USAGE, SELECT` on
+sequences; `EXECUTE` on functions; and the same as `ALTER DEFAULT PRIVILEGES`
+for objects the owner creates later, so the next migration cannot reintroduce
+the gap. It only ever GRANTs.
+
+The audit (`auditRuntimeRoleGrants`, run by deploy-migrate step 5 and by the
+provisioner's step 4 whenever a runtime role is identified) walks every table,
+view, materialized view and foreign table in every application schema and
+fails the deploy on:
+
+- any relation the role lacks the recipe privileges on, or a schema it lacks
+  `USAGE` on (the IQ-DEV-001 shape — `re-run deploy-migrate as the owner`);
+- any privilege **beyond** the append-only ceiling that the role holds on an
+  audit relation it does not own (a `PUBLIC` grant or a hand `GRANT UPDATE ON
+  audit.tamper_proof_log`) — the recipe never grants these and a widened audit
+  store is not a deployable state; the operator REVOKEs;
+- the role **owning** `audit.tamper_proof_log` (ownership confers everything).
+
+On demand: `node scripts/db/audit-runtime-grants.mjs [--role <name>] [--json
+<path>]` prints the same audit (exit 1 on any gap) and writes the inventory in
+the shape IQ-001 check IQ-07 records (`deniedCount`, `denied[]`).
 
 ### Re-runs and later deploys
 
@@ -52,6 +92,33 @@ one list while the boot demands another.
   (`.github/workflows/deploy-aws.yml` `migrate` job, from the production
   image). Every file in the set re-executes on every deploy — see
   `CLAUDE.md` Rule 1 before adding a DROP.
+- deploy-migrate connects with `DATABASE_OWNER_URL` when it is set (else
+  `DATABASE_URL`). With the owner URL set, `DATABASE_URL` is read as the
+  runtime's connection and its login is the runtime role to grant — the split
+  posture in one command:
+  `DATABASE_OWNER_URL=… DATABASE_URL=… node scripts/db/deploy-migrate.mjs`.
+
+## Proof (2026-09-21, IQ-DEV-001 — `docs/evidence/WD/2026-09-21/`)
+
+- `denied-before.txt` / `denied-after.txt` — the IQ-07 inventory query on
+  `clinicalsage` (runtime `c2c`, 183 public tables owned by `postgres`): **264
+  denied → 0** after one `deploy-migrate` run as the owner with the runtime
+  role identified from `DATABASE_URL` (`deploy-migrate-clinicalsage.transcript.txt`,
+  grant audit 1263/1263). `audit.tamper_proof_log` for `c2c`: SELECT, INSERT
+  only.
+- `fail-proof-throwaway.transcript.txt` — on a throwaway copy of
+  `clinicalsage_fresh`: a hand `REVOKE` is caught by the audit (exit 1, names
+  `public.organizations` and the `intelligence` schema), healed by
+  deploy-migrate with `RUNTIME_DB_ROLE=app_service` and no password; `GRANT
+  UPDATE ON audit.tamper_proof_log TO PUBLIC` makes deploy-migrate **refuse**
+  (exit 1) until revoked; a table created after the refresh is readable with no
+  further grant (default privileges), and an audit table created later is
+  SELECT/INSERT only; a non-existent `RUNTIME_DB_ROLE` fails the deploy instead
+  of being skipped.
+- `provision-throwaway.transcript.txt` — the full one-command path with
+  `APP_DATABASE_URL` on an existing, unminted `app_service` and no password:
+  preflight confirms the role, both children refresh grants, step 4 verifies as
+  `app_service` including the grant audit.
 
 ## Proof (2026-09-20, local PostgreSQL 16.13, pgvector 0.6.0)
 

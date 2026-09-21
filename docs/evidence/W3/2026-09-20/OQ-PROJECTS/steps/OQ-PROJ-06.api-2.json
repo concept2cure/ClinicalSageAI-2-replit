@@ -1,14 +1,14 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/c2c/actions/verify-chain",
+    "url": "http://localhost:5700/api/c2c/actions/verify-chain",
     "anonymous": false,
     "body": null
   },
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 10,
+    "durationMs": 13,
     "rateLimitRetries": 0,
     "body": {
       "ok": false,

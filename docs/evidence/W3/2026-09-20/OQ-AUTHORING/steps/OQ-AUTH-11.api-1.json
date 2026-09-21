@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/freeze",
+    "anonymous": false,
+    "body": {
+      "reason": "OQ-003 step 11 freeze",
+      "version": "1.0"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 39,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "DOCUMENT_NOT_SETTLED",
+        "message": "Not frozen — this document still has 1 unresolved comment. Freezing seals the content for signature and filing, so the questions would go unanswered and the proposed edits would reach a reviewer undecided. Resolve them, or freeze again confirming you intend to seal it as it stands."
+      },
+      "unresolved": {
+        "openComments": 1,
+        "pendingEdits": 0
+      }
+    }
+  }
+}

@@ -5,16 +5,16 @@
   "appLabel": "Vault",
   "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
   "executedBy": "automated runner tests/validation/oq/vault/run.mjs",
-  "executedAt": "2026-09-21T00:28:56.351Z",
-  "finishedAt": "2026-09-21T00:29:37.544Z",
+  "executedAt": "2026-09-21T01:04:33.310Z",
+  "finishedAt": "2026-09-21T01:05:19.286Z",
   "environment": {
-    "baseUrl": "http://localhost:5200",
+    "baseUrl": "http://localhost:5700",
     "node": "v22.22.2",
     "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
     "playwrightCore": "1.63.0",
     "git": {
       "branch": "concept2cure-v2",
-      "commit": "c07cca69dac11c1cccfb129868a03d613dd354be"
+      "commit": "debdd9664f5759eb9a4a5b024b73c333027baf18"
     },
     "testUser": "jonmichaelpsmith@gmail.com",
     "organizationId": "2",
@@ -40,9 +40,9 @@
     }
   },
   "counts": {
-    "pass": 7,
+    "pass": 9,
     "fail": 3,
-    "deviation": 2,
+    "deviation": 0,
     "not-executed": 0
   },
   "steps": [
@@ -54,21 +54,21 @@
       "action": "POST /api/c2c/projects (IND); GET /api/audit-trail/ledger?limit=200",
       "expected": "Program created (201); ledger readable",
       "status": "pass",
-      "observed": "program 57d2417a-3764-477a-aa51-1cdbc3a57d79; ledger entries before: 0",
-      "startedAt": "2026-09-21T00:28:57.000Z",
-      "finishedAt": "2026-09-21T00:28:57.566Z",
+      "observed": "program 213b24e0-674f-4387-9a13-419c02727536; ledger entries before: 0",
+      "startedAt": "2026-09-21T01:04:34.503Z",
+      "finishedAt": "2026-09-21T01:04:35.122Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-00.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/projects",
+          "url": "http://localhost:5700/api/c2c/projects",
           "status": 201
         },
         {
           "file": "steps/OQ-VAULT-00.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/audit-trail/ledger?limit=200",
+          "url": "http://localhost:5700/api/audit-trail/ledger?limit=200",
           "status": 200
         }
       ],
@@ -87,14 +87,14 @@
       "expected": "HTTP 401/403",
       "status": "pass",
       "observed": "HTTP 401",
-      "startedAt": "2026-09-21T00:28:57.566Z",
-      "finishedAt": "2026-09-21T00:28:57.822Z",
+      "startedAt": "2026-09-21T01:04:35.122Z",
+      "finishedAt": "2026-09-21T01:04:35.379Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-01.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/57d2417a-3764-477a-aa51-1cdbc3a57d79",
+          "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536",
           "status": 401
         }
       ],
@@ -111,37 +111,21 @@
       "kind": "scripted",
       "action": "POST /api/vault/ingest with a .exe payload",
       "expected": "Refused with a 4xx and a message; nothing stored",
-      "status": "fail",
-      "observed": {
-        "error": {
-          "code": "SERVER_ERROR",
-          "message": "File type .exe is not allowed",
-          "path": "/api/vault/ingest",
-          "timestamp": "2026-09-21T00:28:58.294Z",
-          "requestId": "d1498dfb-8c12-472c-9aa6-751d5a60faab",
-          "kernelDecision": "allow",
-          "kernelEnforcedDecision": "allow",
-          "kernelFlags": [],
-          "policyBundleId": "ana-1-0-ri-core",
-          "policyBundleVersion": "1.3.0"
-        }
-      },
-      "startedAt": "2026-09-21T00:28:57.822Z",
-      "finishedAt": "2026-09-21T00:28:58.384Z",
-      "evidence": [
-        "steps/OQ-VAULT-02.at-failure.png"
-      ],
+      "status": "pass",
+      "observed": "HTTP 400: {\"error\":{\"code\":\"FILE_TYPE_NOT_ALLOWED\",\"message\":\"File type .exe is not allowed. Accepted: .pdf, .docx, .doc, .txt, .rtf, .xlsx, .xls, .csv, .md.\"}}",
+      "startedAt": "2026-09-21T01:04:35.379Z",
+      "finishedAt": "2026-09-21T01:04:35.902Z",
+      "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-02.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/vault/ingest",
-          "status": 500
+          "url": "http://localhost:5700/api/vault/ingest",
+          "status": 400
         }
       ],
       "consoleErrors": [],
       "note": null,
-      "failure": "expected 4xx, got 500",
       "rateLimitRetries": 0
     },
     {
@@ -154,15 +138,15 @@
       "action": "POST /api/vault/ingest (multipart: file, programId, documentCode, documentTitle, documentType=PROTOCOL)",
       "expected": "HTTP 201; document.id returned; document.contentHash equals the SHA-256 of the uploaded bytes",
       "status": "pass",
-      "observed": "document 04c7416f-0e9c-492d-b00f-a0191deeef20; contentHash matches sha256 947bfca32a35…; filing: {\"view\":\"biotech\",\"folderId\":null,\"folderLabel\":\"\",\"evidenceKind\":null,\"ctdSection\":null,\"placementStatus\":\"unfiled\",\"confidence\":\"none\",\"rationale\":\"No filing ",
-      "startedAt": "2026-09-21T00:28:58.384Z",
-      "finishedAt": "2026-09-21T00:28:59.162Z",
+      "observed": "document 19c17bfe-98e4-4100-8862-f34c3a64c202; contentHash matches sha256 d8a712c15871…; filing: {\"view\":\"biotech\",\"folderId\":null,\"folderLabel\":\"\",\"evidenceKind\":null,\"ctdSection\":null,\"placementStatus\":\"unfiled\",\"confidence\":\"none\",\"rationale\":\"No filing ",
+      "startedAt": "2026-09-21T01:04:35.902Z",
+      "finishedAt": "2026-09-21T01:04:40.445Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-03.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/vault/ingest",
+          "url": "http://localhost:5700/api/vault/ingest",
           "status": 201
         }
       ],
@@ -179,27 +163,21 @@
       "kind": "scripted",
       "action": "GET /api/c2c/project-vault/:programId",
       "expected": "success:true; documentCount ≥ 1; the tree names the document",
-      "status": "deviation",
-      "observed": {
-        "success": false,
-        "error": "Failed to build project vault"
-      },
-      "startedAt": "2026-09-21T00:28:59.162Z",
-      "finishedAt": "2026-09-21T00:28:59.478Z",
-      "evidence": [
-        "steps/OQ-VAULT-04.at-failure.png"
-      ],
+      "status": "pass",
+      "observed": "documentCount=73; standard=biotech; tree nodes=2",
+      "startedAt": "2026-09-21T01:04:40.445Z",
+      "finishedAt": "2026-09-21T01:04:40.723Z",
+      "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-04.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/57d2417a-3764-477a-aa51-1cdbc3a57d79",
-          "status": 500
+          "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536",
+          "status": 200
         }
       ],
       "consoleErrors": [],
       "note": null,
-      "deviationReason": "IQ-DEV-001: runtime role lacks privileges (table cre_evidence_sources) in this environment; the route answered 500 (server log excerpt attached). Underlying check: expected 200 success, got 500. Re-execute after the grant is applied.",
       "rateLimitRetries": 0
     },
     {
@@ -212,15 +190,15 @@
       "action": "GET /api/c2c/project-vault/:programId/search?q=<title fragment>",
       "expected": "results contain the ingested document id",
       "status": "pass",
-      "observed": "total=1; hit 04c7416f-0e9c-492d-b00f-a0191deeef20",
-      "startedAt": "2026-09-21T00:28:59.478Z",
-      "finishedAt": "2026-09-21T00:28:59.743Z",
+      "observed": "total=1; hit 19c17bfe-98e4-4100-8862-f34c3a64c202",
+      "startedAt": "2026-09-21T01:04:40.723Z",
+      "finishedAt": "2026-09-21T01:04:40.986Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-05.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/57d2417a-3764-477a-aa51-1cdbc3a57d79/search?q=OQ-002%20Protocol",
+          "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536/search?q=OQ-002%20Protocol",
           "status": 200
         }
       ],
@@ -238,9 +216,9 @@
       "action": "GET /api/c2c/project-vault/:programId/documents/:documentId/download",
       "expected": "HTTP 200; SHA-256 of the body equals the hash recorded at ingest",
       "status": "pass",
-      "observed": "611 bytes, sha256 947bfca32a35… matches",
-      "startedAt": "2026-09-21T00:28:59.743Z",
-      "finishedAt": "2026-09-21T00:28:59.755Z",
+      "observed": "611 bytes, sha256 d8a712c15871… matches",
+      "startedAt": "2026-09-21T01:04:40.986Z",
+      "finishedAt": "2026-09-21T01:04:40.999Z",
       "evidence": [
         "steps/OQ-VAULT-06.download.json"
       ],
@@ -260,20 +238,20 @@
       "expected": "Filing into Module 5 answers success:true with the folder recorded; a folder outside the program's vault view is refused (4xx), not stored",
       "status": "pass",
       "observed": "filed: {\"folderId\":\"module-5\",\"folderLabel\":\"Module 5 · Clinical\",\"evidenceKind\":null,\"ctdSection\":null,\"placementStatus\":\"confirmed\",\"confidence\":null,\"rationale\":\"OQ-002 step 07 — filed into Module 5 by va; k510 → 400 INVALID_FOLDER",
-      "startedAt": "2026-09-21T00:28:59.755Z",
-      "finishedAt": "2026-09-21T00:29:00.288Z",
+      "startedAt": "2026-09-21T01:04:40.999Z",
+      "finishedAt": "2026-09-21T01:04:41.538Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-07.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/57d2417a-3764-477a-aa51-1cdbc3a57d79/file",
+          "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536/file",
           "status": 200
         },
         {
           "file": "steps/OQ-VAULT-07.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/project-vault/57d2417a-3764-477a-aa51-1cdbc3a57d79/file",
+          "url": "http://localhost:5700/api/c2c/project-vault/213b24e0-674f-4387-9a13-419c02727536/file",
           "status": 400
         }
       ],
@@ -300,8 +278,8 @@
           "stored": "5b992f989c3f35290fd2e1b8d3b09e3a6bcef48ba0cb3a41df230aa0e431603e"
         }
       },
-      "startedAt": "2026-09-21T00:29:00.288Z",
-      "finishedAt": "2026-09-21T00:29:00.594Z",
+      "startedAt": "2026-09-21T01:04:41.538Z",
+      "finishedAt": "2026-09-21T01:04:41.878Z",
       "evidence": [
         "steps/OQ-VAULT-08.at-failure.png"
       ],
@@ -309,7 +287,7 @@
         {
           "file": "steps/OQ-VAULT-08.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/actions/verify-chain",
+          "url": "http://localhost:5700/api/c2c/actions/verify-chain",
           "status": 409
         }
       ],
@@ -329,8 +307,8 @@
       "expected": "The ledger grew since the baseline taken in OQ-VAULT-00 and the newest entry carries record/previous hashes",
       "status": "fail",
       "observed": [],
-      "startedAt": "2026-09-21T00:29:00.594Z",
-      "finishedAt": "2026-09-21T00:29:00.896Z",
+      "startedAt": "2026-09-21T01:04:41.878Z",
+      "finishedAt": "2026-09-21T01:04:42.187Z",
       "evidence": [
         "steps/OQ-VAULT-08b.at-failure.png"
       ],
@@ -338,7 +316,7 @@
         {
           "file": "steps/OQ-VAULT-08b.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/audit-trail/ledger?limit=200",
+          "url": "http://localhost:5700/api/audit-trail/ledger?limit=200",
           "status": 200
         }
       ],
@@ -356,35 +334,24 @@
       "kind": "scripted",
       "action": "Open /concept2cure/vault with the program selected",
       "expected": "The data room renders and the document title is visible",
-      "status": "deviation",
-      "observed": "CLIENT CATEGORIES\nWORKSPACE\nSCIENCE & INTELLIGENCE\nEXPLORE\nQUICK ACCESS\nJS\nConcept2Cure.RI\n›\nBiotech & Pharma\n›\nVault (DMS)\nBiotech & Pharma\nCT\nConcept2Cure Therapeutics\nSearch, jump, or run a command\n⌘K\nTask\n3\nDOCUMENTS\nPROJECT VAULT\nVault (DMS)\n0 documents\nOpen project\nInspection readiness\nCSR\nPROTOCOL\nCER\nIB\nDSUR\nPSUR\nSAP\nSAR\nMODULE 2\nMODULE 3\nMODULE 4\nMODULE 5\nSOP\nREPORT\nCORRESPONDENCE\nOTHER\nUpload\nAsk AnA to import\n Works alongside Veeva Vault, SharePoint & OneDrive — search in place, import with approval (detect, classify, approve), export everything. No rip-and-replace.\nImport from a co",
-      "startedAt": "2026-09-21T00:29:00.896Z",
-      "finishedAt": "2026-09-21T00:29:37.200Z",
+      "status": "fail",
+      "observed": "CLIENT CATEGORIES\nWORKSPACE\nSCIENCE & INTELLIGENCE\nEXPLORE\nQUICK ACCESS\nJS\nConcept2Cure.RI\n›\nBiotech & Pharma\n›\nVault (DMS)\nBiotech & Pharma\nCT\nConcept2Cure Therapeutics\nSearch, jump, or run a command\n⌘K\nTask\n3\nDOCUMENTS\nPROJECT VAULT\nVault (DMS)\nIND · 21 CFR 312\n73 documents\nOpen project\nInspection readiness\nCSR\nPROTOCOL\nCER\nIB\nDSUR\nPSUR\nSAP\nSAR\nMODULE 2\nMODULE 3\nMODULE 4\nMODULE 5\nSOP\nREPORT\nCORRESPONDENCE\nOTHER\nUpload\nAsk AnA to import\n Works alongside Veeva Vault, SharePoint & OneDrive — search in place, import with approval (detect, classify, approve), export everything. No rip-and-replace",
+      "startedAt": "2026-09-21T01:04:42.187Z",
+      "finishedAt": "2026-09-21T01:05:18.913Z",
       "evidence": [
-        "steps/OQ-VAULT-09.server-log-excerpt.json",
         "steps/OQ-VAULT-09.at-failure.png"
       ],
       "api": [],
       "consoleErrors": [
         {
-          "at": "2026-09-21T00:29:05.326Z",
+          "at": "2026-09-21T01:04:46.609Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
-        },
-        {
-          "at": "2026-09-21T00:29:06.430Z",
-          "kind": "console.error",
-          "message": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
-        },
-        {
-          "at": "2026-09-21T00:29:06.443Z",
-          "kind": "console.error",
-          "message": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
         }
       ],
       "note": null,
       "browser429": 0,
-      "deviationReason": "IQ-DEV-001: runtime role lacks privileges (table cre_evidence_sources) in this environment; the route answered 500 (server log excerpt attached). Underlying check: page text does not contain \"OQ-002 Protocol 20260921002856\". Re-execute after the grant is applied.",
+      "failure": "page text does not contain \"OQ-002 Protocol 20260921010434\"",
       "rateLimitRetries": 0
     },
     {
@@ -398,14 +365,14 @@
       "expected": "HTTP 404",
       "status": "pass",
       "observed": "HTTP 404",
-      "startedAt": "2026-09-21T00:29:37.200Z",
-      "finishedAt": "2026-09-21T00:29:37.460Z",
+      "startedAt": "2026-09-21T01:05:18.914Z",
+      "finishedAt": "2026-09-21T01:05:19.180Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-VAULT-10.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/project-vault/00000000-0000-4000-8000-000000000000",
+          "url": "http://localhost:5700/api/c2c/project-vault/00000000-0000-4000-8000-000000000000",
           "status": 404
         }
       ],

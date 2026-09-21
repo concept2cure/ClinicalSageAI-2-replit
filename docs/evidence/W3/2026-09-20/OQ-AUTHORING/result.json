@@ -5,16 +5,16 @@
   "appLabel": "Authoring",
   "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
   "executedBy": "automated runner tests/validation/oq/authoring/run.mjs",
-  "executedAt": "2026-09-21T00:22:57.098Z",
-  "finishedAt": "2026-09-21T00:23:17.083Z",
+  "executedAt": "2026-09-21T01:05:19.359Z",
+  "finishedAt": "2026-09-21T01:05:45.869Z",
   "environment": {
-    "baseUrl": "http://localhost:5200",
+    "baseUrl": "http://localhost:5700",
     "node": "v22.22.2",
     "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
     "playwrightCore": "1.63.0",
     "git": {
       "branch": "concept2cure-v2",
-      "commit": "25a793e0f5fadc325ecb8d56065da95014dcdc65"
+      "commit": "debdd9664f5759eb9a4a5b024b73c333027baf18"
     },
     "testUser": "jonmichaelpsmith@gmail.com",
     "organizationId": "2",
@@ -40,10 +40,10 @@
     }
   },
   "counts": {
-    "pass": 9,
-    "fail": 1,
+    "pass": 16,
+    "fail": 3,
     "deviation": 1,
-    "not-executed": 11
+    "not-executed": 2
   },
   "steps": [
     {
@@ -54,15 +54,15 @@
       "action": "POST /api/c2c/projects",
       "expected": "201",
       "status": "pass",
-      "observed": "program f8750a35-e81e-4dbd-bbeb-c51d1de60808",
-      "startedAt": "2026-09-21T00:22:57.777Z",
-      "finishedAt": "2026-09-21T00:22:58.102Z",
+      "observed": "program 94ca3949-304b-4a6a-88ae-23db761d50ba",
+      "startedAt": "2026-09-21T01:05:20.205Z",
+      "finishedAt": "2026-09-21T01:05:20.531Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-00.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/projects",
+          "url": "http://localhost:5700/api/c2c/projects",
           "status": 201
         }
       ],
@@ -81,14 +81,14 @@
       "expected": "HTTP 401/403",
       "status": "pass",
       "observed": "HTTP 401",
-      "startedAt": "2026-09-21T00:22:58.102Z",
-      "finishedAt": "2026-09-21T00:22:58.358Z",
+      "startedAt": "2026-09-21T01:05:20.531Z",
+      "finishedAt": "2026-09-21T01:05:20.789Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-01.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs",
+          "url": "http://localhost:5700/api/authoring/docs",
           "status": 401
         }
       ],
@@ -107,14 +107,14 @@
       "expected": "HTTP 400 naming the title",
       "status": "pass",
       "observed": "HTTP 400: Document title is required",
-      "startedAt": "2026-09-21T00:22:58.358Z",
-      "finishedAt": "2026-09-21T00:22:58.619Z",
+      "startedAt": "2026-09-21T01:05:20.789Z",
+      "finishedAt": "2026-09-21T01:05:21.055Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-02.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs",
+          "url": "http://localhost:5700/api/authoring/docs",
           "status": 400
         }
       ],
@@ -132,15 +132,15 @@
       "action": "POST /api/authoring/docs {title, module:\"M2\", client_program_id}",
       "expected": "HTTP 200/201 with a document id (UUID)",
       "status": "pass",
-      "observed": "document 1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9",
-      "startedAt": "2026-09-21T00:22:58.619Z",
-      "finishedAt": "2026-09-21T00:22:58.917Z",
+      "observed": "document 2d2a545d-aca6-474e-bfcb-fa3cc1080fc7",
+      "startedAt": "2026-09-21T01:05:21.055Z",
+      "finishedAt": "2026-09-21T01:05:21.335Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-03.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs",
+          "url": "http://localhost:5700/api/authoring/docs",
           "status": 201
         }
       ],
@@ -157,45 +157,33 @@
       "kind": "scripted",
       "action": "POST /api/authoring/sections ×2 (codes 2.7, then 2.5); GET /api/authoring/docs/:id/sections",
       "expected": "Two sections returned; order follows the CTD code (2.5 before 2.7) or the stored order_index",
-      "status": "deviation",
-      "observed": {
-        "a": {
-          "success": false,
-          "error": {
-            "code": "LINEAGE_REQUIRED",
-            "message": "The section was not created: its data lineage could not be recorded. Saving content without provenance is not permitted."
-          }
-        },
-        "b": {
-          "success": false,
-          "error": {
-            "code": "LINEAGE_REQUIRED",
-            "message": "The section was not created: its data lineage could not be recorded. Saving content without provenance is not permitted."
-          }
-        }
-      },
-      "startedAt": "2026-09-21T00:22:58.917Z",
-      "finishedAt": "2026-09-21T00:22:59.547Z",
-      "evidence": [
-        "steps/OQ-AUTH-04.at-failure.png"
-      ],
+      "status": "pass",
+      "observed": "order: 2.5@0, 2.7@1; structure: {\"duplicateCodes\":[],\"outOfOrder\":false,\"suggestedOrder\":[\"2.5\",\"2.7\"]}",
+      "startedAt": "2026-09-21T01:05:21.335Z",
+      "finishedAt": "2026-09-21T01:05:22.198Z",
+      "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-04.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/sections",
-          "status": 500
+          "url": "http://localhost:5700/api/authoring/sections",
+          "status": 201
         },
         {
           "file": "steps/OQ-AUTH-04.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/sections",
-          "status": 500
+          "url": "http://localhost:5700/api/authoring/sections",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-AUTH-04.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/sections",
+          "status": 200
         }
       ],
       "consoleErrors": [],
       "note": null,
-      "deviationReason": "IQ-DEV-001: runtime role lacks privileges (table document_span_lineage) in this environment; the route answered 500 (server log excerpt attached). Underlying check: section create failed (500, 500). Re-execute after the grant is applied.",
       "rateLimitRetries": 0
     },
     {
@@ -207,14 +195,28 @@
       "kind": "scripted",
       "action": "PATCH /api/authoring/sections/:id {content, changeReason}; GET history",
       "expected": "HTTP 200; history lists ≥1 revision carrying content_sha256 and created_by",
-      "status": "not-executed",
-      "observed": "prerequisite step OQ-AUTH-04 did not pass",
-      "startedAt": "2026-09-21T00:22:59.547Z",
-      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "status": "pass",
+      "observed": "2 revision(s); newest sha256 5f2aa1c0c7f6… by jonmichaelpsmith@gmail.com",
+      "startedAt": "2026-09-21T01:05:22.198Z",
+      "finishedAt": "2026-09-21T01:05:22.752Z",
       "evidence": [],
-      "api": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-05.api-1.json",
+          "method": "PATCH",
+          "url": "http://localhost:5700/api/authoring/sections/be0137e6-f86d-481c-8039-d3b35a422d40",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-AUTH-05.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/authoring/sections/be0137e6-f86d-481c-8039-d3b35a422d40/history",
+          "status": 200
+        }
+      ],
       "consoleErrors": [],
-      "note": null
+      "note": null,
+      "rateLimitRetries": 0
     },
     {
       "id": "OQ-AUTH-06",
@@ -225,14 +227,22 @@
       "kind": "scripted",
       "action": "GET /api/authoring/sections/:id/history/verify",
       "expected": "success:true, revisionCount ≥ 1, chain verdict intact",
-      "status": "not-executed",
-      "observed": "prerequisite step OQ-AUTH-05 did not pass",
-      "startedAt": "2026-09-21T00:22:59.547Z",
-      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "status": "pass",
+      "observed": "revisionCount=2; verdict {\"success\":true,\"revisionCount\":2,\"intact\":true,\"chainedCount\":2,\"preLedgerCount\":0,\"breaks\":[]}",
+      "startedAt": "2026-09-21T01:05:22.752Z",
+      "finishedAt": "2026-09-21T01:05:23.016Z",
       "evidence": [],
-      "api": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-06.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/authoring/sections/be0137e6-f86d-481c-8039-d3b35a422d40/history/verify",
+          "status": 200
+        }
+      ],
       "consoleErrors": [],
-      "note": null
+      "note": null,
+      "rateLimitRetries": 0
     },
     {
       "id": "OQ-AUTH-07",
@@ -243,14 +253,28 @@
       "kind": "scripted",
       "action": "PATCH section with expectedUpdatedAt from before the previous edit",
       "expected": "HTTP 409 SECTION_CHANGED; content unchanged",
-      "status": "not-executed",
-      "observed": "prerequisite step OQ-AUTH-05 did not pass",
-      "startedAt": "2026-09-21T00:22:59.547Z",
-      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "status": "pass",
+      "observed": "HTTP 409 SECTION_CHANGED; content intact",
+      "startedAt": "2026-09-21T01:05:23.016Z",
+      "finishedAt": "2026-09-21T01:05:23.545Z",
       "evidence": [],
-      "api": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-07.api-1.json",
+          "method": "PATCH",
+          "url": "http://localhost:5700/api/authoring/sections/be0137e6-f86d-481c-8039-d3b35a422d40",
+          "status": 409
+        },
+        {
+          "file": "steps/OQ-AUTH-07.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/sections",
+          "status": 200
+        }
+      ],
       "consoleErrors": [],
-      "note": null
+      "note": null,
+      "rateLimitRetries": 0
     },
     {
       "id": "OQ-AUTH-08",
@@ -261,14 +285,40 @@
       "kind": "scripted",
       "action": "POST /api/authoring/sections/:id/revert {rev_id: <first revision>}",
       "expected": "HTTP 200; section content equals that revision; history grows (the revert is itself recorded)",
-      "status": "not-executed",
-      "observed": "prerequisite step OQ-AUTH-05 did not pass",
-      "startedAt": "2026-09-21T00:22:59.547Z",
-      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "status": "pass",
+      "observed": "content restored; history 2 → 3",
+      "startedAt": "2026-09-21T01:05:23.545Z",
+      "finishedAt": "2026-09-21T01:05:24.658Z",
       "evidence": [],
-      "api": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-08.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/authoring/sections/be0137e6-f86d-481c-8039-d3b35a422d40/history",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-AUTH-08.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/authoring/sections/be0137e6-f86d-481c-8039-d3b35a422d40/revert",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-AUTH-08.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/authoring/sections/be0137e6-f86d-481c-8039-d3b35a422d40/history",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-AUTH-08.api-4.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/sections",
+          "status": 200
+        }
+      ],
       "consoleErrors": [],
-      "note": null
+      "note": null,
+      "rateLimitRetries": 0
     },
     {
       "id": "OQ-AUTH-09",
@@ -279,14 +329,28 @@
       "kind": "scripted",
       "action": "POST /api/authoring/sections/:id/comment {body, doc_id}",
       "expected": "HTTP 200/201; comment listed under the document",
-      "status": "not-executed",
-      "observed": "prerequisite step OQ-AUTH-04 did not pass",
-      "startedAt": "2026-09-21T00:22:59.547Z",
-      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "status": "pass",
+      "observed": "comment recorded and listed",
+      "startedAt": "2026-09-21T01:05:24.659Z",
+      "finishedAt": "2026-09-21T01:05:25.204Z",
       "evidence": [],
-      "api": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-09.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/authoring/sections/be0137e6-f86d-481c-8039-d3b35a422d40/comment",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-AUTH-09.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/authoring/documents/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/comments",
+          "status": 200
+        }
+      ],
       "consoleErrors": [],
-      "note": null
+      "note": null,
+      "rateLimitRetries": 0
     },
     {
       "id": "OQ-AUTH-10",
@@ -297,14 +361,22 @@
       "kind": "scripted",
       "action": "GET /api/authoring/docs/:id/audit",
       "expected": "Events for CREATE and UPDATE (and REVERT) with actor email, timestamps and content hashes",
-      "status": "not-executed",
-      "observed": "prerequisite step OQ-AUTH-08 did not pass",
-      "startedAt": "2026-09-21T00:22:59.547Z",
-      "finishedAt": "2026-09-21T00:22:59.547Z",
+      "status": "pass",
+      "observed": "5 events: comment_added, REVERT, UPDATE, CREATE; actor jonmichaelpsmith@gmail.com",
+      "startedAt": "2026-09-21T01:05:25.204Z",
+      "finishedAt": "2026-09-21T01:05:25.467Z",
       "evidence": [],
-      "api": [],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-10.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/audit",
+          "status": 200
+        }
+      ],
       "consoleErrors": [],
-      "note": null
+      "note": null,
+      "rateLimitRetries": 0
     },
     {
       "id": "OQ-AUTH-17",
@@ -316,33 +388,33 @@
       "action": "POST /documents/:id/request-review {reviewers:[self]}; POST /docs/:id/submit {workflow_steps:[{role:\"QA\", approver_email:self}]}; GET /docs/:id/workflow",
       "expected": "Review request recorded (pending, reviewer = self); submit refused without approver_email; with it the document moves to IN_REVIEW and the workflow lists a PENDING step",
       "status": "pass",
-      "observed": "review pending for jonmichaelpsmith@gmail.com; submit w/o approver → 400; workflow: {\"success\":true,\"workflowId\":\"d74b1e4d-ea61-4323-a2b2-5720955da39e\",\"steps\":[{\"workflow_id\":\"d74b1e4d-ea61-4323-a2b2-5720955da39e\",\"doc_id\":\"1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9\",\"step_no\":1,\"role\":\"Q",
-      "startedAt": "2026-09-21T00:22:59.547Z",
-      "finishedAt": "2026-09-21T00:23:00.680Z",
+      "observed": "review pending for jonmichaelpsmith@gmail.com; submit w/o approver → 400; workflow: {\"success\":true,\"workflowId\":\"d78c129d-c2bc-4397-8a9b-c36acf65e5cd\",\"steps\":[{\"workflow_id\":\"d78c129d-c2bc-4397-8a9b-c36acf65e5cd\",\"doc_id\":\"2d2a545d-aca6-474e-bfcb-fa3cc1080fc7\",\"step_no\":1,\"role\":\"Q",
+      "startedAt": "2026-09-21T01:05:25.467Z",
+      "finishedAt": "2026-09-21T01:05:26.531Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-17.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/documents/1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9/request-review",
+          "url": "http://localhost:5700/api/authoring/documents/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/request-review",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-17.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs/1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9/submit",
+          "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/submit",
           "status": 400
         },
         {
           "file": "steps/OQ-AUTH-17.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs/1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9/submit",
+          "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/submit",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-17.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9/workflow",
+          "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/workflow",
           "status": 200
         }
       ],
@@ -365,10 +437,10 @@
         "total": 0,
         "threadItemId": null,
         "threadDocumentId": null,
-        "generatedAt": "2026-09-21T00:23:00.970Z"
+        "generatedAt": "2026-09-21T01:05:26.831Z"
       },
-      "startedAt": "2026-09-21T00:23:00.680Z",
-      "finishedAt": "2026-09-21T00:23:01.020Z",
+      "startedAt": "2026-09-21T01:05:26.531Z",
+      "finishedAt": "2026-09-21T01:05:26.929Z",
       "evidence": [
         "steps/OQ-AUTH-17b.at-failure.png"
       ],
@@ -376,7 +448,7 @@
         {
           "file": "steps/OQ-AUTH-17b.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/review/board",
+          "url": "http://localhost:5700/api/review/board",
           "status": 200
         }
       ],
@@ -394,14 +466,35 @@
       "kind": "scripted",
       "action": "POST /api/authoring/docs/:id/freeze {reason, version:\"1.0\"}; GET /docs/:id/frozen",
       "expected": "HTTP 200; a frozen record with content_hash is retrievable; a second freeze is refused",
-      "status": "not-executed",
-      "observed": "prerequisite step OQ-AUTH-04 did not pass",
-      "startedAt": "2026-09-21T00:23:01.020Z",
-      "finishedAt": "2026-09-21T00:23:01.020Z",
-      "evidence": [],
-      "api": [],
+      "status": "fail",
+      "observed": {
+        "success": false,
+        "error": {
+          "code": "DOCUMENT_NOT_SETTLED",
+          "message": "Not frozen — this document still has 1 unresolved comment. Freezing seals the content for signature and filing, so the questions would go unanswered and the proposed edits would reach a reviewer undecided. Resolve them, or freeze again confirming you intend to seal it as it stands."
+        },
+        "unresolved": {
+          "openComments": 1,
+          "pendingEdits": 0
+        }
+      },
+      "startedAt": "2026-09-21T01:05:26.929Z",
+      "finishedAt": "2026-09-21T01:05:27.269Z",
+      "evidence": [
+        "steps/OQ-AUTH-11.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-11.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/authoring/docs/2d2a545d-aca6-474e-bfcb-fa3cc1080fc7/freeze",
+          "status": 409
+        }
+      ],
       "consoleErrors": [],
-      "note": null
+      "note": null,
+      "failure": "expected 200, got 409",
+      "rateLimitRetries": 0
     },
     {
       "id": "OQ-AUTH-12",
@@ -414,20 +507,20 @@
       "expected": "HTTP 200/201 on first enrolment (identity from the JWT, never from the body); once a PIN exists, a change without the current PIN is refused (400) and succeeds only with old_pin",
       "status": "pass",
       "observed": "PIN already enrolled: change without old_pin → 400 (\"Current PIN is required to change it\"); rotation with old_pin → HTTP 200",
-      "startedAt": "2026-09-21T00:23:01.021Z",
-      "finishedAt": "2026-09-21T00:23:01.756Z",
+      "startedAt": "2026-09-21T01:05:27.269Z",
+      "finishedAt": "2026-09-21T01:05:27.992Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-12.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/users/pin",
+          "url": "http://localhost:5700/api/authoring/users/pin",
           "status": 400
         },
         {
           "file": "steps/OQ-AUTH-12.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/users/pin",
+          "url": "http://localhost:5700/api/authoring/users/pin",
           "status": 200
         }
       ],
@@ -446,8 +539,8 @@
       "expected": "(a) HTTP 401 Invalid PIN; (b) HTTP 400 Invalid signature meaning; no signature stored",
       "status": "not-executed",
       "observed": "prerequisite step OQ-AUTH-11 did not pass",
-      "startedAt": "2026-09-21T00:23:01.756Z",
-      "finishedAt": "2026-09-21T00:23:01.756Z",
+      "startedAt": "2026-09-21T01:05:27.992Z",
+      "finishedAt": "2026-09-21T01:05:27.992Z",
       "evidence": [],
       "api": [],
       "consoleErrors": [],
@@ -465,8 +558,8 @@
       "expected": "HTTP 200; one signature with signer_email = actor, meaning REVIEWER, pin_verified true, signature_digest and covered_content_hash present",
       "status": "not-executed",
       "observed": "prerequisite step OQ-AUTH-13 did not pass",
-      "startedAt": "2026-09-21T00:23:01.756Z",
-      "finishedAt": "2026-09-21T00:23:01.756Z",
+      "startedAt": "2026-09-21T01:05:27.993Z",
+      "finishedAt": "2026-09-21T01:05:27.993Z",
       "evidence": [],
       "api": [],
       "consoleErrors": [],
@@ -481,14 +574,41 @@
       "kind": "scripted",
       "action": "POST /api/authoring/sections/:id/ai/draft {prompt}",
       "expected": "No draft content is returned; the request is refused with a provider-unavailable status (5xx) — never a fabricated draft",
-      "status": "not-executed",
-      "observed": "prerequisite step OQ-AUTH-04 did not pass",
-      "startedAt": "2026-09-21T00:23:01.756Z",
-      "finishedAt": "2026-09-21T00:23:01.756Z",
-      "evidence": [],
-      "api": [],
+      "status": "fail",
+      "observed": {
+        "success": false,
+        "degraded": true,
+        "source": "template",
+        "draft": {
+          "content": "QUALITY OVERALL SUMMARY - Clinical Summary\n\n1. INTRODUCTION\nThis section provides comprehensive quality information for the product in accordance with FDA regulatory requirements.\n\n2. DRUG SUBSTANCE\n[Detailed information about the drug substance, including nomenclature, structure, general properties, and manufacture]\n\n3. DRUG PRODUCT\n[Comprehensive details about the drug product formulation, pharmaceutical development, manufacture, and control]\n\n4. QUALITY CONTROL\n[Description of specifications, analytical procedures, validation, and batch analyses]\n\n5. STABILITY\n[Stability protocol, data, and conclusions supporting the proposed shelf life]\n\n6. CONCLUSION\nThe quality information presented demonstrates that the product meets all FDA regulatory standards for pharmaceutical quality.",
+          "metadata": {
+            "tone": "professional",
+            "region": "FDA",
+            "generated_at": "2026-09-21T01:05:28.311Z",
+            "model": "template-based",
+            "source": "template",
+            "degraded": true
+          }
+        },
+        "message": "AI generation was unavailable; returned a hardcoded section template (not model-generated)."
+      },
+      "startedAt": "2026-09-21T01:05:27.993Z",
+      "finishedAt": "2026-09-21T01:05:28.360Z",
+      "evidence": [
+        "steps/OQ-AUTH-15.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-15.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/authoring/sections/94f2c61c-d468-4d29-900d-bf988e1aa4ca/ai/draft",
+          "status": 200
+        }
+      ],
       "consoleErrors": [],
-      "note": null
+      "note": null,
+      "failure": "a draft was returned without a provider",
+      "rateLimitRetries": 0
     },
     {
       "id": "OQ-AUTH-16",
@@ -499,14 +619,41 @@
       "kind": "scripted",
       "action": "POST /api/authoring/sections/:id/ai/draft with a configured provider",
       "expected": "A draft candidate with provenance is returned for human acceptance",
-      "status": "not-executed",
-      "observed": "prerequisite step OQ-AUTH-04 did not pass",
-      "startedAt": "2026-09-21T00:23:01.756Z",
-      "finishedAt": "2026-09-21T00:23:01.756Z",
-      "evidence": [],
-      "api": [],
+      "status": "deviation",
+      "observed": {
+        "success": false,
+        "degraded": true,
+        "source": "template",
+        "draft": {
+          "content": "QUALITY OVERALL SUMMARY - Clinical Summary\n\n1. INTRODUCTION\nThis section provides comprehensive quality information for the product in accordance with FDA regulatory requirements.\n\n2. DRUG SUBSTANCE\n[Detailed information about the drug substance, including nomenclature, structure, general properties, and manufacture]\n\n3. DRUG PRODUCT\n[Comprehensive details about the drug product formulation, pharmaceutical development, manufacture, and control]\n\n4. QUALITY CONTROL\n[Description of specifications, analytical procedures, validation, and batch analyses]\n\n5. STABILITY\n[Stability protocol, data, and conclusions supporting the proposed shelf life]\n\n6. CONCLUSION\nThe quality information presented demonstrates that the product meets all FDA regulatory standards for pharmaceutical quality.",
+          "metadata": {
+            "tone": "professional",
+            "region": "FDA",
+            "generated_at": "2026-09-21T01:05:28.643Z",
+            "model": "template-based",
+            "source": "template",
+            "degraded": true
+          }
+        },
+        "message": "AI generation was unavailable; returned a hardcoded section template (not model-generated)."
+      },
+      "startedAt": "2026-09-21T01:05:28.360Z",
+      "finishedAt": "2026-09-21T01:05:28.696Z",
+      "evidence": [
+        "steps/OQ-AUTH-16.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-AUTH-16.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5700/api/authoring/sections/94f2c61c-d468-4d29-900d-bf988e1aa4ca/ai/draft",
+          "status": 200
+        }
+      ],
       "consoleErrors": [],
-      "note": null
+      "note": null,
+      "deviationReason": "AnA unavailable: no provider configured; unexpected non-5xx answer recorded for review.",
+      "rateLimitRetries": 0
     },
     {
       "id": "OQ-AUTH-18",
@@ -518,21 +665,21 @@
       "action": "GET /api/c2c/templates (organisation); GET /api/authoring/templates (global reference)",
       "expected": "Both HTTP 200 with list payloads (empty organisation store is honest for a new organisation)",
       "status": "pass",
-      "observed": "org templates: 0; global templates: 0",
-      "startedAt": "2026-09-21T00:23:01.756Z",
-      "finishedAt": "2026-09-21T00:23:02.282Z",
+      "observed": "org templates: 0; global templates: 20",
+      "startedAt": "2026-09-21T01:05:28.696Z",
+      "finishedAt": "2026-09-21T01:05:29.228Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-18.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/templates",
+          "url": "http://localhost:5700/api/c2c/templates",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-18.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/templates",
+          "url": "http://localhost:5700/api/authoring/templates",
           "status": 200
         }
       ],
@@ -551,17 +698,27 @@
       "expected": "The surface renders and the document title is visible",
       "status": "pass",
       "observed": "document visible",
-      "startedAt": "2026-09-21T00:23:02.282Z",
-      "finishedAt": "2026-09-21T00:23:10.756Z",
+      "startedAt": "2026-09-21T01:05:29.228Z",
+      "finishedAt": "2026-09-21T01:05:38.974Z",
       "evidence": [
         "steps/OQ-AUTH-19.png"
       ],
       "api": [],
       "consoleErrors": [
         {
-          "at": "2026-09-21T00:23:06.676Z",
+          "at": "2026-09-21T01:05:33.673Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        },
+        {
+          "at": "2026-09-21T01:05:38.201Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+        },
+        {
+          "at": "2026-09-21T01:05:38.207Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
         }
       ],
       "note": null,
@@ -580,15 +737,15 @@
       "expected": "Review board renders (screenshot)",
       "status": "pass",
       "observed": "rendered",
-      "startedAt": "2026-09-21T00:23:10.756Z",
-      "finishedAt": "2026-09-21T00:23:17.004Z",
+      "startedAt": "2026-09-21T01:05:38.974Z",
+      "finishedAt": "2026-09-21T01:05:45.754Z",
       "evidence": [
         "steps/OQ-AUTH-20.png"
       ],
       "api": [],
       "consoleErrors": [
         {
-          "at": "2026-09-21T00:23:15.172Z",
+          "at": "2026-09-21T01:05:43.639Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
         }

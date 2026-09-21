@@ -1,14 +1,14 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/task-management/board",
+    "url": "http://localhost:5700/api/task-management/board",
     "anonymous": false,
     "body": null
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 36,
+    "durationMs": 53,
     "rateLimitRetries": 0,
     "body": {
       "success": true,
@@ -152,9 +152,37 @@
           "phase": null,
           "blocked": false,
           "estimatedHours": null
+        },
+        {
+          "taskId": "TASK-1789952583448-7ec6864f",
+          "title": "OQ-001 task 20260921010239",
+          "project": "",
+          "moduleType": "projects",
+          "taskType": "",
+          "status": "pending",
+          "priority": "high",
+          "assignee": "4",
+          "assignedBy": "",
+          "progress": 0,
+          "impactScore": null,
+          "criticalPath": false,
+          "regulatoryImpact": false,
+          "approvalRequired": false,
+          "approvalStatus": "not_started",
+          "approvalHistory": [],
+          "dependsOn": [],
+          "blocks": [],
+          "comments": 0,
+          "attachments": 0,
+          "source": "unified",
+          "due": "",
+          "dueDateIso": null,
+          "phase": null,
+          "blocked": false,
+          "estimatedHours": null
         }
       ],
-      "total": 5
+      "total": 6
     }
   }
 }

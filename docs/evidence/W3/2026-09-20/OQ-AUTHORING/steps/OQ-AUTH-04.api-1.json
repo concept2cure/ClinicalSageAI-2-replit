@@ -1,35 +1,35 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/authoring/sections",
+    "url": "http://localhost:5700/api/authoring/sections",
     "anonymous": false,
     "body": {
-      "doc_id": "1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9",
+      "doc_id": "2d2a545d-aca6-474e-bfcb-fa3cc1080fc7",
       "code": "2.7",
       "title": "Clinical Summary",
       "content": "<p>Initial 2.7 text.</p>"
     }
   },
   "response": {
-    "status": 500,
+    "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 19,
+    "durationMs": 54,
     "rateLimitRetries": 0,
     "body": {
-      "success": false,
-      "error": {
-        "code": "LINEAGE_REQUIRED",
-        "message": "The section was not created: its data lineage could not be recorded. Saving content without provenance is not permitted."
-      }
+      "success": true,
+      "section": {
+        "id": "94f2c61c-d468-4d29-900d-bf988e1aa4ca",
+        "doc_id": "2d2a545d-aca6-474e-bfcb-fa3cc1080fc7",
+        "code": "2.7",
+        "title": "Clinical Summary",
+        "content": "<p>Initial 2.7 text.</p>",
+        "order_index": 0,
+        "track_changes": false,
+        "tenant_id": 2,
+        "created_at": "2026-09-21T01:05:21.598Z",
+        "updated_at": "2026-09-21T01:05:21.598Z"
+      },
+      "message": "Section created successfully"
     }
-  },
-  "serverLogExcerpt": {
-    "denied": [
-      "table document_span_lineage"
-    ],
-    "excerpt": [
-      "{\"level\":50,\"time\":\"2026-09-21T00:22:59.185Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"sectionId\":\"d86bc8e4-c8c9-4646-8b69-fe593abc6576\",\"tenantId\":2,\"err\":\"permission denied for table document_span_lineage\"},\"msg\":\"[authoring-router] Section create refused — content and lineage rolled back together\"}",
-      "{\"level\":50,\"time\":\"2026-09-21T00:22:59.186Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"requestId\":\"300201fa-89cf-4326-bd20-d25932806f29\",\"method\":\"POST\",\"path\":\"/api/authoring/sections\",\"statusCode\":500,\"durationMs\":15,\"kernelDecision\":\"allow\",\"kernelScore\":100,\"flags\":[]},\"msg\":\"[http] request_failed\"}"
-    ]
   }
 }

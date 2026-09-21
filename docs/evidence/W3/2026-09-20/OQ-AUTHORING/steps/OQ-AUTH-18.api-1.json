@@ -1,14 +1,14 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/c2c/templates",
+    "url": "http://localhost:5700/api/c2c/templates",
     "anonymous": false,
     "body": null
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 9,
+    "durationMs": 15,
     "rateLimitRetries": 0,
     "body": {
       "data": [],

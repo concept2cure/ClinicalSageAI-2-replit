@@ -1,27 +1,21 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/program-journey",
+    "url": "http://localhost:5700/api/program-journey",
     "anonymous": false,
     "body": null
   },
   "response": {
-    "status": 500,
+    "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 14,
+    "durationMs": 18,
     "rateLimitRetries": 0,
     "body": {
-      "error": {
-        "code": "INTERNAL",
-        "message": "Failed to read program journey."
+      "data": [],
+      "meta": {
+        "count": 0,
+        "source": "program_journeys"
       }
     }
-  },
-  "serverLogExcerpt": {
-    "denied": [],
-    "noise": [],
-    "excerpt": [
-      "{\"level\":50,\"time\":\"2026-09-21T00:28:43.729Z\",\"pid\":11325,\"hostname\":\"vm\",\"context\":{\"requestId\":\"fd071c96-968c-4042-9b48-b73fffac07c1\",\"method\":\"GET\",\"path\":\"/api/program-journey\",\"statusCode\":500,\"durationMs\":8,\"kernelDecision\":\"allow\",\"kernelScore\":100,\"flags\":[]},\"msg\":\"[http] request_failed\"}"
-    ]
   }
 }

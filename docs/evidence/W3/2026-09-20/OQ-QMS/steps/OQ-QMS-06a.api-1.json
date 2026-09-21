@@ -1,11 +1,11 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/mdx/qms/documents",
+    "url": "http://localhost:5700/api/mdx/qms/documents",
     "anonymous": false,
     "body": {
-      "docNumber": "SOP-OQ-B-20260921003124",
-      "title": "OQ-006 Second SOP 20260921003124",
+      "docNumber": "SOP-OQ-B-20260921010704",
+      "title": "OQ-006 Second SOP 20260921010704",
       "docType": "sop",
       "nextReviewDate": "2026-09-26"
     }
@@ -13,14 +13,14 @@
   "response": {
     "status": 201,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 20,
+    "durationMs": 18,
     "rateLimitRetries": 0,
     "body": {
       "data": {
-        "id": 15,
+        "id": 20,
         "organization_id": 2,
-        "doc_number": "SOP-OQ-B-20260921003124",
-        "title": "OQ-006 Second SOP 20260921003124",
+        "doc_number": "SOP-OQ-B-20260921010704",
+        "title": "OQ-006 Second SOP 20260921010704",
         "doc_type": "sop",
         "category": null,
         "version": "1.0",
@@ -33,8 +33,8 @@
         "superseded_by_id": null,
         "artifact_id": null,
         "metadata": {},
-        "created_at": "2026-09-21T00:31:39.733Z",
-        "updated_at": "2026-09-21T00:31:39.733Z",
+        "created_at": "2026-09-21T01:07:06.403Z",
+        "updated_at": "2026-09-21T01:07:06.403Z",
         "deleted_at": null
       },
       "meta": {

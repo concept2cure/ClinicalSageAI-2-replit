@@ -1,14 +1,14 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/module-subscriptions/navigation",
+    "url": "http://localhost:5700/api/module-subscriptions/navigation",
     "anonymous": false,
     "body": null
   },
   "response": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 13,
+    "durationMs": 22,
     "rateLimitRetries": 0,
     "body": {
       "organizationId": 2,

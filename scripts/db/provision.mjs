@@ -29,7 +29,13 @@
  *      only by files in C2C_MIGRATION_FILES. Measured on 2026-09-20.
  *   4. The runtime role had to be minted (APP_SERVICE_DB_PASSWORD) and the app
  *      pointed at it (APP_DATABASE_URL), or production refuses to boot under
- *      RLS_ENFORCE=on.
+ *      RLS_ENFORCE=on. And — 2026-09-21, IQ-DEV-001 — a runtime role that
+ *      already existed but was NOT minted here received no grants at all: the
+ *      refresh was gated on the password. Now any runtime role distinct from
+ *      the owner (the APP_DATABASE_URL login, or RUNTIME_DB_ROLE) is granted
+ *      the recipe by install-fresh and deploy-migrate whether or not it is
+ *      minted, and the readiness contract is verified AS that role, including
+ *      the grant audit over every application relation.
  *
  * This script is those four things in that order, with the role split made
  * explicit: the OWNER connection provisions, the APP connection is what the
@@ -47,7 +53,13 @@
  *   APP_SERVICE_DB_PASSWORD  when set, install-fresh / deploy-migrate mint or
  *                        align the app_service role and grant it every schema
  *                        (scripts/db/provision-app-role.mjs). Unset → no role
- *                        is minted and the readiness check runs as the owner.
+ *                        is minted; if APP_DATABASE_URL still names a role other
+ *                        than the owner, that role must already exist (refused
+ *                        at preflight otherwise) and is granted the same recipe.
+ *   RUNTIME_DB_ROLE      handed to the children (install-fresh, deploy-migrate)
+ *                        as the runtime role to grant, so they never see the
+ *                        app URL. Set explicitly to override the APP_DATABASE_URL
+ *                        login.
  *
  * ── Fail-closed contract ─────────────────────────────────────────────────────
  * Every refusal is BEFORE the first write when it can be, names the cause, and
@@ -74,7 +86,7 @@ import { Client } from 'pg';
 import dotenv from 'dotenv';
 import { sslFor } from './connection.mjs';
 import { AUTHORING_SUBSYSTEM_TABLES } from './authoring-subsystem.mjs';
-import { resolveAppServiceRole } from './provision-app-role.mjs';
+import { resolveAppServiceRole, roleFromUrl } from './provision-app-role.mjs';
 import { verifyReadinessContract, BASE_SCHEMA_SENTINELS } from './readiness-contract.mjs';
 
 dotenv.config({ quiet: true });
@@ -171,7 +183,39 @@ function resolveConnections(env) {
       '  database name.',
     ]);
   }
-  return { ownerUrl, appUrl, ownerFallback };
+  return { ownerUrl, appUrl, ownerFallback, ownerUser: roleFromUrl(ownerUrl), appUser: roleFromUrl(appUrl) };
+}
+
+/**
+ * Which runtime role this run is about, from the two URLs and the mint switch.
+ *
+ *   APP_SERVICE_DB_PASSWORD set   → the role it mints (APP_SERVICE_DB_ROLE); the
+ *                                   app URL must name that same role, or the
+ *                                   server would connect as a role nobody granted.
+ *   RUNTIME_DB_ROLE set           → that role, verbatim.
+ *   app login ≠ owner login       → the app login; it must exist (checked at
+ *                                   preflight) and gets the grant recipe.
+ *   otherwise                     → null: single-role posture.
+ */
+function resolveRuntimeRoleForRun(env, { ownerUser, appUser }) {
+  if (env.APP_SERVICE_DB_PASSWORD) {
+    const minted = resolveAppServiceRole(env);
+    if (env.APP_DATABASE_URL && appUser && appUser !== minted) {
+      fail(EXIT_CONFIG, [
+        `✗ APP_DATABASE_URL connects as ${appUser}, but APP_SERVICE_DB_PASSWORD mints ${minted}.`,
+        '  The server would connect as a role this run never granted. Point APP_DATABASE_URL',
+        `  at ${minted}, or set APP_SERVICE_DB_ROLE=${appUser}.`,
+      ]);
+    }
+    return { role: minted, minted: true };
+  }
+  if (env.RUNTIME_DB_ROLE && env.RUNTIME_DB_ROLE.trim()) {
+    return { role: env.RUNTIME_DB_ROLE.trim(), minted: false };
+  }
+  if (appUser && ownerUser && appUser !== ownerUser) {
+    return { role: appUser, minted: false };
+  }
+  return null;
 }
 
 async function connect(url) {
@@ -188,7 +232,7 @@ async function connect(url) {
  * push reads the schema, while a role that can (RDS master users are not
  * rolsuper but may create vector) is not wrongly refused by a superuser test.
  */
-async function preflight(client, { appRoleWanted }) {
+async function preflight(client, { appRoleWanted, runtimeRole }) {
   const server = await client.query(
     `SELECT current_setting('server_version') AS version,
             current_setting('server_version_num')::int AS num,
@@ -263,6 +307,35 @@ async function preflight(client, { appRoleWanted }) {
   }
   log(`  ✓ owner role ${role} can CREATE ROLE (${rolsuper ? 'superuser' : 'CREATEROLE'})`);
 
+  // 2b. A runtime role this run will NOT mint must already exist — otherwise
+  // the whole install would run and only the final app-connection check could
+  // say "role does not exist". Refuse before the first write instead.
+  if (runtimeRole && !runtimeRole.minted) {
+    const r = await client.query(
+      'SELECT rolsuper, rolbypassrls, rolcanlogin FROM pg_roles WHERE rolname = $1',
+      [runtimeRole.role],
+    );
+    if (r.rowCount === 0) {
+      fail(EXIT_CONFIG, [
+        `✗ runtime role ${runtimeRole.role} does not exist on this server, and APP_SERVICE_DB_PASSWORD is`,
+        '  not set so this run will not mint it. The install would complete and the server would',
+        '  then fail to connect. Either set APP_SERVICE_DB_PASSWORD (mints/aligns',
+        `  APP_SERVICE_DB_ROLE, default app_service) or create ${runtimeRole.role} first.`,
+        '',
+        '  Nothing else was written to the database.',
+      ]);
+    }
+    const a = r.rows[0];
+    if (a.rolsuper || a.rolbypassrls || !a.rolcanlogin) {
+      warn(
+        `  ⚠ runtime role ${runtimeRole.role} is ${a.rolsuper ? 'a superuser' : a.rolbypassrls ? 'BYPASSRLS' : 'NOLOGIN'} — ` +
+          'the readiness contract will refuse it in step 4.',
+      );
+    } else {
+      log(`  ✓ runtime role ${runtimeRole.role} exists (non-superuser, NOBYPASSRLS, LOGIN) — grants will be refreshed`);
+    }
+  }
+
   // 3. psql — install-fresh step 6 (governed content) shells out to it.
   const psql = spawnSync('psql', ['--version'], { encoding: 'utf8' });
   if (psql.error || psql.status !== 0) {
@@ -303,8 +376,13 @@ async function preflight(client, { appRoleWanted }) {
 }
 
 /** Run one of the installers as the OWNER, with the URL precedence pinned. */
-function runAsOwner(label, script, ownerUrl, env) {
+function runAsOwner(label, script, ownerUrl, env, runtimeRole) {
   const childEnv = { ...env };
+  // The children identify the runtime role from RUNTIME_DB_ROLE — the ONE
+  // thing they need to grant to it — never from the app URL, which is deleted
+  // below so no step can run as the runtime role.
+  if (runtimeRole) childEnv.RUNTIME_DB_ROLE = runtimeRole.role;
+  else delete childEnv.RUNTIME_DB_ROLE;
   // Every URL name any of the appliers or drizzle.config.ts consults is set to
   // the owner URL, so no leftover NEON_* / DATABASE_NEON_NEW_SECRET / *_ADMIN
   // variable in the operator's shell can redirect one step at a different
@@ -335,9 +413,10 @@ function runAsOwner(label, script, ownerUrl, env) {
 
 async function main() {
   log('▶ 0/4 Connections');
-  const { ownerUrl, appUrl, ownerFallback } = resolveConnections(process.env);
+  const { ownerUrl, appUrl, ownerFallback, ownerUser, appUser } = resolveConnections(process.env);
   const appRoleWanted = Boolean(process.env.APP_SERVICE_DB_PASSWORD);
-  const appRole = resolveAppServiceRole(process.env);
+  const runtimeRole = resolveRuntimeRoleForRun(process.env, { ownerUser, appUser });
+  const appRole = runtimeRole ? runtimeRole.role : resolveAppServiceRole(process.env);
 
   log(`  owner: ${describeUrl(ownerUrl)}${ownerFallback ? '   (DATABASE_URL fallback)' : ''}`);
   log(`  app:   ${describeUrl(appUrl)}`);
@@ -358,8 +437,13 @@ async function main() {
           '    server until APP_DATABASE_URL points at the role.',
       );
     }
+  } else if (runtimeRole) {
+    log(
+      `  runtime role: ${runtimeRole.role} (${process.env.RUNTIME_DB_ROLE ? 'RUNTIME_DB_ROLE' : 'APP_DATABASE_URL login'}) — ` +
+        'not minted (APP_SERVICE_DB_PASSWORD unset); must exist; its grants are refreshed by install-fresh and deploy-migrate',
+    );
   } else {
-    log('  runtime role: not minted (APP_SERVICE_DB_PASSWORD unset) — the app connects as the owner');
+    log('  runtime role: none distinct from the owner — single-role posture; the app connects as the owner');
   }
 
   log('\n▶ 1/4 Preflight (owner connection, nothing written except CREATE EXTENSION vector)');
@@ -367,7 +451,7 @@ async function main() {
     fail(EXIT_CONFIG, [`✗ cannot connect as the owner: ${err.message}`]),
   );
   try {
-    await preflight(owner, { appRoleWanted });
+    await preflight(owner, { appRoleWanted, runtimeRole });
   } finally {
     await owner.end().catch(() => {});
   }
@@ -377,6 +461,7 @@ async function main() {
     path.join(__dirname, 'install-fresh.mjs'),
     ownerUrl,
     process.env,
+    runtimeRole,
   );
   if (!install.ok) {
     fail(EXIT_INSTALL_FAILED, [
@@ -391,6 +476,7 @@ async function main() {
     path.join(__dirname, 'deploy-migrate.mjs'),
     ownerUrl,
     process.env,
+    runtimeRole,
   );
   if (!migrate.ok) {
     fail(EXIT_MIGRATE_FAILED, [
@@ -400,7 +486,9 @@ async function main() {
   }
 
   log('\n▶ 4/4 Readiness contract — as the APP connection, the way /readyz will see it');
-  const asRuntimeRole = appRoleWanted && appUrl !== ownerUrl;
+  // The app connection is a distinct role whenever one was identified — minted
+  // or merely existing. Then the SELECT-reach and grant-audit checks run as it.
+  const asRuntimeRole = Boolean(runtimeRole) && appUrl !== ownerUrl;
   const app = await connect(appUrl).catch((err) =>
     fail(EXIT_CONTRACT_FAILED, [
       `✗ cannot connect as the app: ${err.message}`,
@@ -426,8 +514,8 @@ async function main() {
   }
   if (!asRuntimeRole) {
     warn(
-      '  ⚠ verified as the OWNER (no APP_DATABASE_URL / APP_SERVICE_DB_PASSWORD split): the\n' +
-        '    SELECT-reach and non-superuser checks did not run. Production needs the split.',
+      '  ⚠ verified as the OWNER (APP_DATABASE_URL is the owner, or unset): the SELECT-reach,\n' +
+        '    grant-audit and non-superuser checks did not run. Production needs the split.',
     );
   }
 
@@ -437,6 +525,7 @@ async function main() {
   log('     GET /readyz must report schema: ok (ana is down until an AI provider key is set).');
   log('   • production: RLS_ENFORCE=on, AUDIT_TRAIL_ENABLED=true, and APP_DATABASE_URL on the');
   log(`     ${appRole} role — the boot refuses a superuser under RLS_ENFORCE=on.`);
+  log(`   • at any time: node scripts/db/audit-runtime-grants.mjs re-checks ${appRole}'s reach.`);
   log('   • every later deploy re-runs deploy-migrate only (the AWS pipeline does this).');
 }
 

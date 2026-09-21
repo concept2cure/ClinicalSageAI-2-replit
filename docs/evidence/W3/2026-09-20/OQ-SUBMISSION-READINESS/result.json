@@ -5,16 +5,16 @@
   "appLabel": "Submission Readiness",
   "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
   "executedBy": "automated runner tests/validation/oq/submission-readiness/run.mjs",
-  "executedAt": "2026-09-21T00:29:42.367Z",
-  "finishedAt": "2026-09-21T00:30:37.035Z",
+  "executedAt": "2026-09-21T01:05:45.948Z",
+  "finishedAt": "2026-09-21T01:07:02.934Z",
   "environment": {
-    "baseUrl": "http://localhost:5200",
+    "baseUrl": "http://localhost:5700",
     "node": "v22.22.2",
     "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
     "playwrightCore": "1.63.0",
     "git": {
       "branch": "concept2cure-v2",
-      "commit": "c07cca69dac11c1cccfb129868a03d613dd354be"
+      "commit": "debdd9664f5759eb9a4a5b024b73c333027baf18"
     },
     "testUser": "jonmichaelpsmith@gmail.com",
     "organizationId": "2",
@@ -40,9 +40,9 @@
     }
   },
   "counts": {
-    "pass": 6,
+    "pass": 8,
     "fail": 1,
-    "deviation": 2,
+    "deviation": 0,
     "not-executed": 0
   },
   "steps": [
@@ -54,45 +54,45 @@
       "action": "POST projects / vault ingest / submissions / sequences / leaves",
       "expected": "All created through the public API",
       "status": "pass",
-      "observed": "program 1d967acc-d6c5-4b0a-a978-7531b0838215; submission 37; sequence 18; leaf m5.3.5",
-      "startedAt": "2026-09-21T00:29:43.020Z",
-      "finishedAt": "2026-09-21T00:29:45.081Z",
+      "observed": "program c89ba4c8-96c4-4379-b181-1c287787b4d6; submission 42; sequence 19; leaf m5.3.5",
+      "startedAt": "2026-09-21T01:05:46.740Z",
+      "finishedAt": "2026-09-21T01:06:07.457Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-00.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/projects",
+          "url": "http://localhost:5700/api/c2c/projects",
           "status": 201
         },
         {
           "file": "steps/OQ-SRDY-00.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/vault/ingest",
+          "url": "http://localhost:5700/api/vault/ingest",
           "status": 201
         },
         {
           "file": "steps/OQ-SRDY-00.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/submissions",
+          "url": "http://localhost:5700/api/submissions",
           "status": 201
         },
         {
           "file": "steps/OQ-SRDY-00.api-4.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/submissions/37/sequences",
+          "url": "http://localhost:5700/api/submissions/42/sequences",
           "status": 201
         },
         {
           "file": "steps/OQ-SRDY-00.api-5.json",
           "method": "PUT",
-          "url": "http://localhost:5200/api/submissions/sequences/18/leaves",
+          "url": "http://localhost:5700/api/submissions/sequences/19/leaves",
           "status": 200
         }
       ],
       "consoleErrors": [],
       "note": null,
-      "rateLimitRetries": 0
+      "rateLimitRetries": 1
     },
     {
       "id": "OQ-SRDY-01",
@@ -105,14 +105,14 @@
       "expected": "HTTP 401/403",
       "status": "pass",
       "observed": "HTTP 401",
-      "startedAt": "2026-09-21T00:29:45.081Z",
-      "finishedAt": "2026-09-21T00:29:45.339Z",
+      "startedAt": "2026-09-21T01:06:07.457Z",
+      "finishedAt": "2026-09-21T01:06:07.714Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-01.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/18/dispatch-readiness",
+          "url": "http://localhost:5700/api/submissions/sequences/19/dispatch-readiness",
           "status": 401
         }
       ],
@@ -131,14 +131,14 @@
       "expected": "HTTP 200 with numeric validationErrors / unacknowledgedShadowCriticals and an explicit ready/blocked verdict with reasons",
       "status": "pass",
       "observed": "gate.cleared=false; validationErrors=1; shadowCriticals=0; releaseSignature=unsigned; blockers: 1 open error-severity validation finding(s) must be resolved before dispatch. | No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting. | Dispatch is blocked because this submission type requires a 21 CFR Par",
-      "startedAt": "2026-09-21T00:29:45.339Z",
-      "finishedAt": "2026-09-21T00:29:45.613Z",
+      "startedAt": "2026-09-21T01:06:07.715Z",
+      "finishedAt": "2026-09-21T01:06:08.021Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-02.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/submissions/sequences/18/dispatch-readiness",
+          "url": "http://localhost:5700/api/submissions/sequences/19/dispatch-readiness",
           "status": 200
         }
       ],
@@ -155,29 +155,21 @@
       "kind": "scripted",
       "action": "POST /api/submissions/:id/dispatch-qc {region, sequenceId, validationErrors:0, unresolvedShadowCriticals:0, leaves}",
       "expected": "HTTP 200; the result uses the server-side assessment (client-supplied zeros do not override it); the verdict is deterministic (no model in the loop)",
-      "status": "deviation",
-      "observed": {
-        "error": {
-          "code": "INVALID_AI_RESPONSE",
-          "message": "The AI response was not valid JSON."
-        }
-      },
-      "startedAt": "2026-09-21T00:29:45.613Z",
-      "finishedAt": "2026-09-21T00:29:45.980Z",
-      "evidence": [
-        "steps/OQ-SRDY-03.at-failure.png"
-      ],
+      "status": "pass",
+      "observed": "{\"clearedToDispatch\":false,\"blockers\":[\"1 open error-severity validation finding(s) must be resolved before dispatch.\",\"No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.\",\"Dispatch is blocked because th",
+      "startedAt": "2026-09-21T01:06:08.021Z",
+      "finishedAt": "2026-09-21T01:06:08.303Z",
+      "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-03.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/submissions/37/dispatch-qc",
-          "status": 502
+          "url": "http://localhost:5700/api/submissions/42/dispatch-qc",
+          "status": 200
         }
       ],
       "consoleErrors": [],
       "note": "If the route answers with an AI-gateway error code, the QC verdict depends on a model call — a CLAUDE.md Rule 2 observation (a verdict must come from a deterministic engine) — and the step is a deviation for the missing provider.",
-      "deviationReason": "AnA unavailable: no provider configured — the dispatch-QC route calls the model (INVALID_AI_RESPONSE). OBSERVATION for review: a dispatch QC verdict routed through a model is not a deterministic gate (CLAUDE.md Rule 2).",
       "rateLimitRetries": 0
     },
     {
@@ -191,20 +183,20 @@
       "expected": "submission_readiness_review listed with 5 steps; execute without projectId → 400",
       "status": "pass",
       "observed": "template present (5 steps); execute w/o projectId → 400",
-      "startedAt": "2026-09-21T00:29:45.980Z",
-      "finishedAt": "2026-09-21T00:29:46.499Z",
+      "startedAt": "2026-09-21T01:06:08.303Z",
+      "finishedAt": "2026-09-21T01:06:08.821Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-04.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/orchestration/templates",
+          "url": "http://localhost:5700/api/orchestration/templates",
           "status": 200
         },
         {
           "file": "steps/OQ-SRDY-04.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/orchestration/execute",
+          "url": "http://localhost:5700/api/orchestration/execute",
           "status": 400
         }
       ],
@@ -222,21 +214,21 @@
       "action": "POST /api/orchestration/execute {templateId:\"submission_readiness_review\", projectId}; GET /executions/:id",
       "expected": "Execution starts (2xx) and its status is readable; steps are orchestrator_logic (no model call)",
       "status": "pass",
-      "observed": "execution a642e22d-2126-42ca-ba3d-00e3ee2815b4: {\"executionId\":\"a642e22d-2126-42ca-ba3d-00e3ee2815b4\",\"templateId\":\"submission_readiness_review\",\"status\":\"completed\",\"projectId\":\"1d967acc-d6c5-4b0a-a978-7531b0838215\",\"organizationId\":2,\"module\":\"ind\",\"steps\":[{\"stepId\":\"inspect_project_state\",\"name\":\"Inspect project state\",\"status\":\"completed\",\"s",
-      "startedAt": "2026-09-21T00:29:46.499Z",
-      "finishedAt": "2026-09-21T00:29:48.554Z",
+      "observed": "execution 0531f814-aca3-44cb-abe9-68af6c76c8c2: {\"executionId\":\"0531f814-aca3-44cb-abe9-68af6c76c8c2\",\"templateId\":\"submission_readiness_review\",\"status\":\"completed\",\"projectId\":\"c89ba4c8-96c4-4379-b181-1c287787b4d6\",\"organizationId\":2,\"module\":\"ind\",\"steps\":[{\"stepId\":\"inspect_project_state\",\"name\":\"Inspect project state\",\"status\":\"completed\",\"s",
+      "startedAt": "2026-09-21T01:06:08.821Z",
+      "finishedAt": "2026-09-21T01:06:10.903Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-05.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/orchestration/execute",
+          "url": "http://localhost:5700/api/orchestration/execute",
           "status": 200
         },
         {
           "file": "steps/OQ-SRDY-05.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/orchestration/executions/a642e22d-2126-42ca-ba3d-00e3ee2815b4",
+          "url": "http://localhost:5700/api/orchestration/executions/0531f814-aca3-44cb-abe9-68af6c76c8c2",
           "status": 200
         }
       ],
@@ -253,27 +245,21 @@
       "kind": "scripted",
       "action": "POST /api/governed-intelligence/contradictions/scan/1",
       "expected": "HTTP 200 with a deterministic scan result (possibly zero findings)",
-      "status": "deviation",
-      "observed": {
-        "error": "Failed to scan project for contradictions",
-        "details": "permission denied for table decision_records"
-      },
-      "startedAt": "2026-09-21T00:29:48.554Z",
-      "finishedAt": "2026-09-21T00:29:48.868Z",
-      "evidence": [
-        "steps/OQ-SRDY-06.at-failure.png"
-      ],
+      "status": "pass",
+      "observed": "{\"findings\":[],\"summary\":{\"total\":0,\"bySeverity\":{},\"byType\":{}}}",
+      "startedAt": "2026-09-21T01:06:10.903Z",
+      "finishedAt": "2026-09-21T01:06:11.167Z",
+      "evidence": [],
       "api": [
         {
           "file": "steps/OQ-SRDY-06.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/governed-intelligence/contradictions/scan/1",
-          "status": 500
+          "url": "http://localhost:5700/api/governed-intelligence/contradictions/scan/1",
+          "status": 200
         }
       ],
       "consoleErrors": [],
       "note": null,
-      "deviationReason": "IQ-DEV-001: public.assumption_records, public.contradiction_links, public.decision_records are listed as unreadable by the runtime role in IQ-07 (IQ/db-role-denied-tables.json); the scan answers 500. Re-execute after the grant is applied.",
       "rateLimitRetries": 0
     },
     {
@@ -286,9 +272,9 @@
       "action": "Open /concept2cure/dispatch-readiness with the program selected",
       "expected": "The surface shows the open program's sequence (number 0000) and its gate verdict",
       "status": "fail",
-      "observed": "CLIENT CATEGORIES\nWORKSPACE\nSCIENCE & INTELLIGENCE\nEXPLORE\nQUICK ACCESS\nJS\nConcept2Cure.RI\n›\n›\nDispatch readiness\nBiotech & Pharma\nCT\nConcept2Cure Therapeutics\nSearch, jump, or run a command\n⌘K\nTask\n3\nANA · DISPATCH GATE · PROVEN, NOT GENERATED\nCleared to dispatch?\nSequence 18 · region FDA · 1 leaves · status draft\nDispatch blocked\n\n3 blockers stand between you and dispatch.\n\nThis is the deterministic floor — I cannot clear it while these are open, no matter how the draft reads. Close them, then re-check.\n\nStructural validation\n1 open error-severity finding\neCTD technical validation over the c",
-      "startedAt": "2026-09-21T00:29:48.868Z",
-      "finishedAt": "2026-09-21T00:30:25.312Z",
+      "observed": "CLIENT CATEGORIES\nWORKSPACE\nSCIENCE & INTELLIGENCE\nEXPLORE\nQUICK ACCESS\nJS\nConcept2Cure.RI\n›\n›\nDispatch readiness\nBiotech & Pharma\nCT\nConcept2Cure Therapeutics\nSearch, jump, or run a command\n⌘K\nTask\n3\nANA · DISPATCH GATE · PROVEN, NOT GENERATED\nCleared to dispatch?\nNo sequence to gate for OQ-005 Readiness program 20260921010546 yet\nIts submission \"OQ-005 Readiness program 20260921010546\" has no eCTD sequence yet. Build a sequence and place documents into it, then AnA can prove whether it is cleared to transmit.\n✻\nANA",
+      "startedAt": "2026-09-21T01:06:11.167Z",
+      "finishedAt": "2026-09-21T01:06:48.818Z",
       "evidence": [
         "steps/OQ-SRDY-07.png",
         "steps/OQ-SRDY-07.at-failure.png"
@@ -296,7 +282,7 @@
       "api": [],
       "consoleErrors": [
         {
-          "at": "2026-09-21T00:29:53.290Z",
+          "at": "2026-09-21T01:06:15.676Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
         }
@@ -317,8 +303,8 @@
       "expected": "Both render (screenshots); an unavailable store is shown as an error/empty state, never as data",
       "status": "pass",
       "observed": "rendered",
-      "startedAt": "2026-09-21T00:30:25.312Z",
-      "finishedAt": "2026-09-21T00:30:36.950Z",
+      "startedAt": "2026-09-21T01:06:48.818Z",
+      "finishedAt": "2026-09-21T01:07:02.838Z",
       "evidence": [
         "steps/OQ-SRDY-08.orchestration.png",
         "steps/OQ-SRDY-08.inconsistency.png"
@@ -326,32 +312,32 @@
       "api": [],
       "consoleErrors": [
         {
-          "at": "2026-09-21T00:30:29.666Z",
+          "at": "2026-09-21T01:06:53.279Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
         },
         {
-          "at": "2026-09-21T00:30:30.667Z",
+          "at": "2026-09-21T01:06:55.815Z",
           "kind": "console.error",
           "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
         },
         {
-          "at": "2026-09-21T00:30:30.668Z",
+          "at": "2026-09-21T01:06:55.861Z",
           "kind": "console.error",
           "message": "Failed to load resource: the server responded with a status of 404 (Not Found)"
         },
         {
-          "at": "2026-09-21T00:30:35.538Z",
+          "at": "2026-09-21T01:07:00.997Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
         },
         {
-          "at": "2026-09-21T00:30:36.331Z",
+          "at": "2026-09-21T01:07:02.159Z",
           "kind": "console.error",
           "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
         },
         {
-          "at": "2026-09-21T00:30:36.337Z",
+          "at": "2026-09-21T01:07:02.171Z",
           "kind": "console.error",
           "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
         }
