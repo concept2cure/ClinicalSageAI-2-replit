@@ -20,7 +20,10 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
 import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
-import { getSubmissionRegionProfile } from '../region-profiles/region-profile-service';
+import {
+  getSubmissionRegionProfile,
+  requiredModule1CodesForRegion,
+} from '../region-profiles/region-profile-service';
 import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
 import {
   evaluateDispatchGate,
@@ -243,26 +246,17 @@ async function countCompletedShadowRuns(
 
 /**
  * Flatten a region profile's Module-1 tree to the section codes marked required
- * for this application type. A section that declares `requiredFor` is required
- * only for those application types (a debarment certification for a marketing
- * application, the general investigational plan for an IND); when the
- * application type is unknown every required section is kept — conservative,
- * as before.
+ * for this application type.
+ *
+ * The walk now lives beside the profile it reads
+ * (`region-profile-service.requiredModule1CodesForRegion`) because a second
+ * copy of "what Module 1 does this application need" had grown in
+ * `ectd4-validator`, as a hand-written literal set that disagreed with this one
+ * on four codes. This name is kept as the export the dispatch path already
+ * uses; it is now a thin delegation rather than a parallel implementation.
  */
 export function requiredModule1Codes(region: string, applicationType?: string | null): string[] {
-  const profile = getSubmissionRegionProfile(region);
-  if (!profile) return [];
-  const app = applicationType ? String(applicationType).toLowerCase() : null;
-  const out: string[] = [];
-  const walk = (sections: typeof profile.module1Sections): void => {
-    for (const s of sections) {
-      const applies = !s.requiredFor || !app || s.requiredFor.includes(app);
-      if (s.required && applies) out.push(s.number);
-      if (s.childSections?.length) walk(s.childSections);
-    }
-  };
-  walk(profile.module1Sections);
-  return out;
+  return requiredModule1CodesForRegion(region, applicationType);
 }
 
 /**
