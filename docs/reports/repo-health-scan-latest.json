@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-21T19:59:01.948Z",
+  "generatedAt": "2026-09-22T01:41:26.331Z",
   "git": {
-    "sha": "c402dbb6b7fb8b52195108c01d15fcc1368c8491",
+    "sha": "c69dcc92dfa51256417886d808956abd003e0728",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2007,7 +2007,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 242329
+        "bytes": 242681
       },
       {
         "file": "server/statistics-service.ts",
@@ -2185,7 +2185,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5269
+        "lines": 5273
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
