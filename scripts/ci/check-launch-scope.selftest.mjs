@@ -23,7 +23,12 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'launch-scope-selftest-'));
 const copy = path.join(tmp, 'surfaces');
 fs.cpSync(SRC, copy, { recursive: true });
 const vault = path.join(copy, 'Vault.tsx');
-fs.appendFileSync(vault, "\nimport { SELFTEST_FAKE_ROWS } from '../fixtures/vault-data';\n");
+// The specifier is assembled rather than written out: ci:untracked-imports scans
+// this file, and a literal relative specifier inside a string reads to it as an
+// import of a module that does not exist. The line written into the COPY is
+// byte-for-byte what it always was.
+const fixtureSpecifier = ['..', 'fixtures', 'vault-data'].join('/');
+fs.appendFileSync(vault, `\nimport { SELFTEST_FAKE_ROWS } from '${fixtureSpecifier}';\n`);
 
 const run = (env) =>
   spawnSync(process.execPath, [GATE, '--json'], { cwd: ROOT, env: { ...process.env, ...env }, encoding: 'utf8' });

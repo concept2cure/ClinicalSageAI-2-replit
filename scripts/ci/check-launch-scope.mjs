@@ -137,7 +137,9 @@ if (fs.existsSync(ALLOWLIST)) {
   }
 }
 // Which file implements which surface. surfaceViews.ts binds a component
-// symbol to a chunk (`const Vault = lazySurface(() => import('./surfaces/Vault')…`)
+// symbol to a chunk (`const Vault = lazySurface(...)` loading surfaces/Vault — written
+// without the import keyword on purpose: ci:untracked-imports reads this file, and a
+// quoted relative specifier in a comment parses there as a real import)
 // and then an id to that symbol (`vault: { component: Vault, … }`). Two maps.
 const pathForSymbol = {};
 for (const m of viewsSrc.matchAll(/^const\s+(\w+)\s*=\s*lazy(?:Owned)?Surface\(\(\)\s*=>\s*import\('\.\/surfaces\/([^']+)'\)/gm)) {
