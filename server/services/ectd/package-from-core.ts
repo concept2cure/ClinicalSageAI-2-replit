@@ -120,6 +120,12 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
       checksum: l.checksum,
       documentTable: l.documentTable,
       documentId: l.documentId,
+      // 2026-09-22 (W5/D7): the uuid half of the reference. Without it every
+      // vault-backed leaf reached resolveFile with documentId null and no uuid,
+      // resolved to nothing and landed in `skipped` — AFTER materialization had
+      // staged it, so it was never `unresolved` either, and transmit (which read
+      // only unresolvedLeaves) sent the sequence without the document.
+      documentUuid: l.documentUuid,
       granularity: l.granularity,
       documentType: l.documentType,
     })),

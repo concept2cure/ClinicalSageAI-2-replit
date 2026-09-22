@@ -1001,6 +1001,22 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     );
   }
 
+  // 2026-09-22 (W5/D7): two more ways a sequence reached the gateway missing
+  // what the author placed — a leaf left out of the ZIP (`skipped`) and a draft
+  // leaf shipped in it (`unfinalized`) — both computed by assembly and read by
+  // nobody here. See assembledTransmitBlockers. The claim is released so the
+  // sequence stays transmittable once the cause is fixed.
+  const { assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
+  const gaps = assembledTransmitBlockers(assembled);
+  if (gaps.length > 0) {
+    await assembled.cleanup();
+    await releaseTransmitSlot(sequenceId, ctx.organizationId);
+    throw new SubmissionError(
+      'DISPATCH_BLOCKED',
+      `Transmit blocked — ${gaps.join('; ')}. A transmitted sequence must carry every placed leaf, and only approved documents.`,
+    );
+  }
+
   let result;
   try {
     result = await gw.transmit({

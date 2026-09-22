@@ -89,6 +89,42 @@ export interface AssembleSequenceResult extends PackageFromCoreResult {
 }
 
 /**
+ * What, besides an unresolved source, stops an assembled sequence from being
+ * transmitted — one sentence per cause, in the words transmit refuses with.
+ * Empty means nothing here stops it. 2026-09-22 (W5/D7).
+ *
+ *  • `skipped`: a placed leaf the packaging step could not express and left out
+ *    of the ZIP. A leaf left out is a leaf missing from the filing.
+ *  • `unfinalized`: a leaf whose source is still a draft or in review. It is IN
+ *    the ZIP — the agency would receive a document no one approved.
+ *
+ * transmitSequence refuses on any of these; the assemble route reports them,
+ * so "assembled" is never read as "ready to send".
+ */
+export function assembledTransmitBlockers(
+  r: Pick<AssembleSequenceResult, 'skipped' | 'unfinalized' | 'unfinalizedSections'>,
+): string[] {
+  const out: string[] = [];
+  if (r.skipped.length > 0) {
+    out.push(
+      `${r.skipped.length} placed leaf/leaves could not be packaged (` +
+        r.skipped.map((l) => `${l.sectionCode}: ${l.reason}`).join('; ') +
+        ')',
+    );
+  }
+  if (r.unfinalized > 0) {
+    out.push(
+      `${r.unfinalized} leaf document(s) are not approved (` +
+        (r.unfinalizedSections.length > 0
+          ? r.unfinalizedSections.map((d) => `${d.sectionCode}: ${d.status}`).join('; ')
+          : 'not itemised') +
+        ')',
+    );
+  }
+  return out;
+}
+
+/**
  * Assemble the sequence's canonical leaves into an eCTD package. Tenant-scoped:
  * leaves + their coauthor documents must belong to organizationId.
  */
