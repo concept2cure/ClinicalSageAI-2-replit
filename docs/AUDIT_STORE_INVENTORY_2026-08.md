@@ -97,7 +97,7 @@ verdict (b)".
 | 12 | `cognitive_audit.electronic_signatures` | 1 | `cognitive-audit.service.ts:542` |
 | 13 | `cognitive_audit.compliance_attestations` | 1 | `cognitive-audit.service.ts:787` |
 | 14 | `cognitive_audit.audit_replay_sessions` | 1 | `cognitive-audit.service.ts:395` |
-| 15 | `document_audit_trail` | 1 live | `DocumentOrchestrationService.ts:437` (the second writer, `unifiedDocumentIngestion.js:1316`, is broken and callerless — §6.1) |
+| 15 | `document_audit_trail` | 1 live | `DocumentOrchestrationService.ts:437` (a second writer, `unifiedDocumentIngestion.js`, was broken and callerless and has been deleted — §6.1) |
 | 16 | `device_audit_trail` | 2, one partial | `part11ComplianceService.ts:355` **already emits an `audit_logs` row** at `:374`, but with `resourceType: entityType` — the row exists and is chained, it just does not name the domain table, so a coverage query keyed on `table_name` cannot see it. `medicalDeviceService.ts:876` emits nothing |
 | 17 | `authoring_export_history` | 2 | `authoring.router.ts:4232`, `ana-ri/command-executor.ts:3186` |
 | 18 | `section_status_log` | 2 | `artifact-tagger.ts:290`, `project-sections.ts:861` |
@@ -418,7 +418,7 @@ right fix for most is a reader, not a `DROP`.
 | Table | Writers | Reader evidence | Note |
 |---|---|---|---|
 | `charter_audit_events` | `routes/charters.ts:717` | `grep -rniE "FROM charter_audit_events\|from\(charterAuditEvents\)" server client` → nothing; migrations: only `BEFORE UPDATE`/`BEFORE DELETE` immutability triggers (`20260629_charter_tables_rebuild.sql:359-364`) | **The sharpest case.** `charters.ts:745` states the row "IS the §11.10(e) coverage of record for the" charter domain. Written in-transaction with an `event_hash` — and unreadable through the application. Add a reader |
-| `document_audit_trail` | `DocumentOrchestrationService.ts:437` (Drizzle), `unifiedDocumentIngestion.js:1316` (raw, broken — §6.1) | none in the application; migrations: one `COUNT(*)` into a `RAISE NOTICE` in `emergency_security_migration.sql:78` — a one-off diagnostic, not a reader | Also has a DDL collision — §6.2 |
+| `document_audit_trail` | `DocumentOrchestrationService.ts:437` (Drizzle); the raw `unifiedDocumentIngestion.js` writer was deleted — §6.1 | none in the application; migrations: one `COUNT(*)` into a `RAISE NOTICE` in `emergency_security_migration.sql:78` — a one-off diagnostic, not a reader | Also has a DDL collision — §6.2 |
 | `contradiction_consequence_log` | 9 sites: `contradiction-consequence-service.ts:451,499,553,696`, `contradiction-engine-service.ts:606`, `contradiction-resolution-orchestrator.ts:460,547,592,617` | none | Most-written dead table in the repo |
 | `ai.gateway_audit_log` | `ai-gateway/audit.ts:321` | `grep -rniE "FROM ai\.gateway_audit_log" server scripts` → nothing | The AI provenance ledger is **fail-closed on write** (`server/startup/…/aiProvenanceLedgerInvariant.test.ts:25`, `audit.ts:143-152`) and never read back. `scripts/ai-governance/generate-evidence-pack.ts:86` only *describes* it in prose |
 | `innovation.guardrail_api_audit` | `compliance-guardrails-sdk-service.ts:1027` | only `tests/integration/innovation-platform.test.ts:842,935` | |
@@ -447,6 +447,22 @@ caught and logged at `:1332-1335` and processing continues, so the write silentl
 Impact today is nil — `createAuditEntry` has no callers
 (`grep -rn "createAuditEntry" server` returns only its own definition) — which makes it dead
 *and* broken. Delete it or fix it; do not leave it as a template.
+
+**Resolved 2026-09-22 — deleted.** `createAuditEntry` was removed together with its two
+siblings in the same file, `storeDocumentChunks` and `storeDocumentTables`, which had the
+same defect one level worse: they insert into `document_chunks` and `document_tables`,
+neither of which exists in `public` on a deployed schema (only `vault.document_chunks`
+exists, with a different column set), so every call raised 42P01 and was swallowed as
+"non-critical". Neither was reachable: `processDocument` never builds
+`processedText.chunks`, and `extractContent` never returns `tables`. The canonical chunk
+store is `vault.document_chunks`, written by
+`server/services/vault/document-chunking.service.ts`. The live ingestion path is audited
+through `ModuleIntegrationService` → `document_audit_logs`, and the canonical
+`document_audit_trail` writer is still `DocumentOrchestrationService.ts`.
+`db/migrations/emergency_security_migration.sql`, the only file that adds the columns these
+writers named, stays **off every applier**: it would add a `VARCHAR tenant_id DEFAULT
+'default'` second tenancy key to this Part 11 table, whose RLS is keyed on
+`organization_id`. Found by `npm run ci:column-reachability`.
 
 ### 6.2 `document_audit_trail` has two incompatible DDLs
 - `migrations/0000_sweet_joseph.sql:2610` — `id serial`, `organization_id`, `action_type`, `action_category`, `user_name`, `user_email`, `data_integrity_check`, … (matches `shared/schema.ts:1903` and the `DocumentOrchestrationService.ts:437` writer)

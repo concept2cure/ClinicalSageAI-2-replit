@@ -111,6 +111,18 @@ jobs:
         # referenced table. Baselined; anything new fails.
         run: npm run ci:migration-reachability
 
+      - name: Guardrails — server SQL references a COLUMN no applier creates
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # The same question one level down. A migration that only ALTERs creates
+        # no table, so the guard above never looks at it: six columns (the Part 11
+        # seal verifier's hmac_seal, DSAR execution_evidence, ai_claims
+        # verifier_flags, IVDR binder/pack columns) sat in db/migrations/ on no
+        # applier while every endpoint naming them raised 42703. Reads the same
+        # durable surface and server files as the table guard; resolves each
+        # column through the clause it appears in, not by word co-occurrence.
+        # Baseline entries need a written reason.
+        run: npm run ci:column-reachability
+
       - name: Guardrails — server SQL references a table nothing creates
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit

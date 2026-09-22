@@ -1033,9 +1033,9 @@ describe('golden journey — drug NDA / eCTD', () => {
       'authMiddleware/requireRole run against a verified-principal middleware standing in for the platform ' +
         "auth boundary (see the 510(k) journey); the routers' own org scoping, role gates and Part 11 " +
         're-authentication all execute for real.',
-      'Separation of duties degrades to log-and-allow for `ectd-sequence` targets (resolveTargetOwnerId ' +
-        'models no owner column for them), so the journey signs as a SECOND user by convention rather than ' +
-        'by enforcement. That degradation is the real behaviour and is recorded here rather than papered over.',
+      'Separation of duties is ENFORCED for `ectd-sequence` targets: authorship resolves to ' +
+        'ectd_sequences.created_by, and an approval/release signature by that user is refused (403); a sequence ' +
+        'with no recorded creator is refused too (409). The journey signs as a SECOND user because it must.',
       "auditService's second sink (audit.tamper_proof_log) is not provisioned here; the chained audit_logs " +
         'rows this journey asserts are written first and independently.',
     );

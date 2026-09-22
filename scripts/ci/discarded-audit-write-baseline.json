@@ -10,7 +10,7 @@
     "server/routes/ana-intelligence.ts": 1,
     "server/routes/authoring.router.ts": 1,
     "server/routes/c2c/ai-editing.ts": 2,
-    "server/routes/c2c/artifacts.ts": 16,
+    "server/routes/c2c/artifacts.ts": 15,
     "server/routes/c2c/communication-center.ts": 7,
     "server/routes/c2c/context-intelligence.ts": 1,
     "server/routes/c2c/conversations.ts": 4,

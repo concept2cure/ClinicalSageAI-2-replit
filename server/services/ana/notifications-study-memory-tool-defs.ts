@@ -475,7 +475,9 @@ export const CREATE_PROTOCOL_AMENDMENT: AnaTool = {
     properties: {
       protocol_document_id: { type: 'number' }, title: { type: 'string' }, amendment_number: { type: 'string' },
       rationale: { type: 'string' }, amendment_type: { type: 'string', enum: ['major', 'minor', 'administrative'] },
-      affects_consent: { type: 'boolean' }, affects_risk: { type: 'boolean' }, reason: { type: 'string' },
+      affects_consent: { type: 'boolean', description: 'Does the change affect the informed-consent content? Omit if not assessed.' },
+      affects_risk: { type: 'boolean', description: 'Does the change INCREASE risk to subjects or worsen the risk/benefit balance? A risk-reducing change is false. Omit if not assessed.' },
+      reason: { type: 'string' },
     },
     required: ['protocol_document_id', 'title'],
   },
@@ -493,7 +495,7 @@ export const ADD_AMENDMENT_CHANGE: AnaTool = {
 
 export const REVIEW_AMENDMENT: AnaTool = {
   name: 'review_amendment',
-  description: "Read-only amendment submission readiness: whether the amendment is a draft with at least one change line item, and the blockers if not. Does NOT compute an IRB review path or a re-consent determination.",
+  description: "Read-only amendment review. Returns submission readiness (a draft with at least one change line item) and a deterministic impact classification: IRB review is ALWAYS required (45 CFR 46.108(a)(3)(iii); 21 CFR 56.108(a)(4)) and the result says whether it is expedited-eligible or convened; re-consent is always reported as the IRB's determination, never as required or not required; and FDA protocol-amendment status under 21 CFR 312.30 for IND studies. Phase and IND status come back with their recorded source; unrecorded inputs are reported as undetermined. Relay the statuses and bases as given — do not upgrade 'undetermined' or 'sponsor_determination_required' to a yes or no.",
   input_schema: { type: 'object', properties: { amendment_id: { type: 'number' } }, required: ['amendment_id'] },
 };
 

@@ -219,3 +219,36 @@ export function projectModelsForPicker(models: ModelConfig[]): PickerModel[] {
     }))
     .sort((a, b) => b.qualityScore - a.qualityScore);
 }
+
+/**
+ * The `output_config.effort` a given wire model will accept, or undefined when
+ * it accepts none — so the gateway never sends a parameter the model rejects.
+ *
+ * Effort was attached to every Anthropic request regardless of model, and
+ * Haiku 4.5 rejects it with a 400. Short asks ("take me to CMC") and every
+ * Fast turn route to the economy tier, which is Haiku 4.5, so each of those
+ * turns failed its first call and was re-served up the fallback ladder —
+ * slower, dearer, and on a turn that had tools, sometimes on a model path that
+ * carries none.
+ *
+ *   Haiku 4.5, Sonnet 4.5 and older   → no effort (400 if sent)
+ *   Opus 4.5                          → low | medium | high
+ *   Opus 4.6, Sonnet 4.6              → low | medium | high | max
+ *   Opus 4.7+, Sonnet 5, Claude 5 / Fable / Mythos → all levels
+ *
+ * A level the model does not take is lowered to the nearest it does, never
+ * raised: the person asked for at most that much work.
+ */
+export function apiEffortForModel(
+  wireModel: string,
+  effort: 'low' | 'medium' | 'high' | 'max' | undefined
+): 'low' | 'medium' | 'high' | 'max' | undefined {
+  if (!effort) return undefined;
+  const m = (wireModel || '').toLowerCase();
+  if (!m.startsWith('claude-')) return effort;
+  if (/^claude-(haiku|3|instant|2)/.test(m)) return undefined;
+  if (/^claude-sonnet-4(-5|-2|$|-\d{8})/.test(m) || /^claude-sonnet-4-0/.test(m)) return undefined;
+  if (/^claude-opus-4(-1|-0|$|-\d{8})/.test(m)) return undefined;
+  if (/^claude-opus-4-5/.test(m)) return effort === 'max' ? 'high' : effort;
+  return effort;
+}

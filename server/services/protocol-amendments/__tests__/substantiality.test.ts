@@ -1,6 +1,7 @@
 /**
- * Amendment substantiality — EU CTR 536/2014 Article 16, derived rather than
- * declared.
+ * Amendment substantiality — EU CTR 536/2014 Article 2(2)(13) (definition) and
+ * Article 15 (authorisation), plus the US 21 CFR 312.30(b)(1) examples in their
+ * own scope — derived rather than declared.
  *
  * The existing `classifyAmendmentImpact` takes the sponsor's declared type as
  * an input, so it cannot disagree with it. These tests are mostly about the
@@ -160,7 +161,9 @@ describe('substantiality — indicators', () => {
     const after = full({ endpoints: [{ name: 'Fasting plasma glucose at week 24', role: 'primary', type: 'continuous', definition: 'Change from baseline' }] });
     const a = assessSubstantiality(input({ designDelta: diffDesigns(full(), after) }));
 
-    expect(a.verdict).toBe('substantial');
+    expect(a.verdict).toBe('substantial_indicators');
+    expect(a.verdictReason).toMatch(/Article 15/);
+    expect(a.verdictReason).not.toMatch(/Article 16/);
     expect(a.indicators.find((i) => i.id === 'eu-ctr-primary-endpoint')?.status).toBe('indicated');
     expect(a.changed).toContain('primary endpoint');
   });
@@ -231,6 +234,16 @@ describe('substantiality — 21 CFR 312.30(b)(1)(i) sample size', () => {
     expect(i?.action).toMatch(/sets no numeric threshold/);
   });
 
+  /* 312.30(b)(1)(i) names "any significant INCREASE in the number of subjects".
+     A decrease used to be reported as a (b)(1)(i) indication. */
+  it('does not report a decrease as the 312.30(b)(1)(i) example', () => {
+    const after = full({ statisticalPlan: { alpha: 0.05, power: 0.9, plannedSampleSize: 400, plannedAnalyses: [{ endpointName: 'HbA1c change at week 24', method: 'MMRM' }] } });
+    const i = assessSubstantiality(input({ designDelta: diffDesigns(full(), after) })).indicators.find((x) => x.id === 'us-ind-312-30-subject-number');
+    expect(i?.status).toBe('not_indicated');
+    expect(i?.message).toMatch(/not the 312\.30\(b\)\(1\)\(i\) example/);
+    expect(i?.message).toMatch(/scope or scientific quality/);
+  });
+
   it('is not assessed when either version omits the planned sample size', () => {
     const after = full({ statisticalPlan: { alpha: 0.05, power: 0.9, plannedAnalyses: [] } });
     const a = assessSubstantiality(input({ designDelta: diffDesigns(full(), after) }));
@@ -250,7 +263,8 @@ describe('substantiality — reconciling the sponsor’s declaration', () => {
       designDelta: changedEndpoint(),
     }));
 
-    expect(a.declarationConflict).toMatch(/declared administrative/);
+    expect(a.declarationConflict).toMatch(/labelled administrative/);
+    expect(a.declarationConflict).toMatch(/No regulation defines an "administrative" amendment/);
     expect(a.declarationConflict).toMatch(/primary endpoint/);
   });
 
@@ -325,5 +339,52 @@ describe('determinism', () => {
   it('names changed fields in a stable order', () => {
     const after = full({ phase: '2', population: { targetDescription: 'x', analysisPopulations: [], eligibility: [] } });
     expect(changedFields(diffDesigns(full(), after))).toEqual(['eligibility criteria', 'phase']);
+  });
+});
+
+// ─── Scopes: EU verdict, EU procedures, US IND ───────────────────────────────
+
+describe('substantiality — the EU verdict counts only Article 2(2)(13) indicators', () => {
+  it('a Member-State change is an Article 14 / 37 procedure, not a substantial-modification indicator', () => {
+    const a = assessSubstantiality(input({ designDelta: diffDesigns(full(), full({ targetRegions: ['US', 'EU', 'JP'] })) }));
+    const scope = a.indicators.find((i) => i.id === 'eu-ctr-scope');
+    expect(scope?.status).toBe('indicated');
+    expect(scope?.scope).toBe('eu_procedure');
+    expect(scope?.clause).toBe('Regulation (EU) No 536/2014, Articles 14 and 37');
+    expect(a.verdict).not.toBe('substantial_indicators');
+    expect(a.counts.indicated).toBe(0);
+  });
+
+  it('a US-only indication never makes the EU verdict "substantial"', () => {
+    // Arms changed → the EU arms indicator AND the US (b)(1)(ii) indicator both fire;
+    // the EU count must count the EU one only.
+    const after = full({ arms: [full().arms![0]] });
+    const a = assessSubstantiality(input({ designDelta: diffDesigns(full(), after) }));
+    expect(a.indicators.find((i) => i.id === 'us-ind-312-30-control-group')).toMatchObject({ scope: 'us_ind', status: 'indicated' });
+    expect(a.counts.indicated).toBe(a.indicators.filter((i) => i.scope === 'eu_sm' && i.status === 'indicated').length);
+    expect(a.us.indicated).toBeGreaterThanOrEqual(1);
+    expect(a.us.note).toMatch(/Relevant only if the study is under a US IND/);
+  });
+
+  it('a sample-size increase is not counted twice (EU statistical plan + US subject number are separate scopes)', () => {
+    const after = full({ statisticalPlan: { alpha: 0.05, power: 0.9, plannedSampleSize: 900, plannedAnalyses: [{ endpointName: 'HbA1c change at week 24', method: 'MMRM' }] } });
+    const a = assessSubstantiality(input({ designDelta: diffDesigns(full(), after) }));
+    expect(a.counts.indicated).toBe(1); // eu-ctr-statistical-plan only
+    expect(a.us.indicated).toBe(1);     // us-ind-312-30-subject-number
+  });
+
+  it('a dose change surfaces the unconditional 312.30(b)(1)(i) rule without guessing the direction', () => {
+    const arms = full().arms!;
+    const after = full({ arms: [{ ...arms[0], interventions: [{ ...arms[0].interventions[0], dose: '20 mg' }] }, arms[1]] });
+    const i = assessSubstantiality(input({ designDelta: diffDesigns(full(), after) })).indicators.find((x) => x.id === 'us-ind-312-30-dose-exposure');
+    expect(i?.status).toBe('indicated');
+    expect(i?.message).toMatch(/ANY increase in dose/);
+    expect(i?.message).toMatch(/direction is not determined here/);
+  });
+
+  it('no clean US result is presented as "no FDA amendment needed"', () => {
+    const a = assessSubstantiality(input({ designDelta: diffDesigns(full(), full()) }));
+    expect(a.us.indicated).toBe(0);
+    expect(a.us.note).toMatch(/NOT a determination that no FDA protocol amendment is needed/);
   });
 });

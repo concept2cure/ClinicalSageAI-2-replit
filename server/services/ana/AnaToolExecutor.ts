@@ -240,6 +240,20 @@ export interface ToolContext {
    * additional authority — it only changes the narration contract.
    */
   liveDrive?: boolean | null;
+  /**
+   * Navigation targets whose screen is closed to this person (launch scope,
+   * plan tier, module grant), with the reason — from the shell's copy of the
+   * server's own verdict set (services/ana-ri/drive-context). The self-drive
+   * tools refuse these instead of moving the person onto a locked panel.
+   */
+  lockedScreens?: ReadonlyMap<string, string> | null;
+  /**
+   * State that lives for ONE turn and changes as AnA works: the program she
+   * has opened on the person's screen so far. The request's `projectRef` is
+   * what was open when the turn began; after she opens a program mid-turn,
+   * the next project screen must not ask again which one.
+   */
+  turnState?: { program: { id: string; name?: string; code?: string } | null } | null;
 }
 
 type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
@@ -16870,13 +16884,15 @@ registerToolHandler('assess_analytical_method_validation', async (input: Record<
 });
 
 // AnA self-navigation — discover navigable screens from the governed registry.
-registerToolHandler('list_app_screens', async (input: Record<string, unknown>) => {
+registerToolHandler('list_app_screens', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   try {
     const { NAVIGATION_TARGETS } = await import('../../../shared/navigation/index.js');
     const group = typeof input.group === 'string' ? input.group : undefined;
     const scope = input.scope === 'global' || input.scope === 'project' ? input.scope : undefined;
+    const locked = ctx?.lockedScreens ?? null;
     const screens = NAVIGATION_TARGETS
       .filter(t => (group ? t.group === group : true) && (scope ? t.scope === scope : true))
+      .filter(t => !locked?.has(t.id))
       .map(t => ({
         id: t.id,
         label: t.label,
@@ -16889,8 +16905,11 @@ registerToolHandler('list_app_screens', async (input: Record<string, unknown>) =
       status: 'ok',
       count: screens.length,
       screens,
+      ...(locked && locked.size > 0
+        ? { notAvailableHere: [...locked.keys()].slice(0, 100) }
+        : {}),
       instruction:
-        "Navigate with navigate_to using a screen id verbatim. 'project'-scope screens require an active project in context. Pass any listed params (e.g. intelligenceTab).",
+        "Navigate with navigate_to using a screen id verbatim. For a 'project'-scope screen, pass `program` (its id, code or name) to open that program there, or rely on the one already open. Pass any listed params (e.g. intelligenceTab). Screens under notAvailableHere are closed to this workspace — do not offer them.",
     });
   } catch (err: any) {
     return JSON.stringify({ error: `list_app_screens failed: ${err?.message || 'unknown error'}` });
@@ -16906,7 +16925,25 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
     if (!target) {
       return JSON.stringify({ status: 'needs_parameters', message: 'target is required — call list_app_screens to discover screen ids.' });
     }
-    const params = input.params && typeof input.params === 'object' ? (input.params as Record<string, unknown>) : {};
+    const rawParams = input.params && typeof input.params === 'object' ? (input.params as Record<string, unknown>) : {};
+    // `program` is not a registry param — it names the program a project
+    // screen should show, resolved below against the tenant's own programs.
+    const { program: paramProgram, ...params } = rawParams as Record<string, unknown> & { program?: unknown };
+    const programRef =
+      typeof input.program === 'string' && input.program.trim()
+        ? input.program.trim()
+        : typeof paramProgram === 'string' && paramProgram.trim()
+          ? paramProgram.trim()
+          : '';
+    const locked = ctx?.lockedScreens?.get(target);
+    if (locked) {
+      return JSON.stringify({
+        status: 'not_available',
+        message: `The "${target}" screen is not available in this workspace (${locked}).`,
+        instruction:
+          'Do not say you are taking them there. Tell them plainly it is not available here and why, and offer what you can do instead.',
+      });
+    }
     const { resolveNavigation } = await import('../../../shared/navigation/index.js');
     const res = resolveNavigation(target, params);
     if (!res.ok) {
@@ -16916,15 +16953,74 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
         ...(res.code === 'unknown_target' ? { validTargets: res.validTargets } : {}),
       });
     }
+    const directive: Record<string, unknown> = { ...res.directive };
+    // A project screen shows ONE program. Resolve the one named, or refuse to
+    // move onto an empty "open a program" state when none is open.
+    if (res.directive.scope === 'project') {
+      const drive = await import('../ana-ri/drive-context.js');
+      if (programRef) {
+        const found = await drive.resolveProgramRef(ctx?.organizationId ?? null, programRef);
+        if (found.status === 'found') {
+          directive.program = {
+            id: found.program.id,
+            name: found.program.name,
+            ...(found.program.code ? { code: found.program.code } : {}),
+          };
+          if (ctx?.turnState) ctx.turnState.program = directive.program as { id: string; name?: string; code?: string };
+        } else if (found.status === 'ambiguous') {
+          return JSON.stringify({
+            status: 'needs_parameters',
+            message: `"${programRef}" matches more than one program — name one exactly.`,
+            programs: drive.programChoices(found.matches),
+          });
+        } else if (found.status === 'not_found') {
+          return JSON.stringify({
+            status: 'needs_parameters',
+            message: `No program matching "${programRef}" in this workspace.`,
+            programs: drive.programChoices(found.candidates),
+          });
+        } else {
+          return JSON.stringify({
+            status: 'error',
+            error: 'The program list could not be read, so the program could not be opened.',
+          });
+        }
+      } else if (ctx?.turnState?.program) {
+        // AnA opened a program earlier this turn — the screen follows it.
+        directive.program = ctx.turnState.program;
+      } else if (!ctx?.projectRef) {
+        const listed = await drive.listProgramCandidates(ctx?.organizationId ?? null, 25);
+        return JSON.stringify({
+          status: 'needs_project',
+          message: listed.ok
+            ? listed.programs.length > 0
+              ? `"${res.directive.label}" shows one program and none is open. Call navigate_to again with \`program\` set to one of these (ask the person which if it is not clear from the conversation).`
+              : `"${res.directive.label}" shows one program and this workspace has none yet. Offer to create one with them from Projects.`
+            : 'The program list could not be read, so no program could be opened.',
+          ...(listed.ok ? { programs: drive.programChoices(listed.programs) } : {}),
+        });
+      }
+    }
+    // What the destination lets AnA do once she is there — so the next move
+    // (an act_on_screen) needs no discovery round.
+    const { SURFACE_ACTIONS } = await import('../../../shared/navigation/surface-actions.js');
+    const screenActions = SURFACE_ACTIONS.filter(a => a.surfaceId === res.directive.targetId).map(a => ({
+      id: a.id,
+      label: a.label,
+      ...(a.params && a.params.length > 0
+        ? { params: a.params.map(p => ({ name: p.name, required: p.required, ...(p.enum ? { enum: p.enum } : {}) })) }
+        : {}),
+    }));
     return JSON.stringify({
       status: 'navigation_ready',
-      directive: res.directive,
+      directive,
+      ...(screenActions.length > 0 ? { screenActions } : {}),
       // The instruction must match what actually happens on screen: under Live
       // Drive the directive is applied as it streams (the user opted in and is
       // watching); otherwise it is offered as a chip the user activates.
       instruction: ctx?.liveDrive
-        ? 'Live Drive is on: this navigation is being applied to the user’s screen now — they are watching you drive. Narrate where you have taken them and why, then continue the work there. Project-scoped screens require an active project.'
-        : 'A navigation directive was produced and is OFFERED to the user as an action they activate — the screen does not change on its own. Say where you can take them and why, not that you have taken them. Project-scoped screens require an active project.',
+        ? 'Live Drive is on: this navigation is being applied to the person’s screen now. Say where you have taken them in a few words, then continue the work there — screenActions lists what you can do on that screen with act_on_screen. If a screen report says a move did not happen, tell them and take another route.'
+        : 'A navigation directive was produced and is OFFERED to the user as an action they activate — the screen does not change on its own. Say where you can take them and why, not that you have taken them.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });
@@ -16933,11 +17029,14 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
 
 // AnA self-operation — discover the ungoverned on-screen operations from the
 // governed surface-action registry (the sibling of list_app_screens).
-registerToolHandler('list_screen_actions', async (input: Record<string, unknown>) => {
+registerToolHandler('list_screen_actions', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   try {
     const { SURFACE_ACTIONS } = await import('../../../shared/navigation/surface-actions.js');
     const surface = typeof input.surface === 'string' ? input.surface.trim() : '';
-    const actions = SURFACE_ACTIONS.filter(a => (surface ? a.surfaceId === surface : true)).map(
+    const locked = ctx?.lockedScreens ?? null;
+    const actions = SURFACE_ACTIONS.filter(a => (surface ? a.surfaceId === surface : true))
+      .filter(a => !locked?.has(a.surfaceId))
+      .map(
       a => ({
         id: a.id,
         surface: a.surfaceId,
@@ -16975,8 +17074,32 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       input.params && typeof input.params === 'object'
         ? (input.params as Record<string, unknown>)
         : {};
-    const { resolveSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
+    const { resolveSurfaceAction, findSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
+    const known = findSurfaceAction(action);
+    const lockedReason = known ? ctx?.lockedScreens?.get(known.surfaceId) : undefined;
+    if (known && lockedReason) {
+      return JSON.stringify({
+        status: 'not_available',
+        message: `"${known.label}" works on the "${known.surfaceId}" screen, which is not available in this workspace (${lockedReason}).`,
+        instruction: 'Do not say you did it. Tell them plainly it is not available here and why.',
+      });
+    }
     const res = resolveSurfaceAction(action, params);
+    // Opening a program changes which program the next project screen shows.
+    if (res.ok && res.directive.actionId === 'projects.open-program' && ctx?.turnState) {
+      const ref = String(res.directive.params?.program ?? '').trim();
+      if (ref) {
+        const { resolveProgramRef } = await import('../ana-ri/drive-context.js');
+        const found = await resolveProgramRef(ctx.organizationId ?? null, ref);
+        if (found.status === 'found') {
+          ctx.turnState.program = {
+            id: found.program.id,
+            name: found.program.name,
+            ...(found.program.code ? { code: found.program.code } : {}),
+          };
+        }
+      }
+    }
     if (!res.ok) {
       return JSON.stringify({
         status:
@@ -16995,7 +17118,7 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       // The instruction must match what actually happens on screen, exactly as
       // navigate_to's does.
       instruction: ctx?.liveDrive
-        ? `Live Drive is on: this operation is being performed on the user's screen now (on the "${res.directive.surfaceId}" surface — make sure you have navigated there). Narrate what you did and what it shows, then continue.`
+        ? `Live Drive is on: this operation is being performed on the person's screen now (on the "${res.directive.surfaceId}" screen — AnA's move queue takes them there first if needed). Say what you did in a few words and continue. If a screen report says it did not happen, tell them and take another route.`
         : `An action directive was produced and is OFFERED to the user as a chip they activate — the screen does not change on its own. Say what the action will do when they tap it, not that you have done it.`,
     });
   } catch (err: any) {
@@ -17004,17 +17127,42 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
 });
 
 // AnA demonstrations — list the curated demo scripts (training + sales).
-registerToolHandler('list_demo_scripts', async (input: Record<string, unknown>) => {
+/** The screens a demonstration script moves through (navigation targets). */
+async function demoScriptScreens(demoId: string): Promise<string[]> {
+  const { findDemoScript } = await import('../../../shared/navigation/demo-scripts.js');
+  const { findSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
+  const script = findDemoScript(demoId);
+  if (!script) return [];
+  const out: string[] = [];
+  for (const step of script.steps) {
+    if (step.navigate) out.push(step.navigate.target);
+    if (step.act) {
+      const a = findSurfaceAction(step.act.actionId);
+      if (a) out.push(a.surfaceId);
+    }
+  }
+  return out;
+}
+
+registerToolHandler('list_demo_scripts', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   try {
     const { listDemoScripts } = await import('../../../shared/navigation/demo-scripts.js');
     const kind = input.kind === 'training' || input.kind === 'sales' ? input.kind : undefined;
-    const scripts = listDemoScripts().filter(s => (kind ? s.kind === kind : true));
+    const locked = ctx?.lockedScreens ?? null;
+    const all = listDemoScripts().filter(s => (kind ? s.kind === kind : true));
+    // A demonstration that would walk onto a locked screen fails in front of
+    // the person it was run for — it is not offered here.
+    const scripts: typeof all = [];
+    for (const sc of all) {
+      const screens = locked && locked.size > 0 ? await demoScriptScreens(sc.id) : [];
+      if (!screens.some(id => locked?.has(id))) scripts.push(sc);
+    }
     return JSON.stringify({
       status: 'ok',
       count: scripts.length,
       scripts,
       instruction:
-        'Fetch the chosen script with start_product_demo. Demonstrations run best under Live Drive demonstration mode — the user starts it from the AnA rail (Control → Run a demonstration).',
+        'Fetch the chosen script with start_product_demo and run it. With Live Drive on, you drive it on their screen stop by stop.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `list_demo_scripts failed: ${err?.message || 'unknown error'}` });
@@ -17045,6 +17193,20 @@ registerToolHandler('start_product_demo', async (input: Record<string, unknown>,
         scripts: listDemoScripts(),
       });
     }
+    const lockedStops = (await demoScriptScreens(script.id)).filter(id => ctx?.lockedScreens?.has(id));
+    if (lockedStops.length > 0) {
+      const available: Array<{ id: string; title: string }> = [];
+      for (const sc of listDemoScripts()) {
+        const screens = await demoScriptScreens(sc.id);
+        if (!screens.some(id => ctx?.lockedScreens?.has(id))) available.push({ id: sc.id, title: sc.title });
+      }
+      return JSON.stringify({
+        status: 'not_available',
+        message: `"${script.title}" visits screens that are not available in this workspace (${[...new Set(lockedStops)].join(', ')}).`,
+        availableDemos: available,
+        instruction: 'Tell them plainly, and offer one of availableDemos instead.',
+      });
+    }
     // Belt: scripts are registry-validated by the test suite; refuse rather
     // than run a script that somehow references a screen that no longer exists.
     const defects = validateDemoScript(script);
@@ -17056,6 +17218,11 @@ registerToolHandler('start_product_demo', async (input: Record<string, unknown>,
       });
     }
     const driven = ctx?.liveDrive === true;
+    // The workspace's real programs: stops that open one (projects.open-program,
+    // and every project-scoped screen via navigate_to's `program`) are filled
+    // from here, never from a name in the script's talking points.
+    const { listProgramCandidates, programChoices } = await import('../ana-ri/drive-context.js');
+    const listed = await listProgramCandidates(ctx?.organizationId ?? null, 12);
     return JSON.stringify({
       status: 'demo_ready',
       // Read by services/ana-ri/navigation-actions demoStartFromToolResult:
@@ -17063,8 +17230,9 @@ registerToolHandler('start_product_demo', async (input: Record<string, unknown>,
       // demonstration" chip on the answer; a driven one is already playing.
       driven,
       script,
+      ...(listed.ok ? { programs: programChoices(listed.programs) } : {}),
       instruction: driven
-        ? `Run the demonstration now, stop by stop and briskly: for each step, narrate its "say" talking point in your own words (adapted to the user's real data on screen — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). A step without pinned params (e.g. which program to open) is filled from the on-screen context; if the workspace has no programs yet, narrate from the portfolio and offer to set one up together instead. Answer any question the user asks mid-demo, then resume from the next stop. If the turn ends before the script does, say which stop you reached so you can continue from the next one.`
+        ? `Run the demonstration now, all the way through, one stop per step: for each step, say its talking point in one or two sentences of your own (adapted to their real data — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). Make ONE move per round so each screen lands before the next. Pick ONE program from \`programs\` at the start (the first is fine) and use it throughout: pass its name as \`program\` to projects.open-program, and as navigate_to's \`program\` for project screens. If \`programs\` is empty, narrate from the portfolio and offer to set one up together. If a screen report says a move did not happen, say so briefly and continue with the next stop. Answer any question they ask mid-demo, then resume. If the turn ends before the script does, say which stop you reached.`
         : `Live Drive is NOT on for this turn, so the moves below can only be OFFERED as chips, not performed — do not narrate the stops as if you had made them. This answer carries a "Start demonstration: ${script.title}" chip: tell the user that pressing it starts the demonstration with you driving (Live Drive switches on visibly and they can take over at any time), and offer to proceed chip-by-chip instead if they prefer. Give a one-paragraph preview of what the demonstration covers (${script.steps.length} stops, about ${script.minutes} minutes) and stop there.`,
     });
   } catch (err: any) {

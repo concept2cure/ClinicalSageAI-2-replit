@@ -1,5 +1,5 @@
 {
-  "_comment": "Tables the server queries whose ONLY creator is a migration on no durable apply path — they exist on no real database, so those endpoints 500. ci:unbacked-tables cannot see this class: it counts any .sql file as a creator regardless of whether an applier runs it. Anything NEW fails the build. Resolve an entry (put its migration on an applier, or delete the dead reference), then remove it here to ratchet down. Goal: 0.",
+  "_comment": "Tables the server queries whose ONLY creator is a migration on no durable apply path \u2014 they exist on no real database, so those endpoints 500. ci:unbacked-tables cannot see this class: it counts any .sql file as a creator regardless of whether an applier runs it. Anything NEW fails the build. Resolve an entry (put its migration on an applier, or delete the dead reference), then remove it here to ratchet down. Goal: 0.",
   "_durablePaths": [
     "migrations/meta/_journal.json (drizzle migrate)",
     "db/migrations/*_gcc_*.sql (CI psql loop)",
@@ -8,6 +8,16 @@
     "files install-fresh.mjs names explicitly",
     "the drizzle push surface (pgTable/pgView in shared/)"
   ],
-  "count": 0,
-  "tables": {}
+  "count": 1,
+  "tables": {
+    "roles": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/006_roles.sql"
+      ],
+      "referencedBy": [
+        "server/api/enterprise/rbac-routes.js"
+      ],
+      "reason": "Pre-existing, newly visible on 2026-09-22 when the reference scan (serverSqlFiles in check-migration-reachability.mjs) widened from .ts to .ts/.js/.mjs. Each entry was confirmed absent on a reference database built by install-fresh + the full migration set + the gcc tree. Resolutions are being verified adversarially (2026-09-22 triage) and each entry is removed when its fix lands. Not accepted debt. roles is created only under the refused _consolidated tree; the mounted .js router reads it (and user_roles)."
+    }
+  }
 }

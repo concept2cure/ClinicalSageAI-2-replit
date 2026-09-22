@@ -171,3 +171,51 @@ describe('driveReducer', () => {
     expect(next.mode).toBe('assist');
   });
 });
+
+describe('driveReducer — moves that did not land', () => {
+  /* The move queue reports a navigation whose screen never showed, or an
+     operation the screen refused, as `move_failed`. The trail must say so —
+     with the screen's own reason — and must never count it as a move made:
+     the budgets are for moves that happened, and the overlay used to show a
+     tick for an operation stashed for a screen that never mounted. */
+  it('records the failure with its reason, without touching either budget', () => {
+    let s = engaged();
+    s = driveReducer(s, { kind: 'navigation', directive: directive() });
+    s = driveReducer(s, { kind: 'action', actionId: 'vault.search', label: 'Search the vault' });
+    const before = { nav: s.turnApplied, act: s.turnActionsApplied };
+    s = driveReducer(s, {
+      kind: 'move_failed',
+      targetId: 'vault.search',
+      label: 'Search the vault',
+      reason: 'The vault screen is not open.',
+    });
+    expect(s.steps[s.steps.length - 1]).toEqual({
+      kind: 'act',
+      targetId: 'vault.search',
+      label: 'Search the vault',
+      failed: 'The vault screen is not open.',
+    });
+    expect(s.turnApplied).toBe(before.nav);
+    expect(s.turnActionsApplied).toBe(before.act);
+  });
+
+  it('is a no-op outside a live drive — before it engages and after take over', () => {
+    const failed = {
+      kind: 'move_failed' as const,
+      targetId: 'cmc',
+      label: 'CMC',
+      reason: 'did not open',
+    };
+    expect(driveReducer(INITIAL_DRIVE_STATE, failed)).toBe(INITIAL_DRIVE_STATE);
+    const taken = driveReducer(engaged(), { kind: 'take_over' });
+    expect(driveReducer(taken, failed)).toBe(taken);
+  });
+
+  it('take over marks the turn as taken over, not merely inactive', () => {
+    // `takenOver` is what the move queue's canApply reads between moves; a
+    // take-over that only cleared `active` would let the queue keep going.
+    const s = driveReducer(engaged(), { kind: 'take_over' });
+    expect(s.takenOver).toBe(true);
+    expect(s.active).toBe(false);
+  });
+});

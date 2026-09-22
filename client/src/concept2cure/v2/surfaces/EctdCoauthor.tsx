@@ -45,6 +45,7 @@
  * they were typed into, and a governed command comes back as the real §11.50
  * sign-off rather than vanishing.
  */
+import { AnaActionChips } from '../AnaActionChips';
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { I } from '../icons';
 import { liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
@@ -213,7 +214,7 @@ function readProjectId(): string | undefined {
 
 /* ---- Component ---- */
 
-export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
+export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
 
   const [docs, setDocs] = useState<CoauthorDoc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -797,11 +798,12 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
                   <p>{m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')}</p>
                   {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {m.executedActions.map((a, ai) => (
-                        <span key={ai} className="ec-chip" title={a.error || a.label}>
-                          {a.error ? (I.alertTriangle || I.x) : I.check} {a.label}
-                        </span>
-                      ))}
+                      <AnaActionChips
+                        actions={m.executedActions}
+                        onNav={onNav}
+                        onStartDemo={liveDrive?.onStartDemo}
+                        inertClassName="ec-chip"
+                      />
                     </div>
                   )}
                   {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (

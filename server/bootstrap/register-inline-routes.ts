@@ -604,7 +604,9 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Protocol risk register routes:', error);
   }
 
-  // Protocol amendments authoring (impact classification, reconsent triggers; 45 CFR 46.109 / 21 CFR 56.110).
+  // Protocol amendments authoring: IRB review of changes (45 CFR 46.108(a)(3)(iii); 21 CFR 56.108(a)(4)),
+  // re-consent as an IRB determination (45 CFR 46.116(c)(5), 46.109(b); 21 CFR 50.25(b)(5), 56.109(b)),
+  // FDA protocol amendments (21 CFR 312.30).
   try {
     const protocolAmendmentsModule = await import('../routes/protocol-amendments');
     app.use('/api/protocol-amendments', authMiddleware, protocolAmendmentsModule.default);
