@@ -150,16 +150,20 @@ await step(
     urs: ['URS-PROJ-004'],
     title: 'Program creation appears on the organisation audit ledger surface',
     action: 'GET /api/audit-trail/ledger?limit=50 (the read model behind /concept2cure/audit-trail)',
-    expected: 'At least one hash-chained entry exists for the organisation after a program was created',
+    expected: 'At least one hash-chained entry exists for the organisation after a program was created, and the server\'s chain verdict says the chain verifies (meta.chain.ok = true)',
     dependsOn: ['OQ-PROJ-04'],
-    note: 'The ledger surface reads audit_events (server/routes/audit-trail-ledger.routes.ts:173); program intake writes its chained row to audit_logs (server/routes/c2c/projects.ts). If this step fails the two stores are not the same store.',
+    note: 'The ledger surface reads audit_logs, where program intake writes its chained row (server/routes/c2c/projects.ts), merged with audit_events (server/routes/audit-trail-ledger.routes.ts). v0.1 counted entries only, so an unchained entry or a broken chain passed; the step now checks what its expected result says.',
   },
   async ({ api, expect }) => {
     const ledger = await api('GET', '/api/audit-trail/ledger?limit=50');
     expect(ledger.status === 200, `ledger expected 200, got ${ledger.status}`, ledger.json);
     const l = ledger.json?.data ?? [];
     expect(l.length >= 1, 'audit-trail ledger surface has no entries although governed writes were made this run', ledger.json);
-    return `ledger entries: ${l.length}; newest: ${JSON.stringify(l[0]).slice(0, 200)}`;
+    const chained = l.filter((r) => r.hash && r.prevHash);
+    expect(chained.length >= 1, 'no ledger entry carries record/previous hashes', l.slice(0, 3));
+    const chain = ledger.json?.meta?.chain;
+    expect(chain && chain.ok === true, `the server's chain verdict says the audit chain does not verify (${chain ? `ok=false over ${chain.rowsChecked} row(s)` : 'no meta.chain'})`, ledger.json?.meta);
+    return `ledger entries: ${l.length} (${chained.length} hash-chained); server chain verdict ok=true over ${chain.rowsChecked} row(s); newest: ${JSON.stringify(l[0]).slice(0, 160)}`;
   },
 );
 

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-002 |
-| Version | 0.1 |
+| Version | 0.3 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-002 |
 | Runner (the executable protocol) | `tests/validation/oq/vault/run.mjs` — `npm run validation:oq -- vault` |
@@ -14,6 +14,8 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
+| 0.2 | 2026-09-21 | control tower (`0014daa87`) | OQ-VAULT-08b: a newest-first windowed read cannot be asserted to "grow"; the step asserts that the window lists this document's ingest and filing, hash-chained, and that the server's chain verdict is present (VSR-001 §10.1). The step text carried the change; this row and the version field were not updated at the time and are recorded here. |
+| 0.3 | 2026-09-22 | W3 | OQ-VAULT-08b requires the verdict to say the chain verifies (`meta.chain.ok = true`), not merely to be present. Under v0.2 the 2026-09-21 record passed this step over "server chain verdict ok=false over 33 row(s)" (VSR-001 §12). |
 
 ## 1. Method
 
@@ -36,7 +38,7 @@ IQ-001 executed; the test identity can create programs (OQ-VAULT-00 creates one 
 | OQ-VAULT-06 | URS-VAULT-006 | scripted | Download the document | 200; SHA-256 of the body equals the ingest hash |
 | OQ-VAULT-07 | URS-VAULT-007 | scripted | File into `module-5`; then attempt `k510` | Filing recorded with `folderId`; cross-modality folder refused (4xx) |
 | OQ-VAULT-08 | URS-VAULT-008 | scripted | `GET /api/c2c/actions/verify-chain` | `ok:true` |
-| OQ-VAULT-08b | URS-VAULT-008 | scripted | `GET /api/audit-trail/ledger` | The window lists this document's ingest and filing, each hash-chained; the server's chain verdict (`meta.chain`) is present (v0.2: a windowed read cannot be asserted to "grow") |
+| OQ-VAULT-08b | URS-VAULT-008 | scripted | `GET /api/audit-trail/ledger` | The window lists this document's ingest and filing, each hash-chained; the server's chain verdict says the chain verifies, `meta.chain.ok = true` (v0.2: a windowed read cannot be asserted to "grow"; v0.3: presence of a verdict is not a pass) |
 | OQ-VAULT-09 | URS-VAULT-009 | unscripted (browser) | Open `/concept2cure/vault` with the program selected | Document title visible in the data room; screenshot |
 | OQ-VAULT-10 | URS-VAULT-010 | scripted | Read a random program id | 404 |
 

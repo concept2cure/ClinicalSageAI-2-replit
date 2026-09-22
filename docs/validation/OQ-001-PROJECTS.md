@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-001 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-001 |
 | Runner (the executable protocol) | `tests/validation/oq/projects/run.mjs` — `npm run validation:oq -- projects` |
@@ -14,6 +14,7 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
+| 0.2 | 2026-09-22 | W3 | OQ-PROJ-06b checks what its expected result says: at least one entry carries record/previous hashes, and the server's chain verdict (`meta.chain`) is `ok = true`. v0.1 counted entries only, so an unchained entry or a broken chain passed. Shown on a deliberately tampered local chain: v0.1 passed OQ-PROJ-06b while OQ-PROJ-06 failed; v0.2 fails it (VSR-001 §12). |
 
 ## 1. Method
 
@@ -33,7 +34,7 @@ IQ-001 executed on the same installation; `LAUNCH_SCOPE_ENFORCE=on`; a fresh or 
 | OQ-PROJ-04 | URS-PROJ-002, 003 | scripted | Create an IND program | 201; UUID id; name echoed; intake reports scaffolded document and canonical submission |
 | OQ-PROJ-05 | URS-PROJ-003 | scripted | List programs; read by id | Listed; detail matches |
 | OQ-PROJ-06 | URS-PROJ-004 | scripted | `GET /:id/activity`; `GET /api/c2c/actions/verify-chain` | ≥1 attributable entry; chain `ok:true` |
-| OQ-PROJ-06b | URS-PROJ-004 | scripted | `GET /api/audit-trail/ledger` | ≥1 chained entry on the ledger surface's read model |
+| OQ-PROJ-06b | URS-PROJ-004 | scripted | `GET /api/audit-trail/ledger` | ≥1 entry carrying record/previous hashes on the ledger surface's read model, and the server's chain verdict `meta.chain.ok = true` (v0.2) |
 | OQ-PROJ-07 | URS-PROJ-005 | unscripted (browser) | Open `/concept2cure/projects` | Program name visible; screenshot |
 | OQ-PROJ-08 | URS-PROJ-005 | unscripted (browser) | Open `/concept2cure/project-home` with the program selected | Program name visible; screenshot |
 | OQ-PROJ-09 | URS-PROJ-006 | scripted | `POST /api/tasks/tasks`; `GET /api/task-management/board` | 2xx; task on the board |
