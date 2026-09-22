@@ -5,6 +5,8 @@
  * authenticated, tenant-scoped request. Endpoints:
  *
  *   POST /validate   run the deterministic defensibility gates over a design (read-only)
+ *   POST /burden     participant burden + protocol complexity over the SoA (read-only)
+ *   POST /burden/compare  the burden delta an amendment introduces (read-only)
  *   POST /simulate   run the seeded synthetic-twin outcome simulation; the prior can be
  *                    grounded in this tenant's prior CSRs (`useCsrEvidence`)
  *   POST /persist    upsert the design onto the CDISC PRM tables; a governed mutation —
@@ -44,6 +46,8 @@ import {
   type EffectPrior,
   type EvidenceObservation,
 } from '../services/study-design';
+import { burdenProfileForDesign } from '../services/study-design/burden-adapters';
+import { compareBurden } from '../services/study-design/burden-delta';
 
 const router = Router();
 
@@ -297,6 +301,56 @@ router.post('/schedule-of-activities', (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /burden (participant burden + complexity over the SoA) ─────────────
+//
+// Read-only. Every figure is counted from the Schedule of Activities by
+// `burden-model.ts`; a measure the schedule cannot support comes back
+// `not_computable` with a reason, never as zero.
+
+router.post('/burden', (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const design = parseDesign(req, res);
+  if (!design) return;
+  try {
+    return res.json({ burden: burdenProfileForDesign(design) });
+  } catch (err: any) {
+    console.error('[study-design/burden]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─── POST /burden/compare (the burden delta between two designs) ─────────────
+//
+// Read-only. The amendment question: what did this change do to the participant.
+// Body: { before: <design>, after: <design> }.
+
+router.post('/burden/compare', (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const before = designSchema.safeParse(req.body?.before);
+  const after = designSchema.safeParse(req.body?.after);
+  const issues = [
+    ...(before.success ? [] : before.error.issues),
+    ...(after.success ? [] : after.error.issues),
+  ];
+  if (!before.success || !after.success) {
+    return res.status(400).json({ error: 'INVALID_DESIGN', details: issues });
+  }
+  try {
+    const beforeProfile = burdenProfileForDesign(before.data as unknown as StudyDesign);
+    const afterProfile = burdenProfileForDesign(after.data as unknown as StudyDesign);
+    return res.json({
+      before: beforeProfile,
+      after: afterProfile,
+      delta: compareBurden(beforeProfile, afterProfile),
+    });
+  } catch (err: any) {
+    console.error('[study-design/burden-compare]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
 // ─── POST /registration (project the design as a registry record) ────────────
 
 /** Resolve the requested registry and project the matching record(s). */
@@ -439,6 +493,22 @@ router.get('/:studyId/schedule-of-activities', async (req: Request, res: Respons
     });
   } catch (err: any) {
     console.error('[study-design/soa-load]', err?.message);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ─── GET /:studyId/burden (load + measure) ───────────────────────────────────
+
+router.get('/:studyId/burden', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const studyId = String(req.params.studyId);
+  try {
+    const loaded = await loadStudyDesign(studyId, orgId);
+    if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
+    return res.json({ burden: burdenProfileForDesign(loaded.design), validation: loaded.validation });
+  } catch (err: any) {
+    console.error('[study-design/burden-load]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });

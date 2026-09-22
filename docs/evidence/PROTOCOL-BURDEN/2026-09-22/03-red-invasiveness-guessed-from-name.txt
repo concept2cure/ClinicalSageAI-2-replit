@@ -1,0 +1,88 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > counts visits and scheduled procedures from the SoA grid 2ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > reports the study-day span when every scheduled visit carries a study day 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > identifies the heaviest single visit and the median load 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > breaks the load down per visit, preserving column order and cell state 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > counts how many visits each assessment is scheduled at 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > reports the complexity indicators with their basis 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > emits no burden findings for a schedule with no outlier and no empty visit 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses participant time when the activities carry no duration 1ms
+ × server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses the invasive-procedure count and says it will not guess from names 8ms
+   → expected 'computed' to be 'not_computable' // Object.is equality
+ × server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > lists every refused measure, with a reason, on the profile 4ms
+   → expected [ 'participantTimeMinutes', …(2) ] to deeply equal ArrayContaining{…}
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > publishes no composite index 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses the study-day span when any scheduled visit has no study day 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > reports the absent profile for a design with no Schedule of Activities 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > computes the participant total when every scheduled activity carries a duration 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > goes absent — not to 30, not to 0 — when one activity loses its duration 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > counts invasive procedures only when the activities carry invasiveness 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit far heavier than the rest (BRD-010) 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit with nothing scheduled (BRD-011) 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > asks about an assessment scheduled at every single visit (BRD-012) 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > emits findings in the repo DesignFinding shape 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > counts one visit and its load 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > reports a zero-day span, which is a real zero and says so 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > runs no outlier check with too few visits to have a distribution 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > reports the net change in visits, procedures and span 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > names the visit the amendment added and the assessment it dropped 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > reports which retained visits changed load 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > raises the amendment finding on an increase (BRD-030) 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > carries a delta as absent when either side could not compute the measure 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > is not comparable when a side has no Schedule of Activities 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > takes the study-design SoA 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > takes the protocol read model SoA matrix through the same engine 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > refuses the study-day and arm measures the protocol read model does not carry 2ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > refuses the category count when the activities carry no category 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses the invasive-procedure count and says it will not guess from names
+AssertionError: expected 'computed' to be 'not_computable' // Object.is equality
+
+Expected: "not_computable"
+Received: "computed"
+
+ ❯ server/services/study-design/__tests__/burden-model.test.ts:184:51
+    182|
+    183|   it('refuses the invasive-procedure count and says it will not guess …
+    184|     expect(profile.invasiveProcedureCount.status).toBe('not_computable…
+       |                                                   ^
+    185|     expect(profile.invasiveProcedureCount.value).toBeNull();
+    186|     expect(profile.invasiveProcedureCount.absentReason).toMatch(/does …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > lists every refused measure, with a reason, on the profile
+AssertionError: expected [ 'participantTimeMinutes', …(2) ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
++ [
+    "participantTimeMinutes",
+-   "invasiveProcedureCount",
+    "siteStaffTime",
+    "compositeBurdenScore",
+  ]
+
+ ❯ server/services/study-design/__tests__/burden-model.test.ts:191:34
+    189|   it('lists every refused measure, with a reason, on the profile', () …
+    190|     const refused = Object.fromEntries(profile.notComputed.map(n => [n…
+    191|     expect(Object.keys(refused)).toEqual(
+       |                                  ^
+    192|       expect.arrayContaining(['participantTimeMinutes', 'invasiveProce…
+    193|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 31 passed (33)
+   Start at  03:39:31
+   Duration  385ms (transform 159ms, setup 87ms, import 103ms, tests 29ms, environment 0ms)
+
