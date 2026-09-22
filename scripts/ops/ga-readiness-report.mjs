@@ -674,6 +674,53 @@ for (const f of ENFORCEMENT_FLAGS) {
   });
 }
 
+// ── 5b. AI governance ───────────────────────────────────────────────────────
+
+/*
+ * Performance qualification for the models that may serve high-risk regulatory
+ * drafting. `docs/LAUNCH_DEFINITION_OF_DONE.md`: "Only models with a passed PQ
+ * … are approved for high-risk regulatory drafting. For launch that is Claude
+ * Opus 5 (primary) and one validated fallback." D4 lists it as owed.
+ *
+ * Read from the registry source as text, the same way the eSTAR rows read
+ * estar-field-map.ts: this probe runs under plain node and must not need a TS
+ * loader. If the source cannot be parsed the row says so and is NOT ready — an
+ * unreadable registry is not a qualified one.
+ */
+{
+  const src = readFile('server/services/ai-governance/approved-models.ts');
+  const entries = [];
+  if (src) {
+    for (const chunk of src.split(/\n\s+id: '/).slice(1)) {
+      const id = chunk.slice(0, chunk.indexOf("'"));
+      const approved = /\n\s+approvedForHighRisk: true,/.test(chunk);
+      const pq = (chunk.match(/\n\s+pq: \{ status: '([a-z]+)'/) ?? [])[1] ?? null;
+      if (/\n\s+approvedForHighRisk: (true|false),/.test(chunk)) entries.push({ id, approved, pq });
+    }
+  }
+  const approved = entries.filter((e) => e.approved);
+  const passed = approved.filter((e) => e.pq === 'passed');
+  const primaryPassed = passed.some((e) => e.id === 'claude-opus-4');
+  const ok = primaryPassed && passed.length >= 2;
+  record({
+    id: 'high-risk-model-pq',
+    group: 'AI governance',
+    label: 'PQ executed for the models approved for high-risk drafting (Opus 5 + one fallback)',
+    status: ok ? 'ready' : 'blocked',
+    severity: 'blocker',
+    observed:
+      approved.length === 0
+        ? 'could not read approvedForHighRisk from server/services/ai-governance/approved-models.ts — treated as not qualified'
+        : `${passed.length} of ${approved.length} approved model(s) have a passed PQ: ` +
+          approved.map((e) => `${e.id}=${e.pq ?? 'unknown'}`).join(', '),
+    gate:
+      'server/services/ai-gateway/gateway.ts approvedForTask — only approvedForHighRisk models serve document_drafting / regulatory_review, at primary, fallback and explicit selection; PQ status in approved-models.ts',
+    owner: 'Engineering (execute the PQ) + Ops (a product provider key)',
+    unblock:
+      'Provision a product ANTHROPIC_API_KEY; add the live mode the eval harnesses do not yet have (server/eval/doc-quality/README.md, "how to make the numbers real"); execute against server/eval/rag/ and server/eval/doc-quality/; record pq: { status: \'passed\', reference } on each entry it covers.',
+  });
+}
+
 // ── 6. Observability & operational posture ──────────────────────────────────
 
 record({

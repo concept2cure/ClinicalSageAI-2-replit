@@ -16,10 +16,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { parseEnvFile, readEnvFiles, resolveEnv } from './env-files.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-20';
+const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-22';
 const BASE_URL = (process.env.VALIDATION_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
 const OUT = path.join(ROOT, 'docs', 'evidence', 'W3', RUN_DATE, 'IQ');
 fs.mkdirSync(OUT, { recursive: true });
@@ -51,17 +52,9 @@ const fail = (msg) => new Error(msg);
 const exists = (p) => fs.existsSync(path.join(ROOT, p));
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 
-/** Parse KEY=VALUE lines from a dotenv file without exporting them. */
-function dotenv(p) {
-  const out = {};
-  if (!exists(p)) return out;
-  for (const line of read(p).split('\n')) {
-    const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)$/.exec(line);
-    if (m) out[m[1]] = m[2].trim();
-  }
-  return out;
-}
-const env = { ...dotenv('.env'), ...process.env };
+// The environment the server will run with: .env.local, then .env, then the
+// process environment over both — so IQ qualifies the database the OQ uses.
+const env = resolveEnv(ROOT);
 
 console.log('IQ-001 Installation Qualification');
 
@@ -93,18 +86,18 @@ await record('IQ-03', 'Container image definition matches the runbook', 'node:22
   return `Dockerfile checks pass; deploy-aws.yml jobs: ${jobs.join(' → ')}`;
 });
 
-await record('IQ-04', 'Required configuration is declared and (locally) set', 'Every variable docker-compose.yml marks as required exists in .env.example; report which are set in the local .env (values never printed)', () => {
+await record('IQ-04', 'Required configuration is declared and (locally) set', 'Every variable docker-compose.yml marks as required exists in .env.example; report which are set in the local env files, .env.local then .env (values never printed)', () => {
   const compose = read('docker-compose.yml');
   // `${VAR:?...}` in the compose header is the syntax example, not a variable.
   const required = [...new Set([...compose.matchAll(/\$\{([A-Z0-9_]+):\?/g)].map((m) => m[1]))].filter((k) => k !== 'VAR');
-  const example = dotenv('.env.example');
+  const example = parseEnvFile(path.join(ROOT, '.env.example'));
   const exampleText = read('.env.example');
-  const local = dotenv('.env');
+  const local = readEnvFiles(ROOT);
   const notInExample = required.filter((k) => !(k in example) && !new RegExp(`^#?\\s*${k}=`, 'm').test(exampleText));
   const setLocally = required.filter((k) => local[k] && local[k].length > 0);
   const unsetLocally = required.filter((k) => !local[k]);
   const aiKey = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'KIMI_API_KEY'].filter((k) => local[k] && !/^sk-\.\.\./.test(local[k]));
-  const observed = `compose-required: ${required.join(', ')}; not documented in .env.example: ${notInExample.length ? notInExample.join(', ') : 'none'}; set in local .env: ${setLocally.join(', ') || 'none'}; unset locally: ${unsetLocally.join(', ') || 'none'}; AI provider key present locally: ${aiKey.length ? 'yes' : 'no'}`;
+  const observed = `compose-required: ${required.join(', ')}; not documented in .env.example: ${notInExample.length ? notInExample.join(', ') : 'none'}; set in local .env.local/.env: ${setLocally.join(', ') || 'none'}; unset locally: ${unsetLocally.join(', ') || 'none'}; AI provider key present locally: ${aiKey.length ? 'yes' : 'no'}`;
   if (notInExample.length) throw fail(observed);
   return { status: unsetLocally.length ? 'deviation' : 'pass', observed: unsetLocally.length ? `IQ-DEV-002: local environment is a development install, not the production boot contract — ${observed}` : observed };
 });
@@ -117,15 +110,19 @@ await record('IQ-05', 'Database is reachable and carries the application schema'
   client = new pg.Client({ connectionString: env.DATABASE_URL });
   await client.connect();
   const v = (await client.query('select version()')).rows[0].version;
+  // Name the database qualified — host, port and name, never the credentials —
+  // so the record shows it is the one the server and the OQ protocols used.
+  const target = new URL(env.DATABASE_URL);
+  const database = `${target.hostname}:${target.port || 5432}/${(await client.query('select current_database() as d')).rows[0].d}`;
   const ext = (await client.query("select extname, extversion from pg_extension where extname in ('vector','pgcrypto','uuid-ossp') order by 1")).rows;
   const crit = (await client.query("select table_name from information_schema.tables where table_schema='public' and table_name in ('organizations','users','projects','audit_logs','organization_users','platform_role_grants','revoked_tokens') order by 1")).rows.map((r) => r.table_name);
   const journal = await client.query('select count(*)::int as n from c2c_migration_journal').catch(() => null);
   const tables = (await client.query("select count(*)::int as n from information_schema.tables where table_schema='public'")).rows[0].n;
   rec.evidence.push('db-schema.json');
-  fs.writeFileSync(path.join(OUT, 'db-schema.json'), JSON.stringify({ version: v, extensions: ext, criticalTables: crit, publicTableCount: tables, migrationJournalRows: journal?.rows?.[0]?.n ?? null }, null, 2));
+  fs.writeFileSync(path.join(OUT, 'db-schema.json'), JSON.stringify({ database, version: v, extensions: ext, criticalTables: crit, publicTableCount: tables, migrationJournalRows: journal?.rows?.[0]?.n ?? null }, null, 2));
   if (!crit.includes('organizations') || !crit.includes('users')) throw fail(`critical tables missing: ${crit.join(', ')}`);
   if (!ext.some((e) => e.extname === 'vector')) throw fail('pgvector extension not installed');
-  return `${v.split(' on ')[0]}; extensions: ${ext.map((e) => `${e.extname}@${e.extversion}`).join(', ')}; public tables: ${tables}; critical present: ${crit.join(', ')}; c2c_migration_journal rows: ${journal?.rows?.[0]?.n ?? 'table absent'}`;
+  return `database ${database}; ${v.split(' on ')[0]}; extensions: ${ext.map((e) => `${e.extname}@${e.extversion}`).join(', ')}; public tables: ${tables}; critical present: ${crit.join(', ')}; c2c_migration_journal rows: ${journal?.rows?.[0]?.n ?? 'table absent'}`;
 });
 
 await record('IQ-06', 'Migration set files listed by scripts/db/migration-set.mjs exist on disk', 'Every .sql path named in C2C_MIGRATION_FILES resolves to a file', () => {
@@ -137,7 +134,7 @@ await record('IQ-06', 'Migration set files listed by scripts/db/migration-set.mj
   return `${names.length} migration files named in the set, all present on disk`;
 });
 
-await record('IQ-07', 'Runtime database role can reach the tables the launch apps read and write', 'The role in DATABASE_URL (or APP_DATABASE_URL) holds SELECT/INSERT on every public table; RLS-relevant role attributes recorded', async (rec) => {
+await record('IQ-07', 'Runtime database role can reach the tables the launch apps read and write', 'The role in DATABASE_URL (or APP_DATABASE_URL) holds SELECT/INSERT on every public table; RLS-relevant role attributes recorded; the role owns no table whose row-level security is not forced', async (rec) => {
   if (!client) throw deviation('database not reachable (IQ-05)');
   const url = new URL(env.APP_DATABASE_URL || env.DATABASE_URL);
   const role = decodeURIComponent(url.username);
@@ -150,11 +147,25 @@ await record('IQ-07', 'Runtime database role can reach the tables the launch app
       [role],
     )
   ).rows.map((r) => r.t);
+  // A table's OWNER is exempt from its row-level security unless FORCE ROW
+  // LEVEL SECURITY is set, whatever rolsuper/rolbypassrls say. The 2026-09-21
+  // OQ set ran as a role that owned 61 such tables (vault.documents among them),
+  // so those policies were never evaluated and a Vault defect under the
+  // non-owner runtime role went unseen.
+  const ownedUnforced = (
+    await client.query(
+      "select n.nspname||'.'||c.relname as t from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind in ('r','p') and c.relrowsecurity and not c.relforcerowsecurity and pg_get_userbyid(c.relowner)=$1 and n.nspname not in ('pg_catalog','information_schema') order by 1",
+      [role],
+    )
+  ).rows.map((r) => r.t);
   const launchRelevant = ['public.platform_settings', 'public.tamper_proof_log', 'public.qms_change_controls', 'public.program_journeys', 'public.cre_evidence_sources', 'public.document_span_lineage', 'public.assumption_records', 'public.contradiction_links', 'public.decision_records', 'ai.gateway_audit_log'].filter((t) => denied.includes(t));
   rec.evidence.push('db-grants-before.txt', 'db-role-denied-tables.json');
-  fs.writeFileSync(path.join(OUT, 'db-role-denied-tables.json'), JSON.stringify({ role, attrs, deniedCount: denied.length, denied }, null, 2));
-  const summary = `role ${role} (superuser=${attrs?.rolsuper}, bypassrls=${attrs?.rolbypassrls}); tables without SELECT: ${denied.length}; launch-relevant among them: ${launchRelevant.join(', ') || 'none'}`;
-  if (denied.length) throw deviation(`IQ-DEV-001 (OPEN): ${summary}. Corrective action (owner role, not applied by the runner): GRANT USAGE ON SCHEMA … ; GRANT ALL ON ALL TABLES IN SCHEMA … TO ${role}; — or re-provision with scripts/db/install-fresh.mjs so one role owns the schema.`);
+  fs.writeFileSync(path.join(OUT, 'db-role-denied-tables.json'), JSON.stringify({ role, attrs, deniedCount: denied.length, denied, ownedRlsNotForcedCount: ownedUnforced.length, ownedRlsNotForced: ownedUnforced }, null, 2));
+  const summary = `role ${role} (superuser=${attrs?.rolsuper}, bypassrls=${attrs?.rolbypassrls}); tables without SELECT: ${denied.length}; launch-relevant among them: ${launchRelevant.join(', ') || 'none'}; owns ${ownedUnforced.length} RLS-enabled table(s) without FORCE`;
+  const devs = [];
+  if (denied.length) devs.push(`IQ-DEV-001 (OPEN): ${summary}. Corrective action (owner role, not applied by the runner): GRANT USAGE ON SCHEMA … ; GRANT ALL ON ALL TABLES IN SCHEMA … TO ${role}; — or re-provision with scripts/db/install-fresh.mjs so one role owns the schema.`);
+  if (ownedUnforced.length) devs.push(`IQ-DEV-006: ${summary} (e.g. ${ownedUnforced.slice(0, 5).join(', ')}). Row-level security does not apply to a table's owner unless forced, so an OQ executed as this role does not exercise tenant isolation on these tables. Run the server as a non-owner role: APP_DATABASE_URL → app_service (scripts/db/provision-app-role.mjs; \`npm run up\` does this).`);
+  if (devs.length) throw deviation(devs.join(' | '));
   return summary;
 });
 

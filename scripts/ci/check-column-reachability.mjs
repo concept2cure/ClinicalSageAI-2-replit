@@ -23,21 +23,43 @@
  *   c2c_ana_actions.command ........ (a CHECK, not a column — same cause)
  *
  * Each was one line of wiring away from working, and nothing could see them.
- * This guard is that missing eye. Anything NEW fails the build.
+ * The contract test un-wires each of the five column migrations and requires
+ * this guard to name its column.
  *
  * ── How it decides ───────────────────────────────────────────────────────────
- * A column counts as DURABLY ADDED when any of these creates it:
- *   · an `ALTER TABLE … ADD COLUMN` in a file on a durable apply path
- *   · a `CREATE TABLE` body in such a file
- *   · a drizzle table definition in shared/schema*.ts (drizzle-kit push runs
- *     before the set on every from-scratch install)
- * Durability is decided by the SAME rule as the table guard — that definition
- * lives there and is imported, not restated.
+ * A column is DURABLE when something a deployment runs creates it:
+ *   · an `ALTER TABLE … ADD [COLUMN]` / `RENAME COLUMN … TO` in a durable file —
+ *     every action of a multi-clause ALTER, not just the first;
+ *   · a `CREATE TABLE` body in a durable file, parsed by balanced parentheses;
+ *   · a catalog sweep in a durable file — `EXECUTE format('ALTER TABLE %I.%I ADD
+ *     COLUMN …')` over a `table_name LIKE/IN`, ARRAY or VALUES set — but ONLY for
+ *     tables created EARLIER in apply order, because a sweep can only touch a
+ *     table that already exists (stab_studies.tenant_id is vouched this way; a
+ *     stab_* table created after the sweep would not be);
+ *   · a public table in the drizzle push surface (push creates nothing outside
+ *     public), or runtime DDL in server code.
+ * "Durable", the apply order and the set of durably-created tables all come from
+ * durableSurface() in the table guard, so the two levels cannot disagree.
  *
- * A column counts as REFERENCED only when a SQL-looking string in server/ names
- * BOTH the table and the column. Requiring both is what keeps generic names
- * (`status`, `notes`, `metadata`) from producing a stream of phantoms — the
- * failure mode the sibling guard's header warns costs you the whole guard.
+ * A column is ORPHANED when it is not durable and some non-durable file adds it
+ * (an ALTER, or a CREATE TABLE of a table that exists in another shape).
+ *
+ * A column is REFERENCED when a server SQL string names it ON THAT RELATION,
+ * resolved through the clause it appears in (lib/sql-columns.mjs): an INSERT
+ * column list, an UPDATE SET target, `alias.col` through the alias's binding, or
+ * a bare column that no other relation in scope durably has. Not "the table word
+ * and the column word both occur in the string" — that rule reported
+ * documents.tags for `SELECT p.tags, (…) AS documents FROM regulatory_programs p`.
+ *
+ * A table nothing durable creates is skipped as the TABLE guard's finding — sound
+ * only because both guards read the same server files (serverSqlFiles).
+ *
+ * ── Baseline ─────────────────────────────────────────────────────────────────
+ * column-reachability-baseline.json maps a column to a WRITTEN reason. An entry
+ * without one fails the guard, and so does an entry that no longer reproduces
+ * (remove it — the ratchet only turns one way). --write-baseline keeps existing
+ * reasons and adds new findings with an empty one, which fails until a human
+ * writes it: a baseline entry is a decision, not a snapshot.
  *
  * Usage:  node scripts/ci/check-column-reachability.mjs [--write-baseline]
  */
@@ -45,180 +67,241 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { C2C_MIGRATION_FILES } from '../db/migration-set.mjs';
-import { AUTHORING_SUBSYSTEM_FILES } from '../db/authoring-subsystem.mjs';
-import { sqlishSegments, stripSqlComments, tablesIn, repoRoot } from './check-migration-reachability.mjs';
+import {
+  durableSurface,
+  serverSqlFiles,
+  sqlishSegments,
+  stripSqlComments,
+  repoRoot,
+} from './check-migration-reachability.mjs';
+import {
+  columnsAddedIn,
+  columnsCreatedIn,
+  dynamicColumnAdds,
+  drizzleColumns,
+  columnReferences,
+  referencesColumn,
+  lastPart,
+  splitKey,
+} from './lib/sql-columns.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const TAG = '[ci:column-reachability]';
 const BASELINE = path.join(repoRoot, 'scripts', 'ci', 'column-reachability-baseline.json');
-const writeBaseline = process.argv.includes('--write-baseline');
 const read = (p) => fs.readFileSync(p, 'utf8');
+const toRel = (abs) => path.relative(repoRoot, abs).split(path.sep).join('/');
 
-/** `ALTER TABLE [IF EXISTS] [schema.]t ADD COLUMN [IF NOT EXISTS] c` */
-const ADD_COLUMN_RE =
-  /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?[a-z0-9_]+"?\s*\.\s*)?"?([a-z0-9_]+)"?\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-z0-9_]+)"?/gi;
-
-/** `CREATE TABLE [IF NOT EXISTS] [schema.]t ( … )` → the table and its body. */
-const CREATE_TABLE_BODY_RE =
-  /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"?[a-z0-9_]+"?\s*\.\s*)?"?([a-z0-9_]+)"?\s*\(([\s\S]*?)\n\s*\)\s*;/gi;
-
-function walkSql(dir, acc = []) {
-  if (!fs.existsSync(dir)) return acc;
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    const p = path.join(dir, e.name);
-    if (e.isDirectory()) {
-      if (!/^(_archive|_legacy|meta|node_modules)$/.test(e.name)) walkSql(p, acc);
-    } else if (e.name.endsWith('.sql')) acc.push(p);
-  }
-  return acc;
-}
-
-// ── Durability: the table guard's rule, imported in spirit and restated only
-//    where it needs the file list this script already has. ──────────────────
-const journal = fs.existsSync(path.join(repoRoot, 'migrations/meta/_journal.json'))
-  ? read(path.join(repoRoot, 'migrations/meta/_journal.json'))
-  : '';
-const installFresh = read(path.join(repoRoot, 'scripts/db/install-fresh.mjs'));
-const namedDurable = new Set([...C2C_MIGRATION_FILES, ...AUTHORING_SUBSYSTEM_FILES]);
-
-function isDurable(rel) {
-  const base = path.basename(rel);
-  if (namedDurable.has(rel)) return true;
-  if (/_gcc_/.test(base)) return true;
-  if (journal.includes(base.replace(/\.sql$/, ''))) return true;
-  if (installFresh.includes(rel) || installFresh.includes(base)) return true;
-  if (rel.startsWith('migrations/') && !rel.startsWith('migrations/meta/')) return true;
-  return false;
-}
-
-// ── 1. Who adds which column, and is that path durable? ─────────────────────
-const durable = new Set(); // "table.column"
-const durableTables = new Set(); // a table the sibling guard already vouches for
-const orphanAdds = new Map(); // "table.column" -> [files]
-
-for (const dir of ['migrations', 'db/migrations']) {
-  for (const abs of walkSql(path.join(repoRoot, dir))) {
-    const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
-    const sql = stripSqlComments(read(abs));
-    const durableFile = isDurable(rel);
-
-    ADD_COLUMN_RE.lastIndex = 0;
-    for (const m of sql.matchAll(ADD_COLUMN_RE)) {
-      const key = `${m[1].toLowerCase()}.${m[2].toLowerCase()}`;
-      if (durableFile) durable.add(key);
-      else {
-        if (!orphanAdds.has(key)) orphanAdds.set(key, []);
-        orphanAdds.get(key).push(rel);
-      }
-    }
-
-    if (!durableFile) continue;
-    for (const t of tablesIn(sql)) durableTables.add(String(t).split('.').pop().toLowerCase());
-    CREATE_TABLE_BODY_RE.lastIndex = 0;
-    for (const m of sql.matchAll(CREATE_TABLE_BODY_RE)) {
-      const table = m[1].toLowerCase();
-      for (const line of m[2].split('\n')) {
-        const col = /^\s*"?([a-z0-9_]+)"?\s+[a-z]/i.exec(line);
-        if (col && !/^(constraint|primary|unique|foreign|check|like|exclude)$/i.test(col[1])) {
-          durable.add(`${table}.${col[1].toLowerCase()}`);
-        }
-      }
-    }
-  }
-}
-
-// Drizzle push runs before the set on every from-scratch install, so a column it
-// declares is present regardless of the .sql trees.
-for (const rel of ['shared/schema.ts', ...fs.existsSync(path.join(repoRoot, 'shared/schema'))
-  ? fs.readdirSync(path.join(repoRoot, 'shared/schema')).filter((f) => f.endsWith('.ts')).map((f) => `shared/schema/${f}`)
-  : []]) {
-  const abs = path.join(repoRoot, rel);
-  if (!fs.existsSync(abs)) continue;
-  const src = read(abs);
-  const re = /pgTable\(\s*['"]([a-z0-9_]+)['"]\s*,\s*\{([\s\S]*?)\n\s*\}/g;
-  for (const m of src.matchAll(re)) {
-    const table = m[1].toLowerCase();
-    for (const c of m[2].matchAll(/\b[a-zA-Z]+\(\s*['"]([a-z0-9_]+)['"]/g)) {
-      durable.add(`${table}.${c[1].toLowerCase()}`);
-    }
-    durableTables.add(table);
-  }
-}
-
-// ── 2. Which of the orphaned columns does the server actually query? ────────
-function serverSqlSegments() {
+/**
+ * Every migration .sql the guard reads, comment-stripped. db/migrations/_legacy
+ * and _archive are skipped as the table guard skips them; migrations/<subdir>
+ * is read and is non-durable (durableSurface decides).
+ */
+export function migrationSources() {
   const out = [];
   const walk = (dir) => {
     if (!fs.existsSync(dir)) return;
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, e.name);
       if (e.isDirectory()) {
-        if (!/^(node_modules|dist|_archive|__tests__|coverage)$/.test(e.name)) walk(p);
-      } else if (/\.(ts|js|mjs)$/.test(e.name) && !/\.(test|spec)\./.test(e.name)) {
-        out.push(...sqlishSegments(read(p)).map((s) => ({ sql: s, file: path.relative(repoRoot, p) })));
-      }
+        if (!/^(_archive|meta|node_modules)$/.test(e.name) && !(e.name === '_legacy' && toRel(dir) === 'db/migrations')) walk(p);
+      } else if (e.name.endsWith('.sql')) out.push({ rel: toRel(p), sql: stripSqlComments(read(p)) });
     }
   };
-  walk(path.join(repoRoot, 'server'));
+  walk(path.join(repoRoot, 'migrations'));
+  walk(path.join(repoRoot, 'db/migrations'));
   return out;
 }
 
-const segments = serverSqlSegments();
-const findings = [];
-for (const [key, files] of orphanAdds) {
-  if (durable.has(key)) continue;
-  const [table, column] = key.split('.');
-  // A table nothing durable creates is the TABLE guard's finding, not this
-  // one — reporting it here would duplicate ci:migration-reachability and
-  // blame the column for an absent table.
-  if (!durableTables.has(table)) continue;
-  const tRe = new RegExp(`\\b${table}\\b`, 'i');
-  const cRe = new RegExp(`\\b${column}\\b`, 'i');
-  const hit = segments.find((s) => tRe.test(s.sql) && cRe.test(s.sql));
-  if (hit) findings.push({ column: key, addedOnlyBy: files, referencedIn: hit.file });
-}
-findings.sort((a, b) => a.column.localeCompare(b.column));
+/**
+ * Which columns exist on a deployed database, and which are added only by files
+ * nothing runs.
+ *
+ * @param {ReturnType<typeof durableSurface>} surface
+ * @param {{rel: string, sql: string}[]} sqlFiles comment-stripped migrations
+ * @param {{drizzle: string[], runtimeDdl: string[]}} sources file contents
+ */
+export function buildColumnSurface(surface, sqlFiles, { drizzle = [], runtimeDdl = [] } = {}) {
+  const durable = new Set(); // "rel.column"
+  const orphanAdds = new Map(); // "rel.column" -> [files]
+  const unresolvedDynamic = []; // {file, snippet}
+  const sweeps = [];
+  const orphan = (key, rel) => {
+    if (!orphanAdds.has(key)) orphanAdds.set(key, []);
+    if (!orphanAdds.get(key).includes(rel)) orphanAdds.get(key).push(rel);
+  };
 
-// ── 3. Ratchet ──────────────────────────────────────────────────────────────
-const baseline = fs.existsSync(BASELINE) ? JSON.parse(read(BASELINE)) : { columns: [] };
-const allowed = new Set(baseline.columns ?? []);
-
-if (writeBaseline) {
-  fs.writeFileSync(
-    BASELINE,
-    JSON.stringify(
-      {
-        _comment:
-          'Columns the server queries whose ONLY creator is a migration on no durable apply path — they exist on no real database, so the statements naming them raise 42703. Anything NEW fails the build. Resolve an entry (put its migration on an applier, or delete the dead reference), then remove it here to ratchet down. Goal: 0.',
-        count: findings.length,
-        columns: findings.map((f) => f.column),
-        detail: findings,
-      },
-      null,
-      2,
-    ) + '\n',
-  );
-  console.log(`${TAG} baseline written — ${findings.length} column(s).`);
-  process.exit(0);
-}
-
-const fresh = findings.filter((f) => !allowed.has(f.column));
-if (fresh.length > 0) {
-  console.error(`${TAG} ❌ ${fresh.length} column(s) the server queries are added only by a migration nothing runs:`);
-  for (const f of fresh) {
-    console.error(`  ${f.column}`);
-    console.error(`      added only by : ${f.addedOnlyBy.join(', ')}`);
-    console.error(`      queried in    : ${f.referencedIn}`);
+  for (const { rel, sql } of sqlFiles) {
+    const idx = surface.applyIndex(rel);
+    const adds = columnsAddedIn(sql);
+    const creates = columnsCreatedIn(sql);
+    if (idx === null) {
+      for (const { table, column } of [...adds, ...creates]) orphan(`${table}.${column}`, rel);
+      continue;
+    }
+    for (const { table, column } of [...adds, ...creates]) durable.add(`${table}.${column}`);
+    const dyn = dynamicColumnAdds(sql);
+    for (const sw of dyn.sweeps) sweeps.push({ rel, idx, ...sw });
+    for (const snippet of dyn.unresolved) unresolvedDynamic.push({ file: rel, snippet });
   }
-  console.error(
-    `\n  Put the migration on an applier (C2C_MIGRATION_FILES, positioned after the file that\n` +
-      `  creates the table — CLAUDE.md RULE 1), or delete the reference if the feature is dead.`,
-  );
-  process.exit(1);
+
+  // A catalog sweep vouches only for tables that exist when it runs.
+  const createdBefore = (t, idx) => (surface.creatorIndex.get(t) ?? Number.POSITIVE_INFINITY) < idx;
+  for (const sw of sweeps) {
+    for (const t of surface.durableTables) {
+      const schema = t.includes('.') ? t.slice(0, t.lastIndexOf('.')) : 'public';
+      if (sw.schema && sw.schema !== schema) continue;
+      const name = lastPart(t);
+      if (!(sw.names.includes(name) || sw.patterns.some((re) => re.test(name)))) continue;
+      if (!createdBefore(t, sw.idx)) continue;
+      for (const c of sw.columns) durable.add(`${t}.${c}`);
+    }
+    for (const [tbl, col] of sw.pairs) {
+      const t = sw.schema && sw.schema !== 'public' ? `${sw.schema}.${tbl}` : tbl;
+      if (createdBefore(t, sw.idx)) durable.add(`${t}.${col}`);
+    }
+  }
+
+  // drizzle push creates public tables only; see durableSurface.
+  for (const src of drizzle) {
+    for (const { table, column } of drizzleColumns(src).columns) {
+      if (!table.includes('.')) durable.add(`${table}.${column}`);
+    }
+  }
+  for (const src of runtimeDdl) {
+    const sql = stripSqlComments(src);
+    for (const { table, column } of [...columnsAddedIn(sql), ...columnsCreatedIn(sql)]) durable.add(`${table}.${column}`);
+  }
+
+  return { durable, orphanAdds, unresolvedDynamic };
 }
 
-console.log(
-  `${TAG} OK — ${orphanAdds.size} column add(s) on no applier, ${findings.length} of them queried by the server` +
-    `${findings.length ? ` (all baselined)` : ''}.`,
-);
+/** Every SQL-looking string in server code: the same files the table guard reads. */
+export function serverSegments() {
+  const out = [];
+  for (const abs of serverSqlFiles()) {
+    for (const sql of sqlishSegments(read(abs))) out.push({ sql, file: toRel(abs) });
+  }
+  return out;
+}
+
+/**
+ * Orphaned columns the server references.
+ *
+ * @param {{durable: Set<string>, orphanAdds: Map<string, string[]>}} columns
+ * @param {Set<string>} durableTables
+ * @param {{sql: string, file: string}[]} segments
+ */
+export function findUnreachableColumns({ durable, orphanAdds }, durableTables, segments) {
+  const parsed = new Map(); // segment index -> columnReferences
+  const refsOf = (i) => {
+    if (!parsed.has(i)) parsed.set(i, columnReferences(segments[i].sql));
+    return parsed.get(i);
+  };
+  const hasColumn = (rel, column) => durable.has(`${rel}.${column}`);
+  const findings = [];
+  for (const [key, files] of orphanAdds) {
+    if (durable.has(key)) continue;
+    const [table, column] = splitKey(key);
+    // A table nothing durable creates is the TABLE guard's finding, not this
+    // one. Both guards read serverSqlFiles(), so the deferral lands on a guard
+    // that can see the reference.
+    if (!durableTables.has(table)) continue;
+    const word = new RegExp(`\\b${column}\\b`, 'i');
+    for (let i = 0; i < segments.length; i++) {
+      if (!word.test(segments[i].sql)) continue;
+      if (referencesColumn(refsOf(i), table, column, hasColumn)) {
+        findings.push({ column: key, addedOnlyBy: [...files].sort(), referencedIn: segments[i].file });
+        break;
+      }
+    }
+  }
+  return findings.sort((a, b) => a.column.localeCompare(b.column));
+}
+
+/** The whole check against the repository, with an optional substitute set. */
+export function scanRepository({ setFiles } = {}) {
+  const surface = durableSurface(setFiles ? { setFiles } : {});
+  const runtimeDdl = serverSqlFiles()
+    .filter((abs) => abs.endsWith('.ts'))
+    .map(read)
+    .filter((src) => /\b(CREATE|ALTER)\s+TABLE\b/i.test(src));
+  const columns = buildColumnSurface(surface, migrationSources(), {
+    drizzle: surface.drizzleFiles.map(read),
+    runtimeDdl,
+  });
+  const findings = findUnreachableColumns(columns, surface.durableTables, serverSegments());
+  return { findings, columns };
+}
+
+const isEntryPoint = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename);
+if (isEntryPoint) {
+  const writeBaseline = process.argv.includes('--write-baseline');
+  const { findings, columns } = scanRepository();
+  const baseline = fs.existsSync(BASELINE) ? JSON.parse(read(BASELINE)) : { columns: {} };
+  const entries = baseline.columns ?? {};
+
+  if (writeBaseline) {
+    const next = {};
+    for (const f of findings) {
+      next[f.column] = { reason: entries[f.column]?.reason ?? '', addedOnlyBy: f.addedOnlyBy, referencedIn: f.referencedIn };
+    }
+    fs.writeFileSync(
+      BASELINE,
+      `${JSON.stringify(
+        {
+          _comment:
+            'Columns the server queries whose ONLY creator is a migration on no durable apply path — they exist on no real database, so the statements naming them raise 42703. Every entry needs a written reason; an empty one fails the guard. Resolve an entry (put its migration on an applier after the file that creates the table, or delete the dead reference), then remove it here. Goal: empty.',
+          columns: next,
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    console.log(`${TAG} baseline written — ${findings.length} column(s); every new entry needs a reason before the guard passes.`);
+    process.exit(0);
+  }
+
+  let failed = false;
+  const found = new Set(findings.map((f) => f.column));
+  const fresh = findings.filter((f) => !(f.column in entries));
+  const unreasoned = Object.entries(entries).filter(([, e]) => !String(e?.reason ?? '').trim()).map(([k]) => k);
+  const stale = Object.keys(entries).filter((k) => !found.has(k));
+
+  if (fresh.length) {
+    failed = true;
+    console.error(`${TAG} ❌ ${fresh.length} column(s) the server queries are added only by a migration nothing runs:`);
+    for (const f of fresh) {
+      console.error(`  ${f.column}`);
+      console.error(`      added only by : ${f.addedOnlyBy.join(', ')}`);
+      console.error(`      queried in    : ${f.referencedIn}`);
+    }
+    const consolidatedOnly = fresh.filter((f) => f.addedOnlyBy.every((x) => x.startsWith('db/migrations/_consolidated/')));
+    console.error(
+      `\n  Put the migration on an applier (C2C_MIGRATION_FILES, positioned after the file that\n` +
+        `  creates the table — CLAUDE.md RULE 1), or delete the reference if the feature is dead.`,
+    );
+    if (consolidatedOnly.length) {
+      console.error(
+        `  EXCEPT ${consolidatedOnly.map((f) => f.column).join(', ')}: added only under db/migrations/_consolidated/,\n` +
+          `  which must never be wired. Delete the reference, or write a NEW replay-safe migration in the set.`,
+      );
+    }
+  }
+  if (unreasoned.length) {
+    failed = true;
+    console.error(`${TAG} ❌ baseline entries with no written reason: ${unreasoned.join(', ')}`);
+  }
+  if (stale.length) {
+    failed = true;
+    console.error(`${TAG} ❌ baselined column(s) no longer found — remove them to ratchet down: ${stale.join(', ')}`);
+  }
+  for (const u of columns.unresolvedDynamic) {
+    console.warn(`${TAG} note: dynamic ALTER … ADD in ${u.file} has no resolvable table set; it vouches for nothing.`);
+  }
+  if (failed) process.exit(1);
+
+  console.log(
+    `${TAG} OK — ${columns.orphanAdds.size} column add(s) on no applier, ${findings.length} queried by the server` +
+      `${findings.length ? ' (all baselined with reasons)' : ''}.`,
+  );
+}

@@ -8,7 +8,7 @@
  * because nothing in this codebase compared the two protocol versions.
  *
  * This module does the comparison. It is the input `substantiality.ts` needs
- * to say anything about EU CTR 536/2014 Article 16, where "substantial" is
+ * to say anything about EU CTR 536/2014 Article 2(2)(13), where "substantial" is
  * defined by the EFFECT of the change — on subject safety and rights, or on
  * the reliability and robustness of the data — not by what the sponsor called
  * it.

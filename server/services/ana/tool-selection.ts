@@ -35,6 +35,20 @@ export const ALWAYS_ON_TOOLS: ReadonlySet<string> = new Set([
   'generate_document',
   'generate_citation',
   'fetch_template_and_fill',
+  // AnA's hands. Taking someone to a screen, operating it and running a
+  // product demonstration are core to every conversation, and the relevance
+  // cap used to decide them by wording: over 762 tools, "go to biostatistics",
+  // "open settings" and "show me around" scored none of these, so AnA had no
+  // way to move and answered in prose. The platform bridge does not cover them
+  // (it dispatches only to the ana-ri command registry), so a trimmed
+  // navigate_to was unreachable, not merely deprioritised. Without Live Drive
+  // they still only offer chips, which is the governed default.
+  'list_app_screens',
+  'navigate_to',
+  'list_screen_actions',
+  'act_on_screen',
+  'list_demo_scripts',
+  'start_product_demo',
 ]);
 
 const STOPWORDS: ReadonlySet<string> = new Set([

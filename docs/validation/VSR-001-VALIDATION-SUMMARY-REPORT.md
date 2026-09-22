@@ -461,3 +461,137 @@ Prepared by the LIVE-PROOF Claude session (drafting only; cannot sign). No produ
 code, server, client, shared or CI file was changed in this session, and no git
 command was run. No result was edited after execution; the runner regenerated the
 OQ-003 bundle and the matrix builder regenerated TM-001.
+
+
+## 12. Addendum 2026-09-22 — the first execution under the production posture; six defects it and its preparation exposed (W3 session)
+
+Appended only. Sections 1–11 are unchanged and describe the runs they were written
+for.
+
+Every execution filed before this one ran as role `c2c` on the database
+`clinicalsage`, with `RLS_ENFORCE=off` (IQ-DEV-003). Under that setting the
+tenant-isolation policies are inert. `c2c` also **owns** 746 RLS-enabled tables,
+61 of them without FORCE ROW LEVEL SECURITY, and a table's owner is exempt from
+its policies. So the package had never been exercised the way D3 requires
+production to run. This section records that execution, and the defects found
+on the way to it.
+
+**Installation.** Database `c2c_oq_w3_20260922b`, provisioned from empty with
+`C2C_DB_NAME=c2c_oq_w3_20260922b npm run up` at `6a0575213`. Server
+`npx tsx server/index.ts`, booted from the env files `npm run up` wrote (no
+database variable exported), with `RLS_ENFORCE=on NODE_ENV=development
+ALLOW_DEV_AUTH=1 LAUNCH_SCOPE_ENFORCE=on` on port 5200. Runtime role
+`app_service`: not superuser, no BYPASSRLS, owns no table. The server logged
+`RLS enforcement mode resolved {"mode":"on"}`. No AI provider is configured, and
+no model output was produced, requested or simulated. Second signer: user 11
+`oq-signer@validation.local`, provisioned into this database only through
+`scripts/seed-admin.mjs`, as §9 did. Its password is held in the session
+scratchpad and never in the tree (`transcripts/provision-signer.transcript.txt`
+is redacted, and a search of the evidence for the password finds nothing).
+
+OQ at `e2d910d6f`. IQ at `32569d496`, whose only difference from `e2d910d6f` is
+the IQ runner and IQ-001: `git diff e2d910d6f 32569d496 -- server client shared
+migrations db package.json package-lock.json` is empty. Evidence:
+`docs/evidence/W3/2026-09-22/`.
+
+### 12.1 Results
+
+| Record | Pass | Fail | Deviation | Not executed |
+|---|---|---|---|---|
+| IQ-001 (v0.3) | 11 | 0 | 4 | 0 |
+| OQ-001 Projects | 16 | 0 | 0 | 0 |
+| OQ-002 Vault | 12 | 0 | 0 | 0 |
+| OQ-003 Authoring | 23 | 0 | 1 | 0 |
+| OQ-004 Submission Center | 15 | 0 | 0 | 0 |
+| OQ-005 Submission Readiness | 9 | 0 | 0 | 0 |
+| OQ-006 QMS controlled documents | 20 | 0 | 0 | 0 |
+| **OQ total** | **95** | **0** | **1** | **0** |
+
+IQ-07 and IQ-08 pass for the first time: `app_service` owns 0 RLS tables
+without FORCE, and `RLS_ENFORCE=on` with `APP_DATABASE_URL` set. The remaining
+IQ deviations are the development-install ones (IQ-DEV-002, 004, 005, and
+IQ-10's production refusal), which only staging closes. The single OQ deviation
+is OQ-AUTH-16 (no provider).
+
+TM-001 is regenerated from this set (`runDate 2026-09-22`): 67 requirements,
+66 pass, 1 partial (URS-AUTH-012), 0 fail, 0 open, 0 uncovered, and `problems: []`.
+The verdicts are the same as §11.3's, now against the production posture. The
+default run date in `scripts/validation/build-traceability.mjs`,
+`scripts/validation/run-iq.mjs` and `tests/validation/lib/harness.mjs` moves
+from `2026-09-20` to `2026-09-22`, so the matrix and the next re-execution use
+this set. The `2026-09-20` records stay in the tree unchanged as history.
+
+### 12.2 Findings
+
+| Id | What | Where it bit | State |
+|---|---|---|---|
+| **F-14** (product) | Under the non-owner runtime role, `POST /api/vault/ingest` answered 500 on every upload: `new row violates row-level security policy for table "documents"`. The `vault.*` policies key on the organisation's UUID (`core.can_write_program` → `identity.current_org_id()` ← `app.current_org_id`). The route-level `authMiddleware` (`server/auth.ts`) rebuilt `req.user` and `req.tenantContext` without the UUID the global `authenticateToken` gate had resolved. The route re-opens its scope from `req.tenantContext` after multer, so the scope it re-opened had no UUID. The same object carries the UUID to the authoring router's post-multer scope and to the AI editing, chat, cortex and module-integration routes. | OQ-VAULT-03 under `RLS_ENFORCE=on`: 4 pass, 1 fail, 7 not executed (`vault-rls-before-after/before-e2d910d6f/`). The filed 12/0/0 never saw it, because `c2c` owns `vault.documents`. | **Fixed** `e2d910d6f`: the gate composes the canonical `enforceOrgMembership` and publishes the UUID. OQ-002 12/0/0 under the production posture (`after-e2d910d6f/`). Unit test red on the original, falsified on the live path. |
+| **F-15** (product / configuration) | In RLS shadow mode (`RLS_ENFORCE=off`, which `scripts/setup-local-db.sh` writes into `.env` for development), the pool sets no tenant variables, and the `vault.*` policy functions have no `app.rls_enforce` clause, unlike the 0021 predicate. With the non-owner role that `npm run up` provisions, Vault ingest is still refused. **A developer or tester on `npm run up` + `npm run dev` cannot upload to the Vault.** | OQ-VAULT-03 in shadow mode after `e2d910d6f`: 4 pass, 1 fail, 7 not executed (`vault-rls-before-after/dev-shadow-after-e2d910d6f/`). | **Open — a decision for the system owner.** (a) Run development in the production posture, `RLS_ENFORCE=on`, which is the posture all six OQs now pass in; or (b) make the GCC-lineage policy functions (`db/migrations/000`, `044c`, `053`, `069`) honour `app.rls_enforce` as 0021 does, amended in place under CLAUDE.md Rule 1. Option (a) keeps one isolation posture everywhere; (b) keeps shadow mode meaningful. |
+| **F-16** (product) | `server/db/runtime.ts` loaded `.env` at import time. ESM evaluates imports before `server/index.ts`'s body, so `.env` beat `.env.local` for every entrypoint that skips `scripts/startup.sh`, contrary to `server/index.ts`'s own comment. | This session's first OQ-003 attempt answered 500 `AUDIT_CHAIN_SCHEMA_MISSING` from a stale database named in `.env`. Its record was discarded before re-running and is not filed. With a current database in `.env` the misdirection is silent: a governed create returned 201 into the wrong database. | **Fixed** `6a0575213`: one loader, `server/config/load-env-files.ts`, imported first. Red test on the real pool target, falsified two ways. This set's server booted from the files alone and wrote only to the provisioned database. |
+| **P-3** (protocol) | OQ-VAULT-08b asserted only that a chain verdict was present, so `ok=false` passed. The filed 2026-09-21 record passes it over "server chain verdict ok=false over 33 row(s)". That verdict came from a verifier defect fixed in `047b98fda`. OQ-PROJ-06b counted rows. | — | **Fixed** `e0c983cc1` (OQ-001 v0.2, OQ-002 v0.3): both require `meta.chain.ok = true`. Shown on a deliberately tampered chain in a throwaway database: v0.1 passed OQ-PROJ-06b while OQ-PROJ-06 failed, and v0.2 fails it (`negative-tampered-chain/`). The row was restored and `verify-chain` read ok. |
+| **P-4** (protocol) | IQ-07 checked `rolsuper`/`rolbypassrls` and not table ownership. | It passed the `c2c` environment behind every filed execution. It would have passed the superuser owner `postgres`. | **Fixed** `32569d496` (IQ-001 v0.3): **IQ-DEV-006** when the runtime role owns an RLS table without FORCE. Live: `postgres` before pass, after IQ-DEV-006 (127 tables); `c2c` after IQ-DEV-001 plus IQ-DEV-006 (61 tables); `app_service` pass (0). |
+| **P-5** (protocol) | The IQ runner read `.env` alone, so on an `npm run up` installation IQ-05/07/08 qualified a different database from the one the server and the OQ used. IQ-05 did not name the database it checked. | Same checkout, only the resolution differing: `clinicalsage` as `c2c` with a false IQ-DEV-001, versus the provisioned database as `app_service`, pass. | **Fixed** `a6bee4cf9` (IQ-001 v0.2): the runner resolves the environment as the server does, and IQ-05 names the database. |
+
+### 12.3 What this changes in the records above
+
+- §8.1's IQ-DEV-001 corrective action and every OQ verdict from §8 to §11 stand
+  as records of what was run. But they qualify the `c2c`/`clinicalsage` posture,
+  not the one D3 requires, and they could not have detected F-14.
+- The §10.2 pass of OQ-VAULT-08b over `ok=false` would read **fail** under v0.3.
+- The 2026-09-21 IQ-07 pass would read **IQ-DEV-006** under v0.3.
+
+### 12.4 Disposition summary after this section
+
+| Finding | State after §12 |
+|---|---|
+| F-1 … F-13 | As §11.4. |
+| **F-14** | **Closed** locally (`e2d910d6f`); staging re-execution owed with the rest. |
+| **F-15** | **Open** — decision (a) or (b) above. |
+| **F-16**, **P-3**, **P-4**, **P-5** | **Closed**. |
+| OQ-AUTH-16 / URS-AUTH-012 | Deviation / partial — no PQ-passed provider. Nothing simulated. |
+
+### 12.5 What the package still owes before signature
+
+§11.5 items 1–6 stand, with item 1 narrowed. The full protocol set now passes
+locally under the posture staging must run in: RLS enforcing, a non-owner
+runtime role, and a credentialed second signer. What local execution cannot
+supply is still owed: the production image (`NODE_ENV=production`, HMAC-sealed
+audit chain, enforcing CSP, dev-login not mounted), a real second account
+created through user administration rather than the seeding script, and a
+witness. New:
+
+7. **The F-15 decision.** Until it is made, the Vault cannot accept an upload
+   on a development installation brought up the documented way.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+Product changes in this section: `6a0575213` (env-file loading) and `e2d910d6f`
+(F-14). Validation-tooling changes: `a6bee4cf9`, `e0c983cc1`, `32569d496`. No
+result was edited after execution. The runners wrote every record, and the
+matrix builder regenerated TM-001.
+
+### 12.6 Postscript — the one recurring failure in the production-posture server log
+
+The server log of the §12.1 execution has one recurring error, five times,
+each about 30 seconds apart. It is also **F-17** (product): *"[enforcement-mode]
+could not read the stored enforcement mode — serving a fail-safe value —
+FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on"*.
+The entitlement gate resolves the module-enforcement mode on every request,
+including unauthenticated page and asset loads that carry no tenant scope.
+The stored-mode read ran on the shared pool unscoped, so under the only RLS
+posture production accepts it always failed. **The mode an operator sets on
+the Master Licensing console could never take effect in production**; the
+server served the deployment value (capped at `report`) and flagged it
+degraded. No OQ step covers that console, which is why no step failed.
+
+**Fixed** in the change that files this note. The read runs under
+`runWithPreAuthScope`, which marks it as intentionally tenant-less and grants no
+role, so no policy is bypassed. `platform_settings` has no row-level security,
+so the read succeeds on its own merits. Live, under `RLS_ENFORCE=on` with a
+stored mode of `report` (evidence: `docs/evidence/W3/2026-09-22/enforcement-mode-under-rls/`):
+
+| | Resolved mode | Source | Degraded | Read failures |
+|---|---|---|---|---|
+| Before | `off` | deployment | yes | 2 |
+| After | `report` | stored | no | 0 |
+
+A red test runs the real pool guard, `server/services/entitlements/__tests__/enforcement-mode-under-rls.test.ts`.

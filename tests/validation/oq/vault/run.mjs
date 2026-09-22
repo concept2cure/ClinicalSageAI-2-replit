@@ -195,9 +195,9 @@ await step(
     urs: ['URS-VAULT-008'],
     title: 'Ingest and filing appear on the organisation audit ledger surface',
     action: 'GET /api/audit-trail/ledger?limit=200 (the read model behind /concept2cure/audit-trail)',
-    expected: 'The ledger window lists the ingest and the filing of this document, each carrying record/previous hashes, and the server reports the chain verdict',
+    expected: 'The ledger window lists the ingest and the filing of this document, each carrying record/previous hashes, and the server\'s chain verdict says the chain verifies (meta.chain.ok = true)',
     dependsOn: ['OQ-VAULT-07'],
-    note: 'The ledger surface reads audit_logs merged with audit_events (server/routes/audit-trail-ledger.routes.ts) — the chained store vault ingest and filing write through server/services/auditService.ts writeChainedAuditRow. The read is a newest-first WINDOW (limit), so a ledger already longer than the window cannot "grow"; the observable claim is that this document\'s events are in it, hash-chained, and that the server\'s own verdict (meta.chain) is present. If this step fails, the surface a user is told to inspect does not show the writes the launch apps make.',
+    note: 'The ledger surface reads audit_logs merged with audit_events (server/routes/audit-trail-ledger.routes.ts) — the chained store vault ingest and filing write through server/services/auditService.ts writeChainedAuditRow. The read is a newest-first WINDOW (limit), so a ledger already longer than the window cannot "grow"; the observable claim is that this document\'s events are in it, hash-chained, and that the server\'s own verdict (meta.chain) says the chain verifies. A verdict that is present but ok=false is a failure: v0.2 asserted only presence, and the 2026-09-21 record passed this step over "server chain verdict ok=false over 33 row(s)". If this step fails, the surface a user is told to inspect does not show the writes the launch apps make.',
   },
   async ({ api, expect }) => {
     const l = await api('GET', '/api/audit-trail/ledger?limit=200');
@@ -208,6 +208,7 @@ await step(
     expect(unchained.length === 0, 'an entry for this document lacks chain hashes', unchained);
     const chain = l.json?.meta?.chain;
     expect(chain && typeof chain.ok === 'boolean', 'the ledger carried no server chain verdict (meta.chain)', l.json?.meta);
+    expect(chain.ok === true, `the server's chain verdict says the audit chain does not verify (ok=false over ${chain.rowsChecked} row(s))`, chain);
     return `ledger window ${rows.length} (baseline ${state.ledgerBefore}); ${mine.length} chained entr(ies) for the document: ${mine.map((r) => r.event).join(', ')}; server chain verdict ok=${chain.ok} over ${chain.rowsChecked} row(s)`;
   },
 );

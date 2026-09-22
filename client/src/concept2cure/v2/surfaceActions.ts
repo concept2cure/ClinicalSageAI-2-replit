@@ -146,11 +146,51 @@ interface PendingEntry {
 export const PENDING_ACTION_TTL_MS = 20 * 1000;
 
 let pending: PendingEntry | null = null;
+let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Put a directive in the pending slot. Whatever held the slot is told it will
+ * not run (it was superseded), and the new entry reports its own expiry: a
+ * stash used to die silently on both counts, so the drive recorded — and AnA
+ * narrated — operations that never happened.
+ */
+function stash(entry: PendingEntry): void {
+  const previous = pending;
+  pending = entry;
+  if (pendingTimer) clearTimeout(pendingTimer);
+  pendingTimer = setTimeout(() => {
+    pendingTimer = null;
+    if (pending !== entry) return;
+    pending = null;
+    entry.onOutcome?.({
+      status: 'unavailable',
+      reason: `The ${entry.directive.surfaceId} screen did not become ready in time.`,
+    });
+  }, PENDING_ACTION_TTL_MS);
+  if (previous && previous !== entry) {
+    previous.onOutcome?.({
+      status: 'unavailable',
+      reason: `"${previous.directive.label}" was replaced by a newer action before its screen was ready.`,
+    });
+  }
+}
+
+/** Take the entry out of the pending slot (it is being resolved now). */
+function unstash(entry: PendingEntry): void {
+  if (pending !== entry) return;
+  pending = null;
+  if (pendingTimer) {
+    clearTimeout(pendingTimer);
+    pendingTimer = null;
+  }
+}
 
 /** Test hook: wipe all module state. */
 export function __resetSurfaceActionBus(): void {
   registration = null;
   pending = null;
+  if (pendingTimer) clearTimeout(pendingTimer);
+  pendingTimer = null;
 }
 
 /** The surface id currently holding registered handlers (null when none). */
@@ -233,19 +273,23 @@ export function useSurfaceActionHandlers(
  * Attempt the pending directive for `surfaceId`. Terminal outcomes (applied /
  * hard failure / unavailable-handler) consume the entry and report through
  * its deferred callback; a NOT-READY refusal (`retry: true`) leaves the entry
- * pending until the TTL kills it. An expired entry dies silently — nothing
- * was performed, so nothing is claimed.
+ * pending until the TTL expires it — and an expired entry REPORTS that it
+ * never ran, so no caller can go on believing it did.
  */
 function attemptPendingFor(surfaceId: string): void {
   const p = pending;
   if (!p || resolvedTargetSurface(p.directive) !== surfaceId) return;
   if (Date.now() - p.setAt > PENDING_ACTION_TTL_MS) {
-    pending = null;
+    unstash(p);
+    p.onOutcome?.({
+      status: 'unavailable',
+      reason: `The ${p.directive.surfaceId} screen did not become ready in time.`,
+    });
     return;
   }
   const res = performRaw(p.directive);
   if (res.kind === 'retry') return; // still pending — the ready signal re-attempts
-  pending = null;
+  unstash(p);
   p.onOutcome?.(res.outcome);
 }
 
@@ -322,8 +366,8 @@ export function validateDriveAction(raw: unknown): SurfaceActionDirective | null
  * Returns the IMMEDIATE outcome ('applied' / 'failed' / 'unavailable', or
  * 'stashed' when the directive is waiting on a mount or a load). After a
  * stash, the terminal outcome arrives through `onDeferredOutcome` exactly
- * once — or never, if the stash expires unconsumed (the moment passed;
- * nothing was done, so nothing is claimed).
+ * once: applied, refused, or 'unavailable' when the stash expired unconsumed
+ * or was replaced by a newer one.
  */
 export function applySurfaceAction(
   directive: SurfaceActionDirective,
@@ -335,13 +379,14 @@ export function applySurfaceAction(
     const res = performRaw(directive);
     if (res.kind === 'done') return res.outcome;
     // Mounted but not ready — hold for the surface's ready signal.
-    pending = { directive, setAt: Date.now(), onOutcome: onDeferredOutcome };
+    stash({ directive, setAt: Date.now(), onOutcome: onDeferredOutcome });
     return { status: 'stashed' };
   }
   // Not mounted (or another surface is): stash one-shot and head there. A
-  // newer stash replaces an older one — the drive moved on, and so must we.
+  // newer stash replaces an older one — the drive moved on, and so must we —
+  // and the replaced one is told so rather than vanishing.
   // nav() applies the same alias resolution, so the nav-target id is correct.
-  pending = { directive, setAt: Date.now(), onOutcome: onDeferredOutcome };
+  stash({ directive, setAt: Date.now(), onOutcome: onDeferredOutcome });
   navigate(directive.surfaceId);
   return { status: 'stashed' };
 }

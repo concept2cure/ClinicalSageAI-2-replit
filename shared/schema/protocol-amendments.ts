@@ -32,8 +32,10 @@ export const protocolAmendments = pgTable(
     title: text('title').notNull(),
     rationale: text('rationale'),
     amendmentType: text('amendment_type').$type<AmendmentType>(),
-    affectsConsent: boolean('affects_consent').notNull().default(false),
-    affectsRisk: boolean('affects_risk').notNull().default(false),
+    /** Sponsor declaration. NULL = NOT DECLARED — never default it to false
+     *  (see migrations/20260922e_amendment_declarations_nullable.sql). */
+    affectsConsent: boolean('affects_consent'),
+    affectsRisk: boolean('affects_risk'),
     status: text('status').$type<AmendmentStatus>().notNull().default('draft'),
     submittedDate: date('submitted_date'),
     decidedDate: date('decided_date'),

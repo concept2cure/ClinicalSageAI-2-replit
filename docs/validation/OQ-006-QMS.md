@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-006 |
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-006 |
 | Runner (the executable protocol) | `tests/validation/oq/qms/run.mjs` — `npm run validation:oq -- qms` |
@@ -15,6 +15,7 @@
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
 | 0.2 | 2026-09-21 | WF | VSR-001 §8.3 P-2 / F-3 (fixed in the product 2026-09-21): approval is an electronic signature. OQ-QMS-05 is a CREDENTIALED step executed by a second identity supplied through `OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD` (recorded *not executed — credential not supplied* when absent); new OQ-QMS-05b (signature row + §11.70 digest recomputation), OQ-QMS-06 tightened to 400 `ESIGNATURE_COMPONENT_MISSING`, new OQ-QMS-06b (401 wrong password), OQ-QMS-06c (403 self-approval), OQ-QMS-06d (signed approval of SOP B as the review-due/retire fixture). Re-executed locally (§3). |
+| 0.3 | 2026-09-22 | W3 | §3 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
 
 ## 1. Method
 
@@ -49,11 +50,15 @@ As OQ-001 §1. Two SOPs are created by the run identity (the author): A exercise
 | OQ-QMS-14 | URS-QMS-012 | unscripted (browser) | Open `/concept2cure/quality`; click *Change control* | SOP A number visible; both tabs captured |
 | OQ-QMS-15 | URS-QMS-011, 012 | unscripted (browser) | Open `/concept2cure/qmp` | Plan name visible |
 
-## 3. Result of the local execution (2026-09-21, version 0.2 — worker WF)
+## 3. Result of the local execution (2026-09-22, production posture — VSR-001 §12)
+
+**20 pass, 0 fail, 0 deviation, 0 not-executed** (record `docs/evidence/W3/2026-09-22/OQ-QMS/`, executed 2026-09-22T22:37:19Z UTC at `e2d910d6f`). Installation: a database provisioned from empty by `npm run up`; the server booted from the checkout with `RLS_ENFORCE=on` as runtime role `app_service` (not superuser, no BYPASSRLS, owns no table — IQ-07 and IQ-08 pass, `docs/evidence/W3/2026-09-22/IQ/`); no AI provider configured. This is the first execution with RLS enforcing and as a role that owns no table. The executions filed before it record `RLS_ENFORCE=off` (IQ-DEV-003), under which the tenant-isolation policies are inert, and runtime role `c2c` on `clinicalsage`, which owns 61 RLS-enabled tables without FORCE — `vault.documents` among them — whose policies therefore never applied to it (VSR-001 §12). Signer: user 11, provisioned as for OQ-004. OQ-QMS-05/05b: SOP A approved by signer 11 ≠ author 2, one signature row, the recomputed §11.70 digest equal to the signature's and the document's. OQ-QMS-06/06b/06c: 400 `ESIGNATURE_COMPONENT_MISSING`, 401 `PASSWORD_INVALID`, 403 `QMS_SELF_APPROVAL`, no signature row written by any of them.
+
+### 3.1 Result of the local execution (2026-09-21, version 0.2 — worker WF, superseded)
 
 **20 pass, 0 fail, 0 deviation, 0 not-executed** (20 steps; record regenerated under `docs/evidence/W3/2026-09-20/OQ-QMS/`; signer identity provisioned locally as described in `docs/evidence/WF/2026-09-21/README.md`). OQ-QMS-05: SOP A approved by the signer (user 42) ≠ author (user 1), `meta.signature` id 6, meaning APPROVED, `authenticationMethod password`, re-approve 409 `QMS_INVALID_STATE`. OQ-QMS-05b: exactly one `electronic_signatures` row (`signature_type qms-document-approval`, `binding_basis qms-document-version-content-sha256`, `is_valid`), recomputed digest equal to the signature's and the document's (`steps/OQ-QMS-05b.digest-recomputation.json`). OQ-QMS-06: 400 `ESIGNATURE_COMPONENT_MISSING` (password, meaning, reason). OQ-QMS-06b: 401 `PASSWORD_INVALID`, no row. OQ-QMS-06c: 403 `QMS_SELF_APPROVAL`, no row. OQ-QMS-06d: SOP B signed effective. OQ-QMS-07/09 execute behind the signed approvals. Fail-proof of the credential gate (scratchpad roots, not under W3): with no credential OQ-QMS-05 is a deviation *not executed — credential not supplied* and 05b/06b/06c/06d/07/09 are not-executed (13 pass, 1 deviation, 6 not-executed); with the author as signer OQ-QMS-05 is a deviation naming the two-person rule. Observation for the reviewer: after OQ-QMS-07 (revise to v2.0 draft) `approver_id`/`approved_at` are cleared but `metadata.approval` (reason, meaning, digest of the v1.0 content) remains on the row — the v1.0 signature row is untouched, but a reader of the v2.0 draft's metadata sees an approval block that belongs to the prior version.
 
-### 3.1 Result of the local execution (2026-09-21, version 0.1 — W3a, superseded)
+### 3.2 Result of the local execution (2026-09-21, version 0.1 — W3a, superseded)
 
 14 pass, 1 fail, 1 deviation. Fail: OQ-QMS-06 — `POST /qms/documents/:id/approve` with an empty body answered 200 and set the document `effective` with `approver_id` = the session user; the route (`server/routes/mdx-qms.ts:463-501`) verifies no PIN or password and records no signature meaning, so an SOP can be made binding on possession of a session alone — finding F-3 (Part 11 §11.50/§11.200). Deviation: OQ-QMS-11 (`qms_change_controls` unreadable, IQ-DEV-001). Passed: access gate, validation, uniqueness, lifecycle stamps and audit outcomes, revision with reason and major bump, training acknowledgement, review-due, retire, QMP, templates, both surfaces.
 

@@ -42,6 +42,12 @@ export interface AnaChatAction {
   /** Params the target requires (e.g. an intelligence sub-tab). */
   params?: Record<string, string>;
   /**
+   * The program a project-scoped navigation opens first — resolved server-side
+   * from the tenant's own programs, so the chip lands on that program's
+   * screen instead of an empty "open a program" state.
+   */
+  program?: { id: string; name?: string; code?: string };
+  /**
    * Present only when `actionType === 'surface_action'`: the surface-action
    * registry id (e.g. "vault.search") produced server-side by `act_on_screen`
    * against the governed surface-action contract, plus the screen it operates.
@@ -496,7 +502,7 @@ export interface UseAnaChatOptions {
    * shared navigation registry and the apply/take-over state machine live in
    * v2/liveDrive.ts, next to the shell that owns navigation.
    */
-  onDriveEvent?: (event: DriveSseEvent) => void;
+  onDriveEvent?: (event: DriveSseEvent, controls?: DriveTurnControls) => void;
   /**
    * Fired when the server persists a draft this turn produced
    * (`artifact_version_saved`, with the governed artifact's external id).
@@ -525,7 +531,37 @@ export type DriveSseEvent =
       requiredTier?: string | null;
     }
   | { type: 'drive_navigation'; round?: number; directive: unknown }
-  | { type: 'drive_action'; round?: number; directive: unknown };
+  | { type: 'drive_action'; round?: number; directive: unknown }
+  /**
+   * Client-side, never on the wire: the chat instance whose turn received an
+   * enabled `drive_state` reports that the turn has ended (answered, failed or
+   * stopped). The shell released the drive only when ITS OWN chat stopped
+   * streaming, so a drive started from any other chat left "AnA is driving"
+   * on screen, with dead controls, for good.
+   */
+  | { type: 'drive_turn_end' };
+
+/**
+ * The run that is driving, handed to the shell with every drive event so the
+ * overlay's Stop and steer reach the chat that is actually driving — which is
+ * not always the shell's own — and so an on-screen outcome AnA needs to know
+ * about (an action that could not be performed) can be told to her mid-turn.
+ */
+export interface DriveTurnControls {
+  stop: () => void;
+  interject: (message: string) => Promise<boolean>;
+}
+
+/**
+ * Per-call overrides for `send`. Each one wins over the hook's options for
+ * THIS turn only, so a caller that changes a setting and sends in the same
+ * tick is never sent with the previous render's value.
+ */
+export interface AnaSendOptions {
+  toolsOverride?: string[];
+  liveDrive?: boolean;
+  driveMode?: 'assist' | 'demo';
+}
 
 /** Control status of an in-flight AnA run (null when no run is active). */
 export type RunControlStatus = 'running' | 'paused' | 'cancelled' | null;
@@ -541,7 +577,7 @@ export interface UseAnaChatReturn {
   send: (
     text: string,
     attachments?: MessageAttachment[],
-    sendOpts?: { toolsOverride?: string[] },
+    sendOpts?: AnaSendOptions,
   ) => Promise<void>;
   /** Abort the current stream (and cancel the run server-side). */
   stop: () => void;

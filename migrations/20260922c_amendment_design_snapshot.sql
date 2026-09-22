@@ -18,9 +18,15 @@
 -- them rather than comparing against an invented baseline. That is the honest
 -- outcome and it is pinned by a test.
 --
--- Guarded on to_regclass: protocol_amendments is created by
--- migrations/20260629_protocol_amendments.sql, which is on the applier, but the
--- guard costs nothing and keeps a set-only database from failing here.
+-- Guarded on to_regclass. protocol_amendments is created by
+-- migrations/20260629_protocol_amendments.sql, which is applied by install-fresh
+-- ONLY, not by deploy-migrate. (Corrected 2026-09-22: this header first said
+-- that file was "on the applier". It is not in C2C_MIGRATION_FILES, see
+-- docs/evaluation-2026-09/evidence/03-applier-reachability.json. A database
+-- built only by the set has no protocol_amendments, and the guard is what
+-- keeps this file from failing there. The guard is load-bearing, not
+-- belt-and-braces.) Comment-only amendment: the SQL is unchanged, and the
+-- journal will record the hash change as drift.
 
 DO $$
 BEGIN

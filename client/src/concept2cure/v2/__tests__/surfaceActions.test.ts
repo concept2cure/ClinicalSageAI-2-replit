@@ -110,15 +110,29 @@ describe('applySurfaceAction', () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it('an expired stash is dead — nothing performs, nothing is claimed', () => {
+  it('an expired stash never performs, and says so once — never silence', () => {
     vi.useFakeTimers();
     const deferred = vi.fn();
     applySurfaceAction(directive(), vi.fn(), deferred);
     vi.advanceTimersByTime(PENDING_ACTION_TTL_MS + 1);
+    // Expiry is REPORTED: the caller (the drive queue, the model) must not go
+    // on believing the operation happened.
+    expect(deferred).toHaveBeenCalledTimes(1);
+    expect(deferred.mock.calls[0][0].status).toBe('unavailable');
     const handler = vi.fn().mockReturnValue({ ok: true });
     registerSurfaceActionHandlers('vault', { 'vault.search': handler });
     expect(handler).not.toHaveBeenCalled();
-    expect(deferred).not.toHaveBeenCalled();
+    expect(deferred).toHaveBeenCalledTimes(1);
+  });
+
+  it('a stash replaced by a newer one is told it will not run', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    applySurfaceAction(directive(), vi.fn(), first);
+    applySurfaceAction(directive('vault.search', { query: 'y' }), vi.fn(), second);
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(first.mock.calls[0][0].status).toBe('unavailable');
+    expect(second).not.toHaveBeenCalled();
   });
 
   it('a stash for another surface is not consumed by an unrelated registration', () => {
@@ -165,7 +179,9 @@ describe('applySurfaceAction', () => {
     expect(applySurfaceAction(directive(), vi.fn(), deferred)).toEqual({ status: 'stashed' });
     vi.advanceTimersByTime(PENDING_ACTION_TTL_MS + 1);
     notifySurfaceActionReady('vault');
-    expect(deferred).not.toHaveBeenCalled();
+    // Held is not forever — and the end of the hold is reported, once.
+    expect(deferred).toHaveBeenCalledTimes(1);
+    expect(deferred.mock.calls[0][0].status).toBe('unavailable');
   });
 
   it('resolves DEEP_LINK_ALIASES: a nav-target directive lands on the v2 surface registration', () => {

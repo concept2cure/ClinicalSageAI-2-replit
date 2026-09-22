@@ -1,0 +1,17 @@
+ ✓registry: which models may serve high-risk regulatory work > approves exactly the four Opus entries — changing this set is a governance act, not a refactor 
+ ✓registry: which models may serve high-risk regulatory work > every entry says, in words, why it is or is not approved 
+ ✓registry: which models may serve high-risk regulatory work > a PQ recorded as passed must point at the run that passed it 
+ ✓registry: which models may serve high-risk regulatory work > an id the registry does not know is not approved — it fails closed 
+ ✓registry: which models may serve high-risk regulatory work > drafting and review are the high-risk task types 
+ ✓the gateway enforces it at every selection point > cost_optimized drafting is served by an approved model, not by the cheapest capable one 
+ ✓the gateway enforces it at every selection point > when both approved Opus models fail, drafting refuses — it does not fall to Sonnet 
+ ✓the gateway enforces it at every selection point > when the approved models fail, regulatory review does not cross to GPT-4o 
+ ✓the gateway enforces it at every selection point > round_robin never lands on an unapproved model, across many requests 
+ ✓the gateway enforces it at every selection point > with only unapproved providers configured, review refuses with a typed error — never null, never demo content 
+ ✓the gateway enforces it at every selection point > an explicit request for Sonnet on a drafting task is refused, not rerouted and not honoured 
+ ✓the gateway enforces it at every selection point > the refusal is audited, naming the models withheld 
+ ✓the gateway enforces it at every selection point > reaches the author as a specific message, not "blocked by AI gateway policy" 
+ ✓the gateway enforces it at every selection point > controls — what must NOT change > a task that is not high-risk may still be served by Sonnet on request 
+ ✓the gateway enforces it at every selection point > controls — what must NOT change > cost_optimized chat still picks the cheapest model — the rule is scoped to high-risk work 
+ ✓the gateway enforces it at every selection point > controls — what must NOT change > the default path for drafting is unchanged: Opus 5 serves it 
+      Tests  16 passed (16)

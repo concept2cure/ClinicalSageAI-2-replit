@@ -1,0 +1,121 @@
+
+=== projects ===
+  OQ-PROJ-01  pass
+  OQ-PROJ-02  pass
+  OQ-PROJ-03  pass
+  OQ-PROJ-04  pass
+  OQ-PROJ-05  pass
+  OQ-PROJ-06  pass
+  OQ-PROJ-06b  pass
+  OQ-PROJ-07  pass
+  OQ-PROJ-08  pass
+  OQ-PROJ-09  pass
+  OQ-PROJ-10  pass
+  OQ-PROJ-11  pass
+  OQ-PROJ-12  pass
+  OQ-PROJ-13  pass
+  OQ-PROJ-14  pass
+  OQ-PROJ-15  pass
+
+OQ-001 Projects: 16 pass, 0 fail, 0 deviation, 0 not-executed → <scratch>/OQ-PROJECTS
+
+=== vault ===
+  OQ-VAULT-00  pass
+  OQ-VAULT-01  pass
+  OQ-VAULT-02  pass
+  OQ-VAULT-03  pass
+  OQ-VAULT-04  pass
+  OQ-VAULT-05  pass
+  OQ-VAULT-06  pass
+  OQ-VAULT-07  pass
+  OQ-VAULT-08  pass
+  OQ-VAULT-08b  pass
+  OQ-VAULT-09  pass
+  OQ-VAULT-10  pass
+
+OQ-002 Vault: 12 pass, 0 fail, 0 deviation, 0 not-executed → <scratch>/OQ-VAULT
+
+=== authoring ===
+  OQ-AUTH-00  pass
+  OQ-AUTH-01  pass
+  OQ-AUTH-02  pass
+  OQ-AUTH-03  pass
+  OQ-AUTH-04  pass
+  OQ-AUTH-05  pass
+  OQ-AUTH-06  pass
+  OQ-AUTH-07  pass
+  OQ-AUTH-08  pass
+  OQ-AUTH-09  pass
+  OQ-AUTH-10  pass
+  OQ-AUTH-17  pass
+  OQ-AUTH-17b  pass
+  OQ-AUTH-15  pass
+  OQ-AUTH-16  deviation  (AnA unavailable: no provider configured (ANTHROPIC_API_KEY / OPENAI_API_KEY unset in this environment). Re-execute with a PQ-passed model configured.)
+  OQ-AUTH-11a  pass
+  OQ-AUTH-11b  pass
+  OQ-AUTH-11  pass
+  OQ-AUTH-12  pass
+  OQ-AUTH-13  pass
+  OQ-AUTH-14  pass
+  OQ-AUTH-18  pass
+  OQ-AUTH-19  pass
+  OQ-AUTH-20  pass
+
+OQ-003 Authoring: 23 pass, 0 fail, 1 deviation, 0 not-executed → <scratch>/OQ-AUTHORING
+
+=== submission-center ===
+  OQ-SUBC-00  pass
+  OQ-SUBC-01  pass
+  OQ-SUBC-02  pass
+  OQ-SUBC-03  pass
+  OQ-SUBC-04  pass
+  OQ-SUBC-05  pass
+  OQ-SUBC-06  pass
+  OQ-SUBC-07  pass
+  OQ-SUBC-08  pass
+  OQ-SUBC-09  pass
+  OQ-SUBC-10  pass
+  OQ-SUBC-11  pass
+  OQ-SUBC-12  pass
+  OQ-SUBC-13  pass
+  OQ-SUBC-14  pass
+
+OQ-004 Submission Center: 15 pass, 0 fail, 0 deviation, 0 not-executed → <scratch>/OQ-SUBMISSION-CENTER
+
+=== submission-readiness ===
+  OQ-SRDY-00  pass
+  OQ-SRDY-01  pass
+  OQ-SRDY-02  pass
+  OQ-SRDY-03  pass
+  OQ-SRDY-04  pass
+  OQ-SRDY-05  pass
+  OQ-SRDY-06  pass
+  OQ-SRDY-07  pass
+  OQ-SRDY-08  pass
+
+OQ-005 Submission Readiness: 9 pass, 0 fail, 0 deviation, 0 not-executed → <scratch>/OQ-SUBMISSION-READINESS
+
+=== qms ===
+  OQ-QMS-01  pass
+  OQ-QMS-02  pass
+  OQ-QMS-03  pass
+  OQ-QMS-04  pass
+  OQ-QMS-05  pass
+  OQ-QMS-05b  pass
+  OQ-QMS-06a  pass
+  OQ-QMS-06  pass
+  OQ-QMS-06b  pass
+  OQ-QMS-06c  pass
+  OQ-QMS-06d  pass
+  OQ-QMS-07  pass
+  OQ-QMS-08  pass
+  OQ-QMS-09  pass
+  OQ-QMS-10  pass
+  OQ-QMS-11  pass
+  OQ-QMS-12  pass
+  OQ-QMS-13  pass
+  OQ-QMS-14  pass
+  OQ-QMS-15  pass
+
+OQ-006 QMS controlled documents: 20 pass, 0 fail, 0 deviation, 0 not-executed → <scratch>/OQ-QMS
+OQ_EXIT=0

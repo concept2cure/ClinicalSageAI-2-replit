@@ -145,6 +145,8 @@
     "ci:proof-tier:write-baseline": "node scripts/ci/check-proof-tier.mjs --write-baseline",
     "ci:journey-migration-reachability": "node scripts/ci/check-journey-migration-reachability.mjs",
     "ci:migration-reachability": "node scripts/ci/check-migration-reachability.mjs",
+    "ci:column-reachability": "node scripts/ci/check-column-reachability.mjs",
+    "ci:column-reachability:write-baseline": "node scripts/ci/check-column-reachability.mjs --write-baseline",
     "ci:tables-live-schema": "node scripts/ci/check-tables-against-live-schema.mjs --strict-no-regression",
     "ci:purge-coverage": "node scripts/ci/check-purge-coverage.mjs",
     "ci:purge-coverage:write-baseline": "node scripts/ci/check-purge-coverage.mjs --write-baseline",

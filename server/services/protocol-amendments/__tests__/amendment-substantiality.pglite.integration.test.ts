@@ -1,12 +1,13 @@
 /**
- * Amendment substantiality, END-TO-END against in-process PGlite.
+ * Amendment substantiality (EU CTR Art. 2(2)(13) / Art. 15; US 21 CFR 312.30(b)(1)),
+ * END-TO-END against in-process PGlite.
  *
  * The pure engine is covered by `substantiality.test.ts`. What this proves is
  * the part that can silently go wrong in the database:
  *
  *   • the "before" design is captured when the amendment is OPENED, and does
  *     not move when the live design is later edited — without that, the
- *     comparison has nothing to compare and the whole Article 16 assessment is
+ *     comparison has nothing to compare and the whole Article 2(2)(13) assessment is
  *     theatre;
  *   • an amendment opened before this column existed, or against a protocol
  *     with no design bound, reports not-assessed rather than a clean bill;
@@ -34,7 +35,7 @@ const SD = 'sd_amendment';
 
 const DDL = `
 CREATE TABLE protocol_documents (id serial PRIMARY KEY, organization_id int NOT NULL, protocol_kind text, title text, status text DEFAULT 'draft', created_by int, deleted_at timestamptz, study_design_id text);
-CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int NOT NULL, protocol_document_id int NOT NULL, amendment_number text, title text NOT NULL, rationale text, amendment_type text, affects_consent boolean NOT NULL DEFAULT false, affects_risk boolean NOT NULL DEFAULT false, status text NOT NULL DEFAULT 'draft', submitted_date date, decided_date date, created_by int NOT NULL, created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now(), deleted_at timestamptz, study_design_snapshot jsonb, study_design_snapshot_id text, study_design_snapshot_at timestamptz);
+CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int NOT NULL, protocol_document_id int NOT NULL, amendment_number text, title text NOT NULL, rationale text, amendment_type text, affects_consent boolean, affects_risk boolean, status text NOT NULL DEFAULT 'draft', submitted_date date, decided_date date, created_by int NOT NULL, created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now(), deleted_at timestamptz, study_design_snapshot jsonb, study_design_snapshot_id text, study_design_snapshot_at timestamptz);
 CREATE TABLE cdisc_prm_studies (id serial PRIMARY KEY, tenant_id int, study_id varchar(100) UNIQUE, protocol_title text, metadata json);
 `;
 
@@ -105,7 +106,7 @@ describe('the before-design is captured at open and does not move', () => {
 
     const out = await getAmendmentSubstantiality(ORG, id);
 
-    expect(out.assessment.verdict).toBe('substantial');
+    expect(out.assessment.verdict).toBe('substantial_indicators');
     expect(out.assessment.changed).toContain('primary endpoint');
     expect(out.assessment.indicators.find((i) => i.id === 'eu-ctr-primary-endpoint')?.status).toBe('indicated');
     expect(out.snapshotAt).toBeTruthy();
@@ -119,8 +120,39 @@ describe('the before-design is captured at open and does not move', () => {
 
     const out = await getAmendmentSubstantiality(ORG, id);
 
-    expect(out.assessment.declarationConflict).toMatch(/declared administrative/);
+    expect(out.assessment.declarationConflict).toMatch(/labelled administrative/);
     expect(out.assessment.declarationConflict).toMatch(/eligibility criteria/);
+  });
+
+  /* The declaration check needs a DECLARATION. The form that creates
+     amendments never asked about consent or risk, the writer stored `?? false`,
+     and the column defaulted to false. So every product-created amendment read
+     as "declared to affect neither", and this branch accused its sponsor of
+     contradicting an answer they were never asked for (migrations/20260922e). */
+  it('does not accuse a sponsor who declared nothing about consent or risk', async () => {
+    await writeDesign(design());
+    const docId = await seedProtocol();
+    const { id } = await createAmendmentTx(pool, ORG, 5, { protocolDocumentId: docId, title: 'A1', amendmentType: 'major' });
+    await writeDesign(design({ population: { targetDescription: 'Adults', analysisPopulations: [], eligibility: [{ type: 'inclusion', text: 'HbA1c 6.0-13.0%' }] } }));
+
+    const stored = await pool.query(`SELECT affects_consent, affects_risk FROM protocol_amendments WHERE id = $1`, [id]);
+    expect(stored.rows[0]).toEqual({ affects_consent: null, affects_risk: null });
+
+    const out = await getAmendmentSubstantiality(ORG, id);
+    expect(out.assessment.indicators.find((i) => i.id === 'eu-ctr-eligibility')?.status).toBe('indicated');
+    expect(out.assessment.declarationConflict).toBeNull();
+  });
+
+  it('still contradicts a sponsor who DID declare "affects neither"', async () => {
+    await writeDesign(design());
+    const docId = await seedProtocol();
+    const { id } = await createAmendmentTx(pool, ORG, 5, {
+      protocolDocumentId: docId, title: 'A1', amendmentType: 'major', affectsConsent: false, affectsRisk: false,
+    });
+    await writeDesign(design({ population: { targetDescription: 'Adults', analysisPopulations: [], eligibility: [{ type: 'inclusion', text: 'HbA1c 6.0-13.0%' }] } }));
+
+    const out = await getAmendmentSubstantiality(ORG, id);
+    expect(out.assessment.declarationConflict).toMatch(/declared to affect neither consent nor risk/);
   });
 
   /* An untouched design fires NOTHING. This test first failed for a real

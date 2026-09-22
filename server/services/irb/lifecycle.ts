@@ -97,7 +97,12 @@ export interface LifecycleStatus {
 
 const B_CONTINUING = '45 CFR 46.109(e) / 21 CFR 56.109(f) — continuing review at intervals not exceeding one year for research requiring it; 46.109(f) is the list of research for which it is NOT required, which `continuingReviewRequirement` implements';
 const B_LAPSE = 'OHRP guidance on continuing review — IRB approval lapses on the expiration date; research activity must stop unless the IRB finds that stopping would harm subjects';
-const B_MOD = '45 CFR 46.108(a)(3)(iii) / 21 CFR 56.108(a)(4) — a change to approved research may not be initiated without IRB review and approval, except to eliminate an immediate hazard';
+// The "may not be initiated" wording is 21 CFR 56.108(a)(4)'s; the 2018 Common
+// Rule (46.108(a)(3)(iii)) says investigators follow the approved terms "until
+// any proposed changes have been reviewed and approved by the IRB". Same rule,
+// different words, so the basis paraphrases rather than quoting either
+// (corrected 2026-09-22, docs/evidence/REGULATORY-SME/2026-09-22/).
+const B_MOD = '45 CFR 46.108(a)(3)(iii); 21 CFR 56.108(a)(4); 21 CFR 312.66 — a change to approved research must be reviewed and approved by the IRB before it is implemented, except when necessary to eliminate apparent immediate hazards to subjects';
 const B_UPIRSO = '45 CFR 46.108(a)(4) / 21 CFR 56.108(b) — prompt reporting of unanticipated problems involving risks to subjects or others';
 
 // ─── Date helpers ────────────────────────────────────────────────────────────

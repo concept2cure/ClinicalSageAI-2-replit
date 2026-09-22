@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | TM-001 |
-| Version | generated 2026-09-22T00:10:13.813Z |
+| Version | generated 2026-09-22T22:40:54.286Z |
 | Status | DRAFT — UNSIGNED — GENERATED, DO NOT EDIT |
 | Generator | `scripts/validation/build-traceability.mjs` (`npm run validation:traceability`) |
-| Sources | URS-001…006 requirement tables · RA-001 rows · docs/evidence/W3/2026-09-20/OQ-*/result.json · IQ/iq-results.json |
+| Sources | URS-001…006 requirement tables · RA-001 rows · docs/evidence/W3/2026-09-22/OQ-*/result.json · IQ/iq-results.json |
 
 > This file is regenerated from the URS documents and the executed OQ results. Hand edits are overwritten. A requirement with no executed step reads **uncovered**; a requirement with any failed step reads **fail**; pass with deviations reads **partial**. Nothing here is a pass unless a step recorded a pass.
 
@@ -14,7 +14,7 @@
 
 - Requirements: **67** — pass 66 · partial 1 · fail 0 · open 0 · uncovered 0
 - OQ steps executed: **96** — pass 95 · fail 0 · deviation 1 · not-executed 0
-- IQ-001: 10 pass · 0 fail · 5 deviation (executed 2026-09-21T01:02:35.782Z)
+- IQ-001: 11 pass · 0 fail · 4 deviation (executed 2026-09-22T22:40:22.650Z)
 
 | App | Requirements | Pass | Partial | Fail | Open | Uncovered |
 |---|---|---|---|---|---|---|
@@ -29,12 +29,12 @@
 
 | Protocol | App | Executed | Pass | Fail | Deviation | Not executed | Evidence |
 |---|---|---|---|---|---|---|---|
-| OQ-003 | Authoring | 2026-09-22T00:08:57.969Z | 23 | 0 | 1 | 0 | `docs/evidence/W3/2026-09-20/OQ-AUTHORING/` |
-| OQ-001 | Projects | 2026-09-21T16:25:49.411Z | 16 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-20/OQ-PROJECTS/` |
-| OQ-006 | QMS controlled documents | 2026-09-21T16:28:10.701Z | 20 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-20/OQ-QMS/` |
-| OQ-004 | Submission Center | 2026-09-21T16:27:19.126Z | 15 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-20/OQ-SUBMISSION-CENTER/` |
-| OQ-005 | Submission Readiness | 2026-09-21T16:27:46.394Z | 9 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-20/OQ-SUBMISSION-READINESS/` |
-| OQ-002 | Vault | 2026-09-21T16:29:20.238Z | 12 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-20/OQ-VAULT/` |
+| OQ-003 | Authoring | 2026-09-22T22:36:01.384Z | 23 | 0 | 1 | 0 | `docs/evidence/W3/2026-09-22/OQ-AUTHORING/` |
+| OQ-001 | Projects | 2026-09-22T22:35:06.814Z | 16 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-22/OQ-PROJECTS/` |
+| OQ-006 | QMS controlled documents | 2026-09-22T22:37:19.817Z | 20 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-22/OQ-QMS/` |
+| OQ-004 | Submission Center | 2026-09-22T22:36:28.564Z | 15 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-22/OQ-SUBMISSION-CENTER/` |
+| OQ-005 | Submission Readiness | 2026-09-22T22:36:55.403Z | 9 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-22/OQ-SUBMISSION-READINESS/` |
+| OQ-002 | Vault | 2026-09-22T22:35:48.986Z | 12 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-22/OQ-VAULT/` |
 
 ## Matrix
 
