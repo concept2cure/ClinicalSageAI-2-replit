@@ -27,8 +27,18 @@
  *      never rewrites what came before);
  *   3. everything appended after the template keeps the template's own
  *      encryption: every /Encrypt it carries points at the template's
- *      encryption dictionary, and it does not redefine that object.
+ *      encryption dictionary, and it does not redefine that object;
+ *   4. a reader agrees: pdf.js opens the leaf with no password, with the same
+ *      permissions and the same document ID as the FDA template.
  * Anything else with an /Encrypt entry is refused, with the reason.
+ *
+ * Why step 4 (2026-09-22, adversarial review of this module): steps 1-3 read
+ * text, and the encryption a reader uses is not text. The dictionary can be
+ * redefined as `047 0 obj`, `47 00 obj`, with a comment before `obj`, or
+ * inside a compressed object stream through an xref-stream entry; and a new
+ * /ID changes the R4 key. Each produced a form that needs a password yet
+ * passed as issued. Opening it the way a reader does is the one check that
+ * covers every such shape; the text checks stay, for their precise reasons.
  *
  * A sponsor-completed form qualifies when the tool that completed it saved
  * incrementally (Acrobat does for a rights-enabled FDA form). A re-saved,
@@ -59,6 +69,36 @@ interface SecuredFormTemplate {
   head: Buffer;
   /** `N G` of every /Encrypt reference in the template. */
   encryptRefs: Set<string>;
+  /** What pdf.js reports for the template opened with no password. */
+  reader: { permissions: string; fingerprint: string };
+}
+
+/**
+ * Open a PDF the way a reader does — pdf.js, empty user password — and report
+ * its permissions and first document-ID fingerprint, or why it would not open.
+ */
+async function openAsReader(
+  bytes: Uint8Array,
+): Promise<{ ok: true; permissions: string; fingerprint: string } | { ok: false; reason: string }> {
+  try {
+    const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    // A copy: pdf.js may take ownership of the buffer it is handed.
+    const task = getDocument({ data: new Uint8Array(bytes), password: '', verbosity: 0, isEvalSupported: false, disableFontFace: true });
+    const doc = await task.promise;
+    try {
+      const permissions = JSON.stringify((await doc.getPermissions()) ?? null);
+      const fingerprint = String((doc as unknown as { fingerprints?: Array<string | null> }).fingerprints?.[0] ?? '');
+      return { ok: true, permissions, fingerprint };
+    } finally {
+      await doc.destroy();
+    }
+  } catch (err) {
+    const e = err as { name?: string; message?: string };
+    return {
+      ok: false,
+      reason: e?.name === 'PasswordException' ? 'a reader asks for a password to open it' : `a reader cannot open it (${e?.message ?? String(err)})`,
+    };
+  }
 }
 
 const REF_AFTER_NAME = /^(?:[\x00\t\n\f\r ]|%[^\r\n]*[\r\n])*(\d+)[\x00\t\n\f\r ]+(\d+)[\x00\t\n\f\r ]+R(?![A-Za-z0-9])/;
@@ -101,6 +141,8 @@ async function loadSecuredFdaFormTemplates(): Promise<SecuredFormTemplate[]> {
           if (typeof manifest?.sha256 !== 'string' || manifest.sha256.toLowerCase() !== sha256) continue;
           const refs = pdfNameOffsets(bytes, 'Encrypt').map((o) => encryptRefAt(bytes, o));
           if (refs.length === 0 || refs.some((r) => r === null)) continue;
+          const reader = await openAsReader(bytes);
+          if (!reader.ok) continue;
           out.push({
             formId: typeof manifest.formId === 'string' ? manifest.formId : name.replace(/\.pdf$/i, ''),
             edition: typeof manifest.edition === 'string' ? manifest.edition : null,
@@ -108,6 +150,7 @@ async function loadSecuredFdaFormTemplates(): Promise<SecuredFormTemplate[]> {
             sha256,
             head: bytes.subarray(0, 1024),
             encryptRefs: new Set(refs as string[]),
+            reader: { permissions: reader.permissions, fingerprint: reader.fingerprint },
           });
         } catch {
           // No manifest, unreadable, or not JSON: not a verified FDA form.
@@ -165,14 +208,31 @@ export async function assessLeafPdfSecurity(
       }
     }
     const suffixText = suffix.toString('latin1');
+    // Whitespace or comments between the tokens, and leading zeros on either
+    // number, all spell the same object header to a reader.
+    const sep = '(?:[\\x00\\t\\n\\f\\r ]|%[^\\r\\n]*[\\r\\n])+';
     for (const ref of t.encryptRefs) {
       const [num, gen] = ref.split(' ');
-      if (new RegExp(`(?:^|[^0-9])${num}[\\x00\\t\\n\\f\\r ]+${gen}[\\x00\\t\\n\\f\\r ]+obj(?![A-Za-z0-9])`).test(suffixText)) {
+      if (new RegExp(`(?:^|[^0-9])0*${num}${sep}0*${gen}${sep}obj(?![A-Za-z0-9])`).test(suffixText)) {
         return {
           verdict: 'secured',
           reason: `it is Form ${t.formId} but its encryption dictionary (object ${ref}) was redefined after FDA issued it; submit the form with FDA's own security settings`,
         };
       }
+    }
+    // A reader must agree it carries FDA's own security: it opens with no
+    // password, with the template's permissions and document ID.
+    const reader = await openAsReader(bytes);
+    if (!reader.ok) {
+      return { verdict: 'secured', reason: `it is Form ${t.formId} but ${reader.reason}; submit the form with FDA's own security settings` };
+    }
+    if (reader.permissions !== t.reader.permissions || reader.fingerprint !== t.reader.fingerprint) {
+      return {
+        verdict: 'secured',
+        reason:
+          `it is Form ${t.formId} but a reader sees different security from the form FDA issued ` +
+          `(${reader.permissions !== t.reader.permissions ? 'permissions' : 'document ID'} changed); submit the form with FDA's own security settings`,
+      };
     }
     return { verdict: 'fda-form-as-issued', formId: t.formId, edition: t.edition };
   }
