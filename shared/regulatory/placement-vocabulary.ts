@@ -28,13 +28,25 @@
  *
  * ── Closed list where we own the vocabulary, shape rule where we do not ──────
  *
- * The CTD gate's own docstring explains why it checks code SHAPE and not
- * membership of a published heading list: four codes this product itself
- * writes (m1.5, m1.7, m1.9, m1.13) are absent from FDA's published Module 1
- * table, so a membership gate would refuse the product's own filings. The same
- * reasoning applies to eSTAR and CTIS, whose published section sets are not
- * vendored in this repository and cannot be verified from here. Those two get
- * a shape rule.
+ * The CTD gate checks code SHAPE, not membership of a published heading list,
+ * and the reason is about what this repository can check rather than about
+ * what FDA publishes. The only machine-readable Module 1 vocabulary vendored
+ * here is `server/services/ectd/controlled-vocab/cv-v4-data.ts`, and it
+ * enumerates LEAF Contexts of Use only — `us_1.5.1`, `us_1.7.1`, `us_1.9.1`,
+ * `us_1.13.1` … — with no entry for the heading nodes those leaves hang from.
+ * This product writes heading-level codes: `ind-document-renderer.ts` and
+ * `ind-lifecycle-persistence.ts` both file an IND annual report at `m1.13`. A
+ * membership gate built from the one list we have would therefore refuse the
+ * product's own filings.
+ *
+ * To be clear about what is and is not being claimed: 1.5 Application Status,
+ * 1.7 Fast Track, 1.9 Pediatric Administrative Information and 1.13 Annual
+ * Report ARE sections of FDA's Module 1 — this repo carries them itself, in
+ * `server/services/regional-ctd-templates.ts`. They are headings missing from
+ * a leaf-only derivation, not codes missing from FDA's table. That table is
+ * not vendored in a form a validator can read, which is the actual blocker.
+ * The same holds for eSTAR and CTIS, whose published section sets are not
+ * vendored here at all. All three get a shape rule.
  *
  * The IRB slots are different: they are a PRODUCT vocabulary, defined by
  * `docs/design/IRB_SUBMISSION.md` and by nobody else, so membership is
@@ -145,8 +157,10 @@ export function isIrbSlot(code: string): code is IrbSlot {
  *
  * Two slots come from the obligation rather than from the projection, and are
  * marked as such so nobody later reads them as drift:
- *   • `registry.results` — 42 CFR 11.44 results information, which is a filing
- *     the projection does not model (it projects the registration record).
+ *   • `registry.results` — clinical trial results information under 42 CFR
+ *     part 11 subpart C (§ 11.48 sets out what the results information is;
+ *     § 11.44 sets its deadlines), which is a filing the projection does not
+ *     model (it projects the registration record).
  *   • `registry.other` — supporting material, the same escape hatch
  *     `irb.other` provides; without one a legitimate attachment has nowhere to
  *     go and the closed list becomes a wall.
@@ -160,7 +174,7 @@ export const REGISTRY_SLOTS = {
   'registry.member-states': 'Member state(s) concerned (EU CTIS)',
   'registry.other': 'Other supporting material',
   'registry.outcome-measures': 'Objectives, outcome measures and endpoints',
-  'registry.results': 'Results information (42 CFR 11.44 / summary of results)',
+  'registry.results': 'Results information (42 CFR part 11 subpart C, § 11.48 / summary of results)',
   'registry.sponsor': 'Sponsor, responsible party and oversight',
   'registry.status': 'Recruitment status and study dates',
 } as const;

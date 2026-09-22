@@ -217,7 +217,7 @@ describe('substantiality — indicators', () => {
 
 // ─── No invented thresholds ──────────────────────────────────────────────────
 
-describe('substantiality — 21 CFR 312.30(b)(2) sample size', () => {
+describe('substantiality — 21 CFR 312.30(b)(1)(i) sample size', () => {
   it('reports the magnitude and explicitly declines to decide significance', () => {
     const after = full({ statisticalPlan: { alpha: 0.05, power: 0.9, plannedSampleSize: 900, plannedAnalyses: [{ endpointName: 'HbA1c change at week 24', method: 'MMRM' }] } });
     const a = assessSubstantiality(input({ designDelta: diffDesigns(full(), after) }));

@@ -54,7 +54,7 @@ export interface IrbSubmissionInput {
   isIndStudy?: boolean | null;
   /** HIPAA. Absent/null means NOT RECORDED, not "no PHI". */
   usesPhi?: boolean | null;
-  /** 21 CFR 56.111(a)(3). Absent/null means NOT RECORDED. */
+  /** 21 CFR 56.111(a)(3)-(a)(4). Absent/null means NOT RECORDED. */
   usesRecruitmentMaterial?: boolean | null;
 }
 

@@ -21,6 +21,26 @@
  *   selectMissingDataStrategy         — primary estimator + sensitivity analyses.
  *   estimateSampleSize                — closed-form n for continuous/binary/TTE endpoints.
  *
+ * ── ICH E9(R1) annex numbering, written down once ────────────────────────────
+ * Corrected 2026-09-22. Fourteen citations in this file read §A.4 for
+ * sensitivity analysis and missing data. §A.4 is "Impact on Trial Design and
+ * Conduct"; the analysis half is §A.5, and sensitivity analysis is §A.5.2
+ * specifically. The annex, so the next reader does not have to look it up:
+ *
+ *   A.1  Purpose and Scope
+ *   A.2  Trial Objectives and Estimands
+ *   A.3  The Estimand   — A.3.2 attributes · A.3.3 intercurrent events
+ *                         A.3.4 the five ICE strategies · A.3.5 population-level summary
+ *   A.4  Impact on Trial Design and Conduct
+ *   A.5  Impact on Trial Analysis — A.5.1 main estimation · A.5.2 sensitivity
+ *                                   analysis · A.5.3 supplementary analysis
+ *   A.6  Documenting Estimands and Sensitivity Analysis
+ *
+ * `design-gates.ts` had the mirror-image error — §A.6 (documentation) cited for
+ * a missing-data strategy that is absent rather than undocumented — and was
+ * corrected in the same change. Cite the subsection, not the parent, wherever
+ * the subsection is what is meant: a sponsor checks the number.
+ *
  * Determinism contract: identical input always yields identical output. No
  * Date.now(), no Math.random(), no I/O. Numeric routines are closed-form
  * (normal-approximation sample sizing; inverse-CDF by rational approximation).
@@ -323,8 +343,8 @@ function strategyMeta(s: IntercurrentEventStrategy): StrategyMeta {
  * Construct an ICH E9(R1) estimand from its five attributes and run alignment
  * checks. Deterministic and pure.
  *
- * Citations: ICH E9(R1) (2019) §A.3 (estimand attributes), Figure 1
- * (structured description), §A.4 (sensitivity analysis), ICH E9 (1998) §5.
+ * Citations: ICH E9(R1) (2019) §A.3.2 (estimand attributes), Figure 1
+ * (structured description), §A.5.2 (sensitivity analysis), ICH E9 (1998) §5.
  */
 export function defineEstimand(params: DefineEstimandParams): DefinedEstimand {
   const comparator = params.comparator ?? null;
@@ -401,7 +421,7 @@ export function defineEstimand(params: DefineEstimandParams): DefinedEstimand {
         'A principal-stratum strategy targets a latent subpopulation that cannot be ' +
         'directly observed. Estimation requires untestable assumptions; pre-specify the ' +
         'identification strategy and a dedicated sensitivity analysis.',
-      citation: 'ICH E9(R1) §A.3.4(5), §A.4',
+      citation: 'ICH E9(R1) §A.3.4(5), §A.5.2',
     });
   }
 
@@ -465,13 +485,13 @@ export function defineEstimand(params: DefineEstimandParams): DefinedEstimand {
         `For the hypothetical handling of ${ice.event}: the primary estimator assumes ` +
           'MAR after setting post-ICE data to missing. Pre-specify a control-based / ' +
           'jump-to-reference or tipping-point sensitivity analysis to probe departures ' +
-          'from MAR (ICH E9(R1) §A.4).',
+          'from MAR (ICH E9(R1) §A.5.2).',
       );
     } else if (ice.strategy === 'treatment-policy') {
       sensitivityConsiderations.push(
         `For the treatment-policy handling of ${ice.event}: collect data after the ICE; ` +
           'sensitivity analyses address only the genuinely unobserved values, not the ' +
-          'post-ICE-but-observed values (ICH E9(R1) §A.3.4(1), §A.4).',
+          'post-ICE-but-observed values (ICH E9(R1) §A.3.4(1), §A.5.2).',
       );
     } else if (ice.strategy === 'principal-stratum') {
       sensitivityConsiderations.push(
@@ -487,7 +507,7 @@ export function defineEstimand(params: DefineEstimandParams): DefinedEstimand {
   if (sensitivityConsiderations.length === 0) {
     sensitivityConsiderations.push(
       'Specify at least one sensitivity analysis targeting the same estimand under ' +
-        'plausible alternative assumptions (ICH E9(R1) §A.4).',
+        'plausible alternative assumptions (ICH E9(R1) §A.5.2).',
     );
   }
 
@@ -597,7 +617,7 @@ export interface AssessIntercurrentEventResult {
  * Recommend an ICH E9(R1) strategy for each intercurrent event given endpoint
  * nature, therapeutic context, and regulatory objective. Deterministic.
  *
- * Citations: ICH E9(R1) §A.3.4 (the five strategies), §A.4 (sensitivity),
+ * Citations: ICH E9(R1) §A.3.4 (the five strategies), §A.5.2 (sensitivity),
  * FDA Multiple Endpoints (2022) §V (composite/mortality handling).
  */
 export function assessIntercurrentEventStrategy(
@@ -748,11 +768,11 @@ export function assessIntercurrentEventStrategy(
         sensitivityGuidance:
           (strategy as IntercurrentEventStrategy) === 'hypothetical'
             ? 'Primary under MAR; add control-based / jump-to-reference and tipping-point ' +
-              'sensitivity analyses (ICH E9(R1) §A.4).'
+              'sensitivity analyses (ICH E9(R1) §A.5.2).'
             : (strategy as IntercurrentEventStrategy) === 'principal-stratum'
-              ? 'Vary the latent-stratum identification assumption and report bounds (§A.4).'
+              ? 'Vary the latent-stratum identification assumption and report bounds (§A.5.2).'
               : 'Confirm the estimator targets this estimand; add a sensitivity analysis ' +
-                'under plausible alternative assumptions (§A.4).',
+                'under plausible alternative assumptions (§A.5.2).',
         citation: meta.citation,
       };
     },
@@ -773,7 +793,7 @@ export function assessIntercurrentEventStrategy(
     generalNotes,
     citations: [
       'ICH E9(R1) (2019) §A.3.4 — the five intercurrent-event strategies',
-      'ICH E9(R1) (2019) §A.4 — sensitivity analysis aligned to the estimand',
+      'ICH E9(R1) (2019) §A.5.2 — sensitivity analysis aligned to the estimand',
       'FDA Multiple Endpoints in Clinical Trials (2022) §V — mortality / composite handling',
     ],
   };
@@ -1534,7 +1554,7 @@ function primaryEstimatorMeta(e: PrimaryEstimator): PrimaryEstimatorMeta {
  * Choose a primary estimator and sensitivity analyses for missing data,
  * aligned to the estimand's intercurrent-event strategy. Deterministic.
  *
- * Citations: ICH E9(R1) (2019) §A.4 (sensitivity analysis & missing data);
+ * Citations: ICH E9(R1) (2019) §A.5 (impact on trial analysis: §A.5.1 main estimation, §A.5.2 sensitivity analysis);
  * ICH E9 (1998) §5.3; NRC "The Prevention and Treatment of Missing Data in
  * Clinical Trials" (2010) as referenced by ICH E9(R1).
  */
@@ -1640,7 +1660,7 @@ export function selectMissingDataStrategy(
   const cautions: string[] = [
     'No statistical method recovers information that was never collected; the first-line ' +
       'defense against missing data is trial conduct (minimize dropout, follow up after ' +
-      'discontinuation) — ICH E9(R1) §A.4 and the NRC 2010 report.',
+      'discontinuation) — ICH E9(R1) §A.5.2 and the NRC 2010 report.',
     'The missing-data assumption (MCAR/MAR/MNAR) is untestable from the observed data alone; ' +
       'pre-specify the primary assumption and the sensitivity analyses in the SAP.',
     'Avoid single-imputation shortcuts (LOCF/BOCF) as the PRIMARY analysis — they assume an ' +
@@ -1664,10 +1684,10 @@ export function selectMissingDataStrategy(
     estimandAlignmentNote:
       'The missing-data handling must serve the estimand: the same intercurrent-event ' +
       'strategy that defines the estimand dictates which observations are "missing" versus ' +
-      '"out of scope". Re-derive this plan if the estimand changes (ICH E9(R1) §A.4).',
+      '"out of scope". Re-derive this plan if the estimand changes (ICH E9(R1) §A.5.2).',
     cautions,
     citations: [
-      'ICH E9(R1) (2019) §A.4 — sensitivity analysis and missing data',
+      'ICH E9(R1) (2019) §A.5.2 — sensitivity analysis and missing data',
       'ICH E9 (1998) §5.3 — missing values and outliers',
       'National Research Council (2010), The Prevention and Treatment of Missing Data ' +
         'in Clinical Trials (referenced by ICH E9(R1))',

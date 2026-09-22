@@ -166,7 +166,7 @@ export const ASSESS_INTERCURRENT_EVENT_STRATEGY: AnaTool = {
     'adverse event), rescue medication, death, treatment switching, dose modification, ' +
     'non-compliance, and non-fatal terminal events. Returns the recommended strategy plus an ' +
     'alternative, the rationale, the typical estimator, the sensitivity-analysis approach, and ' +
-    'citations (ICH E9(R1) §A.3.4 / §A.4, FDA Multiple Endpoints 2022 §V). Use when the user ' +
+    'citations (ICH E9(R1) §A.3.4 / §A.5.2, FDA Multiple Endpoints 2022 §V). Use when the user ' +
     'needs to decide how to handle rescue, discontinuation, switching, or death in an estimand. ' +
     DETERMINISTIC_NOTE,
   input_schema: {
@@ -381,7 +381,7 @@ export const SELECT_MISSING_DATA_STRATEGY: AnaTool = {
     'delta-adjustment tipping-point, pattern-mixture and selection models. Returns the primary ' +
     'estimator with rationale and assumption, the sensitivity analyses with purpose and ' +
     'assumption, an estimand-alignment note, cautions (LOCF/BOCF discouraged; conduct is the ' +
-    'first defense), and citations (ICH E9(R1) §A.4, ICH E9 §5.3, NRC 2010). Use when the user ' +
+    'first defense), and citations (ICH E9(R1) §A.5.2, ICH E9 §5.3, NRC 2010). Use when the user ' +
     'needs a missing-data analysis plan for the SAP. ' +
     DETERMINISTIC_NOTE,
   input_schema: {
