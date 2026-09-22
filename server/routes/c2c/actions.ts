@@ -50,6 +50,7 @@ import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-g
 import {
   assertSignerIsNotAuthor,
   SeparationOfDutiesError,
+  SeparationOfDutiesUnverifiedError,
 } from '../../services/governance/separation-of-duties.js';
 import { can } from '../../services/governance/permissions.js';
 import {
@@ -635,6 +636,11 @@ function makeHandler(command: Command) {
       }
       if (err instanceof SeparationOfDutiesError) {
         return res.status(403).json({ error: err.code, detail: err.message });
+      }
+      if (err instanceof SeparationOfDutiesUnverifiedError) {
+        // The check did not run, which is not the same as the check refusing.
+        // 503, not 403: the user is not the problem, and a retry may succeed.
+        return res.status(503).json({ error: err.code, detail: err.message });
       }
       if (err instanceof SignatureRevocationUnresolvedError) {
         // Nothing was written (the transaction rolled back). Say so plainly

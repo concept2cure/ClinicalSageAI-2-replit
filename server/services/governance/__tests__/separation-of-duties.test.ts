@@ -7,6 +7,7 @@ import {
   assertSignerIsNotAuthor,
   resolveTargetOwnerId,
   SeparationOfDutiesError,
+  SeparationOfDutiesUnverifiedError,
 } from '../separation-of-duties';
 
 beforeEach(() => vi.clearAllMocks());
@@ -50,9 +51,12 @@ describe('resolveTargetOwnerId', () => {
     expect(query).not.toHaveBeenCalled();
   });
 
-  it('returns null (degrades) on a missing table/column', async () => {
+  // Was: "returns null (degrades) on a missing table/column". That carve-out is
+  // what let the c2c_blockers org_id/organization_id typo (42703, above)
+  // silently switch the check off. A failed lookup is not an answer.
+  it('throws, rather than returning null, when the owner lookup fails', async () => {
     query.mockRejectedValue({ code: '42P01' });
-    expect(await resolveTargetOwnerId('document:doc-1', 2)).toBeNull();
+    await expect(resolveTargetOwnerId('document:doc-1', 2)).rejects.toMatchObject({ code: '42P01' });
   });
 
   it('returns null when the row has no owner', async () => {
@@ -74,8 +78,40 @@ describe('assertSignerIsNotAuthor', () => {
     await expect(assertSignerIsNotAuthor('document:doc-1', 2, 10)).resolves.toBeUndefined();
   });
 
-  it('degrades to allow when the author is unresolved (never blocks the whole surface)', async () => {
+  it('degrades to allow when the row records no owner (never blocks the whole surface)', async () => {
     query.mockResolvedValue({ rows: [] });
     await expect(assertSignerIsNotAuthor('document:doc-1', 2, 9)).resolves.toBeUndefined();
+  });
+
+  it('degrades to allow for an un-modelled target type, without querying', async () => {
+    await expect(assertSignerIsNotAuthor('submission:sub-1', 2, 9)).resolves.toBeUndefined();
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  /* The defect: every lookup error returned null, null read as "allow", and an
+     author could sign their own record during any database blip. Each of these
+     must refuse, with the error that says the check did not run. */
+  it.each([
+    ['a statement timeout', { code: '57014', message: 'canceling statement due to statement timeout' }],
+    ['a dropped connection', new Error('Connection terminated unexpectedly')],
+    ['an RLS / permission refusal', { code: '42501', message: 'permission denied for table c2c_documents' }],
+    ['an undefined column (the c2c_blockers org_id typo)', { code: '42703', message: 'column "organization_id" does not exist' }],
+    ['an undefined table', { code: '42P01', message: 'relation "ectd_sequences" does not exist' }],
+  ])('refuses to sign when the owner lookup fails with %s', async (_label, failure) => {
+    query.mockRejectedValue(failure);
+    const attempt = assertSignerIsNotAuthor('ectd-sequence:42', 7, 11);
+    await expect(attempt).rejects.toBeInstanceOf(SeparationOfDutiesUnverifiedError);
+    // Not the "you are the author" refusal: the check did not run, and the
+    // route answers these two differently (503 vs 403).
+    await expect(assertSignerIsNotAuthor('ectd-sequence:42', 7, 11)).rejects.not.toBeInstanceOf(
+      SeparationOfDutiesError,
+    );
+  });
+
+  it('names the target and says nothing was signed', async () => {
+    query.mockRejectedValue({ code: '57014', message: 'timeout' });
+    await expect(assertSignerIsNotAuthor('document:doc-1', 2, 9)).rejects.toThrow(
+      /could not be verified for "document:doc-1" \(database error 57014\)\. Nothing was signed/,
+    );
   });
 });
