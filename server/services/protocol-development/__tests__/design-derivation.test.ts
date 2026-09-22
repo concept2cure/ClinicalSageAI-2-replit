@@ -329,7 +329,7 @@ describe('applyDerivation', () => {
 
     expect(r.applied).toEqual([]);
     expect(r.rejected).toHaveLength(3);
-    expect((r.next as Record<string, unknown>).indication).toBe('Type 2 diabetes');
+    expect((r.next as unknown as Record<string, unknown>).indication).toBe('Type 2 diabetes');
   });
 
   it('applies each accepted path once, even when the caller repeats it', () => {
