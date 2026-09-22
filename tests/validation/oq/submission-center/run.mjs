@@ -2,7 +2,7 @@
  * OQ-004 — Operational Qualification: Submission Center.
  * Protocol: docs/validation/OQ-004-SUBMISSION-CENTER.md. Requirements: docs/validation/URS-004-SUBMISSION-CENTER.md.
  */
-import { createRun, devLogin, helpers } from '../../lib/harness.mjs';
+import { createRun, helpers } from '../../lib/harness.mjs';
 import { requireSigner } from '../../lib/credentials.mjs';
 import { createProgram, ingestPdf, createSubmissionWithSequence } from '../../lib/fixtures.mjs';
 
@@ -179,7 +179,7 @@ await step(
   },
   async (ctx) => {
     const { api, apiAs, expect, auth, baseUrl, state } = ctx;
-    const signer = await requireSigner(ctx, devLogin, baseUrl, auth.user.email);
+    const signer = await requireSigner(ctx, baseUrl, auth.user.email);
     const asSigner = apiAs(signer.session);
     const target = `ectd-sequence:${state.sequence.id}`;
     const sign = await asSigner('POST', '/api/c2c/actions/sign', {

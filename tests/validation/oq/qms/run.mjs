@@ -2,7 +2,7 @@
  * OQ-006 — Operational Qualification: QMS controlled documents.
  * Protocol: docs/validation/OQ-006-QMS.md. Requirements: docs/validation/URS-006-QMS.md.
  */
-import { createRun, devLogin, helpers } from '../../lib/harness.mjs';
+import { createRun, helpers } from '../../lib/harness.mjs';
 import { requireSigner } from '../../lib/credentials.mjs';
 import { computeQmsDocumentContentDigest, qmsDocumentDigestInput } from '../../lib/qms-digest.mjs';
 
@@ -149,7 +149,7 @@ await step(
   },
   async (ctx) => {
     const { expect, auth, baseUrl } = ctx;
-    const signer = await requireSigner(ctx, devLogin, baseUrl, auth.user.email);
+    const signer = await requireSigner(ctx, baseUrl, auth.user.email);
     expect(signer.session.user.email !== auth.user.email, 'signer session resolved to the author identity', signer.session.user.email);
     ctx.state.signer = signer;
     const { response, document: d, signature: sig } = await approveSigned(ctx, ctx.state.docA.id, 'OQ-006 step 05: SOP approved for validation (signed)');
