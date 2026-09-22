@@ -20,6 +20,8 @@ const h = vi.hoisted(() => ({
     mode: 'clean' as 'clean' | 'throws' | 'missing-method' | 'blocking',
   },
   fabric: { mode: 'clean' as 'clean' | 'throws' },
+  fabricInput: null as null | Record<string, any>,
+  artifact: null as null | Record<string, unknown>,
 }));
 
 vi.mock('../../db', () => ({
@@ -30,7 +32,8 @@ vi.mock('../../db', () => ({
         return { returning: async () => [{ id: 'transition-1', ...row }] };
       },
     }),
-    execute: vi.fn(async () => ({ rows: [] })),
+    // Gate 4 is the only execute() reached (rules are stubbed empty).
+    execute: vi.fn(async () => ({ rows: h.artifact ? [h.artifact] : [] })),
   },
 }));
 
@@ -50,13 +53,18 @@ vi.mock('../contradiction-engine-service.js', () => ({
 }));
 
 vi.mock('../../src/control-plane/governed-document-evaluator.js', () => ({
-  evaluateGovernedDocument: () => {
+  evaluateGovernedDocument: (input: Record<string, any>) => {
+    h.fabricInput = input;
     if (h.fabric.mode === 'throws') throw new Error('fabric evaluator failed');
     return { evaluation: { readiness: { level: 'ready', blockers: [] } } };
   },
 }));
 
-import { GovernanceBoundaryService } from '../governance-boundary-service';
+import {
+  GovernanceBoundaryService,
+  documentBoundaryRequirements,
+  documentReadinessFacts,
+} from '../governance-boundary-service';
 
 function service(): GovernanceBoundaryService {
   const s = new (GovernanceBoundaryService as unknown as { new (): GovernanceBoundaryService })();
@@ -76,7 +84,14 @@ const LOCK = {
   actorRole: 'regulatory_lead',
 };
 
+const ARTIFACT = {
+  status: 'approved', content: 'Section 2.5 clinical overview text.', content_hash: 'abc',
+  citations: [{ id: 'c1' }], ctd_section: 'm2.5', type: 'clinical_overview',
+};
+
 beforeEach(() => {
+  h.artifact = { ...ARTIFACT };
+  h.fabricInput = null;
   h.inserted.length = 0;
   h.contradiction.mode = 'clean';
   h.fabric.mode = 'clean';
@@ -121,6 +136,7 @@ describe('gate 4 — fabric readiness gate fails closed', () => {
     async (toBoundary) => {
       h.fabric.mode = 'throws';
       const fromBoundary = toBoundary === 'approved' ? 'governed_draft' : 'approved';
+      if (toBoundary === 'submission_ready') h.artifact = { ...ARTIFACT, status: 'locked' };
       const r = await service().evaluateTransition({ ...LOCK, fromBoundary, toBoundary });
       expect(r.allowed).toBe(false);
       expect(r.blockedReasons.join(' ')).toMatch(/Fabric readiness gate could not be evaluated \(fabric evaluator failed\)/);
@@ -135,5 +151,73 @@ describe('the audit row tells the truth', () => {
     expect(h.inserted).toHaveLength(1);
     expect(h.inserted[0].transitionAllowed).toBe(false);
     expect((h.inserted[0].blockedReasons as string[]).join(' ')).toMatch(/Contradiction gate could not be evaluated/);
+  });
+});
+
+describe('gate 4 — judges the real artifact, not asserted facts', () => {
+  it('fails closed when the artifact is not in this organization and project', async () => {
+    h.artifact = null;
+    const r = await service().evaluateTransition(LOCK);
+    expect(r.allowed).toBe(false);
+    expect(r.blockedReasons.join(' ')).toMatch(/artifact 77 was not found in this organization and project/);
+  });
+
+  it('feeds the fabric what the row records — no hard-coded trues', async () => {
+    h.artifact = { ...ARTIFACT, citations: [], content_hash: null };
+    await service().evaluateTransition(LOCK);
+    const st = h.fabricInput?.documentState;
+    expect(st.hasEvidence).toBe(false);          // was hard-coded true
+    expect(st.evidenceCount).toBe(0);
+    expect(st.hasProvenance).toBe(false);        // was hard-coded true; not evaluated here
+    expect(st.hasApproval).toBe(true);           // the row says approved
+    expect(st.placementValid).toBe(true);
+  });
+
+  it('blocks locking an artifact with no content', async () => {
+    h.artifact = { ...ARTIFACT, content: '   ' };
+    const r = await service().evaluateTransition(LOCK);
+    expect(r.allowed).toBe(false);
+    expect(r.blockedReasons.join(' ')).toMatch(/has no content/);
+  });
+
+  it('blocks submission-ready for an artifact that was never locked', async () => {
+    h.artifact = { ...ARTIFACT, status: 'approved' };
+    const r = await service().evaluateTransition({ ...LOCK, fromBoundary: 'locked', toBoundary: 'submission_ready' });
+    expect(r.allowed).toBe(false);
+    expect(r.blockedReasons.join(' ')).toMatch(/only a locked artifact can be marked submission-ready/);
+  });
+
+  it('blocks submission-ready with no CTD placement', async () => {
+    h.artifact = { ...ARTIFACT, status: 'locked', ctd_section: null };
+    const r = await service().evaluateTransition({ ...LOCK, fromBoundary: 'locked', toBoundary: 'submission_ready' });
+    expect(r.allowed).toBe(false);
+    expect(r.blockedReasons.join(' ')).toMatch(/no CTD placement/);
+  });
+
+  it('allows submission-ready for a locked, placed artifact with content (control)', async () => {
+    h.artifact = { ...ARTIFACT, status: 'locked' };
+    const r = await service().evaluateTransition({ ...LOCK, fromBoundary: 'locked', toBoundary: 'submission_ready' });
+    expect(r.blockedReasons).toEqual([]);
+    expect(r.allowed).toBe(true);
+  });
+
+  it('does not judge a transition with no artifact as a document', async () => {
+    h.artifact = null;
+    const r = await service().evaluateTransition({ ...LOCK, artifactId: undefined });
+    expect(r.blockedReasons.join(' ')).not.toMatch(/Document readiness gate|Fabric readiness gate/);
+  });
+});
+
+describe('documentBoundaryRequirements — pure', () => {
+  const facts = (over: Partial<Parameters<typeof documentReadinessFacts>[0]> = {}) =>
+    documentReadinessFacts({ ...ARTIFACT, ...over } as Parameters<typeof documentReadinessFacts>[0]);
+
+  it('rejects a code-shaped-invalid placement by name', () => {
+    expect(documentBoundaryRequirements('submission_ready', facts({ status: 'locked', ctd_section: 'estar.device' })).join(' '))
+      .toMatch(/"estar.device" is not a valid CTD section code/);
+  });
+
+  it('approve needs content only (status stays the route\'s check)', () => {
+    expect(documentBoundaryRequirements('approved', facts({ status: 'review' }))).toEqual([]);
   });
 });
