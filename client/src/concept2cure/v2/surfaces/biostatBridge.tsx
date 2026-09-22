@@ -508,22 +508,48 @@ export function FilingPlacementNote({ placement }: { placement: BridgePlacement 
 
 // ─── Statistics tab (protocol workspace) ─────────────────────────────────────
 
-export function StudyDesignStatisticsTab({ onNav }: { onNav: (id: string) => void }) {
+/**
+ * Statistics for THIS protocol's bound study design.
+ *
+ * This pane used to render `useBridgeDesigns()` unfiltered, which narrows to
+ * the open PROGRAM (see `bridgeDesignsPath`) or, with no program open, to the
+ * whole organization. So opening protocol A showed protocol B's sample size,
+ * power and alpha under a heading that said "Statistics" on A's workspace. The
+ * numbers were right and they answered a question the user had not asked.
+ *
+ * A protocol's statistics live on the design BOUND TO IT
+ * (`protocol_documents.study_design_id`, shipped 2026-09-22), so the pane takes
+ * that id and shows that design. Three absences are kept apart, because they
+ * mean different things to the author:
+ *
+ *   no id          nothing is bound yet -> say so and point at the Study design
+ *                  tab. Do NOT fall back to listing the program's designs; that
+ *                  is the old behaviour wearing a different label.
+ *   id, not found  the link names a design this scope cannot read -> an
+ *                  UNRESOLVED link, not an absent one.
+ *   read failed    the store did not answer. Never rendered as "no design".
+ */
+export function StudyDesignStatisticsTab({ onNav, boundStudyId }: { onNav: (id: string) => void; boundStudyId?: string | null }) {
   const designs = useBridgeDesigns();
+  const bound = (boundStudyId ?? '').trim();
+  const rows = bound ? designs.rows.filter((d) => d.studyId === bound) : [];
+  const unresolved = Boolean(bound) && !designs.loading && !designs.error && rows.length === 0;
   return (
     <div className="pd-pane">
       <div className="pd-pane-h">
-        <div><h2 className="pd-pane-t">Statistics</h2><div className="pd-pane-s">Statistical readiness of the {scopeLabel() === 'org-scoped' ? "organization's" : "program's"} persisted study designs — sample size, power, estimand and analysis plan, as the design record holds them.</div></div>
+        <div><h2 className="pd-pane-t">Statistics</h2><div className="pd-pane-s">Statistical readiness of the study design bound to this protocol — sample size, power, estimand and analysis plan, as the design record holds them.</div></div>
       </div>
-      {designs.loading ? (
+      {!bound ? (
+        <div style={{ padding: 12 }}><EmptyState icon={I.fileText} title="No study design is bound to this protocol" hint="A protocol's statistics live on its study design (CDISC PRM). Bind one on the Study design tab and its readiness appears here. Other designs in this program are not shown, because they are not this protocol's." /></div>
+      ) : designs.loading ? (
         <div role="status" className="scaf-note" style={{ margin: 12 }}>Loading study designs…</div>
       ) : designs.error ? (
         <div style={{ padding: 12 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load study designs" hint="The design store didn't respond. Sign in and retry, or check that the study-design service is reachable." /></div>
-      ) : designs.empty ? (
-        <div style={{ padding: 12 }}><EmptyState icon={I.fileText} title="No persisted study design for this scope" hint="A protocol's statistics live on its study design (CDISC PRM). Persist a design and its readiness appears here with a link into the Biostatistics designer." /></div>
+      ) : unresolved ? (
+        <div style={{ padding: 12 }}><EmptyState tone="error" icon={I.alertTriangle} title="The bound study design could not be read" hint={`This protocol names study design ${bound}, but it is not readable in this scope. The link is unresolved — this is not a protocol without a design, and no statistics are shown for it.`} /></div>
       ) : (
         <div style={{ display: 'grid', gap: 10, padding: 12 }}>
-          {designs.rows.map((d) => {
+          {rows.map((d) => {
             const failed = d.readiness.checks.filter((c) => !c.ok);
             return (
               <div key={d.studyId} className="pj-card">

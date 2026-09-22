@@ -249,7 +249,9 @@ function TabBody(props: BodyProps) {
       return <DerivationTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} />;
     case 'compliance': return <ComplianceTab doc={doc} />;
     case 'irb-package': return <IrbPackageTab doc={doc} />;
-    case 'statistics': return <StudyDesignStatisticsTab onNav={onNav} />;
+    /* Scoped to the design BOUND to this protocol. Passing nothing rendered the
+       whole program's designs on one protocol's workspace. */
+    case 'statistics': return <StudyDesignStatisticsTab onNav={onNav} boundStudyId={doc.studyDesign?.studyId ?? null} />;
     default:
       return sec
         /* Keyed on the section: switching section replaces the pane rather
