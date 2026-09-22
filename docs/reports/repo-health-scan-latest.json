@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-22T05:14:07.990Z",
+  "generatedAt": "2026-09-22T07:13:41.988Z",
   "git": {
-    "sha": "47c3bece842df000885bbd93da233049bdc71d4d",
+    "sha": "33678538750af6a1d34db45b110504272669a0a0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2492,6 +2492,10 @@
         "lines": 1726
       },
       {
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 1714
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1706
       },
@@ -2506,10 +2510,6 @@
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
-      },
-      {
-        "file": "server/services/submission-service/submission-service.ts",
-        "lines": 1677
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
