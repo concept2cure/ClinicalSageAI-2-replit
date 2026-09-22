@@ -84,8 +84,11 @@ export async function createAmendmentTx(client: Queryable, orgId: number, userId
       input.title,
       input.rationale ?? null,
       input.amendmentType ?? null,
-      input.affectsConsent ?? false,
-      input.affectsRisk ?? false,
+      // NULL = not declared. `?? false` stored "affects neither" for every
+      // amendment whose creator did not answer, and substantiality.ts then
+      // read that as a declaration (migrations/20260922e).
+      input.affectsConsent ?? null,
+      input.affectsRisk ?? null,
       userId,
       snapshot.design === null ? null : JSON.stringify(snapshot.design),
       snapshot.studyDesignId,

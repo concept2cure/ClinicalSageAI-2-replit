@@ -49,6 +49,27 @@ describe('classifyAmendmentImpact', () => {
   });
 });
 
+describe('classifyAmendmentImpact — an undeclared flag is not a No', () => {
+  it('does not route a minor amendment to expedited review when consent/risk were not declared', () => {
+    const r = classifyAmendmentImpact({ amendmentType: 'minor', affectsConsent: null, affectsRisk: null });
+    expect(r.reviewPath).toBe('undetermined');
+    expect(r.requiresReconsent).toBeNull();
+    expect(r.basis).toMatch(/not declared/);
+  });
+
+  it('a major amendment still needs full review, but re-consent stays undetermined', () => {
+    const r = classifyAmendmentImpact({ amendmentType: 'major', affectsConsent: null, affectsRisk: false });
+    expect(r.reviewPath).toBe('full');
+    expect(r.requiresReconsent).toBeNull();
+  });
+
+  it('one declared Yes settles it even if the other flag is undeclared', () => {
+    const r = classifyAmendmentImpact({ amendmentType: 'minor', affectsConsent: true, affectsRisk: null });
+    expect(r.reviewPath).toBe('full');
+    expect(r.requiresReconsent).toBe(true);
+  });
+});
+
 describe('evaluateAmendmentReadiness', () => {
   it('is ready when draft with at least one change', () => {
     const r = evaluateAmendmentReadiness({ status: 'draft', changeCount: 1 });

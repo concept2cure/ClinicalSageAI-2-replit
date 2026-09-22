@@ -51,7 +51,8 @@ export interface PdevBudget { params: BudgetParams; items: BudgetItem[]; }
 export interface AmendmentChange { sec: string; from: string; to: string; }
 export interface PdevAmendment {
   id: string; num: string; summary: string; status: string;
-  reconsent: boolean; path: string; changes: AmendmentChange[];
+  /** null = consent impact not declared. */
+  reconsent: boolean | null; path: string; changes: AmendmentChange[];
 }
 export interface CapaAction { id: string; action: string; status: string; }
 export interface PdevDeviation {

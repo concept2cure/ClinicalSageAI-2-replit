@@ -15,20 +15,37 @@ export type AmendmentType = 'major' | 'minor' | 'administrative';
 export type AmendmentStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'implemented';
 
 const EXPEDITED_BASIS = '45 CFR 46.110 / 21 CFR 56.110 — minor changes to previously approved research may be reviewed by expedited procedure';
-const FULL_BASIS = '45 CFR 46.109(c) / 46.116 — substantive changes (major, or affecting consent or risk) require convened-board review and may require re-consent';
-const ADMIN_BASIS = '45 CFR 46.103 — administrative/non-substantive changes are tracked but do not alter the risk/benefit assessment';
+/* Citations corrected 2026-09-22. FULL_BASIS cited 45 CFR 46.109(c), which is
+   documentation of informed consent; the requirement that a change to approved
+   research be reviewed before it is initiated is 46.108(a)(3)(iii) /
+   21 CFR 56.108(a)(4), as lifecycle.ts already cites. ADMIN_BASIS cited
+   46.103, which is assurances of compliance. No regulation defines an
+   "administrative" amendment, so the basis now says that instead of citing a
+   clause that does not. OPEN QUESTION for regulatory review, not settled here:
+   the Common Rule reviews every change to approved research, so whether an
+   "administrative" path can mean "no IRB review" is an IRB-procedure judgment.
+   This classifier has no production caller today; do not wire it into anything
+   user-facing until that is decided. */
+const FULL_BASIS = '45 CFR 46.108(a)(3)(iii) / 21 CFR 56.108(a)(4) — a change to approved research requires IRB review and approval before it is initiated; substantive changes (major, or affecting consent or risk) go to the convened board, and 45 CFR 46.116 / 21 CFR 50.25 may require re-consent';
+const ADMIN_BASIS = 'Sponsor-classified administrative change. No regulation defines this category; whether it needs IRB review, and by what procedure, is for the IRB under 45 CFR 46.108(a)(3)(iii) / 21 CFR 56.108(a)(4)';
 
 export interface AmendmentImpactInput {
   amendmentType: AmendmentType;
-  affectsConsent: boolean;
-  affectsRisk: boolean;
+  /** null = not declared. Never default it to false. */
+  affectsConsent: boolean | null;
+  affectsRisk: boolean | null;
 }
 
 export interface AmendmentImpactResult {
-  reviewPath: 'full' | 'expedited' | 'administrative';
-  requiresReconsent: boolean;
+  /** 'undetermined' when the path turns on a declaration nobody made. */
+  reviewPath: 'full' | 'expedited' | 'administrative' | 'undetermined';
+  /** null when consent or risk impact was not declared and nothing declared settles it. */
+  requiresReconsent: boolean | null;
   basis: string;
 }
+
+const UNDECLARED_BASIS =
+  'Consent and/or risk impact not declared. Whether this amendment needs convened-board review and re-consent (45 CFR 46.109 / 46.116; 21 CFR 56.110) turns on that declaration, so it is not decided here.';
 
 /**
  * Classify an amendment's review path and re-consent requirement. A major
@@ -39,14 +56,19 @@ export interface AmendmentImpactResult {
  * escalates them). Pure — cited to 45 CFR 46 / 21 CFR 56.
  */
 export function classifyAmendmentImpact(input: AmendmentImpactInput): AmendmentImpactResult {
-  const substantive = input.affectsConsent || input.affectsRisk;
+  // A declared `true` settles it. An undeclared flag is not a `false`.
+  const substantive = input.affectsConsent === true || input.affectsRisk === true;
+  const undeclared = input.affectsConsent === null || input.affectsRisk === null;
 
   if (input.amendmentType === 'major' || substantive) {
     return {
       reviewPath: 'full',
-      requiresReconsent: substantive,
+      requiresReconsent: substantive ? true : undeclared ? null : false,
       basis: FULL_BASIS,
     };
+  }
+  if (undeclared) {
+    return { reviewPath: 'undetermined', requiresReconsent: null, basis: UNDECLARED_BASIS };
   }
   if (input.amendmentType === 'minor') {
     return { reviewPath: 'expedited', requiresReconsent: false, basis: EXPEDITED_BASIS };

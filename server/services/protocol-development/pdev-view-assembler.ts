@@ -164,7 +164,8 @@ function mapAmendments(
   return rows.map((a) => ({
     id: str(a.id), num: str(a.amendment_number), summary: str(a.title),
     status: a.decided_date ? 'decided' : a.submitted_date ? 'submitted' : 'draft',
-    reconsent: bool(a.affects_consent), path: '',
+    // null = not declared, which the panel says rather than showing "no re-consent".
+    reconsent: a.affects_consent === null || a.affects_consent === undefined ? null : bool(a.affects_consent), path: '',
     changes: at(Number(a.id)).map((c) => ({ sec: str(c.section_ref), from: str(c.previous_text), to: str(c.proposed_text) })),
   }));
 }

@@ -469,7 +469,7 @@ export const REVIEW_PROTOCOL_RISK_REGISTER: AnaTool = {
 export const CREATE_PROTOCOL_AMENDMENT: AnaTool = {
   name: 'create_protocol_amendment',
   description:
-    "Open a protocol amendment against a protocol document. Type (major/minor/administrative) plus the affects-consent / affects-risk flags drive the deterministic review path and reconsent trigger (45 CFR 46.109 / 21 CFR 56.110). Governed + audited.",
+    "Open a protocol amendment against a protocol document. Type (major/minor/administrative) and the affects-consent / affects-risk flags are recorded as the sponsor's declaration, and the substantiality assessment compares that declaration against what actually changed in the study design. Pass a flag only if it has been assessed: an omitted flag is stored as NOT DECLARED, never as No. Snapshots the bound study design as the 'before' side. Governed + audited.",
   input_schema: {
     type: 'object',
     properties: {
@@ -493,7 +493,7 @@ export const ADD_AMENDMENT_CHANGE: AnaTool = {
 
 export const REVIEW_AMENDMENT: AnaTool = {
   name: 'review_amendment',
-  description: "Read-only amendment readiness: change count, computed review path / reconsent trigger, and any blockers before submission.",
+  description: "Read-only amendment submission readiness: whether the amendment is a draft with at least one change line item, and the blockers if not. Does NOT compute an IRB review path or a re-consent determination.",
   input_schema: { type: 'object', properties: { amendment_id: { type: 'number' } }, required: ['amendment_id'] },
 };
 
