@@ -170,8 +170,16 @@ export async function writeUploadRetrievalAtom(
     const atomId = Number(rows[0].id);
     try {
       const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
-      // embedAtom takes the id as a string (it interpolates into a parameterized read).
-      await getEmbeddingService(db as any).embedAtom(String(atomId));
+      /* The id goes down as the number the insert returned. It used to be
+         `String(atomId)`, on the note that "embedAtom takes the id as a string
+         (it interpolates into a parameterized read)" — which is not what
+         embedAtom does: `WHERE id = $1` is a bound parameter, nothing is
+         interpolated, and `lumen_data_atoms.id` is `serial`. Every other caller
+         of embedAtom passes the row id as it came back (contextual-ingest,
+         c2c/artifacts, c2c/knowledge-sources); this one round-tripped it
+         through Number() and straight back to a string, so the same capability
+         reached the same function in two shapes for no reason. */
+      await getEmbeddingService(db as any).embedAtom(atomId);
       return { ...bounds, atomId, embedded: true };
     } catch (err) {
       logger.warn('Upload atom written but not embedded — it is not retrievable yet', {

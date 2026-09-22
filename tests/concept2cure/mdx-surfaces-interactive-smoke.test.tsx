@@ -85,19 +85,46 @@ function wrap(node: React.ReactNode) {
 }
 
 /**
- * Click every enabled <button> in the rendered container in turn. After all
- * clicks, the container must still hold rendered content (the surface didn't
- * crash and unmount itself). Returns the number of buttons clicked so the
- * test fails fast if a surface degenerates to zero interactive controls — a
- * symptom of a refactor that accidentally removed all interactivity.
+ * Click every enabled <button> the surface can *reach*, not just the ones it
+ * paints first.
+ *
+ * The original helper took one `querySelectorAll('button')` snapshot and
+ * clicked that list. That measured the whole surface only while every panel
+ * rendered flat. Engineering and UDI now hold their rich content — DHF strip,
+ * ISO 14971 heatmap, design-controls trace, change requests, device registry,
+ * ISO 15223-1 symbols, MRI matrix — inside the "Situational awareness"
+ * accordion, collapsed on first paint by design (the surfaces' own module docs
+ * say so). A single snapshot therefore saw two controls: the accordion head and
+ * one `DataGate` retry. Clicking the head revealed the rest *after* the list
+ * had already been taken, so the suite drove none of it — which is the opposite
+ * of what its name claims.
+ *
+ * So: click, re-query, click whatever the last click revealed, until the set
+ * closes. Elements are tracked by DOM identity, so a control that survives a
+ * re-render is clicked exactly once and an accordion is never toggled shut by
+ * this helper; a genuinely remounted control (tab switch) is a new node and is
+ * driven again, which is the handler-safety property under test. `maxRounds`
+ * bounds a surface that ping-pongs between two panels.
+ *
+ * After every click the container must still hold rendered content (the surface
+ * didn't crash and unmount itself). Returns the number of buttons clicked, so
+ * the test fails fast if a surface degenerates to a handful of interactive
+ * controls — a refactor that accidentally removed interactivity, or a
+ * disclosure control that no longer discloses anything.
  */
-function clickEveryButton(container: HTMLElement): { clicked: number } {
-  const buttons = Array.from(container.querySelectorAll('button')) as HTMLButtonElement[];
+function clickEveryButton(container: HTMLElement, maxRounds = 8): { clicked: number } {
+  const seen = new Set<Element>();
   let clicked = 0;
-  for (const b of buttons) {
-    if (b.disabled) continue;
-    fireEvent.click(b);
-    clicked++;
+  for (let round = 0; round < maxRounds; round++) {
+    const fresh = (
+      Array.from(container.querySelectorAll('button')) as HTMLButtonElement[]
+    ).filter((b) => !b.disabled && !seen.has(b));
+    if (fresh.length === 0) break;
+    for (const b of fresh) {
+      seen.add(b);
+      fireEvent.click(b);
+      clicked++;
+    }
   }
   const remainingText = (container.textContent || '').trim();
   if (remainingText.length === 0) {
@@ -131,6 +158,12 @@ describe('MDX rich-surface interactive smoke', () => {
 
   it('UDI: every label-preview / format-picker click is handler-safe', () => {
     const { container } = wrap(<UdiSurface onAskAna={askAna} />);
+    /* The controls this case is named for are per-document: the row-open button
+       and the Ask-AnA chip inside "documents in flight". The panel frame draws
+       its framework chips whether or not a single row reached it, so the button
+       count alone cannot tell "the gate rendered" from "the gate's rows reached
+       the panel" — which is exactly the defect that was here. Pin the rows. */
+    expect(container.querySelectorAll('.docs-row').length).toBeGreaterThan(0);
     const { clicked } = clickEveryButton(container);
     expect(clicked).toBeGreaterThan(5);
   });
