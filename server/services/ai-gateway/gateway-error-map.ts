@@ -11,6 +11,7 @@
 
 import {
   GatewayPolicyError,
+  ModelNotApprovedError,
   GatewayNoProviderError,
   GatewayAllProvidersFailedError,
 } from './gateway';
@@ -69,6 +70,16 @@ export function classifyGatewayError(err: unknown): ClassifiedGatewayError {
   }
   if (err instanceof GatewayNoProviderError) {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is available to handle this request.' };
+  }
+  // Before the general policy branch: it is a GatewayPolicyError subclass, and
+  // "blocked by AI gateway policy" would tell the author nothing they can act on.
+  if (err instanceof ModelNotApprovedError) {
+    return {
+      code: 'PROVIDER_UNAVAILABLE',
+      message:
+        'No model approved for regulatory drafting and review is available right now, ' +
+        'so this request was not sent to one that is not approved for it. Try again shortly.',
+    };
   }
   if (err instanceof GatewayPolicyError) {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'This request was blocked by AI gateway policy.' };

@@ -14,9 +14,24 @@
  * @module server/services/ai-governance/approved-models
  */
 
-import type { ProviderName } from '../ai-gateway/types';
+import type { ProviderName, TaskType } from '../ai-gateway/types';
 
 export type ModelRole = 'primary' | 'fallback';
+
+/**
+ * Where a model stands against performance qualification (PQ) — the eval run
+ * against `server/eval/rag/` and `server/eval/doc-quality/` that
+ * `docs/LAUNCH_DEFINITION_OF_DONE.md` makes the condition for high-risk
+ * regulatory drafting.
+ *
+ * `passed` carries the reference to the run that established it; a pass with
+ * nothing to point at is not a pass, and the registry test refuses one.
+ */
+export interface PqStatus {
+  status: 'pending' | 'passed' | 'failed';
+  /** Path to the executed PQ record. Null until a run exists. */
+  reference: string | null;
+}
 
 export interface ApprovedModel {
   /** Stable gateway alias id (e.g. 'claude-opus-4'). */
@@ -31,6 +46,27 @@ export interface ApprovedModel {
   evalReference: string;
   /** ISO date of the last governance review of this entry. */
   lastReviewed: string;
+  /**
+   * Whether this model may serve a high-risk task — regulatory drafting or
+   * regulatory review (see {@link HIGH_RISK_TASK_TYPES}).
+   *
+   * Until 2026-09-22 this lived only in prose — "not approved for high-risk
+   * regulatory drafting" in a rationale string — and nothing read it: the
+   * gateway's fallback ladder, `cost_optimized`, `round_robin` and explicit
+   * selection could each route drafting to a model this file said was not
+   * approved for it. The gateway now enforces this field at every selection
+   * point, so it is a control, not a description.
+   */
+  approvedForHighRisk: boolean;
+  /**
+   * The words that decide `approvedForHighRisk`, quoted from this registry or
+   * from the launch definition of done. Transcribed, not re-decided: changing
+   * a model's approval is a governance act and belongs in review, with the
+   * sentence that justifies it written here.
+   */
+  highRiskBasis: string;
+  /** Performance qualification against the eval harnesses. */
+  pq: PqStatus;
 }
 
 /**
@@ -47,6 +83,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Flagship reasoning + regulatory drafting model; primary for high-risk authoring and review tasks. Bumped 4.8 → Opus 5. Same wire surface as its predecessor (adaptive thinking; temperature/top_p/top_k and thinking.budget_tokens rejected), so the request shape is unchanged — but this is a capability change, not a patch: re-validation is owed against the PQ targets below, and until it executes the accuracy claim rests on the same harness as 4.8, not on measurement of this version. Opus 4.8 is retained as the top intra-provider fallback, so a tenant whose tier does not yet carry Opus 5 keeps the reviewed behaviour rather than falling to Sonnet.',
     evalReference: 'server/eval/rag/ (faithfulness); same capability profile and eval harness as the 4.8 predecessor; docs/validation/PQ-CORTEX-001 (PQ-007/008 accuracy targets, PENDING EXECUTION for this version).',
     lastReviewed: '2026-09-17',
+    approvedForHighRisk: true,
+    highRiskBasis: 'This entry: "primary for high-risk authoring and review tasks".',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'claude-opus-4-legacy',
@@ -56,6 +95,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Previous flagship (Opus 4.8), retained as the top intra-provider fallback below Opus 5. Shares the reasoning-only surface, so a fallback preserves the same reasoning behaviour and the same request shape. Was the primary until 2026-09-17 and carries that review.',
     evalReference: 'Same capability profile as claude-opus-4; covered by the gateway fallback law. Reviewed as primary on 2026-07-24.',
     lastReviewed: '2026-09-17',
+    approvedForHighRisk: true,
+    highRiskBasis: 'This entry: retained as "the top intra-provider fallback below Opus 5" so a tenant "keeps the reviewed behaviour rather than falling to Sonnet". The DoD\'s "one validated fallback".',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'claude-sonnet-4',
@@ -65,6 +107,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'High-quality, lower-cost fallback below Opus on the quality ladder. Bumped Sonnet 4.6 → Sonnet 5. NOTE the surface change: Sonnet 5 is reasoning-only (adaptive thinking, no sampling params) where 4.6 took budget_tokens + temperature, so this rung no longer sends the same request shape as the rung below it. That is declared per entry in the gateway registry (thinkingMode / supportsSamplingParams) rather than inferred, which is what makes a mixed ladder safe.',
     evalReference: 'server/eval/rag/; gateway fallback law (Opus → Sonnet → Haiku). Not approved for high-risk regulatory drafting on its own — it is a fallback rung.',
     lastReviewed: '2026-09-17',
+    approvedForHighRisk: false,
+    highRiskBasis: 'This entry: "Not approved for high-risk regulatory drafting on its own"; the Opus 4.8 entry exists so a high-risk request does not fall to Sonnet.',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'claude-sonnet-4-legacy',
@@ -74,6 +119,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Previous Sonnet (4.6), retained as the intra-provider rung below Sonnet 5. Replaces the dated claude-sonnet-4-20250514 snapshot that held this slot: a fallback should be the previous generation, not a year-old pin nobody re-reviewed. Keeps the LEGACY thinking surface (budget_tokens + temperature).',
     evalReference: 'Same capability profile as the prior claude-sonnet-4 entry it succeeds; covered by the gateway fallback law.',
     lastReviewed: '2026-09-17',
+    approvedForHighRisk: false,
+    highRiskBasis: 'Below Sonnet 5 on the quality ladder, which is itself not approved for high-risk drafting.',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'claude-haiku-4',
@@ -83,6 +131,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Fast, low-cost model for chat/summarization and last-rung Anthropic fallback. Version string only: the dated suffix (-20251001) was dropped because claude-haiku-4-5 is the complete model id. Same weights, same model — this is a naming correction, not a swap.',
     evalReference: 'server/eval/rag/; gateway fallback law.',
     lastReviewed: '2026-09-17',
+    approvedForHighRisk: false,
+    highRiskBasis: 'This entry: chat/summarization and last-rung fallback. Model card: "Not approved for high-risk regulatory drafting".',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'gpt-4o',
@@ -92,6 +143,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Cross-provider primary for structured output; first OpenAI fallback when Anthropic is unavailable.',
     evalReference: 'server/eval/rag/; docs/rfi/AI_CAPABILITIES_INVENTORY.md (model configuration).',
     lastReviewed: '2026-06-03',
+    approvedForHighRisk: false,
+    highRiskBasis: 'DoD: GPT ships "with riskTier capped below high-risk until their PQ executes".',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'gpt-4o-mini',
@@ -101,6 +155,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Low-cost model for chat/summarization; not approved for high-risk regulatory drafting.',
     evalReference: 'server/eval/rag/.',
     lastReviewed: '2026-06-03',
+    approvedForHighRisk: false,
+    highRiskBasis: 'This entry: "not approved for high-risk regulatory drafting".',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'kimi-k2-0711',
@@ -110,6 +167,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Long-context cross-provider fallback when both Anthropic and OpenAI are unavailable.',
     evalReference: 'Gateway fallback law (final cross-provider rung).',
     lastReviewed: '2026-06-03',
+    approvedForHighRisk: false,
+    highRiskBasis: 'DoD: Kimi ships "with riskTier capped below high-risk until their PQ executes".',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'moonshot-v1-128k',
@@ -119,6 +179,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Long-context cross-provider fallback.',
     evalReference: 'Gateway fallback law.',
     lastReviewed: '2026-06-03',
+    approvedForHighRisk: false,
+    highRiskBasis: 'DoD: Kimi/Moonshot ship "with riskTier capped below high-risk until their PQ executes".',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'moonshot-v1-32k',
@@ -128,6 +191,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Short-context cross-provider fallback for chat/general tasks.',
     evalReference: 'Gateway fallback law.',
     lastReviewed: '2026-06-03',
+    approvedForHighRisk: false,
+    highRiskBasis: 'DoD: Kimi/Moonshot ship "with riskTier capped below high-risk until their PQ executes".',
+    pq: { status: 'pending', reference: null },
   },
   // ── Private-cloud + self-hosted substrates ─────────────────────────────────
   // Same Claude/GPT models as the shared-frontier entries, deployed in a
@@ -142,6 +208,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Flagship Claude in the tenant AWS account — primary high-risk authoring/review path for BAA + zero-retention customers.',
     evalReference: 'Same model weights as claude-opus-4 (first-party); server/eval/rag/. Region/ZDR governed by providers/placement.ts.',
     lastReviewed: '2026-06-08',
+    approvedForHighRisk: true,
+    highRiskBasis: 'This entry: "primary high-risk authoring/review path for BAA + zero-retention customers".',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'claude-sonnet-4-bedrock',
@@ -151,6 +220,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Lower-cost private-cloud Claude fallback below Opus for BAA/ZDR customers.',
     evalReference: 'Same weights as claude-sonnet-4; gateway fallback law.',
     lastReviewed: '2026-06-08',
+    approvedForHighRisk: false,
+    highRiskBasis: 'Sonnet weights; see claude-sonnet-4.',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'claude-opus-4-vertex',
@@ -160,6 +232,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Flagship Claude in the tenant GCP project — regional data-residency path (EU/APAC) for customers on Google Cloud.',
     evalReference: 'Same weights as claude-opus-4; residency governed by providers/placement.ts.',
     lastReviewed: '2026-06-08',
+    approvedForHighRisk: true,
+    highRiskBasis: 'INFERENCE, not a quotation: this entry does not say high-risk in words. Treated as the Bedrock Opus entry is — the flagship Claude on a tenant cloud — because it is the only residency path for GCP customers, and refusing it would leave them no drafting model at all. A reviewer should confirm or reverse this.',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'gpt-4o-azure',
@@ -169,6 +244,9 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'GPT-4o in the tenant Azure estate — private-cloud path for Microsoft-shop / enterprise customers.',
     evalReference: 'Same model as gpt-4o (first-party); abuse-monitoring opt-out is an Azure-side control.',
     lastReviewed: '2026-06-08',
+    approvedForHighRisk: false,
+    highRiskBasis: 'Same model as gpt-4o; see gpt-4o.',
+    pq: { status: 'pending', reference: null },
   },
   {
     id: 'local-default',
@@ -178,8 +256,39 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     rationale: 'Self-hosted open-weight model (vLLM/LiteLLM) — the only air-gappable substrate, for tenants who cannot send data to any third party. Lower quality; intended for non-high-risk tasks and offline deployments. The concrete weights are resolved by the self-hosted server / LiteLLM model map.',
     evalReference: 'Pending per-deployment eval; not approved for high-risk regulatory drafting until evaluated against server/eval/rag/.',
     lastReviewed: '2026-06-08',
+    approvedForHighRisk: false,
+    highRiskBasis: 'This entry: "not approved for high-risk regulatory drafting until evaluated against server/eval/rag/".',
+    pq: { status: 'pending', reference: null },
   },
 ];
+
+/**
+ * Task types that are high-risk regulatory work. `server/services/ai-governance/
+ * risk-tiers.ts` puts the drafting, compliance and submission capability
+ * categories at `riskTier: 'high'`; at the gateway those reach a model as
+ * `document_drafting` and `regulatory_review`.
+ */
+export const HIGH_RISK_TASK_TYPES: ReadonlySet<TaskType> = new Set<TaskType>([
+  'document_drafting',
+  'regulatory_review',
+]);
+
+export function isHighRiskTask(taskType: TaskType): boolean {
+  return HIGH_RISK_TASK_TYPES.has(taskType);
+}
+
+const APPROVED_FOR_HIGH_RISK: ReadonlySet<string> = new Set(
+  APPROVED_MODELS.filter((m) => m.approvedForHighRisk).map((m) => m.id),
+);
+
+/**
+ * True only for a registry entry marked `approvedForHighRisk`. An id this
+ * registry does not know is NOT approved: a model added to the gateway without
+ * a governance entry must fail closed here, not inherit an approval by default.
+ */
+export function isApprovedForHighRisk(modelId: string): boolean {
+  return APPROVED_FOR_HIGH_RISK.has(modelId);
+}
 
 /** Minimal fact about a model as it exists in the live gateway registry. */
 export interface RegistryModelFact {
