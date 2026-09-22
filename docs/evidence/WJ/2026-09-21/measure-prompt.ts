@@ -17,10 +17,10 @@ const label = process.argv[2] ?? 'unlabelled';
 const bytes = (s: string) => Buffer.byteLength(s, 'utf8');
 const tok = (s: string) => Math.ceil(bytes(s) / 4);
 const row = (name: string, s: string) =>
-  console.log(`${name.padEnd(58)} ${String(bytes(s)).padStart(7)} B  ~${String(tok(s)).padStart(6)} tok`);
+  console.info(`${name.padEnd(58)} ${String(bytes(s)).padStart(7)} B  ~${String(tok(s)).padStart(6)} tok`);
 
-console.log(`# AnA prompt measurement — ${label}\n`);
-console.log('## Stream-path parts (server/routes/ana-ri/stream.ts -> orchestrate())');
+console.info(`# AnA prompt measurement — ${label}\n`);
+console.info('## Stream-path parts (server/routes/ana-ri/stream.ts -> orchestrate())');
 const core = getCorePrompt();
 row('persona.ts ANA_RI_CORE_PROMPT', core);
 row('personality-core.ts ANA_PERSONALITY_CORE', ANA_PERSONALITY_CORE);
@@ -32,7 +32,7 @@ row('  of which orchestrator.ts static additions', plain.systemPrompt.slice(pers
 const hi = orchestrate({ message: 'hi' });
 row('orchestrate() first-turn greeting "hi"', hi.systemPrompt);
 
-console.log('\n## orchestrator.ts static additions, by block');
+console.info('\n## orchestrator.ts static additions, by block');
 const cmd = buildCommandContextForPrompt();
 const orchRest = plain.systemPrompt.slice(persona.length).replace(cmd, '');
 for (const sec of orchRest.split(/\n(?=## )/)) {
@@ -40,12 +40,12 @@ for (const sec of orchRest.split(/\n(?=## )/)) {
 }
 row('  buildCommandContextForPrompt() (command catalog)', cmd);
 
-console.log('\n## Other AnA prompt stacks (not on the stream path)');
+console.info('\n## Other AnA prompt stacks (not on the stream path)');
 row('base-system-prompt.ts BASE_SYSTEM_PROMPT (cortex-unified)', BASE_SYSTEM_PROMPT);
 row('ana-personality.ts ANA_SYSTEM_PROMPT', ANA_SYSTEM_PROMPT);
 row('ana-personality.ts ANA_COMPACT_PROMPT (ana-cortex)', ANA_COMPACT_PROMPT);
 
-console.log('\n## persona.ts core sections (## headers)');
+console.info('\n## persona.ts core sections (## headers)');
 const parts = core.split(/\n(?=## )/);
 for (const p of parts) {
   const title = p.split('\n')[0].replace(/^## /, '').slice(0, 56);

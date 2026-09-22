@@ -33,7 +33,7 @@ function sections(text) {
 for (const [cur, origName] of FILES) {
   const a = sections(fs.readFileSync(path.join(origDir, origName), 'utf8'));
   const b = sections(fs.readFileSync(cur, 'utf8'));
-  console.log(`\n### ${cur}`);
+  console.info(`\n### ${cur}`);
   const identical = [], changed = [], removed = [], added = [];
   for (const [t, body] of a) {
     if (!b.has(t)) removed.push(t);
@@ -41,12 +41,12 @@ for (const [cur, origName] of FILES) {
     else changed.push(t);
   }
   for (const t of b.keys()) if (!a.has(t)) added.push(t);
-  console.log(`byte-identical (${identical.length}):`);
-  for (const t of identical) console.log(`  = ${t}`);
-  console.log(`changed (${changed.length}):`);
-  for (const t of changed) console.log(`  ~ ${t}`);
-  console.log(`removed (${removed.length}):`);
-  for (const t of removed) console.log(`  - ${t}`);
-  console.log(`added (${added.length}):`);
-  for (const t of added) console.log(`  + ${t}`);
+  console.info(`byte-identical (${identical.length}):`);
+  for (const t of identical) console.info(`  = ${t}`);
+  console.info(`changed (${changed.length}):`);
+  for (const t of changed) console.info(`  ~ ${t}`);
+  console.info(`removed (${removed.length}):`);
+  for (const t of removed) console.info(`  - ${t}`);
+  console.info(`added (${added.length}):`);
+  for (const t of added) console.info(`  + ${t}`);
 }

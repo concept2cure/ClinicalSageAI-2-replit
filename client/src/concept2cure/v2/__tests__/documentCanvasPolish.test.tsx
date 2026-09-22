@@ -300,7 +300,7 @@ describe('the canvas stylesheet — motion', () => {
       if (sel) animated.add(sel);
     }
     expect(animated.size).toBeGreaterThan(0);
-    const reduced = CANVAS_BLOCK.match(/@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\n  \}/g) ?? [];
+    const reduced = CANVAS_BLOCK.match(/@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*?\n {2}\}/g) ?? [];
     const reducedText = reduced.join('\n');
     const missing = Array.from(animated).filter(sel => !reducedText.includes(sel.replace(/^\./, '.')));
     expect(missing).toEqual([]);
