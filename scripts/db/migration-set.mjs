@@ -2402,6 +2402,18 @@ export const C2C_MIGRATION_FILES = [
   // because ci:migration-set-order pins those two last.
   'migrations/20260921_protocol_documents_sponsor_pi.sql',
 
+  // ── IRB / IEC submissions, reviews, amendments, reportable events ────────
+  // Registered 2026-09-22. The file was written on 2026-06-10 with a service,
+  // three deterministic engines and nine mounted routes — and was never put on
+  // an applier, so on every deployed database the tables did not exist and the
+  // whole capability was dead. Six tables, all CREATE TABLE IF NOT EXISTS, no
+  // DROP. Its hard FK to clinical_studies was removed in place before this
+  // registration (see the file's dated note): nothing on the applier creates
+  // that table and it is not in the schema install-fresh pushes, so the
+  // constraint would have failed the first deploy to run this file. Above the
+  // final pair so the tenant sweep policies these six tables.
+  'migrations/20260610_irb_submissions.sql',
+
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the
   // canonical per-tenant uuid) + a forward-sync trigger, so a single
