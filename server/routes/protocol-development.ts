@@ -44,6 +44,11 @@ import {
   recordProtocolEligibilityAdded, recordProtocolVisitAdded, recordProtocolVersionSnapshot, recordProtocolFinalized,
 } from '../services/protocol-development-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import {
+  readDerivation,
+  applyDerivationTx,
+  DerivationError,
+} from '../services/protocol-development/design-derivation-service';
 
 const router = Router();
 
@@ -61,7 +66,9 @@ function resolveOrgId(req: Request): number | null {
 }
 const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400, SECTION_CHANGED: 409 };
 function fail(res: Response, err: unknown): void {
-  const code = (err as { code?: string } | null)?.code;
+  // DerivationError uses the same code vocabulary, so it maps through the same
+  // table rather than getting its own handler.
+  const code = err instanceof DerivationError ? err.code : (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
@@ -268,6 +275,63 @@ router.post('/documents/:id/study-design/remove', async (req, res) => {
       target: `protocol-document:${id}`,
       payload: { studyDesignId: null },
       body: { documentId: id, studyDesignId: null },
+    };
+  });
+});
+
+/* ── Derivation: the protocol read back INTO the design ────────────────────
+   The bind routes above make the protocol a projection of the design. These
+   two close the loop the other way (docs/design/PROTOCOL_INTELLIGENCE.md,
+   "Direction two"): what the protocol's registers evidence about the design,
+   offered as a reviewed diff, applied only where a human says so.
+
+   GET is read-only and writes nothing, including no audit row — looking at a
+   diff is not a governed action. POST is governed like every other mutation
+   here, and takes the PATHS accepted rather than the values: the server
+   recomputes the derivation from the live rows, so a protocol someone else
+   edited since the diff was displayed cannot be written from a stale payload. */
+router.get('/documents/:id/design-derivation', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try {
+    const client = requestPgClient(req);
+    const view = await readDerivation(client, orgId, id);
+    return res.json({
+      documentId: view.documentId,
+      studyDesignId: view.studyDesignId,
+      derivation: view.derivation,
+    });
+  } catch (err) {
+    return fail(res, err);
+  }
+});
+
+const applyDerivationSchema = z
+  .object({ acceptedPaths: z.array(z.string().min(1).max(120)).min(1).max(20), reason })
+  .strict();
+router.post('/documents/:id/design-derivation/apply', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = applyDerivationSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governedScoped(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
+    const result = await applyDerivationTx(client, orgId, id, parsed.data.acceptedPaths, userId);
+    return {
+      target: `study-design:${result.studyDesignId}`,
+      payload: {
+        fromProtocolDocumentId: id,
+        applied: result.applied,
+        rejected: result.rejected.map((r) => r.path),
+      },
+      body: {
+        documentId: id,
+        studyDesignId: result.studyDesignId,
+        applied: result.applied,
+        rejected: result.rejected,
+        derivation: result.derivation,
+      },
     };
   });
 });
