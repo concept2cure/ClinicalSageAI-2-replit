@@ -568,3 +568,30 @@ Product changes in this section: `6a0575213` (env-file loading) and `e2d910d6f`
 (F-14). Validation-tooling changes: `a6bee4cf9`, `e0c983cc1`, `32569d496`. No
 result was edited after execution. The runners wrote every record, and the
 matrix builder regenerated TM-001.
+
+### 12.6 Postscript — the one recurring failure in the production-posture server log
+
+The server log of the §12.1 execution has one recurring error, five times,
+each about 30 seconds apart. It is also **F-17** (product): *"[enforcement-mode]
+could not read the stored enforcement mode — serving a fail-safe value —
+FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on"*.
+The entitlement gate resolves the module-enforcement mode on every request,
+including unauthenticated page and asset loads that carry no tenant scope.
+The stored-mode read ran on the shared pool unscoped, so under the only RLS
+posture production accepts it always failed. **The mode an operator sets on
+the Master Licensing console could never take effect in production**; the
+server served the deployment value (capped at `report`) and flagged it
+degraded. No OQ step covers that console, which is why no step failed.
+
+**Fixed** in the change that files this note. The read runs under
+`runWithPreAuthScope`, which marks it as intentionally tenant-less and grants no
+role, so no policy is bypassed. `platform_settings` has no row-level security,
+so the read succeeds on its own merits. Live, under `RLS_ENFORCE=on` with a
+stored mode of `report` (evidence: `docs/evidence/W3/2026-09-22/enforcement-mode-under-rls/`):
+
+| | Resolved mode | Source | Degraded | Read failures |
+|---|---|---|---|---|
+| Before | `off` | deployment | yes | 2 |
+| After | `report` | stored | no | 0 |
+
+A red test runs the real pool guard, `server/services/entitlements/__tests__/enforcement-mode-under-rls.test.ts`.
