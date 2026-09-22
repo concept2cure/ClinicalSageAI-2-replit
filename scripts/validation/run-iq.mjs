@@ -134,7 +134,7 @@ await record('IQ-06', 'Migration set files listed by scripts/db/migration-set.mj
   return `${names.length} migration files named in the set, all present on disk`;
 });
 
-await record('IQ-07', 'Runtime database role can reach the tables the launch apps read and write', 'The role in DATABASE_URL (or APP_DATABASE_URL) holds SELECT/INSERT on every public table; RLS-relevant role attributes recorded', async (rec) => {
+await record('IQ-07', 'Runtime database role can reach the tables the launch apps read and write', 'The role in DATABASE_URL (or APP_DATABASE_URL) holds SELECT/INSERT on every public table; RLS-relevant role attributes recorded; the role owns no table whose row-level security is not forced', async (rec) => {
   if (!client) throw deviation('database not reachable (IQ-05)');
   const url = new URL(env.APP_DATABASE_URL || env.DATABASE_URL);
   const role = decodeURIComponent(url.username);
@@ -147,11 +147,25 @@ await record('IQ-07', 'Runtime database role can reach the tables the launch app
       [role],
     )
   ).rows.map((r) => r.t);
+  // A table's OWNER is exempt from its row-level security unless FORCE ROW
+  // LEVEL SECURITY is set, whatever rolsuper/rolbypassrls say. The 2026-09-21
+  // OQ set ran as a role that owned 61 such tables (vault.documents among them),
+  // so those policies were never evaluated and a Vault defect under the
+  // non-owner runtime role went unseen.
+  const ownedUnforced = (
+    await client.query(
+      "select n.nspname||'.'||c.relname as t from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind in ('r','p') and c.relrowsecurity and not c.relforcerowsecurity and pg_get_userbyid(c.relowner)=$1 and n.nspname not in ('pg_catalog','information_schema') order by 1",
+      [role],
+    )
+  ).rows.map((r) => r.t);
   const launchRelevant = ['public.platform_settings', 'public.tamper_proof_log', 'public.qms_change_controls', 'public.program_journeys', 'public.cre_evidence_sources', 'public.document_span_lineage', 'public.assumption_records', 'public.contradiction_links', 'public.decision_records', 'ai.gateway_audit_log'].filter((t) => denied.includes(t));
   rec.evidence.push('db-grants-before.txt', 'db-role-denied-tables.json');
-  fs.writeFileSync(path.join(OUT, 'db-role-denied-tables.json'), JSON.stringify({ role, attrs, deniedCount: denied.length, denied }, null, 2));
-  const summary = `role ${role} (superuser=${attrs?.rolsuper}, bypassrls=${attrs?.rolbypassrls}); tables without SELECT: ${denied.length}; launch-relevant among them: ${launchRelevant.join(', ') || 'none'}`;
-  if (denied.length) throw deviation(`IQ-DEV-001 (OPEN): ${summary}. Corrective action (owner role, not applied by the runner): GRANT USAGE ON SCHEMA … ; GRANT ALL ON ALL TABLES IN SCHEMA … TO ${role}; — or re-provision with scripts/db/install-fresh.mjs so one role owns the schema.`);
+  fs.writeFileSync(path.join(OUT, 'db-role-denied-tables.json'), JSON.stringify({ role, attrs, deniedCount: denied.length, denied, ownedRlsNotForcedCount: ownedUnforced.length, ownedRlsNotForced: ownedUnforced }, null, 2));
+  const summary = `role ${role} (superuser=${attrs?.rolsuper}, bypassrls=${attrs?.rolbypassrls}); tables without SELECT: ${denied.length}; launch-relevant among them: ${launchRelevant.join(', ') || 'none'}; owns ${ownedUnforced.length} RLS-enabled table(s) without FORCE`;
+  const devs = [];
+  if (denied.length) devs.push(`IQ-DEV-001 (OPEN): ${summary}. Corrective action (owner role, not applied by the runner): GRANT USAGE ON SCHEMA … ; GRANT ALL ON ALL TABLES IN SCHEMA … TO ${role}; — or re-provision with scripts/db/install-fresh.mjs so one role owns the schema.`);
+  if (ownedUnforced.length) devs.push(`IQ-DEV-006: ${summary} (e.g. ${ownedUnforced.slice(0, 5).join(', ')}). Row-level security does not apply to a table's owner unless forced, so an OQ executed as this role does not exercise tenant isolation on these tables. Run the server as a non-owner role: APP_DATABASE_URL → app_service (scripts/db/provision-app-role.mjs; \`npm run up\` does this).`);
+  if (devs.length) throw deviation(devs.join(' | '));
   return summary;
 });
 
