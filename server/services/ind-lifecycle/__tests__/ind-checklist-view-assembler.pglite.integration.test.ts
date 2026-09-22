@@ -310,3 +310,57 @@ describe('assembleOrgIndChecklists — a missing authoring store degrades sectio
     }
   });
 });
+
+/* upsertLeaf stores a section code exactly as written, and the writers do not
+   agree on a spelling: the Vault filing dialog stores judgeSectionCode's
+   canonical form ('1.1.1'), a person may type 'M1.2' or '3.2.s.4', and the
+   server-side writers store 'm'-prefixed codes. The checklist must read all of
+   them as the section they name. */
+describe('assembleOrgIndChecklists — a section is the same section however it was spelled', () => {
+  async function seedSpelled(org: number, leaves: Array<[string, string, string?]>): Promise<void> {
+    const s = await pglite.query(
+      `INSERT INTO submissions (organization_id, title, product_name, application_type) VALUES ($1,'BX-301','BX-301','ind') RETURNING id`,
+      [org],
+    );
+    const subId = (s.rows[0] as { id: number }).id;
+    const q = await pglite.query(`INSERT INTO ectd_sequences (organization_id, submission_id) VALUES ($1,$2) RETURNING id`, [org, subId]);
+    const seqId = (q.rows[0] as { id: number }).id;
+    for (const [code, status, name] of leaves) {
+      const d = await pglite.query(
+        `INSERT INTO coauthor_documents (organization_id, module_number, status, module_name) VALUES ($1,$2,$3,$4) RETURNING id`,
+        [org, code, status, name ?? code],
+      );
+      await pglite.query(
+        `INSERT INTO submission_leaves (organization_id, sequence_id, section_code, document_table, document_id) VALUES ($1,$2,$3,'coauthor_documents',$4)`,
+        [org, seqId, code, (d.rows[0] as { id: number }).id],
+      );
+    }
+  }
+
+  it('completes a form and enriches a blueprint section whatever the stored spelling', async () => {
+    await seedSpelled(ORG, [['1.1.1', 'approved'], ['M1.2', 'finalized'], ['3.2.s.4', 'draft']]);
+    const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
+    const done = Object.fromEntries(ind.forms.map((f: any) => [f.id, f.done]));
+    expect(done.FDA_1571).toBe(true);
+    const sec = Object.fromEntries(ind.sections.map((x: any) => [x.code, x]));
+    // Shown under the blueprint's own spelling, with the blueprint's title and
+    // reference — not as an unrecognised code titled by its file name.
+    expect(sec['m1.2']).toMatchObject({ title: 'Cover Letter', module: 'M1', status: 'signed' });
+    expect(sec['m3.2.S.4']).toMatchObject({ title: 'Control of Drug Substance', module: 'M3', status: 'drafting' });
+    // A form's section is the form, not a stray section beside it.
+    expect(Object.keys(sec).sort()).toEqual(['m1.2', 'm3.2.S.4']);
+  });
+
+  it('two spellings of one section are one section, at the more advanced status', async () => {
+    await seedSpelled(ORG, [['m1.2', 'draft'], ['1.2', 'approved']]);
+    const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
+    expect(ind.sections).toHaveLength(1);
+    expect(ind.sections[0]).toMatchObject({ code: 'm1.2', status: 'approved' });
+  });
+
+  it('a section the blueprint does not model keeps the document’s own name, never an invented title', async () => {
+    await seedSpelled(ORG, [['3.2.S.4.2', 'draft', 'Analytical Procedures']]);
+    const ind = (await assembleOrgIndChecklists(ORG))[0] as any;
+    expect(ind.sections).toEqual([expect.objectContaining({ code: 'm3.2.S.4.2', title: 'Analytical Procedures', module: 'M3' })]);
+  });
+});

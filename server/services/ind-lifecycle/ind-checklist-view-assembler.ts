@@ -29,7 +29,7 @@
  */
 import { pool } from '../../db';
 import { getSectionByCode } from '../../../services/regulatory/ind-ectd-sections.js';
-import { compareSectionCode } from '../../../shared/regulatory/section-code';
+import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code';
 
 const MAX_DOCS = 10;
 
@@ -43,6 +43,18 @@ const FORM_SECTIONS: Array<{ code: string; id: string; title: string; label: str
   { code: 'm1.1.3', id: 'FDA_3674', title: 'Form FDA 3674', label: 'Certification of Compliance (ClinicalTrials.gov)', ref: '42 USC 282(j)(5)(B)' },
 ];
 const FORM_CODES = new Set(FORM_SECTIONS.map((f) => f.code));
+
+/** The blueprint's spelling of a placed section code. upsertLeaf stores a code
+ *  exactly as its writer spelled it and the writers do not agree — the Vault
+ *  filing dialog stores the canonical '1.1.1', a person may type 'M1.2' or
+ *  '3.2.s.4', the server-side writers store 'm1.12.4' — while the blueprint and
+ *  FORM_SECTIONS are keyed 'm' + canonical. Keying by the stored string made a
+ *  placed Form 1571 read as not done and a placed section read as unrecognised.
+ *  A value that is not a CTD code is kept as written. */
+const sectionKey = (code: string): string => {
+  const canonical = normalizeCtdCode(code);
+  return canonical ? `m${canonical}` : code;
+};
 
 /** coauthor_documents.status (real, coarse) → the surface's SectionStatus vocabulary. */
 const STATUS_MAP: Record<string, string> = {
@@ -311,7 +323,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
     const subId = seqToSub.get(Number(l.sequence_id));
     if (subId == null) continue;
     const m = placedBySub.get(subId) ?? new Map();
-    put(m, str(l.section_code), mapStatus(doc.status), str(doc.module_name));
+    put(m, sectionKey(str(l.section_code)), mapStatus(doc.status), str(doc.module_name));
     placedBySub.set(subId, m);
   }
 

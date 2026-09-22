@@ -27,9 +27,36 @@ to one line; edit only your own row to limit merge conflicts.
 | Schema authority — live-schema baseline + the 61 tables behind it | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **active** — gate fixed, baseline 70→61→47; DEAD surfaces deleted (7 files, §7); triage corrected (§8); CMC playbook provisioned (§9), baseline 47→42; reg_* refused with evidence |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, `server/services/chat-uploads/*`, the retrieval-atom blocks of `server/routes/chat/upload.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 | WO-3 — tenant-isolation proof: the `app.current_org_id` distribution (`orgMembership` enrichment, token mint paths) | `…session_01J935DZwfFEardJCv85SJds` | **released** 2026-09-19 — question answered, degraded path pinned; the 230-route migration itself is NOT claimed |
+| IND eCTD demo path — JM's *"WO-09 Biotech IND eCTD Sequence Demo"*, **not** `WO-9-pilot-surface-lock.md` below (two work orders share the number). `server/services/ind-forms/*`, `server/routes/ind-forms.routes.ts`, `IndFormsPanel.tsx`, `AuthoringPlaceIntoFiling.tsx`, `ind-checklist-view-assembler.ts`, `scripts/seed/ga-demo.d/111-*`/`112-*`. Record: `docs/reports/wo9-phase1-ectd-unblock-2026-09-03.md` | `…session_01TtwRHmBMya3QTFCbFsBjoj` | **claimed** 2026-09-22 — Clicks 1–3 built and in human testing; Clicks 4–6 unbuilt, and JM names each click. RULE 2: the placement dialog (Authoring), compile and dispatch readiness are in the launch catalog; the IND forms panel and IND checklist (`ind-lifecycle`) are not. Whether Clicks 4–6 proceed, and against which row, is JM's call |
 
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
+
+### Found by the IND eCTD demo lane (`…01TtwRHm`) — not fixed, not this lane's to decide
+
+1. **Two go/no-go gates disagree about a clinical hold.** `ind-lifecycle/ind-dispatch-gate.ts`
+   hard-blocks on any open critical action, a 21 CFR 312.42 hold included;
+   `ectd/dispatch-gate.ts`, which `assess-dispatch-readiness` composes and the governed
+   freeze/dispatch transition enforces, has no hold check. Its header calls the first
+   gate "complementary", so two gates is deliberate — the disagreement is not. Do NOT
+   simply copy the hold into the second gate: during a hold the sponsor must still be
+   able to send the complete response that lifts it (312.42(e)), so a blanket refusal
+   is its own defect. Product decision for JM (it is Click 5 of the demo). Session
+   `…015weqdG` is doing unclaimed work beside this (`50e78caa4`, `3c101fc96`).
+2. **A same-named `normalizeCtdCode` with a different contract.**
+   `server/services/ind/ctd/index.ts:41` (re-exported at `ind-section-registry.ts:404`)
+   returns a string for `m1/us/1.2`, where `shared/regulatory/section-code.ts` returns
+   null — the exact input the `upsertLeaf` gate exists to refuse. An import resolved by
+   autocomplete reopens that gate. Two more private copies:
+   `ectd-packager/ich-headings.ts:160` and `ectd/dispatch-readiness.ts:162` (which
+   lower-cases where the shared one upper-cases).
+3. **The BX-204 dossier-map seed files three of its four Module 1 rows under codes
+   that mean something else** (`scripts/seed/ga-demo.d/105-dossier-map.mjs:30-33`,
+   checked against the vendored FDA table `controlled-vocab/cv-v4-data.ts`): Draft
+   Labeling at `m1.3.1` (FDA: 1.14.1.x), Meeting Materials at `m1.14.1` (FDA: 1.6.x),
+   Financial Disclosure at `m1.12.4` (FDA: 1.3.4; FDA's 1.12.4 is "request for comments
+   and advice"). It is a BLA, not on the IND demo path. `ON CONFLICT DO NOTHING` means a
+   corrected code reaches only a freshly seeded database.
 
 ### Handed to the AnA / council lane (`…01DiJJAk`) — found, not fixed, by the schema-authority lane
 

@@ -78,6 +78,7 @@ import {
 import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { getContentClassifier } from '../ai-governance/classification/index.js';
+import { isApprovedForHighRisk, isHighRiskTask } from '../ai-governance/approved-models.js';
 import {
   extractRequestText,
   getPiiEnforcement,
@@ -1029,7 +1030,17 @@ export class AIGateway {
     }
 
     // Select model — fall back to deterministic if no providers available
-    const selectedModel = this.selectModel(request, strategy);
+    let selectedModel: ModelConfig | null;
+    try {
+      selectedModel = this.selectModel(request, strategy);
+    } catch (error) {
+      // A governance refusal is a compliance event: it leaves an audit trace
+      // naming the models withheld, exactly as a content-policy block does.
+      if (error instanceof ModelNotApprovedError) {
+        await this.logModelApprovalRefusal(request, strategy, requestId, startTime, error);
+      }
+      throw error;
+    }
     if (!selectedModel) {
       // Fail closed in production: serving demo-mode ("[KNOWN]"/placeholder)
       // regulatory text from a keyless prod deploy would silently present
@@ -2466,13 +2477,21 @@ export class AIGateway {
   private selectModel(request: GatewayRequest, strategy: RoutingStrategy): ModelConfig | null {
     // Explicit provider/model override
     if (request.provider || request.model) {
-      const explicit = this.models.find(
+      const matches = this.models.filter(
         m =>
           m.enabled &&
           (!request.provider || m.provider === request.provider) &&
           (!request.model || m.model === request.model || m.id === request.model) &&
           this.meetsPlacementRequirements(m.provider, request)
       );
+      // A caller naming a model for a high-risk task does not get a silent
+      // substitute and does not get the model it named: it gets a refusal that
+      // says why. Rerouting would hide the violation in the caller; honouring
+      // it would be the violation.
+      const explicit = matches.find(m => this.approvedForTask(m, request));
+      if (!explicit && matches.length > 0 && isHighRiskTask(request.taskType)) {
+        throw new ModelNotApprovedError(request.taskType, matches.map(m => m.id), 'explicit');
+      }
       if (explicit && this.isProviderHealthy(explicit.provider)) return explicit;
       // Even if unhealthy, honor explicit if it's the only option
       if (explicit) return explicit;
@@ -2483,19 +2502,40 @@ export class AIGateway {
         m.enabled &&
         m.capabilities.includes(request.taskType) &&
         this.meetsPlacementRequirements(m.provider, request) &&
+        this.approvedForTask(m, request) &&
         this.isProviderHealthy(m.provider)
     );
 
     if (eligible.length === 0) {
-      // Relax health check (but never relax placement: residency/ZDR are hard
-      // compliance constraints, not preferences).
+      // Relax health check (but never relax placement or approval: residency,
+      // ZDR and high-risk approval are hard compliance constraints, not
+      // preferences).
       const relaxed = this.models.filter(
         m =>
           m.enabled &&
           m.capabilities.includes(request.taskType) &&
-          this.meetsPlacementRequirements(m.provider, request)
+          this.meetsPlacementRequirements(m.provider, request) &&
+          this.approvedForTask(m, request)
       );
-      return relaxed[0] || null;
+      if (relaxed.length > 0) return relaxed[0];
+      /* Nothing approved remains — but something capable may. That is not
+         "no provider configured", and it must not be returned as null: the
+         caller turns null into demo-mode content outside production and into
+         a misleading "no AI provider is configured" inside it. A governance
+         refusal is its own terminal outcome, and it says which models were
+         withheld. */
+      if (isHighRiskTask(request.taskType)) {
+        const withheld = this.models.filter(
+          m =>
+            m.enabled &&
+            m.capabilities.includes(request.taskType) &&
+            this.meetsPlacementRequirements(m.provider, request)
+        );
+        if (withheld.length > 0) {
+          throw new ModelNotApprovedError(request.taskType, withheld.map(m => m.id), 'no-approved-model');
+        }
+      }
+      return null;
     }
 
     switch (strategy) {
@@ -2563,7 +2603,12 @@ export class AIGateway {
         m.capabilities.includes(request.taskType) &&
         !triedModels.includes(m.id) &&
         // Residency / ZDR are hard constraints — never fall back across them.
-        this.meetsPlacementRequirements(m.provider, request),
+        this.meetsPlacementRequirements(m.provider, request) &&
+        // So is high-risk approval. This rung was where drafting used to walk
+        // from Opus down to Sonnet, and review on to GPT-4o, when the approved
+        // models failed: a degraded answer from a model the registry says is
+        // not approved for the work, delivered as if nothing had happened.
+        this.approvedForTask(m, request),
     );
     const samePriority = eligible.filter(m => m.provider === primaryProvider);
     const otherProviders = eligible.filter(m => m.provider !== primaryProvider);
@@ -2571,6 +2616,18 @@ export class AIGateway {
     const sortByQuality = (list: ModelConfig[]) =>
       [...list].sort((a, b) => b.qualityScore - a.qualityScore);
     return [...sortByQuality(samePriority), ...sortByQuality(otherProviders)];
+  }
+
+  /**
+   * True when this model may serve this request's task.
+   *
+   * `docs/LAUNCH_DEFINITION_OF_DONE.md`: only approved models serve high-risk
+   * regulatory drafting. The approval is `approvedForHighRisk` in
+   * `server/services/ai-governance/approved-models.ts`; an id that registry does
+   * not know is not approved. Tasks that are not high-risk are unaffected.
+   */
+  private approvedForTask(model: ModelConfig, request: GatewayRequest): boolean {
+    return !isHighRiskTask(request.taskType) || isApprovedForHighRisk(model.id);
   }
 
   /**
@@ -2896,6 +2953,51 @@ export class AIGateway {
    * pre-existing unaudited behavior. Records the prompt hash, never raw
    * content; provider/model are 'none' because nothing was dispatched.
    */
+  /** Audit a {@link ModelNotApprovedError}. Never throws; an audit failure is logged. */
+  private async logModelApprovalRefusal(
+    request: GatewayRequest,
+    strategy: RoutingStrategy,
+    requestId: string,
+    startTime: number,
+    refusal: ModelNotApprovedError,
+  ): Promise<void> {
+    if (!this.config.auditEnabled) return;
+    try {
+      await this.auditLogger.log({
+        requestId,
+        timestamp: new Date(),
+        provider: 'none',
+        model: 'none',
+        taskType: request.taskType,
+        strategy,
+        organizationId: request.organizationId,
+        userId: request.userId,
+        projectId: request.projectId,
+        callerModule: request.callerModule,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        estimatedCostUsd: 0,
+        latencyMs: Date.now() - startTime,
+        success: false,
+        error: refusal.code,
+        cached: false,
+        deterministic: false,
+        promptHash: this.hashPrompt(request.messages),
+        metadata: {
+          ...(request.metadata ?? {}),
+          modelGovernance: {
+            code: refusal.code,
+            reason: refusal.reason,
+            withheldModelIds: refusal.withheldModelIds,
+          },
+        },
+      });
+    } catch (auditError: any) {
+      log.error(`[AI Gateway] Model-approval audit log failed: ${auditError.message}`);
+    }
+  }
+
   private async logContentPolicyBlock(
     request: GatewayRequest,
     strategy: RoutingStrategy,
@@ -3168,6 +3270,32 @@ export class GatewayPolicyError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'GatewayPolicyError';
+  }
+}
+
+/**
+ * A high-risk task (regulatory drafting or review) could only have been served
+ * by a model the approved-models registry does not approve for it.
+ *
+ * A {@link GatewayPolicyError}, so it is terminal on every path that already
+ * treats policy refusals as terminal: never retried, never walked down the
+ * fallback ladder, never counted against a provider's health.
+ */
+export class ModelNotApprovedError extends GatewayPolicyError {
+  readonly code = 'MODEL_NOT_APPROVED_FOR_HIGH_RISK' as const;
+  constructor(
+    readonly taskType: TaskType,
+    /** Models that could have served the request and were withheld. */
+    readonly withheldModelIds: string[],
+    /** `explicit`: the caller named them. `no-approved-model`: routing found only them. */
+    readonly reason: 'explicit' | 'no-approved-model',
+  ) {
+    super(
+      `MODEL_NOT_APPROVED_FOR_HIGH_RISK: ${taskType} is high-risk regulatory work and no model approved ` +
+        `for it is available. Withheld: ${withheldModelIds.join(', ') || 'none'} ` +
+        `(${reason === 'explicit' ? 'named by the caller' : 'the only models remaining'}). ` +
+        'See approvedForHighRisk in server/services/ai-governance/approved-models.ts.',
+    );
   }
 }
 

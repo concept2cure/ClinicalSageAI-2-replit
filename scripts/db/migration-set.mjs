@@ -2478,6 +2478,18 @@ export const C2C_MIGRATION_FILES = [
   // ci:migration-set-order pins last.
   'migrations/20260922d_irb_submission_context.sql',
 
+  // ── Amendment consent/risk declarations: NULL = not declared ────────────
+  // Registered 2026-09-22. affects_consent / affects_risk were NOT NULL
+  // DEFAULT false and the writer sent `?? false`, so every amendment the
+  // product's form created (it never asked either question) was stored as a
+  // sponsor declaration of "affects neither", and substantiality.ts accused
+  // sponsors of contradicting it. DROP NOT NULL + DROP DEFAULT only: no DROP of
+  // any object, no backfill (a pre-change false cannot be told from a real
+  // No). Idempotent. The creator, 20260629_protocol_amendments.sql, is
+  // install-fresh-only and was amended in place to match. Guarded on
+  // to_regclass; above the final pair, which ci:migration-set-order pins last.
+  'migrations/20260922e_amendment_declarations_nullable.sql',
+
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the
   // canonical per-tenant uuid) + a forward-sync trigger, so a single

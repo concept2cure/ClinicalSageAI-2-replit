@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-22T15:40:37.181Z",
+  "generatedAt": "2026-09-22T22:53:30.496Z",
   "git": {
-    "sha": "b55c7a936547aac3f106b9ae1e62056909854f3d",
+    "sha": "6b33036df09678fab83d229082498bd5f1921310",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2087,16 +2087,16 @@
         "bytes": 128728
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 128076
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "bytes": 127662
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
         "bytes": 126270
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 122547
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2107,12 +2107,12 @@
         "bytes": 119840
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "bytes": 116307
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "bytes": 116608
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "bytes": 116241
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "bytes": 116307
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2237,16 +2237,16 @@
         "lines": 3116
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 3099
+      },
+      {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3067
       },
       {
         "file": "server/routes/concept2cure.ts",
         "lines": 3007
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2971
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2322,7 +2322,7 @@
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
-        "lines": 2177
+        "lines": 2197
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
@@ -2501,11 +2501,11 @@
         "lines": 1706
       },
       {
-        "file": "server/routes/submissions.ts",
-        "lines": 1696
+        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "lines": 1698
       },
       {
-        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "file": "server/routes/submissions.ts",
         "lines": 1696
       },
       {
