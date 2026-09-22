@@ -131,6 +131,8 @@ export interface SubmissionBundle {
     pdfaConverted: number;
     notConverted: string[];
     allPdfA: boolean;
+    /** Agency forms shipped as issued; absent on bundles built before 2026-09-22. */
+    agencyFormsAsIssued?: string[];
   };
   /**
    * Optional eCTD DTD self-containment status: whether every DTD the backbones

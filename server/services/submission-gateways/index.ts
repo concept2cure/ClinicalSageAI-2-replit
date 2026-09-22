@@ -29,6 +29,7 @@ import type {
 } from './types';
 import { TransmitAuthorizationError, ValidationError } from './types';
 import { evaluatePreTransmit } from './pre-transmit-check';
+import { assertBundleLeafSecurity } from './bundle-leaf-security';
 
 export * from './types';
 export { evaluatePreTransmit } from './pre-transmit-check';
@@ -150,6 +151,9 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
           pre.blockers,
         );
       }
+      // Leaf security, re-established from the signed bundle's own bytes in
+      // every environment (bundle-leaf-security.ts). 2026-09-22 W5/D7.
+      await assertBundleLeafSecurity(req.bundle, impl.region);
       return impl.transmit(req);
     },
     checkStatus: (transmittalId: number) => impl.checkStatus(transmittalId),
