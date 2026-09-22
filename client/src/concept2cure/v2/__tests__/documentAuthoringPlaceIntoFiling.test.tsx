@@ -165,6 +165,34 @@ describe('the dialog states the identity fact and picks real targets', () => {
 });
 
 describe('the placement chain — snapshot then leaf, verdict verbatim', () => {
+  it('files at the code the note announces, not at the keystrokes', async () => {
+    // upsertLeaf stores a section code exactly as sent. This dialog used to send
+    // the raw input while its note said "Files as 3.2.S.4.2", and the Vault
+    // filing dialog — sharing the same judgement — sends the canonical code, so
+    // one section reached the database under two spellings depending on which
+    // dialog filed it.
+    const calls: Array<{ method: string; url: string; body?: unknown }> = [];
+    mockApi((method, url, body) => {
+      if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
+        calls.push({ method, url, body });
+        return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 502 } }) };
+      }
+      if (method === 'PUT' && url === '/api/submissions/sequences/31/leaves') {
+        calls.push({ method, url, body });
+        return { ok: true, status: 200, json: async () => ({ id: 78, sectionCode: '3.2.S.4.2', title: 'M2.7 Clinical Summary', lifecycleOp: 'new' }) };
+      }
+      return undefined;
+    });
+    renderSeam();
+    await openAndTarget();
+    fireEvent.change(screen.getByLabelText(/Section code/), { target: { value: ' m3.2.s.4.2 ' } });
+    expect(document.body.textContent).toContain('Files as 3.2.S.4.2');
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await waitFor(() => expect(calls).toHaveLength(2));
+    expect(calls[0].body).toMatchObject({ moduleNumber: '3.2.S.4.2' });
+    expect(calls[1].body).toMatchObject({ sectionCode: '3.2.S.4.2' });
+  });
+
   it('places via GET saved sections → POST snapshot → PUT leaves with the snapshot id', async () => {
     const calls: Array<{ method: string; url: string; body?: unknown }> = [];
     mockApi((method, url, body) => {

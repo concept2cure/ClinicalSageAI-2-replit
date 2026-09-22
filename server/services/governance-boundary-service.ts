@@ -321,25 +321,40 @@ export class GovernanceBoundaryService {
       }
     }
 
-    // 3. Contradiction gate — block if unresolved blocking contradictions exist
+    // 3. Contradiction gate — block if unresolved blocking contradictions exist.
+    //
+    // FAIL CLOSED (2026-09-22). This catch, and the one on gate 4, used to be
+    // empty with the comment "non-blocking degradation". `allowed` below is
+    // `blockedReasons.length === 0`, so a gate that threw was arithmetically
+    // the same as a gate that passed, and the append-only row recorded
+    // `transitionAllowed: true, blockedReasons: []` for a lock whose
+    // contradiction check never ran. Gates 2, the confidence gate and the audit
+    // insert in this same method already fail closed; these two now match. A
+    // missing `checkPromotionBlocked` is the same case — the gate cannot run —
+    // and is no longer a silent skip.
     if (request.projectId && request.artifactId != null && request.toBoundary !== 'advisory') {
       try {
         const { contradictionEngineService } = await import('./contradiction-engine-service.js');
-        if (contradictionEngineService?.checkPromotionBlocked) {
-          const contradictionCheck = await contradictionEngineService.checkPromotionBlocked(
-            request.organizationId,
-            request.projectId,
-            request.artifactId ?? 0
-          );
-          if (contradictionCheck?.blocked) {
-            const blockingCount = contradictionCheck.blockingFindings?.length ?? 0;
-            blockedReasons.push(
-              `${blockingCount} unresolved blocking contradiction(s) must be resolved before transitioning to ${request.toBoundary}.`
-            );
-          }
+        if (typeof contradictionEngineService?.checkPromotionBlocked !== 'function') {
+          throw new Error('contradiction engine does not expose checkPromotionBlocked');
         }
-      } catch {
-        // Contradiction engine unavailable — continue without gate (non-blocking degradation)
+        const contradictionCheck = await contradictionEngineService.checkPromotionBlocked(
+          request.organizationId,
+          request.projectId,
+          request.artifactId
+        );
+        if (contradictionCheck?.blocked) {
+          const blockingCount = contradictionCheck.blockingFindings?.length ?? 0;
+          blockedReasons.push(
+            `${blockingCount} unresolved blocking contradiction(s) must be resolved before transitioning to ${request.toBoundary}.`
+          );
+        }
+      } catch (err) {
+        blockedReasons.push(
+          `Contradiction gate could not be evaluated ` +
+          `(${err instanceof Error ? err.message : 'unknown error'}). ` +
+          `Failing closed: transition to ${request.toBoundary} is blocked until unresolved contradictions can be checked.`
+        );
       }
     }
 
@@ -379,8 +394,13 @@ export class GovernanceBoundaryService {
             );
           }
         }
-      } catch {
-        // Fabric readiness gate unavailable — continue without (non-blocking degradation)
+      } catch (err) {
+        // Fail closed — see gate 3.
+        blockedReasons.push(
+          `Fabric readiness gate could not be evaluated ` +
+          `(${err instanceof Error ? err.message : 'unknown error'}). ` +
+          `Failing closed: transition to ${request.toBoundary} is blocked until readiness can be evaluated.`
+        );
       }
     }
 
