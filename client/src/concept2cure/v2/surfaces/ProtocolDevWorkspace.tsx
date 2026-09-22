@@ -237,6 +237,22 @@ function RegisterTabBody({ tab, doc, canWrite, onReg, onEdit }: BodyProps): Reac
   }
 }
 
+/**
+ * The bound study design's id, read defensively.
+ *
+ * `doc` is `Record<string, unknown>` here, so `doc.studyDesign?.studyId` does
+ * not typecheck and an `as` cast would only move the lie. A doc whose
+ * studyDesign is absent, unresolved, or carrying a non-string id all mean the
+ * same thing to the Statistics pane -- there is no design to scope to -- and
+ * it renders its own honest state for that.
+ */
+function boundStudyIdOf(doc: Record<string, unknown>): string | null {
+  const design = doc.studyDesign;
+  if (!design || typeof design !== 'object') return null;
+  const id = (design as { studyId?: unknown }).studyId;
+  return typeof id === 'string' && id.trim() ? id.trim() : null;
+}
+
 function TabBody(props: BodyProps) {
   const { tab, doc, sec, canWrite, onAsk, onNav, onEdit, onSaved, onError, onToast, onRefresh } = props;
   const register = RegisterTabBody(props);
@@ -251,7 +267,7 @@ function TabBody(props: BodyProps) {
     case 'irb-package': return <IrbPackageTab doc={doc} />;
     /* Scoped to the design BOUND to this protocol. Passing nothing rendered the
        whole program's designs on one protocol's workspace. */
-    case 'statistics': return <StudyDesignStatisticsTab onNav={onNav} boundStudyId={doc.studyDesign?.studyId ?? null} />;
+    case 'statistics': return <StudyDesignStatisticsTab onNav={onNav} boundStudyId={boundStudyIdOf(doc)} />;
     default:
       return sec
         /* Keyed on the section: switching section replaces the pane rather
