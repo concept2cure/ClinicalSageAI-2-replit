@@ -32,6 +32,8 @@ const read = (p: string) => fs.readFileSync(path.join(repo, p), 'utf8');
 const bootstrap = read('server/bootstrap/register-inline-routes.ts');
 const permissionsRouter = read('server/routes/authoring-permissions.ts');
 const authoringRouter = read('server/routes/authoring.router.ts');
+/* The creator bootstrap grant lives here now, not on the router. */
+const authoringDocuments = read('server/services/authoring/authoring-documents.ts');
 
 describe('ownership of /api/authoring/docs/:docId/permissions', () => {
   it('mounts the permissions router BEFORE the authoring router', () => {
@@ -80,13 +82,27 @@ describe('ownership of /api/authoring/docs/:docId/permissions', () => {
     /* Comments stripped first — the deletion note above the removed routes
        quotes the statement it is describing, and a prose mention is not a
        writer. */
-    const code = authoringRouter
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/^\s*\/\/.*$/gm, '');
-    expect(code.match(/INSERT INTO doc_permissions/g)).toBeNull();
-    expect(code).toMatch(/grantAuthoringPermission\(/);
+    /* 2026-09-22: this scanned the ROUTER for the grant call and went red when
+       the creator bootstrap moved down a layer into
+       services/authoring/authoring-documents.ts (grantCreatorOwnership, called
+       from the create path). Nothing regressed — the grant still goes through
+       grantAuthoringPermission and still carries its log line — but the gate
+       was pinned to a file rather than to the behaviour, so it failed for the
+       one reason a gate must not: the code moved.
+
+       It follows the writer now, and the raw-write ban is asserted on BOTH
+       files rather than only the router. That is a strengthening: the ban now
+       covers the file the writer actually lives in, which is where a
+       hand-rolled INSERT would most plausibly reappear. */
+    const strip = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    const routerCode = strip(authoringRouter);
+    const creationCode = strip(authoringDocuments);
+
+    expect(routerCode.match(/INSERT INTO doc_permissions/g)).toBeNull();
+    expect(creationCode.match(/INSERT INTO doc_permissions/g)).toBeNull();
+    expect(creationCode).toMatch(/grantAuthoringPermission\(/);
     // …and the one caller is the creator bootstrap, which cannot fail the create.
-    expect(code).toMatch(/creator ownership grant failed/);
+    expect(creationCode).toMatch(/creator ownership grant failed/);
   });
 
   it('drops the constant that only the deleted route used', () => {
