@@ -1,0 +1,40 @@
+### migrations/20260922_protocol_document_study_design.sql applied TWICE
+### against a scratch PostgreSQL database (PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit)
+
+--- FIRST APPLY ---
+DO
+columns after first apply:
+ study_design_id        | text                     |           |          | 
+ study_design_linked_at | timestamp with time zone |           |          | 
+ study_design_linked_by | integer                  |           |          | 
+    "protocol_documents_study_design_idx" btree (organization_id, study_design_id) WHERE study_design_id IS NOT NULL
+
+--- a link is written between the two deploys ---
+ id | study_design_id | study_design_linked_by 
+----+-----------------+------------------------
+  1 | sd_abc          |                      1
+(1 row)
+
+--- SECOND APPLY (must be a no-op) ---
+psql:migrations/20260922_protocol_document_study_design.sql:72: NOTICE:  column "study_design_id" of relation "protocol_documents" already exists, skipping
+psql:migrations/20260922_protocol_document_study_design.sql:72: NOTICE:  column "study_design_linked_at" of relation "protocol_documents" already exists, skipping
+psql:migrations/20260922_protocol_document_study_design.sql:72: NOTICE:  column "study_design_linked_by" of relation "protocol_documents" already exists, skipping
+psql:migrations/20260922_protocol_document_study_design.sql:72: NOTICE:  relation "protocol_documents_study_design_idx" already exists, skipping
+DO
+columns after second apply:
+ study_design_id        | text                     |           |          | 
+ study_design_linked_at | timestamp with time zone |           |          | 
+ study_design_linked_by | integer                  |           |          | 
+    "protocol_documents_study_design_idx" btree (organization_id, study_design_id) WHERE study_design_id IS NOT NULL
+the row written between deploys still carries its link:
+ id | study_design_id | study_design_linked_by 
+----+-----------------+------------------------
+  1 | sd_abc          |                      1
+(1 row)
+
+
+--- BLANK DATABASE (set-only replay, no protocol_documents): NOTICE-skip, exit 0 ---
+psql:migrations/20260922_protocol_document_study_design.sql:72: NOTICE:  protocol_documents does not exist on this database (created by the install-fresh overlay, migrations/20260621_protocol_development.sql); study_design link columns not added here.
+DO
+psql exit = 0
+(scratch databases dropped)

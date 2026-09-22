@@ -131,6 +131,71 @@ export async function updateDocumentHeaderTx(client: Queryable, orgId: number, d
   );
 }
 
+// ─── Study design link (PROTOCOL-CONVERGENCE step 1) ─────────────────────────
+
+/**
+ * Bind this protocol document to a persisted study design.
+ *
+ * docs/design/PROTOCOL_DESIGN_CONVERGENCE.md: the design object is the spine
+ * and the protocol document is its projection. The link is a soft one — the
+ * migration adds no REFERENCES clause, because nothing on the applier creates
+ * `cdisc_prm_studies` — so the tenant boundary is enforced HERE, twice:
+ *
+ *   • the protocol document must belong to `orgId` (loadDoc, NOT_FOUND);
+ *   • the design must belong to the same tenant (`tenant_id = orgId`), so a
+ *     study id guessed or copied from another customer cannot be bound.
+ *
+ * Fails closed: an unresolvable design is NOT_FOUND and nothing is written.
+ * The caller owns the transaction and records the governed action on the same
+ * client, so the link and its 21 CFR Part 11 audit row commit together.
+ */
+export async function bindStudyDesignTx(
+  client: Queryable,
+  orgId: number,
+  docId: number,
+  studyDesignId: string,
+  actorUserId: number,
+): Promise<{ studyDesignId: string; title: string }> {
+  const doc = await loadDoc(client, orgId, docId);
+  assertEditable(doc.status);
+  const id = (studyDesignId ?? '').trim();
+  if (!id) throw new ProtocolDevError('BAD_INPUT', 'A study design id is required.');
+
+  const design = await client.query(
+    `SELECT study_id, protocol_title FROM cdisc_prm_studies
+      WHERE study_id = $1 AND tenant_id = $2 LIMIT 1`,
+    [id, orgId],
+  );
+  if (design.rows.length === 0) {
+    throw new ProtocolDevError('NOT_FOUND', 'Study design not found for this organization.');
+  }
+
+  await client.query(
+    `UPDATE protocol_documents
+        SET study_design_id = $3, study_design_linked_at = now(), study_design_linked_by = $4, updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [docId, orgId, id, actorUserId],
+  );
+  return { studyDesignId: id, title: String(design.rows[0].protocol_title ?? '') };
+}
+
+/**
+ * Remove the link. The design itself is untouched — this only stops the
+ * protocol claiming to be a projection of it, which is why the protocol's
+ * design-gate panel goes back to saying no design is bound rather than to
+ * saying the protocol passed anything.
+ */
+export async function unbindStudyDesignTx(client: Queryable, orgId: number, docId: number): Promise<void> {
+  const doc = await loadDoc(client, orgId, docId);
+  assertEditable(doc.status);
+  await client.query(
+    `UPDATE protocol_documents
+        SET study_design_id = NULL, study_design_linked_at = NULL, study_design_linked_by = NULL, updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [docId, orgId],
+  );
+}
+
 // ─── Sections ────────────────────────────────────────────────────────────────
 
 export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; status?: string; sources?: RetrievedSource[]; expectedUpdatedAt?: string | null }, actorUserId: number): Promise<SourceAndAuthorLineageResult | null> {

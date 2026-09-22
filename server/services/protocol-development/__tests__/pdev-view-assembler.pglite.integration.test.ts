@@ -26,7 +26,7 @@ const OTHER = 9;
 
 // Minimal DDL — only the columns the assembler reads (mirrors the migrations/protocol_* set).
 const DDL = `
-CREATE TABLE protocol_documents (id serial PRIMARY KEY, organization_id int, protocol_kind text, protocol_number text, title text, design_type text, phase text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz, sponsor text, principal_investigator text);
+CREATE TABLE protocol_documents (id serial PRIMARY KEY, organization_id int, protocol_kind text, protocol_number text, title text, design_type text, phase text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz, sponsor text, principal_investigator text, study_design_id text, study_design_linked_at timestamptz, study_design_linked_by int);
 CREATE TABLE protocol_sections (id serial PRIMARY KEY, organization_id int, protocol_document_id int, section_key text, title text, content text, required boolean, status text, order_index int, deleted_at timestamptz, updated_at timestamptz DEFAULT now());
 CREATE TABLE protocol_objectives (id serial PRIMARY KEY, organization_id int, protocol_document_id int, objective_type text, objective text, endpoint text, timepoint text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_eligibility_criteria (id serial PRIMARY KEY, organization_id int, protocol_document_id int, kind text, criterion text, order_index int, deleted_at timestamptz);

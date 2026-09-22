@@ -66,6 +66,28 @@ export interface PdevReview {
 }
 export interface ConsentElement { id: string; el: string; present: boolean; }
 
+/** A design-gate finding, as `validateDesign()` produced it on the server.
+ *  `sev` / `text` match the shape every other register's findings use. */
+export interface PdevDesignFinding {
+  code: string; section: string; sev: string; title: string; text: string;
+  standard: string; endpoint: string; fix: string;
+}
+
+/** The study design this protocol is a projection of, or null when none is
+ *  bound. Never an empty report: an unbound protocol has been checked against
+ *  nothing, and `resolved: false` says the link names a design this
+ *  organisation cannot read. */
+export interface PdevStudyDesign {
+  studyId: string;
+  resolved: boolean;
+  title: string; phase: string; indication: string; status: string;
+  linkedAt: string;
+  riskLevel: string; canAdvance: boolean; blocksApproval: boolean;
+  counts: { critical: number; major: number; minor: number; info: number };
+  summary: string; standardsChecked: string[];
+  findings: PdevDesignFinding[];
+}
+
 export interface PdevDoc {
   id: string; title: string; shortTitle: string; kind: string;
   version: string; status: string; sponsor: string; pi: string;
@@ -84,6 +106,8 @@ export interface PdevDoc {
   reviews: PdevReview[];
   consent: ConsentElement[];
   completenessFindings: SevText[];
+  /** The bound study design and the design gates' findings, or null. */
+  studyDesign: PdevStudyDesign | null;
 }
 
 

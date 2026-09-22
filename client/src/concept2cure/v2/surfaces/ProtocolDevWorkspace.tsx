@@ -27,6 +27,7 @@ import { SoaTab } from './ProtocolDevSoa';
 import { BudgetTab, RiskTab } from './ProtocolDevRegisters';
 import { ConsentTab, ReviewsTab } from './ProtocolDevReviews';
 import { StudyDesignStatisticsTab } from './biostatBridge';
+import { StudyDesignTab } from './ProtocolDevDesign';
 
 const Ic = PG.Ic;
 type Row = Record<string, unknown>;
@@ -38,6 +39,10 @@ export const TABS = [
   { id: 'objectives', label: 'Objectives', icon: 'clipboardList' },
   { id: 'eligibility', label: 'Eligibility', icon: 'checkSquare' },
   { id: 'soa', label: 'Schedule of assessments', icon: 'grid' },
+  // The design-as-data spine this protocol is a projection of: the link, the
+  // design gates' findings, and the five projections the spine produces
+  // (docs/design/PROTOCOL_DESIGN_CONVERGENCE.md steps 1 and 2).
+  { id: 'study-design', label: 'Study design', icon: 'network' },
   // The protocol's statistics live on its study design (the design-as-data
   // spine), read through the biostatistics bridge; the tab links into the
   // designer with the design pre-loaded instead of retyped.
@@ -189,14 +194,23 @@ interface BodyProps {
   onEdit: (kind: PdevFormKind, target?: PdevFormTarget) => void;
   onSaved: () => void;
   onError: (m: string) => void;
+  /** A confirmation in the register's own words, not an error. */
+  onToast: (m: string) => void;
+  /** Re-read the record after a confirmed write, with no toast of its own —
+   *  the pane that wrote says what it wrote. */
+  onRefresh: () => void;
 }
 
-function TabBody({ tab, doc, sec, canWrite, onAsk, onNav, onReg, onEdit, onSaved, onError }: BodyProps) {
+/**
+ * The registers whose pane is a plain read/add list. Split out of `TabBody`
+ * when the Study design tab was added: one switch over every tab passed the
+ * repo's complexity budget, and suppressing that would have been the wrong
+ * trade. Returns null for a tab it does not own, so `TabBody` falls through.
+ */
+function RegisterTabBody({ tab, doc, canWrite, onReg, onEdit }: BodyProps): React.ReactElement | null {
   switch (tab) {
     case 'objectives': return <ObjectivesTab doc={doc} onAdd={() => onReg('objective')} />;
     case 'eligibility': return <EligibilityTab doc={doc} onAdd={() => onReg('eligibility')} />;
-    case 'soa': return <SoaTab doc={doc} canWrite={canWrite} onError={onError} onEdit={onEdit} />;
-    case 'statistics': return <StudyDesignStatisticsTab onNav={onNav} />;
     case 'risks': return <RiskTab doc={doc} onAdd={() => onReg('risk')} onEdit={onEdit} />;
     case 'milestones': return <MilestonesTab doc={doc} onAdd={() => onReg('milestone')} />;
     case 'budget': return <BudgetTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
@@ -204,6 +218,19 @@ function TabBody({ tab, doc, sec, canWrite, onAsk, onNav, onReg, onEdit, onSaved
     case 'deviations': return <DeviationsTab doc={doc} onAdd={() => onReg('deviation')} />;
     case 'reviews': return <ReviewsTab doc={doc} onEdit={canWrite ? onEdit : undefined} />;
     case 'consent': return <ConsentTab doc={doc} />;
+    default: return null;
+  }
+}
+
+function TabBody(props: BodyProps) {
+  const { tab, doc, sec, canWrite, onAsk, onNav, onEdit, onSaved, onError, onToast, onRefresh } = props;
+  const register = RegisterTabBody(props);
+  if (register) return register;
+  switch (tab) {
+    case 'soa': return <SoaTab doc={doc} canWrite={canWrite} onError={onError} onEdit={onEdit} />;
+    case 'study-design':
+      return <StudyDesignTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} />;
+    case 'statistics': return <StudyDesignStatisticsTab onNav={onNav} />;
     default:
       return sec
         /* Keyed on the section: switching section replaces the pane rather
@@ -299,6 +326,8 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
             onReg={openReg} onEdit={openForm}
             onSaved={() => { fireToast('Section saved — the revision is in the audit trail.'); onChanged?.(); }}
             onError={(m) => fireToast(m, 'error')}
+            onToast={(m) => fireToast(m)}
+            onRefresh={() => onChanged?.()}
           />
         </div>
       </div>

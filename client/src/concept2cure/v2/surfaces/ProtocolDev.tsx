@@ -69,12 +69,22 @@ function anaContextFor(
   const objs = Array.isArray(doc.objectives) ? doc.objectives : [];
   const len = (v: unknown) => (Array.isArray(v) ? v.length : 0);
   const done = secs.filter((sec) => sec.status === 'complete').length;
+  /* The design-as-data spine. A protocol with no design bound has been checked
+     against no design gate, and AnA must say that rather than let the absence
+     read as a pass. */
+  const sd = doc.studyDesign ?? null;
+  const designLine = !sd
+    ? 'No study design is bound to this protocol, so no design gate has been run on it and its projections are unavailable.'
+    : !sd.resolved
+      ? `This protocol names study design ${sd.studyId}, which could not be read for this organisation — the link is unresolved.`
+      : `Bound to study design "${sd.title}" (${sd.studyId}): ${sd.findings.length} design-gate finding(s), risk ${sd.riskLevel}.`;
   return {
     summary:
       `Protocol development: "${doc.shortTitle}" (${doc.title}) v${doc.version}, status ` +
       `${doc.status}, ${doc.completeness}% complete — ${done} of ${secs.length} ` +
       `section(s) complete. ${len(doc.risks)} risk(s), ${len(doc.amendments)} amendment(s), ` +
-      `${len(doc.deviations)} deviation(s), ${len(doc.completenessFindings)} completeness finding(s).`,
+      `${len(doc.deviations)} deviation(s), ${len(doc.completenessFindings)} completeness finding(s). ` +
+      designLine,
     facts: {
       protocolId: doc.id,
       shortTitle: doc.shortTitle,
@@ -89,6 +99,15 @@ function anaContextFor(
       sections: secs.map((sec) => ({ number: sec.num, title: sec.title, status: sec.status, required: sec.required })),
       objectives: objs.map((o) => ({ type: o.type, text: o.text, endpoint: o.endpoint })),
       completenessFindings: Array.isArray(doc.completenessFindings) ? doc.completenessFindings : [],
+      studyDesign: sd
+        ? {
+            studyId: sd.studyId, resolved: sd.resolved, title: sd.title, phase: sd.phase,
+            indication: sd.indication, riskLevel: sd.riskLevel, blocksApproval: sd.blocksApproval,
+            canAdvance: sd.canAdvance, counts: sd.counts, summary: sd.summary,
+            standardsChecked: sd.standardsChecked,
+            findings: sd.findings.map((f) => ({ code: f.code, severity: f.sev, title: f.title, standard: f.standard })),
+          }
+        : null,
       registerCounts: {
         risks: len(doc.risks), milestones: len(doc.milestones), amendments: len(doc.amendments),
         deviations: len(doc.deviations), reviews: len(doc.reviews),
@@ -98,6 +117,9 @@ function anaContextFor(
       'Open a protocol section to read, draft or edit it',
       'Add a risk, milestone, amendment or deviation to the governed registers (a real persisted write)',
       'Review the protocol for completeness against its recorded findings',
+      sd
+        ? 'Read the bound study design’s gate findings and its five projections on the Study design tab'
+        : 'Bind a study design so the protocol carries the design gates’ findings and the spine’s projections',
     ],
   };
 }

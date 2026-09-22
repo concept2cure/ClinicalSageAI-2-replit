@@ -2402,6 +2402,20 @@ export const C2C_MIGRATION_FILES = [
   // because ci:migration-set-order pins those two last.
   'migrations/20260921_protocol_documents_sponsor_pi.sql',
 
+  // ── Protocol document → study design link (PROTOCOL-CONVERGENCE, 2026-09-22) ─
+  // Three nullable columns + one partial index on protocol_documents, all
+  // ADD/CREATE ... IF NOT EXISTS, no DROP. It is the link that makes the
+  // protocol a projection of the design-as-data spine
+  // (docs/design/PROTOCOL_DESIGN_CONVERGENCE.md step 1). Deliberately a SOFT
+  // link: the FK target, cdisc_prm_studies(study_id), is created by the
+  // Drizzle schema install-fresh pushes and by NO file in this set, so a
+  // REFERENCES clause would be the same defect the IRB file above had to have
+  // removed before it could be registered. Guarded on to_regclass because
+  // protocol_documents is overlay-only, so it NOTICE-skips on a set-only
+  // database. Above the final pair because ci:migration-set-order pins those
+  // two last.
+  'migrations/20260922_protocol_document_study_design.sql',
+
   // ── IRB / IEC submissions, reviews, amendments, reportable events ────────
   // Registered 2026-09-22. The file was written on 2026-06-10 with a service,
   // three deterministic engines and nine mounted routes — and was never put on

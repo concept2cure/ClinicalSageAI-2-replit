@@ -31,6 +31,8 @@ import {
   removeVisitTx,
   removeSoaAssessmentTx,
   addTeamMemberTx,
+  bindStudyDesignTx,
+  unbindStudyDesignTx,
   getCompleteness,
   snapshotVersionTx,
   finalizeProtocolTx,
@@ -226,6 +228,47 @@ router.patch('/documents/:id', async (req, res) => {
   await governedScoped(req, res, 'update', reasonText, async (client, orgId) => {
     await updateDocumentHeaderTx(client, orgId, id, fields);
     return { target: `protocol-document:${id}`, payload: { fields: Object.keys(fields) }, body: { id, updated: Object.keys(fields) } };
+  });
+});
+
+// ─── Study design link (PROTOCOL-CONVERGENCE step 1b) ────────────────────────
+
+/* Bind / unbind the protocol document to the persisted study design it is a
+   projection of (docs/design/PROTOCOL_DESIGN_CONVERGENCE.md). Read-only in
+   effect: nothing is generated into the protocol's sections, and the design is
+   not modified — the link is what lets the surface render the DESIGN GATES'
+   findings on the protocol and offer the spine's five projections. Both run on
+   the request-scoped connection (governedScoped) and are tenant-scoped on both
+   sides: another organisation's protocol, and a design that is not this
+   tenant's, are both NOT_FOUND with nothing written. */
+const bindDesignSchema = z.object({ studyDesignId: z.string().min(1).max(100), reason }).strict();
+router.post('/documents/:id/study-design', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = bindDesignSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governedScoped(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
+    const bound = await bindStudyDesignTx(client, orgId, id, parsed.data.studyDesignId, userId);
+    return {
+      target: `protocol-document:${id}`,
+      payload: { studyDesignId: bound.studyDesignId, studyDesignTitle: bound.title },
+      body: { documentId: id, studyDesignId: bound.studyDesignId, studyDesignTitle: bound.title },
+    };
+  });
+});
+
+router.post('/documents/:id/study-design/remove', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = z.object({ reason }).safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governedScoped(req, res, 'update', parsed.data.reason, async (client, orgId) => {
+    await unbindStudyDesignTx(client, orgId, id);
+    return {
+      target: `protocol-document:${id}`,
+      payload: { studyDesignId: null },
+      body: { documentId: id, studyDesignId: null },
+    };
   });
 });
 

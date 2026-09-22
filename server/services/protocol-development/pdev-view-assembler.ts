@@ -16,6 +16,8 @@ import { pool } from '../../db';
 import { evaluateCompleteness, type SectionView } from './protocol-development-logic';
 import { buildSoaMatrix, validateSoa } from '../protocol-soa/protocol-soa-logic';
 import { computeProtocolBudget } from '../protocol-budget/protocol-budget-logic';
+import { rowsToStudyDesign } from '../study-design/study-design-repository';
+import { validateDesign } from '../study-design/design-validation';
 
 const MAX_DOCS = 25;
 
@@ -179,13 +181,122 @@ function mapDeviations(
   }));
 }
 
+/* ── The bound study design, and the design gates' findings ──────────────── */
+
+/**
+ * The design-as-data spine's verdict on a protocol that names a design.
+ *
+ * docs/design/PROTOCOL_DESIGN_CONVERGENCE.md step 1c: nothing here decides
+ * anything. The design object is read back verbatim from
+ * `cdisc_prm_studies.metadata` (the same round-trip `loadStudyDesign` does)
+ * and handed to `validateDesign`, which is the SAME ICH E9 / E9(R1) / E10 /
+ * E3 and ICH M11 gate engine `/api/study-design` serves. The mapping below is
+ * a rename of that report's fields onto the `sev`/`text` shape the protocol
+ * surface's other registers already use — no severity is re-derived, no
+ * finding is invented, and no finding is filtered out.
+ */
+export interface PdevStudyDesignFinding {
+  code: string; section: string; sev: string; title: string; text: string;
+  standard: string; endpoint: string; fix: string;
+}
+
+export interface PdevStudyDesignView {
+  studyId: string;
+  /** False when the link names a design this tenant cannot read. Never a
+   *  silent empty result: the surface says the link is unresolved. */
+  resolved: boolean;
+  title: string;
+  phase: string;
+  indication: string;
+  status: string;
+  linkedAt: string;
+  riskLevel: string;
+  canAdvance: boolean;
+  blocksApproval: boolean;
+  counts: { critical: number; major: number; minor: number; info: number };
+  summary: string;
+  standardsChecked: string[];
+  findings: PdevStudyDesignFinding[];
+}
+
+/**
+ * The bound design for one protocol row, or null when it names none.
+ *
+ * Extracted from the per-document mapper for the same reason mapSoa/mapBudget
+ * are: the mapper is at the repo's complexity budget and a suppression there
+ * would be the wrong trade.
+ */
+function resolveStudyDesign(
+  d: Record<string, unknown>,
+  bound: Map<string, PdevStudyDesignView>,
+): PdevStudyDesignView | null {
+  const studyId = str(d.study_design_id);
+  if (!studyId) return null;
+  const linkedAt = d.study_design_linked_at ? new Date(String(d.study_design_linked_at)).toISOString() : '';
+  return { ...(bound.get(studyId) ?? unresolvedDesign(studyId, linkedAt)), linkedAt };
+}
+
+/** The unresolved view: the link exists, the design does not (for this tenant). */
+function unresolvedDesign(studyId: string, linkedAt: string): PdevStudyDesignView {
+  return {
+    studyId, resolved: false, title: '', phase: '', indication: '', status: '', linkedAt,
+    riskLevel: '', canAdvance: false, blocksApproval: false,
+    counts: { critical: 0, major: 0, minor: 0, info: 0 },
+    summary: '', standardsChecked: [], findings: [],
+  };
+}
+
+/**
+ * Load every design named by this org's protocols, tenant-scoped, and run the
+ * gate engine over each. One query for the whole page, keyed by study id.
+ */
+async function loadBoundDesigns(
+  orgId: number,
+  studyIds: string[],
+): Promise<Map<string, PdevStudyDesignView>> {
+  const out = new Map<string, PdevStudyDesignView>();
+  if (studyIds.length === 0) return out;
+  const res = await pool.query(
+    `SELECT study_id, protocol_title, study_phase, indication, protocol_status, metadata
+       FROM cdisc_prm_studies
+      WHERE tenant_id = $1 AND study_id = ANY($2)`,
+    [orgId, studyIds],
+  );
+  for (const row of res.rows as Array<Record<string, unknown>>) {
+    const design = rowsToStudyDesign(row);
+    if (!design) continue;
+    const v = validateDesign(design);
+    out.set(str(row.study_id), {
+      studyId: str(row.study_id),
+      resolved: true,
+      title: str(row.protocol_title),
+      phase: str(row.study_phase),
+      indication: str(row.indication),
+      status: str(row.protocol_status),
+      linkedAt: '',
+      riskLevel: v.riskLevel,
+      canAdvance: v.canAdvance,
+      blocksApproval: v.blocksApproval,
+      counts: v.counts,
+      summary: v.summary,
+      standardsChecked: v.standardsChecked,
+      findings: v.findings.map((f) => ({
+        code: f.code, section: f.section, sev: f.severity, title: f.title, text: f.detail,
+        standard: str(f.standard), endpoint: str(f.endpointName), fix: str(f.suggestedFix),
+      })),
+    });
+  }
+  return out;
+}
+
 /**
  * Assemble every in-development protocol for the org, newest first. Returns [] when
  * the org has no real protocols — the surface renders its honest empty state.
  */
 export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string, unknown>[]> {
   const docsRes = await pool.query(
-    `SELECT id, protocol_kind, protocol_number, title, design_type, phase, version, status, updated_at, sponsor, principal_investigator
+    `SELECT id, protocol_kind, protocol_number, title, design_type, phase, version, status, updated_at, sponsor, principal_investigator,
+            study_design_id, study_design_linked_at
        FROM protocol_documents
       WHERE organization_id = $1 AND deleted_at IS NULL
       ORDER BY updated_at DESC, id DESC
@@ -269,6 +380,13 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
     team: groupBy(team.rows, (r) => r.protocol_document_id),
     consentForms: groupBy(consentForms.rows, (r) => r.protocol_document_id),
   };
+  /* The design-as-data spine, for the protocols that name one. Tenant-scoped,
+     and the verdict is validateDesign()'s — see loadBoundDesigns. */
+  const boundDesigns = await loadBoundDesigns(
+    orgId,
+    Array.from(new Set(docs.map((d) => str(d.study_design_id)).filter(Boolean))),
+  );
+
   const elementsByForm = groupBy(consentElements.rows, (r) => r.consent_form_id);
   const paramsByDoc = groupBy(budgetParams.rows, (r) => r.protocol_document_id);
   const changesByAmend = groupBy(amendChanges.rows, (r) => r.amendment_id);
@@ -322,6 +440,11 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
     const latestConsentForm = g(byDoc.consentForms, id)[0];
     const consentEls = latestConsentForm ? g(elementsByForm, Number(latestConsentForm.id)) : [];
 
+    /* The bound study design. `null` — not an empty report — when the protocol
+       names no design, so the surface says "no design is bound" rather than
+       implying the protocol cleared gates that were never run on it. */
+    const studyDesign = resolveStudyDesign(d, boundDesigns);
+
     return {
       id: str(id),
       title: str(d.title),
@@ -367,6 +490,7 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
         ? { id: str(latestConsentForm.id), title: str(latestConsentForm.title), version: str(latestConsentForm.version), status: str(latestConsentForm.status), formsLinked: g(byDoc.consentForms, id).length }
         : null,
       completenessFindings: findings.map((f) => ({ sev: str((f as { severity?: unknown }).severity), text: str((f as { message?: unknown }).message) })),
+      studyDesign,
     };
   });
 }
