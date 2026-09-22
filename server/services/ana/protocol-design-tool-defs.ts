@@ -139,7 +139,7 @@ export const REVIEW_PROTOCOL_REGULATORY_RULES: AnaTool = {
   description:
     'READ-ONLY. Run the deterministic protocol regulatory rule pack (evaluateProtocolRules) over a protocol document\'s recorded registers and return ' +
     'one finding per rule in scope for its kind, each citing its clause — ICH M11, E8(R1), E9/E9(R1), E6(R3), 21 CFR 312.23(a)(6), 50.25 and 56.111, ' +
-    '45 CFR 46 Subparts B/C/D, EU CTR 536/2014 Annex I Part D, FDORA §3601, and for non-clinical kinds the 3Rs and the NIH Guidelines. ' +
+    '45 CFR 46 Subparts B/C/D, EU CTR 536/2014 Annex I section D, FDORA §3601, and for non-clinical kinds the 3Rs and the NIH Guidelines. ' +
     'Writes nothing and records no audit row. This is deeper than review_protocol_completeness, which is the five-check finalize gate; a protocol can pass that and fail here. ' +
     'The engine returns three counts — assessed, unmet, not-assessed — and you report them and the findings VERBATIM. Never compute a compliance percentage, ' +
     'a score or a readiness verdict of your own, and never fill in a figure the engine did not return. ' +

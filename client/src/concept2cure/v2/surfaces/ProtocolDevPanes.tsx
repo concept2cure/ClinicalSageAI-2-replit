@@ -145,9 +145,10 @@ export function AmendmentsTab({ doc, onAdd }: ListPaneProps) {
         <div key={str(a.id)} className="pd-card">
           <div className="pd-card-h">
             <span className="pd-card-t">{str(a.num)}</span><span className="pd-chip">{str(a.path)}</span>
-            {a.reconsent === true && <span className="pg-badge" data-tone="warn">Re-consent</span>}
-            {/* Not declared is not "no re-consent": say it, rather than render the same silence as a No. */}
-            {a.reconsent === null && <span className="pg-badge" data-tone="idle">Consent impact not declared</span>}
+            {/* The IRB decides re-consent (45 CFR 46.109(b); 21 CFR 56.109(b)); the badge says a decision is
+                needed, never that re-consent is required. Not declared is not "no". */}
+            {a.reconsent === true && <span className="pg-badge" data-tone="warn">IRB re-consent determination needed</span>}
+            {a.reconsent === null && <span className="pg-badge" data-tone="idle">Consent / risk impact not declared</span>}
             <PG.StatusBadge status={str(a.status)} />
           </div>
           <div className="pd-card-sum">{str(a.summary)}</div>

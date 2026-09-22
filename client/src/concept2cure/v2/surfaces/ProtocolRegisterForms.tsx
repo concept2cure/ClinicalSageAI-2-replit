@@ -81,7 +81,7 @@ const FORMS: Record<RegisterKind, C2CFormConfig> = {
   },
   amendment: {
     eyebrow: 'Protocol · amendments', title: 'Create amendment',
-    sub: '45 CFR 46.116 / ICH E6(R2) — substantive change review. Recorded as a governed action.',
+    sub: 'Every change to approved research needs IRB review before it is implemented (45 CFR 46.108(a)(3)(iii); 21 CFR 56.108(a)(4)). Recorded as a governed action.',
     governed: true, submitLabel: 'Open amendment',
     fields: [
       { key: 'title', label: 'Amendment title', type: 'text', required: true, placeholder: 'e.g. Amendment 2 — revised eligibility criteria' },
@@ -90,7 +90,8 @@ const FORMS: Record<RegisterKind, C2CFormConfig> = {
          "affects neither". "Not assessed" is sent as absent and stored as not
          declared, which is different from answering No. */
       { key: 'affectsConsent', label: 'Affects informed consent?', type: 'seg', options: DECLARATION_OPTIONS, half: true },
-      { key: 'affectsRisk', label: 'Affects subject risk?', type: 'seg', options: DECLARATION_OPTIONS, half: true },
+      { key: 'affectsRisk', label: 'Increases risk to subjects?', type: 'seg', options: DECLARATION_OPTIONS, half: true,
+        desc: 'Yes if it increases risk or worsens the risk/benefit balance. A change that reduces risk is No.' },
       { key: 'rationale', label: 'Rationale', type: 'textarea', placeholder: 'Why the protocol is being amended' },
       REASON_FIELD,
     ],
