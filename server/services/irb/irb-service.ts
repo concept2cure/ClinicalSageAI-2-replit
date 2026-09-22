@@ -210,3 +210,94 @@ export async function getCompletenessInput(client: Queryable, orgId: number, id:
     approvalDate: s.approval_date,
   };
 }
+
+// ─── Package manifest (IRB_SUBMISSION.md step 3) ─────────────────────────────
+
+/**
+ * What this IRB submission's package would contain, and what it is missing.
+ *
+ * Reads the leaves placed at IRB slots on the sequences of the Submission
+ * Center submission this IRB submission is linked to (D1: an IRB submission is
+ * a submission, not a parallel stack). The `submission_id` foreign key that has
+ * been on `irb_submissions` since it was written is what makes that reachable.
+ *
+ * Read-only and tenant-scoped on both sides. Computes nothing itself: the
+ * requirements and the readiness verdict come from `buildPackageManifest`.
+ *
+ * `linkedSubmissionId: null` is reported as its own fact. An IRB submission
+ * that has not been linked to the Submission Center has no package to inspect,
+ * which is a different thing from a package with nothing in it, and a surface
+ * must not render the two the same way.
+ */
+export async function getPackageManifest(
+  orgId: number,
+  irbSubmissionId: number,
+): Promise<{
+  irbSubmissionId: number;
+  linkedSubmissionId: number | null;
+  manifest: import('./package-manifest').PackageManifest;
+}> {
+  const { rows } = await pool.query(
+    `SELECT id, submission_id, risk_level, review_type, involves_vulnerable_populations, consent_waiver_requested
+       FROM irb_submissions
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+      LIMIT 1`,
+    [irbSubmissionId, orgId],
+  );
+  if (rows.length === 0) throw new IrbError('NOT_FOUND', 'IRB submission not found for this organization.');
+  const s = rows[0];
+  const linkedSubmissionId = s.submission_id == null ? null : Number(s.submission_id);
+
+  const { buildPackageManifest } = await import('./package-manifest');
+  const placed = linkedSubmissionId === null ? [] : await loadIrbPlacements(orgId, linkedSubmissionId);
+
+  return {
+    irbSubmissionId,
+    linkedSubmissionId,
+    manifest: buildPackageManifest(
+      {
+        riskLevel: s.risk_level ?? null,
+        reviewType: s.review_type ?? null,
+        involvesVulnerablePopulations: s.involves_vulnerable_populations ?? null,
+        consentWaiverRequested: s.consent_waiver_requested ?? null,
+        /* Not passed, deliberately. `irb_submissions` records none of these,
+           so they stay ABSENT and the manifest reports those requirements as
+           undetermined with the field that would settle each. Passing `false`
+           would read as "this study does not run under an IND" — a claim
+           nobody made, and the one a board would be misled by. */
+      },
+      placed,
+    ),
+  };
+}
+
+/**
+ * The leaves placed at IRB slots across this submission's sequences.
+ *
+ * `resolvable` mirrors what the leaf-document resolver needs: a document table
+ * plus a key in the right space. A leaf naming neither is a placeholder, and
+ * the manifest refuses to count it as satisfying a slot.
+ */
+async function loadIrbPlacements(
+  orgId: number,
+  submissionId: number,
+): Promise<import('./package-manifest').PlacedArtifact[]> {
+  const { rows } = await pool.query(
+    `SELECT l.id, l.section_code, l.title, l.document_table, l.document_id, l.document_uuid
+       FROM submission_leaves l
+       JOIN ectd_sequences q ON q.id = l.sequence_id
+      WHERE q.submission_id = $1
+        AND q.organization_id = $2
+        AND q.deleted_at IS NULL
+        AND l.deleted_at IS NULL
+        AND l.section_code LIKE 'irb.%'
+      ORDER BY l.id`,
+    [submissionId, orgId],
+  );
+  return rows.map((r: Record<string, unknown>) => ({
+    slot: String(r.section_code),
+    leafId: Number(r.id),
+    title: String(r.title ?? ''),
+    resolvable: Boolean(r.document_table) && (r.document_id != null || r.document_uuid != null),
+  }));
+}

@@ -25,6 +25,7 @@ import {
   addReportableEventTx,
   listSubmissions,
   getCompletenessInput,
+  getPackageManifest,
 } from '../services/irb/irb-service';
 import { evaluateIrbCompleteness, continuingReviewStatus, recommendReviewType } from '../services/irb/irb-logic';
 import { recordIrbSubmissionCreated, recordIrbApproval, recordIrbReportableEvent } from '../services/irb-metrics';
@@ -205,6 +206,20 @@ router.post('/submissions/:id/reportable-events', async (req, res) => {
     recordIrbReportableEvent(parsed.data.eventType);
     return { target: `irb-submission:${id}`, payload: { eventId: eid, eventType: parsed.data.eventType }, body: { irbSubmissionId: id, eventId: eid } };
   });
+});
+
+/* The package manifest (docs/design/IRB_SUBMISSION.md step 3): which artifacts
+   a board expects of THIS submission, and which its linked Submission Center
+   submission actually carries. Read-only; it records no governed action,
+   because reading a manifest is not one. It decides nothing about the study --
+   per D4 it may find an artifact absent, and may not decide whether the
+   research is approvable. */
+router.get('/submissions/:id/package-manifest', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  try { res.json(await getPackageManifest(orgId, id)); } catch (err) { fail(res, err); }
 });
 
 router.get('/submissions/:id/completeness', async (req, res) => {
