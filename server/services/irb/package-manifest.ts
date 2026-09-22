@@ -79,8 +79,8 @@ const B_56_115 = '21 CFR 56.115(a)(1) — the board keeps the protocol and conse
 const B_50_25 = '21 CFR 50.25 — the elements of informed consent';
 const B_46_408 = '45 CFR 46.408 — child assent and parental permission (Subpart D)';
 const B_46_116 = '45 CFR 46.116 — consent, including the key-information summary';
-const B_312_53 = "21 CFR 312.53(c) — Form FDA 1572 and the investigator's qualifications";
-const B_54 = '21 CFR 54 — financial disclosure by clinical investigators';
+const B_312_53 = "21 CFR 312.53(c)(1)-(c)(2) — the signed Form FDA 1572 and the investigator's curriculum vitae or statement of qualifications";
+const B_54 = '21 CFR 312.53(c)(4) and 21 CFR part 54 — financial disclosure by clinical investigators';
 const B_56_111 = '21 CFR 56.111(a)(6) — data monitoring for subject safety';
 const B_HIPAA = '45 CFR 164.508 — authorization for use or disclosure of protected health information';
 const B_BOARD = "Supporting material most boards accept; not demanded by a regulation";
@@ -152,7 +152,7 @@ export function expectationsFor(ctx: PackageContext): SlotExpectation[] {
       field: 'isIndStudy',
     }),
     gated('irb.recruitment-material', ctx.usesRecruitmentMaterial, {
-      basis: '21 CFR 56.111(a)(3) and FDA guidance — recruitment material is part of the consent process and is reviewed',
+      basis: '21 CFR 56.111(a)(3)-(a)(4) and FDA Information Sheet Guidance "Recruiting Study Subjects" — FDA treats direct advertising as the start of the subject-selection and informed-consent process, so the IRB reviews the material itself',
       whenTrue: 'This submission records that recruitment material is used.',
       whenFalse: 'This submission records that no recruitment material is used.',
       field: 'usesRecruitmentMaterial',

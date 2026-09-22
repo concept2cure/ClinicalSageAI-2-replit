@@ -95,7 +95,7 @@ export interface LifecycleStatus {
 
 // ─── Bases ───────────────────────────────────────────────────────────────────
 
-const B_CONTINUING = '45 CFR 46.109(f) / 21 CFR 56.109(f) — continuing review at intervals not exceeding one year for research requiring it';
+const B_CONTINUING = '45 CFR 46.109(e) / 21 CFR 56.109(f) — continuing review at intervals not exceeding one year for research requiring it; 46.109(f) is the list of research for which it is NOT required, which `continuingReviewRequirement` implements';
 const B_LAPSE = 'OHRP guidance on continuing review — IRB approval lapses on the expiration date; research activity must stop unless the IRB finds that stopping would harm subjects';
 const B_MOD = '45 CFR 46.108(a)(3)(iii) / 21 CFR 56.108(a)(4) — a change to approved research may not be initiated without IRB review and approval, except to eliminate an immediate hazard';
 const B_UPIRSO = '45 CFR 46.108(a)(4) / 21 CFR 56.108(b) — prompt reporting of unanticipated problems involving risks to subjects or others';

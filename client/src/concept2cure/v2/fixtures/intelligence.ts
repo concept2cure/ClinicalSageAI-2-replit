@@ -451,7 +451,7 @@ export const INTEL_DEMOS_RAW = {
       'Pre-specify sensitivity analyses under a hypothetical strategy for the discontinuation-for-toxicity intercurrent event.',
       'Carry the estimand definition verbatim into SAP §3.1 and the protocol synopsis.',
     ],
-    citations: ['ICH E9(R1) §A.3', 'ICH E9(R1) §A.4', 'FDA Guidance: Multiple Endpoints (2022)'],
+    citations: ['ICH E9(R1) §A.3', 'ICH E9(R1) §A.5.2', 'FDA Guidance: Multiple Endpoints (2022)'],
     warnings: [],
   },
   naranjo: {

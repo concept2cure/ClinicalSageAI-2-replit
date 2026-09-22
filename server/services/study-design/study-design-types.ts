@@ -290,7 +290,7 @@ export interface SafetyDesign {
   };
 }
 
-// ─── Schedule of Activities (ICH M11 §7 / USDM ScheduleOfActivities / CDISC) ───
+// ─── Schedule of Activities (ICH M11 §1.3 / USDM ScheduleOfActivities / CDISC) ───
 
 /** Trial epoch a visit belongs to (ICH M11 / CDISC SDTM epoch). */
 export type SoaEpochKind = 'screening' | 'run_in' | 'treatment' | 'follow_up' | 'unscheduled';

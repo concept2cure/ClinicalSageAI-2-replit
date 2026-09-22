@@ -88,7 +88,7 @@ const MANIFEST = {
     },
     {
       slot: 'irb.form-1572', label: 'Form FDA 1572', requirement: 'undetermined',
-      basis: "21 CFR 312.53(c) — Form FDA 1572 and the investigator's qualifications. This submission does not record whether it applies, so the requirement could not be decided.",
+      basis: "21 CFR 312.53(c)(1)-(c)(2) — the signed Form FDA 1572 and the investigator's curriculum vitae or statement of qualifications. This submission does not record whether it applies, so the requirement could not be decided.",
       settledBy: 'isIndStudy',
       placed: [], satisfied: false, unresolvable: 0,
     },

@@ -111,7 +111,7 @@ projection **of**:
 |---|---|
 | ICH M11 protocol | the study design object, as an ICH M11-structured protocol |
 | Statistical Analysis Plan skeleton | the design's statistical plan and estimands (ICH E9 / E9(R1)) |
-| Schedule of Activities | the design's time-and-events grid (ICH M11 §7) |
+| Schedule of Activities | the design's time-and-events grid (ICH M11 §1.3) |
 | Trial registry record | the design as a registry record — ClinicalTrials.gov under FDAAA 801, EU CTIS under Regulation 536/2014 |
 | CRF shell | the design's Schedule of Activities as a blank CRF set (CDISC CDASH) |
 
@@ -221,7 +221,7 @@ All five projections answered live against the real design:
 |---|---|---|---|
 | ICH M11 protocol | ICH M11 | 69 % | 0, 8 sections |
 | SAP skeleton | ICH E9 / E9(R1) | 71 % | 0, 12 sections |
-| Schedule of Activities | ICH M11 §7 | **0 %** | **1** — the design carries no SoA |
+| Schedule of Activities | ICH M11 §1.3 | **0 %** | **1** — the design carries no SoA |
 | Trial registry record | FDAAA 801 / PRS · EU Reg 536/2014 / CTIS | 62 % / 80 % | 8 / 3 |
 | CRF shell | CDISC CDASH | 40 % | 1, 7 forms |
 
