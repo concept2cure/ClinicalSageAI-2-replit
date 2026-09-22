@@ -4,7 +4,6 @@
  * Consolidates all CSR extraction and search services.
  *
  * Consolidated from:
- * - csr-extractor-service.ts
  * - csr-foresight-orchestrator.ts
  * - csr-knowledge-extractor.ts
  * - csr-search-service.ts
@@ -15,7 +14,6 @@
 
 // Re-export primary services
 export * from '../csr-search-service';
-export * from '../csr-extractor-service';
 
 // Unified CSR service interface
 export interface CSRSearchParams {
@@ -93,11 +91,11 @@ export class UnifiedCSRService {
   }
 
   async extract(_documentId: string): Promise<CSRExtractionResult> {
-    // The underlying csr-extractor-service operates on extracted text
-    // (extractTextFromPDF / extractStructuredInfo), not on a document id.
-    // A document-id-based extraction pipeline has not been wired up here.
+    // CSR extraction is deterministic and text-based: csr-intelligence-library,
+    // reached through POST /api/corpus/extract. A document-id-based extraction
+    // pipeline has not been wired up here.
     throw new Error(
-      'UnifiedCSRService.extract is not implemented: csr-extractor-service requires document text, not a document id'
+      'UnifiedCSRService.extract is not implemented: use POST /api/corpus/extract (csr-intelligence-library), which extracts from CSR text'
     );
   }
 
