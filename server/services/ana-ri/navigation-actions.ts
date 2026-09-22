@@ -50,11 +50,17 @@ export interface NavigationAction {
   path: string;
   scope: NavigationDirective['scope'];
   params?: Record<string, string>;
+  /** The program a project-scope destination opens (navigate_to's `program`). */
+  program?: { id: string; name?: string; code?: string };
   executed: true;
 }
 
-/** Chips beyond this are dropped: a turn offering more is not offering. */
-export const MAX_NAVIGATION_ACTIONS = 3;
+/**
+ * Chips beyond this are dropped: a turn offering more is not offering. Equal
+ * to the assist drive budget (shared/navigation/drive-policy), so driving
+ * never moves a person more times than offering would have offered.
+ */
+export const MAX_NAVIGATION_ACTIONS = 6;
 
 /**
  * Read a `navigate_to` tool result and return its directive, or null.
@@ -104,7 +110,8 @@ export function toNavigationActions(
   const out: NavigationAction[] = [];
   for (const d of directives) {
     if (out.length >= MAX_NAVIGATION_ACTIONS) break;
-    const key = `${d.targetId}:${JSON.stringify(d.params ?? {})}`;
+    const program = (d as NavigationDirective & { program?: NavigationAction['program'] }).program;
+    const key = `${d.targetId}:${JSON.stringify(d.params ?? {})}:${program?.id ?? ''}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push({
@@ -114,6 +121,7 @@ export function toNavigationActions(
       path: d.path,
       scope: d.scope,
       ...(d.params && Object.keys(d.params).length > 0 ? { params: d.params } : {}),
+      ...(program && typeof program.id === 'string' ? { program } : {}),
       executed: true,
     });
   }

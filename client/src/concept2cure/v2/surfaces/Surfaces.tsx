@@ -9,6 +9,7 @@
  *                     surfaces whose components haven't ported yet
  * Styles: styles/surfaces-v2.css (+ shell classes from app-v2.css).
  */
+import { LiveDriveSwitch } from '../LiveDriveSwitch';
 import React from 'react';
 import { useAuth } from '@/services/portal/authService';
 import { useGlobalRiCatalog } from '@/hooks/useGlobalRiCatalog';
@@ -298,6 +299,7 @@ export function Home({
           <span className="sr-only" aria-live="polite">{upload.statusMessage}</span>
           <div className="landing-crow">
             <div className="landing-crow-l">
+              <LiveDriveSwitch />
               <button
                 type="button"
                 className="landing-tool"

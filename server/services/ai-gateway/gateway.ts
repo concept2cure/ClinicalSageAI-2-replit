@@ -53,6 +53,8 @@ import { CLOUD_MODELS } from './providers/cloud-models';
 import {
   parseOpenAIStreamDelta,
   extractOpenAIReasoning,
+  parseOpenAIToolCallFragments,
+  extractOpenAIToolCalls,
 } from './openai-stream.js';
 import {
   createBedrockClient,
@@ -82,6 +84,7 @@ import {
 } from './pii-screen.js';
 // In-flight concurrency limiter — bounds simultaneous outbound provider calls.
 import { Semaphore, resolveMaxConcurrency } from './concurrency.js';
+import { apiEffortForModel } from './effort.js';
 const log = createScopedLogger('ai-gateway');
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -509,7 +512,28 @@ function partitionSystemMessages(
     systemMessages.push(m);
   }
 
-  return { systemMessages, bodyMessages };
+  return { systemMessages, bodyMessages: fillEmptyBodyMessages(bodyMessages) };
+}
+
+/**
+ * The Messages API refuses a body message with empty content (every message
+ * but an optional final assistant one), and it refuses the WHOLE request — a
+ * 400 the gateway then repeated on every fallback model, marking the provider
+ * unhealthy on the way. One blank assistant turn in the agentic loop's
+ * transcript (a round that called tools without narrating) was enough to end
+ * the turn. A blank turn carries no information, so it is filled with a
+ * neutral marker rather than sent; callers should not produce one, and this is
+ * the belt for the one that does.
+ */
+export function fillEmptyBodyMessages(messages: GatewayMessage[]): GatewayMessage[] {
+  let changed = false;
+  const out = messages.map(m => {
+    if (m.contentBlocks && m.contentBlocks.length > 0) return m;
+    if (typeof m.content === 'string' && m.content.trim().length > 0) return m;
+    changed = true;
+    return { ...m, content: m.role === 'assistant' ? '(Continuing.)' : '(No message.)' };
+  });
+  return changed ? out : messages;
 }
 
 /**
@@ -641,6 +665,192 @@ function finalizeToolInput(
   } catch (err: any) {
     toolUse.inputParseError = `tool input was not parseable JSON: ${err?.message ?? 'unknown error'}`;
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OpenAI-compatible tool calling (openai / azure / local / moonshot)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Chat Completions refuses a request carrying more tools than this — the whole
+ * request, with a 400. AnA's relevance selection already offers ~50 a turn, so
+ * this is the belt for a caller that offers everything.
+ */
+const OPENAI_MAX_TOOLS = 128;
+
+/**
+ * It also refuses a function description longer than this ("Invalid
+ * 'tools[n].function.description': string too long. Expected a string with
+ * maximum length 1024"), on OpenAI and Azure alike — and 131 of AnA's 762
+ * tools were longer when this was written. Sent as written, any turn that
+ * offered one of them would fail on every OpenAI-compatible model; trimmed,
+ * the model reads the head of the description and the turn keeps its tools.
+ */
+const OPENAI_MAX_TOOL_DESCRIPTION_CHARS = 1024;
+
+/** The function names Chat Completions accepts. Any other name 400s the request. */
+const OPENAI_TOOL_NAME = /^[a-zA-Z0-9_-]{1,64}$/;
+
+/**
+ * Tools whose description has already been reported as trimmed. The same tools
+ * are offered on every round of every turn; one warning per tool per process
+ * says what an operator needs without burying the log in it.
+ */
+const openAITrimmedDescriptionsReported = new Set<string>();
+
+interface OpenAIFunctionTool {
+  type: 'function';
+  function: { name: string; description?: string; parameters: Record<string, unknown> };
+}
+
+/**
+ * The gateway's tool_choice vocabulary (Anthropic's) in OpenAI's. 'auto' is the
+ * API's own default whenever tools are present, so it — like an unset choice —
+ * sends nothing.
+ */
+function toOpenAIToolChoice(
+  choice: GatewayRequest['toolChoice']
+): 'none' | 'required' | { type: 'function'; function: { name: string } } | undefined {
+  if (choice === undefined || choice === 'auto') return undefined;
+  if (choice === 'none') return 'none';
+  if (choice === 'any') return 'required';
+  return { type: 'function', function: { name: choice.name } };
+}
+
+/**
+ * Offer the request's tools on an OpenAI-compatible Chat Completions request.
+ *
+ * These paths used to build their params with no tools and return no tool
+ * calls, so an AnA turn that landed on one — a cross-provider fallback, a model
+ * pin, an ANA_TIER_*_MODEL remap, a deployment holding only an OpenAI or Kimi
+ * key — lost every tool without a word: she could not navigate, act on a
+ * screen, run a demo, or call anything else, and nothing reported it.
+ *
+ * `{ name, description, input_schema }` becomes `{ type: 'function', function:
+ * { name, description, parameters } }`; the schema is the same JSON Schema on
+ * both surfaces, so it passes through. Not everything crosses, and what does
+ * not is logged rather than dropped quietly:
+ *
+ *   - Anthropic SERVER tools (web_search, web_fetch, code_execution) carry no
+ *     input_schema and run in Anthropic's infrastructure. There is nothing on
+ *     this side to execute one, so it is not offered.
+ *   - A name this API would reject is not offered, because one bad name
+ *     refuses the whole request and every other tool with it.
+ *
+ * `tool_choice` goes only alongside tools — the API rejects it without them.
+ * Moonshot documents only 'auto' and 'none'; a forced choice ('any', or a
+ * named tool) is still sent as asked, and its 400 is a hard client error that
+ * moves the fallback walk to a model that can honour it, rather than a turn
+ * that was required to call a tool quietly answering without one.
+ */
+function applyOpenAIToolParams(
+  params: Record<string, unknown>,
+  request: GatewayRequest,
+  modelConfig: ModelConfig
+): void {
+  if (!request.tools || request.tools.length === 0) return;
+  const target = `${modelConfig.provider}/${modelConfig.model}`;
+
+  const functions: OpenAIFunctionTool[] = [];
+  const serverTools: string[] = [];
+  const rejectedNames: string[] = [];
+  const newlyTrimmed: string[] = [];
+
+  for (const tool of request.tools as Array<Record<string, any>>) {
+    const schema = tool?.input_schema;
+    if (!schema || typeof schema !== 'object') {
+      serverTools.push(String(tool?.name ?? tool?.type ?? 'unnamed'));
+      continue;
+    }
+    const name = tool.name;
+    if (typeof name !== 'string' || !OPENAI_TOOL_NAME.test(name)) {
+      rejectedNames.push(String(name));
+      continue;
+    }
+    let description = typeof tool.description === 'string' ? tool.description : '';
+    if (description.length > OPENAI_MAX_TOOL_DESCRIPTION_CHARS) {
+      description = `${description.slice(0, OPENAI_MAX_TOOL_DESCRIPTION_CHARS - 1)}…`;
+      if (!openAITrimmedDescriptionsReported.has(name)) {
+        openAITrimmedDescriptionsReported.add(name);
+        newlyTrimmed.push(name);
+      }
+    }
+    functions.push({
+      type: 'function',
+      function: { name, ...(description ? { description } : {}), parameters: schema },
+    });
+  }
+
+  if (serverTools.length > 0) {
+    log.warn(
+      `[AI Gateway] ${target}: ${serverTools.length} Anthropic server tool(s) not offered — ` +
+        `they run only on Anthropic: ${serverTools.join(', ')}`
+    );
+  }
+  if (rejectedNames.length > 0) {
+    log.warn(
+      `[AI Gateway] ${target}: ${rejectedNames.length} tool(s) not offered — name not accepted ` +
+        `by OpenAI function calling (${OPENAI_TOOL_NAME}): ${rejectedNames.join(', ')}`
+    );
+  }
+  if (newlyTrimmed.length > 0) {
+    log.warn(
+      `[AI Gateway] Tool description(s) trimmed to ${OPENAI_MAX_TOOL_DESCRIPTION_CHARS} chars for ` +
+        `OpenAI-compatible providers (reported once per tool): ${newlyTrimmed.join(', ')}`
+    );
+  }
+  if (functions.length > OPENAI_MAX_TOOLS) {
+    const dropped = functions.splice(OPENAI_MAX_TOOLS);
+    log.warn(
+      `[AI Gateway] ${target}: ${OPENAI_MAX_TOOLS + dropped.length} tools offered, the API accepts ` +
+        `${OPENAI_MAX_TOOLS} — sending the first ${OPENAI_MAX_TOOLS}, not offering: ` +
+        dropped.map(f => f.function.name).join(', ')
+    );
+  }
+  if (functions.length === 0) return;
+
+  params.tools = functions;
+  const toolChoice = toOpenAIToolChoice(request.toolChoice);
+  if (toolChoice !== undefined) params.tool_choice = toolChoice;
+}
+
+/**
+ * An id for a tool call a server sent without one. It is only a correlation
+ * key — the loop quotes it back beside the call's result — so it needs to be
+ * unique, not meaningful; a positional one would repeat every round.
+ */
+function openAIToolCallId(): string {
+  return `call_${randomUUID()}`;
+}
+
+/**
+ * Tool uses off a NON-streaming OpenAI-compatible message. Arguments arrive as
+ * a JSON string, so they go through finalizeToolInput exactly as a streamed
+ * Anthropic input does: parsed onto `input`, or `{}` plus `inputParseError`
+ * when they will not parse (a `length` stop mid-arguments is the usual way) —
+ * never a bare `{}` that dispatches as a call with no arguments.
+ */
+function readOpenAIToolUses(message: unknown): AnaToolUse[] {
+  return extractOpenAIToolCalls(message).map(call => {
+    const toolUse: AnaToolUse = { id: call.id || openAIToolCallId(), name: call.name, input: {} };
+    finalizeToolInput(toolUse, call.arguments);
+    return toolUse;
+  });
+}
+
+/**
+ * The message list for an OpenAI-compatible request.
+ *
+ * This surface sends `content` only (`contentBlocks` are not forwarded), so a
+ * message is empty when that string is — and a blank one is filled exactly as
+ * the Anthropic side fills it. Moonshot refuses the whole request over one
+ * ("the message at position N with role 'assistant' must not be empty"), and
+ * a round that called tools without narrating is the ordinary way to stage one.
+ */
+function toOpenAIChatMessages(
+  messages: GatewayMessage[]
+): Array<{ role: GatewayMessage['role']; content: string }> {
+  return fillEmptyBodyMessages(messages.map(m => ({ role: m.role, content: m.content })));
 }
 
 export class AIGateway {
@@ -1295,7 +1505,7 @@ export class AIGateway {
 
     const params: any = {
       model: modelConfig.model,
-      messages: request.messages.map(m => ({ role: m.role, content: m.content })),
+      messages: toOpenAIChatMessages(request.messages),
       max_tokens: request.maxTokens || 2000,
       temperature: request.temperature ?? 0.7,
     };
@@ -1324,6 +1534,8 @@ export class AIGateway {
       }
     }
 
+    applyOpenAIToolParams(params, request, modelConfig);
+
     const completion = await Promise.race([
       client.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
       new Promise<never>((_, reject) =>
@@ -1337,10 +1549,12 @@ export class AIGateway {
     });
     const choice = completion.choices?.[0];
     const reasoning = extractOpenAIReasoning(choice?.message);
+    const toolUses = readOpenAIToolUses(choice?.message);
 
     return {
       content: choice?.message?.content || '',
       thinking: reasoning || undefined,
+      toolUses: toolUses.length > 0 ? toolUses : undefined,
       provider: modelConfig.provider,
       model: modelConfig.model,
       // The snapshot the provider says answered — `modelConfig.model` is only
@@ -1556,8 +1770,10 @@ export class AIGateway {
     if (structured.format) {
       params.output_config = { ...(params.output_config ?? {}), format: structured.format };
     }
-    if (request.apiEffort) {
-      params.output_config = { ...(params.output_config ?? {}), effort: request.apiEffort };
+    // Only a level this model accepts (Haiku 4.5 rejects effort outright).
+    const modelEffort = apiEffortForModel(modelConfig.model, request.apiEffort);
+    if (modelEffort) {
+      params.output_config = { ...(params.output_config ?? {}), effort: modelEffort };
     }
 
     // Tool use
@@ -1772,8 +1988,10 @@ export class AIGateway {
     if (structured.format) {
       params.output_config = { ...(params.output_config ?? {}), format: structured.format };
     }
-    if (request.apiEffort) {
-      params.output_config = { ...(params.output_config ?? {}), effort: request.apiEffort };
+    // Only a level this model accepts (Haiku 4.5 rejects effort outright).
+    const modelEffort = apiEffortForModel(modelConfig.model, request.apiEffort);
+    if (modelEffort) {
+      params.output_config = { ...(params.output_config ?? {}), effort: modelEffort };
     }
 
     const streamOptions: Record<string, unknown> = {};
@@ -1987,7 +2205,7 @@ export class AIGateway {
 
     const params: any = {
       model: modelConfig.model,
-      messages: request.messages.map(m => ({ role: m.role, content: m.content })),
+      messages: toOpenAIChatMessages(request.messages),
       max_tokens: request.maxTokens || 2000,
       temperature: request.temperature ?? 0.7,
     };
@@ -2002,6 +2220,8 @@ export class AIGateway {
       params.response_format = { type: 'json_object' };
     }
 
+    applyOpenAIToolParams(params, request, modelConfig);
+
     const completion = await Promise.race([
       this.moonshotClient.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
       new Promise<never>((_, reject) =>
@@ -2015,10 +2235,12 @@ export class AIGateway {
     });
     const choice = completion.choices?.[0];
     const reasoning = extractOpenAIReasoning(choice?.message);
+    const toolUses = readOpenAIToolUses(choice?.message);
 
     return {
       content: choice?.message?.content || '',
       thinking: reasoning || undefined,
+      toolUses: toolUses.length > 0 ? toolUses : undefined,
       provider: 'moonshot',
       model: modelConfig.model,
       resolvedModel: typeof completion.model === 'string' ? completion.model : undefined,
@@ -2047,7 +2269,9 @@ export class AIGateway {
    * reasoning incrementally through request.onStream, at parity with the
    * Anthropic streaming path: same text/thinking callback contract, the same
    * 30s per-chunk stall watchdog, and the same return-partial-on-error
-   * resilience. Usage is read from the final include_usage chunk.
+   * resilience. Usage is read from the final include_usage chunk. Tool calls
+   * come back as `toolUses` in the Anthropic path's shape, including
+   * `inputParseError` for arguments that did not survive the stream.
    */
   private async executeOpenAICompatibleStream(
     client: any,
@@ -2061,7 +2285,7 @@ export class AIGateway {
 
     const params: any = {
       model: modelConfig.model,
-      messages: request.messages.map(m => ({ role: m.role, content: m.content })),
+      messages: toOpenAIChatMessages(request.messages),
       max_tokens: request.maxTokens || 2000,
       temperature: request.temperature ?? 0.7,
       stream: true,
@@ -2078,6 +2302,7 @@ export class AIGateway {
           ? { type: 'json_schema', json_schema: { name: 'response', strict: true, schema: request.jsonSchema } }
           : { type: 'json_object' };
     }
+    applyOpenAIToolParams(params, request, modelConfig);
 
     const stream = await client.chat.completions.create(
       params,
@@ -2091,6 +2316,15 @@ export class AIGateway {
     let totalTokens = 0;
     let finishReason = 'unknown';
     let resolvedModel: string | undefined;
+    const toolUses: AnaToolUse[] = [];
+    // A call's arguments arrive in pieces across many chunks, and parallel
+    // calls interleave, so the buffers are keyed by the fragment's `index` —
+    // the one field every fragment of a call carries (see
+    // parseOpenAIToolCallFragments). Same buffers as the Anthropic path.
+    const toolInputBuffers: ToolInputBuffers = new Map();
+    // OpenAI has no per-call close event. The choice's finish_reason is the
+    // only thing that says every call's arguments are complete.
+    let choiceClosed = false;
 
     // Per-chunk watchdog — abort a stream that goes silent for 30s (mirrors the
     // Anthropic path) so a hung provider can't wedge the turn.
@@ -2147,7 +2381,25 @@ export class AIGateway {
           content += delta.text;
           onStream(delta.text, { type: 'text' });
         }
-        if (delta.finishReason) finishReason = delta.finishReason;
+        for (const fragment of parseOpenAIToolCallFragments(chunk)) {
+          const buffered = toolInputBuffers.get(fragment.index);
+          if (!buffered) {
+            toolUses.push({ id: fragment.id, name: fragment.name, input: {} });
+            toolInputBuffers.set(fragment.index, { toolIndex: toolUses.length - 1, json: '' });
+          } else {
+            // Fill, never overwrite or append: id and name belong to the first
+            // fragment, and some servers repeat them on every fragment after.
+            const toolUse = toolUses[buffered.toolIndex];
+            if (!toolUse.id && fragment.id) toolUse.id = fragment.id;
+            if (!toolUse.name && fragment.name) toolUse.name = fragment.name;
+          }
+          // Verbatim; the pieces are only valid JSON once concatenated.
+          appendToolInputFragment(toolInputBuffers, fragment.index, fragment.arguments);
+        }
+        if (delta.finishReason) {
+          finishReason = delta.finishReason;
+          choiceClosed = true;
+        }
         if (delta.usage) {
           inputTokens = delta.usage.inputTokens;
           outputTokens = delta.usage.outputTokens;
@@ -2160,6 +2412,20 @@ export class AIGateway {
     } finally {
       clearInterval(chunkWatchdog);
     }
+
+    // A stream that ended before finish_reason — a stall, a cancel, a dropped
+    // connection — may have cut any call's arguments short, so each is
+    // reported as lost rather than parsed. That matters most for a call whose
+    // arguments had not started arriving: its empty buffer would otherwise
+    // read as a tool called with no arguments, and dispatch. Same contract as
+    // the Anthropic path's unclosed blocks.
+    const truncation = choiceClosed ? undefined : 'the stream ended before the tool input was complete';
+    for (const [, buffered] of toolInputBuffers) {
+      const toolUse = toolUses[buffered.toolIndex];
+      if (!toolUse.id) toolUse.id = openAIToolCallId();
+      finalizeToolInput(toolUse, buffered.json, truncation);
+    }
+    toolInputBuffers.clear();
 
     // Ended because the person ended it — not a stall, not a failure.
     if (streamAborted) {
@@ -2174,6 +2440,7 @@ export class AIGateway {
     return {
       content,
       thinking: thinking || undefined,
+      toolUses: toolUses.length > 0 ? toolUses : undefined,
       provider,
       model: modelConfig.model,
       resolvedModel,
@@ -2467,6 +2734,16 @@ export class AIGateway {
   private recordFailure(provider: ProviderName, error: Error): void {
     const health = this.providerHealth.get(provider);
     if (!health) return;
+
+    // A request the provider refused as malformed (400/404/413/422) says the
+    // REQUEST was wrong, not that the provider is down. Counting it marked a
+    // healthy provider unhealthy for a minute or more after three such turns,
+    // so one bad transcript shape took AnA offline for every tenant.
+    const status = Number((error as { status?: unknown })?.status);
+    if (status === 400 || status === 404 || status === 413 || status === 422) {
+      health.requestCount++;
+      return;
+    }
 
     health.consecutiveFailures++;
     health.lastFailure = new Date();

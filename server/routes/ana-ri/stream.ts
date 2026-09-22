@@ -65,12 +65,14 @@ import {
   buildDriveNavigationEvent,
   buildDriveActionEvent,
   buildLiveDrivePromptBlock,
+  buildOfferedMovesPromptBlock,
   auditDriveNavigation,
   auditDriveAction,
   driveBudgetFor,
   DEMO_MAX_ROUNDS,
 } from '../../services/ana-ri/live-drive.js';
 import auditService from '../../services/auditService.js';
+import { parseLockedScreens } from '../../services/ana-ri/drive-context.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
 import {
@@ -78,6 +80,7 @@ import {
   resolveMaxRounds,
   resolveRoundExtension,
   capToolResultForModel,
+  assistantTurnContent,
   budgetToolResultsForModel,
   buildAdaptationNote,
   mapWithConcurrency,
@@ -231,7 +234,11 @@ export function mountStreamRoute(router: Router): void {
         effort_level,
         live_drive,
         drive_mode,
+        locked_screens,
       } = req.body;
+      // Screens closed to this person, from the shell's copy of the server's
+      // own verdict set — the self-drive tools refuse them honestly.
+      const lockedScreens = parseLockedScreens(locked_screens);
 
       if (!message || typeof message !== 'string') {
         return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
@@ -659,7 +666,9 @@ export function mountStreamRoute(router: Router): void {
       // cache_control so subsequent turns on the same screen/project hit cache.
       // Live Drive rides the VOLATILE suffix: the mode is per-turn, so putting
       // it in the cached prefix would poison the cache across toggle flips.
-      const driveState = await driveStatePromise;
+      // `let`: a turn that asks for a demonstration in plain words is promoted to
+      // demo mode when start_product_demo answers (see the tool loop below).
+      let driveState = await driveStatePromise;
       if (driveState.requested) {
         res.write(`data: ${JSON.stringify(buildDriveStateEvent(driveState))}\n\n`);
       }
@@ -667,7 +676,7 @@ export function mountStreamRoute(router: Router): void {
       const streamVolatileSuffix =
         memoryBlock +
         enrichment.block +
-        (driveState.enabled ? buildLiveDrivePromptBlock(driveState.mode) : '');
+        (driveState.enabled ? buildLiveDrivePromptBlock(driveState.mode) : buildOfferedMovesPromptBlock());
 
       // Thread resolution (before message building so we can load server history).
       //
@@ -1148,7 +1157,12 @@ export function mountStreamRoute(router: Router): void {
       // this turn, per kind. Budgets come from the shared per-mode policy
       // (assist = the chip budget, so driving can never move a person more
       // times than offering would have offered; demo = a full-tour allowance).
-      const driveBudget = driveBudgetFor(driveState.mode);
+      let driveBudget = driveBudgetFor(driveState.mode);
+      // What AnA has changed on the person's screen so far this turn (the
+      // program she opened) — read by the self-drive tools between rounds.
+      const driveTurnState: { program: { id: string; name?: string; code?: string } | null } = {
+        program: null,
+      };
       let driveNavigationsApplied = 0;
       let driveActionsApplied = 0;
       // Document drafts emitted this turn — persisted to the governed artifact
@@ -1628,6 +1642,8 @@ export function mountStreamRoute(router: Router): void {
                       // Lets navigate_to tell the model the truth about what its
                       // directive does this turn (applied live vs offered chip).
                       liveDrive: driveState.enabled,
+                      lockedScreens,
+                      turnState: driveTurnState,
                       signal: runSignal,
                     }),
                     abortRace(runSignal),
@@ -1676,6 +1692,25 @@ export function mountStreamRoute(router: Router): void {
           );
 
           const entries: ToolResultEntry[] = [];
+          /* The model reads `entries`, not the stream. A directive the drive
+             budget stops from being applied must not reach it as "being applied
+             now": the screen will not move, and she would narrate a move that
+             did not happen. It is offered as a chip instead, and she is told. */
+          const amendForModel = (
+            toolUseId: string,
+            parsedResult: Record<string, unknown> | null,
+            kind: 'navigation' | 'action'
+          ) => {
+            const entry = entries.find(e => e.tool_use_id === toolUseId);
+            if (!entry || !parsedResult) return;
+            entry.content = JSON.stringify({
+              ...parsedResult,
+              applied: false,
+              instruction:
+                `This turn's ${kind} budget is used up, so this ${kind} was NOT made on their screen — ` +
+                'it is offered as a one-click chip under your answer. Say so plainly and do not narrate it as done.',
+            });
+          };
           const roundFailures: FailedToolCall[] = [];
           for (const { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs } of ran) {
             entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
@@ -1739,6 +1774,11 @@ export function mountStreamRoute(router: Router): void {
                 const directive = directiveFromToolResult(toolUse.name, resultStr);
                 if (directive) {
                   collectedNavigation.push(directive);
+                  // Past the turn's budget the move is NOT applied — say so to
+                  // the model instead of the handler's "being applied now".
+                  if (driveState.enabled && driveNavigationsApplied >= driveBudget.navigations) {
+                    amendForModel(toolUse.id, parsed, 'navigation');
+                  }
                   // Live Drive: the person opted in and is entitled, so the
                   // directive is ALSO emitted now for immediate application —
                   // budgeted per mode, audited, and re-validated client-side
@@ -1770,6 +1810,9 @@ export function mountStreamRoute(router: Router): void {
                 const actionDirective = surfaceActionFromToolResult(toolUse.name, resultStr);
                 if (actionDirective) {
                   collectedSurfaceActions.push(actionDirective);
+                  if (driveState.enabled && driveActionsApplied >= driveBudget.actions) {
+                    amendForModel(toolUse.id, parsed, 'action');
+                  }
                   if (driveState.enabled && driveActionsApplied < driveBudget.actions) {
                     driveActionsApplied += 1;
                     res.write(
@@ -1791,6 +1834,27 @@ export function mountStreamRoute(router: Router): void {
                 }
                 const demoStart = demoStartFromToolResult(toolUse.name, resultStr);
                 if (demoStart) collectedDemoStarts.push(demoStart);
+                // A demonstration asked for in plain words ("give me the sales
+                // demo") arrives as an ordinary driving turn. Once the script
+                // is fetched, the turn IS a demonstration: promote it so the
+                // tour gets the demo budgets, prompt and round ceiling, and tell
+                // the client so its caps (and the next turns) follow.
+                if (
+                  toolUse.name === 'start_product_demo' &&
+                  parsed?.status === 'demo_ready' &&
+                  parsed?.driven === true &&
+                  driveState.enabled &&
+                  driveState.mode !== 'demo'
+                ) {
+                  driveState = { ...driveState, mode: 'demo' };
+                  driveBudget = driveBudgetFor('demo');
+                  res.write(`data: ${JSON.stringify(buildDriveStateEvent(driveState))}\n\n`);
+                  pendingOperatorTurns.push({
+                    role: 'system',
+                    inlineSystem: true,
+                    content: buildLiveDrivePromptBlock('demo').trim(),
+                  });
+                }
                 if (parsed?.status === 'intelligence_question' && parsed.question) {
                   res.write(
                     `data: ${JSON.stringify({
@@ -1926,7 +1990,7 @@ export function mountStreamRoute(router: Router): void {
            live; reading them interleaved made both harder to follow, and the
            mix pushed callModel past the complexity limit. */
         const stageRound = (results: ToolResultEntry[], priorText: string): void => {
-          loopMessages.push({ role: 'assistant', content: priorText || '' });
+          loopMessages.push({ role: 'assistant', content: assistantTurnContent(priorText, results) });
           // Entries arrive pre-budgeted from executeTools, so the per-result cap
           // here is a no-op safety net. The adaptation note (when a tool failed
           // last round) rides the same user turn so the model course-corrects
@@ -2142,6 +2206,10 @@ export function mountStreamRoute(router: Router): void {
               driveState.enabled && driveState.mode === 'demo'
                 ? Math.max(resolveMaxRounds(effortUsed), DEMO_MAX_ROUNDS)
                 : resolveMaxRounds(effortUsed),
+            // A turn promoted to demo mode mid-way gets the demo ceiling from
+            // that point on (read every round).
+            maxRoundsFloor: () =>
+              driveState.enabled && driveState.mode === 'demo' ? DEMO_MAX_ROUNDS : 0,
             progressExtension: resolveRoundExtension(effortUsed),
           }
         );

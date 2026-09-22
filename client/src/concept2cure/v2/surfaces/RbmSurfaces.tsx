@@ -3,6 +3,7 @@
  * the AnA resolver + dock, and the cross-surface action store.
  * Sub-surfaces are in RbmSurfacesA (1-5) and RbmSurfacesB (6-10).
  */
+import { AnaActionChip } from '../AnaActionChips';
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { SignoffList } from '../SignoffList';
@@ -295,7 +296,15 @@ function RbmSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
   );
 }
 
-function RbmAnaMsg({ m }: { m: RbmAnaMessage }) {
+function RbmAnaMsg({
+  m,
+  onNav,
+  onStartDemo,
+}: {
+  m: RbmAnaMessage;
+  onNav?: (id: string) => void;
+  onStartDemo?: (demoId: string, title: string) => void;
+}) {
   if (m.role === 'user') return <div className="rbm-ana-user">{m.text}</div>;
   return (
     <div className="rbm-ana-ai">
@@ -303,17 +312,24 @@ function RbmAnaMsg({ m }: { m: RbmAnaMessage }) {
       {m.text && <div className="rbm-ana-text">{m.text}</div>}
       {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
         <div className="rbm-ana-chips">
-          {m.executedActions.map((a, i) => (
-            <span
-              key={i}
-              className="rbm-chip"
-              data-tone={a.error ? 'err' : a.executed ? 'ok' : 'ai'}
-              title={a.error || a.label}
-            >
-              {(I as Record<string, React.ReactNode>)[a.error ? 'shieldAlert' : a.executed ? 'check' : 'zap']}
-              {a.label}
-            </span>
-          ))}
+          {m.executedActions.map((a, i) =>
+            onNav &&
+            ((a.actionType === 'navigate' && a.targetId) ||
+              (a.actionType === 'surface_action' && a.actionId) ||
+              (a.actionType === 'start_demo' && a.demoId && onStartDemo)) ? (
+              <AnaActionChip key={i} action={a} onNav={onNav} onStartDemo={onStartDemo} />
+            ) : (
+              <span
+                key={i}
+                className="rbm-chip"
+                data-tone={a.error ? 'err' : a.executed ? 'ok' : 'ai'}
+                title={a.error || a.label}
+              >
+                {(I as Record<string, React.ReactNode>)[a.error ? 'shieldAlert' : a.executed ? 'check' : 'zap']}
+                {a.label}
+              </span>
+            ),
+          )}
         </div>
       )}
       {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (
@@ -332,10 +348,13 @@ export interface RbmAnaWork {
   pendingSteers: string[];
 }
 
-export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
+export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onStartDemo }: {
   nav: RbmNavItem; study: string; msgs: RbmAnaMessage[];
   onAsk: (t: string) => void; onClose: () => void;
   work?: RbmAnaWork;
+  /** The shell's navigation, so AnA's navigation and screen-action chips work. */
+  onNav?: (id: string) => void;
+  onStartDemo?: (demoId: string, title: string) => void;
 }) {
   const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
@@ -388,7 +407,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
           <div className="rbm-ana-starters-l">Starters for {nav.label.toLowerCase()}</div>
           {nav.starters.map((s, i) => <button key={i} className="rbm-starter" onClick={() => ask(s)}>{s}</button>)}
         </div>
-        {msgs.map((m, i) => <RbmAnaMsg key={i} m={m} />)}
+        {msgs.map((m, i) => <RbmAnaMsg key={i} m={m} onNav={onNav} onStartDemo={onStartDemo} />)}
       </div>
       <div className="rbm-ana-composer">
         <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') ask(draft.trim()); }} aria-label="Ask AnA about this study" placeholder={`Ask AnA about ${study}...`} />

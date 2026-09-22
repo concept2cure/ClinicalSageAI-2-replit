@@ -42,6 +42,7 @@
  * state's "Ask AnA to draft" — goes to the conversation the person is already
  * in, and the pane is not drawn. One conversation on screen, never two.
  */
+import { AnaActionChips } from '../AnaActionChips';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -4253,11 +4254,12 @@ export function DocumentWorkbench({
                     )}
                     {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                        {m.executedActions.map((a, ai) => (
-                          <span key={ai} className="rd-chip tone-ok" title={a.error || a.label}>
-                            {a.label}
-                          </span>
-                        ))}
+                        <AnaActionChips
+                          actions={m.executedActions}
+                          onNav={onNav}
+                          onStartDemo={liveDrive?.onStartDemo}
+                          inertClassName="rd-chip tone-ok"
+                        />
                       </div>
                     )}
                     {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (
