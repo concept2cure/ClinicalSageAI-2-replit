@@ -2430,6 +2430,17 @@ export const C2C_MIGRATION_FILES = [
   // ci:migration-set-order pins last.
   'migrations/20260922b_protocol_discontinuation_section.sql',
 
+  // ── The design as it stood when an amendment was opened ─────────────────
+  // Registered 2026-09-22. EU CTR 536/2014 Article 16 makes a modification
+  // substantial by its EFFECT, which needs a before and an after. Nothing
+  // captured a before: protocol_versions.snapshot holds sections only, and the
+  // bound design is overwritten in place as it is edited. Three additive
+  // columns, ADD COLUMN IF NOT EXISTS, no DROP and no backfill -- an amendment
+  // that predates the column keeps a NULL snapshot and its assessment reports
+  // not-assessed rather than comparing against an invented baseline. Guarded on
+  // to_regclass; above the final pair, which ci:migration-set-order pins last.
+  'migrations/20260922c_amendment_design_snapshot.sql',
+
   // ── IRB / IEC submissions, reviews, amendments, reportable events ────────
   // Registered 2026-09-22. The file was written on 2026-06-10 with a service,
   // three deterministic engines and nine mounted routes — and was never put on
