@@ -109,3 +109,46 @@ export {
   type SapSection,
   projectSap,
 } from './sap-projection';
+export {
+  type BurdenCellState,
+  type BurdenInvasiveness,
+  type BurdenVisitInput,
+  type BurdenActivityInput,
+  type BurdenCellInput,
+  type BurdenMatrix,
+  type Measure,
+  type NotComputedNote,
+  type BurdenPeakVisit,
+  type BurdenVisitLoad,
+  type BurdenAssessmentLoad,
+  type BurdenComplexity,
+  type BurdenProfile,
+  BURDEN_BASIS,
+  BURDEN_SECTION,
+  computeBurdenProfile,
+  absentBurdenProfile,
+} from './burden-model';
+export {
+  burdenMatrixFromDesign,
+  burdenProfileForDesign,
+  burdenMatrixFromProtocolSoaMatrix,
+} from './burden-adapters';
+export {
+  type MeasureDelta,
+  type VisitLoadChange,
+  type BurdenDelta,
+  compareBurden,
+} from './burden-delta';
+export {
+  type DesignRegionMapping,
+  type DesignRegionEvaluation,
+  type UnmappedRegionField,
+  type RegionFindingStatus,
+  REGION_INPUT_FIELDS,
+  DERIVED_REGION_INPUT_FIELDS,
+  REGION_FINDING_SECTION,
+  regionToAgency,
+  regionFindingStatus,
+  studyDesignToRegionInput,
+  evaluateDesignRegionRules,
+} from './region-rules-adapter';
