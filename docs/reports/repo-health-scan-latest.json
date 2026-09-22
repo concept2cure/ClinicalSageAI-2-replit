@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-22T01:41:26.331Z",
+  "generatedAt": "2026-09-22T05:07:26.779Z",
   "git": {
-    "sha": "c69dcc92dfa51256417886d808956abd003e0728",
+    "sha": "88860bd8821beb14f2bf0b03dd3fa311175096a6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1987,7 +1987,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1038388
+        "bytes": 1051195
       },
       {
         "file": "shared/schema.ts",
@@ -2083,7 +2083,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 128180
+        "bytes": 128728
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2160,12 +2160,12 @@
     ],
     "largeFilesByLines": [
       {
-        "file": "shared/schema.ts",
-        "lines": 20190
+        "file": "server/services/ana/AnaToolExecutor.ts",
+        "lines": 20314
       },
       {
-        "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20121
+        "file": "shared/schema.ts",
+        "lines": 20190
       },
       {
         "file": "server/statistics-service.ts",
@@ -2253,7 +2253,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2820
+        "lines": 2828
       },
       {
         "file": "server/src/routes/stability.router.ts",
