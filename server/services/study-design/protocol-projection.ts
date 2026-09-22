@@ -40,11 +40,42 @@ export interface ProtocolDocument {
     rendered: number;
     partial: number;
     missing: number;
+    /**
+     * The number of sections THIS PROJECTION ATTEMPTS. It is not the number of
+     * sections in the ICH M11 template — see `conformance` below.
+     */
     total: number;
-    /** Rendered counts 1, partial 0.5, missing 0. */
+    /**
+     * Percent of the ATTEMPTED sections that rendered (rendered 1, partial 0.5,
+     * missing 0). It is a measure of how much of the design object reached the
+     * page, NOT a measure of conformance to ICH M11: a document can read 100%
+     * here while omitting whole sections of the standard.
+     */
     percent: number;
   };
   standard: 'ICH M11';
+  /**
+   * What the "ICH M11" label above does and does not claim.
+   *
+   * The projection renders M11-ordered sections 2 through 9. It does not render
+   * a protocol summary, the oversight, risk-management, appendix or reference
+   * sections, so the output is an M11-ORDERED document, not a conformant M11
+   * protocol, and nothing downstream may present it as one.
+   *
+   * `outlineVerified` records whether this section list has been checked
+   * against the published ICH M11 template. It is false: the outline in this
+   * module was written from working knowledge and has never been reconciled
+   * with the ICH/EMA document. Until it is, the section NUMBERS here are
+   * internal ordering, not citable M11 references — and they are cited as
+   * though they were in several places in this codebase.
+   */
+  conformance: {
+    standard: 'ICH M11';
+    claim: 'partial';
+    sectionsRendered: string[];
+    outlineVerified: false;
+    note: string;
+  };
   /** Honesty marker: this document is a deterministic projection, not generated prose. */
   projectedFromObject: true;
 }
@@ -268,6 +299,18 @@ export function projectProtocol(design: StudyDesign): ProtocolDocument {
     sections: built,
     completeness: { rendered, partial, missing, total, percent },
     standard: 'ICH M11',
+    conformance: {
+      standard: 'ICH M11',
+      claim: 'partial',
+      sectionsRendered: built.map(s => s.number),
+      outlineVerified: false,
+      note:
+        'Renders M11-ordered sections 2-9 only. No protocol summary, oversight, ' +
+        'risk-management, appendix or reference section is produced, so this is an ' +
+        'M11-ordered document rather than a conformant M11 protocol. The outline has ' +
+        'not been reconciled against the published ICH M11 template, so these section ' +
+        'numbers are internal ordering and must not be presented as M11 citations.',
+    },
     projectedFromObject: true,
   };
 }
