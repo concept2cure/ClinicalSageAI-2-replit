@@ -1,0 +1,30 @@
+$ node scripts/ci/check-column-reachability.mjs
+[ci:column-reachability] OK — 2136 column add(s) on no applier, 16 queried by the server (all baselined with reasons).
+exit=0
+
+$ node scripts/ci/check-migration-reachability.mjs
+[ci:migration-reachability] 1343 durably-created tables; 1 server-referenced table(s) created only by a deploy-dead migration; 1 baselined
+[ci:migration-reachability] ✅ no new unreachable table references.
+
+$ DATABASE_URL=…/c2c_full node scripts/ci/check-tables-against-live-schema.mjs --strict-no-regression
+[ci:tables-live-schema] 1293 relations on the live database; 763 referenced by server SQL; 9 resolved as functions; 58 absent
+[ci:tables-live-schema] ✅ no NEW references to tables missing from the live schema (58 baselined)
+
+$ node scripts/ci/check-insert-columns-declared.mjs
+[ci:insert-columns-declared] columns written vs columns declared
+  Drizzle models parsed        : 701
+  static INSERTs examined      : 718
+  skipped (unjudgeable)        : 8
+  migration lineage tables     : 1402
+  tables unknown to BOTH       : 16
+  baselined (known, unfixed)   : 59
+
+✅ no new violations. 59 baselined and awaiting burn-down.
+
+$ node scripts/ci/check-model-migration-agreement.mjs
+  models parsed              : 701
+  tables CREATEd by both     : 393
+  divergent tables           : 12
+  baselined (known, unfixed) : 28
+
+✅ no new divergence. 28 baselined and awaiting burn-down.

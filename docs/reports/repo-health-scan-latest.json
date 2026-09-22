@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-22T22:53:30.496Z",
+  "generatedAt": "2026-09-22T23:06:36.040Z",
   "git": {
-    "sha": "6b33036df09678fab83d229082498bd5f1921310",
+    "sha": "264c6972b1ce2c1e7a64c3c7103cd2e82dad6411",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2052,7 +2052,7 @@
       },
       {
         "file": "server/storage.ts",
-        "bytes": 145402
+        "bytes": 145065
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2198,7 +2198,7 @@
       },
       {
         "file": "server/storage.ts",
-        "lines": 4444
+        "lines": 4431
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2521,10 +2521,6 @@
         "lines": 1650
       },
       {
-        "file": "server/services/unifiedDocumentIngestion.js",
-        "lines": 1628
-      },
-      {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
       },
@@ -2555,6 +2551,10 @@
       {
         "file": "server/routes/c2c/projects.ts",
         "lines": 1522
+      },
+      {
+        "file": "server/services/unifiedDocumentIngestion.js",
+        "lines": 1509
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
