@@ -169,3 +169,10 @@ atomic audit write. P1 bypasses it with a local `governed()` helper. T1 calls it
 best-effort outside the transaction. P2 and P3 never call it. A gate that refuses
 a governed-looking mutation route not reaching that path would have caught all
 four. Owner: D5.
+
+T1 is known debt. `check-discarded-audit-write` (in `.husky/pre-push`) already
+baselines all nine sites (`scripts/ci/discarded-audit-write-baseline.json:36`,
+`"server/routes/taskManagement.routes.ts": 9`). The same baseline holds **160
+discarded audit-write outcomes across 72 files**. The ratchet stops new ones and
+retires none. How many of those 160 are on launch-catalog write paths has not
+been measured; that count is the next review's first item.

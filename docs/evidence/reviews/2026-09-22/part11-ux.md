@@ -192,6 +192,9 @@ Re-run because the first brief named the device-kit components; see `README.md`,
   and `project-vault.ts:1389-1405` returns 500 `AUDIT_WRITE_FAILED`.
 - **Fix.** Pass `executor` (the task write's client), or answer 5xx when
   `recorded:false`.
+- **Known debt.** All nine sites are baselined in
+  `scripts/ci/discarded-audit-write-baseline.json:36`. The pre-push ratchet stops a
+  tenth; it does not retire these nine.
 
 ### T2. High (CT-verified): no authority check on task writes
 
