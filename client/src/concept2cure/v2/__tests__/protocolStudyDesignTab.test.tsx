@@ -100,7 +100,7 @@ const SOA = {
     counts: { epochs: 0, visits: 0, activities: 0, scheduledCells: 0 },
     gaps: ['The design object carries no Schedule of Activities.'],
     completeness: { satisfied: 0, total: 1, percent: 0 },
-    standard: 'ICH M11 §7',
+    standard: 'ICH M11 §1.3',
     projectedFromObject: true,
   },
 };

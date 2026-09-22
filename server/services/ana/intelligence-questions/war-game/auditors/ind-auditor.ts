@@ -424,7 +424,7 @@ const rules: AuditRule[] = [
         return finding(
           this.id, this.dimension, 'warning', this.title, this.question,
           'Investigator qualifications have not been described. Form FDA 1572 and supporting CVs are required for each participating investigator.',
-          'Per 21 CFR 312.53(c)(4), the sponsor must select investigators qualified by training and experience to investigate the drug. Form FDA 1572 must include a CV and a statement of the investigator\'s qualifications.',
+          'Per 21 CFR 312.53(a), the sponsor must select only investigators qualified by training and experience as appropriate experts to investigate the drug. Before an investigator may begin, 312.53(c)(1) requires a signed Form FDA 1572 and 312.53(c)(2) a curriculum vitae or other statement of qualifications — the CV is obtained alongside the 1572, not a field of it. (312.53(c)(4) is the separate financial-disclosure item feeding 21 CFR Part 54.)',
           '21 CFR 312.53; 21 CFR 312.23(a)(6)(iii)(b); FDA Form 1572',
           'Provide investigator qualifications including relevant therapeutic area experience, GCP training certification, and clinical trial experience. Ensure Form 1572 is completed for each site.',
           ['investigator_qualifications', 'irb_approval_status'],

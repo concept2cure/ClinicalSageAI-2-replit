@@ -1,6 +1,6 @@
 /**
  * Participant burden and protocol complexity — a deterministic engine over the
- * Schedule of Activities (ICH M11 §7).
+ * Schedule of Activities (ICH M11 §1.3).
  *
  * WHAT THIS IS. Every figure here is a count, a span or a ratio read directly off
  * the (activity × visit) grid. There is no model, no estimate and no benchmark:
@@ -55,7 +55,7 @@
 import type { DesignFinding } from './design-gates';
 
 export const BURDEN_BASIS =
-  'ICH M11 §7 Schedule of Activities — participant burden counted from the scheduled (activity × visit) grid';
+  'ICH M11 §1.3 Schedule of Activities — participant burden counted from the scheduled (activity × visit) grid';
 
 /** Section label the findings carry, matching the §-prefixed labels design-gates uses. */
 export const BURDEN_SECTION = '§7 Participant burden';

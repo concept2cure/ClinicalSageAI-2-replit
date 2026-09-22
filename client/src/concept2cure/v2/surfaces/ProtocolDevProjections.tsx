@@ -154,7 +154,7 @@ export const PROJECTIONS: ProjectionSpec[] = [
   },
   {
     id: 'soa', label: 'Schedule of Activities', path: 'schedule-of-activities',
-    of: 'A projection of the study design object’s time-and-events grid (ICH M11 §7).',
+    of: 'A projection of the study design object’s time-and-events grid (ICH M11 §1.3).',
     normalize: (p) => soaView((p.scheduleOfActivities ?? {}) as Obj),
   },
   {

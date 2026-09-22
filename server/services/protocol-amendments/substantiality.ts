@@ -112,7 +112,7 @@ const EU_DEF = 'Regulation (EU) No 536/2014, Article 2(2)(13)';
 const EU_AUTH = 'Regulation (EU) No 536/2014, Article 16';
 const EU = 'EU CTR 536/2014';
 const US = '21 CFR 312.30';
-const US_CHANGES = '21 CFR 312.30(b)(2)';
+const US_CHANGES = '21 CFR 312.30(b)(1)(i)';
 
 const EU_ACTION =
   'Record the Article 16 determination against this evidence. If the modification is substantial, it requires authorisation through CTIS before implementation.';
@@ -264,9 +264,12 @@ function describeBurdenScale(delta: BurdenDelta): string {
 }
 
 /**
- * 21 CFR 312.30(b)(2) — a change to a protocol that significantly affects
+ * 21 CFR 312.30(b)(1) — a change to a protocol that significantly affects
  * subject safety, the scope of the investigation, or the scientific quality of
- * the study must be submitted as a protocol amendment.
+ * the study must be submitted as a protocol amendment; (b)(1)(i) names "any
+ * significant increase in the number of subjects under study" as an example.
+ * (b)(2) is the procedural half — the submit-and-IRB-approval conditions and
+ * the immediate-hazard exception at (b)(2)(ii) — not the substantive trigger.
  *
  * Note what this does NOT do: the regulation says "significant" and sets no
  * number, so no threshold is invented here. The magnitude is reported and
@@ -276,7 +279,7 @@ function usSampleSizeIndicator(delta: DesignDelta | null | undefined): Substanti
   const base = {
     id: 'us-ind-312-30-subject-number', standard: US, clause: US_CHANGES,
     title: 'Number of subjects changed',
-    action: 'Record whether this is a significant increase for the purposes of 21 CFR 312.30(b)(2); the regulation sets no numeric threshold, so this module reports the magnitude and does not decide it.',
+    action: 'Record whether this is a significant increase for the purposes of 21 CFR 312.30(b)(1)(i); the regulation sets no numeric threshold, so this module reports the magnitude and does not decide it.',
   };
   const n = delta?.plannedSampleSize;
   if (!n || n.before === null || n.after === null) {
@@ -291,7 +294,7 @@ function usSampleSizeIndicator(delta: DesignDelta | null | undefined): Substanti
   const direction = n.after > n.before ? 'increased' : 'decreased';
   return {
     ...base, status: 'indicated',
-    message: `Planned sample size ${direction} from ${n.before} to ${n.after} (a change of ${n.delta}). Whether that is "significant" under 21 CFR 312.30(b)(2) is a judgment the regulation leaves to the sponsor; it is not decided here.`,
+    message: `Planned sample size ${direction} from ${n.before} to ${n.after} (a change of ${n.delta}). Whether that is "significant" under 21 CFR 312.30(b)(1)(i) is a judgment the regulation leaves to the sponsor; it is not decided here.`,
   };
 }
 

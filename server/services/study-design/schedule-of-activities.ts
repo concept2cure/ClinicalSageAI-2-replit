@@ -1,17 +1,30 @@
 /**
- * Schedule of Activities — the design object's time-and-events grid, as data (module spec §7).
+ * Schedule of Activities — the design object's time-and-events grid, as data.
+ *
+ * ── Which M11 section this is ────────────────────────────────────────────────
+ * §1.3. Corrected 2026-09-22 from §7, which was wrong and which this repository
+ * contradicted in two places: `protocol-rule-pack.ts` CATALOGUE seeds Section 7
+ * as "Discontinuation of Trial Intervention and Participant Withdrawal" and
+ * Section 8 as "Trial Assessments and Procedures", and
+ * `protocol-development-logic.ts` carries a matching `discontinuation` section.
+ * The ICH M11 template places the Schedule of Activities in the Protocol
+ * Summary, at 1.3, deliberately — synopsis, schema and SoA sit at the front so
+ * site staff reach them first. Numbering is the Step 2 template's, which is
+ * what the rest of this repository's M11 references use; the Step 4 final
+ * guideline is not vendored here, so a reader comparing against it should
+ * check the number rather than assume it carried over.
  *
  * The Schedule of Activities (SoA) is the time-and-events table that anchors every protocol:
  * visits are columns (grouped by epoch), procedures/assessments are rows (grouped by category),
  * and the body marks which assessment happens at which visit. Here it is a structured node of the
- * design, not a drawn table — so the protocol's §7, the registration outcome timing, and the CRF
+ * design, not a drawn table — so the protocol's SoA section, the registration outcome timing, and the CRF
  * shell all *project* from it and cannot drift.
  *
  * Two pure functions, both deterministic with no DB, RNG, clock or LLM:
  *   - {@link projectScheduleOfActivities} renders the grid (epoch-spanned columns, category-grouped
  *     rows, resolved footnotes, counts) honestly — it renders only what the object holds and reports
  *     what is missing, never inventing a cell.
- *   - {@link analyzeScheduleOfActivities} runs the §7 checks (structural integrity, a baseline
+ *   - {@link analyzeScheduleOfActivities} runs the SoA checks (structural integrity, a baseline
  *     anchor, and — the high-value one — whether every confirmatory endpoint is actually collected
  *     by a scheduled activity). The design-gate (`design-gates.ts`) wraps these issues into the
  *     standard `DesignFinding` shape so they flow into `validateDesign`.
@@ -85,7 +98,7 @@ export interface SoaProjection {
   gaps: string[];
   /** Structural completeness over a fixed five-point checklist. */
   completeness: { satisfied: number; total: number; percent: number };
-  standard: 'ICH M11 §7';
+  standard: 'ICH M11 §1.3';
   /** Honesty marker: this is a deterministic projection, not generated content. */
   projectedFromObject: true;
 }
@@ -138,7 +151,7 @@ export function projectScheduleOfActivities(design: StudyDesign): SoaProjection 
       counts: { epochs: 0, visits: 0, activities: 0, scheduledCells: 0 },
       gaps: ['No Schedule of Activities is attached.'],
       completeness: { satisfied: 0, total: 5, percent: 0 },
-      standard: 'ICH M11 §7',
+      standard: 'ICH M11 §1.3',
       projectedFromObject: true,
     };
   }
@@ -194,7 +207,7 @@ export function projectScheduleOfActivities(design: StudyDesign): SoaProjection 
     },
     gaps,
     completeness: { satisfied, total: 5, percent: Math.round((satisfied / 5) * 100) },
-    standard: 'ICH M11 §7',
+    standard: 'ICH M11 §1.3',
     projectedFromObject: true,
   };
 }
