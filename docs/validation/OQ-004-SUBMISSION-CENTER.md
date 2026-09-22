@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-004 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-004 |
 | Runner (the executable protocol) | `tests/validation/oq/submission-center/run.mjs` — `npm run validation:oq -- submission-center` |
@@ -14,6 +14,7 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
+| 0.2 | 2026-09-22 | W3 | §5 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
 
 ## 1. Method
 
@@ -47,7 +48,11 @@ IQ-001 executed; OQ-SUBC-00 creates a program and ingests one PDF to serve as a 
 
 As OQ-001 §4. OQ-SUBC-08 is executed by a tester holding a second identity's password (`OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD`; the signer must not be the sequence's creator — separation of duties). Protocol text updated 2026-09-21 (WF) to the credentialed form and the honest freeze expectation; the step was exercised locally into a scratchpad evidence root (`docs/evidence/WF/2026-09-21/oq-subc-scratch.transcript.txt`: sign 200, one signature row, freeze 409 `INVALID_STATE`, status `assembling` unchanged — 15 pass) but the OQ-004 record under `docs/evidence/W3/` was **not** regenerated in that session; the record below is the baseline.
 
-## 5. Result of the local execution (2026-09-21)
+## 5. Result of the local execution (2026-09-22, production posture — VSR-001 §12)
+
+**15 pass, 0 fail, 0 deviation, 0 not-executed** (record `docs/evidence/W3/2026-09-22/OQ-SUBMISSION-CENTER/`, executed 2026-09-22T22:36:28Z UTC at `e2d910d6f`). Installation: a database provisioned from empty by `npm run up`; the server booted from the checkout with `RLS_ENFORCE=on` as runtime role `app_service` (not superuser, no BYPASSRLS, owns no table — IQ-07 and IQ-08 pass, `docs/evidence/W3/2026-09-22/IQ/`); no AI provider configured. This is the first execution with RLS enforcing and as a role that owns no table. The executions filed before it record `RLS_ENFORCE=off` (IQ-DEV-003), under which the tenant-isolation policies are inert, and runtime role `c2c` on `clinicalsage`, which owns 61 RLS-enabled tables without FORCE — `vault.documents` among them — whose policies therefore never applied to it (VSR-001 §12). OQ-SUBC-08 executed with the credentialed second signer — user 11, provisioned into this database only through `scripts/seed-admin.mjs` as in `docs/evidence/WF/2026-09-21/`, password never in the tree (`transcripts/provision-signer.transcript.txt`): one `electronic_signatures` row, and the freeze from `assembling` refused 409. OQ-SUBC-10: 200 `PROGRAM_UNANCHORED` (F-7 closed, VSR-001 §10.3).
+
+### 5.1 Result of the first local execution (2026-09-21, W3a — superseded; later executions: VSR-001 §8.2, §10.2)
 
 13 pass, 1 fail, 1 deviation. Fail: OQ-SUBC-10 — the dossier-map route requires an integer `projectId` (`server/routes/dossier-map.routes.ts:46-53`) while the shell supplies the program UUID; `parseInt` of a UUID beginning with digits yields an unrelated integer id (observed 500 on one run, 400 `PROJECT_REQUIRED` on another depending on the UUID's leading characters) — finding F-7. Deviation: OQ-SUBC-08 (no password credential). Passed: role gate, validation, submission + sequence + audit outcome, leaf vocabulary, state machine, governed-transition guards, re-auth refusal, honest gateway capabilities, compile answers without 500 (`OQ-SUBC-11` observation recorded), transmit refusal, surfaces render.
 

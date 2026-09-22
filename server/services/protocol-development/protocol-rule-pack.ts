@@ -104,7 +104,10 @@ const PHS = 'PHS Policy IV.C.1';
 const NIHG = 'NIH Guidelines (Recombinant or Synthetic Nucleic Acid Molecules)';
 const ESTIMAND = 'Addendum on Estimands and Sensitivity Analysis';
 const E8CTQ = 'Designing Quality into Clinical Studies';
-const CTRD = 'Annex I, Part D — Protocol';
+// Annex I of Regulation (EU) 536/2014 is organised in lettered SECTIONS
+// ("D. PROTOCOL"). "Part" in the CTR means Part I / Part II of the assessment
+// report, so "Part D" invited confusion (corrected 2026-09-22).
+const CTRD = 'Annex I, section D — Protocol';
 
 const CATALOGUE: Array<{ standard: string; seeds: Seed[] }> = [
   { standard: M11, seeds: [
@@ -167,7 +170,7 @@ const CATALOGUE: Array<{ standard: string; seeds: Seed[] }> = [
     ['hhs-additional-safeguards-vulnerable', '45 CFR 46.111(b)', 'Additional safeguards for vulnerable subjects', HUMAN, 'Vulnerability to coercion is a reason for extra protection, not an exception to it.'],
   ] },
   { standard: CTR, seeds: [
-    ['eu-ctr-protocol-content', CTRD, 'Annex I Part D protocol content recorded', CLIN, 'A Part I assessment is refused on an incomplete protocol before its science is read.'],
+    ['eu-ctr-protocol-content', CTRD, 'Annex I, section D protocol content recorded', CLIN, 'Member State assessors cannot assess what the protocol does not state.'],
     ['eu-ctr-eligibility-criteria', `${CTRD} (inclusion and exclusion criteria)`, 'Inclusion and exclusion criteria recorded', CLIN, 'Member State assessors check eligibility against the stated population first.'],
     ['eu-ctr-endpoints', `${CTRD} (endpoints)`, 'Endpoints recorded against objectives', CLIN, 'Endpoints are what the EU assessment report records the trial as measuring.'],
   ] },
@@ -520,7 +523,7 @@ function evalEuCtr(ctx: Ctx, sink: Sink): void {
     return;
   }
   sink.set('eu-ctr-protocol-content', ctx.requiredTotal === 0
-    ? unmet('This protocol records no required sections, so its Annex I Part D content has not been assessed.', 'Seed the protocol from its section template before submitting.')
+    ? unmet('This protocol records no required sections, so its Annex I, section D content has not been assessed.', 'Seed the protocol from its section template before submitting.')
     : ctx.requiredIncomplete === 0
       ? met(`All ${ctx.requiredTotal} required sections are recorded complete.`)
       : unmet(`${ctx.requiredIncomplete} of ${ctx.requiredTotal} required sections are not complete.`, 'Complete every required section before the Part I submission.'));

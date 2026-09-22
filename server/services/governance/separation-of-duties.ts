@@ -1,44 +1,49 @@
 /**
- * Separation of duties — the un-disableable Part 11 invariant.
+ * Separation of duties (four-eyes) for review, approval and lock signatures.
  *
- * The signer / approver of a governed target MUST NOT be its author / owner.
- * There is NO flag to turn this off. Per the governance contract, Admin may only
- * *tighten* (add approvers / four-eyes), never *loosen* — so this lives as a hard
- * code path, not a permission row. A rush is exactly when an override becomes a
- * finding.
+ * ── What this is, and what it is not (relabelled 2026-09-22) ─────────────────
+ * This file used to call itself "the un-disableable Part 11 invariant". That
+ * was wrong. 21 CFR Part 11 does not require the signer to be someone other
+ * than the author: 11.50(a)(3) lists "authorship" among the meanings a
+ * signature may carry, alongside review, approval and responsibility. The
+ * author-is-not-the-approver rule comes from predicate rules and governance —
+ * record-specific second-person and quality-unit requirements such as
+ * 21 CFR 211.186(a), 211.22, 211.100(a), 211.192 and 58.35(a) — and this
+ * platform adopts it as policy for every review/approval/lock. Part 11's role
+ * is ENFORCEMENT: this is an authority check (11.10(g)), and it relies on the
+ * audit trail (11.10(e)) to know who authored what.
+ * Research record: docs/evidence/REGULATORY-SME/2026-09-22/.
  *
- * `resolveTargetOwnerId` mirrors the org-scoped resolver in
- * `server/routes/c2c/actions.ts` but returns the target's author/owner user id
- * (the real owner column per table). When a target type has no modelled owner
- * column, it returns null and the SoD check degrades to log-and-allow rather than
- * blocking every signature on an un-modelled target — i.e. it fires wherever the
- * author is known (the common, signable path: documents / sections / work items /
- * blockers / programs), and never silently blocks the whole signing surface.
+ * It stays un-disableable. Admin may only tighten, never loosen.
  *
- * ── A failed lookup is not an un-modelled target (2026-09-22) ─────────────────
- * The resolver used to catch EVERY query error and return null, the same value
- * it returns for "no owner column modelled". `assertSignerIsNotAuthor` reads
- * null as allow, so a statement timeout, a dropped connection or an RLS refusal
- * let an author sign their own record, and the signature row carried no trace
- * that the four-eyes check had not run.
- *
- * The 42P01 / 42703 carve-out ("table or column not migrated") went too, and
- * for a reason this file had already recorded: the `c2c_blockers` query once
- * named `organization_id` where the column is `org_id`, and that 42703 is
- * exactly what "silently degraded the un-disableable SoD check to allow". In a
- * deployed database an undefined column is a code defect, not an unmigrated
- * environment, and a code defect in this check must be loud.
- *
- * So now: an un-modelled target type returns null WITHOUT querying; any error
- * while querying a modelled type propagates, and `assertSignerIsNotAuthor`
- * turns it into `SeparationOfDutiesUnverifiedError`. Nothing is signed, and the
- * route answers 503 with a code that says the check could not run, which is
- * different from a 403 that says the check ran and refused.
+ * ── The rules ────────────────────────────────────────────────────────────────
+ *  1. Scope by meaning. A `lock`, or a `sign` whose declared 11.50(a)(3)
+ *     meaning is anything other than authorship — review, approval,
+ *     responsibility, release, or no meaning at all — must be independent of
+ *     the record's authors. A `sign` whose meaning IS authorship is the author
+ *     signing as author, which Part 11 expects; it is not refused.
+ *  2. Authorship is a SET drawn from what the record's history shows, not one
+ *     mutable column. For a document: everyone in the section version ledger
+ *     (`c2c_document_section_versions.author_id`, template scaffolds
+ *     excluded), everyone who accepted a drafted section (`accepted_by`), and
+ *     the recorded owner. The previous check read only `c2c_documents.owner_id`
+ *     — which is whoever SCAFFOLDED the project, NULL on backfilled documents —
+ *     and `c2c_document_sections.owner_id`, which nothing writes, so a user who
+ *     wrote every section could approve it and every section target was waved
+ *     through.
+ *  3. Unknown author ⇒ refuse (409). An independent signature asserts that
+ *     someone other than the author reviewed the record; with no recorded
+ *     author that cannot be shown, and a signature row must never imply a
+ *     four-eyes check that did not happen. This used to log and allow.
+ *  4. Authorship not modelled for the record type ⇒ refuse (409), for the same
+ *     reason. Sign it with meaning "authorship", or model its authorship here.
+ *  5. The lookup failed ⇒ refuse (503). The check did not run; a retry may work.
  *
  * @module server/services/governance/separation-of-duties
  */
 import { pool } from '../../db.js';
 
+/** The check ran, and the signer is one of the record's authors. → 403 */
 export class SeparationOfDutiesError extends Error {
   readonly code = 'SEPARATION_OF_DUTIES';
   constructor(message: string) {
@@ -48,11 +53,10 @@ export class SeparationOfDutiesError extends Error {
 }
 
 /**
- * The owner lookup for a MODELLED target type failed, so authorship could not be
- * checked. Deliberately not a subclass of `SeparationOfDutiesError`: that one
- * means "the check ran and you are the author"; this one means "the check did
- * not run". A caller that maps both to the same response tells the user
- * something false either way.
+ * The authorship lookup FAILED, so the check did not run. → 503. Not a
+ * subclass of `SeparationOfDutiesError`: that means "you are the author"; this
+ * means "we could not look". A caller mapping both to one response tells the
+ * user something false either way.
  */
 export class SeparationOfDutiesUnverifiedError extends Error {
   readonly code = 'SEPARATION_OF_DUTIES_UNVERIFIED';
@@ -65,114 +69,208 @@ export class SeparationOfDutiesUnverifiedError extends Error {
   }
 }
 
+/**
+ * The lookup worked, but the record has no recorded author — or its record
+ * type has no authorship modelled — so independence cannot be shown. → 409.
+ * A retry will not help; the record's attribution has to be established.
+ */
+export class SeparationOfDutiesAuthorUnresolvedError extends Error {
+  readonly code = 'SEPARATION_OF_DUTIES_AUTHOR_UNRESOLVED';
+  constructor(message: string) {
+    super(message);
+    this.name = 'SeparationOfDutiesAuthorUnresolvedError';
+  }
+}
+
+// ─── Scope by signature meaning ──────────────────────────────────────────────
+
+/** 21 CFR 11.50(a)(3) meanings that denote authorship. */
+const AUTHORSHIP_MEANINGS = new Set(['authorship', 'author']);
+
+/**
+ * Whether this action must be independent of the record's authors. `lock` and
+ * every non-authorship meaning do; an undeclared meaning is treated as an
+ * approval, which is the fail-closed reading.
+ */
+export function requiresIndependence(command: 'sign' | 'lock', meaning: unknown): boolean {
+  if (command === 'lock') return true;
+  return !(typeof meaning === 'string' && AUTHORSHIP_MEANINGS.has(meaning.trim().toLowerCase()));
+}
+
+// ─── Authorship ──────────────────────────────────────────────────────────────
+
+export interface TargetAuthorship {
+  /** False when no authorship source is modelled for this record type. */
+  modelled: boolean;
+  /** Distinct user ids of the record's authors, from every source below. */
+  authors: number[];
+  /** Which sources contributed, for the refusal message and the audit. */
+  sources: string[];
+}
+
 function intOrNull(v: unknown): number | null {
   if (v === null || v === undefined) return null;
   const n = typeof v === 'string' ? parseInt(v, 10) : Number(v);
   return Number.isFinite(n) ? n : null;
 }
 
+class AuthorSet {
+  private readonly ids = new Set<number>();
+  private readonly from = new Set<string>();
+  add(rows: Array<Record<string, unknown>>, column: string, source: string): void {
+    for (const row of rows) {
+      const id = intOrNull(row[column]);
+      if (id !== null) {
+        this.ids.add(id);
+        this.from.add(source);
+      }
+    }
+  }
+  result(): TargetAuthorship {
+    return { modelled: true, authors: [...this.ids].sort((a, b) => a - b), sources: [...this.from].sort() };
+  }
+}
+
+const NOT_MODELLED: TargetAuthorship = { modelled: false, authors: [], sources: [] };
+
+async function documentAuthors(documentId: string, orgId: number, sectionKey: string | null): Promise<TargetAuthorship> {
+  const set = new AuthorSet();
+  const sectionFilter = sectionKey === null ? '' : 'AND s.section_key = $3';
+  const params = sectionKey === null ? [documentId, orgId] : [documentId, orgId, sectionKey];
+
+  // Everyone who wrote a version of the content. Template scaffolds are not
+  // authorship: creating an empty section from a rule pack writes no content.
+  const versions = await pool.query(
+    `SELECT DISTINCT v.author_id
+       FROM c2c_document_section_versions v
+       JOIN c2c_document_sections s ON s.id = v.section_id
+       JOIN c2c_documents d ON d.id = s.document_id
+      WHERE d.id = $1 AND d.org_id = $2 ${sectionFilter}
+        AND v.author_id IS NOT NULL
+        AND v.author_kind IS DISTINCT FROM 'template'`,
+    params,
+  );
+  set.add(versions.rows, 'author_id', 'section version ledger');
+
+  // Whoever adopted a drafted section is its human author of record.
+  const accepted = await pool.query(
+    `SELECT DISTINCT s.accepted_by
+       FROM c2c_document_sections s
+       JOIN c2c_documents d ON d.id = s.document_id
+      WHERE d.id = $1 AND d.org_id = $2 ${sectionFilter} AND s.accepted_by IS NOT NULL`,
+    params,
+  );
+  set.add(accepted.rows, 'accepted_by', 'accepted drafts');
+
+  // The recorded owner adds to the set; it is never the only source.
+  const owner = sectionKey === null
+    ? await pool.query(`SELECT owner_id FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`, [documentId, orgId])
+    : await pool.query(
+        `SELECT s.owner_id FROM c2c_document_sections s JOIN c2c_documents d ON d.id = s.document_id
+          WHERE d.id = $1 AND d.org_id = $2 AND s.section_key = $3 LIMIT 1`,
+        params,
+      );
+  set.add(owner.rows, 'owner_id', 'recorded owner');
+  return set.result();
+}
+
+async function single(sql: string, params: unknown[], column: string, source: string): Promise<TargetAuthorship> {
+  const set = new AuthorSet();
+  const r = await pool.query(sql, params);
+  set.add(r.rows, column, source);
+  return set.result();
+}
+
 /**
- * Resolve the author/owner user id of a governed target, org-scoped. Returns
- * null when the target type has no modelled owner column, or when the row is
- * missing or records no owner. THROWS when the lookup itself fails: that is not
- * an answer about the owner, and must not be read as one.
+ * Resolve the authors of a governed target, org-scoped. THROWS when a lookup
+ * fails — that is not an answer about authorship and must not be read as one.
  */
-export async function resolveTargetOwnerId(target: string, orgId: number): Promise<number | null> {
+export async function resolveTargetAuthors(target: string, orgId: number): Promise<TargetAuthorship> {
   const colonIdx = target.indexOf(':');
-  if (colonIdx === -1) return null;
+  if (colonIdx === -1) return NOT_MODELLED;
   const prefix = target.slice(0, colonIdx);
   const rest = target.slice(colonIdx + 1);
 
   switch (prefix) {
-    case 'document': {
-      const r = await pool.query(
-        `SELECT owner_id FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
-        [rest, orgId],
-      );
-      return intOrNull(r.rows[0]?.owner_id);
-    }
+    case 'document':
+      return documentAuthors(rest, orgId, null);
     case 'section': {
       const parts = rest.split(':');
-      if (parts.length < 2) return null;
+      if (parts.length < 2) return NOT_MODELLED;
       const [docId, ...keyParts] = parts;
-      const sectionKey = keyParts.join(':');
-      const r = await pool.query(
-        `SELECT s.owner_id
-           FROM c2c_document_sections s
-           JOIN c2c_documents d ON d.id = s.document_id
-          WHERE s.document_id = $1 AND s.section_key = $2 AND d.org_id = $3
-          LIMIT 1`,
-        [docId, sectionKey, orgId],
-      );
-      return intOrNull(r.rows[0]?.owner_id);
+      return documentAuthors(docId, orgId, keyParts.join(':'));
     }
-    case 'task': {
-      const r = await pool.query(
-        `SELECT owner_id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`,
-        [rest, orgId],
-      );
-      return intOrNull(r.rows[0]?.owner_id);
-    }
-    case 'blocker': {
-      const r = await pool.query(
-        `SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`,
-        [rest, orgId],
-      );
-      return intOrNull(r.rows[0]?.owner_user_id);
-    }
-    case 'ectd-sequence': {
-      // The one target the Part 11 freeze/dispatch/transmit chain signs. It
-      // had no case here, so the check resolved no owner and allowed the
-      // preparer to sign their own sequence.
-      const r = await pool.query(
-        `SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-        [rest, orgId],
-      );
-      return intOrNull(r.rows[0]?.created_by);
-    }
-    case 'program': {
-      const r = await pool.query(
-        `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-        [rest, orgId],
-      );
-      return intOrNull(r.rows[0]?.created_by);
-    }
+    case 'task':
+      return single(`SELECT owner_id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_id', 'recorded owner');
+    case 'blocker':
+      return single(`SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_user_id', 'recorded owner');
+    case 'ectd-sequence':
+      // The one target the Part 11 freeze/dispatch/transmit chain signs.
+      return single(`SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'sequence creator');
+    case 'program':
+      return single(`SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'program creator');
     default:
-      // submission / specification / unknown — owner column not modelled here.
-      return null;
+      // submission (pma_submissions records no creator), specification, batch,
+      // correspondence-issue and pointer-only targets: no authorship source.
+      return NOT_MODELLED;
   }
 }
 
+// ─── The check ───────────────────────────────────────────────────────────────
+
+export interface SeparationOfDutiesResult {
+  /** True when independence was verified; false only for an authorship signature. */
+  checked: boolean;
+  reason: string;
+}
+
 /**
- * Enforce author≠signer. Throws SeparationOfDutiesError when the signer owns /
- * authored the target. Un-disableable. Throws SeparationOfDutiesUnverifiedError
- * when the owner lookup fails. Degrades (logs, allows) only when there is no
- * owner to compare against — an un-modelled target type, or a row that records
- * no owner.
+ * Enforce independence of review/approval/lock from the record's authors.
+ * Returns when the action may proceed; throws one of the three errors above
+ * when it may not. See the module note for the rules.
  */
 export async function assertSignerIsNotAuthor(
   target: string,
   orgId: number,
   signerId: number,
-): Promise<void> {
-  let ownerId: number | null;
+  opts: { command?: 'sign' | 'lock'; meaning?: unknown } = {},
+): Promise<SeparationOfDutiesResult> {
+  if (!requiresIndependence(opts.command ?? 'sign', opts.meaning)) {
+    return {
+      checked: false,
+      reason: 'Authorship signature (21 CFR 11.50(a)(3)): the author signing as author is not a separation-of-duties case.',
+    };
+  }
+
+  let authorship: TargetAuthorship;
   try {
-    ownerId = await resolveTargetOwnerId(target, orgId);
+    authorship = await resolveTargetAuthors(target, orgId);
   } catch (err: unknown) {
     const e = err as { code?: unknown; message?: unknown } | null;
     const cause = typeof e?.code === 'string' ? `database error ${e.code}` : 'owner lookup failed';
-    console.error(`[governance/SoD] owner lookup failed for "${target}"; refusing to sign:`, e?.message);
+    console.error(`[governance/SoD] authorship lookup failed for "${target}"; refusing to sign:`, e?.message);
     throw new SeparationOfDutiesUnverifiedError(target, cause);
   }
-  if (ownerId !== null && ownerId === signerId) {
+
+  if (!authorship.modelled) {
+    throw new SeparationOfDutiesAuthorUnresolvedError(
+      `Authorship is not recorded for "${target.split(':')[0]}" records, so a review, approval or lock signature cannot be shown ` +
+        'to be independent of the author. Nothing was signed. Sign with the meaning "authorship" if you are the author; ' +
+        'otherwise this record type needs its authorship modelled before it can be approved.',
+    );
+  }
+  if (authorship.authors.length === 0) {
+    throw new SeparationOfDutiesAuthorUnresolvedError(
+      `No author is recorded for "${target}", so a review, approval or lock signature cannot be shown to be independent ` +
+        'of the author. Nothing was signed. Establish who authored it through an audited action, then have a different, ' +
+        'authorized user sign.',
+    );
+  }
+  if (authorship.authors.includes(signerId)) {
     throw new SeparationOfDutiesError(
-      'Separation of duties: you authored or own this record and cannot sign, approve, or lock it. ' +
-        'A different, authorized user must sign.',
+      `Separation of duties: you are an author of this record (${authorship.sources.join(', ')}) and cannot review, approve ` +
+        'or lock it. A different, authorized user must sign.',
     );
   }
-  if (ownerId === null) {
-    console.warn(
-      `[governance/SoD] author/owner unresolved for target "${target}"; SoD check degraded (allowed).`,
-    );
-  }
+  return { checked: true, reason: `Signer is not among the record's authors (${authorship.sources.join(', ')}).` };
 }

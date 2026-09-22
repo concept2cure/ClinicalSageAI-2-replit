@@ -13,9 +13,12 @@
 
 import { pool } from '../../db';
 import {
+  classifyAmendmentImpact,
   evaluateAmendmentReadiness,
+  type AmendmentImpactResult,
   type AmendmentStatus,
   type AmendmentReadinessResult,
+  type AmendmentType,
 } from './protocol-amendments-logic';
 import type { StudyDesign } from '../study-design/study-design-types';
 
@@ -65,7 +68,7 @@ export async function createAmendmentTx(client: Queryable, orgId: number, userId
   );
   if (doc.rows.length === 0) throw new ProtocolAmendmentError('NOT_FOUND', 'Protocol document not found for this organization.');
 
-  /* The "before" side of the EU CTR Article 16 comparison, captured now.
+  /* The "before" side of the substantiality comparison (EU CTR Art. 2(2)(13); US 21 CFR 312.30(b)(1)), captured now.
      The bound design is overwritten in place as it is edited, so unless it is
      snapshotted at this moment the version this amendment amends is gone by
      the time anyone reviews it. A protocol with no design bound snapshots
@@ -208,21 +211,86 @@ export async function getAmendment(orgId: number, amendmentId: number): Promise<
   return { ...a.rows[0], changes: changes.rows };
 }
 
-/** Read-only submission-readiness assessment (uses the pure evaluateAmendmentReadiness). */
-export async function getAmendmentReadiness(orgId: number, amendmentId: number): Promise<AmendmentReadinessResult> {
+/** Where a fact the classifier used came from, so a reader can check it. */
+export interface RecordedFact<T> {
+  value: T | null;
+  source: string;
+}
+
+export interface AmendmentReview extends AmendmentReadinessResult {
+  /** IRB review, re-consent and FDA protocol-amendment status (protocol-amendments-logic.ts). */
+  impact: AmendmentImpactResult;
+  inputs: { phase: RecordedFact<string>; isIndStudy: RecordedFact<boolean> };
+}
+
+/**
+ * Read-only amendment review: submission readiness, plus the impact
+ * classification — IRB review (always required), re-consent (always the IRB's
+ * determination) and FDA protocol-amendment status. Nothing here is inferred:
+ * phase comes from the protocol document, IND status from an IRB submission
+ * for the same protocol number, and each is returned with its source. Absent or
+ * conflicting records stay null and the classifier reports "undetermined".
+ */
+export async function getAmendmentReadiness(orgId: number, amendmentId: number): Promise<AmendmentReview> {
   const a = await pool.query(
-    `SELECT status FROM protocol_amendments WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    `SELECT a.status, a.amendment_type, a.affects_consent, a.affects_risk,
+            d.phase AS doc_phase, d.protocol_number
+       FROM protocol_amendments a
+       JOIN protocol_documents d ON d.id = a.protocol_document_id AND d.organization_id = a.organization_id
+      WHERE a.id = $1 AND a.organization_id = $2 AND a.deleted_at IS NULL LIMIT 1`,
     [amendmentId, orgId],
   );
   if (a.rows.length === 0) throw new ProtocolAmendmentError('NOT_FOUND', 'Amendment not found for this organization.');
+  const row = a.rows[0];
   const cnt = await pool.query(
     `SELECT count(*)::int n FROM protocol_amendment_changes WHERE amendment_id = $1 AND organization_id = $2`,
     [amendmentId, orgId],
   );
-  return evaluateAmendmentReadiness({ status: a.rows[0].status, changeCount: cnt.rows[0].n });
+  const phase = recordedPhase(row.doc_phase);
+  const isIndStudy = await recordedIndStatus(orgId, row.protocol_number);
+  return {
+    ...evaluateAmendmentReadiness({ status: row.status, changeCount: cnt.rows[0].n }),
+    impact: classifyAmendmentImpact({
+      amendmentType: (row.amendment_type ?? null) as AmendmentType | null,
+      affectsConsent: row.affects_consent ?? null,
+      affectsRisk: row.affects_risk ?? null,
+      isIndStudy: isIndStudy.value,
+      phase: phase.value,
+    }),
+    inputs: { phase, isIndStudy },
+  };
 }
 
-// ─── Substantiality (EU CTR 536/2014 Article 16) ─────────────────────────────
+function recordedPhase(docPhase: unknown): RecordedFact<string> {
+  const v = typeof docPhase === 'string' && docPhase.trim() ? docPhase.trim() : null;
+  return v === null
+    ? { value: null, source: 'Not recorded on the protocol document.' }
+    : { value: v, source: 'protocol_documents.phase' };
+}
+
+/**
+ * IND status is recorded on IRB submissions (`irb_submissions.is_ind_study`,
+ * NULL = not recorded). Matched on protocol number within the organization.
+ * Several submissions that disagree are a conflict, not a vote: null.
+ */
+async function recordedIndStatus(orgId: number, protocolNumber: unknown): Promise<RecordedFact<boolean>> {
+  const num = typeof protocolNumber === 'string' ? protocolNumber.trim() : '';
+  if (!num) return { value: null, source: 'The protocol document has no protocol number to match an IRB submission on.' };
+  const r = await pool.query(
+    `SELECT id, is_ind_study FROM irb_submissions
+      WHERE organization_id = $1 AND protocol_number = $2 AND deleted_at IS NULL AND is_ind_study IS NOT NULL
+      ORDER BY id`,
+    [orgId, num],
+  );
+  const values = new Set(r.rows.map((x: { is_ind_study: boolean }) => x.is_ind_study));
+  if (values.size === 0) return { value: null, source: `No IRB submission for protocol ${num} records whether it is an IND study.` };
+  if (values.size > 1) {
+    return { value: null, source: `IRB submissions for protocol ${num} disagree on IND status (${r.rows.map((x: { id: number }) => `#${x.id}`).join(', ')}).` };
+  }
+  return { value: [...values][0] as boolean, source: `irb_submissions.is_ind_study (${r.rows.map((x: { id: number }) => `#${x.id}`).join(', ')})` };
+}
+
+// ─── Substantiality (EU CTR 536/2014 Art. 2(2)(13) / Art. 15; US 21 CFR 312.30(b)(1)) ──
 
 /**
  * Assess an amendment's substantiality from the evidence.

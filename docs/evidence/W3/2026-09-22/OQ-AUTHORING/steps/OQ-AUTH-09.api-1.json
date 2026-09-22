@@ -1,0 +1,41 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/sections/81200d37-6db0-49fa-9914-b07e4c9e23f3/comment",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "body": "OQ-003 step 09 review comment",
+      "doc_id": "8ac00c3e-8b3d-43ae-b730-6987ca6ef197"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 28,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "comment": {
+        "id": "53bd9f73-b999-4de7-9e1b-acd9bfcddeb0",
+        "section_id": "81200d37-6db0-49fa-9914-b07e4c9e23f3",
+        "doc_id": "8ac00c3e-8b3d-43ae-b730-6987ca6ef197",
+        "body": "OQ-003 step 09 review comment",
+        "anchor": null,
+        "status": "open",
+        "created_by": "2",
+        "tenant_id": 1,
+        "created_at": "2026-09-22T22:36:06.595Z",
+        "user_name": "jonmichaelpsmith@gmail.com",
+        "user_email": "jonmichaelpsmith@gmail.com",
+        "parent_comment_id": null,
+        "position_data": null,
+        "resolved_by": null,
+        "resolved_at": null,
+        "resolution_note": null,
+        "updated_at": "2026-09-22T22:36:06.595Z"
+      },
+      "message": "Comment added successfully"
+    }
+  }
+}

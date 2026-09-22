@@ -15,6 +15,7 @@ import { verifyJwtWithRotation } from './utils/jwtVerify';
 import { requireAccessTokenReason } from './middleware/tokenType';
 import { runWithPreAuthScope } from './db/tenantStore';
 import { establishRequestTenantScope } from './middleware/establishRequestTenantScope';
+import { enforceOrgMembership } from './middleware/orgMembership';
 import { enforceTenantLifecycle } from './middleware/tenantLifecycleGuard';
 import { enforceStorageQuota } from './middleware/storageQuotaGuard';
 
@@ -232,9 +233,27 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       // deliberate — see storageQuotaGuard's note on why an optional parameter
       // threaded through the upload helpers would have produced a quota enforced
       // only on the routes someone remembered.
-      return establishRequestTenantScope(req, res, () =>
-        enforceTenantLifecycle(req, res, () => enforceStorageQuota(req, res, next))
-      );
+      //
+      // enforceOrgMembership runs first, as on authenticateToken: the inline check
+      // above verifies the token's tenant claim, but only the canonical membership
+      // lookup resolves the organization's UUID (organizations.uuid) and puts it
+      // on req.user. It is then published on req.tenantContext as well, because
+      // this middleware rebuilt that object above without it — behind the
+      // authenticateToken gate it overwrote a context that had it — and routes
+      // read it from there: vault-ingest and the authoring router rebuild their
+      // scope from it after multer drops the async one, and the AI routes pass it
+      // on. The scope carries it into app.current_org_id, which the vault.*
+      // policies key on through identity.current_org_id(); without it they
+      // refused every write from the non-owner runtime role. Cached per user:org.
+      return enforceOrgMembership(req, res, () => {
+        req.tenantContext = {
+          ...req.tenantContext,
+          organizationUuid: req.user?.organizationUuid ?? null,
+        };
+        return establishRequestTenantScope(req, res, () =>
+          enforceTenantLifecycle(req, res, () => enforceStorageQuota(req, res, next))
+        );
+      });
     } catch (error) {
       logger.error('Authentication error', error);
       return res.status(401).json({ error: 'Invalid or expired token' });

@@ -133,7 +133,7 @@ router.get('/amendments/:id/readiness', async (req, res) => {
   try { res.json(await getAmendmentReadiness(orgId, id)); } catch (err) { fail(res, err); }
 });
 
-/* Substantiality under EU CTR 536/2014 Article 16, derived from what changed
+/* Substantiality under EU CTR 536/2014 Article 2(2)(13) (authorisation: Article 15), derived from what changed
    rather than from what the sponsor declared. Read-only: it writes nothing and
    records no governed action, because reading an assessment is not a governed
    action. It never returns a finding of non-substantiality -- see the module

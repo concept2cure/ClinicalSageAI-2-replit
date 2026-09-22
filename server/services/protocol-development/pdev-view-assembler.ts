@@ -164,10 +164,18 @@ function mapAmendments(
   return rows.map((a) => ({
     id: str(a.id), num: str(a.amendment_number), summary: str(a.title),
     status: a.decided_date ? 'decided' : a.submitted_date ? 'submitted' : 'draft',
-    // null = not declared, which the panel says rather than showing "no re-consent".
-    reconsent: a.affects_consent === null || a.affects_consent === undefined ? null : bool(a.affects_consent), path: '',
+    // Re-consent is the IRB's determination (45 CFR 46.109(b); 21 CFR 56.109(b)),
+    // never the engine's. true = a declared consent or risk impact means the
+    // IRB must decide; null = either impact undeclared; false = both declared no.
+    reconsent: reconsentIndicator(a.affects_consent, a.affects_risk), path: '',
     changes: at(Number(a.id)).map((c) => ({ sec: str(c.section_ref), from: str(c.previous_text), to: str(c.proposed_text) })),
   }));
+}
+
+function reconsentIndicator(consent: unknown, risk: unknown): boolean | null {
+  if (bool(consent) || bool(risk)) return true;
+  if (consent === null || consent === undefined || risk === null || risk === undefined) return null;
+  return false;
 }
 
 /** Deviations with their CAPA rows. Extracted for the same reason. */
