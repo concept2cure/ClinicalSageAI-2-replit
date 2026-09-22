@@ -187,14 +187,14 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
               r.severity, r.probability,
               r.residual_severity, r.residual_probability,
               r.control_strategy, r.status,
-              u.username AS owner,
+              COALESCE(u.name, u.email) AS owner,
               ARRAY_REMOVE(ARRAY_AGG(c.description ORDER BY c.id), NULL)            AS controls,
               ARRAY_REMOVE(ARRAY_AGG(c.verification_evidence ORDER BY c.id), NULL)  AS verification
          FROM risk_items r
          LEFT JOIN risk_controls c ON c.risk_item_id = r.id
          LEFT JOIN users u         ON u.id = r.assigned_to
         WHERE r.organization_id = $1 AND r.program_id = $2 AND r.deleted_at IS NULL
-        GROUP BY r.id, u.username
+        GROUP BY r.id, u.id
         ORDER BY r.severity DESC, r.probability DESC, r.id`,
       [orgId, programId],
       unavailable,

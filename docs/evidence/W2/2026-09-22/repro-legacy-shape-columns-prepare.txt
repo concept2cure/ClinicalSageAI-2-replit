@@ -1,0 +1,48 @@
+== analytical_methods.method_type (server/services/cmc/ich-compliance-checker.ts; 1 segment(s))
+   SELECT method_name AS "methodName", method_type AS "methodType", purpose, validation_status AS "validationStatus", specificity_data AS "specificityData", linearity_data AS "linearityData", accuracy_data AS "accuracyData"
+   -> 42703 column "method_name" does not exist
+== csr_details.age_range (server/scripts/fetch_and_import.js; 1 segment(s))
+   INSERT INTO csr_details ( report_id, study_design, primary_objective, study_description, inclusion_criteria, exclusion_criteria, treatment_arms, study_duration, endpoints, results, safety, processed, processing_status, s
+   -> 42703 column "study_description" of relation "csr_details" does not exist
+== csr_details.gender_distribution (server/scripts/fetch_and_import.js; 1 segment(s))
+   INSERT INTO csr_details ( report_id, study_design, primary_objective, study_description, inclusion_criteria, exclusion_criteria, treatment_arms, study_duration, endpoints, results, safety, processed, processing_status, s
+   -> 42703 column "study_description" of relation "csr_details" does not exist
+== csr_details.processed (server/scripts/fetch_and_import.js; 1 segment(s))
+   INSERT INTO csr_details ( report_id, study_design, primary_objective, study_description, inclusion_criteria, exclusion_criteria, treatment_arms, study_duration, endpoints, results, safety, processed, processing_status, s
+   -> 42703 column "study_description" of relation "csr_details" does not exist
+== csr_details.processing_status (server/scripts/fetch_and_import.js; 1 segment(s))
+   INSERT INTO csr_details ( report_id, study_design, primary_objective, study_description, inclusion_criteria, exclusion_criteria, treatment_arms, study_duration, endpoints, results, safety, processed, processing_status, s
+   -> 42703 column "study_description" of relation "csr_details" does not exist
+== csr_details.safety (server/scripts/fetch_and_import.js; 1 segment(s))
+   INSERT INTO csr_details ( report_id, study_design, primary_objective, study_description, inclusion_criteria, exclusion_criteria, treatment_arms, study_duration, endpoints, results, safety, processed, processing_status, s
+   -> 42703 column "study_description" of relation "csr_details" does not exist
+== csr_details.study_description (server/scripts/fetch_and_import.js; 1 segment(s))
+   INSERT INTO csr_details ( report_id, study_design, primary_objective, study_description, inclusion_criteria, exclusion_criteria, treatment_arms, study_duration, endpoints, results, safety, processed, processing_status, s
+   -> 42703 column "study_description" of relation "csr_details" does not exist
+== csr_details.study_duration (server/scripts/fetch_and_import.js; 1 segment(s))
+   INSERT INTO csr_details ( report_id, study_design, primary_objective, study_description, inclusion_criteria, exclusion_criteria, treatment_arms, study_duration, endpoints, results, safety, processed, processing_status, s
+   -> 42703 column "study_description" of relation "csr_details" does not exist
+== csr_details.treatment_arms (server/scripts/fetch_and_import.js; 1 segment(s))
+   INSERT INTO csr_details ( report_id, study_design, primary_objective, study_description, inclusion_criteria, exclusion_criteria, treatment_arms, study_duration, endpoints, results, safety, processed, processing_status, s
+   -> 42703 column "study_description" of relation "csr_details" does not exist
+== csr_reports.date (server/scripts/fetch_and_import.js; 2 segment(s))
+   UPDATE csr_reports SET title = $1, sponsor = $2, indication = $3, phase = $4, status = $5, date = $6 WHERE id = $7
+   -> 42703 column "date" of relation "csr_reports" does not exist
+== csr_reports.drug_name (server/services/csr-extractor-service.ts; 1 segment(s))
+    SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path FROM csr_reports WHERE id = ${reportId} LIMIT 1 
+   -> 42703 column "nctrial_id" does not exist
+== csr_reports.file_name (server/scripts/fetch_and_import.js; 1 segment(s))
+   INSERT INTO csr_reports ( title, sponsor, indication, phase, status, date, nctrial_id, study_id, file_name, file_size ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
+   -> 42703 column "date" of relation "csr_reports" does not exist
+== csr_reports.file_path (server/services/csr-extractor-service.ts; 1 segment(s))
+    SELECT id, title, nctrial_id, sponsor, indication, phase, drug_name as "drugName", upload_date as "uploadDate", file_path FROM csr_reports WHERE id = ${reportId} LIMIT 1 
+   -> 42703 column "nctrial_id" does not exist
+== csr_reports.file_size (server/scripts/fetch_and_import.js; 1 segment(s))
+   INSERT INTO csr_reports ( title, sponsor, indication, phase, status, date, nctrial_id, study_id, file_name, file_size ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
+   -> 42703 column "date" of relation "csr_reports" does not exist
+== csr_reports.nctrial_id (server/scripts/fetch_and_import.js; 2 segment(s))
+   INSERT INTO csr_reports ( title, sponsor, indication, phase, status, date, nctrial_id, study_id, file_name, file_size ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
+   -> 42703 column "date" of relation "csr_reports" does not exist
+== unified_documents.text_content (server/services/unifiedDocumentIngestion.js; 1 segment(s))
+    SELECT * FROM unified_documents WHERE text_content ILIKE $1 
+   -> 42703 column "text_content" does not exist
