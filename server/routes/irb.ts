@@ -32,11 +32,17 @@ import {
   listSubmissions,
   getCompletenessInput,
   getPackageManifest,
+  getLifecycleStatus,
 } from '../services/irb/irb-service';
-import { evaluateIrbCompleteness, continuingReviewStatus, recommendReviewType } from '../services/irb/irb-logic';
+import { evaluateIrbCompleteness, recommendReviewType } from '../services/irb/irb-logic';
 import { recordIrbSubmissionCreated, recordIrbApproval, recordIrbReportableEvent } from '../services/irb-metrics';
 
 const router = Router();
+
+/** The one place a clock enters this module. The engines take dates as inputs. */
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -283,6 +289,28 @@ router.get('/submissions/:id/package-manifest', async (req, res) => {
   try { res.json(await getPackageManifest(orgId, id)); } catch (err) { fail(res, err); }
 });
 
+/**
+ * The approval lifecycle. Read-only; no governed action, because reading a
+ * status is not one.
+ *
+ * `asOf` (YYYY-MM-DD) is accepted so a caller can ask what will be true on a
+ * given date -- the engine has no clock and takes the date as an argument, so
+ * the boundary is here. An unparseable value is refused rather than quietly
+ * replaced with today: answering a question about 2027 with today's answer is
+ * worse than refusing it.
+ */
+router.get('/submissions/:id/lifecycle', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const raw = typeof req.query.asOf === 'string' ? req.query.asOf.trim() : '';
+  if (raw && !/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'asOf must be an ISO date (YYYY-MM-DD).' } });
+  }
+  try { res.json(await getLifecycleStatus(orgId, id, raw || todayIso())); } catch (err) { fail(res, err); }
+});
+
 router.get('/submissions/:id/completeness', async (req, res) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -292,9 +320,16 @@ router.get('/submissions/:id/completeness', async (req, res) => {
   try {
     const input = await getCompletenessInput(client, orgId, id);
     const completeness = evaluateIrbCompleteness(input);
-    const cr = continuingReviewStatus(input.reviewType, input.approvalDate, new Date().toISOString().slice(0, 10));
     const rec = recommendReviewType({ riskLevel: input.riskLevel });
-    res.json({ completeness, continuingReview: cr, recommendedReview: rec });
+    /* `continuingReview` used to be served here from continuingReviewStatus,
+       which returns two booleans and so cannot say "unknown": a full-board
+       approval with no approval date recorded came back expired: false, and an
+       approval that had actually LAPSED read as current because nobody typed a
+       date. It is replaced rather than supplemented -- nothing consumed the old
+       field, and leaving a misleading value on the API beside an honest one is
+       how the misleading one gets read. */
+    const { status: lifecycle } = await getLifecycleStatus(orgId, id, todayIso());
+    res.json({ completeness, lifecycle, recommendedReview: rec });
   } catch (err) {
     fail(res, err);
   } finally {

@@ -397,3 +397,85 @@ async function loadIrbPlacements(
     resolvable: Boolean(r.document_table) && (r.document_id != null || r.document_uuid != null),
   }));
 }
+
+// ─── Approval lifecycle (IRB_SUBMISSION.md step 5) ───────────────────────────
+
+/**
+ * The submission's approval lifecycle, from the record.
+ *
+ * Reads the submission, its amendments and its reportable events, and hands
+ * them to `lifecycleStatus`. Computes nothing itself.
+ *
+ * `today` is passed IN. The engine has no clock by design — a date at the edge
+ * of the system is testable and a date buried in an engine is not — so the
+ * caller supplies it and a caller may supply a different one to ask what will
+ * be true on a given date.
+ *
+ * The amendment and event lists are passed as real arrays, never omitted:
+ * `lifecycleStatus` treats an ABSENT list as "not assessed" rather than as
+ * "none", and here they genuinely were read.
+ */
+export async function getLifecycleStatus(
+  orgId: number,
+  id: number,
+  today: string,
+): Promise<{ irbSubmissionId: number; status: import('./lifecycle').LifecycleStatus }> {
+  const { rows } = await pool.query(
+    `SELECT id, status, review_type, approval_date, expiration_date
+       FROM irb_submissions
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+      LIMIT 1`,
+    [id, orgId],
+  );
+  if (rows.length === 0) throw new IrbError('NOT_FOUND', 'IRB submission not found for this organization.');
+  const s = rows[0];
+
+  const [amendments, events] = await Promise.all([
+    pool.query(
+      `SELECT id, substantive, status FROM irb_amendments
+        WHERE irb_submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`,
+      [id, orgId],
+    ),
+    pool.query(
+      `SELECT id, event_type, status, reported_date FROM irb_reportable_events
+        WHERE irb_submission_id = $1 AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`,
+      [id, orgId],
+    ),
+  ]);
+
+  const { lifecycleStatus } = await import('./lifecycle');
+  return {
+    irbSubmissionId: id,
+    status: lifecycleStatus({
+      status: String(s.status ?? ''),
+      reviewType: s.review_type ?? null,
+      approvalDate: isoDate(s.approval_date),
+      expirationDate: isoDate(s.expiration_date),
+      today,
+      amendments: amendments.rows.map((a: Record<string, unknown>) => ({
+        id: Number(a.id),
+        substantive: a.substantive === true,
+        status: String(a.status ?? ''),
+        /* irb_amendments has no protocol_amendment_id column, so the trace
+           from an IRB amendment back to the protocol amendment it came from
+           does not exist yet. Passing null reports that honestly (IRB-LC-012)
+           rather than passing an id we do not have. */
+        protocolAmendmentId: null,
+      })),
+      reportableEvents: events.rows.map((e: Record<string, unknown>) => ({
+        id: Number(e.id),
+        eventType: String(e.event_type ?? ''),
+        status: String(e.status ?? ''),
+        reportedDate: isoDate(e.reported_date),
+      })),
+    }),
+  };
+}
+
+/** A date column as an ISO day string, or null. Never a fabricated date. */
+function isoDate(v: unknown): string | null {
+  if (v == null) return null;
+  if (typeof v === 'string') return v.slice(0, 10) || null;
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  return null;
+}
