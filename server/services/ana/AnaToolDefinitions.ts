@@ -466,6 +466,11 @@ import {
   RESET_PROJECT_GOALS,
   RECONCILE_DOSSIER_NUMBERS,
 } from './discovery-cheminformatics-tool-defs.js';
+// Protocol ⇄ study-design loop (docs/design/PROTOCOL_INTELLIGENCE.md §"AnA's
+// part"): bind, read the derivation diff, apply accepted paths, read the two
+// deterministic verdict engines. Handlers live in AnaToolExecutor.ts beside the
+// other protocol-development handlers.
+import { PROTOCOL_DESIGN_TOOLS } from './protocol-design-tool-defs.js';
 import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
@@ -2686,6 +2691,9 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   START_WAR_GAME,
   // Onboarding — read-only look at what a document could contribute to setup.
   SUMMARIZE_ONBOARDING_READINESS,
+  // Protocol ⇄ study-design loop: bind, review the derivation, apply accepted
+  // paths, read the rule pack and the design gates. See protocol-design-tool-defs.ts.
+  ...PROTOCOL_DESIGN_TOOLS,
 ];
 
 // Defensive registry guard: v2's cdiscTools.ts currently re-registers

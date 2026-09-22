@@ -20118,3 +20118,196 @@ registerToolHandler('list_report_definitions', async (_input, ctx) => {
     return JSON.stringify({ error: `list_report_definitions failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol ⇄ study-design loop (docs/design/PROTOCOL_INTELLIGENCE.md, §"AnA's
+// part"). Definitions in ./protocol-design-tool-defs.ts.
+//
+// AnA decides nothing here. `bind_*` and `apply_*` are governed and audited on
+// the SAME ceremony as create_protocol_document above — BEGIN, tenant context,
+// the domain Tx, recordGovernedAction on the same client, COMMIT, ROLLBACK on
+// error, release in finally — so the change and its 21 CFR Part 11 row commit or
+// roll back together. The three `review_*` tools record NO governed action:
+// looking at a diff or a rule finding is not a governed action, and an audit row
+// claiming otherwise is a false record.
+//
+// The verdicts and counts come from the engines that already exist and are
+// returned VERBATIM. Nothing in this block computes a number, a percentage or a
+// severity of its own (CLAUDE.md Rule 2), and nothing here writes protocol prose
+// or claims a transmission to any authority.
+//
+// `readDerivation`/`applyDerivationTx` need a Queryable, so the read tool opens a
+// read-only transaction purely to carry the RLS tenant variable, which
+// `setTenantContextTx` sets transaction-locally. It issues SELECTs only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Map a ProtocolDevError / DerivationError onto the tool's error envelope. */
+function pdevToolError(tool: string, err: unknown): string {
+  const code = (err as { code?: string } | null)?.code;
+  const message = err instanceof Error ? err.message : String(err);
+  return JSON.stringify(code ? { error: `${tool} failed: ${message}`, code } : { error: `${tool} failed: ${message}` });
+}
+
+/**
+ * The protocol row out of the surface's own assembler, so AnA and the screen
+ * report the same numbers from the same engines. Returns null when this org has
+ * no such protocol — which the callers report as not-found rather than as an
+ * empty finding list.
+ *
+ * `assembleOrgPdevDocs` is the ONLY exported function that returns a protocol's
+ * rule-pack findings and its bound design's gate findings: the per-document
+ * builders inside pdev-view-assembler (`ruleFindingsFor`, `loadBoundDesigns`)
+ * are module-private. Reaching through the org assembler costs a whole-org read
+ * for one document, and that is the trade taken deliberately — the alternative
+ * is a second copy of the register queries and the rule-input mapping in this
+ * file, which is the duplication the repo's standing rule forbids and the way
+ * AnA and the screen start reporting different numbers. Export the per-document
+ * builders and this narrows to one document without changing any caller.
+ */
+async function loadAssembledPdevDoc(orgId: number, documentId: number): Promise<Record<string, unknown> | null> {
+  const { assembleOrgPdevDocs } = await import('../protocol-development/pdev-view-assembler.js');
+  const docs = await assembleOrgPdevDocs(orgId);
+  return docs.find((d) => String(d.id) === String(documentId)) ?? null;
+}
+
+registerToolHandler('bind_protocol_to_study_design', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'bind_protocol_to_study_design requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const studyDesignId = typeof input.study_design_id === 'string' ? input.study_design_id.trim() : '';
+  if (!Number.isInteger(documentId) || !studyDesignId) return JSON.stringify({ error: 'document_id and study_design_id are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { bindStudyDesignTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const bound = await bindStudyDesignTx(client, ctx.organizationId, documentId, studyDesignId, ctx.userId);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol bound to study design via AnA'), payload: { studyDesignId: bound.studyDesignId }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, documentId, studyDesignId: bound.studyDesignId, designTitle: bound.title, message: `Bound protocol ${documentId} to study design ${bound.studyDesignId}. The derivation, the design gates and the projections can now run against it.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return pdevToolError('bind_protocol_to_study_design', err);
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_design_derivation', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_design_derivation requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { readDerivation } = await import('../protocol-development/design-derivation-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const view = await readDerivation(client, ctx.organizationId, documentId);
+    await client.query('COMMIT');
+    const d = view.derivation;
+    return JSON.stringify({
+      ok: true,
+      documentId,
+      studyDesignId: view.studyDesignId,
+      counts: { proposed: d.proposed.length, conflicts: d.conflicts.length, unchanged: d.unchanged.length, unevidenced: d.unevidenced.length, incomplete: d.incomplete.length },
+      derivation: d,
+      note: 'Derived by deriveDesignFromProtocol. Report the buckets and counts verbatim. An unevidenced or incomplete path is not agreement and not a pass. Nothing was written; to apply any path, ask the human which ones and call apply_protocol_design_derivation.',
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return pdevToolError('review_protocol_design_derivation', err);
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('apply_protocol_design_derivation', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'apply_protocol_design_derivation requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const raw = Array.isArray(input.accepted_paths) ? input.accepted_paths : [];
+  const acceptedPaths = raw.filter((p): p is string => typeof p === 'string' && p.trim().length > 0);
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  if (acceptedPaths.length === 0) return JSON.stringify({ error: 'accepted_paths must be a non-empty array of derivation path strings. Paths only — the engine supplies the values.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { applyDerivationTx } = await import('../protocol-development/design-derivation-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const result = await applyDerivationTx(client, ctx.organizationId, documentId, acceptedPaths, ctx.userId);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `study-design:${result.studyDesignId}`, reason: fcoiReason(input, 'Protocol derivation applied to study design via AnA'), payload: { documentId, requested: acceptedPaths, applied: result.applied, rejected: result.rejected.length }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({
+      ok: true,
+      documentId,
+      studyDesignId: result.studyDesignId,
+      applied: result.applied,
+      rejected: result.rejected,
+      derivation: result.derivation,
+      message: result.applied.length === 0
+        ? `No path was applied to study design ${result.studyDesignId}. The engine refused every accepted path; report its reasons verbatim and do not describe this as an update.`
+        : `Applied ${result.applied.length} path(s) to study design ${result.studyDesignId}: ${result.applied.join(', ')}.`,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return pdevToolError('apply_protocol_design_derivation', err);
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_regulatory_rules', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_regulatory_rules requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  try {
+    const doc = await loadAssembledPdevDoc(ctx.organizationId, documentId);
+    if (!doc) return JSON.stringify({ error: `Protocol document ${documentId} was not found for this organization. No rules were evaluated.` });
+    const rules = doc.ruleFindings as { findings: unknown[]; assessed: number; unmet: number; notAssessed: number } | undefined;
+    if (!rules) return JSON.stringify({ error: `The rule pack returned no evaluation for protocol ${documentId}, so nothing was assessed. Report this as a gap, not as a clean protocol.` });
+    return JSON.stringify({
+      ok: true,
+      documentId,
+      kind: doc.kind,
+      assessed: rules.assessed,
+      unmet: rules.unmet,
+      notAssessed: rules.notAssessed,
+      findings: rules.findings,
+      note: 'Evaluated by evaluateProtocolRules. Report the findings and the three counts verbatim; compute no score or percentage. A not-assessed rule is not a pass, and an attention finding on a complete section means the content was not inspected.',
+    });
+  } catch (err) {
+    return pdevToolError('review_protocol_regulatory_rules', err);
+  }
+});
+
+registerToolHandler('review_protocol_design_gates', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_design_gates requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  try {
+    const doc = await loadAssembledPdevDoc(ctx.organizationId, documentId);
+    if (!doc) return JSON.stringify({ error: `Protocol document ${documentId} was not found for this organization. No design gates were run.` });
+    const design = doc.studyDesign as Record<string, unknown> | null;
+    if (!design) return JSON.stringify({ error: `No study design is bound to protocol ${documentId}, so the design gates did not run. This is not a clean gate result — bind a design with bind_protocol_to_study_design first.` });
+    if (design.resolved !== true) return JSON.stringify({ error: `Protocol ${documentId} names study design ${String(design.studyId)}, but that design could not be read for this organization, so the gates did not run. The link is unresolved; this is not a clean gate result.`, studyDesignId: design.studyId });
+    return JSON.stringify({
+      ok: true,
+      documentId,
+      studyDesignId: design.studyId,
+      designTitle: design.title,
+      riskLevel: design.riskLevel,
+      canAdvance: design.canAdvance,
+      blocksApproval: design.blocksApproval,
+      counts: design.counts,
+      summary: design.summary,
+      standardsChecked: design.standardsChecked,
+      findings: design.findings,
+      note: 'Produced by validateDesign — the same ICH E9 / E9(R1) / E10 / E3 / ICH M11 gate engine /api/study-design serves. Report the findings, counts and verdicts verbatim; do not re-rank, drop or total them yourself. These are the DESIGN gates; the protocol document\'s own rules come from review_protocol_regulatory_rules.',
+    });
+  } catch (err) {
+    return pdevToolError('review_protocol_design_gates', err);
+  }
+});
