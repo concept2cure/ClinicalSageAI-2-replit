@@ -2416,6 +2416,20 @@ export const C2C_MIGRATION_FILES = [
   // two last.
   'migrations/20260922_protocol_document_study_design.sql',
 
+  // ── The ICH M11 discontinuation / withdrawal section, backfilled ─────────
+  // Registered 2026-09-22. SECTION_TEMPLATES.clinical claimed ICH M11 as the
+  // basis of all twelve of its sections and covered neither discontinuation of
+  // trial intervention nor participant withdrawal, so a protocol could pass
+  // the finalize gate with every required section complete and say nothing
+  // about either. The template now carries it; this file fixes the documents
+  // already in a deployed database. Replayable: the inserted row is its own
+  // guard, so a document that has the section is skipped including the
+  // order_index shift. Finalized and superseded protocols are left alone --
+  // rewriting an approved record to improve its score is the opposite of the
+  // point. Guarded on to_regclass; above the final pair, which
+  // ci:migration-set-order pins last.
+  'migrations/20260922b_protocol_discontinuation_section.sql',
+
   // ── IRB / IEC submissions, reviews, amendments, reportable events ────────
   // Registered 2026-09-22. The file was written on 2026-06-10 with a service,
   // three deterministic engines and nine mounted routes — and was never put on

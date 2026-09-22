@@ -66,7 +66,10 @@ describe('rule pack — red-first', () => {
 // ─── Scenario matrix ─────────────────────────────────────────────────────────
 
 const EXTRA_KEYS: Record<string, string[]> = {
-  clinical: ['discontinuation', 'monitoring', 'quality', 'privacy', 'data_safety', 'oversight', 'risks_benefits', 'diversity_plan'],
+  // 'discontinuation' is NOT here: this rule found that SECTION_TEMPLATES.clinical
+  // had no such section, and the template now carries it, so it arrives from
+  // templateFor(). Re-adding it here would hide a future removal.
+  clinical: ['monitoring', 'quality', 'privacy', 'data_safety', 'oversight', 'risks_benefits', 'diversity_plan'],
   irb: ['safety', 'consent', 'statistics', 'intervention', 'design', 'synopsis'],
   iacuc: [],
   ibc: [],
@@ -399,9 +402,15 @@ describe('estimand, multiplicity and applicability gates', () => {
     expect(statusOf({ ...full('clinical'), regions: [], phase: 'Phase 3' }, id)).toBe('not-assessed');
   });
 
-  it('ICH M11 Section 7 catches the discontinuation section the template never seeds', () => {
+  /* This rule is why SECTION_TEMPLATES.clinical now has a 'discontinuation'
+     section (and why migrations/20260922b backfills it). The template supplies
+     it, so the seeded case is 'attention'; strip it and the rule still says
+     'unmet', which is what protects the template from losing it again. */
+  it('ICH M11 Section 7 is what put the discontinuation section in the template', () => {
     const f = evaluateProtocolRules(full('clinical')).findings.find((x) => x.ruleId === 'ich-m11-discontinuation-withdrawal');
     expect(f?.clause).toMatch(/Section 7/);
+    // The template seeds it now, so a fully-seeded protocol no longer reports unmet.
+    expect(f?.status).not.toBe('unmet');
     const noSection = evaluateProtocolRules({ ...full('clinical'), sections: sectionsFor('clinical', 'complete', 400).filter((s) => s.sectionKey !== 'discontinuation') });
     const g = noSection.findings.find((x) => x.ruleId === 'ich-m11-discontinuation-withdrawal');
     expect(g?.status).toBe('unmet');
