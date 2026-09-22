@@ -44,7 +44,7 @@ import {
   type RuleStatus,
 } from '../region-design-rules';
 import { type DesignFinding, type FindingSeverity } from './design-gates';
-import { type StudyDesign, type StudyPhase } from './study-design-types';
+import { type RegulatoryStrategy, type StudyDesign, type StudyPhase } from './study-design-types';
 
 // ─── Public shapes ───────────────────────────────────────────────────────────
 
@@ -239,8 +239,18 @@ const NO_KNOWN_REGION_REASON =
   'covers (FDA, EMA, PMDA, MHRA, NMPA, Swissmedic, ANVISA). No agency is derived and ' +
   'FDA is not assumed.';
 
-/** Gaps that exist for every design, because StudyDesign has no node for them at all. */
-const STATIC_GAPS: readonly UnmappedRegionField[] = [
+/**
+ * Gaps that exist only while `design.regulatoryStrategy` does not record the
+ * field. Added 2026-09-22: these were unconditional, because StudyDesign had
+ * no node for any of them. It now does, so each gap is reported only when the
+ * design is actually silent — and a design that records the field gets a rule
+ * it can decide instead of a not-assessed.
+ *
+ * `localRepresentation.fraction` stays unconditional: it is a per-region
+ * sample-size allocation, which is design structure rather than strategy, and
+ * nothing carries it yet.
+ */
+const ALWAYS_GAPS: readonly UnmappedRegionField[] = [
   {
     field: 'localRepresentation.fraction',
     reason:
@@ -248,6 +258,9 @@ const STATIC_GAPS: readonly UnmappedRegionField[] = [
       'is free text and StatisticalPlan.plannedSampleSize is a single total. Left undefined; no ' +
       'rule reads the fraction today, but an ICH E17 allocation threshold could not be evaluated.',
   },
+];
+
+const STRATEGY_GAPS: readonly UnmappedRegionField[] = [
   {
     field: 'ethnicSensitivityAssessed',
     reason:
@@ -327,6 +340,61 @@ const MRCT_GAPS: readonly UnmappedRegionField[] = [
   },
 ];
 
+
+// ─── Recorded regulatory strategy ────────────────────────────────────────────
+
+/**
+ * The strategy fields this adapter reads, as a `Record<keyof
+ * RegulatoryStrategy, true>` rather than a list.
+ *
+ * The type is the contract. A field added to `RegulatoryStrategy` will not
+ * compile until it is named here, and one removed from this object will not
+ * compile either. A plain array was the first attempt and it was vacuous: the
+ * test that walks it to check the ledger gets WEAKER when the array shrinks,
+ * so deleting an entry passed. Proved by deleting one.
+ */
+const STRATEGY_FIELD_SET: Record<keyof RegulatoryStrategy, true> = {
+  ethnicSensitivityAssessed: true,
+  thoroughQt: true,
+  qtInRegionalPopulation: true,
+  diversityPlan: true,
+  localSponsorRepresentative: true,
+  usesReliancePathway: true,
+  oncology: true,
+};
+
+export const STRATEGY_FIELDS = Object.keys(STRATEGY_FIELD_SET).sort() as Array<keyof RegulatoryStrategy>;
+
+type StrategyField = keyof RegulatoryStrategy;
+
+/**
+ * Whether the design records this field at all.
+ *
+ * Absence is the whole point: `undefined` means nobody stated it, and the rule
+ * that reads it stays not-assessed. A recorded `false` IS a statement and the
+ * rule is decided on it. Collapsing the two would turn every unfilled design
+ * into a design that has declared "no" to everything.
+ */
+function records(design: StudyDesign, field: StrategyField): boolean {
+  const v = design.regulatoryStrategy?.[field];
+  if (field === 'localSponsorRepresentative') {
+    return v !== undefined && v !== null && Object.keys(v as Record<string, boolean>).length > 0;
+  }
+  return typeof v === 'boolean';
+}
+
+function recordedBool(design: StudyDesign, field: StrategyField): boolean {
+  return design.regulatoryStrategy?.[field] === true;
+}
+
+/** The agencies for which a local legal representative is recorded as appointed. */
+function recordedRepresentatives(design: StudyDesign, agencies: Agency[]): Partial<Record<Agency, boolean>> {
+  const recorded = design.regulatoryStrategy?.localSponsorRepresentative ?? {};
+  const out: Partial<Record<Agency, boolean>> = {};
+  for (const a of agencies) out[a] = recorded[a] === true;
+  return out;
+}
+
 function unmappedLedger(design: StudyDesign, agencies: Agency[], hadRegions: boolean): UnmappedRegionField[] {
   const ledger: UnmappedRegionField[] = [];
   if (agencies.length === 0) {
@@ -336,7 +404,10 @@ function unmappedLedger(design: StudyDesign, agencies: Agency[], hadRegions: boo
     });
   }
   if (!design.framework?.mrct) ledger.push(...MRCT_GAPS);
-  ledger.push(...STATIC_GAPS);
+  ledger.push(...ALWAYS_GAPS);
+  /* Only report a strategy gap the design is actually silent about. A design
+     that records the field closes the gap and the rule becomes decidable. */
+  ledger.push(...STRATEGY_GAPS.filter((g) => !records(design, g.field as StrategyField)));
   return ledger;
 }
 
@@ -357,14 +428,19 @@ export function studyDesignToRegionInput(design: StudyDesign): DesignRegionMappi
     multiRegional: (mrct?.regions?.length ?? 0) >= 2,
     localRepresentation: representationOf(mrctAgencies(design)),
     regionalConsistencyPlan: Boolean(mrct?.consistencyApproach?.trim()),
-    // Absent from the design; see the unmapped ledger for each reason.
-    ethnicSensitivityAssessed: false,
-    thoroughQt: false,
-    qtInRegionalPopulation: false,
-    diversityPlan: false,
-    localSponsorRepresentative: {},
-    usesReliancePathway: false,
-    oncology: false,
+    /* Recorded where the design states them; otherwise the pessimistic
+       default, which is belt-and-braces only — what actually protects the
+       result is the invariance sweep below, which returns not-assessed for any
+       rule an unrecorded field could move. */
+    ethnicSensitivityAssessed: recordedBool(design, 'ethnicSensitivityAssessed'),
+    thoroughQt: recordedBool(design, 'thoroughQt'),
+    qtInRegionalPopulation: recordedBool(design, 'qtInRegionalPopulation'),
+    diversityPlan: recordedBool(design, 'diversityPlan'),
+    localSponsorRepresentative: records(design, 'localSponsorRepresentative')
+      ? recordedRepresentatives(design, agencies)
+      : {},
+    usesReliancePathway: recordedBool(design, 'usesReliancePathway'),
+    oncology: recordedBool(design, 'oncology'),
   };
 
   return { input, unmapped: unmappedLedger(design, agencies, regions.length > 0) };
@@ -379,7 +455,10 @@ interface UnknownField {
 }
 
 function unknownFields(design: StudyDesign, agencies: Agency[]): UnknownField[] {
-  const unknowns: UnknownField[] = [
+  /* Only the fields the design does NOT record go into the sweep. A recorded
+     field is a fact, so its rule is decided rather than returned
+     not-assessed — which is the entire point of design.regulatoryStrategy. */
+  const candidates: UnknownField[] = [
     { field: 'ethnicSensitivityAssessed', set: (i, v) => ({ ...i, ethnicSensitivityAssessed: v }) },
     { field: 'thoroughQt', set: (i, v) => ({ ...i, thoroughQt: v }) },
     { field: 'qtInRegionalPopulation', set: (i, v) => ({ ...i, qtInRegionalPopulation: v }) },
@@ -391,6 +470,7 @@ function unknownFields(design: StudyDesign, agencies: Agency[]): UnknownField[] 
       set: (i, v) => ({ ...i, localSponsorRepresentative: flagsOf(agencies, v) }),
     },
   ];
+  const unknowns: UnknownField[] = candidates.filter((c) => !records(design, c.field as StrategyField));
   if (design.framework?.mrct) return unknowns;
   unknowns.push(
     { field: 'multiRegional', set: (i, v) => ({ ...i, multiRegional: v }) },

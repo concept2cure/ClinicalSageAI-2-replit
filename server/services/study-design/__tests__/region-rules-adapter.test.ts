@@ -14,6 +14,7 @@ import { describe, it, expect } from 'vitest';
 import {
   DERIVED_REGION_INPUT_FIELDS,
   REGION_INPUT_FIELDS,
+  STRATEGY_FIELDS,
   evaluateDesignRegionRules,
   regionFindingStatus,
   studyDesignToRegionInput,
@@ -78,7 +79,12 @@ function unmappedFields(mapping: DesignRegionMapping): string[] {
   return mapping.unmapped.map(u => u.field).sort();
 }
 
-/** The fields that are unmapped for every design, whatever it carries today. */
+/**
+ * The fields unmapped for a design that records NO regulatory strategy. They
+ * stopped being unconditional on 2026-09-22, when `RegulatoryStrategy` was
+ * added: a design that records one of these closes its gap and the rules that
+ * read it become decidable.
+ */
 const ALWAYS_UNMAPPED = [
   'diversityPlan',
   'ethnicSensitivityAssessed',
@@ -319,5 +325,131 @@ describe('evaluateDesignRegionRules', () => {
     expect(JSON.stringify(studyDesignToRegionInput(design))).toBe(
       JSON.stringify(studyDesignToRegionInput(design)),
     );
+  });
+});
+
+// ─── Recorded regulatory strategy closes the gaps ────────────────────────────
+
+/*
+ * Before `StudyDesign.regulatoryStrategy` existed, this adapter measured that
+ * ELEVEN OF ELEVEN region rules were not-assessed for a design with no MRCT
+ * block: the spine could not decide a single one. These tests hold the fix,
+ * and — more importantly — hold the line that a RECORDED false is a statement
+ * while an ABSENT field is not.
+ */
+describe('regulatory strategy — recorded fields close their gaps', () => {
+  function withStrategy(strategy: StudyDesign['regulatoryStrategy']): StudyDesign {
+    return { ...mrctDesign(), regulatoryStrategy: strategy };
+  }
+
+  /*
+   * This assertion is exact in BOTH directions on purpose. The first version
+   * walked STRATEGY_FIELDS and checked each appeared in the ledger, which gets
+   * weaker as the list shrinks — deleting a field from the list made the test
+   * pass. It was proved vacuous by deleting 'oncology' and watching all 30
+   * tests still pass. STRATEGY_FIELD_SET is now a Record<keyof
+   * RegulatoryStrategy, true>, so the same deletion no longer compiles, and
+   * this set-equality catches a ledger that drifts from it.
+   */
+  it('the ledger names exactly the strategy fields the adapter reads', () => {
+    const ledger = unmappedFields(studyDesignToRegionInput(mrctDesign()));
+    const strategyEntries = ledger.filter((f) => (STRATEGY_FIELDS as string[]).includes(f));
+
+    expect(strategyEntries.sort()).toEqual([...STRATEGY_FIELDS].sort());
+    expect(STRATEGY_FIELDS).toHaveLength(7);
+  });
+
+  it('drops a field from the unmapped ledger once the design records it', () => {
+    const before = unmappedFields(studyDesignToRegionInput(mrctDesign()));
+    const after = unmappedFields(studyDesignToRegionInput(withStrategy({ ethnicSensitivityAssessed: true })));
+
+    expect(before).toContain('ethnicSensitivityAssessed');
+    expect(after).not.toContain('ethnicSensitivityAssessed');
+  });
+
+  it('drops it for a recorded FALSE too, because that is a statement', () => {
+    const after = unmappedFields(studyDesignToRegionInput(withStrategy({ ethnicSensitivityAssessed: false })));
+    expect(after).not.toContain('ethnicSensitivityAssessed');
+  });
+
+  it('keeps the gap when the strategy node exists but omits the field', () => {
+    // The node being present says nothing about a field it does not carry.
+    const after = unmappedFields(studyDesignToRegionInput(withStrategy({ oncology: true })));
+    expect(after).toContain('ethnicSensitivityAssessed');
+    expect(after).not.toContain('oncology');
+  });
+
+  it('carries a recorded value through to the engine input', () => {
+    const { input } = studyDesignToRegionInput(withStrategy({ thoroughQt: true, qtInRegionalPopulation: true }));
+    expect(input.thoroughQt).toBe(true);
+    expect(input.qtInRegionalPopulation).toBe(true);
+  });
+
+  it('records a local representative per agency, and only for agencies the design targets', () => {
+    // mrctDesign() targets the United States and Japan, so FDA and PMDA. A
+    // representative recorded for ANVISA is not carried into the input,
+    // because the adapter does not invent a Brazilian filing this design does
+    // not have. This is the behaviour the first version of this test got
+    // wrong, and the adapter was right.
+    const { input } = studyDesignToRegionInput(
+      withStrategy({ localSponsorRepresentative: { FDA: true, ANVISA: true } }),
+    );
+
+    expect(input.localSponsorRepresentative?.FDA).toBe(true);
+    expect(input.localSponsorRepresentative?.ANVISA).toBeUndefined();
+    // PMDA is targeted but not recorded as appointed, so it is a recorded false.
+    expect(input.localSponsorRepresentative?.PMDA).toBe(false);
+  });
+
+  it('decides rules that were not-assessed, once the fields they read are recorded', () => {
+    const before = evaluateDesignRegionRules(mrctDesign());
+    const after = evaluateDesignRegionRules(
+      withStrategy({
+        ethnicSensitivityAssessed: true,
+        thoroughQt: true,
+        qtInRegionalPopulation: true,
+        diversityPlan: true,
+        usesReliancePathway: true,
+        oncology: true,
+        localSponsorRepresentative: { ANVISA: true },
+      }),
+    );
+
+    expect(after.notAssessed).toBeLessThan(before.notAssessed);
+    expect(after.findings.length).toBe(before.findings.length);
+  });
+
+  it('decides every rule when the design records the whole strategy and its MRCT block', () => {
+    const a = evaluateDesignRegionRules(
+      withStrategy({
+        ethnicSensitivityAssessed: true,
+        thoroughQt: true,
+        qtInRegionalPopulation: true,
+        diversityPlan: true,
+        usesReliancePathway: true,
+        oncology: true,
+        localSponsorRepresentative: { ANVISA: true, FDA: true, EMA: true, PMDA: true, MHRA: true, NMPA: true, Swissmedic: true },
+      }),
+    );
+
+    expect(a.notAssessed).toBe(0);
+    expect(a.unmapped.map((u) => u.field)).toEqual(['localRepresentation.fraction']);
+  });
+
+  it('still reaches unmet, not met, when the strategy records the absent case', () => {
+    const a = evaluateDesignRegionRules(
+      withStrategy({
+        ethnicSensitivityAssessed: false,
+        thoroughQt: false,
+        qtInRegionalPopulation: false,
+        diversityPlan: false,
+        usesReliancePathway: false,
+        oncology: false,
+        localSponsorRepresentative: { ANVISA: false },
+      }),
+    );
+
+    expect(a.notAssessed).toBe(0);
+    expect(a.findings.some((f) => regionFindingStatus(f) === 'unmet')).toBe(true);
   });
 });
