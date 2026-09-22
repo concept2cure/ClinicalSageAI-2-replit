@@ -12,6 +12,16 @@
  *   2. Every launch module id is seeded by one of the catalog migrations, so
  *      provisionLaunchModules writes grants that a real row satisfies (the
  *      FK on module_subscriptions.module_id refuses anything else).
+ *   2b. Every launch module id is on the keep-list of step 1 in
+ *      db/migrations/20260810_reconcile_module_catalog.sql. That file runs late
+ *      in the migration set and, under Rule 1, on EVERY deploy; its step 1
+ *      retires every module_id not on its list. A launch module added by a
+ *      later file (as 'ectd-publishing' was, by 20260814j) is therefore seeded,
+ *      so rule 2 passes, and then re-deprecated on every deploy — invisible to
+ *      getModuleCatalog, so the launch catalog loses it on any deploy-shaped
+ *      database while every local check stays green. Found 2026-09-22 by
+ *      tests/db/entitlement-grants-resolution.dbtest.ts; this rule catches the
+ *      next one before a database is needed.
  *   3. No file that implements a launch surface imports a symbol from
  *      client/src/concept2cure/v2/fixtures/ unless
  *      scripts/ci/launch-scope-fixture-allowlist.json names that symbol with a
@@ -24,7 +34,8 @@
  * Fails closed: a missing allowlist is an empty allowlist. Exit 1 on any
  * finding. `--json` for machine-readable output. LAUNCH_SCOPE_SURFACES_DIR
  * overrides the surfaces directory (the selftest points it at a copy carrying
- * a deliberate violation).
+ * a deliberate violation). LAUNCH_SCOPE_RECONCILE_FILE overrides the 20260810
+ * file for rule 2b (the selftest points it at a copy missing a launch id).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -48,6 +59,9 @@ const CATALOG_FILES = [
   'migrations/20260814l_catalog_filing_strategy.sql',
 ].map((f) => path.join(ROOT, f));
 const ALLOWLIST = path.join(ROOT, 'scripts/ci/launch-scope-fixture-allowlist.json');
+const RECONCILE = process.env.LAUNCH_SCOPE_RECONCILE_FILE
+  ? path.resolve(process.env.LAUNCH_SCOPE_RECONCILE_FILE)
+  : path.join(ROOT, 'db/migrations/20260810_reconcile_module_catalog.sql');
 
 const read = (p) => fs.readFileSync(p, 'utf8');
 
@@ -85,6 +99,30 @@ const catalogSrc = CATALOG_FILES.filter(fs.existsSync).map(read).join('\n');
 for (const id of launchModules) {
   if (!new RegExp(`'${id}'`).test(catalogSrc)) {
     findings.push({ rule: 'licensable', detail: `launch module '${id}' is seeded by no catalog migration` });
+  }
+}
+
+// ── 3b. Survives the replay: on 20260810's step-1 keep-list ────────────────
+// Fails closed: if the list cannot be found, that is a finding, not a pass —
+// a reshaped file must not quietly turn this rule off.
+{
+  const reconcile = fs.existsSync(RECONCILE) ? read(RECONCILE) : '';
+  const keep = reconcile.match(/WHERE module_id NOT IN \(([\s\S]*?)\);/);
+  if (!keep) {
+    findings.push({
+      rule: 'survives-replay',
+      detail: `could not find step 1's "WHERE module_id NOT IN (...)" keep-list in ${path.relative(ROOT, RECONCILE)}`,
+    });
+  } else {
+    const kept = new Set([...keep[1].matchAll(/'([^']+)'/g)].map((m) => m[1]));
+    for (const id of launchModules) {
+      if (!kept.has(id)) {
+        findings.push({
+          rule: 'survives-replay',
+          detail: `launch module '${id}' is not on step 1's keep-list in ${path.relative(ROOT, RECONCILE)} — that step re-deprecates it on every deploy (Rule 1 replay); add it in place with a dated note`,
+        });
+      }
+    }
   }
 }
 
