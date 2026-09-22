@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IQ-001 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5 |
 | Runner | `npm run validation:iq` → `scripts/validation/run-iq.mjs` |
@@ -14,6 +14,7 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | Derived from the deployment artefacts: `Dockerfile.optimized`, `docker-compose.yml`, `docker-compose.staging.yml`, `terraform/environments/{production,staging}`, `terraform/modules/*`, `.github/workflows/deploy-aws.yml`, `scripts/db/install-fresh.mjs`, `scripts/db/deploy-migrate.mjs`, `scripts/db/provision-app-role.mjs`, `server/startup/inline-endpoints.ts` (`/readyz`), `server/auth/dev-auth-policy.ts`, `server/middleware/enterprise-security.ts`, `.env.example`. |
+| 0.2 | 2026-09-22 | W3 | §3: the runner resolves the environment the way the server does, `.env.local` then `.env` with the process environment over both (`scripts/validation/env-files.mjs`, held equal to `server/config/load-env-files.ts`). It read `.env` alone, so on an installation brought up by `npm run up`, which writes the database to `.env.local`, IQ-05/07/08 qualified a different database from the one the server and the OQ protocols used. IQ-05 now names the database it qualified (host, port, name; never credentials). No check's expected result changed. |
 
 ## 1. Purpose
 
@@ -38,7 +39,7 @@ Show that a given installation of Concept2Cure.RI is the artefact the repository
 ## 3. Pre-conditions
 
 - The repository checkout to be qualified, with `npm ci` done and `tests/validation` installed (`npm install` there).
-- A PostgreSQL reachable at `DATABASE_URL` (from `.env` or the environment).
+- A PostgreSQL reachable at `DATABASE_URL`, resolved as the server resolves it: the process environment, else `.env.local`, else `.env`. IQ-05 records which database that is.
 - The application running at `VALIDATION_BASE_URL` (default `http://localhost:5200`), booted from that checkout.
 - Chromium at `CHROMIUM_PATH` (for the OQ runners that follow).
 
