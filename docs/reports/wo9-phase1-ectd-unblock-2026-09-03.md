@@ -1499,3 +1499,11 @@ For this path, the catalog splits it:
 
 The fixes in this section repair existing surfaces and add no capability. Whether
 Clicks 4–6 proceed under RULE 2, and against which row, is JM's decision.
+
+Checks run on `4cc0df494`, the merged tree this section was pushed on:
+
+- `ci:typecheck:no-regression`: 0 errors, baseline 0.
+- `ci:eslint-ratchet`: the warning count did not grow.
+- Every pre-push gate passed.
+- Golden journeys: 9 of 9 green.
+- This path's suites: 577 server tests and 234 client tests.
