@@ -2453,6 +2453,31 @@ export const C2C_MIGRATION_FILES = [
   // final pair so the tenant sweep policies these six tables.
   'migrations/20260610_irb_submissions.sql',
 
+  // ── The four facts an IRB package manifest needs (registered 2026-09-22) ──
+  // Four columns on irb_submissions: involves_children, is_ind_study, uses_phi,
+  // uses_recruitment_material. package-manifest.ts gates five artifact slots on
+  // them (assent, Form FDA 1572, financial disclosure, HIPAA authorization,
+  // recruitment material) and the table recorded none, so all five came back
+  // `undetermined` on every submission and a package could never be ready.
+  //
+  // All four are NULLABLE with NO DEFAULT, deliberately, and that is the point
+  // of the file rather than an oversight: three states have to survive to the
+  // manifest — true (required), false (a RECORDED statement, not required) and
+  // NULL (NOT RECORDED, stays undetermined). `NOT NULL DEFAULT false` would
+  // collapse "nobody answered" into "the sponsor said no" and drop Form FDA
+  // 1572 out of a package on a claim nobody made, which is the exact failure
+  // package-manifest.ts was written to prevent. The sibling columns on this
+  // table are NOT NULL DEFAULT false and that is correct for them; it is the
+  // pattern that must not be copied here. Pinned by a test that fails if a
+  // default or a NOT NULL is ever added.
+  //
+  // Additive: ADD COLUMN IF NOT EXISTS, no DROP, no backfill — a row predating
+  // the file keeps NULL and keeps reporting undetermined. Guarded on
+  // to_regclass with every statement including the COMMENTs inside the DO
+  // block. Ordered after its creator above and above the final pair, which
+  // ci:migration-set-order pins last.
+  'migrations/20260922d_irb_submission_context.sql',
+
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the
   // canonical per-tenant uuid) + a forward-sync trigger, so a single

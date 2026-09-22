@@ -42,19 +42,105 @@ export interface IrbSubmissionInput {
   vulnerablePopulationProtections?: string | null;
   isSingleIrb?: boolean;
   consentWaiverRequested?: boolean;
+  /*
+   * The four package-manifest facts. TRI-STATE, and typed as such: `true`,
+   * `false` and absent/null are three different answers, and absent must not
+   * be written as `false`. See `package-manifest.ts` and the column comments
+   * in `migrations/20260922d_irb_submission_context.sql`.
+   */
+  /** Subpart D. Absent/null means NOT RECORDED, not "no children". */
+  involvesChildren?: boolean | null;
+  /** 21 CFR 312. Absent/null means NOT RECORDED. Gates the 1572 and the disclosure. */
+  isIndStudy?: boolean | null;
+  /** HIPAA. Absent/null means NOT RECORDED, not "no PHI". */
+  usesPhi?: boolean | null;
+  /** 21 CFR 56.111(a)(3). Absent/null means NOT RECORDED. */
+  usesRecruitmentMaterial?: boolean | null;
+}
+
+/**
+ * Normalize a tri-state fact for the INSERT.
+ *
+ * `?? null` and nothing else. The `x === true` coercion used by the siblings
+ * on this row is WRONG for these four: it maps both `false` and absent onto
+ * `false`, which writes "the sponsor said no" into a column nobody filled in
+ * and takes Form FDA 1572 out of a board's package. Absent stays NULL, and
+ * NULL reads back as `undetermined`.
+ */
+function recordedFact(v: boolean | null | undefined): boolean | null {
+  return v ?? null;
 }
 
 export async function createSubmissionTx(client: Queryable, orgId: number, userId: number, input: IrbSubmissionInput): Promise<{ id: number }> {
   const { rows } = await client.query(
     `INSERT INTO irb_submissions
        (organization_id, study_id, submission_id, protocol_number, title, risk_level,
-        involves_vulnerable_populations, vulnerable_population_protections, is_single_irb, consent_waiver_requested, status, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'draft',$11) RETURNING id`,
+        involves_vulnerable_populations, vulnerable_population_protections, is_single_irb, consent_waiver_requested,
+        involves_children, is_ind_study, uses_phi, uses_recruitment_material, status, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'draft',$15) RETURNING id`,
     [orgId, input.studyId ?? null, input.submissionId ?? null, input.protocolNumber, input.title, input.riskLevel,
       input.involvesVulnerablePopulations === true, input.vulnerablePopulationProtections ?? null,
-      input.isSingleIrb === true, input.consentWaiverRequested === true, userId],
+      input.isSingleIrb === true, input.consentWaiverRequested === true,
+      recordedFact(input.involvesChildren), recordedFact(input.isIndStudy),
+      recordedFact(input.usesPhi), recordedFact(input.usesRecruitmentMaterial), userId],
   );
   return { id: Number(rows[0].id) };
+}
+
+/**
+ * The four package-manifest facts, by DB column, in one place.
+ *
+ * `createSubmissionTx` and `setSubmissionContextTx` both write them and the
+ * route validates them; a fifth fact added in one place and forgotten in
+ * another is the bug this list exists to make impossible.
+ */
+export const IRB_CONTEXT_FIELDS = [
+  ['involvesChildren', 'involves_children'],
+  ['isIndStudy', 'is_ind_study'],
+  ['usesPhi', 'uses_phi'],
+  ['usesRecruitmentMaterial', 'uses_recruitment_material'],
+] as const;
+
+export type IrbContextField = (typeof IRB_CONTEXT_FIELDS)[number][0];
+
+/**
+ * Record (or un-record) the facts the package manifest gates on.
+ *
+ * A field ABSENT from `input` is left exactly as it was — this is a patch, not
+ * a replace, and an unmentioned fact must not be reset. A field present as
+ * `null` is an explicit retraction back to NOT RECORDED, which is a legitimate
+ * thing for a sponsor to do when an answer turns out to have been wrong; the
+ * manifest then goes back to `undetermined` rather than keeping a stale claim.
+ *
+ * Returns the fields actually written, so the governed-action payload records
+ * what changed rather than what was offered.
+ */
+export async function setSubmissionContextTx(
+  client: Queryable,
+  orgId: number,
+  id: number,
+  input: Partial<Record<IrbContextField, boolean | null>>,
+): Promise<{ id: number; recorded: Partial<Record<IrbContextField, boolean | null>> }> {
+  await getSubmission(client, orgId, id);
+
+  const sets: string[] = [];
+  const params: unknown[] = [id, orgId];
+  const recorded: Partial<Record<IrbContextField, boolean | null>> = {};
+  for (const [key, column] of IRB_CONTEXT_FIELDS) {
+    if (!(key in input)) continue;
+    const value = input[key] ?? null;
+    params.push(value);
+    sets.push(`${column} = $${params.length}`);
+    recorded[key] = value;
+  }
+  if (sets.length === 0) throw new IrbError('BAD_INPUT', 'Record at least one of involvesChildren, isIndStudy, usesPhi or usesRecruitmentMaterial.');
+
+  await client.query(
+    `UPDATE irb_submissions SET ${sets.join(', ')}, updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    params,
+  );
+  return { id, recorded };
 }
 
 async function getSubmission(client: Queryable, orgId: number, id: number): Promise<any> {
@@ -238,7 +324,8 @@ export async function getPackageManifest(
   manifest: import('./package-manifest').PackageManifest;
 }> {
   const { rows } = await pool.query(
-    `SELECT id, submission_id, risk_level, review_type, involves_vulnerable_populations, consent_waiver_requested
+    `SELECT id, submission_id, risk_level, review_type, involves_vulnerable_populations, consent_waiver_requested,
+            involves_children, is_ind_study, uses_phi, uses_recruitment_material
        FROM irb_submissions
       WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
       LIMIT 1`,
@@ -260,11 +347,20 @@ export async function getPackageManifest(
         reviewType: s.review_type ?? null,
         involvesVulnerablePopulations: s.involves_vulnerable_populations ?? null,
         consentWaiverRequested: s.consent_waiver_requested ?? null,
-        /* Not passed, deliberately. `irb_submissions` records none of these,
-           so they stay ABSENT and the manifest reports those requirements as
-           undetermined with the field that would settle each. Passing `false`
-           would read as "this study does not run under an IND" — a claim
-           nobody made, and the one a board would be misled by. */
+        /* The four tri-state facts, passed through UNCOERCED.
+           `migrations/20260922d_irb_submission_context.sql` made them
+           recordable; the reader's only job is not to flatten them. `?? null`
+           is the whole contract: true and false are recorded answers the
+           manifest acts on, and NULL — a row nobody has answered, including
+           every row that predates that migration — stays NULL so the
+           requirement reports `undetermined` and names the field that would
+           settle it. A `Boolean(...)` or `=== true` here would read an
+           unanswered column as "this study does not run under an IND", a claim
+           nobody made and the one a board would be misled by. */
+        involvesChildren: s.involves_children ?? null,
+        isIndStudy: s.is_ind_study ?? null,
+        usesPhi: s.uses_phi ?? null,
+        usesRecruitmentMaterial: s.uses_recruitment_material ?? null,
       },
       placed,
     ),

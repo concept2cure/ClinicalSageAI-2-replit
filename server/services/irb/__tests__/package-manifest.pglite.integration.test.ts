@@ -28,16 +28,32 @@ const ORG = 7;
 const OTHER = 9;
 
 const DDL = `
-CREATE TABLE irb_submissions (id serial PRIMARY KEY, organization_id int NOT NULL, submission_id int, protocol_number text, title text, review_type text, risk_level text NOT NULL DEFAULT 'minimal', involves_vulnerable_populations boolean NOT NULL DEFAULT false, consent_waiver_requested boolean NOT NULL DEFAULT false, status text NOT NULL DEFAULT 'draft', deleted_at timestamptz);
+CREATE TABLE irb_submissions (id serial PRIMARY KEY, organization_id int NOT NULL, submission_id int, protocol_number text, title text, review_type text, risk_level text NOT NULL DEFAULT 'minimal', involves_vulnerable_populations boolean NOT NULL DEFAULT false, consent_waiver_requested boolean NOT NULL DEFAULT false, status text NOT NULL DEFAULT 'draft', deleted_at timestamptz,
+  /* The four package-manifest facts, exactly as
+     migrations/20260922d_irb_submission_context.sql declares them: nullable,
+     NO DEFAULT. The catalog shape itself is pinned against the real migration
+     file in submission-context-columns.pglite.integration.test.ts; what this
+     file proves is that a NULL here survives the READER and arrives at the
+     manifest as undetermined rather than as false. */
+  involves_children boolean, is_ind_study boolean, uses_phi boolean, uses_recruitment_material boolean);
 CREATE TABLE ectd_sequences (id serial PRIMARY KEY, submission_id int NOT NULL, organization_id int NOT NULL, region text, sequence_number text, status text DEFAULT 'draft', deleted_at timestamptz);
 CREATE TABLE submission_leaves (id serial PRIMARY KEY, sequence_id int NOT NULL, section_code text NOT NULL, title text NOT NULL, document_table text, document_id int, document_uuid uuid, deleted_at timestamptz);
 `;
 
+/**
+ * Seed a submission. Every context fact defaults to ABSENT here, and absent is
+ * written as SQL NULL — `?? null`, never `=== true`. Writing false for an
+ * unmentioned fact would make this helper itself the defect the manifest
+ * exists to prevent, and every "undetermined" assertion below would pass for
+ * the wrong reason.
+ */
 async function seedIrb(over: Record<string, unknown> = {}): Promise<number> {
   const r = await pool.query(
-    `INSERT INTO irb_submissions (organization_id, submission_id, protocol_number, title, risk_level, consent_waiver_requested)
-     VALUES ($1,$2,'P-1','A study',$3,$4) RETURNING id`,
-    [over.org ?? ORG, over.submissionId ?? null, over.riskLevel ?? 'minimal', over.waiver ?? false],
+    `INSERT INTO irb_submissions (organization_id, submission_id, protocol_number, title, risk_level, consent_waiver_requested,
+                                  involves_children, is_ind_study, uses_phi, uses_recruitment_material)
+     VALUES ($1,$2,'P-1','A study',$3,$4,$5,$6,$7,$8) RETURNING id`,
+    [over.org ?? ORG, over.submissionId ?? null, over.riskLevel ?? 'minimal', over.waiver ?? false,
+      over.involvesChildren ?? null, over.isIndStudy ?? null, over.usesPhi ?? null, over.usesRecruitmentMaterial ?? null],
   );
   return Number(r.rows[0].id);
 }
@@ -158,13 +174,35 @@ describe('tenant scope', () => {
   });
 });
 
+const GATED_SLOTS = [
+  'irb.assent',
+  'irb.financial-disclosure',
+  'irb.form-1572',
+  'irb.hipaa-authorization',
+  'irb.recruitment-material',
+] as const;
+
+/** Every fact answered "yes", which is the most demanding package a board asks for. */
+const ALL_RECORDED_TRUE = {
+  involvesChildren: true,
+  isIndStudy: true,
+  usesPhi: true,
+  usesRecruitmentMaterial: true,
+} as const;
+
 describe('what the submission does not record stays undecided', () => {
   /*
-   * `irb_submissions` records no IND status, no child involvement, no PHI use
-   * and no recruitment plan. The reader passes NONE of them rather than
-   * passing false, so the manifest reports those requirements as undetermined
-   * and names the field that would settle each. Passing false would have read
-   * as "this study does not run under an IND" — a claim nobody made.
+   * `migrations/20260922d_irb_submission_context.sql` made these four facts
+   * RECORDABLE. It did not make them recorded, and the distinction is the
+   * point: a NULL column must arrive at the manifest as absent, so the
+   * requirement reports `undetermined` and names the field that would settle
+   * it. The reader's `?? null` is what carries that; a `Boolean(...)` or
+   * `=== true` there would read an unanswered column as "this study does not
+   * run under an IND" — a claim nobody made, and the one a board would be
+   * misled by.
+   *
+   * This was the state of EVERY submission before that migration, and it is
+   * still the state of every submission nobody has answered.
    */
   it('leaves the flag-gated requirements undetermined, with a settling field named', async () => {
     const irbId = await seedIrb({ submissionId: 500 });
@@ -172,17 +210,146 @@ describe('what the submission does not record stays undecided', () => {
     const out = await getPackageManifest(ORG, irbId);
     const undecided = out.manifest.rows.filter((r) => r.requirement === 'undetermined');
 
-    expect(undecided.map((r) => r.slot).sort()).toEqual([
-      'irb.assent',
-      'irb.financial-disclosure',
-      'irb.form-1572',
-      'irb.hipaa-authorization',
-      'irb.recruitment-material',
-    ]);
+    expect(undecided.map((r) => r.slot).sort()).toEqual([...GATED_SLOTS]);
     for (const r of undecided) expect(r.settledBy).toBeTruthy();
     expect(out.manifest.counts.undetermined).toBe(5);
   });
 
+  it('leaves a fact still absent undetermined even when its neighbours are answered', async () => {
+    /* The partial answer is the realistic case and the one a coercing reader
+       gets wrong most quietly: three facts recorded, one not. */
+    const irbId = await seedIrb({ submissionId: 500, involvesChildren: false, isIndStudy: true, usesPhi: true });
+
+    const out = await getPackageManifest(ORG, irbId);
+    const undecided = out.manifest.rows.filter((r) => r.requirement === 'undetermined');
+
+    expect(undecided.map((r) => r.slot)).toEqual(['irb.recruitment-material']);
+    expect(undecided[0]?.settledBy).toBe('usesRecruitmentMaterial');
+  });
+});
+
+describe('a RECORDED fact decides the requirement', () => {
+  it('recorded true makes each gated slot conditional-required', async () => {
+    const irbId = await seedIrb({ submissionId: 500, ...ALL_RECORDED_TRUE });
+
+    const out = await getPackageManifest(ORG, irbId);
+
+    for (const slot of GATED_SLOTS) {
+      const row = out.manifest.rows.find((r) => r.slot === slot);
+      expect(row?.requirement, slot).toBe('conditional');
+      expect(row?.settledBy, slot).toBeUndefined();
+    }
+    expect(out.manifest.counts.undetermined).toBe(0);
+    expect(out.manifest.counts.conditional).toBeGreaterThanOrEqual(5);
+  });
+
+  it('recorded false decides it the other way — not_required, not undetermined', async () => {
+    const irbId = await seedIrb({
+      submissionId: 500,
+      involvesChildren: false,
+      isIndStudy: false,
+      usesPhi: false,
+      usesRecruitmentMaterial: false,
+    });
+
+    const out = await getPackageManifest(ORG, irbId);
+
+    for (const slot of GATED_SLOTS) {
+      const row = out.manifest.rows.find((r) => r.slot === slot);
+      expect(row?.requirement, slot).toBe('not_required');
+      /* The basis must cite the RECORD, not the absence of one. */
+      expect(row?.basis, slot).toMatch(/This submission records/);
+      expect(row?.basis, slot).not.toMatch(/could not be decided/);
+    }
+    expect(out.manifest.counts.undetermined).toBe(0);
+  });
+
+  it('a false and a true on the same submission are two different answers', async () => {
+    const irbId = await seedIrb({
+      submissionId: 500,
+      involvesChildren: true,
+      isIndStudy: false,
+      usesPhi: true,
+      usesRecruitmentMaterial: false,
+    });
+
+    const out = await getPackageManifest(ORG, irbId);
+    const req = (slot: string) => out.manifest.rows.find((r) => r.slot === slot)?.requirement;
+
+    expect(req('irb.assent')).toBe('conditional');
+    expect(req('irb.form-1572')).toBe('not_required');
+    expect(req('irb.financial-disclosure')).toBe('not_required');
+    expect(req('irb.hipaa-authorization')).toBe('conditional');
+    expect(req('irb.recruitment-material')).toBe('not_required');
+  });
+});
+
+describe('readyToAssemble is reachable', () => {
+  /*
+   * Before the context columns existed, NO submission could reach this: five
+   * requirements were undetermined on every row and `readyToAssemble` requires
+   * `counts.undetermined === 0`. A gate nothing can pass tells a sponsor
+   * nothing. These two tests are the proof that the ceiling is gone — and the
+   * one after them is the proof that the ceiling was load-bearing, not
+   * removed.
+   */
+  async function everySlotPlaced(irbId: number, submissionId: number): Promise<void> {
+    const seq = await seedSequence(submissionId);
+    const out = await getPackageManifest(ORG, irbId);
+    for (const row of out.manifest.rows) {
+      if (row.requirement === 'required' || row.requirement === 'conditional') await seedLeaf(seq, row.slot);
+    }
+  }
+
+  it('reaches true with every fact recorded and every demanded slot placed', async () => {
+    const irbId = await seedIrb({ submissionId: 500, riskLevel: 'greater_than_minimal', ...ALL_RECORDED_TRUE });
+    await everySlotPlaced(irbId, 500);
+
+    const out = await getPackageManifest(ORG, irbId);
+
+    expect(out.manifest.counts.undetermined).toBe(0);
+    expect(out.manifest.counts.unresolvable).toBe(0);
+    expect(out.manifest.counts.required).toBe(out.manifest.counts.requiredSatisfied);
+    expect(out.manifest.counts.conditional).toBe(out.manifest.counts.conditionalSatisfied);
+    expect(out.manifest.readyToAssemble).toBe(true);
+  });
+
+  it('reaches true on a recorded-false package WITHOUT the slots that false excused', async () => {
+    const irbId = await seedIrb({
+      submissionId: 500,
+      riskLevel: 'minimal',
+      involvesChildren: false,
+      isIndStudy: false,
+      usesPhi: false,
+      usesRecruitmentMaterial: false,
+    });
+    await everySlotPlaced(irbId, 500);
+
+    const out = await getPackageManifest(ORG, irbId);
+    const placedSlots = out.manifest.rows.filter((r) => r.placed.length > 0).map((r) => r.slot);
+
+    expect(out.manifest.readyToAssemble).toBe(true);
+    /* The recorded "no" genuinely took them out of the package, rather than
+       being satisfied by a document quietly placed at them anyway. */
+    for (const slot of GATED_SLOTS) expect(placedSlots, slot).not.toContain(slot);
+  });
+
+  it('is blocked again by a single fact going back to NOT RECORDED', async () => {
+    /* The retraction case, and the fail-first proof for the two above: the
+       ONLY difference from the first test is one column set back to NULL. */
+    const irbId = await seedIrb({ submissionId: 500, riskLevel: 'greater_than_minimal', ...ALL_RECORDED_TRUE });
+    await everySlotPlaced(irbId, 500);
+    expect((await getPackageManifest(ORG, irbId)).manifest.readyToAssemble).toBe(true);
+
+    await pool.query(`UPDATE irb_submissions SET is_ind_study = NULL WHERE id = $1`, [irbId]);
+
+    const out = await getPackageManifest(ORG, irbId);
+    expect(out.manifest.counts.undetermined).toBe(2); // the 1572 and the financial disclosure
+    expect(out.manifest.readyToAssemble).toBe(false);
+  });
+});
+
+describe('the rest of the recorded context still carries through', () => {
   it('carries the recorded risk level through, so the monitoring plan IS decided', async () => {
     const irbId = await seedIrb({ submissionId: 500, riskLevel: 'greater_than_minimal' });
 
