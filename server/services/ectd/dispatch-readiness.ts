@@ -249,6 +249,18 @@ function resolutionFindings(leaf: ReadinessLeaf, isDelete: boolean): ReadinessFi
         `${resolution.reason ? ` — ${resolution.reason}` : ''}. Re-file the leaf against the current document, or restore the filed content, before dispatch.`,
     });
   }
+  // 2026-09-22 (W5/D7): a resolved leaf with no pin used to produce nothing,
+  // so "content not verified" read exactly like "content matches".
+  if (!isDelete && resolution.status === 'resolved' && resolution.pin === 'unpinned') {
+    out.push({
+      severity: 'warning',
+      code: 'DOCUMENT_CONTENT_NOT_PINNED',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, but no content hash was pinned when it was placed, ` +
+        'so whether the document still holds what was placed cannot be verified. Re-place the leaf to pin its content.',
+    });
+  }
   return out;
 }
 

@@ -318,6 +318,15 @@ describe('resolver verdicts become findings', () => {
   it('a resolved leaf whose pin matches carries no error', () => {
     const r = computeDispatchReadiness([vaultLeaf(resolution({}))]);
     expect(r.errors).toBe(0);
+    expect(r.findings.some(f => f.code === 'DOCUMENT_CONTENT_NOT_PINNED')).toBe(false);
+  });
+
+  it('an unpinned leaf says its content was not verified, rather than reading like a match (2026-09-22 W5/D7)', () => {
+    const r = computeDispatchReadiness([vaultLeaf(resolution({ pin: 'unpinned', pinnedSha256: null }))]);
+    const w = r.findings.filter(f => f.code === 'DOCUMENT_CONTENT_NOT_PINNED');
+    expect(w).toHaveLength(1);
+    expect(w[0].severity).toBe('warning');
+    expect(r.errors).toBe(0);
   });
 
   it('a pinned hash that differs from the stored document is DOCUMENT_CONTENT_MISMATCH — its own code, never silently passed', () => {

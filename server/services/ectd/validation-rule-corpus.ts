@@ -203,6 +203,20 @@ export const RULE_CORPUS: ValidationRule[] = [
     findingCode: 'LIFECYCLE_BINDING_NOT_ASSESSED',
   },
   {
+    // 2026-09-22 (W5/D7).
+    id: 'DOCUMENT_CONTENT_NOT_PINNED',
+    title: 'A placed leaf carries a pin of its source content',
+    category: 'integrity',
+    regions: ['ich'],
+    severity: 'medium',
+    rationale:
+      'Without a content pin taken at placement, the platform cannot say whether the document behind a leaf still holds what was placed. ' +
+      'This is reported as not verified rather than passed as matching.',
+    source: ICH_SPEC,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'DOCUMENT_CONTENT_NOT_PINNED',
+  },
+  {
     id: 'LIFECYCLE_TARGET_EXISTS',
     title: 'replace/append/delete reference an existing prior leaf',
     category: 'lifecycle',
