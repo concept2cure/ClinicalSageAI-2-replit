@@ -136,6 +136,9 @@ export function DocumentCanvas({
   const expandBtnRef = useRef<HTMLButtonElement>(null);
   const backBtnRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
+  /* The expanded region's id, so the control that opens it can say what it
+     controls (`aria-controls`) rather than only that it is expanded. */
+  const expandedId = useId();
 
   const load = useCallback(async () => {
     setState('loading');
@@ -172,33 +175,56 @@ export function DocumentCanvas({
     void load();
   }, [load]);
 
-  /* Escape collapses, from anywhere inside the expanded canvas that does not
-     own the key itself; focus returns to the header control that expands. */
+  /* Escape collapses, from anywhere the key is not already owned by something
+     inside; focus returns to the header control that expands.
+
+     The listener is on the DOCUMENT, not on the canvas element. Bound to the
+     element it only ever saw a keydown that bubbled from a descendant, so
+     Escape worked while a control inside the editor held focus and did
+     nothing the moment focus was on the body — which is where focus sits
+     after a click on any non-focusable chrome. The way out of a region that
+     fills the conversation was then the mouse alone. Only the expanded canvas
+     binds it (`expanded` gates the effect) and the thread expands one at a
+     time, so two canvases never both answer the key. */
   useEffect(() => {
     if (!expanded) return undefined;
-    const el = rootRef.current;
-    if (!el) return undefined;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented) return;
       if (escapeBelongsToInner(e.target)) return;
+      /* An open modal owns Escape wherever focus happens to be — closing the
+         canvas underneath it would leave the dialog over a collapsed card. */
+      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
       e.preventDefault();
       onExpandedChange(false);
     };
-    el.addEventListener('keydown', onKey);
-    return () => el.removeEventListener('keydown', onKey);
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
   }, [expanded, onExpandedChange]);
 
+  useEffect(() => {
+    if (expanded && !workbenchMounted) setWorkbenchMounted(true);
+  }, [expanded, workbenchMounted]);
+
+  /* Focus follows the region. Opening moves it to the first control of what
+     opened — the way back — and closing returns it to the control that
+     opened it, so the keyboard never lands on a region that is now hidden.
+
+     On the FIRST expand the bar does not exist yet: the workbench mounts in
+     the render after `expanded` flips, so a focus call made on that first
+     pass reached a null ref and did nothing at all. The effect therefore
+     waits for the control, rather than firing once into an empty ref. */
   const wasExpanded = useRef(expanded);
   useEffect(() => {
     if (expanded) {
-      setWorkbenchMounted(true);
-      /* Into the expanded region: the first control is the way back. */
-      backBtnRef.current?.focus({ preventScroll: true });
-    } else if (wasExpanded.current) {
-      expandBtnRef.current?.focus({ preventScroll: true });
+      const back = backBtnRef.current;
+      if (!back) return;
+      if (!wasExpanded.current) back.focus({ preventScroll: true });
+      wasExpanded.current = true;
+      return;
     }
-    wasExpanded.current = expanded;
-  }, [expanded]);
+    if (wasExpanded.current) expandBtnRef.current?.focus({ preventScroll: true });
+    wasExpanded.current = false;
+  }, [expanded, workbenchMounted, doc]);
 
   const provenance: DocumentProvenance | null = doc
     ? describeProvenance(doc.provenance, { inThisConversation: fromThisConversation })
@@ -237,31 +263,31 @@ export function DocumentCanvas({
   return (
     <section
       ref={rootRef}
-      className="dc"
+      className="dcv"
       data-expanded={expanded || undefined}
       aria-labelledby={titleId}
       data-testid="document-canvas"
       data-doc-id={docId}
     >
       {/* ── The card ── */}
-      <div className="dc-card" hidden={expanded}>
-        <div className="dc-head">
-          <div className="dc-kind">
+      <div className="dcv-card" hidden={expanded}>
+        <div className="dcv-head">
+          <div className="dcv-kind">
             {I.fileText} Document{doc?.module ? ` · ${doc.module}` : ''}{doc?.status ? ` · ${String(doc.status).replace(/_/g, ' ').toLowerCase()}` : ''}
           </div>
-          <h3 className="dc-title" id={titleId}>{title}</h3>
-          <div className="dc-meta">
+          <h3 className="dcv-title" id={titleId}>{title}</h3>
+          <div className="dcv-meta">
             {programId ? (
-              <span className="dc-project">{I.folder} {programLine ?? 'Reading the program…'}</span>
+              <span className="dcv-project">{I.folder} {programLine ?? 'Reading the program…'}</span>
             ) : (
-              <span className="dc-project dc-project-none" data-testid="dc-no-program">{I.folder} Not filed under a program</span>
+              <span className="dcv-project dcv-project-none" data-testid="dc-no-program">{I.folder} Not filed under a program</span>
             )}
             {state === 'ready' && (
               <span>{sectionCount} section{sectionCount === 1 ? '' : 's'}</span>
             )}
           </div>
           {provenance && (
-            <div className="dc-prov" data-source={provenance.source} data-testid="dc-provenance">{provenance.line}</div>
+            <div className="dcv-prov" data-source={provenance.source} data-testid="dc-provenance">{provenance.line}</div>
           )}
         </div>
 
@@ -277,47 +303,52 @@ export function DocumentCanvas({
             testId="dc-error"
           />
         ) : sections.length === 0 ? (
-          <p className="dc-empty">This document has no sections yet. Open the full editor to add one, or ask AnA to draft the sections.</p>
+          <p className="dcv-empty">This document has no sections yet. Open the full editor to add one, or ask AnA to draft the sections.</p>
         ) : (
-          <div className="dc-body">
+          <div className="dcv-body">
             {shown.map(sec => (
-              <article key={sec.id} className="dc-sec" aria-label={`${sec.code} ${sec.title}`}>
-                <div className="dc-sec-h">
-                  <span className="dc-sec-num">{sec.code}</span>
-                  <span className="dc-sec-t">{sec.title}</span>
+              <article key={sec.id} className="dcv-sec" aria-label={`${sec.code} ${sec.title}`}>
+                <div className="dcv-sec-h">
+                  <span className="dcv-sec-num">{sec.code}</span>
+                  <span className="dcv-sec-t">{sec.title}</span>
                 </div>
                 {(sec.content ?? '').trim() ? (
-                  <AuthoredHtml className="dc-sec-body ed-full-sec-body" html={sec.content ?? ''} />
+                  <AuthoredHtml className="dcv-sec-body ed-full-sec-body" html={sec.content ?? ''} />
                 ) : (
-                  <p className="dc-sec-empty">Not drafted yet.</p>
+                  <p className="dcv-sec-empty">Not drafted yet.</p>
                 )}
               </article>
             ))}
             {sections.length > 1 && (
-              <button type="button" className="nda-open dc-showall" onClick={() => setShowAll(v => !v)} aria-expanded={showAll}>
+              <button type="button" className="nda-open dcv-showall" onClick={() => setShowAll(v => !v)} aria-expanded={showAll}>
                 {showAll ? `Show the first section only` : `Show all ${sections.length} sections`}
               </button>
             )}
           </div>
         )}
 
-        <div className="dc-actions">
+        <div className="dcv-actions">
+          {/* No inline heights on these four. `height: 30` beat every
+              stylesheet rule, including the 44px minimum a phone needs, and a
+              declaration a stylesheet cannot reach is a declaration no
+              breakpoint can correct. The size is `.dcv-actions .btn` in
+              authoring-v2.css, which raises it at phone width. */}
           <button
             ref={expandBtnRef}
             type="button"
             className="btn primary"
-            style={{ height: 30 }}
             onClick={() => onExpandedChange(true)}
             disabled={state !== 'ready'}
             aria-expanded={expanded}
+            aria-controls={expandedId}
             data-testid="dc-open-editor"
           >
             {I.maximize} Open full editor
           </button>
-          <button type="button" className="btn ghost" style={{ height: 30 }} onClick={() => setFileToVaultOpen(true)} disabled={state !== 'ready'} data-testid="dc-file-to-vault">
+          <button type="button" className="btn ghost" onClick={() => setFileToVaultOpen(true)} disabled={state !== 'ready'} data-testid="dc-file-to-vault">
             {I.vault} File to vault
           </button>
-          <button type="button" className="btn ghost" style={{ height: 30 }} onClick={() => setAssignReviewOpen(true)} disabled={state !== 'ready'} data-testid="dc-assign-review">
+          <button type="button" className="btn ghost" onClick={() => setAssignReviewOpen(true)} disabled={state !== 'ready'} data-testid="dc-assign-review">
             {I.user} Assign review
           </button>
           {doc && (
@@ -330,7 +361,7 @@ export function DocumentCanvas({
               fireToast={fireToast}
             />
           )}
-          <button type="button" className="nda-open dc-open-surface" onClick={openInAuthoring} title="Open this document on the Authoring surface" data-testid="dc-edit-in-authoring">
+          <button type="button" className="nda-open dcv-open-surface" onClick={openInAuthoring} title="Open this document on the Authoring surface" data-testid="dc-edit-in-authoring">
             {I.penLine} Edit in Authoring
           </button>
         </div>
@@ -338,16 +369,20 @@ export function DocumentCanvas({
 
       {/* ── The editor, in place ── */}
       {workbenchMounted && doc && (
-        <div className="dc-expanded" hidden={!expanded} data-testid="dc-expanded">
-          <div className="dc-bar">
+        <div className="dcv-expanded" id={expandedId} hidden={!expanded} data-testid="dc-expanded">
+          <div className="dcv-bar">
             <button ref={backBtnRef} type="button" className="ed-back" onClick={() => onExpandedChange(false)} data-testid="dc-back">
               {I.left} Back to conversation
             </button>
-            <span className="dc-bar-t" title={doc.title}>{doc.title}</span>
-            {programLine && <span className="dc-bar-p">{programLine}</span>}
-            <span className="dc-bar-hint" aria-hidden="true">Esc</span>
+            <span className="dcv-bar-t" title={doc.title}>{doc.title}</span>
+            {programLine && <span className="dcv-bar-p">{programLine}</span>}
+            <span className="dcv-bar-hint" aria-hidden="true">Esc</span>
           </div>
-          <div className="dc-workbench">
+          <div className="dcv-workbench">
+            {/* `hostShowsBack`: the bar above already carries "Back to
+                conversation" and the Esc hint, so the workbench must not draw
+                a second one into its crumb trail — it did, 75px below this
+                one and overprinting the crumbs beside it. */}
             <DocumentWorkbench
               onNav={onNav}
               liveDrive={liveDrive}
@@ -357,7 +392,7 @@ export function DocumentCanvas({
               reloadDocs={reloadDoc}
               programId={programId}
               pinnedDocId={doc.id}
-              embedded={{ onBack: () => onExpandedChange(false) }}
+              embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true }}
               surfaceActionId={null}
               consumeDeepLinks={false}
               onAsk={onAsk}

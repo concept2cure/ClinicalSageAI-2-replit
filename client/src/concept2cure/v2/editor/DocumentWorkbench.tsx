@@ -543,8 +543,12 @@ export interface DocumentWorkbenchProps {
    *  and no document switch is offered. */
   pinnedDocId?: string | null;
   /** Mounted inside a conversation: draws "Back to conversation", hides the
-   *  workbench's own AnA pane (the thread's composer is the conversation). */
-  embedded?: { onBack: () => void; backLabel?: string } | null;
+   *  workbench's own AnA pane (the thread's composer is the conversation).
+   *  `hostShowsBack` when the host's own chrome already carries the way back —
+   *  the document canvas's bar does — so this component does not draw a
+   *  second one into its crumb trail. `onBack` is still the one callback the
+   *  way back runs, whoever draws the control. */
+  embedded?: { onBack: () => void; backLabel?: string; hostShowsBack?: boolean } | null;
   /** Surface-action bus id to register under, or null to register nothing —
    *  the canvas must not claim the bus while ConversationThread is on. */
   surfaceActionId?: string | null;
@@ -3251,7 +3255,7 @@ export function DocumentWorkbench({
       <section className="ed-doc">
         <header className="ed-doc-h">
           <div className="ed-crumbs">
-            {(embedded || returnTo) && (
+            {((embedded && !embedded.hostShowsBack) || (!embedded && returnTo)) && (
               <button
                 type="button"
                 className="ed-back"

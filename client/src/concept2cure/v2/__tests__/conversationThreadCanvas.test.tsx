@@ -151,7 +151,7 @@ describe('ConversationThread — the document canvas', () => {
     await screen.findByTestId('dc-expanded');
     await vi.waitFor(() => expect(document.querySelector('.ct-wrap')?.getAttribute('data-canvas-expanded')).toBe('true'));
     expect(document.querySelector('.ct-side')).toBeNull();
-    expect(document.querySelector('.dc-workbench .ed')).not.toBeNull();
+    expect(document.querySelector('.dcv-workbench .ed')).not.toBeNull();
     // The composer is still there, below.
     expect(screen.getByLabelText('Reply to AnA')).toBeTruthy();
   });
