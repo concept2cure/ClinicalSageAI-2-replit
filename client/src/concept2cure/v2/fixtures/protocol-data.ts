@@ -108,6 +108,37 @@ export interface PdevDoc {
   completenessFindings: SevText[];
   /** The bound study design and the design gates' findings, or null. */
   studyDesign: PdevStudyDesign | null;
+  /**
+   * Deterministic regulatory findings from `protocol-rule-pack.ts` — one per
+   * rule, each citing its clause. This is depth alongside `completenessFindings`
+   * (the five checks the finalize gate enforces), not a replacement for it.
+   *
+   * `notAssessed` is a first-class count, not a rounding error: a rule the
+   * protocol does not record enough to decide is reported as not-assessed and
+   * is NEVER folded into `assessed`. A percentage over rules that did not run
+   * is the defect this platform has already been burned by.
+   */
+  ruleFindings: PdevRuleFindings;
+}
+
+export interface PdevRuleFinding {
+  ruleId: string;
+  standard: string;
+  clause: string;
+  title: string;
+  status: 'met' | 'unmet' | 'attention' | 'not-assessed';
+  sev: 'critical' | 'warning' | 'info';
+  message: string;
+  remediation: string;
+}
+
+export interface PdevRuleFindings {
+  findings: PdevRuleFinding[];
+  /** Rules that reached a verdict. */
+  assessed: number;
+  unmet: number;
+  /** Rules that could not be decided from what the protocol records. */
+  notAssessed: number;
 }
 
 

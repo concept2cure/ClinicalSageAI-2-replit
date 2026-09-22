@@ -142,4 +142,46 @@ describe('assembleOrgPdevDocs', () => {
     await pglite.query(`UPDATE protocol_documents SET deleted_at = now() WHERE id = $1`, [id]);
     expect(await assembleOrgPdevDocs(ORG)).toEqual([]);
   });
+
+  /* The 53-rule regulatory evaluation, carried on the same read the surface
+     already makes. The counts are the point: not-assessed is its own number
+     and is never folded into assessed, because a protocol that has not been
+     checked against a clause is not a protocol that passes it. */
+  it('carries the regulatory rule findings, with not-assessed counted separately', async () => {
+    await seedFullProtocol(ORG);
+
+    const [doc] = await assembleOrgPdevDocs(ORG);
+    const rf = doc.ruleFindings as {
+      findings: Array<{ ruleId: string; standard: string; clause: string; status: string }>;
+      assessed: number; unmet: number; notAssessed: number;
+    };
+
+    expect(rf.findings.length).toBeGreaterThan(0);
+    expect(rf.assessed + rf.notAssessed).toBe(rf.findings.length);
+    expect(rf.notAssessed).toBeGreaterThan(0);
+    for (const f of rf.findings) {
+      expect(f.standard).toBeTruthy();
+      expect(f.clause).toBeTruthy();
+    }
+  });
+
+  it('leaves the vulnerable-population rules not-assessed, because no register records them', async () => {
+    await seedFullProtocol(ORG);
+
+    const [doc] = await assembleOrgPdevDocs(ORG);
+    const rf = doc.ruleFindings as { findings: Array<{ ruleId: string; clause: string; status: string; message: string }> };
+    // `standard` is '45 CFR 46'; the subpart lives in the clause, so the rule
+    // ids are what identifies them.
+    const subparts = rf.findings.filter((f) => f.ruleId.startsWith('hhs-subpart-'));
+
+    expect(subparts.map((f) => f.ruleId).sort()).toEqual([
+      'hhs-subpart-b-pregnant-women',
+      'hhs-subpart-c-prisoners',
+      'hhs-subpart-d-children-assent-permission',
+      'hhs-subpart-d-children-risk-category',
+    ]);
+    // Not 'met'. Nobody recorded that this study excludes children; passing
+    // `false` for an unrecorded flag would manufacture that claim.
+    for (const f of subparts) expect(f.status).toBe('not-assessed');
+  });
 });

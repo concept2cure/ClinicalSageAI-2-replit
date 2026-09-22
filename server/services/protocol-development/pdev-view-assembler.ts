@@ -14,6 +14,7 @@
  */
 import { pool } from '../../db';
 import { evaluateCompleteness, type SectionView } from './protocol-development-logic';
+import { evaluateProtocolRules, type ProtocolRuleInput } from './protocol-rule-pack';
 import { buildSoaMatrix, validateSoa } from '../protocol-soa/protocol-soa-logic';
 import { computeProtocolBudget } from '../protocol-budget/protocol-budget-logic';
 import { rowsToStudyDesign } from '../study-design/study-design-repository';
@@ -393,6 +394,65 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
   const capaByDev = groupBy(capa.rows, (r) => r.deviation_id);
   const commentsByAssignment = groupBy(reviewComments.rows, (r) => r.protocol_document_id);
 
+/**
+ * The 53-rule regulatory evaluation for one protocol.
+ *
+ * Note what is NOT passed: the vulnerable-population flags, the IND flag and
+ * the target regions. No protocol register records any of them, so they are
+ * left absent and the rule pack reports those rules as not-assessed. Passing
+ * `false` would read as "this protocol does not enrol children", which is a
+ * claim nobody made, and it is the claim a regulator would hold the sponsor
+ * to. An unrecorded flag is not a record of absence.
+ */
+interface RuleInputRows {
+  kind: string;
+  phase: unknown;
+  designType: unknown;
+  sections: Record<string, unknown>[];
+  objectives: Record<string, unknown>[];
+  eligibility: Record<string, unknown>[];
+  visitCount: number;
+}
+
+function ruleFindingsFor(rows: RuleInputRows) {
+  const { kind, phase, designType, sections: secs, objectives, eligibility, visitCount } = rows;
+  const input: ProtocolRuleInput = {
+    kind: kind as ProtocolRuleInput['kind'],
+    sections: secs.map((s) => {
+      const content = s.content == null ? '' : String(s.content);
+      return {
+        sectionKey: str(s.section_key),
+        title: str(s.title),
+        required: bool(s.required),
+        status: str(s.status) as SectionView['status'],
+        contentLength: content.length,
+        hasContent: content.trim().length > 0,
+      };
+    }),
+    objectives: objectives.map((o) => ({
+      objectiveType: str(o.objective_type),
+      objective: str(o.objective),
+      endpoint: o.endpoint == null ? null : String(o.endpoint),
+      timepoint: o.timepoint == null ? null : String(o.timepoint),
+    })),
+    inclusion: eligibility.filter((e) => e.kind === 'inclusion').map((e) => str(e.criterion)),
+    exclusion: eligibility.filter((e) => e.kind === 'exclusion').map((e) => str(e.criterion)),
+    scheduleVisitCount: visitCount,
+    phase: phase == null ? null : String(phase),
+    designType: designType == null ? null : String(designType),
+  };
+  const out = evaluateProtocolRules(input);
+  return {
+    findings: out.findings.map((f) => ({
+      ruleId: f.ruleId, standard: f.standard, clause: f.clause, title: f.title,
+      status: f.status, sev: f.severity, message: f.message, remediation: f.remediation,
+    })),
+    assessed: out.assessed,
+    unmet: out.unmet,
+    notAssessed: out.notAssessed,
+  };
+}
+
   const g = (m: Map<string, Record<string, unknown>[]>, id: number) => m.get(str(id)) ?? [];
 
   return docs.map((d) => {
@@ -490,6 +550,13 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
         ? { id: str(latestConsentForm.id), title: str(latestConsentForm.title), version: str(latestConsentForm.version), status: str(latestConsentForm.status), formsLinked: g(byDoc.consentForms, id).length }
         : null,
       completenessFindings: findings.map((f) => ({ sev: str((f as { severity?: unknown }).severity), text: str((f as { message?: unknown }).message) })),
+      ruleFindings: ruleFindingsFor({
+        kind: str(d.protocol_kind), phase: d.phase, designType: d.design_type,
+        sections: secs,
+        objectives: g(byDoc.objectives, id),
+        eligibility: g(byDoc.eligibility, id),
+        visitCount: g(byDoc.visits, id).length,
+      }),
       studyDesign,
     };
   });
