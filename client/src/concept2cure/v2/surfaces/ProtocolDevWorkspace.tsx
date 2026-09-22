@@ -28,6 +28,8 @@ import { BudgetTab, RiskTab } from './ProtocolDevRegisters';
 import { ConsentTab, ReviewsTab } from './ProtocolDevReviews';
 import { StudyDesignStatisticsTab } from './biostatBridge';
 import { StudyDesignTab } from './ProtocolDevDesign';
+import { DerivationTab } from './ProtocolDevDerivation';
+import { ComplianceTab } from './ProtocolDevCompliance';
 
 const Ic = PG.Ic;
 type Row = Record<string, unknown>;
@@ -43,6 +45,13 @@ export const TABS = [
   // design gates' findings, and the five projections the spine produces
   // (docs/design/PROTOCOL_DESIGN_CONVERGENCE.md steps 1 and 2).
   { id: 'study-design', label: 'Study design', icon: 'network' },
+  // The other direction of the same spine: what THIS protocol evidences about
+  // the design, as a reviewed field-level diff the human applies path by path
+  // (docs/design/PROTOCOL_INTELLIGENCE.md, direction two).
+  { id: 'derivation', label: 'Design derivation', icon: 'gitCompare' },
+  // The deterministic rule pack's findings on this document — depth alongside
+  // the five-check finalize gate (same document, direction three).
+  { id: 'compliance', label: 'Compliance', icon: 'scale' },
   // The protocol's statistics live on its study design (the design-as-data
   // spine), read through the biostatistics bridge; the tab links into the
   // designer with the design pre-loaded instead of retyped.
@@ -230,6 +239,9 @@ function TabBody(props: BodyProps) {
     case 'soa': return <SoaTab doc={doc} canWrite={canWrite} onError={onError} onEdit={onEdit} />;
     case 'study-design':
       return <StudyDesignTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} />;
+    case 'derivation':
+      return <DerivationTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} />;
+    case 'compliance': return <ComplianceTab doc={doc} />;
     case 'statistics': return <StudyDesignStatisticsTab onNav={onNav} />;
     default:
       return sec
