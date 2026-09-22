@@ -19,7 +19,7 @@ const pool = {
 };
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
 
-import { assembleOrgPdevDocs } from '../pdev-view-assembler';
+import { assembleOrgPdevDocs, assembleOnePdevDocFacets } from '../pdev-view-assembler';
 
 const ORG = 7;
 const OTHER = 9;
@@ -163,6 +163,30 @@ describe('assembleOrgPdevDocs', () => {
       expect(f.standard).toBeTruthy();
       expect(f.clause).toBeTruthy();
     }
+  });
+
+  /* The narrow reader exists so AnA can answer about ONE protocol without
+     reading every protocol the tenant has. Its whole value depends on it
+     agreeing with the page assembly exactly -- two readers of the same engine
+     that disagree is how a surface and an assistant start quoting different
+     numbers at the same person. So the test is equality, not plausibility. */
+  it('the one-document reader returns byte-identical rule findings to the page assembly', async () => {
+    const id = await seedFullProtocol(ORG);
+
+    const [doc] = await assembleOrgPdevDocs(ORG);
+    const one = await assembleOnePdevDocFacets(ORG, id);
+
+    expect(one).not.toBeNull();
+    expect(JSON.stringify(one!.ruleFindings)).toBe(JSON.stringify(doc.ruleFindings));
+    expect(JSON.stringify(one!.studyDesign)).toBe(JSON.stringify(doc.studyDesign));
+    expect(one!.kind).toBe(doc.kind);
+  });
+
+  it('the one-document reader returns null for a protocol this organization does not have', async () => {
+    const id = await seedFullProtocol(ORG);
+
+    expect(await assembleOnePdevDocFacets(OTHER, id)).toBeNull();
+    expect(await assembleOnePdevDocFacets(ORG, id + 9999)).toBeNull();
   });
 
   it('leaves the vulnerable-population rules not-assessed, because no register records them', async () => {

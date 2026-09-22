@@ -66,8 +66,14 @@ const readDerivation = vi.fn();
 const applyDerivationTx = vi.fn();
 vi.mock('../../protocol-development/design-derivation-service', () => ({ readDerivation, applyDerivationTx }));
 
-const assembleOrgPdevDocs = vi.fn();
-vi.mock('../../protocol-development/pdev-view-assembler', () => ({ assembleOrgPdevDocs }));
+/* The two review tools read ONE protocol through assembleOnePdevDocFacets,
+   which calls the same ruleFindingsFor and loadBoundDesigns the page assembly
+   calls. They previously reached through assembleOrgPdevDocs and filtered,
+   which read the whole tenant to answer about one document. `null` means the
+   protocol does not exist for this organization — distinct from a protocol
+   that exists and has nothing bound. */
+const assembleOnePdevDocFacets = vi.fn();
+vi.mock('../../protocol-development/pdev-view-assembler', () => ({ assembleOnePdevDocFacets }));
 
 import { getToolHandler } from '../AnaToolExecutor';
 import { PROTOCOL_DESIGN_TOOLS } from '../protocol-design-tool-defs';
@@ -110,7 +116,7 @@ beforeEach(() => {
   bindStudyDesignTx.mockResolvedValue({ studyDesignId: 'SD-1', title: 'A Phase 2 study' });
   readDerivation.mockResolvedValue({ documentId: 5, studyDesignId: 'SD-1', derivation: EMPTY_DERIVATION });
   applyDerivationTx.mockResolvedValue({ studyDesignId: 'SD-1', applied: [], rejected: [], derivation: EMPTY_DERIVATION });
-  assembleOrgPdevDocs.mockResolvedValue([]);
+  assembleOnePdevDocFacets.mockResolvedValue(null);
 });
 
 // ─── Registration ────────────────────────────────────────────────────────────
@@ -334,9 +340,9 @@ describe('apply_protocol_design_derivation', () => {
 
 describe('review_protocol_regulatory_rules', () => {
   it('returns the rule pack findings and the three counts verbatim', async () => {
-    assembleOrgPdevDocs.mockResolvedValueOnce([
-      { id: '5', title: 'P', ruleFindings: { findings: [{ ruleId: 'M11-1', status: 'unmet' }, { ruleId: 'E9-2', status: 'not-assessed' }], assessed: 1, unmet: 1, notAssessed: 1 } },
-    ]);
+    assembleOnePdevDocFacets.mockResolvedValueOnce(
+      { kind: 'clinical', ruleFindings: { findings: [{ ruleId: 'M11-1', status: 'unmet' }, { ruleId: 'E9-2', status: 'not-assessed' }], assessed: 1, unmet: 1, notAssessed: 1 }, studyDesign: null },
+    );
     const out = await call('review_protocol_regulatory_rules', { document_id: 5 });
     expect(out.ok).toBe(true);
     expect(out.assessed).toBe(1);
@@ -347,7 +353,8 @@ describe('review_protocol_regulatory_rules', () => {
   });
 
   it('says the protocol was not found rather than returning zero findings', async () => {
-    assembleOrgPdevDocs.mockResolvedValueOnce([{ id: '9', ruleFindings: { findings: [], assessed: 0, unmet: 0, notAssessed: 0 } }]);
+    // The narrow reader returns null for a protocol this org does not have.
+    assembleOnePdevDocFacets.mockResolvedValueOnce(null);
     const out = await call('review_protocol_regulatory_rules', { document_id: 5 });
     expect(out.ok).toBeUndefined();
     expect(out.error).toMatch(/not found/i);
@@ -359,9 +366,9 @@ describe('review_protocol_regulatory_rules', () => {
 
 describe('review_protocol_design_gates', () => {
   it('returns the design gate findings and counts from the validation engine', async () => {
-    assembleOrgPdevDocs.mockResolvedValueOnce([
+    assembleOnePdevDocFacets.mockResolvedValueOnce(
       {
-        id: '5',
+        kind: 'clinical',
         studyDesign: {
           studyId: 'SD-1', resolved: true, title: 'A Phase 2 study', riskLevel: 'medium',
           canAdvance: false, blocksApproval: true,
@@ -370,7 +377,7 @@ describe('review_protocol_design_gates', () => {
           findings: [{ code: 'E9-1', sev: 'critical', title: 'No primary endpoint', text: 'x' }],
         },
       },
-    ]);
+    );
     const out = await call('review_protocol_design_gates', { document_id: 5 });
     expect(out.ok).toBe(true);
     expect(out.studyDesignId).toBe('SD-1');
@@ -381,7 +388,7 @@ describe('review_protocol_design_gates', () => {
   });
 
   it('says no design is bound rather than reporting a clean gate run', async () => {
-    assembleOrgPdevDocs.mockResolvedValueOnce([{ id: '5', studyDesign: null }]);
+    assembleOnePdevDocFacets.mockResolvedValueOnce({ kind: 'clinical', studyDesign: null });
     const out = await call('review_protocol_design_gates', { document_id: 5 });
     expect(out.ok).toBeUndefined();
     expect(out.findings).toBeUndefined();
@@ -390,9 +397,9 @@ describe('review_protocol_design_gates', () => {
   });
 
   it('says the link is unresolved rather than reporting a clean gate run', async () => {
-    assembleOrgPdevDocs.mockResolvedValueOnce([
-      { id: '5', studyDesign: { studyId: 'SD-GONE', resolved: false, counts: { critical: 0, major: 0, minor: 0, info: 0 }, findings: [] } },
-    ]);
+    assembleOnePdevDocFacets.mockResolvedValueOnce(
+      { kind: 'clinical', studyDesign: { studyId: 'SD-GONE', resolved: false, counts: { critical: 0, major: 0, minor: 0, info: 0 }, findings: [] } },
+    );
     const out = await call('review_protocol_design_gates', { document_id: 5 });
     expect(out.ok).toBeUndefined();
     expect(out.findings).toBeUndefined();

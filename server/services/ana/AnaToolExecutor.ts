@@ -20154,20 +20154,19 @@ function pdevToolError(tool: string, err: unknown): string {
  * no such protocol — which the callers report as not-found rather than as an
  * empty finding list.
  *
- * `assembleOrgPdevDocs` is the ONLY exported function that returns a protocol's
- * rule-pack findings and its bound design's gate findings: the per-document
- * builders inside pdev-view-assembler (`ruleFindingsFor`, `loadBoundDesigns`)
- * are module-private. Reaching through the org assembler costs a whole-org read
- * for one document, and that is the trade taken deliberately — the alternative
- * is a second copy of the register queries and the rule-input mapping in this
- * file, which is the duplication the repo's standing rule forbids and the way
- * AnA and the screen start reporting different numbers. Export the per-document
- * builders and this narrows to one document without changing any caller.
+ * These tools first reached through `assembleOrgPdevDocs`, which assembles the
+ * WHOLE ORGANISATION, and filtered to one document — the only exported path at
+ * the time, and a deliberate trade against copying the register queries and the
+ * rule-input mapping into this file. `assembleOnePdevDocFacets` now exists and
+ * does exactly this for one protocol, calling the same `ruleFindingsFor` and
+ * `loadBoundDesigns` the page assembly calls. So AnA's numbers are identical to
+ * the screen's by construction rather than by inspection, and answering about
+ * one protocol no longer reads every protocol the tenant has.
  */
 async function loadAssembledPdevDoc(orgId: number, documentId: number): Promise<Record<string, unknown> | null> {
-  const { assembleOrgPdevDocs } = await import('../protocol-development/pdev-view-assembler.js');
-  const docs = await assembleOrgPdevDocs(orgId);
-  return docs.find((d) => String(d.id) === String(documentId)) ?? null;
+  const { assembleOnePdevDocFacets } = await import('../protocol-development/pdev-view-assembler.js');
+  const facets = await assembleOnePdevDocFacets(orgId, documentId);
+  return facets ? (facets as unknown as Record<string, unknown>) : null;
 }
 
 registerToolHandler('bind_protocol_to_study_design', async (input, ctx) => {

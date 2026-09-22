@@ -291,6 +291,76 @@ async function loadBoundDesigns(
 }
 
 /**
+ * The 53-rule regulatory evaluation for one protocol.
+ *
+ * Note what is NOT passed: the vulnerable-population flags, the IND flag and
+ * the target regions. No protocol register records any of them, so they are
+ * left absent and the rule pack reports those rules as not-assessed. Passing
+ * `false` would read as "this protocol does not enrol children", which is a
+ * claim nobody made, and it is the claim a regulator would hold the sponsor
+ * to. An unrecorded flag is not a record of absence.
+ */
+interface RuleInputRows {
+  kind: string;
+  phase: unknown;
+  designType: unknown;
+  sections: Record<string, unknown>[];
+  objectives: Record<string, unknown>[];
+  eligibility: Record<string, unknown>[];
+  visitCount: number;
+}
+
+/** The rule-pack evaluation as the read model carries it. */
+export interface PdevRuleFindingsView {
+  findings: Array<{
+    ruleId: string; standard: string; clause: string; title: string;
+    status: string; sev: string; message: string; remediation: string;
+  }>;
+  assessed: number;
+  unmet: number;
+  notAssessed: number;
+}
+
+function ruleFindingsFor(rows: RuleInputRows): PdevRuleFindingsView {
+  const { kind, phase, designType, sections: secs, objectives, eligibility, visitCount } = rows;
+  const input: ProtocolRuleInput = {
+    kind: kind as ProtocolRuleInput['kind'],
+    sections: secs.map((s) => {
+      const content = s.content == null ? '' : String(s.content);
+      return {
+        sectionKey: str(s.section_key),
+        title: str(s.title),
+        required: bool(s.required),
+        status: str(s.status) as SectionView['status'],
+        contentLength: content.length,
+        hasContent: content.trim().length > 0,
+      };
+    }),
+    objectives: objectives.map((o) => ({
+      objectiveType: str(o.objective_type),
+      objective: str(o.objective),
+      endpoint: o.endpoint == null ? null : String(o.endpoint),
+      timepoint: o.timepoint == null ? null : String(o.timepoint),
+    })),
+    inclusion: eligibility.filter((e) => e.kind === 'inclusion').map((e) => str(e.criterion)),
+    exclusion: eligibility.filter((e) => e.kind === 'exclusion').map((e) => str(e.criterion)),
+    scheduleVisitCount: visitCount,
+    phase: phase == null ? null : String(phase),
+    designType: designType == null ? null : String(designType),
+  };
+  const out = evaluateProtocolRules(input);
+  return {
+    findings: out.findings.map((f) => ({
+      ruleId: f.ruleId, standard: f.standard, clause: f.clause, title: f.title,
+      status: f.status, sev: f.severity, message: f.message, remediation: f.remediation,
+    })),
+    assessed: out.assessed,
+    unmet: out.unmet,
+    notAssessed: out.notAssessed,
+  };
+}
+
+/**
  * Assemble every in-development protocol for the org, newest first. Returns [] when
  * the org has no real protocols — the surface renders its honest empty state.
  */
@@ -393,65 +463,6 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
   const changesByAmend = groupBy(amendChanges.rows, (r) => r.amendment_id);
   const capaByDev = groupBy(capa.rows, (r) => r.deviation_id);
   const commentsByAssignment = groupBy(reviewComments.rows, (r) => r.protocol_document_id);
-
-/**
- * The 53-rule regulatory evaluation for one protocol.
- *
- * Note what is NOT passed: the vulnerable-population flags, the IND flag and
- * the target regions. No protocol register records any of them, so they are
- * left absent and the rule pack reports those rules as not-assessed. Passing
- * `false` would read as "this protocol does not enrol children", which is a
- * claim nobody made, and it is the claim a regulator would hold the sponsor
- * to. An unrecorded flag is not a record of absence.
- */
-interface RuleInputRows {
-  kind: string;
-  phase: unknown;
-  designType: unknown;
-  sections: Record<string, unknown>[];
-  objectives: Record<string, unknown>[];
-  eligibility: Record<string, unknown>[];
-  visitCount: number;
-}
-
-function ruleFindingsFor(rows: RuleInputRows) {
-  const { kind, phase, designType, sections: secs, objectives, eligibility, visitCount } = rows;
-  const input: ProtocolRuleInput = {
-    kind: kind as ProtocolRuleInput['kind'],
-    sections: secs.map((s) => {
-      const content = s.content == null ? '' : String(s.content);
-      return {
-        sectionKey: str(s.section_key),
-        title: str(s.title),
-        required: bool(s.required),
-        status: str(s.status) as SectionView['status'],
-        contentLength: content.length,
-        hasContent: content.trim().length > 0,
-      };
-    }),
-    objectives: objectives.map((o) => ({
-      objectiveType: str(o.objective_type),
-      objective: str(o.objective),
-      endpoint: o.endpoint == null ? null : String(o.endpoint),
-      timepoint: o.timepoint == null ? null : String(o.timepoint),
-    })),
-    inclusion: eligibility.filter((e) => e.kind === 'inclusion').map((e) => str(e.criterion)),
-    exclusion: eligibility.filter((e) => e.kind === 'exclusion').map((e) => str(e.criterion)),
-    scheduleVisitCount: visitCount,
-    phase: phase == null ? null : String(phase),
-    designType: designType == null ? null : String(designType),
-  };
-  const out = evaluateProtocolRules(input);
-  return {
-    findings: out.findings.map((f) => ({
-      ruleId: f.ruleId, standard: f.standard, clause: f.clause, title: f.title,
-      status: f.status, sev: f.severity, message: f.message, remediation: f.remediation,
-    })),
-    assessed: out.assessed,
-    unmet: out.unmet,
-    notAssessed: out.notAssessed,
-  };
-}
 
   const g = (m: Map<string, Record<string, unknown>[]>, id: number) => m.get(str(id)) ?? [];
 
@@ -560,4 +571,85 @@ function ruleFindingsFor(rows: RuleInputRows) {
       studyDesign,
     };
   });
+}
+
+// ─── One document, for callers that are not rendering the page ───────────────
+
+/**
+ * The two engine-backed facets of a SINGLE protocol: its regulatory rule
+ * findings and its bound design's gate findings.
+ *
+ * `assembleOrgPdevDocs` is built for the surface, which renders every protocol
+ * in the org at once. AnA's `review_protocol_regulatory_rules` and
+ * `review_protocol_design_gates` answer about ONE protocol, and the only
+ * exported path was the whole-org assembly — so they read the entire
+ * organisation and filtered. That worked and was the right call at the time:
+ * the alternative was a second copy of the register queries and the
+ * rule-input mapping inside the tool executor, which is how AnA and the screen
+ * start reporting different numbers from nominally the same engine.
+ *
+ * This narrows it without that duplication. It calls the same `ruleFindingsFor`
+ * and `loadBoundDesigns` the page assembly calls, so the numbers are
+ * identical by construction rather than by inspection.
+ *
+ * Returns null when the protocol does not exist for this organisation. A
+ * protocol with no design bound returns `studyDesign: null`, which is not the
+ * same as an empty finding list and must not be rendered as one.
+ */
+export async function assembleOnePdevDocFacets(
+  orgId: number,
+  docId: number,
+): Promise<{ kind: string; ruleFindings: PdevRuleFindingsView; studyDesign: PdevStudyDesignView | null } | null> {
+  const docRes = await pool.query(
+    `SELECT id, protocol_kind, phase, design_type, study_design_id, study_design_linked_at
+       FROM protocol_documents
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+      LIMIT 1`,
+    [docId, orgId],
+  );
+  if (docRes.rows.length === 0) return null;
+  const d = docRes.rows[0] as Record<string, unknown>;
+
+  const [sections, objectives, eligibility, visits] = await Promise.all([
+    pool.query(
+      `SELECT section_key, title, content, required, status FROM protocol_sections
+        WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+        ORDER BY order_index, id`,
+      [docId, orgId],
+    ),
+    pool.query(
+      `SELECT objective_type, objective, endpoint, timepoint FROM protocol_objectives
+        WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+        ORDER BY order_index, id`,
+      [docId, orgId],
+    ),
+    pool.query(
+      `SELECT kind, criterion FROM protocol_eligibility_criteria
+        WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+        ORDER BY order_index, id`,
+      [docId, orgId],
+    ),
+    pool.query(
+      `SELECT id FROM protocol_schedule_visits
+        WHERE protocol_document_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [docId, orgId],
+    ),
+  ]);
+
+  const studyId = str(d.study_design_id);
+  const bound = await loadBoundDesigns(orgId, studyId ? [studyId] : []);
+
+  return {
+    kind: str(d.protocol_kind),
+    ruleFindings: ruleFindingsFor({
+      kind: str(d.protocol_kind),
+      phase: d.phase,
+      designType: d.design_type,
+      sections: sections.rows as Record<string, unknown>[],
+      objectives: objectives.rows as Record<string, unknown>[],
+      eligibility: eligibility.rows as Record<string, unknown>[],
+      visitCount: visits.rows.length,
+    }),
+    studyDesign: resolveStudyDesign(d, bound),
+  };
 }
