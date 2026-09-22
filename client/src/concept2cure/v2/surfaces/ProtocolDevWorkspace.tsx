@@ -30,6 +30,7 @@ import { StudyDesignStatisticsTab } from './biostatBridge';
 import { StudyDesignTab } from './ProtocolDevDesign';
 import { DerivationTab } from './ProtocolDevDerivation';
 import { ComplianceTab } from './ProtocolDevCompliance';
+import { IrbPackageTab } from './IrbPackage';
 
 const Ic = PG.Ic;
 type Row = Record<string, unknown>;
@@ -52,6 +53,11 @@ export const TABS = [
   // The deterministic rule pack's findings on this document — depth alongside
   // the five-check finalize gate (same document, direction three).
   { id: 'compliance', label: 'Compliance', icon: 'scale' },
+  // The IRB package manifest for the IRB submission carrying this protocol's
+  // number — which artifacts a board expects and which the linked Submission
+  // Center submission carries (docs/design/IRB_SUBMISSION.md step 4). The
+  // capability existed and no client code reached it; this is the reach.
+  { id: 'irb-package', label: 'IRB package', icon: 'layers' },
   // The protocol's statistics live on its study design (the design-as-data
   // spine), read through the biostatistics bridge; the tab links into the
   // designer with the design pre-loaded instead of retyped.
@@ -242,6 +248,7 @@ function TabBody(props: BodyProps) {
     case 'derivation':
       return <DerivationTab doc={doc} canWrite={canWrite} onChanged={onRefresh} onError={onError} onToast={onToast} />;
     case 'compliance': return <ComplianceTab doc={doc} />;
+    case 'irb-package': return <IrbPackageTab doc={doc} />;
     case 'statistics': return <StudyDesignStatisticsTab onNav={onNav} />;
     default:
       return sec
