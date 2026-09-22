@@ -43,19 +43,24 @@ export interface AssignReviewDialogProps {
 }
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
+type Priority = (typeof PRIORITIES)[number];
+type RosterState = 'loading' | 'ready' | 'error';
 
-export function AssignReviewDialog({ docId, docTitle, programId, sectionCode, onClose, onCreated, fireToast }: AssignReviewDialogProps) {
-  const [saving, setSaving] = useState(false);
-  const ref = useDialog(() => {
-    if (!saving) onClose();
-  });
+/** What POST /api/tasks/tasks answers with, as much of it as this dialog reads. */
+type CreatedTaskEnvelope = { success?: boolean; data?: { taskId?: string; assigneeName?: string | null } } | null;
+
+/** The create either produced a server-issued task, or it did not and says why. */
+type AssignOutcome =
+  | { ok: true; taskId: string; assigneeName: string | null }
+  | { ok: false; message: string };
+
+/**
+ * Reads the Task board roster once, and abandons the read if the dialog closes
+ * first. Its own function so the dialog body holds the form, not the fetch.
+ */
+function useAssigneeRoster(): { roster: Assignee[]; rosterState: RosterState } {
   const [roster, setRoster] = useState<Assignee[]>([]);
-  const [rosterState, setRosterState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [assignee, setAssignee] = useState('');
-  const [due, setDue] = useState('');
-  const [priority, setPriority] = useState<(typeof PRIORITIES)[number]>('medium');
-  const [instructions, setInstructions] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [rosterState, setRosterState] = useState<RosterState>('loading');
 
   useEffect(() => {
     let alive = true;
@@ -79,7 +84,171 @@ export function AssignReviewDialog({ docId, docTitle, programId, sectionCode, on
     };
   }, []);
 
-  const canSubmit = !saving && assignee.trim().length > 0 && Number.isFinite(Number(assignee));
+  return { roster, rosterState };
+}
+
+/**
+ * Whether a reviewer has been chosen that the task API can take: assigneeId is
+ * an integer column, so a non-numeric selection is not submittable. Pure, so
+ * the submit path does no validation of its own.
+ */
+export function isSubmittableReviewer(assignee: string): boolean {
+  return assignee.trim().length > 0 && Number.isFinite(Number(assignee));
+}
+
+/**
+ * Composes the POST body from what the form holds. Separate from the request
+ * so the shape of the task — the link, the kind, the ask, the context — can be
+ * read and tested without a server.
+ */
+export function buildReviewTaskBody(form: {
+  docId: string;
+  docTitle: string;
+  programId: string | null;
+  sectionCode: string | null;
+  assignee: string;
+  due: string;
+  priority: Priority;
+  instructions: string;
+}): Record<string, unknown> {
+  return {
+    title: `Review: ${form.docTitle}`,
+    description: form.instructions.trim() || undefined,
+    moduleType: AUTHORING_TASK_MODULE,
+    moduleSource: 'document-workbench',
+    category: 'review',
+    taskType: 'review',
+    priority: form.priority,
+    assigneeId: Number(form.assignee),
+    ...(form.due ? { dueDate: new Date(`${form.due}T17:00:00`).toISOString() } : {}),
+    sourceEntityType: AUTHORING_TASK_ENTITY,
+    sourceEntityId: form.docId,
+    regulatoryImpact: true,
+    moduleData: {
+      authoringDocId: form.docId,
+      programId: form.programId,
+      sectionCode: form.sectionCode,
+      raisedFrom: 'document-workbench',
+    },
+    tags: ['review', 'authoring'],
+  };
+}
+
+/**
+ * The one sentence shown when the server answered but created nothing. Its own
+ * function because a refusal has two honest forms — unauthenticated, and
+ * declined — and both must end by saying nothing was recorded.
+ */
+function refusalMessage(status: number, json: CreatedTaskEnvelope): string {
+  if (status === 401) return 'Not assigned — your session isn’t authenticated. Sign in and retry.';
+  return 'The review task was not created — ' + (serverMessage(json) ?? `the server refused it (HTTP ${status})`) + '. Nothing was recorded.';
+}
+
+/**
+ * The sentence for a create that never reached an answer. Shared by the request
+ * and the dialog so an unreachable server reads the same either way, and so no
+ * internal text escapes into the UI.
+ */
+function unreachableMessage(e: unknown): string {
+  return 'The review task was not created — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '. Nothing was recorded.';
+}
+
+/**
+ * Sends the create and maps its answer onto the two outcomes the dialog acts
+ * on. Nothing is treated as created without the server's own task id.
+ */
+async function createReviewTask(body: Record<string, unknown>): Promise<AssignOutcome> {
+  try {
+    const res = await apiRequest('POST', '/api/tasks/tasks', body);
+    const json = (await res.json().catch(() => null)) as CreatedTaskEnvelope;
+    const taskId = json?.data?.taskId;
+    if (res.status === 401 || !res.ok || !json?.success || !taskId) {
+      return { ok: false, message: refusalMessage(res.status, json) };
+    }
+    return { ok: true, taskId: String(taskId), assigneeName: json.data?.assigneeName ?? null };
+  } catch (e) {
+    return { ok: false, message: unreachableMessage(e) };
+  }
+}
+
+/**
+ * The reviewer field. Its own component because a roster that could not be read
+ * is reported in place of the control, never as an empty list of people.
+ */
+function ReviewerSelect({ roster, rosterState, value, onChange }: {
+  roster: Assignee[];
+  rosterState: RosterState;
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const placeholder = rosterState === 'loading'
+    ? 'Reading the roster…'
+    : roster.length === 0 ? 'No members in this organization' : 'Choose a reviewer';
+  return (
+    <div className="de-field">
+      <label className="de-label" htmlFor="ar-assignee">
+        Reviewer<span className="req">*</span>
+      </label>
+      {rosterState === 'error' ? (
+        <div className="de-err" role="status">The reviewer roster could not be read, so no one can be chosen. Retry after checking the service is reachable.</div>
+      ) : (
+        <select
+          id="ar-assignee"
+          className="c2c-input"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          disabled={rosterState === 'loading'}
+          data-testid="ar-assignee"
+        >
+          <option value="">{placeholder}</option>
+          {roster.map(a => (
+            <option key={a.id} value={a.id}>{a.name}</option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The instructions field, with the example it offers keyed to the section in
+ * view. Its own component to keep that one piece of wording out of the dialog.
+ */
+function ReviewInstructionsField({ value, onChange, sectionCode }: {
+  value: string;
+  onChange: (text: string) => void;
+  sectionCode: string | null;
+}) {
+  return (
+    <div className="de-field">
+      <label className="de-label" htmlFor="ar-instructions">Instructions to the reviewer</label>
+      <div className="de-desc">What to check, and what a finding should say. Recorded as the task description.</div>
+      <textarea
+        id="ar-instructions"
+        className="c2c-input"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={sectionCode ? `e.g. Review §${sectionCode} against the cited sources.` : 'e.g. Review the clinical claims against the cited sources.'}
+        style={{ width: '100%', minHeight: 72, resize: 'vertical', fontSize: 13 }}
+        data-testid="ar-instructions"
+      />
+    </div>
+  );
+}
+
+export function AssignReviewDialog({ docId, docTitle, programId, sectionCode, onClose, onCreated, fireToast }: AssignReviewDialogProps) {
+  const [saving, setSaving] = useState(false);
+  const ref = useDialog(() => {
+    if (!saving) onClose();
+  });
+  const { roster, rosterState } = useAssigneeRoster();
+  const [assignee, setAssignee] = useState('');
+  const [due, setDue] = useState('');
+  const [priority, setPriority] = useState<Priority>('medium');
+  const [instructions, setInstructions] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const canSubmit = !saving && isSubmittableReviewer(assignee);
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -87,45 +256,19 @@ export function AssignReviewDialog({ docId, docTitle, programId, sectionCode, on
     setError(null);
     try {
       const chosen = roster.find(a => a.id === assignee) ?? null;
-      const res = await apiRequest('POST', '/api/tasks/tasks', {
-        title: `Review: ${docTitle}`,
-        description: instructions.trim() || undefined,
-        moduleType: AUTHORING_TASK_MODULE,
-        moduleSource: 'document-workbench',
-        category: 'review',
-        taskType: 'review',
-        priority,
-        assigneeId: Number(assignee),
-        ...(due ? { dueDate: new Date(`${due}T17:00:00`).toISOString() } : {}),
-        sourceEntityType: AUTHORING_TASK_ENTITY,
-        sourceEntityId: docId,
-        regulatoryImpact: true,
-        moduleData: {
-          authoringDocId: docId,
-          programId,
-          sectionCode,
-          raisedFrom: 'document-workbench',
-        },
-        tags: ['review', 'authoring'],
-      });
-      const json = (await res.json().catch(() => null)) as
-        | { success?: boolean; data?: { taskId?: string; assigneeName?: string | null } }
-        | null;
-      if (res.status === 401) {
-        setError('Not assigned — your session isn’t authenticated. Sign in and retry.');
+      const outcome = await createReviewTask(
+        buildReviewTaskBody({ docId, docTitle, programId, sectionCode, assignee, due, priority, instructions }),
+      );
+      if (!outcome.ok) {
+        setError(outcome.message);
         return;
       }
-      if (!res.ok || !json?.success || !json.data?.taskId) {
-        setError('The review task was not created — ' + (serverMessage(json) ?? `the server refused it (HTTP ${res.status})`) + '. Nothing was recorded.');
-        return;
-      }
-      const taskId = String(json.data.taskId);
-      const assigneeName = json.data.assigneeName ?? chosen?.name ?? null;
-      fireToast(`Review task ${taskId} assigned${assigneeName ? ` to ${assigneeName}` : ''} — linked to “${docTitle}” on the task ledger.`);
-      onCreated({ taskId, assigneeName });
+      const assigneeName = outcome.assigneeName ?? chosen?.name ?? null;
+      fireToast(`Review task ${outcome.taskId} assigned${assigneeName ? ` to ${assigneeName}` : ''} — linked to “${docTitle}” on the task ledger.`);
+      onCreated({ taskId: outcome.taskId, assigneeName });
       onClose();
     } catch (e) {
-      setError('The review task was not created — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '. Nothing was recorded.');
+      setError(unreachableMessage(e));
     } finally {
       setSaving(false);
     }
@@ -150,53 +293,20 @@ export function AssignReviewDialog({ docId, docTitle, programId, sectionCode, on
           </button>
         </div>
         <div className="de-body">
-          <div className="de-field">
-            <label className="de-label" htmlFor="ar-assignee">
-              Reviewer<span className="req">*</span>
-            </label>
-            {rosterState === 'error' ? (
-              <div className="de-err" role="status">The reviewer roster could not be read, so no one can be chosen. Retry after checking the service is reachable.</div>
-            ) : (
-              <select
-                id="ar-assignee"
-                className="c2c-input"
-                value={assignee}
-                onChange={e => setAssignee(e.target.value)}
-                disabled={rosterState === 'loading'}
-                data-testid="ar-assignee"
-              >
-                <option value="">{rosterState === 'loading' ? 'Reading the roster…' : roster.length === 0 ? 'No members in this organization' : 'Choose a reviewer'}</option>
-                {roster.map(a => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-            )}
-          </div>
+          <ReviewerSelect roster={roster} rosterState={rosterState} value={assignee} onChange={setAssignee} />
           <div className="de-field half">
             <label className="de-label" htmlFor="ar-due">Due date</label>
             <input id="ar-due" className="c2c-input" type="date" value={due} onChange={e => setDue(e.target.value)} data-testid="ar-due" />
           </div>
           <div className="de-field half">
             <label className="de-label" htmlFor="ar-priority">Priority</label>
-            <select id="ar-priority" className="c2c-input" value={priority} onChange={e => setPriority(e.target.value as (typeof PRIORITIES)[number])}>
+            <select id="ar-priority" className="c2c-input" value={priority} onChange={e => setPriority(e.target.value as Priority)}>
               {PRIORITIES.map(p => (
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>
           </div>
-          <div className="de-field">
-            <label className="de-label" htmlFor="ar-instructions">Instructions to the reviewer</label>
-            <div className="de-desc">What to check, and what a finding should say. Recorded as the task description.</div>
-            <textarea
-              id="ar-instructions"
-              className="c2c-input"
-              value={instructions}
-              onChange={e => setInstructions(e.target.value)}
-              placeholder={sectionCode ? `e.g. Review §${sectionCode} against the cited sources.` : 'e.g. Review the clinical claims against the cited sources.'}
-              style={{ width: '100%', minHeight: 72, resize: 'vertical', fontSize: 13 }}
-              data-testid="ar-instructions"
-            />
-          </div>
+          <ReviewInstructionsField value={instructions} onChange={setInstructions} sectionCode={sectionCode} />
           <div className="de-gov">
             <span className="ico">{I.lock}</span>
             <span className="de-gov-t">

@@ -273,22 +273,18 @@ const groupBy = <T extends { doc_id: string }>(rows: T[]): Map<string, T[]> => {
   return m;
 };
 
-// ─── The read ────────────────────────────────────────────────────────────────
+// ─── Bulk reads ──────────────────────────────────────────────────────────────
 
-export async function buildAuthoringReviewBoard(input: BuildReviewBoardInput): Promise<ReviewBoardView> {
-  const { sql, orgId, userId, userEmail, scope, programId, limit, itemId } = input;
-  const generatedAt = new Date().toISOString();
-  const empty = (): ReviewBoardView => ({
-    queue: [],
-    workflows: {},
-    thread: [],
-    meta: { scope, programId, total: 0, threadItemId: null, threadDocumentId: null, generatedAt },
-  });
-
-  // 1. Documents in this organisation that carry any review request or
-  //    approval step (or sit IN_REVIEW). Bounded; the open/ownership filters
-  //    below are applied in memory over this set.
-  const docs = (await sql.query(
+/**
+ * Documents in this organisation that carry any review request or approval
+ * step (or sit IN_REVIEW). Bounded; the open/ownership filters are applied in
+ * memory over this set. Its own function so the entry point reads as a
+ * sequence of named steps rather than as SQL with a loop after it.
+ */
+async function loadReviewDocuments(
+  sql: RequestSqlClient, orgId: number, programId: string | null,
+): Promise<DocRow[]> {
+  const result = await sql.query(
     `SELECT d.id::text AS id, d.title, d.module, d.status,
             d.client_program_id::text AS program_id,
             p.name AS program_name,
@@ -309,12 +305,25 @@ export async function buildAuthoringReviewBoard(input: BuildReviewBoardInput): P
       ORDER BY d.updated_at DESC NULLS LAST
       LIMIT 200`,
     [orgId, programId],
-  )).rows as unknown as DocRow[];
-  if (docs.length === 0) return empty();
+  );
+  return result.rows as unknown as DocRow[];
+}
 
-  const docIds = docs.map((d) => d.id);
+interface RelatedRowsByDoc {
+  reviewsByDoc: Map<string, ReviewRow[]>;
+  stepsByDoc: Map<string, StepRow[]>;
+  openCommentsByDoc: Map<string, number>;
+  firstSectionByDoc: Map<string, SectionRow>;
+}
 
-  // 2. Related rows in bounded batches, all tenant-scoped.
+/**
+ * Everything hanging off the documents, in bounded parallel batches and keyed
+ * by doc_id. One function because a caller holding the documents always wants
+ * all four, indexed the same way, and they must all be tenant-scoped alike.
+ */
+async function loadRelatedRowsByDoc(
+  sql: RequestSqlClient, orgId: number, docIds: string[],
+): Promise<RelatedRowsByDoc> {
   const [reviewRows, stepRows, countRows, sectionRows] = await Promise.all([
     sql.query(
       `SELECT id::text AS id, doc_id::text AS doc_id, reviewer_id, reviewer_name, reviewer_email,
@@ -350,183 +359,322 @@ export async function buildAuthoringReviewBoard(input: BuildReviewBoardInput): P
     ).then((r) => r.rows as unknown as SectionRow[]),
   ]);
 
-  const reviewsByDoc = groupBy(reviewRows);
-  const stepsByDoc = groupBy(stepRows);
-  const openCommentsByDoc = new Map(countRows.map((c) => [c.doc_id, Number(c.open_count)]));
-  const firstSectionByDoc = new Map(sectionRows.map((s) => [s.doc_id, s]));
+  return {
+    reviewsByDoc: groupBy(reviewRows),
+    stepsByDoc: groupBy(stepRows),
+    openCommentsByDoc: new Map(countRows.map((c) => [c.doc_id, Number(c.open_count)])),
+    firstSectionByDoc: new Map(sectionRows.map((s) => [s.doc_id, s])),
+  };
+}
 
-  const isMe = (idOrEmail: unknown): boolean =>
-    same(idOrEmail, userId) || (userEmail != null && same(idOrEmail, userEmail));
+/**
+ * The comment thread for one document, oldest first. Read last and only for
+ * the selected row, so the cost is one document's comments rather than the
+ * whole queue's.
+ */
+async function loadCommentThread(
+  sql: RequestSqlClient, orgId: number, docId: string,
+): Promise<ReviewCommentView[]> {
+  const result = await sql.query(
+    `SELECT c.id::text AS id, c.doc_id::text AS doc_id, c.section_id::text AS section_id, c.body, c.status,
+            c.created_by, c.user_name, c.user_email, c.parent_comment_id::text AS parent_comment_id,
+            c.created_at, s.code AS section_code
+       FROM authoring_comments c
+       LEFT JOIN authoring_sections s ON s.id = c.section_id AND s.tenant_id = c.tenant_id
+      WHERE c.tenant_id = $1 AND c.doc_id::text = $2::text
+      ORDER BY c.created_at ASC`,
+    [orgId, docId],
+  );
+  return (result.rows as unknown as CommentRow[]).map((c) => ({
+    id: c.id,
+    author: c.user_name || c.user_email || c.created_by || '',
+    role: c.section_code ? `§${c.section_code}` : '',
+    when: relTime(c.created_at) ?? '',
+    state: c.status === 'resolved' ? 'resolved' : 'open',
+    body: c.body,
+    ai: false,
+    sectionId: c.section_id ?? null,
+    parentId: c.parent_comment_id ?? null,
+  }));
+}
 
-  // 3. Build queue + workflows.
+// ─── Per-row derivation ──────────────────────────────────────────────────────
+
+/**
+ * How a reviewer is named on screen. One place, because the queue row, the
+ * request list and the "waiting on" line must agree on the fallback order.
+ */
+function reviewerLabel(r: ReviewRow): string {
+  return r.reviewer_name || r.reviewer_email || String(r.reviewer_id);
+}
+
+/**
+ * A predicate for "this id or email is the calling user" — the single place
+ * the caller's two identities (user id, email) are compared against a row.
+ */
+function makeIsMe(userId: string, userEmail: string | null): (idOrEmail: unknown) => boolean {
+  return (idOrEmail) => same(idOrEmail, userId) || (userEmail != null && same(idOrEmail, userEmail));
+}
+
+/**
+ * Only the CURRENT workflow's steps are the document's approval chain; an
+ * earlier submission's steps stay in the table as history.
+ */
+function stepsForCurrentWorkflow(doc: DocRow, all: StepRow[]): StepRow[] {
+  return all.filter((s) => !doc.workflow_id || same(s.workflow_id, doc.workflow_id));
+}
+
+/** The review requests on a document, in the API's shape. */
+function toReviewRequestViews(rows: ReviewRow[]): ReviewRequestView[] {
+  return rows.map((r) => ({
+    id: r.id,
+    reviewerId: String(r.reviewer_id),
+    reviewer: reviewerLabel(r),
+    reviewerEmail: r.reviewer_email ?? null,
+    status: r.review_status,
+    comments: r.review_comments ?? null,
+    requestedBy: r.requested_by ?? null,
+    requestedAt: iso(r.requested_at),
+    reviewedAt: iso(r.reviewed_at),
+  }));
+}
+
+interface ScopeFlags {
+  currentStep: StepRow | null;
+  myReviewId: string | null;
+  myReviewStatus: string | null;
+  awaitingMyReview: boolean;
+  requestedByMe: boolean;
+  atMySignOff: boolean;
+  mine: boolean;
+}
+
+/**
+ * The caller's four relationships to one document, decided from the store.
+ * Extracted because the scope filter and the queue row both need the same
+ * answer and a board that disagrees with itself is the F-6 bug again.
+ */
+function deriveScopeFlags(
+  doc: DocRow, reviews: ReviewRow[], steps: StepRow[], isMe: (idOrEmail: unknown) => boolean,
+): ScopeFlags {
+  const myReview = reviews.find((r) => isMe(r.reviewer_id) || isMe(r.reviewer_email)) ?? null;
+  const awaitingMyReview = !!myReview && myReview.review_status === 'pending';
+  // The submitter of the approval chain is not recorded on the steps; the
+  // document's creator is the closest attributable stand-in for "asked for
+  // this sign-off" when no review request names a requester.
+  const requestedByMe =
+    reviews.some((r) => isMe(r.requested_by)) || (steps.length > 0 && isMe(doc.created_by));
+  const currentStep = steps.find((s) => String(s.status).toUpperCase() === 'PENDING') ?? null;
+  const atMySignOff = !!currentStep && isMe(currentStep.approver_email);
+  return {
+    currentStep,
+    myReviewId: myReview?.id ?? null,
+    myReviewStatus: myReview?.review_status ?? null,
+    awaitingMyReview,
+    requestedByMe,
+    atMySignOff,
+    mine: awaitingMyReview || atMySignOff,
+  };
+}
+
+/**
+ * Does this row belong in the requested scope? "all" and "mine" are OPEN work.
+ * "requested" is everything the caller asked for, decided or not — a requester
+ * who is never shown the verdict has been shown a review that silently vanished.
+ */
+function isInScope(scope: ReviewScope, open: boolean, flags: ScopeFlags): boolean {
+  if (scope === 'requested') return flags.requestedByMe;
+  if (!open) return false;
+  return scope !== 'mine' || flags.mine;
+}
+
+/**
+ * Who the row is waiting on, and in what capacity: the pending reviewer, else
+ * the current signer, else the last reviewer on record. Its own function
+ * because the fallback order is the rule, not an accident of statement order.
+ */
+function pickReviewerAndRole(reviews: ReviewRow[], currentStep: StepRow | null): { reviewer: string; role: string } {
+  const pendingReview = reviews.find((r) => r.review_status === 'pending') ?? null;
+  if (pendingReview) return { reviewer: reviewerLabel(pendingReview), role: 'Reviewer' };
+  if (currentStep) return { reviewer: currentStep.approver_email ?? '', role: `${currentStep.role} sign-off` };
+  if (reviews[0]) return { reviewer: reviewerLabel(reviews[0]), role: 'Reviewer' };
+  return { reviewer: '', role: '' };
+}
+
+/**
+ * The provenance line under a queue row — version, status, requester. Named so
+ * that "what the board claims about where this row came from" has one author.
+ */
+function buildProvenance(doc: DocRow, reviews: ReviewRow[]): string | null {
+  const provBits: string[] = [];
+  if (doc.version) provBits.push(`v${doc.version}`);
+  provBits.push(String(doc.status).toLowerCase().replace(/_/g, ' '));
+  const requester = reviews[0]?.requested_by;
+  if (requester) provBits.push(`review requested by ${requester}`);
+  return provBits.length ? provBits.join(' · ') : null;
+}
+
+/** Where the document sits in the §11.50 signature chain. */
+function deriveEsigState(docStatus: string, currentStep: StepRow | null, stepCount: number): ReviewItemView['esig'] {
+  if (String(docStatus).toUpperCase() === 'APPROVED') return 'signed';
+  if (currentStep) return 'pending';
+  return stepCount > 0 ? 'queued' : 'none';
+}
+
+interface QueueItemContext {
+  doc: DocRow;
+  reviews: ReviewRow[];
+  reviewViews: ReviewRequestView[];
+  steps: StepRow[];
+  flags: ScopeFlags;
+  firstSection: SectionRow | null;
+  openComments: number;
+}
+
+/**
+ * One queue row, assembled from the document and everything indexed against
+ * it. Separate from the loop so the loop is about selection and this is about
+ * shape — the fields the client reads are listed once, in one place.
+ */
+function buildQueueItem(ctx: QueueItemContext): ReviewItemView {
+  const { doc, reviews, reviewViews, steps, flags, firstSection, openComments } = ctx;
+  const { reviewer, role } = pickReviewerAndRole(reviews, flags.currentStep);
+  return {
+    id: doc.id,
+    doc: doc.title || 'Untitled document',
+    prog: doc.program_name ?? null,
+    programId: doc.program_id ?? null,
+    pid: doc.id,
+    module: doc.module ?? null,
+    docStatus: doc.status,
+    state: deriveState(doc.status, reviewViews),
+    reviews: reviewViews,
+    myReviewId: flags.myReviewId,
+    myReviewStatus: flags.myReviewStatus,
+    awaitingMyReview: flags.awaitingMyReview,
+    requestedByMe: flags.requestedByMe,
+    atMySignOff: flags.atMySignOff,
+    mine: flags.mine,
+    reviewer,
+    role,
+    due: '',
+    tone: '',
+    comments: openComments,
+    esig: deriveEsigState(doc.status, flags.currentStep, steps.length),
+    conf: null,
+    prov: buildProvenance(doc, reviews),
+    passage: excerpt(firstSection?.content),
+    firstSectionId: firstSection?.id ?? null,
+    requestedAt: reviewViews[0]?.requestedAt ?? null,
+  };
+}
+
+/**
+ * The approval chain for one document: the first step that is neither approved
+ * nor rejected is the current one, everything after it is still pending. Its
+ * own function because that running "have we seen the current step yet" state
+ * is the whole idea and does not belong in a loop that also filters rows.
+ */
+function buildWorkflowChain(steps: StepRow[]): ReviewWorkflowView {
+  let seenCurrent = false;
+  return {
+    templateId: steps[0].workflow_id,
+    template: 'Authoring approval workflow',
+    steps: steps.map((s) => {
+      const st = String(s.status).toUpperCase();
+      let status: ReviewWorkflowStepView['status'];
+      if (st === 'APPROVED') status = 'approved';
+      else if (st === 'REJECTED') status = 'rejected';
+      else if (!seenCurrent) { status = 'current'; seenCurrent = true; }
+      else status = 'pending';
+      return {
+        id: s.id,
+        order: Number(s.step_no),
+        name: s.role,
+        approverType: 'user',
+        approver: s.approver_email ?? '',
+        requiredActions: ['sign'],
+        status,
+        at: relTime(s.decided_at),
+      };
+    }),
+  };
+}
+
+/** Chains are returned only for the rows that survived the queue cap. */
+function pickWorkflowsFor(
+  items: ReviewItemView[], workflows: Record<string, ReviewWorkflowView>,
+): Record<string, ReviewWorkflowView> {
+  const kept: Record<string, ReviewWorkflowView> = {};
+  for (const item of items) {
+    const chain = workflows[item.id];
+    if (chain) kept[item.id] = chain;
+  }
+  return kept;
+}
+
+/**
+ * The board's meta block. One builder so the empty board and the full one
+ * describe themselves identically — threadDocumentId has always been the same
+ * id as threadItemId and must not drift apart between the two return paths.
+ */
+function boardMeta(
+  input: BuildReviewBoardInput, total: number, threadItemId: string | null, generatedAt: string,
+): ReviewBoardView['meta'] {
+  const { scope, programId } = input;
+  return { scope, programId, total, threadItemId, threadDocumentId: threadItemId, generatedAt };
+}
+
+/** The row the thread is shown for: the one asked for, else the first returned. */
+function selectThreadItem(items: ReviewItemView[], itemId: string | null): ReviewItemView | null {
+  return (itemId ? items.find((q) => q.id === itemId) : undefined) ?? items[0] ?? null;
+}
+
+// ─── The read ────────────────────────────────────────────────────────────────
+
+export async function buildAuthoringReviewBoard(input: BuildReviewBoardInput): Promise<ReviewBoardView> {
+  const { sql, orgId, userId, userEmail, scope, programId, limit, itemId } = input;
+  const generatedAt = new Date().toISOString();
+
+  const docs = await loadReviewDocuments(sql, orgId, programId);
+  if (docs.length === 0) {
+    return { queue: [], workflows: {}, thread: [], meta: boardMeta(input, 0, null, generatedAt) };
+  }
+
+  const { reviewsByDoc, stepsByDoc, openCommentsByDoc, firstSectionByDoc } =
+    await loadRelatedRowsByDoc(sql, orgId, docs.map((d) => d.id));
+  const isMe = makeIsMe(userId, userEmail);
+
   const queue: ReviewItemView[] = [];
   const workflows: Record<string, ReviewWorkflowView> = {};
+  for (const doc of docs) {
+    const reviews = reviewsByDoc.get(doc.id) ?? [];
+    const steps = stepsForCurrentWorkflow(doc, stepsByDoc.get(doc.id) ?? []);
+    const reviewViews = toReviewRequestViews(reviews);
+    const flags = deriveScopeFlags(doc, reviews, steps, isMe);
+    if (!isInScope(scope, isOpenWork(doc.status, reviewViews, steps), flags)) continue;
 
-  for (const d of docs) {
-    const reviews = reviewsByDoc.get(d.id) ?? [];
-    // Only the CURRENT workflow's steps are the document's approval chain; an
-    // earlier submission's steps stay in the table as history.
-    const steps = (stepsByDoc.get(d.id) ?? []).filter((s) => !d.workflow_id || same(s.workflow_id, d.workflow_id));
-    const reviewViews: ReviewRequestView[] = reviews.map((r) => ({
-      id: r.id,
-      reviewerId: String(r.reviewer_id),
-      reviewer: r.reviewer_name || r.reviewer_email || String(r.reviewer_id),
-      reviewerEmail: r.reviewer_email ?? null,
-      status: r.review_status,
-      comments: r.review_comments ?? null,
-      requestedBy: r.requested_by ?? null,
-      requestedAt: iso(r.requested_at),
-      reviewedAt: iso(r.reviewed_at),
+    queue.push(buildQueueItem({
+      doc,
+      reviews,
+      reviewViews,
+      steps,
+      flags,
+      firstSection: firstSectionByDoc.get(doc.id) ?? null,
+      openComments: openCommentsByDoc.get(doc.id) ?? 0,
     }));
-    const open = isOpenWork(d.status, reviewViews, steps);
-
-    const myReview = reviews.find((r) => isMe(r.reviewer_id) || isMe(r.reviewer_email)) ?? null;
-    const awaitingMyReview = !!myReview && myReview.review_status === 'pending';
-    // The submitter of the approval chain is not recorded on the steps; the
-    // document's creator is the closest attributable stand-in for "asked for
-    // this sign-off" when no review request names a requester.
-    const requestedByMe =
-      reviews.some((r) => isMe(r.requested_by)) || (steps.length > 0 && isMe(d.created_by));
-    const currentStep = steps.find((s) => String(s.status).toUpperCase() === 'PENDING') ?? null;
-    const atMySignOff = !!currentStep && isMe(currentStep.approver_email);
-    const mine = awaitingMyReview || atMySignOff;
-
-    // "all" and "mine" are OPEN work. "requested" is everything the caller
-    // asked for, decided or not — a requester who is never shown the verdict
-    // has been shown a review that silently vanished.
-    if (scope === 'requested') {
-      if (!requestedByMe) continue;
-    } else if (!open || (scope === 'mine' && !mine)) {
-      continue;
-    }
-
-    const pendingReview = reviews.find((r) => r.review_status === 'pending') ?? null;
-    let reviewer = '';
-    let role = '';
-    if (pendingReview) {
-      reviewer = pendingReview.reviewer_name || pendingReview.reviewer_email || String(pendingReview.reviewer_id);
-      role = 'Reviewer';
-    } else if (currentStep) {
-      reviewer = currentStep.approver_email ?? '';
-      role = `${currentStep.role} sign-off`;
-    } else if (reviews[0]) {
-      reviewer = reviews[0].reviewer_name || reviews[0].reviewer_email || String(reviews[0].reviewer_id);
-      role = 'Reviewer';
-    }
-
-    const provBits: string[] = [];
-    if (d.version) provBits.push(`v${d.version}`);
-    provBits.push(String(d.status).toLowerCase().replace(/_/g, ' '));
-    const requester = reviews[0]?.requested_by;
-    if (requester) provBits.push(`review requested by ${requester}`);
-
-    const firstSection = firstSectionByDoc.get(d.id) ?? null;
-    const state = deriveState(d.status, reviewViews);
-    const esig: ReviewItemView['esig'] =
-      String(d.status).toUpperCase() === 'APPROVED' ? 'signed'
-      : currentStep ? 'pending'
-      : steps.length > 0 ? 'queued'
-      : 'none';
-
-    queue.push({
-      id: d.id,
-      doc: d.title || 'Untitled document',
-      prog: d.program_name ?? null,
-      programId: d.program_id ?? null,
-      pid: d.id,
-      module: d.module ?? null,
-      docStatus: d.status,
-      state,
-      reviews: reviewViews,
-      myReviewId: myReview?.id ?? null,
-      myReviewStatus: myReview?.review_status ?? null,
-      awaitingMyReview,
-      requestedByMe,
-      atMySignOff,
-      mine,
-      reviewer,
-      role,
-      due: '',
-      tone: '',
-      comments: openCommentsByDoc.get(d.id) ?? 0,
-      esig,
-      conf: null,
-      prov: provBits.length ? provBits.join(' · ') : null,
-      passage: excerpt(firstSection?.content),
-      firstSectionId: firstSection?.id ?? null,
-      requestedAt: reviewViews[0]?.requestedAt ?? null,
-    });
-
-    if (steps.length > 0) {
-      let seenCurrent = false;
-      workflows[d.id] = {
-        templateId: steps[0].workflow_id,
-        template: 'Authoring approval workflow',
-        steps: steps.map((s) => {
-          const st = String(s.status).toUpperCase();
-          let status: ReviewWorkflowStepView['status'];
-          if (st === 'APPROVED') status = 'approved';
-          else if (st === 'REJECTED') status = 'rejected';
-          else if (!seenCurrent) { status = 'current'; seenCurrent = true; }
-          else status = 'pending';
-          return {
-            id: s.id,
-            order: Number(s.step_no),
-            name: s.role,
-            approverType: 'user',
-            approver: s.approver_email ?? '',
-            requiredActions: ['sign'],
-            status,
-            at: relTime(s.decided_at),
-          };
-        }),
-      };
-    }
+    if (steps.length > 0) workflows[doc.id] = buildWorkflowChain(steps);
   }
 
-  // 4. Queue cap, then the thread for the selected (or first) returned item.
+  // Queue cap, then the thread for the selected (or first) returned item.
   const limited = queue.slice(0, limit);
-  const limitedIds = new Set(limited.map((q) => q.id));
-  const limitedWorkflows: Record<string, ReviewWorkflowView> = {};
-  for (const id of Object.keys(workflows)) if (limitedIds.has(id)) limitedWorkflows[id] = workflows[id];
-
-  const threadItem = (itemId ? limited.find((q) => q.id === itemId) : undefined) ?? limited[0] ?? null;
-  let thread: ReviewCommentView[] = [];
-  if (threadItem) {
-    const commentRows = (await sql.query(
-      `SELECT c.id::text AS id, c.doc_id::text AS doc_id, c.section_id::text AS section_id, c.body, c.status,
-              c.created_by, c.user_name, c.user_email, c.parent_comment_id::text AS parent_comment_id,
-              c.created_at, s.code AS section_code
-         FROM authoring_comments c
-         LEFT JOIN authoring_sections s ON s.id = c.section_id AND s.tenant_id = c.tenant_id
-        WHERE c.tenant_id = $1 AND c.doc_id::text = $2::text
-        ORDER BY c.created_at ASC`,
-      [orgId, threadItem.id],
-    )).rows as unknown as CommentRow[];
-    thread = commentRows.map((c) => ({
-      id: c.id,
-      author: c.user_name || c.user_email || c.created_by || '',
-      role: c.section_code ? `§${c.section_code}` : '',
-      when: relTime(c.created_at) ?? '',
-      state: c.status === 'resolved' ? 'resolved' : 'open',
-      body: c.body,
-      ai: false,
-      sectionId: c.section_id ?? null,
-      parentId: c.parent_comment_id ?? null,
-    }));
-  }
+  const threadItem = selectThreadItem(limited, itemId);
+  const thread = threadItem ? await loadCommentThread(sql, orgId, threadItem.id) : [];
 
   return {
     queue: limited,
-    workflows: limitedWorkflows,
+    workflows: pickWorkflowsFor(limited, workflows),
     thread,
-    meta: {
-      scope,
-      programId,
-      total: limited.length,
-      threadItemId: threadItem?.id ?? null,
-      threadDocumentId: threadItem?.id ?? null,
-      generatedAt,
-    },
+    meta: boardMeta(input, limited.length, threadItem?.id ?? null, generatedAt),
   };
 }
