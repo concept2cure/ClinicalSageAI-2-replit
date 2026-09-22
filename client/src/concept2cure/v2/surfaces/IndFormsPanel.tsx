@@ -26,7 +26,7 @@
  * With no program open the panel still works standalone: every field is entered
  * here and nothing is claimed to come from a record.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, apiUpload, serverMessage } from '@/lib/queryClient';
@@ -139,6 +139,10 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
   const [meta, setMeta] = useState({ sponsorName: '', drugName: '', indNumber: '', studyPhase: 'Phase 1', indication: '', serialNumber: '' });
   const [checks, setChecks] = useState<Record<string, BuildResult>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  // One hidden file picker per form, opened by that row's button. The picker
+  // cannot be the visible control: a display:none input is outside the tab
+  // order, and the <label> that used to wrap it is not focusable either.
+  const attachPickers = useRef(new Map<string, HTMLInputElement>());
 
   const programIdent = programIdentOf(readProjectIdent());
 
@@ -408,6 +412,7 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
           const plan = plans[f];
           const placed = placements[f];
           const sponsorBoxes = plan?.sponsorCompletes ?? [];
+          const attachText = busy === 'attach-' + f ? 'Filing…' : placed ? 'Replace completed form' : 'Attach completed form';
           return (
             <tr key={f}>
               <td style={{ fontWeight: 600, verticalAlign: 'top' }}>
@@ -452,15 +457,21 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
                 <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => download(f)} disabled={busy != null}>{I.download} {busy === 'pdf-' + f ? 'Rendering…' : 'PDF'}</button>
                 <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => save(f)} disabled={busy != null} title="Persist as a governed artifact in the project dossier">{I.database} {busy === 'save-' + f ? 'Saving…' : 'Save to dossier'}</button>
                 {programIdent && (
-                  <label className="nda-open" style={{ marginLeft: 6, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: busy != null ? 'default' : 'pointer' }}
-                    title="File the completed, signed form into this program's eCTD sequence">
-                    {I.paperclip}
-                    {busy === 'attach-' + f ? 'Filing…' : placed ? 'Replace completed form' : 'Attach completed form'}
+                  <>
                     <input type="file" accept="application/pdf,.pdf" disabled={busy != null}
+                      ref={(el) => { if (el) attachPickers.current.set(f, el); else attachPickers.current.delete(f); }}
                       aria-label={`Attach the completed ${FORM_LABELS[f] ?? f}`}
                       style={{ display: 'none' }}
                       onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; void attach(f, file); }} />
-                  </label>
+                    {/* Named for its form, visible text first (WCAG 2.5.3), so
+                        a table of five rows is not five identical buttons. */}
+                    <button className="nda-open" style={{ marginLeft: 6 }} disabled={busy != null}
+                      onClick={() => attachPickers.current.get(f)?.click()}
+                      aria-label={`${attachText}: ${FORM_LABELS[f] ?? shortFormId(f)}`}
+                      title="File the completed, signed form into this program's eCTD sequence">
+                      {I.paperclip} {attachText}
+                    </button>
+                  </>
                 )}
               </td>
             </tr>
