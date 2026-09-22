@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-22T07:13:41.988Z",
+  "generatedAt": "2026-09-22T15:40:37.181Z",
   "git": {
-    "sha": "33678538750af6a1d34db45b110504272669a0a0",
+    "sha": "b55c7a936547aac3f106b9ae1e62056909854f3d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -615,6 +615,15 @@
           "client/jest.config.js",
           "scripts/jest.config.js",
           "server/jest.config.js"
+        ]
+      },
+      {
+        "basename": "lifecycle",
+        "count": 3,
+        "paths": [
+          "server/routes/lifecycle.ts",
+          "server/services/irb/lifecycle.ts",
+          "shared/schema/lifecycle.ts"
         ]
       },
       {
@@ -1372,14 +1381,6 @@
         "paths": [
           "client/src/concept2cure/v2/fixtures/licensing.ts",
           "server/routes/licensing.ts"
-        ]
-      },
-      {
-        "basename": "lifecycle",
-        "count": 2,
-        "paths": [
-          "server/routes/lifecycle.ts",
-          "shared/schema/lifecycle.ts"
         ]
       },
       {
@@ -2569,7 +2570,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 408,
+      "duplicateGroups": 409,
       "largeByBytes": 33,
       "largeByLines": 82
     },
