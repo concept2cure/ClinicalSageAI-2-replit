@@ -15,7 +15,7 @@
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
 | 0.2 | 2026-09-21 | control tower (`0014daa87`) | OQ-VAULT-08b: a newest-first windowed read cannot be asserted to "grow"; the step asserts that the window lists this document's ingest and filing, hash-chained, and that the server's chain verdict is present (VSR-001 §10.1). The step text carried the change; this row and the version field were not updated at the time and are recorded here. |
-| 0.3 | 2026-09-22 | W3 | OQ-VAULT-08b requires the verdict to say the chain verifies (`meta.chain.ok = true`), not merely to be present. Under v0.2 the 2026-09-21 record passed this step over "server chain verdict ok=false over 33 row(s)" (VSR-001 §12). |
+| 0.3 | 2026-09-22 | W3 | OQ-VAULT-08b requires the verdict to say the chain verifies (`meta.chain.ok = true`), not merely to be present. Under v0.2 the 2026-09-21 record passed this step over "server chain verdict ok=false over 33 row(s)" (VSR-001 §12). §5 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
 
 ## 1. Method
 
@@ -46,7 +46,11 @@ IQ-001 executed; the test identity can create programs (OQ-VAULT-00 creates one 
 
 As OQ-001 §4.
 
-## 5. Result of the local execution (2026-09-21)
+## 5. Result of the local execution (2026-09-22, production posture — VSR-001 §12)
+
+**12 pass, 0 fail, 0 deviation, 0 not-executed** (record `docs/evidence/W3/2026-09-22/OQ-VAULT/`, executed 2026-09-22T22:35:48Z UTC at `e2d910d6f`). Installation: a database provisioned from empty by `npm run up`; the server booted from the checkout with `RLS_ENFORCE=on` as runtime role `app_service` (not superuser, no BYPASSRLS, owns no table — IQ-07 and IQ-08 pass, `docs/evidence/W3/2026-09-22/IQ/`); no AI provider configured. This is the first execution with RLS enforcing and as a role that owns no table. The executions filed before it record `RLS_ENFORCE=off` (IQ-DEV-003), under which the tenant-isolation policies are inert, and runtime role `c2c` on `clinicalsage`, which owns 61 RLS-enabled tables without FORCE — `vault.documents` among them — whose policies therefore never applied to it (VSR-001 §12). OQ-VAULT-03: ingest 201, content hash matches. Under the non-owner role this step failed with HTTP 500 (`new row violates row-level security policy for table "documents"`) and seven steps behind it were not executed, until `e2d910d6f` (finding F-14, VSR-001 §12; before/after records in `docs/evidence/W3/2026-09-22/vault-rls-before-after/`). OQ-VAULT-08: `verify-chain` ok over 48 rows. OQ-VAULT-08b (v0.3): server chain verdict ok=true over 48 rows. F-1, F-2, F-4 and IQ-DEV-001 in §5.1 were closed as VSR-001 §8 and §10 record.
+
+### 5.1 Result of the first local execution (2026-09-21, W3a — superseded; later executions: VSR-001 §8.2, §10.2)
 
 7 pass, 3 fail, 2 deviation. Fails: OQ-VAULT-02 (the multer `fileFilter` refusal surfaces as HTTP 500 `SERVER_ERROR: File type .exe is not allowed` instead of 400 — finding F-4), OQ-VAULT-08 (chain verifier 409 — F-1), OQ-VAULT-08b (ledger surface empty — F-2). Deviations: OQ-VAULT-04 and OQ-VAULT-09 (read model 500 on `cre_evidence_sources` — IQ-DEV-001). Passed: ingest with matching hash, search, byte-exact download, filing with modality guard, tenant 404.
 

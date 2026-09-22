@@ -1,0 +1,71 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents/1/approve",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "password": "[REDACTED]",
+      "meaning": "APPROVED",
+      "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+      "effectiveDate": "2026-09-22"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 345,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": 1,
+        "organization_id": 1,
+        "doc_number": "SOP-OQ-20260922223720",
+        "title": "OQ-006 Document control SOP 20260922223720",
+        "doc_type": "sop",
+        "category": "validation",
+        "version": "1.0",
+        "status": "effective",
+        "effective_date": "2026-09-22T00:00:00.000Z",
+        "next_review_date": "2026-10-02T00:00:00.000Z",
+        "author_id": 2,
+        "approver_id": 11,
+        "approved_at": "2026-09-22T22:37:22.572Z",
+        "superseded_by_id": null,
+        "artifact_id": null,
+        "metadata": {
+          "approval": {
+            "at": "2026-09-22T22:37:22.572+00:00",
+            "by": 11,
+            "reason": "OQ-006 step 05: SOP approved for validation (signed)",
+            "meaning": "APPROVED",
+            "bindingBasis": "qms-document-version-content-sha256",
+            "contentDigest": "e506c5351d518abe90df7dc514c6b135d0efaabd08886b850946e2509f731200",
+            "twoPersonRule": "enforced"
+          }
+        },
+        "created_at": "2026-09-22T22:37:21.152Z",
+        "updated_at": "2026-09-22T22:37:22.569Z",
+        "deleted_at": null
+      },
+      "meta": {
+        "auditTrail": {
+          "persisted": true,
+          "chained": true
+        },
+        "signature": {
+          "id": 2,
+          "signedAt": "2026-09-22T22:37:22.572Z",
+          "actionId": "act_d099cc06b3b04327be8165a10f576f7d",
+          "auditId": "c88310b2-86f3-4dfe-a764-5151cb5f01cb",
+          "sha256Chain": "b1b62fca7be7e88f11c47efc6bed07fb72df1e6a44a3914ecb585dd23ee4da71",
+          "meaning": "APPROVED",
+          "boundPayloadDigest": "e506c5351d518abe90df7dc514c6b135d0efaabd08886b850946e2509f731200",
+          "bindingBasis": "qms-document-version-content-sha256",
+          "authenticationMethod": "password",
+          "secondFactorVerified": false
+        }
+      }
+    }
+  }
+}
