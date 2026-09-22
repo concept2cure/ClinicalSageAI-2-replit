@@ -48,7 +48,11 @@
  */
 import React from 'react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
-import type { DriveSseEvent } from '../components/ana/useAnaChat.types';
+import type {
+  DriveSseEvent,
+  DriveTurnControls,
+  UseAnaChatReturn,
+} from '../components/ana/useAnaChat.types';
 /*
  * The three bindings that stay static, each because splitting it would buy
  * nothing:
@@ -85,12 +89,27 @@ export interface SurfaceViewProps {
    */
   liveDrive?: {
     on: boolean;
-    onDriveEvent: (event: DriveSseEvent) => void;
+    onDriveEvent: (event: DriveSseEvent, controls?: DriveTurnControls) => void;
     /** Follow-the-work: forward to `useAnaChat`'s `onArtifactSaved` so a
      *  driven turn's persisted draft appears in front of the subscriber from
      *  this surface's dock too, not only the shell rail. */
     onWorkSaved?: (artifactId: string) => void;
+    /** Switch Live Drive on or off — the same toggle the rail's menu holds,
+     *  for composers on screens where the rail is not drawn. */
+    setOn?: (on: boolean) => void;
+    /** Start a curated demonstration exactly as the rail's menu does. */
+    onStartDemo?: (demoId: string, title: string) => void;
+    /** Start the guided tour exactly as the rail's menu does. */
+    onStartTour?: () => void;
   };
+  /**
+   * The shell's own conversation — the one chat instance that lives above
+   * every screen. The conversation thread renders and sends through it rather
+   * than a private instance, so when AnA takes the person to another screen
+   * mid-answer the conversation goes with them (the rail shows it there)
+   * instead of being torn down with the screen that started it.
+   */
+  shellChat?: UseAnaChatReturn;
 }
 
 /**

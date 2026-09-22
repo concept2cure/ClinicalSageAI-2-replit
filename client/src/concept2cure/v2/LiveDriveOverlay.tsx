@@ -114,12 +114,17 @@ export function LiveDriveOverlay({
             {activity}
           </span>
         )}
-        {last && (
+        {last && !last.failed && (
           <span className="ana-drive-step" title={last.label}>
             <span className="ana-drive-step-ic" aria-hidden="true">
               {last.kind === 'act' ? I.zap : I.arrowRight}
             </span>
             {last.label}
+          </span>
+        )}
+        {last && last.failed && (
+          <span className="ana-drive-step is-failed" title={`${last.label}: ${last.failed}`}>
+            Could not {last.label.charAt(0).toLowerCase() + last.label.slice(1)}: {last.failed}
           </span>
         )}
         {onSteer && (

@@ -83,6 +83,38 @@ The work on this branch, in the order it is easiest to see.
 4. Send from the project composer. The request carries the program, so the new
    conversation appears in this project's list rather than vanishing.
 
+### AnA operates the app (Live Drive)
+
+Needs a model key (see "What will not work without a key"). Sign in with the GA
+demo seed (`npm run db:seed`, `jm.smith@concept2cure.pro` / `pass-word`) so there
+are programs to open.
+
+Live Drive is **on by default**. The switch sits beside the composer on Home and
+in every conversation ("AnA drives: on"), with a **Demos** menu next to it.
+Prefs saved under the old off-by-default are read as on, once.
+
+Type these in the Home composer. Each should move the screen while AnA is still
+answering, and the reply should stream token by token:
+
+| ask | what should happen |
+|---|---|
+| `take me to biostatistics` | the Biostatistics screen opens |
+| `take me to the vault` | with no program open, AnA names your programs or picks the one you mean, then opens that program's Vault |
+| `open program BX-301` | Projects → BX-301 opens → its project home |
+| `search the vault for stability` | the Vault opens and its search runs |
+| `give me the training demo` | a full product tour, one screen per step, narrated, with the "AnA is demonstrating" strip, **Take over** (Esc) and **Stop** |
+| Demos → *Sales demonstration* | the same, started from the menu |
+
+When AnA leaves the conversation screen, the rail opens and the same
+conversation continues there. Switch "AnA drives" off and the same asks come
+back as buttons under her answer that do the move when pressed. A move the
+screen refuses (a program that does not exist, a screen still loading) shows in
+the drive strip as "Could not …" and AnA is told, so she says so.
+
+With `LAUNCH_SCOPE_ENFORCE=on` (the production default), screens outside the
+launch catalog are refused by name ("not in this release") instead of opened,
+and demonstrations that would visit them are not offered.
+
 ### `@app` and `/command` in any composer
 - Type `@bio` in the rail, the thread, or the front-door composer. A list of
   callable apps opens; ↑/↓ move, Enter or Tab inserts, Escape closes.

@@ -33,9 +33,8 @@ import { AnaWorkPanel } from './AnaWorkPanel';
 import { useAgentActivity } from './useAgentActivity';
 import { useWorkDockVisible } from './workDock';
 import { segmentForShellProject, shellProgramName, useShellProject } from './shellProject';
-import { stashNavParamsForTarget } from './navParams';
-import { listDemoScripts } from '@shared/navigation/demo-scripts';
-import { applySurfaceAction, validateDriveAction } from './surfaceActions';
+import { availableDemoScripts } from '../components/ana/anaLockedScreens';
+import { AnaActionChips } from './AnaActionChips';
 import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
 import { MAX_INTERJECTION_CHARS } from '@shared/ana/run-control-limits';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
@@ -554,44 +553,6 @@ export interface AnaRailLiveDrive {
   onStartDemo?: (demoId: string, title: string) => void;
 }
 
-/**
- * The executed-action chips that are neither a navigation nor a surface-action
- * offer: the "Start demonstration" offer, and the inert record of everything
- * else. Split from the rail's chip map so each branch stays under the
- * complexity gate.
- *
- * "Show me the system" with Live Drive OFF: the server fetched the script and
- * offers its start. The button is the SAME entry point as the Control menu's
- * Demonstrations list — `onStartDemo` turns the toggle on visibly, commits
- * demo mode and sends the ask — so consent, budgets and take-over are one
- * machine, not a second one. A locked workspace gets no button: the menu
- * hides its demonstrations there too, and a chip that opens a refusal is a
- * dead affordance. A chip that cannot name its script stays inert.
- */
-function ExecutedActionTail({ action: a, liveDrive }: { action: AnaChatAction; liveDrive?: AnaRailLiveDrive }) {
-  const canStart = Boolean(liveDrive && !liveDrive.locked && liveDrive.onStartDemo);
-  if (a.actionType === 'start_demo' && a.demoId && canStart) {
-    const demoId = a.demoId;
-    return (
-      <button
-        type="button"
-        className="ana-exec-chip is-nav"
-        onClick={() => liveDrive?.onStartDemo?.(demoId, a.demoTitle || a.label)}
-      >
-        {I.play} {a.label}
-      </button>
-    );
-  }
-  return (
-    <span
-      className={`ana-exec-chip${a.executed ? ' is-done' : ''}${a.error ? ' is-err' : ''}`}
-      title={a.error || a.label}
-    >
-      {a.error ? I.alertTriangle : a.executed ? I.check : I.zap} {a.label}
-    </span>
-  );
-}
-
 export function AnaRail({
   open,
   setOpen,
@@ -1073,55 +1034,18 @@ export function AnaRail({
                 Array.isArray(m.executedActions) &&
                 m.executedActions.length > 0 && (
                   <div className="ana-msg-executed">
-                    {m.executedActions.map((a, i) =>
-                      /* A navigation target AnA resolved is the one executed
-                         action you can act on: it is an offer, not a report, so
-                         it renders as a button. Everything else is a record of
-                         what already happened and stays inert. Guarded on
-                         `targetId` as well as the type, because a chip that
-                         cannot say where it goes must not look like it can. */
-                      a.actionType === 'navigate' && a.targetId && onNav ? (
-                        <button
-                          key={i}
-                          type="button"
-                          className="ana-exec-chip is-nav"
-                          onClick={() => {
-                            /* The directive's registry-validated params ride
-                               the navParams channel so the destination opens
-                               on the named tab/section; a param-less chip
-                               clears any stale entry instead of inheriting. */
-                            stashNavParamsForTarget(a.targetId as string, a.params);
-                            onNav(a.targetId as string);
-                          }}
-                        >
-                          {I.arrowRight} {a.label}
-                        </button>
-                      ) : a.actionType === 'surface_action' && a.actionId && onNav ? (
-                        <button
-                          key={i}
-                          type="button"
-                          className="ana-exec-chip is-nav"
-                          onClick={() => {
-                            /* Performed through the ONE surface-action bus,
-                               re-validated against the shared registry first —
-                               the chip's payload never executes as-is. If the
-                               action's screen is not mounted the bus stashes
-                               one-shot and navigates there (the tap is the
-                               consent), performing on the surface's mount. */
-                            const d = validateDriveAction({
-                              actionType: 'surface_action',
-                              actionId: a.actionId,
-                              params: a.params,
-                            });
-                            if (d) applySurfaceAction(d, onNav);
-                          }}
-                        >
-                          {I.zap} {a.label}
-                        </button>
-                      ) : (
-                        <ExecutedActionTail key={i} action={a} liveDrive={liveDrive} />
-                      ),
-                    )}
+                    {/* Navigation, screen actions and demonstration starts are
+                        controls; everything else is a record. One renderer,
+                        shared with every other chat (AnaActionChips). A locked
+                        workspace gets no demo button: the menu hides its
+                        demonstrations there too. */}
+                    <AnaActionChips
+                      actions={m.executedActions}
+                      onNav={onNav}
+                      onStartDemo={
+                        liveDrive && !liveDrive.locked ? liveDrive.onStartDemo : undefined
+                      }
+                    />
                   </div>
                 )}
               {m.role === 'ana' &&
@@ -1592,7 +1516,7 @@ export function AnaRail({
               {liveDrive && !liveDrive.locked && liveDrive.onStartDemo && (
                 <>
                   <div className="ana-menu-sec">Demonstrations</div>
-                  {listDemoScripts().map((d) => (
+                  {availableDemoScripts().map((d) => (
                     <button
                       key={d.id}
                       type="button"
