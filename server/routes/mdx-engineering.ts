@@ -192,7 +192,13 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
               ARRAY_REMOVE(ARRAY_AGG(c.verification_evidence ORDER BY c.id), NULL)  AS verification
          FROM risk_items r
          LEFT JOIN risk_controls c ON c.risk_item_id = r.id
+         -- The owner's name is shown only when the assignee belongs to the risk's
+         -- organization: public.users has no RLS, and assigned_to was accepted
+         -- unchecked before mdx-risk-management.ts began refusing non-members.
          LEFT JOIN users u         ON u.id = r.assigned_to
+                                  AND EXISTS (SELECT 1 FROM organization_users ou
+                                               WHERE ou.user_id = r.assigned_to
+                                                 AND ou.organization_id = r.organization_id)
         WHERE r.organization_id = $1 AND r.program_id = $2 AND r.deleted_at IS NULL
         GROUP BY r.id, u.id
         ORDER BY r.severity DESC, r.probability DESC, r.id`,
