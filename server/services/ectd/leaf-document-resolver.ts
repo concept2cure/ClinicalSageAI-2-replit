@@ -265,20 +265,33 @@ function lookupKey(p: LeafDocumentPointer): string {
 }
 
 /**
- * Resolve one pointer. Exported for the Builder route and tests; the batch
- * form below is what the assessor uses.
+ * The pointer half of a resolution, settled once and shared by every branch —
+ * so the three steps below (classify, look up, compare) cannot disagree about
+ * which table, key or pin they are talking about.
  */
-export async function resolveLeafDocument(
-  pointer: LeafDocumentPointer,
-  organizationId: number,
-): Promise<LeafDocumentResolution> {
-  const documentTable = pointer.documentTable ?? null;
-  const documentId = pointer.documentId ?? null;
-  const documentUuid = pointer.documentUuid ?? null;
-  const pinnedSha256 = pointer.documentContentSha256 ?? null;
-  const keyKind = documentTableKeyKind(documentTable);
-  const base = { keyKind, documentTable, documentId, documentUuid, pinnedSha256, storedSha256: null as string | null };
+type LeafResolutionBase = Pick<
+  LeafDocumentResolution,
+  'keyKind' | 'documentTable' | 'documentId' | 'documentUuid' | 'pinnedSha256' | 'storedSha256'
+>;
 
+/**
+ * Why an incomplete pointer names nothing, in the key space its table uses.
+ * Exists so the classification step states the key it wanted without nesting a
+ * second ternary inside the resolution it returns.
+ */
+function incompletePointerReason(documentTable: string | null, keyKind: 'integer' | 'uuid' | null): string {
+  if (!documentTable) return 'the leaf names no document table';
+  if (keyKind === 'uuid') return `${documentTable} is addressed by document_uuid and the leaf carries none`;
+  return `${documentTable} is addressed by document_id and the leaf carries none`;
+}
+
+/**
+ * STEP 1 — classification. The resolution for a pointer no store can be asked
+ * about (a table outside the placeable set, or a key the table does not use),
+ * or null when the pointer is complete and the lookup should proceed.
+ */
+function classifyUnlookupablePointer(base: LeafResolutionBase): LeafDocumentResolution | null {
+  const { documentTable, documentId, documentUuid, pinnedSha256, keyKind } = base;
   if (documentTable && !isPlaceableDocumentTable(documentTable)) {
     return {
       ...base,
@@ -292,29 +305,40 @@ export async function resolveLeafDocument(
       ...base,
       status: 'no_pointer',
       pin: compareDocumentPin(pinnedSha256, null),
-      reason: !documentTable
-        ? 'the leaf names no document table'
-        : keyKind === 'uuid'
-          ? `${documentTable} is addressed by document_uuid and the leaf carries none`
-          : `${documentTable} is addressed by document_id and the leaf carries none`,
+      reason: incompletePointerReason(documentTable, keyKind),
     };
   }
+  return null;
+}
 
-  let lookup: StoreLookup;
+/**
+ * STEP 2 — the store read. Dispatches a complete pointer to the lookup for its
+ * key space and turns a store that cannot be read into a stated not-found,
+ * because the caller is a gate and a gate that throws reports nothing.
+ */
+async function lookupDocumentInStore(base: LeafResolutionBase, organizationId: number): Promise<StoreLookup> {
+  const table = base.documentTable as string;
   try {
-    lookup =
-      keyKind === 'uuid'
-        ? await UUID_LOOKUPS[documentTable as string](documentUuid as string, organizationId)
-        : await INTEGER_LOOKUPS[documentTable as string](documentId as number, organizationId);
+    return base.keyKind === 'uuid'
+      ? await UUID_LOOKUPS[table](base.documentUuid as string, organizationId)
+      : await INTEGER_LOOKUPS[table](base.documentId as number, organizationId);
   } catch (err) {
     // A store that cannot be read is not a document that exists. Say so.
-    lookup = {
+    return {
       found: false,
       storedSha256: null,
       reason: `lookup failed: ${err instanceof Error ? err.message : String(err)}`,
     };
   }
+}
 
+/**
+ * STEP 3 — the digest comparison. Turns what the store answered, plus the pin
+ * taken at filing, into the resolved / content_changed / missing verdict, so
+ * the pin wording lives in one place rather than beside the store dispatch.
+ */
+function resolutionFromStoreLookup(base: LeafResolutionBase, lookup: StoreLookup): LeafDocumentResolution {
+  const { pinnedSha256 } = base;
   if (!lookup.found) {
     return { ...base, status: 'missing', pin: compareDocumentPin(pinnedSha256, null), reason: lookup.reason };
   }
@@ -338,6 +362,30 @@ export async function resolveLeafDocument(
     pin,
     reason: pin === 'unpinned' ? 'no content pin was taken when the leaf was filed' : lookup.reason,
   };
+}
+
+/**
+ * Resolve one pointer. Exported for the Builder route and tests; the batch
+ * form below is what the assessor uses.
+ */
+export async function resolveLeafDocument(
+  pointer: LeafDocumentPointer,
+  organizationId: number,
+): Promise<LeafDocumentResolution> {
+  const documentTable = pointer.documentTable ?? null;
+  const base: LeafResolutionBase = {
+    keyKind: documentTableKeyKind(documentTable),
+    documentTable,
+    documentId: pointer.documentId ?? null,
+    documentUuid: pointer.documentUuid ?? null,
+    pinnedSha256: pointer.documentContentSha256 ?? null,
+    storedSha256: null,
+  };
+
+  const unlookupable = classifyUnlookupablePointer(base);
+  if (unlookupable) return unlookupable;
+
+  return resolutionFromStoreLookup(base, await lookupDocumentInStore(base, organizationId));
 }
 
 /**

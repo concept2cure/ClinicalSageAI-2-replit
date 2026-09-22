@@ -54,6 +54,96 @@ export function readFileToVaultResult(body: unknown): FileToVaultResult | null {
   };
 }
 
+/** Either the vault record the server wrote, or the sentence to show instead. */
+type FileToVaultAttempt =
+  | { ok: true; result: FileToVaultResult }
+  | { ok: false; message: string };
+
+/**
+ * The POST, its status handling and the strict read of its body, in one place:
+ * every way this can fail becomes the same shape, so the component only picks
+ * what to show and can never compose a success out of a failure.
+ */
+async function attemptFileToVault(docId: string, format: 'pdf' | 'docx'): Promise<FileToVaultAttempt> {
+  try {
+    const res = await apiRequest('POST', `/api/authoring/docs/${encodeURIComponent(docId)}/file-to-vault`, { format });
+    const json = await res.json().catch(() => null);
+    if (res.status === 401) {
+      return { ok: false, message: 'Not filed — your session isn’t authenticated. Sign in and retry.' };
+    }
+    const parsed = res.ok ? readFileToVaultResult(json) : null;
+    if (!res.ok || !parsed) {
+      return {
+        ok: false,
+        message:
+          'The document was not filed — ' +
+          (serverMessage(json) ?? (res.ok ? 'the server answered without a vault record' : `the server refused it (HTTP ${res.status})`)) +
+          '. Nothing was written to the vault.',
+      };
+    }
+    return { ok: true, result: parsed };
+  } catch (e) {
+    return {
+      ok: false,
+      message: 'The document was not filed — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '. Nothing was written to the vault.',
+    };
+  }
+}
+
+/**
+ * The format the server recorded, falling back to the one that was asked for
+ * when the server reported none. It exists because the toast and the result
+ * notice must not disagree about what was filed.
+ */
+function filedFormatLabel(result: FileToVaultResult, chosenFormat: string): string {
+  return result.format.toUpperCase() || chosenFormat.toUpperCase();
+}
+
+/**
+ * What the dialog shows once the attempt has answered — the server's own vault
+ * record, or the server's refusal, and the way onwards to the vault. Separated
+ * so the dialog body stays the form and the outcome stays one readable block.
+ */
+function FileToVaultOutcome({
+  result,
+  error,
+  chosenFormat,
+  onClose,
+  onNav,
+}: {
+  result: FileToVaultResult | null;
+  error: string | null;
+  chosenFormat: string;
+  onClose: () => void;
+  onNav?: (id: string) => void;
+}) {
+  return (
+    <>
+      {result && (
+        <div className="de-gov" role="status" data-testid="ftv-result">
+          <span className="ico">{I.checkCircle}</span>
+          <span className="de-gov-t">
+            Filed as {filedFormatLabel(result, chosenFormat)}
+            {result.folder ? ` under ${result.folder}` : ' — the server reported no folder'}.
+            {' '}Vault id {result.vaultDocumentId}.
+            {result.sha256 ? ` SHA-256 ${result.sha256}.` : ' No content hash was reported.'}
+          </span>
+        </div>
+      )}
+      {error && (
+        <div className="de-err" role="alert" data-testid="ftv-error">{error}</div>
+      )}
+      {result && onNav && (
+        <div className="de-field">
+          <button className="btn ghost" style={{ height: 30 }} onClick={() => { onClose(); onNav('vault'); }}>
+            {I.vault} Open in Vault
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function FileToVaultDialog({ docId, docTitle, docStatus, programId, programName, onClose, onFiled, onNav, fireToast }: FileToVaultDialogProps) {
   const [filing, setFiling] = useState(false);
   const ref = useDialog(() => {
@@ -71,26 +161,14 @@ export function FileToVaultDialog({ docId, docTitle, docStatus, programId, progr
     setFiling(true);
     setError(null);
     try {
-      const res = await apiRequest('POST', `/api/authoring/docs/${encodeURIComponent(docId)}/file-to-vault`, { format });
-      const json = await res.json().catch(() => null);
-      if (res.status === 401) {
-        setError('Not filed — your session isn’t authenticated. Sign in and retry.');
+      const attempt = await attemptFileToVault(docId, format);
+      if (!attempt.ok) {
+        setError(attempt.message);
         return;
       }
-      const parsed = res.ok ? readFileToVaultResult(json) : null;
-      if (!res.ok || !parsed) {
-        setError(
-          'The document was not filed — ' +
-            (serverMessage(json) ?? (res.ok ? 'the server answered without a vault record' : `the server refused it (HTTP ${res.status})`)) +
-            '. Nothing was written to the vault.',
-        );
-        return;
-      }
-      setResult(parsed);
-      onFiled?.(parsed);
-      fireToast(`Filed “${docTitle}” to the vault as ${parsed.format.toUpperCase() || format.toUpperCase()}${parsed.folder ? ` under ${parsed.folder}` : ''}.`);
-    } catch (e) {
-      setError('The document was not filed — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '. Nothing was written to the vault.');
+      setResult(attempt.result);
+      onFiled?.(attempt.result);
+      fireToast(`Filed “${docTitle}” to the vault as ${filedFormatLabel(attempt.result, format)}${attempt.result.folder ? ` under ${attempt.result.folder}` : ''}.`);
     } finally {
       setFiling(false);
     }
@@ -145,27 +223,7 @@ export function FileToVaultDialog({ docId, docTitle, docStatus, programId, progr
               One governed action: export, ingest and filing are recorded together in the audit trail. The vault folder is decided by the project’s filing rules and shown below once recorded.
             </span>
           </div>
-          {result && (
-            <div className="de-gov" role="status" data-testid="ftv-result">
-              <span className="ico">{I.checkCircle}</span>
-              <span className="de-gov-t">
-                Filed as {result.format.toUpperCase() || format.toUpperCase()}
-                {result.folder ? ` under ${result.folder}` : ' — the server reported no folder'}.
-                {' '}Vault id {result.vaultDocumentId}.
-                {result.sha256 ? ` SHA-256 ${result.sha256}.` : ' No content hash was reported.'}
-              </span>
-            </div>
-          )}
-          {error && (
-            <div className="de-err" role="alert" data-testid="ftv-error">{error}</div>
-          )}
-          {result && onNav && (
-            <div className="de-field">
-              <button className="btn ghost" style={{ height: 30 }} onClick={() => { onClose(); onNav('vault'); }}>
-                {I.vault} Open in Vault
-              </button>
-            </div>
-          )}
+          <FileToVaultOutcome result={result} error={error} chosenFormat={format} onClose={onClose} onNav={onNav} />
         </div>
         <div className="de-f">
           <button className="de-btn ghost" onClick={onClose} disabled={filing}>{result ? 'Close' : 'Cancel'}</button>
