@@ -2,8 +2,17 @@
  * Tests for the registration projection (module spec §8). A registry record is a projection
  * of the design object: the scientific content is mapped deterministically (phase, masking,
  * allocation, intervention model, arm type, outcome measures), and a field the object does not
- * carry (sponsor, sex/age, dates, recruitment status, EU member states) is reported as a gap,
- * never invented. The same design feeds both ClinicalTrials.gov and EU CTIS, so they agree.
+ * carry (sponsor, dates, recruitment status, EU member states) is reported as a gap, never
+ * invented. The same design feeds both ClinicalTrials.gov and EU CTIS, so they agree.
+ *
+ * Eligibility comes from `eligibility-model.ts`: age limits are rendered when — and only when —
+ * an inclusion age criterion states them, while sex and healthy-volunteer eligibility stay gaps
+ * because nothing on `StudyDesign.population` can record either. The gap text for those three
+ * used to be a flat "not part of the design object"; it now carries the engine's own reason and
+ * names the field that would settle it, and the assertions below were updated to match. The
+ * fixture's criteria state no age, so all three are still gaps here — the CHANGE is in what the
+ * gap says, not in whether it is one. `registration-eligibility-wiring.test.ts` covers the
+ * criteria that do parse.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -101,6 +110,30 @@ describe('projectRegistration — ClinicalTrials.gov', () => {
     expect(rec.registrable).toBe(false);
     expect(rec.gaps.length).toBeGreaterThan(0);
     expect(rec.completeness.requiredRendered).toBeLessThan(rec.completeness.requiredTotal);
+  });
+
+  it('says what would settle each eligibility gap, rather than only that it is absent', () => {
+    const rec = projectRegistration(regDesign(), 'ctgov');
+    // The fixture's criteria state no age, so the engine reports both bounds absent and why.
+    expect(fieldOf(rec, 'Age limits')!.gap).toMatch(/lower age bound in a written time unit/i);
+    // Sex and healthy volunteers name the field that would close them. These two replace the
+    // old flat text "… is not part of the design object."
+    expect(fieldOf(rec, 'Sex / gender')!.gap).toMatch(/EligibilityRecordedFacts\.sex/);
+    expect(fieldOf(rec, 'Accepts healthy volunteers')!.gap).toMatch(/EligibilityRecordedFacts\.healthyVolunteers/);
+    for (const name of ['Sex / gender', 'Accepts healthy volunteers']) {
+      expect(fieldOf(rec, name)!.gap).not.toMatch(/is not part of the design object\.$/);
+    }
+  });
+
+  it('renders the eligibility criteria and carries the same set as data', () => {
+    const rec = projectRegistration(regDesign(), 'ctgov');
+    const criteria = fieldOf(rec, 'Eligibility criteria')!;
+    expect(criteria.status).toBe('rendered');
+    expect(criteria.value).toMatch(/Inclusion: HbA1c 7\.0–10\.0%/);
+    expect(criteria.value).toMatch(/Exclusion: eGFR below 30/);
+    // Every criterion is present as data too, including the one the grammar refuses.
+    expect(criteria.eligibility?.criteria.map(c => c.text)).toEqual(['HbA1c 7.0–10.0%', 'eGFR below 30']);
+    expect(criteria.eligibility?.unstructured).toBe(1); // "eGFR below 30" has no symbolic comparator
   });
 
   it('marks a primary outcome with no time frame as partial', () => {

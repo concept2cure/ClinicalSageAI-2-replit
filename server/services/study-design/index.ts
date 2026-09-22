@@ -5,7 +5,8 @@
  * the seeded synthetic-twin outcome simulator. Persistence, the Schedule of Activities and
  * the protocol projection have shipped; SAP projection and governance follow in subsequent
  * slices. This barrel exposes the object model, the §2/§3/§4/§6/§7/§10/§17 validation, the
- * SoA and protocol projections, and the evidence-grounded trial simulator everything builds on.
+ * SoA and protocol projections, the structured eligibility model and the registry-filing
+ * requirements/statutory clocks, and the evidence-grounded trial simulator everything builds on.
  *
  * @module server/services/study-design
  */
@@ -91,11 +92,48 @@ export {
   type RegistrationRegistry,
   type RegistrationFieldStatus,
   type RegistrationField,
+  type RegistrationEligibilityStructure,
   type RegistrationModule,
   type RegistrationRecord,
   projectRegistration,
   projectAllRegistrations,
 } from './registration-projection';
+export {
+  type EligibilityStructure,
+  type EligibilityUnparsedReason,
+  type StructuredEligibilityCriterion,
+  type EligibilityFinding,
+  type EligibilityFindingStatus,
+  type EligibilityFindingSeverity,
+  type EligibilityCounts,
+  type EligibilityVerdict,
+  type EligibilityAssessment,
+  type EligibilityRecordedFacts,
+  type RegistryAgeLimit,
+  type RegistryAbsentField,
+  type RegistryEligibilityRow,
+  type RegistryEligibilityBlock,
+  ELIGIBILITY_BASIS,
+  parseEligibilityCriterion,
+  structureEligibility,
+  assessEligibility,
+  projectRegistryEligibility,
+} from './eligibility-model';
+export {
+  type FilingRequirement,
+  type ObligationStatus,
+  type RegistryFilingContext,
+  type PlacedRecord,
+  type FilingExpectation,
+  type FilingRow,
+  type TimelinessObligation,
+  type RegistryFilingCounts,
+  type RegistryFiling,
+  OBLIGATION_STATUSES,
+  timelinessObligations,
+  filingExpectations,
+  buildRegistryFiling,
+} from './registry-filing';
 export {
   type CrfShell,
   type CrfForm,
