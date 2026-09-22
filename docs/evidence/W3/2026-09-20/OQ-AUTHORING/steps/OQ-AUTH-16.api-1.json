@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/authoring/sections/9dadb0c2-f23e-4e85-b16d-99197dbede7b/ai/draft",
+    "url": "http://localhost:5102/api/authoring/sections/ad9d2fa4-e0cb-4af4-9bd5-c2853a2d6a4e/ai/draft",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -11,7 +11,7 @@
   "response": {
     "status": 503,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 25,
+    "durationMs": 24,
     "rateLimitRetries": 0,
     "body": {
       "success": false,

@@ -48,6 +48,38 @@ local second signer (WF); staging execution with a real second account is still 
 findings this baseline surfaced (F-1 … F-12, IQ-DEV-001) and their dispositions are in
 VSR-001 §4, §8, §9 and §10.
 
+### Counts after the OQ-003 re-execution — 2026-09-22 00:08–00:10 UTC (LIVE-PROOF session, trunk 8a40bb18, server on port 5102)
+
+Current counts for the package. Only **OQ-003 Authoring** was re-executed; every other
+row is carried forward unchanged from the 16:26 block above, whose bundles were not
+touched. The block above is left as the record of that run.
+
+| Protocol | Steps | Pass | Fail | Deviation | Not executed |
+|---|---|---|---|---|---|
+| IQ-001 (WD, 2026-09-21 01:02 UTC — carried forward) | 15 | 10 | 0 | 5 | 0 |
+| OQ-001 Projects (carried forward) | 16 | 16 | 0 | 0 | 0 |
+| OQ-002 Vault (carried forward) | 12 | 12 | 0 | 0 | 0 |
+| **OQ-003 Authoring (re-executed)** | 24 | **23** | **0** | 1 | 0 |
+| OQ-004 Submission Center (carried forward) | 15 | 15 | 0 | 0 | 0 |
+| OQ-005 Submission Readiness (carried forward) | 9 | 9 | 0 | 0 | 0 |
+| OQ-006 QMS (carried forward) | 20 | 20 | 0 | 0 | 0 |
+| **OQ total** | **96** | **95** | **0** | **1** | **0** |
+
+Requirements (TM-001, regenerated 2026-09-22T00:10:13.813Z): 67 — **66 pass, 1 partial,
+0 fail, 0 open, 0 uncovered**. The one requirement that moved is URS-AUTH-013 (`fail` →
+`pass`), on OQ-AUTH-17b: the Review board now reads the authoring store (WK), so a review
+requested in Authoring appears where a reviewer is told to look. **F-6 is closed.** The
+remaining partial is URS-AUTH-012 (AI drafting) and the remaining deviation is OQ-AUTH-16 —
+both owed to a PQ-passed AI provider, of which none is configured here; nothing was
+simulated. Credentialed steps again ran with the local second signer; staging execution
+with a real second account is still owed.
+
+The same session filed the live dispatch-readiness before/after over the two seeded demo
+sequences (the vault-filed leaf defect, now **F-13** in VSR-001 §11.1): 6
+`UNRESOLVED_DOCUMENT` errors → 0 on both, twelve of twelve leaves `resolved`/`pin match`.
+Evidence and every transcript: `docs/evidence/LIVE-PROOF/2026-09-21/`; dispositions in
+VSR-001 §11.
+
 ## Deviations (nothing was faked; each is recorded where it happened)
 
 - **IQ-DEV-001 — open, blocks acceptance.** The runtime role `c2c` cannot read 264 tables (183 `public` tables owned by `postgres`). Symptoms: section creation in Authoring (→ 11 steps not executed), vault read model and Vault surface, QMS change control, program journey, contradiction scan all answer 500. The corrective `GRANT` is an owner-role action; the session attempted it and was **refused by the permission gate**, so it was not applied. `IQ/db-grants-before.txt` and `IQ/db-role-denied-tables.json` are the inventory.

@@ -258,3 +258,206 @@ Prepared by the control-tower Claude session (drafting only; cannot sign). No re
 edited after execution; the runner regenerated every record under
 `docs/evidence/W3/2026-09-20/`.
 
+
+## 11. Addendum 2026-09-22 — live proof of the WP and WK fixes; TM-001 regenerated (LIVE-PROOF session)
+
+Appended only. Sections 1–10 are unchanged and describe the runs they were written
+for. The revision-history table sits above §1 and was therefore not touched either;
+this section is its own record.
+
+Executed 2026-09-22 00:07–00:11 UTC against `npx tsx server/index.ts` on port 5102
+(`ALLOW_DEV_AUTH=1 SKIP_DB_STARTUP_TEST=true LAUNCH_SCOPE_ENFORCE=on`), branch
+`concept2cure-v2` @ `8a40bb187be3f5b89b8380d23950029d908537f3`, identity
+jonmichaelpsmith@gmail.com / organisation 2. `/readyz` **503**, `anaState
+no_provider` — **no AI provider is configured; no model output was produced,
+requested or simulated.** Full transcripts:
+`docs/evidence/LIVE-PROOF/2026-09-21/`.
+
+§8, §9 and §10 established their verdicts from unit, integration and protocol
+evidence. This section supplies the two live verdicts those sections owed.
+
+### 11.1 The vault-filed leaf and dispatch readiness — new finding F-13, fixed before it was filed
+
+**Numbering note.** This report's **F-5 is the per-IP rate limiter** (§4), fixed by
+WC and recorded in §10.3. The vault-leaf defect below was surfaced by the two demo
+packs on 2026-09-21, *after* the F-1…F-12 set closed, and has had no F-number in
+this report until now. It is filed here as **F-13** so the disposition has an
+identifier. (The MDX demo pack numbers it "F4" in its own local scheme; that is the
+same defect.)
+
+| # | Finding | Evidence | Part 11 | Risk | Disposition |
+|---|---|---|---|---|---|
+| F-13 | **Dispatch readiness could not resolve a document filed from the Vault.** `submission_leaves` addresses two key spaces — `document_id` (integer) and `document_uuid` for the uuid-keyed vault (`migrations/20260917b_submission_leaf_document_uuid.sql`). `upsertLeaf` accepted a vault leaf by uuid and pinned its content hash; the readiness validator then tested the integer column alone. Every vault-filed leaf read back as `UNRESOLVED_DOCUMENT` — "has no resolvable document" — so **no sequence assembled from uploaded documents could ever clear the dispatch gate**, and the Builder showed "Source document: unlinked" on the leaves it had just linked. A third cause sat under it: the `SubmissionLeaf` interface did not declare `documentUuid`, so `listLeaves`' `as SubmissionLeaf` cast erased the uuid from every caller's view. | Before: `docs/evidence/DEMO/biotech/manifest.json` `records.submission.readiness`, `docs/evidence/DEMO/mdx/manifest.json` `records.readiness` (6 `UNRESOLVED_DOCUMENT` errors each). After: `docs/evidence/LIVE-PROOF/2026-09-21/transcripts/dispatch-readiness-{biotech,mdx}.json`, `leaves-{biotech,mdx}.json` | none | **high** | **Fixed (WP), now verified live.** `server/services/ectd/leaf-document-resolver.ts` — one resolver for the readiness assessment, the Builder's source-document column and the freeze/dispatch/transmit gates that compose it; it classifies each pointer per its table's key space and compares the pinned SHA-256 with the digest the store reports now, raising `DOCUMENT_CONTENT_MISMATCH` rather than passing silently. Revert-proof: with the pre-fix predicate restored, 5 of 32 cases in `dispatch-readiness.test.ts` fail. |
+
+**Live verdicts, `GET /api/submissions/sequences/:seqId/dispatch-readiness`** (note:
+the route carries no `/submissions/:id` prefix — the prefixed form answers 404):
+
+| | biotech · submission 67 · sequence 28 | mdx · submission 68 · sequence 29 |
+|---|---|---|
+| | before → after | before → after |
+| `leafCount` | 6 → 6 | 6 → 6 |
+| `validationErrors` | **6 → 0** | **6 → 0** |
+| `readiness.errors` (`UNRESOLVED_DOCUMENT`) | **6 → 0** | **6 → 0** |
+| `readiness.warnings` (`MISSING_REQUIRED_SECTION`) | 6 → 6 (unchanged) | 3 → 3 (unchanged) |
+| `readiness.infos` | 1 → 1 (unchanged) | 0 → 0 |
+| `gate.blockers` | 3 → **2** | 2 → **1** |
+
+All twelve vault leaves now resolve. `GET .../sequences/:seqId/leaves` returns, on
+every one of them, `sourceDocument: {keyKind:"uuid", status:"resolved", pin:"match",
+reason:null}` with `pinnedSha256 === storedSha256`; `documentId` is still `null`,
+which is correct for a uuid-keyed vault row. "Source document: unlinked" is gone.
+
+**The two blockers that remain are real and are recorded as such.**
+
+1. *Both sequences* — "No completed Shadow Review has run for this sequence."
+   `GET .../sequences/29/shadow-review` returns `[]`; sequence 28 returns one row,
+   `status:"failed"`, `model:null`, `summary:null`. Shadow Review is a model-driven
+   lens and **there is no AI provider configured**, so it cannot complete in this
+   environment. This blocker is **owed to a provider key**. The gate refusing to
+   certify a never-reviewed dossier is the required behaviour; nothing was done to
+   clear it.
+2. *Sequence 28 only* — "requires a 21 CFR Part 11 release signature and none has
+   been applied". `releaseSignature.required` is `true` for the IND and `false` for
+   the 510(k) (`sequence 29` is `cleared: true`). No dispatch-intent signature
+   exists on `ectd-sequence:28` and no orchestrator run is linked. Clearing it
+   requires a real signing event by a real signer — the control that must not be
+   faked.
+
+Both were present in the before record. The fix removed six false blockers and left
+the two true ones standing.
+
+### 11.2 F-6 — the one review lifecycle, verified live
+
+**F-6 is closed.** §10.3 carried it as *"Open — design decision"*; WK implemented the
+decision (the store the Authoring launch app writes through is canonical, the board
+reads it, the board's five own write routes are gone — see
+`docs/evidence/WK/2026-09-21/README.md`), and this run is the protocol execution
+that was owed.
+
+```
+VALIDATION_BASE_URL=http://localhost:5102 npm run validation:oq -- authoring
+OQ-003 Authoring: 23 pass, 0 fail, 1 deviation, 0 not-executed
+```
+
+| Step | §10.2 (2026-09-21 16:26, port 5200, `ad69500f`) | this run (2026-09-22 00:08, port 5102, `8a40bb18`) |
+|---|---|---|
+| OQ-AUTH-17 | pass | pass |
+| **OQ-AUTH-17b** | **fail** — `GET /api/review/board` HTTP 200 with `data.meta {scope:"all", total:0}`; *"authoring review request is not on the Review board queue"* | **pass** — HTTP 200, queue **12 items**, listing the document |
+
+The queue row the board returns for the document OQ-AUTH-17 created carries
+`docStatus:"IN_REVIEW"`, `myReviewStatus:"pending"`, `awaitingMyReview:true`, and a
+`reviews[0].id` of `bf9c7e66-7d99-4d98-bf2d-469a6d611227` — the `authoring_reviews`
+id that `POST /api/authoring/documents/:id/request-review` returned one second
+earlier in OQ-AUTH-17. One review lifecycle, one id space, one store. The same
+response also lists the demo packs' outstanding review requests (e.g.
+`[Demo · MDX] Cybersecurity and Interoperability Summary`, reviewer
+`oq-signer@validation.local`), which closes the MDX pack's local finding F4 by the
+same change.
+
+Evidence: `docs/evidence/W3/2026-09-20/OQ-AUTHORING/` (regenerated in full; this run
+replaced the OQ-003 bundle only — the other five protocols' bundles are untouched
+from the 16:26 run), step file
+`OQ-AUTHORING/steps/OQ-AUTH-17b.api-1.json`. Before and after are preserved side by
+side in `docs/evidence/LIVE-PROOF/2026-09-21/transcripts/oq-auth-17b-{before,after}/`,
+including the prior run's `at-failure.png`.
+
+`OQ-AUTHORING/steps/OQ-AUTH-20.png` from the same run is the board screenshot over
+the **seeded demo programs** that WK also owed: filtered to *All open* the surface
+reads "8 documents await your review" and lists `[Demo · MDX] Cybersecurity and
+Interoperability Summary` and `[Demo · Biotech] Module 2.5 Clinical Overview —
+C2C-101` (both IN-REVIEW, reviewer `OQ Signer (validation)`), neither of which was
+visible on this surface before the change. The header states the §11.50 boundary in
+the product's own words — *"Verdicts recorded here are not electronic signatures —
+apply a binding signature from the authoring workspace."* — and the row offers
+*Request changes…* and *Record review decision* only, with no delegate action, which
+is the absent transition WK stated rather than faked. Copy:
+`docs/evidence/LIVE-PROOF/2026-09-21/transcripts/review-board-OQ-AUTH-20.png`.
+
+The credentialed steps ran with the local second signer (OQ-AUTH-12/13/14 pass).
+The password was never printed and appears in no evidence file.
+
+The one remaining deviation in OQ-003 is **OQ-AUTH-16**: the AI-draft route answered
+HTTP 503 `GATEWAY_UNAVAILABLE` — *"No AI provider is configured for this deployment,
+so this section cannot be drafted. Nothing was changed."* OQ-AUTH-15, the fail-closed
+negative case on the same route, passes. That deviation is owed to a provider key,
+not to a defect.
+
+### 11.3 TM-001 regenerated
+
+```
+npm run validation:traceability
+TM-001: 67 requirements — pass 66, partial 1, fail 0, open 0, uncovered 0; 96 OQ steps
+```
+
+| | §5 baseline | §10.2 | **this run** |
+|---|---|---|---|
+| requirements | 67 | 67 | 67 |
+| pass | 43 | 65 | **66** |
+| partial | 2 | 1 | 1 |
+| fail | 7 | 1 | **0** |
+| open | 15 | 0 | 0 |
+| uncovered | 0 | 0 | 0 |
+| OQ steps (pass / fail / deviation / not-executed) | 62 / 9 / 8 / 11 | 94 / 1 / 1 / 0 | **95 / 0 / 1 / 0** |
+
+Exactly one requirement moved: **URS-AUTH-013 `fail` → `pass`**, on OQ-AUTH-17b.
+Its row now reads `OQ-AUTH-17 (pass)`, `OQ-AUTH-17b (pass)`, `OQ-AUTH-20 (pass)`.
+**Correction to §10.3:** that row names "URS-AUTH-017" as the failing requirement;
+the requirement F-6 failed was **URS-AUTH-013**. §10 is left as written.
+
+By app: Projects 9/9 pass, Vault 10/10, **Authoring 14 pass + 1 partial**,
+Submission Center 12/12, Submission Readiness 8/8, QMS controlled documents 13/13.
+`problems: []`. Generated `2026-09-22T00:10:13.813Z`, `runDate 2026-09-20`.
+
+The single remaining **partial** is **URS-AUTH-012** — AI drafting through the
+governed gateway — carried by `OQ-AUTH-15 (pass)` + `OQ-AUTH-16 (deviation)`. It is
+the only non-`pass` requirement in the set and it stays partial until a PQ-passed
+provider is configured.
+
+The matrix machinery was re-proved against its negative case in the same session:
+`npm run validation:traceability:selftest` → *"negative case: builder exited 1 and
+named URS-FAKE-999 — the gate fails when it should"*, and
+`npm run validation:oq:selftest` → a false expectation recorded as `fail`, a
+deviation as `deviation`, a dependent step as `not-executed`, a thrown error as
+`fail`. Transcript: `docs/evidence/LIVE-PROOF/2026-09-21/transcripts/selftests.txt`.
+
+### 11.4 Disposition summary after this section
+
+| Finding | State after §11 |
+|---|---|
+| F-1 … F-5, F-7 … F-12 | Unchanged from §10.3. |
+| **F-6** | **Closed.** One review lifecycle (WK); OQ-AUTH-17b passes live; URS-AUTH-013 reads `pass`. Staging re-execution still owed with the rest of the package. |
+| **F-13** (new, §11.1) | **Closed.** Vault-filed leaves resolve on both demo sequences; Builder source-document column linked; unit revert-proof in `dispatch-readiness.test.ts`. |
+| IQ-DEV-001 | Fixed (WD). |
+| OQ-AUTH-16 / URS-AUTH-012 | Deviation / partial — no PQ-passed provider configured. Nothing simulated. |
+| OQ-SUBC-08, P-1, P-2 | Unchanged: closed locally, staging execution with a real second account owed. |
+
+### 11.5 What the package still owes before signature
+
+Unchanged from §10.4 except that the F-6 decision and its re-execution are now done.
+In full, and nothing here is closable by another local run:
+
+1. **Staging execution** of IQ-001 and all six OQ protocols against the production
+   image (`NODE_ENV=production`, HMAC-sealed audit chain, RLS on, enforcing CSP,
+   dev-login not mounted), witnessed, with a real second signer account holding a
+   password for OQ-SUBC-08 and OQ-QMS-05.
+2. **A configured PQ-passed AI provider**, to convert OQ-AUTH-16 from deviation to
+   an executed step and URS-AUTH-012 from partial to pass, and to let **Shadow
+   Review complete** so the two demo sequences' dispatch gates can be assessed
+   against a reviewed dossier rather than an unreviewed one. There is no provider
+   key in this environment and none was simulated.
+3. **A release signature** applied by a real signer on the IND sequence, to exercise
+   the §11.70 branch of the dispatch gate end to end.
+4. **Verification of F-1/F-2 on staging** — `npm run ops:verify-audit-chain` with the
+   seal on; these bear on the Part 11 claim and D5.
+5. **The qualified validation contractor's review** of URS/RA against CSA and the
+   customer's Part 11 policy (in particular whether PIN + session is an acceptable
+   two-component signature and whether QMS approvals are meant to be signatures),
+   witness of one full re-execution, and initials on every execution record.
+6. **Signatures.** VMP-001, URS-001…006, RA-001, IQ-001, OQ-001…006, TM-001 and
+   VSR-001 are all still `DRAFT — UNSIGNED`; the signed PDFs are filed under
+   `docs/evidence/validation/`.
+
+Prepared by the LIVE-PROOF Claude session (drafting only; cannot sign). No product
+code, server, client, shared or CI file was changed in this session, and no git
+command was run. No result was edited after execution; the runner regenerated the
+OQ-003 bundle and the matrix builder regenerated TM-001.

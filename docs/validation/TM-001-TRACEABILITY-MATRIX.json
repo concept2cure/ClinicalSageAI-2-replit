@@ -1,13 +1,13 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-09-21T16:29:42.222Z",
+  "generatedAt": "2026-09-22T00:10:13.813Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-20",
   "summary": {
     "requirements": 67,
-    "pass": 65,
+    "pass": 66,
     "partial": 1,
-    "fail": 1,
+    "fail": 0,
     "open": 0,
     "uncovered": 0
   },
@@ -30,9 +30,9 @@
     },
     "Authoring": {
       "requirements": 15,
-      "pass": 13,
+      "pass": 14,
       "partial": 1,
-      "fail": 1,
+      "fail": 0,
       "open": 0,
       "uncovered": 0
     },
@@ -62,8 +62,8 @@
     }
   },
   "stepTotals": {
-    "pass": 94,
-    "fail": 1,
+    "pass": 95,
+    "fail": 0,
     "deviation": 1,
     "not-executed": 0,
     "steps": 96
@@ -72,10 +72,10 @@
     {
       "protocolId": "OQ-003",
       "app": "Authoring",
-      "executedAt": "2026-09-21T16:26:52.611Z",
+      "executedAt": "2026-09-22T00:08:57.969Z",
       "counts": {
-        "pass": 22,
-        "fail": 1,
+        "pass": 23,
+        "fail": 0,
         "deviation": 1,
         "not-executed": 0
       },
@@ -1047,7 +1047,7 @@
         {
           "protocol": "OQ-003",
           "step": "OQ-AUTH-17b",
-          "status": "fail",
+          "status": "pass",
           "evidenceDir": "OQ-AUTHORING",
           "title": "The reviewer sees the pending review on the Review surface"
         },
@@ -1065,7 +1065,7 @@
         "assurance": "scripted",
         "rationale": "request, submit negatives/positive, board visibility"
       },
-      "verdict": "fail"
+      "verdict": "pass"
     },
     {
       "id": "URS-AUTH-014",

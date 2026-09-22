@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/signatures",
+    "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/signatures",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -15,19 +15,19 @@
       "success": true,
       "signatures": [
         {
-          "id": "7b44b5d1-135b-4cdc-a340-048534605190",
-          "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
+          "id": "6a19b35a-b06e-45f0-9572-bcd9b52917e8",
+          "doc_id": "76adad64-ded1-4cae-9181-463e744d46f3",
           "signer_email": "jonmichaelpsmith@gmail.com",
           "signer_name": "JM Smith",
           "meaning": "REVIEWER",
           "reason": "OQ-003 step 14: reviewed for validation",
           "method": "PIN",
           "content_hash": "c2f09ccb3ab88796c1142308f5a9ea4a83015442b4eeb2d6d3542c38424e1ccf",
-          "signature_digest": "55ec1f5efea1da7010a04f4bb06332008bae45c0bb00bf97ae83fb3112e01898",
+          "signature_digest": "7fea017a34b18aa12b83a34fb54518ba7cc7106fba726b32a5cf0ddeffc1a79d",
           "covered_freeze_version": "1.0",
-          "covered_content_hash": "cdfeb64386ffff1856d05256803271fe7550097161e7edde0312a4af8eca3f07",
+          "covered_content_hash": "925f207a5b3db33e5f809dfcfd1c0f76a6e3ed030f17324aab3c54cc8a621565",
           "pin_verified": true,
-          "signed_at": "2026-09-21T16:27:04.493Z",
+          "signed_at": "2026-09-22T00:09:11.757Z",
           "tenant_id": 2
         }
       ]

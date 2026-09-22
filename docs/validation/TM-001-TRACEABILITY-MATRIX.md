@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TM-001 |
-| Version | generated 2026-09-21T16:29:42.222Z |
+| Version | generated 2026-09-22T00:10:13.813Z |
 | Status | DRAFT — UNSIGNED — GENERATED, DO NOT EDIT |
 | Generator | `scripts/validation/build-traceability.mjs` (`npm run validation:traceability`) |
 | Sources | URS-001…006 requirement tables · RA-001 rows · docs/evidence/W3/2026-09-20/OQ-*/result.json · IQ/iq-results.json |
@@ -12,15 +12,15 @@
 
 ## Summary
 
-- Requirements: **67** — pass 65 · partial 1 · fail 1 · open 0 · uncovered 0
-- OQ steps executed: **96** — pass 94 · fail 1 · deviation 1 · not-executed 0
+- Requirements: **67** — pass 66 · partial 1 · fail 0 · open 0 · uncovered 0
+- OQ steps executed: **96** — pass 95 · fail 0 · deviation 1 · not-executed 0
 - IQ-001: 10 pass · 0 fail · 5 deviation (executed 2026-09-21T01:02:35.782Z)
 
 | App | Requirements | Pass | Partial | Fail | Open | Uncovered |
 |---|---|---|---|---|---|---|
 | Projects | 9 | 9 | 0 | 0 | 0 | 0 |
 | Vault | 10 | 10 | 0 | 0 | 0 | 0 |
-| Authoring | 15 | 13 | 1 | 1 | 0 | 0 |
+| Authoring | 15 | 14 | 1 | 0 | 0 | 0 |
 | Submission Center | 12 | 12 | 0 | 0 | 0 | 0 |
 | Submission Readiness | 8 | 8 | 0 | 0 | 0 | 0 |
 | QMS controlled documents | 13 | 13 | 0 | 0 | 0 | 0 |
@@ -29,7 +29,7 @@
 
 | Protocol | App | Executed | Pass | Fail | Deviation | Not executed | Evidence |
 |---|---|---|---|---|---|---|---|
-| OQ-003 | Authoring | 2026-09-21T16:26:52.611Z | 22 | 1 | 1 | 0 | `docs/evidence/W3/2026-09-20/OQ-AUTHORING/` |
+| OQ-003 | Authoring | 2026-09-22T00:08:57.969Z | 23 | 0 | 1 | 0 | `docs/evidence/W3/2026-09-20/OQ-AUTHORING/` |
 | OQ-001 | Projects | 2026-09-21T16:25:49.411Z | 16 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-20/OQ-PROJECTS/` |
 | OQ-006 | QMS controlled documents | 2026-09-21T16:28:10.701Z | 20 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-20/OQ-QMS/` |
 | OQ-004 | Submission Center | 2026-09-21T16:27:19.126Z | 15 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-20/OQ-SUBMISSION-CENTER/` |
@@ -71,7 +71,7 @@
 | URS-AUTH-010 | An electronic signature requires the actor's PIN (a second component held only by the signer, enrolled and rotated only by the signer with the current PIN), a meaning from {AUTHOR, REVIEWER, APPROVER} and an intent; a wrong PIN answers 401 and an invalid meaning 400 with nothing stored; a valid signature stores signer, meaning, digest and the covered freeze version/hash and is listed with `pin_verified`. | §11.50 §11.70 §11.200 | high | scripted | OQ-AUTH-12 (pass)<br>OQ-AUTH-13 (pass)<br>OQ-AUTH-14 (pass) | **pass** |
 | URS-AUTH-011 | Only a role with signing authority may apply a signature (403 `ESIGNATURE_NO_AUTHORITY` otherwise). | §11.10(g) | high | scripted (positive only locally) | OQ-AUTH-14 (pass) | **pass** |
 | URS-AUTH-012 | AI drafting runs only through the governed gateway; with no provider configured the request fails closed with an error and never returns draft text; with a PQ-passed provider it returns a candidate for human acceptance with provenance. | none | high | scripted (fail-closed) / deviation (drafting) | OQ-AUTH-15 (pass)<br>OQ-AUTH-16 (deviation) | **partial** |
-| URS-AUTH-013 | A review can be requested from named reviewers and the document submitted into an approval workflow whose steps name their approver; the document moves to IN_REVIEW; a reviewer sees the pending review on the Review surface and records a decision with a meaning. | §11.10(e) | medium | scripted | OQ-AUTH-17 (pass)<br>OQ-AUTH-17b (fail)<br>OQ-AUTH-20 (pass) | **fail** |
+| URS-AUTH-013 | A review can be requested from named reviewers and the document submitted into an approval workflow whose steps name their approver; the document moves to IN_REVIEW; a reviewer sees the pending review on the Review surface and records a decision with a meaning. | §11.10(e) | medium | scripted | OQ-AUTH-17 (pass)<br>OQ-AUTH-17b (pass)<br>OQ-AUTH-20 (pass) | **pass** |
 | URS-AUTH-014 | Template stores (organisation templates and the global regulatory reference store) answer; an empty organisation store is reported honestly. | none | low | ad-hoc | OQ-AUTH-18 (pass) | **pass** |
 | URS-AUTH-015 | The Document Authoring and Review surfaces render the program's documents and the review board without runtime errors. | none | medium | unscripted | OQ-AUTH-19 (pass)<br>OQ-AUTH-20 (pass) | **pass** |
 | URS-SUBC-001 | Submission endpoints require an authenticated actor holding the regulatory-author role; anonymous requests are refused. | §11.10(d) | high | scripted | OQ-SUBC-01 (pass) | **pass** |

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PATCH",
-    "url": "http://localhost:5200/api/authoring/sections/12d601ed-b37e-40ed-afde-ade6e34795a7",
+    "url": "http://localhost:5102/api/authoring/sections/eb2512c6-2ca3-4460-afea-1b90b1134109",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -13,7 +13,7 @@
   "response": {
     "status": 409,
     "contentType": "application/json; charset=utf-8",
-    "durationMs": 11,
+    "durationMs": 13,
     "rateLimitRetries": 0,
     "body": {
       "success": false,
@@ -21,7 +21,7 @@
         "code": "SECTION_CHANGED",
         "message": "This section was changed by someone else while you were editing. Your text has not been saved and nothing was overwritten — reload the section to see their version, then reapply your changes."
       },
-      "currentUpdatedAt": "2026-09-21T16:26:55.408Z"
+      "currentUpdatedAt": "2026-09-22T00:09:02.707Z"
     }
   }
 }

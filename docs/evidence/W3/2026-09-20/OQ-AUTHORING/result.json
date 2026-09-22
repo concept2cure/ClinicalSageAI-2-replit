@@ -5,16 +5,16 @@
   "appLabel": "Authoring",
   "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
   "executedBy": "automated runner tests/validation/oq/authoring/run.mjs",
-  "executedAt": "2026-09-21T16:26:52.611Z",
-  "finishedAt": "2026-09-21T16:27:19.051Z",
+  "executedAt": "2026-09-22T00:08:57.969Z",
+  "finishedAt": "2026-09-22T00:09:32.564Z",
   "environment": {
-    "baseUrl": "http://localhost:5200",
+    "baseUrl": "http://localhost:5102",
     "node": "v22.22.2",
     "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
     "playwrightCore": "1.63.0",
     "git": {
       "branch": "concept2cure-v2",
-      "commit": "ad69500f01f56af1b2b3a0c3b3c69feaaa384ba6"
+      "commit": "8a40bb187be3f5b89b8380d23950029d908537f3"
     },
     "testUser": "jonmichaelpsmith@gmail.com",
     "organizationId": "2",
@@ -40,8 +40,8 @@
     }
   },
   "counts": {
-    "pass": 22,
-    "fail": 1,
+    "pass": 23,
+    "fail": 0,
     "deviation": 1,
     "not-executed": 0
   },
@@ -54,15 +54,15 @@
       "action": "POST /api/c2c/projects",
       "expected": "201",
       "status": "pass",
-      "observed": "program 71aef2b9-4b03-4a9e-b097-b2278f59b7d4",
-      "startedAt": "2026-09-21T16:26:53.220Z",
-      "finishedAt": "2026-09-21T16:26:53.524Z",
+      "observed": "program ad36558c-8719-4200-9d65-90b526894b3b",
+      "startedAt": "2026-09-22T00:08:59.389Z",
+      "finishedAt": "2026-09-22T00:09:00.281Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-00.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/c2c/projects",
+          "url": "http://localhost:5102/api/c2c/projects",
           "status": 201
         }
       ],
@@ -81,14 +81,14 @@
       "expected": "HTTP 401/403",
       "status": "pass",
       "observed": "HTTP 401",
-      "startedAt": "2026-09-21T16:26:53.524Z",
-      "finishedAt": "2026-09-21T16:26:53.779Z",
+      "startedAt": "2026-09-22T00:09:00.281Z",
+      "finishedAt": "2026-09-22T00:09:00.537Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-01.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs",
+          "url": "http://localhost:5102/api/authoring/docs",
           "status": 401
         }
       ],
@@ -107,14 +107,14 @@
       "expected": "HTTP 400 naming the title",
       "status": "pass",
       "observed": "HTTP 400: Document title is required",
-      "startedAt": "2026-09-21T16:26:53.779Z",
-      "finishedAt": "2026-09-21T16:26:54.039Z",
+      "startedAt": "2026-09-22T00:09:00.537Z",
+      "finishedAt": "2026-09-22T00:09:00.799Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-02.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs",
+          "url": "http://localhost:5102/api/authoring/docs",
           "status": 400
         }
       ],
@@ -132,15 +132,15 @@
       "action": "POST /api/authoring/docs {title, module:\"M2\", client_program_id}",
       "expected": "HTTP 200/201 with a document id (UUID)",
       "status": "pass",
-      "observed": "document ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
-      "startedAt": "2026-09-21T16:26:54.039Z",
-      "finishedAt": "2026-09-21T16:26:54.316Z",
+      "observed": "document 76adad64-ded1-4cae-9181-463e744d46f3",
+      "startedAt": "2026-09-22T00:09:00.799Z",
+      "finishedAt": "2026-09-22T00:09:01.311Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-03.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs",
+          "url": "http://localhost:5102/api/authoring/docs",
           "status": 201
         }
       ],
@@ -159,26 +159,26 @@
       "expected": "Two sections returned; order follows the CTD code (2.5 before 2.7) or the stored order_index",
       "status": "pass",
       "observed": "order: 2.5@0, 2.7@1; structure: {\"duplicateCodes\":[],\"outOfOrder\":false,\"suggestedOrder\":[\"2.5\",\"2.7\"]}",
-      "startedAt": "2026-09-21T16:26:54.316Z",
-      "finishedAt": "2026-09-21T16:26:55.145Z",
+      "startedAt": "2026-09-22T00:09:01.311Z",
+      "finishedAt": "2026-09-22T00:09:02.445Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-04.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/sections",
+          "url": "http://localhost:5102/api/authoring/sections",
           "status": 201
         },
         {
           "file": "steps/OQ-AUTH-04.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/sections",
+          "url": "http://localhost:5102/api/authoring/sections",
           "status": 201
         },
         {
           "file": "steps/OQ-AUTH-04.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/sections",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/sections",
           "status": 200
         }
       ],
@@ -197,20 +197,20 @@
       "expected": "HTTP 200; history lists ≥1 revision carrying content_sha256 and created_by",
       "status": "pass",
       "observed": "2 revision(s); newest sha256 5f2aa1c0c7f6… by jonmichaelpsmith@gmail.com",
-      "startedAt": "2026-09-21T16:26:55.145Z",
-      "finishedAt": "2026-09-21T16:26:55.695Z",
+      "startedAt": "2026-09-22T00:09:02.445Z",
+      "finishedAt": "2026-09-22T00:09:02.998Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-05.api-1.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/authoring/sections/12d601ed-b37e-40ed-afde-ade6e34795a7",
+          "url": "http://localhost:5102/api/authoring/sections/eb2512c6-2ca3-4460-afea-1b90b1134109",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-05.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/sections/12d601ed-b37e-40ed-afde-ade6e34795a7/history",
+          "url": "http://localhost:5102/api/authoring/sections/eb2512c6-2ca3-4460-afea-1b90b1134109/history",
           "status": 200
         }
       ],
@@ -229,14 +229,14 @@
       "expected": "success:true, revisionCount ≥ 1, chain verdict intact",
       "status": "pass",
       "observed": "revisionCount=2; verdict {\"success\":true,\"revisionCount\":2,\"intact\":true,\"chainedCount\":2,\"preLedgerCount\":0,\"breaks\":[]}",
-      "startedAt": "2026-09-21T16:26:55.696Z",
-      "finishedAt": "2026-09-21T16:26:55.953Z",
+      "startedAt": "2026-09-22T00:09:02.998Z",
+      "finishedAt": "2026-09-22T00:09:03.258Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-06.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/sections/12d601ed-b37e-40ed-afde-ade6e34795a7/history/verify",
+          "url": "http://localhost:5102/api/authoring/sections/eb2512c6-2ca3-4460-afea-1b90b1134109/history/verify",
           "status": 200
         }
       ],
@@ -255,20 +255,20 @@
       "expected": "HTTP 409 SECTION_CHANGED; content unchanged",
       "status": "pass",
       "observed": "HTTP 409 SECTION_CHANGED; content intact",
-      "startedAt": "2026-09-21T16:26:55.953Z",
-      "finishedAt": "2026-09-21T16:26:56.473Z",
+      "startedAt": "2026-09-22T00:09:03.258Z",
+      "finishedAt": "2026-09-22T00:09:03.781Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-07.api-1.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/authoring/sections/12d601ed-b37e-40ed-afde-ade6e34795a7",
+          "url": "http://localhost:5102/api/authoring/sections/eb2512c6-2ca3-4460-afea-1b90b1134109",
           "status": 409
         },
         {
           "file": "steps/OQ-AUTH-07.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/sections",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/sections",
           "status": 200
         }
       ],
@@ -287,32 +287,32 @@
       "expected": "HTTP 200; section content equals that revision; history grows (the revert is itself recorded)",
       "status": "pass",
       "observed": "content restored; history 2 → 3",
-      "startedAt": "2026-09-21T16:26:56.473Z",
-      "finishedAt": "2026-09-21T16:26:57.546Z",
+      "startedAt": "2026-09-22T00:09:03.781Z",
+      "finishedAt": "2026-09-22T00:09:04.845Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-08.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/sections/12d601ed-b37e-40ed-afde-ade6e34795a7/history",
+          "url": "http://localhost:5102/api/authoring/sections/eb2512c6-2ca3-4460-afea-1b90b1134109/history",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-08.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/sections/12d601ed-b37e-40ed-afde-ade6e34795a7/revert",
+          "url": "http://localhost:5102/api/authoring/sections/eb2512c6-2ca3-4460-afea-1b90b1134109/revert",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-08.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/sections/12d601ed-b37e-40ed-afde-ade6e34795a7/history",
+          "url": "http://localhost:5102/api/authoring/sections/eb2512c6-2ca3-4460-afea-1b90b1134109/history",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-08.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/sections",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/sections",
           "status": 200
         }
       ],
@@ -330,21 +330,21 @@
       "action": "POST /api/authoring/sections/:id/comment {body, doc_id}",
       "expected": "HTTP 200/201; comment listed under the document",
       "status": "pass",
-      "observed": "comment 4fe1b27a-86eb-4b04-8ae2-f2de69bc2a16 recorded (status open) and listed",
-      "startedAt": "2026-09-21T16:26:57.547Z",
-      "finishedAt": "2026-09-21T16:26:58.079Z",
+      "observed": "comment 4324abb4-e29e-4107-96e7-bdaa580c7780 recorded (status open) and listed",
+      "startedAt": "2026-09-22T00:09:04.845Z",
+      "finishedAt": "2026-09-22T00:09:05.379Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-09.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/sections/12d601ed-b37e-40ed-afde-ade6e34795a7/comment",
+          "url": "http://localhost:5102/api/authoring/sections/eb2512c6-2ca3-4460-afea-1b90b1134109/comment",
           "status": 201
         },
         {
           "file": "steps/OQ-AUTH-09.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/documents/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/comments",
+          "url": "http://localhost:5102/api/authoring/documents/76adad64-ded1-4cae-9181-463e744d46f3/comments",
           "status": 200
         }
       ],
@@ -363,14 +363,14 @@
       "expected": "Events for CREATE and UPDATE (and REVERT) with actor email, timestamps and content hashes",
       "status": "pass",
       "observed": "5 events: comment_added, REVERT, UPDATE, CREATE; actor jonmichaelpsmith@gmail.com",
-      "startedAt": "2026-09-21T16:26:58.079Z",
-      "finishedAt": "2026-09-21T16:26:58.340Z",
+      "startedAt": "2026-09-22T00:09:05.379Z",
+      "finishedAt": "2026-09-22T00:09:05.646Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-10.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/audit",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/audit",
           "status": 200
         }
       ],
@@ -388,33 +388,33 @@
       "action": "POST /documents/:id/request-review {reviewers:[self]}; POST /docs/:id/submit {workflow_steps:[{role:\"QA\", approver_email:self}]}; GET /docs/:id/workflow",
       "expected": "Review request recorded (pending, reviewer = self); submit refused without approver_email; with it the document moves to IN_REVIEW and the workflow lists a PENDING step",
       "status": "pass",
-      "observed": "review pending for jonmichaelpsmith@gmail.com; submit w/o approver → 400; workflow: {\"success\":true,\"workflowId\":\"ae0b4a57-de93-40d5-b448-8bc63ef0d6eb\",\"steps\":[{\"workflow_id\":\"ae0b4a57-de93-40d5-b448-8bc63ef0d6eb\",\"doc_id\":\"ed4a88ef-5227-49e6-b5af-a1155f3ba9af\",\"step_no\":1,\"role\":\"Q",
-      "startedAt": "2026-09-21T16:26:58.340Z",
-      "finishedAt": "2026-09-21T16:26:59.471Z",
+      "observed": "review pending for jonmichaelpsmith@gmail.com; submit w/o approver → 400; workflow: {\"success\":true,\"workflowId\":\"710107d3-4604-465a-b8d5-abcb9296ba20\",\"steps\":[{\"workflow_id\":\"710107d3-4604-465a-b8d5-abcb9296ba20\",\"doc_id\":\"76adad64-ded1-4cae-9181-463e744d46f3\",\"step_no\":1,\"role\":\"Q",
+      "startedAt": "2026-09-22T00:09:05.646Z",
+      "finishedAt": "2026-09-22T00:09:06.712Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-17.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/documents/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/request-review",
+          "url": "http://localhost:5102/api/authoring/documents/76adad64-ded1-4cae-9181-463e744d46f3/request-review",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-17.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/submit",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/submit",
           "status": 400
         },
         {
           "file": "steps/OQ-AUTH-17.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/submit",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/submit",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-17.api-4.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/workflow",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/workflow",
           "status": 200
         }
       ],
@@ -431,30 +431,21 @@
       "kind": "scripted",
       "action": "GET /api/review/board (the read model behind /concept2cure/review) after the request-review and submit above",
       "expected": "The queue lists the document for the reviewer",
-      "status": "fail",
-      "observed": {
-        "scope": "all",
-        "total": 0,
-        "threadItemId": null,
-        "threadDocumentId": null,
-        "generatedAt": "2026-09-21T16:26:59.741Z"
-      },
-      "startedAt": "2026-09-21T16:26:59.471Z",
-      "finishedAt": "2026-09-21T16:26:59.816Z",
-      "evidence": [
-        "steps/OQ-AUTH-17b.at-failure.png"
-      ],
+      "status": "pass",
+      "observed": "queue lists the document (12 items)",
+      "startedAt": "2026-09-22T00:09:06.712Z",
+      "finishedAt": "2026-09-22T00:09:06.990Z",
+      "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-17b.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/review/board",
+          "url": "http://localhost:5102/api/review/board",
           "status": 200
         }
       ],
       "consoleErrors": [],
       "note": "The Review board reads document_workflows / workflow_approvals (server/routes/review-board-routes.ts); authoring reviews are stored in authoring_reviews and authoring_workflow_steps (server/routes/authoring.router.ts:3476, 6259). If this step fails, a review requested in Authoring is not visible where a reviewer is told to look.",
-      "failure": "authoring review request is not on the Review board queue",
       "rateLimitRetries": 0
     },
     {
@@ -468,14 +459,14 @@
       "expected": "No draft content is returned; the request is refused with a provider-unavailable status (5xx) — never a fabricated draft",
       "status": "pass",
       "observed": "HTTP 503: {\"success\":false,\"error\":{\"code\":\"GATEWAY_UNAVAILABLE\",\"message\":\"No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed.\"}}",
-      "startedAt": "2026-09-21T16:26:59.817Z",
-      "finishedAt": "2026-09-21T16:27:00.132Z",
+      "startedAt": "2026-09-22T00:09:06.990Z",
+      "finishedAt": "2026-09-22T00:09:07.295Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-15.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/sections/9dadb0c2-f23e-4e85-b16d-99197dbede7b/ai/draft",
+          "url": "http://localhost:5102/api/authoring/sections/ad9d2fa4-e0cb-4af4-9bd5-c2853a2d6a4e/ai/draft",
           "status": 503
         }
       ],
@@ -500,8 +491,8 @@
           "message": "No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed."
         }
       },
-      "startedAt": "2026-09-21T16:27:00.132Z",
-      "finishedAt": "2026-09-21T16:27:00.448Z",
+      "startedAt": "2026-09-22T00:09:07.295Z",
+      "finishedAt": "2026-09-22T00:09:07.646Z",
       "evidence": [
         "steps/OQ-AUTH-16.at-failure.png"
       ],
@@ -509,7 +500,7 @@
         {
           "file": "steps/OQ-AUTH-16.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/sections/9dadb0c2-f23e-4e85-b16d-99197dbede7b/ai/draft",
+          "url": "http://localhost:5102/api/authoring/sections/ad9d2fa4-e0cb-4af4-9bd5-c2853a2d6a4e/ai/draft",
           "status": 503
         }
       ],
@@ -530,20 +521,20 @@
       "expected": "HTTP 409 DOCUMENT_NOT_SETTLED naming 1 unresolved comment; nothing frozen (no content hash retrievable)",
       "status": "pass",
       "observed": "HTTP 409 DOCUMENT_NOT_SETTLED (openComments=1, pendingEdits=0); frozen read → HTTP 404, no content hash",
-      "startedAt": "2026-09-21T16:27:00.448Z",
-      "finishedAt": "2026-09-21T16:27:00.981Z",
+      "startedAt": "2026-09-22T00:09:07.646Z",
+      "finishedAt": "2026-09-22T00:09:08.188Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-11a.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/freeze",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/freeze",
           "status": 409
         },
         {
           "file": "steps/OQ-AUTH-11a.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/frozen",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/frozen",
           "status": 404
         }
       ],
@@ -562,27 +553,27 @@
       "action": "PATCH /api/authoring/comments/:id {status:\"resolved\", resolution_note}; GET /documents/:id/comments; GET /docs/:id/audit",
       "expected": "HTTP 200; comment status resolved with resolved_by = actor and resolved_at set; the audit trail carries a comment_resolved event naming the comment",
       "status": "pass",
-      "observed": "comment 4fe1b27a-86eb-4b04-8ae2-f2de69bc2a16 resolved by jonmichaelpsmith@gmail.com at 2026-09-21T16:27:01.239Z; audit event comment_resolved by jonmichaelpsmith@gmail.com",
-      "startedAt": "2026-09-21T16:27:00.981Z",
-      "finishedAt": "2026-09-21T16:27:01.765Z",
+      "observed": "comment 4324abb4-e29e-4107-96e7-bdaa580c7780 resolved by jonmichaelpsmith@gmail.com at 2026-09-22T00:09:08.446Z; audit event comment_resolved by jonmichaelpsmith@gmail.com",
+      "startedAt": "2026-09-22T00:09:08.188Z",
+      "finishedAt": "2026-09-22T00:09:08.974Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-11b.api-1.json",
           "method": "PATCH",
-          "url": "http://localhost:5200/api/authoring/comments/4fe1b27a-86eb-4b04-8ae2-f2de69bc2a16",
+          "url": "http://localhost:5102/api/authoring/comments/4324abb4-e29e-4107-96e7-bdaa580c7780",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-11b.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/documents/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/comments",
+          "url": "http://localhost:5102/api/authoring/documents/76adad64-ded1-4cae-9181-463e744d46f3/comments",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-11b.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/audit",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/audit",
           "status": 200
         }
       ],
@@ -600,27 +591,27 @@
       "action": "POST /api/authoring/docs/:id/freeze {reason, version:\"1.0\"} after the comment is resolved; GET /docs/:id/frozen",
       "expected": "HTTP 200; a frozen record with content_hash is retrievable; a second freeze is refused",
       "status": "pass",
-      "observed": "frozen; {\"success\":true,\"version\":\"1.0\",\"contentHash\":\"cdfeb64386ffff1856d05256803271fe7550097161e7edde0312a4af8eca3f07\",\"frozenAt\":\"2026-09-21T16:27:02.026Z\",\"frozenBy",
-      "startedAt": "2026-09-21T16:27:01.765Z",
-      "finishedAt": "2026-09-21T16:27:02.562Z",
+      "observed": "frozen; {\"success\":true,\"version\":\"1.0\",\"contentHash\":\"925f207a5b3db33e5f809dfcfd1c0f76a6e3ed030f17324aab3c54cc8a621565\",\"frozenAt\":\"2026-09-22T00:09:09.234Z\",\"frozenBy",
+      "startedAt": "2026-09-22T00:09:08.974Z",
+      "finishedAt": "2026-09-22T00:09:09.772Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-11.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/freeze",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/freeze",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-11.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/frozen",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/frozen",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-11.api-3.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/freeze",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/freeze",
           "status": 400
         }
       ],
@@ -639,20 +630,20 @@
       "expected": "HTTP 200/201 on first enrolment (identity from the JWT, never from the body); once a PIN exists, a change without the current PIN is refused (400) and succeeds only with old_pin",
       "status": "pass",
       "observed": "PIN already enrolled: change without old_pin → 400 (\"Current PIN is required to change it\"); rotation with old_pin → HTTP 200",
-      "startedAt": "2026-09-21T16:27:02.562Z",
-      "finishedAt": "2026-09-21T16:27:03.271Z",
+      "startedAt": "2026-09-22T00:09:09.772Z",
+      "finishedAt": "2026-09-22T00:09:10.527Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-12.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/users/pin",
+          "url": "http://localhost:5102/api/authoring/users/pin",
           "status": 400
         },
         {
           "file": "steps/OQ-AUTH-12.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/users/pin",
+          "url": "http://localhost:5102/api/authoring/users/pin",
           "status": 200
         }
       ],
@@ -671,26 +662,26 @@
       "expected": "(a) HTTP 401 Invalid PIN; (b) HTTP 400 Invalid signature meaning; no signature stored",
       "status": "pass",
       "observed": "wrong PIN → 401; bad meaning → 400; no signature stored",
-      "startedAt": "2026-09-21T16:27:03.271Z",
-      "finishedAt": "2026-09-21T16:27:04.140Z",
+      "startedAt": "2026-09-22T00:09:10.527Z",
+      "finishedAt": "2026-09-22T00:09:11.397Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-13.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/e-sign",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/e-sign",
           "status": 401
         },
         {
           "file": "steps/OQ-AUTH-13.api-2.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/e-sign",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/e-sign",
           "status": 400
         },
         {
           "file": "steps/OQ-AUTH-13.api-3.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/signatures",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/signatures",
           "status": 200
         }
       ],
@@ -709,21 +700,21 @@
       "action": "POST /docs/:id/e-sign {pin, meaning:\"REVIEWER\", intent}; GET /docs/:id/signatures",
       "expected": "HTTP 200; one signature with signer_email = actor, meaning REVIEWER, pin_verified true, signature_digest and covered_content_hash present",
       "status": "pass",
-      "observed": "signature 7b44b5d1-135b-4cdc-a340-048534605190 by jonmichaelpsmith@gmail.com, meaning REVIEWER, covers freeze v1.0 (cdfeb64386ff…)",
-      "startedAt": "2026-09-21T16:27:04.140Z",
-      "finishedAt": "2026-09-21T16:27:04.757Z",
+      "observed": "signature 6a19b35a-b06e-45f0-9572-bcd9b52917e8 by jonmichaelpsmith@gmail.com, meaning REVIEWER, covers freeze v1.0 (925f207a5b3d…)",
+      "startedAt": "2026-09-22T00:09:11.397Z",
+      "finishedAt": "2026-09-22T00:09:12.020Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-14.api-1.json",
           "method": "POST",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/e-sign",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/e-sign",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-14.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/signatures",
+          "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/signatures",
           "status": 200
         }
       ],
@@ -742,20 +733,20 @@
       "expected": "Both HTTP 200 with list payloads (empty organisation store is honest for a new organisation)",
       "status": "pass",
       "observed": "org templates: 0; global templates: 20",
-      "startedAt": "2026-09-21T16:27:04.757Z",
-      "finishedAt": "2026-09-21T16:27:05.282Z",
+      "startedAt": "2026-09-22T00:09:12.020Z",
+      "finishedAt": "2026-09-22T00:09:12.546Z",
       "evidence": [],
       "api": [
         {
           "file": "steps/OQ-AUTH-18.api-1.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/c2c/templates",
+          "url": "http://localhost:5102/api/c2c/templates",
           "status": 200
         },
         {
           "file": "steps/OQ-AUTH-18.api-2.json",
           "method": "GET",
-          "url": "http://localhost:5200/api/authoring/templates",
+          "url": "http://localhost:5102/api/authoring/templates",
           "status": 200
         }
       ],
@@ -774,25 +765,25 @@
       "expected": "The surface renders and the document title is visible",
       "status": "pass",
       "observed": "document visible",
-      "startedAt": "2026-09-21T16:27:05.282Z",
-      "finishedAt": "2026-09-21T16:27:12.819Z",
+      "startedAt": "2026-09-22T00:09:12.546Z",
+      "finishedAt": "2026-09-22T00:09:25.496Z",
       "evidence": [
         "steps/OQ-AUTH-19.png"
       ],
       "api": [],
       "consoleErrors": [
         {
-          "at": "2026-09-21T16:27:09.689Z",
+          "at": "2026-09-22T00:09:17.047Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
         },
         {
-          "at": "2026-09-21T16:27:12.106Z",
+          "at": "2026-09-22T00:09:24.752Z",
           "kind": "console.error",
           "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
         },
         {
-          "at": "2026-09-21T16:27:12.107Z",
+          "at": "2026-09-22T00:09:24.753Z",
           "kind": "console.error",
           "message": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
         }
@@ -813,15 +804,15 @@
       "expected": "Review board renders (screenshot)",
       "status": "pass",
       "observed": "rendered",
-      "startedAt": "2026-09-21T16:27:12.819Z",
-      "finishedAt": "2026-09-21T16:27:18.963Z",
+      "startedAt": "2026-09-22T00:09:25.496Z",
+      "finishedAt": "2026-09-22T00:09:32.475Z",
       "evidence": [
         "steps/OQ-AUTH-20.png"
       ],
       "api": [],
       "consoleErrors": [
         {
-          "at": "2026-09-21T16:27:17.207Z",
+          "at": "2026-09-22T00:09:30.490Z",
           "kind": "console.error",
           "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
         }

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/sections",
+    "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/sections",
     "anonymous": false,
     "identity": null,
     "body": null
@@ -15,30 +15,30 @@
       "success": true,
       "sections": [
         {
-          "id": "12d601ed-b37e-40ed-afde-ade6e34795a7",
-          "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
+          "id": "eb2512c6-2ca3-4460-afea-1b90b1134109",
+          "doc_id": "76adad64-ded1-4cae-9181-463e744d46f3",
           "code": "2.5",
           "title": "Clinical Overview",
           "content": "<p>Revised 2.5 text — OQ-003 step 05.</p>",
           "order_index": 0,
           "track_changes": false,
-          "created_at": "2026-09-21T16:26:54.865Z",
-          "updated_at": "2026-09-21T16:26:55.408Z",
+          "created_at": "2026-09-22T00:09:02.156Z",
+          "updated_at": "2026-09-22T00:09:02.707Z",
           "tenant_id": 2,
           "comment_count": "0",
           "revision_count": "2",
           "citation_count": "0"
         },
         {
-          "id": "9dadb0c2-f23e-4e85-b16d-99197dbede7b",
-          "doc_id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
+          "id": "ad9d2fa4-e0cb-4af4-9bd5-c2853a2d6a4e",
+          "doc_id": "76adad64-ded1-4cae-9181-463e744d46f3",
           "code": "2.7",
           "title": "Clinical Summary",
           "content": "<p>Initial 2.7 text.</p>",
           "order_index": 1,
           "track_changes": false,
-          "created_at": "2026-09-21T16:26:54.577Z",
-          "updated_at": "2026-09-21T16:26:54.577Z",
+          "created_at": "2026-09-22T00:09:01.572Z",
+          "updated_at": "2026-09-22T00:09:01.572Z",
           "tenant_id": 2,
           "comment_count": "0",
           "revision_count": "1",

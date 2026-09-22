@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "http://localhost:5200/api/authoring/docs/ed4a88ef-5227-49e6-b5af-a1155f3ba9af/freeze",
+    "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/freeze",
     "anonymous": false,
     "identity": null,
     "body": {
@@ -16,9 +16,9 @@
     "rateLimitRetries": 0,
     "body": {
       "success": true,
-      "contentHash": "cdfeb64386ffff1856d05256803271fe7550097161e7edde0312a4af8eca3f07",
+      "contentHash": "925f207a5b3db33e5f809dfcfd1c0f76a6e3ed030f17324aab3c54cc8a621565",
       "version": "1.0",
-      "frozenAt": "2026-09-21T16:27:02.032Z"
+      "frozenAt": "2026-09-22T00:09:09.239Z"
     }
   }
 }
