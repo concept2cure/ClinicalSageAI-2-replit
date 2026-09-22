@@ -368,6 +368,24 @@ export function computeDispatchReadiness(
         message: `Leaf "${leaf.title}" uses lifecycle operation "${leaf.lifecycleOp}" in an original (0000) sequence — only "new" is valid; there is no prior content to ${leaf.lifecycleOp}.`,
       });
     }
+
+    // WARNING: a declared act on a filed leaf is NOT assessed here. It is bound
+    // to the filed inventory at assembly (package-from-core), and an act that
+    // cannot bind is refused there and at transmit. Saying so keeps a clean
+    // verdict from being read as covering it. 2026-09-22 (W5/D7).
+    if (
+      !opts.isOriginalSequence &&
+      (leaf.lifecycleOp === 'replace' || leaf.lifecycleOp === 'append' || leaf.lifecycleOp === 'delete')
+    ) {
+      findings.push({
+        severity: 'warning',
+        code: 'LIFECYCLE_BINDING_NOT_ASSESSED',
+        sectionCode: leaf.sectionCode,
+        message:
+          `Leaf "${leaf.title}" declares "${leaf.lifecycleOp}". Which filed leaf it acts on is established when the ` +
+          'sequence is assembled, not here — assemble before freezing; an act that cannot be bound blocks transmit.',
+      });
+    }
   }
 
   // WARNING: required sections not present (informative — prefix match).
