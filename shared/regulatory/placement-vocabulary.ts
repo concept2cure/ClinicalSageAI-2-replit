@@ -40,15 +40,23 @@
  * `docs/design/IRB_SUBMISSION.md` and by nobody else, so membership is
  * checkable and is checked. A misspelled IRB slot is refused by name.
  *
+ * The REGISTRY slots are closed for the same reason, and one stronger. They
+ * are not copied from a published taxonomy; they are derived from the modules
+ * `server/services/study-design/registration-projection.ts` actually emits, so
+ * the vocabulary and the projection are two views of one list.
+ * `REGISTRY_MODULE_SLOTS` is that derivation written down, and the engine's
+ * test walks every module both projectors emit and fails if one has no slot —
+ * which is what stops the two drifting apart.
+ *
  * @module shared/regulatory/placement-vocabulary
  */
 
 import { normalizeCtdCode } from './section-code';
 
 /** The vocabularies a submission's section codes can be drawn from. */
-export type PlacementVocabulary = 'ctd' | 'estar' | 'ctis' | 'irb';
+export type PlacementVocabulary = 'ctd' | 'estar' | 'ctis' | 'irb' | 'registry';
 
-export const PLACEMENT_VOCABULARIES: readonly PlacementVocabulary[] = ['ctd', 'estar', 'ctis', 'irb'] as const;
+export const PLACEMENT_VOCABULARIES: readonly PlacementVocabulary[] = ['ctd', 'estar', 'ctis', 'irb', 'registry'] as const;
 
 /**
  * Application type → vocabulary. Deliberately DEFAULTS TO `ctd`: every
@@ -62,6 +70,12 @@ const VOCABULARY_BY_APPLICATION: Record<string, PlacementVocabulary> = {
   '510k': 'estar', '510(k)': 'estar', de_novo: 'estar', 'de-novo': 'estar', pma: 'estar',
   cta: 'ctis',
   irb: 'irb', iec: 'irb', 'irb-submission': 'irb',
+  // Trial-registry filings. These are NEW types, not a repurposing: `cta`
+  // stays `ctis` because a CTIS clinical trial application files on the CTIS
+  // dossier structure, while a registry RECORD files on the slots below.
+  registry: 'registry', 'trial-registry': 'registry',
+  ctgov: 'registry', 'clinicaltrials.gov': 'registry', 'ctgov-registration': 'registry',
+  'ctis-registration': 'registry',
 };
 
 /**
@@ -116,6 +130,76 @@ export function isIrbSlot(code: string): code is IrbSlot {
   return Object.prototype.hasOwnProperty.call(IRB_SLOTS, code);
 }
 
+// ─── The trial-registry slots ────────────────────────────────────────────────
+
+/**
+ * The slots a trial-registry filing is assembled from — ClinicalTrials.gov
+ * under FDAAA 801 / 42 CFR Part 11, and the EU CTIS under Regulation (EU)
+ * 536/2014.
+ *
+ * Closed, like the IRB list, and derived rather than invented: nine of the
+ * eleven are exactly the modules `registration-projection.ts` emits, folded so
+ * that the ClinicalTrials.gov and CTIS names for one thing share a slot
+ * ("Conditions" and "Medical conditions" are the same place to file). The
+ * derivation is `REGISTRY_MODULE_SLOTS` below.
+ *
+ * Two slots come from the obligation rather than from the projection, and are
+ * marked as such so nobody later reads them as drift:
+ *   • `registry.results` — 42 CFR 11.44 results information, which is a filing
+ *     the projection does not model (it projects the registration record).
+ *   • `registry.other` — supporting material, the same escape hatch
+ *     `irb.other` provides; without one a legitimate attachment has nowhere to
+ *     go and the closed list becomes a wall.
+ */
+export const REGISTRY_SLOTS = {
+  'registry.arms-and-interventions': 'Arms, groups and interventions / investigational products',
+  'registry.conditions': 'Condition or medical condition studied',
+  'registry.design': 'Study design — type, purpose, phase, allocation, model, masking',
+  'registry.eligibility': 'Eligibility, population and planned enrollment',
+  'registry.identification': 'Trial identification — brief, official and full titles',
+  'registry.member-states': 'Member state(s) concerned (EU CTIS)',
+  'registry.other': 'Other supporting material',
+  'registry.outcome-measures': 'Objectives, outcome measures and endpoints',
+  'registry.results': 'Results information (42 CFR 11.44 / summary of results)',
+  'registry.sponsor': 'Sponsor, responsible party and oversight',
+  'registry.status': 'Recruitment status and study dates',
+} as const;
+
+export type RegistrySlot = keyof typeof REGISTRY_SLOTS;
+
+export const REGISTRY_SLOT_CODES: readonly RegistrySlot[] = Object.keys(REGISTRY_SLOTS).sort() as RegistrySlot[];
+
+export function isRegistrySlot(code: string): code is RegistrySlot {
+  return Object.prototype.hasOwnProperty.call(REGISTRY_SLOTS, code);
+}
+
+/**
+ * Projection module name → slot. This IS the derivation: every module name on
+ * the left is a `RegistrationModule.name` that `projectCtGov` or `projectCtis`
+ * emits today. A projector that renames or adds a module and does not appear
+ * here fails the engine's drift test rather than silently losing its content.
+ */
+export const REGISTRY_MODULE_SLOTS: Readonly<Record<string, RegistrySlot>> = {
+  // ClinicalTrials.gov (FDAAA 801 / PRS)
+  'Study identification': 'registry.identification',
+  'Study status': 'registry.status',
+  'Sponsor and oversight': 'registry.sponsor',
+  'Study design': 'registry.design',
+  'Conditions': 'registry.conditions',
+  'Arms and interventions': 'registry.arms-and-interventions',
+  'Outcome measures': 'registry.outcome-measures',
+  'Eligibility': 'registry.eligibility',
+  // EU CTIS (Regulation (EU) 536/2014)
+  'Trial identification': 'registry.identification',
+  'Sponsor': 'registry.sponsor',
+  'Member states concerned': 'registry.member-states',
+  'Medical conditions': 'registry.conditions',
+  'Objectives and endpoints': 'registry.outcome-measures',
+  'Trial design': 'registry.design',
+  'Population': 'registry.eligibility',
+  'Products': 'registry.arms-and-interventions',
+};
+
 // ─── Validation ──────────────────────────────────────────────────────────────
 
 export interface SectionCodeVerdict {
@@ -157,6 +241,8 @@ export function validateSectionCode(raw: string, vocabulary: PlacementVocabulary
       return ctdVerdict(code);
     case 'irb':
       return irbVerdict(code);
+    case 'registry':
+      return registryVerdict(code);
     default:
       return slugVerdict(code, vocabulary);
   }
@@ -195,6 +281,30 @@ function irbVerdict(code: string): SectionCodeVerdict {
     };
   }
   return { ok: true, vocabulary: 'irb', canonical: lower };
+}
+
+/**
+ * Membership, not shape — and for a reason the IRB branch does not have.
+ *
+ * The registry slots are DERIVED from the modules the registration projection
+ * emits (`REGISTRY_MODULE_SLOTS`), so a code outside the list is not merely
+ * unrecognised: it names a place the projection has no content for, and a
+ * filing assembled from it would carry a section nothing fills. Naming the
+ * real slots in the refusal is the whole value of a closed list.
+ */
+function registryVerdict(code: string): SectionCodeVerdict {
+  const lower = code.toLowerCase();
+  if (!isRegistrySlot(lower)) {
+    return {
+      ok: false,
+      vocabulary: 'registry',
+      message:
+        `Section code "${code}" is not a trial-registry filing slot. Use one of: ${REGISTRY_SLOT_CODES.join(', ')}. ` +
+        `Like the IRB list and unlike the CTD and eSTAR vocabularies this list is closed, because it is derived ` +
+        `from the registry record this platform projects.`,
+    };
+  }
+  return { ok: true, vocabulary: 'registry', canonical: lower };
 }
 
 /**
