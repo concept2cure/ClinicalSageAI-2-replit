@@ -53,12 +53,18 @@ beforeEach(() => {
   updateSet.mockResolvedValue([{ id: 99 }]);
 });
 
-async function place(sectionCode: string, over: Record<string, unknown> = {}) {
-  selectChain.mockResolvedValueOnce([{ id: 1, status: 'draft' }]); // getSequence
+async function place(sectionCode: string, over: Record<string, unknown> = {}, applicationType = 'ind') {
+  selectChain.mockResolvedValueOnce([{ id: 1, status: 'draft', submissionId: 21 }]); // getSequence
+  // The submission lookup that decides the section-code vocabulary. An IND
+  // files on CTD headings, so the CTD gate these tests exercise is unchanged.
+  selectChain.mockResolvedValueOnce([{ applicationType }]);
   return upsertLeaf({ sequenceId: 1, sectionCode, title: 'Doc', ...over } as never, CTX).then(
     () => ({
       rejected: false as const,
       code: null as string | null,
+      // Present on both branches so a caller can read it without narrowing —
+      // the refusal MESSAGE is the contract for several of these tests.
+      message: '',
       wrote: (insertValues.mock.calls[0]?.[0] as Record<string, unknown> | undefined)?.sectionCode
         ?? (updateSet.mock.calls[0]?.[0] as Record<string, unknown> | undefined)?.sectionCode ?? null,
     }),
@@ -110,3 +116,105 @@ describe('upsertLeaf — the section code must name a CTD section', () => {
     expect(out.wrote).toBe(code);
   });
 });
+
+/*
+ * The gate above is right for an eCTD sequence and was refusing two whole
+ * submission types that do not file on CTD headings at all. The refusal read
+ * as a malformed-code validation error, so it looked like a caller bug rather
+ * than a missing capability — `docs/design/IRB_SUBMISSION.md` D2 calls it "the
+ * one real blocker".
+ *
+ * The vocabulary is now a property of the submission type. These tests are the
+ * proof that the generalisation added the two types WITHOUT loosening the CTD
+ * gate: the same code is accepted under one application type and refused under
+ * another, by the same function.
+ */
+describe('upsertLeaf — the vocabulary follows the submission type', () => {
+  it('accepts an eSTAR device section on a 510(k), which the CTD gate refused outright', async () => {
+    const out = await place('clinical-performance-testing', {}, '510k');
+
+    expect(out.rejected).toBe(false);
+    expect(out.wrote).toBe('clinical-performance-testing');
+  });
+
+  it('accepts an IRB package slot on an IRB submission', async () => {
+    const out = await place('irb.consent', {}, 'irb');
+
+    expect(out.rejected).toBe(false);
+    expect(out.wrote).toBe('irb.consent');
+  });
+
+  it('refuses that same eSTAR code on an IND, because an IND files on CTD headings', async () => {
+    const out = await place('clinical-performance-testing', {}, 'ind');
+
+    expect(out.rejected).toBe(true);
+    expect(out.code).toBe('VALIDATION');
+    expect(out.message).toMatch(/CTD section code/);
+    expect(out.wrote).toBeNull();
+  });
+
+  it('refuses a CTD code on an IRB submission, in the other direction', async () => {
+    const out = await place('2.7.3', {}, 'irb');
+
+    expect(out.rejected).toBe(true);
+    expect(out.message).toMatch(/not an IRB package slot/);
+  });
+
+  it('refuses a misspelled IRB slot by name, because that list is closed', async () => {
+    const out = await place('irb.conset', {}, 'irb');
+
+    expect(out.rejected).toBe(true);
+    expect(out.message).toContain('irb.consent');
+  });
+
+  it('refuses a path fragment on a 510(k) too — the folder-name defect is vocabulary-independent', async () => {
+    const out = await place('estar/clinical performance', {}, '510k');
+
+    expect(out.rejected).toBe(true);
+    expect(out.wrote).toBeNull();
+  });
+
+  /* The compatibility guarantee, exercised through the real function rather
+     than asserted about the mapping table: an application type nobody has
+     taught this system about must land on the strictest vocabulary. */
+  it('falls back to the CTD gate for an application type it does not recognise', async () => {
+    expect((await place('2.7.3', {}, 'something-new')).rejected).toBe(false);
+    expect((await place('clinical-performance-testing', {}, 'something-new')).rejected).toBe(true);
+  });
+
+  /*
+   * FAIL CLOSED. This lookup only decides how STRICT the code gate is, so a
+   * submission row that cannot be read must narrow to CTD rather than widen to
+   * anything. Without this test the fail-open case was invisible: injecting
+   * `return applicationType ? vocabularyForApplicationType(applicationType) :
+   * 'estar'` passed all 54 tests, because every other test hands the mock a
+   * row. A missing row is exactly when a gate quietly stops being a gate.
+   */
+  it('narrows to CTD when the submission row cannot be read at all', async () => {
+    const out = await placeWithNoSubmissionRow('clinical-performance-testing');
+
+    expect(out.rejected).toBe(true);
+    expect(out.message).toMatch(/CTD section code/);
+    expect(out.wrote).toBeNull();
+  });
+
+  it('still accepts a CTD code when the submission row cannot be read', async () => {
+    expect((await placeWithNoSubmissionRow('2.7.3')).rejected).toBe(false);
+  });
+});
+
+/** The sequence resolves, the submission lookup returns nothing. */
+async function placeWithNoSubmissionRow(sectionCode: string) {
+  selectChain.mockResolvedValueOnce([{ id: 1, status: 'draft', submissionId: 21 }]);
+  selectChain.mockResolvedValueOnce([]);
+  return upsertLeaf({ sequenceId: 1, sectionCode, title: 'Doc' } as never, CTX).then(
+    () => ({
+      rejected: false as const,
+      code: null as string | null,
+      message: '',
+      wrote: (insertValues.mock.calls[0]?.[0] as Record<string, unknown> | undefined)?.sectionCode ?? null,
+    }),
+    (err: { code?: string; message?: string }) =>
+      ({ rejected: true as const, code: err?.code ?? null, message: err?.message ?? '', wrote: null }),
+  );
+}

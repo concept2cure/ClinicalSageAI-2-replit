@@ -43,7 +43,11 @@ import { writeChainedAuditRow } from '../auditService';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { deriveGovernedTargetBinding, BINDING_BASIS, isSignatureWithdrawn } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
-import { normalizeCtdCode } from '../ectd/section-to-ctd';
+import {
+  validateSectionCode,
+  vocabularyForApplicationType,
+  type PlacementVocabulary,
+} from '../../../shared/regulatory/placement-vocabulary';
 
 const logger = createScopedLogger('submission-service');
 
@@ -1359,6 +1363,30 @@ async function verifyLeafSource(
 export type UpsertedLeaf = SubmissionLeaf & { auditTrail: AuditRowOutcome };
 
 /** Create or update a leaf placement. Refuses if the parent sequence is locked. */
+/**
+ * The section-code vocabulary this sequence's leaves are judged against, read
+ * from its submission's `applicationType`.
+ *
+ * Fails SAFE, not open: a submission row that cannot be read gives `ctd`, the
+ * strictest vocabulary and the one every submission in this product uses
+ * today. A lookup failure must never widen what may be written into a package.
+ */
+async function placementVocabularyForSequence(
+  seq: EctdSequence,
+  ctx: { organizationId: number },
+): Promise<PlacementVocabulary> {
+  const rows = await db
+    .select({ applicationType: submissions.applicationType })
+    .from(submissions)
+    .where(and(eq(submissions.id, seq.submissionId), eq(submissions.organizationId, ctx.organizationId)))
+    .limit(1);
+  // Defensive destructure rather than `const [row] =`: this read only decides
+  // how STRICT the code gate is, and a shape it did not expect must narrow to
+  // `ctd`, never throw a placement away.
+  const applicationType = Array.isArray(rows) ? rows[0]?.applicationType : undefined;
+  return vocabularyForApplicationType(applicationType ?? null);
+}
+
 export async function upsertLeaf(
   input: UpsertLeafInput,
   ctx: { organizationId: number; userId: number }
@@ -1388,16 +1416,25 @@ export async function upsertLeaf(
      was written (the IND checklist looks for `m1.1.1`), so canonicalising here
      would silently detach them from their own rows; the packager canonicalises
      when it derives the layout. */
-  const canonicalSection = normalizeCtdCode(input.sectionCode);
-  if (canonicalSection === null || !canonicalSection.includes('.')) {
-    // A bare module ('3') is a CONTAINER — m3-quality holds sub-headings, never
-    // leaves — so it is code-shaped and still not a place a document can go.
-    throw new SubmissionError(
-      'VALIDATION',
-      `Section code "${input.sectionCode}" does not name a CTD section a document can be filed at. ` +
-        `Use a CTD section code — for example 1.2, 2.7.3 or 3.2.S.4.2 — since it decides where the ` +
-        `document is filed in the package. A bare module number is a container, not a section.`,
-    );
+  /* WHICH vocabulary the code is judged against is a property of the
+     SUBMISSION TYPE, not of this function.
+
+     This gate ran `normalizeCtdCode` on every code, which is right for an eCTD
+     sequence and refused two whole submission types that do not file on CTD
+     headings: a 510(k) files on eSTAR sections, and an IRB package files on
+     artifact slots that are not numbered at all. The refusal read as a
+     validation error about a malformed code, so it looked like a caller bug
+     rather than a missing capability.
+
+     Each type is now judged against its own vocabulary, strictly — the CTD
+     branch is byte-for-byte the rule that was here, and an unknown or absent
+     application type resolves to `ctd`, so every existing caller behaves
+     exactly as before. A bare module ('3') is still a CONTAINER, never a
+     place a document can go. */
+  const vocabulary = await placementVocabularyForSequence(seq, ctx);
+  const verdict = validateSectionCode(input.sectionCode, vocabulary);
+  if (!verdict.ok) {
+    throw new SubmissionError('VALIDATION', verdict.message ?? `Section code "${input.sectionCode}" is not valid for this submission.`);
   }
 
   /* The leaf's document pointer is POLYMORPHIC — `document_table` is a plain
