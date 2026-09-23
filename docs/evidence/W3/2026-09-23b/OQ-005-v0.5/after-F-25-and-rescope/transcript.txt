@@ -1,0 +1,13 @@
+  OQ-SRDY-00  pass
+  OQ-SRDY-01  pass
+  OQ-SRDY-02  pass
+  OQ-SRDY-03  pass
+  OQ-SRDY-04  pass
+  OQ-SRDY-05  pass
+  OQ-SRDY-05b  deviation  (intake did not anchor program b4830405-04ea-483d-b385-5b2a62485258 to a project (NO_CLIENT_WORKSPACE: This organization has no client workspace, and projects.client_workspace_id is NOT NULL. The program was created; it carries no PM-spine anchor until a workspace exists.). The review reads projects, so there is no project it can assess for this program)
+  OQ-SRDY-06  pass
+  OQ-SRDY-06b  deviation  (intake did not anchor program b4830405-04ea-483d-b385-5b2a62485258 to a project (NO_CLIENT_WORKSPACE: This organization has no client workspace, and projects.client_workspace_id is NOT NULL. The program was created; it carries no PM-spine anchor until a workspace exists.). The scan reads projects, so there is no project it can scan for this program)
+  OQ-SRDY-07  pass
+  OQ-SRDY-08  pass
+
+OQ-005 Submission Readiness: 9 pass, 0 fail, 2 deviation, 0 not-executed → docs/evidence/W3/2026-09-23b/OQ-005-v0.5/after-F-25-and-rescope/OQ-SUBMISSION-READINESS

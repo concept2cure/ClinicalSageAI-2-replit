@@ -183,7 +183,42 @@ const DEFAULT_CONSEQUENCE: Record<string, ConsequenceType> = {
 
 // ─── Service ─────────────────────────────────────────────────────────────────
 
+/**
+ * A scan that cannot read the project it was asked for: the id is not a
+ * project id (400), or the organisation holds no such project (404). A scan
+ * of a project nothing can be read from is refused, never answered as clean.
+ */
+export class ContradictionScanScopeError extends Error {
+  readonly status: 400 | 404;
+
+  constructor(status: 400 | 404, message: string) {
+    super(message);
+    this.name = 'ContradictionScanScopeError';
+    this.status = status;
+  }
+}
+
 class ContradictionEngineService {
+
+  /**
+   * A scan reads one project, which must be one the organisation holds
+   * (VSR-001 F-25). Without this check a project the organisation does not
+   * hold has no rows and scanned clean, and a program's uuid arrived as NaN,
+   * which the registry searches read as "no project filter", so the scan read
+   * the whole organisation and reported it as this project's.
+   */
+  private async requireProjectInOrganisation(organizationId: number, projectId: number): Promise<void> {
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      throw new ContradictionScanScopeError(400, 'projectId must be a positive integer (projects.id); nothing was scanned');
+    }
+    const held = await pool!.query(
+      'SELECT id FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1',
+      [projectId, organizationId],
+    );
+    if (held.rows.length === 0) {
+      throw new ContradictionScanScopeError(404, 'This organisation holds no project with that id; nothing was scanned');
+    }
+  }
   // ═══════════════════════════════════════════════════════════════════════════
   // PART 4: CROSS-ARTIFACT CONTRADICTION DETECTION
   // ═══════════════════════════════════════════════════════════════════════════
@@ -387,6 +422,7 @@ class ContradictionEngineService {
     findings: ContradictionFinding[];
     summary: { total: number; bySeverity: Record<string, number>; byType: Record<string, number> };
   }> {
+    await this.requireProjectInOrganisation(organizationId, projectId);
     log.info('Running full contradiction scan', { projectId });
 
     const [driftFindings, decisionFindings, jurisdictionFindings] = await Promise.all([
@@ -1423,6 +1459,7 @@ class ContradictionEngineService {
     summary: { total: number; bySeverity: Record<string, number>; byType: Record<string, number> };
     detectionMethods: string[];
   }> {
+    await this.requireProjectInOrganisation(organizationId, projectId);
     log.info('Running FULL contradiction scan (Pass 8)', { projectId, opts });
 
     const detectionMethods: string[] = [];
