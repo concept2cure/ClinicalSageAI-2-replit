@@ -5,7 +5,7 @@
  * Run:  node tests/validation/oq/projects/run.mjs   (server on VALIDATION_BASE_URL, default http://localhost:5200)
  * Writes docs/evidence/W3/<date>/OQ-PROJECTS/{result.json, OQ-001-execution-record.md, steps/*}.
  */
-import { createRun, helpers, runCredential } from '../../lib/harness.mjs';
+import { createRun, devLogin, helpers, passwordLogin, runCredential } from '../../lib/harness.mjs';
 import { freshTotp, totp, TOTP_PERIOD_SECONDS } from '../../lib/totp.mjs';
 
 const run = await createRun({
@@ -194,6 +194,7 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-07',
+    kind: 'unscripted',
     urs: ['URS-PROJ-005'],
     title: 'Projects surface renders the program',
     action: 'Open /concept2cure/projects in Chromium (authenticated)',
@@ -212,6 +213,7 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-08',
+    kind: 'unscripted',
     urs: ['URS-PROJ-005'],
     title: 'Project home renders for the open program',
     action: 'Open /concept2cure/project-home with the program selected in the shell',
@@ -257,6 +259,7 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-10',
+    kind: 'unscripted',
     urs: ['URS-PROJ-006'],
     title: 'Tasks surface renders the task',
     action: 'Open /concept2cure/tasks',
@@ -275,6 +278,7 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-11',
+    kind: 'ad-hoc',
     urs: ['URS-PROJ-007'],
     title: 'Program journey read model answers',
     action: 'GET /api/program-journey',
@@ -295,6 +299,7 @@ await step(
 await step(
   {
     id: 'OQ-PROJ-12',
+    kind: 'ad-hoc',
     urs: ['URS-PROJ-007'],
     title: 'Filings catalog surface renders',
     action: 'Open /concept2cure/filings-catalog',
@@ -435,6 +440,48 @@ await step(
     const chain = ledger.json?.meta?.chain;
     expect(chain && chain.ok === true, `the server's chain verdict says the audit chain does not verify (${chain ? `ok=false over ${chain.rowsChecked} row(s)` : 'no meta.chain'})`, ledger.json?.meta);
     return `sign-in statuses ${statuses.join(', ')}; ${mine.length} new ledger entries for ${target}, newest first: ${read.map((t) => `"${t}"`).join(', ')}; all hash-chained; server chain verdict ok=true over ${chain.rowsChecked} row(s)`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-PROJ-17',
+    urs: ['URS-PROJ-011'],
+    title: 'Signing out ends the session',
+    action:
+      'Open a session of the step\'s own for the run identity (password and authenticator code on a credentialed run; dev-login on a development run). GET /api/c2c/projects with it; POST /api/auth/logout with it; then, with the same token, GET /api/c2c/projects and GET /api/auth/session. Read the ledger (GET /api/audit-trail/ledger?limit=50) with the run session before and after',
+    expected:
+      'Projects 200 before; logout 200; afterwards the projects API answers 401 and the session check authenticated=false. The newest ledger entry the step added for the run identity reads "Signed out", hash-chained',
+    note: 'The step signs out a session of its own, so the run\'s session stays open for the steps after it. Until AUTH-03 was fixed (VSR-001 §13.9, F-21) logout answered "Tokens invalidated." and the token went on opening the API, the session check and the collaboration socket for the rest of its 24 hours.',
+  },
+  async ({ api, expect, auth, baseUrl }) => {
+    const target = `user:${auth.user.id}`;
+    const before = await api('GET', '/api/audit-trail/ledger?limit=50');
+    expect(before.status === 200, `ledger expected 200, got ${before.status}`, before.json);
+    const seen = new Set((before.json?.data ?? []).map((e) => e.id));
+
+    const credential = runCredential();
+    const own = credential ? await passwordLogin(baseUrl, credential) : await devLogin(baseUrl);
+    const bearer = { Authorization: `Bearer ${own.accessToken}`, Origin: baseUrl, 'Content-Type': 'application/json' };
+    const read = async () => (await fetch(`${baseUrl}/api/c2c/projects`, { headers: bearer })).status;
+    const sessionCheck = async () => (await (await fetch(`${baseUrl}/api/auth/session`, { headers: bearer })).json().catch(() => ({}))).authenticated === true;
+
+    const openBefore = await read();
+    expect(openBefore === 200, `the step's own session could not read projects before signing out (${openBefore})`);
+    const logout = await fetch(`${baseUrl}/api/auth/logout`, { method: 'POST', headers: bearer, body: '{}' });
+    expect(logout.status === 200, `logout answered ${logout.status}`);
+    const openAfter = await read();
+    const signedInAfter = await sessionCheck();
+    expect(
+      openAfter === 401 && !signedInAfter,
+      `after signing out, the same token still reads projects (${openAfter}) or is reported signed in (${signedInAfter})`,
+    );
+
+    const after = await api('GET', '/api/audit-trail/ledger?limit=50');
+    const added = (after.json?.data ?? []).filter((e) => e.target === target && !seen.has(e.id));
+    expect(added[0]?.event === 'Signed out', `the newest ledger entry the step added for ${target} reads ${JSON.stringify(added[0]?.event ?? null)}, not "Signed out"`, added.slice(0, 3));
+    expect(Boolean(added[0]?.hash && added[0]?.prevHash), 'the sign-out entry is not hash-chained', added[0]);
+    return `own session (${own.method}): projects ${openBefore}; logout ${logout.status}; afterwards projects ${openAfter}, session check ${signedInAfter ? 'signed in' : 'signed out'}; newest new ledger entry for ${target}: "${added[0].event}", chained`;
   },
 );
 

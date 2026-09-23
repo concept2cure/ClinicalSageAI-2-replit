@@ -18,6 +18,7 @@ const stamp = helpers.stamp();
 await step(
   {
     id: 'OQ-SUBC-00',
+    kind: 'prerequisite',
     urs: [],
     title: 'Prerequisite: a program with one vault document',
     action: 'POST /api/c2c/projects; POST /api/vault/ingest',
@@ -268,6 +269,7 @@ await step(
 await step(
   {
     id: 'OQ-SUBC-11',
+    kind: 'unscripted',
     urs: ['URS-SUBC-010'],
     title: 'eCTD compile answers for the program',
     action: 'POST /api/ectd-compile/:programId/compile {region:"FDA", submissionType:"initial"}; GET /status',
@@ -301,6 +303,7 @@ await step(
 await step(
   {
     id: 'OQ-SUBC-13',
+    kind: 'unscripted',
     urs: ['URS-SUBC-011'],
     title: 'Submission Center surface renders the submission',
     action: 'Open /concept2cure/submission-center with the program selected',
@@ -319,6 +322,7 @@ await step(
 await step(
   {
     id: 'OQ-SUBC-14',
+    kind: 'ad-hoc',
     urs: ['URS-SUBC-011'],
     title: 'eCTD compile and publishing surfaces render',
     action: 'Open /concept2cure/ectd-compile and /concept2cure/ectd-publishing',

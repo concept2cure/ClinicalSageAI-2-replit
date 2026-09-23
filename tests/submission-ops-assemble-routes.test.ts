@@ -63,6 +63,17 @@ vi.mock('../server/services/submission-bundle-storage', () => ({
   readBundleBytes: vi.fn(),
 }));
 
+/* ─── The agency gateway behind the governed transmit (the LEAF-UNAPPROVED
+   cases hand the stored descriptor to the real executeGovernedTransmit). A
+   refusal must be decided before the gateway is ever reached. ───────────── */
+const gatewayTransmitFn = vi.fn();
+vi.mock('../server/services/submission-gateways/index', () => ({
+  getGateway: () => ({ transmit: (...a: unknown[]) => gatewayTransmitFn(...a) }),
+}));
+vi.mock('../server/services/submission-gateways/fda-esg', () => ({
+  findActiveTransmittal: vi.fn().mockResolvedValue(null),
+}));
+
 /* ─── Mock the governed-action ledger so it is a no-op. ──────────────── */
 vi.mock('../server/routes/c2c/actions', () => ({
   recordGovernedAction: vi.fn().mockResolvedValue({ actionId: 'act_x', auditId: 'aud_x', sha256Chain: 'c' }),
@@ -156,6 +167,7 @@ import { recordGovernedAction } from '../server/routes/c2c/actions';
 import { fingerprintPackageContent, sha256Hex } from '../server/services/ectd/package-content-fingerprint';
 import { asc } from 'drizzle-orm';
 import { c2cPackageSections } from '../shared/schema';
+import { executeGovernedTransmit, GovernedTransmitRefusal } from '../server/services/submission-gateways/governed-transmit';
 
 function makeApp() {
   const app = express();
@@ -177,8 +189,12 @@ const REGULATORY = { applicationNumber: 'IND123456', applicantId: 'DUNS-12345678
 const lockedPkg = (metadata: Record<string, unknown> = { foo: 'bar', regulatory: REGULATORY }) => ({
   id: 5, packageId: 'pkg_locked', orgId: 99, status: 'locked', packageFamily: 'ind', metadata,
 });
-const art = (n: string, ctdSection: string | null, id = 1) => ({
-  artifactDbId: id, artifactId: `artifact_${n}`, title: `Artifact ${n}`, content: `Real content ${n}`, version: 1, ctdSection,
+/** A mapped artifact row. `status` is a real column (NOT NULL, default
+ *  'draft'); the double used to omit it, which modelled a row the database
+ *  cannot hold. A package that is meant to transmit holds approved artifacts,
+ *  so that is the default here; the LEAF-UNAPPROVED cases pass one explicitly. */
+const art = (n: string, ctdSection: string | null, id = 1, status = 'approved') => ({
+  artifactDbId: id, artifactId: `artifact_${n}`, title: `Artifact ${n}`, content: `Real content ${n}`, version: 1, ctdSection, status,
 });
 /** Assembly is a governed transition: the operator's reason is REQUIRED. */
 const REASON = { reason: 'Assemble the locked package for agency transmit' };
@@ -967,5 +983,134 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(packageLeafBytesFn.mock.calls[0][0].region).toBe('pmda');
     expect(res.body.data.bundle.format).toBe('pmda_ectd');
     expect(dbState.updateSet.metadata.bundle.format).toBe('pmda_ectd');
+  });
+});
+
+/* ─── Only approved documents reach the agency on the package spine ──────
+ * (2026-09-23, W5/D7, round-2 review.) The rule "a transmitted sequence
+ * carries only approved documents" was enforced on the sequence spine
+ * (transmitSequence refuses `unfinalized`) and nowhere on this one: the
+ * mapped-artifact select had no status predicate, publish needs only 80%
+ * readiness, and executeGovernedTransmit reads no artifact status. So a draft
+ * in an IND package rendered into a leaf and went to FDA ESG. The route now
+ * records an error-severity LEAF-UNAPPROVED finding per unapproved artifact
+ * that ships, which the governed transmit's BUNDLE_VALIDATION_ERRORS gate
+ * refuses. "Approved" is the leaf-source resolver's definition, not a copy. */
+describe('only approved documents reach the agency on the package spine (LEAF-UNAPPROVED)', () => {
+  beforeEach(() => gatewayTransmitFn.mockReset());
+  const unapproved = (res: any) => findings(res).filter((f) => f.ruleId === 'LEAF-UNAPPROVED');
+  /** The real governed transmit, handed the descriptor the route STORED
+   *  (what loadStoredBundle reads back from metadata.bundle). */
+  const transmitStored = () =>
+    executeGovernedTransmit({
+      region: 'fda', gateway: 'esg', organizationId: 99, userId: 777, packageId: 5,
+      environment: 'staging', reason: 'transmit', meaning: 'release',
+      authenticationMethod: 'password+totp', secondFactorVerified: true,
+      reauthVerifiedAt: new Date('2026-09-23T10:00:00Z'),
+      clientBundle: dbState.updateSet.metadata.bundle,
+      recordGovernedAction: vi.fn(),
+    } as any).then(() => null, (e: unknown) => e);
+
+  it('a DRAFT artifact in an IND package assembles with an error-severity LEAF-UNAPPROVED finding, and governed transmit refuses the stored bundle', async () => {
+    dbState.pkg = lockedPkg(); // packageFamily 'ind' → FDA / ectd
+    dbState.sections = [
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 },
+      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 1 },
+    ];
+    dbState.mappedByCall = [[art('co', null, 1, 'approved')], [art('dp', null, 2, 'draft')]];
+
+    const res = await post();
+    expect(res.status).toBe(200);
+    const f = unapproved(res);
+    expect(f).toHaveLength(1);
+    expect(f[0].severity).toBe('error');
+    expect(f[0].message).toMatch(/Artifact dp \(artifact_dp v1\) in Description and Composition \(3\.2\.P\.1\)/);
+    expect(f[0].message).toMatch(/'draft'/);
+    // The approved one is not named.
+    expect(f[0].message).not.toMatch(/artifact_co/);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1);
+    expect(dbState.updateSet.metadata.bundle.validation.errorCount).toBe(1);
+
+    const refusal = await transmitStored();
+    expect(refusal).toBeInstanceOf(GovernedTransmitRefusal);
+    expect((refusal as GovernedTransmitRefusal).code).toBe('BUNDLE_VALIDATION_ERRORS');
+    expect((refusal as GovernedTransmitRefusal).details?.findings).toContainEqual(
+      expect.objectContaining({ ruleId: 'LEAF-UNAPPROVED', severity: 'error' }),
+    );
+    expect(gatewayTransmitFn).not.toHaveBeenCalled();
+  });
+
+  it('an all-approved package (approved and locked) has no LEAF-UNAPPROVED finding and no error', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 },
+      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 1 },
+    ];
+    dbState.mappedByCall = [[art('co', null, 1, 'approved')], [art('dp', null, 2, 'locked')]];
+
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(unapproved(res)).toEqual([]);
+    expect(res.body.data.bundle.validation.errorCount).toBe(0);
+  });
+
+  it('every non-approved status counts (review, and a status outside the vocabulary), one finding per artifact', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('rv', null, 2, 'review'), art('ar', '3.2.S.1', 3, 'archived'), art('ok', '3.2.S.2.2', 4, 'locked')]];
+
+    const res = await post();
+    expect(res.status).toBe(200);
+    const f = unapproved(res);
+    expect(f.map((x) => x.message.match(/\(artifact_(\w+) v1\)/)?.[1])).toEqual(['rv', 'ar']);
+    expect(f.every((x) => x.severity === 'error')).toBe(true);
+    expect(res.body.data.bundle.validation.errorCount).toBe(2);
+  });
+
+  it('applies to a DEVICE format too: a review artifact in a 510(k) eSTAR bundle is refused at transmit', async () => {
+    dbState.pkg = { ...lockedPkg(), packageFamily: '510k' };
+    dbState.sections = [{ id: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('dd', null, 4, 'review')]];
+
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(res.body.data.bundle.format).toBe('estar');
+    const f = unapproved(res);
+    expect(f).toHaveLength(1);
+    expect(f[0].message).toMatch(/artifact_dd/);
+    expect(f[0].message).toMatch(/'review'/);
+
+    const refusal = await transmitStored();
+    expect((refusal as GovernedTransmitRefusal).code).toBe('BUNDLE_VALIDATION_ERRORS');
+    expect(gatewayTransmitFn).not.toHaveBeenCalled();
+  });
+
+  it('describes the leaves that SHIP: a draft whose leaf is byte-identical to the one on file is not in the sequence, and is not a finding', async () => {
+    dbState.pkg = lockedPkg();
+    const sections = [
+      { id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 },
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 1 },
+    ];
+    dbState.sections = sections;
+    dbState.mappedByCall = [[art('cover', null)], [art('co', null, 2)]];
+    expect((await post()).status).toBe(200);
+    const filed = filedFrom('0000');
+
+    // 0001: the cover letter is revised and still a draft (it ships); the
+    // clinical overview was reopened to draft but not edited (it does not).
+    packageLeafBytesFn.mockClear();
+    (dbState as any)._pkgResolved = false;
+    dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
+    dbState.sections = sections;
+    dbState.mappedByCall = [
+      [{ ...art('cover', null, 1, 'draft'), content: 'Real content cover, revised' }],
+      [art('co', null, 2, 'draft')],
+    ];
+    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status).toBe(200);
+    expect(packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.fileName)).toEqual(['cover-letter-cover.pdf']);
+    const f = unapproved(res);
+    expect(f).toHaveLength(1);
+    expect(f[0].message).toMatch(/artifact_cover/);
   });
 });

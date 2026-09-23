@@ -1,0 +1,216 @@
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-09-23T04:57:53.622Z","pid":31377,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-23T04:57:53.624Z","pid":31377,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-23T04:57:53.624Z","pid":31377,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: submission_readiness_review
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: draft_validate_route
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: project_blocker_scan
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+{
+  "timestamp": "2026-09-23T04:57:53.891Z",
+  "level": "info",
+  "message": "[index] Phase 3 orchestration system loaded",
+  "context": {}
+}
+
+{"level":40,"time":"2026-09-23T04:57:54.001Z","pid":31377,"hostname":"vm","context":{"error":"Failed query: select \"id\", \"organization_id\", \"client_workspace_id\", \"parent_project_id\", \"depth\", \"path\", \"name\", \"code\", \"description\", \"status\", \"priority\", \"type\", \"start_date\", \"target_end_date\", \"actual_end_date\", \"progress\", \"budget\", \"budget_currency\", \"budget_status\", \"created_by_id\", \"owner_id\", \"sponsors\", \"tags\", \"therapeutic_area\", \"critical_to_quality_factors\", \"risk_level\", \"risk_assessment\", \"quality_targets\", \"module_references\", \"settings\", \"metadata\", \"retrieval_mode\", \"knowledge_token_estimate\", \"regulatory_program_id\", \"created_at\", \"updated_at\" from \"projects\" where (\"projects\".\"id\" = $1 and \"projects\".\"organization_id\" = $2) limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1"},"msg":"[cross-object-resolver] Failed to resolve project snapshot"}
+{"level":40,"time":"2026-09-23T04:57:54.001Z","pid":31377,"hostname":"vm","context":{"error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-09-23T04:57:54.001Z","pid":31377,"hostname":"vm","context":{"error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2)\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900"},"msg":"[cross-object-resolver] Resolver query failed"}
+ ✓ tests/db/cross-object-resolver.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 9ms
+ × tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is assembled from reads that all succeed, and names the project 50ms
+   → expected { id: 1, …(11) } to match object { id: 1, …(2) }
+(9 matching properties omitted from actual)
+ ✓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is reviewed to completion, and the review says which project it read 24ms
+ × tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid fails the payload, naming every read it broke 12ms
+   → expected 'assembled' to be an instance of CrossObjectReadError
+{"level":40,"time":"2026-09-23T04:57:54.003Z","pid":31377,"hostname":"vm","context":{"error":"Failed query: \n      SELECT MAX(ts) AS last_signal_at\n      FROM (\n        SELECT MAX(updated_at) AS ts\n        FROM concept2cure_artifacts\n        WHERE organization_id = $1\n          AND project_id = $2\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_source_objects\n        WHERE organization_id = $3\n          AND project_id::text = $4\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_contradictions\n        WHERE organization_id = $5\n          AND project_id::text = $6\n      ) sub\n    \nparams: 91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc"},"msg":"[cross-object-resolver] Last-signal query failed"}
+{"level":40,"time":"2026-09-23T04:57:54.004Z","pid":31377,"hostname":"vm","context":{"error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-09-23T04:57:54.017Z","pid":31377,"hostname":"vm","context":{"error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-09-23T04:57:54.017Z","pid":31377,"hostname":"vm","context":{"error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-09-23T04:57:54.017Z","pid":31377,"hostname":"vm","context":{"error":"Failed query: select \"id\", \"organization_id\", \"client_workspace_id\", \"parent_project_id\", \"depth\", \"path\", \"name\", \"code\", \"description\", \"status\", \"priority\", \"type\", \"start_date\", \"target_end_date\", \"actual_end_date\", \"progress\", \"budget\", \"budget_currency\", \"budget_status\", \"created_by_id\", \"owner_id\", \"sponsors\", \"tags\", \"therapeutic_area\", \"critical_to_quality_factors\", \"risk_level\", \"risk_assessment\", \"quality_targets\", \"module_references\", \"settings\", \"metadata\", \"retrieval_mode\", \"knowledge_token_estimate\", \"regulatory_program_id\", \"created_at\", \"updated_at\" from \"projects\" where (\"projects\".\"id\" = $1 and \"projects\".\"organization_id\" = $2) limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1"},"msg":"[cross-object-resolver] Failed to resolve project snapshot"}
+{"level":40,"time":"2026-09-23T04:57:54.017Z","pid":31377,"hostname":"vm","context":{"error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2)\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-09-23T04:57:54.023Z","pid":31377,"hostname":"vm","context":{"error":"Failed query: \n      SELECT MAX(ts) AS last_signal_at\n      FROM (\n        SELECT MAX(updated_at) AS ts\n        FROM concept2cure_artifacts\n        WHERE organization_id = $1\n          AND project_id = $2\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_source_objects\n        WHERE organization_id = $3\n          AND project_id::text = $4\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_contradictions\n        WHERE organization_id = $5\n          AND project_id::text = $6\n      ) sub\n    \nparams: 91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc"},"msg":"[cross-object-resolver] Last-signal query failed"}
+ × tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid ends the review run as failed, with no step completed and the reason recorded 22ms
+   → expected 'completed' to be 'failed' // Object.is equality
+ × tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a project another organisation holds is refused, not assessed as empty 17ms
+   → promise resolved "{ project: { id: 2, …(7) }, …(11) }" instead of rejecting
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  04:57:51
+   Duration  3.03s (transform 958ms, setup 81ms, import 62ms, tests 2.61s, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is assembled from reads that all succeed, and names the project
+AssertionError: expected { id: 1, …(11) } to match object { id: 1, …(2) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "id": 1,
+    "name": "dbtcr lead project 31377_mudmtkqk",
+-   "totalDocuments": 1,
++   "totalDocuments": "1",
+  }
+
+ ❯ tests/db/cross-object-resolver.dbtest.ts:202:29
+    200|     const payload = await asMember(() => resolver.assembleCrossObjectP…
+    201|
+    202|     expect(payload.project).toMatchObject({ id: projectId, name: PROJE…
+       |                             ^
+    203|     expect(payload.documents.map((d) => d.title)).toEqual(['Clinical o…
+    204|     expect(payload.moduleMap.find((m) => m.module === 'Module 2')?.doc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid fails the payload, naming every read it broke
+AssertionError: expected 'assembled' to be an instance of CrossObjectReadError
+ ❯ tests/db/cross-object-resolver.dbtest.ts:226:21
+    224|     ).then(() => 'assembled', (err: unknown) => err);
+    225|
+    226|     expect(outcome).toBeInstanceOf(resolver.CrossObjectReadError);
+       |                     ^
+    227|     expect((outcome as InstanceType<Resolver['CrossObjectReadError']>)…
+    228|       expect.arrayContaining(['project', 'documents', 'artifacts', 'mo…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid ends the review run as failed, with no step completed and the reason recorded
+AssertionError: expected 'completed' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "completed"
+
+ ❯ tests/db/cross-object-resolver.dbtest.ts:235:24
+    233|     const run = await review(PROGRAM_UUID);
+    234|
+    235|     expect(run.status).toBe('failed');
+       |                        ^
+    236|     expect(run.steps.filter((s) => s.status === 'completed')).toHaveLe…
+    237|     expect(run.auditTrail.at(-1)).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a project another organisation holds is refused, not assessed as empty
+AssertionError: promise resolved "{ project: { id: 2, …(7) }, …(11) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "artifacts": [],
++   "assembledAt": "2026-09-23T04:57:54.040Z",
++   "cmcSignals": {
++     "contradictionCounts": {
++       "critical": 0,
++       "high": 0,
++       "low": 0,
++       "medium": 0,
++       "open": 0,
++       "resolved": 0,
++     },
++     "contradictions": [],
++     "sectionCount": 0,
++     "sourceObjectCount": 0,
++     "sourceTypeBreakdown": {},
++     "staleSectionCount": 0,
++   },
++   "documents": [],
++   "evidence": [],
++   "lastSignalAt": null,
++   "moduleMap": [
++     {
++       "artifactCount": 0,
++       "completenessPercent": 0,
++       "documentCount": 0,
++       "hasValidation": false,
++       "missingItems": [
++         "No documents assigned to Module 1",
++       ],
++       "module": "Module 1",
++     },
++     {
++       "artifactCount": 0,
++       "completenessPercent": 0,
++       "documentCount": 0,
++       "hasValidation": false,
++       "missingItems": [
++         "No documents assigned to Module 2",
++       ],
++       "module": "Module 2",
++     },
++     {
++       "artifactCount": 0,
++       "completenessPercent": 0,
++       "documentCount": 0,
++       "hasValidation": false,
++       "missingItems": [
++         "No documents assigned to Module 3",
++       ],
++       "module": "Module 3",
++     },
++     {
++       "artifactCount": 0,
++       "completenessPercent": 0,
++       "documentCount": 0,
++       "hasValidation": false,
++       "missingItems": [
++         "No documents assigned to Module 4",
++       ],
++       "module": "Module 4",
++     },
++     {
++       "artifactCount": 0,
++       "completenessPercent": 0,
++       "documentCount": 0,
++       "hasValidation": false,
++       "missingItems": [
++         "No documents assigned to Module 5",
++       ],
++       "module": "Module 5",
++     },
++   ],
++   "project": {
++     "blockedTasks": 0,
++     "id": 2,
++     "name": "Unknown Project",
++     "overdueTasks": 0,
++     "progress": 0,
++     "status": "unknown",
++     "totalDocuments": 0,
++     "totalTasks": 0,
++   },
++   "recentActions": [],
++   "scope": {
++     "module": undefined,
++     "organizationId": 91900,
++     "projectId": 2,
++   },
++   "tasks": [],
++   "validations": [],
+  }
+
+ ❯ tests/db/cross-object-resolver.dbtest.ts:246:5
+    244|     await expect(
+    245|       asMember(() => resolver.assembleCrossObjectPayload({ organizatio…
+    246|     ).rejects.toMatchObject({ name: 'CrossObjectReadError', failedRead…
+       |     ^
+    247|   });
+    248| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+

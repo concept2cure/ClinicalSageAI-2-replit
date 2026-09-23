@@ -120,21 +120,60 @@ export interface MaterializeLeafSourcesResult {
  * absent status defaulting to draft) is unfinalized — it must not count toward a
  * "complete" package.
  */
-const FINALIZED_SOURCE_STATUSES = new Set(['approved', 'finalized']);
-function isFinalizedStatus(status: string | null | undefined): boolean {
-  return FINALIZED_SOURCE_STATUSES.has((status ?? '').toLowerCase());
-}
+const FINALIZED_SOURCE_STATUSES: ReadonlySet<string> = new Set(['approved', 'finalized']);
 
 /**
- * A GOVERNED section (c2c_document_sections) is finalized when its status is
- * one the readiness trigger counts as complete — `approved` or `locked`
- * (C2C_SECTION_COMPLETE_STATUSES, mirrored from the migration). The governed
- * vocabulary is todo | drafted | review | approved | locked, so the generic
- * `approved | finalized` check above would have mis-read a locked section as
- * a draft; this branch-specific check keeps the two vocabularies honest.
+ * The stores whose status decides whether a leaf built from them may be
+ * transmitted, each with its own vocabulary.
  */
-function isFinalizedGovernedSectionStatus(status: string | null | undefined): boolean {
-  return C2C_SECTION_COMPLETE_STATUSES.has((status ?? '').toLowerCase());
+export type FinalizedStatusStore =
+  | 'coauthor_documents'
+  | 'unified_documents'
+  | 'c2c_document_sections'
+  | 'concept2cure_artifacts';
+
+/**
+ * The ONE definition of "finalized" for the document a leaf is built from:
+ * a leaf whose source is not finalized is not transmitted to an agency.
+ *
+ * (2026-09-23, W5/D7, round-2 review.) Exported, and keyed by store, so the
+ * package-model spine (POST /api/submission-ops/packages/:id/assemble, which
+ * builds its leaves from concept2cure_artifacts) applies the rule the sequence
+ * spine applies through materializeLeafSources below, instead of shipping a
+ * draft artifact to the agency. The vocabularies genuinely differ, so one set
+ * cannot serve every store:
+ *   coauthor_documents / unified_documents — `approved | finalized`
+ *     (coauthor: draft | in-progress | review | approved | finalized;
+ *     unified: draft | in_review | approved | published | archived | rejected —
+ *     `published` is set only by ungoverned setters, so it is not finalized).
+ *   c2c_document_sections — `approved | locked`, the statuses the readiness
+ *     trigger counts as complete (C2C_SECTION_COMPLETE_STATUSES, mirrored from
+ *     the migration). The vocabulary is todo | drafted | review | approved |
+ *     locked; `approved | finalized` would have mis-read a locked section as a
+ *     draft.
+ *   concept2cure_artifacts — `approved | locked`. The vocabulary is draft |
+ *     review | approved | locked (PUT /projects/:projectId/artifacts/
+ *     :artifactId/status, which requires an attestation for both of the last
+ *     two; `locked` is the post-approval publish lock). It has no `finalized`.
+ * Anything else, including a missing status (the columns default to a draft
+ * state), is unfinalized.
+ *
+ * `store` defaults to the coauthor / unified document vocabulary this
+ * predicate was first written for, which is the one server/routes/coauthor.ts
+ * checks. A caller reading another store must name it; the default is the
+ * stricter answer for `locked`, so an omission fails closed.
+ */
+const FINALIZED_STATUSES_BY_STORE: Readonly<Record<FinalizedStatusStore, ReadonlySet<string>>> = {
+  coauthor_documents: FINALIZED_SOURCE_STATUSES,
+  unified_documents: FINALIZED_SOURCE_STATUSES,
+  c2c_document_sections: C2C_SECTION_COMPLETE_STATUSES,
+  concept2cure_artifacts: new Set(['approved', 'locked']),
+};
+export function isFinalizedStatus(
+  status: string | null | undefined,
+  store: FinalizedStatusStore = 'coauthor_documents',
+): boolean {
+  return FINALIZED_STATUSES_BY_STORE[store].has((status ?? '').toLowerCase());
 }
 
 /** Rows of a `db.execute` result across drivers (node-postgres QueryResult / PGlite Results / bare array). */
@@ -336,7 +375,7 @@ export async function materializeLeafSources(
       // backbone. The first product reader of the map (ledger L10).
       const staged = byKey.get(key);
       if (staged) staged.lineage = await coauthorLineage(organizationId, documentId);
-      if (!isFinalizedStatus(doc.status)) {
+      if (!isFinalizedStatus(doc.status, 'coauthor_documents')) {
         unfinalized++;
         unfinalizedSections.push({ sectionCode: doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, status: doc.status ?? 'draft' });
       }
@@ -353,7 +392,7 @@ export async function materializeLeafSources(
         unresolved.push({ documentTable, documentId, reason: 'unified_documents row not found in this organization' });
         continue;
       }
-      if (!isFinalizedStatus(doc.status)) {
+      if (!isFinalizedStatus(doc.status, 'unified_documents')) {
         unfinalized++;
         unfinalizedSections.push({ sectionCode: doc.title || `unified_documents:${documentId}`, status: doc.status ?? 'draft' });
       }
@@ -666,7 +705,7 @@ export async function materializeLeafSources(
         title: row.label ?? undefined,
         sectionCode: row.section_key ?? undefined,
       });
-      if (!isFinalizedGovernedSectionStatus(row.status)) {
+      if (!isFinalizedStatus(row.status, 'c2c_document_sections')) {
         unfinalized++;
         unfinalizedSections.push({ sectionCode: row.section_key || `c2c_document_sections:${documentId}`, status: row.status ?? 'todo' });
       }

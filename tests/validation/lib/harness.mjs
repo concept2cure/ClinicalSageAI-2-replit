@@ -43,7 +43,7 @@ const require = createRequire(import.meta.url);
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(HERE, '..', '..', '..');
 
-export const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-23';
+export const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-23b';
 export const BASE_URL = (process.env.VALIDATION_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
 export const CHROMIUM_PATH =
   process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';

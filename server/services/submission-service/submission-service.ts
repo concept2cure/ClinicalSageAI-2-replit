@@ -955,7 +955,7 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     throw new SubmissionError('VALIDATION', `No transmit gateway is mapped for region "${seq.region}".`);
   }
 
-  const { getGateway } = await import('../submission-gateways/index');
+  const { getGateway, preTransmitFindings } = await import('../submission-gateways/index');
   // gwRegion and gwName are always valid Region/GatewayName values returned by selectGateway
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const gw = getGateway(route.gwRegion as any, route.gwName as any);
@@ -1115,10 +1115,10 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   }
 
   const dispatchStatus = toDispatchStatus(result.status);
-  // null = the guard reported nothing (never read as "all passed").
-  const failedPreTransmitChecks = result.preTransmit
-    ? result.preTransmit.checks.filter((c) => !c.passed).map((c) => `${c.name}: ${c.detail}`)
-    : null;
+  // null = the guard reported nothing (never read as "all passed"). The one
+  // reduction the governed transmit records too (2026-09-23, W5/D7, round-2
+  // review) — it used to be computed inline here only.
+  const preTransmit = preTransmitFindings(result);
   await applySequenceChangeWithAudit(
     {
       // Predicated on the claim taken before the wire: this row is the one that
@@ -1148,8 +1148,8 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
         signatureActionId,
         // The package checks that FAILED without blocking, and the guard's
         // warnings, on the §11.10(e) record of the send (2026-09-22, W5/D7).
-        preTransmitFailedChecks: failedPreTransmitChecks,
-        preTransmitWarnings: result.preTransmit?.warnings ?? null,
+        preTransmitFailedChecks: preTransmit.failedChecks,
+        preTransmitWarnings: preTransmit.warnings,
       },
     },
   );
@@ -1163,8 +1163,8 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     transmissionId: result.transmissionId,
     status: result.status,
     dispatchStatus,
-    preTransmitFailedChecks: failedPreTransmitChecks,
-    preTransmitWarnings: result.preTransmit?.warnings ?? null,
+    preTransmitFailedChecks: preTransmit.failedChecks,
+    preTransmitWarnings: preTransmit.warnings,
   };
 }
 

@@ -127,6 +127,15 @@ export function refusedBeforeWire(err: unknown): boolean {
 }
 
 /**
+ * The one reduction of the `preTransmit` report the guard below attaches —
+ * failed checks and warnings, `null` when the guard reported nothing — that
+ * every transmit record carries (transmitSequence's §11.10(e) row, the governed
+ * transmit's Part 11 sign record). 2026-09-23 (W5/D7, round-2 review).
+ */
+export { preTransmitFindings } from './pre-transmit-findings';
+export type { PreTransmitFindings } from './pre-transmit-findings';
+
+/**
  * Resolve the gateway implementation for (region, gateway).
  *
  * Returns the implementation behind a thin guard rather than the implementation

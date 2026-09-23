@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T04:50:14.047Z",
+  "generatedAt": "2026-09-23T05:40:35.669Z",
   "git": {
-    "sha": "8c00cac8d280466ff592396e6200a88db7e33216",
+    "sha": "03a95e108640d110a50ba5e7c3063b5a6019c17a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1988,7 +1988,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1060153
+        "bytes": 1062692
       },
       {
         "file": "shared/schema.ts",
@@ -2071,16 +2071,16 @@
         "bytes": 134822
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 134747
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "bytes": 133645
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "bytes": 132755
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "bytes": 132466
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2103,12 +2103,12 @@
         "bytes": 122153
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 119840
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 120343
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 119631
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "bytes": 119840
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2162,7 +2162,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20481
+        "lines": 20530
       },
       {
         "file": "shared/schema.ts",
@@ -2225,12 +2225,12 @@
         "lines": 3326
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3228
+        "file": "server/routes/submission-ops.ts",
+        "lines": 3251
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 3217
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 3228
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2282,7 +2282,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2462
+        "lines": 2472
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2413,16 +2413,16 @@
         "lines": 1897
       },
       {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 1892
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
         "lines": 1888
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
-      },
-      {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 1867
       },
       {
         "file": "server/routes/ivdr-routes.ts",

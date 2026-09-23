@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents/26/approve",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "password": "[REDACTED]",
+      "meaning": "APPROVED",
+      "reason": "OQ-006 step 06b: wrong password must be refused"
+    }
+  },
+  "response": {
+    "status": 401,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 410,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Password verification failed (§11.200).",
+      "details": {
+        "code": "PASSWORD_INVALID"
+      }
+    }
+  }
+}
