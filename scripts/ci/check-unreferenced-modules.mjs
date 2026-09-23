@@ -29,9 +29,9 @@
  * tests/ci/unreferenced-modules.contract.test.ts:
  *
  *   1. ESM-style specifiers name .js for a .ts file.
- *        server/services/ana/submission-chat-handler.ts:21
- *          import { ensureGateway } from '../../routes/chat/shared.js';
- *      resolves to server/routes/chat/shared.TS. Matching the literal extension
+ *        server/services/ana/submission-chat-handler.ts:21 imports
+ *          ensureGateway from routes/chat/shared, spelled with a .js extension,
+ *      and that resolves to server/routes/chat/shared.TS. Matching the literal extension
  *      marks all 8 files in server/routes/chat dead. They are live.
  *
  *   2. Routes also mount from a MANIFEST of path strings, not import literals.
