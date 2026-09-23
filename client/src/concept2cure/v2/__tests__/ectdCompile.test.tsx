@@ -209,20 +209,21 @@ const SPINE_STATUS = {
   sequence: { sequenceNumber: '0000', region: 'fda', leafCount: 2 },
 };
 
+function mockSpineCompile(compile: Record<string, unknown>, history: unknown[] = []) {
+  apiRequest.mockReset();
+  apiRequest.mockImplementation(async (method: string, url: string) => {
+    if (method === 'GET' && url === '/api/ectd-compile/42/status') return ok(SPINE_STATUS);
+    if (method === 'GET' && url === '/api/ectd-compile/42/history') return ok({ compilations: history });
+    if (method === 'POST' && url === '/api/ectd-compile/42/compile') return ok(compile);
+    return ok({});
+  });
+}
+const SPINE_COMPILE = {
+  ...COMPILE, xmlBackbone: REAL_INDEX, submissionId: 55, sequenceNumber: '0000', region: 'fda',
+  leafFilesRendered: 2, recorded: true, package: PACKAGE, submissionReady: false, submissionBlockers: ['x'],
+};
+
 describe('EctdCompile — the compiled package', () => {
-  function mockSpineCompile(compile: Record<string, unknown>, history: unknown[] = []) {
-    apiRequest.mockReset();
-    apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/ectd-compile/42/status') return ok(SPINE_STATUS);
-      if (method === 'GET' && url === '/api/ectd-compile/42/history') return ok({ compilations: history });
-      if (method === 'POST' && url === '/api/ectd-compile/42/compile') return ok(compile);
-      return ok({});
-    });
-  }
-  const SPINE_COMPILE = {
-    ...COMPILE, xmlBackbone: REAL_INDEX, submissionId: 55, sequenceNumber: '0000', region: 'fda',
-    leafFilesRendered: 2, recorded: true, package: PACKAGE, submissionReady: false, submissionBlockers: ['x'],
-  };
   beforeEach(() => { (window as any).C2C_PROJECT = { id: 42 }; });
 
   it('opens both backbones as a navigable leaf hierarchy — Module 1 from the regional file', async () => {
@@ -313,5 +314,55 @@ describe('EctdCompile — the compiled package', () => {
     const row = (await screen.findByText('IND Compilation — BX-512')).closest('tr')!;
     expect(row.textContent).toContain('0000');
     expect(row.textContent).toMatch(/manifest recorded/);
+  });
+});
+
+describe('EctdCompile — a follow-up sequence\'s lifecycle', () => {
+  beforeEach(() => { (window as any).C2C_PROJECT = { id: 42 }; });
+
+  it('a follow-up sequence shows every act against the filed state, and what was left out', async () => {
+    mockSpineCompile({
+      ...SPINE_COMPILE,
+      sequenceNumber: '0001',
+      lifecycle: {
+        priorSequence: '0000',
+        operations: [
+          { operation: 'replace', ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/25-clin-over/clinical-overview.pdf',
+            modifiedFile: '../0000/m2/25-clin-over/clinical-overview.pdf' },
+          { operation: 'delete', ctdSection: '3.2.S.4', fileName: 'specification.pdf', href: '../0000/m3/32s4/specification.pdf',
+            modifiedFile: '../0000/m3/32s4/specification.pdf' },
+        ],
+        leftOut: [{ sectionCode: '3.2.P', reason: 'declared append: the content is identical to the filed version, so there is nothing to append' }],
+      },
+    });
+    render(<EctdCompile {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Compile eCTD/ }));
+
+    const life = await screen.findByRole('region', { name: 'Lifecycle' });
+    expect(life.textContent).toMatch(/on file through sequence 0000/);
+    const rows = Array.from(life.querySelectorAll('tbody tr')).map((r) => Array.from(r.querySelectorAll('td')).map((c) => c.textContent));
+    expect(rows).toEqual([
+      ['replace', '2.5', 'm2/25-clin-over/clinical-overview.pdf', '../0000/m2/25-clin-over/clinical-overview.pdf'],
+      ['delete', '3.2.S.4', 'specification.pdf', '../0000/m3/32s4/specification.pdf'],
+    ]);
+    expect(life.textContent).toContain('3.2.P: declared append: the content is identical to the filed version');
+  });
+
+  it('a follow-up with no filed sequence on record says there is nothing on file to act on', async () => {
+    mockSpineCompile({
+      ...SPINE_COMPILE, sequenceNumber: '0001', lifecycle: { priorSequence: null, operations: [], leftOut: [] },
+    });
+    render(<EctdCompile {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Compile eCTD/ }));
+    const life = await screen.findByRole('region', { name: 'Lifecycle' });
+    expect(life.textContent).toMatch(/No filed sequence is on record for this submission/);
+  });
+
+  it('an original sequence has no lifecycle to show', async () => {
+    mockSpineCompile({ ...SPINE_COMPILE, lifecycle: { priorSequence: null, operations: [], leftOut: [] } });
+    render(<EctdCompile {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Compile eCTD/ }));
+    await screen.findByRole('region', { name: 'Leaf hierarchy' });
+    expect(screen.queryByRole('region', { name: 'Lifecycle' })).toBeNull();
   });
 });

@@ -88,6 +88,16 @@ interface ValidationResult {
   sectionCode?: string;
   fix?: string;
 }
+
+/** What a follow-up sequence does to the filed state (see LifecycleView). */
+interface CompiledLifecycle {
+  /** The newest filed sequence the prior state folds up to; null when none is on record. */
+  priorSequence: string | null;
+  operations: Array<{ operation: string; ctdSection: string; fileName: string; href: string; modifiedFile: string | null }>;
+  /** Placed leaves the package does not hold, and why. */
+  leftOut: Array<{ sectionCode: string; reason: string }>;
+}
+
 interface CompileResult {
   id: string;
   projectId: number | null;
@@ -111,6 +121,8 @@ interface CompileResult {
   recorded?: boolean;
   /** What the assembled package holds (spine-backed compiles). */
   package?: CompiledPackage;
+  /** What this sequence does to the filed state, from the manifest it recorded. */
+  lifecycle?: CompiledLifecycle;
   errors: string[];
   warnings: string[];
 }
@@ -418,23 +430,16 @@ function BackboneView({ label, xml }: { label: string; xml: string }) {
   );
 }
 
-function PackageFacts({ result }: { result: CompileResult }) {
-  const pkg = result.package;
-  const pdfa = pkg?.pdfa;
-  const asIssued = pdfa?.agencyFormsAsIssued ?? [];
-  // An FDA form shipped as issued is neither converted nor a conversion failure,
-  // so it is out of the count and named on its own line.
-  const convertible = pdfa ? pdfa.pdfLeaves - asIssued.length : 0;
+/**
+ * The PDF/A outcome. An FDA form shipped as issued is neither converted nor a
+ * conversion failure, so it is out of the count and named on its own line.
+ */
+function PdfaFacts({ pdfa }: { pdfa: NonNullable<CompiledPackage['pdfa']> }) {
+  const asIssued = pdfa.agencyFormsAsIssued ?? [];
+  const convertible = pdfa.pdfLeaves - asIssued.length;
   return (
-    <ul style={{ margin: '0 0 10px', paddingLeft: 18, fontSize: 12.5 }}>
-      <li>
-        Sequence <span className="mono">{result.sequenceNumber ?? '—'}</span>
-        {result.region ? <> · region {result.region.toUpperCase()}</> : null}
-        {pkg?.sha256 ? <> · package SHA-256 <span className="mono">{pkg.sha256.slice(0, 16)}…</span></> : null}
-      </li>
-      {result.recorded === true && <li>Recorded — its leaf manifest is what the next sequence is diffed against.</li>}
-      {result.recorded === false && <li className="sp-tone-err">Not recorded — the next sequence has nothing to be diffed against.</li>}
-      {pdfa && convertible > 0 && (
+    <>
+      {convertible > 0 && (
         <li className={pdfa.allPdfA ? undefined : 'sp-tone-warn'}>
           {pdfa.pdfaConverted} of {convertible} PDF leaves converted to PDF/A.
         </li>
@@ -445,7 +450,75 @@ function PackageFacts({ result }: { result: CompileResult }) {
           FDA&apos;s security settings intact, and not converted: <span className="mono">{asIssued.join(', ')}</span>
         </li>
       )}
+    </>
+  );
+}
+
+function PackageFacts({ result }: { result: CompileResult }) {
+  const pkg = result.package;
+  const pdfa = pkg?.pdfa;
+  return (
+    <ul style={{ margin: '0 0 10px', paddingLeft: 18, fontSize: 12.5 }}>
+      <li>
+        Sequence <span className="mono">{result.sequenceNumber ?? '—'}</span>
+        {result.region ? <> · region {result.region.toUpperCase()}</> : null}
+        {pkg?.sha256 ? <> · package SHA-256 <span className="mono">{pkg.sha256.slice(0, 16)}…</span></> : null}
+      </li>
+      {result.recorded === true && <li>Recorded — its leaf manifest is what the next sequence is diffed against.</li>}
+      {result.recorded === false && <li className="sp-tone-err">Not recorded — the next sequence has nothing to be diffed against.</li>}
+      {pdfa && <PdfaFacts pdfa={pdfa} />}
     </ul>
+  );
+}
+
+/**
+ * What a follow-up sequence does to the filed state: every act with the filed
+ * leaf it names, and what was left out. Read from the manifest the compile
+ * recorded — the record the next sequence is diffed against.
+ */
+function LifecycleView({ result }: { result: CompileResult }) {
+  const life = result.lifecycle;
+  if (!life || result.sequenceNumber === '0000') return null;
+  return (
+    <section aria-label="Lifecycle" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
+      <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>Lifecycle</div>
+      <p style={{ fontSize: 12, margin: '0 0 6px' }}>
+        {life.priorSequence ? (
+          <>
+            Acts are bound to what is on file through sequence <span className="mono">{life.priorSequence}</span>, read from the
+            leaf manifests recorded for the filed sequences.
+          </>
+        ) : (
+          <>
+            No filed sequence is on record for this submission, so nothing is on file to act on: a declared replace, append or
+            delete is left out of the package.
+          </>
+        )}
+      </p>
+      {life.operations.length > 0 && (
+        <table className="reg-tbl">
+          <thead><tr><th>Operation</th><th>Section</th><th>File</th><th>modified-file</th></tr></thead>
+          <tbody>
+            {life.operations.map((o) => (
+              <tr key={`${o.operation}:${o.ctdSection}:${o.href}`}>
+                <td className="mono">{o.operation}</td>
+                <td>{o.ctdSection}</td>
+                <td className="mono">{o.operation === 'delete' ? o.fileName : o.href}</td>
+                <td className="mono">{o.modifiedFile ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {life.leftOut.length > 0 && (
+        <div className="sp-tone-err" style={{ fontSize: 12, marginTop: 6 }}>
+          Left out of the package:
+          <ul style={{ margin: '2px 0 0', paddingLeft: 18 }}>
+            {life.leftOut.map((k) => <li key={`${k.sectionCode}:${k.reason}`}>{k.sectionCode}: {k.reason}</li>)}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -459,6 +532,7 @@ function CompiledPackageView({ result, ident }: { result: CompileResult; ident: 
   return (
     <div style={{ marginTop: 10 }}>
       <PackageFacts result={result} />
+      <LifecycleView result={result} />
       <section aria-label="Leaf hierarchy" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>Leaf hierarchy</div>
         {result.xmlBackbone && <BackboneView label="index.xml — ICH backbone" xml={result.xmlBackbone} />}

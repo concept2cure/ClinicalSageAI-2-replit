@@ -391,8 +391,31 @@ interface CompilationResult {
   recorded?: boolean;
   /** What the assembled package actually holds (spine-backed compiles only). */
   package?: CompiledPackage;
+  /** What this sequence does to the filed state (spine-backed compiles only). */
+  lifecycle?: CompiledLifecycle;
   errors: string[];
   warnings: string[];
+}
+
+/**
+ * A sequence's lifecycle, read from the leaf manifest it recorded — the same
+ * record the next sequence is diffed against, so what is shown is what binds.
+ */
+interface CompiledLifecycle {
+  /** The newest filed sequence the prior state folds up to; null when none is
+   *  on record (an original, or a follow-up with nothing filed before it). */
+  priorSequence: string | null;
+  /** Every act in the package: operation, section, file, and — for replace,
+   *  append and delete — the filed leaf it acts on. */
+  operations: Array<{
+    operation: string;
+    ctdSection: string;
+    fileName: string;
+    href: string;
+    modifiedFile: string | null;
+  }>;
+  /** Placed leaves the package does not hold, and why (the transmit blockers). */
+  leftOut: Array<{ sectionCode: string; reason: string }>;
 }
 
 interface CompiledPackage {
@@ -729,12 +752,19 @@ async function loadSpineLeaves(sequenceId: number, orgId: number): Promise<Spine
   return leafRes.rows as SpineLeafRow[];
 }
 
+/** A declared withdrawal: it acts on a filed leaf and places no content. */
+function isWithdrawal(l: SpineLeafRow): boolean {
+  return String(l.lifecycle_op ?? '').trim().toLowerCase() === 'delete';
+}
+
 /**
  * Does this placed leaf satisfy a required section? By section (a leaf at or
  * beneath the requirement), or — for an FDA form, which is filed at 1.1 and
- * told apart by type — by the form requirement its document_type proves.
+ * told apart by type — by the form requirement its document_type proves. A
+ * withdrawal satisfies nothing: it takes a document off file.
  */
 function leafSatisfies(l: SpineLeafRow, requiredCode: string): boolean {
+  if (isWithdrawal(l)) return false;
   if (sectionMatches(l.section_code, requiredCode)) return true;
   const formRequirement = formRequirementForDocumentType(l.document_type);
   return formRequirement != null && sectionMatches(formRequirement, requiredCode);
@@ -789,10 +819,12 @@ function leafPlacementFindings(
   }
 
   // Unrenderable placed leaves at non-required sections are still errors —
-  // an incomplete package must be visible, never silently dropped.
+  // an incomplete package must be visible, never silently dropped. A
+  // withdrawal has no document to render, so it is never one of them.
   if (opts.isMaterialized) {
     for (const l of leaves) {
       if (
+        !isWithdrawal(l) &&
         !opts.isMaterialized(l) &&
         !allRequired.some((rc) => leafSatisfies(l, rc))
       ) {
@@ -822,7 +854,9 @@ function moduleStatusesFromLeaves(
     .map((def) => {
       const code = def.code;
       const digit = code.replace('m', '');
-      const moduleLeaves = leaves.filter((l) => sectionMatches(l.section_code, digit));
+      // A module's documents are the content it holds; a withdrawal is a
+      // lifecycle act and is reported with the lifecycle, not counted here.
+      const moduleLeaves = leaves.filter((l) => !isWithdrawal(l) && sectionMatches(l.section_code, digit));
       const completedRequired = def.requiredSections.filter((rs) =>
         moduleLeaves.some((l) => leafSatisfies(l, rs) && isMaterialized(l)),
       );
@@ -880,7 +914,7 @@ async function compileFromSpine(
 
   // Canonical assembler (dynamic import keeps the draft-only path light and
   // lets route tests that stub the pool avoid loading the drizzle stack).
-  const { assembleSequence } = await import('../services/ectd/assemble-from-core');
+  const { assembleSequence, assembledTransmitBlockers } = await import('../services/ectd/assemble-from-core');
 
   let xmlBackbone = '';
   let materialized = 0;
@@ -898,6 +932,11 @@ async function compileFromSpine(
   // from: the file tree, the regional Module 1 backbone (index.xml only points
   // at it, so an IND's forms are otherwise invisible) and the MD5 index.
   let compiledPackage: CompiledPackage | null = null;
+  // What the assembly left out of the package, or put in it unapproved — in the
+  // words transmit refuses with. A compile that did not read these called a
+  // package ready that transmit would refuse (2026-09-23, W5/D7).
+  let leftOut: string[] = [];
+  let lifecycle: CompiledLifecycle | null = null;
 
   try {
     const assembled = await assembleSequence({
@@ -920,6 +959,7 @@ async function compileFromSpine(
       const zip = await JSZip.loadAsync(buffer);
       xmlBackbone = (await zip.file('index.xml')?.async('string')) ?? '';
       materialized = assembled.materialized;
+      leftOut = assembledTransmitBlockers(assembled);
       unresolvedCount = assembled.unresolvedLeaves.length;
       unresolvedKeys = new Set(
         assembled.unresolvedLeaves.map((u) => `${u.documentTable ?? ''}:${u.documentId ?? ''}`),
@@ -951,6 +991,17 @@ async function compileFromSpine(
       // Snapshot this sequence's shipped leaves as its immutable manifest.
       const manifest = buildLeafManifest(assembled.bundle.leafManifest ?? []);
       leafManifestJson = manifest.length > 0 ? JSON.stringify(manifest) : null;
+      lifecycle = {
+        priorSequence: assembled.priorSequence ?? null,
+        operations: manifest.map((m) => ({
+          operation: m.operation ?? 'new',
+          ctdSection: m.ctdSection,
+          fileName: m.fileName,
+          href: m.href,
+          modifiedFile: m.modifiedFile ?? null,
+        })),
+        leftOut: assembled.skipped.map((k) => ({ sectionCode: k.sectionCode, reason: k.reason })),
+      };
     } finally {
       await assembled.cleanup();
     }
@@ -996,6 +1047,7 @@ async function compileFromSpine(
         `${unresolvedCount} placed document(s) could not be materialized into leaf files — the package is incomplete until their sources are renderable.`,
       );
     }
+    blockers.push(...leftOut);
     const missingRequired = validationResults.filter(
       (v) => v.rule === 'REQUIRED_SECTION_UNPLACED' && v.severity === 'error',
     ).length;
@@ -1088,6 +1140,7 @@ async function compileFromSpine(
     region: seq.region,
     recorded,
     ...(compiledPackage ? { package: compiledPackage } : {}),
+    ...(lifecycle ? { lifecycle } : {}),
     errors,
     warnings: validationResults.filter((v) => v.severity === 'warning').map((v) => v.message),
   };
