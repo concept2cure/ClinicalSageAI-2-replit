@@ -21,6 +21,8 @@ const h = vi.hoisted(() => ({
   sigFail: null as unknown,
   finalizeFail: null as unknown,
   dispositionFail: null as unknown,
+  authors: [11] as number[],
+  role: 'member',
 }));
 
 const client = {
@@ -37,6 +39,11 @@ vi.mock('../../db', () => ({
   db: {},
 }));
 vi.mock('../../db/requestDb', () => ({ requestPgClient: () => client }));
+// Every case here signs as the same user; the attempt limit has its own suite
+// (server/middleware/__tests__/signing-attempt-limiter.test.ts).
+vi.mock('../../middleware/signing-attempt-limiter', () => ({
+  signingAttemptLimiter: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
 vi.mock('../../services/tenant/governed-tenant-context', () => ({ setTenantContextTx: vi.fn(async () => undefined) }));
 vi.mock('../../services/protocol-development-metrics', () => ({
   recordProtocolDocCreated: vi.fn(), recordProtocolSectionUpdated: vi.fn(), recordProtocolObjectiveAdded: vi.fn(),
@@ -72,9 +79,14 @@ const assertSignerIsNotAuthor = vi.fn(async () => {
   h.log.push('SOD');
   return { checked: true, reason: 'ok' };
 });
+const resolveTargetAuthors = vi.fn(async () => {
+  h.log.push('AUTHORS');
+  return { modelled: true, authors: h.authors, sources: ['protocol creator'] };
+});
 vi.mock('../../services/governance/separation-of-duties', async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
   assertSignerIsNotAuthor: (...a: unknown[]) => assertSignerIsNotAuthor(...(a as [])),
+  resolveTargetAuthors: (...a: unknown[]) => resolveTargetAuthors(...(a as [])),
 }));
 
 const finalizeProtocolTx = vi.fn(async () => {
@@ -105,7 +117,7 @@ import { ProtocolReviewError } from '../../services/protocol-reviews/protocol-re
 const app = express();
 app.use(express.json());
 app.use((req, _res, next) => {
-  Object.assign(req, { userId: 11, organizationId: 2, user: { id: 11, organizationId: 2 } });
+  Object.assign(req, { userId: 11, organizationId: 2, userRole: h.role, user: { id: 11, organizationId: 2, role: h.role } });
   next();
 });
 app.use('/api/protocol-development', protocolDevelopment);
@@ -126,6 +138,8 @@ beforeEach(() => {
   h.sigFail = null;
   h.finalizeFail = null;
   h.dispositionFail = null;
+  h.authors = [11];
+  h.role = 'member';
   vi.clearAllMocks();
 });
 
@@ -167,13 +181,16 @@ describe('POST /documents/:id/finalize is a real electronic signature', () => {
     expect(h.log).toEqual([
       'BEGIN',
       'FINALIZE',
-      'SOD',
+      'AUTHORS',
       'LEDGER:sign:protocol-document:5',
       'SIGNATURE:protocol-document:5',
       'COMMIT',
     ]);
     expect(verifyReauth).toHaveBeenCalledWith(11, REAUTH);
-    expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'authorship' });
+    // An authorship signature is checked against the recorded authors, on the
+    // signing transaction's own client.
+    expect(resolveTargetAuthors).toHaveBeenCalledWith('protocol-document:5', 2, client);
+    expect(assertSignerIsNotAuthor).not.toHaveBeenCalled();
     const ledger = recordGovernedAction.mock.calls[0][1] as { payload: Record<string, unknown>; reason: string };
     expect(ledger.payload.meaning).toBe('authorship');
     expect(ledger.reason).toBe(REASON);
@@ -195,6 +212,37 @@ describe('POST /documents/:id/finalize is a real electronic signature', () => {
     await finalize({ reason: REASON, meaning: 'authorship', reauth: { ...REAUTH, totp: '123456' } });
     const sig = persistGovernedSignSignature.mock.calls[0] as unknown as [unknown, Record<string, unknown>];
     expect(sig[1]).toMatchObject({ authenticationMethod: 'password+totp', secondFactorVerified: true });
+  });
+
+  it('a non-author cannot sign as the author', async () => {
+    h.authors = [99];
+    const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
+    expect(r.status).toBe(403);
+    expect(r.body.error.code).toBe('NOT_AN_AUTHOR');
+    expect(h.log).toEqual(['BEGIN', 'FINALIZE', 'AUTHORS', 'ROLLBACK']);
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+  });
+
+  it('an approval is checked for independence on the signing client', async () => {
+    await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
+    expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'approval', client });
+  });
+
+  it('a viewer cannot sign, and nothing is asked or written', async () => {
+    h.role = 'viewer';
+    const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
+    expect(r.status).toBe(403);
+    expect(verifyReauth).not.toHaveBeenCalled();
+    expect(h.log).toEqual([]);
+  });
+
+  it('an enrolled second factor that was not given is named as such', async () => {
+    h.reauth = { ok: false, error: 'REAUTH_TOTP_REQUIRED' };
+    const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
+    expect(r.status).toBe(401);
+    expect(r.body.error.code).toBe('REAUTH_TOTP_REQUIRED');
+    expect(r.body.error.message).toMatch(/authenticator/);
+    expect(h.log).toEqual([]);
   });
 
   it('an author approving their own protocol is refused, and the finalization rolls back', async () => {
@@ -222,6 +270,13 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
     expect(r.status).toBe(401);
     expect(setDispositionTx).not.toHaveBeenCalled();
     expect(h.log).toEqual([]);
+  });
+
+  it('a viewer cannot sign a disposition', async () => {
+    h.role = 'viewer';
+    const r = await disposition({ disposition: 'approve', reason: REASON, meaning: 'review', reauth: REAUTH });
+    expect(r.status).toBe(403);
+    expect(setDispositionTx).not.toHaveBeenCalled();
   });
 
   it('passes the signer and the declared meaning to the domain write, then signs', async () => {

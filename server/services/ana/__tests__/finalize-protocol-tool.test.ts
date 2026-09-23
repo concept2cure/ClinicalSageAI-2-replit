@@ -18,7 +18,8 @@ vi.mock('../../../routes/c2c/actions', () => ({ recordGovernedAction }));
 
 const finalizeProtocolTx = vi.fn();
 const getCompleteness = vi.fn();
-vi.mock('../../protocol-development/protocol-development-service', () => ({ finalizeProtocolTx, getCompleteness }));
+const getProtocolDocument = vi.fn();
+vi.mock('../../protocol-development/protocol-development-service', () => ({ finalizeProtocolTx, getCompleteness, getProtocolDocument }));
 
 import { getToolHandler } from '../AnaToolExecutor';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
@@ -33,6 +34,7 @@ async function call(input: Record<string, unknown>) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  getProtocolDocument.mockResolvedValue({ id: 5, status: 'draft', version: '0.3' });
 });
 
 describe('finalize_protocol_document never signs', () => {
@@ -59,6 +61,20 @@ describe('finalize_protocol_document never signs', () => {
     expect(finalizeProtocolTx).not.toHaveBeenCalled();
     expect(r.readyToFinalize).toBe(false);
     expect(r.findings).toEqual([{ severity: 'critical', message: 'Eligibility is empty.' }]);
+  });
+
+  it('an already-finalized protocol is reported as finalized, not as one to finalize', async () => {
+    getProtocolDocument.mockResolvedValue({ id: 5, status: 'finalized', version: '1.0' });
+    const r = await call({ document_id: 5 });
+    expect(getCompleteness).not.toHaveBeenCalled();
+    expect(r.message).toMatch(/already finalized \(version 1\.0\)/);
+    expect(r.message).not.toMatch(/passes the completeness check/);
+  });
+
+  it('a protocol this organization does not hold is not found', async () => {
+    getProtocolDocument.mockResolvedValue(null);
+    const r = await call({ document_id: 5 });
+    expect(r.error).toMatch(/not found/);
   });
 
   it('the tool description does not promise a finalization it cannot perform', () => {

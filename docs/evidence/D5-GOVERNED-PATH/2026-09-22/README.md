@@ -55,12 +55,11 @@ Supporting changes:
   (assigning, commenting, resolving a comment, a disposition) is not counted as
   authorship.
 - **The signature binds content**, via a new basis,
-  `protocol-document-content-sha256`: the protocol's identity, its version and
-  its ordered live sections at signing time.
+  `protocol-document-content-sha256`.
   - A disposition binds the protocol the reviewer read.
   - A finalization binds the version it froze.
-  - Workflow status is not in the digest, so a signature cannot invalidate itself
-    through the act it authorized (the `ectd-sequence` lesson, 2026-09-21).
+  - *As first pushed, the digest covered the document's version and its
+    sections' status. That was wrong; see "Review round" below.*
 - **Who may sign a disposition** is decided by the assignment:
   - the assigned user signs as `review` or `approval`;
   - anyone else is refused (403);
@@ -107,6 +106,28 @@ Two existing tests pinned the defect and were rewritten:
 
 Two assembler test fixtures hand-built `protocol_review_assignments` without the
 real schema's `reviewer_user_id`. They were aligned with the migration.
+
+### Review round (adversarial, after the first push)
+
+Three independent reviewers (Part 11; behaviour and regression; security and
+gate soundness) read the pushed change. Every finding below was verified in the
+code before it was fixed.
+
+| Finding | Fix | Proof |
+|---|---|---|
+| The binding held the version and section status. Finalize bumps the version, so a reviewer's signature taken before finalization stopped re-deriving with no content changed (the `ectd-sequence` defect again). It also left out the synopsis, cover page, objectives, eligibility, visits, schedule of assessments and team. The claim above, "no workflow status in the digest", was false. | The binding is now content only: cover page, synopsis, sections, objectives, eligibility, visits, SoA assessments and cells, team. No version, status or timestamp. | PGlite: the digest is unchanged by finalize (version + status). It moves for an objective, an eligibility criterion, a visit, the synopsis or the sponsor. Putting `version` back fails the test. |
+| A non-author could finalize as `authorship`, which separation of duties does not examine, and record a false meaning. | An `authorship` signature is checked against the recorded authors: 403 `NOT_AN_AUTHOR`. | Route test. Removing the check fails it. |
+| Authorship missed whoever built the schedule of assessments, objectives, eligibility, visits or team. | Authors are now the creators of every content row, plus governed content edits. Review tables are excluded. | PGlite: the SoA builder and objective author are counted, the commenting reviewer is not. Dropping the SoA rows fails it. |
+| A completed disposition could be signed again, overwriting the decision while the first signature stayed live. | Refused with 409 `INVALID_STATE`; the decision stands. | PGlite. Allowing it fails the test. |
+| No authority gate: a viewer could sign, and the canonical path's RBAC gate was absent. | `requireEditorAccess` on both routes, plus the `GOVERNANCE_RBAC_ENFORCE` `can()` gate the canonical path runs. | Route tests: a viewer gets 403 with nothing asked or written. |
+| Password guessing was unlimited on the two new endpoints (§11.300(d)). | One per-signer limiter (`middleware/signing-attempt-limiter.ts`), extracted from `esignature.ts`, which now uses it too. | Limiter suite: the 11th attempt gets 429, counted per signer. |
+| Separation of duties borrowed a second pool connection while the signing transaction held one. | The authorship reader takes the transaction's client (additive, optional parameter). | PGlite and route tests assert the client is passed. |
+| Two concurrent finalizations could both commit. | `finalizeProtocolTx` locks the row (`FOR UPDATE`). | Code; the lock is inside the signing transaction. |
+| The client never asked for the authenticator code, while the server (upgraded upstream) now demands it whenever one is enrolled. The same gap blocked enrolled signers in Submission Center freeze and dispatch. | `requireMfa` from the session, in both modals. Refusals now name the password or the code correctly. | Route test for `REAUTH_TOTP_REQUIRED`; client refusal wording test. |
+| The signer's name could print as "undefined" after a reload. | The printed name falls back to the email, and is absent rather than invented. | Code. |
+| The AnA tool told the user to finalize a protocol that was already finalized. | The tool reads the status first. | 2 new cases. |
+| The gate did not enforce "shrink only", and its blind spots were undocumented. | The baseline is exact: a freed allowance fails. The known misses are written in the gate header. | Selftest case 10. |
+| A UI contract still said the surface offers no e-signature, and no test proved the replacement finalize path was reachable. | The contract is restated: no local ceremony; the signed acts use the shared modal and send `reauth`. A surface test drives Finalize to the signed POST. | 12/12 contract cases; 41/41 client cases. |
 
 ## The class: `ci:sign-ceremony`
 

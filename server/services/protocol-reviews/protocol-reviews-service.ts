@@ -82,13 +82,20 @@ export async function setDispositionTx(
 ): Promise<{ id: number; disposition: string; protocolDocumentId: number; reviewerName: string; onBehalfOf: string | null }> {
   if (!DISPOSITIONS.includes(disposition)) throw new ProtocolReviewError('BAD_INPUT', `Invalid disposition "${disposition}".`);
   const a = await client.query(
-    `SELECT id, protocol_document_id, reviewer_name, reviewer_user_id
+    `SELECT id, protocol_document_id, reviewer_name, reviewer_user_id, status, disposition
        FROM protocol_review_assignments WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1
        FOR UPDATE`,
     [assignmentId, orgId],
   );
   if (a.rows.length === 0) throw new ProtocolReviewError('NOT_FOUND', 'Review assignment not found for this organization.');
   const row = a.rows[0];
+  // A signed disposition is final. Signing again would overwrite the decision
+  // while the first signature stayed live, with nothing saying which decision it
+  // signed; a changed mind needs the first signature withdrawn, which this path
+  // does not offer.
+  if (row.status === 'completed' || row.disposition != null) {
+    throw new ProtocolReviewError('INVALID_STATE', 'A disposition is already signed for this review. Nothing was recorded.');
+  }
   const assignedTo = row.reviewer_user_id == null ? null : Number(row.reviewer_user_id);
   if (assignedTo !== null && assignedTo !== signerId) {
     throw new ProtocolReviewError('FORBIDDEN', 'This review is assigned to another user. Only they can sign its disposition. Nothing was recorded.');

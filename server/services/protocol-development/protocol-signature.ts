@@ -10,11 +10,17 @@
  * domain route's own transaction:
  *
  *   1. the declared §11.50 meaning is one this act can carry
- *   2. §11.200 re-authentication (verifyReauth), before anything is written
- *   3. BEGIN, the domain write
- *   4. separation of duties against the protocol's authors
- *   5. the ledger pair and the electronic_signatures row, on the same client
- *   6. COMMIT, so the change and its signature land together or not at all
+ *   2. authority (§11.10(g)): the route admits writers only (requireEditorAccess),
+ *      and the permission gate the canonical path runs when
+ *      GOVERNANCE_RBAC_ENFORCE is on runs here too
+ *   3. §11.200 re-authentication (verifyReauth: the password, and the second
+ *      factor whenever the signer has one enrolled), before anything is written
+ *   4. BEGIN, the domain write
+ *   5. the meaning checked against authorship, on the same client: an
+ *      `authorship` signature only from an author; any other meaning only from
+ *      someone independent of the authors
+ *   6. the ledger pair and the electronic_signatures row, on the same client
+ *   7. COMMIT, so the change and its signature land together or not at all
  *
  * @module server/services/protocol-development/protocol-signature
  */
@@ -24,10 +30,12 @@ import { pool } from '../../db';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import {
   assertSignerIsNotAuthor,
+  resolveTargetAuthors,
   SeparationOfDutiesAuthorUnresolvedError,
   SeparationOfDutiesError,
   SeparationOfDutiesUnverifiedError,
 } from '../governance/separation-of-duties';
+import { can } from '../governance/permissions';
 import { persistGovernedSignSignature } from '../part11/signature-persistence';
 import { setTenantContextTx } from '../tenant/governed-tenant-context';
 
@@ -53,12 +61,24 @@ export interface ProtocolSignatureInput {
   allowedMeanings: readonly ProtocolSignMeaning[];
   reauth: unknown;
   ipAddress: string | null;
+  /** The signer's org role, for the permission gate. */
+  role: string;
   /** The domain write. Runs first inside the transaction; throw to refuse. */
   write: (
     client: PoolClient,
     meaning: ProtocolSignMeaning,
   ) => Promise<{ payload?: Record<string, unknown>; body: Record<string, unknown> }>;
 }
+
+/** What the signer is told for each re-authentication refusal (verifyReauth's codes). */
+const REAUTH_MESSAGE: Record<string, string> = {
+  REAUTH_REQUIRED: 'Re-enter your password to sign. Nothing was signed.',
+  REAUTH_PASSWORD_REQUIRED: 'Enter your password to sign. Nothing was signed.',
+  REAUTH_PASSWORD_INVALID: 'The password was not accepted. Nothing was signed.',
+  REAUTH_TOTP_REQUIRED: 'Your account has an authenticator enrolled: enter its current code to sign. Nothing was signed.',
+  REAUTH_TOTP_INVALID: 'The authenticator code was not accepted. Nothing was signed.',
+  REAUTH_MFA_STATE_UNKNOWN: 'Your second factor could not be checked, so the signature was refused. Try again. Nothing was signed.',
+};
 
 function asReauth(raw: unknown): { password?: string; totp?: string } | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
@@ -84,14 +104,20 @@ export async function signProtocolAct(input: ProtocolSignatureInput): Promise<Re
     );
   }
 
+  // The canonical sign path's permission gate, dark-launched the same way
+  // (routes/c2c/actions.ts makeHandler): off until validated on real role data.
+  if (process.env.GOVERNANCE_RBAC_ENFORCE === 'true') {
+    const resourceType = target.split(':')[0];
+    if (!(await can(orgId, input.role, { action: 'sign', resourceType }))) {
+      throw new ProtocolSignatureRefusal(403, 'NOT_AUTHORIZED', `Your role does not hold sign permission for ${resourceType}. Nothing was signed.`);
+    }
+  }
+
   const reauth = asReauth(input.reauth);
   const verified = await verifyReauth(userId, reauth);
   if (!verified.ok) {
-    throw new ProtocolSignatureRefusal(
-      401,
-      verified.error ?? 'REAUTH_REQUIRED',
-      'Re-enter your password to sign. Nothing was signed.',
-    );
+    const code = verified.error ?? 'REAUTH_REQUIRED';
+    throw new ProtocolSignatureRefusal(401, code, REAUTH_MESSAGE[code] ?? REAUTH_MESSAGE.REAUTH_REQUIRED);
   }
 
   const client = await pool.connect();
@@ -101,8 +127,22 @@ export async function signProtocolAct(input: ProtocolSignatureInput): Promise<Re
     const { payload = {}, body } = await input.write(client, meaning);
 
     try {
-      await assertSignerIsNotAuthor(target, orgId, userId, { command: 'sign', meaning });
+      if (meaning === 'authorship') {
+        // SoD does not examine an authorship signature, so the claim to be an
+        // author is checked here instead of being taken on the signer's word.
+        const authorship = await resolveTargetAuthors(target, orgId, client);
+        if (!authorship.authors.includes(userId)) {
+          throw new ProtocolSignatureRefusal(
+            403,
+            'NOT_AN_AUTHOR',
+            'You are not an author of this protocol, so you cannot sign it as its author. Sign as approval or responsibility. Nothing was signed.',
+          );
+        }
+      } else {
+        await assertSignerIsNotAuthor(target, orgId, userId, { command: 'sign', meaning, client });
+      }
     } catch (err) {
+      if (err instanceof ProtocolSignatureRefusal) throw err;
       if (err instanceof SeparationOfDutiesError) throw new ProtocolSignatureRefusal(403, err.code, err.message);
       if (err instanceof SeparationOfDutiesAuthorUnresolvedError) throw new ProtocolSignatureRefusal(409, err.code, err.message);
       if (err instanceof SeparationOfDutiesUnverifiedError) throw new ProtocolSignatureRefusal(503, err.code, err.message);

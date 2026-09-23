@@ -111,6 +111,12 @@ test('the baseline is a ceiling per file, not a pass', () => {
   assert.equal(failsWith(two, { files: { 'server/routes/x.ts': { count: 2, reason } } }).length, 0);
 });
 
+test('a baseline that allows more than exists is reported, so a fixed site cannot be refilled', () => {
+  const reason = 'DEFECT, recorded so the population cannot grow while it is fixed.';
+  const r = evaluate(scan(PRE_FIX_FINALIZE), { files: { 'server/routes/x.ts': { count: 2, reason } } });
+  assert.deepEqual(r.shrinkable, [{ file: 'server/routes/x.ts', count: 1, allowed: 2 }]);
+});
+
 test('a baseline entry without a written reason fails', () => {
   const r = evaluate(scan(PRE_FIX_FINALIZE), { files: { 'server/routes/x.ts': { count: 1, reason: '' } } });
   assert.deepEqual(r.unreasoned, ['server/routes/x.ts']);

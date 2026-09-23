@@ -95,6 +95,8 @@ beforeAll(async () => {
   await pglite.exec(migration('db/migrations/20260730_c2c_ana_actions_command_vocab.sql'));
   await pglite.exec(migration('migrations/20260621_protocol_development.sql'));
   await pglite.exec(migration('migrations/20260629_protocol_reviews.sql'));
+  await pglite.exec(migration('migrations/20260701_protocol_soa.sql'));
+  await pglite.exec(migration('migrations/20260921_protocol_documents_sponsor_pi.sql'));
   holder.query = q;
 }, 120_000);
 
@@ -117,7 +119,37 @@ describe('who authored a protocol', () => {
     const a = await resolveTargetAuthors(`protocol-document:${docId}`, ORG);
     expect(a.modelled).toBe(true);
     expect(a.authors).toEqual([CREATOR, EDITOR]);
-    expect(a.sources).toEqual(['protocol creator', 'protocol edit ledger']);
+    expect(a.sources).toEqual(['protocol content', 'protocol creator', 'protocol edit ledger']);
+  });
+
+  it('whoever built the schedule of assessments or the objectives is an author; a commenting reviewer is not', async () => {
+    const { docId } = await protocol();
+    await q(
+      `INSERT INTO protocol_soa_assessments (organization_id, protocol_document_id, name, category, order_index, created_by)
+       VALUES ($1,$2,'Vital signs','vital_signs',0,$3)`,
+      [ORG, docId, EDITOR],
+    );
+    await q(
+      `INSERT INTO protocol_objectives (organization_id, protocol_document_id, objective_type, objective, order_index, created_by)
+       VALUES ($1,$2,'primary','Reduce HbA1c',0,$3)`,
+      [ORG, docId, STRANGER],
+    );
+    await q(
+      `INSERT INTO protocol_review_comments (organization_id, protocol_document_id, comment, severity, created_by)
+       VALUES ($1,$2,'Clarify the endpoint','major',$3)`,
+      [ORG, docId, REVIEWER],
+    );
+    const a = await resolveTargetAuthors(`protocol-document:${docId}`, ORG);
+    expect(a.authors).toEqual([CREATOR, EDITOR, STRANGER]);
+    expect(a.authors).not.toContain(REVIEWER);
+  });
+
+  it('reads on the client it is given', async () => {
+    const { docId } = await protocol();
+    const seen: string[] = [];
+    const spy = { query: async (sql: string, params?: unknown[]) => { seen.push(sql); return q(sql, params); } };
+    await resolveTargetAuthors(`protocol-document:${docId}`, ORG, spy);
+    expect(seen.length).toBeGreaterThan(0);
   });
 
   it('a document-level edit counts', async () => {
@@ -152,6 +184,29 @@ describe('what a protocol signature binds', () => {
     expect(disp.digest).toBe(doc.digest);
     // Same content, same digest.
     expect((await deriveGovernedTargetBinding(client, `protocol-document:${docId}`, ORG)).digest).toBe(doc.digest);
+  });
+
+  it('finalization does not move it: version and workflow status are not content', async () => {
+    const { docId } = await protocol();
+    const before = await deriveGovernedTargetBinding(client, `protocol-document:${docId}`, ORG);
+    await q(`UPDATE protocol_documents SET version = '1.0', status = 'finalized' WHERE id = $1`, [docId]);
+    await q(`UPDATE protocol_sections SET status = 'complete' WHERE protocol_document_id = $1`, [docId]);
+    const after = await deriveGovernedTargetBinding(client, `protocol-document:${docId}`, ORG);
+    expect(after.digest).toBe(before.digest);
+  });
+
+  it.each([
+    ['an objective', `INSERT INTO protocol_objectives (organization_id, protocol_document_id, objective_type, objective, order_index, created_by) VALUES ($1,$2,'primary','Reduce HbA1c',0,${CREATOR})`],
+    ['an eligibility criterion', `INSERT INTO protocol_eligibility_criteria (organization_id, protocol_document_id, kind, criterion, order_index, created_by) VALUES ($1,$2,'inclusion','Age 18 or over',0,${CREATOR})`],
+    ['a visit', `INSERT INTO protocol_schedule_visits (organization_id, protocol_document_id, visit_name, timepoint, order_index, created_by) VALUES ($1,$2,'Screening','Day -14',0,${CREATOR})`],
+    ['the synopsis', `UPDATE protocol_documents SET synopsis = 'A new synopsis' WHERE organization_id = $1 AND id = $2`],
+    ['the sponsor', `UPDATE protocol_documents SET sponsor = 'Acme Bio' WHERE organization_id = $1 AND id = $2`],
+  ])('adding or changing %s moves it', async (_what, sql) => {
+    const { docId } = await protocol();
+    const before = await deriveGovernedTargetBinding(client, `protocol-document:${docId}`, ORG);
+    await q(sql, [ORG, docId]);
+    const after = await deriveGovernedTargetBinding(client, `protocol-document:${docId}`, ORG);
+    expect(after.digest).not.toBe(before.digest);
   });
 
   it('changing the content moves the digest', async () => {
@@ -194,6 +249,15 @@ describe('who may sign a disposition, and as what', () => {
     await expect(setDispositionTx(client, ORG, aid, 'reject', STRANGER, 'review')).rejects.toBeInstanceOf(ProtocolReviewError);
     const r = await setDispositionTx(client, ORG, aid, 'reject', STRANGER, 'responsibility');
     expect(r.onBehalfOf).toBe('Dr. Reviewer');
+  });
+
+  it('a signed disposition is final: a second signing is refused and the decision stands', async () => {
+    const { docId } = await protocol();
+    const aid = await assignment(docId, REVIEWER);
+    await setDispositionTx(client, ORG, aid, 'approve', REVIEWER, 'review');
+    await expect(setDispositionTx(client, ORG, aid, 'reject', REVIEWER, 'review')).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    const row = (await q(`SELECT disposition FROM protocol_review_assignments WHERE id = $1`, [aid])).rows[0];
+    expect(row.disposition).toBe('approve');
   });
 
   it('another tenant\'s assignment is not found', async () => {

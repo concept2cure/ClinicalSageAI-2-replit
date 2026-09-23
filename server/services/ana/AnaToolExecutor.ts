@@ -11493,8 +11493,18 @@ registerToolHandler('finalize_protocol_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant context.' });
   const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
   if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
-  const { getCompleteness } = await import('../protocol-development/protocol-development-service.js');
+  const { getCompleteness, getProtocolDocument } = await import('../protocol-development/protocol-development-service.js');
   try {
+    const doc = await getProtocolDocument(ctx.organizationId, documentId);
+    if (!doc) return JSON.stringify({ error: `Protocol ${documentId} was not found in this organization.` });
+    if (doc.status === 'finalized' || doc.status === 'superseded') {
+      return JSON.stringify({
+        ok: false,
+        documentId,
+        status: doc.status,
+        message: `Protocol ${documentId} is already ${doc.status}${doc.version ? ` (version ${doc.version})` : ''}; there is nothing to finalize.`,
+      });
+    }
     const c = await getCompleteness(ctx.organizationId, documentId);
     return JSON.stringify({
       ok: false,

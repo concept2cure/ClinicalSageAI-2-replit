@@ -49,11 +49,20 @@ import {
   signerIpAddress,
   signProtocolAct,
 } from '../services/protocol-development/protocol-signature';
+import { requireEditorAccess } from '../middleware/orgMembership';
+import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
 import {
   readDerivation,
   applyDerivationTx,
   DerivationError,
 } from '../services/protocol-development/design-derivation-service';
+
+// A viewer cannot sign (requireEditorAccess, 21 CFR 11.10(g)), and the password
+// behind a signature cannot be guessed without limit here any more than at
+// /api/esignature/verify-password (11.300(d)).
+const signingAttempts = signingAttemptLimiter('protocol-sign', {
+  error: { code: 'TOO_MANY_ATTEMPTS', message: 'Too many signing attempts. Wait a few minutes and try again. Nothing was signed.' },
+});
 
 const router = Router();
 
@@ -484,7 +493,7 @@ router.post('/documents/:id/versions', async (req, res) => {
 // declares the protocol complete, or another person approves it. It runs the
 // full ceremony in protocol-signature.ts, never the plain governed() helper.
 const finalizeSchema = z.object({ reason, meaning: z.unknown().optional(), reauth: z.unknown().optional() });
-router.post('/documents/:id/finalize', async (req, res) => {
+router.post('/documents/:id/finalize', requireEditorAccess, signingAttempts, async (req, res) => {
   const userId = resolveUserId(req);
   const orgId = resolveOrgId(req);
   if (!userId || !orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -502,6 +511,7 @@ router.post('/documents/:id/finalize', async (req, res) => {
       allowedMeanings: ['authorship', 'approval', 'responsibility'],
       reauth: parsed.data.reauth,
       ipAddress: signerIpAddress(req),
+      role: String((req as any).userRole ?? (req as any).user?.role ?? ''),
       write: async (client) => {
         const result = await finalizeProtocolTx(client, orgId, userId, id);
         return { payload: { version: result.version }, body: { documentId: id, ...result } };

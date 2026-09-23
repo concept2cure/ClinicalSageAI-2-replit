@@ -30,6 +30,15 @@ import {
   signerIpAddress,
   signProtocolAct,
 } from '../services/protocol-development/protocol-signature';
+import { requireEditorAccess } from '../middleware/orgMembership';
+import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
+
+// A viewer cannot sign (requireEditorAccess, 21 CFR 11.10(g)), and the password
+// behind a signature cannot be guessed without limit here any more than at
+// /api/esignature/verify-password (11.300(d)).
+const signingAttempts = signingAttemptLimiter('protocol-sign', {
+  error: { code: 'TOO_MANY_ATTEMPTS', message: 'Too many signing attempts. Wait a few minutes and try again. Nothing was signed.' },
+});
 
 const router = Router();
 
@@ -153,7 +162,7 @@ const dispositionSchema = z.object({
   meaning: z.unknown().optional(),
   reauth: z.unknown().optional(),
 });
-router.patch('/assignments/:id/disposition', async (req, res) => {
+router.patch('/assignments/:id/disposition', requireEditorAccess, signingAttempts, async (req, res) => {
   const userId = resolveUserId(req);
   const orgId = resolveOrgId(req);
   if (!userId || !orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -171,6 +180,7 @@ router.patch('/assignments/:id/disposition', async (req, res) => {
       allowedMeanings: ['review', 'approval', 'responsibility'],
       reauth: parsed.data.reauth,
       ipAddress: signerIpAddress(req),
+      role: String((req as any).userRole ?? (req as any).user?.role ?? ''),
       write: async (client, meaning) => {
         const r = await setDispositionTx(client, orgId, id, parsed.data.disposition, userId, meaning);
         return {

@@ -37,6 +37,21 @@
  * that the existing population is a number that can only fall. The baseline is
  * per file WITH A WRITTEN REASON; an entry without one fails.
  *
+ * ── Known limits (from the adversarial review, 2026-09-23) ─────────────────────
+ * The scanner can miss a sign write that:
+ *   - passes the command as a variable or shorthand (`{ command }`), or a
+ *     constant rather than the literal 'sign';
+ *   - goes through a helper whose name does not start with `governed`;
+ *   - sits in routes nested inside one factory function, where one route's
+ *     verifyReauth makes an unceremonied sibling look covered (the "handler"
+ *     is the enclosing column-0 statement).
+ * It cannot see a proof handed across a function boundary (the eSTAR and
+ * governed-transmit baseline entries). These limits are why the baseline carries
+ * reasons and why each signing surface keeps its own behavioural tests.
+ *
+ * The baseline is exact: an entry above the current count fails too, so fixing a
+ * site means lowering its entry, and a freed allowance cannot absorb a new site.
+ *
  * Usage:
  *   node scripts/ci/check-sign-ceremony.mjs            # fail on new sites
  *   node scripts/ci/check-sign-ceremony.mjs --list     # every site, with verdict
@@ -248,12 +263,13 @@ function main() {
     console.error('[ci:sign-ceremony] FAIL — baseline entries with no written reason:');
     for (const f of unreasoned) console.error(`  ✗ ${f}`);
   }
-  if (failed) process.exit(1);
-  console.log(`[ci:sign-ceremony] OK — no new sign write without the ceremony. ${baselined} baselined site(s) remain; the baseline may only shrink.`);
   if (shrinkable.length) {
-    console.log('[ci:sign-ceremony] these baseline entries can be lowered:');
-    for (const s of shrinkable) console.log(`  ${s.file}: ${s.count} (baseline ${s.allowed})`);
+    failed = true;
+    console.error('[ci:sign-ceremony] FAIL — the baseline allows more than exists. Lower these entries (or remove them at 0) so the freed allowance cannot absorb a new site:');
+    for (const x of shrinkable) console.error(`  ✗ ${x.file}: ${x.count} now, baseline ${x.allowed}`);
   }
+  if (failed) process.exit(1);
+  console.log(`[ci:sign-ceremony] OK — no new sign write without the ceremony. ${baselined} baselined site(s) remain, exactly as baselined.`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) main();

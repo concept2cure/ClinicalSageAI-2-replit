@@ -280,6 +280,34 @@ describe('reviews — request a review and record a disposition', () => {
   });
 });
 
+describe('finalize — the replacement for the deleted reason-only drawer is reachable', () => {
+  it('Finalize protocol opens the e-signature and posts the signed finalization', async () => {
+    /* The reason-only finalize drawer was removed 2026-09-23 (it wrote a `sign`
+       ledger row nobody had signed). Its replacement, ProtocolDevSigning, must
+       be reachable from the same control, and the request must carry the
+       signature: meaning, reason, and the credentials for the server. */
+    const verify = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ valid: true }) }));
+    vi.stubGlobal('fetch', verify);
+    try {
+      render(<Providers><ProtocolWorkspace {...props()} /></Providers>);
+      fireEvent.click(await screen.findByRole('button', { name: /Finalize protocol/ }));
+      expect(apiRequest.mock.calls.filter((c) => c[0] !== 'GET')).toHaveLength(0);
+
+      fireEvent.change(await screen.findByLabelText(/Reason for this action/), { target: { value: REASON } });
+      fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'correct horse' } });
+      fireEvent.click(screen.getByRole('button', { name: /Sign and commit/ }));
+
+      await waitFor(() => expect(lastWrite()).toBeTruthy());
+      const [method, path, body] = lastWrite();
+      expect(method).toBe('POST');
+      expect(path).toBe('/api/protocol-development/documents/2/finalize');
+      expect(body).toEqual({ reason: REASON, meaning: 'authorship', reauth: { password: 'correct horse' } });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
 describe('cover page — sponsor and principal investigator', () => {
   it('writes both through the cover-page PATCH and re-reads', async () => {
     render(<Providers><ProtocolWorkspace {...props()} /></Providers>);
