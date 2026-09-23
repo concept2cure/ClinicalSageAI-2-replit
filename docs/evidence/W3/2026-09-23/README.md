@@ -113,4 +113,4 @@ run was discarded rather than redacted by hand. The harness was fixed
 4. The qualified contractor's review. §11.5 item 5 now also covers the
    Authoring PIN signature (VSR-001 §13.3 item 3). Then signatures.
 5. **The F-15 decision** (VSR-001 §12.2).
-6. A full execution that includes OQ-PROJ-16 and OQ-PROJ-17. This set predates both steps, so a TM-001 built from it shows URS-PROJ-010 and URS-PROJ-011 uncovered.
+6. ~~A full execution that includes OQ-PROJ-16 and OQ-PROJ-17.~~ Done: `docs/evidence/W3/2026-09-23b/` (VSR-001 §14), at one commit carrying the fixes for F-19 to F-23. TM-001 is built from it: 0 requirements uncovered.

@@ -1,24 +1,24 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-09-23T03:34:32.900Z",
+  "generatedAt": "2026-09-23T05:23:50.828Z",
   "generator": "scripts/validation/build-traceability.mjs",
-  "runDate": "2026-09-23",
+  "runDate": "2026-09-23b",
   "summary": {
-    "requirements": 68,
-    "pass": 66,
-    "partial": 1,
+    "requirements": 69,
+    "pass": 67,
+    "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 1
+    "uncovered": 0
   },
   "byApp": {
     "Projects": {
-      "requirements": 10,
-      "pass": 9,
+      "requirements": 11,
+      "pass": 11,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 1
+      "uncovered": 0
     },
     "Vault": {
       "requirements": 10,
@@ -46,8 +46,8 @@
     },
     "Submission Readiness": {
       "requirements": 8,
-      "pass": 8,
-      "partial": 0,
+      "pass": 7,
+      "partial": 1,
       "fail": 0,
       "open": 0,
       "uncovered": 0
@@ -62,88 +62,88 @@
     }
   },
   "stepTotals": {
-    "pass": 95,
+    "pass": 97,
     "fail": 0,
-    "deviation": 1,
+    "deviation": 2,
     "not-executed": 0,
-    "steps": 96
+    "steps": 99
   },
   "protocols": [
     {
       "protocolId": "OQ-003",
       "app": "Authoring",
-      "executedAt": "2026-09-23T02:50:23.033Z",
+      "executedAt": "2026-09-23T05:19:44.325Z",
       "counts": {
         "pass": 23,
         "fail": 0,
         "deviation": 1,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23/OQ-AUTHORING/"
+      "evidence": "docs/evidence/W3/2026-09-23b/OQ-AUTHORING/"
     },
     {
       "protocolId": "OQ-001",
       "app": "Projects",
-      "executedAt": "2026-09-23T02:49:00.539Z",
+      "executedAt": "2026-09-23T05:18:00.578Z",
       "counts": {
-        "pass": 16,
+        "pass": 18,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23/OQ-PROJECTS/"
+      "evidence": "docs/evidence/W3/2026-09-23b/OQ-PROJECTS/"
     },
     {
       "protocolId": "OQ-006",
       "app": "QMS controlled documents",
-      "executedAt": "2026-09-23T02:51:43.906Z",
+      "executedAt": "2026-09-23T05:21:04.629Z",
       "counts": {
         "pass": 20,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23/OQ-QMS/"
+      "evidence": "docs/evidence/W3/2026-09-23b/OQ-QMS/"
     },
     {
       "protocolId": "OQ-004",
       "app": "Submission Center",
-      "executedAt": "2026-09-23T02:50:50.623Z",
+      "executedAt": "2026-09-23T05:20:12.334Z",
       "counts": {
         "pass": 15,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23/OQ-SUBMISSION-CENTER/"
+      "evidence": "docs/evidence/W3/2026-09-23b/OQ-SUBMISSION-CENTER/"
     },
     {
       "protocolId": "OQ-005",
       "app": "Submission Readiness",
-      "executedAt": "2026-09-23T02:51:18.954Z",
+      "executedAt": "2026-09-23T05:20:41.105Z",
       "counts": {
         "pass": 9,
         "fail": 0,
-        "deviation": 0,
+        "deviation": 1,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23/OQ-SUBMISSION-READINESS/"
+      "evidence": "docs/evidence/W3/2026-09-23b/OQ-SUBMISSION-READINESS/"
     },
     {
       "protocolId": "OQ-002",
       "app": "Vault",
-      "executedAt": "2026-09-23T02:50:08.251Z",
+      "executedAt": "2026-09-23T05:19:30.588Z",
       "counts": {
         "pass": 12,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-23/OQ-VAULT/"
+      "evidence": "docs/evidence/W3/2026-09-23b/OQ-VAULT/"
     }
   ],
   "iq": {
-    "executedAt": "2026-09-23T02:48:41.548Z",
+    "executedAt": "2026-09-23T05:17:43.704Z",
     "counts": {
       "pass": 12,
       "fail": 0,
@@ -438,14 +438,46 @@
       "requirement": "Every sign-in attempt by a user of an organisation is entered in that organisation's hash-chained audit log and shown on its audit ledger: a wrong password, the second-factor challenge a correct password receives, a wrong code, and the session a verified code opens. A refused attempt reads as refused, never as a sign-in.",
       "part11": "§11.10(e)",
       "risk": "high",
-      "steps": [],
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-16",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Every sign-in attempt is entered in the organisation audit trail"
+        }
+      ],
       "ra": {
         "intendedUse": "Enter every sign-in attempt in the organisation's audit trail",
         "risk": "high — without it an attack on an account, or a session opened on it, leaves no record an inspector can read (§11.10(e)); F-19 showed the trail empty under RLS while every other check passed",
         "assurance": "scripted",
         "rationale": "the attempts made by the step itself, read back on the ledger in order, hash-chained, with the server's chain verdict"
       },
-      "verdict": "uncovered"
+      "verdict": "pass"
+    },
+    {
+      "id": "URS-PROJ-011",
+      "app": "Projects",
+      "doc": "URS-001-PROJECTS.md",
+      "requirement": "Signing out ends the session. Once a user signs out, the token that session used opens nothing for the rest of its lifetime: the API refuses it with 401 and the session check reports the user signed out. The sign-out is entered in the organisation's hash-chained audit log and shown on its audit ledger.",
+      "part11": "§11.10(d) §11.10(e)",
+      "risk": "high",
+      "steps": [
+        {
+          "protocol": "OQ-001",
+          "step": "OQ-PROJ-17",
+          "status": "pass",
+          "evidenceDir": "OQ-PROJECTS",
+          "title": "Signing out ends the session"
+        }
+      ],
+      "ra": {
+        "intendedUse": "End the session when its user signs out",
+        "risk": "high — a session that survives sign-out stays usable by whoever holds its token, on a shared machine or from a copied header, for up to 24 hours, and everything done with it is attributed to the user who signed out (§11.10(d)); F-21 showed logout answering success while ending nothing, and no step checked",
+        "assurance": "scripted",
+        "rationale": "a session opened by the step itself, refused by the API and the session check once it is signed out, and the sign-out read back on the ledger, hash-chained"
+      },
+      "verdict": "pass"
     },
     {
       "id": "URS-VAULT-001",
@@ -1547,25 +1579,32 @@
       "id": "URS-SRDY-005",
       "app": "Submission Readiness",
       "doc": "URS-005-SUBMISSION-READINESS.md",
-      "requirement": "Executing the readiness review for a program starts an execution whose status and steps are readable.",
+      "requirement": "Executing the readiness review starts an execution whose status and steps are readable, and the review states what it read: it names the project it assessed, and a project it cannot read is refused or fails with the reason, never assessed as clear.",
       "part11": "none",
-      "risk": "medium",
+      "risk": "high",
       "steps": [
         {
           "protocol": "OQ-005",
           "step": "OQ-SRDY-05",
           "status": "pass",
           "evidenceDir": "OQ-SUBMISSION-READINESS",
-          "title": "Execute the readiness review for the program"
+          "title": "The readiness review never assesses a project it cannot read"
+        },
+        {
+          "protocol": "OQ-005",
+          "step": "OQ-SRDY-05b",
+          "status": "deviation",
+          "evidenceDir": "OQ-SUBMISSION-READINESS",
+          "title": "The readiness review names the project it assessed"
         }
       ],
       "ra": {
-        "intendedUse": "Readiness review executes and is readable",
-        "risk": "medium",
-        "assurance": "unscripted",
-        "rationale": "execution observed and recorded"
+        "intendedUse": "Readiness review executes, is readable, and states what it read",
+        "risk": "high — a review that completes on reads that failed tells a regulatory lead \"No critical issues found\" about a program nobody examined, and nothing on the record shows it (F-23)",
+        "assurance": "scripted",
+        "rationale": "a program id the engine cannot read must be refused or fail with the reason; an anchored project must be assessed and named"
       },
-      "verdict": "pass"
+      "verdict": "partial"
     },
     {
       "id": "URS-SRDY-006",

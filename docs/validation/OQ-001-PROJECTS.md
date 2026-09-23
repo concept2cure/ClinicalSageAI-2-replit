@@ -55,7 +55,11 @@ IQ-001 executed on the same installation; `LAUNCH_SCOPE_ENFORCE=on`; a fresh or 
 
 All scripted steps pass; unscripted/ad-hoc observations reviewed and accepted by the reviewer; no `fail` without a change request (VMP-001 §6).
 
-## 5. Result of the local execution (2026-09-23, production posture with production authentication — VSR-001 §13)
+## 5. Result of the local execution (2026-09-23b, one commit carrying every fix — VSR-001 §14)
+
+**18 pass, 0 fail, 0 deviation, 0 not-executed** (record `docs/evidence/W3/2026-09-23b/OQ-PROJECTS/`, executed 2026-09-23T05:18:00.578Z UTC at `0d7b85e50`). Same installation, posture and identities as the 2026-09-23 execution below: database `c2c_oq_w3_20260922b` with the migration set re-applied by `deploy-migrate` first, `RLS_ENFORCE=on`, runtime role `app_service`, dev-login refused, and every session opened by password and authenticator code. Each step is recorded with the kind this protocol gives it (OQ-001 §1, v0.6). OQ-PROJ-16 made its five attempts and found exactly five new ledger entries, in order and hash-chained. OQ-PROJ-17 (v0.5) opened a session of its own, read projects, signed it out, and was then refused (401) and reported signed out; the newest entry it added reads "Signed out", chained. OQ-PROJ-06b: the server chain verdict is ok over 417 rows.
+
+### 5.1 Result of the local execution (2026-09-23, production posture with production authentication — VSR-001 §13; superseded by the 2026-09-23b execution)
 
 *v0.5 (OQ-PROJ-17) was executed on its own with the runner at `d3556910a`. On a server with the F-21 logout fix reverse-applied: 17 pass, 1 fail (OQ-PROJ-17: after signing out, the token still read projects and the session check still reported it signed in). On HEAD: 18 pass, 0 fail. Records: `docs/evidence/W3/2026-09-23/OQ-001-v0.5/`; VSR-001 §13.10.*
 
@@ -63,11 +67,11 @@ All scripted steps pass; unscripted/ad-hoc observations reviewed and accepted by
 
 **16 pass, 0 fail, 0 deviation, 0 not-executed** (record `docs/evidence/W3/2026-09-23/OQ-PROJECTS/`, executed 2026-09-23T02:49:00Z UTC at `0e2b3a971`). Same installation and RLS posture as the 2026-09-22 execution below: database `c2c_oq_w3_20260922b`, `RLS_ENFORCE=on`, runtime role `app_service`, no AI provider configured. It adds the authentication production requires. The server refuses dev-login (`ALLOW_DEV_AUTH=0`; IQ-10 pass, `docs/evidence/W3/2026-09-23/IQ/`). Every session was opened by a password sign-in that completed the TOTP challenge of the identity's enrolled factor, once per identity per run (OQ-001 §1; VSR-001 §13). Run identity: user 17 `oq-runner@validation.local`. Second signer: user 11 `oq-signer@validation.local`. Both enrolled their authenticator through the product's own enrolment endpoints. OQ-PROJ-02 (v0.3) signed in through the form with password and authenticator code, and landed on `/concept2cure`. OQ-PROJ-06: `verify-chain` ok over 213 rows. OQ-PROJ-06b: 50 ledger entries, all hash-chained; the server chain verdict is ok=true over 213 rows.
 
-### 5.1 Result of the local execution (2026-09-22, production posture — VSR-001 §12; superseded by the 2026-09-23 execution)
+### 5.2 Result of the local execution (2026-09-22, production posture — VSR-001 §12; superseded by the 2026-09-23 execution)
 
 **16 pass, 0 fail, 0 deviation, 0 not-executed** (record `docs/evidence/W3/2026-09-22/OQ-PROJECTS/`, executed 2026-09-22T22:35:06Z UTC at `e2d910d6f`). Installation: a database provisioned from empty by `npm run up`; the server booted from the checkout with `RLS_ENFORCE=on` as runtime role `app_service` (not superuser, no BYPASSRLS, owns no table — IQ-07 and IQ-08 pass, `docs/evidence/W3/2026-09-22/IQ/`); no AI provider configured. This is the first execution with RLS enforcing and as a role that owns no table. The executions filed before it record `RLS_ENFORCE=off` (IQ-DEV-003), under which the tenant-isolation policies are inert, and runtime role `c2c` on `clinicalsage`, which owns 61 RLS-enabled tables without FORCE — `vault.documents` among them — whose policies therefore never applied to it (VSR-001 §12). OQ-PROJ-06: `verify-chain` answered ok. OQ-PROJ-06b (v0.2): 42 ledger entries, all hash-chained, server chain verdict ok=true over 42 rows. The failures and the deviation recorded in §5.2 (F-1, F-2, IQ-DEV-001) were closed by WA and WD before the 2026-09-21 re-executions (VSR-001 §8, §10).
 
-### 5.2 Result of the first local execution (2026-09-21, W3a — superseded; later executions: VSR-001 §8.2, §10.2)
+### 5.3 Result of the first local execution (2026-09-21, W3a — superseded; later executions: VSR-001 §8.2, §10.2)
 
 See the record. Summary: 13 pass, 2 fail, 1 deviation. Fails: OQ-PROJ-06 (audit chain verifier answered 409 `ok:false`, broken at an audit_logs row — VSR-001 finding F-1) and OQ-PROJ-06b (audit ledger surface read model `audit_events` empty — finding F-2). Deviation: OQ-PROJ-11 (IQ-DEV-001).
 
