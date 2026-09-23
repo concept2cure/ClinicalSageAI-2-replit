@@ -1,0 +1,40 @@
+# tree at 4a3e1a9b8
+
+$ npm run ci:audit-logs-fixture
+[ci:audit-logs-fixture] audit_logs fixtures vs writeChainedAuditRow
+  columns the writer writes : 16
+  fixtures found            : 16
+
+✅ every audit_logs fixture accepts the writer's full column list.
+exit=0
+
+$ npm run ci:db-test-isolation:selftest
+  ✓ flags: export * from '../setup';
+  ✓ passes: import { databaseUrl } from '../setup.db';
+  ✓ passes: await request(app).post('/api/auth/mfa/setup').send({});
+  ✓ passes: const path = '/api/setup';
+
+✓ self-test: 8 cases
+exit=0
+
+$ npm run ci:db-test-isolation
+[ci:db-test-isolation] OK — 41 real-database test file(s) run unmocked, and every mocked vitest config excludes them.
+exit=0
+
+$ npm run ci:dependency-risk
+Dependency risk gate: PASS; 4 Critical/High advisory occurrence(s), all reviewed.
+Scanner: npm audit 10.9.7; Node v22.22.2; lockfile 1f410d45d0d706e9778bc538e34126ba4c7eb67222a8553f13b658f8a33eaa8d
+  GHSA-W3RX-R6R6-PGPR image-size high: unreachable
+  GHSA-5P2G-FCMC-QVQQ image-size high: unreachable
+  GHSA-W3RX-R6R6-PGPR image-size high: unreachable
+  GHSA-5P2G-FCMC-QVQQ image-size high: unreachable
+exit=0
+
+$ npm run ci:untracked-imports
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+exit=0
+
+$ npm run test:ci-scripts
+# tests 43
+# pass 43
+# fail 0
