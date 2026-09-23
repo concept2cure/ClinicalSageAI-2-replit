@@ -390,7 +390,7 @@ export function describeFilingRefusal(status: number, code: string | null): stri
     return 'That password was not accepted. Nothing was filed and nothing was signed.';
   }
   if (code === 'REAUTH_TOTP_INVALID') {
-    return 'That authenticator code was not accepted. Nothing was filed and nothing was signed.';
+    return 'That authenticator code was not accepted. Each code works once, so if it was just used, wait for the next. Nothing was filed and nothing was signed.';
   }
   if (code === 'REAUTH_TOTP_REQUIRED') {
     return 'Your account has an authenticator enrolled — enter its current code to sign. Nothing was filed and nothing was signed.';

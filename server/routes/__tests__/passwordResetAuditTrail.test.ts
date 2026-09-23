@@ -62,6 +62,9 @@ vi.mock('../../services/auditService', () => ({
 const dbState = vi.hoisted(() => ({
   selectRows: [] as unknown[],
   updates: [] as unknown[],
+  // What a conditional UPDATE ... RETURNING answers: the row when its WHERE
+  // still held, nothing when another request had already used the token.
+  returningRows: [] as unknown[],
 }));
 vi.mock('../../db', () => {
   const chain = (rows: unknown[]) => ({
@@ -74,10 +77,16 @@ vi.mock('../../db', () => {
     select: () => chain(dbState.selectRows),
     update: () => ({
       set: (v: unknown) => ({
-        where: async () => {
-          dbState.updates.push(v);
-          return undefined;
-        },
+        where: () => ({
+          returning: async () => {
+            dbState.updates.push(v);
+            return dbState.returningRows;
+          },
+          then: (resolve: (x: unknown) => unknown, reject?: (e: unknown) => unknown) => {
+            dbState.updates.push(v);
+            return Promise.resolve(undefined).then(resolve, reject);
+          },
+        }),
       }),
     }),
   };
@@ -102,7 +111,7 @@ vi.mock('../../services/emailService', () => ({
 }));
 vi.mock('../../services/mfaService', () => ({
   generateSecret: vi.fn(), enableMfa: vi.fn(), disableMfa: vi.fn(),
-  verifyToken: vi.fn(), detectVerificationMethod: vi.fn(),
+  verifyToken: vi.fn(), verifySecondFactor: vi.fn(),
 }));
 vi.mock('../../services/emailOtpService', () => ({
   createEmailOtp: vi.fn(), verifyEmailOtp: vi.fn(),
@@ -138,6 +147,7 @@ beforeEach(() => {
   sendPasswordResetEmail.mockClear();
   dbState.selectRows = [];
   dbState.updates = [];
+  dbState.returningRows = [{ id: 7 }];
 });
 
 describe('requesting a password reset is audited', () => {
@@ -211,6 +221,22 @@ describe('changing the password is audited — the credential-changing event', (
     expect(row!.resourceId).toBe('7');
     // The password itself never reaches the audit trail.
     expect(JSON.stringify(row)).not.toContain('Str0ng-Passphrase!42');
+  });
+
+  it('refuses, and records, a token another request used first — no second success', async () => {
+    // The read found the token, but by the time the conditional write ran it
+    // had been used (two requests racing one reset link). Until 2026-09-23 the
+    // write was by account id alone and both requests reported success.
+    dbState.selectRows = [{ id: 7, resetToken: 'x', resetTokenExpiresAt: future() }];
+    dbState.returningRows = [];
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'raw-token', newPassword: 'Str0ng-Passphrase!42' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('AUTH_006');
+    expect(actions()).toContain('user_password_reset_failed');
+    expect(actions(), 'a refused reset was recorded as a password change').not.toContain('user_password_changed');
   });
 
   it('records a token that matched no account', async () => {
