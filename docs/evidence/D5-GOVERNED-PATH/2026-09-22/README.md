@@ -307,6 +307,17 @@ Open items, left as they are on purpose:
 - **The signing modal offers every meaning.** The server refuses a meaning the
   act cannot carry, with a 400, before it re-authenticates. The attempt still
   counts against the limiter.
+- **For D2, not fixed here: the non-launch modules' APIs are reachable unless
+  the production environment says otherwise.** `deploymentEnforcementMode`
+  (`server/services/entitlements/enforcement-mode.ts`) reads
+  `MODULE_ENFORCEMENT` and defaults to `off`. A mode stored on the console is
+  capped at the deployment's (`capAt`), so the console cannot switch it on. No
+  deploy configuration in the repository sets the variable. This checkout cannot
+  see whether production's own environment sets it. Where it is off, the 21
+  unceremonied sign routes baselined above (research administration, CMC, BLA,
+  IRB, IBC, IACUC, RIM) are live APIs, even though no launch surface links to
+  them. Turning enforcement on is a deployment change that needs a staging run
+  first. It belongs to D2, and the founder should see it before it is made.
 - The gate is textual. It proves a new signature cannot be written without its
   author wiring the ceremony. It does not prove the ceremony is correct; each
   surface's tests do that.
