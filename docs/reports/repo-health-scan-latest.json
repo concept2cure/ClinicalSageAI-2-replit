@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T04:16:26.408Z",
+  "generatedAt": "2026-09-23T04:52:15.572Z",
   "git": {
-    "sha": "c0897d9730e1a99493011b6dcd9060c421c802b8",
+    "sha": "7b74013ceafdcfb3f8efbe21099f0f5600e17ea2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 101
+    "largeFilesByLines": 103
   },
   "findings": {
     "duplicateBasenames": [
@@ -1988,11 +1988,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1060153
+        "bytes": 1062692
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 858583
+        "bytes": 858926
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2103,12 +2103,12 @@
         "bytes": 122153
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 119840
+        "file": "server/routes/ana-ri/stream.ts",
+        "bytes": 120343
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 119631
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "bytes": 119840
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2162,11 +2162,11 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20481
+        "lines": 20530
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20190
+        "lines": 20195
       },
       {
         "file": "server/statistics-service.ts",
@@ -2282,7 +2282,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2462
+        "lines": 2472
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2421,6 +2421,10 @@
         "lines": 1869
       },
       {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 1867
+      },
+      {
         "file": "server/routes/ivdr-routes.ts",
         "lines": 1866
       },
@@ -2461,6 +2465,10 @@
         "lines": 1813
       },
       {
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 1811
+      },
+      {
         "file": "server/routes/c2c/ai-editing.ts",
         "lines": 1809
       },
@@ -2489,10 +2497,6 @@
         "lines": 1753
       },
       {
-        "file": "server/services/submission-service/submission-service.ts",
-        "lines": 1748
-      },
-      {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
       },
@@ -2502,7 +2506,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1706
+        "lines": 1701
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
@@ -2521,10 +2525,6 @@
         "lines": 1650
       },
       {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 1636
-      },
-      {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
       },
@@ -2541,6 +2541,10 @@
         "lines": 1569
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1544
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
         "lines": 1532
       },
@@ -2555,6 +2559,10 @@
       {
         "file": "server/routes/c2c/projects.ts",
         "lines": 1522
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
+        "lines": 1506
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
@@ -2590,7 +2598,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 5,
-      "largeByLines": 11
+      "largeByLines": 13
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",

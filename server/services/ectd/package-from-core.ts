@@ -205,12 +205,9 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
             continue;
           }
         }
-        // A withdrawal ships no bytes. The row may still name its document —
-        // that is how its file name binds above — but the resolved file must
-        // not ride along: with a sourcePath the packager ships it as content,
-        // and the withdrawn document was re-filed inside this sequence.
-        // 2026-09-23 (W5/D7).
-        desired.push({ ...rest, sourcePath: '', fileName, md5: '', withdraw: true });
+        // A withdrawal ships no bytes: computeLifecycleOperations drops the
+        // resolved sourcePath from every delete it emits (2026-09-23, W5/D7).
+        desired.push({ ...rest, fileName, md5: '', withdraw: true });
       }
       const life = computeLifecycleOperations(prior.leaves, desired, {
         priorSequencePrefix: computeSequencePrefix(prior.priorSequenceNumber),

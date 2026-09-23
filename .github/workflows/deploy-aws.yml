@@ -495,6 +495,14 @@ jobs:
         #   AUDIT_HMAC_SECRET        server/lib/tamper-proof-audit.ts.
         #   CONNECTOR_ENCRYPTION_KEY server/services/connectors/connector-registry.ts
         #                            — module-level throw in production.
+        #   CONCEPT2CURE_SIGNER_MODE server/services/signature/signer-mode.ts —
+        #                            refused at boot in production when unset or
+        #                            `dev`. kms needs ..._SIGNER_KMS_KEY_ID; hmac
+        #                            needs ..._SIGNER_ACCEPT_HMAC=true. Which one is
+        #                            an operator decision (SOP_KEY_MANAGEMENT.md);
+        #                            this check only refuses a task definition that
+        #                            has made none, before it rolls rather than at
+        #                            boot (2026-09-23).
         run: |
           set -euo pipefail
 
@@ -512,7 +520,8 @@ jobs:
           for VAR in RLS_ENFORCE DATABASE_URL APP_DATABASE_URL JWT_SECRET \
                      REFRESH_TOKEN_SECRET MFA_ENCRYPTION_KEY AUDIT_HMAC_KEY \
                      AUDIT_HMAC_SECRET CONNECTOR_ENCRYPTION_KEY \
-                     AI_SENSITIVE_DATA_POLICY_MODE AI_PROVIDER_PLACEMENT_APPROVALS; do
+                     AI_SENSITIVE_DATA_POLICY_MODE AI_PROVIDER_PLACEMENT_APPROVALS \
+                     CONCEPT2CURE_SIGNER_MODE; do
             if ! grep -qx "$VAR" <<< "$PRESENT"; then MISSING="$MISSING $VAR"; fi
           done
 
