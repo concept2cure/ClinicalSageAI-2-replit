@@ -14,9 +14,11 @@ import { pool } from '../../db';
 import {
   assessReportability,
   evaluateCapaClosure,
+  isAssessed,
   type DeviationCategory,
   type DeviationSeverity,
   type CapaActionStatus,
+  type ReportabilityResult,
 } from './protocol-deviations-logic';
 
 interface Queryable {
@@ -47,17 +49,29 @@ export interface DeviationInput {
   discoveredDate?: string | null;
 }
 
-/** Record a protocol deviation; reportability is computed deterministically. */
+export interface DeviationWriteResult extends ReportabilityResult {
+  id: number;
+  assessed: boolean;
+}
+
+/**
+ * Record a protocol deviation. Severity, category and safety impact are stored
+ * as given and NULL when not given — an unrecorded severity is not "minor"
+ * (it used to be defaulted, which made the deviation "not reportable" on an
+ * assessment nobody made). When the reporter supplies both severity and
+ * safety impact, that IS their assessment and is recorded as such.
+ */
 export async function createDeviationTx(
   client: Queryable,
   orgId: number,
   userId: number,
   input: DeviationInput,
-): Promise<{ id: number; reportable: boolean; timelinessDays: number; basis: string }> {
-  const category = input.category ?? 'other';
-  const severity = input.severity ?? 'minor';
-  if (!CATEGORIES.includes(category)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid category "${category}".`);
-  if (!SEVERITIES.includes(severity)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid severity "${severity}".`);
+): Promise<DeviationWriteResult> {
+  const category = input.category ?? null;
+  const severity = input.severity ?? null;
+  const affectsSafety = typeof input.affectsSafety === 'boolean' ? input.affectsSafety : null;
+  if (category !== null && !CATEGORIES.includes(category)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid category "${category}".`);
+  if (severity !== null && !SEVERITIES.includes(severity)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid severity "${severity}".`);
 
   const doc = await client.query(
     `SELECT id FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
@@ -65,23 +79,74 @@ export async function createDeviationTx(
   );
   if (doc.rows.length === 0) throw new ProtocolDeviationsError('NOT_FOUND', 'Protocol document not found for this organization.');
 
-  const report = assessReportability({ severity, category, affectsSafety: input.affectsSafety });
+  const report = assessReportability({ severity, category, affectsSafety });
+  const assessed = isAssessed({ severity, affectsSafety });
   const { rows } = await client.query(
     `INSERT INTO protocol_deviations
-       (organization_id, protocol_document_id, deviation_number, description, category, severity, is_reportable, root_cause, discovered_date, status, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'open',$10) RETURNING id`,
-    [orgId, input.protocolDocumentId, input.deviationNumber ?? null, input.description, category, severity, report.reportable, input.rootCause ?? null, input.discoveredDate ?? null, userId],
+       (organization_id, protocol_document_id, deviation_number, description, category, severity, affects_safety, is_reportable,
+        root_cause, discovered_date, status, created_by, assessed_by, assessed_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'open',$11,$12, CASE WHEN $12::int IS NULL THEN NULL ELSE now() END) RETURNING id`,
+    [
+      orgId, input.protocolDocumentId, input.deviationNumber ?? null, input.description, category, severity, affectsSafety,
+      report.reportable, input.rootCause ?? null, input.discoveredDate ?? null, userId, assessed ? userId : null,
+    ],
   );
-  return { id: Number(rows[0].id), reportable: report.reportable, timelinessDays: report.timelinessDays, basis: report.basis };
+  return { id: Number(rows[0].id), assessed, ...report };
 }
 
-async function loadDeviation(client: Queryable, orgId: number, devId: number): Promise<{ status: string }> {
+interface LoadedDeviation {
+  status: string;
+  category: DeviationCategory | null;
+  severity: DeviationSeverity | null;
+  affectsSafety: boolean | null;
+}
+
+async function loadDeviation(client: Queryable, orgId: number, devId: number): Promise<LoadedDeviation> {
   const d = await client.query(
-    `SELECT status FROM protocol_deviations WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    `SELECT status, category, severity, affects_safety FROM protocol_deviations
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
     [devId, orgId],
   );
   if (d.rows.length === 0) throw new ProtocolDeviationsError('NOT_FOUND', 'Deviation not found for this organization.');
-  return { status: d.rows[0].status };
+  const r = d.rows[0];
+  return { status: r.status, category: r.category ?? null, severity: r.severity ?? null, affectsSafety: r.affects_safety ?? null };
+}
+
+export interface DeviationAssessmentInput {
+  severity: DeviationSeverity;
+  affectsSafety: boolean;
+  /** Why this severity — written to the deviation, alongside who and when. */
+  rationale: string;
+}
+
+/**
+ * Record a person's assessment of a deviation: severity, effect on subject
+ * safety, and the rationale, stamped with who and when. Recomputes what the
+ * assessment indicates about reporting. This is how a deviation recorded
+ * without an assessment — including every legacy row — becomes closable.
+ */
+export async function assessDeviationTx(
+  client: Queryable,
+  orgId: number,
+  userId: number,
+  devId: number,
+  input: DeviationAssessmentInput,
+): Promise<DeviationWriteResult> {
+  if (!SEVERITIES.includes(input.severity)) throw new ProtocolDeviationsError('BAD_INPUT', `Invalid severity "${input.severity}".`);
+  if (typeof input.affectsSafety !== 'boolean') throw new ProtocolDeviationsError('BAD_INPUT', 'State whether the deviation affected subject safety.');
+  const rationale = (input.rationale ?? '').trim();
+  if (rationale.length < 8) throw new ProtocolDeviationsError('BAD_INPUT', 'Give the rationale for this assessment (at least 8 characters).');
+  const dev = await loadDeviation(client, orgId, devId);
+  if (dev.status === 'closed') throw new ProtocolDeviationsError('INVALID_STATE', 'Deviation is closed; its assessment cannot be changed.');
+  const report = assessReportability({ severity: input.severity, category: dev.category, affectsSafety: input.affectsSafety });
+  await client.query(
+    `UPDATE protocol_deviations
+        SET severity = $3, affects_safety = $4, is_reportable = $5,
+            assessed_by = $6, assessed_at = now(), assessment_rationale = $7, updated_at = now()
+      WHERE id = $1 AND organization_id = $2`,
+    [devId, orgId, input.severity, input.affectsSafety, report.reportable, userId, rationale],
+  );
+  return { id: devId, assessed: true, ...report };
 }
 
 // ─── CAPA actions ────────────────────────────────────────────────────────────
@@ -157,7 +222,11 @@ export async function closeDeviationTx(
 ): Promise<{ closed: true }> {
   const dev = await loadDeviation(client, orgId, devId);
   const capaActions = await capaStatusesFor(client, orgId, devId);
-  const gate = evaluateCapaClosure({ deviationStatus: dev.status as any, capaActions });
+  const gate = evaluateCapaClosure({
+    deviationStatus: dev.status as any,
+    capaActions,
+    assessed: isAssessed({ severity: dev.severity, affectsSafety: dev.affectsSafety }),
+  });
   if (!gate.readyToClose) {
     throw new ProtocolDeviationsError('INVALID_STATE', `Cannot close — ${gate.blockers.join(' ')}`);
   }
@@ -172,7 +241,7 @@ export async function closeDeviationTx(
 
 export async function listDeviations(orgId: number, protocolDocumentId?: number): Promise<any[]> {
   const params: unknown[] = [orgId];
-  let sql = `SELECT id, protocol_document_id, deviation_number, description, category, severity, is_reportable, status, discovered_date, created_at
+  let sql = `SELECT id, protocol_document_id, deviation_number, description, category, severity, affects_safety, is_reportable, assessed_by, assessed_at, status, discovered_date, created_at
                FROM protocol_deviations WHERE organization_id = $1 AND deleted_at IS NULL`;
   if (protocolDocumentId != null) { params.push(protocolDocumentId); sql += ` AND protocol_document_id = $2`; }
   sql += ` ORDER BY created_at DESC, id DESC`;
@@ -193,16 +262,17 @@ export async function getDeviation(orgId: number, devId: number): Promise<any | 
   return { ...d.rows[0], capaActions: capa.rows };
 }
 
-/** Read-only closure assessment (uses the pure evaluateCapaClosure). */
+/**
+ * Read-only closure assessment — the same loaders and gate closeDeviationTx
+ * uses, so the preview and the enforcement cannot disagree (this used to read
+ * status alone and would have said "ready" for a deviation nobody assessed).
+ */
 export async function getCapaClosure(orgId: number, devId: number): Promise<{ readyToClose: boolean; blockers: string[] }> {
-  const dev = await pool.query(
-    `SELECT status FROM protocol_deviations WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-    [devId, orgId],
-  );
-  if (dev.rows.length === 0) throw new ProtocolDeviationsError('NOT_FOUND', 'Deviation not found for this organization.');
-  const capa = await pool.query(
-    `SELECT status FROM protocol_capa_actions WHERE deviation_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-    [devId, orgId],
-  );
-  return evaluateCapaClosure({ deviationStatus: dev.rows[0].status, capaActions: capa.rows.map((r) => ({ status: r.status })) });
+  const dev = await loadDeviation(pool, orgId, devId);
+  const capaActions = await capaStatusesFor(pool, orgId, devId);
+  return evaluateCapaClosure({
+    deviationStatus: dev.status as any,
+    capaActions,
+    assessed: isAssessed({ severity: dev.severity, affectsSafety: dev.affectsSafety }),
+  });
 }

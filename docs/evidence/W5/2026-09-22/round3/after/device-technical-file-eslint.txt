@@ -1,0 +1,12 @@
+
+/home/user/ClinicalSageAI-2-replit/server/routes/submissions.ts
+  610:1  warning  File has too many lines (1429). Maximum allowed is 500  max-lines
+
+/home/user/ClinicalSageAI-2-replit/server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts
+  296:116  warning  Arrow function has too many lines (124). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/services/pathway-engines/mdr-ivdr/tech-doc-assembler.ts
+  313:11  warning  'match' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 3 problems (0 errors, 3 warnings)
+

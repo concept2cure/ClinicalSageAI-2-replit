@@ -1,0 +1,70 @@
+=== server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved → locked after an unreviewed edit is REFUSED, writes nothing, and asks for re-approval 1789ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status: a lock must cover the approval, and records no lock version > approved → locked after an unreviewed edit is REFUSED, writes nothing, and asks for re-approval
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+=== server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+=== server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+=== server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+=== tests/artifact-status-lock-covers-approval.test.ts
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+=== server/routes/__tests__/lockArtifactCoversApproval.test.ts
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+=== skeptic probe P1 (after)
+PROBE-P1 A1 true "Clinical Overview" (section 2.5) status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v1) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, which takes an attestation and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.
+PROBE-P1 L1 false "Clinical Overview" cannot be locked: its status is 'approved' but no approved version is recorded, so its current content (v1) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, which takes an attestation and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved. Lock it after that through the review workflow's Lock action (the status route's approved → locked, or authoring-actions lock-artifact), which records the version locked; this command records none.
+PROBE-P1 R2 true "Clinical Overview" (section 2.5) status changed: approved → review. ⚠ This reverses approval and will require re-review before the document can be approved again.
+PROBE-P1 A2 true "Clinical Overview" (section 2.5) status changed: review → approved. It cannot be filed yet: its status is 'approved' but no approved version is recorded, so its current content (v1) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, which takes an attestation and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved.
+PROBE-P1 L2 false "Clinical Overview" cannot be locked: its status is 'approved' but no approved version is recorded, so its current content (v1) cannot be shown to be the content that was approved. An approved version is recorded only by the review workflow's Approve action (the status route's review → approved, which takes an attestation and applies the review quorum, or authoring-actions approve-artifact); this command records none, so repeating it will not make the artifact filable. To file it, return it to review and approve it through that Approve action, which records the version approved. Lock it after that through the review workflow's Lock action (the status route's approved → locked, or authoring-actions lock-artifact), which records the version locked; this command records none.
+PROBE-P1 row {"status":"approved","version":1,"approved_version_id":null,"published_version_id":null}
+      Tests  1 passed | 4 skipped (5)
+=== server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts (re-run after correcting the lock-refusal assertion to the refusal's wording)
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+=== neighbour sweep (importers/mockers of command-executor, promote-artifact, artifact-approval-act, handler/ana-ri indexes), one file at a time, --no-file-parallelism
+server/__tests__/routes/ana-ri-gdpr-commands.test.ts ::  Test Files 1 passed (1)  Tests 4 passed (4) 
+server/routes/__tests__/lockArtifactCoversApproval.test.ts ::  Test Files 1 passed (1)  Tests 8 passed (8) 
+server/services/__tests__/ana-ri.test.ts ::  Test Files 1 passed (1)  Tests 256 passed (256) 
+server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts ::  Test Files 1 passed (1)  Tests 8 passed (8) 
+server/services/ana-ri/__tests__/ana-governance-fail-closed.test.ts ::  Test Files 1 passed (1)  Tests 18 passed (18) 
+server/services/ana-ri/__tests__/ana-task-esign-gate.pglite.integration.test.ts ::  Test Files 1 passed (1)  Tests 13 passed (13) 
+server/services/ana-ri/__tests__/artifact-approval-follows-status.pglite.test.ts ::  Test Files 1 passed (1)  Tests 12 passed (12) 
+server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts ::  Test Files 1 passed (1)  Tests 10 passed (10) 
+server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts ::  Test Files 1 passed (1)  Tests 9 passed (9) 
+server/services/ana-ri/__tests__/command-rbac.test.ts ::  Test Files 1 passed (1)  Tests 32 passed (32) 
+server/services/ana-ri/__tests__/command-registry-consistency.test.ts ::  Test Files 1 passed (1)  Tests 3 passed (3) 
+server/services/ana-ri/__tests__/mdx-context-resolver.test.ts ::  Test Files 1 passed (1)  Tests 6 passed (6) 
+server/services/ana-ri/__tests__/mdx-knowledge-overrides.test.ts ::  Test Files 1 passed (1)  Tests 8 passed (8) 
+server/services/ana-ri/__tests__/part11-command-gate.test.ts ::  Test Files 1 passed (1)  Tests 5 passed (5) 
+server/services/ana-ri/__tests__/persona-cmc-capabilities.test.ts ::  Test Files 1 passed (1)  Tests 30 passed (30) 
+server/services/ana-ri/__tests__/propose-only-partition.test.ts ::  Test Files 1 passed (1)  Tests 7 passed (7) 
+server/services/ana-ri/__tests__/update-project-dispatch.contract.test.ts ::  Test Files 1 passed (1)  Tests 6 passed (6) 
+tests/artifact-change-invalidates-bundles.contract.test.ts ::  Test Files 1 passed (1)  Tests 7 passed (7) 
+tests/artifact-status-lock-covers-approval.test.ts ::  Test Files 1 passed (1)  Tests 12 passed (12) 
+tests/golden-journeys/ind-authoring.journey.test.ts ::  Test Files 1 passed (1)  Tests 1 passed (1) 
+tests/routes/ai-entry-point-contract.test.ts ::  Test Files 1 passed (1)  Tests 31 passed (31) 
+tests/routes/ana-ri-health.test.ts ::  Test Files 1 passed (1)  Tests 7 passed (7) 
+tests/routes/ana-ri-resilience.test.ts ::  Test Files 1 passed (1)  Tests 1 passed (1) 
+tests/routes/chat-governed-upload.test.ts ::  Test Files 1 passed (1)  Tests 1 passed (1) 
+tests/schema-contract/reachability-debt-cleared.contract.test.ts ::  Test Files 1 passed (1)  Tests 18 passed (18) 
+DONE
+=== eslint (changed files this repair): 0 errors, 27 warnings (existing)
+=== scoped tsc (tsconfig.ag.json over the 6 group source files): 5 errors, all in unchanged files (server/auth.ts, server/routes/c2c/shared.ts, server/services/mfaService.ts, server/utils/jwtVerify.ts: missing jsonwebtoken/qrcode/metrics.js declarations), identical to the skeptic's pre-repair tsc.txt; none in a changed file
+server/auth.ts(12,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/routes/c2c/shared.ts(15,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. '/home/user/ClinicalSageAI-2-replit/server/metrics.js' implicitly has an 'any' type.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/mfaService.ts(16,25): error TS7016: Could not find a declaration file for module 'qrcode'. '/home/user/ClinicalSageAI-2-replit/node_modules/qrcode/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/qrcode` if it exists or add a new declaration (.d.ts) file containing `declare module 'qrcode';`
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`

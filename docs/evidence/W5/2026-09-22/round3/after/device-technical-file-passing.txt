@@ -1,0 +1,386 @@
+# 2026-09-23 final pass — every suite of the touched modules and their importers, one file per run, --no-file-parallelism
+=== server/routes/__tests__/ivd-completeness-denominator.test.ts
+ ✓ server/routes/__tests__/ivd-completeness-denominator.test.ts > IVDR completeness — a family with no evidence counts as zero > one Annex VIII classification is not a complete technical file 30ms
+ ✓ server/routes/__tests__/ivd-completeness-denominator.test.ts > IVDR completeness — a family with no evidence counts as zero > an empty file is 0%, and says seven families are not started 11ms
+ ✓ server/routes/__tests__/ivd-completeness-denominator.test.ts > IVDR completeness — a family with no evidence counts as zero > flags is a count of flagged evidence, not a hardcoded zero 15ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/routes/__tests__/ivdr-program-scoping.test.ts
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR programme scoping > classifications (list converged to /api/mdx/ivdr, D11d) > no longer serves a duplicate list — /api/mdx/ivdr/classifications is the one list API 28ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR programme scoping > analytical validations > scopes through the classification join 9ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR programme scoping > analytical validations > keeps tenancy on the validation row itself, not only the join 4ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR programme scoping > analytical validations > reads the CANONICAL classification columns, aliased to the historical keys 3ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR programme scoping > analytical validations > 422s a malformed program_id 3ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR programme scoping > clinical evidence > scopes through the classification join 3ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR programme scoping > clinical evidence > keeps tenancy on the evidence row itself 3ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR programme scoping > clinical evidence > reads the CANONICAL classification columns, aliased to the historical keys 3ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR programme scoping > clinical evidence > 422s a malformed program_id 5ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > POST /api/ivdr/classify — canonical column vocabulary (D11d) > persists through the canonical shape-2 names, never the deprecated shape-1 ones 12ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR diagnostic result calculations > rejects invalid counts before persistence: {"truePositive":-1,"falsePositive":0,"trueNegative":1,"falseNegative":0} 4ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR diagnostic result calculations > rejects invalid counts before persistence: {"truePositive":1.25,"falsePositive":0,"trueNegative":1,"falseNegative":0} 4ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR diagnostic result calculations > rejects invalid counts before persistence: {"truePositive":"5","falsePositive":0,"trueNegative":1,"falseNegative":0} 5ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR diagnostic result calculations > persists explicit null metrics for an all-zero table 7ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR diagnostic result calculations > fails closed before persistence when actor attribution is absent 4ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR diagnostic result calculations > does not report success or write history for a missing tenant-scoped row 3ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR governed writes — history follows the row, not the URL > does not report success or write parameter history for a missing tenant-scoped validation 10ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR governed writes — history follows the row, not the URL > does not report success or write status history for a missing tenant-scoped CDx workflow 9ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR governed writes — history follows the row, not the URL > fails closed before persistence when actor attribution is absent: /api/ivdr/validations/7/parameters 3ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR governed writes — history follows the row, not the URL > fails closed before persistence when actor attribution is absent: /api/ivdr/cdx-workflows/7/status 3ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR governed writes — history follows the row, not the URL > does not report success when the validation stops matching mid-request 3ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR governed writes — history follows the row, not the URL > binds parameter history to the tenant-scoped update in one statement 3ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR governed writes — history follows the row, not the URL > binds CDx status history to the tenant-scoped update in one statement 3ms
+ ✓ server/routes/__tests__/ivdr-program-scoping.test.ts > IVDR governed writes — history follows the row, not the URL > keeps the verdict on parameters a partial update does not resend 3ms
+ Test Files  1 passed (1)
+      Tests  24 passed (24)
+=== server/services/__tests__/ivdr-pack-read-failures.test.ts
+ ✓ server/services/__tests__/ivdr-pack-read-failures.test.ts > sectionEmptyText separates "none" from "could not read" > says "No records." only when the read succeeded 1ms
+ ✓ server/services/__tests__/ivdr-pack-read-failures.test.ts > sectionEmptyText separates "none" from "could not read" > says the section is INCOMPLETE when the read failed 1ms
+ ✓ server/services/__tests__/ivdr-pack-read-failures.test.ts > sectionEmptyText separates "none" from "could not read" > does not let one section failure change another section wording 0ms
+ ✓ server/services/__tests__/ivdr-pack-read-failures.test.ts > sectionEmptyText separates "none" from "could not read" > tolerates a manifest built before readFailures existed 0ms
+ ✓ server/services/__tests__/ivdr-pack-read-failures.test.ts > the rendered IVDR pack itself > prints "No records." when the sections were genuinely empty 1ms
+ ✓ server/services/__tests__/ivdr-pack-read-failures.test.ts > the rendered IVDR pack itself > never prints "No records." for a section whose query failed 0ms
+ ✓ server/services/__tests__/ivdr-pack-read-failures.test.ts > the rendered IVDR pack itself > mixes the two correctly when only one section failed 0ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+=== server/services/ana-advisory/__tests__/device-market-advisor.test.ts
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseDeviceReadiness > returns submittable advice when sections are complete and the official template is present 4ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseDeviceReadiness > returns not-submittable advice and surfaces blockers when the official template is missing 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseDeviceReadiness > surfaces missing required sections as blockers and critical actions 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseDeviceReadiness > returns artifactKind "none" with honest headline when no content is supplied 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseDeviceReadiness > includes a target-market overlay finding when a market is supplied 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > ranks markets best-ready first based on readiness score 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > reports transmission capability honestly — true for markets with live gateways 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > reports which markets the platform can assemble and which need a local rep 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > assesses every registry market when no candidates are supplied 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > reports unrecognised candidate market ids without throwing 1ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseGlobalMarketStrategy > always recommends self-submission (critical) 0ms
+ ✓ server/services/ana-advisory/__tests__/device-market-advisor.test.ts > ANA_ADVISORY_TOOL_SPECS > exports a well-formed spec for each advisory function 1ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+=== server/services/ana-advisory/__tests__/eu-techdoc-advisor.test.ts
+ ✓ server/services/ana-advisory/__tests__/eu-techdoc-advisor.test.ts > adviseEuTechnicalFileReadiness > advises NB-ready for a complete MDR file 4ms
+ ✓ server/services/ana-advisory/__tests__/eu-techdoc-advisor.test.ts > adviseEuTechnicalFileReadiness > advises not NB-ready with missing Annex sections for IVDR 1ms
+ ✓ server/services/ana-advisory/__tests__/eu-techdoc-advisor.test.ts > adviseEuTechnicalFileReadiness > each missing section carries its Annex reference 0ms
+ ✓ server/services/ana-advisory/__tests__/eu-techdoc-advisor.test.ts > adviseEuTechnicalFileReadiness > exposes a well-formed tool spec 1ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+=== server/services/ana/__tests__/submission-center-tools.test.ts
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > registers a handler for every submission-center tool 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > exposes every submission-center tool in ALL_ANA_TOOLS with a valid schema 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > diffs prior vs desired and assigns operations 11ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > forwards prior href + prior_sequence_prefix so a replace emits modified-file 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > refuses to auto-load a prior sequence without tenant context (org from ToolContext only) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > does NOT engage auto-load when explicit prior_leaves are supplied (org not required) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > maps v3 operations to RPS and emits one document + CoU per leaf 368ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > points relatedContextOfUse at the prior sequence for a lifecycle op 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > returns serialized RPS message XML when include_xml is set 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf.xml per study 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > check_ectd_cross_references (pure) > resolves present references and flags missing targets 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > validate_ectd_package (pure) > returns a verdict, score, and findings for a leaf set 64ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission validates required inputs 4ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > explain_validation_findings refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > cross_region_gap_analysis validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > dispatch_qc_check refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > trace_provenance refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence validates required inputs before touching the core 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > check_consistency validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules returns the corpus without tenant context 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules validates the region enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec returns a single spec by id 21ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec filters by market without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec validates the family enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template returns a document spine by id 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template lists a family without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting enforces a spec and flags a bad name 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting errors on an unknown spec 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_submission_requirements returns and assesses a type 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility checks all-criteria-met 10ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility errors on an unknown designation 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change recommends a category from flags 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change lists the catalog without flags 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure gap-checks a CER 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device applies the MDR rules 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_reviewer_checklist returns the 510(k) reviewer questions 19ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device validates the framework 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_biocompatibility_endpoints returns endpoints for a permanent implant 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure now handles rmf 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint assembles the reverse-workflow view 39ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint validates the submission type 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer refuses without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer requires a report_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy maps device evidence across regions 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy validates the kind 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_regulatory_timeline returns the 510(k) RTA + decision goal 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint now includes a readiness scorecard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_udi computes the GS1 check digit 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_electrical_standards adds collaterals from facts 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_sterilization_requirements resolves the method standard 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_regulatory_capabilities enumerates the layer 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product maps PMOA to the lead center 6ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product validates components 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_qms returns the clause structure and gap-checks 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_labeling adds sterile elements for a sterile device 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document requires a numeric document_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document validates required inputs 0ms
+ Test Files  1 passed (1)
+      Tests  66 passed (66)
+=== server/services/device-ivd-cockpit/__tests__/cockpit.test.ts
+ ✓ server/services/device-ivd-cockpit/__tests__/cockpit.test.ts > assessDeviceProgram (device cockpit) > assesses the default device pathway set and recommends the most-ready 6ms
+ ✓ server/services/device-ivd-cockpit/__tests__/cockpit.test.ts > assessDeviceProgram (device cockpit) > uses the IVDR pathway for IVDs (not MDR) 2ms
+ ✓ server/services/device-ivd-cockpit/__tests__/cockpit.test.ts > assessDeviceProgram (device cockpit) > computes per-pathway completeness and missing sections honestly 1ms
+ ✓ server/services/device-ivd-cockpit/__tests__/cockpit.test.ts > assessDeviceProgram (device cockpit) > honours an explicit pathway subset 2ms
+ ✓ server/services/device-ivd-cockpit/__tests__/cockpit.test.ts > assessDeviceProgram (device cockpit) > overlays target-market readiness and surfaces market blockers 2ms
+ ✓ server/services/device-ivd-cockpit/__tests__/cockpit.test.ts > assessDeviceProgram (device cockpit) > has no recommendation and no market when nothing is provided 1ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+=== server/services/ectd/__tests__/core-leaf-projection.test.ts
+ ✓ server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > carries the uuid half of the document reference 2ms
+ ✓ server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > carries every CoreLeaf field and nothing else from the row 1ms
+ ✓ server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > is the projection both submission_leaves packagers use — neither builds a CoreLeaf by hand 1ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/services/global-markets/__tests__/market-readiness.test.ts
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > bandForScore > maps scores to bands at the boundaries 2ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — full / partial / empty > full artifact set scores 100, band ready, complete=true 1ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — full / partial / empty > partial artifact set scores between 0 and 100 with present+missing split 1ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — full / partial / empty > empty artifact set scores 0, band not-started, everything missing 0ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — full / partial / empty > defaults availableArtifacts to empty when omitted 0ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — full / partial / empty > ignores artifacts that are not part of the required set 1ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — honest blockers > includes a cannot-transmit blocker only for markets without a live gateway 1ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — honest blockers > adds a cannot-assemble blocker only for non-assembler markets 0ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — honest blockers > adds a local-representative blocker where required 0ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — honest blockers > lists each missing element as a blocker 1ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — honest blockers > a complete set still carries the honest transmit blocker (never zero blockers) 0ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — unknown market handling > throws on an unknown market id 1ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — unknown market handling > tryAssessMarketReadiness returns null for unknown market 0ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — unknown market handling > tryAssessMarketReadiness returns a result for a known market 0ms
+ ✓ server/services/global-markets/__tests__/market-readiness.test.ts > assessMarketReadiness — result shape > returns authority short code and the assessed marketId 0ms
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+=== server/services/mdx-submission-planner/__tests__/planner.test.ts
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — single market > produces one market plan for a single target market 5ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — single market > echoes the profile it was built for 1ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — single market > carries provenance with the composed modules 1ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — multi-market > produces a plan per requested market 1ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — multi-market > sorts market plans by canonical registry order (deterministic) 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — multi-market > deduplicates repeated target market ids 1ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — multi-market > is deterministic across repeated calls (ignoring the timestamp) 1ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — IVD vs non-IVD pathway selection > selects the device pathway set when profile.isIvd is false 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — IVD vs non-IVD pathway selection > selects the IVD pathway set when profile.isIvd is true 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — IVD vs non-IVD pathway selection > IVD and device pathways differ where the registry distinguishes them 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — IVD vs non-IVD pathway selection > returns a copy of the pathway array (not the registry reference) 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — readiness reflects availableArtifacts > reports not-started readiness when no artifacts are supplied 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — readiness reflects availableArtifacts > reports present elements and a higher score when artifacts are supplied 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — readiness reflects availableArtifacts > reports complete readiness when every required element is present 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — readiness reflects availableArtifacts > prioritizes next actions for missing elements in registry order 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — readiness reflects availableArtifacts > emits no next actions when readiness is complete 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — honest capability flags & blockers > reports canTransmit matching the registry and cannot-transmit blocker only for gateway-less markets 1ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — honest capability flags & blockers > reports canAssemble straight from the registry 1ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — honest capability flags & blockers > surfaces a cannot-assemble blocker for assemble-incapable markets 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — honest capability flags & blockers > de-duplicates per-market blockers 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — unknown markets handled gracefully > reports an unknown market without throwing 1ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — unknown markets handled gracefully > plans known markets and reports unknown ones alongside 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — unknown markets handled gracefully > handles an empty target list 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — aggregate rollup > counts ready / partial / not-started correctly 1ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — aggregate rollup > partitions markets into assemble-capable vs incapable correctly 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — aggregate rollup > reports transmit-capable markets matching the registry (12 with gateways) 0ms
+ ✓ server/services/mdx-submission-planner/__tests__/planner.test.ts > planGlobalSubmission — aggregate rollup > rolls up a de-duplicated set of all per-market blockers 0ms
+ Test Files  1 passed (1)
+      Tests  27 passed (27)
+=== server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > packages the authored MDR sections into a real ZIP and returns the bytes 178ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > refuses honestly when the program has no authored content in the caller organization 3ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > filters by the requested regulation — an mdr-only program has no ivdr technical file 2ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/services/pathway-engines/__tests__/assemble-technical-file-multisource.test.ts
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-multisource.test.ts > assembleTechnicalFileFromCore multi-source resolution > materializes coauthor + unified leaves and surfaces the ctd_onboarding leaf as unresolved 124ms
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+=== server/services/pathway-engines/__tests__/dispatcher.test.ts
+ ✓ server/services/pathway-engines/__tests__/dispatcher.test.ts > mapToEstar > 510(k) requires a substantial-equivalence comparison 3ms
+ ✓ server/services/pathway-engines/__tests__/dispatcher.test.ts > mapToEstar > De Novo requires a classification request + special controls (not predicate SE) 1ms
+ ✓ server/services/pathway-engines/__tests__/dispatcher.test.ts > assessPathwayReadiness — dispatcher > routes ctis and aggregates Part I + Part II gaps with prefixes 1ms
+ ✓ server/services/pathway-engines/__tests__/dispatcher.test.ts > assessPathwayReadiness — dispatcher > routes mdr and ivdr to the tech-doc assembler 1ms
+ ✓ server/services/pathway-engines/__tests__/dispatcher.test.ts > assessPathwayReadiness — dispatcher > routes estar variants to the eSTAR mapper 0ms
+ ✓ server/services/pathway-engines/__tests__/dispatcher.test.ts > assessPathwayReadiness — dispatcher > routes pma to the PMA mapper and threads the submission type 1ms
+ ✓ server/services/pathway-engines/__tests__/dispatcher.test.ts > assessPathwayReadiness — dispatcher > routes prestar q_sub / ide / 513g to the PreSTAR mapper 1ms
+ ✓ server/services/pathway-engines/__tests__/dispatcher.test.ts > assessPathwayReadiness — dispatcher > exposes the full set of pathways 1ms
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+=== server/services/pathway-engines/__tests__/pathway-manifest.test.ts
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — flat pathways > builds an ordered, deterministic manifest for estar_510k 4ms
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — flat pathways > builds an ordered, deterministic manifest for estar_de_novo 1ms
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — flat pathways > builds an ordered, deterministic manifest for mdr 1ms
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — flat pathways > builds an ordered, deterministic manifest for ivdr 1ms
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — flat pathways > builds an ordered, deterministic manifest for pmda_shonin 1ms
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — flat pathways > builds an ordered, deterministic manifest for pma 1ms
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — flat pathways > builds an ordered, deterministic manifest for prestar_q_sub 1ms
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — flat pathways > builds an ordered, deterministic manifest for prestar_ide 1ms
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — flat pathways > builds an ordered, deterministic manifest for prestar_513g 1ms
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — flat pathways > marks a slot present (with sources) once a matching leaf exists 0ms
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — CTIS (structured Part I/II) > flattens Part I and per-state Part II into grouped entries 3ms
+ ✓ server/services/pathway-engines/__tests__/pathway-manifest.test.ts > buildPathwayManifest — guards > throws on an unrecognized result shape 1ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+=== server/services/pathway-engines/__tests__/tech-doc-assembler-pack-keys.test.ts
+ ✓ server/services/pathway-engines/__tests__/tech-doc-assembler-pack-keys.test.ts > assembleTechDoc — 20260810b rule-pack section keys > maps the MDR Annex II/III pack keys onto the technical-file slots 9ms
+ ✓ server/services/pathway-engines/__tests__/tech-doc-assembler-pack-keys.test.ts > assembleTechDoc — 20260810b rule-pack section keys > maps the IVDR Annex II/III pack keys onto the analytical / clinical / PER slots 1ms
+ ✓ server/services/pathway-engines/__tests__/tech-doc-assembler-pack-keys.test.ts > assembleTechDoc — 20260810b rule-pack section keys > does not treat a key prefix as a dotted-path ancestor (II.1 must not claim II.10-style codes) 0ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/services/pathway-engines/__tests__/technical-file-manifest.test.ts
+ ✓ server/services/pathway-engines/__tests__/technical-file-manifest.test.ts > buildTechnicalFileManifest > produces one ordered, deterministic entry per tech-doc section 3ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-manifest.test.ts > buildTechnicalFileManifest > marks an empty file as not ready with required sections missing 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-manifest.test.ts > buildTechnicalFileManifest > marks a section present (with its sources) once a matching leaf exists 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-manifest.test.ts > buildTechnicalFileManifest > threads product + manufacturer metadata through 0ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+=== server/services/pathway-engines/__tests__/technical-file-packager.test.ts
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan > places a matched leaf at its Annex section path and reports nothing skipped for it 6ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan > reports a source as skipped when the file cannot be resolved 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan > de-collides duplicate file names within the package 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > materializeTechnicalFile > writes a real ZIP with the manifest, the placed file, and a checksum index 41ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — unmapped leaves are reported, never dropped > reports a resolvable leaf that no manifest entry lists as a source under sectionId "unmapped" 1ms
+ ✓ server/services/pathway-engines/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — unmapped leaves are reported, never dropped > does not double-report a leaf that a section lists but whose file cannot be resolved 1ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+=== server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — unmapped leaves are reported, not folded into ready > a complete MDR program that also holds the mandatory IV.* sections is ready, and names them 146ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — the ZIP manifest agrees with the response and the audit row > a ZIP without the CER says ready: false and does not list the CER as present 64ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > a slot holding two documents with one section code places both, once each, and names neither unmapped 65ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program with the mandatory II.6.3.a places it in the stability slot and is ready, in the result, the ZIP and the audit row 66ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — every claimed leaf reaches the ZIP, and Annex II/III leaves count > an IVDR program without the mandatory II.6.3 stability group is not ready, and says the stability slot is missing 54ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 3 (bench first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER 68ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-ready.pglite.test.ts > technical-file ready — a slot holds the document it matched, not the first one with the same code > sequence 4 (CER first): the Annex XIV clinical-evaluation folder holds the CER (651) and only the CER 58ms
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+=== server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it 152ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP 71ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+=== server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > marks every required MDR Annex II/III section present for a complete file 3ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > reports missing GSPR and CER as gaps, never invents them 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > requires analytical + clinical performance and the PER (not a CER) 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > is ready when IVDR performance evidence is supplied 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — each slot names the leaves it matched > two leaves with one section code: the CER slot holds the CER, not the first leaf with that code 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — each slot names the leaves it matched > an unmatched slot names no leaf 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > stability is a required slot after the PER; software/cybersecurity and usability are optional 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > an IVDR file without II.6.3 stability is not ready; with it, it is 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > claims II.6.3 / II.6.4 / II.6.5 keys (and the stability document type) and nothing next to them 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > the MDR registry is unchanged: stability evidence stays under Annex II 6 verification and validation 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > MDR: a II.6.1.a report titled "Preclinical evaluation ..." is verification and validation, not the CER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > IVDR: a II.6.1.a "Analytical performance evaluation report" is analytical performance, not the PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > IVDR: the II.6.2.a scientific-validity section does not stand in for the II.6.2.c PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > a group IV leaf is claimed by no slot through its title (IVDR IV.4 SSP names "clinical performance") 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > a document type still places a keyed leaf (the CER at II.6.1.b), and the key still places it too 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a title matcher matches the phrase as words, not inside another word > "preclinical", "pre-clinical" and "non-clinical" evaluation are not a clinical evaluation 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a title matcher matches the phrase as words, not inside another word > an analytical or clinical performance evaluation is not the performance evaluation report 3ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > underscore- and hyphen-joined file-name titles fill the IFU, GSPR and risk slots (the HEAD result) 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > the electronic IFU: "eIFU" (case transition) and "eifu" / "EIFU" / "e-IFU" (the eIFU token) fill the IFU slot 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > a token is whole: "ifu" / "gspr" inside a longer word does not match 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > file-name titles of the CER and the PER fill their slots 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > pre-/non-clinical evaluation, in any spelling, is not the CER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > a plan is not the report: the CEP is not the CER and a performance evaluation plan is not the PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the outline key is read trimmed and case-insensitively > " II.6.1.a" and "ii.6.1.a" are the outline key: placed by key, never by title 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the outline key is read trimmed and case-insensitively > a group IV leaf is claimed by no slot, by title or by document type (IV.4 SSCP with documentType "cer") 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a CTD-coded "Clinical_Evaluation_Report_v2" with no document type is a title-only CER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a leaf matched by its outline key, its document type or its code prefix is not title-only 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a slot with a keyed and a title-only leaf names only the title-only one 0ms
+ Test Files  1 passed (1)
+      Tests  28 passed (28)
+=== server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > plans, writes a real ZIP, and the ZIP round-trips with manifest + files + checksums 29ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > is content-addressed: identical input yields the same sha256 18ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > pins every entry (files AND implicit folders) to a fixed epoch — no wall-clock timestamps 12ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > materializeTechnicalFile (end-to-end ZIP emission) > reports skipped sources for leaves with no resolvable file 8ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > an entry whose every source was skipped is not present, and the plan is not ready 15ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf no slot claims is reported as unmapped and does not make a complete file not ready 7ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — the manifest in the ZIP says what the ZIP holds > a leaf whose source did not materialize makes the plan not ready, even when every slot is filled 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > two leaves with one section code in one slot are both placed, once each, and neither is unmapped 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > when the second of two same-code leaves does not resolve, the slot lost a source and the plan is not ready 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > an authored Annex II/III leaf no slot claims makes the plan not ready; an IV.* leaf does not 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — every leaf a slot claims reaches the ZIP once > only the Annex II and III key trees count: III is not II, and IV / IIa are neither 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > bench report and CER both at II.6.1.b, in either order: the CER slot holds the CER 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > IFU and CER share a non-Annex code (1.11): each lands in its own slot and the CER is not unmapped 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > a manifest entry whose sources are not the leaves its slot matches places nothing by string, and the plan is not ready 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > two same-named files in one slot are de-collided (the leaves are distinct, so both are placed) 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > no CER, and a II.6.1.a report titled "Preclinical evaluation ...": clinical-evaluation is missing and the plan is not ready 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > a real CER at II.6.1.g and a II.6.1.b "Pre-clinical evaluation ..." bench report: Annex XIV holds only the CER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > IVDR with no II.6.2.c PER and a II.6.1.a "Analytical performance evaluation report": the PER is missing, not filled 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a slot places the leaves it matched, not the first leaf with the same code > an IVDR program with II.6.3 / II.6.4 / II.6.5 places them in their slots and nothing is unmapped 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > "IFU_EN_rev3" + "GSPR_Checklist_v2", and "eIFU" + "GSPR-Checklist": the IFU and GSPR are filed and the plan is ready 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > the Annex II/III test reads the key trimmed and case-insensitively: " ii.9" counts, "iii.9" is the PMS plan, " IV.1" does not count 6ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts > buildTechnicalFilePlan — a Vault-built sequence (CTD codes, file-name titles) > a CER placed by its title alone is reported as matchedByTitleOnly in the manifest; ready is unchanged 4ms
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+=== server/services/regulatory/__tests__/batch-portfolio.test.ts
+ ✓ server/services/regulatory/__tests__/batch-portfolio.test.ts > runPortfolioPlans > handles an empty batch 2ms
+ ✓ server/services/regulatory/__tests__/batch-portfolio.test.ts > runPortfolioPlans > builds plans and aggregates a portfolio view 31ms
+ ✓ server/services/regulatory/__tests__/batch-portfolio.test.ts > runPortfolioPlans > per-program lines carry class, verdict, timeline, cost, and a next action 10ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/services/regulatory/__tests__/global-pathways.test.ts
+ ✓ server/services/regulatory/__tests__/global-pathways.test.ts > global pathways > lists all supported jurisdictions 1ms
+ ✓ server/services/regulatory/__tests__/global-pathways.test.ts > global pathways > Health Canada ready when MDSAP + core docs present 1ms
+ ✓ server/services/regulatory/__tests__/global-pathways.test.ts > global pathways > NMPA flags missing type testing 1ms
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+=== server/services/regulatory/__tests__/submission-readiness.test.ts
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > uses the pathway domain set and averages scores 8ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > verdict is ready only when every required domain is complete 1ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > nearly-ready when overall ≥ 0.8 but a gap remains 0ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > prioritizes gaps lowest-score first 0ms
+ ✓ server/services/regulatory/__tests__/submission-readiness.test.ts > assessSubmissionReadiness > rejects an unknown pathway or out-of-range score 1ms
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+=== tests/routes/ivdr-submission-package-scope.test.ts
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR submission package project scoping > packages only the requested project's rows — project B's never appear 35ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR submission package project scoping > scopes every gather by org AND programme in the SQL itself 6ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR submission package project scoping > excludes unassigned legacy rows and counts them visibly 4ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR submission package project scoping > does not fabricate a zero when exclusion counts are unavailable 6ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR submission package ownership + input validation > 404s a programme owned by another org before gathering anything 6ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR submission package ownership + input validation > 404s a programme that does not exist 4ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR submission package ownership + input validation > 422s a non-UUID projectId before touching the database 4ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR submission package job durability > declares ephemeral job tracking on the package response 3ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR submission package job durability > status endpoint reports the completed job and its durability 10ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR submission package job durability > a restart forgets jobs — the 404 says so instead of hiding it 7ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR EUDAMED export project scoping > exports only the requested project's records — project B's never appear 5ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR EUDAMED export project scoping > scopes every gather by org AND programme in the SQL itself 4ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR EUDAMED export project scoping > 422s a non-UUID projectId before touching the database 3ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR EUDAMED export project scoping > 404s a programme owned by another org before gathering anything 3ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR EUDAMED export project scoping > does not report a failed classification read as "Not classified" 4ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR EUDAMED export project scoping > reports the assessment's own requirement count, and null when there is none 15ms
+ ✓ tests/routes/ivdr-submission-package-scope.test.ts > IVDR submission package read failures > fails the job rather than reporting an unreadable section as empty 5ms
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+=== tests/routes/technical-file-export-governance.test.ts
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (a) anchored program: hands the ZIP bytes to the governed export consequence 7ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (b) unanchored program: audited-unplaced delivery with the sha256, bytes still returned 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (c) no authored content: 422 NO_AUTHORED_CONTENT, no consequence, no export audit 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (d) program from another organization: 404 and the assembler is never invoked 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (e) size cap: the consequence refusing the bytes is an honest 413, never a 200 with empty data 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /sequences/:seqId/technical-file/assemble > (f) reads the bundle bytes before cleanup and delivers them through the export path 40ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+=== tests/golden-journeys/cer-eu-mdr.journey.test.ts
+ ✓ tests/golden-journeys/cer-eu-mdr.journey.test.ts > golden journey — CER (EU MDR) clinical evaluation > runs the CER journey 780ms
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+=== tests/golden-journeys/drug-nda-ectd.journey.test.ts
+ ✓ tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey 2526ms
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+
+=== probes (verify-r3c p2/p3/p4/p5 re-run on the final tree): see device-technical-file-probes.txt

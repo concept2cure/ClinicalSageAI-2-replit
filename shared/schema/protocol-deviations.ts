@@ -7,11 +7,13 @@
  * only be closed once every linked CAPA action is completed/verified — the
  * deterministic gate enforced by the service.
  *
- * Soft-links to protocol_documents(id) via protocol_document_id. Reportability
- * timeliness follows 45 CFR 46.108(a)(4) (prompt reporting of unanticipated
- * problems / serious or continuing noncompliance) and ICH E6(R2) §4.5.3/§5.20
- * (prompt deviation reporting). Status/category/severity columns are CHECK-
- * constrained; mutations are governed + audited.
+ * Soft-links to protocol_documents(id) via protocol_document_id. Severity,
+ * category, safety impact and reportability are NULL until a person assesses
+ * the deviation — an unassessed deviation is never "minor" by default
+ * (migrations/20260922f). Reportability logic and its bases live in
+ * server/services/protocol-deviations/protocol-deviations-logic.ts.
+ * Status/category/severity columns are CHECK-constrained; mutations are
+ * governed + audited.
  *
  * @module shared/schema/protocol-deviations
  */
@@ -35,9 +37,17 @@ export const protocolDeviations = pgTable(
     protocolDocumentId: integer('protocol_document_id').notNull().references(() => protocolDocuments.id),
     deviationNumber: text('deviation_number'),
     description: text('description').notNull(),
-    category: text('category').$type<DeviationCategory>().notNull().default('other'),
-    severity: text('severity').$type<DeviationSeverity>().notNull().default('minor'),
-    isReportable: boolean('is_reportable').notNull().default(false),
+    /** NULL = not recorded. */
+    category: text('category').$type<DeviationCategory>(),
+    /** NULL = not assessed. Never default it to 'minor'. */
+    severity: text('severity').$type<DeviationSeverity>(),
+    /** Prompt IRB report indicated. NULL = not determined (assessment required). */
+    isReportable: boolean('is_reportable'),
+    /** Assessed effect on subject safety, rights or welfare. NULL = not assessed. */
+    affectsSafety: boolean('affects_safety'),
+    assessedBy: integer('assessed_by'),
+    assessedAt: timestamp('assessed_at', { withTimezone: true }),
+    assessmentRationale: text('assessment_rationale'),
     rootCause: text('root_cause'),
     discoveredDate: date('discovered_date'),
     status: text('status').$type<DeviationStatus>().notNull().default('open'),
