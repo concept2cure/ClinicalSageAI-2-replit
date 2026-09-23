@@ -7,9 +7,6 @@
  */
 
 import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { users, organizations, organizationUsers, notificationPreferences } from '../../shared/schema';
@@ -18,41 +15,8 @@ import {
   isReportPersona,
 } from '../../shared/constants/domain/report-personas';
 
-import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { isDevAuthAllowed } from '../auth/dev-auth-policy.js';
-import { createScopedLogger } from '../utils/logger.js';
-
-const log = createScopedLogger('users-routes');
-
-/** Login: 10 attempts per 15 minutes per IP */
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' },
-  },
-  validate: { xForwardedForHeader: false },
-});
-
-/** Register: 5 attempts per 15 minutes per IP */
-const registerLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: {
-      code: 'RATE_LIMIT',
-      message: 'Too many registration attempts. Please try again later.',
-    },
-  },
-  validate: { xForwardedForHeader: false },
-});
 
 const router = Router();
 
@@ -764,190 +728,26 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 /**
- * POST /api/login
- * Legacy login endpoint for compatibility with useAuth hook
+ * POST /login, /logout, /register — answered by the canonical routes.
+ *
+ * These were parallel implementations of sign-in, sign-out and sign-up, mounted
+ * at /api/users and /api/user ahead of the /api gate. /login checked the
+ * password alone and issued a 24-hour access token: no second factor, no
+ * lockout, no audit record, for users who had enrolled an authenticator. It
+ * was a way around MFA for every account. /logout reported success and revoked
+ * nothing. /register created an account with no organisation outside signup
+ * and its admission control, and gave it a token.
+ *
+ * Nothing in the client called them (the sign-in page uses /api/v1/auth). They
+ * now answer the way the platform's own /api/login, /api/logout and
+ * /api/register already do (register-platform-routes.ts): a 307 to the
+ * canonical route in server/routes/auth.ts, which keeps the method and body.
+ * Reachability of the replacements is pinned by
+ * tests/db/sign-in-audit-trail.dbtest.ts (the login and register paths) and by
+ * OQ-PROJ-02 / OQ-PROJ-16.
  */
-router.post('/login', loginLimiter, async (req: Request, res: Response) => {
-  const { username, password, email } = req.body;
-  const loginEmail = email || username;
-
-  if (!loginEmail || !password) {
-    return res.status(400).json({ message: 'Email/username and password required' });
-  }
-
-  try {
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, loginEmail.toLowerCase()))
-      .limit(1);
-
-    if (!user.length) {
-      // Use constant-time comparison to prevent timing attacks
-      await bcrypt.hash(password, 12);
-      return res.status(401).json({
-        error: { code: 'AUTH_001', message: 'Invalid email or password' },
-      });
-    }
-
-    const userData = user[0];
-
-    // Verify password
-    if (!userData.passwordHash) {
-      return res.status(401).json({
-        error: { code: 'AUTH_001', message: 'Invalid email or password' },
-      });
-    }
-
-    const passwordValid = await bcrypt.compare(password, userData.passwordHash);
-    if (!passwordValid) {
-      return res.status(401).json({
-        error: { code: 'AUTH_001', message: 'Invalid email or password' },
-      });
-    }
-
-    // Generate JWT
-    const token = jwt.sign(
-      {
-        userId: String(userData.id),
-        email: userData.email,
-        organizationId: userData.defaultOrganizationId ? String(userData.defaultOrganizationId) : '2',
-        type: 'access',
-      },
-      config.jwt.secret,
-      { expiresIn: '24h' }
-    );
-
-    // Update last login
-    db.update(users)
-      .set({ lastLogin: new Date() })
-      .where(eq(users.id, userData.id))
-      .catch((err: unknown) => {
-        // Non-blocking: login still succeeds, but surface the failure.
-        log.error('Failed to update lastLogin after successful login', {
-          userId: String(userData.id),
-          err: err instanceof Error ? err.message : String(err),
-        });
-      });
-
-    res.json({
-      id: userData.id,
-      username: userData.email?.split('@')[0] || 'user',
-      email: userData.email,
-      role: 'user',
-      token,
-    });
-  } catch (error: any) {
-    console.error('[users] Login error:', error);
-    res.status(500).json({
-      error: { code: 'INTERNAL_ERROR', message: 'Login failed' },
-    });
-  }
-});
-
-/**
- * POST /api/logout
- * Legacy logout endpoint
- */
-router.post('/logout', (req: Request, res: Response) => {
-  res.json({ success: true, message: 'Logged out successfully' });
-});
-
-/**
- * POST /api/register
- * User registration endpoint
- */
-router.post('/register', registerLimiter, async (req: Request, res: Response) => {
-  const { username, password, email, firstName, lastName } = req.body;
-  // An account is attributed by its email for the rest of its life. Inventing
-  // `${username}@trialsage.ai` when none was given created identities nobody
-  // owns; a registration without an email is refused instead (ledger L153).
-  const registrationEmail = typeof email === 'string' && email.trim() ? email.trim() : null;
-
-  if (!registrationEmail || !password) {
-    return res.status(400).json({
-      error: { code: 'VALIDATION_ERROR', message: 'Email and password are required' },
-    });
-  }
-
-  // Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(registrationEmail)) {
-    return res.status(400).json({
-      error: { code: 'VALIDATION_ERROR', message: 'Invalid email format' },
-    });
-  }
-
-  // Validate password strength
-  if (password.length < 8) {
-    return res.status(400).json({
-      error: { code: 'VALIDATION_ERROR', message: 'Password must be at least 8 characters' },
-    });
-  }
-
-  try {
-    // Check for existing user with this email
-    const existing = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, registrationEmail.toLowerCase()))
-      .limit(1);
-
-    if (existing.length > 0) {
-      return res.status(409).json({
-        error: { code: 'EMAIL_EXISTS', message: 'An account with this email already exists' },
-      });
-    }
-
-    // Hash the password
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    // Build display name
-    const displayName =
-      [firstName, lastName].filter(Boolean).join(' ') ||
-      username ||
-      registrationEmail.split('@')[0];
-
-    // Insert new user
-    const [newUser] = await db
-      .insert(users)
-      .values({
-        email: registrationEmail.toLowerCase(),
-        name: displayName,
-        passwordHash,
-        status: 'active',
-        passwordChangedAt: new Date(),
-      })
-      .returning();
-
-    // Generate JWT for immediate login
-    const token = jwt.sign(
-      { userId: String(newUser.id), email: newUser.email, type: 'access' },
-      config.jwt.secret,
-      { expiresIn: '24h' }
-    );
-
-    res.status(201).json({
-      id: newUser.id,
-      username: newUser.email.split('@')[0],
-      email: newUser.email,
-      displayName: newUser.name,
-      role: 'user',
-      token,
-    });
-  } catch (error: any) {
-    // Handle unique constraint violation at DB level (race condition)
-    if (error.code === '23505' && error.constraint?.includes('email')) {
-      return res.status(409).json({
-        error: { code: 'EMAIL_EXISTS', message: 'An account with this email already exists' },
-      });
-    }
-
-    console.error('[users] Registration error:', error);
-    res.status(500).json({
-      error: { code: 'INTERNAL_ERROR', message: 'Registration failed' },
-    });
-  }
-});
+router.post('/login', (_req: Request, res: Response) => res.redirect(307, '/api/auth/login'));
+router.post('/logout', (_req: Request, res: Response) => res.redirect(307, '/api/auth/logout'));
+router.post('/register', (_req: Request, res: Response) => res.redirect(307, '/api/auth/signup'));
 
 export default router;

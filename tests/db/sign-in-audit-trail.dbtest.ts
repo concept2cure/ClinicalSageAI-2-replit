@@ -24,6 +24,21 @@
  * login attempt. The first OQ execution with production authentication found
  * it (VSR-001 §13, F-19): 6 of 6 challenge rows refused, 0 rows.
  *
+ * The enterprise router (/api/auth/enterprise) is a second, complete sign-in:
+ * verify-password then verify-mfa issue a 24-hour session. It recorded no
+ * event at all, in any posture. Its logout answered "Logged out successfully"
+ * and revoked nothing. Its organisation-switch audit named the destination
+ * organisation from the pre-auth scope and was refused like the rest. The
+ * second describe block drives it the same way.
+ *
+ * The users router (/api/users, /api/user) carried a third sign-in: POST /login
+ * checked the password alone and issued a 24-hour access token, with no second
+ * factor, no lockout and no record, to users who had enrolled an authenticator.
+ * Its /logout revoked nothing and its /register created an account outside
+ * signup. They now answer as the platform's /api/login, /api/logout and
+ * /api/register already did: a 307 to the canonical route. The third describe
+ * block drives them.
+ *
  * Writing each row in the scope of the tenant it names is the fix, and it makes
  * the source of that name a security boundary. /logout read it from a token it
  * only decoded, so a forged token could have written into any organisation's
@@ -307,16 +322,130 @@ describe('a sign-in reaches the audit trail under RLS', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ record_id: String(userId), new_values: { outcome: 'success' } });
   });
+});
 
-  it('keeps the organisation chain verifiable end to end', async () => {
-    // chain_seq orders the whole table, not one tenant: the anonymous logout
-    // above is interleaved. The organisation's chain is its hash links, so the
-    // product's own verifier walks them.
+describe('the enterprise sign-in reaches the same audit trail', () => {
+  let partialToken: string;
+  let token: string;
+
+  it('records a wrong password', async () => {
+    const before = (await auditRows('user_login')).length;
+    const res = await request(app).post('/api/auth/enterprise/verify-password').send({ email: EMAIL, password: 'not-the-password' });
+    expect(res.status).toBe(401);
+
+    const rows = (await auditRows('user_login')).slice(before);
+    expect(rows, 'a wrong password on the enterprise path left no record').toHaveLength(1);
+    expect(rows[0]).toMatchObject({ record_id: String(userId), new_values: { outcome: 'failure', reason: 'wrong_password' } });
+  });
+
+  it('records the challenge a correct password receives', async () => {
+    const before = (await auditRows('user_login_mfa_challenge')).length;
+    const res = await request(app).post('/api/auth/enterprise/verify-password').send({ email: EMAIL, password: PASSWORD });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    partialToken = res.body.partialToken;
+
+    const rows = (await auditRows('user_login_mfa_challenge')).slice(before);
+    expect(rows, 'the enterprise challenge left no record').toHaveLength(1);
+    expect(rows[0]).toMatchObject({ new_values: { outcome: 'success', reason: 'mfa_challenge_totp' } });
+  });
+
+  it('records a wrong code', async () => {
+    const before = (await auditRows('user_login_mfa_failed')).length;
+    const good = totp(secret, Date.now() - 30_000);
+    const res = await request(app)
+      .post('/api/auth/enterprise/verify-mfa')
+      .send({ partialToken, code: good === '000000' ? '111111' : '000000' });
+    expect(res.status).toBe(401);
+
+    const rows = (await auditRows('user_login_mfa_failed')).slice(before);
+    expect(rows, 'a wrong code on the enterprise path left no record').toHaveLength(1);
+    expect(rows[0]).toMatchObject({ new_values: { outcome: 'failure', reason: 'invalid_code' } });
+  });
+
+  it('records the session it issues', async () => {
+    const before = (await auditRows('user_login')).length;
+    // The previous step's code: inside the server's window, and not one the
+    // canonical sign-in above presented.
+    const res = await request(app)
+      .post('/api/auth/enterprise/verify-mfa')
+      .send({ partialToken, code: totp(secret, Date.now() - 30_000) });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    token = res.body.token;
+
+    const rows = (await auditRows('user_login')).slice(before);
+    expect(rows, 'the enterprise path issued a 24-hour session and recorded nothing').toHaveLength(1);
+    expect(rows[0]).toMatchObject({ new_values: { outcome: 'success', reason: 'mfa_verified' } });
+  });
+
+  it('records entering an organisation, against that organisation', async () => {
+    const res = await request(app)
+      .post('/api/auth/enterprise/select-organization')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ organizationId: String(ORG) });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+
+    // The write is fire-and-forget; give it its turn.
+    let rows = await auditRows('authorization.organization_switch');
+    for (let i = 0; i < 20 && rows.length === 0; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      rows = await auditRows('authorization.organization_switch');
+    }
+    expect(rows, 'the organisation switch was refused by the audit_logs policy').toHaveLength(1);
+  });
+
+  it('ends the session it reports ending, and records it', async () => {
+    const before = (await auditRows('user_logout')).length;
+    const res = await request(app).post('/api/auth/enterprise/logout').set('Authorization', `Bearer ${token}`).send({}).redirects(1);
+    expect(res.status).toBe(200);
+
+    const rows = (await auditRows('user_logout')).slice(before);
+    expect(rows, 'the enterprise logout recorded nothing').toHaveLength(1);
+    const { rows: revoked } = await owner.query('SELECT 1 FROM revoked_tokens WHERE token_hash = encode(sha256($1::bytea), \'hex\') OR token_hash = $2 LIMIT 1', [token, token]).catch(() => ({ rows: [] as unknown[] }));
+    const session = await request(app).get('/api/auth/session').set('Authorization', `Bearer ${token}`);
+    expect(
+      session.body?.authenticated === true ? 'still signed in' : 'signed out',
+      `"Logged out successfully" while the token still opens a session (revocation row: ${revoked.length})`,
+    ).toBe('signed out');
+  });
+});
+
+describe('no sign-in path skips the second factor', () => {
+  it.each(['/api/users/login', '/api/user/login'])('%s asks for the code instead of issuing a session', async (path) => {
+    const res = await request(app).post(path).send({ email: EMAIL, password: PASSWORD }).redirects(1);
+    expect(res.body.token, `${path} issued a session on the password alone`).toBeUndefined();
+    expect(res.body.accessToken).toBeUndefined();
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ mfaRequired: true });
+  });
+
+  it('creates no account outside signup', async () => {
+    const email = `${TAG}-register-${RUN}@example.invalid`;
+    const res = await request(app)
+      .post('/api/users/register')
+      .send({ email, password: 'Dbtsi-Register-2026!', username: 'dbtsi' })
+      .redirects(1);
+    expect(res.body.token, 'the legacy register issued a session for an account with no organisation').toBeUndefined();
+    const { rows } = await owner.query(
+      `SELECT u.id FROM users u
+         LEFT JOIN organization_users m ON m.user_id = u.id
+        WHERE u.email = $1 AND m.user_id IS NULL`,
+      [email],
+    );
+    expect(rows, 'an account without an organisation was created').toHaveLength(0);
+  });
+});
+
+describe('the organisation audit chain', () => {
+  it('verifies end to end over every row the organisation holds', async () => {
+    // chain_seq orders the whole table, not one tenant, so the organisation's
+    // chain is its hash links, walked by the product's own verifier.
     const { verifyAuditChain } = await import('../../server/services/audit/chain');
+    const { rows } = await owner.query('SELECT count(*)::int AS n FROM audit_logs WHERE tenant_id = $1', [ORG]);
     const client = await owner.connect();
     try {
       const verdict = await verifyAuditChain(client, { tenantId: ORG });
-      expect(verdict).toMatchObject({ ok: true, rowsChecked: 5, sequencedRows: 5 });
+      expect(verdict).toMatchObject({ ok: true, rowsChecked: rows[0].n });
+      expect(rows[0].n).toBe(13);
     } finally {
       client.release();
     }
