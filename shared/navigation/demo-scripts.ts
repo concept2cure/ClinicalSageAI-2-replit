@@ -119,12 +119,8 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         act: { actionId: 'submissions.set-workspace', params: { workspace: 'validation' } },
       },
       {
-        say: 'Submission Readiness is the judgment layer: workflow runs, the human-in-the-loop approval gates, and the readiness verdict that says whether this program would survive review before an agency sees it.',
-        navigate: { target: 'orchestration' },
-      },
-      {
-        say: 'Open the readiness view — the deterministic verdict and what still blocks it.',
-        act: { actionId: 'orchestration.set-view', params: { view: 'readiness' } },
+        say: 'Submission Readiness is the judgment layer: the dispatch gate for the program’s sequence, computed from stored facts — validation errors, unacknowledged shadow-review criticals and the release signature — with every blocker named until it is cleared.',
+        navigate: { target: 'dispatch-readiness' },
       },
       {
         say: 'QMS controlled documents is the quality spine: the SOP register and change control, where approvals, revisions and read-and-understood training are Part 11 ceremonies a person signs.',
@@ -192,12 +188,8 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         act: { actionId: 'submissions.set-workspace', params: { workspace: 'validation' } },
       },
       {
-        say: 'Submission Readiness gives the verdict: the approval gates that are still open and the deterministic readiness call — the go / no-go a person signs against.',
-        navigate: { target: 'orchestration' },
-      },
-      {
-        say: 'Open the readiness view.',
-        act: { actionId: 'orchestration.set-view', params: { view: 'readiness' } },
+        say: 'Submission Readiness gives the verdict: the dispatch gate for this sequence and the blockers it names — the go / no-go a person signs against.',
+        navigate: { target: 'dispatch-readiness' },
       },
       {
         say: 'The Part 11 console shows how compliance is evidenced: the signer mode in force, the signature manifestations, and the audit-chain verifier — the record a reviewer will ask for.',
@@ -250,12 +242,8 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'submissions' },
       },
       {
-        say: 'Submission Readiness: the platform says whether the submission would survive review before the agency sees it — a deterministic verdict with the open gates named, never a model’s opinion.',
-        navigate: { target: 'orchestration' },
-      },
-      {
-        say: 'Open the readiness view.',
-        act: { actionId: 'orchestration.set-view', params: { view: 'readiness' } },
+        say: 'Submission Readiness: the platform says whether the sequence is cleared to dispatch before the agency sees it — a deterministic verdict with every blocker named, never a model’s opinion.',
+        navigate: { target: 'dispatch-readiness' },
       },
       {
         say: 'QMS controlled documents: the SOP register and change control under Part 11 ceremonies — the quality system and the regulatory work in one place, one audit trail.',

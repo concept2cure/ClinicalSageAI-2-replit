@@ -39,7 +39,7 @@ import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { assumptionRegistryService } from '../services/assumption-registry-service';
 import { decisionRecordService } from '../services/decision-record-service';
-import { contradictionEngineService } from '../services/contradiction-engine-service';
+import { ContradictionScanScopeError, contradictionEngineService } from '../services/contradiction-engine-service';
 import { reactiveDependencyService } from '../services/reactive-dependency-service';
 import { requireUuidParams } from '../middleware/uuidParam';
 
@@ -351,6 +351,10 @@ router.post('/contradictions/scan/:projectId', async (req: Request, res: Respons
     );
     res.json(result);
   } catch (error) {
+    // A project the scan cannot read is refused, never answered as clean (F-25).
+    if (error instanceof ContradictionScanScopeError) {
+      return res.status(error.status).json({ error: error.message });
+    }
     handleError(res, error, 'scan project for contradictions');
   }
 });
