@@ -381,7 +381,7 @@ await step(
     title: 'Every sign-in attempt is entered in the organisation audit trail',
     action:
       'Credentialed run: POST /api/auth/login with a wrong password; POST /api/auth/login with the password, then POST /api/auth/mfa/verify with a wrong code; POST /api/auth/login with the password, then POST /api/auth/mfa/verify with the current authenticator code. Then GET /api/audit-trail/ledger?limit=50',
-    expected: `HTTP 401; 200 then 401; 200 then 200 with a session. The ledger's newest entries for the run identity then read, each hash-chained: ${SIGN_IN_TRAIL.map((t) => `"${t}"`).join(', ')}; the server chain verdict is ok`,
+    expected: `HTTP 401; 200 then 401; 200 then 200 with a session. The ledger then holds exactly five entries for the run identity that it did not hold before the step, reading newest first, each hash-chained: ${SIGN_IN_TRAIL.map((t) => `"${t}"`).join(', ')}; the server chain verdict is ok`,
     note: 'Every sign-in outside development is challenged, and each of its events names the user organisation, which the pre-auth scope every /api/auth request runs in could not write under RLS (VSR-001 §13, F-19): the trail was empty and no step saw it. The sign-in calls go straight to the server, not through the recorded API client, so no password or code reaches the record; the observed result carries their statuses. A dev-login run passes through none of these events, so it is a deviation.',
   },
   async ({ api, expect, deviation, auth, baseUrl }) => {
@@ -397,6 +397,13 @@ await step(
       });
       return { status: r.status, json: await r.json().catch(() => ({})) };
     };
+    // The entries already on the ledger. Only entries this step adds count: an
+    // earlier run that signed in the same way leaves the same five sentences.
+    const target = `user:${auth.user.id}`;
+    const before = await api('GET', '/api/audit-trail/ledger?limit=50');
+    expect(before.status === 200, `ledger expected 200, got ${before.status}`, before.json);
+    const seen = new Set((before.json?.data ?? []).map((e) => e.id));
+
     // A code the server's ±1-step window cannot accept.
     const now = Date.now();
     const valid = new Set([-1, 0, 1].map((k) => totp(credential.totpSecret, now + k * TOTP_PERIOD_SECONDS * 1000)));
@@ -417,18 +424,17 @@ await step(
 
     const ledger = await api('GET', '/api/audit-trail/ledger?limit=50');
     expect(ledger.status === 200, `ledger expected 200, got ${ledger.status}`, ledger.json);
-    const target = `user:${auth.user.id}`;
-    const mine = (ledger.json?.data ?? []).filter((e) => e.target === target).slice(0, SIGN_IN_TRAIL.length);
+    const mine = (ledger.json?.data ?? []).filter((e) => e.target === target && !seen.has(e.id));
     const read = mine.map((e) => e.event);
     expect(
       JSON.stringify(read) === JSON.stringify(SIGN_IN_TRAIL),
-      `the ledger's newest entries for ${target} read ${JSON.stringify(read)}, not the sign-in just made`,
+      `the sign-in attempts this step made added ${mine.length} ledger entr(ies) for ${target}: ${JSON.stringify(read)}`,
       mine,
     );
     expect(mine.every((e) => e.hash && e.prevHash), 'a sign-in entry is not hash-chained', mine);
     const chain = ledger.json?.meta?.chain;
     expect(chain && chain.ok === true, `the server's chain verdict says the audit chain does not verify (${chain ? `ok=false over ${chain.rowsChecked} row(s)` : 'no meta.chain'})`, ledger.json?.meta);
-    return `sign-in statuses ${statuses.join(', ')}; ledger for ${target}, newest first: ${read.map((t) => `"${t}"`).join(', ')}; all hash-chained; server chain verdict ok=true over ${chain.rowsChecked} row(s)`;
+    return `sign-in statuses ${statuses.join(', ')}; ${mine.length} new ledger entries for ${target}, newest first: ${read.map((t) => `"${t}"`).join(', ')}; all hash-chained; server chain verdict ok=true over ${chain.rowsChecked} row(s)`;
   },
 );
 
