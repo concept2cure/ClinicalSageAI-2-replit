@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-006 |
-| Version | 0.5 |
+| Version | 0.6 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-006 |
 | Runner (the executable protocol) | `tests/validation/oq/qms/run.mjs` — `npm run validation:oq -- qms` |
@@ -17,7 +17,8 @@
 | 0.2 | 2026-09-21 | WF | VSR-001 §8.3 P-2 / F-3 (fixed in the product 2026-09-21): approval is an electronic signature. OQ-QMS-05 is a CREDENTIALED step executed by a second identity supplied through `OQ_SIGNER_EMAIL` / `OQ_SIGNER_PASSWORD` (recorded *not executed — credential not supplied* when absent); new OQ-QMS-05b (signature row + §11.70 digest recomputation), OQ-QMS-06 tightened to 400 `ESIGNATURE_COMPONENT_MISSING`, new OQ-QMS-06b (401 wrong password), OQ-QMS-06c (403 self-approval), OQ-QMS-06d (signed approval of SOP B as the review-due/retire fixture). Re-executed locally (§3). |
 | 0.3 | 2026-09-22 | W3 | §3 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
 | 0.4 | 2026-09-23 | W3 | OQ-QMS-05 first shows that a password-only approval from a signer with a second factor enrolled is refused with no row written, then approves with the authenticator code; 05b checks the row records the verified second factor; 06c presents the code so its refusal is the two-person rule. The signer signs in with its password and code rather than dev-login (VSR-001 §13). |
-| 0.5 | 2026-09-23 | W3 | The approval re-verifies the signer with the platform's one signing ceremony (`server/services/part11/reverify-signer.ts`) instead of a second implementation of it, and so answers with the ceremony's responses: OQ-QMS-05's password-only refusal is 400 `MFA_TOKEN_REQUIRED` (was 401), OQ-QMS-06b's wrong password is 401 `PASSWORD_VERIFICATION_FAILED` (was `PASSWORD_INVALID`). A wrong password now counts against the account's lockout (VSR-001 F-27). |
+| 0.5 | 2026-09-23 | D5 | Creating, changing and deleting a Quality Management Plan became governed changes (weekly review 2026-09-22, P2; `docs/evidence/D5-GOVERNED-PATH/2026-09-22/`): a reason of at least 8 characters is required and the ledger row commits with the plan. OQ-QMS-12 first shows a plan posted without a reason is refused 400 `REASON_REQUIRED` and not created, then creates it with a reason. The same change also made these behaviour changes, which no step exercises yet: a `viewer` is refused 403 on create, change and delete; the active plan cannot be deleted (409 `PLAN_ACTIVE`; archive it through the governed change first); a plan other quality records still reference is refused 409 `PLAN_IN_USE`; the ledger row carries the whole row on create and delete and every changed field's before and after on change. **Not yet executed at this version**; the 2026-09-23b record ran v0.4. Owed before signature, through change control: steps for the viewer refusal, the active-plan delete refusal and the ledger row; URS-QMS-011 restated as a governed change; its RA-001 classification (still `low`, `none`) re-assessed; TM-001 updated; then re-execution. |
+| 0.6 | 2026-09-23 | W3 | The approval re-verifies the signer with the platform's one signing ceremony (`server/services/part11/reverify-signer.ts`) instead of a second implementation of it, and so answers with the ceremony's responses: OQ-QMS-05's password-only refusal is 400 `MFA_TOKEN_REQUIRED` (was 401), OQ-QMS-06b's wrong password is 401 `PASSWORD_VERIFICATION_FAILED` (was `PASSWORD_INVALID`). A wrong password now counts against the account's lockout (VSR-001 F-27). |
 
 ## 1. Method
 
@@ -47,7 +48,7 @@ As OQ-001 §1. Two SOPs are created by the run identity (the author): A exercise
 | OQ-QMS-09 | URS-QMS-009 | scripted | review-due within 30 days (B effective since OQ-QMS-06d) | B listed, `overdue:false` |
 | OQ-QMS-10 | URS-QMS-007 | scripted | retire B with reason | retired; reason kept |
 | OQ-QMS-11 | URS-QMS-010 | scripted | raise a change; list; summary | 201; listed |
-| OQ-QMS-12 | URS-QMS-011 | scripted | create QMP; list | 201 draft; listed |
+| OQ-QMS-12 | URS-QMS-011 | scripted | create QMP with no reason; create it with a reason (v0.5); list | 400 `REASON_REQUIRED`, not listed; then 201 draft; listed |
 | OQ-QMS-13 | URS-QMS-013 | ad-hoc | templates | 200, non-empty |
 | OQ-QMS-14 | URS-QMS-012 | unscripted (browser) | Open `/concept2cure/quality`; click *Change control* | SOP A number visible; both tabs captured |
 | OQ-QMS-15 | URS-QMS-011, 012 | unscripted (browser) | Open `/concept2cure/qmp` | Plan name visible |

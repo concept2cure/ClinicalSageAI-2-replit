@@ -433,13 +433,21 @@ await step(
   {
     id: 'OQ-QMS-12',
     urs: ['URS-QMS-011'],
-    title: 'Quality Management Plan create and list',
-    action: 'POST /api/quality/plans {name, description}; GET /api/quality/plans',
-    expected: 'HTTP 201; plan listed with status draft',
+    title: 'Quality Management Plan create and list (governed: reason required)',
+    action: 'POST /api/quality/plans {name, description} with no reason; again with a reason of at least 8 characters; GET /api/quality/plans',
+    expected: 'Without a reason: HTTP 400 REASON_REQUIRED and no plan created. With it: HTTP 201; plan listed with status draft',
   },
   async ({ api, expect }) => {
     const name = `OQ-006 QMP ${stamp}`;
-    const r = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise' });
+    // v0.5: creating a plan is a governed change (D5, 2026-09-23); a plan
+    // posted without a reason is refused and nothing is created.
+    const refused = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise' });
+    expect(refused.status === 400, `expected 400 without a reason, got ${refused.status}`, refused.json);
+    expect(refused.json?.error === 'REASON_REQUIRED', 'expected REASON_REQUIRED', refused.json);
+    const before = await api('GET', '/api/quality/plans');
+    const beforeArr = Array.isArray(before.json) ? before.json : before.json?.data ?? [];
+    expect(!beforeArr.some((p) => p.name === name), 'a refused plan was created', beforeArr.map((p) => p.name));
+    const r = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise', reason: 'OQ-006 validation exercise: QMP create' });
     expect(r.status === 201, `expected 201, got ${r.status}`, r.json);
     const l = await api('GET', '/api/quality/plans');
     const arr = Array.isArray(l.json) ? l.json : l.json?.data ?? [];

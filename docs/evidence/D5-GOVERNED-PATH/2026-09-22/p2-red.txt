@@ -1,0 +1,41 @@
+✓ client/src/concept2cure/v2/__tests__/qmpWorkspace.test.tsx > QmpWorkspace — real quality backend > loads plans and the completeness/risk dashboard 186ms
+× server/routes/__tests__/quality-plans-governed.test.ts > POST /api/quality/plans — governed create > refuses a create with no reason: 400, nothing written, no transaction opened 92ms
+× server/routes/__tests__/quality-plans-governed.test.ts > POST /api/quality/plans — governed create > refuses a reason that is under 8 characters once trimmed 26ms
+× server/routes/__tests__/quality-plans-governed.test.ts > POST /api/quality/plans — governed create > writes the plan and the ledger pair in ONE transaction on the request client 25ms
+× server/routes/__tests__/quality-plans-governed.test.ts > POST /api/quality/plans — governed create > rolls the create back and answers 5xx when the ledger write fails 35ms
+× server/routes/__tests__/quality-plans-governed.test.ts > POST /api/quality/plans — governed create > refuses a create with no acting user rather than ledgering an unattributed change 19ms
+× server/routes/__tests__/quality-plans-governed.test.ts > PATCH /api/quality/plans/:id — governed update / activation > refuses an activation with no reason: 400, plan unchanged, no ledger 23ms
+× server/routes/__tests__/quality-plans-governed.test.ts > PATCH /api/quality/plans/:id — governed update / activation > activates in ONE transaction and the ledger payload says it was an activation 20ms
+× server/routes/__tests__/quality-plans-governed.test.ts > PATCH /api/quality/plans/:id — governed update / activation > ledgers the before and after value of EVERY changed field, metadata included 20ms
+× server/routes/__tests__/quality-plans-governed.test.ts > PATCH /api/quality/plans/:id — governed update / activation > rolls the activation back and answers 5xx when the ledger write fails 32ms
+× server/routes/__tests__/quality-plans-governed.test.ts > PATCH /api/quality/plans/:id — governed update / activation > refuses an update that changes nothing rather than ledgering a change that did not happen 22ms
+× server/routes/__tests__/quality-plans-governed.test.ts > PATCH /api/quality/plans/:id — governed update / activation > refuses an update to the values the plan already holds: a double click is not a second change 17ms
+× server/routes/__tests__/quality-plans-governed.test.ts > PATCH /api/quality/plans/:id — governed update / activation > ledgers only the fields that actually changed 23ms
+× server/routes/__tests__/quality-plans-governed.test.ts > PATCH /api/quality/plans/:id — governed update / activation > a COMMIT that fails is reported as unknown, never as "nothing was changed" 25ms
+✓ server/routes/__tests__/quality-plans-governed.test.ts > PATCH /api/quality/plans/:id — governed update / activation > 404s on another organization's plan and writes nothing 19ms
+× server/routes/__tests__/quality-plans-governed.test.ts > DELETE /api/quality/plans/:id — governed delete > refuses a delete with no reason: 400, plan still there, no ledger 21ms
+× server/routes/__tests__/quality-plans-governed.test.ts > DELETE /api/quality/plans/:id — governed delete > deletes in ONE transaction and ledgers what was deleted 21ms
+× server/routes/__tests__/quality-plans-governed.test.ts > DELETE /api/quality/plans/:id — governed delete > ledgers the WHOLE deleted row, so nothing the delete destroys is lost 21ms
+× server/routes/__tests__/quality-plans-governed.test.ts > DELETE /api/quality/plans/:id — governed delete > refuses to delete the ACTIVE plan: 409, kept, nothing ledgered — archive it instead 25ms
+× server/routes/__tests__/quality-plans-governed.test.ts > DELETE /api/quality/plans/:id — governed delete > keeps the plan and answers 5xx when the ledger write fails 23ms
+× server/routes/__tests__/quality-plans-governed.test.ts > DELETE /api/quality/plans/:id — governed delete > refuses to delete a plan section gating still uses: rolled back, nothing ledgered 19ms
+× server/routes/__tests__/quality-plans-governed.test.ts > DELETE /api/quality/plans/:id — governed delete > a plan other quality records still refer to is refused 409, not an unexplained 500 22ms
+✓ server/routes/__tests__/quality-plans-governed.test.ts > DELETE /api/quality/plans/:id — governed delete > 404s on another organization's plan and deletes nothing 18ms
+× server/routes/__tests__/quality-plans-governed.test.ts > QMP writes — authority check (§11.10(g)) > refuses a viewer on create, activate and delete: 403, nothing read or written 43ms
+✓ server/routes/__tests__/quality-plans-governed.test.ts > QMP writes — authority check (§11.10(g)) > admits a manager and an admin (the gate is viewer-only, not admin-only) 26ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — Activate is a governed change > opens the reason dialog and does not PATCH until it is confirmed 5378ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — Activate is a governed change > sends the reason with the activation and reports success as success 5061ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — Activate is a governed change > refuses a reason under 8 characters without sending anything 5051ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — Activate is a governed change > renders a server refusal as an error in the server's words and leaves the plan unchanged 5059ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — what activation claims, and an outcome nobody can confirm > does not claim activation switches the gates on: validation uses a plan by id, whatever its status 5055ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — what activation claims, and an outcome nobody can confirm > a COMMIT the server could not confirm is not reported as "not activated", and the register is re-read 5045ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — what activation claims, and an outcome nobody can confirm > a double click sends one create, not two 85ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — create and delete are governed changes > create carries the reason in the POST body 94ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — create and delete are governed changes > delete opens the reason dialog, sends nothing until confirmed, then sends the reason 264ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — create and delete are governed changes > renders a refused delete in the server's words and keeps the plan listed 177ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — the active plan is archived, never deleted > offers no Delete on the active plan 77ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — the active plan is archived, never deleted > archives through the reason dialog, sending the reason, and then offers Delete 214ms
+× client/src/concept2cure/v2/__tests__/qmpWorkspaceGoverned.test.tsx > QmpWorkspace — the server authority refusal > renders a 403 as a refusal and leaves the plan as it was 5046ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 34 ⎯⎯⎯⎯⎯⎯⎯
+Test Files  2 failed | 1 passed (3)
+Tests  34 failed | 4 passed (38)

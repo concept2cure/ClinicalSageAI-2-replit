@@ -251,7 +251,106 @@ protocol acts now are.
 - ESLint on `AnaToolExecutor.ts` shows 0 errors and 102 warnings, the same as
   HEAD.
 
-## T1–T4, P2, P3
+## The request client could carry an open transaction to the next request
+
+Found by the P2 behaviour reviewer. It predates this work, and it is shared by
+every governed write that runs on the request-scoped connection:
+`governedScoped` in protocol development, and QMP plans.
+
+The middleware releases the request's connection on `res` `finish` **and**
+`close`, and a client abort fires `close` mid-handler. If that happened between
+`BEGIN` and `COMMIT`, `LazyRequestDbClient.release()` reset the session
+variables and handed the connection back to the pool, still inside the
+transaction. The handler's own `COMMIT` or `ROLLBACK` then threw "released", so
+nothing ended the transaction. The next request to take that connection ran
+inside it:
+
+- its `COMMIT` could commit the aborted request's half-written change, including
+  a domain write whose ledger row never landed: an unaudited change;
+- the resets are `set_config(…, false)`, which are transactional. A later
+  rollback therefore reverted the connection's tenant variables to the
+  **previous request's** tenant.
+
+**Fix** (`server/middleware/lazyRequestDbClient.ts`): after the resets, which
+queue behind any statement still in flight, `release()` reads node-postgres's
+`getTransactionStatus()`. A connection that is not idle is discarded, not pooled,
+and Postgres rolls its transaction back on disconnect. A normal release costs no
+extra round trip.
+
+**Proof:** `lazy-request-db-client.test.ts` with a client that models pg's
+transaction status. Red 2/13 (`request-client-tx-red.txt`): an open transaction
+and a failed one both went back to the pool. Green 13/13
+(`request-client-tx-green.txt`). A committed transaction still returns its
+connection. Both handlers that open transactions on this client (`governedScoped`
+and the QMP plan writes) commit before they respond, so a completed request is
+unaffected.
+
+## P2: quality-management plans
+
+**The defect.** A QMP sets the gates governed documents are validated against.
+Creating, activating (any change) or deleting one was a bare Drizzle write, with
+no reason and no ledger row. One click activated a plan, and nothing recorded
+who did it.
+
+**The fix** (`server/routes/quality-management-api.ts`, `QmpWorkspace.tsx`),
+written test-first, then read by three independent reviewers and repaired:
+
+- **The governed path.** A reason (at least 8 characters, trimmed) is required.
+  `BEGIN` → tenant variables → plan write → `recordGovernedAction` → `COMMIT`
+  all run on the request-scoped connection that the Drizzle write also uses, so
+  the plan and its ledger row commit together. A ledger failure changes
+  nothing: 500 `AUDIT_WRITE_FAILED`.
+- **Nothing overwritten is lost (§11.10(e)).** The ledger carries the whole row
+  on create and on delete, and each changed field's before and after value on a
+  change, including `metadata`, which holds `allowWaivers`.
+- **Authority (§11.10(g)).** `requireEditorAccess` gates all three writes, so a
+  viewer gets 403. The actor comes from the canonical `governedActorId`. The
+  first version had a second resolver of its own.
+- **The active plan is archived, never deleted.** Deleting it is refused with
+  409 `PLAN_ACTIVE`, enforced on the server. The UI offers Archive, a governed
+  change, in its place.
+- **Honest outcomes.**
+  - A change to values the plan already holds (a double click, a stale board) is
+    refused 409 `NO_CHANGES`, so no `active → active` ledger row is written.
+  - A plan that CTQ factors or traceability rows still reference is refused 409
+    `PLAN_IN_USE`, not an unexplained 500.
+  - A COMMIT that fails is answered `OUTCOME_UNKNOWN`: "could not be confirmed;
+    reload to check". It is never "nothing was changed". The UI does not call
+    that a refusal, and it re-reads the register.
+  - One write runs at a time from the UI.
+- **Copy.** The activation dialog said the plan's gates "apply once active".
+  Validation selects a plan by id, whatever its status, so the dialog now says
+  what activation actually does.
+
+**Proof.** The new route and client suites were run against the unfixed files
+from HEAD: red 34/38 (`p2-red.txt`). Green 38/38 (`p2-green.txt`). A mutation of
+each reviewer fix fails a named test: value compare, commit stage, FK mapping,
+changed-fields-only, the canonical actor, the in-flight guard, the unknown
+outcome, and the copy. Gates: `ci:discarded-audit-write`,
+`ci:regulated-delete-audit`, `ci:server-error-leaks`, `ci:internals-in-copy`,
+`ci:empty-state-honesty`, `check:microcopy`. Scoped typecheck: no errors in
+the changed files.
+
+The two cases in `qmpWorkspace.test.tsx` that pinned the one-click,
+reasonless writes were removed. Once rewritten they duplicated the governed
+suite.
+
+**Validation owed (D4/W3).** OQ-006 is now v0.5, and OQ-QMS-12 refuses a
+reasonless create before creating with a reason. It is **not executed** at
+that version. Before signature, through change control:
+
+- steps for the viewer refusal, the active-plan delete refusal and the ledger
+  row;
+- URS-QMS-011 restated;
+- its RA-001 classification re-assessed (still `low`, no Part 11 relevance);
+- TM-001 updated;
+- then re-execution.
+
+**Open, for the control tower.** The other QMS writes on this router (CTQ
+factors, section gating, quality validation, batch validate) have no authority
+gate and no ledger row. They are the same gap, and they are outside this item.
+
+## T1–T4, P3
 
 *In progress, not yet verified. These fixes are being written test-first and
 adversarially reviewed; this section is filled in when they land.*
@@ -273,6 +372,17 @@ Open items, left as they are on purpose:
 - **The signing modal offers every meaning.** The server refuses a meaning the
   act cannot carry, with a 400, before it re-authenticates. The attempt still
   counts against the limiter.
+- **For D2, not fixed here: the non-launch modules' APIs are reachable unless
+  the production environment says otherwise.** `deploymentEnforcementMode`
+  (`server/services/entitlements/enforcement-mode.ts`) reads
+  `MODULE_ENFORCEMENT` and defaults to `off`. A mode stored on the console is
+  capped at the deployment's (`capAt`), so the console cannot switch it on. No
+  deploy configuration in the repository sets the variable. This checkout cannot
+  see whether production's own environment sets it. Where it is off, the 21
+  unceremonied sign routes baselined above (research administration, CMC, BLA,
+  IRB, IBC, IACUC, RIM) are live APIs, even though no launch surface links to
+  them. Turning enforcement on is a deployment change that needs a staging run
+  first. It belongs to D2, and the founder should see it before it is made.
 - The gate is textual. It proves a new signature cannot be written without its
   author wiring the ceremony. It does not prove the ceremony is correct; each
   surface's tests do that.

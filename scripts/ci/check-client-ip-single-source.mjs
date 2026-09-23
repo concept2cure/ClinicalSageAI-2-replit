@@ -32,6 +32,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', 'coverage', '.git', '__tests__', '__mocks__']);
@@ -48,12 +49,8 @@ function isExcluded(rel) {
   return /\.(test|spec|dbtest)\.[cm]?[jt]sx?$/.test(rel) || /\.d\.ts$/.test(rel);
 }
 
-/** Remove block and line comments, keeping line numbers. */
-function codeOnly(src) {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .replace(/(^|[^:\\])\/\/[^\n]*/g, (m, lead) => lead + ' '.repeat(m.length - lead.length));
-}
+/** Comments blanked, strings kept (scripts/ci/lib/strip-comments.mjs). */
+const codeOnly = stripComments;
 
 /** Every violation under root, as "file:line — what". */
 export function findViolations(root) {
@@ -123,6 +120,9 @@ function selfTest() {
     ['control — the helper', () => put('server/routes/a.ts', 'const ip = clientIpOf(req);\n'), 0],
     ['control — req.ip and req.protocol', () => put('server/routes/a.ts', 'const u = `${req.protocol}://${req.get("host")}`; const ip = req.ip;\n'), 0],
     ['control — prose in a comment', () => put('server/routes/a.ts', "// the left-most 'x-forwarded-for' entry\n/* req.headers['x-forwarded-for'] */\nconst a = 1;\n"), 0],
+    ['a read after a string holding /* (a CSP source)', () => put('server/middleware/csp.ts', "const src = ['https://*.neon.tech'];\nconst ip = req.headers['x-forwarded-for'];\nconst end = 'a */ b';\n"), 1],
+    ['a read on a line whose string holds //', () => put('server/routes/a.ts', "const u = 'https://example.com'; const ip = req.get('x-forwarded-for');\n"), 1],
+    ['a read after a regex with an escaped //', () => put('server/routes/a.ts', "const re = /https?:\\/\\//; const ip = req.headers['x-real-ip'];\n"), 1],
     ['control — a test file', () => put('server/routes/__tests__/a.test.ts', "req.headers['x-forwarded-for'];\n"), 0],
     ['control — a hop count in server/index.ts', () => put('server/index.ts', "app.set('trust proxy', resolveTrustProxy().hops);\n"), 0],
     ['the left-most X-Forwarded-For entry', () => put('server/routes/sign.ts', "const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0];\n"), 1],
