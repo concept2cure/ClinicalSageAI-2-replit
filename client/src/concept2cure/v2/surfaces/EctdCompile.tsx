@@ -34,6 +34,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
+import { assessmentState } from '../assessmentState';
 import { apiRequest } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
@@ -582,6 +583,15 @@ function EvalidatorReportView({ row }: { row: CompilationRow }) {
   const r = row.external_validation;
   if (!r) return null;
   const seq = row.sequence_number ?? String(row.id);
+  /* "No findings" is a clearance claim, so it comes from positive evidence that
+     the validator ran — an imported report carrying its digest and a parsed
+     findings list — never from the list being empty. Without that evidence the
+     view says the findings could not be read. */
+  const findingsState = assessmentState({
+    scopeExists: true,
+    findingCount: Array.isArray(r.findings) ? r.findings.length : 0,
+    assessmentRan: Array.isArray(r.findings) && Boolean(r.reportSha256),
+  });
   return (
     <section aria-label={`eValidator report — sequence ${seq}`} style={{ borderTop: '1px solid var(--border)', padding: '10px 12px' }}>
       <div style={{ fontSize: 12.5, fontWeight: 600 }}>
@@ -601,8 +611,10 @@ function EvalidatorReportView({ row }: { row: CompilationRow }) {
           </ul>
         </div>
       )}
-      {r.findings.length === 0 ? (
+      {findingsState === 'assessed-clear' ? (
         <p style={{ fontSize: 12, margin: 0 }}>The report lists no findings.</p>
+      ) : findingsState !== 'assessed-with-findings' ? (
+        <p style={{ fontSize: 12, margin: 0 }}>The findings in this report could not be read.</p>
       ) : (
         <table className="reg-tbl">
           <thead><tr><th>Rule</th><th>Severity</th><th>Message</th><th>File</th></tr></thead>
