@@ -164,17 +164,24 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
       sessionId,
       ctx?.userId != null ? String(ctx.userId) : undefined,
     );
+    const verifications = session.statisticianResult?.verifications ?? [];
     return JSON.stringify({
       status: 'completed',
       session_id: session.id,
       section_path: sectionPath,
       final_text: session.finalText,
       corrections_applied: session.corrections,
+      // Every numerical claim is one of: checked against bound data (verified or
+      // a discrepancy), or UNVERIFIABLE — no data source answered it. The last
+      // is reported so it is never narrated as checked.
+      claims_found: verifications.length,
+      claims_checked_against_data: verifications.filter(v => v.status !== 'UNVERIFIABLE').length,
+      claims_unverifiable: verifications.filter(v => v.status === 'UNVERIFIABLE').length,
       issues_found: session.issues,
       critic_assessment: session.criticResult?.overallAssessment,
       // Bounded detail so the model can narrate what the council caught
       // without the payload swamping the loop context.
-      discrepancies: (session.statisticianResult?.verifications || [])
+      discrepancies: verifications
         .filter(v => v.status === 'DISCREPANCY')
         .slice(0, 10),
       high_severity_issues: (session.criticResult?.issues || [])

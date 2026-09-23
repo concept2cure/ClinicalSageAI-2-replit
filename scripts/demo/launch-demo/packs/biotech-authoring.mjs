@@ -7,7 +7,7 @@
  */
 import { must } from '../lib.mjs';
 import { AUTHORING_DOCS, STUDY, T, findDemoByTitle } from './biotech-content.mjs';
-import { NOT_EXECUTED_NO_SIGNER, SIGNING_PIN, asArray, uuidRe } from './biotech-shared.mjs';
+import { NOT_EXECUTED_NO_SIGNER, asArray, uuidRe } from './biotech-shared.mjs';
 
 /** Create the document, falling back to an unbound one when the program's governed document is already aliased. */
 async function createDoc({ api, run }, program, spec) {
@@ -137,24 +137,6 @@ async function ensureFreeze({ api, tally }, spec, docRec) {
   return `frozen v${docRec.frozen.version} ${String(docRec.frozen.contentHash ?? '').slice(0, 12)}…`;
 }
 
-/**
- * The authoring e-signature is PIN-based (authoring.router.ts e-sign:
- * verifyUserPin). Enrol or rotate the signer's PIN the way OQ-003 step 12 does;
- * the PIN is a separate credential from the account password and is never the
- * password. Returns null when the PIN is usable, else the reason it is not.
- */
-async function ensureSignerPin(signer) {
-  const enrol = await signer.api('POST', '/api/authoring/users/pin', { pin: SIGNING_PIN });
-  if (enrol.status < 300) return null;
-  if (!(enrol.status === 400 && /current pin|old_pin/i.test(JSON.stringify(enrol.json)))) {
-    must(enrol, [200, 201], 'enrol signer PIN');
-  }
-  const rot = await signer.api('POST', '/api/authoring/users/pin', { pin: SIGNING_PIN, old_pin: SIGNING_PIN });
-  if (rot.status === 401) return 'not executed — the signer already holds a PIN with a value this run does not have (set VALIDATION_SIGNING_PIN to it)';
-  must(rot, [200, 201], 'rotate signer PIN');
-  return null;
-}
-
 async function ensureSignature({ api, run, tally, signer }, spec, docRec) {
   const rows = must(await api('GET', `/api/authoring/docs/${docRec.id}/signatures`), 200, `signatures ${spec.key}`).signatures ?? [];
   if (!signer) {
@@ -169,20 +151,16 @@ async function ensureSignature({ api, run, tally, signer }, spec, docRec) {
     docRec.signature = { id: mine.id, signer: mine.signer_email, meaning: mine.meaning, coveredContentHash: mine.covered_content_hash };
     return `found signature ${mine.id} by ${mine.signer_email} (${mine.meaning})`;
   }
-  const pinProblem = await ensureSignerPin(signer);
-  if (pinProblem) {
-    docRec.signature = pinProblem;
-    run.note(`Authoring e-signature on ${spec.name}: ${pinProblem}`);
-    return pinProblem;
-  }
+  // The platform's signing ceremony: the signer's own password, re-verified by
+  // the server (the separate authoring PIN was retired 2026-09-23).
   must(await signer.api('POST', `/api/authoring/docs/${docRec.id}/e-sign`, {
-    pin: SIGNING_PIN,
+    password: signer.password,
     meaning: 'REVIEWER',
     intent: `Reviewed Protocol Synopsis ${STUDY} v1.0 against Protocol v1.0 and SAP v1.0; content is consistent and settled for the IND (demo seed, second signer).`,
   }), 200, `e-sign ${spec.key}`);
   const after = must(await api('GET', `/api/authoring/docs/${docRec.id}/signatures`), 200, `signatures ${spec.key}`);
   const sig = (after.signatures ?? []).find((s) => s.signer_email === signer.email);
-  if (!sig || sig.pin_verified !== true || !sig.covered_content_hash) throw new Error(`e-sign ${spec.key}: signature not stored as expected — ${JSON.stringify(after).slice(0, 300)}`);
+  if (!sig || !/^password/.test(String(sig.method)) || !sig.covered_content_hash) throw new Error(`e-sign ${spec.key}: signature not stored as expected — ${JSON.stringify(after).slice(0, 300)}`);
   tally.created('authoring-signature');
   docRec.signature = { id: sig.id, signer: sig.signer_email, meaning: sig.meaning, coveredFreezeVersion: sig.covered_freeze_version, coveredContentHash: sig.covered_content_hash };
   return `signed by ${sig.signer_email} (${sig.meaning}) covering freeze v${sig.covered_freeze_version}`;

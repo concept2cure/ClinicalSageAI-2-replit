@@ -890,6 +890,31 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
       if (!artifact) throw new Error('Artifact not found');
       if (artifact.status !== 'review') throw new Error(`Cannot approve: artifact is ${artifact.status}, must be in review`);
 
+      // 2026-09-23 (W5/D7, final pass): this is a governed approval act — it
+      // records approved_version_id below, which is what makes an artifact
+      // filable (artifactApproval) — but it never applied the P12 review
+      // quorum the status route applies to review → approved, so an artifact
+      // with a reviewer pending, or one who did not approve, was recorded as
+      // approved. It applies the same implementation now (reviewQuorumVerdict,
+      // server/services/artifact-approval-act.ts). A quorum that cannot be read
+      // is not met: refused, nothing written.
+      const { reviewQuorumVerdict } = await import('../services/artifact-approval-act.js');
+      const { queryableFromDrizzle } = await import('../db/drizzle-queryable.js');
+      let quorum: Awaited<ReturnType<typeof reviewQuorumVerdict>>;
+      try {
+        quorum = await reviewQuorumVerdict(queryableFromDrizzle(db), artifact.id, Number(orgId));
+      } catch (quorumErr: any) {
+        console.error('[authoring-actions] approve-artifact review quorum read failed:', quorumErr?.message);
+        return res.status(500).json({
+          approved: false,
+          reason: 'review-quorum-unavailable',
+          message: 'The review quorum could not be checked, so the artifact was not approved. The problem has been logged.',
+        });
+      }
+      if (!quorum.met) {
+        return res.status(409).json({ approved: false, reason: 'review-quorum-not-met', message: quorum.message });
+      }
+
       const metadata =
         artifact.metadata && typeof artifact.metadata === 'object'
           ? (artifact.metadata as Record<string, unknown>)
@@ -1071,6 +1096,30 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
         .limit(1);
       if (!artifact) throw new Error('Artifact not found');
       if (artifact.status !== 'approved') throw new Error(`Cannot lock: artifact is ${artifact.status}, must be approved`);
+
+      // 2026-09-23 (W5/D7, residual repair): a lock must cover the approval.
+      // This handler checked status alone and stamped published_version_id =
+      // the CURRENT version, so approved v1 → edit to v2 (status stays
+      // 'approved') → lock recorded "locked at v2" over content no one
+      // reviewed. Refused now with the filing rule's own verdict
+      // (artifactApproval, imported — not a second rule): lockable only when
+      // filable as approved, i.e. version = approved_version_id; an approval
+      // that recorded no version fails closed. Mirrors the status route
+      // (server/routes/c2c/artifacts.ts PUT …/status, approved → locked).
+      const { artifactApproval } = await import('../services/ectd/package-content-fingerprint.js');
+      const approval = artifactApproval({
+        status: artifact.status,
+        version: artifact.version,
+        approvedVersionId: artifact.approvedVersionId,
+        publishedVersionId: artifact.publishedVersionId,
+      });
+      if (!approval.filable) {
+        return res.status(409).json({
+          locked: false,
+          reason: approval.reason,
+          message: `Cannot lock: ${approval.problem}. Re-approval is required first: ${approval.remedy}.`,
+        });
+      }
 
       const metadata =
         artifact.metadata && typeof artifact.metadata === 'object'

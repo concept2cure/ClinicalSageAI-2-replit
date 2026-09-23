@@ -1,0 +1,331 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts
+{
+  "timestamp": "2026-09-23T04:36:46.335Z",
+  "level": "info",
+  "message": "[submission-service] Created submission",
+  "context": {
+    "submissionId": 1,
+    "organizationId": 1
+  }
+}
+
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > 401 when unauthenticated (no user)
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > 403 when the user lacks the regulatory-author role
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > auth + RBAC gating > admin role is allowed through
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /readiness → 200 with a verdict
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /readiness → 400 on a bad filingType
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /clock → 400 without receiptDate
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /clock → 200 with receiptDate
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/lifecycle-validate → 200 allows original first; blocks amendment-first
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/lifecycle-validate → 400 without required fields
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/history-audit → 200 valid history vs flagged amendment-first
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > pure compute routes > POST /sequence/history-audit → 400 without sequenceTypes
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /portfolio → 200 listing the seeded IND submission
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /portfolio/drift/csv → 200 text/csv attachment
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /submission/:id/overview → 400 on a non-numeric id
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-backed routes > GET /submission/:id/overview → 404 for a missing submission
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cover-letter/pdf → 200 application/pdf
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cover-letter/pdf → 400 without required fields
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr → 200 E2B(R3) elements + completeness 27ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr?format=xml → 200 application/xml 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr → 400 without an event 3ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message → 200 transmittable message + readiness 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message?format=xml → 200 application/xml 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /safety-report/icsr/message → 400 without gateway/senderId/messageNumber 3ms
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing → 200 with rows + tabulation
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing?format=csv → 200 text/csv attachment
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /annual-report/line-listing → 400 without events/period
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa → 200 with the LOA model + m1.4.1 leaf intent
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa → 400 without the required identifiers
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /loa/pdf → 200 application/pdf
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /right-of-reference → 200 with the m1.4.2 model
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /authorized-persons/pdf → 200 application/pdf
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cross-reference-register → 200 not ready when an LOA is missing
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /cross-reference-register → 400 without references[]
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > document routes > POST /envelope → 200 application/xml
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > API discovery > GET /openapi.json → 200 with a generated OpenAPI 3.1 spec
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file → 201 creates an amendment sequence
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file → 400 without a 4-digit sequenceNumber
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /safety-report/file with an ICSR → 201 also files a checksummed m5.3.5 leaf 80ms
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > GET /sequence/:id/manifest → 200 with the filed leaf
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate → 200 with a verdict
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /sequence/:id/dispatch-gate/snapshot → 201 then GET /snapshots → 200
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/cockpit → 200 with per-sequence gates
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/dashboard → 200
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > DB-write + program surface (full HTTP flow) > POST /submission/:id/drift → 200 with a digest
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > POST /safety-report/file places the Module 1 transmittal pair, and says the 1571 has no document without a sponsor 36ms
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > with NO gateway configured, transmit → 503 (NOT transmitted) and the row stays prepared
+{
+  "timestamp": "2026-09-23T04:36:46.732Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Prepared ICSR transmission",
+  "context": {
+    "submissionId": 1,
+    "gateway": "FDA_FAERS",
+    "transmitReady": true,
+    "organizationId": 1
+  }
+}
+
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > POST /safety-report/file attaches the REAL filled Form 1571 to m1.1 when a sponsor is named 127ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > Module 1 transmittal — the m1.1 Form 1571 leaf > refuses to attach a Form 1571 that is missing required fields, naming them 81ms
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 201
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST /submission/:id/cross-references → 400 on a bad file type
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > GET /submission/:id/cross-references → 200 includes the record
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > register is NOT ready while the LOA is not on file, then ready after PATCH
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/cross-references/:id/file-loa → 201 files the m1.4.1 leaf and authorizes it
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 400 without a 4-digit sequenceNumber
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > POST …/file-loa → 404 for an unknown cross-reference
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > does not leak another org's cross-references
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > PATCH unknown id → 404
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted cross-references (eCTD m1.4) > DELETE /cross-references/:id → 204 then absent
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /submission/:id/safety-reports → 201 drafts a tracked report
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > POST /safety-reports → 422 for a non-reportable event
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports → 200 lists the draft
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > GET /safety-reports/overdue → 200 includes the unfiled past-deadline draft
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > the cockpit counts the overdue safety report from the register, whatever the body says
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > refuses to file a draft that is not the draft being filed
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > filing with draftId marks it filed and drops it from overdue
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND safety reports (21 CFR 312.32) > does not leak another org's safety reports
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /submission/:id/annual-reports → 201 drafts a tracked report with a due date
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > refuses a report with no reporting period dates as 400 VALIDATION, not 500 and not 404
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > POST /annual-reports → 400 without indNumber/productName
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > GET /annual-reports → 200 lists the draft
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > GET /annual-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND annual reports (21 CFR 312.33) > overdue with a far-future asOf includes it; filing then drops it
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /submission/:id/amendments → 201 drafts a tracked amendment
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > POST /amendments → 400 without indNumber/changedDocuments
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > GET /amendments → 200 lists the draft
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > GET /amendments/:amendmentId → 200 roundtrips the draft; cross-org + unknown → 404
+ ↓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted IND amendments (21 CFR 312.30/.31) > filing with draftId marks the amendment filed + links its sequence
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a simulated receipt handed back by the transport is never recorded as transmitted (503)
+{
+  "timestamp": "2026-09-23T04:36:46.747Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Prepared ICSR transmission",
+  "context": {
+    "submissionId": 1,
+    "gateway": "FDA_FAERS",
+    "transmitReady": true,
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a transport failure → 502 (NOT transmitted) and the row stays prepared
+{
+  "timestamp": "2026-09-23T04:36:46.759Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Prepared ICSR transmission",
+  "context": {
+    "submissionId": 1,
+    "gateway": "FDA_FAERS",
+    "transmitReady": true,
+    "organizationId": 1
+  }
+}
+
+stderr | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a transport failure → 502 (NOT transmitted) and the row stays prepared
+{
+  "timestamp": "2026-09-23T04:36:46.762Z",
+  "level": "error",
+  "message": "[ind-icsr-transmission-persistence] ICSR gateway transmit failed",
+  "context": {
+    "id": "03346996-ce1f-40d2-8d95-7dbf49c4c7a8",
+    "gateway": "FDA_FAERS",
+    "organizationId": 1,
+    "reason": "AS2 MDN timeout"
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case)
+{
+  "timestamp": "2026-09-23T04:36:46.769Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Prepared ICSR transmission",
+  "context": {
+    "submissionId": 1,
+    "gateway": "FDA_FAERS",
+    "transmitReady": true,
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case)
+{
+  "timestamp": "2026-09-23T04:36:46.779Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "73e31128-625c-4711-9879-cd61660c9284",
+    "gateway": "FDA_FAERS",
+    "receiptId": "ESG-CORE-7F3A2C",
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > rejects transmit when the ICSR is not transmit-ready (422 with the gaps); transport never called
+{
+  "timestamp": "2026-09-23T04:36:46.790Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Prepared ICSR transmission",
+  "context": {
+    "submissionId": 1,
+    "gateway": "FDA_FAERS",
+    "transmitReady": false,
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > an AR acknowledgment marks a TRANSMITTED report rejected with errors
+{
+  "timestamp": "2026-09-23T04:36:46.803Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Prepared ICSR transmission",
+  "context": {
+    "submissionId": 1,
+    "gateway": "FDA_FAERS",
+    "transmitReady": true,
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > an AR acknowledgment marks a TRANSMITTED report rejected with errors
+{
+  "timestamp": "2026-09-23T04:36:46.808Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "96dee7ee-0e70-4c06-9106-ebb41c464937",
+    "gateway": "FDA_FAERS",
+    "receiptId": "ESG-CORE-1003",
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses to transmit a report that is no longer prepared (409): no second send of the same message
+{
+  "timestamp": "2026-09-23T04:36:46.817Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Prepared ICSR transmission",
+  "context": {
+    "submissionId": 1,
+    "gateway": "FDA_FAERS",
+    "transmitReady": true,
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses to transmit a report that is no longer prepared (409): no second send of the same message
+{
+  "timestamp": "2026-09-23T04:36:46.822Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "7ec7b5a9-6774-49ba-8ea3-3dd6a2ed4288",
+    "gateway": "FDA_FAERS",
+    "receiptId": "ESG-CORE-1007",
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a study report with no study registration number is prepared but not transmit-ready
+{
+  "timestamp": "2026-09-23T04:36:46.832Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Prepared ICSR transmission",
+  "context": {
+    "submissionId": 1,
+    "gateway": "FDA_FAERS",
+    "transmitReady": false,
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement for a report that was never transmitted (409), and the row is unchanged
+{
+  "timestamp": "2026-09-23T04:36:46.836Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Prepared ICSR transmission",
+  "context": {
+    "submissionId": 1,
+    "gateway": "FDA_FAERS",
+    "transmitReady": true,
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged"
+{
+  "timestamp": "2026-09-23T04:36:46.846Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Prepared ICSR transmission",
+  "context": {
+    "submissionId": 1,
+    "gateway": "FDA_FAERS",
+    "transmitReady": true,
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged"
+{
+  "timestamp": "2026-09-23T04:36:46.851Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "a47cf299-2e41-4dc8-9cc8-451bf9e66fda",
+    "gateway": "FDA_FAERS",
+    "receiptId": "ESG-CORE-1005",
+    "organizationId": 1
+  }
+}
+
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > with NO gateway configured, transmit → 503 (NOT transmitted) and the row stays prepared 17ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a simulated receipt handed back by the transport is never recorded as transmitted (503) 12ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a transport failure → 502 (NOT transmitted) and the row stays prepared 11ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case) 21ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > rejects transmit when the ICSR is not transmit-ready (422 with the gaps); transport never called 13ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > an AR acknowledgment marks a TRANSMITTED report rejected with errors 14ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses to transmit a report that is no longer prepared (409): no second send of the same message 15ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > a study report with no study registration number is prepared but not transmit-ready 4ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement for a report that was never transmitted (409), and the row is unchanged 11ms
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement that names a different message number (422)
+{
+  "timestamp": "2026-09-23T04:36:46.862Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Prepared ICSR transmission",
+  "context": {
+    "submissionId": 1,
+    "gateway": "FDA_FAERS",
+    "transmitReady": true,
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement that names a different message number (422)
+{
+  "timestamp": "2026-09-23T04:36:46.868Z",
+  "level": "info",
+  "message": "[ind-icsr-transmission-persistence] Recorded ICSR transmission receipt",
+  "context": {
+    "id": "e46b9154-99d9-4854-9fc6-ea9b77cb9061",
+    "gateway": "FDA_FAERS",
+    "receiptId": "ESG-CORE-1006",
+    "organizationId": 1
+  }
+}
+
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement with no readable ACK code (422), never recording "acknowledged" 16ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > refuses an acknowledgement that names a different message number (422) 18ms
+ ✓ server/routes/ind-lifecycle/__tests__/routes.contract.integration.test.ts > persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance) > 400 without gateway; 404 transmitting an unknown id 5ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed | 67 skipped (89)
+   Start at  04:36:41
+   Duration  5.55s (transform 1.47s, setup 78ms, import 2.47s, tests 2.74s, environment 0ms)
+

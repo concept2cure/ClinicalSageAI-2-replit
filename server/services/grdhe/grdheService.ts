@@ -1353,8 +1353,8 @@ export class GRDHEService {
   // `{ valid: true }` for every non-invalidated row. Neither can be repaired
   // into a second signing path: there is ONE conforming writer
   // (server/services/part11/signature-persistence.ts, behind
-  // /api/esignature/sign, credentials verified by
-  // part11ComplianceService.verifyUserCredentials) and one verifier
+  // /api/esignature/sign, the signer re-verified by the platform's one signing
+  // ceremony, services/part11/reverify-signer.ts) and one verifier
   // (/api/auth/enterprise/electronic-signature/:id/verify). The GRDHE routes
   // answer 410 and name them. regulatory_harmonization.electronic_signatures
   // is not dropped; it held no rows on a database provisioned from empty.

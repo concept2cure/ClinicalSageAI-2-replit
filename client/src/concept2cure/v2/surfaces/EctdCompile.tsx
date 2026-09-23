@@ -30,10 +30,11 @@
  * resolves it; a program with no linked section store gets the server's own
  * blocker text, not a silent 0%.)
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
+import { assessmentState } from '../assessmentState';
 import { apiRequest } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
@@ -71,6 +72,11 @@ interface StatusView {
   submissionBlockers?: string[];
   modules: ModuleReadiness[];
   requiredSectionSource?: RequiredSectionSource;
+  /** 'placed' — counted from documents placed in the program's sequence;
+   *  'approved' — from the section store's approved/locked/final statuses. */
+  readinessBasis?: 'placed' | 'approved';
+  /** The sequence a compile builds, with the region recorded on it. */
+  sequence?: { sequenceNumber: string; region: string; leafCount: number } | null;
   totalSections: number;
   totalRequired: number;
   totalCompleted: number;
@@ -83,6 +89,16 @@ interface ValidationResult {
   sectionCode?: string;
   fix?: string;
 }
+
+/** What a follow-up sequence does to the filed state (see LifecycleView). */
+interface CompiledLifecycle {
+  /** The newest filed sequence the prior state folds up to; null when none is on record. */
+  priorSequence: string | null;
+  operations: Array<{ operation: string; ctdSection: string; fileName: string; href: string; modifiedFile: string | null }>;
+  /** Placed leaves the package does not hold, and why. */
+  leftOut: Array<{ sectionCode: string; reason: string }>;
+}
+
 interface CompileResult {
   id: string;
   projectId: number | null;
@@ -100,8 +116,30 @@ interface CompileResult {
    *  the package-download endpoint needs. Absent on draft-backbone compiles. */
   submissionId?: number;
   sequenceNumber?: string;
+  /** The region recorded on the compiled sequence. */
+  region?: string;
+  /** Whether the compilation — and its leaf manifest — was written. */
+  recorded?: boolean;
+  /** What the assembled package holds (spine-backed compiles). */
+  package?: CompiledPackage;
+  /** What this sequence does to the filed state, from the manifest it recorded. */
+  lifecycle?: CompiledLifecycle;
   errors: string[];
   warnings: string[];
+}
+interface CompiledPackage {
+  sha256: string | null;
+  files: string[];
+  regionalBackbone: { path: string; xml: string } | null;
+  indexMd5: string | null;
+  pdfa: {
+    pdfLeaves: number;
+    pdfaConverted: number;
+    allPdfA: boolean;
+    notConverted: string[];
+    /** FDA forms shipped with FDA's own security settings — never converted, by rule. */
+    agencyFormsAsIssued?: string[];
+  } | null;
 }
 interface CompilationRow {
   id: number | string;
@@ -111,7 +149,34 @@ interface CompilationRow {
   version: string;
   compiled_at: string | null;
   created_at: string | null;
+  sequence_number?: string | null;
+  has_manifest?: boolean;
+  /** An agency-validator report run outside the product, imported against this compilation. */
+  external_validation?: ImportedReport | null;
 }
+
+/** A LORENZ eValidator report as the server keeps it (ectd_compilations.external_validation). */
+interface ImportedReport {
+  validator: string;
+  source: 'imported';
+  importedAt: string;
+  importedBy: number;
+  importedByEmail?: string | null;
+  fileName: string | null;
+  reportSha256: string;
+  findings: Array<{ ruleId: string; severity: 'error' | 'warning' | 'info'; message: string; leafHref?: string }>;
+  errorCount: number;
+  warningCount: number;
+  infoCount: number;
+  /** Every report this one replaced, oldest first. */
+  supersedes?: ReportSummary[];
+}
+
+/** What stays on record of a report — kept for one that was replaced. */
+type ReportSummary = Pick<
+  ImportedReport,
+  'importedAt' | 'importedBy' | 'importedByEmail' | 'fileName' | 'reportSha256' | 'errorCount' | 'warningCount' | 'infoCount'
+>;
 
 async function readJson<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
@@ -321,6 +386,366 @@ function isIntegrityFailure(code: string): boolean {
 
 const downloadXml = (name: string, text: string) => downloadText(name, text, 'application/xml');
 
+/* ── The compiled package, as a reviewer opens it ─────────────────────────────
+ * The ICH stylesheet is what renders index.xml as a navigable leaf hierarchy,
+ * and it cannot ship until the agency files are vendored. This reads the SAME
+ * two backbones the package holds — index.xml and the regional Module 1 file it
+ * points at — and shows their headings and leaves as the XML states them:
+ * element names, titles, lifecycle operations and paths. Nothing is inferred
+ * from the request that built them. */
+interface BackboneLeaf { title: string; href: string; operation: string; modifiedFile: string | null }
+interface BackboneNode { name: string; leaves: BackboneLeaf[]; children: BackboneNode[] }
+
+function readLeaf(el: Element): BackboneLeaf {
+  return {
+    title: el.getElementsByTagName('title')[0]?.textContent?.trim() || '(untitled leaf)',
+    href: el.getAttribute('xlink:href') ?? '',
+    operation: el.getAttribute('operation') ?? '',
+    modifiedFile: el.getAttribute('modified-file'),
+  };
+}
+
+/** A heading and everything beneath it that holds a leaf; null when nothing does. */
+function readBranch(el: Element): BackboneNode | null {
+  const leaves: BackboneLeaf[] = [];
+  const children: BackboneNode[] = [];
+  for (const child of Array.from(el.children)) {
+    if (child.localName === 'leaf') leaves.push(readLeaf(child));
+    else {
+      const branch = readBranch(child);
+      if (branch) children.push(branch);
+    }
+  }
+  return leaves.length || children.length ? { name: el.localName, leaves, children } : null;
+}
+
+/** Parse a backbone; null when it is not well-formed XML. */
+function backboneTree(xml: string): BackboneNode | null {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length > 0 || !doc.documentElement) return null;
+  return readBranch(doc.documentElement);
+}
+
+function BackboneBranch({ node }: { node: BackboneNode }) {
+  return (
+    <details open style={{ marginLeft: 12 }}>
+      <summary className="mono" style={{ fontSize: 12, cursor: 'pointer' }}>{node.name}</summary>
+      <ul style={{ listStyle: 'none', margin: '2px 0 4px', paddingLeft: 12 }}>
+        {node.leaves.map((l, i) => (
+          <li key={`leaf-${i}`} style={{ fontSize: 12.5, padding: '2px 0' }}>
+            {l.title} <span className="rd-chip tone-dim">{l.operation || 'no operation'}</span>{' '}
+            <span className="mono" style={{ color: 'var(--text-400)' }}>{l.href}</span>
+            {l.modifiedFile && <> · supersedes <span className="mono">{l.modifiedFile}</span></>}
+          </li>
+        ))}
+        {node.children.map((c, i) => <li key={`branch-${i}`}><BackboneBranch node={c} /></li>)}
+      </ul>
+    </details>
+  );
+}
+
+function BackboneView({ label, xml }: { label: string; xml: string }) {
+  const tree = useMemo(() => backboneTree(xml), [xml]);
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ fontSize: 12, fontWeight: 600 }}>{label}</div>
+      {tree ? <BackboneBranch node={tree} /> : (
+        <div className="sp-tone-warn" style={{ fontSize: 12 }}>This backbone is not well-formed XML, so its hierarchy cannot be shown.</div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The PDF/A outcome. An FDA form shipped as issued is neither converted nor a
+ * conversion failure, so it is out of the count and named on its own line.
+ */
+function PdfaFacts({ pdfa }: { pdfa: NonNullable<CompiledPackage['pdfa']> }) {
+  const asIssued = pdfa.agencyFormsAsIssued ?? [];
+  const convertible = pdfa.pdfLeaves - asIssued.length;
+  return (
+    <>
+      {convertible > 0 && (
+        <li className={pdfa.allPdfA ? undefined : 'sp-tone-warn'}>
+          {pdfa.pdfaConverted} of {convertible} PDF leaves converted to PDF/A.
+        </li>
+      )}
+      {asIssued.length > 0 && (
+        <li>
+          {asIssued.length === 1 ? 'One FDA form' : `${asIssued.length} FDA forms`} shipped as FDA issued, with
+          FDA&apos;s security settings intact, and not converted: <span className="mono">{asIssued.join(', ')}</span>
+        </li>
+      )}
+    </>
+  );
+}
+
+function PackageFacts({ result }: { result: CompileResult }) {
+  const pkg = result.package;
+  const pdfa = pkg?.pdfa;
+  return (
+    <ul style={{ margin: '0 0 10px', paddingLeft: 18, fontSize: 12.5 }}>
+      <li>
+        Sequence <span className="mono">{result.sequenceNumber ?? '—'}</span>
+        {result.region ? <> · region {result.region.toUpperCase()}</> : null}
+        {pkg?.sha256 ? <> · package SHA-256 <span className="mono">{pkg.sha256.slice(0, 16)}…</span></> : null}
+      </li>
+      {result.recorded === true && <li>Recorded — its leaf manifest is what the next sequence is diffed against.</li>}
+      {result.recorded === false && <li className="sp-tone-err">Not recorded — the next sequence has nothing to be diffed against.</li>}
+      {pdfa && <PdfaFacts pdfa={pdfa} />}
+    </ul>
+  );
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/** Who imported a report: the account, else the user id. */
+const importer = (r: ReportSummary) => r.importedByEmail || `user ${r.importedBy}`;
+
+/** One line naming a report: when, by whom, its counts, its file and hash. */
+function reportLine(r: ReportSummary): string {
+  const file = r.fileName ? `${r.fileName}, ` : '';
+  return `${new Date(r.importedAt).toLocaleString()} by ${importer(r)} — ${reportCounts(r)} (${file}SHA-256 ${r.reportSha256.slice(0, 16)}…)`;
+}
+
+/** "1 error · 1 warning" — the counts the report itself gives. */
+function reportCounts(r: Pick<ImportedReport, 'errorCount' | 'warningCount' | 'infoCount'>): string {
+  const parts = [plural(r.errorCount, 'error'), plural(r.warningCount, 'warning')];
+  if (r.infoCount > 0) parts.push(`${r.infoCount} info`);
+  return parts.join(' · ');
+}
+
+/**
+ * Import a LORENZ eValidator JSON report against one compilation — the one
+ * whose exported package it was run over. The file input is driven by a named,
+ * focusable button (the input itself is not in the tab order). A refused report
+ * is shown in the server's words.
+ */
+function EvalidatorImport({ identPath, row, onImported }: { identPath: string; row: CompilationRow; onImported: () => void }) {
+  const picker = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const seq = row.sequence_number ?? String(row.id);
+  const current = row.external_validation ?? null;
+  const verb = current ? 'Replace eValidator report' : 'Import eValidator report';
+
+  const onFile = async (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { setError('This report is larger than 2 MB, the most one import carries.'); return; }
+    setBusy(true); setError(null);
+    let text: string;
+    try {
+      text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ''));
+        reader.onerror = () => reject(reader.error ?? new Error('unreadable'));
+        reader.readAsText(file);
+      });
+    } catch {
+      setBusy(false); setError('The file could not be read.');
+      return;
+    }
+    const { ok, body } = await readJson<{ error?: { message?: string } }>('POST', `/api/ectd-compile/${identPath}/validate`, {
+      evalidatorReport: { compilationId: Number(row.id), fileName: file.name, text },
+    });
+    setBusy(false);
+    if (!ok) { setError(body?.error?.message ?? 'The report was not imported.'); return; }
+    onImported();
+  };
+
+  return (
+    <span>
+      <input type="file" accept=".json,application/json" ref={picker} disabled={busy} style={{ display: 'none' }}
+        aria-label={`eValidator report file for sequence ${seq}`}
+        onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; void onFile(file); }} />
+      <button className="nda-open" disabled={busy || confirming} aria-label={`${verb}: sequence ${seq}`}
+        onClick={() => (current ? setConfirming(true) : picker.current?.click())}
+        title="Import the JSON report LORENZ eValidator wrote for this compilation's exported package">
+        {I.fileCheck} {busy ? 'Importing…' : verb}
+      </button>
+      {current && confirming && (
+        <div role="group" aria-label={`Replace the eValidator report for sequence ${seq}`} style={{ fontSize: 12, marginTop: 4, whiteSpace: 'normal' }}>
+          This replaces the report imported {reportLine(current)}. It stays listed with the new report as replaced, and in the audit trail.
+          <div style={{ marginTop: 4 }}>
+            <button className="nda-open" onClick={() => { setConfirming(false); picker.current?.click(); }}>Choose the replacement report</button>
+            <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setConfirming(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {error && <div role="alert" className="sp-tone-err" style={{ fontSize: 12, marginTop: 4, whiteSpace: 'normal' }}>{error}</div>}
+    </span>
+  );
+}
+
+/** An imported report: what it is, where it came from, and every finding it lists. */
+function EvalidatorReportView({ row }: { row: CompilationRow }) {
+  const r = row.external_validation;
+  if (!r) return null;
+  const seq = row.sequence_number ?? String(row.id);
+  /* "No findings" is a clearance claim, so it comes from positive evidence that
+     the validator ran — an imported report carrying its digest and a parsed
+     findings list — never from the list being empty. Without that evidence the
+     view says the findings could not be read. */
+  const findingsState = assessmentState({
+    scopeExists: true,
+    findingCount: Array.isArray(r.findings) ? r.findings.length : 0,
+    assessmentRan: Array.isArray(r.findings) && Boolean(r.reportSha256),
+  });
+  return (
+    <section aria-label={`eValidator report — sequence ${seq}`} style={{ borderTop: '1px solid var(--border)', padding: '10px 12px' }}>
+      <div style={{ fontSize: 12.5, fontWeight: 600 }}>
+        LORENZ eValidator — sequence <span className="mono">{seq}</span>:{' '}
+        <span className={r.errorCount > 0 ? 'sp-tone-err' : undefined}>{reportCounts(r)}</span>
+      </div>
+      <p style={{ fontSize: 12, margin: '4px 0 6px' }}>
+        Run outside this product, over the exported package, and imported {new Date(r.importedAt).toLocaleString()} by {importer(r)}.
+        This product did not run the validator; it keeps the report as imported
+        {r.fileName ? <> (<span className="mono">{r.fileName}</span>, SHA-256 <span className="mono">{r.reportSha256.slice(0, 16)}…</span>)</> : null}.
+      </p>
+      {(r.supersedes?.length ?? 0) > 0 && (
+        <div style={{ fontSize: 12, margin: '0 0 6px' }}>
+          Replaces {r.supersedes!.length === 1 ? 'an earlier import' : `${r.supersedes!.length} earlier imports`}:
+          <ul aria-label="Reports this one replaced" style={{ margin: '2px 0 0', paddingLeft: 18 }}>
+            {r.supersedes!.map((p) => <li key={`${p.reportSha256}:${p.importedAt}`}>{reportLine(p)}</li>)}
+          </ul>
+        </div>
+      )}
+      {findingsState === 'assessed-clear' ? (
+        <p style={{ fontSize: 12, margin: 0 }}>The report lists no findings.</p>
+      ) : findingsState !== 'assessed-with-findings' ? (
+        <p style={{ fontSize: 12, margin: 0 }}>The findings in this report could not be read.</p>
+      ) : (
+        <table className="reg-tbl">
+          <thead><tr><th>Rule</th><th>Severity</th><th>Message</th><th>File</th></tr></thead>
+          <tbody>
+            {r.findings.map((f, i) => (
+              <tr key={`${f.ruleId}:${i}`}>
+                <td className="mono">{f.ruleId}</td>
+                <td className={f.severity === 'error' ? 'sp-tone-err' : f.severity === 'warning' ? 'sp-tone-warn' : undefined}>{f.severity}</td>
+                <td>{f.message}</td>
+                <td className="mono">{f.leafHref ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  );
+}
+
+/** The compilation history, with each packaged compilation's imported agency-validator report. */
+function CompilationHistoryTable({ history, identPath, onImported }: { history: CompilationRow[]; identPath: string | null; onImported: () => void }) {
+  return (
+    <>
+      <table className="reg-tbl"><thead><tr><th>Name</th><th>Sequence</th><th>Leaf manifest</th><th>Type</th><th>Version</th><th>Status</th><th>Agency validator</th><th style={{ textAlign: 'right' }}>Compiled</th></tr></thead>
+        <tbody>{history.map((h) => (
+          <tr key={String(h.id)}>
+            <td>{h.compilation_name}</td>
+            <td className="mono">{h.sequence_number ?? '—'}</td>
+            <td>{h.has_manifest ? 'manifest recorded' : 'no manifest — cannot anchor a lifecycle'}</td>
+            <td>{h.compilation_type}</td><td className="mono">{h.version}</td>
+            <td><span className={'rd-chip tone-' + (h.status === 'completed' ? 'ok' : h.status === 'failed' ? 'err' : 'dim')}>{h.status}</span></td>
+            <td>
+              {h.external_validation && <div>{reportCounts(h.external_validation)}</div>}
+              {h.has_manifest && identPath != null ? <EvalidatorImport identPath={identPath} row={h} onImported={onImported} /> : (!h.external_validation && '—')}
+            </td>
+            <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{h.compiled_at ? new Date(h.compiled_at).toLocaleString() : '—'}</td>
+          </tr>))}</tbody></table>
+      {history.map((h) => <EvalidatorReportView key={`report-${String(h.id)}`} row={h} />)}
+    </>
+  );
+}
+
+/**
+ * What a follow-up sequence does to the filed state: every act with the filed
+ * leaf it names, and what was left out. Read from the manifest the compile
+ * recorded — the record the next sequence is diffed against.
+ */
+function LifecycleView({ result }: { result: CompileResult }) {
+  const life = result.lifecycle;
+  if (!life || result.sequenceNumber === '0000') return null;
+  return (
+    <section aria-label="Lifecycle" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
+      <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>Lifecycle</div>
+      <p style={{ fontSize: 12, margin: '0 0 6px' }}>
+        {life.priorSequence ? (
+          <>
+            Acts are bound to what is on file through sequence <span className="mono">{life.priorSequence}</span>, read from the
+            leaf manifests recorded for the filed sequences.
+          </>
+        ) : (
+          <>
+            No filed sequence is on record for this submission, so nothing is on file to act on: a declared replace, append or
+            delete is left out of the package.
+          </>
+        )}
+      </p>
+      {life.operations.length > 0 && (
+        <table className="reg-tbl">
+          <thead><tr><th>Operation</th><th>Section</th><th>File</th><th>modified-file</th></tr></thead>
+          <tbody>
+            {life.operations.map((o) => (
+              <tr key={`${o.operation}:${o.ctdSection}:${o.href}`}>
+                <td className="mono">{o.operation}</td>
+                <td>{o.ctdSection}</td>
+                <td className="mono">{o.operation === 'delete' ? o.fileName : o.href}</td>
+                <td className="mono">{o.modifiedFile ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {life.leftOut.length > 0 && (
+        <div className="sp-tone-err" style={{ fontSize: 12, marginTop: 6 }}>
+          Left out of the package:
+          <ul style={{ margin: '2px 0 0', paddingLeft: 18 }}>
+            {life.leftOut.map((k) => <li key={`${k.sectionCode}:${k.reason}`}>{k.sectionCode}: {k.reason}</li>)}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** What the compile assembled: facts, the leaf hierarchy, the files, the two backbone artifacts. */
+function CompiledPackageView({ result, ident }: { result: CompileResult; ident: string }) {
+  const pkg = result.package;
+  if (!pkg) return null;
+  const regional = pkg.regionalBackbone;
+  const regionalName = regional?.path.split('/').pop() ?? 'regional.xml';
+  const stem = safeFileName(`ectd-${ident}-seq-${result.sequenceNumber ?? 'package'}`);
+  return (
+    <div style={{ marginTop: 10 }}>
+      <PackageFacts result={result} />
+      <LifecycleView result={result} />
+      <section aria-label="Leaf hierarchy" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>Leaf hierarchy</div>
+        {result.xmlBackbone && <BackboneView label="index.xml — ICH backbone" xml={result.xmlBackbone} />}
+        {regional && <BackboneView label={`${regional.path} — regional Module 1`} xml={regional.xml} />}
+      </section>
+      <details style={{ marginBottom: 10 }}>
+        <summary style={{ fontSize: 12.5, cursor: 'pointer' }}>Files in this package ({pkg.files.length})</summary>
+        <ul className="mono" style={{ fontSize: 12, margin: '4px 0 0', paddingLeft: 18 }}>
+          {pkg.files.map((f) => <li key={f}>{f}</li>)}
+        </ul>
+      </details>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {regional && (
+          <button className="nda-open" onClick={() => downloadXml(`${stem}-${regionalName}`, regional.xml)}>
+            {I.download} Download {regionalName}
+          </button>
+        )}
+        {pkg.indexMd5 != null && (
+          <button className="nda-open" onClick={() => downloadText(`${stem}-index-md5.txt`, pkg.indexMd5!)}>
+            {I.download} Download index-md5.txt
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /**
  * The open program's identifier — a regulatory_programs UUID, a program code,
  * or a legacy numeric project id. The SERVER resolves whichever it is,
@@ -465,12 +890,19 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
 
   useEffect(() => { void loadStatus(); void loadHistory(); }, [loadStatus, loadHistory]);
 
+  /* A program whose sequence exists compiles for the region RECORDED on that
+     sequence; the server refuses a contradicting one. So the selector is
+     replaced by the recorded region and nothing is sent — a Region menu that
+     changed nothing told the user a choice existed that did not. */
+  const recordedRegion = status?.sequence?.region ?? null;
+  const regionBody = useMemo(() => (recordedRegion ? {} : { region }), [recordedRegion, region]);
+
   const doValidate = useCallback(async () => {
     if (identPath == null) return;
     setBusy('validate');
     try {
       const { ok, status: st, body } = await readJson<{ valid: boolean; results: ValidationResult[]; summary: { pass: number; warnings: number; errors: number } }>(
-        'POST', `/api/ectd-compile/${identPath}/validate`, { region },
+        'POST', `/api/ectd-compile/${identPath}/validate`, regionBody,
       );
       if (!ok || !body) {
         fireToast(st === 401 ? 'Sign in to your tenant to validate.' : `Validation didn’t run (HTTP ${st}).`, 'error');
@@ -482,7 +914,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       setFindings(body.results ?? []);
       fireToast(`Validation: ${body.summary.errors} error(s), ${body.summary.warnings} warning(s).`);
     } finally { setBusy(null); }
-  }, [identPath, region, fireToast]);
+  }, [identPath, regionBody, fireToast]);
 
   /* The actual deliverable. The compile proves the package exists (leaf
      counts, sha256) — this hands the publisher its BYTES through the governed
@@ -495,7 +927,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     if (subId == null) return;
     setBusy('export');
     try {
-      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, { region });
+      // Pinned to the sequence this compile built, not whichever is latest now.
+      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, {
+        ...regionBody,
+        ...(compileResult?.sequenceNumber ? { sequenceNumber: compileResult.sequenceNumber } : {}),
+      });
       if (!res.ok) {
         const pj = (await res.json().catch(() => null)) as { error?: string } | null;
         fireToast('The package was not returned — ' + (pj?.error ?? `HTTP ${res.status}`) + '.', 'error');
@@ -515,15 +951,19 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     } finally {
       setBusy(null);
     }
-  }, [compileResult, region, ident, fireToast]);
+  }, [compileResult, regionBody, ident, fireToast]);
 
   const doCompile = useCallback(async () => {
     if (identPath == null) return;
     setBusy('compile');
     try {
-      const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, { submissionType, region });
+      const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, { submissionType, ...regionBody });
       if (!ok || !body) {
-        fireToast(st === 401 ? 'Sign in to your tenant to compile.' : `Compile failed (HTTP ${st}). Nothing was assembled.`, 'error');
+        const refusal = (body as { error?: { message?: string } } | null)?.error?.message;
+        fireToast(
+          st === 401 ? 'Sign in to your tenant to compile.' : `Compile refused (HTTP ${st}) — ${refusal ?? 'nothing was assembled'}.`,
+          'error',
+        );
         return;
       }
       setCompileResult(body);
@@ -543,7 +983,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       );
       void loadStatus(); void loadHistory();
     } finally { setBusy(null); }
-  }, [identPath, submissionType, region, fireToast, loadStatus, loadHistory]);
+  }, [identPath, submissionType, regionBody, fireToast, loadStatus, loadHistory]);
 
   /* WHAT ANA SEES HERE. Published ABOVE the no-program early return, because
      `usePublishSurfaceContext` is a hook and a hook below a conditional return
@@ -675,10 +1115,19 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           </span>
         </div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-region">Region</label>
-          <select id="ectd-region" className="c2c-input" style={{ height: 30 }} value={region} onChange={(e) => setRegion(e.target.value as any)}>
-            {REGIONS.map((r) => <option key={r} value={r}>{r === 'FDA' ? 'US · FDA' : 'EU · EMA'}</option>)}
-          </select>
+          {recordedRegion ? (
+            <span style={{ fontSize: 12.5 }}>
+              Region <b>{recordedRegion.toUpperCase()}</b>
+              <span style={{ color: 'var(--text-400)' }}> · recorded on sequence {status?.sequence?.sequenceNumber}</span>
+            </span>
+          ) : (
+            <>
+              <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-region">Region</label>
+              <select id="ectd-region" className="c2c-input" style={{ height: 30 }} value={region} onChange={(e) => setRegion(e.target.value as any)}>
+                {REGIONS.map((r) => <option key={r} value={r}>{r === 'FDA' ? 'US · FDA' : 'EU · EMA'}</option>)}
+              </select>
+            </>
+          )}
           <label style={{ fontSize: 12, color: 'var(--text-400)' }} htmlFor="ectd-subtype">Submission</label>
           <select id="ectd-subtype" className="c2c-input" style={{ height: 30 }} value={submissionType} onChange={(e) => setSubmissionType(e.target.value as any)}>
             {SUB_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -697,7 +1146,13 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           {/* The chip reports CONTENT completeness, which is what this number
               measures. It used to read "submission-ready" at 100%, over a package
               with no leaf files — see the blockers panel below. */}
-          {status && (
+          {status && status.readinessBasis === 'placed' ? (
+            // Counted from documents PLACED in the sequence — placement, not
+            // approval, so it never borrows the "content complete" wording.
+            <span className={'rd-chip tone-' + (status.totalCompleted === status.totalRequired ? 'ok' : 'warn')}>
+              {status.totalCompleted} of {status.totalRequired} required sections placed
+            </span>
+          ) : status && (
             <span className={'rd-chip tone-' + ((status.contentComplete ?? status.overallReadiness === 100) ? 'ok' : 'warn')}>
               {status.overallReadiness}% · {(status.contentComplete ?? status.overallReadiness === 100) ? 'content complete' : 'incomplete'}
             </span>
@@ -808,6 +1263,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                 )}
               </>
             )}
+            <CompiledPackageView result={compileResult} ident={ident} />
           </div>
         </div>
       )}
@@ -846,13 +1302,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           ) : history.length === 0 ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="No compilations yet" hint="Each Compile run is recorded here with its status and version." /></div>
           ) : (
-            <table className="reg-tbl"><thead><tr><th>Name</th><th>Type</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Compiled</th></tr></thead>
-              <tbody>{history.map((h) => (
-                <tr key={String(h.id)}>
-                  <td>{h.compilation_name}</td><td>{h.compilation_type}</td><td className="mono">{h.version}</td>
-                  <td><span className={'rd-chip tone-' + (h.status === 'completed' ? 'ok' : h.status === 'failed' ? 'err' : 'dim')}>{h.status}</span></td>
-                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{h.compiled_at ? new Date(h.compiled_at).toLocaleString() : '—'}</td>
-                </tr>))}</tbody></table>
+            <CompilationHistoryTable history={history} identPath={identPath} onImported={() => { void loadHistory(); }} />
           )}
         </div>
       </div>

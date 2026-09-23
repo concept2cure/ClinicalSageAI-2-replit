@@ -43,22 +43,62 @@ export function normalizeSeverity(raw: string | undefined): ValidationSeverity {
   return 'info';
 }
 
+/** The severity words a JSON report may use, and what each one counts as. */
+const JSON_SEVERITY: ReadonlyMap<string, ValidationSeverity> = new Map([
+  ...['error', 'err', 'high', 'fail', 'failure', 'failed', 'critical', 'fatal'].map((w) => [w, 'error'] as const),
+  ...['warning', 'warn', 'medium', 'low'].map((w) => [w, 'warning'] as const),
+  ...['info', 'information', 'informational', 'notice', 'pass', 'passed', 'ok'].map((w) => [w, 'info'] as const),
+]);
+
 /**
  * Parse a JSON eValidator report. Accepts either our native shape
  * ({validator?, profile?, findings:[{ruleId,severity,message,leafHref,criterion}]})
  * or a bare findings array. This is the recommended integration contract: point
  * the engine (or a thin wrapper) at JSON output.
+ *
+ * FAILS CLOSED (2026-09-23, W5/D7). Any other envelope, a row that is not an
+ * object, or a severity outside JSON_SEVERITY THROWS, naming what it found. It
+ * used to return [] for an unknown envelope and map an unknown severity to
+ * 'info', and the adapter reported both as passed:true — a report this product
+ * could not read, or an error it could not name, cleared the external gate.
+ * A report in a shape not listed here is a report to add a reading for, from
+ * the real file, never one to guess at.
  */
 export function parseEvalidatorJsonReport(text: string): ExternalValidationFinding[] {
   const data = JSON.parse(text);
-  const rows: any[] = Array.isArray(data) ? data : Array.isArray(data?.findings) ? data.findings : [];
-  return rows.map((r) => ({
-    ruleId: String(r.ruleId ?? r.rule ?? r.number ?? r.code ?? r.id ?? 'UNKNOWN'),
-    severity: normalizeSeverity(r.severity ?? r.type ?? r.level),
-    message: String(r.message ?? r.description ?? r.text ?? ''),
-    leafHref: r.leafHref ?? r.location ?? r.href ?? undefined,
-    criterion: r.criterion ?? r.guidance ?? undefined,
-  }));
+  let rows: unknown[];
+  if (Array.isArray(data)) rows = data;
+  else if (data && typeof data === 'object' && Array.isArray((data as { findings?: unknown }).findings)) {
+    rows = (data as { findings: unknown[] }).findings;
+  } else {
+    const shape = data && typeof data === 'object'
+      ? `an object with keys [${Object.keys(data).join(', ')}]${'findings' in data ? ' whose "findings" is not an array' : ''}`
+      : `a JSON ${data === null ? 'null' : typeof data}`;
+    throw new Error(
+      `This is not an eValidator report this product reads: expected a findings array, or an object with a "findings" array; got ${shape}.`,
+    );
+  }
+  return rows.map((raw, i) => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      throw new Error(`eValidator report finding ${i + 1} is not an object.`);
+    }
+    const r = raw as Record<string, any>;
+    const sevRaw = r.severity ?? r.type ?? r.level;
+    if (sevRaw == null || String(sevRaw).trim() === '') {
+      throw new Error(`eValidator report finding ${i + 1} has no severity, so it cannot be counted.`);
+    }
+    const severity = JSON_SEVERITY.get(String(sevRaw).trim().toLowerCase());
+    if (!severity) {
+      throw new Error(`eValidator report finding ${i + 1} has severity "${String(sevRaw)}", which this product does not map.`);
+    }
+    return {
+      ruleId: String(r.ruleId ?? r.rule ?? r.number ?? r.code ?? r.id ?? 'UNKNOWN'),
+      severity,
+      message: String(r.message ?? r.description ?? r.text ?? ''),
+      leafHref: r.leafHref ?? r.location ?? r.href ?? undefined,
+      criterion: r.criterion ?? r.guidance ?? undefined,
+    };
+  });
 }
 
 /**

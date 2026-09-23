@@ -14,6 +14,13 @@ const PROGRAM_ID = '11111111-2222-3333-4444-000000000204';
 const queryFn = vi.fn();
 const connectFn = vi.fn();
 
+// The signing ceremony reads the signer's account standing (VSR-001 F-28);
+// every signer here is active. Suspended and deprovisioned signers are pinned
+// by reverify-signer.test.ts and tests/db/account-standing.dbtest.ts.
+vi.mock('../server/services/account-standing', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../server/services/account-standing')>()),
+  isAccountActive: async () => true,
+}));
 vi.mock('../server/db', () => ({
   pool: {
     query:   (...args: unknown[]) => queryFn(...args),
@@ -35,6 +42,10 @@ vi.mock('bcryptjs', () => ({
 }));
 vi.mock('../server/services/mfaService', () => ({
   verifyToken: vi.fn().mockResolvedValue(true),
+  // The operator has no second factor enrolled. verifyReauth asks (the canonical
+  // §11.200 rule: the code is required whenever one is enrolled) and refuses when
+  // the answer cannot be read, so the fixture has to state it.
+  isMfaEnabled: vi.fn().mockResolvedValue(false),
 }));
 
 /** Re-auth body that satisfies verifyReauth in these tests. */

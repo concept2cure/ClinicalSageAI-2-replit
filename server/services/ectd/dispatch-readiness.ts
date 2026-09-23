@@ -23,7 +23,9 @@
  *     content hash pinned on the leaf when it was filed no longer matches what
  *     the store holds. The pin exists so "is the document behind this leaf
  *     still what was filed?" has an answer; a mismatch is that answer and is
- *     never silently passed.
+ *     never silently passed. Not raised on a delete: a withdrawal ships none
+ *     of the document's content, and it withdraws the copy already on file,
+ *     whatever the source holds now (2026-09-23, W5/D7, residual repair).
  *   - UNPLACEABLE_DOCUMENT_TABLE — a leaf pointing at a document table no
  *     resolver can materialize (a typo or an invented table). The write path
  *     now refuses these, but rows placed BEFORE that guard existed are still in
@@ -37,10 +39,18 @@
  *     here would promise an operator a transmit the system will refuse.
  *   - INVALID_LIFECYCLE_OP — an operation outside new|replace|append|delete
  *
- * The delete exemption is scoped to UNRESOLVED_DOCUMENT alone. A delete is
- * backbone-only and correctly carries no document, but if a delete row DOES
- * carry a pointer the table checks still apply — the assembler resolves every
- * stored leaf without reading its operation.
+ * The delete exemption is scoped to the CONTENT checks (UNRESOLVED_DOCUMENT
+ * and DOCUMENT_CONTENT_MISMATCH). A delete is backbone-only and correctly
+ * carries no document, but if a delete row DOES carry a pointer the table
+ * checks still apply: the assembler binds a named withdrawal by that
+ * pointer's source key, and a key no filed leaf carries (as with a typo or
+ * external table) is refused at transmit as unbindable.
+ * 2026-09-23 (W5/D7, residual repair): this said "the assembler resolves
+ * every stored leaf without reading its operation". It no longer reads the
+ * source of a document the sequence only withdraws, and a delete-only
+ * document that cannot be read is no longer a transmit blocker — so
+ * DOCUMENT_CONTENT_MISMATCH on a delete, like UNRESOLVED_DOCUMENT, would be
+ * a refusal transmit does not share.
  *
  * Required-section completeness is reported as a non-blocking WARNING (Module-1
  * numbering and leaf section codes don't align cleanly across regions, so it is
@@ -58,6 +68,7 @@
  * @module server/services/ectd/dispatch-readiness
  */
 
+import type { RuleView } from './validation-rule-corpus';
 import {
   documentTableKeyKind,
   externalDocumentTableReason,
@@ -129,6 +140,9 @@ export interface ReadinessFinding {
   code: string;
   sectionCode: string | null;
   message: string;
+  /** The corpus rule this finding is an instance of — attached by the
+   *  assessment (withRules); null when the corpus names no such rule. */
+  rule?: RuleView | null;
 }
 
 export interface DispatchReadinessReport {
@@ -176,10 +190,13 @@ function normalizeCode(code: string): string {
  * table checks. A delete row can still carry a pointer — AnaToolExecutor takes
  * `lifecycle_op` and `document_table` on the same call — and a pointer that
  * exists must be one the assembler recognizes whatever the operation, because
- * the assembler does not read the operation: buildPackagerInputFromCore calls
- * resolveFile on EVERY stored leaf and counts each one it cannot resolve
- * against submission completeness. Written as a blanket exemption, a typo table
- * on a delete leaf read dispatch-clear.
+ * the assembler binds a named withdrawal by that pointer's source key, and a
+ * pointer onto a table no resolver recognizes names a document that can never
+ * have been filed, so the withdrawal is refused at transmit as unbindable.
+ * Written as a blanket exemption, a typo table on a delete leaf read
+ * dispatch-clear. (2026-09-23, W5/D7, residual repair: this said the
+ * assembler resolved every stored leaf without reading its operation; it no
+ * longer reads a delete-only document's source.)
  *
  * The completeness check and the table check are INDEPENDENT: a half-pointer
  * (an unknown table AND a null document_id) is genuinely two defects and yields
@@ -187,7 +204,9 @@ function normalizeCode(code: string): string {
  * are mutually exclusive by construction — a table is either outside the closed
  * set or inside it, and only a table inside it can be a documented external
  * one. Each finding predicts the same outcome: the assembler cannot produce
- * this leaf's file, and transmitSequence fails closed on any unresolved leaf.
+ * this leaf's file, and transmitSequence fails closed on any unresolved leaf —
+ * or, for a delete, cannot bind the withdrawal to a filed leaf and reports it
+ * in `skipped`, on which transmit fails closed too.
  */
 /**
  * Is the leaf's pointer complete for the key space its table is addressed by?
@@ -238,7 +257,9 @@ function resolutionFindings(leaf: ReadinessLeaf, isDelete: boolean): ReadinessFi
         `${resolution.reason ? ` — ${resolution.reason}` : ''}. It cannot be assembled into the package.`,
     });
   }
-  if (resolution.status === 'content_changed') {
+  // A withdrawal withdraws the copy on file, whatever the source holds now, and
+  // transmit no longer reads it (2026-09-23, W5/D7, residual repair).
+  if (!isDelete && resolution.status === 'content_changed') {
     out.push({
       severity: 'error',
       code: 'DOCUMENT_CONTENT_MISMATCH',
@@ -247,6 +268,18 @@ function resolutionFindings(leaf: ReadinessLeaf, isDelete: boolean): ReadinessFi
         `Leaf "${leaf.title}" (${leaf.sectionCode}) was filed against content with SHA-256 ${resolution.pinnedSha256 ?? 'unknown'}, ` +
         `but ${pointerLabel(leaf)} now ${resolution.storedSha256 ? `carries ${resolution.storedSha256}` : 'yields no content digest'}` +
         `${resolution.reason ? ` — ${resolution.reason}` : ''}. Re-file the leaf against the current document, or restore the filed content, before dispatch.`,
+    });
+  }
+  // 2026-09-22 (W5/D7): a resolved leaf with no pin used to produce nothing,
+  // so "content not verified" read exactly like "content matches".
+  if (!isDelete && resolution.status === 'resolved' && resolution.pin === 'unpinned') {
+    out.push({
+      severity: 'warning',
+      code: 'DOCUMENT_CONTENT_NOT_PINNED',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, but no content hash was pinned when it was placed, ` +
+        'so whether the document still holds what was placed cannot be verified. Re-place the leaf to pin its content.',
     });
   }
   return out;
@@ -366,6 +399,24 @@ export function computeDispatchReadiness(
         code: 'LIFECYCLE_OP_IN_ORIGINAL',
         sectionCode: leaf.sectionCode,
         message: `Leaf "${leaf.title}" uses lifecycle operation "${leaf.lifecycleOp}" in an original (0000) sequence — only "new" is valid; there is no prior content to ${leaf.lifecycleOp}.`,
+      });
+    }
+
+    // WARNING: a declared act on a filed leaf is NOT assessed here. It is bound
+    // to the filed inventory at assembly (package-from-core), and an act that
+    // cannot bind is refused there and at transmit. Saying so keeps a clean
+    // verdict from being read as covering it. 2026-09-22 (W5/D7).
+    if (
+      !opts.isOriginalSequence &&
+      (leaf.lifecycleOp === 'replace' || leaf.lifecycleOp === 'append' || leaf.lifecycleOp === 'delete')
+    ) {
+      findings.push({
+        severity: 'warning',
+        code: 'LIFECYCLE_BINDING_NOT_ASSESSED',
+        sectionCode: leaf.sectionCode,
+        message:
+          `Leaf "${leaf.title}" declares "${leaf.lifecycleOp}". Which filed leaf it acts on is established when the ` +
+          'sequence is assembled, not here; freeze and dispatch assemble it and refuse an act that cannot be bound.',
       });
     }
   }

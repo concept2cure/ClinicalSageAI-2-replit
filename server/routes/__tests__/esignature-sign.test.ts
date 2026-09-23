@@ -61,6 +61,13 @@ const hoisted = vi.hoisted(() => {
   };
 });
 
+// The signing ceremony reads the signer's account standing (VSR-001 F-28);
+// every signer here is active. Suspended and deprovisioned signers are pinned
+// by reverify-signer.test.ts and tests/db/account-standing.dbtest.ts.
+vi.mock('../../services/account-standing', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/account-standing')>()),
+  isAccountActive: async () => true,
+}));
 vi.mock('../../db.js', () => ({ pool: hoisted.makePool() }));
 vi.mock('../../db', () => ({ pool: hoisted.makePool() }));
 vi.mock('../../services/mfaService.js', () => ({
@@ -270,5 +277,33 @@ describe('POST /api/esignature/sign — §11.50 signer attribution', () => {
     const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('ESIGNATURE_SIGNER_NOT_ATTRIBUTABLE');
+  });
+});
+
+// The e-sign modal asks for the authenticator code on this answer instead of
+// sending a signature every signing endpoint would refuse (§11.200).
+describe('POST /api/esignature/verify-password — whether a second factor is enrolled', () => {
+  it('reports an enrolled second factor once the password verified', async () => {
+    hoisted.isMfaEnabled.mockResolvedValue(true);
+    const res = await request(makeApp()).post('/api/esignature/verify-password').send({ password: PASSWORD });
+    expect(res.body).toEqual({ valid: true, mfaRequired: true });
+  });
+
+  it('reports none when none is enrolled', async () => {
+    const res = await request(makeApp()).post('/api/esignature/verify-password').send({ password: PASSWORD });
+    expect(res.body).toEqual({ valid: true, mfaRequired: false });
+  });
+
+  it('says nothing about enrolment for a wrong password', async () => {
+    hoisted.isMfaEnabled.mockResolvedValue(true);
+    const res = await request(makeApp()).post('/api/esignature/verify-password').send({ password: 'wrong-password' });
+    expect(res.body).toEqual({ valid: false });
+    expect(hoisted.isMfaEnabled).not.toHaveBeenCalled();
+  });
+
+  it('leaves the answer out, not false, when enrolment cannot be read', async () => {
+    hoisted.isMfaEnabled.mockRejectedValue(new Error('users unreachable'));
+    const res = await request(makeApp()).post('/api/esignature/verify-password').send({ password: PASSWORD });
+    expect(res.body).toEqual({ valid: true });
   });
 });

@@ -1,0 +1,59 @@
+# claim-release repair (round-3 skeptic) — failing-first on the tree BEFORE the fix, 2026-09-23T08:12:39Z
+
+## 1. Skeptic probe verify-r3b/claim-release/sftp-strands.probe.test.ts (asserts the defect: refusedBeforeWire=false)
+ERR CredentialError | FDA esg (production) — missing credentials: FDA_ESG_SFTP_HOST, FDA_ESG_SFTP_USER, FDA_ESG_SFTP_KEY_PATH. See docs/runbooks/fda-esg-setup.md. | refusedBeforeWire= false | pool= ["INSERT INTO submission_gateway_credentials ( organization_id","INSERT INTO submission_transmittals ( organization_id, progr","INSERT INTO submission_gateway_credentials ( organization_id","UPDATE submission_transmittals SET status = $1, updated_at =","UPDATE submission_transmittals SET status = $1, error_class "]
+ERR2 TransportError | FDA ESG SFTP transport requires 'ssh2-sftp-client' package. Install it (npm install ssh2-sftp-client) and retry. | refusedBeforeWire= false
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/claim-release/sftp-strands.probe.test.ts > SFTP pre-connect refusal > isConfigured is true with AS2 creds only 3ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/claim-release/sftp-strands.probe.test.ts > SFTP pre-connect refusal > no SFTP creds: CredentialError before connect, refusedBeforeWire false 4ms
+ ✓ ../../../tmp/claude-0/-home-user-ClinicalSageAI-2-replit/dc5d62d1-d0ff-5631-8f23-d68d3f8ccc63/scratchpad/verify-r3b/claim-release/sftp-strands.probe.test.ts > SFTP pre-connect refusal > SFTP creds set, ssh2-sftp-client absent: TransportError before connect, refusedBeforeWire false 9ms
+      Tests  3 passed (3)
+
+## 2. New/changed cases (unit + service)
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 1247ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the FDA NextGen REST refusal (UnverifiedTransportError) 4ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a refusal inside the gateway that proves nothing was sent > releases the claim for the requiredAgencyMetadata refusal raised by the gateway 5ms
+ × server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError) 16ms
+   → expected 'transmitting' to be 'pending' // Object.is equality
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > TransportError keeps the claim at transmitting 2ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > a failure from inside the gateway after the guard passed (NEGATIVE) > GatewayError keeps the claim at transmitting 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — the guard refuses before the gateway > is true for a guard refusal, and the gateway is never called 4ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for TransportError raised by impl.transmit 5ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for GatewayError raised by impl.transmit 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for a plain Error raised by impl.transmit 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an unmarked ValidationError raised by impl.transmit 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — failures from inside the gateway after the guard passed > is false for an arbitrary error that merely carries transmitted === false (typed, not duck-typed) 1ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the FDA NextGen REST refusal (UnverifiedTransportError, transmitted === false) 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > is true for the requiredAgencyMetadata refusal raised before the transmittal row 2ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — refusals inside a gateway that PROVE nothing was sent > requiredAgencyMetadata marks both of its refusals, and only those 1ms
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a CredentialError raised by a gateway's credential check (real MHRA transmit, no credentials) 16ms
+   → expected false to be true // Object.is equality
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a TransportError only when its throw site passed NOTHING_TRANSMITTED 2ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > every `new CredentialError(` in server/ is at an audited pre-request site 216ms
+ ✓ server/services/submission-gateways/__tests__/refused-before-wire.test.ts > test setup keeps staged bundles out of the repository > resolves the bundle root outside the working tree 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a CredentialError raised by a gateway's credential check (real MHRA transmit, no credentials)
+AssertionError: expected false to be true // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > is true for a TransportError only when its throw site passed NOTHING_TRANSMITTED
+AssertionError: expected false to be true // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > the FDA SFTP branch refusing before connect (round-3 skeptic) > releases the claim when a >1 GiB sequence has no SFTP credentials (CredentialError)
+AssertionError: expected 'transmitting' to be 'pending' // Object.is equality
+Expected: "pending"
+Received: "transmitting"
+ Test Files  2 failed (2)
+      Tests  3 failed | 16 passed (19)
+
+## 3. Setup temp-root leak check (low #3)
+/tmp/c2c-test-bundles-M43jQL
+/tmp/c2c-test-bundles-Z3Bwzm
+SETUP-LEAK-CHECK FAIL
+
+## 4. Mutant: an unaudited `new CredentialError(` site added under server/ (temporary file, removed after the run) — the source pin fails
+ × server/services/submission-gateways/__tests__/refused-before-wire.test.ts > refusedBeforeWire — CredentialError and the proof-carrying TransportError (round-3 skeptic) > every `new CredentialError(` in server/ is at an audited pre-request site 260ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "server/services/submission-gateways/zz-credential-pin-mutant.ts": 1,
+      Tests  1 failed | 12 skipped (13)

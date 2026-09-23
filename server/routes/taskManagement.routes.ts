@@ -12,7 +12,12 @@ import {
   organizationUsers,
 } from '../../shared/schema';
 import { getSecureOrgId } from '../utils/tenantContext';
-import { auditTaskAction } from '../services/tasking/task-audit';
+import { requireEditorAccess } from '../middleware/orgMembership';
+import {
+  auditTaskAction,
+  auditTaskActionInTx,
+  TaskAuditNotRecordedError,
+} from '../services/tasking/task-audit';
 import { loadTaskAnalytics } from '../services/tasking/task-analytics';
 import { listTemplatesForOrg } from '../services/tasking/task-template-catalog';
 import { createNotification } from '../services/notifications/notification-service';
@@ -44,6 +49,35 @@ function getActorUserId(req: Request): number | null {
   const raw = (req as any).userId ?? (req as any).user?.id;
   const parsed = Number(raw);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+/* Every write below is ROLE-GATED with requireEditorAccess (the repo's one
+   governed-write gate): an org `viewer` reads the board but may not author a
+   task, a transition or a ledger row naming them. Reads stay open. This router
+   only: unifiedTasks.routes.ts writes the same table ungated and still best-
+   effort audited, and the completion cascade (task-side-effects) is unrecorded. */
+
+/** Org + actor, or null with the 401 already sent. Every write needs both: the
+ *  ledger refuses an attributionless row, so an unnamed actor may not write. */
+function actorContext(req: Request, res: Response): { organizationId: number; actorUserId: number } | null {
+  const organizationId = Number(getSecureOrgId(req) ?? NaN);
+  const actorUserId = getActorUserId(req);
+  if (!Number.isFinite(organizationId) || organizationId <= 0 || !actorUserId) {
+    res.status(401).json({ success: false, error: 'Organization and user context required' });
+    return null;
+  }
+  return { organizationId, actorUserId };
+}
+
+/** A task write and its ledger row are one fact: each runs on ONE transaction
+ *  with auditTaskActionInTx, so a failed row rolls the write back — and this
+ *  is the answer, never a 200 over an unrecorded change. */
+function auditWriteFailed(res: Response, what: string) {
+  return res.status(500).json({
+    success: false,
+    error: 'AUDIT_WRITE_FAILED',
+    message: `${what} could not be recorded in the audit trail, so nothing was changed. Try again.`,
+  });
 }
 
 const taskStatusSchema = z.enum(TASK_STATUSES);
@@ -169,15 +203,12 @@ const createAutomationSchema = z.object({
 // Critical-path + workload-balancing helpers live in
 // services/tasking/task-planning (extracted for the repo-health line gate).
 // Create single task
-router.post('/tasks', async (req: Request, res: Response) => {
+router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) => {
   try {
+    const ctx = actorContext(req, res);
+    if (!ctx) return;
+    const { organizationId, actorUserId } = ctx;
     const validatedData = createTaskSchema.parse(req.body);
-    const actorUserId = getActorUserId(req);
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
     const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
     // Auto-assign if not specified
@@ -193,40 +224,42 @@ router.post('/tasks', async (req: Request, res: Response) => {
     }
 
     const { startDate, dueDate, ...taskFields } = validatedData;
-    const [newTask] = await storage.db
-      .insert(unifiedTasks)
-      .values({
-        taskId,
-        organizationId,
-        ...taskFields,
-        startDate: startDate ? new Date(startDate) : undefined,
-        dueDate: dueDate ? new Date(dueDate) : undefined,
-        assigneeId,
-        assigneeName,
-        status: validatedData.status ?? 'pending',
-        progress: 0,
-        completionPercentage: 0,
-        createdById: actorUserId ?? undefined,
-      })
-      .returning();
-
     // Part 11 lineage — the create is written to the governed ledger on THIS
-    // path too, not only on /api/regulatory/tasks (assessment D11).
-    await auditTaskAction({
-      orgId: organizationId,
-      userId: actorUserId,
-      command: 'task.create',
-      taskId,
-      payload: {
-        moduleType: validatedData.moduleType,
-        title: validatedData.title,
-        priority: validatedData.priority,
-        status: validatedData.status ?? 'pending',
-        assigneeId: assigneeId ?? null,
-        sourceEntityType: validatedData.sourceEntityType ?? null,
-        sourceEntityId: validatedData.sourceEntityId ?? null,
-      },
-      reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+    // path too (assessment D11), in the create's own transaction.
+    const newTask = await storage.db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(unifiedTasks)
+        .values({
+          taskId,
+          organizationId,
+          ...taskFields,
+          startDate: startDate ? new Date(startDate) : undefined,
+          dueDate: dueDate ? new Date(dueDate) : undefined,
+          assigneeId,
+          assigneeName,
+          status: validatedData.status ?? 'pending',
+          progress: 0,
+          completionPercentage: 0,
+          createdById: actorUserId,
+        })
+        .returning();
+      await auditTaskActionInTx(tx, {
+        orgId: organizationId,
+        userId: actorUserId,
+        command: 'task.create',
+        taskId,
+        payload: {
+          moduleType: validatedData.moduleType,
+          title: validatedData.title,
+          priority: validatedData.priority,
+          status: validatedData.status ?? 'pending',
+          assigneeId: assigneeId ?? null,
+          sourceEntityType: validatedData.sourceEntityType ?? null,
+          sourceEntityId: validatedData.sourceEntityId ?? null,
+        },
+        reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+      });
+      return row;
     });
 
     // Tell the assignee (unless they created it themselves).
@@ -246,6 +279,7 @@ router.post('/tasks', async (req: Request, res: Response) => {
       data: newTask,
     });
   } catch (error) {
+    if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The task');
     console.error('Error creating task:', error);
     res.status(400).json({
       success: false,
@@ -262,25 +296,25 @@ const updateTaskStatusSchema = z.object({
   status: taskStatusSchema,
   progress: z.number().min(0).max(100).optional(),
   reason: z.string().max(1000).optional(),
-  // The e-signature ceremony for approval-gated completion. The PIN is used
-  // for verification only — it is never logged, audited, or echoed back.
+  // The e-signature ceremony for approval-gated completion: the signer's
+  // password, and the authenticator code when one is enrolled, re-verified by
+  // services/part11/reverify-signer.ts. Used for verification only — never
+  // logged, audited, or echoed back.
   signature: z
     .object({
-      pin: z.string().min(4).max(64),
+      password: z.string().min(1).max(256),
+      mfaToken: z.string().max(12).optional(),
       meaning: z.string().max(40),
     })
     .optional(),
 });
-router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
+router.patch('/tasks/:taskId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
+    const ctx = actorContext(req, res);
+    if (!ctx) return;
+    const { organizationId, actorUserId } = ctx;
     const taskId = String(req.params.taskId);
     const parsed = updateTaskStatusSchema.parse(req.body);
-    const actorUserId = getActorUserId(req);
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
 
     // Fetch-first: the transition is validated against the task's REAL current
     // status, and a cross-org id 404s before anything is written.
@@ -309,7 +343,7 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
     }
 
     // Approval-gated completion demands the §11.50 signature ceremony —
-    // PIN-verified identity, stated meaning, reason. 428 tells the client to
+    // re-verified identity, stated meaning, reason. 428 tells the client to
     // run the ceremony; nothing is written until it verifies.
     const signoff = await requireTaskSignoff({
       organizationId,
@@ -337,48 +371,102 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
     const isDone = parsed.status === 'completed';
     const progress = parsed.progress ?? (isDone ? 100 : undefined);
     const isReopen = existing.status === 'completed' && parsed.status !== 'completed';
-    const [updated] = await storage.db
-      .update(unifiedTasks)
-      .set({
-        status: parsed.status,
-        progress,
-        completionPercentage: progress,
-        completedAt: isDone ? new Date() : isReopen ? null : undefined,
-        // Reopening retires the signature. The stored manifestation attests to
-        // the record as it stood at first completion; once the task is reopened
-        // and worked on, that attestation is stale, so the gate has to close
-        // again. Without this, a task signed once could be reopened, changed
-        // and re-completed indefinitely with no new PIN, meaning or reason —
-        // and it rendered "approved" the whole time it sat back in progress.
-        ...(isReopen ? { approvalStatus: 'pending' as string } : {}),
-        // Placed after the reopen reset so a real signature always wins.
-        // Appended in SQL rather than read-then-written: two concurrent
-        // sign-offs each reading the same prior array would write
-        // [...same, mine] and silently drop one verified §11.50 manifestation
-        // while its ledger entry persisted. approval_history is `json`, so the
-        // concat casts through jsonb and back.
-        ...(manifestation
-          ? {
-              approvalStatus: 'approved',
-              approvalHistory: sql`(COALESCE(${unifiedTasks.approvalHistory}, '[]'::json)::jsonb || ${JSON.stringify([manifestation])}::jsonb)::json`,
-            }
-          : {}),
-        lastModifiedBy: actorUserId ?? undefined,
-        updatedAt: new Date(),
-      })
-      // Compare-and-set on the status we read above. The state machine
-      // constrains what each request BELIEVES the row holds, not what it
-      // actually holds, and the PIN bcrypt comparison sits between the read and
-      // this write — a window of order-100ms. Without this predicate two
-      // concurrent transitions both pass isLegalTransition and both commit.
-      .where(
-        and(
-          eq(unifiedTasks.taskId, taskId),
-          eq(unifiedTasks.organizationId, organizationId),
-          eq(unifiedTasks.status, existing.status)
+    const statusChanges = existing.status !== parsed.status;
+    // isLegalTransition passes from === to, so a same-status PATCH reaches here.
+    // It is a write only if it carries a signature or moves progress; otherwise
+    // the caller's view is stale (a board still showing a task someone else
+    // completed) and re-running the UPDATE would rewrite a signed record's
+    // completion time and last editor with nothing to record. Refused, not 200:
+    // the change this caller asked for did not happen.
+    if (!statusChanges && !manifestation && (progress === undefined || progress === existing.progress)) {
+      return res.status(409).json({
+        success: false,
+        code: 'CONFLICT_STALE',
+        error: `This task is already "${existing.status}", so nothing was changed. Reload to see its current state.`,
+        from: existing.status,
+      });
+    }
+    // Every UPDATE below commits with its ledger row, including a same-status
+    // one (a late §11.50 signature, a progress change): a signed completion or
+    // any task write with no ledger entry must not exist.
+    const updated = await storage.db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(unifiedTasks)
+        .set({
+          status: parsed.status,
+          progress,
+          completionPercentage: progress,
+          // Only a real move into `completed` stamps the time. Signing a task
+          // that is already complete attests to that completion; the
+          // manifestation carries its own signedAt.
+          completedAt: isDone && statusChanges ? new Date() : isReopen ? null : undefined,
+          // Reopening retires the signature. The stored manifestation attests to
+          // the record as it stood at first completion; once the task is reopened
+          // and worked on, that attestation is stale, so the gate has to close
+          // again. Without this, a task signed once could be reopened, changed
+          // and re-completed indefinitely with no new signature, meaning or reason —
+          // and it rendered "approved" the whole time it sat back in progress.
+          ...(isReopen ? { approvalStatus: 'pending' as string } : {}),
+          // Placed after the reopen reset so a real signature always wins.
+          // Appended in SQL rather than read-then-written: two concurrent
+          // sign-offs each reading the same prior array would write
+          // [...same, mine] and silently drop one verified §11.50 manifestation
+          // while its ledger entry persisted. approval_history is `json`, so the
+          // concat casts through jsonb and back.
+          ...(manifestation
+            ? {
+                approvalStatus: 'approved',
+                approvalHistory: sql`(COALESCE(${unifiedTasks.approvalHistory}, '[]'::json)::jsonb || ${JSON.stringify([manifestation])}::jsonb)::json`,
+              }
+            : {}),
+          lastModifiedBy: actorUserId,
+          updatedAt: new Date(),
+        })
+        // Compare-and-set on the status we read above. The state machine
+        // constrains what each request BELIEVES the row holds, not what it
+        // actually holds, and the signer's re-verification sits between the read
+        // and this write — a window of order-100ms. Without this predicate two
+        // concurrent transitions both pass isLegalTransition and both commit.
+        .where(
+          and(
+            eq(unifiedTasks.taskId, taskId),
+            eq(unifiedTasks.organizationId, organizationId),
+            eq(unifiedTasks.status, existing.status),
+            // A same-status signature has no status to race on, so it sets on
+            // the approval it read instead: one signature clears the gate, and
+            // a second concurrent one gets CONFLICT_STALE rather than stacking.
+            manifestation ? sql`${unifiedTasks.approvalStatus} IS DISTINCT FROM 'approved'` : undefined
+          )
         )
-      )
-      .returning();
+        .returning();
+      if (row) {
+        await auditTaskActionInTx(tx, {
+          orgId: organizationId,
+          userId: actorUserId,
+          command: 'task.transition',
+          taskId,
+          payload: {
+            from: existing.status,
+            to: parsed.status,
+            progress: progress ?? null,
+            previousProgress: existing.progress ?? null,
+            // Signature manifestation (never the credentials) rides the governed record.
+            ...(manifestation
+              ? {
+                  signature: {
+                    signedByName: manifestation.signedByName,
+                    meaning: manifestation.meaning,
+                    signedAt: manifestation.signedAt,
+                    method: manifestation.method,
+                  },
+                }
+              : {}),
+          },
+          reason: parsed.reason,
+        });
+      }
+      return row;
+    });
 
     if (!updated) {
       // The row was there a moment ago (we read it), so an empty result means
@@ -391,31 +479,7 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
       });
     }
 
-    if (existing.status !== parsed.status) {
-      await auditTaskAction({
-        orgId: organizationId,
-        userId: actorUserId,
-        command: 'task.transition',
-        taskId,
-        payload: {
-          from: existing.status,
-          to: parsed.status,
-          progress: progress ?? null,
-          // Signature manifestation (never the PIN) rides the governed record.
-          ...(manifestation
-            ? {
-                signature: {
-                  signedByName: manifestation.signedByName,
-                  meaning: manifestation.meaning,
-                  signedAt: manifestation.signedAt,
-                  method: manifestation.method,
-                },
-              }
-            : {}),
-        },
-        reason: parsed.reason,
-      });
-
+    if (statusChanges) {
       if (isDone) {
         await cascadeUnblockOnCompletion(organizationId, taskId);
         if (existing.createdById && existing.createdById !== actorUserId) {
@@ -442,6 +506,7 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
 
     return res.json({ success: true, data: updated });
   } catch (error) {
+    if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The status change');
     return res.status(400).json({
       success: false,
       error: error instanceof z.ZodError ? error.errors : 'Failed to update task',
@@ -450,31 +515,23 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
 });
 
 // Bulk create tasks
-router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
+router.post('/tasks/bulk-create', requireEditorAccess, async (req: Request, res: Response) => {
+  const createdTasks: (typeof unifiedTasks.$inferSelect)[] = [];
   try {
+    const ctx = actorContext(req, res);
+    if (!ctx) return;
+    const { organizationId, actorUserId } = ctx;
     const validatedData = bulkCreateTasksSchema.parse(req.body);
-    const actorUserId = getActorUserId(req);
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
-    const createdTasks = [];
     const taskIdMapping: Record<string, string> = {};
 
-    // Create all tasks
+    // One transaction PER TASK (row + ledger row), not one for the batch: each
+    // workload-balanced pick must see the assignments committed before it.
     for (const taskData of validatedData.tasks) {
       const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
+      if (taskData.title) taskIdMapping[taskData.title] = taskId;
 
-      // Store temporary ID mapping for dependencies
-      if (taskData.title) {
-        taskIdMapping[taskData.title] = taskId;
-      }
-
-      // Auto-assign if needed
       let assigneeId = taskData.assigneeId;
       let assigneeName = null;
-
       if (!assigneeId) {
         const optimalAssignee = await getOptimalAssignee(organizationId, taskData);
         if (optimalAssignee) {
@@ -484,38 +541,34 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
       }
 
       const { startDate, dueDate, ...taskFields } = taskData;
-      const [newTask] = await storage.db
-        .insert(unifiedTasks)
-        .values({
-          taskId,
-          organizationId,
-          ...taskFields,
-          startDate: startDate ? new Date(startDate) : undefined,
-          dueDate: dueDate ? new Date(dueDate) : undefined,
-          assigneeId,
-          assigneeName,
-          status: 'pending',
-          progress: 0,
-          completionPercentage: 0,
-          createdById: actorUserId ?? undefined,
-        })
-        .returning();
-
-      if (newTask) {
-        createdTasks.push(newTask);
-        await auditTaskAction({
+      const newTask = await storage.db.transaction(async (tx) => {
+        const [row] = await tx
+          .insert(unifiedTasks)
+          .values({
+            taskId,
+            organizationId,
+            ...taskFields,
+            startDate: startDate ? new Date(startDate) : undefined,
+            dueDate: dueDate ? new Date(dueDate) : undefined,
+            assigneeId,
+            assigneeName,
+            status: 'pending',
+            progress: 0,
+            completionPercentage: 0,
+            createdById: actorUserId,
+          })
+          .returning();
+        await auditTaskActionInTx(tx, {
           orgId: organizationId,
           userId: actorUserId,
           command: 'task.create',
           taskId,
-          payload: {
-            moduleType: taskData.moduleType,
-            title: taskData.title,
-            priority: taskData.priority,
-            status: 'pending',
-            bulk: true,
-          },
+          payload: { moduleType: taskData.moduleType, title: taskData.title, priority: taskData.priority, status: 'pending', bulk: true },
         });
+        return row;
+      });
+      if (newTask) {
+        createdTasks.push(newTask);
         if (assigneeId && assigneeId !== actorUserId) {
           notifyTaskEvent({
             organizationId,
@@ -531,31 +584,32 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
 
     // Create dependencies if requested
     if (validatedData.linkDependencies) {
-      for (let i = 0; i < validatedData.tasks.length; i++) {
-        const task = validatedData.tasks[i];
-        if (task.dependencies && task.dependencies.length > 0) {
-          for (const depTitle of task.dependencies) {
-            if (taskIdMapping[depTitle] && taskIdMapping[task.title]) {
-              await storage.db.insert(taskDependencies).values({
-                dependencyId: `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`,
-                organizationId,
-                predecessorTaskId: taskIdMapping[depTitle],
-                successorTaskId: taskIdMapping[task.title],
-                dependencyType: 'finish-to-start',
-                status: 'active',
-              });
-            }
-          }
+      for (const task of validatedData.tasks) {
+        for (const depTitle of task.dependencies ?? []) {
+          if (!taskIdMapping[depTitle] || !taskIdMapping[task.title]) continue;
+          await storage.db.insert(taskDependencies).values({
+            dependencyId: `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`,
+            organizationId,
+            predecessorTaskId: taskIdMapping[depTitle],
+            successorTaskId: taskIdMapping[task.title],
+            dependencyType: 'finish-to-start',
+            status: 'active',
+          });
         }
       }
     }
 
-    res.json({
-      success: true,
-      data: createdTasks,
-      count: createdTasks.length,
-    });
+    res.json({ success: true, data: createdTasks, count: createdTasks.length });
   } catch (error) {
+    if (error instanceof TaskAuditNotRecordedError) {
+      // Earlier tasks in the batch committed with their ledger rows; say which.
+      return res.status(500).json({
+        success: false,
+        error: 'AUDIT_WRITE_FAILED',
+        message: `${createdTasks.length} task(s) were created and recorded; the next could not be recorded in the audit trail, so it and the rest were not created.`,
+        data: createdTasks,
+      });
+    }
     console.error('Error bulk creating tasks:', error);
     res.status(400).json({
       success: false,
@@ -565,16 +619,14 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
 });
 
 // Create tasks from template
-router.post('/tasks/from-template/:templateId', async (req: Request, res: Response) => {
+type TemplateShape = { templateId: string; name: string; tasks: unknown; dependencies?: unknown };
+router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
+    const ctx = actorContext(req, res);
+    if (!ctx) return;
+    const { organizationId, actorUserId } = ctx;
     const templateId = String(req.params.templateId);
     const { projectId, startDate, adjustDates } = req.body;
-    const actorUserId = getActorUserId(req);
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
 
     // Get template — the org's own row wins; a built-in catalog entry serves
     // when the org has none, so "Start workflow" works with zero seeding
@@ -586,14 +638,7 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
     // 500 (the list endpoint offers built-ins in exactly that situation).
     // Shape shared by a stored row and a built-in catalog entry — the fields
     // the instantiation below reads.
-    let storedTemplate:
-      | {
-          templateId: string;
-          name: string;
-          tasks: unknown;
-          dependencies?: unknown;
-        }
-      | undefined;
+    let storedTemplate: TemplateShape | undefined;
     try {
       [storedTemplate] = await storage.db
         .select()
@@ -611,135 +656,119 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
 
     const builtin = storedTemplate ? null : getBuiltinWorkflowTemplate(templateId);
     const template = storedTemplate ?? builtin;
-    if (!template) {
-      return res.status(404).json({
-        success: false,
-        error: 'Template not found',
-      });
-    }
+    if (!template) return res.status(404).json({ success: false, error: 'Template not found' });
 
     const taskDefinitions = template.tasks as any[];
-    const createdTasks = [];
     const taskIdMapping: Record<string, string> = {};
 
-    // Create tasks from template
-    for (let i = 0; i < taskDefinitions.length; i++) {
-      const taskDef = taskDefinitions[i];
-      const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
+    // The workflow is instantiated as ONE transaction — every task, its ledger
+    // row, the dependency edges and the usage bump — so a failure part-way
+    // leaves no half-built workflow and no task without its lineage.
+    const createdTasks = await storage.db.transaction(async (tx) => {
+      const created: (typeof unifiedTasks.$inferSelect)[] = [];
+      for (let i = 0; i < taskDefinitions.length; i++) {
+        const taskDef = taskDefinitions[i];
+        const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
-      taskIdMapping[taskDef.id || i.toString()] = taskId;
+        taskIdMapping[taskDef.id || i.toString()] = taskId;
 
-      // Calculate dates if needed
-      let taskStartDate = startDate;
-      let taskDueDate = null;
+        // Calculate dates if needed
+        let taskStartDate = startDate;
+        let taskDueDate = null;
 
-      // `taskDef.dayOffset` was truthiness-tested, so the workflow's day-0
-      // tasks never got dates even when adjustDates was requested.
-      if (adjustDates && startDate && taskDef.dayOffset != null) {
-        const start = new Date(startDate);
-        start.setDate(start.getDate() + taskDef.dayOffset);
-        taskStartDate = start.toISOString();
+        // `taskDef.dayOffset` was truthiness-tested, so the workflow's day-0
+        // tasks never got dates even when adjustDates was requested.
+        if (adjustDates && startDate && taskDef.dayOffset != null) {
+          const start = new Date(startDate);
+          start.setDate(start.getDate() + taskDef.dayOffset);
+          taskStartDate = start.toISOString();
 
-        if (taskDef.duration) {
-          const due = new Date(start);
-          due.setDate(due.getDate() + taskDef.duration);
-          taskDueDate = due.toISOString();
+          if (taskDef.duration) {
+            const due = new Date(start);
+            due.setDate(due.getDate() + taskDef.duration);
+            taskDueDate = due.toISOString();
+          }
         }
-      }
 
-      const [newTask] = await storage.db
-        .insert(unifiedTasks)
-        .values({
-          taskId,
-          organizationId,
-          projectId: projectId != null ? Number(projectId) : undefined,
-          title: taskDef.title,
-          description: taskDef.description,
-          moduleType: taskDef.moduleType || 'general',
-          category: taskDef.category,
-          taskType: taskDef.taskType,
-          priority: taskDef.priority || 'medium',
-          startDate: taskStartDate ? new Date(taskStartDate) : undefined,
-          dueDate: taskDueDate ? new Date(taskDueDate) : undefined,
-          estimatedHours: taskDef.estimatedHours,
-          status: 'pending',
-          progress: 0,
-          completionPercentage: 0,
-          // unifiedTasks has no template foreign key; record the originating
-          // template via the generic source-entity fields instead.
-          sourceEntityType: 'taskTemplate',
-          sourceEntityId: template.templateId,
-          createdById: actorUserId ?? undefined,
-        })
-        .returning();
-
-      if (newTask) {
-        createdTasks.push(newTask);
-        await auditTaskAction({
-          orgId: organizationId,
-          userId: actorUserId,
-          command: 'task.create',
-          taskId,
-          payload: {
-            moduleType: taskDef.moduleType || 'general',
-            title: taskDef.title,
-            priority: taskDef.priority || 'medium',
-            status: 'pending',
-            templateId: template.templateId,
-          },
-          reason: `Created from workflow template "${template.name}"`,
-        });
-      }
-    }
-
-    // Create dependencies from template
-    if (template.dependencies) {
-      const dependencies = template.dependencies as any[];
-      for (const dep of dependencies) {
-        if (taskIdMapping[dep.predecessor] && taskIdMapping[dep.successor]) {
-          await storage.db.insert(taskDependencies).values({
-            dependencyId: `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`,
+        const [newTask] = await tx
+          .insert(unifiedTasks)
+          .values({
+            taskId,
             organizationId,
-            predecessorTaskId: taskIdMapping[dep.predecessor],
-            successorTaskId: taskIdMapping[dep.successor],
-            dependencyType: dep.type || 'finish-to-start',
-            lagTime: dep.lag || 0,
-            status: 'active',
+            projectId: projectId != null ? Number(projectId) : undefined,
+            title: taskDef.title,
+            description: taskDef.description,
+            moduleType: taskDef.moduleType || 'general',
+            category: taskDef.category,
+            taskType: taskDef.taskType,
+            priority: taskDef.priority || 'medium',
+            startDate: taskStartDate ? new Date(taskStartDate) : undefined,
+            dueDate: taskDueDate ? new Date(taskDueDate) : undefined,
+            estimatedHours: taskDef.estimatedHours,
+            status: 'pending',
+            progress: 0,
+            completionPercentage: 0,
+            // unifiedTasks has no template foreign key; record the originating
+            // template via the generic source-entity fields instead.
+            sourceEntityType: 'taskTemplate',
+            sourceEntityId: template.templateId,
+            createdById: actorUserId,
+          })
+          .returning();
+
+        if (newTask) {
+          created.push(newTask);
+          await auditTaskActionInTx(tx, {
+            orgId: organizationId,
+            userId: actorUserId,
+            command: 'task.create',
+            taskId,
+            payload: {
+              moduleType: taskDef.moduleType || 'general',
+              title: taskDef.title,
+              priority: taskDef.priority || 'medium',
+              status: 'pending',
+              templateId: template.templateId,
+            },
+            reason: `Created from workflow template "${template.name}"`,
           });
         }
       }
-    }
 
-    // Update template usage statistics (stored templates only — built-ins have
-    // no row to bump).
-    if (storedTemplate) {
-      await storage.db
-        .update(taskTemplates)
-        .set({
-          usageCount: sql`${taskTemplates.usageCount} + 1`,
-          lastUsedAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(taskTemplates.templateId, templateId),
-            eq(taskTemplates.organizationId, organizationId)
-          )
-        );
-    }
+      // Create dependencies from template
+      if (template.dependencies) {
+        const dependencies = template.dependencies as any[];
+        for (const dep of dependencies) {
+          if (taskIdMapping[dep.predecessor] && taskIdMapping[dep.successor]) {
+            await tx.insert(taskDependencies).values({
+              dependencyId: `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`,
+              organizationId,
+              predecessorTaskId: taskIdMapping[dep.predecessor],
+              successorTaskId: taskIdMapping[dep.successor],
+              dependencyType: dep.type || 'finish-to-start',
+              lagTime: dep.lag || 0,
+              status: 'active',
+            });
+          }
+        }
+      }
 
-    res.json({
-      success: true,
-      data: createdTasks,
-      count: createdTasks.length,
-      template: template.name,
+      // Update template usage statistics (stored templates only — built-ins have
+      // no row to bump).
+      if (storedTemplate) {
+        await tx
+          .update(taskTemplates)
+          .set({ usageCount: sql`${taskTemplates.usageCount} + 1`, lastUsedAt: new Date(), updatedAt: new Date() })
+          .where(and(eq(taskTemplates.templateId, templateId), eq(taskTemplates.organizationId, organizationId)));
+      }
+      return created;
     });
+
+    res.json({ success: true, data: createdTasks, count: createdTasks.length, template: template.name });
   } catch (error) {
+    if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The workflow');
     console.error('Error creating tasks from template:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create tasks from template',
-    });
+    res.status(500).json({ success: false, error: 'Failed to create tasks from template' });
   }
 });
 
@@ -788,14 +817,12 @@ router.get('/tasks/by-module/:moduleId', async (req: Request, res: Response) => 
 });
 
 // Set task dependencies
-router.post('/tasks/dependencies', async (req: Request, res: Response) => {
+router.post('/tasks/dependencies', requireEditorAccess, async (req: Request, res: Response) => {
   try {
+    const ctx = actorContext(req, res);
+    if (!ctx) return;
+    const { organizationId, actorUserId } = ctx;
     const validatedData = createDependencySchema.parse(req.body);
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
 
     const [predecessorRows, successorRows] = await Promise.all([
       storage.db
@@ -852,28 +879,6 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
 
     const dependencyId = `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
-    const [newDependency] = await storage.db
-      .insert(taskDependencies)
-      .values({
-        dependencyId,
-        organizationId,
-        ...validatedData,
-        status: 'active',
-      })
-      .returning();
-
-    await auditTaskAction({
-      orgId: organizationId,
-      userId: getActorUserId(req),
-      command: 'task.link',
-      taskId: validatedData.predecessorTaskId,
-      payload: {
-        successorTaskId: validatedData.successorTaskId,
-        dependencyType: validatedData.dependencyType,
-        isBlocking: validatedData.isBlocking,
-      },
-    });
-
     // A blocking edge onto an unfinished predecessor means the successor IS
     // blocked — so say so. Without this the edge was recorded but no task ever
     // entered 'blocked', which made cascadeUnblockOnCompletion dead code: it
@@ -881,15 +886,31 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
     // a predecessor never unblocked anything and never notified the dependents'
     // assignees. Guarded by the same state machine the routes use, so an
     // already-completed or cancelled successor is left alone.
-    const isBlockingEdge = validatedData.isBlocking !== false;
-    let successorBlocked = false;
-    if (
-      isBlockingEdge &&
+    const blockSuccessor =
+      validatedData.isBlocking !== false &&
       predecessorTask.status !== 'completed' &&
       successorTask.status !== 'blocked' &&
-      isLegalTransition(successorTask.status, 'blocked')
-    ) {
-      const [blocked] = await storage.db
+      isLegalTransition(successorTask.status, 'blocked');
+
+    // The edge, the successor's block and both ledger rows are one transaction.
+    const { newDependency, successorBlocked } = await storage.db.transaction(async (tx) => {
+      const [dependency] = await tx
+        .insert(taskDependencies)
+        .values({ dependencyId, organizationId, ...validatedData, status: 'active' })
+        .returning();
+      await auditTaskActionInTx(tx, {
+        orgId: organizationId,
+        userId: actorUserId,
+        command: 'task.link',
+        taskId: validatedData.predecessorTaskId,
+        payload: {
+          successorTaskId: validatedData.successorTaskId,
+          dependencyType: validatedData.dependencyType,
+          isBlocking: validatedData.isBlocking,
+        },
+      });
+      if (!blockSuccessor) return { newDependency: dependency, successorBlocked: false };
+      const [blocked] = await tx
         .update(unifiedTasks)
         .set({ status: 'blocked', updatedAt: new Date() })
         .where(
@@ -902,24 +923,27 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
         )
         .returning({ taskId: unifiedTasks.taskId });
       if (blocked) {
-        successorBlocked = true;
-        await auditTaskAction({
+        await auditTaskActionInTx(tx, {
           orgId: organizationId,
-          userId: getActorUserId(req),
+          userId: actorUserId,
           command: 'task.transition',
           taskId: successorTask.taskId,
           payload: { from: successorTask.status, to: 'blocked' },
           reason: `Blocked by new dependency on ${validatedData.predecessorTaskId}`,
         });
-        notifyTaskEvent({
-          organizationId,
-          recipientUserId: successorTask.assigneeId,
-          category: 'task_blocked',
-          title: `Blocked: ${successorTask.title}`,
-          body: 'This task now depends on work that is not finished yet.',
-          taskId: successorTask.taskId,
-        });
       }
+      return { newDependency: dependency, successorBlocked: Boolean(blocked) };
+    });
+
+    if (successorBlocked) {
+      notifyTaskEvent({
+        organizationId,
+        recipientUserId: successorTask.assigneeId,
+        category: 'task_blocked',
+        title: `Blocked: ${successorTask.title}`,
+        body: 'This task now depends on work that is not finished yet.',
+        taskId: successorTask.taskId,
+      });
     }
 
     res.json({
@@ -930,6 +954,7 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
       successorBlocked,
     });
   } catch (error) {
+    if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The dependency');
     console.error('Error creating dependency:', error);
     res.status(400).json({
       success: false,
@@ -964,28 +989,21 @@ router.get('/tasks/critical-path/:projectId', async (req: Request, res: Response
 });
 
 // Auto-assign tasks based on workload
-router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
+const autoAssignSchema = z.object({ taskIds: z.array(z.string().min(1)).min(1).max(500) });
+router.post('/tasks/auto-assign', requireEditorAccess, async (req: Request, res: Response) => {
+  const assignmentResults: { taskId: string; assignedTo: string; assigneeId: number }[] = [];
   try {
-    const { taskIds } = req.body;
-    const actorUserId = getActorUserId(req);
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
-    const assignmentResults = [];
+    const ctx = actorContext(req, res);
+    if (!ctx) return;
+    const { organizationId, actorUserId } = ctx;
+    const { taskIds } = autoAssignSchema.parse(req.body ?? {});
 
     for (const taskId of taskIds) {
       // Get task details
       const [task] = await storage.db
         .select()
         .from(unifiedTasks)
-        .where(
-          and(
-            eq(unifiedTasks.taskId, taskId),
-            eq(unifiedTasks.organizationId, organizationId)
-          )
-        )
+        .where(and(eq(unifiedTasks.taskId, taskId), eq(unifiedTasks.organizationId, organizationId)))
         .limit(1);
 
       if (!task) continue;
@@ -994,37 +1012,30 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
       const optimalAssignee = await getOptimalAssignee(organizationId, task);
 
       if (optimalAssignee) {
-        // Update task assignment
-        await storage.db
-          .update(unifiedTasks)
-          .set({
-            assigneeId: optimalAssignee.id,
-            assigneeName: optimalAssignee.name,
-            assignedBy: actorUserId ?? undefined,
-            assignedAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(unifiedTasks.taskId, taskId),
-              eq(unifiedTasks.organizationId, organizationId)
-            )
-          );
-
-        assignmentResults.push({
-          taskId,
-          assignedTo: optimalAssignee.name,
-          assigneeId: optimalAssignee.id,
+        // One transaction per assignment (row + ledger row): the next pick
+        // must see this one committed, or the balancing piles onto one person.
+        await storage.db.transaction(async (tx) => {
+          await tx
+            .update(unifiedTasks)
+            .set({
+              assigneeId: optimalAssignee.id,
+              assigneeName: optimalAssignee.name,
+              assignedBy: actorUserId,
+              assignedAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .where(and(eq(unifiedTasks.taskId, taskId), eq(unifiedTasks.organizationId, organizationId)));
+          await auditTaskActionInTx(tx, {
+            orgId: organizationId,
+            userId: actorUserId,
+            command: 'task.assign',
+            taskId,
+            payload: { assigneeId: optimalAssignee.id, method: 'workload-balanced' },
+            reason: 'Workload-balanced auto-assign',
+          });
         });
 
-        await auditTaskAction({
-          orgId: organizationId,
-          userId: actorUserId,
-          command: 'task.assign',
-          taskId,
-          payload: { assigneeId: optimalAssignee.id, method: 'workload-balanced' },
-          reason: 'Workload-balanced auto-assign',
-        });
+        assignmentResults.push({ taskId, assignedTo: optimalAssignee.name, assigneeId: optimalAssignee.id });
         if (optimalAssignee.id !== actorUserId) {
           notifyTaskEvent({
             organizationId,
@@ -1037,17 +1048,22 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
       }
     }
 
-    res.json({
-      success: true,
-      data: assignmentResults,
-      count: assignmentResults.length,
-    });
+    res.json({ success: true, data: assignmentResults, count: assignmentResults.length });
   } catch (error) {
+    if (error instanceof TaskAuditNotRecordedError) {
+      // Earlier assignments committed with their ledger rows; say which.
+      return res.status(500).json({
+        success: false,
+        error: 'AUDIT_WRITE_FAILED',
+        message: `${assignmentResults.length} task(s) were assigned and recorded; the next assignment could not be recorded in the audit trail, so it and the rest were not made.`,
+        data: assignmentResults,
+      });
+    }
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: error.errors });
+    }
     console.error('Error auto-assigning tasks:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to auto-assign tasks',
-    });
+    res.status(500).json({ success: false, error: 'Failed to auto-assign tasks' });
   }
 });
 
@@ -1108,15 +1124,12 @@ router.get('/templates', async (req: Request, res: Response) => {
 });
 
 // Create task template
-router.post('/templates', async (req: Request, res: Response) => {
+router.post('/templates', requireEditorAccess, async (req: Request, res: Response) => {
   try {
+    const ctx = actorContext(req, res);
+    if (!ctx) return;
+    const { organizationId, actorUserId } = ctx;
     const validatedData = createTemplateSchema.parse(req.body);
-    const actorUserId = getActorUserId(req);
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
     const templateId = `TMPL-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
     const [newTemplate] = await storage.db
@@ -1128,7 +1141,7 @@ router.post('/templates', async (req: Request, res: Response) => {
         isActive: true,
         version: 1,
         usageCount: 0,
-        createdById: actorUserId ?? undefined,
+        createdById: actorUserId,
       })
       .returning();
 
@@ -1146,15 +1159,12 @@ router.post('/templates', async (req: Request, res: Response) => {
 });
 
 // Create automation rule
-router.post('/automation', async (req: Request, res: Response) => {
+router.post('/automation', requireEditorAccess, async (req: Request, res: Response) => {
   try {
+    const ctx = actorContext(req, res);
+    if (!ctx) return;
+    const { organizationId, actorUserId } = ctx;
     const validatedData = createAutomationSchema.parse(req.body);
-    const actorUserId = getActorUserId(req);
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
     const automationId = `AUTO-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
     const [newAutomation] = await storage.db
@@ -1168,7 +1178,7 @@ router.post('/automation', async (req: Request, res: Response) => {
         executionCount: 0,
         successCount: 0,
         failureCount: 0,
-        createdById: actorUserId ?? undefined,
+        createdById: actorUserId,
       })
       .returning();
 
@@ -1194,16 +1204,15 @@ const notifyTaskSchema = z.object({
   recipientUserId: z.number().int().positive().optional(),
   severity: z.enum(['info', 'warning', 'critical']).optional(),
 });
-router.post('/tasks/:taskId/notify', async (req: Request, res: Response) => {
+// Gated: it writes a governed ledger row naming the sender. (/messages below
+// is not — a plain collaboration message, which a viewer may send.)
+router.post('/tasks/:taskId/notify', requireEditorAccess, async (req: Request, res: Response) => {
   try {
+    const ctx = actorContext(req, res);
+    if (!ctx) return;
+    const { organizationId, actorUserId } = ctx;
     const taskId = String(req.params.taskId);
     const parsed = notifyTaskSchema.parse(req.body ?? {});
-    const actorUserId = getActorUserId(req);
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
 
     const [task] = await storage.db
       .select()
@@ -1257,13 +1266,23 @@ router.post('/tasks/:taskId/notify', async (req: Request, res: Response) => {
       metadata: { fromUserId: actorUserId },
     });
 
-    await auditTaskAction({
+    // createNotification owns its own connection, so the two cannot share a
+    // transaction. Ledger AFTER delivery, so the ledger never claims a message
+    // that was not sent — and an unrecorded send is reported, not a 200.
+    const audit = await auditTaskAction({
       orgId: organizationId,
       userId: actorUserId,
       command: 'task.notify',
       taskId,
       payload: { recipientUserId },
     });
+    if (!audit.recorded) {
+      return res.status(500).json({
+        success: false,
+        error: 'AUDIT_WRITE_FAILED',
+        message: 'The notification was delivered, but it could not be recorded in the audit trail.',
+      });
+    }
 
     res.json({ success: true, taskId, recipientUserId });
   } catch (error) {
@@ -1355,54 +1374,58 @@ router.post('/messages', async (req: Request, res: Response) => {
 // The ONLY removal verb for a task — stamps deleted_at/deleted_by instead of
 // destroying the row (Part 11 retention, assessment D24). Archived rows leave
 // every read model; the tombstone and its governed ledger record remain.
+// The reason is REQUIRED: the board tells the user it is written to the Part 11
+// trail, so a server that accepted none let a caller archive with a constant
+// default the user never gave. Same minimum as the UI (3, trimmed).
 const archiveTaskSchema = z.object({
-  reason: z.string().max(1000).optional(),
+  reason: z.string().trim().min(3).max(1000),
 });
-router.delete('/tasks/:taskId', async (req: Request, res: Response) => {
+router.delete('/tasks/:taskId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
+    const ctx = actorContext(req, res);
+    if (!ctx) return;
+    const { organizationId, actorUserId } = ctx;
     const taskId = String(req.params.taskId);
-    const parsed = archiveTaskSchema.parse(req.body ?? {});
-    const actorUserId = getActorUserId(req);
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
+    const parsed = archiveTaskSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'REASON_REQUIRED',
+        message: 'Give a reason for archiving (at least 3 characters). It is recorded in the audit trail.',
+      });
     }
 
-    const [archived] = await storage.db
-      .update(unifiedTasks)
-      .set({
-        deletedAt: new Date(),
-        deletedBy: actorUserId ?? undefined,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(unifiedTasks.taskId, taskId),
-          eq(unifiedTasks.organizationId, organizationId),
-          isNull(unifiedTasks.deletedAt)
+    const archived = await storage.db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(unifiedTasks)
+        .set({ deletedAt: new Date(), deletedBy: actorUserId, updatedAt: new Date() })
+        .where(
+          and(
+            eq(unifiedTasks.taskId, taskId),
+            eq(unifiedTasks.organizationId, organizationId),
+            isNull(unifiedTasks.deletedAt)
+          )
         )
-      )
-      .returning({ taskId: unifiedTasks.taskId, title: unifiedTasks.title });
+        .returning({ taskId: unifiedTasks.taskId, title: unifiedTasks.title });
+      if (row) {
+        await auditTaskActionInTx(tx, {
+          orgId: organizationId,
+          userId: actorUserId,
+          command: 'task.delete',
+          taskId,
+          payload: { title: row.title, softDelete: true },
+          reason: parsed.data.reason,
+        });
+      }
+      return row;
+    });
 
     if (!archived) {
       return res.status(404).json({ success: false, error: 'Task not found' });
     }
-
-    await auditTaskAction({
-      orgId: organizationId,
-      userId: actorUserId,
-      command: 'task.delete',
-      taskId,
-      payload: { title: archived.title, softDelete: true },
-      reason: parsed.reason,
-    });
-
     return res.json({ success: true, archived: true, taskId });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: error.errors });
-    }
+    if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The archive');
     console.error('Error archiving task:', error);
     return res.status(500).json({ success: false, error: 'Failed to archive task' });
   }
@@ -1416,15 +1439,9 @@ router.delete('/tasks/:taskId', async (req: Request, res: Response) => {
 // showed a hardcoded count (assessment D40).
 router.get('/my-work', async (req: Request, res: Response) => {
   try {
-    const actorUserId = getActorUserId(req);
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
-    if (!actorUserId) {
-      return res.status(401).json({ success: false, error: 'User context required' });
-    }
+    const ctx = actorContext(req, res);
+    if (!ctx) return;
+    const { organizationId, actorUserId } = ctx;
 
     const rows = await storage.db
       .select()

@@ -21,6 +21,7 @@ import { downloadBlob, downloadText, safeFileName } from '../download';
 import { useSurfaceActionHandlers } from '../surfaceActions';
 import { ProtocolRegisterForm, type RegisterKind } from './ProtocolRegisterForms';
 import { ProtocolDevForm, type PdevFormKind, type PdevFormTarget } from './ProtocolDevForms';
+import { ProtocolSignModal, type ProtocolSigning } from './ProtocolDevSigning';
 import { ProtocolSectionPane } from './ProtocolDevSection';
 import { AmendmentsTab, DeviationsTab, EligibilityTab, MilestonesTab, ObjectivesTab, Outline } from './ProtocolDevPanes';
 import { SoaTab } from './ProtocolDevSoa';
@@ -306,6 +307,7 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
   const [exportOpen, setExportOpen] = useState(false);
   const [reg, setReg] = useState<RegisterKind | null>(null);
   const [form, setForm] = useState<{ kind: PdevFormKind; target?: PdevFormTarget } | null>(null);
+  const [signing, setSigning] = useState<ProtocolSigning | null>(null);
   const [toast, fireToast] = useToast();
 
   // The write routers key on the numeric protocol_documents id.
@@ -322,6 +324,10 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
   const openForm = (kind: PdevFormKind, target?: PdevFormTarget) => {
     if (!canWrite) { fireToast('This protocol row has no numeric document id — governed writes need the governed store.', 'error'); return; }
     setForm({ kind, target });
+  };
+  const openFinalize = () => {
+    if (!canWrite) { fireToast('This protocol row has no numeric document id — governed writes need the governed store.', 'error'); return; }
+    setSigning({ kind: 'finalize' });
   };
 
   /* AnA can open any protocol section by its number or title — the same click
@@ -356,7 +362,7 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
       {reloadError && <StaleNotice />}
       <TabStrip tab={tab} onTab={setTab} />
       <div className="pd-grid">
-        <Outline doc={doc} activeSec={activeSec} onSec={onSec} onFinalize={() => openReg('finalize')} />
+        <Outline doc={doc} activeSec={activeSec} onSec={onSec} onFinalize={openFinalize} />
         <div className="pd-work">
           <TabBody
             tab={tab} doc={doc} sec={sec} canWrite={canWrite} onAsk={onAsk} onNav={onNav}
@@ -402,6 +408,25 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
           onCancel={() => setForm(null)}
           onDone={(kind) => { setForm(null); fireToast(FORM_DONE[kind]); onChanged?.(); }}
           onError={(m) => fireToast(m, 'error')}
+          onSignRequest={(_kind, target, values) => {
+            setForm(null);
+            setSigning({
+              kind: 'disposition',
+              assignmentId: Number(target?.id),
+              reviewer: target?.label ?? '',
+              disposition: values.disposition,
+              reviewerUserId: target?.reviewerUserId ?? null,
+            });
+          }}
+        />
+      )}
+      {signing && canWrite && (
+        <ProtocolSignModal
+          signing={signing}
+          documentId={numericDocId}
+          documentTitle={str(doc.title)}
+          onClose={() => setSigning(null)}
+          onSigned={(s, result) => { fireToast(signedMessage(s, result)); onChanged?.(); }}
         />
       )}
       <C2CToast msg={toast} />
@@ -420,16 +445,24 @@ const FORM_DONE: Record<PdevFormKind, string> = {
   'budget-item': 'Budget line added — the roll-up is the budget engine’s.',
   'budget-params': 'Feasibility parameters saved — the verdict is the budget engine’s.',
   'review-request': 'Review requested — the reviewer is on the record.',
-  'review-disposition': 'Disposition recorded as a signed governed action.',
+  'review-disposition': 'Disposition signed.',
   'cover-page': 'Cover page saved.',
   'start-protocol': 'Protocol started — its sections are seeded and on the record.',
 };
 
-function registerDoneMessage(kind: RegisterKind, result: Record<string, unknown> | null): string {
-  if (kind !== 'finalize') return 'Recorded — the ' + kind + ' was written to the governed register.';
-  const version = (result as { version?: string } | null)?.version;
-  return 'Protocol finalized' + (version ? ' — now v' + version : '') +
-    '. The completeness gate passed and the action is in the audit trail.';
+function registerDoneMessage(kind: RegisterKind, _result: Record<string, unknown> | null): string {
+  return 'Recorded — the ' + kind + ' was written to the governed register.';
+}
+
+/** What was signed, in the server's words: the version it froze, the meaning. */
+function signedMessage(s: ProtocolSigning, result: Record<string, unknown>): string {
+  const meaning = typeof result.meaning === 'string' ? ' (' + result.meaning + ')' : '';
+  if (s.kind === 'finalize') {
+    const version = typeof result.version === 'string' ? result.version : '';
+    return 'Protocol finalized' + (version ? ' — now v' + version : '') + '. Signed' + meaning +
+      '; the signature and the audit entry were recorded with it.';
+  }
+  return 'Disposition signed' + meaning + '; the signature and the audit entry were recorded with it.';
 }
 
 /** AnA's "open section N" — resolved against the sections actually loaded. */

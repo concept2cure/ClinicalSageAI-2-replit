@@ -1,0 +1,14 @@
+ × server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared-clean PDF is NOT assessed for security or size — the verdict says so 6ms
+ × server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a declared violation is still reported, and marked as declared 1ms
+ × server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > a file with no extension or format is not judged for type — it used to pass 1ms
+ × server/services/market-specs/__tests__/market-formatting-verdict.test.ts > declared facts are claims > no files is not a conformant package 1ms
+ × server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > reads encryption from the bytes and calls a measured clean set conformant 1ms
+ × server/services/market-specs/__tests__/market-formatting-verdict.test.ts > measured facts > does not flag an FDA form submitted as FDA issued it 85ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be 'not_assessed' // Object.is equality
+AssertionError: expected undefined to be 'nonconformant' // Object.is equality
+TypeError: Cannot read properties of undefined (reading 'some')
+AssertionError: expected undefined to be 'not_assessed' // Object.is equality
+TypeError: measureLeafFile is not a function
+TypeError: measureLeafFile is not a function
+      Tests  6 failed (6)

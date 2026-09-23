@@ -1,0 +1,274 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > does not treat a SQL-injection attempt as a document id
+{
+  "timestamp": "2026-09-23T04:06:03.377Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration for an unrecognised documentName",
+  "context": {
+    "documentName": "authoring:' OR '1'='1"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a session that was signed out (AUTH-03)
+{
+  "timestamp": "2026-09-23T04:06:03.437Z",
+  "level": "warn",
+  "message": "[token-revocation] DB revoke failed",
+  "context": {
+    "error": "relation \"revoked_tokens\" does not exist"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (refresh)
+{
+  "timestamp": "2026-09-23T04:06:03.440Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration for a non-access token",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "nonAccess": "refresh"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_challenge)
+{
+  "timestamp": "2026-09-23T04:06:03.442Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration for a non-access token",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "nonAccess": "mfa_challenge"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_partial)
+{
+  "timestamp": "2026-09-23T04:06:03.444Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration for a non-access token",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "nonAccess": "mfa_partial"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfaPending flag)
+{
+  "timestamp": "2026-09-23T04:06:03.446Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration for a non-access token",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "nonAccess": "mfa_partial_token"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (pending_mfa role)
+{
+  "timestamp": "2026-09-23T04:06:03.448Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration for a non-access token",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "nonAccess": "mfa_pending_role"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a valid token whose organization membership has been revoked
+{
+  "timestamp": "2026-09-23T04:06:03.450Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration — organization membership not confirmed",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "userId": 7001,
+    "organizationId": 4101,
+    "membership": "revoked"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open another tenant's document
+{
+  "timestamp": "2026-09-23T04:06:03.455Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration — document not authorized for this tenant",
+  "context": {
+    "documentName": "authoring:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "organizationId": 4101,
+    "authorization": "[REDACTED]"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open a section of another tenant's document
+{
+  "timestamp": "2026-09-23T04:06:03.458Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration — document not authorized for this tenant",
+  "context": {
+    "documentName": "authoring:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb:dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    "organizationId": 4101,
+    "authorization": "[REDACTED]"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses another tenant's section even when paired with an owned document id
+{
+  "timestamp": "2026-09-23T04:06:03.465Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration — document not authorized for this tenant",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa:dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    "organizationId": 4101,
+    "authorization": "[REDACTED]"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a document that does not exist at all
+{
+  "timestamp": "2026-09-23T04:06:03.468Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration — document not authorized for this tenant",
+  "context": {
+    "documentName": "authoring:eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+    "organizationId": 4101,
+    "authorization": "[REDACTED]"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > is symmetric — the other tenant is refused in the other direction
+{
+  "timestamp": "2026-09-23T04:06:03.471Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration — document not authorized for this tenant",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "organizationId": 4202,
+    "authorization": "[REDACTED]"
+  }
+}
+
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > accepts a whole-document name and a section name 3ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > refuses an unknown resource kind rather than defaulting to permitted 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > refuses a malformed id before it can reach Postgres 0ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > does not treat a SQL-injection attempt as a document id 6ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member of the document owning tenant 48ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member for a section of their own document 4ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a missing token 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token signed with the wrong secret — no fallback identity 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses an expired token 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a session that was signed out (AUTH-03) 4ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (refresh) 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_challenge) 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_partial) 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfaPending flag) 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (pending_mfa role) 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a valid token whose organization membership has been revoked 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token with no tenant claim 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token with no usable subject claim 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open another tenant's document 3ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open a section of another tenant's document 3ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses another tenant's section even when paired with an owned document id 7ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a document that does not exist at all 3ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > is symmetric — the other tenant is refused in the other direction 10ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > reports an unwritten document as absent, not as an error 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > survives a restart: a fresh Y.Doc reloads what the first one wrote 9ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > preserves concurrent edits rather than last-write-wins 7ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > replaces rather than appends on a second store 7ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > does not serve one tenant the bytes another tenant stored under the same name 5ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > cascades the CRDT state away with the document it belongs to 6ms
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > an unprovisioned store > reports missing rather than looking like an empty document
+{
+  "timestamp": "2026-09-23T04:06:08.473Z",
+  "level": "error",
+  "message": "[collab-state] collab_document_state is not provisioned — collaboration cannot persist",
+  "context": {
+    "documentName": "authoring:whatever"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > an unprovisioned store > reports missing rather than looking like an empty document
+{
+  "timestamp": "2026-09-23T04:06:08.474Z",
+  "level": "error",
+  "message": "[collab-state] collab_document_state is not provisioned — edits are NOT being persisted",
+  "context": {
+    "documentName": "authoring:whatever"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > REFUSES a member of a suspended tenant
+{
+  "timestamp": "2026-09-23T04:06:08.481Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration — tenant lifecycle posture denies access",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "organizationId": 4101,
+    "state": "suspended"
+  }
+}
+
+stdout | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > DOWNGRADES a read-only tenant to a view-only socket rather than refusing
+{
+  "timestamp": "2026-09-23T04:06:08.483Z",
+  "level": "info",
+  "message": "[hocuspocus] Collaboration downgraded to read-only by tenant lifecycle posture",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "organizationId": 4101,
+    "state": "past_due"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses a read-only tenant when the socket cannot be downgraded
+{
+  "timestamp": "2026-09-23T04:06:08.485Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration — read-only tenant and no way to downgrade the socket",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "organizationId": 4101,
+    "state": "pending_deletion"
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses fail-closed when the posture cannot be read
+{
+  "timestamp": "2026-09-23T04:06:08.486Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration — tenant posture unverifiable (fail-closed)",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "organizationId": 4101
+  }
+}
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > checks the posture AFTER membership — a revoked user never reveals tenant state
+{
+  "timestamp": "2026-09-23T04:06:08.487Z",
+  "level": "warn",
+  "message": "[hocuspocus] Refused collaboration — organization membership not confirmed",
+  "context": {
+    "documentName": "authoring:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "userId": 7001,
+    "organizationId": 4101,
+    "membership": "revoked"
+  }
+}
+
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > an unprovisioned store > reports missing rather than looking like an empty document 4961ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > admits a member of an ACTIVE tenant (the baseline) 3ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > REFUSES a member of a suspended tenant 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > DOWNGRADES a read-only tenant to a view-only socket rather than refusing 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses a read-only tenant when the socket cannot be downgraded 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses fail-closed when the posture cannot be read 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > checks the posture AFTER membership — a revoked user never reveals tenant state 1ms
+
+ Test Files  1 passed (1)
+      Tests  36 passed (36)
+   Start at  04:05:55
+   Duration  12.85s (transform 327ms, setup 108ms, import 527ms, tests 11.91s, environment 0ms)
+

@@ -27,8 +27,11 @@ import type {
   SubmissionGateway,
   TransmitAuthorization,
 } from './types';
-import { TransmitAuthorizationError, ValidationError } from './types';
+import {
+  CredentialError, TransmitAuthorizationError, TransportError, UnverifiedTransportError, ValidationError,
+} from './types';
 import { evaluatePreTransmit } from './pre-transmit-check';
+import { assertBundleLeafSecurity } from './bundle-leaf-security';
 
 export * from './types';
 export { evaluatePreTransmit } from './pre-transmit-check';
@@ -107,6 +110,60 @@ function assertTransmitAuthorized(
   );
 }
 
+/** Errors the transmit guard raised before handing anything to a gateway. */
+const REFUSED_BEFORE_WIRE = new WeakSet<object>();
+
+function markRefusedBeforeWire(err: unknown): unknown {
+  if (err !== null && typeof err === 'object') REFUSED_BEFORE_WIRE.add(err);
+  return err;
+}
+
+/**
+ * True when `err` proves nothing was sent, so a transmit claim can safely be
+ * released:
+ *  - a refusal the transmit guard made before calling the gateway
+ *    (authorization, pre-transmit checks, leaf security); or
+ *  - a refusal a gateway made before any byte left, raised as one of the
+ *    declared error classes carrying the literal `transmitted === false` —
+ *    UnverifiedTransportError always; ValidationError and TransportError when
+ *    their throw site passed NOTHING_TRANSMITTED (requiredAgencyMetadata's
+ *    refusals; the FDA SFTP client-module refusal; FDA ESG's AS2
+ *    NOT_DELIVERED verdict from the delivery classifier — 2026-09-23, W5/D7,
+ *    MDN close); or
+ *  - a CredentialError, which every site raises from a credential check before
+ *    any request is opened (the audited sites are pinned in
+ *    __tests__/refused-before-wire.test.ts). The gateway records its own
+ *    transmittal row, if it made one, as rejected ('auth').
+ * False for everything else from inside a gateway (a TransportError without
+ * the proof, GatewayError, an unmarked error), where delivery is unknown. The
+ * check is by class, not by shape: an arbitrary object with
+ * `transmitted: false` proves nothing.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic): only the guard's own refusals used to
+ * count, so the in-gateway refusals above stranded never-sent sequences at
+ * 'transmitting' (every FDA transmit with FDA_ESG_TRANSPORT=rest).
+ * 2026-09-23 (W5/D7, round-3 skeptic): CredentialError and the proof-carrying
+ * TransportError added — the FDA SFTP branch (>1 GiB) refuses before connect()
+ * with one of them, and every such sequence was stranded.
+ */
+export function refusedBeforeWire(err: unknown): boolean {
+  if (err === null || typeof err !== 'object') return false;
+  if (REFUSED_BEFORE_WIRE.has(err)) return true;
+  if (err instanceof CredentialError) return true;
+  return (
+    err instanceof UnverifiedTransportError || err instanceof ValidationError || err instanceof TransportError
+  ) && err.transmitted === false;
+}
+
+/**
+ * The one reduction of the `preTransmit` report the guard below attaches —
+ * failed checks and warnings, `null` when the guard reported nothing — that
+ * every transmit record carries (transmitSequence's §11.10(e) row, the governed
+ * transmit's Part 11 sign record). 2026-09-23 (W5/D7, round-2 review).
+ */
+export { preTransmitFindings } from './pre-transmit-findings';
+export type { PreTransmitFindings } from './pre-transmit-findings';
+
 /**
  * Resolve the gateway implementation for (region, gateway).
  *
@@ -132,25 +189,46 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
     // signature promises a Promise. A sync throw out of an async-shaped API
     // slips past `.catch()` handlers that are otherwise correct.
     transmit: async (req: GatewayTransmitRequest) => {
-      assertTransmitAuthorized(impl.region, impl.gateway, req?.authorization);
-      // Package-fitness preconditions (belt-and-suspenders alongside the human
-      // gate): size limit (always), + PDF/A grade and DTD self-containment when
-      // the operator opts in for production. External agency-grade validation is
-      // enforced upstream in assess-dispatch-readiness (which holds the report),
-      // so it is not re-run here.
-      const pre = evaluatePreTransmit({
-        region: impl.region,
-        bundle: req.bundle,
-        environment: req.environment,
-        enforceExternal: false,
-      });
-      if (!pre.cleared) {
-        throw new ValidationError(
-          `Refusing to transmit to ${impl.region.toUpperCase()} ${impl.gateway}: package failed pre-transmit checks. ${pre.blockers.join(' ')}`,
-          pre.blockers,
-        );
+      // Everything up to impl.transmit refuses BEFORE a byte leaves. Such a
+      // refusal is marked (refusedBeforeWire) so a caller holding a transmit
+      // claim can release it: an unmarked throw is treated as "may have
+      // reached the agency" and left for a human, which stranded a sequence
+      // that was never sent. 2026-09-23 (W5/D7). impl.transmit stays OUTSIDE
+      // this try: its errors are pre-wire only when typed as such (see
+      // refusedBeforeWire), never because they passed through here —
+      // 2026-09-23 (W5/D7, round-2 skeptic), pinned by
+      // __tests__/refused-before-wire.test.ts.
+      let pre: ReturnType<typeof evaluatePreTransmit>;
+      let leafSecurity: Awaited<ReturnType<typeof assertBundleLeafSecurity>>;
+      try {
+        assertTransmitAuthorized(impl.region, impl.gateway, req?.authorization);
+        // Package-fitness preconditions (belt-and-suspenders alongside the human
+        // gate): size limit (always), + PDF/A grade and DTD self-containment when
+        // the operator opts in for production. External agency-grade validation is
+        // enforced upstream in assess-dispatch-readiness (which holds the report),
+        // so it is not re-run here.
+        pre = evaluatePreTransmit({
+          region: impl.region,
+          bundle: req.bundle,
+          environment: req.environment,
+          enforceExternal: false,
+        });
+        if (!pre.cleared) {
+          throw new ValidationError(
+            `Refusing to transmit to ${impl.region.toUpperCase()} ${impl.gateway}: package failed pre-transmit checks. ${pre.blockers.join(' ')}`,
+            pre.blockers,
+          );
+        }
+        // Leaf security, re-established from the signed bundle's own bytes in
+        // every environment (bundle-leaf-security.ts). 2026-09-22 W5/D7.
+        leafSecurity = await assertBundleLeafSecurity(req.bundle, impl.region);
+      } catch (err) {
+        throw markRefusedBeforeWire(err);
       }
-      return impl.transmit(req);
+      const result = await impl.transmit(req);
+      // What was checked travels with the result — including checks that
+      // failed without blocking, which used to be computed and dropped here.
+      return { ...result, preTransmit: { checks: pre.checks, warnings: pre.warnings, leafSecurity } };
     },
     checkStatus: (transmittalId: number) => impl.checkStatus(transmittalId),
     downloadAcknowledgment: (transmittalId: number) => impl.downloadAcknowledgment(transmittalId),

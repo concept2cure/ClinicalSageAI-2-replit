@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-003 |
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-003 |
 | Runner (the executable protocol) | `tests/validation/oq/authoring/run.mjs` — `npm run validation:oq -- authoring` |
@@ -16,10 +16,11 @@
 | 0.1 | 2026-09-21 | W3a | First protocol; executed locally (see record). |
 | 0.2 | 2026-09-21 | WF | VSR-001 §8.3 P-1: the comment recorded in OQ-AUTH-09 is resolved through the comment-resolution API (new OQ-AUTH-11b, audited) before the freeze; the refusal of a freeze over an open comment is kept as the negative case (new OQ-AUTH-11a); the `acknowledgeUnresolved` confirm flag is not the happy path. OQ-AUTH-15/16 moved before the freeze (a FROZEN document refuses every edit-class route with 409, which answered the AI-draft check for the wrong reason). Re-executed locally (§5). |
 | 0.3 | 2026-09-22 | W3 | §5 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
+| 0.4 | 2026-09-23 | W3 | OQ-AUTH-12 to 14 rewritten for the signing ceremony that replaces the PIN (URS-003 v0.2, URS-AUTH-010): the PIN route is gone and a PIN signs nothing (12); a wrong password, a missing code and a wrong meaning are refused with nothing stored (13); the review signature re-verifies the run identity's password and authenticator code and records that method (14). §1 updated. |
 
 ## 1. Method
 
-As OQ-001 §1. The signing PIN is enrolled by the runner through the product's own endpoint for the test identity (`VALIDATION_SIGNING_PIN`, default `246813`); PIN values are redacted from every record. Steps execute in the order below: review/submit precede freeze because submit requires DRAFT; the AI-draft steps precede freeze because a FROZEN document refuses every edit-class route; the comment from OQ-AUTH-09 is resolved through the product's comment-resolution API (OQ-AUTH-11b) before the freeze, after the refusal of a freeze over an open comment has been observed (OQ-AUTH-11a). The freeze confirm flag `acknowledgeUnresolved` is never sent.
+As OQ-001 §1. The e-signature steps (OQ-AUTH-13, 14) re-authenticate the run identity with its own password and, when it has an authenticator enrolled, a current code the harness computes and never reuses (`VALIDATION_USER_PASSWORD`, `VALIDATION_USER_TOTP_SECRET`; `tests/validation/lib/totp.mjs`). Neither value appears in any record. Without the password (a dev-login run) those steps are recorded as deviations with that reason. Until v0.4 the steps enrolled and used a separate signing PIN, which the product no longer has. Steps execute in the order below: review/submit precede freeze because submit requires DRAFT; the AI-draft steps precede freeze because a FROZEN document refuses every edit-class route; the comment from OQ-AUTH-09 is resolved through the product's comment-resolution API (OQ-AUTH-11b) before the freeze, after the refusal of a freeze over an open comment has been observed (OQ-AUTH-11a). The freeze confirm flag `acknowledgeUnresolved` is never sent.
 
 ## 2. Pre-conditions
 
@@ -47,9 +48,9 @@ IQ-001 executed; a program created by OQ-AUTH-00. The AI-provider steps expect `
 | OQ-AUTH-11a | URS-AUTH-009, 007 | scripted (negative) | Freeze v1.0 while the OQ-AUTH-09 comment is open; read frozen | 409 `DOCUMENT_NOT_SETTLED` counting 1 open comment; nothing frozen |
 | OQ-AUTH-11b | URS-AUTH-007, 008 | scripted | `PATCH /api/authoring/comments/:id {status:"resolved", resolution_note}`; list comments; read audit | 200; status resolved with `resolved_by` = actor and `resolved_at`; audit event `comment_resolved` naming the comment |
 | OQ-AUTH-11 | URS-AUTH-009 | scripted | Freeze v1.0 (document settled); read frozen; freeze again | Frozen record with content hash; second freeze 400 |
-| OQ-AUTH-12 | URS-AUTH-010 | scripted | Enrol the PIN (or rotate with `old_pin` if already enrolled) | 2xx; change without current PIN refused |
-| OQ-AUTH-13 | URS-AUTH-010 | scripted | e-sign with wrong PIN; with meaning `WHATEVER` | 401; 400; no signature stored |
-| OQ-AUTH-14 | URS-AUTH-010, 011 | scripted | e-sign REVIEWER with PIN and intent; list signatures | One signature: actor, REVIEWER, `pin_verified`, digest, covered freeze hash |
+| OQ-AUTH-12 | URS-AUTH-010 | scripted | `POST /api/authoring/users/pin`; e-sign with a PIN and no password | 404; 400 `PASSWORD_REQUIRED`; no signature stored |
+| OQ-AUTH-13 | URS-AUTH-010 | scripted | e-sign with a wrong password; with the right password and no code (when the identity has an authenticator enrolled); with meaning `WHATEVER` | 401 `PASSWORD_VERIFICATION_FAILED`; 400 `MFA_TOKEN_REQUIRED`; 400; no signature stored |
+| OQ-AUTH-14 | URS-AUTH-010, 011 | scripted | e-sign REVIEWER with the password, the current code and intent; list signatures | One signature: actor, REVIEWER, method `password+mfa` (`password` for an identity with no authenticator), `pin_verified` false, digest, covered freeze hash |
 | OQ-AUTH-18 | URS-AUTH-014 | ad-hoc | Template stores | 200 / 200 |
 | OQ-AUTH-19 | URS-AUTH-015 | unscripted (browser) | Open `/concept2cure/document-authoring` | Document title visible; screenshot |
 | OQ-AUTH-20 | URS-AUTH-013, 015 | ad-hoc (browser) | Open `/concept2cure/review` | Renders; screenshot |
@@ -58,15 +59,23 @@ IQ-001 executed; a program created by OQ-AUTH-00. The AI-provider steps expect `
 
 As OQ-001 §4. URS-AUTH-011's negative case (a non-signing role refused) needs a second identity and is executed on staging. A freeze must never be obtained by the confirm flag in this protocol; a run whose OQ-AUTH-11a passes for any reason other than 409 `DOCUMENT_NOT_SETTLED` is invalid.
 
-## 5. Result of the local execution (2026-09-22, production posture — VSR-001 §12)
+## 5. Result of the local execution (2026-09-23b, one commit carrying every fix — VSR-001 §14)
+
+**23 pass, 0 fail, 1 deviation, 0 not-executed** (record `docs/evidence/W3/2026-09-23b/OQ-AUTHORING/`, executed 2026-09-23T05:19:44.325Z UTC at `0d7b85e50`). Same installation, posture and identities as the 2026-09-23 execution below: database `c2c_oq_w3_20260922b` with the migration set re-applied by `deploy-migrate` first, `RLS_ENFORCE=on`, runtime role `app_service`, dev-login refused, and every session opened by password and authenticator code. Each step is recorded with the kind this protocol gives it (OQ-001 §1, v0.6). The one deviation is OQ-AUTH-16: no AI provider is configured, so the drafting step cannot run (URS-AUTH-012 partial). OQ-AUTH-12: rotating the signing PIN requires the current one.
+
+### 5.1 Result of the local execution (2026-09-23, production posture with production authentication — VSR-001 §13; superseded by the 2026-09-23b execution)
+
+**23 pass, 0 fail, 1 deviation, 0 not-executed** (record `docs/evidence/W3/2026-09-23/OQ-AUTHORING/`, executed 2026-09-23T02:50:23Z UTC at `0e2b3a971`). Same installation and RLS posture as the 2026-09-22 execution below: database `c2c_oq_w3_20260922b`, `RLS_ENFORCE=on`, runtime role `app_service`, no AI provider configured. It adds the authentication production requires. The server refuses dev-login (`ALLOW_DEV_AUTH=0`; IQ-10 pass, `docs/evidence/W3/2026-09-23/IQ/`). Every session was opened by a password sign-in that completed the TOTP challenge of the identity's enrolled factor, once per identity per run (OQ-001 §1; VSR-001 §13). Run identity: user 17 `oq-runner@validation.local`. Second signer: user 11 `oq-signer@validation.local`. Both enrolled their authenticator through the product's own enrolment endpoints. OQ-AUTH-14: the review signature is by the run identity with its PIN and covers freeze v1.0. The run identity has a TOTP factor enrolled, and this route does not ask for it (VSR-001 §13.3, a question for the reviewer). OQ-AUTH-16: deviation, `GATEWAY_UNAVAILABLE`. No provider is configured, and nothing was simulated.
+
+### 5.2 Result of the local execution (2026-09-22, production posture — VSR-001 §12; superseded by the 2026-09-23 execution)
 
 **23 pass, 0 fail, 1 deviation, 0 not-executed** (record `docs/evidence/W3/2026-09-22/OQ-AUTHORING/`, executed 2026-09-22T22:36:01Z UTC at `e2d910d6f`). Installation: a database provisioned from empty by `npm run up`; the server booted from the checkout with `RLS_ENFORCE=on` as runtime role `app_service` (not superuser, no BYPASSRLS, owns no table — IQ-07 and IQ-08 pass, `docs/evidence/W3/2026-09-22/IQ/`); no AI provider configured. This is the first execution with RLS enforcing and as a role that owns no table. The executions filed before it record `RLS_ENFORCE=off` (IQ-DEV-003), under which the tenant-isolation policies are inert, and runtime role `c2c` on `clinicalsage`, which owns 61 RLS-enabled tables without FORCE — `vault.documents` among them — whose policies therefore never applied to it (VSR-001 §12). OQ-AUTH-13/14: wrong PIN 401, bad meaning 400, no signature stored; a REVIEWER signature covering the v1.0 freeze (F-12 closed). OQ-AUTH-15: 503 `GATEWAY_UNAVAILABLE`, "Nothing was changed" (F-10 closed). OQ-AUTH-17b: the review requested in Authoring is on the Review board queue (F-6 closed, VSR-001 §11.2). Deviation: OQ-AUTH-16 — no AI provider is configured; URS-AUTH-012 stays partial until a PQ-passed provider is. The same 23 / 0 / 1 was recorded at `8a40bb187` (2026-09-22 00:08 UTC, owner role; `docs/evidence/W3/2026-09-20/OQ-AUTHORING/`).
 
-### 5.1 Result of the local execution (2026-09-21, version 0.2 — worker WF, superseded)
+### 5.3 Result of the local execution (2026-09-21, version 0.2 — worker WF, superseded)
 
 **19 pass, 3 fail, 1 deviation, 1 not-executed** (24 steps; record regenerated under `docs/evidence/W3/2026-09-20/OQ-AUTHORING/`, transcript `docs/evidence/WF/2026-09-21/`). P-1 is closed by protocol change: OQ-AUTH-11a observed the 409 `DOCUMENT_NOT_SETTLED` refusal, OQ-AUTH-11b resolved the comment (status `resolved`, `resolved_by` = actor, audit event `comment_resolved`), OQ-AUTH-11 froze v1.0 with a content hash and the second freeze was refused. Fail: OQ-AUTH-17b (F-6, unchanged); OQ-AUTH-15 (F-10 reproduces before the freeze: `POST …/ai/draft` with no provider answered HTTP 200 `degraded:true, source:"template"` with a full template draft); **OQ-AUTH-13 (new): `POST /docs/:id/e-sign` on the FROZEN document answered 409 `AUTHORING_DOCUMENT_IMMUTABLE`** — `server/middleware/authoringObjectAuthorization.ts:31` classifies the path as `edit` (its regex matches `sign` only as a whole segment; the segment is `e-sign`), so the immutability guard refuses the signature the route itself binds to the frozen snapshot (`covered_freeze_version`). OQ-AUTH-14 is not-executed behind it; the PIN refusal, the meaning refusal and the positive REVIEWER signature remain unqualified. Deviation: OQ-AUTH-16 (no AI provider).
 
-### 5.2 Result of the local execution (2026-09-21, version 0.1 — W3a, superseded)
+### 5.4 Result of the local execution (2026-09-21, version 0.1 — W3a, superseded)
 
 9 pass, 1 fail, 1 deviation, 11 not-executed. OQ-AUTH-04 (section create) answered 500 because the runtime role cannot write `document_span_lineage` (IQ-DEV-001), so every step needing a section — revisions, chain verify, stale save, revert, comment, audit, freeze, e-signature, AI draft — is **not-executed**: the Part 11 controls of Authoring are **not yet qualified** on this installation. Fail: OQ-AUTH-17b — a review requested and submitted in Authoring does not appear on the Review board's queue (the board reads `document_workflows`/`workflow_approvals`, authoring stores `authoring_reviews`/`authoring_workflow_steps`) — finding F-6. Passed: access control, creation validation, review request + workflow submit, template stores, both surfaces render.
 

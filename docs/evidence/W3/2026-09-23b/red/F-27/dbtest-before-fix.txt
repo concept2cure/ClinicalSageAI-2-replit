@@ -1,0 +1,157 @@
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-09-23T09:17:09.507Z","pid":13966,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-23T09:17:09.508Z","pid":13966,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-23T09:17:09.508Z","pid":13966,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/signing-lockout.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T09:17:09.853Z', poolSize: 1 }
+
+stdout | tests/db/signing-lockout.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/signing-lockout.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/signing-lockout.dbtest.ts
+[mfa] MFA enabled for user 109
+
+{"level":30,"time":"2026-09-23T09:17:35.000Z","pid":13966,"hostname":"vm","context":{"userId":108,"tenantId":92000,"resourceId":"108"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/signing-lockout.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ × tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > count against the account, and the fifth locks it 32ms
+   → five wrong passwords at signing left the account unlocked: expected { failed: +0, locked: false } to deeply equal { failed: 5, locked: true }
+{"level":30,"time":"2026-09-23T09:17:35.000Z","pid":13966,"hostname":"vm","context":{"userId":110,"tenantId":92000,"resourceId":"110"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ × tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > lock the sign-in too: the account has one password and one allowance 66ms
+   → sign-in accepted the password of an account locked at signing: expected 200 to be 423 // Object.is equality
+ × tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > while locked, refuse a signature even with the right password, without comparing it 8ms
+   → expected { ok: true, …(2) } to match object { ok: false, status: 423, …(1) }
+(2 matching properties omitted from actual)
+ ✓ tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > unlock when the lockout has run out 5ms
+ × tests/db/signing-lockout.dbtest.ts > wrong codes at signing > count against the account once the password is right, and the fifth locks it 26ms
+   → five wrong codes at signing left the account unlocked: expected { failed: +0, locked: false } to deeply equal { failed: 5, locked: true }
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a signer who mistypes and then gets it right signs 14ms
+ ✓ tests/db/signing-lockout.dbtest.ts > below the allowance > a successful sign-in clears the count, as it always has 20ms
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 passed (8)
+   Start at  09:17:07
+   Duration  3.92s (transform 1.51s, setup 72ms, import 176ms, tests 3.38s, environment 0ms)
+
+stderr | tests/db/signing-lockout.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stderr | tests/db/signing-lockout.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > lock the sign-in too: the account has one password and one allowance
+{
+  "timestamp": "2026-09-23T09:17:35.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "dbslk-password-13966_mudw2zu4@example.invalid"
+  }
+}
+
+stderr | tests/db/signing-lockout.dbtest.ts > below the allowance > a successful sign-in clears the count, as it always has
+{
+  "timestamp": "2026-09-23T09:17:35.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "dbslk-below-13966_mudw2zu4@example.invalid"
+  }
+}
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > count against the account, and the fifth locks it
+AssertionError: five wrong passwords at signing left the account unlocked: expected { failed: +0, locked: false } to deeply equal { failed: 5, locked: true }
+
+- Expected
++ Received
+
+  {
+-   "failed": 5,
+-   "locked": true,
++   "failed": 0,
++   "locked": false,
+  }
+
+ ❯ tests/db/signing-lockout.dbtest.ts:247:91
+    245|       expect(await sign(m, { password: `wrong-${i}` })).toMatchObject(…
+    246|     }
+    247|     expect(await account(m), 'five wrong passwords at signing left the…
+       |                                                                                           ^
+    248|   });
+    249|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > lock the sign-in too: the account has one password and one allowance
+AssertionError: sign-in accepted the password of an account locked at signing: expected 200 to be 423 // Object.is equality
+
+- Expected
++ Received
+
+- 423
++ 200
+
+ ❯ tests/db/signing-lockout.dbtest.ts:253:89
+    251|     at(1);
+    252|     const res = await signIn(members.password);
+    253|     expect(res.status, 'sign-in accepted the password of an account lo…
+       |                                                                                         ^
+    254|   });
+    255|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/signing-lockout.dbtest.ts > wrong passwords at signing > while locked, refuse a signature even with the right password, without comparing it
+AssertionError: expected { ok: true, …(2) } to match object { ok: false, status: 423, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "ACCOUNT_LOCKED",
+-   "ok": false,
+-   "status": 423,
++   "ok": true,
+  }
+
+ ❯ tests/db/signing-lockout.dbtest.ts:259:51
+    257|     at(1);
+    258|     const m = members.password;
+    259|     expect(await sign(m, { password: PASSWORD })).toMatchObject({ ok: …
+       |                                                   ^
+    260|     expect((await account(m)).failed, 'a guess against a locked accoun…
+    261|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/signing-lockout.dbtest.ts > wrong codes at signing > count against the account once the password is right, and the fifth locks it
+AssertionError: five wrong codes at signing left the account unlocked: expected { failed: +0, locked: false } to deeply equal { failed: 5, locked: true }
+
+- Expected
++ Received
+
+  {
+-   "failed": 5,
+-   "locked": true,
++   "failed": 0,
++   "locked": false,
+  }
+
+ ❯ tests/db/signing-lockout.dbtest.ts:277:87
+    275|       expect(await sign(m, { password: PASSWORD, mfaToken: '000000' })…
+    276|     }
+    277|     expect(await account(m), 'five wrong codes at signing left the acc…
+       |                                                                                       ^
+    278|     expect(await sign(m, { password: PASSWORD, mfaToken: codeFor(m, 1)…
+    279|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+

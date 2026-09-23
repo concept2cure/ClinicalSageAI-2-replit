@@ -129,6 +129,14 @@ export const BINDING_BASIS = {
    */
   FILED_ESTAR_ARTIFACT: 'filed-estar-artifact-sha256',
   /**
+   * sha256 over a protocol's content at signing time: cover page, synopsis,
+   * sections, objectives, eligibility, visits, schedule of assessments and
+   * team. No version, workflow status or timestamp, so the signature survives
+   * finalization when the content did not change. A reviewer's disposition
+   * binds what they reviewed; a finalization binds what it froze.
+   */
+  PROTOCOL_DOCUMENT_CONTENT: 'protocol-document-content-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target
@@ -445,8 +453,22 @@ export async function deriveGovernedTargetBinding(
           [rest, orgId],
         );
         if (seq.rows.length === 0) return ledgerFallback('sequence row not readable at signing time');
+        /* ── document_uuid and document_content_sha256 are bound (2026-09-22,
+           W5/D7) ──────────────────────────────────────────────────────────────
+           A vault leaf names its document by document_uuid (its document_id is
+           NULL), and the content pin records what the source held when it was
+           placed. Neither was digested, so re-pointing a signed vault leaf at a
+           different PDF — upsertLeaf re-pins, so DOCUMENT_CONTENT_MISMATCH does
+           not fire either — left this digest byte-identical, and Gate 1 accepted
+           a signature over a document the signer never saw. Both columns are
+           written only by upsertLeaf, when a leaf is placed or changed, never by
+           a workflow transition, so this cannot recreate the self-invalidating
+           signature described above. A signature taken before this change binds
+           the old digest and is refused by Gate 1 with "re-sign the current
+           content", as with the 2026-09-21 amendment. */
         const leaves = await client.query(
-          `SELECT id, section_code, lifecycle_op, document_table, document_id, checksum, title
+          `SELECT id, section_code, lifecycle_op, document_table, document_id, document_uuid,
+                  document_content_sha256, checksum, title
              FROM submission_leaves
             WHERE sequence_id = $1::int AND organization_id = $2 AND deleted_at IS NULL
             ORDER BY section_code, id`,
@@ -456,7 +478,7 @@ export async function deriveGovernedTargetBinding(
         return {
           digest: sha256Hex(payload),
           basis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST,
-          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id) at signing time.`,
+          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid and content pin) at signing time.`,
         };
       }
       case 'document': {
@@ -504,6 +526,57 @@ export async function deriveGovernedTargetBinding(
           note: 'sha256 over the section content + version at signing time.',
         };
       }
+      case 'protocol-document':
+      case 'protocol-review-assignment': {
+        // A disposition is a signature over the protocol the reviewer read, so
+        // it binds that protocol's content, not the assignment row.
+        //
+        // CONTENT ONLY. No version, no workflow status, no timestamps: finalize
+        // bumps the version and moves section status, and a reviewer's
+        // signature taken before that must still re-derive afterwards when no
+        // content changed (the ectd-sequence lesson in the case above). And ALL
+        // of the content, not just the prose: the cover page, synopsis,
+        // objectives, eligibility, schedule of visits, schedule of assessments
+        // and study team are what a reviewer approves too.
+        if (!/^\d+$/.test(rest)) return ledgerFallback('malformed protocol pointer');
+        let docId = rest;
+        if (prefix === 'protocol-review-assignment') {
+          const a = await client.query(
+            `SELECT protocol_document_id FROM protocol_review_assignments
+              WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+              LIMIT 1`,
+            [rest, orgId],
+          );
+          if (a.rows.length === 0) return ledgerFallback('review assignment not readable at signing time');
+          docId = String(a.rows[0].protocol_document_id);
+        }
+        const doc = await client.query(
+          `SELECT id, protocol_kind, protocol_number, title, design_type, phase, therapeutic_area,
+                  synopsis, sponsor, principal_investigator
+             FROM protocol_documents
+            WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+            LIMIT 1`,
+          [docId, orgId],
+        );
+        if (doc.rows.length === 0) return ledgerFallback('protocol document not readable at signing time');
+        const rows = async (sql: string) => (await client.query(sql, [docId, orgId])).rows;
+        const live = 'protocol_document_id = $1::int AND organization_id = $2';
+        const content = {
+          protocol: doc.rows[0],
+          sections: await rows(`SELECT section_key, title, content, required, order_index FROM protocol_sections WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, section_key`),
+          objectives: await rows(`SELECT objective_type, objective, endpoint, timepoint, order_index FROM protocol_objectives WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
+          eligibility: await rows(`SELECT kind, criterion, order_index FROM protocol_eligibility_criteria WHERE ${live} AND deleted_at IS NULL ORDER BY kind, order_index, id`),
+          visits: await rows(`SELECT id, visit_name, timepoint, procedures, order_index FROM protocol_schedule_visits WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
+          assessments: await rows(`SELECT id, name, category, order_index FROM protocol_soa_assessments WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
+          cells: await rows(`SELECT assessment_id, visit_id, required, notes FROM protocol_soa_cells WHERE ${live} ORDER BY assessment_id, visit_id`),
+          team: await rows(`SELECT member_name, role, responsibilities, personnel_id, user_id FROM protocol_team_members WHERE ${live} AND deleted_at IS NULL ORDER BY id`),
+        };
+        return {
+          digest: sha256Hex(canonicalJson(content)),
+          basis: BINDING_BASIS.PROTOCOL_DOCUMENT_CONTENT,
+          note: `sha256 over the protocol's content at signing time: cover page and synopsis (protocol_documents), ${content.sections.length} section(s), ${content.objectives.length} objective(s), ${content.eligibility.length} eligibility criteria, ${content.visits.length} visit(s), ${content.assessments.length} SoA assessment(s) and ${content.cells.length} cell(s), ${content.team.length} team member(s). No version, workflow status or timestamp is bound.`,
+        };
+      }
       default:
         return ledgerFallback(`no content-digest derivation implemented for target type '${prefix}'`);
     }
@@ -538,6 +611,14 @@ export interface GovernedSignParams {
   secondFactorVerified: boolean;
   ipAddress?: string | null;
   occurredAt: Date;
+  /**
+   * Extra manifest members, APPENDED after the shared ones. Appending (never
+   * interleaving) keeps the persisted manifest bytes — and therefore the
+   * §11.200 attribution hash — byte-identical for callers that pass none.
+   * Use it for what the signer decided when the target alone does not say
+   * (a reviewer's approve or reject), so the signature row states it itself.
+   */
+  extraManifest?: Record<string, unknown>;
 }
 
 /**
@@ -559,12 +640,6 @@ export interface GovernedActionSignatureParams extends GovernedSignParams {
   command?: string;
   /** Overrides the default §11 compliance statement. */
   complianceStatement?: string;
-  /**
-   * Extra manifest members, APPENDED after the shared ones. Appending (never
-   * interleaving) keeps the persisted manifest bytes — and therefore the
-   * §11.200 attribution hash — byte-identical for callers that pass none.
-   */
-  extraManifest?: Record<string, unknown>;
 }
 
 /**

@@ -431,7 +431,7 @@ export const REVIEW_PROTOCOL_COMPLETENESS: AnaTool = {
 export const FINALIZE_PROTOCOL_DOCUMENT: AnaTool = {
   name: 'finalize_protocol_document',
   description:
-    "Finalize a protocol document. Gated on the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB); rejected with the gaps otherwise. On success it snapshots a major version. Governed + audited (signature).",
+    "Check whether a protocol document can be finalized, against the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB), and return the gaps. This tool does not finalize: finalizing is an electronic signature and AnA cannot sign. Tell the user to finalize from the protocol workspace, where they enter their password.",
   input_schema: { type: 'object', properties: { document_id: { type: 'number' }, reason: { type: 'string' } }, required: ['document_id'] },
 };
 
@@ -614,7 +614,7 @@ export const REVIEW_DMS_PLAN_COMPLETENESS: AnaTool = {
 
 export const FINALIZE_DMS_PLAN: AnaTool = {
   name: 'finalize_dms_plan',
-  description: "Finalize an NIH DMS plan behind the deterministic completeness gate (all six required elements addressed). Records a governed signature. Governed + audited.",
+  description: "AnA cannot sign. Finalizing an NIH DMS plan is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user to finalize the plan in its workspace.",
   input_schema: { type: 'object', properties: { plan_id: { type: 'number' }, reason: { type: 'string' } }, required: ['plan_id'] },
 };
 
@@ -663,7 +663,7 @@ export const REVIEW_OTHER_SUPPORT: AnaTool = {
 
 export const CERTIFY_OTHER_SUPPORT: AnaTool = {
   name: 'certify_other_support',
-  description: "Certify an NIH Other Support document behind the deterministic readiness gate (every entry complete, foreign components disclosed, no effort overcommitment). Records a governed signature. Governed + audited.",
+  description: "AnA cannot sign. Certifying NIH Other Support is an electronic signature and needs the user's password, so this tool does not certify and writes nothing. Tell the user to certify it in its workspace.",
   input_schema: { type: 'object', properties: { document_id: { type: 'number' }, reason: { type: 'string' } }, required: ['document_id'] },
 };
 
@@ -697,7 +697,7 @@ export const REVIEW_BIOSKETCH_COMPLETENESS: AnaTool = {
 
 export const FINALIZE_BIOSKETCH: AnaTool = {
   name: 'finalize_biosketch',
-  description: "Finalize an NIH biosketch behind the deterministic completeness gate (all required sections addressed). Records a governed signature. Governed + audited.",
+  description: "AnA cannot sign. Finalizing an NIH biosketch is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user to finalize it in its workspace.",
   input_schema: { type: 'object', properties: { biosketch_id: { type: 'number' }, reason: { type: 'string' } }, required: ['biosketch_id'] },
 };
 
@@ -786,7 +786,7 @@ export const REVIEW_EXPORT_CONTROL: AnaTool = {
 
 export const FINALIZE_EXPORT_CONTROL_DETERMINATION: AnaTool = {
   name: 'finalize_export_control_determination',
-  description: "Finalize an export-control determination behind the deterministic readiness gate; persists the computed license-required outcome and FRE finding. Records a governed signature. Governed + audited.",
+  description: "AnA cannot sign. Finalizing an export-control determination is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user to finalize it in the export-control workspace.",
   input_schema: { type: 'object', properties: { review_id: { type: 'number' }, reason: { type: 'string' } }, required: ['review_id'] },
 };
 
@@ -834,7 +834,7 @@ export const REVIEW_RESEARCH_AGREEMENT: AnaTool = {
 
 export const EXECUTE_RESEARCH_AGREEMENT: AnaTool = {
   name: 'execute_research_agreement',
-  description: "Execute a research agreement behind the deterministic HIPAA readiness gate (PHI properly handled, parties + material described). Records a governed signature. Governed + audited.",
+  description: "AnA cannot sign. Executing a research agreement is an electronic signature and needs the user's password, so this tool does not execute it and writes nothing. Tell the user to execute it in its workspace.",
   input_schema: { type: 'object', properties: { agreement_id: { type: 'number' }, reason: { type: 'string' } }, required: ['agreement_id'] },
 };
 
@@ -1131,7 +1131,7 @@ export const CAST_COMMITTEE_VOTE: AnaTool = {
 export const FINALIZE_COMMITTEE_DETERMINATION: AnaTool = {
   name: 'finalize_committee_determination',
   description:
-    "Finalize an agenda item by tallying the poll into the deterministic determination (approved / approved_with_modifications / disapproved / tabled). Gated: a convened meeting WITH quorum, the 'approve' privilege, AND current CITI training for the finalizing actor (citi_human_subjects for IRB, citi_animal for IACUC). Governed + audited (signature).",
+    "AnA cannot sign. Finalizing a committee determination is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user a member holding the approve privilege finalizes it in the committee workspace.",
   input_schema: {
     type: 'object',
     properties: { agenda_item_id: { type: 'number' }, reason: { type: 'string' } },

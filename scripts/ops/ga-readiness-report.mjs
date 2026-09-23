@@ -694,10 +694,91 @@ for (const f of ENFORCEMENT_FLAGS) {
     for (const chunk of src.split(/\n\s+id: '/).slice(1)) {
       const id = chunk.slice(0, chunk.indexOf("'"));
       const approved = /\n\s+approvedForHighRisk: true,/.test(chunk);
-      const pq = (chunk.match(/\n\s+pq: \{ status: '([a-z]+)'/) ?? [])[1] ?? null;
-      if (/\n\s+approvedForHighRisk: (true|false),/.test(chunk)) entries.push({ id, approved, pq });
+      const pqMatch = chunk.match(/\n\s+pq: \{ status: '([a-z]+)', reference: (null|'([^']*)') \}/);
+      const pinned = (chunk.match(/\n\s+pinnedVersion: '([^']+)'/) ?? [])[1] ?? null;
+      let pq = pqMatch ? pqMatch[1] : null;
+      let note = '';
+      /* A "passed" claim counts only if the record it cites says so — the same
+         rules as verifyPqClaim in server/eval/pq/pq-verdict.ts, which is the
+         canonical check and runs in CI. Repeated here because this probe runs
+         under plain node, and a green dashboard row on a claim CI would reject
+         is the thing this report exists not to be. */
+      if (pq === 'passed') {
+        const ref = pqMatch[3] ?? null;
+        let rec = null;
+        try {
+          rec = ref ? JSON.parse(readFile(ref) ?? 'null') : null;
+        } catch {
+          rec = null;
+        }
+        const ok =
+          rec?.kind === 'pq-record' &&
+          rec.modelId === id &&
+          rec.pinnedVersion === pinned &&
+          rec.verdict === 'PASS' &&
+          rec.protocolStatus === 'approved';
+        if (!ok) {
+          pq = 'unverified';
+          note = ref ? ` (claims passed; ${ref} does not support it)` : ' (claims passed; cites no record)';
+        }
+      }
+      if (/\n\s+approvedForHighRisk: (true|false),/.test(chunk)) entries.push({ id, approved, pq, note });
     }
   }
+  /**
+   * The gold bank measured against the protocol's own sample floor, rather
+   * than asserted. This line used to read "the seed has 4", which stopped
+   * being true the moment the bank was expanded and would have sent the next
+   * session to re-do finished work — the failure the CLAUDE.md working
+   * agreement describes. Counted the way run-pq.ts counts: generation tasks
+   * carrying an input, because a task with no input is never given to a model
+   * and so does not raise the floor.
+   */
+  function goldBankState() {
+    const floorLine = 'a gold bank at the protocol floor';
+    try {
+      const protocol = JSON.parse(readFile('server/eval/pq/pq-protocol.json') ?? 'null');
+      const bank = JSON.parse(readFile('server/eval/doc-quality/gold-tasks.json') ?? 'null');
+      const floor = protocol?.components?.generation?.criteria?.minTasksPerDocType;
+      const tasks = Array.isArray(bank?.tasks) ? bank.tasks : null;
+      if (typeof floor !== 'number' || !tasks) return floorLine;
+      const counts = new Map();
+      for (const t of tasks) {
+        if (t?.taskType !== 'generation') continue;
+        if (typeof t.input !== 'string' || !t.input.trim()) continue;
+        counts.set(t.docType, (counts.get(t.docType) ?? 0) + 1);
+      }
+      const short = [...counts].filter(([, n]) => n < floor);
+      return short.length
+        ? `${floorLine} (${floor}+ generation tasks per document type; below it: ${short.map(([d, n]) => `${d}=${n}`).join(', ')})`
+        : `the gold bank reaches the protocol floor of ${floor} per document type (${[...counts].map(([d, n]) => `${d}=${n}`).join(', ')}) — done`;
+    } catch {
+      return floorLine;
+    }
+  }
+
+  /**
+   * Which required PQ components still cannot execute, read from the protocol
+   * rather than listed here. Same reason as goldBankState: this line named "a
+   * live extraction path" after extraction became executable, and a dashboard
+   * that keeps naming finished work sends the next session to redo it.
+   */
+  function unexecutableComponentsState() {
+    try {
+      const protocol = JSON.parse(readFile('server/eval/pq/pq-protocol.json') ?? 'null');
+      const components = protocol?.components;
+      if (!components || typeof components !== 'object') return 'the components that cannot execute yet';
+      const blocked = Object.entries(components)
+        .filter(([, c]) => c?.required && !c?.executable)
+        .map(([name]) => name);
+      return blocked.length
+        ? `the required component(s) that still cannot execute: ${blocked.join(', ')}`
+        : 'every required component can execute';
+    } catch {
+      return 'the components that cannot execute yet';
+    }
+  }
+
   const approved = entries.filter((e) => e.approved);
   const passed = approved.filter((e) => e.pq === 'passed');
   const primaryPassed = passed.some((e) => e.id === 'claude-opus-4');
@@ -712,12 +793,14 @@ for (const f of ENFORCEMENT_FLAGS) {
       approved.length === 0
         ? 'could not read approvedForHighRisk from server/services/ai-governance/approved-models.ts — treated as not qualified'
         : `${passed.length} of ${approved.length} approved model(s) have a passed PQ: ` +
-          approved.map((e) => `${e.id}=${e.pq ?? 'unknown'}`).join(', '),
+          approved.map((e) => `${e.id}=${e.pq ?? 'unknown'}${e.note}`).join(', '),
     gate:
       'server/services/ai-gateway/gateway.ts approvedForTask — only approvedForHighRisk models serve document_drafting / regulatory_review, at primary, fallback and explicit selection; PQ status in approved-models.ts',
     owner: 'Engineering (execute the PQ) + Ops (a product provider key)',
     unblock:
-      'Provision a product ANTHROPIC_API_KEY; add the live mode the eval harnesses do not yet have (server/eval/doc-quality/README.md, "how to make the numbers real"); execute against server/eval/rag/ and server/eval/doc-quality/; record pq: { status: \'passed\', reference } on each entry it covers.',
+      'System owner approves server/eval/pq/pq-protocol.json (it is draft; a PQ against unapproved criteria cannot PASS). Engineering: ' +
+      `${goldBankState()}; ${unexecutableComponentsState()}. ` +
+      'Ops: a product ANTHROPIC_API_KEY. Then `npm run pq:run -- --model claude-opus-4 --record` and cite the record as pq.reference — verifyPqClaim refuses anything but a PASS for that exact pinned version.',
   });
 }
 

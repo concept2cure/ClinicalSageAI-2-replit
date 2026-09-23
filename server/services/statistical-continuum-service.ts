@@ -13,6 +13,19 @@ import { ai } from '../lib/unified-ai-client';
 
 import { createScopedLogger } from '../utils/logger.js';
 
+/**
+ * The model produced no usable draft, so nothing was stored. Raised instead of
+ * recording an empty result as generated. The cause is kept for the log; the
+ * message is safe to show.
+ */
+export class NoDraftProducedError extends Error {
+  readonly code = 'NO_DRAFT_PRODUCED' as const;
+  constructor(what: string, readonly causeError: unknown) {
+    super(`No ${what} were drafted, so nothing was saved. The drafting model was unavailable or returned nothing usable.`);
+    this.name = 'NoDraftProducedError';
+  }
+}
+
 const logger = createScopedLogger('statistical-continuum-service');
 
 // --- Types ---
@@ -224,14 +237,18 @@ export class StatisticalContinuumService {
       }>;
     };
 
-    try {
-      const aiResponse = await ai.chat(
-        {
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a senior biostatistician creating ADaM dataset specifications for a clinical trial.
+    // A model failure or a refusal to draft on an unapproved model propagates
+    // with its own type, so the caller can say which it was.
+    const aiResponse = await ai.chat(
+      {
+        // Drafting a regulated deliverable: only a model approved for high-risk
+        // regulatory drafting may serve it (approved-models.ts). It pinned gpt-4o.
+        taskType: 'document_drafting',
+        callerModule: 'statistical-continuum.analysis-specs',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a senior biostatistician creating ADaM dataset specifications for a clinical trial.
 Generate specifications for ADSL (Subject Level), ADAE (Adverse Events), and ADTTE (Time to Event) datasets.
 For each dataset, provide:
 1. datasetName (e.g., "ADSL")
@@ -242,10 +259,10 @@ For each dataset, provide:
 6. population: analysis population
 
 Return a JSON object with key "datasets" containing an array of 3 dataset specs.`,
-            },
-            {
-              role: 'user',
-              content: `Generate ADaM dataset specifications for this trial:
+          },
+          {
+            role: 'user',
+            content: `Generate ADaM dataset specifications for this trial:
 Indication: ${protocol?.indication || 'Not specified'}
 Phase: ${protocol?.phase || 'Not specified'}
 Primary Endpoint: ${protocol?.primaryEndpoint || 'Not specified'}
@@ -255,16 +272,26 @@ Duration: ${protocol?.durationWeeks || 24} weeks
 
 SAP Summary:
 ${sapContent.substring(0, 3000)}`,
-            },
-          ],
-        },
-        { jsonMode: true, temperature: 0.2 }
-      );
+          },
+        ],
+      },
+      { jsonMode: true, temperature: 0.2 }
+    );
 
-      datasetsPayload = JSON.parse(aiResponse.content || '{"datasets":[]}');
-    } catch (aiError) {
-      logger.error('AI analysis spec generation failed, using fallback', { err: aiError instanceof Error ? aiError.message : String(aiError) });
-      datasetsPayload = { datasets: [] };
+    try {
+      datasetsPayload = JSON.parse(aiResponse.content ?? '');
+    } catch (parseError) {
+      /* Nothing is stored. Until 2026-09-23 any failure here fell back to
+         { datasets: [] } and recorded zero specifications with a fresh
+         generatedAt — a failed generation written down as one that found
+         nothing to specify. */
+      logger.error('AI analysis spec reply was unreadable; nothing stored', {
+        err: parseError instanceof Error ? parseError.message : String(parseError),
+      });
+      throw new NoDraftProducedError('analysis dataset specifications', parseError);
+    }
+    if (!Array.isArray(datasetsPayload?.datasets) || datasetsPayload.datasets.length === 0) {
+      throw new NoDraftProducedError('analysis dataset specifications', new Error('the model returned no datasets'));
     }
 
     // Store each dataset specification
@@ -334,7 +361,10 @@ ${sapContent.substring(0, 3000)}`,
     // Use AI to generate TLF shells
     const aiResponse = await ai.chat(
       {
-        model: 'gpt-4o',
+        // Drafting a regulated deliverable: only a model approved for high-risk
+        // regulatory drafting may serve it (approved-models.ts). It pinned gpt-4o.
+        taskType: 'document_drafting',
+        callerModule: 'statistical-continuum.tlf-shells',
         messages: [
           {
             role: 'system',
@@ -393,9 +423,13 @@ SAP Summary: ${(sapSnapshot?.content || '').substring(0, 2000)}`,
     };
 
     try {
-      tlfPayload = JSON.parse(aiResponse.content || '{"tlfs":[]}');
-    } catch {
-      tlfPayload = { tlfs: [] };
+      tlfPayload = JSON.parse(aiResponse.content ?? '');
+    } catch (parseError) {
+      // An unreadable reply is not "no TLFs": nothing is stored.
+      throw new NoDraftProducedError('TLF shells', parseError);
+    }
+    if (!Array.isArray(tlfPayload?.tlfs) || tlfPayload.tlfs.length === 0) {
+      throw new NoDraftProducedError('TLF shells', new Error('the model returned no TLFs'));
     }
 
     // Store each TLF shell
@@ -512,7 +546,10 @@ SAP Summary: ${(sapSnapshot?.content || '').substring(0, 2000)}`,
     // Use AI to generate CSR statistical sections
     const aiResponse = await ai.chat(
       {
-        model: 'gpt-4o',
+        // Drafting a regulated deliverable: only a model approved for high-risk
+        // regulatory drafting may serve it (approved-models.ts). It pinned gpt-4o.
+        taskType: 'document_drafting',
+        callerModule: 'statistical-continuum.csr-sections',
         messages: [
           {
             role: 'system',
@@ -543,9 +580,14 @@ Results: ${JSON.stringify(resultsSnapshot, null, 2).substring(0, 2000)}`,
 
     let sectionsPayload: { sections: Record<string, string> };
     try {
-      sectionsPayload = JSON.parse(aiResponse.content || '{"sections":{}}');
-    } catch {
-      sectionsPayload = { sections: {} };
+      sectionsPayload = JSON.parse(aiResponse.content ?? '');
+    } catch (parseError) {
+      // Until 2026-09-23 this stored empty sections and set status
+      // 'csr_generated'. An unreadable reply is not a generated CSR.
+      throw new NoDraftProducedError('CSR statistical sections', parseError);
+    }
+    if (!sectionsPayload?.sections || Object.keys(sectionsPayload.sections).length === 0) {
+      throw new NoDraftProducedError('CSR statistical sections', new Error('the model returned no sections'));
     }
 
     // Store CSR sections snapshot

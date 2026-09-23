@@ -29,8 +29,18 @@ vi.mock('drizzle-orm', async importOriginal => {
 // Mock DB chain
 // ---------------------------------------------------------------------------
 
+// update().set().where() is awaited directly by most writes, and ends in
+// .returning() for the compare-and-set that consumes a TOTP step. The where
+// result is therefore both a thenable and carries returning(). mockReturning
+// stands in for the database's answer to the conditional UPDATE: one row when
+// the step was later than the last accepted, none when it was not.
 const mockUpdateSet = vi.fn();
-const mockUpdateWhere = vi.fn().mockResolvedValue(undefined);
+const mockReturning = vi.fn();
+const mockUpdateWhere = vi.fn(() => ({
+  returning: mockReturning,
+  then: (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) =>
+    Promise.resolve(undefined).then(resolve, reject),
+}));
 mockUpdateSet.mockReturnValue({ where: mockUpdateWhere });
 const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }));
 
@@ -59,6 +69,7 @@ const mockUsers = {
   mfaBackupCodes: 'users.mfaBackupCodes',
   mfaMethod: 'users.mfaMethod',
   mfaVerifiedAt: 'users.mfaVerifiedAt',
+  mfaTotpLastStep: 'users.mfaTotpLastStep',
 };
 
 vi.mock('../../shared/schema', () => ({
@@ -102,6 +113,8 @@ beforeEach(async () => {
   // Clear any leftover queued DB responses between tests.
   mockSelectLimit.mockReset();
   mockSelectLimit.mockResolvedValue([]);
+  mockReturning.mockReset();
+  mockReturning.mockResolvedValue([{ id: 1 }]);
   // Re-import to pick up fresh mocks
   mfaModule = await import('../../server/services/mfaService');
 });
@@ -149,9 +162,22 @@ describe('MFA Service', () => {
       expect(setCall.mfaSecret).toMatch(/^[a-f0-9]+:[a-f0-9]+:[a-f0-9]+$/);
     });
 
-    it('should return a QR code URL', async () => {
+    it('refuses, and returns no secret, when an authenticator is already enabled', async () => {
+      // The conditional UPDATE matched nothing, and the account exists: mfa_enabled was true.
+      mockReturning.mockResolvedValueOnce([]);
+      mockSelectLimit.mockResolvedValueOnce([{ id: 42 }]);
+      await expect(mfaModule.generateSecret(42, 'admin@corp.com')).rejects.toBeInstanceOf(
+        mfaModule.MfaAlreadyEnabledError,
+      );
+    });
+
+    it('draws the QR code itself: a data: URL, never an address that carries the secret', async () => {
+      // It was https://api.qrserver.com/...?data=<otpauth URI with secret=...>:
+      // displaying it sent the TOTP seed to a third party.
       const result = await mfaModule.generateSecret(1, 'test@test.com');
-      expect(result.qrCodeDataUrl).toContain('qr');
+      expect(result.qrCodeDataUrl).toMatch(/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/);
+      expect(result.qrCodeDataUrl).not.toContain(result.secret);
+      expect(result.qrCodeDataUrl).not.toMatch(/^https?:/);
     });
   });
 
@@ -208,6 +234,101 @@ describe('MFA Service', () => {
       // but for practical purposes this is fine.
       // We just verify the function returns a boolean without crashing.
       expect(typeof result).toBe('boolean');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // A code is accepted once (RFC 6238 §5.2; VSR-001 §13.3 item 1)
+  //
+  // What the unit can prove: which step is offered for consumption, that the
+  // answer of the conditional UPDATE decides the result, and that the pre-check
+  // never writes. That the WHERE refuses a step not later than the stored one,
+  // including under concurrency, needs real PostgreSQL:
+  // tests/db/one-time-credentials.dbtest.ts.
+  // -------------------------------------------------------------------------
+
+  describe('consume-once', () => {
+    const enrolled = (lastStep: number | null = null) => {
+      const secret = crypto.randomBytes(20);
+      mockSelectLimit.mockResolvedValue([{
+        mfaSecret: encryptForTest(base32Encode(secret)),
+        mfaTotpLastStep: lastStep,
+      }]);
+      return secret;
+    };
+    const stepNow = () => Math.floor(Date.now() / 1000 / 30);
+
+    it('offers the matched step for consumption and verifies when the database accepts it', async () => {
+      const secret = enrolled();
+      const step = stepNow();
+      expect(await mfaModule.verifySecondFactor(1, generateTestTOTP(secret, step))).toBe('totp');
+      expect(mockUpdateSet).toHaveBeenCalledWith({ mfaTotpLastStep: step });
+      expect(mockReturning).toHaveBeenCalledTimes(1);
+    });
+
+    it('offers the PREVIOUS step when the code is from the previous window', async () => {
+      const secret = enrolled();
+      const step = stepNow() - 1;
+      expect(await mfaModule.verifyToken(1, generateTestTOTP(secret, step))).toBe(true);
+      expect(mockUpdateSet).toHaveBeenCalledWith({ mfaTotpLastStep: step });
+    });
+
+    it('refuses a matching code when the database refuses the step (already used, or an earlier one)', async () => {
+      const secret = enrolled();
+      mockReturning.mockResolvedValue([]);
+      expect(await mfaModule.verifySecondFactor(1, generateTestTOTP(secret))).toBeNull();
+      expect(await mfaModule.verifyToken(1, generateTestTOTP(secret))).toBe(false);
+    });
+
+    it('a wrong code is refused before anything is written', async () => {
+      const secret = enrolled();
+      const right = generateTestTOTP(secret);
+      const wrong = String((Number(right) + 1) % 1_000_000).padStart(6, '0');
+      // A wrong code can still match one of the other two window steps by chance
+      // (about 2 in 10^6); skip that draw rather than assert on it.
+      if ([-1, 1].some(d => generateTestTOTP(secret, stepNow() + d) === wrong)) return;
+      expect(await mfaModule.verifySecondFactor(1, wrong)).toBeNull();
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('enableMfa does not enable when the enrolment code is refused as used', async () => {
+      const secret = enrolled();
+      mockReturning.mockResolvedValue([]);
+      const result = await mfaModule.enableMfa(1, generateTestTOTP(secret));
+      expect(result.success).toBe(false);
+      expect(mockUpdateSet).not.toHaveBeenCalledWith(expect.objectContaining({ mfaEnabled: true }));
+    });
+
+    describe('isTokenCurrentlyAcceptable (the e-signature pre-check)', () => {
+      it('accepts a current code when no step has been used, and writes nothing', async () => {
+        const secret = enrolled(null);
+        expect(await mfaModule.isTokenCurrentlyAcceptable(1, generateTestTOTP(secret))).toBe(true);
+        expect(mockUpdate).not.toHaveBeenCalled();
+      });
+
+      it('accepts a code whose step is later than the last used', async () => {
+        const secret = enrolled(stepNow() - 1);
+        expect(await mfaModule.isTokenCurrentlyAcceptable(1, generateTestTOTP(secret))).toBe(true);
+      });
+
+      it('refuses a code whose step is the last used', async () => {
+        const secret = enrolled(stepNow());
+        expect(await mfaModule.isTokenCurrentlyAcceptable(1, generateTestTOTP(secret))).toBe(false);
+      });
+
+      it('refuses a code whose step is earlier than the last used', async () => {
+        const secret = enrolled(stepNow());
+        expect(await mfaModule.isTokenCurrentlyAcceptable(1, generateTestTOTP(secret, stepNow() - 1))).toBe(false);
+      });
+
+      it('refuses malformed input and a user with no secret, without reading or writing', async () => {
+        expect(await mfaModule.isTokenCurrentlyAcceptable(1, '12345')).toBe(false);
+        expect(await mfaModule.isTokenCurrentlyAcceptable(1, 'ABCD-EF01')).toBe(false);
+        expect(mockSelect).not.toHaveBeenCalled();
+        mockSelectLimit.mockResolvedValue([{ mfaSecret: null, mfaTotpLastStep: null }]);
+        expect(await mfaModule.isTokenCurrentlyAcceptable(1, '123456')).toBe(false);
+        expect(mockUpdate).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -390,8 +511,8 @@ function encryptForTest(plaintext: string): string {
   return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
 }
 
-function generateTestTOTP(secret: Buffer): string {
-  const timeCounter = Math.floor(Math.floor(Date.now() / 1000) / 30);
+function generateTestTOTP(secret: Buffer, step?: number): string {
+  const timeCounter = step ?? Math.floor(Math.floor(Date.now() / 1000) / 30);
   const counterBuffer = Buffer.alloc(8);
   counterBuffer.writeUInt32BE(Math.floor(timeCounter / 0x100000000), 0);
   counterBuffer.writeUInt32BE(timeCounter & 0xffffffff, 4);

@@ -7,7 +7,6 @@ import path from 'node:path';
 import { MANIFEST_ROOT } from '../lib.mjs';
 import { PACK } from './biotech-content.mjs';
 
-export const SIGNING_PIN = process.env.VALIDATION_SIGNING_PIN || '246813';
 export const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const NOT_EXECUTED_NO_SIGNER = 'not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)';
 

@@ -33,6 +33,30 @@ import type {
   CmcContradictionSnapshot,
 } from '../../../shared/types/orchestration';
 
+/**
+ * The payload could not be assembled, because a read it depends on failed or
+ * the project is not in the organisation. `failedReads` names each one; the
+ * underlying causes are logged, not returned, since they carry SQL.
+ */
+export class CrossObjectReadError extends Error {
+  readonly failedReads: string[];
+
+  constructor(failedReads: string[]) {
+    super(
+      `The project could not be assessed: ${failedReads.join(', ')} could not be read. Nothing was assessed.`,
+    );
+    this.name = 'CrossObjectReadError';
+    this.failedReads = failedReads;
+  }
+}
+
+/** A read failed: log its cause, and fail the payload naming the read. */
+function readFailed(read: string, err: unknown): CrossObjectReadError {
+  if (err instanceof CrossObjectReadError) return err;
+  logger.warn('Resolver query failed', { read, error: err instanceof Error ? err.message : err });
+  return new CrossObjectReadError([read]);
+}
+
 // ---------------------------------------------------------------------------
 // Main Resolver
 // ---------------------------------------------------------------------------
@@ -52,7 +76,32 @@ export async function assembleCrossObjectPayload(
 ): Promise<CrossObjectReasoningPayload> {
   const { organizationId, projectId } = scope;
 
-  // Run all queries in parallel for speed
+  // Run all queries in parallel for speed. Every one must succeed: each
+  // resolver used to answer a failed read with an empty result, so a project
+  // nothing could be read from was assessed as an empty one, and the readiness
+  // review reported "No critical issues found" for it (VSR-001 F-23). Rows that
+  // are absent are an answer; a read that failed is not, so the payload fails
+  // and names every read that did.
+  const settled = await Promise.allSettled([
+    resolveProjectSnapshot(organizationId, projectId),
+    resolveDocuments(organizationId, projectId, scope.module),
+    resolveArtifacts(organizationId, projectId, scope.module),
+    resolveValidations(organizationId, projectId),
+    resolveTasks(organizationId, projectId, scope.module),
+    resolveModulePlacements(organizationId, projectId),
+    resolveRecentActions(organizationId, projectId),
+    resolveEvidence(organizationId, projectId),
+    resolveCmcSignals(organizationId, projectId),
+    resolveLastSignalAt(organizationId, projectId),
+  ] as const);
+  const failedReads = settled.flatMap((r) =>
+    r.status === 'rejected'
+      ? r.reason instanceof CrossObjectReadError
+        ? r.reason.failedReads
+        : ['an unnamed read']
+      : [],
+  );
+  if (failedReads.length > 0) throw new CrossObjectReadError(failedReads);
   const [
     projectSnap,
     documents,
@@ -64,18 +113,18 @@ export async function assembleCrossObjectPayload(
     evidence,
     cmcSignals,
     lastSignalAt,
-  ] = await Promise.all([
-    resolveProjectSnapshot(organizationId, projectId),
-    resolveDocuments(organizationId, projectId, scope.module),
-    resolveArtifacts(organizationId, projectId, scope.module),
-    resolveValidations(organizationId, projectId),
-    resolveTasks(organizationId, projectId, scope.module),
-    resolveModulePlacements(organizationId, projectId),
-    resolveRecentActions(organizationId, projectId),
-    resolveEvidence(organizationId, projectId),
-    resolveCmcSignals(organizationId, projectId),
-    resolveLastSignalAt(organizationId, projectId),
-  ]);
+  ] = settled.map((r) => (r as PromiseFulfilledResult<unknown>).value) as [
+    ProjectSnapshot,
+    DocumentSnapshot[],
+    ArtifactSnapshot[],
+    ValidationSnapshot[],
+    TaskSnapshot[],
+    ModulePlacementSnapshot[],
+    ActionHistoryEntry[],
+    EvidenceSnapshot[],
+    CmcSignalSnapshot,
+    string | null,
+  ];
 
   return {
     project: projectSnap,
@@ -112,22 +161,14 @@ async function resolveProjectSnapshot(
       .where(and(eq(projects.id, projectId), eq(projects.organizationId, orgId)))
       .limit(1);
 
-    if (!project) {
-      return {
-        id: projectId,
-        name: 'Unknown Project',
-        status: 'unknown',
-        progress: 0,
-        totalDocuments: 0,
-        totalTasks: 0,
-        blockedTasks: 0,
-        overdueTasks: 0,
-      };
-    }
+    // Not a project this organisation holds: nothing about it can be read, so
+    // it is refused rather than assessed as an empty "Unknown Project".
+    if (!project) throw new CrossObjectReadError(['project']);
 
-    // Count related entities
+    // Count related entities. count(*) is a bigint, which the driver returns
+    // as a string: cast it, so the snapshot carries the number its type says.
     const [artifactCounts] = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql<number>`count(*)::int` })
       .from(concept2cureArtifacts)
       .where(
         and(
@@ -151,17 +192,7 @@ async function resolveProjectSnapshot(
       overdueTasks: 0,
     };
   } catch (err) {
-    logger.warn('Failed to resolve project snapshot', { error: err instanceof Error ? err.message : err });
-    return {
-      id: projectId,
-      name: 'Project',
-      status: 'active',
-      progress: 0,
-      totalDocuments: 0,
-      totalTasks: 0,
-      blockedTasks: 0,
-      overdueTasks: 0,
-    };
+    throw readFailed('project', err);
   }
 }
 
@@ -197,8 +228,7 @@ async function resolveDocuments(
       routedTo: (a as any).ctdSection,
     }));
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('documents', err);
   }
 }
 
@@ -232,8 +262,7 @@ async function resolveArtifacts(
       lastModified: a.updatedAt?.toISOString(),
     }));
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('artifacts', err);
   }
 }
 
@@ -278,8 +307,7 @@ async function resolveValidations(
         };
       });
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('validations', err);
   }
 }
 
@@ -313,8 +341,7 @@ async function resolveTasks(
       isOverdue: false,
     }));
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('tasks', err);
   }
 }
 
@@ -374,8 +401,7 @@ async function resolveModulePlacements(
 
     return result;
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('module placements', err);
   }
 }
 
@@ -418,8 +444,7 @@ async function resolveRecentActions(
         };
       });
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('recent actions', err);
   }
 }
 
@@ -434,23 +459,13 @@ async function resolveRecentActions(
  * Cast both sides to text so the query is type-safe regardless of which
  * project flavor (legacy integer or CMC UUID) the caller supplied. Returns
  * an empty signal set when the project has no CMC rows — readiness treats
- * that as "CMC not in scope," not as a failure.
+ * that as "CMC not in scope," not as a failure. A query that fails is a
+ * failure, and fails the payload.
  */
 async function resolveCmcSignals(
   orgId: number,
   projectId: number,
 ): Promise<CmcSignalSnapshot> {
-  const empty: CmcSignalSnapshot = {
-    sourceObjectCount: 0,
-    sourceTypeBreakdown: {},
-    sectionCount: 0,
-    staleSectionCount: 0,
-    contradictions: [],
-    contradictionCounts: {
-      critical: 0, high: 0, medium: 0, low: 0, open: 0, resolved: 0,
-    },
-  };
-
   try {
     const projectIdParam = String(projectId);
 
@@ -534,11 +549,7 @@ async function resolveCmcSignals(
       contradictionCounts: counts,
     };
   } catch (err) {
-    logger.warn(
-      'CMC signal query failed',
-      { error: err instanceof Error ? err.message : err },
-    );
-    return empty;
+    throw readFailed('CMC signals', err);
   }
 }
 
@@ -579,11 +590,7 @@ async function resolveLastSignalAt(
     if (ts instanceof Date) return ts.toISOString();
     return new Date(String(ts)).toISOString();
   } catch (err) {
-    logger.warn(
-      'Last-signal query failed',
-      { error: err instanceof Error ? err.message : err },
-    );
-    return null;
+    throw readFailed('last signal', err);
   }
 }
 
@@ -619,8 +626,7 @@ async function resolveEvidence(
       };
     });
   } catch (err) {
-    logger.warn('Resolver query failed', { error: err instanceof Error ? err.message : err });
-    return [];
+    throw readFailed('evidence', err);
   }
 }
 

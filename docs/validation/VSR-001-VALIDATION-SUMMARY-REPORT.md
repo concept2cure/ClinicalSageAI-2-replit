@@ -568,3 +568,526 @@ Product changes in this section: `6a0575213` (env-file loading) and `e2d910d6f`
 (F-14). Validation-tooling changes: `a6bee4cf9`, `e0c983cc1`, `32569d496`. No
 result was edited after execution. The runners wrote every record, and the
 matrix builder regenerated TM-001.
+
+### 12.6 Postscript — the one recurring failure in the production-posture server log
+
+The server log of the §12.1 execution has one recurring error, five times,
+each about 30 seconds apart. It is also **F-17** (product): *"[enforcement-mode]
+could not read the stored enforcement mode — serving a fail-safe value —
+FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on"*.
+The entitlement gate resolves the module-enforcement mode on every request,
+including unauthenticated page and asset loads that carry no tenant scope.
+The stored-mode read ran on the shared pool unscoped, so under the only RLS
+posture production accepts it always failed. **The mode an operator sets on
+the Master Licensing console could never take effect in production**; the
+server served the deployment value (capped at `report`) and flagged it
+degraded. No OQ step covers that console, which is why no step failed.
+
+**Fixed** in the change that files this note. The read runs under
+`runWithPreAuthScope`, which marks it as intentionally tenant-less and grants no
+role, so no policy is bypassed. `platform_settings` has no row-level security,
+so the read succeeds on its own merits. Live, under `RLS_ENFORCE=on` with a
+stored mode of `report` (evidence: `docs/evidence/W3/2026-09-22/enforcement-mode-under-rls/`):
+
+| | Resolved mode | Source | Degraded | Read failures |
+|---|---|---|---|---|
+| Before | `off` | deployment | yes | 2 |
+| After | `report` | stored | no | 0 |
+
+A red test runs the real pool guard, `server/services/entitlements/__tests__/enforcement-mode-under-rls.test.ts`.
+
+## 13. Addendum 2026-09-23 — the package executed with the authentication production requires; two Part 11 defects it exposed (W3 session)
+
+Appended only. Sections 1–12 are unchanged.
+
+§12 ran the protocols with RLS enforcing as a non-owner role, but every session
+still came from dev-login. Dev-login exists only on a development server with
+`ALLOW_DEV_AUTH=1`; production must refuse it (IQ-10), and there every password
+sign-in is answered with a TOTP challenge. The harness therefore could not open
+a session on any server the package has to be executed on (P-6). No signer had a
+second factor enrolled, so no step could see how a signing path treats one
+(P-7). This section records the execution in which both identities sign in and
+sign the way production requires, and what that execution exposed.
+
+**Installation.**
+- Database: `c2c_oq_w3_20260922b`, as §12.
+- Runtime role: `app_service`.
+- Server posture: `RLS_ENFORCE=on`, `LAUNCH_SCOPE_ENFORCE=on`, no AI provider.
+- New in this execution: the server runs with `ALLOW_DEV_AUTH=0` and
+  `MFA_ENCRYPTION_KEY` set. Dev-login answers 404, and every password sign-in is
+  challenged.
+
+**Identities.**
+- Run identity (author): user 17, `oq-runner@validation.local`.
+- Second signer: user 11, `oq-signer@validation.local`.
+- Both were provisioned into this database only, by `scripts/seed-admin.mjs`.
+- Both enrolled a TOTP factor through the product's own endpoints
+  (`POST /api/auth/mfa/setup`, then `POST /api/auth/mfa/enable`).
+- Passwords and TOTP secrets exist only in the session scratchpad. A search of
+  the evidence finds none of them, no six-digit code in any factor field, and
+  no bearer token.
+
+IQ and OQ were both executed at `0e2b3a971`. Evidence:
+`docs/evidence/W3/2026-09-23/`.
+
+### 13.1 Results
+
+| Record | Pass | Fail | Deviation | Not executed |
+|---|---|---|---|---|
+| IQ-001 (v0.4) | 12 | 0 | 3 | 0 |
+| OQ-001 Projects (v0.3) | 16 | 0 | 0 | 0 |
+| OQ-002 Vault | 12 | 0 | 0 | 0 |
+| OQ-003 Authoring | 23 | 0 | 1 | 0 |
+| OQ-004 Submission Center (v0.3) | 15 | 0 | 0 | 0 |
+| OQ-005 Submission Readiness | 9 | 0 | 0 | 0 |
+| OQ-006 QMS controlled documents (v0.4) | 20 | 0 | 0 | 0 |
+| **OQ total** | **95** | **0** | **1** | **0** |
+
+Every OQ record names `authentication: password+totp`. A run signs in three
+times: the run identity and the signer once each, plus OQ-PROJ-02's sign-in
+through the form. The server log shows exactly those three. IQ-10 passes for the
+first time: dev-login answers 404 on a server without development
+authentication. IQ-11 passes on a session opened by password and code. The
+remaining IQ deviations are the development-install ones: IQ-DEV-002, 004 and
+005. The single OQ deviation is OQ-AUTH-16 (no provider).
+
+TM-001 was regenerated from this set (`runDate 2026-09-23`): 67 requirements,
+66 pass, 1 partial (URS-AUTH-012), 0 fail, 0 open, 0 uncovered. The default run
+date in `scripts/validation/build-traceability.mjs`,
+`scripts/validation/run-iq.mjs` and `tests/validation/lib/harness.mjs` moves to
+`2026-09-23`. The `2026-09-22` records stay in the tree, unchanged, as history.
+
+### 13.2 Findings
+
+| Id | What | Where it bit | State |
+|---|---|---|---|
+| **F-18** (product, §11.200) | `POST /api/c2c/actions/sign` verified the second factor only when the caller chose to send a code. That route is the re-authentication behind the eCTD sequence release signature, CMC batch release, Module 3 approval, 510(k) eSTAR filing and gateway transmittal. A signer with an authenticator enrolled could sign with the password alone, and the Part 11 row recorded `second_factor_verified false, is_valid true`. The QMS approval and `/api/esignature/sign` refused the same signer. The route also answered `REAUTH_USER_NOT_FOUND` for a signer with no stored password, which told that case apart from a wrong password. | First execution with enrolled signers, at `9b77ee3d8`. OQ-SUBC-08 signed `ectd-sequence:3` with the password alone (row 4, `second_factor_verified false`). OQ-QMS-05 was refused `MFA_TOKEN_REQUIRED` for the same signer (`red/F-18/`). | **Fixed** `828faf809`. `verifyReauth` now delegates to the canonical signer re-verification (`server/services/part11/reverify-signer.ts`): the password always, and the enrolled second factor. An unreadable enrolment state is refused. A presented code must verify, because callers record the factors from the request. Unit test: 3 fail / 6 pass on the pre-fix code, 9 / 9 after. Live, OQ-SUBC-08 v0.3: password only → 401 `REAUTH_TOTP_REQUIRED`, no row; password and code → row 11, `second_factor_verified true`. The e-sign modal now asks for the code when verify-password reports `mfaRequired`. |
+| **F-19** (product, §11.10(e)) | **Under RLS a sign-in by a user with a second factor leaves no audit record.** `auditAuthEvent` (`server/routes/auth.ts:40`) writes through `auditService.logAction` on the auth mount's pre-auth scope. That scope is tenant `'0'` with no role (`runWithPreAuthScope`), and the `audit_logs` policy admits only rows for the scope's tenant. So `user_login_mfa_challenge` (`auth.ts:605`), which carries the user's tenant, is refused, and `auditAuthEvent` swallows the refusal by design. `POST /api/auth/mfa/verify` (`auth.ts:1314`) records nothing: neither a wrong code nor the session it issues. Events with no tenant (an unknown email) are recorded. By the same mechanism, from source and not yet observed live: every other authentication event that carries a real tenant (a wrong password for a real account, a lockout, a sign-in without MFA) is refused too. | All six password sign-ins against the record server were refused (`observations/sign-in-audit-refused.log.txt`), and `audit_logs` holds 0 `user_login_mfa_challenge` rows. The 4 failed attempts for an unknown account were recorded (tenant 0). No earlier execution could see this: dev-login never reaches the path. | **Open.** Fix: write each authentication event under a scope for the tenant it records, and record the outcome of `/mfa/verify`. Red test on the real pool guard; live re-verification. |
+| **P-6** (protocol) | The OQ harness opened sessions with dev-login only. | Against a server without development authentication, every protocol died before its first step: `dev-login failed (404)` (`red/harness-dev-login-only.transcript.txt`). | **Fixed** `9b77ee3d8`, `ebd0edd42`. The harness signs in with a password and completes the TOTP challenge (RFC 6238, checked against Appendix B; no code is presented twice). OQ-PROJ-02 signs in through the form (OQ-001 v0.3; §1 states the session method). |
+| **P-7** (protocol) | No signer had a second factor, so no signing step could observe whether a path enforces one. F-18 was invisible to OQ-004 v0.2. | — | **Fixed** `ebd0edd42` (OQ-004 v0.3, OQ-006 v0.4). OQ-SUBC-08 and OQ-QMS-05 first show the password-only signature or approval refused, with no row written. They then sign with password and code. OQ-SUBC-08 and OQ-QMS-05b assert `second_factor_verified`. |
+| **P-8** (tooling) | The records carried the authenticator codes the QMS approvals presented. The field is named `mfaToken`, and the redaction list did not include it. | Four step files of the first complete production-authentication run (`ebd0edd42`). That run was not filed, and the codes had been spent. | **Fixed** `52e3acc94`. `mfaToken` is now redacted along with `password`, `totp`, `pin` and the tokens; the set was re-executed. |
+| **P-9** (tooling) | Each protocol process signed its identities in separately. A re-run inside 15 minutes exceeded the login limit (10 per 15 minutes per IP), and every protocol after that failed to open a session with 429 `RATE_LIMIT`. | `red/login-limit.transcript.txt`. | **Fixed** `c33e43d26`. `npm run validation:oq` signs each identity in once per run and hands the sessions to the protocols, which re-validate them. |
+| **P-10** (protocol) | IQ-10 could neither pass nor fail. v0.3 recorded an observed refusal as a deviation, and recorded dev-login answering where the configuration must refuse it as the same deviation. IQ-11 took its session from dev-login only. | All four combinations were executed on one installation (`IQ-falsification/`). v0.3, dev-login closed: deviation. v0.3, dev-login open: deviation. v0.4, dev-login open: **fail**. v0.4, dev-login closed: pass (the record). | **Fixed** `0e2b3a971` (IQ-001 v0.4). The `NODE_ENV=production` refusal is still qualified on staging. |
+
+### 13.3 Observations for other rows (not dispositioned by this package)
+
+1. **A TOTP code is accepted more than once (D6).** `verifyTOTPToken`
+   (`server/services/mfaService.ts:269`) accepts any code in the ±1-step
+   window, and nothing records the last step used. A code that has verified is
+   therefore accepted again until its window closes, although RFC 6238 §5.2
+   requires the verifier to refuse it. Live: one code opened two sessions for
+   user 17 inside one time step (`observations/totp-replay.json`). No OQ step
+   exercises this, because the harness never presents a code twice. The fix
+   stores the last-used step per user and compares-and-sets it atomically on
+   every verification.
+2. **The server trusts no proxy (D1, D6).** The bootstrap never sets Express
+   `trust proxy`. The login and MFA limiters (`server/routes/auth.ts:118,160`)
+   key on `req.ip`, and express-rate-limit's forwarded-header check is turned
+   off. Live: twelve login attempts, each claiming a different client in
+   `X-Forwarded-For`, were all counted in one bucket, and every attempt from the
+   fifth on was refused 429 (`observations/login-limit-forwarded-for.txt`).
+   Behind the production ALB every user arrives from the ALB's address. About
+   ten requests per 15 minutes per ALB node and task would then refuse every
+   user's sign-in, and `audit_logs.ip_address` would record the proxy, as
+   `server/routes/charters.ts:75-81` already warns. The fix is the deployment's
+   hop count set explicitly (never bare `true`), as part of the production boot
+   contract.
+3. **The Authoring e-signature does not ask for the second factor (for the
+   reviewer, §11.5 item 5).** After F-18, three signing paths require an
+   enrolled second factor: the governed actions, the QMS approval and
+   `/api/esignature/sign`. `POST /api/authoring/docs/:id/e-sign` verifies the
+   PIN alone (`server/routes/authoring.router.ts:3906`). OQ-AUTH-14 passed for
+   user 17, who has a TOTP factor enrolled. §11.5 item 5 asks whether PIN plus
+   session is an acceptable two-component signature. The answer now also
+   decides whether this path joins the other three.
+4. **The session misstates enrolment.** `GET /api/auth/session` and the login
+   response return `mfaEnabled: false, mfaMethods: []` for every user
+   (`server/routes/auth.ts:340,586`). No launch surface displays the field, and
+   since F-18 the e-sign modal reads `mfaRequired` from verify-password instead.
+5. The development build shows *Demo access* on the login page whether or not
+   the server provides dev-login (`Concept2CureLogin.tsx:190`, a build-time
+   flag). A production build does not render it.
+
+### 13.4 What this changes in the records above
+
+- The OQ records filed in §8–§12 were executed with dev-login sessions, and
+  none had a signer holding a second factor. They stand as records of what was
+  run, and their signatures are correct for signers without a factor. They
+  could not have observed F-18 or F-19.
+- IQ-10's deviations in §6 and §12 are the configured-development case, and
+  they still read deviation under v0.4.
+
+### 13.5 Disposition summary after this section
+
+| Finding | State after §13 |
+|---|---|
+| F-1 … F-17 | As §12.4 and §12.6. |
+| **F-18** | **Closed** locally (`828faf809`). The staging re-execution is owed with the rest. |
+| **F-19** | **Open.** Tracked for the next change. |
+| **P-6 … P-10** | **Closed**. |
+| F-15 | **Open**: decision (a) or (b), §12.2. |
+| §13.3 items 1–2 | Raised for D6 and D1; not closed by this package. |
+| §13.3 item 3 | Added to §11.5 item 5 for the reviewer. |
+| OQ-AUTH-16 / URS-AUTH-012 | Deviation / partial: no PQ-passed provider, and nothing simulated. |
+
+### 13.6 What the package still owes before signature
+
+§12.5 stands, with item 1 narrowed again. The harness now executes against a
+server that refuses dev-login and challenges every sign-in, which is how staging
+and production run. Still owed:
+
+- the production image (`NODE_ENV=production`: the dev-login refusal on that
+  branch, the HMAC-sealed chain, enforcing CSP and HSTS);
+- a real second account created through user administration rather than the
+  seeding script;
+- a witness;
+- a PQ-passed provider;
+- a live release signature;
+- the contractor's review;
+- the F-15 decision;
+- the F-19 fix;
+- signatures.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+Product change in this section: `828faf809` (F-18). Validation-tooling changes:
+`9b77ee3d8`, `ebd0edd42`, `52e3acc94`, `c33e43d26`, `0e2b3a971`. No result was
+edited after execution. The runners wrote every record, and the matrix builder
+regenerated TM-001.
+
+### 13.7 Postscript: F-19 fixed, and its scope corrected
+
+**Scope correction to §13.2.** F-19 is not limited to users with a second
+factor. Outside development the login route challenges every password sign-in:
+email OTP by default, TOTP when enrolled (`server/routes/auth.ts`, "Always
+require 2FA"). So before this fix, under RLS, *every* sign-in left no audit
+record. The events §13.2 marked "from source, not yet observed live" have now
+been observed on real PostgreSQL:
+- a wrong password on a real account, which was refused;
+- a logout, which was refused;
+- the session `/mfa/verify` issues, which was never written at all.
+
+The login route's own comment pointed to a success audit "near `res.json({
+success: true, accessToken … })`". That call survives only on the development
+path; mandatory MFA moved session creation to `/mfa/verify`, and the audit
+call was not moved with it.
+
+**Fix.**
+- `recordAuthEvent` (`server/services/audit/auth-event-audit.ts`) replaces
+  the route-local helper at all eleven call sites.
+- For an event that names an organisation, it writes the row in a scope for
+  exactly that organisation, with no role, and around the write alone. The
+  request's own queries stay in the pre-auth scope.
+- An event that names no organisation is written as before, as tenant 0.
+- New-organisation provisioning at signup uses the same least-privilege
+  shape, fixed on trunk for the same cause.
+- `POST /api/auth/mfa/verify` now records its outcome:
+  - `user_login_mfa_failed` for a wrong code (against the organisation) or
+    for an invalid or expired challenge (tenant 0);
+  - `user_login` success, reason `mfa_verified`, for the session it issues.
+- A write that fails is still logged and does not fail the sign-in. That is
+  a deliberate policy, now no longer the steady state.
+
+**The source of the organisation is now a security boundary.** A row is
+written into whichever organisation the event names, so that name must come
+from the server: the user record, or the server-signed MFA challenge.
+`/logout` took it from a token it had only *decoded*. With the scope fix
+alone, a token signed with any key could write a `user_logout` row into any
+organisation's audit chain. Before the fix, RLS refused that row along with
+every other one. `/logout` now attributes a logout only when the token's
+signature verifies against the server's keys (expiry ignored, because a logout
+from an expired session is still an event). Anything else is recorded as an
+anonymous logout (tenant 0).
+
+**Shown failing first.** Evidence: `docs/evidence/W3/2026-09-23/red/F-19/`.
+
+| Check | Original code | Scope fix, `/logout` still decoding | Final |
+|---|---|---|---|
+| `tests/db/sign-in-audit-trail.dbtest.ts`: production route registration, a freshly minted non-superuser `NOBYPASSRLS` role, `app.rls_enforce=on` | 6 fail / 2 pass, with 4 policy refusals logged. The forged-token case passes only because RLS refused every tenant-named write | 3 fail / 5 pass. A token signed with a foreign key writes `user_logout` into the organisation's chain | 8 / 8, 0 refusals. The challenge, wrong code, session, wrong password and genuine logout are recorded against the organisation. The forged logout is not. The product's chain verifier reads the organisation's 5 rows `ok` |
+| `server/services/audit/__tests__/auth-event-audit.test.ts` (the scope rule, in the default CI job) | The write without its scope: 2 fail / 8 pass | — | 10 / 10 |
+| Live, the MFA-posture server, after the fix | §13.2: 6 of 6 challenge rows refused, 0 rows | — | Sign-in, wrong code, wrong password: 7 rows in org 1's chain, 0 refusals. On the final code, a forged-token logout is recorded as tenant 0, and the genuine logout as org 1 / user 17. The chain verifier reads `ok` over 273 rows in 2 tenants |
+
+§13.5 after this postscript: **F-19 closed** locally; the staging
+re-execution is owed with the rest. §13.6 no longer owes the F-19 fix.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+Product change: the one that files this note. No record in
+`docs/evidence/W3/2026-09-23/` was re-executed or edited. Those records were
+made before this fix; the OQ protocols do not exercise the audit trail of a
+sign-in. That gap is noted for the next URS/OQ revision.
+
+### 13.8 Postscript: the protocol set now covers the sign-in audit trail
+
+F-19 was found in a server log, not by a step. No requirement asked whether
+a sign-in reached the audit trail, so no step could fail when it did not.
+
+- **URS-001 v0.2, URS-PROJ-010** (§11.10(e), high). Every sign-in attempt by
+  a user of an organisation is entered in that organisation's hash-chained
+  audit log and shown on its audit ledger. A refused attempt reads as
+  refused, never as a sign-in. RA-001 v0.2 assesses it: high, scripted.
+- **OQ-001 v0.4, OQ-PROJ-16.** The step makes the attempts itself: a wrong
+  password; a correct password, then a wrong code; a correct password, then
+  the current code. It then requires exactly five new entries for the run
+  identity on the ledger, in order and hash-chained, and the server's chain
+  verdict. The sign-in calls bypass the recorded API client, so no password
+  or code reaches a record.
+- **The ledger's wording.** An authentication event was shown by its action
+  name, so a refused sign-in and a successful one both read "User Login".
+  `recordAuthEvent` now writes the sentence the ledger shows first, for
+  example "Sign-in refused: wrong password".
+
+**The check was first seen to pass when it should not have.** The first
+draft compared the *newest* five sign-in entries with the expected
+sentences. Run at `092718c9d` against a server still on the pre-F-19 auth
+code, it passed. None of that run's attempts had reached the trail; the
+newest five were identical sentences an earlier run had left. That record
+was overwritten by the corrected run and is not filed. The false pass is
+described here and in the commit that corrected the step (`5a53d2db2`). The step now counts only the
+entries it adds.
+
+| OQ-001 v0.4 at `5a53d2db2` | Result | OQ-PROJ-16 observed |
+|---|---|---|
+| Server on the pre-F-19 auth code | 16 pass / **1 fail** | "the sign-in attempts this step made added 0 ledger entr(ies) for user:17"; 5 policy refusals in that server's log |
+| Server on the fixed code | **17 / 0 / 0 / 0** | 401, 200, 401, 200, 200; 5 new entries, newest first "Signed in: password and second factor verified" … "Sign-in refused: wrong password"; all chained; chain verdict ok |
+
+Evidence: `docs/evidence/W3/2026-09-23/OQ-001-v0.4/`. TM-001 was regenerated
+from the 2026-09-23 set: 68 requirements, 66 pass, 1 partial, 1 uncovered
+(URS-PROJ-010). The uncovered row is true of that set, which was executed
+before the step existed. The next full execution, on staging, covers it.
+
+### 13.9 Postscript: three more sign-in defects, found by sweeping the pre-auth mounts after F-19
+
+F-19 was a pre-auth mount writing rows for a real organisation, and trunk
+fixed the same class in signup the same day. So every mount that runs
+before the `/api` gate was read for the same class: `/api/auth`,
+`/api/users` and `/api/user`, and `/api/auth/enterprise`. The sweep found
+three defects, each larger than a refused audit row. Each was reproduced on
+real PostgreSQL, as a freshly minted non-superuser `NOBYPASSRLS` role
+behind production's own route registration
+(`tests/db/sign-in-audit-trail.dbtest.ts`), before its fix, then verified
+live on the MFA-posture server.
+
+| Id | What | Shown failing first | State |
+|---|---|---|---|
+| **F-20** (product, §11.10(d), §11.300) | **A way around MFA for every account.** `POST /api/users/login` and `/api/user/login` checked the password alone and issued a 24-hour access token. There was no second factor, no lockout check, no failed-attempt count and no audit record, for users who had enrolled an authenticator. The same router's `/register` created an account with no organisation outside signup and gave it a token. Its `/logout` revoked nothing. Nothing called any of them. | Live, for the TOTP-enrolled run identity: both paths returned a token that read `/api/c2c/projects` (200) and that `/api/auth/session` called signed in. The dbtest reproduces all three (`red/F-20/`). | **Fixed** `a7d5478ca`. All three answer with a 307 to the canonical `/api/auth/login`, `/logout` and `/signup`, as the platform's `/api/login`, `/api/logout` and `/api/register` already did. The parallel handlers are deleted. The replacement is the page's `/api/v1/auth`, exercised by OQ-PROJ-02 and OQ-PROJ-16. |
+| **F-21** (product, §11.10(d); July 2026 audit **AUTH-03**, P1, blocks G2) | **Logout did not end the session.** `/api/auth/logout` revoked the token and answered "Tokens invalidated.", but nothing on the request path read the revocation list; only the refresh route did. Under RLS the revocation lookup itself ran unscoped and was refused silently, so it saw only this instance's memory. | Live, after logout, the same token still read projects and the audit ledger, and `/session` called it signed in. In the dbtest the `/api` gate, `/session`, `/api/users/me` and the enterprise re-mint answered 200 / signed in / 200 / a fresh token. A session revoked by another instance still opened the gate while the lookup was unscoped. On the unfixed Hocuspocus code, a signed-out token opened a collaborative editing session (`red/F-21/`). | **Fixed** `0d99ca0cf`. `verifyLiveToken` (signature, then revocation) runs at every entry point that accepts a session token: the `/api` gate, the route-level middleware, the `/api/auth` and `/api/users` bearer routes, the enterprise routes, and the Socket.IO, Hocuspocus and AnA transports. The revocation lookup runs tenant-less (`revoked_tokens` has no RLS). Enterprise `/logout` is a 307 to the canonical logout. Live after: 401 / signed out / 401. |
+| **F-22** (product, §11.10(e)) | **A second sign-in recorded nothing.** The enterprise router's `verify-password` → `verify-mfa` issues a 24-hour session. No client calls it, and it wrote no audit event in any posture. Its organisation-switch audit named the destination from the pre-auth scope and was refused under RLS. URS-PROJ-010 was false for this path. | The dbtest's enterprise cases: wrong password, challenge, wrong code, session and organisation switch each left no row (`red/F-22/`). | **Fixed** `c62ec4961`. The path records the canonical events through `recordAuthEvent`, and the switch is written in the entered organisation's scope. Whether to delete the router (its organisation switch has no other implementation) is left to the system owner. |
+
+After the three fixes the dbtest is 20 / 20. The organisation's 13 rows,
+from the canonical, enterprise and legacy paths, verify as one chain. 86
+unit test files that import the changed modules pass (825 tests), and the
+typecheck is clean.
+
+**Effect on the records above.** The OQ sets of §12 and §13 signed in
+through `/api/v1/auth/login` and `/mfa/verify`. Their verdicts stand. They
+could not have observed any of these defects, because no step used the
+legacy or enterprise paths or presented a signed-out token. A protocol step
+that signs out and then shows the session refused belongs in the next
+OQ-001 revision beside OQ-PROJ-16.
+
+### 13.10 Postscript: the protocol set now covers signing out
+
+F-21 was found by reading the logout route, not by a step. Every step signed
+in and none signed out, so a logout that ended nothing passed every protocol.
+
+- **URS-001 v0.3, URS-PROJ-011** (§11.10(d) §11.10(e), high). Signing out
+  ends the session. The API refuses the token with 401, the session check
+  reports the user signed out, and the sign-out is entered in the
+  organisation's hash-chained audit log. RA-001 v0.3 assesses it: high,
+  scripted. URS-001 §3 names what the protocol does not exercise and the
+  automated test that does: the collaboration channels
+  (`collab-governance.pglite.integration.test.ts`) and a second server
+  instance (`tests/db/sign-in-audit-trail.dbtest.ts`).
+- **OQ-001 v0.5, OQ-PROJ-17.** The step opens a session of its own, reads
+  projects, signs it out, then presents the same token again. It signs out
+  its own session, not the run's, so the steps after it keep theirs. Its
+  session calls bypass the recorded API client, so no token reaches a
+  record.
+
+| OQ-001 v0.5, runner at `d3556910a` | Result | OQ-PROJ-17 observed |
+|---|---|---|
+| Server on HEAD with the F-21 fix (`0d99ca0cf`) reverse-applied to its nine server files; F-22 kept | 17 pass / **1 fail** | "after signing out, the same token still reads projects (200) or is reported signed in (true)": both held |
+| Server on HEAD | **18 / 0 / 0 / 0** | projects 200; logout 200; afterwards projects 401, session check signed out; newest new ledger entry "Signed out", chained |
+
+Both records name the runner's commit, `d3556910a`. The first server ran
+that commit's working tree with the fix reversed, which the record cannot
+show; `before-AUTH-03-fix/server-code.txt` gives the exact procedure. The first record's
+`OQ-PROJ-17.at-failure.png` is the harness's capture of the page left open
+by OQ-PROJ-14, since the step itself drives no page. Evidence:
+`docs/evidence/W3/2026-09-23/OQ-001-v0.5/`.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+
+## 14. Addendum 2026-09-23 — one execution at one commit carrying every fix; the defect it exposed (W3 session)
+
+The 2026-09-23 set (§13) predates the fixes for F-19 to F-22 and the two
+steps that cover them, OQ-PROJ-16 and OQ-PROJ-17, so TM-001 built from it
+left URS-PROJ-010 and URS-PROJ-011 uncovered. This addendum executes IQ-001
+and all six OQ protocols again, at one commit that carries all of them, in
+the same installation, posture and identities. It is the second execution of
+the day, so its records are in `docs/evidence/W3/2026-09-23b/`; the run date
+is only a folder key.
+
+The first attempt, at `af798a862`, recorded no failure. Its server log held
+five failed reads behind a step that had passed: F-23. Reading its records
+against their protocols then showed that 22 steps were recorded with a kind
+their protocol does not give them: P-11. Both were fixed and shown failing
+first. The set filed is the second execution, at `0d7b85e50`. Only the first
+attempt's OQ-SRDY-05 records are kept, as evidence (`red/F-23/first-run-*`).
+
+Before it, trunk was merged and the migration set was re-applied to the
+database the way a deploy does it, `deploy-migrate` as owner with the
+runtime role refreshed: 302 of 302 files, readiness contract verified
+(`transcripts/deploy-migrate.transcript.txt`).
+
+### 14.1 Results
+
+| Record | Pass | Fail | Deviation | Not executed |
+|---|---|---|---|---|
+| IQ-001 (v0.4) | 12 | 0 | 3 | 0 |
+| OQ-001 Projects (v0.6) | 18 | 0 | 0 | 0 |
+| OQ-002 Vault | 12 | 0 | 0 | 0 |
+| OQ-003 Authoring | 23 | 0 | 1 | 0 |
+| OQ-004 Submission Center | 15 | 0 | 0 | 0 |
+| OQ-005 Submission Readiness (v0.4) | 9 | 0 | 1 | 0 |
+| OQ-006 QMS controlled documents | 20 | 0 | 0 | 0 |
+| **OQ total** | **97** | **0** | **2** | **0** |
+
+- Every record is at `0d7b85e50` and names `authentication: password+totp`.
+- The server log shows 8 password attempts and 7 code verifications, and no
+  429: IQ-11, the run identity and the signer once each, OQ-PROJ-02 through
+  the form, OQ-PROJ-16's three attempts and two codes, OQ-PROJ-17's one.
+- The log shows no row-level-security refusal, no permission denial, no 500
+  and no failed read. Its only errors are OQ-AUTH-16's two 503s (no provider).
+- The OQ deviations are OQ-AUTH-16 (no provider) and OQ-SRDY-05b (no project
+  anchor, §14.3). The IQ deviations are the development-install ones,
+  IQ-DEV-002, 004 and 005.
+- Kinds recorded, as the protocols give them: 78 scripted, 9 unscripted,
+  7 ad-hoc, 5 prerequisite.
+
+TM-001 was regenerated from this set (`runDate 2026-09-23b`): 69
+requirements, 67 pass, 2 partial (URS-AUTH-012, no provider; URS-SRDY-005,
+no anchor), 0 fail, 0 open, 0 uncovered. The default run date in the three
+runners moved to `2026-09-23b` (`af798a862`).
+
+### 14.2 Findings
+
+| Id | What | Shown failing first | State |
+|---|---|---|---|
+| **F-23** (product; data integrity, honest state) | **The readiness review reported an all-clear for a project it could not read.** OQ-SRDY-05 executed the submission readiness review for the program OQ-SRDY-00 had built. The review reads the integer project spine and a program's id is a uuid, so the project, document, artifact, placement and last-signal reads all failed. Every reader in `cross-object-resolver.ts` answered its own failure with an empty result. The review completed all five steps for "Project", 0 documents, and recommended "No critical issues found … All analyzers returned no critical or high findings". Two related defects: `POST /execute` accepted any project id, and nine sibling routes parsed ids with `parseInt`, so a request naming program `1d3c…` was answered with the readiness of project 1. The same swallowed failure fed the authoring promotion gates and AnA's readiness context. The five failed reads are in the log of every full run since 2026-09-22. | Unit, resolver: 3 fail / 1 pass (the zero-rows control). Unit, routes: 6 fail / 2 pass; the engine was called with project 1 for program `1d3c…`. `tests/db/cross-object-resolver.dbtest.ts` on real PostgreSQL as a NOBYPASSRLS role: 4 fail / 2 pass. OQ-SRDY-05 v0.4 on the pre-fix server: fail (`OQ-005-v0.4/before-F-23-fix/`). | **Fixed** `79217254f`. A failed read, or a project the organisation does not hold, fails the payload with the reads it names. Every consumer already reported a thrown payload honestly and now gets one. One strict id parser serves all ten routes. After: 4/4, 8/8, 6/6, and OQ-SRDY-05 passes. The dbtest's healthy-project cases prove all ten reads succeed on the migrated schema as the runtime role, so failing closed does not refuse a real review. |
+| **P-11** (protocol) | **The records misstated the assurance activity.** The harness records the kind a runner gives a step and defaults to scripted, and no runner gave one. Every record therefore presented the protocols' 17 unscripted and ad-hoc steps, and 5 prerequisites, as scripted: a pass criterion checked by machine where the protocol says a reviewer judges what was observed. OQ-SRDY-05 was one of them. | `ci:validation-traceability`, extended to compare every runner step with its protocol: 22 findings on the tree before the runners declared their kinds (`red/P-11/`). | **Fixed** `ec76f693c`. The runners declare each kind; the gate (in CI) refuses a mismatch, an undescribed step and an unexecuted one. Its self-test gained six cases, two of them controls. OQ-001 v0.6 §1. |
+| F-23, protocol half | OQ-SRDY-05 passed on any 2xx. | See F-23. | **Fixed** `ec76f693c`, OQ-005 v0.4. OQ-SRDY-05 (scripted) requires a program id the engine cannot read to be refused, or to fail with the reason. OQ-SRDY-05b (scripted, new) requires the review of the program's anchored project to name the program. URS-005 v0.2 (URS-SRDY-005, high); RA-001 v0.4 (high, scripted). |
+
+### 14.3 Observations for other rows (not dispositioned by this package)
+
+1. **The Submission Readiness app cannot see a launch program in any
+   organisation signup creates.** Its readiness review, its Orchestration
+   board and its Inconsistency board read the integer project spine
+   (`projects.id`). A program (`regulatory_programs.id`, a uuid) reaches that
+   spine only through the anchor intake writes, and intake writes one only
+   when the organisation has exactly one client workspace
+   (`server/services/c2c/program-project-anchor.ts`). Signup creates none. In
+   this organisation, which holds dozens of programs:
+   - the Orchestration board says "No lead program is identified for this
+     organization yet", because its portfolio read answers 404, "No programs
+     found";
+   - the Inconsistency board shows "Couldn't load the inconsistency board"
+     and blames reachability, because its read refused the program uuid with
+     400, "A valid numeric projectId is required";
+   - the review has no project to assess (OQ-SRDY-05b, deviation).
+   The surfaces are honest about what they read: none shows an empty result
+   as clear. The gap is what they read. The owner's options are:
+   - (a) signup creates the organisation's one client workspace, so intake
+     anchors every program. This is the smallest change, but a workspace is
+     the access boundary `project-module-bridge` checks.
+   - (b) re-key the review and both boards to the program spine.
+   - (c) take the two boards and the review out of the launch catalog and
+     rely on the dispatch-readiness gate (OQ-SRDY-02, 03, 07), which is
+     program- and sequence-keyed. Deleting a surface is a founder decision
+     under the working agreement.
+2. `GET /api/data-origins/document?documentTable=authoring_sections` answers
+   400 twice during OQ-003. It is the attribution coverage gap already
+   recorded as open (the route omits `authoring_sections`, the table the
+   editor asks about). No step asserts it.
+
+### 14.4 What this changes in the records above
+
+- **OQ-SRDY-05's pass is withdrawn in every earlier execution**: the
+  baseline and its re-executions (§2, §8 to §10; `docs/evidence/W3/2026-09-20/`),
+  2026-09-22 (§12) and 2026-09-23 (§13). Each record's step file shows the
+  program's uuid sent, and a run that completed for "Project" with 0
+  documents. The records are not edited. This report withdraws the verdict;
+  URS-SRDY-005 was never verified by them.
+- In every earlier record, the Kind column of the 22 steps P-11 names is
+  wrong. The protocols' kinds govern. No verdict changes on that account.
+- TM-001 is built from `2026-09-23b`. The `2026-09-23` records stay in the
+  tree, unchanged, as history, with their F-19 to F-22 falsification evidence.
+
+### 14.5 Disposition summary after this section
+
+| Item | State |
+|---|---|
+| F-18, F-19, F-20, F-21, F-22 | Fixed (§13); covered by OQ-SUBC-08, OQ-QMS-05, OQ-PROJ-16 and OQ-PROJ-17, all passing in this set |
+| F-23 | Fixed `79217254f`; covered by OQ-SRDY-05 |
+| P-11 | Fixed `ec76f693c`; enforced by `ci:validation-traceability` |
+| OQ-SRDY-05b / URS-SRDY-005 partial | Open: the anchor decision, §14.3 item 1 |
+| OQ-AUTH-16 / URS-AUTH-012 partial | Open: a PQ-passed provider |
+| IQ-DEV-002, 004, 005 | Open: development install; staging closes them |
+
+### 14.6 What the package still owes before signature
+
+§13.6 stands, with the F-19 fix done. Still owed:
+
+- the production image (`NODE_ENV=production`: the dev-login refusal on
+  that branch, the HMAC-sealed chain, enforcing CSP and HSTS);
+- a real second account created through user administration;
+- a witness;
+- a PQ-passed provider;
+- a live release signature;
+- the contractor's review;
+- the F-15 decision;
+- the Submission Readiness anchor decision (§14.3 item 1);
+- signatures.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+Product change in this section: `79217254f` (F-23). Validation changes:
+`d3556910a` (OQ-PROJ-17), `af798a862` (run date), `ec76f693c` (P-11,
+OQ-SRDY-05 v0.4). No result was edited after execution. The runners wrote
+every record, and the matrix builder regenerated TM-001.
+
+## 15. Addendum 2026-09-23 — §13.3 items 1, 2 and 4 closed for D6 (D6 session)
+
+§13.3 raised three sign-in observations for D6 and did not disposition them.
+The D6 session fixed them, together with defects of the same kind found while
+mapping them. Each was reproduced on real PostgreSQL first, as a NOBYPASSRLS
+runtime role with production's route registration, and then shown fixed.
+Evidence: `docs/evidence/D6/2026-09-23/` (README, `red/`, `green/`).
+
+| §13.3 item | Disposition |
+|---|---|
+| 1. A TOTP code is accepted more than once | **Fixed** `a689ad680`. `users.mfa_totp_last_step`; a code is accepted once, and only for a step later than the last one accepted, compared and set in one statement. Concurrent verifications of one code: exactly one succeeds. The same pattern also closed the emailed sign-in code and the password-reset token. |
+| 2. The server trusts no proxy | **Collapse half: fixed by F-24**, `eefac757b`, in the W3 session (one trusted hop in production). **Forgery half: fixed** in the D6 session's item-2 commit. About 20 sites took the client-written left-most X-Forwarded-For entry into e-signature, QMS approval, financial-disclosure and §11.10(e) rows, and into a sign-in limit's key. They now read `req.ip` through one helper, and `ci:client-ip-single-source` forbids the header. Owed for D1: closing the ALB to CloudFront, so that two hops can reach the user rather than the edge. |
+| 4. The session misstates enrolment | **Fixed** `75d3069a2`. The session, `/mfa/verify` and `/api/users/me` report the account's real factor, from the rule the sign-in challenge uses. |
+
+Found while mapping, and fixed:
+- the enrolment QR code sent the TOTP secret to `api.qrserver.com`;
+- a session alone could replace an enrolled authenticator (found in
+  parallel and fixed as F-26, `0c912e67e`; this session mapped the enterprise
+  router's refusal from 500 to 409);
+- a pre-auth route distinguished enrolled accounts;
+- reset and invitation links were built on the request's Host header in
+  production;
+- an audit route took its IP from the request body.
+
+**Effect on the records.** The OQ harness never presents a code twice
+(`tests/validation/lib/totp.mjs` waits for a fresh step), so no filed record
+depended on the replay. From this change on:
+- an enrolment uses the step it presents;
+- two signatures by one signer inside 30 seconds need two steps;
+- a harness sign-in in the same step as its enrolment waits for the next.
+
+**Still open, for the owner** (README §4):
+- recovery codes are issued but never redeemable, and a TOTP account can
+  finish sign-in with an emailed code;
+- per-task rate-limit stores;
+- the ALB ingress;
+- item 3, with the reviewer.

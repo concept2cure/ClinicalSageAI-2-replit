@@ -171,7 +171,13 @@ export function decideNavEntitlement(
   // "not available": an org told to upgrade when the real reason is that the
   // module is not offered for their industry would buy a plan that changes
   // nothing.
-  const tierRank = opts.tier != null ? TIER_RANK[opts.tier] : undefined;
+  // An unrecognised tier ranks as standard — exactly license-manager's
+  // `TIER_LEVELS[tier] ?? 1`, which produced the `isAvailable` above. Without
+  // the fallback a 'starter' org (a value the Stripe webhook can write) had
+  // every tier lock labelled 'industry' and was told its plan was not offered
+  // for its industry. Found 2026-09-22 comparing this against the console on a
+  // deploy-shaped database (tests/db/master-licensing-console.dbtest.ts).
+  const tierRank = opts.tier != null ? (TIER_RANK[opts.tier] ?? TIER_RANK.standard) : undefined;
   const requiredRank = entry.requiredTier != null ? TIER_RANK[entry.requiredTier] : undefined;
   const belowTier =
     tierRank !== undefined && requiredRank !== undefined && tierRank < requiredRank;

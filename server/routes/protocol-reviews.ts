@@ -25,6 +25,20 @@ import {
   recordReviewerAssigned, recordReviewComment, recordReviewDisposition,
 } from '../services/protocol-reviews-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import {
+  ProtocolSignatureRefusal,
+  signerIpAddress,
+  signProtocolAct,
+} from '../services/protocol-development/protocol-signature';
+import { requireEditorAccess } from '../middleware/orgMembership';
+import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
+
+// A viewer cannot sign (requireEditorAccess, 21 CFR 11.10(g)), and the password
+// behind a signature cannot be guessed without limit here any more than at
+// /api/esignature/verify-password (11.300(d)).
+const signingAttempts = signingAttemptLimiter('protocol-sign', {
+  error: { code: 'TOO_MANY_ATTEMPTS', message: 'Too many signing attempts. Wait a few minutes and try again. Nothing was signed.' },
+});
 
 const router = Router();
 
@@ -40,7 +54,7 @@ function resolveOrgId(req: Request): number | null {
   const n = raw == null ? NaN : typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
 }
-const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400 };
+const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400, FORBIDDEN: 403 };
 function fail(res: Response, err: unknown): void {
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) {
@@ -136,20 +150,59 @@ router.patch('/comments/:id/resolve', async (req, res) => {
 
 // ─── Dispositions ────────────────────────────────────────────────────────────
 
+// A disposition is the reviewer's electronic signature over the protocol
+// (21 CFR 11.50/11.200). It runs the full ceremony in protocol-signature.ts.
+// Which meanings are allowed depends on the assignment: the assigned reviewer
+// signs as `review` or `approval`; a reviewer with no account can only have
+// their decision recorded by someone taking `responsibility` for the record.
+// setDispositionTx enforces that, and refuses an assignment held by another user.
 const dispositionSchema = z.object({
   disposition: z.enum(['approve', 'approve_with_changes', 'reject', 'abstain']),
   reason,
+  meaning: z.unknown().optional(),
+  reauth: z.unknown().optional(),
 });
-router.patch('/assignments/:id/disposition', async (req, res) => {
+router.patch('/assignments/:id/disposition', requireEditorAccess, signingAttempts, async (req, res) => {
+  const userId = resolveUserId(req);
+  const orgId = resolveOrgId(req);
+  if (!userId || !orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = dispositionSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId) => {
-    const { disposition } = await setDispositionTx(client, orgId, id, parsed.data.disposition);
-    recordReviewDisposition(disposition);
-    return { target: `protocol-review-assignment:${id}`, payload: { disposition }, body: { assignmentId: id, disposition } };
-  });
+  try {
+    const body = await signProtocolAct({
+      orgId,
+      userId,
+      target: `protocol-review-assignment:${id}`,
+      reason: parsed.data.reason,
+      meaning: parsed.data.meaning,
+      allowedMeanings: ['review', 'approval', 'responsibility'],
+      reauth: parsed.data.reauth,
+      ipAddress: signerIpAddress(req),
+      role: String((req as any).userRole ?? (req as any).user?.role ?? ''),
+      write: async (client, meaning) => {
+        const r = await setDispositionTx(client, orgId, id, parsed.data.disposition, userId, meaning);
+        return {
+          act: {
+            disposition: r.disposition,
+            protocolDocumentId: r.protocolDocumentId,
+            protocolVersion: r.protocolVersion,
+            ...(r.onBehalfOf ? { recordedOnBehalfOf: r.onBehalfOf } : {}),
+          },
+          body: { assignmentId: id, disposition: r.disposition },
+        };
+      },
+    });
+    recordReviewDisposition(parsed.data.disposition);
+    res.status(201).json(body);
+  } catch (err) {
+    if (err instanceof ProtocolSignatureRefusal) {
+      res.status(err.status).json({ error: { code: err.code, message: err.message } });
+      return;
+    }
+    fail(res, err);
+  }
 });
 
 // ─── Read: consensus + readiness summary ─────────────────────────────────────

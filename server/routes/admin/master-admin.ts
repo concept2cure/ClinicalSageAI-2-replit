@@ -77,6 +77,7 @@ import { writeModuleGrant } from '../../services/entitlements/module-grants';
 import masterLicensingRoutes from './master-licensing';
 import licensingTrialsRoutes from './licensing-trials';
 import licensingHistoryRoutes from './licensing-history';
+import masterAccessRequestRoutes from './master-access-requests';
 
 const logger = createScopedLogger('admin-master');
 const router = Router();
@@ -98,6 +99,11 @@ router.use(licensingTrialsRoutes);
 // why. Read-only, but it renders the Part 11 chain, so it inherits this gate
 // rather than declaring its own.
 router.use(licensingHistoryRoutes);
+// Every workspace's access requests, and the owner's answer to them. Served
+// here, under the system scope this prefix carries, because the per-user
+// /api/module-access-requests connection is RLS-confined to the caller's own
+// workspace. Same handlers as that route; the guard is this one.
+router.use(masterAccessRequestRoutes);
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 

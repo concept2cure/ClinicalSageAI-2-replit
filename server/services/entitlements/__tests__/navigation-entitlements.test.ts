@@ -229,10 +229,15 @@ describe("decideNavEntitlement — 'none' + unavailable: naming the real cause",
     expect(verdict.requiredTier).toBeNull();
   });
 
-  it('falls back to industry (never throws) for a tier string outside the rank table', () => {
-    // A tier value the billing code does not know about is unrankable, so a
-    // tier claim would be fabricated. Degrade to the generic explanation
-    // rather than crashing the whole rail resolution over one bad row.
+  it('ranks a tier string outside the rank table as standard — as isAvailable did — and never throws', () => {
+    // This used to label such a lock 'industry', on the reasoning that an
+    // unrankable tier makes a tier claim fabricated. But `isAvailable` is
+    // computed by license-manager, which ranks an unknown tier as standard
+    // (`TIER_LEVELS[tier] ?? 1`): the module was refused BECAUSE standard is
+    // below enterprise. Naming 'industry' was the fabrication — it told a
+    // 'trial' or 'starter' workspace its plan was not offered for its industry
+    // when the module may have no industry restriction at all. Found 2026-09-22
+    // comparing the rail with the console on a deploy-shaped database.
     for (const tier of ['platinum', '', 'FREE', 'trial']) {
       let verdict!: ReturnType<typeof decideNavEntitlement>;
       expect(() => {
@@ -241,7 +246,7 @@ describe("decideNavEntitlement — 'none' + unavailable: naming the real cause",
           { masterAdmin: false, tier },
         );
       }, `tier=${tier}`).not.toThrow();
-      expect(verdict.source, `tier=${tier}`).toBe('industry');
+      expect(verdict.source, `tier=${tier}`).toBe('tier');
       expect(verdict.entitled).toBe(false);
     }
   });

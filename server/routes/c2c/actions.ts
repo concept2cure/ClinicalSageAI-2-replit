@@ -33,7 +33,6 @@
 
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
-import bcrypt from 'bcryptjs';
 import type { PoolClient } from 'pg';
 import { pool } from '../../db.js';
 import {
@@ -45,7 +44,12 @@ import {
 } from '../../services/audit/chain.js';
 import { withTenantConnection } from '../../db/withTenantConnection.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
-import { verifyToken as verifyMfaToken } from '../../services/mfaService.js';
+import {
+  reverifySigner,
+  type ReverifySignerDeps,
+  type SignerRefused,
+} from '../../services/part11/reverify-signer.js';
+import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
 import {
   assertSignerIsNotAuthor,
@@ -59,6 +63,7 @@ import {
   persistGovernedSignatureRevocation,
   SignatureRevocationUnresolvedError,
 } from '../../services/part11/signature-persistence.js';
+import { clientIpOf } from '../../utils/client-ip';
 
 const router = Router();
 
@@ -255,28 +260,50 @@ async function resolveTarget(
 
 // ── Re-auth gate ──────────────────────────────────────────────────────────────
 
+/** The canonical refusal, in the REAUTH_* vocabulary this route's clients read. */
+const REAUTH_ERROR: Record<SignerRefused['code'], string> = {
+  PASSWORD_REQUIRED: 'REAUTH_PASSWORD_REQUIRED',
+  PASSWORD_VERIFICATION_FAILED: 'REAUTH_PASSWORD_INVALID',
+  MFA_TOKEN_REQUIRED: 'REAUTH_TOTP_REQUIRED',
+  MFA_VERIFICATION_FAILED: 'REAUTH_TOTP_INVALID',
+  MFA_STATE_UNKNOWN: 'REAUTH_MFA_STATE_UNKNOWN',
+  ACCOUNT_INACTIVE: 'REAUTH_ACCOUNT_INACTIVE',
+  ACCOUNT_LOCKED: 'REAUTH_ACCOUNT_LOCKED',
+  ACCOUNT_STATE_UNKNOWN: 'REAUTH_ACCOUNT_STATE_UNKNOWN',
+};
+
+/**
+ * §11.200 re-authentication for every high-risk governed action: the release
+ * signature, CMC batch release, Module 3 approval, 510(k) eSTAR filing, gateway
+ * transmittals.
+ *
+ * The rule is the canonical one (services/part11/reverify-signer): the password
+ * always, and the second factor whenever the signer has one enrolled. It used
+ * to verify a TOTP only when the caller chose to send one, so a signer who had
+ * enrolled an authenticator could sign with the password alone here while the
+ * QMS approval and /api/esignature/sign refused the same signature.
+ *
+ * One rule is added on top: a code that is presented must verify, even for a
+ * signer with no second factor enrolled (where the canonical rule does not look
+ * at it). Five callers record the signature's factors from the request —
+ * 'password+totp' whenever a code is present — and this keeps that record true.
+ */
 export async function verifyReauth(
   userId: number,
   reauth: ActionEnvelope['reauth'],
+  deps: ReverifySignerDeps = signerReverificationDeps(),
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!reauth?.password) {
-    return { ok: false, error: 'REAUTH_PASSWORD_REQUIRED' };
-  }
-
-  const userRow = await pool.query(
-    `SELECT password_hash FROM users WHERE id = $1 LIMIT 1`, [userId],
+  const verified = await reverifySigner(
+    userId,
+    { password: reauth?.password, mfaToken: reauth?.totp },
+    deps,
   );
-  const hash: string | undefined = userRow.rows[0]?.password_hash as string | undefined;
-  if (!hash) return { ok: false, error: 'REAUTH_USER_NOT_FOUND' };
+  if (!verified.ok) return { ok: false, error: REAUTH_ERROR[verified.code] };
 
-  const passwordOk = await bcrypt.compare(reauth.password, hash);
-  if (!passwordOk) return { ok: false, error: 'REAUTH_PASSWORD_INVALID' };
-
-  if (reauth.totp) {
-    const totpOk = await verifyMfaToken(userId, reauth.totp);
-    if (!totpOk) return { ok: false, error: 'REAUTH_TOTP_INVALID' };
+  if (reauth?.totp && !verified.secondFactorVerified) {
+    const presentedCodeVerifies = await deps.verifyMfaToken(userId, reauth.totp).catch(() => false);
+    if (!presentedCodeVerifies) return { ok: false, error: 'REAUTH_TOTP_INVALID' };
   }
-
   return { ok: true };
 }
 
@@ -634,10 +661,7 @@ function makeHandler(command: Command) {
         {
           // Honest attribution on the Part 11 signature row a `sign` persists:
           // the real client IP when resolvable, null otherwise (never fabricated).
-          ipAddress:
-            (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-            req.socket?.remoteAddress ||
-            null,
+          ipAddress: clientIpOf(req),
         },
       );
       return res.json(result);
@@ -665,7 +689,15 @@ function makeHandler(command: Command) {
       if (err instanceof SeparationOfDutiesUnverifiedError) {
         // The check did not run, which is not the same as the check refusing.
         // 503, not 403: the user is not the problem, and a retry may succeed.
-        return res.status(503).json({ error: err.code, detail: err.message });
+        // The error's own message carries the failed lookup's cause, which is
+        // internal; it goes to the log, and the caller gets an authored
+        // sentence (ci:server-error-leaks, 2026-09-23).
+        console.error(`[c2c/actions/${command}]`, err.message);
+        return res.status(503).json({
+          error: err.code,
+          detail:
+            'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.',
+        });
       }
       if (err instanceof SignatureRevocationUnresolvedError) {
         // Nothing was written (the transaction rolled back). Say so plainly
@@ -706,8 +738,14 @@ router.get('/verify-chain', async (req: Request, res: Response) => {
     return res.status(result.ok ? 200 : 409).json(result);
   } catch (err: any) {
     if (err instanceof AuditChainPartialViewError || err instanceof AuditChainSchemaMissingError) {
-      // The chain could not be verified — say so; never an empty "ok".
-      return res.status(503).json({ error: err.code, detail: err.message });
+      // The chain could not be verified — say so; never an empty "ok". The
+      // error's message names a migration and a database setting, so it goes
+      // to the log, not the body (ci:server-error-leaks, 2026-09-23).
+      console.error('[c2c/actions/verify-chain]', err.message);
+      return res.status(503).json({
+        error: err.code,
+        detail: 'The audit chain could not be verified, so no result is given.',
+      });
     }
     console.error('[c2c/actions/verify-chain]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });

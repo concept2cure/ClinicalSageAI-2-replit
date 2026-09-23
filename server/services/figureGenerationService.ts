@@ -241,6 +241,22 @@ const FIGURE_TYPE_CONFIG: Record<
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * A regulatory figure is drawn from data. Until 2026-09-23 a request with none
+ * asked the model for "a representative template", and the model's
+ * Kaplan-Meier curves, PK profiles and CONSORT counts were stored as a governed
+ * artifact that document export includes. A linked document with no extracted
+ * data points is no data either.
+ */
+const NO_SOURCE_DATA: FigureGenerationResult = {
+  success: false,
+  error: 'No source data was supplied, so no figure was generated. Link the data the figure should show.',
+};
+
+function hasDataPoints(sources: Array<{ data: Record<string, unknown>[] }>): boolean {
+  return sources.some(src => Array.isArray(src.data) && src.data.length > 0);
+}
+
+/**
  * Generate a regulatory-grade figure using AI.
  */
 export async function generateFigure(
@@ -258,6 +274,8 @@ export async function generateFigure(
       request.organizationId
     );
 
+    if (!hasDataPoints(sourceData)) return NO_SOURCE_DATA;
+
     // 2. Get figure type config
     const typeConfig = FIGURE_TYPE_CONFIG[request.figureType] || FIGURE_TYPE_CONFIG.custom;
     const format = request.preferences?.format || typeConfig.preferredFormat;
@@ -272,16 +290,15 @@ export async function generateFigure(
     const systemPrompt = buildFigureSystemPrompt(format, request.figureType);
     const userPrompt = buildFigureUserPrompt(request, typeConfig, sourceData, format, figureNumber);
 
-    // 5. Call OpenAI
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      // Return a placeholder figure spec when no API key
-      return buildPlaceholderFigure(request, figureId, figureNumber, format);
-    }
-
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    // 5. Draft the figure. document_drafting: only a model approved for
+    // high-risk regulatory drafting serves it. It defaulted to gpt-4o as a
+    // 'general' request, and with no OpenAI key stored a placeholder figure.
     const aiResult = await ai.chat({
-      model,
+      taskType: 'document_drafting',
+      callerModule: 'figureGeneration.generateFigure',
+      organizationId: request.organizationId,
+      userId: request.userId,
+      projectId: request.projectId,
       temperature: 0.1,
       max_tokens: 4000,
       messages: [
@@ -291,7 +308,11 @@ export async function generateFigure(
     });
 
     const content = aiResult.content || '';
+    if (!content.trim()) {
+      return { success: false, error: 'The drafting model returned no figure, so nothing was stored.' };
+    }
     const tokensUsed = aiResult.usage?.totalTokens;
+    const model = aiResult.model;
 
     // 6. Build figure spec
     const figure: FigureSpec = {
@@ -368,14 +389,12 @@ export async function autoInsertFigures(params: {
   const results: FigureGenerationResult[] = [];
 
   try {
-    // Use AI to identify where figures should be inserted
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) return results;
-
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
-
+    // Where figures belong in a section: suggestions only. Each one still goes
+    // through generateFigure, which drafts only from source data and only with
+    // an approved model.
     const analysis = await ai.chat({
-      model,
+      taskType: 'document_analysis',
+      callerModule: 'figureGeneration.autoInsertFigures',
       temperature: 0.1,
       max_tokens: 2000,
       response_format: { type: 'json_object' },
@@ -662,68 +681,3 @@ async function logFigureGeneration(
   });
 }
 
-function buildPlaceholderFigure(
-  request: FigureGenerationRequest,
-  figureId: string,
-  figureNumber: string,
-  format: string
-): FigureGenerationResult {
-  const placeholderContent =
-    format === 'mermaid'
-      ? `graph TD\n  A[${request.title}] --> B[DATA PLACEHOLDER]\n  B --> C[Generate with API key]`
-      : format === 'chartjs'
-        ? JSON.stringify(
-            {
-              type: 'bar',
-              data: {
-                labels: ['Placeholder 1', 'Placeholder 2', 'Placeholder 3'],
-                datasets: [
-                  {
-                    label: request.title,
-                    data: [0, 0, 0],
-                    backgroundColor: ['#292524', '#57534e', '#a8a29e'],
-                  },
-                ],
-              },
-              options: {
-                plugins: {
-                  title: {
-                    display: true,
-                    text: `${figureNumber}: ${request.title} [DATA PLACEHOLDER]`,
-                  },
-                },
-              },
-            },
-            null,
-            2
-          )
-        : `<!-- ${figureNumber}: ${request.title} -->\n<p>[FIGURE PLACEHOLDER — Configure OPENAI_API_KEY to generate]</p>`;
-
-  return {
-    success: true,
-    figure: {
-      id: figureId,
-      figureNumber,
-      title: request.title,
-      figureType: request.figureType,
-      description: request.description,
-      sourceData: [],
-      generatedContent: placeholderContent,
-      generatedFormat: format as FigureSpec['generatedFormat'],
-      metadata: {
-        generatedAt: new Date().toISOString(),
-        generatedByUserId: request.userId,
-        modelUsed: 'placeholder',
-      },
-      confidence: 0,
-      auditTrail: [
-        {
-          action: 'placeholder_generated',
-          timestamp: new Date().toISOString(),
-          userId: request.userId,
-          details: 'Placeholder figure — no API key configured',
-        },
-      ],
-    },
-  };
-}

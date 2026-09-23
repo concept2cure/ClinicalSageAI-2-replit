@@ -1,0 +1,146 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > fails the payload and names every read it took with it
+{
+  "timestamp": "2026-09-23T04:55:20.488Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "documents",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:55:20.489Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "artifacts",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:55:20.489Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "module placements",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+
+stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > fails the payload and names every read it took with it
+{
+  "timestamp": "2026-09-23T04:55:20.489Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "project",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+
+stderr | server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > never lets a project nothing could be read from be assessed
+{
+  "timestamp": "2026-09-23T04:55:20.493Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "last signal",
+    "error": "could not read the CMC tables"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:55:20.493Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "CMC signals",
+    "error": "could not read the CMC tables"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:55:20.493Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "project",
+    "error": "could not read projects"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:55:20.493Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "documents",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:55:20.493Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "artifacts",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:55:20.494Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "validations",
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:55:20.494Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "tasks",
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:55:20.494Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "module placements",
+    "error": "could not read concept2cure_artifacts"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:55:20.494Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "recent actions",
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+{
+  "timestamp": "2026-09-23T04:55:20.494Z",
+  "level": "warn",
+  "message": "[cross-object-resolver] Resolver query failed",
+  "context": {
+    "read": "evidence",
+    "error": "could not read regulatory_audit_logs"
+  }
+}
+
+ ✓ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > fails the payload and names every read it took with it 9ms
+ ✓ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a read that fails > never lets a project nothing could be read from be assessed 4ms
+ ✓ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a project the organisation does not hold > is refused, not assessed as "Unknown Project" 1ms
+ ✓ server/services/orchestration/__tests__/cross-object-resolver.fail-closed.test.ts > a project with no records > is an empty payload that names the project it read 1ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  04:55:18
+   Duration  1.61s (transform 749ms, setup 85ms, import 1.33s, tests 18ms, environment 0ms)
+

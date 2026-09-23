@@ -39,7 +39,7 @@ CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, pr
 CREATE TABLE protocol_capa_actions (id serial PRIMARY KEY, deviation_id int, action text, status text);
 CREATE TABLE protocol_budget_items (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, unit_cost numeric, quantity_per_subject numeric, deleted_at timestamptz);
 CREATE TABLE protocol_budget_params (id serial PRIMARY KEY, organization_id int, protocol_document_id int, target_enrollment int, sponsor_payment_per_subject numeric, indirect_rate_pct numeric);
-CREATE TABLE protocol_review_assignments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, reviewer_name text, role text, status text, deleted_at timestamptz, disposition text, due_date date);
+CREATE TABLE protocol_review_assignments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, reviewer_name text, reviewer_user_id int, role text, status text, deleted_at timestamptz, disposition text, due_date date);
 CREATE TABLE protocol_review_comments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, section_ref text, comment text, severity text CHECK (severity IN ('blocking','major','minor','info')), resolved boolean, deleted_at timestamptz);
 CREATE TABLE protocol_soa_assessments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, category text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_soa_cells (id serial PRIMARY KEY, organization_id int, protocol_document_id int, assessment_id int, visit_id int, required boolean);
@@ -123,6 +123,8 @@ describe('assembleOrgPdevDocs', () => {
     expect(doc.deviations[0].capa[0]).toMatchObject({ action: 'Retrain site', status: 'open' });
 
     expect(doc.reviews[0].reviewer).toBe('Dr Reviewer');
+    // No account named: the disposition can only be recorded under responsibility.
+    expect(doc.reviews[0].reviewerUserId).toBeNull();
     // Review comment severity carried through so blocking-open counts can be real.
     expect(doc.reviews[0].comments[0]).toMatchObject({ sec: '9', sev: 'blocking', text: 'Clarify the SAP', resolved: false });
     expect(doc.milestones[0].urgency).toBe('overdue');              // target in the past, no actual date

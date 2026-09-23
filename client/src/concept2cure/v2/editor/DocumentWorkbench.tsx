@@ -42,6 +42,7 @@
  * state's "Ask AnA to draft" — goes to the conversation the person is already
  * in, and the pane is not drawn. One conversation on screen, never two.
  */
+import { AnaActionChips } from '../AnaActionChips';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -56,6 +57,7 @@ import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
 import { apiRequest, serverMessage, ApiRequestError, redactInternals } from '@/lib/queryClient';
 import { AuthoringFilingBar } from '../surfaces/AuthoringFilingBar';
+import { esignSignerOf } from '../../_shared/components/EsignModal';
 import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from '../surfaces/AuthoringCollab';
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
@@ -3561,6 +3563,7 @@ export function DocumentWorkbench({
                   if (activeDocId) void loadSections(activeDocId);
                 }}
                 fireToast={fireToast}
+                signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
               />
             )}
             {/* The authoring → filing seam: place the OPEN document into an
@@ -4253,11 +4256,12 @@ export function DocumentWorkbench({
                     )}
                     {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                        {m.executedActions.map((a, ai) => (
-                          <span key={ai} className="rd-chip tone-ok" title={a.error || a.label}>
-                            {a.label}
-                          </span>
-                        ))}
+                        <AnaActionChips
+                          actions={m.executedActions}
+                          onNav={onNav}
+                          onStartDemo={liveDrive?.onStartDemo}
+                          inertClassName="rd-chip tone-ok"
+                        />
                       </div>
                     )}
                     {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (

@@ -36,6 +36,7 @@ import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
+import { describeSignatureMethod } from '@shared/part11/signature-method';
 
 /** A row of `authoring_signatures`, as GET /docs/:docId/signatures returns it. */
 export interface AuthoringSignature {
@@ -81,144 +82,15 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-/* ── Signing-PIN enrollment (§11.200(a)(1)) ─────────────────────────────────
- * The e-sign dialog has always demanded a "Signing PIN", and POST /users/pin
- * has always been able to set one — with NO screen between them: a first-time
- * signer faced a required field nothing in the product could satisfy. This
- * panel is the missing screen.
- *
- * The PIN is user-scoped, not document-scoped, so it renders with or without
- * a document open. There is deliberately no "do I have a PIN?" probe: the
- * server is the authority on that, and its refusals are shown verbatim —
- * "Current PIN is required to change it" IS the honest answer to a rotation
- * attempted without the current PIN, and a wrong current PIN is refused
- * server-side by the bcrypt check, never guessed at here. The PIN itself
- * never appears in any record; the audit trail records only that it was set
- * or rotated, by whom, and when. */
-function SigningPinPanel() {
-  const [open, setOpen] = useState(false);
-  const [pin, setPin] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [current, setCurrent] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
-
-  const submit = useCallback(async () => {
-    setNote(null);
-    if (pin.length < 6) {
-      setNote({ tone: 'err', text: 'The PIN must be at least 6 characters. Nothing was changed.' });
-      return;
-    }
-    if (pin !== confirm) {
-      setNote({ tone: 'err', text: 'The two PIN entries do not match. Nothing was changed.' });
-      return;
-    }
-    setBusy(true);
-    try {
-      const res = await apiRequest('POST', '/api/authoring/users/pin', {
-        pin,
-        ...(current ? { old_pin: current } : {}),
-      });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        setNote({
-          tone: 'err',
-          text: (serverMessage(json) ?? `The PIN was not set (HTTP ${res.status}).`) + ' Nothing was changed.',
-        });
-        return;
-      }
-      setPin('');
-      setConfirm('');
-      setCurrent('');
-      setNote({
-        tone: 'ok',
-        text: 'Signing PIN set — the change is recorded in the audit trail. E-signing asks for this PIN every time.',
-      });
-    } catch {
-      setNote({ tone: 'err', text: 'The PIN service could not be reached. Nothing was changed.' });
-    } finally {
-      setBusy(false);
-    }
-  }, [pin, confirm, current]);
-
-  return (
-    <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)' }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 12, fontWeight: 600 }}>{I.lock} Signing PIN</span>
-        <span style={{ flex: 1 }} />
-        <button type="button" className="nda-open" onClick={() => setOpen(o => !o)} aria-expanded={open}>
-          {open ? 'Close' : 'Set or rotate'}
-        </button>
-      </div>
-      <p style={{ fontSize: 11.5, color: 'var(--text-400)', margin: '4px 0 0' }}>
-        The second component of your electronic signature (§11.200). Set it here before your first
-        e-sign; every signature asks for it.
-      </p>
-      {open && (
-        <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
-          <input
-            className="c2c-input"
-            type="password"
-            autoComplete="new-password"
-            aria-label="New signing PIN"
-            placeholder="New PIN (at least 6 characters)"
-            value={pin}
-            onChange={e => setPin(e.target.value)}
-          />
-          <input
-            className="c2c-input"
-            type="password"
-            autoComplete="new-password"
-            aria-label="Confirm new signing PIN"
-            placeholder="Confirm new PIN"
-            value={confirm}
-            onChange={e => setConfirm(e.target.value)}
-          />
-          <input
-            className="c2c-input"
-            type="password"
-            autoComplete="current-password"
-            aria-label="Current signing PIN"
-            placeholder="Current PIN — leave blank if enrolling for the first time"
-            value={current}
-            onChange={e => setCurrent(e.target.value)}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              type="button"
-              className="btn primary"
-              style={{ height: 28 }}
-              disabled={busy || !pin || !confirm}
-              onClick={() => void submit()}
-            >
-              {busy ? 'Setting…' : 'Set signing PIN'}
-            </button>
-          </div>
-        </div>
-      )}
-      {note && (
-        <p
-          role="status"
-          style={{
-            fontSize: 11.5,
-            margin: '6px 0 0',
-            color: note.tone === 'ok' ? 'var(--success,#067647)' : 'var(--error)',
-          }}
-        >
-          {note.text}
-        </p>
-      )}
-    </div>
-  );
-}
+/* The signing-PIN panel that stood here (SigningPinPanel, POST /users/pin) is
+ * deleted with the PIN itself (2026-09-23, VSR-001 §13.3 item 3): authoring
+ * signatures re-verify the account password and enrolled second factor, as
+ * every other signature does, so there is no separate credential to set.
+ * Replacement: the e-sign dialog, the shared EsignModal opened from
+ * AuthoringFilingBar.tsx, reached as authoringFilingBar.test.tsx drives it. */
 
 export function AuthoringSignatures({ docId }: { docId: string | null }) {
-  return (
-    <>
-      <SigningPinPanel />
-      <SignatureManifest docId={docId} />
-    </>
-  );
+  return <SignatureManifest docId={docId} />;
 }
 
 function SignatureManifest({ docId }: { docId: string | null }) {
@@ -306,8 +178,7 @@ function SignatureManifest({ docId }: { docId: string | null }) {
           </Row>
           {s.reason ? <Row label="Reason">{s.reason}</Row> : null}
           <Row label="Method">
-            {s.method ?? 'Not recorded'}
-            {s.pin_verified ? <span style={{ color: 'var(--text-400)' }}> · PIN verified</span> : null}
+            {describeSignatureMethod(s.method, s.pin_verified)}
           </Row>
           {/* §11.70: WHAT was signed, not merely that something was. */}
           <Row label="Covers">

@@ -30,18 +30,30 @@
 import { pool } from '../../db';
 import { getSectionByCode } from '../../../services/regulatory/ind-ectd-sections.js';
 import { compareSectionCode, normalizeCtdCode } from '../../../shared/regulatory/section-code';
+import { IND_FORM_REQUIREMENTS, indFormForDocumentType } from '../ectd/section-to-ctd';
 
 const MAX_DOCS = 10;
 
 const str = (v: unknown): string => (v == null ? '' : String(v));
 
-/** Module-1 forms the surface renders separately from sections, keyed by their eCTD
- *  section code. A form is "done" when its section is authored to a complete status. */
-const FORM_SECTIONS: Array<{ code: string; id: string; title: string; label: string; ref: string }> = [
-  { code: 'm1.1.1', id: 'FDA_1571', title: 'Form FDA 1571', label: 'IND Application', ref: '21 CFR 312.23(a)(1)' },
-  { code: 'm1.1.2', id: 'FDA_1572', title: 'Form FDA 1572', label: 'Statement of Investigator', ref: '21 CFR 312.53(c)' },
-  { code: 'm1.1.3', id: 'FDA_3674', title: 'Form FDA 3674', label: 'Certification of Compliance (ClinicalTrials.gov)', ref: '42 USC 282(j)(5)(B)' },
-];
+/** How each required form is named on the surface. Which forms, and the
+ *  requirement each one satisfies, come from IND_FORM_REQUIREMENTS — the table
+ *  the compile's required-section check reads too. */
+const FORM_PRESENTATION: Record<string, { title: string; label: string; ref: string }> = {
+  FDA_1571: { title: 'Form FDA 1571', label: 'IND Application', ref: '21 CFR 312.23(a)(1)' },
+  FDA_1572: { title: 'Form FDA 1572', label: 'Statement of Investigator', ref: '21 CFR 312.53(c)' },
+  FDA_3674: { title: 'Form FDA 3674', label: 'Certification of Compliance (ClinicalTrials.gov)', ref: '42 USC 282(j)(5)(B)' },
+};
+
+/** Module-1 forms the surface renders separately from sections, keyed by the
+ *  requirement's code. A form is "done" when its requirement is authored to a
+ *  complete status, or a sponsor-completed copy of it is filed. */
+const FORM_SECTIONS: Array<{ code: string; id: string; title: string; label: string; ref: string }> =
+  IND_FORM_REQUIREMENTS.map((f) => ({
+    code: `m${f.requirement}`,
+    id: f.formId,
+    ...(FORM_PRESENTATION[f.formId] ?? { title: f.formId, label: '', ref: '' }),
+  }));
 const FORM_CODES = new Set(FORM_SECTIONS.map((f) => f.code));
 
 /** The blueprint's spelling of a placed section code. upsertLeaf stores a code
@@ -56,6 +68,15 @@ const sectionKey = (code: string): string => {
   return canonical ? `m${canonical}` : code;
 };
 
+/* 2026-09-23 (W5/D7, co-author final pass): coauthor 'finalized' maps to
+   'locked', not 'signed'. 'finalized' is what a FROZEN authoring document
+   files as (services/coauthor/coauthor-snapshot.ts snapshotStatusFor), and
+   freezing needs no signature — any org member may freeze. Reporting it as
+   'signed' said a Form 1571 had been signed when nobody signed it. 'locked' is
+   the surface's own complete-but-unsigned state: the content is sealed and
+   locked, and nothing more is claimed. 'signed' is kept only for a stored
+   'signed'. Whether an unsigned freeze should count as complete at all is a
+   founder decision and is unchanged here: 'locked' is still COMPLETE. */
 /** coauthor_documents.status (real, coarse) → the surface's SectionStatus vocabulary. */
 const STATUS_MAP: Record<string, string> = {
   draft: 'drafting',
@@ -63,17 +84,22 @@ const STATUS_MAP: Record<string, string> = {
   in_progress: 'drafting',
   review: 'qa_review',
   approved: 'approved',
-  finalized: 'signed',
+  finalized: 'locked',
   signed: 'signed',
   locked: 'locked',
 };
 /** A document exists, so the floor is "drafting" — never not_started (that means no doc). */
 const mapStatus = (raw: unknown): string => STATUS_MAP[str(raw).toLowerCase()] ?? 'drafting';
 
-/** Ordering used to keep the most-advanced status when two docs land on one section. */
+/** Ordering used to keep the most-advanced status when two docs land on one section.
+ *  2026-09-23 (W5/D7, co-author final pass): among the complete states, a bare
+ *  lock ranks BELOW the ones that record a sign-off — every 'locked' here comes
+ *  from coauthor_documents, where it (and 'finalized', now mapped to it)
+ *  records no signature — so a section holding an approved or signed copy and
+ *  a frozen one shows the approval, never less than the truth. */
 const RANK: Record<string, number> = {
   not_started: 0, data_gathering: 1, drafting: 2, revision: 3, internal_review: 3,
-  qa_review: 4, approved: 5, signed: 6, locked: 7,
+  qa_review: 4, locked: 5, approved: 6, signed: 7,
 };
 const COMPLETE = new Set(['approved', 'signed', 'locked']);
 
@@ -158,10 +184,6 @@ const norm = (v: unknown): string => str(v).trim().toLowerCase();
 const EMPTY_FORM_IDS: ReadonlySet<string> = new Set<string>();
 
 /** `form_1571` → `FDA_1571`; null for a document type that names no FDA form. */
-function formIdForDocumentType(documentType: string | null): string | null {
-  const m = /^form_([0-9]{3,4}[a-z]?)$/i.exec((documentType ?? '').trim());
-  return m ? `FDA_${m[1].toUpperCase()}` : null;
-}
 
 /**
  * Which FDA forms each submission has a sponsor-completed, retained document
@@ -185,13 +207,13 @@ async function resolveSponsorCompletedForms(
   const byId = new Map<number, Array<{ subId: number; formId: string }>>();
   for (const l of leaves) {
     if (l.document_table !== 'rendered_leaf_files' || l.document_id == null) continue;
-    const formId = formIdForDocumentType(l.document_type);
-    if (!formId) continue;
+    const form = indFormForDocumentType(l.document_type);
+    if (!form) continue;
     const subId = seqToSub.get(Number(l.sequence_id));
     if (subId == null) continue;
     const docId = Number(l.document_id);
     const list = byId.get(docId) ?? [];
-    list.push({ subId, formId });
+    list.push({ subId, formId: form.formId });
     byId.set(docId, list);
   }
   const out = new Map<number, Set<string>>();

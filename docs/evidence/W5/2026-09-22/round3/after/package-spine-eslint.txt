@@ -1,0 +1,41 @@
+
+/home/user/ClinicalSageAI-2-replit/server/routes/submission-ops.ts
+   648:1    warning  File has too many lines (2402). Maximum allowed is 500                 max-lines
+   989:83   warning  Async arrow function has a complexity of 17. Maximum allowed is 15     complexity
+  1300:11   warning  'projectId' is assigned a value but never used                         @typescript-eslint/no-unused-vars
+  1603:67   warning  Async arrow function has too many lines (113). Maximum allowed is 100  max-lines-per-function
+  1747:11   warning  'userId' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+  2058:50   warning  '_orphan' is assigned a value but never used                           @typescript-eslint/no-unused-vars
+  2094:103  warning  Async arrow function has too many lines (565). Maximum allowed is 100  max-lines-per-function
+  2094:103  warning  Async arrow function has a complexity of 118. Maximum allowed is 15    complexity
+  2680:51   warning  '_orphan' is assigned a value but never used                           @typescript-eslint/no-unused-vars
+  2809:28   warning  '_previous' is assigned a value but never used                         @typescript-eslint/no-unused-vars
+  2975:83   warning  Async arrow function has too many lines (244). Maximum allowed is 100  max-lines-per-function
+  2975:83   warning  Async arrow function has a complexity of 54. Maximum allowed is 15     complexity
+  3102:11   warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+
+/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts
+  122:9  warning  'setImmediate' is not defined  no-undef
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/governed-transmit.ts
+  227:1  warning  Async function 'loadStoredBundle' has a complexity of 25. Maximum allowed is 15            complexity
+  410:8  warning  Async function 'executeGovernedTransmit' has too many lines (275). Maximum allowed is 100  max-lines-per-function
+  410:8  warning  Async function 'executeGovernedTransmit' has a complexity of 68. Maximum allowed is 15     complexity
+
+/home/user/ClinicalSageAI-2-replit/tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+  377:13  warning  'validation' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  678:1   warning  File has too many lines (622). Maximum allowed is 500  max-lines
+  701:33  warning  '_none' is assigned a value but never used             @typescript-eslint/no-unused-vars
+
+/home/user/ClinicalSageAI-2-replit/tests/submission-ops-assemble-routes.test.ts
+   306:70  warning  Arrow function has too many lines (583). Maximum allowed is 100  max-lines-per-function
+   656:1   warning  File has too many lines (941). Maximum allowed is 500            max-lines
+  1006:96  warning  Arrow function has too many lines (153). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/tests/submission-ops-preflight-routes.test.ts
+  161:71  warning  Arrow function has too many lines (266). Maximum allowed is 100  max-lines-per-function
+  270:33  warning  '_none' is assigned a value but never used                       @typescript-eslint/no-unused-vars
+  430:21  warning  '_none' is assigned a value but never used                       @typescript-eslint/no-unused-vars
+
+✖ 26 problems (0 errors, 26 warnings)
+

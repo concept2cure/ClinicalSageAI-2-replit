@@ -1,0 +1,1246 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ × tests/dev-up-env-local.test.ts > the environment `npm run up` writes > enforces row-level security, as production does 5ms
+   → expected '# Written by `npm run up`. Git-ignore…' to match /^RLS_ENFORCE=on$/m
+ × tests/dev-up-env-local.test.ts > the environment `npm run up` writes > wins over a .env that still says off 4ms
+   → expected 'off' to be 'on' // Object.is equality
+ ✓ tests/dev-up-env-local.test.ts > the environment `npm run up` writes > is the one up.mjs writes 0ms
+ × tests/dev-up-env-local.test.ts > the development defaults > scripts/setup-local-db.sh sets RLS_ENFORCE=on 1ms
+   → expected '#!/usr/bin/env bash\n# ==============…' to match /^RLS_ENFORCE=on$/m
+ × tests/dev-up-env-local.test.ts > the development defaults > .env.example sets RLS_ENFORCE=on 1ms
+   → expected '# Concept2Cure.RI Environment Configu…' to match /^RLS_ENFORCE=on$/m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/dev-up-env-local.test.ts > the environment `npm run up` writes > enforces row-level security, as production does
+AssertionError: expected '# Written by `npm run up`. Git-ignore…' to match /^RLS_ENFORCE=on$/m
+
+- Expected:
+/^RLS_ENFORCE=on$/m
+
++ Received:
+"# Written by `npm run up`. Git-ignored. Delete and re-run to regenerate.
+APP_DATABASE_URL=postgresql://app_service:pw@127.0.0.1:5432/c2c
+DATABASE_URL=postgresql://postgres:pw@127.0.0.1:5432/c2c
+PORT=5000
+NODE_ENV=development
+"
+
+ ❯ tests/dev-up-env-local.test.ts:27:21
+     25| describe('the environment `npm run up` writes', () => {
+     26|   it('enforces row-level security, as production does', () => {
+     27|     expect(WRITTEN).toMatch(/^RLS_ENFORCE=on$/m);
+       |                     ^
+     28|   });
+     29|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/dev-up-env-local.test.ts > the environment `npm run up` writes > wins over a .env that still says off
+AssertionError: expected 'off' to be 'on' // Object.is equality
+
+Expected: "on"
+Received: "off"
+
+ ❯ tests/dev-up-env-local.test.ts:35:45
+     33|       fs.writeFileSync(path.join(dir, '.env.local'), WRITTEN);
+     34|       fs.writeFileSync(path.join(dir, '.env'), 'RLS_ENFORCE=off\nNODE_…
+     35|       expect(readEnvFiles(dir).RLS_ENFORCE).toBe('on');
+       |                                             ^
+     36|     } finally {
+     37|       fs.rmSync(dir, { recursive: true, force: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/dev-up-env-local.test.ts > the development defaults > scripts/setup-local-db.sh sets RLS_ENFORCE=on
+AssertionError: expected '#!/usr/bin/env bash\n# ==============…' to match /^RLS_ENFORCE=on$/m
+
+- Expected:
+/^RLS_ENFORCE=on$/m
+
++ Received:
+"#!/usr/bin/env bash
+# ============================================================================
+# setup-local-db.sh — stand up a local PostgreSQL for development / build agents
+#
+# WHY THIS EXISTS
+#   The app refuses to do anything useful without a database: server/db/runtime.ts
+#   sets `pool = null` when no connection string is present, and every
+#   DB-touching call then throws \"Database connection not available\". Build
+#   agents and fresh checkouts that have no DATABASE_URL hit exactly that —
+#   the \"there is no DB\" failure.
+#
+#   This script provisions a local PostgreSQL 16 instance, creates the app
+#   role/database/schemas/extensions, writes a dev .env pointing at it, and
+#   lets the app's own boot-time bootstrap (ensureCoreTables + ensureAuthTables)
+#   create the working table set on first run.
+#
+# WHAT IT IS NOT
+#   Not for production. Production injects DATABASE_URL + JWT secrets via the
+#   host environment. This is dev/CI/build-agent scaffolding only.
+#
+# USAGE
+#   bash scripts/setup-local-db.sh            # provision + start + write .env
+#   bash scripts/setup-local-db.sh --status   # report whether it's up
+#
+# IDEMPOTENT: safe to re-run. Re-running starts the server if stopped and
+# leaves an existing .env untouched.
+# ============================================================================
+set -euo pipefail
+
+PG_VERSION=\"${PG_VERSION:-16}\"
+PG_BIN=\"/usr/lib/postgresql/${PG_VERSION}/bin\"
+DATADIR=\"${C2C_PGDATA:-/var/lib/postgresql/c2c-local}\"
+PG_PORT=\"${C2C_PGPORT:-5432}\"
+PG_HOST=\"127.0.0.1\"
+DB_NAME=\"${C2C_DBNAME:-clinicalsage}\"
+DB_USER=\"${C2C_DBUSER:-c2c}\"
+DB_PASS=\"${C2C_DBPASS:-c2c_local}\"
+LOGFILE=\"/tmp/c2c-pg.log\"
+DATABASE_URL=\"postgresql://${DB_USER}:${DB_PASS}@${PG_HOST}:${PG_PORT}/${DB_NAME}\"
+
+REPO_ROOT=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")/..\" && pwd)\"
+cd \"$REPO_ROOT\"
+
+log() { printf '\\033[0;34m[setup-local-db]\\033[0m %s\\n' \"$1\"; }
+err() { printf '\\033[0;31m[setup-local-db] ERROR:\\033[0m %s\\n' \"$1\" >&2; }
+
+if [ \"${1:-}\" = \"--status\" ]; then
+  if pg_isready -h \"$PG_HOST\" -p \"$PG_PORT\" >/dev/null 2>&1; then
+    log \"PostgreSQL is UP on ${PG_HOST}:${PG_PORT}\"
+    log \"DATABASE_URL=${DATABASE_URL}\"
+    exit 0
+  fi
+  err \"PostgreSQL is NOT running on ${PG_HOST}:${PG_PORT}\"
+  exit 1
+fi
+
+# ── 1. Locate the PostgreSQL binaries ───────────────────────────────────────
+if [ ! -x \"${PG_BIN}/initdb\" ]; then
+  err \"PostgreSQL ${PG_VERSION} not found at ${PG_BIN}.\"
+  err \"Install it: apt-get install -y postgresql-${PG_VERSION} postgresql-${PG_VERSION}-pgvector\"
+  exit 1
+fi
+
+# ── 2. initdb (once) ─────────────────────────────────────────────────────────
+# initdb / postgres refuse to run as root, so run cluster ops as the
+# `postgres` system user that the postgresql package creates.
+RUN_AS_PG=\"sudo -u postgres\"
+if [ \"$(id -un)\" = \"postgres\" ]; then RUN_AS_PG=\"\"; fi
+
+if [ ! -s \"${DATADIR}/PG_VERSION\" ]; then
+  log \"Initializing cluster at ${DATADIR}\"
+  install -d -o postgres -g postgres \"$(dirname \"$DATADIR\")\" 2>/dev/null || true
+  $RUN_AS_PG rm -rf \"$DATADIR\" 2>/dev/null || true
+  $RUN_AS_PG \"${PG_BIN}/initdb\" -D \"$DATADIR\" -U postgres --auth=trust -E UTF8 >/dev/null
+else
+  log \"Cluster already initialized at ${DATADIR}\"
+fi
+
+# ── 3. Start the server (if not already accepting connections) ──────────────
+if pg_isready -h \"$PG_HOST\" -p \"$PG_PORT\" >/dev/null 2>&1; then
+  log \"PostgreSQL already accepting connections on :${PG_PORT}\"
+else
+  log \"Starting PostgreSQL on :${PG_PORT}\"
+  $RUN_AS_PG \"${PG_BIN}/pg_ctl\" -D \"$DATADIR\" -o \"-p ${PG_PORT} -k /tmp\" -l \"$LOGFILE\" start >/dev/null
+  for _ in $(seq 1 15); do
+    pg_isready -h \"$PG_HOST\" -p \"$PG_PORT\" >/dev/null 2>&1 && break
+    sleep 1
+  done
+fi
+pg_isready -h \"$PG_HOST\" -p \"$PG_PORT\" >/dev/null 2>&1 || { err \"PostgreSQL failed to start (see ${LOGFILE})\"; exit 1; }
+
+# ── 4. Role + database + schemas + extensions (idempotent) ──────────────────
+export PAGER=cat PSQL_PAGER=cat
+PSQL=\"psql -h ${PG_HOST} -p ${PG_PORT} -U postgres -q -v ON_ERROR_STOP=1\"
+
+log \"Ensuring role '${DB_USER}' and database '${DB_NAME}'\"
+$PSQL >/dev/null <<SQL
+DO \\$\\$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '${DB_USER}') THEN
+    CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}' CREATEDB;
+  END IF;
+END \\$\\$;
+SQL
+if ! $PSQL -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\" | grep -q 1; then
+  $PSQL >/dev/null -c \"CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};\"
+fi
+
+log \"Ensuring schemas + extensions\"
+$PSQL -d \"$DB_NAME\" >/dev/null <<SQL
+CREATE SCHEMA IF NOT EXISTS vault AUTHORIZATION ${DB_USER};
+CREATE SCHEMA IF NOT EXISTS precedent AUTHORIZATION ${DB_USER};
+GRANT ALL ON SCHEMA public TO ${DB_USER};
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";
+SQL
+
+# pgvector is a SEPARATE package (postgresql-${PG_VERSION}-pgvector) and is not
+# always installed. Until now it was the last statement in the block above, under
+# `ON_ERROR_STOP=1` and `set -e`, so on any machine without it this script died
+# HERE — before writing .env and before creating a single table. The SessionStart
+# hook runs this as `... >/dev/null 2>&1 || true`, so the failure was silent, and
+# every fresh session began with no DATABASE_URL and an empty database. That is
+# the state in which the product's surfaces report \"the service didn't respond\".
+#
+# Non-fatal now, and reported. The embedding features degrade without it; nothing
+# else does.
+if $PSQL -d \"$DB_NAME\" -c \"CREATE EXTENSION IF NOT EXISTS vector;\" >/dev/null 2>&1; then
+  log \"pgvector ready\"
+  PGVECTOR=1
+else
+  PGVECTOR=0
+  err \"pgvector unavailable — embedding features will degrade. Install it with:\"
+  err \"  apt-get install -y postgresql-${PG_VERSION}-pgvector   (then re-run)\"
+  err \"install-fresh will provision everything that does not need it and name\"
+  err \"the objects it had to skip.\"
+fi
+
+# ── 5. Write .env (only if absent — never clobber an operator's config) ─────
+if [ -f .env ]; then
+  log \".env already present — leaving it untouched\"
+  if ! grep -q '^DATABASE_URL=' .env; then
+    err \".env exists but has no DATABASE_URL. Add: DATABASE_URL=${DATABASE_URL}\"
+  fi
+  # The sign-in card's dev-only \"Demo access\" button POSTs /api/auth/dev-login,
+  # which server/auth/dev-auth-policy.ts gates behind NODE_ENV=development AND
+  # ALLOW_DEV_AUTH=1. Without the flag the route answers 404 and the button
+  # appears to do nothing — the reason the Wave 0 design review could not get
+  # past the login page and screenshotted it for every surface it had changed.
+  if ! grep -q '^ALLOW_DEV_AUTH=' .env; then
+    err \".env exists but has no ALLOW_DEV_AUTH. The sign-in card's 'Demo access'\"
+    err \"button will 404 without it. Add:  ALLOW_DEV_AUTH=1\"
+  fi
+  # AnA is the product. Without a provider key the AI gateway initializes with
+  # zero providers and every chat turn returns 503 GATEWAY_UNAVAILABLE — the
+  # platform boots green and its core feature is dead. Setup used to leave this
+  # out silently, which is exactly how a tester came to find AnA not working at
+  # all. The server now refuses readiness for it too (startup/ana-readiness-state.ts).
+  if ! grep -qE '^(ANTHROPIC_API_KEY|OPENAI_API_KEY|KIMI_API_KEY|MOONSHOT_API_KEY)=.+' .env; then
+    err \".env exists but has no AI provider key. AnA cannot answer without one:\"
+    err \"every chat turn returns 503 and /readyz reports NOT READY. Add:\"
+    err \"  ANTHROPIC_API_KEY=sk-ant-...\"
+  fi
+else
+  log \"Writing dev .env\"
+  cat > .env <<ENV
+# Local development environment — generated by scripts/setup-local-db.sh.
+# Points at the local PostgreSQL ${PG_VERSION} instance under ${DATADIR}.
+# NOT for production. Real deployments inject these via the host env.
+
+NODE_ENV=development
+DATABASE_URL=${DATABASE_URL}
+
+# JWT dev secrets (>=32 chars, as server/config/environment.ts requires).
+JWT_SECRET=dev_local_jwt_secret_change_me_0123456789abcdef
+JWT_SECRET_DEV=dev_local_jwt_secret_change_me_0123456789abcdef
+
+# RLS rollout is off (shadow) in dev; see server/db/rlsEnforcement.ts.
+RLS_ENFORCE=off
+
+# Enables POST /api/auth/dev-login — the sign-in card's dev-only \"Demo access\"
+# button (client/src/concept2cure/components/concept2cure-auth/Concept2CureLogin.tsx).
+#
+# The route is gated by server/auth/dev-auth-policy.ts → isDevAuthAllowed(),
+# which requires BOTH NODE_ENV=development AND ALLOW_DEV_AUTH=1, and returns
+# 404 otherwise. This file never ships: it is gitignored, local-only, and
+# production injects its environment from the host. Setting the flag HERE does
+# not weaken that gate — with NODE_ENV=production the route still refuses even
+# with this set.
+#
+# It is written because the flag was the missing half: setup produced a dev
+# environment whose only usable sign-in path was silently disabled, so the
+# button did nothing and no session could be established to look at the product.
+ALLOW_DEV_AUTH=1
+
+# ── AnA's AI provider — SET THIS OR AnA DOES NOT WORK ───────────────────────
+#
+# This is the one value setup cannot generate for you, and the one the product
+# is useless without. With no provider key the AI gateway initializes with zero
+# providers, POST /api/ana-ri/stream returns 503 GATEWAY_UNAVAILABLE on every
+# turn, and the chat panel renders \"AnA is unreachable\" for every question.
+#
+# It is written here as an empty placeholder rather than omitted, because
+# omitting it is what previously produced a fully provisioned local environment
+# whose headline feature was dead on arrival with nothing saying so. The server
+# now says so loudly — a boot banner plus a red /readyz — but the fix is here:
+#
+#   ANTHROPIC_API_KEY=sk-ant-...
+#
+# OPENAI_API_KEY or KIMI_API_KEY work as alternatives; any one is enough.
+ANTHROPIC_API_KEY=
+ENV
+fi
+
+# ── 6. Provision the schema the application actually serves from ────────────
+#
+# This step used to run ensureCoreTables + ensureAuthTables and stop, and its
+# epilogue said \"Core + auth tables are ready (sufficient for most work)\". That
+# claim is what BP-W0-2 was.
+#
+# ensureCoreTables does not CREATE anything — it VERIFIES and reports. So on a
+# fresh cluster this step wrote nothing at all, and the developer was told the
+# database was ready. Booting the app against it produced exactly the symptom in
+# the work order: \"roughly half the specialist services do not load\", six
+# surfaces each with a user-facing error. Every one of them was a missing table.
+#
+# Even with tables, the out-of-band migration set (scripts/db/migration-set.mjs)
+# adds columns the live queries read — `nonclinical_studies.duration_label` is
+# the one that surfaced — so a database provisioned by install-fresh alone still
+# answers 500 on the nonclinical registry. Diagnosed by probing all six services
+# against a running server: five returned 200 once the schema existed, and the
+# sixth returned 200 after deploy-migrate. None of them was a code defect.
+#
+# Both steps now run here, in order, and the script reports honestly if either
+# is incomplete rather than printing a green line over a database the app cannot
+# serve from.
+#
+# `--allow-incomplete` is deliberate: on a local cluster the governed-content
+# tree needs roles a non-superuser cannot create, and refusing the whole install
+# over that would put us back where we started. The verification below is what
+# decides whether to claim success.
+log \"Provisioning application schema (install-fresh)\"
+if DATABASE_URL=\"$DATABASE_URL\" NODE_ENV=development node scripts/db/install-fresh.mjs --allow-incomplete >/tmp/c2c-install.log 2>&1; then
+  log \"Application schema provisioned\"
+else
+  err \"install-fresh failed — see /tmp/c2c-install.log\"
+fi
+
+log \"Applying the out-of-band migration set (deploy-migrate)\"
+if DATABASE_URL=\"$DATABASE_URL\" NODE_ENV=development node scripts/db/deploy-migrate.mjs >/tmp/c2c-migrate.log 2>&1; then
+  log \"Migration set applied\"
+else
+  err \"deploy-migrate failed — see /tmp/c2c-migrate.log\"
+fi
+
+# ── 6b. Seed the account the dev sign-in actually uses ──────────────────────
+# ALLOW_DEV_AUTH=1 only opens the route. /api/auth/dev-login then LOOKS UP the
+# email it was given, and the sign-in card's \"Demo access\" button hardcodes
+# jm.smith@concept2cure.pro — so on a freshly provisioned database, with the
+# flag set and the route reachable, the button still answers
+# 401 \"User not found. Please sign up first.\" Seeding that user (idempotent
+# upsert, plus its organization and admin membership) is the other half of a
+# dev environment you can actually sign into and look at.
+log \"Seeding the demo admin account (scripts/seed-admin.mjs)\"
+SEEDED=0
+if DATABASE_URL=\"$DATABASE_URL\" NODE_ENV=development node scripts/seed-admin.mjs >/tmp/c2c-seed.log 2>&1; then
+  SEEDED=1
+  log \"Demo account ready: jm.smith@concept2cure.pro\"
+else
+  err \"seed-admin failed — 'Demo access' will answer 401. See /tmp/c2c-seed.log\"
+fi
+
+# ── 7. Verify, and say what is actually true ────────────────────────────────
+# The point of this block is that the script must not report readiness it has
+# not checked. It counts the tables the product's own route handlers read.
+TABLES=$($PSQL -d \"$DB_NAME\" -tAc \"SELECT count(*) FROM information_schema.tables WHERE table_schema='public'\" 2>/dev/null || echo 0)
+MISSING=$($PSQL -d \"$DB_NAME\" -tAc \"
+  SELECT count(*) FROM (VALUES
+    ('organizations'),('users'),('regulatory_programs'),('authoring_documents'),
+    ('authoring_sections'),('nonclinical_studies'),('unified_tasks')
+  ) AS required(name)
+  WHERE NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+     WHERE table_schema='public' AND table_name = required.name
+  )\" 2>/dev/null || echo 99)
+
+# ── Done ─────────────────────────────────────────────────────────────────────
+log \"Local PostgreSQL ready.\"
+log \"  DATABASE_URL=${DATABASE_URL}\"
+log \"  data dir:    ${DATADIR}\"
+log \"  logs:        ${LOGFILE}\"
+log \"  tables:      ${TABLES}\"
+if [ \"$MISSING\" = \"0\" ]; then
+  log \"Every core route table is present — the app can serve from this database.\"
+else
+  err \"${MISSING} core route table(s) MISSING. The app will boot and its\"
+  err \"specialist surfaces will report that services did not respond.\"
+  err \"See /tmp/c2c-install.log and /tmp/c2c-migrate.log.\"
+fi
+
+if [ \"${PGVECTOR:-0}\" = \"1\" ]; then
+  log \"  pgvector:    installed\"
+else
+  err \"pgvector is NOT installed. Everything that does not need it was\"
+  err \"provisioned; the vector-dependent tables were skipped and are named at\"
+  err \"the end of /tmp/c2c-install.log. Embedding storage and similarity\"
+  err \"search are unavailable until you install postgresql-${PG_VERSION}-pgvector\"
+  err \"and re-run this script.\"
+fi
+
+# ── 8. How to sign in ───────────────────────────────────────────────────────
+# A provisioned database nobody can log into is not a usable dev environment.
+# State the exact path, and state it only when both halves are actually true.
+if grep -q '^ALLOW_DEV_AUTH=1' .env 2>/dev/null && [ \"${SEEDED:-0}\" = \"1\" ]; then
+  log \"Dev sign-in is available:\"
+  log \"  the 'Demo access' button on the sign-in card (POST /api/auth/dev-login)\"
+  log \"  or email jm.smith@concept2cure.pro / password 'pass-word'.\"
+  log \"  ALLOW_DEV_AUTH=1 is set in .env; the route stays 404 in any environment\"
+  log \"  where NODE_ENV is not 'development' (server/auth/dev-auth-policy.ts).\"
+else
+  err \"Dev sign-in is NOT usable: ALLOW_DEV_AUTH=1 in .env and a seeded\"
+  err \"jm.smith@concept2cure.pro are BOTH required. /api/auth/dev-login answers\"
+  err \"404 without the flag and 401 without the user.\"
+fi
+"
+
+ ❯ tests/dev-up-env-local.test.ts:53:18
+     51|   ])('%s sets RLS_ENFORCE=on', (file, pattern) => {
+     52|     const text = fs.readFileSync(path.resolve(__dirname, '..', file), …
+     53|     expect(text).toMatch(pattern);
+       |                  ^
+     54|     expect(text).not.toMatch(/^RLS_ENFORCE=off$/m);
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/dev-up-env-local.test.ts > the development defaults > .env.example sets RLS_ENFORCE=on
+AssertionError: expected '# Concept2Cure.RI Environment Configu…' to match /^RLS_ENFORCE=on$/m
+
+- Expected:
+/^RLS_ENFORCE=on$/m
+
++ Received:
+"# Concept2Cure.RI Environment Configuration
+# Copy this file to .env and fill in the values
+
+# ─── Neon Database Configuration ────────────────────────────────────
+# Get your connection string from the Neon Console: https://console.neon.tech
+#
+# Steps:
+#   1. Log into the Neon Console and select your project.
+#   2. Go to \"Connection Details\" → copy the connection string.
+#   3. Paste it below as DATABASE_URL (remove any leading \"psql \" or quotes).
+#
+# Example (pooler endpoint — used by the application):
+#   DATABASE_URL=postgresql://neondb_owner:YOUR_PASSWORD@ep-example-name-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+#
+# For migrations only (optional — direct endpoint, not pooler):
+#   DATABASE_URL_ADMIN=postgresql://neondb_owner:YOUR_PASSWORD@ep-example-name.us-east-1.aws.neon.tech/neondb?sslmode=require
+#
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+
+# ─── Non-superuser runtime role (the RLS enforcement unlock) ─────────
+# PostgreSQL Row-Level Security only filters rows for a role that is NOT a
+# superuser and does NOT hold BYPASSRLS. DATABASE_URL above is the owner/admin
+# role (a superuser on managed providers) — RLS never filters on it, and a
+# production boot with RLS_ENFORCE=on FAILS CLOSED on that role. Split the roles:
+#
+#   • DATABASE_URL      → owner/admin. Used ONLY by migrations & provisioning
+#                         (CREATE ROLE, DDL, GRANT all need owner privileges).
+#   • APP_DATABASE_URL  → the non-superuser `app_service` role. The request-
+#                         serving application pool connects as this so RLS
+#                         actually enforces tenant isolation. Falls back to
+#                         DATABASE_URL when unset (today's single-role behavior).
+#
+# To provision the role, set APP_SERVICE_DB_PASSWORD before running
+# scripts/db/install-fresh.mjs (and it is re-granted on every deploy-migrate run).
+# Then point the runtime at it via APP_DATABASE_URL.
+#
+#   APP_SERVICE_DB_PASSWORD=change-me-min-12-chars   # provisioning-time only; mints/rotates the role
+#   APP_DATABASE_URL=postgresql://app_service:change-me-min-12-chars@localhost:5432/dbname
+#   APP_SERVICE_DB_ROLE=app_service                  # optional; role name (default app_service)
+APP_DATABASE_URL=
+APP_SERVICE_DB_PASSWORD=
+# APP_SERVICE_DB_ROLE=app_service
+# RUNTIME_DB_ROLE names an EXISTING, unminted runtime role (no password here)
+# whose grants install-fresh / deploy-migrate must refresh on every run — an
+# operator-created app_service, or the local `c2c` login. Unset, the installers
+# identify the role from APP_SERVICE_DB_PASSWORD, then APP_DATABASE_URL, then
+# DATABASE_URL when its login differs from the owner. Verify with
+# `npm run db:audit-grants` (exit 1 on any table the role cannot reach).
+# RUNTIME_DB_ROLE=app_service
+
+# ─── The client's address behind a proxy (rate limits, audit rows) ─────────
+# TRUST_PROXY_HOPS is the number of proxies in front of the server that may
+# report the client's address (Express `trust proxy`). Unset, it is 1 in
+# production (the load balancer) and 0 elsewhere. Never set it above the
+# proxies actually present: a client can write every X-Forwarded-For entry
+# beyond them. See server/config/trust-proxy.ts.
+# TRUST_PROXY_HOPS=1
+
+# ─── One-command provisioning (empty database → /readyz schema: ok) ─────────
+# `node scripts/db/provision.mjs` (npm run db:provision) runs install-fresh then
+# deploy-migrate as the OWNER, mints app_service when APP_SERVICE_DB_PASSWORD is
+# set, and verifies the /readyz schema contract as the APP connection. It
+# refuses, before the first write, when pgvector is not available on the server
+# or when the owner role cannot CREATE ROLE / CREATE EXTENSION (three *_gcc_*
+# files create roles). See docs/operations/DB_READINESS.md.
+#   DATABASE_OWNER_URL  → owner/admin connection for provisioning ONLY. Falls
+#                         back to DATABASE_URL with a warning (single-role posture).
+#                         Needs CREATEROLE and the ability to CREATE EXTENSION
+#                         vector (superuser, or the provider's master/admin role).
+# DATABASE_OWNER_URL=postgresql://postgres:password@localhost:5432/dbname
+
+# API Keys
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Google Gemini / Nano Banana (image generation, presentations)
+# Get a free key at https://aistudio.google.com/apikey (50 req/day free tier)
+GOOGLE_GEMINI_API_KEY=
+
+# ─── AI substrates: private-cloud + self-hosted (all opt-in, default off) ───
+# The gateway routes every call (frontier / private-cloud / local) through one
+# audited path. A deployment turns on only the substrates it has infra for.
+# Placement (residency / zero-retention) per provider lives in
+# server/services/ai-gateway/providers/placement.ts.
+#
+# Claude on AWS Bedrock (private-cloud; BAA / zero-retention path for US pharma).
+#   Requires: npm i @anthropic-ai/bedrock-sdk  + AWS credentials (env/role).
+AI_BEDROCK_ENABLED=false
+AI_BEDROCK_REGION=
+AI_BEDROCK_RESIDENCY=us            # comma list of residency codes this deploy serves
+AI_BEDROCK_ZERO_RETENTION=true     # set false only if your BAA/contract lacks ZDR
+#
+# Claude / Gemini on Google Vertex AI (private-cloud; EU/APAC data residency).
+#   Requires: npm i @anthropic-ai/vertex-sdk  + Application Default Credentials.
+AI_VERTEX_ENABLED=false
+AI_VERTEX_PROJECT_ID=
+AI_VERTEX_REGION=us-east5
+AI_VERTEX_RESIDENCY=us,eu
+AI_VERTEX_ZERO_RETENTION=true
+#
+# OpenAI on Azure (private-cloud; enterprise / Microsoft estate).
+#   Enabled automatically when both key + endpoint are set.
+AZURE_OPENAI_API_KEY=
+AZURE_OPENAI_ENDPOINT=
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
+AZURE_OPENAI_RESIDENCY=us,eu
+AI_AZURE_ZERO_RETENTION=true
+#
+# Self-hosted / local open-weight models (vLLM / LiteLLM / Ollama shim).
+# The only air-gappable substrate — data never leaves the deployment.
+AI_LOCAL_ENABLED=false
+LOCAL_AI_BASE_URL=                 # OpenAI-compatible endpoint, e.g. http://vllm:8000/v1
+LOCAL_AI_API_KEY=                  # usually unused for local servers
+#
+# Zero-retention flags for the SHARED frontier APIs (default false). Flip to
+# true only once a signed zero-retention agreement is actually in force.
+OPENAI_ZERO_RETENTION=false
+ANTHROPIC_ZERO_RETENTION=false
+
+# ─── LiteLLM proxy (optional unified egress / local model map) ───
+#
+# LITELLM_ENABLED=true DIVERTS EVERY ROUTED AI CALL AROUND THE GOVERNED GATEWAY.
+# aiProviderRouter makes the gateway the ELSE branch of this flag, so turning it
+# on removes policy evaluation, the fail-closed PII/PHI screen, the
+# provider-placement / residency check, and the ai.gateway_audit_log row from
+# every call. The router's own audit row carries no prompt hash, no resolved
+# model and no residency decision, so a Part 11 call becomes unreconstructable.
+#
+# In production this refuses to boot unless LITELLM_UNGOVERNED_ACK is set to the
+# exact string below. That is a speed bump, not an approval — routing LiteLLM
+# through the gateway as a provider is the fix (WO-6).
+LITELLM_ENABLED=false
+LITELLM_BASE_URL=http://localhost:4000
+LITELLM_API_KEY=
+LITELLM_MODEL_MAP_JSON=
+# LITELLM_UNGOVERNED_ACK=i-accept-ungoverned-ai-calls
+
+# ─── Embeddings substrate (default OpenAI; 'local' enables offline RAG) ───
+EMBEDDING_PROVIDER=openai          # openai | local
+EMBEDDING_MODEL=text-embedding-3-small
+# Self-hostable embeddings (Text-Embeddings-Inference / vLLM, OpenAI-compatible).
+# Required for air-gapped retrieval. Model dimension must match the target corpus.
+EMBEDDING_LOCAL_BASE_URL=
+EMBEDDING_LOCAL_MODEL=bge-large-en-v1.5
+EMBEDDING_LOCAL_API_KEY=
+
+# ─── Client/project memory extraction ───
+# Document ingestion extracts \"memory atoms\" through the governed AI gateway
+# (audited, tenant-scoped, PII-screened). ON by default; set to false to force
+# the deterministic regex/heuristic extractor only (e.g. an air-gapped
+# deployment with no configured model). Failures always fall back to heuristics.
+MEMORY_LLM_EXTRACTION_ENABLED=true
+
+# ─── AnA working memory (per-thread conversation summaries) ───
+# AnA compresses long threads into a structured \"working memory\" summary,
+# refreshed every WORKING_MEMORY_THRESHOLD messages and injected into context.
+WORKING_MEMORY_THRESHOLD=20
+# Semantic recall of working memory (off by default). When ON, each summary is
+# embedded on write and the most RELEVANT prior summary is recalled by query
+# similarity instead of just the latest one — so AnA surfaces the part of a long
+# history that actually bears on the current question.
+# To enable safely:
+#   1) ensure pgvector is available and apply migrations/20260602_working_memory_embeddings.sql
+#      (adds conversation_working_memory.embedding vector(1536));
+#   2) set ENABLE_SEMANTIC_WORKING_MEMORY=true.
+# Order-independent: if the flag is on before the column exists, writes still
+# succeed WITHOUT embeddings (a one-time warning is logged) and recall falls
+# back to recency until the migration lands — no data loss, no breakage.
+ENABLE_SEMANTIC_WORKING_MEMORY=false
+
+# ─── Content classification (PHI / PII / Regulatory) ───
+# heuristic (default; deterministic baseline) | slm (small fine-tuned model)
+AI_CLASSIFIER_MODE=heuristic
+AI_CLASSIFIER_SLM_URL=             # serve the classifier SLM here (see scripts/ml/)
+# AI gateway PHI/PII placement enforcement (uses the classifier above):
+#   off   — no screening
+#   audit — detect + record, never block (NON-PRODUCTION default; safe for synthetic-data pilots)
+#   block — fail closed: PHI/PII may only go to a zero-data-retention provider.
+# PRODUCTION DEFAULT IS 'block' (unset → block). An explicit 'audit'/'off' in
+# production REFUSES TO BOOT unless AI_GOVERNANCE_ACCEPT_PERMISSIVE=true records
+# the accepted risk (see the AI governance block below).
+AI_PII_ENFORCEMENT=audit
+
+# ─── AI governance (optional; default off — enable per deployment) ───
+# Enforce the groundedness gate org-wide: AI content scored below a capability's
+# threshold is BLOCKED on accept unless a human review is acknowledged.
+# Groundedness gate. ON by default as of 2026-08-13 — low-citation AI content is
+# blocked on accept unless a human acknowledges it (groundednessReviewAck).
+# Set to 0 to turn it OFF for this deployment; any other value leaves it on.
+AI_GROUNDEDNESS_ENFORCE=
+# ─── Production boot posture for the two gates (B19 / B20, 2026-09-20) ──────
+# In production both gates default STRICT: AI_PII_ENFORCEMENT unset → block,
+# AI_GROUNDEDNESS_ENFORCE unset → enforced. An explicit permissive value is a
+# deliberate degraded posture and is handled like AUDIT_SEAL_ACCEPT_UNSEALED /
+# RLS_ENFORCE. Evaluated in THIS order (server/startup/ai-governance-posture.ts):
+#   1. NODE_ENV != production                → nothing enforced, nothing warned
+#   2. both gates strict (value or default)  → boots silently (acceptance ignored)
+#   3. AI_GOVERNANCE_REQUIRE_ENFORCE=true    → REFUSES TO BOOT on any permissive
+#                                               gate, even with the acceptance set
+#   4. AI_GOVERNANCE_ACCEPT_PERMISSIVE=true  → boots; one structured warning per boot
+#   5. otherwise                             → REFUSES TO BOOT, naming the gate
+# Flip a gate strict in the same change window as the artifact it depends on
+# (B20); set REQUIRE only after both gates are strict; set ACCEPT only as a
+# dated, reviewed decision and clear it when the gate goes strict.
+AI_GOVERNANCE_REQUIRE_ENFORCE=
+# AI_GOVERNANCE_ACCEPT_PERMISSIVE=true  # accepted-risk escape hatch; leave unset in normal operation
+# Export human-review gate (server/services/export/exportReviewGate.ts) — in
+# production it is ALWAYS enforced and NEITHER variable below can disable it;
+# both are non-production toggles only. Two legacy spellings, same gate:
+# Set 'true' to enforce the export human-review gate outside production; any other value leaves it off there.
+CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW=
+# Legacy runbook spelling of the same non-production toggle: set 'enforce' to turn the gate on outside production.
+EXPORT_REVIEW_GATE=
+# Run the daily 21 CFR Part 11 audit-chain integrity sweep (read-only).
+ENABLE_AUDIT_CHAIN_CHECK=
+# Cron expression for the sweep (default '0 2 * * *').
+AUDIT_CHAIN_CHECK_CRON=
+# Real-time CRDT co-editing over the /collab WebSocket (Y.js + Hocuspocus).
+# No-op unless set to 'true': flag off means the upgrade handler is not
+# attached at all, so /collab refuses the upgrade rather than half-serving it.
+# Requires db/migrations/20260727_collab_document_state.sql to have been
+# applied — without it the server refuses every connection rather than
+# accepting edits it cannot persist. No client opens this socket yet.
+ENABLE_COLLAB_CRDT=
+# RIM precedent flywheel: periodic ClinicalTrials.gov ingestion into the corpus.
+# No-op unless set to 'true'. Configure what to ingest with the vars below.
+ENABLE_CORPUS_INGESTION=
+# Comma-separated indications to keep fresh (e.g. \"non-small cell lung cancer, multiple myeloma\").
+# With none set, the sweep no-ops rather than guessing.
+CORPUS_INGESTION_INDICATIONS=
+# Comma-separated phase filters (default \"PHASE2,PHASE3\"). Blank = no phase filter.
+CORPUS_INGESTION_PHASES=
+# Per-query fetch cap (default 100).
+CORPUS_INGESTION_LIMIT=
+# Cron expression for the sweep (default '30 3 * * 0' — weekly, Sunday 03:30).
+CORPUS_INGESTION_CRON=
+
+# Server
+BASE_URL=http://localhost:3000
+NODE_ENV=development
+PORT=5000
+FASTAPI_SERVER=http://localhost:8000
+# HTTP keep-alive tuning for deployments behind an ALB/ELB or L7 proxy. Node's
+# 5s default keepAliveTimeout sits BELOW a typical 60s proxy idle timeout, which
+# causes sporadic 502s (the proxy reuses a socket Node just closed). Defaults:
+# keep-alive 65s (> proxy idle), headers 66s (must exceed keep-alive). Raise both
+# if your proxy's idle timeout is longer than 60s.
+HTTP_KEEP_ALIVE_TIMEOUT_MS=65000
+HTTP_HEADERS_TIMEOUT_MS=66000
+
+# ─── THE PRODUCTION BOOT CONTRACT ────────────────────────────────────────────
+# With NODE_ENV=production the server EXITS at startup when any of the following
+# is missing or invalid — it never boots degraded. Every deploy target must
+# supply the complete set (docker-compose.yml, docker-compose.beta.yml, the ECS
+# task definition, scripts/deploy-prod.sh), and CI proves it in ci.yml's
+# \"Boot in production mode and require /readyz=200\" job.
+#
+#   NODE_ENV=production        must be one of development|staging|production|test
+#                              (server/config/environment.ts)
+#   RLS_ENFORCE=on             literal `on` only — see the tenant-isolation block
+#                              below (server/db/rlsEnforcement.ts)
+#   DATABASE_URL               owner/admin role; migrations + provisioning
+#                              (server/startup/env.ts)
+#   APP_DATABASE_URL           the non-superuser app_service role — the boot
+#                              posture probe refuses a superuser/BYPASSRLS
+#                              runtime role under RLS_ENFORCE=on
+#                              (server/index.ts → assertRlsCatalogPosture)
+#   JWT_SECRET                 >=32 chars (server/config/environment.ts)
+#   REFRESH_TOKEN_SECRET       >=32 chars, must differ from JWT_SECRET
+#   MFA_ENCRYPTION_KEY         >=32 chars (server/config/environment.ts)
+#   AUDIT_HMAC_KEY             >=32 chars, or AUDIT_SEAL_ACCEPT_UNSEALED=true
+#                              (server/services/audit/auditSealPosture.ts)
+#   AUDIT_HMAC_SECRET          >=32 chars, no accept-unsealed equivalent
+#                              (server/services/audit/auditSealPosture.ts)
+#   CONCEPT2CURE_SIGNER_MODE   kms (+ CONCEPT2CURE_SIGNER_KMS_KEY_ID, region)
+#                              or hmac + CONCEPT2CURE_SIGNER_ACCEPT_HMAC=true
+#                              (server/services/signature/signer-mode.ts)
+#   CONNECTOR_ENCRYPTION_KEY   (server/services/connectors/connector-registry.ts)
+#
+# Everything above is a cryptographic secret except NODE_ENV / RLS_ENFORCE and
+# the two database URLs. Generate each independently — reusing one value across
+# two of them collapses separate trust domains into one:
+#   openssl rand -base64 48 | tr -d '\\n='
+#
+# Auth (JWT_SECRET is REQUIRED — server will not start without it)
+# SESSION_SECRET is read by start.sh / start-platform.sh, which generate a
+# throwaway value when it is unset — so every restart silently invalidates every
+# existing session. Set it explicitly in any environment users log into.
+SESSION_SECRET=your-secret-here
+JWT_SECRET=your-jwt-secret-here-change-in-production
+# REFRESH_TOKEN_SECRET is REQUIRED in staging + production, must be >=32 chars,
+# and MUST differ from JWT_SECRET (the server refuses to boot otherwise). In
+# development/test it falls back to JWT_SECRET.
+REFRESH_TOKEN_SECRET=your-refresh-token-secret-here-change-in-production
+# MFA_ENCRYPTION_KEY is REQUIRED in production (>=32 chars) — MFA TOTP secrets
+# are encrypted with a dedicated key rather than a JWT-derived one. Optional in
+# dev/staging/test (falls back to a derived key with a warning).
+MFA_ENCRYPTION_KEY=your-dedicated-mfa-encryption-key-min-32-chars-change-me
+# AUDIT_HMAC_KEY is REQUIRED in production (>=32 chars) — it keys the HMAC seal
+# over the tamper-evident audit hash-chain (21 CFR Part 11 record authenticity).
+# Without it the ledger is written UNSEALED and forgery becomes possible, so the
+# server refuses to boot in production unless the key is set OR the operator
+# explicitly accepts an unsealed ledger via AUDIT_SEAL_ACCEPT_UNSEALED=true
+# (boots with a prominent warning — intended only until the key is provisioned).
+# Hold this key outside the database (KMS / secrets manager). Optional in
+# dev/staging/test (rows seal when set, skip when unset).
+AUDIT_HMAC_KEY=your-dedicated-audit-hmac-key-min-32-chars-change-me
+# AUDIT_SEAL_ACCEPT_UNSEALED=true  # accepted-risk escape hatch; leave unset in normal operation
+# CONNECTOR_ENCRYPTION_KEY is REQUIRED in production — it is the AES key for
+# stored third-party connector credentials (server/services/connectors/
+# connector-registry.ts throws at module load in production when it is unset).
+# It is deliberately NOT derived from JWT_SECRET: reusing the token-signing key
+# as a credential-encryption key means one leak compromises both, so no fallback
+# to JWT_SECRET or a hardcoded value is permitted. Outside production an
+# insecure built-in default applies, which is why this is easy to miss until a
+# production deploy refuses to start.
+CONNECTOR_ENCRYPTION_KEY=your-dedicated-connector-encryption-key-min-32-chars-change-me
+
+# ─── Enterprise Identity: SAML SSO + SCIM provisioning (all optional) ───
+# The SSO/SCIM endpoints are inert until configured. Both support a single
+# default org via the vars below, or many client orgs via the *_TENANTS JSON
+# (one deployment → multiple IdPs). All assertions validate only against the
+# configured IdP certificate, so cross-tenant forgery is impossible.
+#
+# --- Master Administration (platform owner + support console) ---
+# Non-client-facing console at /concept2cure/master-admin, API under
+# /api/admin/master. Access is restricted to platform roles (super_admin /
+# platform_admin / support). As a bootstrap path before a platform role is
+# provisioned in the DB, list platform-admin emails here (comma-separated) —
+# any authenticated user whose email matches is granted access.
+#   PLATFORM_ADMIN_EMAILS=owner@concept2cure.ai,support@concept2cure.ai
+PLATFORM_ADMIN_EMAILS=
+
+# --- Business Center (owner + finance only — cost accounting, margins) ---
+# A STRICTER tier than Master Admin: the support team must NOT see financials.
+# API under /api/admin/business. Access = business roles (owner / business_admin
+# / super_admin) OR any email on this comma-separated allowlist. Use this to add
+# designated finance personnel without granting a DB role.
+#   BUSINESS_CENTER_EMAILS=owner@concept2cure.ai,finance@concept2cure.ai
+BUSINESS_CENTER_EMAILS=
+
+# --- Master admin (platform owner) — commercial ENTITLEMENT grant only ---
+# Who holds the platform-owner licence grant: every licensable module resolves
+# as entitled, so the nav rail shows no locks. This widens the ENTITLEMENT
+# verdict for the organization the request is already scoped to — it is NOT a
+# tenancy bypass, NOT a route guard, and NOT the Business Center gate (those are
+# PLATFORM_ADMIN_EMAILS / BUSINESS_CENTER_EMAILS above).
+# Holders = the `super_admin` role, OR any email listed here.
+# Leaving this blank keeps the built-in default (the platform owner's address in
+# server/services/entitlements/master-admin.ts). Setting it REPLACES that
+# default outright, which is how the grant is moved or removed.
+#   MASTER_ADMIN_EMAILS=owner@concept2cure.ai
+MASTER_ADMIN_EMAILS=
+
+# --- Module entitlement ENFORCEMENT (off by default) ---
+# Whether an unlicensed module's API routes are actually refused, or only
+# greyed in the nav. Until this is set, entitlement is presentation only: a
+# customer can deep-link to a locked surface and its API calls succeed.
+#   off      (default) the gate is inert
+#   report   resolve the verdict, LOG every request that would be denied
+#            (org, module set, path), and serve it anyway
+#   enforce  refuse with 403 MODULE_NOT_LICENSED
+# Run 'report' first and read the log. Nothing has ever measured which real,
+# paying requests enforcement would break, and switching straight to 'enforce'
+# discovers that from customers. 156 API prefixes are gated when it is on.
+# The gate fails OPEN on a resolution error (logged at error level): a database
+# blip must not 403 every customer at once. See
+# server/middleware/moduleEntitlementGate.ts.
+MODULE_ENFORCEMENT=off
+
+# --- SAML 2.0 (single default org) — see server/routes/sso.ts ---
+SAML_IDP_SSO_URL=                 # IdP SSO (login) endpoint
+SAML_IDP_SLO_URL=                 # IdP Single Logout endpoint (enables SLO)
+SAML_IDP_ENTITY_ID=               # IdP entityID (issuer / trust anchor id)
+SAML_IDP_CERTIFICATE=             # IdP signing cert (PEM or base64 body)
+SAML_SP_ENTITY_ID=                # our SP entityID (default: <APP_BASE_URL>/saml/metadata)
+SAML_SIGN_REQUESTS=false          # sign outbound AuthnRequests (needs SAML_SP_PRIVATE_KEY)
+SAML_SP_PRIVATE_KEY=              # SP private key (PEM) for signed requests
+SAML_SP_CERTIFICATE=              # SP cert (PEM) advertised in metadata
+SAML_NAME_ID_FORMAT=              # default: emailAddress
+SAML_WANT_AUTHN_RESPONSE_SIGNED=  # 'true' to also require a signed Response (assertion is always required)
+SAML_VALIDATE_INRESPONSETO=ifPresent  # never | ifPresent | always (replay binding)
+# Multi-tenant SAML: JSON keyed by org slug. Each value mirrors the fields above
+# (idpSsoUrl, idpEntityId, idpCertificate, optional idpSloUrl/entityId/signRequests/sp keys).
+#   SAML_TENANTS={\"acme\":{\"idpSsoUrl\":\"...\",\"idpEntityId\":\"...\",\"idpCertificate\":\"...\"}}
+SAML_TENANTS=
+
+# --- SCIM 2.0 provisioning — see server/routes/scim.ts (mounted at /scim/v2) ---
+SCIM_BEARER_TOKEN=                # single-tenant: the IdP's SCIM bearer token
+SCIM_ORG_ID=                      # single-tenant: the org id SCIM provisions into
+# Multi-tenant SCIM: JSON array of { token, orgId } (each IdP → its own org).
+#   SCIM_TENANTS=[{\"token\":\"...\",\"orgId\":7}]
+SCIM_TENANTS=
+
+# ─── Tenant isolation (RLS) ───
+# Postgres RLS is defense-in-depth (primary boundary is the JWT-derived org
+# scoping). RLS_ENFORCE=on makes it filter; production REFUSES TO BOOT unless it
+# is set to exactly `on` — unset, `off`, `shadow`, and even the truthy aliases
+# accepted outside production (`true`/`1`/`enforce`) are all rejected, so a
+# deployed environment can be audited with a plain `grep RLS_ENFORCE=on`.
+# The value below is the DEVELOPMENT default; every production target sets `on`.
+#
+# IMPORTANT: RLS only actually filters when the runtime connects as a
+# NON-SUPERUSER role. Under RLS_ENFORCE=on the boot posture check FAILS CLOSED if
+# the connection is a superuser or has BYPASSRLS. Provision APP_SERVICE_DB_PASSWORD
+# and point the app at APP_DATABASE_URL (see the non-superuser runtime role block
+# near DATABASE_URL above) before enabling enforcement in a multi-tenant deploy.
+#
+# RLS_REQUIRE_ENFORCE was removed from this file: nothing outside tests reads it
+# any more. It was the old opt-in strict gate, from when production merely WARNED
+# on an inert RLS posture; production now hard-fails unconditionally
+# (server/db/rlsEnforcement.ts), so documenting the flag only invited operators
+# to believe setting it changed something.
+RLS_ENFORCE=off
+
+# ─── Tenant lifecycle & entitlement enforcement ───
+# Seat licensing. `seats_purchased` on the organization is what the customer
+# pays for; enforcement blocks the (N+1)th member or pending invitation.
+#   enforce — block over-seat adds.
+#   report  — compute and surface the decision without blocking.
+# UNSET defaults to ENFORCE in production and report-only elsewhere. Set
+# `report` explicitly (and only in production) during a migration window while
+# over-seat tenants are reconciled with their contracts. A typo'd value falls
+# back to the environment default rather than silently disabling the control.
+SEAT_LIMIT_ENFORCEMENT=report
+
+# Storage quota. `max_storage` (GB) on the organization is written by the Stripe
+# webhook on every subscription change; enforcement refuses a content-bearing
+# upload that would put the tenant over it. A non-positive value (including the
+# -1 the billing tier config uses) means UNLIMITED, matching seats.
+#   enforce — refuse over-quota uploads with 413 TENANT_STORAGE_QUOTA_EXCEEDED.
+#   report  — compute, count and log the decision without blocking.
+# UNSET defaults to ENFORCE in production and report-only elsewhere.
+#
+# READ THIS BEFORE ENFORCING IN AN EXISTING DEPLOYMENT. Unlike `seats_purchased`
+# (which defaults to 0 = unlimited), `max_storage` defaults to 5 GB and nothing
+# has ever measured a tenant against it. Turning enforcement on without checking
+# can refuse uploads for tenants who have been silently over for months — during
+# a submission, which is the worst moment available. Run
+# `npm run report:tenant-storage` first: it prints exactly who would be refused.
+# Set `report` explicitly for the reconciliation window; report mode still
+# computes, counts (`tenant_quota_decisions_total{resource=\"storage\"}`) and logs,
+# so it is a measurement mode rather than an off switch.
+STORAGE_LIMIT_ENFORCEMENT=report
+
+# SCIM provisioning on a suspended tenant. `block` (default) refuses CREATE and
+# ACTIVATE while always allowing DELETE and DEACTIVATE — deprovisioning is a
+# security action (departed employee, compromised account) and must not depend
+# on the invoice. `allow` restores pre-2026-08 behaviour. Reads are never gated.
+SCIM_PROVISIONING_ON_SUSPENDED_TENANT=block
+
+# The tenant lifecycle guard (server/middleware/tenantLifecycleGuard.ts) has no
+# env switch by design: an organization suspended for non-payment, a terminated
+# contract, or a security incident must not be reachable through a missing
+# environment variable. Posture comes from organizations.status and
+# organizations.payment_status; see docs/adr/0002-multi-tenant-architecture.md.
+
+# ─── Vulnerability disclosure (RFC 9116 /.well-known/security.txt) ───
+SECURITY_CONTACT_EMAIL=security@concept2cure.pro
+
+# Redis Configuration
+REDIS_URL=redis://redis:6379
+
+# ─── Self-host / docker-compose stack ───────────────────────────────
+# Used by docker-compose.yml and docker-compose.beta.yml. The app's
+# DATABASE_URL is assembled from these for the bundled Postgres service.
+# DB_PASSWORD is REQUIRED (the bundled Postgres will not start without it);
+# the rest have sensible defaults shown below.
+DB_PASSWORD=your-db-password-here   # REQUIRED for the docker-compose stacks
+DB_USER=postgres
+DB_NAME=concept2cure
+DB_PORT=5432
+REDIS_PORT=6379
+APP_PORT=5000
+LOG_LEVEL=info
+
+# Single-tenant / private install:
+#   - SEED_DEMO_USER controls the built-in GA demo admin (publicly-known
+#     password). Leave it 'false' for any private/production install; set
+#     'true' only for throwaway demo environments. The compose stacks
+#     default it to false.
+#   - With SEED_DEMO_USER=false, create your first admin on a fresh install by
+#     POSTing to /api/setup/initialize (email, password, organizationName).
+#     That endpoint self-closes once any user exists.
+SEED_DEMO_USER=false
+# SINGLE_TENANT_MODE=true defaults new orgs to the enterprise tier (all
+# features on for the one tenant). DEFAULT_ORG_TIER overrides the tier
+# explicitly (free | standard | professional | enterprise).
+SINGLE_TENANT_MODE=false
+# DEFAULT_ORG_TIER=enterprise
+# STRIPE_DISABLED=true turns off all Stripe/billing integration even if a key
+# is present (no Stripe customer on signup; billing is treated as off).
+STRIPE_DISABLED=false
+
+# LiteLLM gateway (optional) — see the fuller warning at the LiteLLM block above.
+# Enabling this bypasses the governed AI gateway entirely; production refuses to
+# boot without LITELLM_UNGOVERNED_ACK.
+LITELLM_ENABLED=false
+LITELLM_BASE_URL=http://localhost:4000
+LITELLM_API_KEY=
+LITELLM_MODEL_MAP_JSON=
+LITELLM_TIMEOUT_MS=45000
+# LITELLM_UNGOVERNED_ACK=i-accept-ungoverned-ai-calls
+
+# Langfuse observability (optional)
+LANGFUSE_ENABLED=false
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+LANGFUSE_PUBLIC_KEY=
+LANGFUSE_SECRET_KEY=
+
+# OpenTelemetry (optional)
+# When OTEL_ENABLED=true, OTEL_EXPORTER_OTLP_ENDPOINT MUST be set in production
+# (boot fails fast otherwise). To intentionally start with no exporter in a
+# production-like environment for local debugging, set OTEL_ALLOW_NO_EXPORTER=true.
+OTEL_ENABLED=false
+OTEL_SERVICE_NAME=concept2cure-server
+OTEL_EXPORTER_OTLP_ENDPOINT=
+OTEL_EXPORTER_OTLP_HEADERS=
+OTEL_ALLOW_NO_EXPORTER=false
+
+# OPA policy engine (optional)
+OPA_ENABLED=false
+OPA_MODE=observe
+OPA_BASE_URL=http://localhost:8181
+OPA_POLICY_PATH=concept2cure/allow
+OPA_TIMEOUT_MS=3000
+
+# LLM routing policy is governed centrally by the AI gateway
+# (server/services/ai-gateway). The legacy LLM_ROUTING_* knobs were removed
+# with server/lib/multi-provider-llm.ts.
+
+# ─── AnA compute & code execution ───
+# AnA's sandboxed scripting (run_python_script) and targeted document edits
+# (insert_document_content) are ALWAYS available — they run inside the isolated
+# artifact-compute worker (no network, bounded CPU/memory, wall-clock timeout)
+# and need no flag. They require python3 + python-docx on the host (see
+# services/Dockerfile).
+#
+# The flag below additionally exposes Anthropic's HOSTED code-execution tool to
+# AnA (cloud interpreter, separate from the local sandbox). Leave it off unless
+# the tool is admin-enabled in the Anthropic Console and the billing impact is
+# accepted. Companion flags gate live web search/fetch the same way.
+# Hardened container execution (run_in_container) — a real Linux container with
+# bash + Python via `docker run`, with dropped capabilities, no-new-privileges,
+# read-only root fs, resource limits, a non-root user, and a wall-clock timeout.
+# ENABLED (computer-use turned on). Requires Docker available to the app runtime
+# (the daemon + a pullable ANA_CONTAINER_IMAGE); the tool fails closed with a
+# friendly message if Docker is absent. Outbound network stays a SEPARATE
+# opt-in (the biggest GxP/exfiltration surface) and remains OFF below — only
+# flip ANA_CONTAINER_ALLOW_NETWORK with compensating egress controls. To turn
+# the capability back off, set ANA_ENABLE_CONTAINER_EXEC=false.
+ANA_ENABLE_CONTAINER_EXEC=true     # master switch for run_in_container (computer-use)
+ANA_CONTAINER_ALLOW_NETWORK=false  # outbound network OFF (GxP egress boundary) — opt-in only
+ANA_CONTAINER_IMAGE=python:3.11-slim
+ANA_CONTAINER_MEMORY=1g
+ANA_CONTAINER_CPUS=1
+ANA_CONTAINER_PIDS_LIMIT=256
+ANA_CONTAINER_WORK_TMPFS_MB=512
+ANA_CONTAINER_USER=1000:1000
+
+ANA_ENABLE_CODE_EXECUTION=false    # Anthropic hosted code interpreter (off by default)
+ANA_ENABLE_WEB_SEARCH=false        # live regulatory web search (billed per search)
+ANA_ENABLE_WEB_FETCH=false         # retrieve guidance/CFR/ICH text by URL
+# Set to 1 to send AnA the full tool surface every turn (disables relevance-based
+# tool selection). Leave unset in production — selection keeps the surface tight.
+ANA_TOOL_SELECTION_DISABLED=
+# Auto-rehydrate prior context at the start of each conversation (latest thread
+# summary + most important project/client memory + AnA's own past lessons) so a
+# session never starts cold. On by default; set 'false' to disable. Fires only
+# on the first message of a thread and is fault-tolerant.
+ANA_SESSION_BOOTSTRAP_AUTO=
+# Reading refinements (on by default; set 'false' to disable). search_large_document
+# extracts a big file's full text server-side and returns only query-relevant
+# windows; remember_document_in_project promotes a read document into durable
+# project memory. Both are additive, tenant-scoped, and fault-tolerant.
+ANA_LARGE_DOC_SEARCH=
+ANA_REMEMBER_DOCUMENT=
+# Cost-tiered model routing (on by default; set 'off' to disable). Keeps the
+# everyday chat path off the expensive flagship: routine turns run on the
+# economy model (Haiku), real drafting/review on the standard model (Sonnet),
+# and the flagship (Opus) is reserved for a high kernel risk-tier or an explicit
+# Thorough request. Only selects already-approved registry models, and always
+# yields to an explicit user model pin or a governance-pinned strategy.
+# Applied on all three chat paths (/api/ana-ri/stream, /api/ana-ri/chat, /api/chat).
+ANA_MODEL_TIERING=on
+# Per-deployment tier→model remaps (registry alias id or wire model string).
+# The value must resolve to an ENABLED model in this deployment's registry, or
+# the tier falls back to strategy-based selection. This is the cost-independence
+# dial — no code changes needed:
+#   ANA_TIER_FLAGSHIP_MODEL=claude-sonnet-4   # strict no-Opus deployment
+#   ANA_TIER_ECONOMY_MODEL=local-default      # self-hosted everyday tier
+ANA_TIER_ECONOMY_MODEL=
+ANA_TIER_STANDARD_MODEL=
+ANA_TIER_FLAGSHIP_MODEL=
+# Background deep investigations (on by default; set 'false' to disable).
+# start_deep_investigation runs a Thorough-depth agentic research task that
+# outlives the chat turn, persisting progress + the final memo to
+# ana_deep_investigations (requires the migration via npm run db:apply-c2c).
+# Concurrency is capped at 2 active runs per tenant; runs orphaned by a server
+# restart are reported as stalled, never as eternally running.
+ANA_ENABLE_DEEP_INVESTIGATIONS=true
+
+# ─── AnA external evidence integrations (all optional) ───
+# AnA's live evidence tools (search_clinical_evidence, search_literature,
+# search_medicare_coverage) call public APIs. Base URLs are overridable so a
+# deployment behind an egress allowlist/proxy can redirect them.
+CTGOV_API_BASE_URL=                # default https://clinicaltrials.gov/api/v2
+PUBMED_EUTILS_BASE_URL=            # default https://eutils.ncbi.nlm.nih.gov/entrez/eutils
+CMS_COVERAGE_API_BASE_URL=         # default https://api.coverage.cms.gov/v1
+# NCBI E-utilities usage policy — set an email (and optional API key for higher
+# rate limits); requests without identification are throttled at volume.
+NCBI_TOOL_EMAIL=
+NCBI_API_KEY=
+# Identifying User-Agent sent to the above APIs (good API citizenship).
+INTEGRATION_USER_AGENT=            # default 'Concept2Cure-AnA/1.0 (regulatory intelligence)'
+
+# ─── Vendored regulatory dataset drop-points ───
+# Agency artifacts this platform reads from disk rather than fetching, because
+# no public API serves them. Each defaults to a directory under assets/ and
+# fails closed when the asset is absent — the code reports an explicitly
+# labelled empty state, never a plausible substitute. See the READMEs in those
+# directories and docs/GA_OPS_PROCUREMENT_RUNBOOK_2026-08.md.
+# FDA CDRH Recognized Consensus Standards (product code → recognized standards).
+# openFDA has no endpoint for this; it is a normalized export of FDA's
+# recognition list. Runbook B21.
+FDA_RECOGNIZED_STANDARDS_DIR=      # default assets/fda-recognized-standards
+
+# ─── AnA workflow integrations (all optional) ───
+# Regulatory mailbox (read-only Gmail) — AnA's search_regulatory_correspondence.
+GMAIL_OAUTH_JSON=                  # JSON: {client_id, client_secret, refresh_token, access_token, redirect_uris}
+GMAIL_USER_EMAIL=                  # mailbox to read (default 'me')
+GMAIL_QUERY=                       # Gmail search filter (default 'newer_than:60d')
+# Team calendar (service account) — AnA's create_calendar_event.
+GOOGLE_CALENDAR_ID=                # target calendar id
+GOOGLE_SERVICE_ACCOUNT=           # JSON: {client_email, private_key, subject?}
+# HubSpot CRM (read-only) — AnA's search_crm. Private-app token.
+HUBSPOT_ACCESS_TOKEN=
+HUBSPOT_PORTAL_ID=                 # optional — enables app.hubspot.com record links
+HUBSPOT_API_BASE_URL=             # default https://api.hubapi.com
+
+# Embedding Cache Controls (vectorization worker)
+# Cache TTL in ms (default: 900000)
+EMBEDDING_CACHE_TTL_MS=900000
+# Max cache entries (default: 10000)
+EMBEDDING_CACHE_MAX_ENTRIES=10000
+# Emit cache hit/miss log every N lookups (default: 20)
+EMBEDDING_CACHE_LOG_EVERY=20
+
+# Stripe Billing (Checkout + Link)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# SMTP Configuration — REQUIRED for login.
+# Login uses mandatory email OTP as 2FA, so without working SMTP NO user can
+# complete a login (the code is never delivered). Also used for password reset,
+# invitations, and welcome emails. Set all three of HOST/USER/PASS; the app
+# fails loud at boot in production when they are missing. Verify a code reaches
+# a real external inbox (Gmail AND Outlook) before onboarding testers.
+SMTP_HOST=
+SMTP_PORT=465
+SMTP_USER=
+SMTP_PASS=
+# From address on outbound mail (defaults to noreply@concept2cure.pro).
+SMTP_FROM=
+
+# Notifications
+TEAMS_WEBHOOK_URL=
+
+# DocuShare OEM Integration Configuration
+DOCUSHARE_API_URL=https://docushare.yourcompany.com/docushare/dsweb/Services
+DOCUSHARE_API_VERSION=7.5
+DOCUSHARE_API_KEY=your_secure_api_key_from_xerox
+DOCUSHARE_OEM_ID=your_oem_id_from_xerox
+DOCUSHARE_USERNAME=trialsage_service_account
+DOCUSHARE_PASSWORD=your_secure_password
+DOCUSHARE_DOMAIN=your_domain
+DOCUSHARE_COLLECTION_ID=1
+DOCUSHARE_TENANT_ISOLATION=true
+DOCUSHARE_ENCRYPTION_KEY=your_32_character_encryption_key
+
+# DocuShare Security Settings
+DOCUSHARE_SSL_VERIFY=true
+DOCUSHARE_SESSION_TIMEOUT=3600
+DOCUSHARE_MAX_FILE_SIZE=104857600
+DOCUSHARE_ALLOWED_EXTENSIONS=.pdf,.docx,.doc,.txt,.xml,.zip,.csv,.xlsx
+DOCUSHARE_CONNECTION_TIMEOUT=30000
+DOCUSHARE_RETRY_ATTEMPTS=3
+DOCUSHARE_RATE_LIMIT_REQUESTS=100
+DOCUSHARE_RATE_LIMIT_WINDOW=60000
+
+# OEM Customization Settings
+DOCUSHARE_CUSTOM_FIELDS=project_id,regulatory_phase,submission_type,study_id,protocol_version
+DOCUSHARE_AUDIT_ENABLED=true
+DOCUSHARE_VERSIONING_ENABLED=true
+DOCUSHARE_WORKFLOW_ENABLED=true
+DOCUSHARE_HEALTH_CHECK_INTERVAL=300000
+
+# Backend Integration Settings
+DOCUSHARE_BACKEND_HOST=0.0.0.0
+DOCUSHARE_BACKEND_PORT=5000
+DOCUSHARE_LOG_LEVEL=info
+DOCUSHARE_METRICS_ENABLED=true
+
+# CERV2 workbench smoke test
+CERV2_PROGRAM_ID=replace-with-program-id
+CERV2_BASE_URL=http://localhost:3000
+
+# Signature Configuration (21 CFR Part 11) — server/services/signature/signer-mode.ts
+# CONCEPT2CURE_SIGNER_MODE is READ AT BOOT and refused in production when it is
+# unset, `dev`, or incomplete (same contract as RLS_ENFORCE / AUDIT_HMAC_KEY).
+#   dev   laptop posture: the HMAC seal when AUDIT_HMAC_KEY happens to be set.
+#         REFUSED in production.
+#   hmac  the HMAC-SHA256 seal keyed by AUDIT_HMAC_KEY (>=32 chars, required).
+#         In production ONLY with CONCEPT2CURE_SIGNER_ACCEPT_HMAC=true — a
+#         symmetric seal proves the server sealed the record, not who signed.
+#   kms   AWS KMS RSA asymmetric signature stored BESIDE the seal (algorithm +
+#         key id + signature; verifiable via KMS Verify or the public key).
+#         Requires CONCEPT2CURE_SIGNER_KMS_KEY_ID and a region; the SDK uses the
+#         default AWS credential chain (task role) — no AWS secret lives here.
+# The retired literals `hsm_kms` / `hsm_vault` are refused by name.
+CONCEPT2CURE_SIGNER_MODE=dev  # dev | hmac | kms
+# CONCEPT2CURE_SIGNER_ACCEPT_HMAC=true   # production + hmac only: records the accepted risk
+# CONCEPT2CURE_SIGNER_KMS_KEY_ID=alias/fda-signing-key-2026   # key id, ARN or alias (SOP-SEC-001 §4)
+# CONCEPT2CURE_SIGNER_KMS_REGION=us-east-1                     # falls back to AWS_REGION
+# CONCEPT2CURE_SIGNER_KMS_SIGNING_ALGORITHM=RSASSA_PKCS1_V1_5_SHA_256   # or RSASSA_PSS_SHA_256
+AWS_REGION=us-east-1
+KMS_KEY_CUSTODY_SOP=SOP-SEC-001
+KMS_ROTATION_POLICY=annual
+
+# Boot-time invariant checks: log-only by default; 'true' halts boot on a
+# critical invariant failure. Roll out staging-first (see .env.beta.example).
+STRICT_STARTUP_INVARIANTS=false
+
+# Optional JSON webhook for [SECURITY]-class alert forwarding (Slack/SIEM).
+SECURITY_ALERT_WEBHOOK_URL=
+
+# ─── Development / test-only safety toggles (MUST be unset in production) ───
+# Each weakens auth, storage, or DB safety and exists only for local dev/test.
+# All are default-OFF and fail-closed: unset = safe. Never set in production.
+#
+# Enable the dev-auth bypass. Inert unless NODE_ENV=development AND set to '1'
+# (server/auth/dev-auth-policy.ts) — production/staging can never enable it.
+ALLOW_DEV_AUTH=
+#
+# Accept a database TLS certificate WITHOUT verifying it. Off unless set to
+# exactly '1'. Only for an operator whose chain genuinely isn't trusted (a
+# self-signed proxy); it removes MITM protection from the DB connection, so
+# prefer fixing the trust store. Never inferred from NODE_ENV — deriving TLS
+# posture from the environment name is how run-sql.js ended up verifying
+# everywhere EXCEPT production.
+DB_SSL_ALLOW_UNVERIFIED=
+#
+# Force mock-vault fixture content on. Otherwise mock vault is served only when
+# NODE_ENV is development/test (server/services/mockVault.ts). Set to '1' to force.
+ALLOW_MOCK_VAULT=
+#
+# Permit CREATE EXTENSION DDL against a managed (Neon) database at boot. Off by
+# default on Neon; set to 'true' only when the DB role has DDL rights
+# (server/db/ensureCoreTables.ts).
+ALLOW_EXTENSION_DDL=
+#
+# Permit non-canonical fallback embeddings when the primary embedding substrate
+# is unavailable (server/services/biotechRagService.js). Set to 'true' to allow;
+# leave unset to fail closed on the approved substrate.
+ALLOW_FALLBACK_EMBEDDINGS=
+
+# ─── CORS & public base URLs ───
+# Comma-separated list of allowed browser origins for CORS (credentialed
+# requests + SSE). Do not use a wildcard in production; list each deployed
+# frontend origin (server/middleware/enterprise-security.ts).
+ALLOWED_ORIGINS=
+# Public base URL used in outbound email links (default https://concept2cure.com).
+APP_URL=
+# Public base URL for SSO redirects and /.well-known documents
+# (default https://app.concept2cure.ai). Set to the deployed app origin.
+APP_BASE_URL=
+
+# ─── Audit integrity & attestation crypto (21 CFR Part 11) ───
+# All are cryptographic secrets — set to long, random values; never commit real
+# ones. The audit subsystems fail closed in production without them.
+#
+# HMAC secret signing the tamper-evident audit hash chain. REQUIRED in
+# production, >=32 chars: the server refuses to start without it. That refusal
+# lives at config load (server/services/audit/auditSealPosture.ts
+# ::assertAuditChainSecretForProduction) rather than in the store's own
+# constructor, which is reached lazily behind a fallback-to-console catch — so
+# until 2026-09-19 this sentence described a refusal nothing enforced.
+# There is no accept-unsealed equivalent: without this secret the chain cannot
+# be signed at all, so there is no degraded-but-honest posture to accept.
+AUDIT_HMAC_SECRET=
+# Signs governed audit exports. One of AUDIT_EXPORT_SIGNING_KEY, JWT_SECRET_PROD,
+# or JWT_SECRET must be set or export signing refuses to run (§11.10(e))
+# (server/services/audit/signedAuditExport.ts).
+AUDIT_EXPORT_SIGNING_KEY=
+# Attestation-report signing key (>= 32 chars; required for tenant-export
+# attestation). *_ID names the active key (default 'k1'); the *_PREV / *_PREV_ID
+# pair keeps a rotated-out key available so older reports still verify
+# (server/services/tenant-export/attestation-report.service.ts).
+AUDIT_ATTESTATION_KEY=
+AUDIT_ATTESTATION_KEY_ID=
+AUDIT_ATTESTATION_KEY_PREV=
+AUDIT_ATTESTATION_KEY_PREV_ID=
+
+# ─── Internal service & admin auth tokens ───
+# Header tokens gating privileged internal endpoints — set to strong, random
+# values in any shared environment.
+#
+# Compared against the admin header on privileged authoring routes; unset =
+# the guarded admin operations are refused (server/routes/authoring.router.ts).
+ADMIN_TOKEN=
+# Presented as the x-ana-ops-token header to reach the AnA control-plane router
+# (server/src/routes/control-plane.router.ts).
+ANA_OPS_TOKEN=
+# Presented as the X-Service-Token header on internal AnA-RI service calls
+# (server/services/ana-ri/*).
+ANA_SERVICE_TOKEN=
+
+# Production-sensitive AI placement contract (authorized deployment owners only).
+# Production startup requires enforce plus a non-empty JSON map. Provider names
+# are deployment choices; no provider is approved by the application itself.
+AI_SENSITIVE_DATA_POLICY_MODE=enforce
+# AI_PROVIDER_PLACEMENT_APPROVALS={\"deployment-provider\":{\"region\":\"us\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"chat\",\"document_analysis\"]}}
+"
+
+ ❯ tests/dev-up-env-local.test.ts:53:18
+     51|   ])('%s sets RLS_ENFORCE=on', (file, pattern) => {
+     52|     const text = fs.readFileSync(path.resolve(__dirname, '..', file), …
+     53|     expect(text).toMatch(pattern);
+       |                  ^
+     54|     expect(text).not.toMatch(/^RLS_ENFORCE=off$/m);
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  08:21:25
+   Duration  301ms (transform 77ms, setup 77ms, import 23ms, tests 15ms, environment 0ms)
+

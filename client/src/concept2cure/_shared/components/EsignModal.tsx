@@ -106,6 +106,23 @@ export interface EsignSigner {
   role?: string;
 }
 
+/**
+ * The signer the dialog shows, from the signed-in user as a host already holds
+ * it (useAuth().user). Undefined when there is no name to show; the dialog then
+ * reads "You". Display only: the server resolves the signer from the session.
+ */
+export function esignSignerOf(
+  user:
+    | { displayName?: string | null; name?: string | null; firstName?: string | null; lastName?: string | null; email?: string | null }
+    | null
+    | undefined,
+): EsignSigner | undefined {
+  if (!user) return undefined;
+  const name =
+    user.displayName || user.name || [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || user.email || '';
+  return name ? { name, ...(user.email ? { email: user.email } : {}) } : undefined;
+}
+
 export interface EsignModalProps {
   open: boolean;
   /** Human-readable action, e.g. "Release batch". */
@@ -116,6 +133,13 @@ export interface EsignModalProps {
   targetMeta?: string;
   /** Pre-select a meaning. Defaults to 'approval'. */
   defaultMeaning?: EsigMeaning;
+  /**
+   * The meanings this act can carry, when its store has a closed vocabulary
+   * narrower than the five (the authoring store takes authorship, review and
+   * approval). The dialog then never offers a meaning the server would refuse.
+   * Defaults to all five.
+   */
+  meanings?: ReadonlyArray<EsigMeaning>;
   /** Identity shown as the signer. Server is the source of truth at /sign. */
   signer?: EsignSigner;
   /** Require a TOTP second factor (set when the signer is MFA-enrolled). */
@@ -158,6 +182,7 @@ export function EsignModal({
   target,
   targetMeta,
   defaultMeaning,
+  meanings,
   signer,
   requireMfa = false,
   onClose,
@@ -165,10 +190,22 @@ export function EsignModal({
 }: EsignModalProps) {
   const esig = useEsignature();
 
-  const [meaning, setMeaning] = React.useState<EsigMeaning>(defaultMeaning ?? 'approval');
+  const offered = React.useMemo(
+    () => (meanings ? MEANINGS.filter((m) => meanings.includes(m.id)) : MEANINGS),
+    [meanings],
+  );
+  const initialMeaning: EsigMeaning = offered.some((m) => m.id === (defaultMeaning ?? 'approval'))
+    ? (defaultMeaning ?? 'approval')
+    : (offered[0]?.id ?? 'approval');
+  const [meaning, setMeaning] = React.useState<EsigMeaning>(initialMeaning);
   const [reason, setReason] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [totp, setTotp] = React.useState('');
+  // Learned from the server's password check: the signer has a second factor
+  // enrolled, so the signing endpoint will require its code. The caller may say
+  // so up front with `requireMfa`; when it does not know, the server does.
+  const [mfaEnrolled, setMfaEnrolled] = React.useState(false);
+  const needCode = requireMfa || mfaEnrolled;
   const [phase, setPhase] = React.useState<'form' | 'committing' | 'signed'>('form');
   const [manifest, setManifest] = React.useState<EsigSignedManifest | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -186,7 +223,7 @@ export function EsignModal({
   React.useEffect(() => {
     if (open) {
       restoreFocusRef.current = document.activeElement as HTMLElement | null;
-      setMeaning(defaultMeaning ?? 'approval');
+      setMeaning(initialMeaning);
       setReason('');
       setPassword('');
       setTotp('');
@@ -197,7 +234,7 @@ export function EsignModal({
       return () => window.clearTimeout(t);
     }
     return undefined;
-  }, [open, defaultMeaning]);
+  }, [open, initialMeaning]);
 
   // Restore focus to the trigger when closing.
   React.useEffect(() => {
@@ -249,7 +286,7 @@ export function EsignModal({
   const canCommit =
     reason.trim().length >= MIN_REASON &&
     password.length >= MIN_PASSWORD &&
-    (!requireMfa || /^\d{6}$/.test(totp));
+    (!needCode || /^\d{6}$/.test(totp));
 
   const commit = async () => {
     if (!canCommit) return;
@@ -265,10 +302,17 @@ export function EsignModal({
         setPhase('form');
         return;
       }
-      if (requireMfa) {
+      if (pw.mfaRequired && !needCode) {
+        // Ask for the code before anything is sent: the signing endpoint would
+        // refuse the signature without it. The password stays entered.
+        setMfaEnrolled(true);
+        setPhase('form');
+        return;
+      }
+      if (needCode) {
         const mfa = await esig.verifyMfa(totp);
         if (!mfa.valid) {
-          setError('Authenticator code could not be verified. Enter a current code.');
+          setError('Authenticator code could not be verified. Each code works once — if you just used this one, wait for the next.');
           setTotp('');
           setPhase('form');
           return;
@@ -280,7 +324,7 @@ export function EsignModal({
         meaning,
         reason: reason.trim(),
         password,
-        totp: requireMfa ? totp : undefined,
+        totp: needCode ? totp : undefined,
       });
       setManifest(signed);
       setPhase('signed');
@@ -294,7 +338,7 @@ export function EsignModal({
     }
   };
 
-  const meaningObj = MEANINGS.find((m) => m.id === meaning) ?? MEANINGS[2];
+  const meaningObj = offered.find((m) => m.id === meaning) ?? offered[0] ?? MEANINGS[2];
   const signerName = signer?.name ?? 'You';
   const committing = phase === 'committing';
 
@@ -406,7 +450,7 @@ export function EsignModal({
             <fieldset className="es-field" style={{ border: 0, margin: 0, padding: 0 }}>
               <legend className="es-field-lbl">Signature meaning {'·'} {'§'}11.50</legend>
               <div className="es-meaning" role="radiogroup" aria-label="Signature meaning">
-                {MEANINGS.map((m) => (
+                {offered.map((m) => (
                   <button
                     key={m.id}
                     type="button"
@@ -458,7 +502,7 @@ export function EsignModal({
               />
             </div>
 
-            {requireMfa ? (
+            {needCode ? (
               <div className="es-field">
                 <label className="es-field-lbl" htmlFor={totpId}>
                   Authenticator code (TOTP)

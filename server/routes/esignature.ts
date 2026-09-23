@@ -24,22 +24,21 @@
 
 import { Router, type Request, type Response } from 'express';
 import { resolveSignerIdentity } from '../services/part11/resolve-signer-identity.js';
-import bcrypt from 'bcryptjs';
 import { createHash } from 'crypto';
 import { pool } from '../db.js';
-import { verifyToken as verifyMfaToken } from '../services/mfaService.js';
+import { isTokenCurrentlyAcceptable, isMfaEnabled } from '../services/mfaService.js';
+import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
 import { writeChainedAuditRow } from '../services/auditService';
 import { buildVersionBindingDigest } from '../services/part11/version-binding.js';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
-import { reverifySigner } from '../services/part11/reverify-signer.js';
-import {
-  signerReverificationDeps,
-  loadPasswordHash,
-} from '../services/part11/reverify-signer-deps.js';
+import { reverifySigner, verifySignerPassword } from '../services/part11/reverify-signer.js';
+import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
+import { ACCOUNT_INACTIVE_MESSAGE } from '../services/account-standing.js';
 import {
   persistElectronicSignature,
   BINDING_BASIS,
 } from '../services/part11/signature-persistence.js';
+import { clientIpOf } from '../utils/client-ip.js';
 
 const router = Router();
 
@@ -58,9 +57,16 @@ function resolveUserRole(req: Request): string {
   return String(raw).trim().toLowerCase();
 }
 
-/* The password loader lives in services/part11/reverify-signer-deps.ts so the
-   signing path and this pre-check verify against the same read. */
-const loadUserPasswordHash = loadPasswordHash;
+/**
+ * The two pre-checks answer "is this credential right?" without signing
+ * anything, so each is a guessing oracle for whoever holds the session. Each is
+ * limited per signer with its own budget (middleware/signing-attempt-limiter,
+ * shared with the protocol signing routes). Until 2026-09-23 neither was limited
+ * beyond the global per-session API budget (600 a minute).
+ */
+function signerCheckLimiter(check: 'password' | 'mfa') {
+  return signingAttemptLimiter(`esign-verify-${check}`, { valid: false, error: 'TOO_MANY_ATTEMPTS' });
+}
 
 /**
  * POST /api/esignature/verify-password
@@ -71,27 +77,43 @@ const loadUserPasswordHash = loadPasswordHash;
  * stored hash. 21 CFR Part 11 §11.200(a)(1)(i) — at least one component of
  * the e-signature must use a password.
  */
-router.post('/verify-password', async (req: Request, res: Response) => {
+router.post('/verify-password', signerCheckLimiter('password'), async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   if (!userId) {
     return res.status(401).json({ valid: false, error: 'AUTH_REQUIRED' });
   }
   const { password } = req.body ?? {};
-  if (typeof password !== 'string' || password.length === 0) {
-    return res.status(400).json({ valid: false, error: 'PASSWORD_REQUIRED' });
-  }
-  const hash = await loadUserPasswordHash(userId);
-  if (!hash) {
-    // Don't differentiate "no user" from "no hash" to outside callers.
+  // The signing path's own first factor (services/part11/reverify-signer.ts),
+  // so a wrong password here counts against the account's lockout exactly as it
+  // does at signing and at sign-in, and a locked account is told so without its
+  // password being compared (F-27). It compared on its own before, and a guess
+  // here counted for nothing. "No user" and "no hash" still read as invalid.
+  const first = await verifySignerPassword(userId, password, signerReverificationDeps());
+  if (!first.ok) {
+    if (first.code === 'PASSWORD_REQUIRED') {
+      return res.status(400).json({ valid: false, error: 'PASSWORD_REQUIRED' });
+    }
+    if (first.code === 'ACCOUNT_LOCKED') {
+      return res.status(423).json({
+        valid: false,
+        error: 'ACCOUNT_LOCKED',
+        message: 'This account is locked after repeated failed attempts. Try again later.',
+      });
+    }
+    // Suspended or deprovisioned (F-28): refused before its password is compared.
+    if (first.code === 'ACCOUNT_INACTIVE') {
+      return res.status(403).json({ valid: false, error: 'ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
+    }
     return res.json({ valid: false });
   }
-  try {
-    const valid = await bcrypt.compare(password, hash);
-    return res.json({ valid });
-  } catch (err: any) {
-    console.warn('[esignature] bcrypt compare failed:', err?.message);
-    return res.json({ valid: false });
-  }
+  const valid = true;
+  // Only after the password verified: whether the signer has a second factor
+  // enrolled, which every signing endpoint then requires (§11.200). The e-sign
+  // modal asks for the code on this answer instead of sending a signature the
+  // server will refuse. When the state cannot be read it is left out, and the
+  // signing endpoint refuses the signature on the same uncertainty.
+  const mfaRequired = await isMfaEnabled(userId).catch(() => undefined);
+  return res.json(mfaRequired === undefined ? { valid } : { valid, mfaRequired });
 });
 
 /**
@@ -103,7 +125,7 @@ router.post('/verify-password', async (req: Request, res: Response) => {
  * Reuses the same TOTP verifier as login MFA so seeds and clock skew
  * tolerance are identical.
  */
-router.post('/verify-mfa', async (req: Request, res: Response) => {
+router.post('/verify-mfa', signerCheckLimiter('mfa'), async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   if (!userId) {
     return res.status(401).json({ valid: false, error: 'AUTH_REQUIRED' });
@@ -113,7 +135,26 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
     return res.status(400).json({ valid: false, error: 'TOKEN_FORMAT_INVALID' });
   }
   try {
-    const valid = await verifyMfaToken(userId, token);
+    // The account's allowance, as the signing path keeps it (F-27): a locked
+    // account's code is not checked, and a wrong code counts.
+    const allowance = signerReverificationDeps();
+    // An account out of use has no code to check (F-28), as at signing.
+    if (!(await allowance.isAccountActive(userId))) {
+      return res.status(403).json({ valid: false, error: 'ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
+    }
+    if (await allowance.isAccountLocked(userId)) {
+      return res.status(423).json({
+        valid: false,
+        error: 'ACCOUNT_LOCKED',
+        message: 'This account is locked after repeated failed attempts. Try again later.',
+      });
+    }
+    // A CHECK, not a use: the modal sends this same code to the signing
+    // endpoint next, which consumes it (reverifySigner -> verifyToken). A code
+    // already used — at sign-in, or for an earlier signature — reads invalid
+    // here, as it would there.
+    const valid = await isTokenCurrentlyAcceptable(userId, token);
+    if (!valid) await allowance.recordFailedAttempt(userId);
     return res.json({ valid });
   } catch (err: any) {
     console.warn('[esignature] MFA verify failed:', err?.message);
@@ -274,10 +315,7 @@ router.post('/sign', async (req: Request, res: Response) => {
   }
 
   const signedAt = new Date();
-  const ipAddress: string | undefined =
-    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-    req.socket?.remoteAddress ||
-    undefined;
+  const ipAddress: string | undefined = clientIpOf(req) ?? undefined;
 
   // §11.70 content binding: the signature must be linked to the *bytes* of the
   // version being signed, not just its id. Load the version's content

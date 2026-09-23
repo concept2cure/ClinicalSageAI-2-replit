@@ -16,6 +16,7 @@
  * @module server/services/ectd/assess-dispatch-readiness
  */
 
+import { ruleView, DISPATCH_GATE_RULE_IDS, type RuleView } from './validation-rule-corpus';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
@@ -24,7 +25,7 @@ import {
   getSubmissionRegionProfile,
   requiredModule1CodesForRegion,
 } from '../region-profiles/region-profile-service';
-import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
+import { computeDispatchReadiness, type DispatchReadinessReport, type ReadinessFinding } from './dispatch-readiness';
 import { resolveLeafDocuments } from './leaf-document-resolver';
 import {
   evaluateDispatchGate,
@@ -55,6 +56,41 @@ export interface AssessDispatchReadinessParams {
    * fail-closed rule applies under ECTD_REQUIRE_EVALIDATOR in production.
    */
   externalValidationReport?: ExternalValidationReport | null;
+}
+
+/** A composed dispatch gate, keyed as composeDispatchGates takes it. */
+export type DispatchGateKey = keyof typeof DISPATCH_GATE_RULE_IDS;
+
+/** One part of the dispatch verdict, as the corpus rule it enforces. */
+export interface DispatchGateView {
+  key: DispatchGateKey;
+  rule: RuleView | null;
+  cleared: boolean;
+  blockers: string[];
+}
+
+/** composeDispatchGates' merge order — the gate views follow it, so the list
+ *  reads exactly as the verdict it explains. */
+const GATE_ORDER: DispatchGateKey[] = ['structural', 'external', 'shadowPresence', 'releaseSignature'];
+
+/**
+ * The dispatch verdict, gate by gate. Every gate the verdict composes appears,
+ * named by its corpus rule and carrying its OWN blockers, so a blocker is read
+ * as the rule it enforces — not as prose under a pass/fail icon — and the
+ * gates' blockers, in order, are exactly the verdict's.
+ */
+export function dispatchGateViews(gates: Record<DispatchGateKey, DispatchGateResult>): DispatchGateView[] {
+  return GATE_ORDER.map((key) => ({
+    key,
+    rule: ruleView(DISPATCH_GATE_RULE_IDS[key]),
+    cleared: gates[key].cleared,
+    blockers: [...gates[key].blockers],
+  }));
+}
+
+/** Each finding with the corpus rule it is an instance of (null when the corpus names none). */
+export function withRules<F extends ReadinessFinding>(findings: F[]): Array<F & { rule: RuleView | null }> {
+  return findings.map((f) => ({ ...f, rule: ruleView(f.code) }));
 }
 
 export interface DispatchReadinessAssessment {
@@ -103,7 +139,11 @@ export interface DispatchReadinessAssessment {
    *  is not transmit and carries its own Part 11 signature; see
    *  composeDispatchGatesForStep. */
   freezeGate: DispatchGateResult;
-  /** Full structural breakdown (errors + non-blocking warnings/infos). */
+  /** The DISPATCH verdict gate by gate, each as the corpus rule it enforces;
+   *  their blockers, in order, are exactly `gate.blockers`. */
+  gates: DispatchGateView[];
+  /** Full structural breakdown (errors + non-blocking warnings/infos); every
+   *  finding carries the corpus rule it is an instance of. */
   readiness: DispatchReadinessReport;
   leafCount: number;
 }
@@ -453,6 +493,15 @@ export async function assessSequenceDispatchReadiness(
   };
   const gate = composeDispatchGatesForStep(gateParts, 'dispatch');
   const freezeGate = composeDispatchGatesForStep(gateParts, 'freeze');
+  // The same four results `gate` merged: the dispatch-step release-signature
+  // evaluation is releaseSignatureGate (required as the type requires).
+  const gates = dispatchGateViews({
+    structural: structuralGate,
+    external: gateParts.external,
+    shadowPresence: shadowPresenceGate,
+    releaseSignature: releaseSignatureGate,
+  });
+  readiness.findings = withRules(readiness.findings);
 
   return {
     sequenceId,
@@ -485,6 +534,7 @@ export async function assessSequenceDispatchReadiness(
     },
     gate,
     freezeGate,
+    gates,
     readiness,
     leafCount: leaves.length,
   };

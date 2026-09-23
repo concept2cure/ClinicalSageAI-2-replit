@@ -495,13 +495,14 @@ router.post('/quick', async (req: Request, res: Response) => {
     recordModelProvenance({
       req,
       surface: 'quick',
-      // quickComplete returns content only; mirror its pinned model
-      // (AnaDocumentDraftingService.quickComplete).
-      model: 'claude-sonnet-4-6',
-      content: result,
+      // The model the gateway served. Until 2026-09-23 this was the literal
+      // 'claude-sonnet-4-6' — a registry entry quickComplete does not even pin —
+      // written into the sealed audit log whatever had answered.
+      model: result.model,
+      content: result.content,
     });
 
-    res.json({ success: true, data: { content: result } });
+    res.json({ success: true, data: { content: result.content } });
   } catch (error: any) {
     console.error('[Claude Intelligence] Quick error:', error.message);
     return failRequest(res, 'completing the prompt', error);

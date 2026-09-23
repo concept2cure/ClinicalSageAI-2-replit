@@ -155,6 +155,22 @@ if ! npm run --silent ci:migration-drop-safety 2>&1; then
 fi
 echo "   ✅ Replay-safe DROPs passed."
 
+# One level below table reachability: a column the server queries must be added
+# by a migration an applier runs. A file that only ALTERs creates no table, so
+# the table guard never sees it — six columns shipped that way, each a 42703 on
+# every execution. Reads files only, no database (~1.5s).
+echo "   Validating queried columns are reachable..."
+if ! npm run --silent ci:column-reachability 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Column reachability check FAILED."
+  echo "   A column the server queries is added only by a migration nothing runs."
+  echo "   Wire the migration after the file that creates its table (CLAUDE.md"
+  echo "   RULE 1), or delete the dead reference. Never wire db/migrations/_consolidated/."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Column reachability passed."
+
 # The third migration invariant, and the only one nothing was enforcing: every
 # .sql file in db/migrations must appear in migrations_manifest.json, which is
 # what orders them for the appliers that read it. `db:sync-manifest:check`
@@ -302,6 +318,41 @@ if ! npm run --silent ci:discarded-audit-write 2>&1; then
   exit 1
 fi
 echo "   ✅ No discarded audit-write outcome."
+
+# ── One source for a request's client address (D6) ───────────────────────────
+#
+# Until 23 Sep 2026 about twenty sites read X-Forwarded-For by hand and took its
+# left-most entry -- the one every client writes -- into electronic_signatures,
+# QMS approvals and the 11.10(e) trail. The client address is req.ip, resolved
+# by the trust-proxy hop count (server/config/trust-proxy.ts) and read through
+# server/utils/client-ip.ts.
+echo "   Checking that the client address has one source..."
+if ! npm run --silent ci:client-ip-single-source 2>&1; then
+  echo ""
+  echo "🚫 ERROR: A forwarding header is read, or trust proxy is set, outside its one place."
+  echo "   Use clientIpOf(req) / req.ip / req.protocol (server/utils/client-ip.ts)."
+  echo ""
+  exit 1
+fi
+echo "   ✅ One source for the client address."
+
+# ── A `sign` ledger row must come from a signature ceremony ──────────────────
+#
+# recordGovernedAction(…, command: 'sign') is read by an inspector as an
+# electronic signature, and the primitive checks nothing. Until 2026-09-23 the
+# protocol finalize and review-disposition routes, and an AnA tool, wrote such
+# rows with no password re-entry and no electronic_signatures row. The baseline
+# caps the remaining sites per file, each with a written reason; never grow it.
+echo "   Checking that every sign ledger row comes from a signature ceremony..."
+if ! npm run --silent ci:sign-ceremony 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a sign ledger write without the signature ceremony."
+  echo "   Re-verify the signer (verifyReauth) and write the signature row on the same"
+  echo "   transaction -- see server/services/protocol-development/protocol-signature.ts."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Every new sign ledger row has its ceremony."
 
 # ── The commit has to build for somebody other than you ──────────────────────
 #

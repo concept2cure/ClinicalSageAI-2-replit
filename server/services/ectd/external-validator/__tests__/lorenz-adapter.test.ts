@@ -40,6 +40,52 @@ describe('parseEvalidatorJsonReport', () => {
   });
 });
 
+/**
+ * A report this product cannot read is refused, never read as clean.
+ * 2026-09-23 (W5/D7, WO-9 Click 6). The parser returned [] for any envelope
+ * other than an array or {findings}, and mapped any severity it did not know to
+ * 'info'; the adapter turned both into passed:true — a report it could not read,
+ * or an error it could not name, cleared the external validation gate.
+ */
+describe('parseEvalidatorJsonReport — fails closed', () => {
+  it('refuses an envelope it does not know, naming what it found', () => {
+    expect(() => parseEvalidatorJsonReport(JSON.stringify({ results: [{ ruleId: '1734', severity: 'High' }] })))
+      .toThrow(/not an eValidator report this product reads.*results/);
+  });
+
+  it('refuses a "findings" member that is not an array', () => {
+    expect(() => parseEvalidatorJsonReport(JSON.stringify({ findings: { ruleId: '1734' } }))).toThrow(/findings/);
+  });
+
+  it('refuses a finding whose severity it cannot map, instead of counting it as info', () => {
+    expect(() => parseEvalidatorJsonReport(JSON.stringify([{ ruleId: '1734', severity: 'Blocker', message: 'x' }])))
+      .toThrow(/finding 1.*severity "Blocker"/);
+  });
+
+  it('refuses a finding with no severity at all', () => {
+    expect(() => parseEvalidatorJsonReport(JSON.stringify([{ ruleId: '1734', message: 'x' }])))
+      .toThrow(/finding 1.*no severity/);
+  });
+
+  it('refuses a row that is not an object', () => {
+    expect(() => parseEvalidatorJsonReport(JSON.stringify(['1734 error']))).toThrow(/finding 1/);
+  });
+
+  it('still reads an empty findings list as no findings — a clean report is a clean report', () => {
+    expect(parseEvalidatorJsonReport(JSON.stringify({ findings: [] }))).toEqual([]);
+  });
+
+  it('reads the agency severity words: High is an error, Medium and Low are warnings, Pass is info', () => {
+    const f = parseEvalidatorJsonReport(JSON.stringify([
+      { ruleId: 'a', severity: 'High', message: '' },
+      { ruleId: 'b', severity: 'Medium', message: '' },
+      { ruleId: 'c', severity: 'Low', message: '' },
+      { ruleId: 'd', severity: 'Pass', message: '' },
+    ]));
+    expect(f.map((x) => x.severity)).toEqual(['error', 'warning', 'warning', 'info']);
+  });
+});
+
 describe('parseEvalidatorXmlReport', () => {
   it('parses a LORENZ-style XML report (attrs + child message)', async () => {
     const xml = `<?xml version="1.0"?>

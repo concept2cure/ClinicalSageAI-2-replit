@@ -30,7 +30,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { ApiRequestError } from '@/lib/queryClient';
 import {
-  ProtocolSectionConflict, addScheduleVisit, assessProtocolDeviation, saveProtocolSection, updateProtocolHeader,
+  ProtocolSectionConflict, addScheduleVisit, assessProtocolDeviation, finalizeProtocol, recordReviewDisposition,
+  saveProtocolSection, updateProtocolHeader,
 } from '../surfaces/ProtocolDevWrites';
 
 const REASON = 'Recording the agreed change in the governed register';
@@ -115,6 +116,44 @@ describe('the section save carries the concurrency token and the status', () => 
     expect(path).toBe('/api/protocol-development/sections/13');
     expect(body).toEqual({ content: 'body', status: 'complete', expectedUpdatedAt: '2026-09-21T10:00:00.000Z', reason: REASON });
     expect(out).toEqual({ updatedAt: '2026-09-22T00:00:00.000Z', status: 'complete' });
+  });
+});
+
+describe('the two signed acts carry the signature, and say plainly when it was refused', () => {
+  const SIGN = { meaning: 'authorship', reason: REASON, password: 'correct horse' };
+
+  it('finalize sends the meaning, the reason and the credentials for the server to re-verify', async () => {
+    apiRequest.mockResolvedValue(ok({ documentId: 12, version: '2.0', signatureId: 3 }));
+    const out = await finalizeProtocol(12, { ...SIGN, totp: '123456' });
+    const [method, path, body] = apiRequest.mock.calls[0];
+    expect(method).toBe('POST');
+    expect(path).toBe('/api/protocol-development/documents/12/finalize');
+    expect(body).toEqual({ reason: REASON, meaning: 'authorship', reauth: { password: 'correct horse', totp: '123456' } });
+    expect(out).toMatchObject({ version: '2.0', signatureId: 3 });
+  });
+
+  it('a disposition carries the decision with the signature', async () => {
+    apiRequest.mockResolvedValue(ok({ assignmentId: 5, disposition: 'reject' }));
+    await recordReviewDisposition(5, { disposition: 'reject', ...SIGN, meaning: 'review' });
+    const [method, path, body] = apiRequest.mock.calls[0];
+    expect(method).toBe('PATCH');
+    expect(path).toBe('/api/protocol-reviews/assignments/5/disposition');
+    expect(body).toEqual({ disposition: 'reject', reason: REASON, meaning: 'review', reauth: { password: 'correct horse' } });
+  });
+
+  it('a rejected password is reported as a rejected password, not an expired session', async () => {
+    throws(new ApiRequestError('Re-enter your password to sign.', 401, {}, 'REAUTH_PASSWORD_INVALID'));
+    await expect(finalizeProtocol(12, SIGN)).rejects.toThrow(/password was not accepted\. Nothing was signed\./);
+  });
+
+  it('a refused finalize names the act and carries the server\u2019s reason', async () => {
+    throws(new ApiRequestError('Cannot finalize — Section 6 is not complete.', 409, {}, 'INVALID_STATE'));
+    await expect(finalizeProtocol(12, SIGN)).rejects.toThrow(/finalize the protocol — Cannot finalize — Section 6 is not complete\. Nothing was written\./);
+  });
+
+  it('refuses a reason under eight characters with no request at all', async () => {
+    await expect(finalizeProtocol(12, { ...SIGN, reason: 'short' })).rejects.toThrow(/at least 8/);
+    expect(apiRequest).not.toHaveBeenCalled();
   });
 });
 

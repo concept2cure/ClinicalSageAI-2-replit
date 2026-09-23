@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
+import { AnaActionChips } from '../AnaActionChips';
+import { LiveDriveSwitch } from '../LiveDriveSwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
@@ -169,6 +171,9 @@ interface AnaTurnProps {
   turn: CtTurn;
   onRefine: () => void;
   onNav: (id: string) => void;
+  /** Starts a demonstration from a "Start demonstration" chip — on every turn,
+   *  not only the ones that drafted a document (which is all `canvas` covers). */
+  onStartDemo?: (demoId: string, title: string) => void;
   /** The document canvas beneath this turn, when the turn drafted a document. */
   canvas?: {
     conversationId: string | null;
@@ -180,7 +185,7 @@ interface AnaTurnProps {
   };
 }
 
-function AnaTurn({ turn, onRefine, onNav, canvas }: AnaTurnProps) {
+function AnaTurn({ turn, onRefine, onNav, onStartDemo, canvas }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
@@ -273,15 +278,11 @@ function AnaTurn({ turn, onRefine, onNav, canvas }: AnaTurnProps) {
         )}
         {turn.executedActions && (
           <div className="ana-msg-executed">
-            {turn.executedActions.map((a, i) => (
-              <span
-                key={i}
-                className={`ana-exec-chip${a.executed ? ' is-done' : ''}${a.error ? ' is-err' : ''}`}
-                title={a.error || a.label}
-              >
-                {a.error ? I.alertTriangle : a.executed ? I.check : I.zap} {a.label}
-              </span>
-            ))}
+            <AnaActionChips
+              actions={turn.executedActions}
+              onNav={onNav}
+              onStartDemo={onStartDemo}
+            />
           </div>
         )}
         {/* The §11.50 prompt. Rendered here for the same reason RbmSurfaces
@@ -722,10 +723,13 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, setCollapsed, proj
 
 /* ---- Conversation thread (main export) ---- */
 
-export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) {
+export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurfaceViewProps) {
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
-  // conversation; the default is a fresh conversation.
+  // conversation; the default is a fresh conversation. `current` means "the
+  // conversation already in progress" — what this screen shows when the person
+  // comes back to it after AnA took them elsewhere mid-answer.
   const sel = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };
+  const isCurrent = sel.id === 'current';
   const isNew = sel.id === 'new';
 
   // The conversation runs on the REAL streaming assistant (POST /api/ana-ri/stream
@@ -751,14 +755,21 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
     return p ? p.id : null;
   })();
 
-  const anaChat = useAnaChat({
-    initialThreadId: isNew ? null : sel.id,
+  /* The conversation runs on the SHELL's chat when the shell provides it —
+     the one instance that outlives this screen. A private instance here was
+     unmounted by the first navigation AnA made from it, which aborted the
+     turn: the screen moved once and the answer stopped mid-sentence. The
+     private instance remains only for a host that provides no shell chat
+     (tests, an embed), and then it holds no thread of its own. */
+  const ownChat = useAnaChat({
+    initialThreadId: shellChat || isNew || isCurrent ? null : sel.id,
     screenName: 'conversation-thread',
     projectId: shellProjectId,
     liveDrive: liveDrive?.on,
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
+  const anaChat = shellChat ?? ownChat;
   const [toast, fireToast] = useToast();
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -863,7 +874,15 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
         : 'Conversation';
 
   useEffect(() => {
+    if (isCurrent) {
+      // The conversation in progress — already in the shell chat. Nothing to
+      // load, nothing to reset.
+      return;
+    }
     if (!isNew) {
+      // Returning to the conversation the shell chat already holds must not
+      // reload it: a reload aborts the turn that may still be running.
+      if (shellChat && shellChat.threadId === sel.id) return;
       setLoadErr(false);
       Promise.resolve(anaChat.loadThread(sel.id)).catch(() => setLoadErr(true));
     } else if (sel.seed) {
@@ -878,13 +897,21 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
       const seed = sel.seed;
       let cancelled = false;
       const t = setTimeout(() => {
-        if (!cancelled) void anaChat.send(seed);
+        if (cancelled) return;
+        // A new conversation starts clean in the shared chat.
+        if (shellChat) shellChat.reset();
+        void anaChat.send(seed);
       }, 0);
-      (window as any).C2C_CONVO = { ...sel, seed: null };
+      // From here on this screen shows the conversation in progress.
+      (window as any).C2C_CONVO = shellChat ? { id: 'current', seed: null } : { ...sel, seed: null };
       return () => {
         cancelled = true;
         clearTimeout(t);
       };
+    } else if (shellChat) {
+      // An explicitly new, empty conversation.
+      shellChat.reset();
+      (window as any).C2C_CONVO = { id: 'current', seed: null };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -997,8 +1024,9 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
                     turn={t}
                     onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }}
                     onNav={onNav}
+                    onStartDemo={liveDrive?.onStartDemo}
                     canvas={t.authoringDoc ? {
-                      conversationId: anaChat.threadId ?? (isNew ? null : sel.id),
+                      conversationId: anaChat.threadId ?? (isNew || isCurrent ? null : sel.id),
                       expanded: expandedDocId === t.authoringDoc.docId,
                       onExpandedChange: (open) => setExpandedDocId(open ? t.authoringDoc!.docId : null),
                       onAsk: prefillComposer,
@@ -1083,6 +1111,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
               </div>
             )}
             <span className="sr-only" aria-live="polite">{statusMessage}</span>
+            <div className="ct-comp-foot"><LiveDriveSwitch /></div>
             <div className="ct-comp-foot">{I.lock} Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>
         </div>

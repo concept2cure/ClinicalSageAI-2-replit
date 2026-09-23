@@ -1,0 +1,26 @@
+
+/home/user/ClinicalSageAI-2-replit/server/routes/submission-ops.ts
+   648:1    warning  File has too many lines (2402). Maximum allowed is 500                 max-lines
+   989:83   warning  Async arrow function has a complexity of 17. Maximum allowed is 15     complexity
+  1300:11   warning  'projectId' is assigned a value but never used                         @typescript-eslint/no-unused-vars
+  1603:67   warning  Async arrow function has too many lines (113). Maximum allowed is 100  max-lines-per-function
+  1747:11   warning  'userId' is assigned a value but never used                            @typescript-eslint/no-unused-vars
+  2058:50   warning  '_orphan' is assigned a value but never used                           @typescript-eslint/no-unused-vars
+  2094:103  warning  Async arrow function has too many lines (565). Maximum allowed is 100  max-lines-per-function
+  2094:103  warning  Async arrow function has a complexity of 118. Maximum allowed is 15    complexity
+  2686:51   warning  '_orphan' is assigned a value but never used                           @typescript-eslint/no-unused-vars
+  2815:28   warning  '_previous' is assigned a value but never used                         @typescript-eslint/no-unused-vars
+  2981:83   warning  Async arrow function has too many lines (244). Maximum allowed is 100  max-lines-per-function
+  2981:83   warning  Async arrow function has a complexity of 54. Maximum allowed is 15     complexity
+  3108:11   warning  Blocks are nested too deeply (5). Maximum allowed is 4                 max-depth
+
+/home/user/ClinicalSageAI-2-replit/server/services/ectd/package-content-fingerprint.ts
+  107:8  warning  Function 'artifactApproval' has a complexity of 16. Maximum allowed is 15  complexity
+
+/home/user/ClinicalSageAI-2-replit/tests/submission-ops-assemble-routes.test.ts
+   306:70  warning  Arrow function has too many lines (583). Maximum allowed is 100  max-lines-per-function
+   656:1   warning  File has too many lines (974). Maximum allowed is 500            max-lines
+  1006:96  warning  Arrow function has too many lines (186). Maximum allowed is 100  max-lines-per-function
+
+✖ 17 problems (0 errors, 17 warnings)
+

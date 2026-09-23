@@ -175,6 +175,10 @@ beforeAll(async () => {
   await pglite.exec(`INSERT INTO users (id, email, name) VALUES (${USER},'s@e.test','A Signer');`);
   // The REAL sequence/leaf tables the binding is derived from.
   await pglite.exec(migration('migrations/20260604_submission_core_canonical.sql'));
+  // The later leaf columns the binding digests (2026-09-22, W5/D7): the content
+  // pin and the uuid half of the document pointer. Both are on the applier.
+  await pglite.exec(migration('migrations/20260814e_submission_leaf_source_pin.sql'));
+  await pglite.exec(migration('migrations/20260917b_submission_leaf_document_uuid.sql'));
   await pglite.exec(ANA_ACTIONS_DDL);
   await pglite.exec(ELECTRONIC_SIGNATURES_PRE_D6_DDL);
   // The REAL migration that adds signed_target / binding_basis.

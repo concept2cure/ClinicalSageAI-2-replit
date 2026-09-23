@@ -299,7 +299,10 @@ describe('eCTD export → reopen → external-validator qualification', () => {
         // Every leaf href in the backbone must resolve to a real file on disk —
         // the backbone-to-bytes correspondence a validator relies on.
         const hrefs = Array.from(indexRaw.matchAll(/xlink:href="([^"]+)"/g)).map((m) => m[1]);
-        expect(hrefs.length).toBe(2);
+        // The two content leaves, plus index.xml's pointer to the regional
+        // Module 1 backbone — which must resolve like any other leaf.
+        expect(hrefs.length).toBe(3);
+        expect(hrefs).toContain('m1/us/us-regional.xml');
         for (const href of hrefs) {
           const abs = path.join(packageDir, href);
           await fs.access(abs); // throws → step fails

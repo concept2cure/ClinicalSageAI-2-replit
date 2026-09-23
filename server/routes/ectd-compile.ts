@@ -38,9 +38,15 @@ import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { pool } from '../db';
+import { writeChainedAuditRow } from '../services/auditService';
+import { parseEvalidatorJsonReport } from '../services/ectd/external-validator/lorenz-adapter';
+import { tallyFindings, type ExternalValidationFinding } from '../services/ectd/external-validator/types';
 import { resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { sectionMatches } from '../services/ectd/section-code-match';
+import { formRequirementForDocumentType } from '../services/ectd/section-to-ctd';
+import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 import {
   resolveRequiredSections,
@@ -381,8 +387,60 @@ interface CompilationResult {
   /** Leaf files actually rendered to disk: the materialized count on the
    *  spine-backed compile, 0 on the draft-backbone path. */
   leafFilesRendered?: number;
+  /** The region recorded on the compiled sequence — authoritative, never the
+   *  caller's selector. */
+  region?: string;
+  /** Whether the compilation (and the leaf manifest the NEXT sequence is
+   *  diffed against) was written to ectd_compilations. */
+  recorded?: boolean;
+  /** What the assembled package actually holds (spine-backed compiles only). */
+  package?: CompiledPackage;
+  /** What this sequence does to the filed state (spine-backed compiles only). */
+  lifecycle?: CompiledLifecycle;
   errors: string[];
   warnings: string[];
+}
+
+/**
+ * A sequence's lifecycle, read from the leaf manifest it recorded — the same
+ * record the next sequence is diffed against, so what is shown is what binds.
+ */
+interface CompiledLifecycle {
+  /** The newest filed sequence the prior state folds up to; null when none is
+   *  on record (an original, or a follow-up with nothing filed before it). */
+  priorSequence: string | null;
+  /** Every act in the package: operation, section, file, and — for replace,
+   *  append and delete — the filed leaf it acts on. */
+  operations: Array<{
+    operation: string;
+    ctdSection: string;
+    fileName: string;
+    href: string;
+    modifiedFile: string | null;
+  }>;
+  /** Placed leaves the package does not hold, and why (the transmit blockers). */
+  leftOut: Array<{ sectionCode: string; reason: string }>;
+}
+
+interface CompiledPackage {
+  sha256: string | null;
+  /** Every file in the package, by its path inside the ZIP, sorted. */
+  files: string[];
+  /** The regional Module 1 backbone index.xml points at, verbatim. */
+  regionalBackbone: { path: string; xml: string } | null;
+  /** index-md5.txt: the MD5 of index.xml, verbatim. */
+  indexMd5: string | null;
+  /** PDF/A conversion outcome over the package's PDF leaves; null when the
+   *  packager reported no grade. agencyFormsAsIssued are FDA forms shipped with
+   *  FDA's own security (leaf-pdf-security.ts): never converted, by rule, and
+   *  counted in neither pdfaConverted nor notConverted. */
+  pdfa: {
+    pdfLeaves: number;
+    pdfaConverted: number;
+    allPdfA: boolean;
+    notConverted: string[];
+    agencyFormsAsIssued: string[];
+  } | null;
 }
 
 interface ModuleCompilationStatus {
@@ -444,6 +502,30 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     //    packager) — genuine rendered PDF leaves, real index.xml, real MD5s.
     const spine = await resolveSubmissionSpine(anchor, orgId);
     if (spine?.sequence && spine.sequence.leafCount > 0) {
+      // The sequence's recorded region decides the package; the selector only
+      // cross-checks it. A region that contradicts the record is refused, the
+      // same way the export route refuses it — a Region selector that silently
+      // built an FDA package after the user chose EMA told the user nothing.
+      if (req.body?.region != null && String(req.body.region).trim() !== '') {
+        let requested: string;
+        try {
+          requested = toPackagerRegion(String(req.body.region));
+        } catch (err) {
+          return res.status(400).json({
+            error: { code: 'REGION_UNSUPPORTED', message: err instanceof Error ? err.message : String(err) },
+          });
+        }
+        if (requested !== toPackagerRegion(spine.sequence.region)) {
+          return res.status(409).json({
+            error: {
+              code: 'REGION_MISMATCH',
+              message:
+                `Sequence ${spine.sequence.sequenceNumber} was created for region "${spine.sequence.region}"; ` +
+                `it cannot be compiled as "${req.body.region}". The sequence's recorded region decides the package.`,
+            },
+          });
+        }
+      }
       return await compileFromSpine(req, res, {
         orgId,
         anchor,
@@ -657,6 +739,58 @@ interface SpineLeafRow {
   lifecycle_op: string | null;
   document_table: string | null;
   document_id: number | null;
+  /** The uuid half of the reference, for uuid-keyed stores (vault.documents);
+   *  set instead of document_id. */
+  document_uuid?: string | null;
+  /** form_<number> for a filed FDA form; how a form proves its requirement. */
+  document_type?: string | null;
+}
+
+/** The sequence's placed (not deleted) leaves, org-scoped: the one read that
+ *  compile, validate and status share.
+ *
+ *  2026-09-23 (W5/D7, round-2 review): document_uuid is read too. Without it a
+ *  vault leaf (document_id NULL) that the assembler packages by its uuid was
+ *  reported "could not be materialized" by the compile, shown as
+ *  'unresolved-source', and not counted as placed by the status roll-up. */
+async function loadSpineLeaves(sequenceId: number, orgId: number): Promise<SpineLeafRow[]> {
+  const leafRes = await pool.query(
+    `SELECT section_code, title, lifecycle_op, document_table, document_id, document_uuid, document_type
+       FROM submission_leaves
+      WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+      ORDER BY section_code`,
+    [sequenceId, orgId],
+  );
+  return leafRes.rows as SpineLeafRow[];
+}
+
+/**
+ * Does the leaf name a document? A table plus either key: integer-keyed stores
+ * carry document_id, uuid-keyed ones (vault.documents) carry document_uuid —
+ * the rule the assembler's resolveFile applies. Requiring document_id read
+ * every vault leaf as having nothing behind it (2026-09-23, W5/D7, round-2
+ * review).
+ */
+function namesLeafDocument(l: SpineLeafRow): boolean {
+  return !!l.document_table && (!!l.document_id || !!l.document_uuid);
+}
+
+/** A declared withdrawal: it acts on a filed leaf and places no content. */
+function isWithdrawal(l: SpineLeafRow): boolean {
+  return String(l.lifecycle_op ?? '').trim().toLowerCase() === 'delete';
+}
+
+/**
+ * Does this placed leaf satisfy a required section? By section (a leaf at or
+ * beneath the requirement), or — for an FDA form, which is filed at 1.1 and
+ * told apart by type — by the form requirement its document_type proves. A
+ * withdrawal satisfies nothing: it takes a document off file.
+ */
+function leafSatisfies(l: SpineLeafRow, requiredCode: string): boolean {
+  if (isWithdrawal(l)) return false;
+  if (sectionMatches(l.section_code, requiredCode)) return true;
+  const formRequirement = formRequirementForDocumentType(l.document_type);
+  return formRequirement != null && sectionMatches(formRequirement, requiredCode);
 }
 
 /**
@@ -678,7 +812,7 @@ function leafPlacementFindings(
   const allRequired = opts.required.modules.flatMap((m) => m.requiredSections);
 
   for (const reqCode of allRequired) {
-    const found = leaves.find((l) => sectionMatches(l.section_code, reqCode));
+    const found = leaves.find((l) => leafSatisfies(l, reqCode));
     if (!found) {
       results.push({
         rule: 'REQUIRED_SECTION_UNPLACED',
@@ -708,12 +842,14 @@ function leafPlacementFindings(
   }
 
   // Unrenderable placed leaves at non-required sections are still errors —
-  // an incomplete package must be visible, never silently dropped.
+  // an incomplete package must be visible, never silently dropped. A
+  // withdrawal has no document to render, so it is never one of them.
   if (opts.isMaterialized) {
     for (const l of leaves) {
       if (
+        !isWithdrawal(l) &&
         !opts.isMaterialized(l) &&
-        !allRequired.some((rc) => sectionMatches(l.section_code, rc))
+        !allRequired.some((rc) => leafSatisfies(l, rc))
       ) {
         results.push({
           rule: 'LEAF_SOURCE_UNRESOLVED',
@@ -741,9 +877,11 @@ function moduleStatusesFromLeaves(
     .map((def) => {
       const code = def.code;
       const digit = code.replace('m', '');
-      const moduleLeaves = leaves.filter((l) => sectionMatches(l.section_code, digit));
+      // A module's documents are the content it holds; a withdrawal is a
+      // lifecycle act and is reported with the lifecycle, not counted here.
+      const moduleLeaves = leaves.filter((l) => !isWithdrawal(l) && sectionMatches(l.section_code, digit));
       const completedRequired = def.requiredSections.filter((rs) =>
-        moduleLeaves.some((l) => sectionMatches(l.section_code, rs) && isMaterialized(l)),
+        moduleLeaves.some((l) => leafSatisfies(l, rs) && isMaterialized(l)),
       );
       return {
         moduleCode: code,
@@ -763,7 +901,7 @@ function moduleStatusesFromLeaves(
           title: String(l.title ?? l.section_code ?? ''),
           status: isMaterialized(l) ? 'rendered' : 'unresolved-source',
           hasContent: isMaterialized(l),
-          required: def.requiredSections.some((rs) => sectionMatches(l.section_code, rs)),
+          required: def.requiredSections.some((rs) => leafSatisfies(l, rs)),
         })),
       };
     });
@@ -795,18 +933,14 @@ async function compileFromSpine(
   const seq = spine.sequence!;
   const startedAt = new Date().toISOString();
 
-  const leafRes = await pool.query(
-    `SELECT section_code, title, lifecycle_op, document_table, document_id
-       FROM submission_leaves
-      WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL
-      ORDER BY section_code`,
-    [seq.id, orgId],
-  );
-  const leaves = leafRes.rows as SpineLeafRow[];
+  const leaves = await loadSpineLeaves(seq.id, orgId);
 
   // Canonical assembler (dynamic import keeps the draft-only path light and
   // lets route tests that stub the pool avoid loading the drizzle stack).
-  const { assembleSequence } = await import('../services/ectd/assemble-from-core');
+  const { assembleSequence, assembledTransmitBlockers } = await import('../services/ectd/assemble-from-core');
+  // The assembler's own leaf key (table + uuid, else table + id), so what the
+  // compile calls materialized is decided by the key the assembly staged under.
+  const { leafSourceKey } = await import('../services/ectd/leaf-source-resolver');
 
   let xmlBackbone = '';
   let materialized = 0;
@@ -820,6 +954,15 @@ async function compileFromSpine(
   // Without this write-half, prior-sequence load always returned [] and every
   // leaf stayed `new` — no amendments/supplements were producible.
   let leafManifestJson: string | null = null;
+  // What the package actually holds, read from the same ZIP the backbone comes
+  // from: the file tree, the regional Module 1 backbone (index.xml only points
+  // at it, so an IND's forms are otherwise invisible) and the MD5 index.
+  let compiledPackage: CompiledPackage | null = null;
+  // What the assembly left out of the package, or put in it unapproved — in the
+  // words transmit refuses with. A compile that did not read these called a
+  // package ready that transmit would refuse (2026-09-23, W5/D7).
+  let leftOut: string[] = [];
+  let lifecycle: CompiledLifecycle | null = null;
 
   try {
     const assembled = await assembleSequence({
@@ -842,15 +985,49 @@ async function compileFromSpine(
       const zip = await JSZip.loadAsync(buffer);
       xmlBackbone = (await zip.file('index.xml')?.async('string')) ?? '';
       materialized = assembled.materialized;
+      leftOut = assembledTransmitBlockers(assembled);
       unresolvedCount = assembled.unresolvedLeaves.length;
       unresolvedKeys = new Set(
-        assembled.unresolvedLeaves.map((u) => `${u.documentTable ?? ''}:${u.documentId ?? ''}`),
+        assembled.unresolvedLeaves.map((u) => leafSourceKey(u.documentTable, u.documentId, u.documentUuid)),
       );
       dtdSelfContained = assembled.bundle.dtdStatus?.selfContained ?? null;
       packageSha256 = assembled.bundle.sha256;
+      const files = Object.values(zip.files)
+        .filter((f) => !f.dir)
+        .map((f) => f.name)
+        .sort();
+      const regionalPath = assembled.bundle.regionalBackbone?.file ?? null;
+      const regionalXml = regionalPath ? await zip.file(regionalPath)?.async('string') : undefined;
+      const grade = assembled.bundle.submissionGrade;
+      compiledPackage = {
+        sha256: packageSha256,
+        files,
+        regionalBackbone: regionalPath && regionalXml != null ? { path: regionalPath, xml: regionalXml } : null,
+        indexMd5: (await zip.file('index-md5.txt')?.async('string'))?.trim() ?? null,
+        pdfa: grade
+          ? {
+              pdfLeaves: grade.pdfLeaves,
+              pdfaConverted: grade.pdfaConverted,
+              allPdfA: grade.allPdfA,
+              notConverted: [...grade.notConverted],
+              agencyFormsAsIssued: [...(grade.agencyFormsAsIssued ?? [])],
+            }
+          : null,
+      };
       // Snapshot this sequence's shipped leaves as its immutable manifest.
       const manifest = buildLeafManifest(assembled.bundle.leafManifest ?? []);
       leafManifestJson = manifest.length > 0 ? JSON.stringify(manifest) : null;
+      lifecycle = {
+        priorSequence: assembled.priorSequence ?? null,
+        operations: manifest.map((m) => ({
+          operation: m.operation ?? 'new',
+          ctdSection: m.ctdSection,
+          fileName: m.fileName,
+          href: m.href,
+          modifiedFile: m.modifiedFile ?? null,
+        })),
+        leftOut: assembled.skipped.map((k) => ({ sectionCode: k.sectionCode, reason: k.reason })),
+      };
     } finally {
       await assembled.cleanup();
     }
@@ -863,11 +1040,14 @@ async function compileFromSpine(
   // so its key ':' was never in unresolvedKeys and a required section read as
   // satisfied by a leaf that has nothing behind it. Nothing renders without a
   // document — a declared delete included, which withdraws rather than places.
+  // 2026-09-23 (W5/D7, round-2 review): a document is named by either key, and
+  // the leaf is looked up by the assembler's key — a vault leaf the package
+  // holds was reported "could not be materialized" when this required
+  // document_id and keyed by it alone.
   const isMaterialized = (l: SpineLeafRow) =>
     assembleFailure == null &&
-    !!l.document_table &&
-    !!l.document_id &&
-    !unresolvedKeys.has(`${l.document_table}:${l.document_id}`);
+    namesLeafDocument(l) &&
+    !unresolvedKeys.has(leafSourceKey(l.document_table, l.document_id, l.document_uuid));
 
   const initialSequence = seq.sequenceNumber === '0000';
   const validationResults = leafPlacementFindings(leaves, { initialSequence, required, isMaterialized });
@@ -896,6 +1076,7 @@ async function compileFromSpine(
         `${unresolvedCount} placed document(s) could not be materialized into leaf files — the package is incomplete until their sources are renderable.`,
       );
     }
+    blockers.push(...leftOut);
     const missingRequired = validationResults.filter(
       (v) => v.rule === 'REQUIRED_SECTION_UNPLACED' && v.severity === 'error',
     ).length;
@@ -909,6 +1090,18 @@ async function compileFromSpine(
         'The package references eCTD DTDs that are not bundled under util/dtd/ — it is not self-contained. Vendor the ICH/regional DTDs before transmission.',
       );
     }
+    // The packager converts every PDF leaf to PDF/A when it can and ships the
+    // original bytes when it cannot (no Ghostscript on the host). It reported
+    // that grade; nothing read it, so a vanilla-PDF package compiled with no
+    // word said about it.
+    const pdfa = compiledPackage?.pdfa;
+    if (pdfa && !pdfa.allPdfA && pdfa.notConverted.length > 0) {
+      blockers.push(
+        `${pdfa.notConverted.length} of ${pdfa.pdfLeaves} PDF leaf file(s) were not converted to PDF/A ` +
+          `(${pdfa.notConverted.join(', ')}). The PDF/A toolchain did not run on this host; ` +
+          'the leaves ship as ordinary PDFs until it does.',
+      );
+    }
   }
 
   // Record the compilation (real backbone + recorded sequence identity, so this
@@ -916,6 +1109,7 @@ async function compileFromSpine(
   // path — a compilation the caller can download is worth more than a failed
   // request.
   const compilationName = `IND Compilation — ${anchor.label}`;
+  let recorded = false;
   try {
     await pool.query(
       `INSERT INTO ectd_compilations
@@ -940,9 +1134,17 @@ async function compileFromSpine(
         spine.submissionId,
       ],
     );
+    recorded = true;
   } catch (err: any) {
+    // Not a warning to swallow: this row carries the leaf manifest the NEXT
+    // sequence's replace/delete operations are computed from. Unrecorded, the
+    // package can still be exported, but it can anchor no lifecycle.
     console.warn(
       `[eCTD Compile] could not record spine compilation for ${anchor.label}: ${err?.message}`,
+    );
+    blockers.push(
+      `This compilation was not recorded (${err?.message ?? 'the write failed'}), so its leaf_manifest — ` +
+        'what the next sequence is diffed against — does not exist. Resolve the write and compile again.',
     );
   }
 
@@ -964,6 +1166,10 @@ async function compileFromSpine(
     leafFilesRendered: materialized,
     submissionId: spine.submissionId,
     sequenceNumber: seq.sequenceNumber,
+    region: seq.region,
+    recorded,
+    ...(compiledPackage ? { package: compiledPackage } : {}),
+    ...(lifecycle ? { lifecycle } : {}),
     errors,
     warnings: validationResults.filter((v) => v.severity === 'warning').map((v) => v.message),
   };
@@ -1003,23 +1209,42 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
       programType: anchor.programType,
       primaryAgency: anchor.primaryAgency,
     });
+
+    // The leaf-rendering half of readiness comes from the submission spine's
+    // REAL state (documents placed into the sequence), not a capability flag.
+    const spine = await resolveSubmissionSpine(anchor, orgId);
+    // A program has no linked section store, so for it the section-store count
+    // was always 0 of N — shown beside documents already placed in its
+    // sequence. Where the sequence carries leaves, readiness counts what is
+    // PLACED with a document behind it, and says so (`readinessBasis`), so a
+    // placed section is never read as an approved one.
+    const placedLeaves =
+      spine?.sequence && spine.sequence.leafCount > 0
+        ? (await loadSpineLeaves(spine.sequence.id, orgId)).filter(namesLeafDocument)
+        : null;
+
     const moduleReadiness = required.modules.map((def) => {
       const code = def.code;
+      const digit = code.replace('m', '');
       const moduleSections = sections.filter(
-        s => s.section_code?.startsWith(code.replace('m', '')) || s.module?.toLowerCase() === code
+        s => s.section_code?.startsWith(digit) || s.module?.toLowerCase() === code
       );
       const totalRequired = def.requiredSections.length;
-      const completedRequired = def.requiredSections.filter(rs =>
-        moduleSections.some(
-          ms =>
-            ms.section_code?.startsWith(rs) && ['approved', 'locked', 'final'].includes(ms.status)
-        )
-      ).length;
+      const completedRequired = placedLeaves
+        ? def.requiredSections.filter((rs) => placedLeaves.some((l) => leafSatisfies(l, rs))).length
+        : def.requiredSections.filter(rs =>
+            moduleSections.some(
+              ms =>
+                ms.section_code?.startsWith(rs) && ['approved', 'locked', 'final'].includes(ms.status)
+            )
+          ).length;
 
       return {
         moduleCode: code,
         moduleName: def.name,
-        totalSections: moduleSections.length,
+        totalSections: placedLeaves
+          ? placedLeaves.filter((l) => sectionMatches(l.section_code, digit)).length
+          : moduleSections.length,
         requiredSections: totalRequired,
         completedRequired,
         completionPct:
@@ -1031,10 +1256,6 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
     const totalRequired = moduleReadiness.reduce((a, m) => a + m.requiredSections, 0);
     const totalCompleted = moduleReadiness.reduce((a, m) => a + m.completedRequired, 0);
     const overallPct = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
-
-    // The leaf-rendering half of readiness comes from the submission spine's
-    // REAL state (documents placed into the sequence), not a capability flag.
-    const spine = await resolveSubmissionSpine(anchor, orgId);
 
     res.json({
       projectId: anchor.numericProjectId,
@@ -1054,6 +1275,13 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
         ? submissionBlockers([], anchor, spine)
         : ['Required sections are not all complete.', ...submissionBlockers([], anchor, spine)],
       modules: moduleReadiness,
+      /** 'placed' — counted from documents placed in the sequence; 'approved' —
+       *  from the section store's approved/locked/final statuses. */
+      readinessBasis: placedLeaves ? 'placed' : 'approved',
+      /** The sequence a compile would build, with its recorded region. */
+      sequence: spine?.sequence
+        ? { sequenceNumber: spine.sequence.sequenceNumber, region: spine.sequence.region, leafCount: spine.sequence.leafCount }
+        : null,
       requiredSectionSource: required.provenance,
       totalSections: sections.length,
       totalRequired,
@@ -1087,7 +1315,7 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
   const { orgId, anchor, ident } = resolved;
 
   try {
-    let compilations: any[] = [];
+    let compilations: any[];
     try {
       // Match the anchor label as a WHOLE token, not a bare substring. A
       // `LIKE '%Project 5%'` matched "Project 50", "Project 500", etc., so
@@ -1101,7 +1329,9 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
       const labelTokenPattern = `(^|[^A-Za-z0-9])${escapedLabel}($|[^A-Za-z0-9])`;
       const result = await pool.query(
         `SELECT id, compilation_name, compilation_type, status, version,
-                compiled_at, created_at
+                compiled_at, created_at, sequence_number,
+                leaf_manifest IS NOT NULL AS has_manifest,
+                external_validation
          FROM ectd_compilations
          WHERE organization_id = $1 AND compilation_name ~ $2
          ORDER BY created_at DESC
@@ -1110,7 +1340,12 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
       );
       compilations = result.rows;
     } catch (err: any) {
+      // An unreadable history is not an empty one: "never compiled" is a claim
+      // about this submission that a failed read cannot make.
       console.warn(`[eCTD History] query failed for ${anchor.label}: ${err?.message}`);
+      return res.status(503).json({
+        error: { code: 'HISTORY_UNAVAILABLE', message: 'Compilation history could not be read.' },
+      });
     }
 
     res.json({ projectId: anchor.numericProjectId, projectIdent: ident, programId: anchor.programId, compilations });
@@ -1129,6 +1364,14 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
 
+  // An agency-validator report run outside the product, imported against the
+  // compilation whose package it covered (WO-9 Click 6). Same route: it is a
+  // validation of this program's package, recorded, never re-run here.
+  if (req.body && typeof req.body === 'object' && 'evalidatorReport' in req.body) {
+    await importEvalidatorReport(req, res, { orgId, anchor });
+    return;
+  }
+
   try {
     const { region = 'FDA' } = req.body;
     const required = await resolveRequiredSections(pool, {
@@ -1143,13 +1386,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
     const spine = await resolveSubmissionSpine(anchor, orgId);
     let results: ValidationResult[];
     if (spine?.sequence && spine.sequence.leafCount > 0) {
-      const leafRes = await pool.query(
-        `SELECT section_code, title, lifecycle_op, document_table, document_id
-           FROM submission_leaves
-          WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL
-          ORDER BY section_code`,
-        [spine.sequence.id, orgId],
-      );
+      const leaves = await loadSpineLeaves(spine.sequence.id, orgId);
       results = [
         {
           rule: 'SUBMISSION_SPINE_LINKED',
@@ -1158,7 +1395,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
             `Validating the ${spine.sequence.leafCount} document(s) placed in the linked submission's ` +
             `eCTD sequence ${spine.sequence.sequenceNumber}; compile assembles and renders them into real leaf files.`,
         },
-        ...leafPlacementFindings(leafRes.rows as SpineLeafRow[], {
+        ...leafPlacementFindings(leaves, {
           initialSequence: spine.sequence.sequenceNumber === '0000',
           required,
         }),
@@ -1190,6 +1427,224 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Validation failed', message: error.message });
   }
 });
+
+/**
+ * An agency-validator report run OUTSIDE the product (LORENZ eValidator, on the
+ * operator's machine, over the exported package), as kept with the compilation
+ * whose package it covered — ectd_compilations.external_validation.
+ */
+interface ImportedExternalValidation {
+  validator: 'lorenz-evalidator';
+  /** Run outside the product and imported; this product did not run it. */
+  source: 'imported';
+  importedAt: string;
+  importedBy: number;
+  /** The importing account (the verified token's email); null when absent. */
+  importedByEmail: string | null;
+  fileName: string | null;
+  /** sha256 of the report text as imported — identifies the original file. */
+  reportSha256: string;
+  findings: ExternalValidationFinding[];
+  errorCount: number;
+  warningCount: number;
+  infoCount: number;
+  /** Every report this one replaced, oldest first — a replace is never silent. */
+  supersedes: SupersededReport[];
+}
+
+/** What stays on record, in the product, of a report that was replaced. */
+type SupersededReport = Pick<
+  ImportedExternalValidation,
+  'importedAt' | 'importedBy' | 'importedByEmail' | 'fileName' | 'reportSha256' | 'errorCount' | 'warningCount' | 'infoCount'
+>;
+
+/** The replaced report's trail: its own supersedes, then itself. */
+function supersededTrail(prev: unknown): SupersededReport[] {
+  if (!prev || typeof prev !== 'object') return [];
+  const p = prev as Partial<ImportedExternalValidation>;
+  const own: SupersededReport = {
+    importedAt: String(p.importedAt ?? ''),
+    importedBy: Number(p.importedBy ?? 0),
+    importedByEmail: p.importedByEmail ?? null,
+    fileName: p.fileName ?? null,
+    reportSha256: String(p.reportSha256 ?? ''),
+    errorCount: Number(p.errorCount ?? 0),
+    warningCount: Number(p.warningCount ?? 0),
+    infoCount: Number(p.infoCount ?? 0),
+  };
+  return [...(Array.isArray(p.supersedes) ? p.supersedes : []), own];
+}
+
+const evalidatorImportSchema = z.object({
+  compilationId: z.number().int().positive(),
+  fileName: z.string().max(255).optional(),
+  text: z.string().min(1).max(2 * 1024 * 1024),
+});
+
+/** Read the report fail-closed: JSON only, in a shape the parser knows. */
+function readEvalidatorReport(text: string): ExternalValidationFinding[] {
+  if (text.trimStart().startsWith('<')) {
+    throw new Error('This report is XML. Import the JSON report eValidator writes; an XML report is not read on import.');
+  }
+  try {
+    return parseEvalidatorJsonReport(text);
+  } catch (err) {
+    if (err instanceof SyntaxError) throw new Error(`This report is not JSON (${err.message}).`, { cause: err });
+    throw err;
+  }
+}
+
+/** The report as it will be kept, before any report it replaces is known. */
+function importDraft(
+  req: Request,
+  upload: { fileName?: string; text: string },
+  findings: ExternalValidationFinding[],
+): Omit<ImportedExternalValidation, 'supersedes'> {
+  const { errorCount, warningCount } = tallyFindings(findings);
+  const email = (req as any).user?.email;
+  return {
+    validator: 'lorenz-evalidator',
+    source: 'imported',
+    importedAt: new Date().toISOString(),
+    importedBy: resolveUserId(req),
+    importedByEmail: typeof email === 'string' && email ? email : null,
+    fileName: upload.fileName ?? null,
+    reportSha256: sha256(upload.text),
+    findings,
+    errorCount,
+    warningCount,
+    infoCount: findings.length - errorCount - warningCount,
+  };
+}
+
+type TxClient = { query: (sql: string, params?: unknown[]) => Promise<{ rowCount?: number | null; rows: any[] }> };
+
+/** The import's audit row could not be written; nothing of the import stands. */
+class ImportNotRecordedError extends Error {}
+
+/**
+ * Inside the caller's transaction: read the compilation under lock (it must be
+ * this program's submission's), carry any report already on it forward as
+ * replaced, store the new one, and write the §11.10(e) row of the import.
+ * null = no such compilation of this submission. Throws on any write failure,
+ * so the caller rolls the whole import back.
+ */
+async function storeImportedReport(
+  client: TxClient,
+  target: { compilationId: number; orgId: number; submissionId: number },
+  draft: Omit<ImportedExternalValidation, 'supersedes'>,
+): Promise<{ record: ImportedExternalValidation; sequenceNumber: string | null } | null> {
+  const where = [target.compilationId, target.orgId, target.submissionId];
+  const current = await client.query(
+    `SELECT external_validation FROM ectd_compilations
+      WHERE id = $1 AND organization_id = $2 AND submission_id = $3
+      FOR UPDATE`,
+    where,
+  );
+  if (!current.rowCount) return null;
+  const prev = current.rows[0]?.external_validation ?? null;
+  const record: ImportedExternalValidation = { ...draft, supersedes: supersededTrail(prev) };
+  const updated = await client.query(
+    `UPDATE ectd_compilations
+        SET external_validation = $4::jsonb, updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND submission_id = $3
+      RETURNING sequence_number`,
+    [...where, JSON.stringify(record)],
+  );
+  const sequenceNumber = updated.rows[0]?.sequence_number ?? null;
+  try {
+    await writeChainedAuditRow(client, {
+      organizationId: target.orgId,
+      userId: record.importedBy,
+      action: 'EVALIDATOR_REPORT_IMPORTED',
+      resourceType: 'ectd_compilation',
+      resourceId: target.compilationId,
+      details: {
+        sequenceNumber,
+        validator: record.validator,
+        source: record.source,
+        fileName: record.fileName,
+        reportSha256: record.reportSha256,
+        errorCount: record.errorCount,
+        warningCount: record.warningCount,
+        infoCount: record.infoCount,
+        replacesReportSha256: record.supersedes[record.supersedes.length - 1]?.reportSha256 ?? null,
+      },
+    });
+  } catch (err) {
+    throw new ImportNotRecordedError((err as Error).message);
+  }
+  return { record, sequenceNumber };
+}
+
+/**
+ * Import a LORENZ eValidator JSON report against a compilation of this
+ * program's submission. The report and the §11.10(e) record of its import
+ * commit in one transaction, or neither does. A report the parser cannot read
+ * is refused in the parser's words (422) — never stored as a clean one.
+ */
+async function importEvalidatorReport(
+  req: Request,
+  res: Response,
+  resolved: { orgId: number; anchor: Parameters<typeof resolveSubmissionSpine>[0] },
+): Promise<void> {
+  const parsed = evalidatorImportSchema.safeParse(req.body.evalidatorReport);
+  if (!parsed.success) {
+    res.status(400).json({
+      error: {
+        code: 'VALIDATION',
+        message: 'An import names the compilation it belongs to (compilationId) and carries the report text.',
+        details: parsed.error.flatten(),
+      },
+    });
+    return;
+  }
+  let findings: ExternalValidationFinding[];
+  try {
+    findings = readEvalidatorReport(parsed.data.text);
+  } catch (err) {
+    res.status(422).json({ error: { code: 'REPORT_UNREADABLE', message: (err as Error).message } });
+    return;
+  }
+  const spine = await resolveSubmissionSpine(resolved.anchor, resolved.orgId);
+  if (!spine) {
+    res.status(409).json({
+      error: { code: 'NO_SUBMISSION', message: 'This program has no submission, so it has no compiled package a report could cover.' },
+    });
+    return;
+  }
+
+  const { compilationId } = parsed.data;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const stored = await storeImportedReport(
+      client,
+      { compilationId, orgId: resolved.orgId, submissionId: spine.submissionId },
+      importDraft(req, parsed.data, findings),
+    );
+    if (!stored) {
+      await client.query('ROLLBACK');
+      res.status(404).json({
+        error: { code: 'COMPILATION_NOT_FOUND', message: `Compilation ${compilationId} is not a compiled package of this program's submission.` },
+      });
+      return;
+    }
+    await client.query('COMMIT');
+    res.json({ imported: true, compilationId, sequenceNumber: stored.sequenceNumber, externalValidation: stored.record });
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch { /* the failure below is the one to report */ }
+    const unrecorded = err instanceof ImportNotRecordedError;
+    console.error(`[eCTD Validate] eValidator import ${unrecorded ? 'not recorded' : 'failed'}:`, (err as Error).message);
+    res.status(500).json({
+      error: unrecorded
+        ? { code: 'IMPORT_NOT_RECORDED', message: 'The report was not imported: the record of its import could not be written.' }
+        : { code: 'IMPORT_FAILED', message: 'The report could not be imported.' },
+    });
+  } finally {
+    client.release();
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS

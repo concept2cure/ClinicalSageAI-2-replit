@@ -4,12 +4,15 @@
  */
 import { Router, Request, Response } from 'express';
 import { eq, desc, and } from 'drizzle-orm';
-import { db, transaction, pool } from '../db';
+import { db, transaction } from '../db';
 import { coauthorDocuments, coauthorSections } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { randomUUID } from 'crypto';
 import { queryableFromDrizzle } from '../db/drizzle-queryable.js';
 import { recordDocumentAlias, DocumentAliasConflictError } from '../services/c2c/document-alias-map.js';
+import { applyCoauthorDocumentPut } from '../services/coauthor/coauthor-status-write.js';
+import { takeAuthoringSnapshot } from '../services/coauthor/coauthor-snapshot.js';
+import { coauthorAuditActor, recordCoauthorDocumentEvent } from '../services/coauthor/coauthor-audit.js';
 
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -153,70 +156,77 @@ router.post('/documents', authMiddleware, async (req: any, res: Response) => {
     }
 
     const { title, moduleNumber, content, templateId, sourceAuthoringDocId } = req.body || {};
-
-    if (!title) {
-      return res.status(400).json({ error: 'title is required' });
-    }
-
     const userId = req.user?.id || req.user?.userId;
 
     /* ── THE SNAPSHOT INHERITS THE SOURCE DOCUMENT'S GOVERNED STATE ──
      *
      * `status` was hardcoded to 'draft' here, and that one word made the
-     * authoring editor structurally incapable of producing a filable package.
+     * authoring editor structurally incapable of producing a filable package:
+     * the eCTD leaf resolver counts a source as submission-finalized only when
+     * its status is 'approved' or 'finalized' — correctly — so a document the
+     * author had frozen, hash-sealed and e-signed was filed as a draft.
      *
-     * The eCTD leaf resolver counts a source as submission-finalized only when
-     * its status is 'approved' or 'finalized' — correctly; a draft must never
-     * count toward a complete package. So every snapshot the authoring
-     * surface's "Place into filing" created was unfinalized, which makes
-     * `assertEctdSubmissionComplete` throw whenever completeness is required.
-     * A document the author had frozen, hash-sealed and e-signed was filed as
-     * a draft, and no UI could change it: the only client that PUTs a coauthor
-     * document sends `{ content }` alone.
-     *
-     * THE STATUS IS DERIVED HERE, NEVER ACCEPTED FROM THE CALLER. A
-     * client-supplied status would let any caller stamp 'approved' on anything
-     * and make an incomplete package report itself complete — the same class
-     * of unearned verdict this codebase keeps having to remove. The caller may
+     * THE STATUS IS DERIVED, NEVER ACCEPTED FROM THE CALLER: a client-supplied
+     * status would let any caller stamp 'approved' on anything. The caller may
      * only say WHICH document it is snapshotting; what that document's state
      * IS, is read from the record, under this organization.
      *
-     * The mapping claims nothing the source has not earned:
-     *   APPROVED  -> 'approved'   an APPROVER e-signature was applied
-     *   FROZEN    -> 'finalized'  content snapshotted, hash-sealed and locked;
-     *                             and, since the freeze gate, proven to carry
-     *                             no unresolved comments or undecided edits
-     *   anything else -> 'draft'  which correctly fails completeness
-     */
-    let snapshotStatus = 'draft';
-    let sourceState: { docId: string; status: string } | null = null;
+     * 2026-09-23 (W5/D7, round-3 review, repair 1): and so is its TEXT. This
+     * handler derived the status from the source but wrote `content` (and
+     * `title`) from the request body, so naming any APPROVED document returned
+     * an 'approved' row carrying text nobody approved. A sourced snapshot's
+     * title, text and status now all come from the source, and placing the
+     * same source again re-takes the same copy instead of failing on the alias
+     * map — the rule is services/coauthor/coauthor-snapshot.ts. Only an
+     * unsourced document takes its title and text from the body, and it is
+     * always a draft.
+     *
+     * 2026-09-23 (W5/D7, round-3 review, repair 2): an approved or finalized
+     * copy is written only when the source's sections are the ones its seal
+     * recorded (apply-template could rewrite an APPROVED document's sections
+     * past the lock), and a re-take of an existing copy is audited as the
+     * placing user — hence `actor`.
+     *
+     * 2026-09-23 (W5/D7, co-author final pass): a sourceAuthoringDocId that is
+     * not a string is refused 400. It was coerced with String(): an array of
+     * one id named that document (and re-took its copy), and anything else
+     * came back as a 404 or a 500. */
+    if (sourceAuthoringDocId !== undefined && sourceAuthoringDocId !== null && typeof sourceAuthoringDocId !== 'string') {
+      return res.status(400).json({
+        error: 'INVALID_SOURCE_DOCUMENT_ID',
+        message: 'sourceAuthoringDocId must be the id of an authoring document, as a string. Nothing was created.',
+      });
+    }
     if (sourceAuthoringDocId) {
-      const src = await pool.query<{ status: string | null }>(
-        'SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
-        [String(sourceAuthoringDocId), organizationId],
-      );
-      if (src.rowCount === 0) {
-        /* Named a document that is not this organization's, or does not exist.
-           Refused rather than quietly falling back to a draft snapshot: the
-           caller asked for a document's state to be carried, and silently
-           carrying a different one is worse than saying no. */
-        return res.status(404).json({
-          error: 'Source document not found',
-          message:
-            'The document this snapshot was to be taken from does not exist in this organization. Nothing was created.',
+      const outcome = await takeAuthoringSnapshot({
+        organizationId,
+        sourceAuthoringDocId,
+        moduleNumber: moduleNumber || null,
+        templateId: templateId ? Number(templateId) : null,
+        createdBy: userId ? String(userId) : null,
+        actor: coauthorAuditActor(req),
+      });
+      if (!outcome.ok) return res.status(outcome.httpStatus).json(outcome.body);
+      if (!outcome.aliasRecorded) {
+        logger.warn('Document alias map absent; snapshot created without cross-store identity', {
+          coauthorDocumentId: outcome.document.id,
+          migration: 'migrations/20260814d_document_alias_map.sql',
         });
       }
-      const state = String(src.rows[0].status ?? '').toUpperCase();
-      snapshotStatus = state === 'APPROVED' ? 'approved' : state === 'FROZEN' ? 'finalized' : 'draft';
-      sourceState = { docId: String(sourceAuthoringDocId), status: state || 'UNKNOWN' };
+      return res.status(outcome.created ? 201 : 200).json({
+        success: true,
+        document: outcome.document,
+        ...(outcome.created ? {} : { replaced: true }),
+      });
     }
 
-    /* The row and its identity commit together. A snapshot taken from an
-       authoring document is that document's representation in this store, so
-       it is aliased under the authoring uuid; a document with no source gets a
-       fresh canonical id. A fork — the authoring document already represented
-       here by another row — refuses the create and nothing is persisted. */
-    const canonicalId = sourceState ? String(sourceAuthoringDocId) : randomUUID();
+    if (!title) {
+      return res.status(400).json({ error: 'title is required' });
+    }
+
+    /* The row and its identity commit together. A document with no source
+       gets a fresh canonical id. */
+    const canonicalId = randomUUID();
     const document = await db.transaction(async (tx) => {
       const [row] = await tx
         .insert(coauthorDocuments)
@@ -226,12 +236,8 @@ router.post('/documents', authMiddleware, async (req: any, res: Response) => {
           content: content || '',
           moduleNumber: moduleNumber || null,
           templateId: templateId ? Number(templateId) : null,
-          status: snapshotStatus,
+          status: 'draft',
           createdBy: userId ? String(userId) : null,
-          /* Where this snapshot came from and what that source's state was when
-             it was taken — so the status above can be audited back to the record
-             that justified it rather than being taken on trust. */
-          ...(sourceState ? { metadata: { source: 'authoring-document', ...sourceState } } : {}),
         })
         .returning();
       const alias = await recordDocumentAlias(queryableFromDrizzle(tx), {
@@ -279,22 +285,44 @@ router.put('/documents/:id', authMiddleware, async (req: any, res: Response) => 
 
     const { title, content, status } = req.body || {};
 
-    const updateValues: Record<string, any> = { updatedAt: new Date() };
-    if (title !== undefined) updateValues.title = title;
-    if (content !== undefined) updateValues.content = content;
-    if (status !== undefined) updateValues.status = status;
-
-    const [document] = await db
-      .update(coauthorDocuments)
-      .set(updateValues)
-      .where(
-        and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId))
-      )
-      .returning();
-
-    if (!document) {
-      return res.status(404).json({ error: 'Document not found' });
+    /* ── A PUT CANNOT AWARD A VERDICT, OR REWRITE A DOCUMENT THAT HAS ONE ──
+     * (2026-09-23, W5/D7, round-2 review.) `status` was written verbatim from
+     * the body, so any member of the organization could send
+     * {"status":"approved"} for a draft snapshot and the eCTD leaf resolver
+     * would count it finalized — clearing transmit's "only approved documents"
+     * refusal for a document no one approved. That is the client-supplied
+     * status the POST handler above already refuses to honour.
+     *
+     * 2026-09-23 (W5/D7, round-3 review): round 2 answered that with a check
+     * written here — a denylist of the resolver's approved | finalized, an
+     * exact-case restate test, and no guard on content. It was not sound: PUT
+     * /api/ectd-documents/:id wrote the same column unguarded; 'signed' and
+     * 'locked' (which the IND checklist and NDA cockpit count complete) and any
+     * unknown string were still accepted; 'Approved' on an 'approved' row was
+     * refused as a promotion; and the content of an approved snapshot could be
+     * rewritten under its approved status. The rule now lives once, in
+     * services/coauthor/coauthor-status-write.ts, which both routes import: a
+     * PUT may set only a working state (draft, in-progress, in_progress,
+     * review — written trimmed and lower-cased); any other value is only a
+     * no-op restate of the current status, else 400 and nothing written; and
+     * title / content changes to a row that carries a verdict are refused 409
+     * FINALIZED_DOCUMENT_READ_ONLY. 2026-09-23 (round-3 review, repair 1):
+     * both are decided on the row held FOR UPDATE, with one normaliser (the
+     * SQL btrim guard and the JS trim disagreed on 'approved\t'); a status
+     * with a control character is a 400, not a Postgres 500; and the 409 names
+     * re-placement from the source (POST above), which now works. Callers:
+     * EctdCoauthor.saveContent sends `{ content }` alone and renders a
+     * refusal's message ("Not saved — …"). */
+    const outcome = await applyCoauthorDocumentPut({
+      documentId: docId,
+      organizationId,
+      status,
+      governed: { title, content },
+    });
+    if (!outcome.ok) {
+      return res.status(outcome.refusal.httpStatus).json(outcome.refusal.body);
     }
+    const { document } = outcome;
 
     return res.json({
       success: true,
@@ -318,12 +346,14 @@ router.delete('/documents/:id', authMiddleware, async (req: any, res: Response) 
       return res.status(400).json({ error: 'Invalid document ID' });
     }
 
-    const u = req.user || {};
-    const auditUserId = Number(u.id ?? u.userId) || null;
+    const actor = coauthorAuditActor(req);
 
     // 21 CFR Part 11 §11.10(e): delete the regulated document and record the
     // deletion in the hash-chained, append-only audit_events table IN THE SAME
-    // TRANSACTION — atomic and fail-closed.
+    // TRANSACTION — atomic and fail-closed. 2026-09-23 (W5/D7, round-3 review,
+    // repair 2): the INSERT was inline here and, identically, in
+    // ectd-documents.ts; both now call the one writer, which the filing-copy
+    // re-take also uses.
     const deletedRow = await transaction(async (client: any) => {
       const del = await client.query(
         'DELETE FROM coauthor_documents WHERE id = $1 AND organization_id = $2 RETURNING id, organization_id',
@@ -332,24 +362,13 @@ router.delete('/documents/:id', authMiddleware, async (req: any, res: Response) 
       if (!del.rows.length) return null;
       const row = del.rows[0];
 
-      await client.query(
-        `INSERT INTO audit_events
-           (organization_id, event_type, entity_type, entity_id, user_id, user_name,
-            user_role, ip_address, timestamp, reason, metadata,
-            regulatory_significant, gxp_relevant, created_at)
-         VALUES ($1, 'coauthor_document.deleted', 'coauthor_document', $2, $3, $4, $5, $6,
-                 NOW(), $7, $8, true, true, NOW())`,
-        [
-          row.organization_id,
-          row.id,
-          auditUserId,
-          u.name ?? u.email ?? 'System',
-          u.role ?? 'user',
-          req.ip ?? '',
-          'coauthor document deleted',
-          JSON.stringify({}),
-        ],
-      );
+      await recordCoauthorDocumentEvent(client, {
+        organizationId: row.organization_id,
+        documentId: row.id,
+        eventType: 'coauthor_document.deleted',
+        actor,
+        reason: 'coauthor document deleted',
+      });
 
       return row;
     });

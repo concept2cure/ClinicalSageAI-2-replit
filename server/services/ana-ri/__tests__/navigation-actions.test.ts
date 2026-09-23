@@ -101,7 +101,7 @@ describe('toNavigationActions', () => {
   });
 
   it('caps a turn — a response offering everything is offering nothing', () => {
-    const many = ['a', 'b', 'c', 'd', 'e'].map(id => directive(id));
+    const many = Array.from({ length: MAX_NAVIGATION_ACTIONS + 2 }, (_, i) => directive(`t${i}`));
     expect(toNavigationActions(many)).toHaveLength(MAX_NAVIGATION_ACTIONS);
   });
 
@@ -175,7 +175,7 @@ describe('toSurfaceActionChips', () => {
     expect(
       toSurfaceActionChips([actionDirective('vault.search'), actionDirective('vault.search')]),
     ).toHaveLength(1);
-    const many = ['a.x', 'b.x', 'c.x', 'd.x', 'e.x'].map(id => actionDirective(id));
+    const many = Array.from({ length: MAX_NAVIGATION_ACTIONS + 2 }, (_, k) => `a${k}.x`).map(id => actionDirective(id));
     expect(toSurfaceActionChips(many)).toHaveLength(MAX_NAVIGATION_ACTIONS);
   });
 

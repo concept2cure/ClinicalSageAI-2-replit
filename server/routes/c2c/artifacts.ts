@@ -24,6 +24,8 @@ import { enforceAuthorLineage } from '../../services/clinical-regulatory-evidenc
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService';
 import { createTraceId, emitTraceEvent } from '../../services/generation-guard.js';
 import { markPackagesContentChangedForArtifact } from '../../services/ectd/package-content-change';
+import { artifactApproval } from '../../services/ectd/package-content-fingerprint';
+import { reviewQuorumVerdict } from '../../services/artifact-approval-act';
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
 import * as crypto from 'crypto';
@@ -36,7 +38,6 @@ import {
   type Artifact,
   calculateContentHash,
   concept2cureRateLimiter,
-  getClientIp,
   getOrganizationId,
   getUserId,
   logAuditEntry,
@@ -48,6 +49,7 @@ import {
   verifyIntegrityChain,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
+import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-artifacts');
 const router = Router();
@@ -604,7 +606,7 @@ router.post(
           : 'Manual document creation',
         backendRoute: 'POST /api/concept2cure/projects/:projectId/artifacts',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
 
       // RIM: capture artifact creation signal (non-blocking)
@@ -1012,7 +1014,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         sourceDescription: `Updated from v${dbArtifact.version} to v${newVersion}`,
         backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
     }
 
@@ -1269,7 +1271,7 @@ router.put(
         } → ${toSection} — ${reason.trim()}`,
         backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
 
       logger.info('Artifact placement updated', {
@@ -2346,6 +2348,16 @@ router.post(
           ctdSection: artifact.ctdSection,
           lockedAt: now,
           lockedById: userId,
+          // 2026-09-23 (W5/D7, residual repair): a lock records the version it
+          // locked, as the status route's approved → locked does
+          // (publishedVersionId / publishedAt). approvedVersionId is left unset
+          // on purpose: this report is generated and frozen as an inspection
+          // record, and nobody approved it. Recording an approval here would
+          // fabricate one, and would make an unreviewed report filable; unset,
+          // the filing rule (artifactApproval) refuses it as
+          // 'no-approved-version' (fail closed).
+          publishedVersionId: 1,
+          publishedAt: now,
           metadata: {
             sourceArtifactId: artifact.artifactId,
             harness: {
@@ -2391,7 +2403,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/audit-report/export`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           exportedArtifactId: exportArtifactId,
           reportMode: 'detailed',
@@ -2585,6 +2597,35 @@ router.put(
         }
       }
 
+      // ── A lock must cover the approval ───────────────────────────────
+      // 2026-09-23 (W5/D7, residual repair): approved → locked used to check
+      // status alone and stamp published_version_id = the CURRENT version, so
+      // approved v1 → PUT edit to v2 (status stays 'approved') → lock recorded
+      // "locked at v2" over content no one reviewed. The filing rule already
+      // refuses that artifact; the lock is now refused too, so an unreviewed
+      // edit is never recorded as locked. The verdict is artifactApproval's —
+      // the one filing rule, imported, not restated: an approved artifact may
+      // be locked only when it is filable as approved (version =
+      // approved_version_id, and an approval that recorded no version fails
+      // closed). Its remedy names the re-approval (approved → review → approved).
+      if (previousStatus === 'approved' && status === 'locked') {
+        const approval = artifactApproval({
+          status: previousStatus,
+          version: artifact.version,
+          approvedVersionId: artifact.approvedVersionId,
+          publishedVersionId: artifact.publishedVersionId,
+        });
+        if (!approval.filable) {
+          return sendError(
+            res,
+            409,
+            `Cannot lock: ${approval.problem}. Re-approval is required first: ${approval.remedy}.`,
+            { reason: approval.reason },
+            'LOCK_NOT_COVERED_BY_APPROVAL'
+          );
+        }
+      }
+
       // ── Contradiction governance gate ───────────────────────────────
       // Hard block promotion if unresolved contradictions with blocks_promotion authority
       if (status === 'approved' || status === 'locked') {
@@ -2631,63 +2672,16 @@ router.put(
       // ── P12: Review quorum gate ─────────────────────────────────────
       // Block review → approved if reviewers are assigned but not all approved.
       // Withdrawn assignments are excluded from the quorum check.
+      // 2026-09-23 (W5/D7, residual repair, round 3; amended final pass): the
+      // gate moved, unchanged, to server/services/artifact-approval-act.ts
+      // (reviewQuorumVerdict), the one implementation this route and
+      // authoring-actions approve-artifact — the two governed approval acts —
+      // apply. A quorum that cannot be read throws, and the catch below
+      // answers 500 before anything is written: an unread quorum is not met.
       if (previousStatus === 'review' && status === 'approved') {
-        const roundAssignments = await db
-          .select()
-          .from(concept2cureReviewAssignments)
-          .where(
-            and(
-              eq(concept2cureReviewAssignments.artifactId, artifact.id),
-              eq(concept2cureReviewAssignments.organizationId, organizationId)
-            )
-          )
-          .orderBy(desc(concept2cureReviewAssignments.reviewRound));
-
-        if (roundAssignments.length > 0) {
-          const latestRound = roundAssignments[0].reviewRound;
-          // Exclude withdrawn assignments from quorum
-          const activeAssignments = roundAssignments.filter(
-            a => a.reviewRound === latestRound && a.status !== 'withdrawn'
-          );
-
-          if (activeAssignments.length === 0) {
-            // All were withdrawn — no quorum to enforce, allow approval
-          } else {
-            const pendingReviews = activeAssignments.filter(a => a.status !== 'completed');
-
-            if (pendingReviews.length > 0) {
-              return sendError(
-                res,
-                400,
-                `Cannot approve: ${pendingReviews.length} of ${activeAssignments.length} reviewers have not yet submitted their decision`
-              );
-            }
-
-            // All completed — verify all decisions are "approve"
-            const roundDecisions = await db
-              .select()
-              .from(concept2cureReviewDecisions)
-              .where(
-                and(
-                  eq(concept2cureReviewDecisions.artifactId, artifact.id),
-                  eq(concept2cureReviewDecisions.reviewRound, latestRound),
-                  eq(concept2cureReviewDecisions.organizationId, organizationId)
-                )
-              );
-
-            const nonApprovals = roundDecisions.filter(d => d.decision !== 'approve');
-            if (nonApprovals.length > 0) {
-              return sendError(
-                res,
-                400,
-                `Cannot approve: ${
-                  nonApprovals.length
-                } reviewer(s) did not approve (decisions: ${nonApprovals
-                  .map(d => d.decision)
-                  .join(', ')})`
-              );
-            }
-          }
+        const quorum = await reviewQuorumVerdict(pool, artifact.id, organizationId);
+        if (!quorum.met) {
+          return sendError(res, 400, quorum.message);
         }
       }
 
@@ -2695,6 +2689,11 @@ router.put(
         status,
         updatedAt: new Date(),
       };
+      // Leaving approved/locked (approved → review, locked → draft) clears
+      // approvedVersionId and publishedVersionId in this same write: the
+      // concept2cure_artifacts trigger does it for every writer
+      // (migrations/20260923b_artifact_approval_follows_status.sql, 2026-09-23
+      // W5/D7 final pass), so a revoked approval cannot be resurrected.
       if (status === 'approved') {
         updateData.approvedVersionId = artifact.version;
       }
@@ -2840,7 +2839,7 @@ router.put(
                 previousStatus,
                 newStatus: status,
               },
-              ipAddress: getClientIp(req),
+              ipAddress: clientIpKey(req),
               deviceInfo: null,
               status: 'active',
               signedAt,
@@ -2926,7 +2925,7 @@ router.put(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/status`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           previousStatus,
           newStatus: status,
@@ -3128,7 +3127,7 @@ router.put(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/ctd-section`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { previousSection, newSection: ctdSection },
       });
 
@@ -3416,7 +3415,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/rollback`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           rolledBackFromVersion: artifact.version,
           targetVersion,
@@ -3523,7 +3522,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/comments`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { commentId, version: artifact.version },
       });
 
@@ -3814,7 +3813,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviewers`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           reviewerIds: numericIds,
           reviewRound,
@@ -4014,7 +4013,7 @@ router.delete(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviewers/${req.params.assignmentId}`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { assignmentId: req.params.assignmentId, reviewerId: assignment.reviewerId },
       });
 
@@ -4274,7 +4273,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviews/submit`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           decisionId,
           decision,

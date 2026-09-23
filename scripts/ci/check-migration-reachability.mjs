@@ -52,6 +52,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { C2C_MIGRATION_FILES } from '../db/migration-set.mjs';
 import { AUTHORING_SUBSYSTEM_FILES } from '../db/authoring-subsystem.mjs';
+import { qualify, drizzleColumns, stripSqlComments } from './lib/sql-columns.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -79,27 +80,13 @@ const CREATE_VIEW_RE = new RegExp(
   'gi',
 );
 
-/**
- * Canonical table identity. `public.foo` and `foo` are the same relation, so the
- * public schema is normalized away; any other schema is kept, because
- * `predicate.runs` and `precedent.runs` are different tables and collapsing them
- * would let one mask the other.
- */
-const qualify = (schema, name) => {
-  const s = (schema || '').toLowerCase();
-  const n = name.toLowerCase();
-  return !s || s === 'public' ? n : `${s}.${n}`;
-};
+// Canonical table identity (`public.foo` and `foo` are the same relation; any
+// other schema is kept) is `qualify` in lib/sql-columns.mjs, shared with the
+// column guards so the table and column levels cannot disagree about what a
+// relation's name is.
 
-/**
- * Strip SQL comments before scanning. These files are heavily commented, and the
- * comments discuss DDL: a header reading `-- (CREATE TABLE IF NOT EXISTS only)`
- * otherwise registers a table named "only". Worse than the phantom itself, a
- * commented-out or merely *described* CREATE TABLE would count as a durable
- * creator and mask a genuinely missing one.
- */
-const stripSqlComments = (sql) =>
-  sql.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
+// Comment stripping (`stripSqlComments`) lives in lib/sql-columns.mjs with the
+// other shared SQL helpers; see the rationale there.
 
 const tablesIn = (sql) => {
   const out = new Set();
@@ -236,6 +223,62 @@ export function cteNames(sql) {
 }
 
 /**
+ * The server source files whose SQL the reference side reads: .ts, .js AND .mjs,
+ * tests excluded.
+ *
+ * .js and .mjs were missing until 2026-09-22. A mounted router written in .js —
+ * server/api/enterprise/rbac-routes.js reading `roles`, server/routes/
+ * smart-blocks.js reading four tables — queried relations that exist on no
+ * database, and this guard, the live-schema guard and the column guard all
+ * reported green: the first two never opened the file, and the third skipped
+ * the table as "the table guard's finding". A guard that defers to another must
+ * be looking at the same files, so there is one walk and every reference-side
+ * guard uses it.
+ *
+ * @param {string} [dir] absolute directory to scan; defaults to server/
+ * @returns {string[]} absolute paths
+ */
+export function serverSqlFiles(dir = path.join(repoRoot, 'server')) {
+  return walk(dir, (n) => /\.(ts|js|mjs)$/.test(n) && !/\.test\.|\.spec\./.test(n));
+}
+
+/**
+ * The relations one SQL-looking string segment binds, qualified. The reference
+ * scan's per-segment step, exported so the column guard can require that a
+ * table be bound as a RELATION — not merely mentioned — without a second copy of
+ * this parser.
+ *
+ * @param {string} raw one segment from `sqlishSegments`
+ * @returns {Set<string>}
+ */
+export function relationsIn(raw) {
+  const out = new Set();
+  // Comments inside a query are prose, and prose discusses joins: the line
+  // `-- fails to match and the LEFT JOIN yields a null name.` inside a
+  // template literal registered a table called `yields`. The CREATE side has
+  // stripped comments since C-35; the reference side had not, and nothing
+  // could see it until every name had to resolve against a real database.
+  const segment = stripSqlComments(raw);
+  // A CTE is defined by the query itself, so `WITH ranked AS (…) SELECT …
+  // FROM ranked` references no storage at all. This guard's own finding rule
+  // hid the omission — a CTE name is never in `deadCreators`, so it could
+  // never become a finding here — but the live-schema guard resolves every
+  // referenced name against a real database, where `ranked`, `latest`,
+  // `descendants` and two dozen other CTE names come back as missing tables.
+  // Filtering them at the source keeps both guards honest; the alternative
+  // is a baseline full of entries no migration can ever satisfy.
+  const ctes = cteNames(segment);
+  REF_RE.lastIndex = 0;
+  for (const m of segment.matchAll(REF_RE)) {
+    if (NOT_A_RELATION.has((m[2] || '').toLowerCase())) continue;
+    const t = qualify(m[1], m[2]);
+    if (!m[1] && ctes.has(t)) continue; // unqualified name bound by this query
+    out.add(t);
+  }
+  return out;
+}
+
+/**
  * Every table the server's raw SQL names, mapped to the files that name it.
  *
  * Exported, and used by this guard through the export, because a SECOND guard
@@ -253,36 +296,161 @@ export function cteNames(sql) {
  */
 export function referencedTables(dir = path.join(repoRoot, 'server')) {
   const referenced = new Map();
-  for (const abs of walk(dir, (n) => n.endsWith('.ts') && !/\.test\.|\.spec\./.test(n))) {
+  for (const abs of serverSqlFiles(dir)) {
     const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
     // Only SQL-looking string segments — never the whole file. See sqlishSegments.
     for (const raw of sqlishSegments(read(abs))) {
-      // Comments inside a query are prose, and prose discusses joins: the line
-      // `-- fails to match and the LEFT JOIN yields a null name.` inside a
-      // template literal registered a table called `yields`. The CREATE side has
-      // stripped comments since C-35; the reference side had not, and nothing
-      // could see it until every name had to resolve against a real database.
-      const segment = stripSqlComments(raw);
-      // A CTE is defined by the query itself, so `WITH ranked AS (…) SELECT …
-      // FROM ranked` references no storage at all. This guard's own finding rule
-      // hid the omission — a CTE name is never in `deadCreators`, so it could
-      // never become a finding here — but the live-schema guard resolves every
-      // referenced name against a real database, where `ranked`, `latest`,
-      // `descendants` and two dozen other CTE names come back as missing tables.
-      // Filtering them at the source keeps both guards honest; the alternative
-      // is a baseline full of entries no migration can ever satisfy.
-      const ctes = cteNames(segment);
-      REF_RE.lastIndex = 0;
-      for (const m of segment.matchAll(REF_RE)) {
-        if (NOT_A_RELATION.has((m[2] || '').toLowerCase())) continue;
-        const t = qualify(m[1], m[2]);
-        if (!m[1] && ctes.has(t)) continue; // unqualified name bound by this query
+      for (const t of relationsIn(raw)) {
         if (!referenced.has(t)) referenced.set(t, new Set());
         referenced.get(t).add(rel);
       }
     }
   }
   return referenced;
+}
+
+// ── The durable surface, as a reusable unit ─────────────────────────────────
+// Exported because ci:column-reachability asks this guard's question one level
+// down and must get the same answer. The column guard skips a table that nothing
+// durable creates, as THIS guard's finding; if the two disagreed about which
+// tables are durable, that skip would land on a table this guard also passes,
+// and neither would report it.
+
+/**
+ * The files drizzle-kit push reads: every `schema` entry in drizzle.config.ts,
+ * plus whatever those files `export * from`, recursively.
+ *
+ * Scoped the way drizzle scopes it, NOT by walking shared/. Walking the whole
+ * tree counted tables that drizzle never creates — shared/cmc-schema.ts declares
+ * quality_specifications, project_workflows, module_documents, defense_packets
+ * and document_audit_logs, none of which is re-exported, all of which are
+ * queried by live server code, and none of which any migration creates either.
+ * They were registered as "durably created" here, so this guard reported green
+ * while those tables existed on no database and their endpoints 500'd.
+ *
+ * Read from drizzle.config.ts rather than assumed to be shared/schema.ts: the
+ * config lists three entries, and an earlier revision that hard-coded the first
+ * one never saw the tables of the other two.
+ */
+export function drizzlePushFiles() {
+  const configSrc = fs.existsSync(path.join(repoRoot, 'drizzle.config.ts'))
+    ? read(path.join(repoRoot, 'drizzle.config.ts'))
+    : '';
+  const schemaDecl = /\bschema\s*:\s*(\[[^\]]*\]|'[^']*'|"[^"]*")/.exec(configSrc);
+  const entries = schemaDecl
+    ? [...schemaDecl[1].matchAll(/['"]([^'"]+)['"]/g)].map((m) => path.resolve(repoRoot, m[1]))
+    : [path.join(repoRoot, 'shared/schema.ts')];
+  const files = [];
+  const seen = new Set();
+  const visit = (abs) => {
+    if (seen.has(abs) || !fs.existsSync(abs)) return;
+    seen.add(abs);
+    files.push(abs);
+    for (const m of read(abs).matchAll(/export\s+\*\s+from\s+['"](\.[^'"]+)['"]/g)) {
+      for (const ext of ['.ts', '/index.ts', '']) {
+        const candidate = path.resolve(path.dirname(abs), `${m[1].replace(/\.js$/, '')}${ext}`);
+        if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+          visit(candidate);
+          break;
+        }
+      }
+    }
+  };
+  entries.forEach(visit);
+  return files;
+}
+
+let surfaceMemo = null;
+
+/**
+ * Which .sql files a real deployment runs, which tables they create, and in what
+ * order — computed once per process.
+ *
+ * `applyIndex(rel)` is a file's position in C2C_MIGRATION_FILES, or -1 for the
+ * base every deploy applies the set ON TOP OF (drizzle push, the root migrations/
+ * overlay, the gcc tree, the authoring subsystem), or null when nothing runs it.
+ * `creatorIndex` maps a table to the earliest apply position that creates it
+ * (+Infinity for tables only runtime server DDL creates, which happens at boot,
+ * after every migration). Order matters to anything that vouches for a column
+ * added by a catalog sweep: a sweep only touches tables that already exist.
+ */
+export function durableSurface({ setFiles } = {}) {
+  // `setFiles` replaces C2C_MIGRATION_FILES for one call — how a test shows the
+  // guards failing on a real defect by un-wiring its migration. Only the default
+  // surface is memoized.
+  if (!setFiles && surfaceMemo) return surfaceMemo;
+  const set = setFiles ?? C2C_MIGRATION_FILES;
+  const journal = fs.existsSync(path.join(repoRoot, 'migrations/meta/_journal.json'))
+    ? read(path.join(repoRoot, 'migrations/meta/_journal.json'))
+    : '';
+  const installFresh = read(path.join(repoRoot, 'scripts/db/install-fresh.mjs'));
+  const namedDurable = new Set([...set, ...AUTHORING_SUBSYSTEM_FILES]);
+  const setIndex = new Map(set.map((f, i) => [f, i]));
+
+  /** Is this repo-relative .sql on a path a real deployment runs? */
+  const isDurable = (rel) => {
+    const base = path.basename(rel);
+    if (namedDurable.has(rel)) return true;
+    if (/_gcc_/.test(base)) return true;
+    if (journal.includes(base.replace(/\.sql$/, ''))) return true;
+    if (installFresh.includes(rel) || installFresh.includes(base)) return true;
+    // The root migrations/ tree is the drizzle lineage install-fresh overlays —
+    // its TOP LEVEL only. install-fresh lists it with a flat readdirSync, so a
+    // subdirectory is never applied: migrations/_legacy/ holds files moved out
+    // precisely because a canonical creator supersedes them (its README), and
+    // counting them durable let a table look created by a file nothing runs.
+    if (/^migrations\/[^/]+\.sql$/.test(rel)) return true;
+    return false;
+  };
+  const applyIndex = (rel) => (!isDurable(rel) ? null : setIndex.has(rel) ? setIndex.get(rel) : -1);
+
+  const durableTables = new Set();
+  const deadCreators = new Map(); // table -> [files]
+  const creatorIndex = new Map(); // table -> earliest apply index
+  const noteCreator = (t, idx) => {
+    durableTables.add(t);
+    if (!creatorIndex.has(t) || idx < creatorIndex.get(t)) creatorIndex.set(t, idx);
+  };
+
+  for (const abs of walk(path.join(repoRoot, 'db/migrations'), (n) => n.endsWith('.sql'))) {
+    const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
+    if (rel.includes('/_legacy/') || rel.includes('/_archive/')) continue;
+    const created = tablesIn(read(abs));
+    if (isDurable(rel)) {
+      for (const t of created) noteCreator(t, applyIndex(rel));
+    } else {
+      for (const t of created) {
+        if (!deadCreators.has(t)) deadCreators.set(t, []);
+        deadCreators.get(t).push(rel);
+      }
+    }
+  }
+  for (const abs of walk(path.join(repoRoot, 'migrations'), (n) => n.endsWith('.sql'))) {
+    const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
+    if (!isDurable(rel)) continue; // a subdirectory: see isDurable
+    for (const t of tablesIn(read(abs))) noteCreator(t, -1);
+  }
+  // drizzle push surface. Push creates nothing outside `public`
+  // (scripts/db/install-fresh.mjs, step 2): a pgSchema('vault').table(…) is
+  // durable only if SQL creates it, so only unqualified names count here.
+  const drizzleFiles = drizzlePushFiles();
+  for (const abs of drizzleFiles) {
+    const src = read(abs);
+    for (const m of src.matchAll(/pg(?:Table|View|MaterializedView)\(\s*['"]([a-z0-9_]+)['"]/gi)) {
+      noteCreator(m[1].toLowerCase(), -1);
+    }
+    for (const t of drizzleColumns(src).tables) if (!t.includes('.')) noteCreator(t, -1);
+  }
+  // runtime DDL in server code is a real (if discouraged) provisioning path.
+  for (const abs of walk(path.join(repoRoot, 'server'), (n) => n.endsWith('.ts'))) {
+    const src = read(abs);
+    if (!/CREATE\s+TABLE/i.test(src)) continue;
+    for (const t of tablesIn(src)) noteCreator(t, Number.POSITIVE_INFINITY);
+  }
+
+  const surface = { isDurable, applyIndex, durableTables, deadCreators, creatorIndex, drizzleFiles };
+  if (!setFiles) surfaceMemo = surface;
+  return surface;
 }
 
 export { qualify, tablesIn, stripSqlComments, NOT_A_RELATION, sqlishSegments, REF_RE, repoRoot };
@@ -294,83 +462,7 @@ if (!isEntryPoint) {
 } else {
 
 // ── 1. The durable creator set ──────────────────────────────────────────────
-const journal = fs.existsSync(path.join(repoRoot, 'migrations/meta/_journal.json'))
-  ? read(path.join(repoRoot, 'migrations/meta/_journal.json'))
-  : '';
-const installFresh = read(path.join(repoRoot, 'scripts/db/install-fresh.mjs'));
-const namedDurable = new Set([...C2C_MIGRATION_FILES, ...AUTHORING_SUBSYSTEM_FILES]);
-
-/** Is this repo-relative .sql on a path a real deployment runs? */
-function isDurable(rel) {
-  const base = path.basename(rel);
-  if (namedDurable.has(rel)) return true;
-  if (/_gcc_/.test(base)) return true;
-  if (journal.includes(base.replace(/\.sql$/, ''))) return true;
-  if (installFresh.includes(rel) || installFresh.includes(base)) return true;
-  // The root migrations/ tree is the drizzle lineage the journal replays.
-  if (rel.startsWith('migrations/') && !rel.startsWith('migrations/meta/')) return true;
-  return false;
-}
-
-const durableTables = new Set();
-const deadCreators = new Map(); // table -> [files]
-
-for (const abs of walk(path.join(repoRoot, 'db/migrations'), (n) => n.endsWith('.sql'))) {
-  const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
-  if (rel.includes('/_legacy/') || rel.includes('/_archive/')) continue;
-  const created = tablesIn(read(abs));
-  if (isDurable(rel)) {
-    for (const t of created) durableTables.add(t);
-  } else {
-    for (const t of created) {
-      if (!deadCreators.has(t)) deadCreators.set(t, []);
-      deadCreators.get(t).push(rel);
-    }
-  }
-}
-for (const abs of walk(path.join(repoRoot, 'migrations'), (n) => n.endsWith('.sql'))) {
-  for (const t of tablesIn(read(abs))) durableTables.add(t);
-}
-// drizzle push surface — provisions fresh installs from shared/schema.ts.
-//
-// Scoped the way drizzle scopes it, NOT by walking shared/. drizzle.config.ts
-// sets `schema: './shared/schema.ts'`, so drizzle-kit sees that one file plus
-// what it re-exports and nothing else. Walking the whole tree counted tables
-// that drizzle never creates — shared/cmc-schema.ts declares
-// quality_specifications, project_workflows, module_documents,
-// defense_packets and document_audit_logs, none of which is re-exported, all
-// of which are queried by live server code, and none of which any migration
-// creates either. They were registered as "durably created" here, so this
-// guard reported green while those tables existed on no database and their
-// endpoints 500'd. Verified against a fresh install: absent, with named
-// consumers in server/.
-const drizzleEntry = path.join(repoRoot, 'shared/schema.ts');
-const drizzleFiles = [drizzleEntry];
-if (fs.existsSync(drizzleEntry)) {
-  const entrySrc = read(drizzleEntry);
-  for (const m of entrySrc.matchAll(/export\s+\*\s+from\s+['"](\.[^'"]+)['"]/g)) {
-    for (const ext of ['.ts', '/index.ts']) {
-      const candidate = path.resolve(repoRoot, 'shared', `${m[1]}${ext}`);
-      if (fs.existsSync(candidate)) {
-        drizzleFiles.push(candidate);
-        break;
-      }
-    }
-  }
-}
-for (const abs of drizzleFiles) {
-  if (!fs.existsSync(abs)) continue;
-  const src = read(abs);
-  for (const m of src.matchAll(/pg(?:Table|View|MaterializedView)\(\s*['"]([a-z0-9_]+)['"]/gi)) {
-    durableTables.add(m[1].toLowerCase());
-  }
-}
-// runtime DDL in server code is a real (if discouraged) provisioning path.
-for (const abs of walk(path.join(repoRoot, 'server'), (n) => n.endsWith('.ts'))) {
-  const src = read(abs);
-  if (!/CREATE\s+TABLE/i.test(src)) continue;
-  for (const t of tablesIn(src)) durableTables.add(t);
-}
+const { durableTables, deadCreators } = durableSurface();
 
 // ── 2. Tables the server actually queries ───────────────────────────────────
 // The scan itself lives in `referencedTables` above, so this guard and the
@@ -444,6 +536,17 @@ if (added.length) {
   console.error(`  scripts/db/migration-set.mjs — or the table will exist on no real`);
   console.error(`  database and every endpoint that queries it will 500 in production,`);
   console.error(`  while ci:unbacked-tables still reports it "backed".`);
+  // db/migrations/_consolidated/ is a snapshot of a legacy schema that is refused
+  // on purpose (migration-set.mjs). "Put it on an applier" is the wrong advice
+  // there: those files are not replay-safe and their shapes are not this schema's.
+  const consolidatedOnly = added.filter((t) =>
+    findings[t].createdOnlyBy.every((f) => f.startsWith('db/migrations/_consolidated/')),
+  );
+  if (consolidatedOnly.length) {
+    console.error(`\n  EXCEPT ${consolidatedOnly.join(', ')}: created only under db/migrations/_consolidated/,`);
+    console.error(`  which must never be wired. Delete the dead reference, move it onto the`);
+    console.error(`  canonical store, or write a NEW replay-safe migration in the set.`);
+  }
   process.exit(1);
 }
 

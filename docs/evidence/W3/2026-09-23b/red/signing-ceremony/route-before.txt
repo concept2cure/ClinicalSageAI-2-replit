@@ -1,0 +1,239 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > a signing PIN alone signs nothing
+PIN verified successfully for signer@test.co
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > a signing PIN alone signs nothing
+{
+  "timestamp": "2026-09-23T09:23:36.924Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc D1 by signer@test.co",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > a signing PIN alone signs nothing 57ms
+   → a PIN signed a document: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the account password and the enrolled code, and records that 7ms
+   → {"error":"PIN required for signature"}: expected 400 to be 200 // Object.is equality
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses the password alone when an authenticator is enrolled 9ms
+   → expected undefined to be 'MFA_TOKEN_REQUIRED' // Object.is equality
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses a wrong code, counts it against the account, and writes nothing 4ms
+   → expected 400 to be 401 // Object.is equality
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the password when no authenticator is enrolled, and records that 5ms
+   → {"error":"PIN required for signature"}: expected 400 to be 200 // Object.is equality
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > a signing PIN alone signs nothing
+PIN verified successfully for signer@test.co
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > a signing PIN alone signs nothing
+{
+  "timestamp": "2026-09-23T09:23:36.995Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by signer@test.co",
+  "context": {}
+}
+
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses a wrong password and writes nothing 23ms
+   → expected 400 to be 401 // Object.is equality
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > a signing PIN alone signs nothing 11ms
+   → a PIN signed a document: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the account password and the enrolled code, and records that 15ms
+   → {"error":"PIN and reason are required for signing"}: expected 400 to be 200 // Object.is equality
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses the password alone when an authenticator is enrolled 7ms
+   → expected undefined to be 'MFA_TOKEN_REQUIRED' // Object.is equality
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses a wrong code, counts it against the account, and writes nothing 4ms
+   → expected 400 to be 401 // Object.is equality
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the password when no authenticator is enrolled, and records that 3ms
+   → {"error":"PIN and reason are required for signing"}: expected 400 to be 200 // Object.is equality
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses a wrong password and writes nothing 3ms
+   → expected 400 to be 401 // Object.is equality
+ × server/routes/__tests__/authoring-sign-ceremony.test.ts > the PIN store > has no route that sets a PIN: POST /users/pin is gone 3ms
+   → a session can still set the signing credential: expected 400 to be 404 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > a signing PIN alone signs nothing
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > a signing PIN alone signs nothing
+AssertionError: a PIN signed a document: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/authoring-sign-ceremony.test.ts:159:55
+    157|           .set('Authorization', await bearer())
+    158|           .send({ pin: PIN, ...ACT[path] });
+    159|         expect(res.status, 'a PIN signed a document').toBe(400);
+       |                                                       ^
+    160|         expect(res.body.code).toBe('PASSWORD_REQUIRED');
+    161|         expect(signatureInsert()).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the account password and the enrolled code, and records that
+AssertionError: {"error":"PIN required for signature"}: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ server/routes/__tests__/authoring-sign-ceremony.test.ts:170:54
+    168|           .set('Authorization', await bearer())
+    169|           .send({ password: 'right-password', mfaToken: '135790', ...A…
+    170|         expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                      ^
+    171|         const insert = signatureInsert();
+    172|         expect(insert?.params).toContain('password+mfa');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses the password alone when an authenticator is enrolled
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses the password alone when an authenticator is enrolled
+AssertionError: expected undefined to be 'MFA_TOKEN_REQUIRED' // Object.is equality
+
+- Expected:
+"MFA_TOKEN_REQUIRED"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/authoring-sign-ceremony.test.ts:183:31
+    181|           .send({ password: 'right-password', ...ACT[path] });
+    182|         expect(res.status).toBe(400);
+    183|         expect(res.body.code).toBe('MFA_TOKEN_REQUIRED');
+       |                               ^
+    184|         expect(signatureInsert()).toBeUndefined();
+    185|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses a wrong code, counts it against the account, and writes nothing
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses a wrong code, counts it against the account, and writes nothing
+AssertionError: expected 400 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 400
+
+ ❯ server/routes/__tests__/authoring-sign-ceremony.test.ts:193:28
+    191|           .set('Authorization', await bearer())
+    192|           .send({ password: 'right-password', mfaToken: '000000', ...A…
+    193|         expect(res.status).toBe(401);
+       |                            ^
+    194|         expect(res.body.code).toBe('MFA_VERIFICATION_FAILED');
+    195|         expect(h.failures).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the password when no authenticator is enrolled, and records that
+AssertionError: {"error":"PIN required for signature"}: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ server/routes/__tests__/authoring-sign-ceremony.test.ts:204:54
+    202|           .set('Authorization', await bearer())
+    203|           .send({ password: 'right-password', ...ACT[path] });
+    204|         expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                      ^
+    205|         expect(signatureInsert()?.params).toContain('password');
+    206|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses a wrong password and writes nothing
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses a wrong password and writes nothing
+AssertionError: expected 400 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 400
+
+ ❯ server/routes/__tests__/authoring-sign-ceremony.test.ts:213:28
+    211|           .set('Authorization', await bearer())
+    212|           .send({ password: 'wrong', ...ACT[path] });
+    213|         expect(res.status).toBe(401);
+       |                            ^
+    214|         expect(res.body.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    215|         expect(signatureInsert()).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the account password and the enrolled code, and records that
+AssertionError: {"error":"PIN and reason are required for signing"}: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ server/routes/__tests__/authoring-sign-ceremony.test.ts:170:54
+    168|           .set('Authorization', await bearer())
+    169|           .send({ password: 'right-password', mfaToken: '135790', ...A…
+    170|         expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                      ^
+    171|         const insert = signatureInsert();
+    172|         expect(insert?.params).toContain('password+mfa');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the password when no authenticator is enrolled, and records that
+AssertionError: {"error":"PIN and reason are required for signing"}: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ server/routes/__tests__/authoring-sign-ceremony.test.ts:204:54
+    202|           .set('Authorization', await bearer())
+    203|           .send({ password: 'right-password', ...ACT[path] });
+    204|         expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                      ^
+    205|         expect(signatureInsert()?.params).toContain('password');
+    206|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  server/routes/__tests__/authoring-sign-ceremony.test.ts > the PIN store > has no route that sets a PIN: POST /users/pin is gone
+AssertionError: a session can still set the signing credential: expected 400 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 400
+
+ ❯ server/routes/__tests__/authoring-sign-ceremony.test.ts:227:74
+    225|       .set('Authorization', await bearer())
+    226|       .send({ pin: '135792468' });
+    227|     expect(res.status, 'a session can still set the signing credential…
+       |                                                                          ^
+    228|     expect(h.poolQuery.mock.calls.some((c) => /user_pins/i.test(String…
+    229|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed (13)
+   Start at  09:23:34
+   Duration  3.02s (transform 1.34s, setup 101ms, import 2.52s, tests 155ms, environment 0ms)
+

@@ -1,0 +1,52 @@
+-- The bypass, reproduced. A policied table the runtime role owns, with
+-- FORCE ROW LEVEL SECURITY never applied: exactly the state 117 real
+-- tables are in, including vault.documents, identity.users,
+-- signing.signatures and evidence.hash_ledger.
+
+BEGIN
+CREATE SCHEMA
+CREATE TABLE
+INSERT 0 2
+ALTER TABLE
+CREATE POLICY
+                           posture                           
+-------------------------------------------------------------
+ owner=c2c  current_user=c2c  rls_enabled=true  forced=false
+(1 row)
+
+SET
+SET
+
+-- Sponsor A session, enforcement ON, correct policy installed:
+ organization_id |              secret              
+-----------------+----------------------------------
+               1 | Sponsor A: BX-701 stability data
+              16 | Sponsor B: CP-200 batch record
+(2 rows)
+
+
+-- Sponsor A read Sponsor B. The policy never ran: Postgres exempts the
+-- table owner from its own policies unless FORCE is set.
+ROLLBACK
+
+-- How many real tables are in this state, by schema:
+      schema      | rls_enabled_not_forced | owned_by_runtime_role 
+------------------+------------------------+-----------------------
+ cortex           |                     29 |                    29
+ innovation       |                     27 |                    27
+ evidence         |                      7 |                     7
+ intelligent_docs |                      7 |                     7
+ ectd_v4          |                      6 |                     6
+ fhir             |                      6 |                     6
+ labeling         |                      5 |                     5
+ registry         |                      5 |                     5
+ product_master   |                      4 |                     4
+ site_intel       |                      4 |                     4
+ public           |                      3 |                     3
+ vault            |                      3 |                     3
+ signing          |                      3 |                     3
+ discovery        |                      3 |                     3
+ predicate        |                      3 |                     3
+ identity         |                      2 |                     2
+(16 rows)
+

@@ -12,6 +12,16 @@
  * for the section header) — a separate spine from the eCTD core, because eSTAR
  * is not eCTD and a device filing is never forced into ectd_sequences.
  *
+ * The PLANNER reads the live region profile (GET /api/region-profiles/:region)
+ * — agency, pathways, the Module 1 sections required for THIS application type,
+ * agency forms, region-specific requirements, and the codified gateway rules the
+ * package will later be validated against. It had named those contents in prose
+ * over a screen that never read them. Profiles exist for five of the twelve
+ * regions the selector offers, so the 404 is a first-class state: "no profile is
+ * registered" is rendered distinctly from a failed read AND from an empty
+ * requirement set, because on a submission screen an empty required-section list
+ * is a statement that nothing is required.
+ *
  * Per-sequence workspaces (SubmissionSeqWorkspaces.tsx) are REAL: a sequence
  * selector feeds Builder (GET/PUT leaves), Validation (dispatch-readiness
  * findings + AI explain), Shadow Review (runs + persisted findings),
@@ -88,6 +98,74 @@ interface SubRow {
 
 // (SeqRow — the `ectd_sequences` display row — now lives in
 // SubmissionSeqWorkspaces.tsx, shared with the per-sequence workspaces.)
+
+/* The region profile GET /api/region-profiles/:region returns. Mirrors
+   SubmissionRegionProfile (server/services/region-profiles/region-profile-service.ts);
+   declared structurally rather than imported because that module is server-side
+   (it reaches into the rule packs), and the client only reads this shape. */
+interface RegionProfileSection {
+  number: string;
+  title: string;
+  titleLocal?: string;
+  required: boolean;
+  /** Application types the `required` flag applies to. Absent = all of them. */
+  requiredFor?: string[];
+  description: string;
+  childSections?: RegionProfileSection[];
+}
+interface RegionProfileForm {
+  name: string;
+  formId?: string;
+  required: boolean;
+  description: string;
+  url?: string;
+}
+interface RegionProfileRule {
+  id: string;
+  severity: string;
+  citation: string;
+  description: string;
+}
+interface RegionProfile {
+  region: string;
+  agency: string;
+  language: string;
+  currency: string;
+  pathways: string[];
+  module1Sections: RegionProfileSection[];
+  forms: RegionProfileForm[];
+  specificRequirements: string[];
+  validationRules: RegionProfileRule[];
+  validationRuleCount: number;
+}
+
+/**
+ * Flatten the Module 1 tree to the sections REQUIRED for this application type.
+ *
+ * `requiredFor` is load-bearing and application-specific: a debarment
+ * certification is required for a marketing application and not for an IND;
+ * the general investigational plan is the reverse. Listing every `required`
+ * section regardless would tell an IND filer they owe paperwork they do not,
+ * which is the same class of false statement as listing none at all.
+ * An ABSENT `requiredFor` means "every application type", per the server's own
+ * contract — so it is kept, not dropped.
+ */
+function requiredModule1For(
+  sections: RegionProfileSection[],
+  applicationType: string | null | undefined,
+): RegionProfileSection[] {
+  const app = applicationType ? String(applicationType).toLowerCase() : null;
+  const out: RegionProfileSection[] = [];
+  const walk = (list: RegionProfileSection[]): void => {
+    for (const s of list) {
+      const appliesHere = !s.requiredFor || !app || s.requiredFor.includes(app);
+      if (s.required && appliesHere) out.push(s);
+      if (s.childSections?.length) walk(s.childSections);
+    }
+  };
+  walk(sections ?? []);
+  return out;
+}
 
 // Deterministic display tone for the submission status enum (not sample data).
 const SUB_STATUS_TONE: Record<string, string> = {
@@ -178,6 +256,41 @@ function reviewClock(f: DeviceFilingRow): string {
 }
 
 // (Chip is imported from SubmissionSeqWorkspaces — one implementation.)
+
+/** Follow-up sequence types: the server's createSequence enum, less 'original' (that is 0000). */
+const FOLLOW_UP_SEQ_TYPES = ['amendment', 'response', 'annual', 'variation', 'withdrawal'] as const;
+
+/** The next sequence number in the submission's own region — numbering restarts per region. */
+function nextSequenceNumber(sub: SubRow, rows: SeqRow[]): string {
+  const taken = rows
+    .filter((r) => r.region === sub.primaryRegion)
+    .map((r) => Number.parseInt(r.sequenceNumber, 10))
+    .filter((n) => Number.isFinite(n));
+  return String((taken.length ? Math.max(...taken) : -1) + 1).padStart(4, '0');
+}
+
+/** Start a follow-up sequence: its number is derived, its type is the author's to state. */
+function NextSequenceControl({ sub, rows, type, onType, busy, onStart }: {
+  sub: SubRow;
+  rows: SeqRow[];
+  type: string;
+  onType: (t: string) => void;
+  busy: boolean;
+  onStart: (sequenceNumber: string) => void;
+}) {
+  const next = nextSequenceNumber(sub, rows);
+  return (
+    <div className="cm-pushbar sc-mt">
+      <select className="sc-subpick" aria-label={`Type of sequence ${next}`} value={type} disabled={busy}
+        onChange={(e) => onType(e.target.value)}>
+        {FOLLOW_UP_SEQ_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+      </select>
+      <button type="button" className="sp-primary sc-btn" disabled={busy} onClick={() => onStart(next)}>
+        {I.sparkles} {busy ? 'Creating…' : `Start sequence ${next}`}
+      </button>
+    </div>
+  );
+}
 
 /** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
 const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'cross-region', 'dispatch']);
@@ -272,6 +385,27 @@ export function SubmissionCenter({
   const [seqBump, setSeqBump] = React.useState(0);
   const seqPath = sub ? `/api/submissions/${sub.id}/sequences` : null;
   const seqs = useLiveRows<SeqRow>(seqPath, [seqPath, seqBump]);
+
+  /* ── The Planner's region profile ────────────────────────────────────────
+     The Planner named this profile's contents in prose — "required modules,
+     granularity, regional Module 1, and the validation profile" — over a
+     screen that never read it. /api/region-profiles is live and auth-gated,
+     and its own header says it serves "the submission UI"; it simply had no
+     caller. This is that caller.
+
+     COVERAGE IS PARTIAL AND THAT IS THE POINT. The region selector offers
+     twelve regions; profiles exist for five (fda, eu, jp, cn, kr), so seven —
+     Health Canada, MHRA, Swissmedic, TGA, ANVISA, CDSCO, HSA — resolve to a
+     404. That 404 must never render as "no requirements": on a submission
+     screen, an empty required-section list is a statement that nothing is
+     required, and for those seven nobody has codified what is. The same
+     fail-visible rule the dispatch assessor already applies to an unregistered
+     region ("the absence of MISSING_REQUIRED_SECTION findings does NOT mean
+     the required sections are present"). */
+  const profilePath = sub?.primaryRegion
+    ? `/api/region-profiles/${encodeURIComponent(String(sub.primaryRegion).toLowerCase())}`
+    : null;
+  const profile = useLiveData<RegionProfile>(profilePath, [profilePath]);
 
   /* The same discriminator for THIS submission's sequences, for the same reason:
      `seqs.rows.length === 0` is true in flight, on failure, and on a genuine
@@ -381,23 +515,28 @@ export function SubmissionCenter({
    * ask the user for. The verdict is the server's, verbatim.
    */
   const [creatingSeq, setCreatingSeq] = React.useState(false);
-  const startFirstSequence = async (target: SubRow) => {
+  const startSequence = async (target: SubRow, sequenceNumber: string, type: string) => {
     if (creatingSeq) return;
     setCreatingSeq(true);
     setNotice(null);
     const r = await mutateVerbatim<SeqRow>('POST', `/api/submissions/${target.id}/sequences`, {
       region: target.primaryRegion,
-      sequenceNumber: '0000',
-      type: 'original',
+      sequenceNumber,
+      type,
     });
     setCreatingSeq(false);
     if (r.data && (r.data as { id?: unknown }).id != null) {
       setSeqBump((b) => b + 1);
-      setNotice({ tone: 'ok', text: `Sequence 0000 created for ${target.title} — server-confirmed.` });
+      setNotice({ tone: 'ok', text: `Sequence ${sequenceNumber} created for ${target.title} — server-confirmed.` });
     } else {
-      setNotice({ tone: 'err', text: `Sequence 0000 not created — ${r.error ?? 'the request failed'}.` });
+      setNotice({ tone: 'err', text: `Sequence ${sequenceNumber} not created — ${r.error ?? 'the request failed'}.` });
     }
   };
+
+  /* A follow-up sequence (WO-9 Click 6). Its number follows the highest in the
+     submission's own region — numbering restarts per region — and its type is
+     the author's to state; the server's enum, less 'original', which is 0000. */
+  const [nextSeqType, setNextSeqType] = React.useState<string>('amendment');
 
   /** Non-governed lifecycle transition — the REAL endpoint, verdict verbatim.
    *  The server refuses frozen/dispatched here (GOVERNED_REQUIRED); those two
@@ -661,6 +800,36 @@ export function SubmissionCenter({
               ? 'unavailable'
               : 'loading',
         lastServerNotice: notice ? { tone: notice.tone, text: notice.text } : null,
+        /* The Planner's region profile. The three outcomes are kept apart here
+           for the same reason they are on screen: an assistant told only
+           "requiredModule1: []" will report that nothing is required, which is
+           true for none of the three cases below. */
+        regionProfile: profile.loading
+          ? 'loading'
+          : profile.status === 404
+            ? {
+                state: 'not-codified',
+                region: sub?.primaryRegion ?? null,
+                detail:
+                  'No region profile is registered for this region. Required Module 1 sections, forms and gateway rules have NOT been codified — this is a rule-pack gap, never a statement that nothing is required.',
+              }
+            : profile.error || !profile.data
+              ? { state: 'unreadable', detail: 'the region-profile read failed; requirements are unknown, not absent' }
+              : {
+                  state: 'codified',
+                  agency: profile.data.agency,
+                  pathways: profile.data.pathways ?? [],
+                  /* Scoped to this application type — see requiredModule1For. */
+                  requiredModule1ForThisApplicationType: requiredModule1For(
+                    profile.data.module1Sections,
+                    sub?.applicationType,
+                  ).map((s) => ({ number: s.number, title: s.title })),
+                  requiredForms: (profile.data.forms ?? [])
+                    .filter((f) => f.required)
+                    .map((f) => ({ formId: f.formId ?? null, name: f.name })),
+                  specificRequirements: profile.data.specificRequirements ?? [],
+                  gatewayRuleCount: profile.data.validationRuleCount ?? 0,
+                },
       },
       availableActions: [
         'Switch workspace — planner, sequences, builder, validation, shadow review, cross-region, dispatch',
@@ -674,6 +843,7 @@ export function SubmissionCenter({
   }, [
     subs.loading, subs.error, list, sub, ws, seqs.loading, seqs.error, seqs.rows, seq,
     deviceRes.loading, deviceRes.error, deviceFilings.length, assembly, notice,
+    profile.loading, profile.error, profile.data,
   ]);
   usePublishSurfaceContext('submission-center', anaContext);
 
@@ -1009,6 +1179,137 @@ export function SubmissionCenter({
                 <span className="tl-spec-v sc-cap">{sub.lifecycleStage}</span>
               </div>
             </div>
+            {/* ── The region profile itself ────────────────────────────────
+                The prose above used to NAME this profile's contents over a
+                screen that never read them. It is read now, with the 404 for
+                an unprofiled region kept distinct from an empty one. */}
+            <div className="sc-mt">
+              {profile.loading ? (
+                <EmptyState icon={I.globe} title="Loading the region profile…" busy />
+              ) : profile.status === 404 ? (
+                /* THE 404, TESTED BEFORE THE GENERIC ERROR. Seven of the twelve
+                   regions the selector offers have no codified profile, and the
+                   route answers 404 for each. That is a different fact from a
+                   failed read — nobody has codified this region, so there is
+                   nothing to retry — and it must not be reported as either a
+                   transient failure or an empty requirement set. Ordering
+                   matters: useLiveData sets `error` for every non-OK status, so
+                   a 404 checked after `error` is unreachable. */
+                <EmptyState
+                  icon={I.globe}
+                  title={`No region profile is registered for ${regL(sub.primaryRegion)}`}
+                  hint="Required Module 1 sections, agency forms and gateway validation rules have not been codified for this region. Their absence here is a gap in the rule pack, not a statement that nothing is required — plan this filing against the agency’s own guidance."
+                />
+              ) : profile.error || !profile.data ? (
+                <EmptyState
+                  tone="error"
+                  icon={I.alertTriangle}
+                  title={`Couldn’t load the ${regL(sub.primaryRegion)} region profile`}
+                  hint="The profile read did not complete, so the required Module 1 sections and validation rules below are unknown — this is a failed read, not an empty requirement set."
+                />
+              ) : (
+                <>
+                  <div className="tl-spec-grid sc-spec">
+                    <div className="tl-spec-row">
+                      <span className="tl-spec-k">Agency</span>
+                      <span className="tl-spec-v">{profile.data.agency}</span>
+                    </div>
+                    <div className="tl-spec-row">
+                      <span className="tl-spec-k">Pathways</span>
+                      <span className="tl-spec-v">
+                        {profile.data.pathways?.length ? profile.data.pathways.join(' · ') : '—'}
+                      </span>
+                    </div>
+                    <div className="tl-spec-row">
+                      <span className="tl-spec-k">Codified gateway rules</span>
+                      <span className="tl-spec-v">{profile.data.validationRuleCount ?? 0}</span>
+                    </div>
+                  </div>
+
+                  {/* Required Module 1, scoped to THIS application type. */}
+                  {(() => {
+                    const req = requiredModule1For(profile.data.module1Sections, sub.applicationType);
+                    return (
+                      <div className="sc-mt">
+                        <div className="tl-spec-k sc-mb">
+                          Required Module 1 for {appL(sub.applicationType)} · {req.length}
+                        </div>
+                        {req.length === 0 ? (
+                          <div className="scaf-note">
+                            The profile codifies no Module 1 section as required for{' '}
+                            {appL(sub.applicationType)} specifically. Sections required for other
+                            application types are not listed here.
+                          </div>
+                        ) : (
+                          <div className="sc-chiprow">
+                            {req.map((s) => (
+                              <span key={s.number} className="rd-chip tone-idle" title={s.description}>
+                                {s.number} {s.title}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Agency forms. */}
+                  {profile.data.forms?.length > 0 && (
+                    <div className="sc-mt">
+                      <div className="tl-spec-k sc-mb">Agency forms</div>
+                      <div className="sc-chiprow">
+                        {profile.data.forms.map((f) => (
+                          <span
+                            key={f.formId ?? f.name}
+                            className={`rd-chip tone-${f.required ? 'warn' : 'idle'}`}
+                            title={f.description}
+                          >
+                            {f.formId ? `${f.formId} · ` : ''}
+                            {f.name}
+                            {f.required ? ' (required)' : ''}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Region-specific requirements, verbatim from the profile. */}
+                  {profile.data.specificRequirements?.length > 0 && (
+                    <div className="sc-mt">
+                      <div className="tl-spec-k sc-mb">Region-specific requirements</div>
+                      <ul className="sc-blockers">
+                        {profile.data.specificRequirements.map((r, i) => (
+                          <li key={i}>{r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* The gateway rules this filing will be validated against —
+                      the same codified set the hardened validator enforces at
+                      package time, shown here BEFORE the package is built. */}
+                  {profile.data.validationRules?.length > 0 && (
+                    <div className="sc-mt">
+                      <div className="tl-spec-k sc-mb">
+                        Gateway validation rules · {profile.data.validationRules.length}
+                      </div>
+                      <div className="sc-chiprow">
+                        {profile.data.validationRules.map((r) => (
+                          <span
+                            key={r.id}
+                            className={`rd-chip tone-${r.severity === 'error' ? 'err' : r.severity === 'warning' ? 'warn' : 'idle'}`}
+                            title={`${r.description} — ${r.citation}`}
+                          >
+                            {r.id}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
             <div className="scaf-note sc-mt">
               {/* Read "AnA builds the sequence plan…" above a button that only
                   opened the chat rail: a capability stated in the present
@@ -1122,7 +1423,7 @@ export function SubmissionCenter({
                   <button
                     type="button"
                     className="sp-primary sc-btn"
-                    onClick={() => void startFirstSequence(sub)}
+                    onClick={() => void startSequence(sub, '0000', 'original')}
                     disabled={creatingSeq}
                   >
                     {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
@@ -1202,6 +1503,14 @@ export function SubmissionCenter({
                     </div>
                   ))}
                 </div>
+                <NextSequenceControl
+                  sub={sub}
+                  rows={seqs.rows}
+                  type={nextSeqType}
+                  onType={setNextSeqType}
+                  busy={creatingSeq}
+                  onStart={(n) => void startSequence(sub, n, nextSeqType)}
+                />
               </>
             )}
           </div>
@@ -1225,6 +1534,10 @@ export function SubmissionCenter({
           }`}
           defaultMeaning={flow.kind === 'freeze' ? 'approval' : 'release'}
           signer={authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined}
+          // The server's re-authentication demands the authenticator code
+          // whenever the signer has one enrolled; without this the modal never
+          // asked for it and an enrolled signer could not freeze or dispatch.
+          requireMfa={authUser?.mfaEnabled === true}
           onClose={() => setFlow(null)}
           onSign={(input) => runGoverned(flow, input)}
         />

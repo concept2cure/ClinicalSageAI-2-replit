@@ -1,0 +1,161 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > keeps the report with its compilation, and its import record commits with it 10ms
+   → expected undefined to be true // Object.is equality
+ × tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report it cannot read, in the parser's words, and stores nothing 2ms
+   → expected "vi.fn()" to be called with arguments: [ 422 ]
+
+Number of calls: 0
+
+ × tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report that is not JSON 1ms
+   → expected "vi.fn()" to be called with arguments: [ 422 ]
+
+Number of calls: 0
+
+ × tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a compilation that is not a package of this program's submission 1ms
+   → expected "vi.fn()" to be called with arguments: [ 404 ]
+
+Number of calls: 0
+
+ × tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written 1ms
+   → expected "vi.fn()" to be called with arguments: [ 500 ]
+
+Number of calls: 0
+
+ × tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a request that names no compilation or carries no report 1ms
+   → expected "vi.fn()" to be called with arguments: [ 400 ]
+
+Number of calls: 0
+
+ × tests/routes/ectd-compile-evalidator-import.test.ts > GET /:projectIdent/history — an imported report is shown with its compilation > reads the stored report back with each compilation 1ms
+   → expected 'SELECT id, compilation_name, compilat…' to match /external_validation/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > keeps the report with its compilation, and its import record commits with it
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ tests/routes/ectd-compile-evalidator-import.test.ts:78:30
+     76|
+     77|     expect(res.status).not.toHaveBeenCalled();
+     78|     expect(payload.imported).toBe(true);
+       |                              ^
+     79|     expect(payload.sequenceNumber).toBe('0001');
+     80|     expect(payload.externalValidation).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report it cannot read, in the parser's words, and stores nothing
+AssertionError: expected "vi.fn()" to be called with arguments: [ 422 ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-evalidator-import.test.ts:111:24
+    109|       text: JSON.stringify({ results: [{ ruleId: '1306', severity: 'Hi…
+    110|     });
+    111|     expect(res.status).toHaveBeenCalledWith(422);
+       |                        ^
+    112|     expect(payload.error.code).toBe('REPORT_UNREADABLE');
+    113|     expect(payload.error.message).toMatch(/not an eValidator report th…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a report that is not JSON
+AssertionError: expected "vi.fn()" to be called with arguments: [ 422 ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-evalidator-import.test.ts:119:24
+    117|   it('refuses a report that is not JSON', async () => {
+    118|     const { res, payload } = await importReport({ compilationId: 31, t…
+    119|     expect(res.status).toHaveBeenCalledWith(422);
+       |                        ^
+    120|     expect(payload.error.code).toBe('REPORT_UNREADABLE');
+    121|     expect(payload.error.message).toMatch(/JSON/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a compilation that is not a package of this program's submission
+AssertionError: expected "vi.fn()" to be called with arguments: [ 404 ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-evalidator-import.test.ts:128:24
+    126|     const client = txClient({ updatedRows: 0 });
+    127|     const { res, payload } = await importReport({ compilationId: 999, …
+    128|     expect(res.status).toHaveBeenCalledWith(404);
+       |                        ^
+    129|     expect(payload.error.code).toBe('COMPILATION_NOT_FOUND');
+    130|     expect(verbs(client)).toEqual(['BEGIN', 'UPDATE', 'ROLLBACK']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > stores nothing when the record of the import cannot be written
+AssertionError: expected "vi.fn()" to be called with arguments: [ 500 ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-evalidator-import.test.ts:138:24
+    136|     auditWrite.mockRejectedValueOnce(new Error('audit_logs unavailable…
+    137|     const { res, payload } = await importReport({ compilationId: 31, t…
+    138|     expect(res.status).toHaveBeenCalledWith(500);
+       |                        ^
+    139|     expect(payload.error.code).toBe('IMPORT_NOT_RECORDED');
+    140|     expect(verbs(client)).toEqual(['BEGIN', 'UPDATE', 'ROLLBACK']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  tests/routes/ectd-compile-evalidator-import.test.ts > POST /:projectIdent/validate — importing an eValidator report > refuses a request that names no compilation or carries no report
+AssertionError: expected "vi.fn()" to be called with arguments: [ 400 ]
+
+Number of calls: 0
+
+ ❯ tests/routes/ectd-compile-evalidator-import.test.ts:146:26
+    144|     for (const body of [{ text: REPORT }, { compilationId: 31 }, { com…
+    145|       const { res } = await importReport(body);
+    146|       expect(res.status).toHaveBeenCalledWith(400);
+       |                          ^
+    147|     }
+    148|     expect(poolConnect).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  tests/routes/ectd-compile-evalidator-import.test.ts > GET /:projectIdent/history — an imported report is shown with its compilation > reads the stored report back with each compilation
+AssertionError: expected 'SELECT id, compilation_name, compilat…' to match /external_validation/
+
+- Expected:
+/external_validation/
+
++ Received:
+"SELECT id, compilation_name, compilation_type, status, version,
+                compiled_at, created_at, sequence_number,
+                leaf_manifest IS NOT NULL AS has_manifest
+         FROM ectd_compilations
+         WHERE organization_id = $1 AND compilation_name ~ $2
+         ORDER BY created_at DESC
+         LIMIT 20"
+
+ ❯ tests/routes/ectd-compile-evalidator-import.test.ts:160:24
+    158|
+    159|     const historySql = poolQuery.mock.calls.map((c) => String(c[0])).f…
+    160|     expect(historySql).toMatch(/external_validation/);
+       |                        ^
+    161|     expect(res.json.mock.calls[0][0].compilations[0].external_validati…
+    162|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  04:06:15
+   Duration  642ms (transform 234ms, setup 73ms, import 284ms, tests 21ms, environment 0ms)
+

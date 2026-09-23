@@ -1,0 +1,404 @@
+# RED: the same file with server/services/c2c/organization-default-workspace.ts at HEAD d40bfd805 (a264e291a's writer, no tenant step); restored after. 2026-09-23T14:17:17Z
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T14:17:20.139Z', poolSize: 1 }
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/signup-launch-catalog.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/signup-launch-catalog.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts
+✅ Platform health/auth routes mounted
+
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > server/db talks to Postgres as the non-superuser runtime role with RLS enforcing 6ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > client_workspaces, module_subscriptions and organization_industry_profiles are RLS-enabled and FORCED 2ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > posture — the connection and the policies are production's > the signup handler's external calls are known-off: no Stripe key, no SMTP host 0ms
+stderr | tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end
+{
+  "timestamp": "2026-09-23T14:17:21.491Z",
+  "message": "[auth] Signup error",
+  "context": {
+    "err": "Failed query: insert into \"client_workspaces\" (\"id\", \"organization_id\", \"name\", \"slug\", \"description\", \"logo\", \"status\", \"quota_projects\", \"quota_storage\", \"contact_name\", \"contact_email\", \"contact_phone\", \"industry\", \"settings\", \"metadata\", \"created_by_id\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, default, default, default, default, default, default, default, $6, $7, default, default) on conflict (\"organization_id\",\"slug\") do nothing returning \"id\"\nparams: 50,dbtsu signup 15144_mue6t1tb,dbtsu-signup-15144-mue6t1tb,Default workspace for dbtsu signup 15144_mue6t1tb,active,{\"defaultForOrganization\":true},461"
+  }
+}
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant
+[database] Database connection successful { timestamp: '2026-09-23T14:17:21.521Z', poolSize: 2 }
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant
+[database] Database connection successful { timestamp: '2026-09-23T14:17:21.522Z', poolSize: 3 }
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant
+[database] Database connection successful { timestamp: '2026-09-23T14:17:21.522Z', poolSize: 4 }
+
+stderr | tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant
+[LicenseManager] Failed to load license: error: invalid input syntax for type integer: "undefined"
+    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)
+    at async Promise.all (index 1)
+    at getLicenseInfo (/home/user/ClinicalSageAI-2-replit/server/services/license-manager.ts:177:40)
+    at async Promise.all (index 0)
+    at Module.resolveNavEntitlements (/home/user/ClinicalSageAI-2-replit/server/services/entitlements/navigation-entitlements.ts:211:26)
+    at /home/user/ClinicalSageAI-2-replit/tests/db/signup-launch-catalog.dbtest.ts:431:14
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  length: 115,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'numutils.c',
+  line: '617',
+  routine: 'pg_strtoint32_safe'
+}
+
+stderr | tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant
+[LicenseManager] Failed to load license: error: invalid input syntax for type integer: "undefined"
+    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)
+    at async Promise.all (index 1)
+    at getLicenseInfo (/home/user/ClinicalSageAI-2-replit/server/services/license-manager.ts:177:40)
+    at getModuleCatalog (/home/user/ClinicalSageAI-2-replit/server/services/license-manager.ts:233:21)
+    at async Promise.all (index 1)
+    at Module.resolveNavEntitlements (/home/user/ClinicalSageAI-2-replit/server/services/entitlements/navigation-entitlements.ts:211:26)
+    at /home/user/ClinicalSageAI-2-replit/tests/db/signup-launch-catalog.dbtest.ts:431:14
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20 {
+  length: 115,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'numutils.c',
+  line: '617',
+  routine: 'pg_strtoint32_safe'
+}
+
+stderr | tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant
+{
+  "timestamp": "2026-09-23T14:17:21.527Z",
+  "message": "[navigation-entitlements] module catalog empty — reporting no verdict",
+  "context": {}
+}
+
+stdout | tests/db/signup-launch-catalog.dbtest.ts > D2 via /api/setup — the first-run path, under the scope its mount applies > the system scope setup runs in grants every launch module, with no failure logged
+{
+  "timestamp": "2026-09-23T14:17:21.563Z",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 91701,
+    "granted": 19
+  }
+}
+
+stderr | tests/db/signup-launch-catalog.dbtest.ts > a refused workspace write takes the whole organisation with it > answers 500 AUTH_010 and leaves no organisation, user, membership or workspace behind
+{
+  "timestamp": "2026-09-23T14:17:21.971Z",
+  "message": "[auth] Signup error",
+  "context": {
+    "err": "Failed query: insert into \"client_workspaces\" (\"id\", \"organization_id\", \"name\", \"slug\", \"description\", \"logo\", \"status\", \"quota_projects\", \"quota_storage\", \"contact_name\", \"contact_email\", \"contact_phone\", \"industry\", \"settings\", \"metadata\", \"created_by_id\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, default, $5, default, default, default, default, default, default, default, $6, $7, default, default) on conflict (\"organization_id\",\"slug\") do nothing returning \"id\"\nparams: 53,dbtsu refused 15144_mue6t1tb,dbtsu-refused-15144-mue6t1tb,Default workspace for dbtsu refused 15144_mue6t1tb,active,{\"defaultForOrganization\":true},462"
+  }
+}
+
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > answers 201 and creates a free-tier organisation whose signing-up user is its admin 4ms
+   → {"success":false,"error":{"code":"AUTH_010","message":"Internal server error"}}: expected 500 to be 201 // Object.is equality
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > grants every launch module to the new organisation — enabled, perpetual, and nothing else 5ms
+   → expected { Object (missing, notEnabled, ...) } to deeply equal { missing: [], notEnabled: [], …(3) }
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > writes the grants as the platform, not a person (enabled_by NULL; the reason lives in the audit trail) 1ms
+   → expected +0 to be 19 // Object.is equality
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > seeds the organization_industry_profiles row from the signup signals 2ms
+   → expected { rows: [], profileWarnings: [] } to deeply equal { rows: [ { …(6) } ], …(1) }
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > gives the new organisation exactly one client workspace — its own, created by the signing-up user 2ms
+   → expected [] to deeply equal [ Array(1) ]
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > logs no launch-provisioning error for the new organisation 1ms
+ × tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant 16ms
+   → expected false to be true // Object.is equality
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > D2 via /api/setup — the first-run path, under the scope its mount applies > the system scope setup runs in grants every launch module, with no failure logged 39ms
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > first-run setup: the system scope its mount applies 9ms
+ × tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > the pre-auth scope (tenant 0, no role): the writer stands on the organisation's own tenant, and it does not outlive the transaction 3ms
+   → new row violates row-level security policy for table "client_workspaces"
+ × tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > the boot seed: its PoolClient under enforcement, run twice, writes one workspace per seeded organisation 15ms
+   → new row violates row-level security policy for table "client_workspaces"
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > a refused workspace write takes the whole organisation with it > answers 500 AUTH_010 and leaves no organisation, user, membership or workspace behind 383ms
+stderr | tests/db/signup-launch-catalog.dbtest.ts > a failed provisioning is never silent > a scope RLS refuses yields every failure, and exactly one error-level summary with the remediation
+{
+  "timestamp": "2026-09-23T14:17:22.004Z",
+  "message": "[launch-scope] launch catalog NOT provisioned for organisation 91702: 19 of 19 launch modules were not granted",
+  "context": {
+    "organizationId": 91702,
+    "attempted": 19,
+    "granted": 0,
+    "failed": 19,
+    "failedModules": [
+      "projects",
+      "program-journey",
+      "filings-catalog",
+      "tasks",
+      "vault",
+      "artifacts-center",
+      "document-authoring",
+      "template-library",
+      "review",
+      "protocol-dev",
+      "submission-center",
+      "dossier-map",
+      "ectd-compile",
+      "ectd-coauthor",
+      "ectd-publishing",
+      "gateway-transmittals",
+      "dispatch-readiness",
+      "quality",
+      "qmp"
+    ],
+    "errors": [
+      "new row violates row-level security policy for table \"module_subscriptions\""
+    ],
+    "scope": {
+      "tenantId": "0",
+      "role": null,
+      "source": "request",
+      "caller": "dbtsu:POST /signup"
+    },
+    "remediation": "npm run ops:provision-launch-modules -- --org 91702"
+  }
+}
+
+ ✓ tests/db/signup-launch-catalog.dbtest.ts > a failed provisioning is never silent > a scope RLS refuses yields every failure, and exactly one error-level summary with the remediation 30ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > answers 201 and creates a free-tier organisation whose signing-up user is its admin
+AssertionError: {"success":false,"error":{"code":"AUTH_010","message":"Internal server error"}}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/db/signup-launch-catalog.dbtest.ts:340:50
+    338|
+    339|   it('answers 201 and creates a free-tier organisation whose signing-u…
+    340|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    341|     expect(Number.isInteger(orgId)).toBe(true);
+    342|     const { rows } = await owner.query(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > grants every launch module to the new organisation — enabled, perpetual, and nothing else
+AssertionError: expected { Object (missing, notEnabled, ...) } to deeply equal { missing: [], notEnabled: [], …(3) }
+
+- Expected
++ Received
+
+  {
+    "expiring": [],
+-   "missing": [],
++   "missing": [
++     "projects",
++     "program-journey",
++     "filings-catalog",
++     "tasks",
++     "vault",
++     "artifacts-center",
++     "document-authoring",
++     "template-library",
++     "review",
++     "protocol-dev",
++     "submission-center",
++     "dossier-map",
++     "ectd-compile",
++     "ectd-coauthor",
++     "ectd-publishing",
++     "gateway-transmittals",
++     "dispatch-readiness",
++     "quality",
++     "qmp",
++   ],
+    "notEnabled": [],
+    "outsideLaunchCatalog": [],
+    "provisioningErrors": [],
+  }
+
+ ❯ tests/db/signup-launch-catalog.dbtest.ts:362:8
+    360|       ...launchGrantGaps(await grantRows(orgId)),
+    361|       provisioningErrors: launchErrors.map((e) => e.context),
+    362|     }).toEqual({ ...NO_GAPS, provisioningErrors: [] });
+       |        ^
+    363|   });
+    364|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > writes the grants as the platform, not a person (enabled_by NULL; the reason lives in the audit trail)
+AssertionError: expected +0 to be 19 // Object.is equality
+
+- Expected
++ Received
+
+- 19
++ 0
+
+ ❯ tests/db/signup-launch-catalog.dbtest.ts:367:25
+    365|   it('writes the grants as the platform, not a person (enabled_by NULL…
+    366|     const rows = await grantRows(orgId);
+    367|     expect(rows.length).toBe(LAUNCH_MODULE_IDS.length);
+       |                         ^
+    368|     expect(rows.filter((r) => r.enabled_by !== null).map((r) => r.modu…
+    369|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > seeds the organization_industry_profiles row from the signup signals
+AssertionError: expected { rows: [], profileWarnings: [] } to deeply equal { rows: [ { …(6) } ], …(1) }
+
+- Expected
++ Received
+
+  {
+    "profileWarnings": [],
+-   "rows": [
+-     {
+-       "default_approval_rigor": null,
+-       "default_markets": [
+-         "US",
+-         "EU",
+-       ],
+-       "default_pathways": [
+-         "510k",
+-         "ind",
+-       ],
+-       "mdx_specialization": "samd",
+-       "primary_industry": "medical_device_diagnostics",
+-       "updated_by": undefined,
+-     },
+-   ],
++   "rows": [],
+  }
+
+ ❯ tests/db/signup-launch-catalog.dbtest.ts:378:78
+    376|       [orgId],
+    377|     );
+    378|     expect({ rows, profileWarnings: profileWarnings.map((w) => w.conte…
+       |                                                                              ^
+    379|       rows: [
+    380|         {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > gives the new organisation exactly one client workspace — its own, created by the signing-up user
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "created_by_id": undefined,
+-     "marker": "true",
+-     "name": "dbtsu signup 15144_mue6t1tb",
+-     "organization_id": undefined,
+-     "slug": "dbtsu-signup-15144-mue6t1tb",
+-     "status": "active",
+-   },
+- ]
++ []
+
+ ❯ tests/db/signup-launch-catalog.dbtest.ts:402:18
+    400|       [orgId],
+    401|     );
+    402|     expect(rows).toEqual([
+       |                  ^
+    403|       {
+    404|         organization_id: orgId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  tests/db/signup-launch-catalog.dbtest.ts > D2 via POST /api/auth/signup — the self-serve path, end to end > the rail, launch scope enforced: every launch surface is available, every live launch module by its grant
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/db/signup-launch-catalog.dbtest.ts:437:27
+    435|       delete process.env.LAUNCH_SCOPE_ENFORCE;
+    436|     }
+    437|     expect(rail.resolved).toBe(true);
+       |                           ^
+    438|     expect(rail.launchScope).toEqual({ enforced: true });
+    439|     expect(rail.tier).toBe('free');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > the pre-auth scope (tenant 0, no role): the writer stands on the organisation's own tenant, and it does not outlive the transaction
+error: new row violates row-level security policy for table "client_workspaces"
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ Object.insertWorkspace server/services/c2c/organization-default-workspace.ts:218:19
+    216|     },
+    217|     async insertWorkspace(orgId, identity, createdById) {
+    218|       const res = await client.query<{ id: string | number }>(
+       |                   ^
+    219|         `INSERT INTO client_workspaces
+    220|            (organization_id, name, slug, description, status, created_…
+ ❯ ensureOrganizationDefaultWorkspace server/services/c2c/organization-default-workspace.ts:192:23
+ ❯ tests/db/signup-launch-catalog.dbtest.ts:536:24
+ ❯ tests/db/signup-launch-catalog.dbtest.ts:531:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 140, severity: 'ERROR', code: '42501', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'execMain.c', routine: 'ExecWithCheckOptions' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  tests/db/signup-launch-catalog.dbtest.ts > the organisation's own workspace, under each creator's scope > the boot seed: its PoolClient under enforcement, run twice, writes one workspace per seeded organisation
+error: new row violates row-level security policy for table "client_workspaces"
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ Object.insertWorkspace server/services/c2c/organization-default-workspace.ts:218:19
+    216|     },
+    217|     async insertWorkspace(orgId, identity, createdById) {
+    218|       const res = await client.query<{ id: string | number }>(
+       |                   ^
+    219|         `INSERT INTO client_workspaces
+    220|            (organization_id, name, slug, description, status, created_…
+ ❯ ensureOrganizationDefaultWorkspace server/services/c2c/organization-default-workspace.ts:192:23
+ ❯ seedOrganizations server/db/bootstrap/seed-default-org.ts:66:5
+ ❯ tests/db/signup-launch-catalog.dbtest.ts:564:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 140, severity: 'ERROR', code: '42501', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'execMain.c', routine: 'ExecWithCheckOptions' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 8 passed (16)
+   Start at  14:17:17
+   Duration  4.48s (transform 1.42s, setup 74ms, import 1.38s, tests 2.70s, environment 0ms)
+

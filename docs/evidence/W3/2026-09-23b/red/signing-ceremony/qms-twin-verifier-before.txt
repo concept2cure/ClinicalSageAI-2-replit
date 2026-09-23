@@ -1,0 +1,202 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses an empty body with 400 naming the missing signature components, and writes nothing 29ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a meaning other than APPROVED — an approval means one thing 4ms
+ ✓ server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a signer whose org role carries no signing authority with 403, before checking the password 4ms
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a wrong password with 401, counts it against the account, and writes nothing 10ms
+   → expected 'PASSWORD_INVALID' to be 'PASSWORD_VERIFICATION_FAILED' // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a locked account with 423 before its password is compared (F-27) 6ms
+   → expected 401 to be 423 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the password alone from a signer with an authenticator enrolled 3ms
+   → expected 401 to be 400 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the author approving their own document with 403 and rolls back 3ms
+   → expected 401 to be 403 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a document that is not draft/in_review with 409 3ms
+   → expected 401 to be 409 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > 404s a document outside the tenant 6ms
+   → expected 401 to be 404 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT 3ms
+   → expected 401 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > records password+totp only when the verifier actually verified a second factor 3ms
+   → expected 401 to be 200 // Object.is equality
+ × server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > rolls the approval back when the signature row cannot be written — never effective without a signature 3ms
+   → expected 401 to be 500 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a wrong password with 401, counts it against the account, and writes nothing
+AssertionError: expected 'PASSWORD_INVALID' to be 'PASSWORD_VERIFICATION_FAILED' // Object.is equality
+
+Expected: "PASSWORD_VERIFICATION_FAILED"
+Received: "PASSWORD_INVALID"
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:178:35
+    176|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    177|     expect(res.status).toBe(401);
+    178|     expect(res.body.details.code).toBe('PASSWORD_VERIFICATION_FAILED');
+       |                                   ^
+    179|     expect(H.compare).toHaveBeenCalledWith('wrong', 'stored-hash');
+    180|     expect(H.failures).toHaveBeenCalledWith(SIGNER);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a locked account with 423 before its password is compared (F-27)
+AssertionError: expected 401 to be 423 // Object.is equality
+
+- Expected
++ Received
+
+- 423
++ 401
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:188:24
+    186|     H.account.locked = true;
+    187|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    188|     expect(res.status).toBe(423);
+       |                        ^
+    189|     expect(res.body.details.code).toBe('ACCOUNT_LOCKED');
+    190|     expect(H.compare).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the password alone from a signer with an authenticator enrolled
+AssertionError: expected 401 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 401
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:198:24
+    196|     H.account.mfa = true;
+    197|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    198|     expect(res.status).toBe(400);
+       |                        ^
+    199|     expect(res.body.details.code).toBe('MFA_TOKEN_REQUIRED');
+    200|     expect(H.txQuery).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses the author approving their own document with 403 and rolls back
+AssertionError: expected 401 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 401
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:206:24
+    204|   it('refuses the author approving their own document with 403 and rol…
+    205|     const res = await request(app(AUTHOR)).post('/api/mdx/qms/document…
+    206|     expect(res.status).toBe(403);
+       |                        ^
+    207|     expect(res.body.details.code).toBe('QMS_SELF_APPROVAL');
+    208|     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'ROLLBACK']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > refuses a document that is not draft/in_review with 409
+AssertionError: expected 401 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 401
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:216:24
+    214|     scriptTransaction({ ...DRAFT, status: 'effective' });
+    215|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    216|     expect(res.status).toBe(409);
+       |                        ^
+    217|     expect(res.body.details.code).toBe('QMS_INVALID_STATE');
+    218|     expect(H.persistSignature).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — electronic signature > 404s a document outside the tenant
+AssertionError: expected 401 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 401
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:224:24
+    222|     scriptTransaction(null);
+    223|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    224|     expect(res.status).toBe(404);
+       |                        ^
+    225|     expect(H.persistSignature).not.toHaveBeenCalled();
+    226|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > signs: one electronic_signatures write on the transaction, bound to the content digest, meaning APPROVED, then COMMIT
+AssertionError: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:233:24
+    231|   it('signs: one electronic_signatures write on the transaction, bound…
+    232|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    233|     expect(res.status).toBe(200);
+       |                        ^
+    234|     expect(res.body.data.status).toBe('effective');
+    235|     expect(res.body.data.approver_id).toBe(SIGNER);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > records password+totp only when the verifier actually verified a second factor
+AssertionError: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:274:24
+    272|     H.account.mfa = true;
+    273|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    274|     expect(res.status).toBe(200);
+       |                        ^
+    275|     const params = H.persistSignature.mock.calls[0][1] as Record<strin…
+    276|     expect(params.authenticationMethod).toBe('password+totp');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/routes/__tests__/qms-document-approval-signature.test.ts > POST /api/mdx/qms/documents/:id/approve — the signed write path > rolls the approval back when the signature row cannot be written — never effective without a signature
+AssertionError: expected 401 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 401
+
+ ❯ server/routes/__tests__/qms-document-approval-signature.test.ts:283:24
+    281|     H.persistSignature.mockRejectedValue(new Error('electronic_signatu…
+    282|     const res = await request(app()).post('/api/mdx/qms/documents/11/a…
+    283|     expect(res.status).toBe(500);
+       |                        ^
+    284|     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'UPDATE', 'ROLL…
+    285|     expect(H.release).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 3 passed (12)
+   Start at  10:12:36
+   Duration  2.01s (transform 900ms, setup 82ms, import 1.67s, tests 82ms, environment 0ms)
+

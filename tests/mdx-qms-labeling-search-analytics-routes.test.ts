@@ -9,11 +9,53 @@ import request from 'supertest';
 
 const queryFn = vi.fn();
 
+/* QMS approve is a Part 11 electronic signature (VSR-001 F-3): it re-verifies
+   the signer and runs the approval on a transaction client from
+   pool.connect(). These stand in for the credential check, the signer's org
+   role and the two in-transaction ledger/signature writes, so the approve
+   cases below exercise the route's state transition itself. The signature
+   semantics (refusals, digest binding, rollback) are pinned in
+   server/routes/__tests__/qms-document-approval-signature.test.ts. */
+const S = vi.hoisted(() => ({
+  txQuery: vi.fn(),
+  verify: vi.fn(),
+  role: vi.fn(),
+  recordGoverned: vi.fn(),
+  persistSignature: vi.fn(),
+}));
+
 vi.mock('../server/db', () => ({
-  pool:    { query: (...args: unknown[]) => queryFn(...args) },
+  pool: {
+    query: (...args: unknown[]) => queryFn(...args),
+    connect: async () => ({ query: (...args: unknown[]) => S.txQuery(...args), release: () => undefined }),
+  },
   getPool: () => ({ query: (...args: unknown[]) => queryFn(...args) }),
   db: {},
 }));
+// The signing ceremony runs for real; only its wiring is an account whose
+// password verifies and which has no second factor enrolled.
+vi.mock('../server/services/part11/reverify-signer-deps', () => ({
+  signerReverificationDeps: () => ({
+    loadPasswordHash: async () => 'stored-hash',
+    comparePassword: async () => S.verify(),
+    isMfaEnabled: async () => false,
+    verifyMfaToken: async () => false,
+    isAccountActive: async () => true,
+    isAccountLocked: async () => false,
+    recordFailedAttempt: async () => {},
+    warn: () => {},
+  }),
+}));
+vi.mock('../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: (...args: unknown[]) => S.role(...args),
+}));
+vi.mock('../server/routes/c2c/actions', () => ({
+  recordGovernedAction: (...args: unknown[]) => S.recordGoverned(...args),
+}));
+vi.mock('../server/services/part11/signature-persistence', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../server/services/part11/signature-persistence')>();
+  return { ...real, persistGovernedActionSignature: (...args: unknown[]) => S.persistSignature(...args) };
+});
 
 import qmsRouter from '../server/routes/mdx-qms';
 import labelingRouter from '../server/routes/mdx-labeling';
@@ -39,7 +81,45 @@ function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
 beforeEach(() => {
   queryFn.mockReset();
   queryFn.mockResolvedValue({ rows: [], rowCount: 0 });
+  // Unscripted transactions (e.g. the tamper-proof audit writer behind other
+  // routes) fail loudly rather than fake-succeed against an empty stub.
+  S.txQuery.mockReset().mockRejectedValue(new Error('no transaction scripted for this test'));
+  S.verify.mockReset().mockResolvedValue(true);
+  S.role.mockReset().mockResolvedValue('admin');
+  S.recordGoverned.mockReset().mockResolvedValue({ actionId: 'act_1', auditId: 'aud-1', sha256Chain: 'chain-1' });
+  S.persistSignature.mockReset().mockResolvedValue({ id: 501, signedAt: new Date('2026-05-19T10:00:00.000Z') });
 });
+
+/* The signature components the approve route now requires (password
+   re-authentication, meaning 'APPROVED', reason for change). An empty body is
+   refused 400 ESIGNATURE_COMPONENT_MISSING — pinned in the signature suite. */
+const SIGNED_APPROVAL = {
+  password: 'correct horse',
+  meaning: 'APPROVED',
+  reason: 'Reviewed against QMSR 820.40; approved for release.',
+};
+
+/** The approval transaction: the FOR UPDATE read sees `current`; the UPDATE
+ *  flips it to effective only when it was draft/in_review (the route's WHERE). */
+function scriptApprovalTx(current: Record<string, unknown> | null) {
+  S.txQuery.mockImplementation(async (sql: unknown) => {
+    const text = String(sql).trim();
+    if (/^(BEGIN|COMMIT|ROLLBACK)/.test(text)) return { rows: [] };
+    if (text.includes('FOR UPDATE')) return { rows: current ? [current] : [] };
+    if (text.startsWith('UPDATE qms_documents')) {
+      const approvable = current && ['draft', 'in_review'].includes(String(current.status));
+      return { rows: approvable ? [{ ...current, status: 'effective', effective_date: '2026-05-19' }] : [] };
+    }
+    throw new Error(`unexpected transaction query: ${text.slice(0, 60)}`);
+  });
+}
+
+const QMS_DOC = {
+  id: 1, organization_id: 99, doc_number: 'SOP-001', title: 'CAPA', doc_type: 'sop',
+  category: null, version: '1.0', status: 'draft', effective_date: null, next_review_date: null,
+  author_id: 555, approver_id: null, approved_at: null, superseded_by_id: null, artifact_id: null,
+  metadata: {},
+};
 
 /* ─── Auth gate ──────────────────────────────────────────────── */
 
@@ -88,23 +168,28 @@ describe('QMS routes', () => {
     expect(res.status).toBe(409);
   });
 
+  /* Updated 2026-09-23: approve became a Part 11 e-signature (VSR-001 F-3,
+     OQ-QMS-06) and refuses an empty body with 400. These two cases used to
+     send `{}` and mock one pool.query; they now send the signature the route
+     legitimately requires and script its transaction, and still assert the
+     same two transitions. */
   it('approve flips draft → effective', async () => {
-    queryFn.mockResolvedValueOnce({
-      rows: [{ id: 1, status: 'effective', effective_date: '2026-05-19' }],
-    });
+    scriptApprovalTx({ ...QMS_DOC, status: 'draft' });
     const res = await request(makeApp())
       .post('/api/mdx/qms/documents/1/approve')
-      .send({});
+      .send(SIGNED_APPROVAL);
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('effective');
+    expect(S.txQuery.mock.calls.map((c) => String(c[0]).trim().split(/\s+/)[0])).toContain('COMMIT');
   });
 
   it('approve 409 when not in draft/in_review', async () => {
-    queryFn.mockResolvedValueOnce({ rows: [] });
+    scriptApprovalTx({ ...QMS_DOC, status: 'retired' });
     const res = await request(makeApp())
       .post('/api/mdx/qms/documents/1/approve')
-      .send({});
+      .send(SIGNED_APPROVAL);
     expect(res.status).toBe(409);
+    expect(S.persistSignature).not.toHaveBeenCalled();
   });
 
   it('training-ack requires document in tenant', async () => {

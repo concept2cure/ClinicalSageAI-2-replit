@@ -77,8 +77,10 @@ export async function createProtocolDocumentTx(client: Queryable, orgId: number,
   return { id, sectionsSeeded: template.length };
 }
 
-async function loadDoc(client: Queryable, orgId: number, docId: number): Promise<{ kind: ProtocolKind; status: string; version: string }> {
-  const d = await client.query(`SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [docId, orgId]);
+async function loadDoc(client: Queryable, orgId: number, docId: number, lock = false): Promise<{ kind: ProtocolKind; status: string; version: string }> {
+  // `lock` holds the row for the transaction, so two concurrent finalizations
+  // cannot both read 'draft' and both commit a version and a signature.
+  const d = await client.query(`SELECT protocol_kind, status, version FROM protocol_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1${lock ? ' FOR UPDATE' : ''}`, [docId, orgId]);
   if (d.rows.length === 0) throw new ProtocolDevError('NOT_FOUND', 'Protocol document not found for this organization.');
   return { kind: d.rows[0].protocol_kind, status: d.rows[0].status, version: d.rows[0].version };
 }
@@ -370,7 +372,7 @@ export async function snapshotVersionTx(client: Queryable, orgId: number, userId
 
 /** Finalize — gated on the deterministic completeness check; bumps to the next major version. */
 export async function finalizeProtocolTx(client: Queryable, orgId: number, userId: number, docId: number): Promise<{ finalized: true; version: string; completeness: CompletenessResult }> {
-  const doc = await loadDoc(client, orgId, docId);
+  const doc = await loadDoc(client, orgId, docId, true);
   if (doc.status === 'finalized') throw new ProtocolDevError('INVALID_STATE', 'Protocol is already finalized.');
   if (doc.status === 'superseded') throw new ProtocolDevError('INVALID_STATE', 'Protocol is superseded.');
   const completeness = evaluateCompleteness(await completenessInputFor(orgId, docId, doc.kind));

@@ -39,7 +39,17 @@
 import { db } from '../../db';
 import { getPool } from '../../db';
 import { coauthorDocuments } from '../../../shared/schema';
-import { getSequence, listLeaves, listSequences, upsertLeaf } from '../submission-service/submission-service';
+import {
+  getSequence,
+  getSubmission,
+  listLeaves,
+  listSequences,
+  upsertLeaf,
+} from '../submission-service/submission-service';
+import {
+  vocabularyForApplicationType,
+  type PlacementVocabulary,
+} from '../../../shared/regulatory/placement-vocabulary';
 import { evaluateFinalExportGate, type FinalExportGateVerdict } from './final-export-gate';
 import { getSectionLabels } from '../module3-convergence-service';
 import { renderComposedSectionMarkdown, type GeneratedTable } from '../module3Composer';
@@ -97,6 +107,18 @@ export type PlaceModule3Result =
       /** The gate's own wording — surfaced verbatim to the caller. */
       error: string;
       data: FinalExportGateVerdict['data'];
+    }
+  | {
+      placed: false;
+      /**
+       * The target submission does not file on CTD headings, so no Module 3
+       * section code it could be given would be accepted. Refused before
+       * anything is read or written.
+       */
+      refusedBy: 'wrong-submission-type';
+      error: string;
+      /** The vocabulary the target actually files on — named, not implied. */
+      vocabulary: PlacementVocabulary;
     }
   | {
       placed: false;
@@ -192,6 +214,14 @@ async function fileSectionAsLeaf(params: {
       content: renderComposedSectionMarkdown(label, narrative, tables),
       status: 'approved',
       moduleNumber: leafSectionCode,
+      /* The IND checklist reads coauthor_documents.module_name, not title, and
+         falls back to the raw code when both the blueprint and this column are
+         empty (ind-checklist-view-assembler.ts enrichSection). Five of the
+         twenty CMC section keys are absent from the IND blueprint — m3.1, m3.3
+         and the three §3.2.A appendices — so leaving this NULL listed them as
+         sections literally titled "m3.1", "m3.2.A.2" beside fifteen properly
+         named ones, while the label they should carry was already in scope. */
+      moduleName: label,
       createdBy: String(userId),
       metadata: {
         placedFrom: 'cmc-module3-os',
@@ -286,6 +316,33 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
   const sequence = await getSequence(sequenceId, { organizationId: orgId });
   if (Number((sequence as { submissionId?: number }).submissionId) !== submissionId) {
     throw new Error('NOT_FOUND: The sequence does not belong to the stated submission.');
+  }
+
+  // 2a. The target must file on CTD headings. upsertLeaf judges every section
+  // code against the vocabulary of its submission's application type
+  // (shared/regulatory/placement-vocabulary.ts), and a Module 3 section code is
+  // a CTD code — 'm3.2.S.1' is not an IRB slot and not an eSTAR device section.
+  // Asked at the submission, before anything is read or written, because
+  // discovering it inside the per-section loop meant: the first section's
+  // coauthor_documents snapshot was already inserted, upsertLeaf then threw a
+  // VALIDATION error the route's catch did not recognise, and the caller got a
+  // 500 whose body told a CMC lead to file their drug substance at
+  // 'irb.consent'. The vocabulary is read through the one resolver, so a new
+  // submission type cannot make this check and upsertLeaf's disagree.
+  const submission = await getSubmission(submissionId, { organizationId: orgId });
+  const targetVocabulary = vocabularyForApplicationType(
+    (submission as { applicationType?: string | null }).applicationType ?? null,
+  );
+  if (targetVocabulary !== 'ctd') {
+    return {
+      placed: false,
+      refusedBy: 'wrong-submission-type',
+      error:
+        `Module 3 files on CTD headings, and this submission files on ${targetVocabulary} ` +
+        'sections. Nothing was written. Place Module 3 into an eCTD submission ' +
+        '(IND, NDA, BLA or their equivalents).',
+      vocabulary: targetVocabulary,
+    };
   }
 
   // 2b. A section already placed in an earlier sequence of this submission is

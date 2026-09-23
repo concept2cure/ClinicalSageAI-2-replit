@@ -455,6 +455,22 @@ export const C2C_MIGRATION_FILES = [
   // get the columns from shared/schema.ts via push. Additive ALTER … ADD COLUMN
   // IF NOT EXISTS, idempotent, safe to re-run.
   'db/migrations/20260730_ectd_compilations_sequence_columns.sql',
+  // The per-sequence leaf manifest (added to the set 2026-09-22, WO-09 Click 6).
+  // package-from-core reads the PRIOR sequence's ectd_compilations.leaf_manifest to
+  // derive every replace/append/delete and its modified-file pointer, and the
+  // compile route writes it. The column reached FRESH installs through drizzle
+  // push, but this file — the existing-database half — was on no applier, and
+  // deploy-migrate runs no push. On a database provisioned before 2026-07-30 the
+  // compile's manifest INSERT failed, was caught as a warning, and every later
+  // sequence was diffed against no prior state at all. Proven on a copy of such a
+  // database: drop the column, run this applier, the column stays absent; with
+  // this entry, it returns. ADD COLUMN IF NOT EXISTS: idempotent, RULE 1 safe.
+  'db/migrations/20260730_ectd_compilations_leaf_manifest.sql',
+  // An imported agency-validator (LORENZ eValidator) report, kept with the
+  // compilation whose package it covered (2026-09-23, W5/D7, WO-9 Click 6).
+  // ADD COLUMN IF NOT EXISTS on a table already under the tenant sweep:
+  // idempotent, additive, RULE 1 safe.
+  'db/migrations/20260923_ectd_compilations_external_validation.sql',
   // ── Part 11 DB-level immutability (added 2026-07-30, auth/e-sig audit) ────
   // electronic_signatures: DELETE always refused; UPDATE refused except the
   // write-once supersession transition (superseded_by NULL → id).
@@ -815,11 +831,19 @@ export const C2C_MIGRATION_FILES = [
   // which the clearance-universe file creates — which is exactly why it failed
   // the earlier screen in isolation.
   //
-  // These tables carry NO tenant column, verified against the live instance: the
-  // FDA 510(k) clearance universe and regulatory precedents are public reference
-  // data every tenant reads, so the isolation sweep correctly leaves them alone.
+  // The FDA 510(k) clearance universe carries NO tenant column: public reference
+  // data every tenant reads, so the isolation sweep correctly leaves it alone.
+  // precedent.regulatory_precedents carries a NULLABLE organization_id (NULL =
+  // public precedent, else private to that org), added and policied by the
+  // 20260617 file directly below.
   'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
   'db/migrations/20260306_precedent_engine.sql',
+  // Wired 2026-09-22, and it must follow its creator: before 20260306 its
+  // IF EXISTS guard would no-op on a blank database and the column would arrive
+  // only on the SECOND deploy. It was on no applier until then, so every corpus
+  // search raised 42703 (`column "organization_id" does not exist`) on every
+  // database, swallowed to [] — precedent search could only ever answer "none".
+  'db/migrations/20260617_precedent_org_isolation.sql',
   'db/migrations/20260208_phase6_6a_risk_rollups.sql',
 
   // ── C-38: the three identity collisions, reconciled to canonical ─────────
@@ -2489,6 +2513,44 @@ export const C2C_MIGRATION_FILES = [
   // install-fresh-only and was amended in place to match. Guarded on
   // to_regclass; above the final pair, which ci:migration-set-order pins last.
   'migrations/20260922e_amendment_declarations_nullable.sql',
+
+  // ── Every organisation gets its own client workspace ─────────────────────
+  // The repair half of the fix for NO_CLIENT_WORKSPACE. The three organisation
+  // creators now write the workspace inside their own transaction
+  // (services/c2c/organization-default-workspace.ts); this sweep covers the
+  // organisations that already exist, including any a seed script wrote
+  // directly. Without it, projects.client_workspace_id — NOT NULL — has no
+  // value to take, ensureProgramProjectAnchor skips for EVERY program in that
+  // tenant, and its governed artifacts never reach concept2cure_artifacts.
+  //
+  // Creates no table, so it needs nothing from the isolation sweep below; it is
+  // placed before the final pair because it is a data repair, not a sweep. It
+  // writes only where an organisation has NO workspace: a second one would turn
+  // the anchor writer's unambiguous case into AMBIGUOUS_CLIENT_WORKSPACE and
+  // stop anchoring programs that anchor today. Its only prerequisites,
+  // organizations and client_workspaces, are far earlier in the set.
+  'migrations/20260923_organization_default_client_workspace.sql',
+
+  // ── A TOTP code is accepted once (RFC 6238 §5.2; D6, VSR-001 §13.3 item 1) ─
+  // Registered 2026-09-23. users.mfa_totp_last_step: the time step of the last
+  // accepted code, compared-and-set by mfaService so a verified code cannot open
+  // a second session. ADD COLUMN IF NOT EXISTS only, nullable, no backfill.
+  // public.users has no tenant column and no policy, so nothing for the sweep.
+  // Must precede any server carrying shared/schema.ts's mfaTotpLastStep (bare
+  // select().from(users) expands to every declared column — the C-20 mode).
+  'migrations/20260923_users_mfa_totp_last_step.sql',
+
+  // ── An approval does not outlive the status that carries it (W5/D7) ──────
+  // Registered 2026-09-23 (final pass). A BEFORE INSERT OR UPDATE trigger on
+  // concept2cure_artifacts clears approved_version_id and published_version_id
+  // whenever the status is not approved/locked, so a revoked approval
+  // (approved → review, locked → draft, → archived) cannot be resurrected by a
+  // later arrival at 'approved' that is not the governed approval act, plus a
+  // backfill of rows that already break that rule. No DROP: the trigger is
+  // created only when absent (the 20260921_audit_logs_chain_seq idiom). No new
+  // table, nothing for the sweep. concept2cure_artifacts is a push-provisioned
+  // base table; the file NOTICE-skips where it is absent.
+  'migrations/20260923b_artifact_approval_follows_status.sql',
 
   // ── Protocol deviations: unassessed is NOT ASSESSED, not "minor" ─────────
   // Registered 2026-09-22. severity / category / is_reportable were NOT NULL

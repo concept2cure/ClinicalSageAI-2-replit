@@ -27,7 +27,7 @@
  * Completing is the tasking path's OWN transition, nothing invented here: a
  * PATCH to `completed`. When the server answers 428 ESIGN_REQUIRED (an
  * approval-gated task) the ceremony lives on the Task board, and the panel
- * says so and offers to go there rather than re-implementing a PIN dialog.
+ * says so and offers to go there rather than re-implementing a signing dialog.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { apiRequest, redactInternals, serverMessage, type ApiRequestError } from '@/lib/queryClient';
@@ -282,7 +282,7 @@ function ReviewTaskRow({ task, busy, needsSignature, onTransition, onNav }: Revi
       </div>
       {needsSignature && (
         <div className="scaf-note" role="status" style={{ marginTop: 6, fontSize: 12 }}>
-          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — PIN, meaning, reason — runs on the Task board.
+          Completing this task requires an electronic signature (21 CFR 11 §11.50). The signing ceremony — your password, the meaning, a reason — runs on the Task board.
           {onNav && (
             <button type="button" className="nda-open" style={{ marginLeft: 8 }} onClick={() => onNav('task-board')}>
               Open Task board

@@ -166,7 +166,9 @@ async function main() {
 
   // Market formatting enforcement (datasheet → deterministic checks).
   const fmtOk = await c.req('POST', '/api/submissions/market-specs/us-ectd/validate', { leaves: [{ fileName: 'cover-letter.pdf', filePath: 'm1/us/cover-letter.pdf', fileFormat: 'PDF', fileSizeBytes: 1024 }] });
-  ok('market formatting validation passes clean FDA files', fmtOk.status === 200 && fmtOk.json?.errors === 0, `status ${fmtOk.status}`);
+  // Declared facts are claims (2026-09-22, W5/D7): a clean name passes the naming
+  // rules, and the byte-level rules come back not assessed — never as a pass.
+  ok('market formatting validation: declared names pass naming, byte rules not assessed', fmtOk.status === 200 && fmtOk.json?.errors === 0 && fmtOk.json?.verdict === 'not_assessed', `status ${fmtOk.status}, verdict ${fmtOk.json?.verdict}`);
   const fmtBad = await c.req('POST', '/api/submissions/market-specs/us-ectd/validate', { leaves: [{ fileName: 'Bad Name.PDF' }] });
   ok('market formatting validation flags a bad file name', fmtBad.status === 200 && Array.isArray(fmtBad.json?.findings) && fmtBad.json.findings.some((f) => f.rule === 'FILE_NAMING'), `status ${fmtBad.status}`);
   const fmt404 = await c.req('POST', '/api/submissions/market-specs/nope-xx/validate', { leaves: [] });

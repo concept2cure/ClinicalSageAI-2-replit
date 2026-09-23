@@ -6,8 +6,9 @@
  * none of them — WI's audit put it plainly: "reviewers/comments are API-only".
  * A review that can only be requested through an API is not a review anyone on
  * the study can ask for. The pane now requests a review (reviewer, role, due
- * date) and records a reviewer's disposition, each through its own governed
- * drawer; the disposition route records a signature-grade action.
+ * date) and records a reviewer's disposition. The disposition is an electronic
+ * signature (ProtocolDevSigning.tsx): only the assigned user can sign it, so the
+ * button is disabled, with the reason, for anyone else.
  *
  * CONSENT: the tab used to read `consent: []` — hard-coded in the assembler —
  * and print "0 of 0 required elements present, 0% complete" over whatever had
@@ -21,6 +22,7 @@
  * it is nothing.
  */
 import React from 'react';
+import { useAuthUser } from '@/services/portal/authService';
 import * as PG from './ProtocolGov';
 import { PaneHead, type PaneAction } from './ProtocolDevShared';
 import type { PdevFormKind, PdevFormTarget } from './ProtocolDevForms';
@@ -38,6 +40,10 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
   const name = str(r.reviewer);
   const disposition = str(r.disposition);
   const due = str(r.dueDate);
+  const assignedTo = typeof r.reviewerUserId === 'number' ? r.reviewerUserId : null;
+  const me = Number(useAuthUser()?.id);
+  // The server refuses anyone but the assigned user; say so before the click.
+  const someoneElses = assignedTo !== null && Number.isFinite(me) && assignedTo !== me;
   return (
     <div className="pde-review-row">
       <span className="pde-review-name">{name || 'Unnamed reviewer'}</span>
@@ -56,9 +62,12 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
             type="button"
             className="pg-btn outline"
             aria-label={'Record disposition for ' + (name || 'this reviewer')}
+            disabled={someoneElses}
+            title={someoneElses ? 'Assigned to another user. Only they can sign this disposition.' : undefined}
             onClick={() => onEdit('review-disposition', {
               id: Number(r.id), label: name,
               defaults: disposition ? { disposition } : undefined,
+              reviewerUserId: assignedTo,
             })}
           >
             <PG.Ic n="penLine" s={14} />Record disposition

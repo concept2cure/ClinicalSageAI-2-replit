@@ -2,8 +2,8 @@
  * OQ-004 — Operational Qualification: Submission Center.
  * Protocol: docs/validation/OQ-004-SUBMISSION-CENTER.md. Requirements: docs/validation/URS-004-SUBMISSION-CENTER.md.
  */
-import { createRun, devLogin, helpers } from '../../lib/harness.mjs';
-import { requireSigner } from '../../lib/credentials.mjs';
+import { createRun, helpers } from '../../lib/harness.mjs';
+import { requireSigner, signerCode } from '../../lib/credentials.mjs';
 import { createProgram, ingestPdf, createSubmissionWithSequence } from '../../lib/fixtures.mjs';
 
 const run = await createRun({
@@ -18,6 +18,7 @@ const stamp = helpers.stamp();
 await step(
   {
     id: 'OQ-SUBC-00',
+    kind: 'prerequisite',
     urs: [],
     title: 'Prerequisite: a program with one vault document',
     action: 'POST /api/c2c/projects; POST /api/vault/ingest',
@@ -166,33 +167,61 @@ await step(
   },
 );
 
+/**
+ * §11.200: a signer with a second factor enrolled must not be able to sign with
+ * the password alone. The refusal must write no signature row.
+ */
+async function refusePasswordOnlySignature({ asSigner, expect, signBody, signerRows, password }) {
+  const bare = await asSigner('POST', '/api/c2c/actions/sign', signBody({ password }));
+  expect(
+    bare.status === 401 && bare.json?.error === 'REAUTH_TOTP_REQUIRED',
+    `a password-only signature by a signer with a second factor enrolled expected 401 REAUTH_TOTP_REQUIRED, got ${bare.status}`,
+    bare.json,
+  );
+  expect((await signerRows()).length === 0, 'a signature row exists for the refused password-only signature');
+  return 'password-only signature refused 401 REAUTH_TOTP_REQUIRED with no row written; signed with password + TOTP';
+}
+
 await step(
   {
     id: 'OQ-SUBC-08',
     urs: ['URS-SUBC-007'],
     title: 'CREDENTIALED: sign the sequence under a Part 11 e-signature; freeze is then decided by the composed gate, not by the signature alone',
-    action: 'dev-login as OQ_SIGNER_EMAIL; POST /api/c2c/actions/sign {target:"ectd-sequence:<id>", reason, payload:{intent:"freeze"}, reauth:{password}}; GET /api/part11/signatures/by-target; POST /sequences/:id/freeze {signatureActionId} as the signer',
+    action: 'sign in as OQ_SIGNER_EMAIL with its password (and its authenticator code where the server requires MFA); when the signer has a second factor enrolled (OQ_SIGNER_TOTP_SECRET), first POST /api/c2c/actions/sign with reauth:{password} only; then POST /api/c2c/actions/sign {target:"ectd-sequence:<id>", reason, payload:{intent:"freeze"}, reauth:{password, totp}}; GET /api/part11/signatures/by-target; POST /sequences/:id/freeze {signatureActionId} as the signer',
     expected:
-      'Sign: HTTP 200 with actionId; exactly one electronic_signatures row on ectd-sequence:<id> by the signer. Freeze on this never-validated sequence (status assembling after OQ-SUBC-04): refused 409 INVALID_STATE by the sequence state machine (a valid e-signature is necessary, not sufficient); the sequence status is unchanged. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
+      'A signer with a second factor enrolled: the password-only signature is refused 401 REAUTH_TOTP_REQUIRED and writes no signature row (§11.200). Sign: HTTP 200 with actionId; exactly one electronic_signatures row on ectd-sequence:<id> by the signer, second_factor_verified true when a code was presented. Freeze on this never-validated sequence (status assembling after OQ-SUBC-04): refused 409 INVALID_STATE by the sequence state machine (a valid e-signature is necessary, not sufficient); the sequence status is unchanged. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
     dependsOn: ['OQ-SUBC-03'],
     note: 'The sign action re-authenticates with the account password (verifyReauth) and applies separation of duties (the signer must not be the sequence\'s creator — the run identity). freezeSequence checks the state machine, then the signature, then the deterministic gate; a frozen outcome needs a validated, shadow-reviewed sequence, which this protocol\'s fixture is not. What is qualified here is the signature persistence and that a signature alone does not freeze.',
   },
   async (ctx) => {
     const { api, apiAs, expect, auth, baseUrl, state } = ctx;
-    const signer = await requireSigner(ctx, devLogin, baseUrl, auth.user.email);
+    const signer = await requireSigner(ctx, baseUrl, auth.user.email);
     const asSigner = apiAs(signer.session);
     const target = `ectd-sequence:${state.sequence.id}`;
-    const sign = await asSigner('POST', '/api/c2c/actions/sign', {
+    const signBody = (reauth) => ({
       target,
       reason: 'OQ-004 step 08: e-signature to freeze sequence 0000 for validation',
       payload: { intent: 'freeze' },
-      reauth: { password: signer.password },
+      reauth,
     });
+    const signerRows = async () => {
+      const rows = await api('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(target)}`);
+      expect(rows.status === 200, `signature read expected 200, got ${rows.status}`, rows.json);
+      return (rows.json?.data ?? []).filter((r) => String(r.signer_id) === String(signer.session.user.id));
+    };
+    const secondFactor = signer.totpSecret
+      ? await refusePasswordOnlySignature({ asSigner, expect, signBody, signerRows, password: signer.password })
+      : 'no second factor enrolled';
+    const code = await signerCode(signer);
+    const sign = await asSigner('POST', '/api/c2c/actions/sign', signBody({ password: signer.password, ...(code ? { totp: code } : {}) }));
     expect(sign.status === 200 && sign.json?.actionId, `sign expected 200 with actionId, got ${sign.status}`, sign.json);
-    const rows = await api('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(target)}`);
-    expect(rows.status === 200, `signature read expected 200, got ${rows.status}`, rows.json);
-    const mine = (rows.json?.data ?? []).filter((r) => String(r.signer_id) === String(signer.session.user.id));
-    expect(mine.length === 1, `expected exactly 1 signature row by the signer on ${target}, got ${mine.length}`, rows.json?.data);
+    const mine = await signerRows();
+    expect(mine.length === 1, `expected exactly 1 signature row by the signer on ${target}, got ${mine.length}`, mine);
+    expect(
+      mine[0].second_factor_verified === Boolean(code),
+      `the signature row records second_factor_verified=${mine[0].second_factor_verified} although a code was ${code ? '' : 'not '}presented`,
+      mine[0],
+    );
     const before = await api('GET', `/api/submissions/${state.submission.id}/sequences`);
     const pick = (r) => (Array.isArray(r.json) ? r.json : r.json?.data ?? []).find((x) => x.id === state.sequence.id);
     const statusBefore = pick(before)?.status;
@@ -200,7 +229,7 @@ await step(
     expect(freeze.status === 409 && freeze.json?.error?.code === 'INVALID_STATE', `freeze on a never-validated sequence expected 409 INVALID_STATE, got ${freeze.status}`, freeze.json);
     const after = pick(await api('GET', `/api/submissions/${state.submission.id}/sequences`));
     expect(after && after.status === statusBefore && after.status !== 'frozen', `sequence status changed (${statusBefore} → ${after?.status}) although the freeze was refused`, after);
-    return `sign → actionId ${sign.json.actionId} (${sign.json.state}); 1 electronic_signatures row (id ${mine[0].id}, ${mine[0].signature_meaning ?? mine[0].signature_type}); freeze → 409 INVALID_STATE (${freeze.json.error.message}); sequence status ${after.status} unchanged`;
+    return `${secondFactor}; sign → actionId ${sign.json.actionId} (${sign.json.state}); 1 electronic_signatures row (id ${mine[0].id}, ${mine[0].signature_meaning ?? mine[0].signature_type}, second_factor_verified ${mine[0].second_factor_verified}); freeze → 409 INVALID_STATE (${freeze.json.error.message}); sequence status ${after.status} unchanged`;
   },
 );
 
@@ -240,6 +269,7 @@ await step(
 await step(
   {
     id: 'OQ-SUBC-11',
+    kind: 'unscripted',
     urs: ['URS-SUBC-010'],
     title: 'eCTD compile answers for the program',
     action: 'POST /api/ectd-compile/:programId/compile {region:"FDA", submissionType:"initial"}; GET /status',
@@ -273,6 +303,7 @@ await step(
 await step(
   {
     id: 'OQ-SUBC-13',
+    kind: 'unscripted',
     urs: ['URS-SUBC-011'],
     title: 'Submission Center surface renders the submission',
     action: 'Open /concept2cure/submission-center with the program selected',
@@ -291,6 +322,7 @@ await step(
 await step(
   {
     id: 'OQ-SUBC-14',
+    kind: 'ad-hoc',
     urs: ['URS-SUBC-011'],
     title: 'eCTD compile and publishing surfaces render',
     action: 'Open /concept2cure/ectd-compile and /concept2cure/ectd-publishing',

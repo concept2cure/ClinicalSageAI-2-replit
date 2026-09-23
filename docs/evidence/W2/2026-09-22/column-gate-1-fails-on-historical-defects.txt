@@ -1,0 +1,50 @@
+# scanRepository({ setFiles: C2C_MIGRATION_FILES minus the five historical column migrations })
+# The hardened guard must name every column those migrations add that the server queries.
+ai_claims.verifier_flags
+    added only by: db/migrations/20260224_ai_claims_verifier_flags.sql
+    queried in   : server/routes/chat/send-message.ts
+audit_events.hmac_seal
+    added only by: db/migrations/20260617_audit_events_hmac_seal.sql
+    queried in   : server/services/audit/chain.ts
+gdpr_data_subject_requests.execution_evidence
+    added only by: db/migrations/20260905_gdpr_dsar_execution_evidence.sql
+    queried in   : server/services/compliance/gdprComplianceService.ts
+ivdr_binder_evidence.source_atom_id
+    added only by: db/migrations/20260224_binder_evidence_source_types.sql
+    queried in   : server/routes/ai-claims-routes.ts
+ivdr_binder_evidence.source_retrieval_chunk_id
+    added only by: db/migrations/20260224_binder_evidence_source_types.sql
+    queried in   : server/routes/ai-claims-routes.ts
+ivdr_binder_evidence.source_type
+    added only by: db/migrations/20260224_binder_evidence_source_types.sql
+    queried in   : server/routes/ai-claims-routes.ts
+ivdr_packs.docx_sha256
+    added only by: db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+    queried in   : server/routes/ivdr-binder-routes.ts
+ivdr_packs.docx_size_bytes
+    added only by: db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+    queried in   : server/routes/ivdr-binder-routes.ts
+ivdr_packs.has_warnings
+    added only by: db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+    queried in   : server/routes/ivdr-binder-routes.ts
+ivdr_packs.manifest_sha256
+    added only by: db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+    queried in   : server/routes/ivdr-binder-routes.ts
+ivdr_packs.manifest_size_bytes
+    added only by: db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+    queried in   : server/routes/ivdr-binder-routes.ts
+ivdr_packs.pdf_sha256
+    added only by: db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+    queried in   : server/routes/ivdr-binder-routes.ts
+ivdr_packs.pdf_size_bytes
+    added only by: db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+    queried in   : server/routes/ivdr-binder-routes.ts
+ivdr_packs.warnings_jsonb
+    added only by: db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+    queried in   : server/routes/ivdr-binder-routes.ts
+ivdr_packs.zip_sha256
+    added only by: db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+    queried in   : server/routes/ivdr-binder-routes.ts
+ivdr_packs.zip_size_bytes
+    added only by: db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+    queried in   : server/routes/ivdr-binder-routes.ts

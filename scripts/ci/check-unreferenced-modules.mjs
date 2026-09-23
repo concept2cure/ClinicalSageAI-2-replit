@@ -29,9 +29,9 @@
  * tests/ci/unreferenced-modules.contract.test.ts:
  *
  *   1. ESM-style specifiers name .js for a .ts file.
- *        server/services/ana/submission-chat-handler.ts:21
- *          import { ensureGateway } from '../../routes/chat/shared.js';
- *      resolves to server/routes/chat/shared.TS. Matching the literal extension
+ *        server/services/ana/submission-chat-handler.ts:21 imports
+ *          ensureGateway from routes/chat/shared, spelled with a .js extension,
+ *      and that resolves to server/routes/chat/shared.TS. Matching the literal extension
  *      marks all 8 files in server/routes/chat dead. They are live.
  *
  *   2. Routes also mount from a MANIFEST of path strings, not import literals.
@@ -93,6 +93,18 @@ export const ENTRY_POINTS = [
   // consolidation; deleting this file is deferred until those honesty pins are
   // re-homed, because deleting it today would break the tests that read it.
   'server/services/medicalDeviceService.ts',
+  // Standalone CLI processes, run as `npx tsx <path>` — a shell command line,
+  // never an import, so no module-path literal names them. Each is the
+  // documented producer of filed evidence, and was run to produce it:
+  //   - server/eval/register/run-eval.ts: the register-eval scorer
+  //     (server/eval/register/README.md). `--samples` run recorded in
+  //     docs/evidence/WJ/2026-09-21/README.md; the owed live evaluation is
+  //     `--transcript <file> --min-pass-rate 0.8` over captured AnA turns.
+  //   - server/mcp/client-transcript.ts: the separate-process MCP SDK client
+  //     (docs/connector/README.md) that produced
+  //     docs/evidence/W7/2026-09-20/transcript-mcp-client.md.
+  'server/eval/register/run-eval.ts',
+  'server/mcp/client-transcript.ts',
 ];
 
 const SOURCE_EXT = ['.ts', '.tsx', '.js', '.jsx'];

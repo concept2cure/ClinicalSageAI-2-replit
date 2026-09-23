@@ -1,0 +1,25 @@
+
+/home/user/ClinicalSageAI-2-replit/server/services/ana/AnaToolDefinitions.ts
+  583:1  warning  File has too many lines (2337). Maximum allowed is 500  max-lines
+
+/home/user/ClinicalSageAI-2-replit/server/services/ectd/leaf-source-resolver.ts
+  325:8   warning  Async function 'materializeLeafSources' has too many lines (304). Maximum allowed is 100  max-lines-per-function
+  325:8   warning  Async function 'materializeLeafSources' has a complexity of 77. Maximum allowed is 15     complexity
+  508:11  warning  The value assigned to 'buf' is not used in subsequent statements                          no-useless-assignment
+  658:11  warning  The value assigned to 'bytes' is not used in subsequent statements                        no-useless-assignment
+
+/home/user/ClinicalSageAI-2-replit/server/services/ectd/package-from-core.ts
+   87:8   warning  Async function 'packageSequenceFromCore' has too many lines (191). Maximum allowed is 100  max-lines-per-function
+   87:8   warning  Async function 'packageSequenceFromCore' has a complexity of 33. Maximum allowed is 15     complexity
+  202:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                     max-depth
+  236:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                     max-depth
+  239:13  warning  Blocks are nested too deeply (6). Maximum allowed is 4                                     max-depth
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/regional-packager.ts
+  386:1  warning  Function 'buildFdaBackbone' has a complexity of 20. Maximum allowed is 15                complexity
+  694:8  warning  Async function 'packageEctdSubmission' has too many lines (288). Maximum allowed is 100  max-lines-per-function
+  694:8  warning  Async function 'packageEctdSubmission' has a complexity of 39. Maximum allowed is 15     complexity
+  875:1  warning  File has too many lines (682). Maximum allowed is 500                                    max-lines
+
+✖ 14 problems (0 errors, 14 warnings)
+
