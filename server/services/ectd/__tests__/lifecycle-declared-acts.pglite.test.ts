@@ -140,3 +140,42 @@ describe('declared lifecycle acts', () => {
     }
   });
 });
+
+/*
+ * 2026-09-23 (W5/D7), found by the round-2 review: a declared withdrawal whose
+ * row still names its document resolved that document's bytes, and the delete
+ * leaf kept them — the withdrawn document shipped as a file in the withdrawing
+ * sequence, with an href into this sequence instead of the filed copy.
+ */
+describe('a declared withdrawal ships no bytes', () => {
+  it('withdraws a filed document with a backbone-only delete pointing at the filed copy', async () => {
+    await harness.pglite.exec(`
+      INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
+      VALUES (5, 'withdraw', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
+      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, dispatch_status) VALUES
+        (8, 5, 'fda', '0000', ${ORG}, ${USER}, 'sent'), (9, 5, 'fda', '0001', ${ORG}, ${USER}, NULL);
+      INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
+        (104, ${ORG}, 'Old Manufacture', '<p>v1</p>', '3.2', 'approved'),
+        (105, ${ORG}, 'Cover Letter', '<p>withdrawing</p>', '1.2', 'approved');
+      INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by) VALUES
+        (9, 'm3.2.s.2', 'Old Manufacture', 'delete', 'coauthor_documents', 104, ${ORG}, ${USER}),
+        (9, 'm1.2', 'Cover Letter', 'new', 'coauthor_documents', 105, ${ORG}, ${USER});
+    `);
+    await harness.pglite.query(
+      `INSERT INTO ectd_compilations (organization_id, submission_id, sequence_number, leaf_manifest) VALUES ($1, 5, '0000', $2)`,
+      [ORG, JSON.stringify([{ ctdSection: 'm3.2.s.2', fileName: '3-2-coauthor-documents-104.pdf', href: 'm3/3-2-s-2/3-2-coauthor-documents-104.pdf', md5: 'c'.repeat(32), operation: 'new' }])],
+    );
+    const r = await assemble(9);
+    try {
+      const zip = await JSZip.loadAsync(await fs.readFile(r.bundle.path));
+      const pdfs = Object.keys(zip.files).filter((f) => !zip.files[f].dir && f.endsWith('.pdf'));
+      expect(pdfs.some((f) => f.includes('coauthor-documents-104'))).toBe(false);
+      const xml = await indexXmlOf(r.bundle.path);
+      const del = (xml.match(/<leaf[^>]*operation="delete"[^>]*>/) ?? [''])[0];
+      expect(del).toContain('xlink:href="../0000/m3/3-2-s-2/3-2-coauthor-documents-104.pdf"');
+      expect(r.skipped).toEqual([]);
+    } finally {
+      await r.cleanup();
+    }
+  });
+});
