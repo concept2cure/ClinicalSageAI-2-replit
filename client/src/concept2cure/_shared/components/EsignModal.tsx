@@ -169,6 +169,11 @@ export function EsignModal({
   const [reason, setReason] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [totp, setTotp] = React.useState('');
+  // Learned from the server's password check: the signer has a second factor
+  // enrolled, so the signing endpoint will require its code. The caller may say
+  // so up front with `requireMfa`; when it does not know, the server does.
+  const [mfaEnrolled, setMfaEnrolled] = React.useState(false);
+  const needCode = requireMfa || mfaEnrolled;
   const [phase, setPhase] = React.useState<'form' | 'committing' | 'signed'>('form');
   const [manifest, setManifest] = React.useState<EsigSignedManifest | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -249,7 +254,7 @@ export function EsignModal({
   const canCommit =
     reason.trim().length >= MIN_REASON &&
     password.length >= MIN_PASSWORD &&
-    (!requireMfa || /^\d{6}$/.test(totp));
+    (!needCode || /^\d{6}$/.test(totp));
 
   const commit = async () => {
     if (!canCommit) return;
@@ -265,7 +270,14 @@ export function EsignModal({
         setPhase('form');
         return;
       }
-      if (requireMfa) {
+      if (pw.mfaRequired && !needCode) {
+        // Ask for the code before anything is sent: the signing endpoint would
+        // refuse the signature without it. The password stays entered.
+        setMfaEnrolled(true);
+        setPhase('form');
+        return;
+      }
+      if (needCode) {
         const mfa = await esig.verifyMfa(totp);
         if (!mfa.valid) {
           setError('Authenticator code could not be verified. Enter a current code.');
@@ -280,7 +292,7 @@ export function EsignModal({
         meaning,
         reason: reason.trim(),
         password,
-        totp: requireMfa ? totp : undefined,
+        totp: needCode ? totp : undefined,
       });
       setManifest(signed);
       setPhase('signed');
@@ -458,7 +470,7 @@ export function EsignModal({
               />
             </div>
 
-            {requireMfa ? (
+            {needCode ? (
               <div className="es-field">
                 <label className="es-field-lbl" htmlFor={totpId}>
                   Authenticator code (TOTP)

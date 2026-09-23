@@ -1,0 +1,42 @@
+$ npx vitest run server/services/ana/__tests__/governed-write-gate.test.ts
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every tool with a free-text input is classified — a new one cannot ship unclassified
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > no tool is in both maps
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every classified name is a real tool — no stale entries
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every entry says why
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > the scan still finds the tools the defect was found through
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > author_docx_native: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > commit_document_revision: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > draft_authoring_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > generate_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > insert_document_content: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > pdf_overlay: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > save_document_to_vault: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_biosketch_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_consent_element: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_dms_plan_element: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_protocol_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_vault_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_kit_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_q_sub_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused when the serving model is unknown — absent means refused
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused for GPT-4o, which the registry caps below high-risk
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > an approved model is not refused by the gate
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool that only analyses free text is not gated
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool calling another tool’s handler directly is gated too (assemble_crl_premortem_artifact → author_docx_native)
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Sonnet is refused and nothing is stored
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Opus reaches the handler
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > the caller cannot vouch for the model: a servingModel in the toolContext is overwritten by the one in the response
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > hands every tool call the model that produced it
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > sets the served model from the first response and updates it after every round
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Draft the clinical overview for this project as an authoring document
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: please write section 2.5.4 for me
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Prepare a response to the FDA information request
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: compose the cover letter for the submission
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: take me to CMC
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: what does section 2.5 require?
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: summarise this thread
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: is the submission ready?
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > a drafting request on Balanced is scored high-risk and routed to the flagship tier
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > both routes compute the hint from the message (source pin)
+ Test Files  1 passed (1)
+      Tests  39 passed (39)

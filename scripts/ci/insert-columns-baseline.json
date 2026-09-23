@@ -2,18 +2,6 @@
   "note": "Pre-existing INSERTs naming columns their table does not declare. Each fails at PLAN time (42703) on every execution. Shrink-only: entries may be removed as they are fixed, never added. Regenerate with --write-baseline ONLY when removing fixed entries.",
   "generated": "scripts/ci/check-insert-columns-declared.mjs --write-baseline",
   "violations": [
-    "csr_details.age_range",
-    "csr_details.gender_distribution",
-    "csr_details.processed",
-    "csr_details.processing_status",
-    "csr_details.safety",
-    "csr_details.study_description",
-    "csr_details.study_duration",
-    "csr_details.treatment_arms",
-    "csr_reports.date",
-    "csr_reports.file_name",
-    "csr_reports.file_size",
-    "csr_reports.nctrial_id",
     "device_data_center.extracted_data",
     "device_data_center.fda_requirement",
     "device_data_center.fda_section",
@@ -61,22 +49,5 @@
     "workflow_runs.tenant_id",
     "workflow_runs.total_steps_count",
     "workflow_runs.workflow_definition_id"
-  ],
-  "newlyVisible_2026_09_22": {
-    "reason": "Pre-existing, newly visible on 2026-09-22 when the reference scan (serverSqlFiles in check-migration-reachability.mjs) widened from .ts to .ts/.js/.mjs. Each entry was confirmed absent on a reference database built by install-fresh + the full migration set + the gcc tree. Resolutions are being verified adversarially (2026-09-22 triage) and each entry is removed when its fix lands. Not accepted debt. All twelve are INSERT columns of server/scripts/fetch_and_import.js, the legacy _consolidated shape of csr_reports/csr_details.",
-    "keys": [
-      "csr_details.age_range",
-      "csr_details.gender_distribution",
-      "csr_details.processed",
-      "csr_details.processing_status",
-      "csr_details.safety",
-      "csr_details.study_description",
-      "csr_details.study_duration",
-      "csr_details.treatment_arms",
-      "csr_reports.date",
-      "csr_reports.file_name",
-      "csr_reports.file_size",
-      "csr_reports.nctrial_id"
-    ]
-  }
+  ]
 }

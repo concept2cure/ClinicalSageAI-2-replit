@@ -17,6 +17,19 @@
  *
  * Everything else is real: the router, its authorization, its status codes and
  * the audit call.
+ *
+ * TWO MOUNTS, ONE IMPLEMENTATION (2026-09-22). The platform owner's
+ * cross-workspace queue and decisions are served by
+ * ../admin/master-access-requests under /api/admin/master (a system-scope
+ * prefix), because under RLS the per-user mount can only ever see the caller's
+ * own workspace. Both mounts are the handlers exported by the route under test,
+ * so both are mounted here. The fake does not model RLS — that half is proven
+ * on real PostgreSQL by tests/db/module-access-requests.dbtest.ts.
+ *
+ * THE DECISION IS ONE TRANSACTION holding the request's row lock, on a client
+ * from `pool.connect()`. The fake client records BEGIN / COMMIT / ROLLBACK and
+ * release, so a refusal that leaves a transaction open or a connection checked
+ * out fails here.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
@@ -24,10 +37,31 @@ import request from 'supertest';
 
 const audit = vi.hoisted(() => ({ logAction: vi.fn(async () => undefined) }));
 const master = vi.hoisted(() => ({ resolve: vi.fn(async (_req: unknown) => false) }));
-const db = vi.hoisted(() => ({ query: vi.fn() }));
+const db = vi.hoisted(() => ({
+  query: vi.fn(),
+  /** Transaction control and release, in order, across every checked-out client. */
+  tx: [] as string[],
+}));
 const grantSvc = vi.hoisted(() => ({ writeModuleGrant: vi.fn() }));
 
-vi.mock('../../db.js', () => ({ pool: { query: (...a: any[]) => db.query(...a) } }));
+vi.mock('../../db.js', () => ({
+  pool: {
+    query: (...a: any[]) => db.query(...a),
+    connect: async () => ({
+      query: async (text: string, params?: any[]) => {
+        const verb = text.trim().toUpperCase();
+        if (verb === 'BEGIN' || verb === 'COMMIT' || verb === 'ROLLBACK') {
+          db.tx.push(verb);
+          return { rows: [] };
+        }
+        return db.query(text, params);
+      },
+      release: () => {
+        db.tx.push('release');
+      },
+    }),
+  },
+}));
 vi.mock('../../middleware/auth.js', () => ({
   authenticateToken: (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
@@ -41,6 +75,7 @@ vi.mock('../../services/auditService.js', () => ({ default: audit }));
 vi.mock('../../services/entitlements/module-grants.js', () => grantSvc);
 
 import accessRequestsRouter from '../module-access-requests';
+import masterAccessRequestsRouter from '../admin/master-access-requests';
 
 /* ── The fake table ────────────────────────────────────────────────────────── */
 
@@ -222,6 +257,9 @@ function appWith(user: TestUser | null) {
     next();
   });
   app.use('/api/module-access-requests', accessRequestsRouter);
+  // The Master Administration guard is not mounted: it admits platform staff
+  // too, so the owner check these tests exercise is the pure rule, not it.
+  app.use('/api/admin/master', masterAccessRequestsRouter);
   return app;
 }
 
@@ -239,6 +277,7 @@ beforeEach(() => {
   audit.logAction.mockClear();
   master.resolve.mockReset();
   master.resolve.mockResolvedValue(false);
+  db.tx.length = 0;
   db.query.mockReset();
   db.query.mockImplementation(async (text: string, params?: any[]) => handle(text, params));
 });
@@ -369,9 +408,9 @@ describe('GET / — the administrator queue', () => {
     expect(res.status).toBe(403);
   });
 
-  it('shows the platform owner every workspace', async () => {
+  it('shows the platform owner every workspace, on the platform mount', async () => {
     master.resolve.mockResolvedValue(true);
-    const res = await request(appWith(PLATFORM)).get('/api/module-access-requests?scope=all');
+    const res = await request(appWith(PLATFORM)).get('/api/admin/master/access-requests');
     expect(res.status).toBe(200);
     expect(res.body.scope).toBe('all');
     expect(res.body.requests).toHaveLength(2);
@@ -381,10 +420,28 @@ describe('GET / — the administrator queue', () => {
     ]);
   });
 
-  /* Refused outright, not quietly narrowed to their own workspace. */
-  it('refuses an org admin the all-workspaces scope', async () => {
-    const res = await request(appWith(ORG_ADMIN)).get('/api/module-access-requests?scope=all');
+  /* The per-user mount can only see the caller's workspace, so it refuses the
+     all-workspaces scope for EVERYONE — the owner included — rather than answer
+     200 with one workspace under a heading that says every one. */
+  it('refuses the all-workspaces scope on the per-user mount, even for the owner', async () => {
+    master.resolve.mockResolvedValue(true);
+    for (const user of [PLATFORM, ORG_ADMIN]) {
+      const res = await request(appWith(user)).get('/api/module-access-requests?scope=all');
+      expect(res.status).toBe(400);
+      expect(res.body.requests).toBeUndefined();
+    }
+    expect(db.query).not.toHaveBeenCalledWith(
+      expect.stringContaining('ORDER BY (r.status'),
+      expect.anything(),
+    );
+  });
+
+  /* The platform guard admits staff roles; the owner grant is what reads every
+     workspace. Refused outright, not quietly narrowed. */
+  it('refuses an org admin the platform mount', async () => {
+    const res = await request(appWith(ORG_ADMIN)).get('/api/admin/master/access-requests');
     expect(res.status).toBe(403);
+    expect(res.body.requests).toBeUndefined();
   });
 });
 
@@ -446,6 +503,20 @@ describe('POST /:id/decision — approving and declining', () => {
     expect(res.body.request.status).toBe('declined');
     expect(res.body.request.decisionReason).toBe('Not in this budget period.');
     expect(grantSvc.writeModuleGrant).not.toHaveBeenCalled();
+    // The check and the write are one transaction, committed, connection returned.
+    expect(db.tx).toEqual(['BEGIN', 'COMMIT', 'release']);
+  });
+
+  it('takes the row lock for the status check the decision depends on', async () => {
+    const id = await openRequest();
+    await request(appWith(ORG_ADMIN))
+      .post(`/api/module-access-requests/${id}/decision`)
+      .send({ decision: 'declined', reason: 'Not in this budget period.' })
+      .expect(200);
+    const check = db.query.mock.calls
+      .map((c) => String(c[0]).replace(/\s+/g, ' '))
+      .find((t) => t.includes('FROM module_access_requests WHERE id = $1'));
+    expect(check).toMatch(/FOR UPDATE/);
   });
 
   /* THE AUTHORIZATION TEST. An administrator of another workspace naming this
@@ -460,6 +531,8 @@ describe('POST /:id/decision — approving and declining', () => {
     expect(res.status).toBe(403);
     expect(grantSvc.writeModuleGrant).not.toHaveBeenCalled();
     expect(rows[0].status).toBe('open');
+    // Refused inside the transaction: rolled back, and the connection returned.
+    expect(db.tx).toEqual(['BEGIN', 'ROLLBACK', 'release']);
     expect(audit.logAction).not.toHaveBeenCalledWith(
       expect.objectContaining({
         details: expect.objectContaining({ accessRequestAction: 'request.approved' }),
@@ -477,11 +550,11 @@ describe('POST /:id/decision — approving and declining', () => {
     expect(rows[0].status).toBe('open');
   });
 
-  it('lets the platform owner answer another workspace request', async () => {
+  it('lets the platform owner answer another workspace request, on the platform mount', async () => {
     const id = await openRequest();
     master.resolve.mockResolvedValue(true);
     const res = await request(appWith(PLATFORM))
-      .post(`/api/module-access-requests/${id}/decision`)
+      .post(`/api/admin/master/access-requests/${id}/decision`)
       .send({ decision: 'approved', reason: 'Granted under the pilot agreement.' });
     expect(res.status).toBe(200);
     expect(grantSvc.writeModuleGrant).toHaveBeenCalledWith(
@@ -521,6 +594,7 @@ describe('POST /:id/decision — approving and declining', () => {
     expect(again.status).toBe(409);
     expect(grantSvc.writeModuleGrant).not.toHaveBeenCalled();
     expect(rows[0].decision_reason).toBe('Not in this budget period.');
+    expect(db.tx).toEqual(['BEGIN', 'COMMIT', 'release', 'BEGIN', 'ROLLBACK', 'release']);
   });
 
   /* The de-duplication index is PARTIAL, so an answered request does not block
@@ -544,6 +618,7 @@ describe('POST /:id/decision — approving and declining', () => {
       .post('/api/module-access-requests/4242/decision')
       .send({ decision: 'approved', reason: 'Nothing there.' });
     expect(res.status).toBe(404);
+    expect(db.tx).toEqual(['BEGIN', 'ROLLBACK', 'release']);
   });
 
   /* Fail closed: a read that throws must not render as an empty queue. */

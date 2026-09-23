@@ -3,38 +3,38 @@
 | Field | Value |
 |---|---|
 | Document ID | TM-001 |
-| Version | generated 2026-09-22T22:40:54.286Z |
+| Version | generated 2026-09-23T05:23:50.828Z |
 | Status | DRAFT — UNSIGNED — GENERATED, DO NOT EDIT |
 | Generator | `scripts/validation/build-traceability.mjs` (`npm run validation:traceability`) |
-| Sources | URS-001…006 requirement tables · RA-001 rows · docs/evidence/W3/2026-09-22/OQ-*/result.json · IQ/iq-results.json |
+| Sources | URS-001…006 requirement tables · RA-001 rows · docs/evidence/W3/2026-09-23b/OQ-*/result.json · IQ/iq-results.json |
 
 > This file is regenerated from the URS documents and the executed OQ results. Hand edits are overwritten. A requirement with no executed step reads **uncovered**; a requirement with any failed step reads **fail**; pass with deviations reads **partial**. Nothing here is a pass unless a step recorded a pass.
 
 ## Summary
 
-- Requirements: **67** — pass 66 · partial 1 · fail 0 · open 0 · uncovered 0
-- OQ steps executed: **96** — pass 95 · fail 0 · deviation 1 · not-executed 0
-- IQ-001: 11 pass · 0 fail · 4 deviation (executed 2026-09-22T22:40:22.650Z)
+- Requirements: **69** — pass 67 · partial 2 · fail 0 · open 0 · uncovered 0
+- OQ steps executed: **99** — pass 97 · fail 0 · deviation 2 · not-executed 0
+- IQ-001: 12 pass · 0 fail · 3 deviation (executed 2026-09-23T05:17:43.704Z)
 
 | App | Requirements | Pass | Partial | Fail | Open | Uncovered |
 |---|---|---|---|---|---|---|
-| Projects | 9 | 9 | 0 | 0 | 0 | 0 |
+| Projects | 11 | 11 | 0 | 0 | 0 | 0 |
 | Vault | 10 | 10 | 0 | 0 | 0 | 0 |
 | Authoring | 15 | 14 | 1 | 0 | 0 | 0 |
 | Submission Center | 12 | 12 | 0 | 0 | 0 | 0 |
-| Submission Readiness | 8 | 8 | 0 | 0 | 0 | 0 |
+| Submission Readiness | 8 | 7 | 1 | 0 | 0 | 0 |
 | QMS controlled documents | 13 | 13 | 0 | 0 | 0 | 0 |
 
 ## Protocol executions included
 
 | Protocol | App | Executed | Pass | Fail | Deviation | Not executed | Evidence |
 |---|---|---|---|---|---|---|---|
-| OQ-003 | Authoring | 2026-09-22T22:36:01.384Z | 23 | 0 | 1 | 0 | `docs/evidence/W3/2026-09-22/OQ-AUTHORING/` |
-| OQ-001 | Projects | 2026-09-22T22:35:06.814Z | 16 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-22/OQ-PROJECTS/` |
-| OQ-006 | QMS controlled documents | 2026-09-22T22:37:19.817Z | 20 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-22/OQ-QMS/` |
-| OQ-004 | Submission Center | 2026-09-22T22:36:28.564Z | 15 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-22/OQ-SUBMISSION-CENTER/` |
-| OQ-005 | Submission Readiness | 2026-09-22T22:36:55.403Z | 9 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-22/OQ-SUBMISSION-READINESS/` |
-| OQ-002 | Vault | 2026-09-22T22:35:48.986Z | 12 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-22/OQ-VAULT/` |
+| OQ-003 | Authoring | 2026-09-23T05:19:44.325Z | 23 | 0 | 1 | 0 | `docs/evidence/W3/2026-09-23b/OQ-AUTHORING/` |
+| OQ-001 | Projects | 2026-09-23T05:18:00.578Z | 18 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-23b/OQ-PROJECTS/` |
+| OQ-006 | QMS controlled documents | 2026-09-23T05:21:04.629Z | 20 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-23b/OQ-QMS/` |
+| OQ-004 | Submission Center | 2026-09-23T05:20:12.334Z | 15 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-23b/OQ-SUBMISSION-CENTER/` |
+| OQ-005 | Submission Readiness | 2026-09-23T05:20:41.105Z | 9 | 0 | 1 | 0 | `docs/evidence/W3/2026-09-23b/OQ-SUBMISSION-READINESS/` |
+| OQ-002 | Vault | 2026-09-23T05:19:30.588Z | 12 | 0 | 0 | 0 | `docs/evidence/W3/2026-09-23b/OQ-VAULT/` |
 
 ## Matrix
 
@@ -49,6 +49,8 @@
 | URS-PROJ-007 | The Program Journey read model and the Filings Catalog surface answer honestly for a new organisation (empty state or explained unavailability; never fixture data, never a silent 500). | none | low | ad-hoc | OQ-PROJ-11 (pass)<br>OQ-PROJ-12 (pass) | **pass** |
 | URS-PROJ-008 | With launch scope enforced, the navigation payload marks every out-of-catalog surface as not entitled with source `launch-scope`, the six launch apps are entitled, and a deep link to an out-of-catalog surface renders the "not in this release" gate rather than the surface. | §11.10(d) | medium | scripted | OQ-PROJ-13 (pass)<br>OQ-PROJ-14 (pass) | **pass** |
 | URS-PROJ-009 | A program id that does not belong to the caller's organisation (or does not exist) answers 404 — never 200 with another tenant's data, never 500. | §11.10(d) | high | scripted | OQ-PROJ-15 (pass) | **pass** |
+| URS-PROJ-010 | Every sign-in attempt by a user of an organisation is entered in that organisation's hash-chained audit log and shown on its audit ledger: a wrong password, the second-factor challenge a correct password receives, a wrong code, and the session a verified code opens. A refused attempt reads as refused, never as a sign-in. | §11.10(e) | high | scripted | OQ-PROJ-16 (pass) | **pass** |
+| URS-PROJ-011 | Signing out ends the session. Once a user signs out, the token that session used opens nothing for the rest of its lifetime: the API refuses it with 401 and the session check reports the user signed out. The sign-out is entered in the organisation's hash-chained audit log and shown on its audit ledger. | §11.10(d) §11.10(e) | high | scripted | OQ-PROJ-17 (pass) | **pass** |
 | URS-VAULT-001 | Vault read, search, download, ingest and filing endpoints require an authenticated organisation member; anonymous requests are refused. | §11.10(d) | high | scripted | OQ-VAULT-01 (pass) | **pass** |
 | URS-VAULT-002 | Ingest accepts a multipart upload with `programId` (UUID of a program the organisation owns), `documentCode`, `documentTitle` and `documentType` from the controlled vocabulary, stores one `vault.documents` row with the file's SHA-256 (`contentHash`) and answers 201 with the document and its initial filing. | §11.10(e) | high | scripted | OQ-VAULT-03 (pass) | **pass** |
 | URS-VAULT-003 | Ingest refuses a file whose extension is outside the allowed set (`.pdf .docx .doc .txt .rtf .xlsx .xls .csv .md`) and files over 50 MB with a 4xx and a message; nothing is stored. | none | medium | scripted | OQ-VAULT-02 (pass) | **pass** |
@@ -90,7 +92,7 @@
 | URS-SRDY-002 | The dispatch-readiness assessment of a sequence is computed server-side from stored facts and returns numeric `validationErrors` and `unacknowledgedShadowCriticals`, the release-signature verdict and a `gate.cleared` boolean with the list of blockers; a never-validated, never-shadow-reviewed, unsigned sequence is not cleared. | none | high | scripted | OQ-SRDY-02 (pass) | **pass** |
 | URS-SRDY-003 | Dispatch QC uses the server-side assessment for the sequence (client-supplied counts do not override it) and returns a deterministic QC record without a model in the decision path. | none | high | scripted | OQ-SRDY-03 (pass) | **pass** |
 | URS-SRDY-004 | The `submission_readiness_review` orchestration template is registered with its five orchestrator-logic steps; execution validates that a project id is supplied. | none | medium | scripted | OQ-SRDY-04 (pass) | **pass** |
-| URS-SRDY-005 | Executing the readiness review for a program starts an execution whose status and steps are readable. | none | medium | unscripted | OQ-SRDY-05 (pass) | **pass** |
+| URS-SRDY-005 | Executing the readiness review starts an execution whose status and steps are readable, and the review states what it read: it names the project it assessed, and a project it cannot read is refused or fails with the reason, never assessed as clear. | none | high | scripted | OQ-SRDY-05 (pass)<br>OQ-SRDY-05b (deviation) | **partial** |
 | URS-SRDY-006 | A contradiction scan for a project returns a deterministic result (possibly zero findings) from the assumption and decision registries. | none | medium | scripted | OQ-SRDY-06 (pass) | **pass** |
 | URS-SRDY-007 | The Dispatch Readiness surface shows the open program's newest sequence and its gate verdict — the sequence the user is working on, not another submission's. | none | high | scripted | OQ-SRDY-07 (pass) | **pass** |
 | URS-SRDY-008 | The Orchestration and Inconsistency surfaces render; an unavailable store is shown as an error or empty state, never as data. | none | low | ad-hoc | OQ-SRDY-08 (pass) | **pass** |

@@ -1,0 +1,62 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stderr | server/services/audit/__tests__/auth-event-audit.test.ts > a write that is not persisted > does not fail the request that caused it
+{
+  "timestamp": "2026-09-23T03:19:21.688Z",
+  "level": "warn",
+  "message": "[auth] Audit log write failed (non-fatal)",
+  "context": {
+    "err": "refused",
+    "action": "user_login_mfa_challenge"
+  }
+}
+
+ × server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a number, from the user record) 11ms
+   → expected { tenantId: '0', role: null, …(2) } to match object { tenantId: '1', role: null }
+(2 matching properties omitted from actual)
+ × server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a string, from the signed MFA challenge) 2ms
+   → expected { tenantId: '0', role: null, …(2) } to match object { tenantId: '1', role: null }
+(2 matching properties omitted from actual)
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > leaves the request in the pre-auth scope it arrived in 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (absent) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (null) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (empty) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (zero) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (negative) 0ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (not an id) 1ms
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > a write that is not persisted > does not fail the request that caused it 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a number, from the user record)
+ FAIL  server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a string, from the signed MFA challenge)
+AssertionError: expected { tenantId: '0', role: null, …(2) } to match object { tenantId: '1', role: null }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "role": null,
+-   "tenantId": "1",
++   "tenantId": "0",
+  }
+
+ ❯ server/services/audit/__tests__/auth-event-audit.test.ts:47:25
+     45|
+     46|     expect(h.scopes).toHaveLength(1);
+     47|     expect(h.scopes[0]).toMatchObject({ tenantId: '1', role: null });
+       |                         ^
+     48|   });
+     49|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  03:19:21
+   Duration  330ms (transform 109ms, setup 80ms, import 58ms, tests 22ms, environment 0ms)
+

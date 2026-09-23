@@ -99,7 +99,8 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     if (usersRouter && (typeof usersRouter === 'function' || (usersRouter as any).handle)) {
       // These mounts sit BEFORE the global /api gate, so the gate's
       // authMiddleware (and the scope lever) never runs for them. The router is
-      // MIXED: pre-auth routes (/login, /register, /logout) alongside
+      // MIXED: /login, /register and /logout (307s to the canonical /api/auth
+      // routes since they were found issuing sessions without MFA) alongside
       // authenticated ones (/, /me, /:id, /me/preferences, …), and it verifies
       // JWTs inline rather than via a mount middleware — so it opens no tenant
       // scope of its own. Under RLS_ENFORCE=on the authenticated routes then

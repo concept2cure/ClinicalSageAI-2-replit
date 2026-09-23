@@ -128,9 +128,10 @@ describe('useEstarExport — existing outcomes unchanged', () => {
     expect(outcome?.blockedByEntitlement).toBe(false);
     // The response carries no downloadable_output_ref, so nothing was
     // delivered. This asserted 'Downloaded package' — a success line over a
-    // response that contained no file.
+    // response that contained no file. It also carried no formatting report,
+    // which (2026-09-22, W5/D7) is said rather than read as 0 errors.
     expect(exportStatusLine(false, outcome ?? null)).toBe(
-      'Export accepted, but the server returned no file to download',
+      'Export accepted, but the server returned no file to download · formatting was not checked',
     );
   });
 });
@@ -527,5 +528,51 @@ describe('exportStatusLine — a produced package is not a delivered one', () =>
     expect(line).toContain('browser blocked the download');
     expect(line).toContain('2 formatting errors');
     expect(line).toContain('artifact registry placement pending');
+  });
+});
+
+/* 2026-09-22 (W5/D7): a formatting check that did not run, or could not judge
+   every rule, was rendered exactly like a clean one — the hook coerced a missing
+   report to 0 errors and the status line said nothing. */
+describe('useEstarExport — formatting is not clean unless it was checked', () => {
+  const okBody = (formattingReport: unknown) => ({
+    governed: true,
+    downloadable_output_ref: { filename: 'BX-204_package.zip', data: 'UEsDBA==', mime: 'application/zip' },
+    formattingReport,
+  });
+
+  it('a build with no report reads "not checked", never 0 errors', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(okBody(null)));
+    const { result } = renderHook(() => useEstarExport());
+    let outcome: EstarExportOutcome | undefined;
+    await act(async () => {
+      outcome = await result.current.exportDraftPackage(PROGRAM);
+    });
+    expect(outcome?.formattingErrors).toBeNull();
+    expect(outcome?.formattingVerdict).toBe('not_run');
+    expect(exportStatusLine(false, outcome ?? null)).toContain('formatting was not checked');
+  });
+
+  it('a report without a verdict (an older server) cannot claim it checked everything', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(okBody({ errors: 0, warnings: 0 })));
+    const { result } = renderHook(() => useEstarExport());
+    let outcome: EstarExportOutcome | undefined;
+    await act(async () => {
+      outcome = await result.current.exportDraftPackage(PROGRAM);
+    });
+    expect(outcome?.formattingErrors).toBe(0);
+    expect(outcome?.formattingVerdict).toBe('not_assessed');
+    expect(exportStatusLine(false, outcome ?? null)).toContain('some formatting rules could not be checked');
+  });
+
+  it('a conformant report adds no formatting clause', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(okBody({ errors: 0, warnings: 0, verdict: 'conformant' })));
+    const { result } = renderHook(() => useEstarExport());
+    let outcome: EstarExportOutcome | undefined;
+    await act(async () => {
+      outcome = await result.current.exportDraftPackage(PROGRAM);
+    });
+    expect(outcome?.formattingVerdict).toBe('conformant');
+    expect(exportStatusLine(false, outcome ?? null)).not.toMatch(/formatting/);
   });
 });

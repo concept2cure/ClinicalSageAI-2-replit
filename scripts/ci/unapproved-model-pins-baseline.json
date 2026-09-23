@@ -1,0 +1,65 @@
+{
+  "_comment": "Pins to models not approved for high-risk work that remain in server code, each with the reason it is safe. Classified 2026-09-23 in three passes (docs/evidence/MODEL-GOVERNANCE/2026-09-23/after/pin-sweep-classification.md), each site by one agent and refuted by another; every governed site was fixed rather than listed. Enforced by scripts/ci/check-unapproved-model-pins.mjs: a new pin fails, and so does a removed one until its count here is lowered.",
+  "files": {
+    "server/services/aiProviderRouter.ts": {
+      "count": 8,
+      "reason": "MODEL_CONFIGS is the router's logical provider table, not a model selection: the router sends only a provider to the gateway, the gateway picks the model and applies the high-risk approval filter, and the router records the model the gateway served (2026-09-23)."
+    },
+    "server/services/submission-twin-service.ts": {
+      "count": 7,
+      "reason": "Regulatory digital twin: a CLAUDE.md Rule 2 surface that gets no sessions. Not classified or changed; recorded so a new pin elsewhere cannot hide behind it."
+    },
+    "server/routes/agent-swarm.ts": {
+      "count": 7,
+      "reason": "Display metadata on the agent definitions (GET /agents). The model that serves a swarm task is chosen by the gateway from the mapped task type, and drafting and QC tasks map to document_drafting and regulatory_review."
+    },
+    "server/routes/c2c/context-intelligence.ts": {
+      "count": 2,
+      "reason": "/summarize and /extract-decisions write conversation working memory, not a governed document; the governed path in this file (/promote) routes as document_drafting with no pin."
+    },
+    "server/services/ana/AnaDocumentDraftingService.ts": {
+      "count": 2,
+      "reason": "analyzeImage (document_analysis) and quickComplete (general) return stateless output to the caller; the gateway refuses to send an image to a text-only fallback (MediaNotCarriedError) and /api/claude/quick records the model that served."
+    },
+    "server/lib/unified-ai-client.ts": {
+      "count": 2,
+      "reason": "ai.fast / ai.quick convenience helpers with no callers (2026-09-23). A caller that drafts regulatory content must pass taskType document_drafting instead."
+    },
+    "server/services/predictiveSectionService.ts": {
+      "count": 1,
+      "reason": "Section-order suggestions returned to the editor, not stored; the response now says whether the model's suggestions are included or unavailable."
+    },
+    "server/api/drafting/routes.ts": {
+      "count": 1,
+      "reason": "/extract-entities builds a search index (vault.extracted_entities) that no applier provisions; the governed /generate path in this file routes as document_drafting with no pin."
+    },
+    "server/services/ai/openai-orchestrator.ts": {
+      "count": 1,
+      "reason": "Unreachable: no importer is reachable from server/index.ts since its route was deleted in 3cc8547d2. Listed for deletion by an owner; if revived it must route as document_drafting / regulatory_review."
+    },
+    "server/api/cmc/audit-risk-monitor.js": {
+      "count": 10,
+      "reason": "Every POST handler throws after its first model call (it reads .choices from a response that has none), so no output is stored or returned (classified 2026-09-23). The first calls still send user documents to the pinned model: listed for retirement by an owner; if kept, drop the pins and route as regulatory_review."
+    },
+    "server/api/cmc/cmc-copilot.js": {
+      "count": 5,
+      "reason": "Chat answers appended to a local conversation log file; nothing is written to a governed record or presented as a draft or verdict (classified 2026-09-23)."
+    },
+    "server/api/cmc/manufacturing-tuner.js": {
+      "count": 5,
+      "reason": "Process-optimisation suggestions written to a local output file and returned; no governed record is written and nothing reaches a submission (classified 2026-09-23)."
+    },
+    "server/services/keywordExtractionService.ts": {
+      "count": 1,
+      "reason": "Keyword and term extraction for search and linking; regex matches override the model's terms and the result is not a governed record (classified 2026-09-23)."
+    },
+    "server/services/cognitive-ecosystem/agent-runtime.service.ts": {
+      "count": 1,
+      "reason": "A default written into a private config object that nothing reads; no model call uses it (classified 2026-09-23)."
+    },
+    "server/services/unifiedDocumentIngestion.js": {
+      "count": 1,
+      "reason": "Unreachable: no production path calls processDocument (classified 2026-09-23). Its designed sink is governed, so if revived the call must route as regulatory_review."
+    }
+  }
+}

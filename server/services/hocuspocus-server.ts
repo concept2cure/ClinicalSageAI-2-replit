@@ -67,7 +67,7 @@ import type { Duplex } from 'stream';
 import { WebSocketServer, type WebSocket } from 'ws';
 import * as Y from 'yjs';
 import { createScopedLogger } from '../utils/logger.js';
-import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { verifyLiveToken } from './token-revocation';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { checkOrgMembership, parseFiniteInt } from '../middleware/orgMembership';
 import { getTenantAccessPosture } from './tenant/tenant-lifecycle';
@@ -214,9 +214,10 @@ export async function authenticateCollabConnection({
   //    environment: an unverifiable token is not a user.
   let payload: CollabTokenClaims;
   try {
-    payload = verifyJwtWithRotation<CollabTokenClaims>(token);
-  } catch {
-    throw denied('invalid-token');
+    payload = await verifyLiveToken<CollabTokenClaims>(token);
+  } catch (err) {
+    // A signed-out session opens no editing session (AUTH-03).
+    throw denied((err as { name?: string })?.name === 'SessionEndedError' ? 'session-ended' : 'invalid-token');
   }
 
   // 3. Token class. Refresh / MFA-challenge / MFA-partial tokens are signed

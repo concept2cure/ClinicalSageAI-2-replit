@@ -18,6 +18,17 @@
 import { manifestToPriorLeaves } from './sequence-manifest';
 import type { PriorLeaf } from './lifecycle-operator';
 
+/**
+ * The leaves ONE stored manifest leaves on file. A manifest records its
+ * sequence's withdrawals (operation 'delete'); the leaf a delete names is off
+ * file after that sequence, so a single-sequence read must not hand it to the
+ * lifecycle diff as a leaf on file. The fold below handles this across
+ * sequences; this is the same rule for the two single-sequence reads.
+ */
+function onFileLeaves(manifest: unknown): PriorLeaf[] {
+  return manifestToPriorLeaves(manifest).filter((l) => (l.operation ?? '').trim().toLowerCase() !== 'delete');
+}
+
 /** Minimal pg-pool surface this loader needs. */
 export interface PoolLike {
   query(sql: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }>;
@@ -55,7 +66,7 @@ export async function loadPriorSequenceManifest(
   );
 
   if (!res?.rows?.length) return [];
-  return manifestToPriorLeaves(res.rows[0].leaf_manifest);
+  return onFileLeaves(res.rows[0].leaf_manifest);
 }
 
 /**
@@ -88,7 +99,7 @@ export async function loadLatestPriorManifest(
   if (!res?.rows?.length) return { priorSequenceNumber: '', leaves: [] };
   return {
     priorSequenceNumber: String(res.rows[0].sequence_number ?? ''),
-    leaves: manifestToPriorLeaves(res.rows[0].leaf_manifest),
+    leaves: onFileLeaves(res.rows[0].leaf_manifest),
   };
 }
 

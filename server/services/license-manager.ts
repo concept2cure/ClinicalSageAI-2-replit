@@ -336,7 +336,18 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
  */
 export async function canAccessModule(
   organizationId: number,
-  moduleId: string
+  moduleId: string,
+  opts: {
+    /**
+     * Answer as if no REVOCATION row existed — the question "does this
+     * organisation's plan include the module?", not "may it use the module
+     * now?". Only the admin toggle asks that: it must let an administrator
+     * turn a module they switched off back on. An enabled grant still allows.
+     * Every other caller — the route gate, requireModule, /check — wants the
+     * default, because a revocation outranks the plan.
+     */
+    ignoreRevocation?: boolean;
+  } = {},
 ): Promise<{ allowed: boolean; reason?: string }> {
   const license = await getLicenseInfo(organizationId);
   if (!license) {
@@ -365,6 +376,26 @@ export async function canAccessModule(
   }
 
   const row = moduleResult.rows[0];
+
+  /*
+   * An explicit revocation (enabled = false) outranks the plan. Resolution order
+   * is master admin → the subscription row → tier + industry, and the rail
+   * (getModuleCatalog / decideNavEntitlement) already locks a revoked module as
+   * 'disabled'. This function did not: it dropped the row from enabledModules
+   * and fell through to tier, so a module an administrator had switched off
+   * still answered allowed:true whenever the plan covered it — and the route
+   * gate, requireModule and /check all ask this function. Seen on a
+   * deploy-shaped database 2026-09-22 (tests/db/licensing-trials.dbtest.ts lane:
+   * catalog 'disabled', canAccessModule allowed). A lapsed grant is enabled =
+   * true, so it is untouched by this.
+   */
+  if (row.enabled === false && !opts.ignoreRevocation) {
+    return {
+      allowed: false,
+      reason: `Module '${moduleId}' has been turned off for this organization by an administrator`,
+    };
+  }
+
   const meta = row.metadata || {};
   const requiredTiers: string[] = meta.tiers || [];
   const allowedIndustries: string[] = meta.industries || [];

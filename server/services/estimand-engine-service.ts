@@ -53,6 +53,14 @@ interface MethodRecommendation {
     rationale: string;
   }>;
   regulatoryConsiderations: string;
+  /**
+   * Who produced it. `model`: a model approved for regulatory review, named in
+   * generatedBy. `deterministic`: STRATEGY_METHOD_MAP, because the model call
+   * failed, was refused, or returned something unusable. Until 2026-09-23 the
+   * two were indistinguishable to the caller.
+   */
+  source: 'model' | 'deterministic';
+  generatedBy: { provider: string; model: string } | null;
 }
 
 interface Hypothesis {
@@ -146,6 +154,32 @@ const STRATEGY_METHOD_MAP: Record<
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
+
+
+/**
+ * The model's recommendation, checked before anything is stored. A reply that
+ * parses but lacks a primary method or the analysis lists is not a
+ * recommendation: drizzle drops undefined fields from an update, so it would
+ * have been reported as a success that changed nothing.
+ */
+function readRecommendation(raw: unknown): Omit<MethodRecommendation, 'source' | 'generatedBy'> {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const isMethodList = (v: unknown) =>
+    Array.isArray(v) && v.every((x) => typeof (x as { method?: unknown })?.method === 'string');
+  if (typeof r.primaryMethod !== 'string' || !r.primaryMethod.trim()) {
+    throw new Error('Model recommendation has no primary method');
+  }
+  if (!isMethodList(r.sensitivityAnalyses) || !isMethodList(r.supplementaryAnalyses)) {
+    throw new Error('Model recommendation is missing its sensitivity or supplementary analyses');
+  }
+  return {
+    primaryMethod: r.primaryMethod,
+    primaryMethodRationale: typeof r.primaryMethodRationale === 'string' ? r.primaryMethodRationale : '',
+    sensitivityAnalyses: r.sensitivityAnalyses as MethodRecommendation['sensitivityAnalyses'],
+    supplementaryAnalyses: r.supplementaryAnalyses as MethodRecommendation['supplementaryAnalyses'],
+    regulatoryConsiderations: typeof r.regulatoryConsiderations === 'string' ? r.regulatoryConsiderations : '',
+  };
+}
 
 export class EstimandEngineService {
   private static instance: EstimandEngineService;
@@ -292,7 +326,7 @@ export class EstimandEngineService {
       let recommendation: MethodRecommendation;
 
       try {
-        recommendation = await this.getAIMethodRecommendation(estimand);
+        recommendation = await this.getAIMethodRecommendation(estimand, organizationId);
       } catch (aiError) {
         console.warn('[EstimandEngine] AI method recommendation unavailable, using deterministic fallback:', aiError);
         recommendation = this.getDeterministicRecommendation(estimand);
@@ -319,7 +353,8 @@ export class EstimandEngineService {
   }
 
   private async getAIMethodRecommendation(
-    estimand: EstimandDefinition
+    estimand: EstimandDefinition,
+    organizationId: number
   ): Promise<MethodRecommendation> {
     const intercurrentEvents = estimand.intercurrentEvents as IntercurrentEvent[];
     const iceDescription = intercurrentEvents
@@ -352,8 +387,13 @@ Respond in JSON with this exact structure:
   "regulatoryConsiderations": "<FDA/EMA/PMDA perspective on this approach>"
 }`;
 
+    // A recommended primary analysis for a regulatory estimand is high-risk
+    // regulatory review: only an approved model may serve it. It pinned gpt-4o
+    // as a 'general' request, which the gateway's approval check never sees.
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'regulatory_review',
+      callerModule: 'estimand-engine.recommendMethods',
+      organizationId,
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
       temperature: 0.3,
@@ -365,7 +405,11 @@ Respond in JSON with this exact structure:
       throw new Error('Empty response from AI');
     }
 
-    return JSON.parse(content) as MethodRecommendation;
+    return {
+      ...readRecommendation(JSON.parse(content)),
+      source: 'model',
+      generatedBy: { provider: aiResult.provider, model: aiResult.model },
+    };
   }
 
   private getDeterministicRecommendation(estimand: EstimandDefinition): MethodRecommendation {
@@ -385,7 +429,12 @@ Respond in JSON with this exact structure:
           rationale: 'Explore treatment effect consistency across subgroups.',
         },
       ],
-      regulatoryConsiderations: `The "${estimand.strategy}" strategy with ${mapping.primary} is well-established in regulatory submissions. FDA, EMA, and PMDA have accepted this approach in recent approvals for similar indications.`,
+      // Until 2026-09-23 this claimed "FDA, EMA, and PMDA have accepted this
+      // approach in recent approvals for similar indications" — for every
+      // estimand, from a lookup table, with no precedent consulted.
+      regulatoryConsiderations: `${mapping.primary} is the standard primary method for the "${estimand.strategy}" strategy in the ICH E9(R1) framework. No regulatory precedent was assessed for this recommendation.`,
+      source: 'deterministic',
+      generatedBy: null,
     };
   }
 

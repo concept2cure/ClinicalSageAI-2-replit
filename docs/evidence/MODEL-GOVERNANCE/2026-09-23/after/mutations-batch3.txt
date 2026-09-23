@@ -1,0 +1,49 @@
+Mutations, batch three (the pin-sweep passes 2 and 3): each line is a deliberate defect applied to the source, the named test file run, and the source restored.
+
+T1 traceability general+pin: CAUGHT — 1 failed | 30 passed (31)
+T2 model excerpt preferred: CAUGHT — 1 failed | 30 passed (31)
+T3 missing linkType supports: CAUGHT — 1 failed | 30 passed (31)
+T4 skipped sentences omitted: CAUGHT — 1 failed | 30 passed (31)
+T5 keyword fallback supported: CAUGHT — 1 failed | 30 passed (31)
+C1 confidence general+pin: CAUGHT — 1 failed | 4 passed (5)
+C2 unreadable reply is a verdict: CAUGHT — 1 failed | 4 passed (5)
+F1 figure without data: CAUGHT — 1 failed | 2 passed (3)
+F2 figure general+pin: CAUGHT — 1 failed | 2 passed (3)
+F3 figure empty stored: CAUGHT — 1 failed | 2 passed (3)
+F4 figure literal modelUsed: CAUGHT — 1 failed | 2 passed (3)
+A1 extraction tables general: CAUGHT — 1 failed | 4 passed (5)
+J1 global-compliance transform untyped: CAUGHT — 1 failed | 10 passed (11)
+J2 indCopilot records default model: CAUGHT — 1 failed | 10 passed (11)
+J3 compliance check undefined name: CAUGHT — 1 failed (1)
+J4 compliance check general: CAUGHT — 1 failed (1)
+J5 document generator pinned: CAUGHT — 2 failed | 9 passed (11)
+J6 preclinical draft untyped: CAUGHT — 1 failed | 10 passed (11)
+J7 change-impact untyped: CAUGHT — 1 failed | 10 passed (11)
+
+First-run survivors, all real test weaknesses, fixed and re-run:
+  C3 survived because the test's claim already drew a completeness warning, so its status could not reach 'verified' either way. The claim is now one every rule-based check passes (probed), with a control asserting 'verified'.
+  A2 and A3 survived because in the harness every job also fails later, at storage, so 'the job failed' proved nothing about extraction. The tests now assert the failing stage and its error, plus a no-tables-list case.
+C3 skipped check can be verified: CAUGHT — 3 failed | 2 passed (5)
+A2 unreadable tables = none: CAUGHT — 1 failed | 5 passed (6)
+A3 classification fallback Other: CAUGHT — 1 failed | 5 passed (6)
+
+$ node scripts/ci/check-unapproved-model-pins.mjs --self-test
+  ✓ control — an Opus pin
+  ✓ control — an embedding model
+  ✓ control — a comment names a model
+  ✓ control — a test file
+  ✓ control — the gateway registry
+  ✓ control — a baselined pin, with its reason
+  ✓ a new pin in an unlisted file
+  ✓ a Sonnet pin
+  ✓ a constant pin
+  ✓ a default behind ||
+  ✓ a default behind ??
+  ✓ a second pin in a baselined file
+  ✓ a baseline that was not tightened
+  ✓ a baseline entry with no reason
+
+✓ self-test: 14 cases, every violation caught and the controls clean
+
+$ node scripts/ci/check-unapproved-model-pins.mjs
+✓ unapproved-model-pins: 54 known pin(s), each with a recorded reason; no new ones

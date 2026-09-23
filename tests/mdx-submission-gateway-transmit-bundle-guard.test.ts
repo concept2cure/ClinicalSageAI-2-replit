@@ -55,6 +55,10 @@ vi.mock('bcryptjs', () => ({
 }));
 vi.mock('../server/services/mfaService', () => ({
   verifyToken: vi.fn().mockResolvedValue(true),
+  // The operator has no second factor enrolled. verifyReauth asks (the canonical
+  // §11.200 rule: the code is required whenever one is enrolled) and refuses when
+  // the answer cannot be read, so the fixture has to state it.
+  isMfaEnabled: vi.fn().mockResolvedValue(false),
 }));
 
 // §11.50: a transmit is signed under a meaning the signer declares; the body carries it.

@@ -1,0 +1,163 @@
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-09-23T04:11:32.325Z","pid":24211,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-23T04:11:32.326Z","pid":24211,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-23T04:11:32.326Z","pid":24211,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/sign-in-audit-trail.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T04:11:32.638Z', poolSize: 1 }
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/sign-in-audit-trail.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[mfa] MFA enabled for user 51
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the session it issues
+[database] Database connection successful { timestamp: '2026-09-23T04:11:33.496Z', poolSize: 2 }
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the session it issues
+[database] Database connection successful { timestamp: '2026-09-23T04:11:33.497Z', poolSize: 3 }
+
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the MFA challenge a password sign-in issues, against the organisation
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong authenticator code
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the session /mfa/verify issues
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong password on a real account, against its organisation
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > does not let a token the server never signed write into the organisation chain
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens the API with the session /mfa/verify issued
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the end of a session the server issued, against its organisation
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens nothing once it is signed out (AUTH-03)
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > refuses a session another server signed out, which only the database can know
+ × tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong password 50ms
+   → a wrong password on the enterprise path left no record: expected [] to have a length of 1 but got +0
+ × tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the challenge a correct password receives 19ms
+   → the enterprise challenge left no record: expected [] to have a length of 1 but got +0
+ × tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong code 12ms
+   → a wrong code on the enterprise path left no record: expected [] to have a length of 1 but got +0
+{"level":30,"time":"2026-09-23T04:11:33.577Z","pid":24211,"hostname":"vm","context":{"userId":"51","resourceType":"organization","resourceId":"91800","success":true},"msg":"[audit] [AUDIT] authorization:organization_switch"}
+{"level":30,"time":"2026-09-23T04:11:33.577Z","pid":24211,"hostname":"vm","context":{"userId":"51","tenantId":"91800","resourceId":"91800"},"msg":"[audit-service] [AUDIT] authorization.organization_switch organization"}
+{"level":50,"time":"2026-09-23T04:11:33.591Z","pid":24211,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at <repo>/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (<repo>/server/services/auditService.ts:287:3)\n    at AuditService.logAction (<repo>/server/services/auditService.ts:420:11)\n    at logAuditEvent (<repo>/server/services/audit/auditLogger.ts:99:17)"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ × tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the session it issues 22ms
+   → the enterprise path issued a 24-hour session and recorded nothing: expected [] to have a length of 1 but got +0
+{"level":30,"time":"2026-09-23T04:11:35.607Z","pid":24211,"hostname":"vm","context":{"userId":"51","tenantId":"91800","resourceId":"51"},"msg":"[audit-service] [AUDIT] user_logout user"}
+ × tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records entering an organisation, against that organisation 2091ms
+   → the organisation switch was refused by the audit_logs policy: expected [] to have a length of 1 but got +0
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > ends the session it reports ending, and records it 23ms
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/users/login asks for the code instead of issuing a session
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/user/login asks for the code instead of issuing a session
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > creates no account outside signup
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > the organisation audit chain > verifies end to end over every row the organisation holds
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong password
+AssertionError: a wrong password on the enterprise path left no record: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/sign-in-audit-trail.dbtest.ts:396:76
+    394|
+    395|     const rows = (await auditRows('user_login')).slice(before);
+    396|     expect(rows, 'a wrong password on the enterprise path left no reco…
+       |                                                                            ^
+    397|     expect(rows[0]).toMatchObject({ record_id: String(userId), new_val…
+    398|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the challenge a correct password receives
+AssertionError: the enterprise challenge left no record: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/sign-in-audit-trail.dbtest.ts:407:61
+    405|
+    406|     const rows = (await auditRows('user_login_mfa_challenge')).slice(b…
+    407|     expect(rows, 'the enterprise challenge left no record').toHaveLeng…
+       |                                                             ^
+    408|     expect(rows[0]).toMatchObject({ new_values: { outcome: 'success', …
+    409|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong code
+AssertionError: a wrong code on the enterprise path left no record: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/sign-in-audit-trail.dbtest.ts:420:72
+    418|
+    419|     const rows = (await auditRows('user_login_mfa_failed')).slice(befo…
+    420|     expect(rows, 'a wrong code on the enterprise path left no record')…
+       |                                                                        ^
+    421|     expect(rows[0]).toMatchObject({ new_values: { outcome: 'failure', …
+    422|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the session it issues
+AssertionError: the enterprise path issued a 24-hour session and recorded nothing: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/sign-in-audit-trail.dbtest.ts:435:87
+    433|
+    434|     const rows = (await auditRows('user_login')).slice(before);
+    435|     expect(rows, 'the enterprise path issued a 24-hour session and rec…
+       |                                                                                       ^
+    436|     expect(rows[0]).toMatchObject({ new_values: { outcome: 'success', …
+    437|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records entering an organisation, against that organisation
+AssertionError: the organisation switch was refused by the audit_logs policy: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/sign-in-audit-trail.dbtest.ts:452:82
+    450|       rows = await auditRows('authorization.organization_switch');
+    451|     }
+    452|     expect(rows, 'the organisation switch was refused by the audit_log…
+       |                                                                                  ^
+    453|   });
+    454|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed | 14 skipped (20)
+   Start at  04:11:30
+   Duration  6.05s (transform 1.52s, setup 80ms, import 242ms, tests 5.40s, environment 0ms)
+

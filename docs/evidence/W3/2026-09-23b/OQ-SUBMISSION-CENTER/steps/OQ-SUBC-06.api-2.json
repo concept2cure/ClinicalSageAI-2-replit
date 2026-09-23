@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/submissions/sequences/15/freeze",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 23,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": {
+        "code": "VALIDATION",
+        "details": {
+          "formErrors": [],
+          "fieldErrors": {
+            "signatureActionId": [
+              "Required"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

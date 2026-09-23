@@ -31,6 +31,7 @@ import { interceptChatResponse } from '../../services/intelligence/rim-intercept
 import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
+import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
 import { resolveMaxRounds } from '../../services/ana/agentic-loop.js';
 import {
   isSubstantiveTurn,
@@ -711,6 +712,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         submissionType: orchestratorResult.detectedSubmissionType,
         hasEvidence: sources.length > 0,
         requestedMaxTokens: GENERATION_MAX_TOKENS,
+        requestsGovernedDraft: requestsGovernedDraft(message),
       });
       const policyHint = await getKernelPolicyHint({
         organizationId: numericOrgId ?? null,
@@ -756,6 +758,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const governedTools = await governedToolsetFor(pool, numericOrgId);
       const baseRequest = {
         taskType: routingPlan.taskType,
+        // The kernel's risk judgment; see GatewayRequest.riskTier.
+        riskTier: routingPlan.riskTier,
         messages: gwMessages,
         temperature: routingPlan.temperature,
         maxTokens: routingPlan.maxTokens,

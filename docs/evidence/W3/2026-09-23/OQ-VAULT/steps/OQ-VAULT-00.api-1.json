@@ -1,0 +1,81 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/projects",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "name": "OQ-002 Vault program 20260923025008",
+      "programType": "ind",
+      "primaryAgency": "FDA",
+      "indication": "Validation exercise",
+      "priority": "medium"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 74,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "id": "e1153657-c2a6-4b4d-9f88-a6a08c10e4d1",
+        "title": "OQ-002 Vault program 20260923025008",
+        "ws": "Biotech",
+        "code": "OVP2-9C3H",
+        "stage": "Planning",
+        "readiness": 0,
+        "status": "active",
+        "lead": "OQ Runner",
+        "blocker": null,
+        "due": "—",
+        "activity": "Updated Sep 23"
+      },
+      "program": {
+        "id": "e1153657-c2a6-4b4d-9f88-a6a08c10e4d1",
+        "code": "OVP2-9C3H",
+        "name": "OQ-002 Vault program 20260923025008",
+        "program_type": "ind",
+        "status": "active",
+        "phase": "planning",
+        "priority": "medium",
+        "description": null,
+        "product_name": "OQ-002 Vault program 20260923025008",
+        "indication": "Validation exercise",
+        "intended_use": null,
+        "primary_agency": "FDA",
+        "target_agencies": [
+          "FDA"
+        ],
+        "target_submission_date": null,
+        "actual_submission_date": null,
+        "approval_date": null,
+        "progress_percent": 0,
+        "lead_user_id": 17,
+        "team_members": [],
+        "created_at": "2026-09-23T02:50:09.149Z",
+        "updated_at": "2026-09-23T02:50:09.149Z",
+        "application_number": null,
+        "product_type": "biologic",
+        "device_class": null,
+        "regulatory_path": null,
+        "product_code": null,
+        "sponsor_name": "Concept2Cure Therapeutics",
+        "predicate_devices": [],
+        "review_panel": null,
+        "regulation_number": null,
+        "device_flags": null
+      },
+      "meta": {
+        "created": true,
+        "documentId": "doc_88dcfb29e9334904b66014a7ecd9a694",
+        "scaffoldedSections": 92,
+        "submissionId": 39,
+        "submissionCreated": true,
+        "projectAnchorId": null,
+        "projectAnchorSkipped": "NO_CLIENT_WORKSPACE",
+        "projectAnchorDetail": "This organization has no client workspace, and projects.client_workspace_id is NOT NULL. The program was created; it carries no PM-spine anchor until a workspace exists."
+      }
+    }
+  }
+}

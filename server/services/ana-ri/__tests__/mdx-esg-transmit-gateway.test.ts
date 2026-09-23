@@ -29,6 +29,7 @@ import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { createHash, generateKeyPairSync, createSign } from 'crypto';
+import JSZip from 'jszip';
 import { fingerprintPackageContent, sha256Hex, type PackageContentRow } from '../../ectd/package-content-fingerprint';
 
 /* ─── DB stub ────────────────────────────────────────────────────── */
@@ -40,7 +41,9 @@ const { poolQueries, storedBundle, httpsRequests, mdnResponse, audit, recordGove
     poolQueries:   [] as QueryRecord[],
     storedBundle:  { value: null as unknown },
     httpsRequests: [] as Array<{ options: any; body: Buffer }>,
-    mdnResponse:   { statusCode: 200, body: '' },
+    // `sent` is the body as delivered, with {{MESSAGE_ID}} echoing the request's
+    // Message-ID the way a real MDN's Original-Message-ID does.
+    mdnResponse:   { statusCode: 200, body: '', sent: '' },
     audit:         { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
     recordGovernedAction: vi.fn(async (_client: unknown, _params: Record<string, any>) => ({
       actionId: 'act_1', auditId: 'aud_1', sha256Chain: 'deadbeef',
@@ -114,7 +117,8 @@ vi.mock('node:https', () => {
         // Deliver asynchronously, like the real socket does.
         setImmediate(() => {
           cb(res);
-          handlers.data?.(Buffer.from(mdnResponse.body, 'utf8'));
+          mdnResponse.sent = mdnResponse.body.replace('{{MESSAGE_ID}}', String(options?.headers?.['Message-ID'] ?? ''));
+          handlers.data?.(Buffer.from(mdnResponse.sent, 'utf8'));
           handlers.end?.();
         });
       },
@@ -177,7 +181,12 @@ beforeAll(async () => {
   bundleRoot = path.join(base, 'bundles');
   await fs.mkdir(bundleRoot, { recursive: true });
 
-  const bytes = Buffer.from('PK assembled eSTAR package bytes', 'utf8');
+  // A real ZIP: the transmit guard opens the signed bundle to judge its PDF
+  // leaves (2026-09-22, W5/D7), and bytes it cannot open are refused. Stored,
+  // not deflated, so the payload text is still visible on the wire below.
+  const zip = new JSZip();
+  zip.file('summary.txt', 'assembled eSTAR package bytes');
+  const bytes = await zip.generateAsync({ type: 'nodebuffer', compression: 'STORE' });
   bundlePath = path.join(bundleRoot, 'pkg-42-estar.zip');
   await fs.writeFile(bundlePath, bytes);
   bundleSha = createHash('sha256').update(bytes).digest('hex');
@@ -207,7 +216,8 @@ beforeEach(() => {
   mdnResponse.statusCode = 200;
   mdnResponse.body =
     'Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256\r\n' +
-    '\r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n';
+    '\r\nOriginal-Message-ID: {{MESSAGE_ID}}\r\n' +
+    'Disposition: automatic-action/MDN-sent-automatically; processed\r\n';
 
   savedEnv = { NODE_ENV: process.env.NODE_ENV, SUBMISSION_BUNDLE_DIR: process.env.SUBMISSION_BUNDLE_DIR };
   for (const k of ESG_ENV_KEYS) savedEnv[k] = process.env[k];
@@ -291,7 +301,7 @@ describe('the 510(k) transmit affordance reaches the real FDA ESG AS2 transport'
       (q) => q.sql.includes('UPDATE submission_transmittals') && q.sql.includes('mdn_raw'),
     );
     expect(mdnWrite).toBeDefined();
-    expect(mdnWrite!.args).toContain(mdnResponse.body);
+    expect(mdnWrite!.args).toContain(mdnResponse.sent);
 
     // 6. The governed `sign` ledger entry was written for the transmission.
     expect(recordGovernedAction).toHaveBeenCalledTimes(1);
@@ -457,5 +467,51 @@ describe('the package gate travels with the transmit, wherever it is invoked fro
     expect(r.success).toBe(false);
     expect(r.error).toBe('BUNDLE_NOT_ASSEMBLED');
     expect(httpsRequests).toHaveLength(0);
+  });
+});
+
+/* 2026-09-23 (W5/D7, round-2 review). The transmit guard reports the package
+   checks that FAILED without blocking (a flag-gated check not enforced here).
+   This handler dropped them from both its audit row and its returned data, and
+   the shared governed transmit kept them off its sign record, so a 510(k) that
+   went out failing a check left no transmit-time trace of it. */
+describe('a check that failed without blocking is recorded, not dropped', () => {
+  it('carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data', async () => {
+    configureEsgCredentials();
+    const savedDtd = process.env.ECTD_REQUIRE_DTD;
+    delete process.env.ECTD_REQUIRE_DTD; // report-only: the check fails, the send goes ahead
+    try {
+      storedBundle.value = {
+        ...(storedBundle.value as Record<string, unknown>),
+        dtdStatus: { selfContained: false, missing: ['ich-ectd-3-2.dtd'], missingStylesheets: [] },
+      };
+
+      const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+      expect(r.success, `handler refused: ${r.message}`).toBe(true);
+      expect(httpsRequests).toHaveLength(1);
+
+      const failed = expect.arrayContaining([expect.stringMatching(/^dtd-self-contained: missing: ich-ectd-3-2\.dtd/)]);
+      // This descriptor records no built region, which the guard warns about.
+      const warned = expect.arrayContaining([expect.stringMatching(/region it was built for/)]);
+
+      // The returned data.
+      expect(r.data?.preTransmitFailedChecks).toEqual(failed);
+      expect(r.data?.preTransmitWarnings).toEqual(warned);
+
+      // The agent.ana.* audit row.
+      expect(audit.logAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'agent.ana.k510_workflow.transmit',
+          details: expect.objectContaining({ preTransmitFailedChecks: failed, preTransmitWarnings: warned }),
+        }),
+      );
+
+      // The governed `sign` ledger entry the shared transmit wrote.
+      const ledger = recordGovernedAction.mock.calls[0]![1] as any;
+      expect(ledger.payload.preTransmitFailedChecks).toEqual(failed);
+      expect(ledger.payload.preTransmitWarnings).toEqual(warned);
+    } finally {
+      if (savedDtd === undefined) delete process.env.ECTD_REQUIRE_DTD; else process.env.ECTD_REQUIRE_DTD = savedDtd;
+    }
   });
 });

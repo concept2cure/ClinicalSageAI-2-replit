@@ -201,7 +201,11 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
     checks.push({
       name: 'pdfa-submission-grade',
       passed: pdfaOk,
-      detail: `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} not converted`,
+      detail:
+        `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} not converted` +
+        (Array.isArray(grade.agencyFormsAsIssued) && grade.agencyFormsAsIssued.length > 0
+          ? `; ${grade.agencyFormsAsIssued.length} agency form(s) shipped as issued (${grade.agencyFormsAsIssued.join(', ')})`
+          : ''),
     });
     if (isProd && pdfaRequired && !pdfaOk) {
       blockers.push(

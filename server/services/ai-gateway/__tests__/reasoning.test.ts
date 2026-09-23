@@ -113,9 +113,17 @@ describe('resolveOutputBudget', () => {
 
 describe('resolveModelTier', () => {
   it('keeps Fast on the economy tier (cheap, quick)', () => {
-    expect(resolveModelTier({ effort: 'fast', substantive: true, riskTier: 'high' })).toBe(
-      'economy',
-    );
+    expect(resolveModelTier({ effort: 'fast', substantive: true, riskTier: 'medium' })).toBe('economy');
+    expect(resolveModelTier({ effort: 'fast', substantive: true })).toBe('economy');
+  });
+
+  it('sends a HIGH-risk turn to the flagship tier even on Fast', () => {
+    // Changed 2026-09-23. This case used to assert 'economy'. Only a model
+    // approved for high-risk work may serve a high-risk turn, and the economy
+    // tier is not one, so the gateway refuses it: Fast + high risk stopped
+    // being cheap and became a refused turn. Governance outranks the effort
+    // preference; Fast still governs every turn that is not high-risk.
+    expect(resolveModelTier({ effort: 'fast', substantive: true, riskTier: 'high' })).toBe('flagship');
   });
 
   it('puts Thorough on the flagship tier (explicit depth request)', () => {

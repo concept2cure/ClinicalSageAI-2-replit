@@ -1,0 +1,21 @@
+{
+ "probe": "same TOTP code presented twice for one identity within its time step",
+ "results": [
+  {
+   "attempt": 1,
+   "login": 200,
+   "mfaRequired": true,
+   "verify": 200,
+   "session": true,
+   "sameStep": true
+  },
+  {
+   "attempt": 2,
+   "login": 200,
+   "mfaRequired": true,
+   "verify": 200,
+   "session": true,
+   "sameStep": true
+  }
+ ]
+}

@@ -5,8 +5,26 @@
  *
  *   POST   /                 a member records a request for a locked module
  *   GET    /mine             the caller's own requests (the lock panel reads this)
- *   GET    /                 the administrator's queue — one workspace, or all
+ *   GET    /                 the org administrator's queue — the caller's workspace
  *   POST   /:id/decision     approve or decline, with a reason
+ *
+ * ── EVERY WORKSPACE IS NOT SERVED HERE (2026-09-22) ─────────────────────────
+ * This prefix is not a system-scope prefix, so every request to it runs under
+ * the CALLER'S organization scope, and module_access_requests is RLS enabled +
+ * FORCED. A cross-workspace read here cannot work, and it did not fail — it
+ * narrowed: the platform owner's `?scope=all` answered 200 with only the
+ * owner's own workspace, which the console rendered as "no requests waiting"
+ * for every other one. Answering another workspace's request from here reads
+ * the row under the caller's scope, finds nothing, and returns 404.
+ * (Reproduced on real PostgreSQL as the runtime role by
+ * tests/db/module-access-requests.dbtest.ts.)
+ *
+ * So the platform owner's queue and decisions are served by
+ * ./admin/master-access-requests, mounted under /api/admin/master — a
+ * SYSTEM_SCOPE_PREFIXES entry — inside the Master Administration guard. It
+ * mounts the SAME two handlers exported below; there is one queue read and one
+ * decision in the product, and two mounts. This route refuses `scope=all`
+ * outright rather than quietly answering for one workspace.
  *
  * WHAT THIS CLOSES. A locked destination opens a panel that names the module,
  * the real reason and the tier that would include it. If the viewer is an org
@@ -57,6 +75,7 @@ import {
   normalizeNote,
   normalizeReason,
   toStatus,
+  type AccessRequestQueueScope,
   type AccessRequestRow,
   type Denial,
   type RequestActor,
@@ -240,53 +259,87 @@ router.get('/mine', async (req: Request, res: Response) => {
   }
 });
 
-// ─── GET / — the administrator's queue ───────────────────────────────────────
+// ─── The queue read — one implementation, two mounts ────────────────────────
 //
-// `scope=all` is the platform owner's cross-workspace view and is refused for
-// anybody else rather than quietly narrowed — a console whose heading says
-// every workspace while it shows one is worse than one that refuses.
-router.get('/', async (req: Request, res: Response) => {
-  try {
-    const actor = await resolveActor(req);
-    const scope = req.query.scope === 'all' ? 'all' : 'organization';
-    const denial = denyQueueRead(actor, scope);
-    if (denial) return refuse(res, denial);
+// `organization` is the org administrator's own workspace and is mounted here.
+// `all` is the platform owner's cross-workspace view and is mounted ONLY by
+// ./admin/master-access-requests, under the system scope — the one scope in
+// which RLS lets a read see more than the caller's own workspace. The scope is
+// fixed by the MOUNT, never by the query string, so no request can ask a
+// per-user connection for a read it cannot perform.
+//
+// `denyQueueRead(actor, 'all')` still requires the owner grant on that mount:
+// the Master Administration guard also admits platform staff (support,
+// platform_admin), and a staff role is not a licence to read every
+// workspace's asks.
+export function readAccessRequestQueue(scope: AccessRequestQueueScope) {
+  return async (req: Request, res: Response) => {
+    try {
+      const actor = await resolveActor(req);
+      const denial = denyQueueRead(actor, scope);
+      if (denial) return refuse(res, denial);
 
-    const statusFilter = req.query.status === 'all' ? null : toStatus(req.query.status ?? 'open');
-    // A master admin reading their own scope still reads THEIR organization;
-    // only `scope=all` lifts the predicate.
-    const orgFilter = scope === 'all' ? null : actor.organizationId;
+      const statusFilter =
+        req.query.status === 'all' ? null : toStatus(req.query.status ?? 'open');
+      // A master admin reading the organization scope still reads THEIR
+      // organization; only the `all` mount lifts the predicate.
+      const orgFilter = scope === 'all' ? null : actor.organizationId;
 
-    const rows = await pool.query(
-      `${SELECT_REQUEST}
-        WHERE ($1::int IS NULL OR r.organization_id = $1)
-          AND ($2::text IS NULL OR r.status = $2)
-        ORDER BY (r.status = 'open') DESC, r.created_at DESC
-        LIMIT ${QUEUE_LIMIT}`,
-      [orgFilter, statusFilter],
-    );
+      const rows = await pool.query(
+        `${SELECT_REQUEST}
+          WHERE ($1::int IS NULL OR r.organization_id = $1)
+            AND ($2::text IS NULL OR r.status = $2)
+          ORDER BY (r.status = 'open') DESC, r.created_at DESC
+          LIMIT ${QUEUE_LIMIT}`,
+        [orgFilter, statusFilter],
+      );
 
-    const requests = rows.rows.map((r) => mapRow(r as AccessRequestRow));
-    return res.json({
-      scope,
-      requests,
-      openCount: requests.filter((r) => r.status === 'open').length,
-      /** True when the list was cut short, so the surface can say so rather
-       *  than presenting a truncated queue as the whole queue. */
-      truncated: rows.rows.length >= QUEUE_LIMIT,
+      const requests = rows.rows.map((r) => mapRow(r as AccessRequestRow));
+      return res.json({
+        scope,
+        requests,
+        openCount: requests.filter((r) => r.status === 'open').length,
+        /** True when the list was cut short, so the surface can say so rather
+         *  than presenting a truncated queue as the whole queue. */
+        truncated: rows.rows.length >= QUEUE_LIMIT,
+      });
+    } catch (err) {
+      logger.error('access request queue read failed', err as Record<string, unknown>);
+      return res.status(500).json({ error: 'Could not load access requests.' });
+    }
+  };
+}
+
+// ─── GET / — the org administrator's queue ───────────────────────────────────
+//
+// `scope=all` is REFUSED here, for everybody, rather than narrowed. Under this
+// mount's per-user scope it could only ever return the caller's own workspace
+// while its payload said every workspace — the exact lie the refusal in
+// `denyQueueRead` exists to prevent. The owner's view lives on its own mount.
+router.get(
+  '/',
+  (req: Request, res: Response, next) => {
+    const asked = req.query.scope;
+    if (asked === undefined || asked === 'organization') return next();
+    return res.status(400).json({
+      error:
+        'This queue shows one workspace. Requests from every workspace are answered in the platform console.',
     });
-  } catch (err) {
-    logger.error('access request queue read failed', err as Record<string, unknown>);
-    return res.status(500).json({ error: 'Could not load access requests.' });
-  }
-});
+  },
+  readAccessRequestQueue('organization'),
+);
 
 // ─── POST /:id/decision — approve or decline ─────────────────────────────────
 //
-// One endpoint for both answers because they are one governed act with two
-// outcomes: same authority, same reason floor, same audit record. Two endpoints
+// One handler for both answers because they are one governed act with two
+// outcomes: same authority, same reason floor, same audit record. Two handlers
 // would be two places for the authorization to drift apart.
-router.post('/:id/decision', async (req: Request, res: Response) => {
+//
+// Mounted twice, and only twice: here, where the caller's own scope means RLS
+// shows it only its own workspace's requests (another workspace's id reads as
+// not found), and by ./admin/master-access-requests under the system scope,
+// where the owner grant in `denyDecision` is what lets it cross a workspace.
+export async function decideAccessRequest(req: Request, res: Response) {
   try {
     const actor = await resolveActor(req);
     const id = Number(req.params.id);
@@ -301,58 +354,91 @@ router.post('/:id/decision', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'A reason (min 3 chars) is required for this action.' });
     }
 
-    const existing = await pool.query(
-      `SELECT id, organization_id, module_id, requested_by, status
-         FROM module_access_requests WHERE id = $1`,
-      [id],
-    );
-    if (!existing.rows.length) return res.status(404).json({ error: 'Not found.' });
-    const row = existing.rows[0];
-    const organizationId = Number(row.organization_id);
+    let row: { organization_id: unknown; module_id: unknown; requested_by: unknown; status: unknown };
+    let organizationId: number;
 
-    const denial = denyDecision(actor, {
-      organizationId,
-      status: toStatus(row.status),
-    });
-    if (denial) return refuse(res, denial);
+    // ONE TRANSACTION HOLDS THE REQUEST'S ROW LOCK from the status check to the
+    // decision write (2026-09-22). Without it the check and the write were two
+    // pooled statements with the grant between them, so two administrators
+    // answering at once both read `open`: the approver wrote the grant, lost the
+    // UPDATE and was told 409, and the request read DECLINED with the module
+    // switched on and no approval anywhere in the audit trail. Reproduced on
+    // real PostgreSQL by tests/db/module-access-requests.dbtest.ts ("a decline
+    // that wins a race against an approval leaves no grant behind"). Under the
+    // lock the second answer waits, then reads the first one's outcome and is
+    // refused before it can write anything.
+    //
+    // The lock is taken on the caller's own connection and scope, so RLS still
+    // decides what can be locked: on the per-user mount another workspace's id
+    // reads as not found, exactly as before.
+    const client = await pool.connect();
+    let open = false;
+    try {
+      await client.query('BEGIN');
+      open = true;
+      const existing = await client.query(
+        `SELECT id, organization_id, module_id, requested_by, status
+           FROM module_access_requests WHERE id = $1
+            FOR UPDATE`,
+        [id],
+      );
+      if (!existing.rows.length) return res.status(404).json({ error: 'Not found.' });
+      row = existing.rows[0];
+      organizationId = Number(row.organization_id);
 
-    // Order matters. The grant is written FIRST, so the only failure this
-    // endpoint can produce is a request that still reads open with no
-    // capability handed out. Marking it approved first and then failing to
-    // grant would leave a queue that says done and a workspace that is still
-    // locked — the same dead end, now with a receipt.
-    if (body.decision === 'approved') {
-      await writeModuleGrant({
+      const denial = denyDecision(actor, {
         organizationId,
-        moduleId: String(row.module_id),
-        enabled: true,
-        actorEmail: actorEmail(req),
-        /* Stated, never defaulted. An organization whose trial of this module
-           lapsed still holds a row carrying a past date; re-enabling without
-           clearing it writes an already-expired grant, so the queue would say
-           approved and the rail would still say locked. An approval is an
-           unbounded grant. A time-limited one is a different, deliberate act. */
-        expiresAt: null,
+        status: toStatus(row.status),
       });
-    }
+      if (denial) return refuse(res, denial);
 
-    // `AND status = 'open'` is the race guard: two administrators pressing at
-    // once produce one decision, and the loser is told so rather than
-    // overwriting the reason that was actually recorded.
-    const updated = await pool.query(
-      `UPDATE module_access_requests
-          SET status = $2,
-              decided_by = $3,
-              decided_by_email = $4,
-              decided_at = now(),
-              decision_reason = $5,
-              updated_at = now()
-        WHERE id = $1 AND status = 'open'
-        RETURNING id`,
-      [id, body.decision, actor.userId, actorEmail(req), reason],
-    );
-    if (!updated.rows.length) {
-      return res.status(409).json({ error: 'This request has already been answered.' });
+      // Order matters. The grant is written FIRST, so the only failure this
+      // endpoint can produce is a request that still reads open with the
+      // capability already granted — which a repeated approval completes, since
+      // the grant is an idempotent upsert. Marking it approved first and then
+      // failing to grant would leave a queue that says done and a workspace that
+      // is still locked — the same dead end, now with a receipt. The grant runs
+      // through the canonical writer on its own connection and commits before
+      // the decision does; the row lock above is what stops a concurrent answer
+      // from reaching this line at all.
+      if (body.decision === 'approved') {
+        await writeModuleGrant({
+          organizationId,
+          moduleId: String(row.module_id),
+          enabled: true,
+          actorEmail: actorEmail(req),
+          /* Stated, never defaulted. An organization whose trial of this module
+             lapsed still holds a row carrying a past date; re-enabling without
+             clearing it writes an already-expired grant, so the queue would say
+             approved and the rail would still say locked. An approval is an
+             unbounded grant. A time-limited one is a different, deliberate act. */
+          expiresAt: null,
+        });
+      }
+
+      // `AND status = 'open'` is kept as the statement's own guard: under the
+      // row lock it cannot lose, and if the lock above is ever removed it is
+      // still the difference between one recorded answer and two.
+      const updated = await client.query(
+        `UPDATE module_access_requests
+            SET status = $2,
+                decided_by = $3,
+                decided_by_email = $4,
+                decided_at = now(),
+                decision_reason = $5,
+                updated_at = now()
+          WHERE id = $1 AND status = 'open'
+          RETURNING id`,
+        [id, body.decision, actor.userId, actorEmail(req), reason],
+      );
+      if (!updated.rows.length) {
+        return res.status(409).json({ error: 'This request has already been answered.' });
+      }
+      await client.query('COMMIT');
+      open = false;
+    } finally {
+      if (open) await client.query('ROLLBACK').catch(() => {});
+      client.release();
     }
 
     await auditService.logAction({
@@ -387,6 +473,8 @@ router.post('/:id/decision', async (req: Request, res: Response) => {
     logger.error('access request decision failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'The decision was not recorded. Please try again.' });
   }
-});
+}
+
+router.post('/:id/decision', decideAccessRequest);
 
 export default router;

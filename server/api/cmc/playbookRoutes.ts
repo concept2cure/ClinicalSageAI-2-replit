@@ -2,6 +2,11 @@ import { Router, Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { ai } from '../../lib/unified-ai-client';
+import {
+  GATEWAY_ERROR_HTTP_STATUS,
+  classifyGatewayError,
+  isGatewayError,
+} from '../../services/ai-gateway/gateway-error-map';
 import { requireAuthedOrgId } from '../../utils/authedOrgId.js';
 
 const router = Router();
@@ -144,8 +149,28 @@ router.post('/ai-tools/execute', async (req: Request, res: Response) => {
       'running',
     ]);
 
-    // Execute the AI tool based on command
-    const result = await executeAITool(command, drugName, additionalContext);
+    // Execute the AI tool based on command. A draft that was not produced is
+    // recorded as failed and answered as an error: until 2026-09-23 a canned
+    // "AI service temporarily unavailable" string was stored as status
+    // 'completed' and returned as "<command> completed successfully".
+    let result: Awaited<ReturnType<typeof executeAITool>>;
+    try {
+      result = await executeAITool(command, drugName, additionalContext, guard.orgId);
+    } catch (aiError) {
+      console.error('AI tool execution error:', aiError);
+      await pool.query(
+        'UPDATE cmc_ai_tool_executions SET status = $1, result = $2, completed_at = NOW() WHERE id = $3',
+        ['failed', JSON.stringify({ error: 'NO_DRAFT_PRODUCED' }), executionId]
+      );
+      const refusal = isGatewayError(aiError) ? classifyGatewayError(aiError) : null;
+      return res.status(refusal ? GATEWAY_ERROR_HTTP_STATUS[refusal.code] : 503).json({
+        error: 'NO_DRAFT_PRODUCED',
+        executionId,
+        message: `${command} was not drafted, and nothing was saved as its result. ${
+          refusal?.message ?? 'The drafting model was unavailable or returned nothing.'
+        }`,
+      });
+    }
 
     // Update execution status
     await pool.query(
@@ -359,45 +384,44 @@ async function createWorkflowTasks(
   }
 }
 
-async function executeAITool(command: string, drugName: string, context: any): Promise<any> {
-  try {
-    // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-    const aiResult = await ai.chat({
-      model: 'gpt-5',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert pharmaceutical regulatory affairs specialist with deep expertise in CMC development and ICH guidelines. Provide detailed, scientifically accurate, and regulatory-compliant guidance. Format your response as structured data that can be used in pharmaceutical workflows.',
-        },
-        {
-          role: 'user',
-          content: generateAIPrompt(command, drugName, context),
-        },
-      ],
-      max_tokens: 2000,
-      temperature: 0.3,
-    });
+async function executeAITool(command: string, drugName: string, context: any, organizationId: number) {
+  // CMC regulatory drafts (validation summaries, stability protocols, risk
+  // assessments): routed as document_drafting so only a model approved for
+  // high-risk regulatory drafting serves them. It pinned 'gpt-5', which no
+  // configured model matches, so a 'general' request went to whatever the
+  // unfiltered fallback ladder reached.
+  const aiResult = await ai.chat({
+    taskType: 'document_drafting',
+    callerModule: 'cmc-playbook.ai-tools',
+    organizationId,
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are an expert pharmaceutical regulatory affairs specialist with deep expertise in CMC development and ICH guidelines. Provide detailed, scientifically accurate, and regulatory-compliant guidance. Format your response as structured data that can be used in pharmaceutical workflows. ' +
+          // The canonical CMC command route's instruction (workflowRoutes.ts):
+          // without it, "be specific" is an instruction to invent.
+          'Write ONLY what the supplied inputs support. Where a section requires information you were not given — a specification limit, a batch result, a synthetic route — write "Not supplied: <what is needed>" and move on. Do NOT invent values.',
+      },
+      {
+        role: 'user',
+        content: generateAIPrompt(command, drugName, context),
+      },
+    ],
+    max_tokens: 2000,
+    temperature: 0.3,
+  });
 
-    const result = aiResult.content;
+  if (!aiResult.content?.trim()) throw new Error('the drafting model returned nothing');
 
-    return {
-      command: command,
-      drugName: drugName,
-      result: result,
-      generatedAt: new Date().toISOString(),
-      status: 'completed',
-    };
-  } catch (error) {
-    console.error('AI tool execution error:', error);
-    return {
-      command: command,
-      drugName: drugName,
-      result: generateFallbackResult(command, drugName),
-      generatedAt: new Date().toISOString(),
-      status: 'fallback',
-    };
-  }
+  return {
+    command: command,
+    drugName: drugName,
+    result: aiResult.content,
+    generatedAt: new Date().toISOString(),
+    generatedBy: { provider: aiResult.provider, model: aiResult.model },
+    status: 'completed',
+  };
 }
 
 function generateAIPrompt(command: string, drugName: string, context: any): string {
@@ -418,8 +442,5 @@ function generateAIPrompt(command: string, drugName: string, context: any): stri
   return prompts[command] || `Provide regulatory guidance for ${command} related to ${drugName}.`;
 }
 
-function generateFallbackResult(command: string, drugName: string): string {
-  return `Regulatory guidance for ${command} related to ${drugName} - AI service temporarily unavailable. Please consult ICH guidelines and regulatory requirements manually.`;
-}
 
 export default router;

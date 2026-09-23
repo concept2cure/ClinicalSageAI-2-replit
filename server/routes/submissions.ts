@@ -1568,7 +1568,7 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
   const parsed = assembleSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    const { assembleSequence } = await import('../services/ectd/assemble-from-core');
+    const { assembleSequence, assembledTransmitBlockers } = await import('../services/ectd/assemble-from-core');
     const result = await assembleSequence({
       sequenceId: seqId,
       organizationId: ctx.organizationId,
@@ -1591,6 +1591,11 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
       materialized: result.materialized,
       skipped: result.skipped,
       unresolvedLeaves: result.unresolvedLeaves,
+      // 2026-09-22 (W5/D7): assembled is not ready-to-send. A draft leaf is IN
+      // the package; transmit refuses it, so the response says so.
+      unfinalized: result.unfinalized,
+      unfinalizedSections: result.unfinalizedSections,
+      transmitBlockers: assembledTransmitBlockers(result),
     });
   } catch (err) {
     fail(res, err);

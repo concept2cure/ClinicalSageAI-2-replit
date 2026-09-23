@@ -39,6 +39,8 @@ function app(org: number | null = 7) {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: 3 };
+    // The route reads through the request-scoped client, as establishRequestTenantScope provides it.
+    (req as unknown as { dbClient: unknown }).dbClient = { query };
     next();
   });
   a.use('/api/data-origins', router);

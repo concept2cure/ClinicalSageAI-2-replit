@@ -42,7 +42,7 @@ import {
   leafSourceKey,
   type UnresolvedLeaf,
 } from '../../ectd/leaf-source-resolver';
-import type { LeafFileResolver, CoreLeaf } from '../../ectd/core-to-packager';
+import { coreLeafFromSubmissionLeaf, type LeafFileResolver, type CoreLeaf } from '../../ectd/core-to-packager';
 import { assembleTechDoc, type EuRegulation } from './tech-doc-assembler';
 import { buildTechnicalFileManifest, type TechnicalFileManifest } from '../technical-file-manifest';
 import {
@@ -92,6 +92,10 @@ export interface AssembleTechnicalFileResult {
   /** Materialized leaves whose source is still a draft/review artifact. */
   unfinalized: number;
   unfinalizedSections: Array<{ sectionCode: string; status: string }>;
+  /**
+   * Every required Annex II/III slot has a source leaf AND every leaf is in
+   * the ZIP. False when the plan left a leaf out (`skipped`).
+   */
   ready: boolean;
 }
 
@@ -138,7 +142,7 @@ interface PackageTechnicalFileParams {
  */
 async function packageTechnicalFile(
   params: PackageTechnicalFileParams,
-): Promise<{ manifest: TechnicalFileManifest; plan: TechnicalFilePlan; bundle: TechnicalFileBundle }> {
+): Promise<{ manifest: TechnicalFileManifest; plan: TechnicalFilePlan; bundle: TechnicalFileBundle; ready: boolean }> {
   const { leaves, regulation, organizationId, userId, unresolvedLeaves, materialized } = params;
 
   const techDocResult = assembleTechDoc({
@@ -152,6 +156,13 @@ async function packageTechnicalFile(
 
   const plan = buildTechnicalFilePlan({ manifest, leaves, resolveFile: params.resolveFile });
   const bundle = await materializeTechnicalFile(plan, { outputDir: params.outputDir, applicationId: params.applicationId });
+
+  // 2026-09-23 (W5/D7, round-2 review): `ready` was manifest.ready — slot
+  // presence, decided from the leaves BEFORE the plan resolved them. A leaf
+  // placed in a required slot whose source did not resolve was left out of the
+  // ZIP (plan.skipped) while the response still said ready: true. A technical
+  // file that left a leaf out is not ready.
+  const ready = manifest.ready && plan.skipped.length === 0;
 
   if (unresolvedLeaves.length > 0) {
     logger.warn('Technical-file assemble could not materialize some leaf sources (not dropped silently)', {
@@ -171,7 +182,7 @@ async function packageTechnicalFile(
     resourceId: params.resourceId,
     details: {
       regulation,
-      ready: manifest.ready,
+      ready,
       materialized,
       fileCount: bundle.fileCount,
       // The sha256 is what binds this audit row to the delivered artifact;
@@ -193,7 +204,7 @@ async function packageTechnicalFile(
     unresolved: unresolvedLeaves.length,
   });
 
-  return { manifest, plan, bundle };
+  return { manifest, plan, bundle, ready };
 }
 
 /**
@@ -232,9 +243,20 @@ export async function assembleTechnicalFileFromCore(
   // own scratch dir; the happy-path cleanup remains the caller's to invoke.
   let assembleReturned = false;
   try {
+    // 2026-09-23 (W5/D7, round-2 review): the rows are read through the ONE
+    // submission_leaves → CoreLeaf projection package-from-core uses. This
+    // copy built CoreLeaf by hand without documentUuid: a vault leaf was staged
+    // by its uuid below, then resolved to nothing and was left out of the ZIP.
+    // Staging and resolving now read the same projected leaf.
+    const coreLeaves: CoreLeaf[] = leaves.map(coreLeafFromSubmissionLeaf);
+
     const { byKey, unresolved: unresolvedLeaves, materialized, unfinalized, unfinalizedSections } =
       await materializeLeafSources({
-        leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId, documentUuid: l.documentUuid ?? null })),
+        leaves: coreLeaves.map((l) => ({
+          documentTable: l.documentTable ?? null,
+          documentId: l.documentId ?? null,
+          documentUuid: l.documentUuid ?? null,
+        })),
         organizationId,
         stageDir,
       });
@@ -247,19 +269,8 @@ export async function assembleTechnicalFileFromCore(
       return byKey.get(leafSourceKey(leaf.documentTable, leaf.documentId, leaf.documentUuid)) ?? null;
     };
 
-    const coreLeaves: CoreLeaf[] = leaves.map((l) => ({
-      sectionCode: l.sectionCode,
-      title: l.title,
-      lifecycleOp: l.lifecycleOp,
-      checksum: l.checksum,
-      documentTable: l.documentTable,
-      documentId: l.documentId,
-      granularity: l.granularity,
-      documentType: l.documentType,
-    }));
-
     // 3-4. Project → plan → materialize → audit (shared spine).
-    const { manifest, plan, bundle } = await packageTechnicalFile({
+    const { plan, bundle, ready } = await packageTechnicalFile({
       leaves: coreLeaves,
       resolveFile,
       regulation,
@@ -297,7 +308,7 @@ export async function assembleTechnicalFileFromCore(
       unresolvedLeaves,
       unfinalized,
       unfinalizedSections,
-      ready: manifest.ready,
+      ready,
     };
   } finally {
     if (!assembleReturned) {
@@ -413,7 +424,7 @@ export async function assembleTechnicalFileFromProgram(
     };
 
     // 3-4. Project → plan → materialize → audit (shared spine).
-    const { manifest, plan, bundle } = await packageTechnicalFile({
+    const { manifest, plan, bundle, ready } = await packageTechnicalFile({
       leaves: coreLeaves,
       resolveFile,
       regulation,
@@ -446,7 +457,7 @@ export async function assembleTechnicalFileFromProgram(
       unresolvedLeaves,
       unfinalized,
       unfinalizedSections,
-      ready: manifest.ready,
+      ready,
     };
   } finally {
     await fs.rm(outputDir, { recursive: true, force: true }).catch((err) => {

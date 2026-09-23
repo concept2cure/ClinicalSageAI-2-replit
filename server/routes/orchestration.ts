@@ -92,6 +92,23 @@ function getUserRole(req: Request): string {
   return req.user?.role || 'user';
 }
 
+/**
+ * The project a route assesses: `projects.id`, a positive integer, taken only
+ * when the whole value is one. The routes parsed it with parseInt, which reads
+ * a program's uuid that begins with a digit as that digit: a request naming
+ * program 1d3c… was answered with the readiness of project 1. /execute did not
+ * check it at all, so a program's uuid started a review of a project nothing
+ * could be read from (VSR-001 F-23).
+ */
+function projectIdOf(value: unknown): number | null {
+  const text = typeof value === 'number' ? String(value) : typeof value === 'string' ? value.trim() : '';
+  if (!/^[1-9]\d{0,9}$/.test(text)) return null;
+  const id = Number(text);
+  return id <= 2147483647 ? id : null;
+}
+
+const PROJECT_ID_REQUIRED = { error: 'projectId must be a positive integer' };
+
 // ---------------------------------------------------------------------------
 // POST /api/orchestration/execute
 // ---------------------------------------------------------------------------
@@ -108,10 +125,12 @@ router.post('/execute', async (req: Request, res: Response) => {
     if (!body.projectId) {
       return res.status(400).json({ error: 'projectId is required' });
     }
+    const projectId = projectIdOf(body.projectId);
+    if (projectId === null) return res.status(400).json(PROJECT_ID_REQUIRED);
 
     const execution = await executeWorkflow({
       templateId: body.templateId,
-      projectId: body.projectId,
+      projectId,
       organizationId: orgId,
       module: body.module,
       targetType: body.targetType,
@@ -177,8 +196,8 @@ router.get('/executions/:id', (req: Request, res: Response) => {
 router.get('/project/:id', (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(String(req.params.id), 10);
-    if (isNaN(projectId)) {
+    const projectId = projectIdOf(req.params.id);
+    if (projectId === null) {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
     const workflows = getProjectWorkflows(orgId, projectId);
@@ -230,10 +249,8 @@ router.post('/cancel/:id', (req: Request, res: Response) => {
 router.get('/projects/:projectId/readiness', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(String(req.params.projectId), 10);
-    if (isNaN(projectId) || projectId <= 0) {
-      return res.status(400).json({ error: 'projectId must be a positive integer' });
-    }
+    const projectId = projectIdOf(req.params.projectId);
+    if (projectId === null) return res.status(400).json(PROJECT_ID_REQUIRED);
 
     const module = req.query.module as string | undefined;
 
@@ -261,10 +278,8 @@ router.post('/readiness', async (req: Request, res: Response) => {
     const orgId = getOrganizationId(req);
     const body = req.body as ReadinessRequest;
 
-    const projectId = typeof body.projectId === 'number' ? body.projectId : parseInt(String(body.projectId), 10);
-    if (!Number.isInteger(projectId) || projectId <= 0) {
-      return res.status(400).json({ error: 'projectId must be a positive integer' });
-    }
+    const projectId = projectIdOf(body.projectId);
+    if (projectId === null) return res.status(400).json(PROJECT_ID_REQUIRED);
 
     const payload = await assembleCrossObjectPayload({
       organizationId: orgId,
@@ -290,10 +305,8 @@ router.post('/recommendations', async (req: Request, res: Response) => {
     const orgId = getOrganizationId(req);
     const body = req.body as RecommendationRequest;
 
-    const projectId = typeof body.projectId === 'number' ? body.projectId : parseInt(String(body.projectId), 10);
-    if (!Number.isInteger(projectId) || projectId <= 0) {
-      return res.status(400).json({ error: 'projectId must be a positive integer' });
-    }
+    const projectId = projectIdOf(body.projectId);
+    if (projectId === null) return res.status(400).json(PROJECT_ID_REQUIRED);
 
     const payload = await assembleCrossObjectPayload({
       organizationId: orgId,
@@ -319,10 +332,8 @@ router.post('/continuity', async (req: Request, res: Response) => {
     const orgId = getOrganizationId(req);
     const body = req.body as ContinuityRequest;
 
-    const projectId = typeof body.projectId === 'number' ? body.projectId : parseInt(String(body.projectId), 10);
-    if (!Number.isInteger(projectId) || projectId <= 0) {
-      return res.status(400).json({ error: 'projectId must be a positive integer' });
-    }
+    const projectId = projectIdOf(body.projectId);
+    if (projectId === null) return res.status(400).json(PROJECT_ID_REQUIRED);
 
     const snapshot = await generateContinuitySnapshot(orgId, projectId);
     res.json(snapshot);
@@ -340,8 +351,8 @@ router.post('/continuity', async (req: Request, res: Response) => {
 router.get('/continuity/:projectId', (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(String(req.params.projectId), 10);
-    if (isNaN(projectId)) {
+    const projectId = projectIdOf(req.params.projectId);
+    if (projectId === null) {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
     const snapshot = getLatestSnapshot(orgId, projectId);
@@ -367,10 +378,8 @@ router.get('/continuity/:projectId', (req: Request, res: Response) => {
 router.get('/readiness/freshness/:projectId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(String(req.params.projectId), 10);
-    if (isNaN(projectId) || projectId <= 0) {
-      return res.status(400).json({ error: 'projectId must be a positive integer' });
-    }
+    const projectId = projectIdOf(req.params.projectId);
+    if (projectId === null) return res.status(400).json(PROJECT_ID_REQUIRED);
 
     const payload = await assembleCrossObjectPayload({
       organizationId: orgId,
@@ -430,10 +439,8 @@ interface PreSubmissionGateRequest {
 router.get('/pre-submission-gate/history/:projectId', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
-    const projectId = parseInt(String(req.params.projectId), 10);
-    if (!Number.isInteger(projectId) || projectId <= 0) {
-      return res.status(400).json({ error: 'projectId must be a positive integer' });
-    }
+    const projectId = projectIdOf(req.params.projectId);
+    if (projectId === null) return res.status(400).json(PROJECT_ID_REQUIRED);
     const limit = Math.min(parseInt(String(req.query.limit ?? '20'), 10) || 20, 100);
 
     const { db } = await import('../db.js');
@@ -495,12 +502,8 @@ router.post('/pre-submission-gate', async (req: Request, res: Response) => {
     const orgId = getOrganizationId(req);
     const body = req.body as PreSubmissionGateRequest;
 
-    const projectId = typeof body.projectId === 'number'
-      ? body.projectId
-      : parseInt(String(body.projectId), 10);
-    if (!Number.isInteger(projectId) || projectId <= 0) {
-      return res.status(400).json({ error: 'projectId must be a positive integer' });
-    }
+    const projectId = projectIdOf(body.projectId);
+    if (projectId === null) return res.status(400).json(PROJECT_ID_REQUIRED);
 
     const orgIdStr = String(orgId);
     const submissionType = body.submissionType ?? 'NDA';
