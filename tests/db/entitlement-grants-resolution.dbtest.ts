@@ -374,10 +374,10 @@ describe('posture — the connection these tests run on is the production one', 
   });
 
   it('the db handles the modules under test import (server/db.js `pool` and `query`) are that same runtime pool', async () => {
-    // license-manager imports `pool` from '../db.js'; module-grants and
-    // master-admin import `query` from '../../db', which vitest resolves to the
-    // same server/db.js. The check above ran through server/db/runtime directly.
-    // This one runs through the exact handles the modules use.
+    // license-manager takes `pool`, and module-grants and master-admin take
+    // `query`, from the server's db module (resolution: vitest.db.config.ts).
+    // The check above ran through server/db/runtime directly. This one runs
+    // through the exact handles the modules use.
     const legacy = await import('../../server/db.js');
     const sql = `SELECT current_user AS role, current_setting('app.current_tenant_id', true) AS tenant`;
     const viaPool = await asUser(ORG_LICENSE, 'member', 'dbta:posture', () => legacy.pool.query(sql));
