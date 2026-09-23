@@ -1262,6 +1262,10 @@ export function mountStreamRoute(router: Router): void {
 
       const gwResponse = await gw.route({
         taskType: routingPlan.taskType,
+        // The kernel's risk judgment, not its surface label: every turn here is
+        // labelled regulatory_review, and the gateway reads riskTier to decide
+        // whether only an approved model may serve it.
+        riskTier: routingPlan.riskTier,
         messages,
         maxTokens: routingPlan.maxTokens,
         temperature: routingPlan.temperature,
@@ -2046,6 +2050,7 @@ export function mountStreamRoute(router: Router): void {
           let roundText = '';
           const roundResponse = await gw.route({
             taskType: routingPlan.taskType,
+            riskTier: routingPlan.riskTier,
             messages: loopMessages,
             maxTokens: routingPlan.maxTokens,
             temperature: routingPlan.temperature,

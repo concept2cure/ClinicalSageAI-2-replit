@@ -277,6 +277,26 @@ export function isHighRiskTask(taskType: TaskType): boolean {
   return HIGH_RISK_TASK_TYPES.has(taskType);
 }
 
+/**
+ * Whether THIS request is high-risk work that only an approved model may serve.
+ *
+ * - `document_drafting` is always high-risk: drafting is `riskTier: 'high'` in
+ *   risk-tiers.ts, and no caller can declare it lower.
+ * - `regulatory_review` is high-risk unless the caller's risk policy declares it
+ *   `low` or `medium`. The kernel router labels every regulatory-surface turn
+ *   `regulatory_review` and carries its actual judgment in `riskTier`; a direct
+ *   service call doing real review declares nothing and stays high-risk.
+ * - Everything else is not high-risk work.
+ */
+export function isHighRiskRequest(
+  taskType: TaskType,
+  riskTier?: 'low' | 'medium' | 'high' | null,
+): boolean {
+  if (taskType === 'document_drafting') return true;
+  if (taskType === 'regulatory_review') return riskTier !== 'low' && riskTier !== 'medium';
+  return false;
+}
+
 const APPROVED_FOR_HIGH_RISK: ReadonlySet<string> = new Set(
   APPROVED_MODELS.filter((m) => m.approvedForHighRisk).map((m) => m.id),
 );

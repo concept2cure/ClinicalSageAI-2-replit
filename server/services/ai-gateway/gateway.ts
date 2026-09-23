@@ -78,7 +78,7 @@ import {
 import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { getContentClassifier } from '../ai-governance/classification/index.js';
-import { isApprovedForHighRisk, isHighRiskTask } from '../ai-governance/approved-models.js';
+import { isApprovedForHighRisk, isHighRiskRequest } from '../ai-governance/approved-models.js';
 import {
   extractRequestText,
   getPiiEnforcement,
@@ -2536,7 +2536,7 @@ export class AIGateway {
       // says why. Rerouting would hide the violation in the caller; honouring
       // it would be the violation.
       const explicit = matches.find(m => this.approvedForTask(m, request));
-      if (!explicit && matches.length > 0 && isHighRiskTask(request.taskType)) {
+      if (!explicit && matches.length > 0 && isHighRiskRequest(request.taskType, request.riskTier)) {
         throw new ModelNotApprovedError(request.taskType, matches.map(m => m.id), 'explicit');
       }
       if (explicit && this.isProviderHealthy(explicit.provider)) return explicit;
@@ -2571,7 +2571,7 @@ export class AIGateway {
          a misleading "no AI provider is configured" inside it. A governance
          refusal is its own terminal outcome, and it says which models were
          withheld. */
-      if (isHighRiskTask(request.taskType)) {
+      if (isHighRiskRequest(request.taskType, request.riskTier)) {
         const withheld = this.models.filter(
           m =>
             m.enabled &&
@@ -2674,7 +2674,7 @@ export class AIGateway {
    * not know is not approved. Tasks that are not high-risk are unaffected.
    */
   private approvedForTask(model: ModelConfig, request: GatewayRequest): boolean {
-    return !isHighRiskTask(request.taskType) || isApprovedForHighRisk(model.id);
+    return !isHighRiskRequest(request.taskType, request.riskTier) || isApprovedForHighRisk(model.id);
   }
 
   /**
@@ -3037,6 +3037,7 @@ export class AIGateway {
             code: refusal.code,
             reason: refusal.reason,
             withheldModelIds: refusal.withheldModelIds,
+            declaredRiskTier: request.riskTier ?? null,
           },
         },
       });

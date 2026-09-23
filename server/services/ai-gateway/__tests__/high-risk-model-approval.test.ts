@@ -32,6 +32,8 @@ import { classifyGatewayError } from '../gateway-error-map';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { verifyPqClaim } from '../../../eval/pq/pq-verdict';
+import { planKernelExecution } from '../../kernel-router';
+import { resolveModelTier, resolveTierModel } from '../reasoning';
 
 const APPROVED = ['claude-opus-4', 'claude-opus-4-legacy', 'claude-opus-4-bedrock', 'claude-opus-4-vertex'];
 
@@ -225,3 +227,115 @@ describe('the gateway enforces it at every selection point', () => {
     });
   });
 });
+
+/**
+ * The regression this change shipped on 2026-09-22, and its fix.
+ *
+ * The kernel router labels EVERY turn on /api/ana-ri `regulatory_review` — a
+ * surface label, with its real risk judgment in `riskTier` ('medium' for an
+ * ordinary turn). The gateway read the label as the judgment, so AnA's
+ * Balanced tier (Sonnet) and Fast tier (Haiku) were refused on every ordinary
+ * turn, "take me to CMC" included. These drive the real kernel, the real tier
+ * resolver and the real gateway together, so a route that stops passing
+ * riskTier, or a tier that stops escalating, fails here.
+ */
+describe('AnA turns: the kernel decides risk, the gateway enforces it', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  const models = makeGateway().getModels().filter((m: any) => m.enabled);
+  async function anaTurn(effort: 'fast' | 'balanced' | 'thorough', intentLens?: string) {
+    const plan = planKernelExecution({ route: '/api/ana-ri/stream', messageLength: 40, intentLens });
+    const tier = resolveModelTier({ effort, riskTier: plan.riskTier, intentLens, taskType: plan.taskType, substantive: false });
+    const tierModel = resolveTierModel(tier, models, {});
+    const gw = makeGateway();
+    const invoked = stubProviders(gw);
+    const outcome = await gw
+      .route({
+        taskType: plan.taskType,
+        riskTier: plan.riskTier,
+        messages: msg,
+        ...(tierModel ? { provider: tierModel.provider, model: tierModel.model } : {}),
+      })
+      .then(
+        () => 'served',
+        (e) => `refused: ${e.constructor.name}`,
+      );
+    return { plan, tier, outcome, invoked };
+  }
+
+  it('an ordinary Balanced turn is served — the regression, pinned shut', async () => {
+    const t = await anaTurn('balanced');
+    expect(t.plan.taskType).toBe('regulatory_review');
+    expect(t.plan.riskTier).toBe('medium');
+    expect(t.outcome).toBe('served');
+  });
+
+  it('an ordinary Fast turn is served on the economy tier', async () => {
+    const t = await anaTurn('fast');
+    expect(t.outcome).toBe('served');
+    expect(APPROVED).not.toContain(t.invoked[0]);
+  });
+
+  it('a high-risk turn on Fast escalates to an approved model instead of being refused', async () => {
+    const t = await anaTurn('fast', 'risk');
+    expect(t.plan.riskTier).toBe('high');
+    expect(t.tier).toBe('flagship');
+    expect(t.outcome).toBe('served');
+    expect(APPROVED).toContain(t.invoked[0]);
+  });
+
+  it('a high-risk turn with Sonnet named explicitly is still refused — the relaxation is for medium risk only', async () => {
+    const gw = makeGateway();
+    stubProviders(gw);
+    const err = await gw
+      .route({ taskType: 'regulatory_review', riskTier: 'high', messages: msg, model: 'claude-sonnet-4' })
+      .catch((e) => e);
+    expect(err).toBeInstanceOf(ModelNotApprovedError);
+  });
+
+  it('regulatory_review with NO declared risk stays high-risk — direct service calls are not relaxed', async () => {
+    const gw = makeGateway();
+    stubProviders(gw);
+    const err = await gw.route({ taskType: 'regulatory_review', messages: msg, model: 'claude-sonnet-4' }).catch((e) => e);
+    expect(err).toBeInstanceOf(ModelNotApprovedError);
+  });
+
+  it('document_drafting cannot be relaxed by declaring a low risk tier', async () => {
+    const gw = makeGateway();
+    stubProviders(gw);
+    const err = await gw
+      .route({ taskType: 'document_drafting', riskTier: 'low', messages: msg, model: 'claude-sonnet-4' })
+      .catch((e) => e);
+    expect(err).toBeInstanceOf(ModelNotApprovedError);
+  });
+
+  it('every kernel-routed gateway call hands over the kernel\'s riskTier (source pin)', () => {
+    // The cases above build the request themselves, so a route that stopped
+    // passing riskTier would leave them green and bring the regression back.
+    // This reads the two routes: every gateway request object that carries the
+    // kernel's taskType must carry its riskTier too.
+    const root = path.resolve(__dirname, '../../../..');
+    let checked = 0;
+    for (const file of ['server/routes/ana-ri/stream.ts', 'server/routes/chat/send-message.ts']) {
+      const src = readFileSync(path.join(root, file), 'utf8');
+      const openers = [...src.matchAll(/gw\.route\(\{|const baseRequest = \{/g)];
+      for (const m of openers) {
+        const body = src.slice(m.index, (m.index ?? 0) + 700);
+        if (!body.includes('taskType: routingPlan.taskType')) continue;
+        checked += 1;
+        expect(body, `${file}: gateway request near offset ${m.index} drops riskTier`).toContain('riskTier: routingPlan.riskTier');
+      }
+    }
+    // stream.ts first call + agentic rounds, send-message.ts baseRequest.
+    expect(checked).toBeGreaterThanOrEqual(3);
+  });
+
+  it('the refusal audit records the risk the caller declared', async () => {
+    const gw = makeGateway(['openai']);
+    stubProviders(gw);
+    await gw.route({ taskType: 'regulatory_review', riskTier: 'high', messages: msg }).catch(() => undefined);
+    const entry = (gw as any).auditLogger.getRecentEntries().find((e: any) => e.error === 'MODEL_NOT_APPROVED_FOR_HIGH_RISK');
+    expect(entry.metadata.modelGovernance.declaredRiskTier).toBe('high');
+  });
+});
+
