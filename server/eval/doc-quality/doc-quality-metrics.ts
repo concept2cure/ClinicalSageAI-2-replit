@@ -150,6 +150,58 @@ export function buildGenerationPrompt(task: GoldDocTask): string {
   );
 }
 
+/**
+ * The extraction question, asked the way the bank's `expectedFields` were
+ * written to be answered: the field names are given, the model returns only
+ * those, and it returns JSON so the answer can be scored rather than read.
+ *
+ * It lives beside buildGenerationPrompt for the same reason that one does —
+ * the PQ runner and any other caller must ask the identical question, or the
+ * score measures the prompt rather than the model. `parseExtraction` is its
+ * counterpart: a model that wraps JSON in prose or a fenced block has still
+ * answered, and failing it for formatting would measure formatting.
+ */
+export function buildExtractionPrompt(task: GoldDocTask): string {
+  const fields = Object.keys(task.expectedFields ?? {});
+  return (
+    `Extract the following fields from the "${task.docType}" source material below: ` +
+    `${fields.join(', ')}.\n\n` +
+    'Return ONLY a JSON object whose keys are exactly those field names and whose values are ' +
+    'the extracted text. Use an empty string for a field the source does not state. Do not ' +
+    'infer, and do not add fields.\n\n' +
+    `Source material:\n${task.input ?? ''}`
+  );
+}
+
+/**
+ * The JSON object out of a model's reply, or null when there is none.
+ *
+ * Accepts a bare object, a ```json fenced block, and an object embedded in
+ * surrounding prose, because all three are the model answering. Returns null
+ * only when nothing parses — which the caller reports as a task that produced
+ * no scorable output, not as a score of zero. A malformed reply scored as zero
+ * would be indistinguishable from a model that extracted every field wrongly.
+ */
+export function parseExtraction(content: string): Record<string, unknown> | null {
+  const fenced = /```(?:json)?\s*([\s\S]*?)```/i.exec(content);
+  const candidates = [fenced?.[1], content].filter((c): c is string => typeof c === 'string');
+  for (const raw of candidates) {
+    const text = raw.trim();
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end <= start) continue;
+    try {
+      const parsed: unknown = JSON.parse(text.slice(start, end + 1));
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // Try the next candidate rather than failing on the first shape.
+    }
+  }
+  return null;
+}
+
 export interface GenerationScore {
   taskId: string;
   docType: string;
