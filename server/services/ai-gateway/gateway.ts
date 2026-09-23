@@ -1190,6 +1190,53 @@ export class AIGateway {
   /**
    * Simple completion helper — wraps a single user message.
    */
+  /**
+   * Performance qualification: run a request on EXACTLY one model, by registry
+   * id, and return what it produced — for `server/eval/pq/run-pq.ts` only.
+   *
+   * Why this exists rather than `route({ model })`. Routing now refuses an
+   * explicit request for a model that is not approved for high-risk work, and
+   * `docs/LAUNCH_DEFINITION_OF_DONE.md` says an unapproved model (GPT, Kimi,
+   * `local`) earns approval by passing its PQ. The PQ therefore has to be able
+   * to exercise an unapproved model on a drafting task. An exemption flag on
+   * `route()` would be a bypass any caller could set; this is a separate,
+   * narrower door instead:
+   *
+   *   - one named model, no selection, no fallback, no retry — a PQ result
+   *     attributed to a model that did not answer is not a PQ result;
+   *   - the last-mile sensitive-dispatch gate still runs (it lives in
+   *     executeProvider), so evaluation cannot move data a tenant's placement
+   *     policy forbids;
+   *   - every call is audited with `purpose: 'performance-qualification'`;
+   *   - `scripts/ci/check-pq-evaluation-callers.mjs` fails the build if anything
+   *     outside `server/eval/pq/` calls it. Its output is never a governed
+   *     artifact.
+   */
+  async evaluateModel(
+    modelId: string,
+    request: Omit<GatewayRequest, 'provider' | 'model' | 'strategy'>,
+  ): Promise<GatewayResponse> {
+    const model = this.models.find(m => m.id === modelId);
+    if (!model) {
+      throw new GatewayNoProviderError(`PQ: "${modelId}" is not a model the gateway knows.`);
+    }
+    if (!model.enabled) {
+      throw new GatewayNoProviderError(
+        `PQ: "${modelId}" is known but its provider (${model.provider}) is not configured — nothing was evaluated.`,
+      );
+    }
+    const requestId = randomUUID();
+    const startTime = Date.now();
+    const tagged: GatewayRequest = {
+      ...request,
+      model: model.id,
+      metadata: { ...(request.metadata ?? {}), purpose: 'performance-qualification' },
+    };
+    const response = await this.executeProvider(model, tagged, requestId, startTime);
+    await this.logAudit(tagged, response, 'explicit', true, undefined, [model.id]);
+    return response;
+  }
+
   async complete(prompt: string, options?: Partial<GatewayRequest>): Promise<string> {
     const response = await this.route({
       taskType: options?.taskType || 'general',

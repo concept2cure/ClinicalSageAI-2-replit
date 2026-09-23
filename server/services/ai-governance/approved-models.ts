@@ -81,7 +81,7 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     provider: 'anthropic',
     role: 'primary',
     rationale: 'Flagship reasoning + regulatory drafting model; primary for high-risk authoring and review tasks. Bumped 4.8 → Opus 5. Same wire surface as its predecessor (adaptive thinking; temperature/top_p/top_k and thinking.budget_tokens rejected), so the request shape is unchanged — but this is a capability change, not a patch: re-validation is owed against the PQ targets below, and until it executes the accuracy claim rests on the same harness as 4.8, not on measurement of this version. Opus 4.8 is retained as the top intra-provider fallback, so a tenant whose tier does not yet carry Opus 5 keeps the reviewed behaviour rather than falling to Sonnet.',
-    evalReference: 'server/eval/rag/ (faithfulness); same capability profile and eval harness as the 4.8 predecessor; docs/validation/PQ-CORTEX-001 (PQ-007/008 accuracy targets, PENDING EXECUTION for this version).',
+    evalReference: 'server/eval/pq/pq-protocol.json (PQ-DRAFT-001, draft; PENDING EXECUTION for this version — see pq below). Corrected 2026-09-23: this field cited docs/validation/PQ-CORTEX-001 PQ-007/008, which measure pathway-prediction accuracy and "regulatory intuition" for a different product, not drafting.',
     lastReviewed: '2026-09-17',
     approvedForHighRisk: true,
     highRiskBasis: 'This entry: "primary for high-risk authoring and review tasks".',

@@ -29,6 +29,9 @@ import {
   isApprovedForHighRisk,
 } from '../../ai-governance/approved-models';
 import { classifyGatewayError } from '../gateway-error-map';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { verifyPqClaim } from '../../../eval/pq/pq-verdict';
 
 const APPROVED = ['claude-opus-4', 'claude-opus-4-legacy', 'claude-opus-4-bedrock', 'claude-opus-4-vertex'];
 
@@ -97,6 +100,17 @@ describe('registry: which models may serve high-risk regulatory work', () => {
 
   it('an id the registry does not know is not approved — it fails closed', () => {
     expect(isApprovedForHighRisk('a-model-added-without-a-governance-entry')).toBe(false);
+  });
+
+  it('every PQ claim in the registry is backed by the record it cites (server/eval/pq/pq-verdict.ts)', () => {
+    // Vacuous while every entry is pending; the moment one is marked passed,
+    // this reads its record and refuses anything but a PASS for that exact id
+    // and pinned version against an approved protocol. The rules themselves are
+    // exercised on constructed records in server/eval/pq/__tests__/pq-verdict.test.ts.
+    const root = path.resolve(__dirname, '../../../..');
+    const read = (ref: string) => JSON.parse(readFileSync(path.join(root, ref), 'utf8'));
+    const problems = APPROVED_MODELS.flatMap((m) => verifyPqClaim(m, read));
+    expect(problems).toEqual([]);
   });
 
   it('drafting and review are the high-risk task types', () => {
