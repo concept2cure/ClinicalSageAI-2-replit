@@ -31,6 +31,7 @@ import {
 import { SIGNATURE_MEANINGS, signatureMeaningSchema, resolveActorUserId } from './governance';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
+import { clientIpOf } from '../../utils/client-ip';
 
 /** The §11.50(a)(3) meanings a signature may carry. */
 type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
@@ -791,10 +792,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         sha256Chain: governance.sha256Chain,
         authenticationMethod: (req.body ?? {}).reauth?.totp ? 'password+totp' : 'password',
         secondFactorVerified: Boolean((req.body ?? {}).reauth?.totp),
-        ipAddress:
-          (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-          req.socket?.remoteAddress ||
-          null,
+        ipAddress: clientIpOf(req),
         occurredAt: new Date(),
         binding: {
           digest: sha256CanonicalJson({

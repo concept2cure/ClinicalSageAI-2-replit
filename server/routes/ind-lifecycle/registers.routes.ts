@@ -437,12 +437,20 @@ router.get('/amendments/:amendmentId', limiter, requireRole(AUTHOR), async (req,
 
 const VALID_GATEWAYS = ['FDA_FAERS', 'EMA_EUDRAVIGILANCE'];
 
-/** ICSR transmission service codes → HTTP status. 503/502 mean NOT transmitted; the row stays 'prepared'. */
+/**
+ * ICSR transmission service codes → HTTP status. 503 and GATEWAY_TRANSMIT_FAILED's
+ * 502 mean NOT transmitted; the row is 'prepared' again. TRANSMISSION_UNCONFIRMED is
+ * also 502 but means the opposite of "nothing happened": the agency may hold the
+ * report, the row is 'transmission_unconfirmed' and will not be sent again — the
+ * body's `code` and `deliveryUnconfirmed: true` say which (2026-09-23, W5/D7,
+ * MDN final pass).
+ */
 const ICSR_TX_CODE_STATUS: Record<IcsrTransmissionErrorCode, number> = {
   NOT_FOUND: 404,
   NOT_READY: 422,
   GATEWAY_NOT_CONFIGURED: 503,
   GATEWAY_TRANSMIT_FAILED: 502,
+  TRANSMISSION_UNCONFIRMED: 502,
   // An acknowledgement that cannot be read, names another message, or arrives
   // for a report never transmitted is refused; the row is unchanged.
   ACK_UNREADABLE: 422,
@@ -500,8 +508,13 @@ router.get('/submission/:id/icsr-transmissions', limiter, requireRole(AUTHOR), a
 /**
  * Transmit a prepared ICSR to its agency gateway. Only a real gateway receipt
  * marks it transmitted: 422 not-ready (gaps returned), 503 gateway not
- * configured (or a simulated receipt), 502 transport failure — in each case
- * nothing was sent and the row stays 'prepared'.
+ * configured (or a simulated receipt), 502 GATEWAY_TRANSMIT_FAILED (nothing
+ * delivered, or the agency refused it) — in each case the row is 'prepared'
+ * again. 502 TRANSMISSION_UNCONFIRMED: sent, and the agency may hold it;
+ * the row is 'transmission_unconfirmed' and a further transmit is refused 409
+ * until the agency's acknowledgement is recorded. 409 INVALID_STATE also when
+ * another transmit of the row is in progress ('transmitting' — claimed before
+ * the send; 2026-09-23, MDN final pass, repair).
  */
 router.post('/icsr-transmissions/:txId/transmit', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);

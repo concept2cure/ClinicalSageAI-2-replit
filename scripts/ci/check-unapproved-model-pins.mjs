@@ -33,6 +33,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripComments } from './lib/strip-comments.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BASELINE = 'scripts/ci/unapproved-model-pins-baseline.json';
@@ -57,12 +58,8 @@ function isExcluded(rel) {
   );
 }
 
-/** Remove block and line comments so documentation that names a model is not a pin. */
-function codeOnly(src) {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .replace(/(^|[^:\\])\/\/[^\n]*/g, (m, lead) => lead + ' '.repeat(m.length - lead.length));
-}
+/** Comments blanked, strings kept (scripts/ci/lib/strip-comments.mjs). */
+const codeOnly = stripComments;
 
 /** { 'server/x.ts': [{ line, model }] } for every pin under root. */
 export function findPins(root) {

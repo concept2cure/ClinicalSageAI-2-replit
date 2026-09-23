@@ -20,6 +20,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'fs';
 
 vi.hoisted(() => {
   process.env.NODE_ENV = process.env.NODE_ENV || 'test';
@@ -187,6 +188,10 @@ const { mdnFixture } = vi.hoisted(() => ({
   mdnFixture: {
     originalMessageId: null as string | null,
     disposition: 'automatic-action/MDN-sent-automatically; processed' as string | null,
+    /** When set, the whole MDN body, built from the request's Message-ID. */
+    body: null as ((requestMessageId: string) => string) | null,
+    /** Extra HTTP response headers (e.g. the multipart/report Content-Type). */
+    headers: {} as Record<string, string>,
   },
 }));
 
@@ -204,15 +209,17 @@ const mdnBodyFor = (originalMessageId: string, disposition: string | null) =>
 vi.mock('node:https', () => {
   return {
     request: (opts: any, cb: (res: unknown) => void) => {
-      const FAKE_MDN_BODY = mdnBodyFor(
-        mdnFixture.originalMessageId ?? String(opts?.headers?.['Message-ID'] ?? ''),
-        mdnFixture.disposition,
-      );
+      const FAKE_MDN_BODY = mdnFixture.body
+        ? mdnFixture.body(String(opts?.headers?.['Message-ID'] ?? ''))
+        : mdnBodyFor(
+          mdnFixture.originalMessageId ?? String(opts?.headers?.['Message-ID'] ?? ''),
+          mdnFixture.disposition,
+        );
       const dataHandlers: Array<(c: Buffer) => void> = [];
       const endHandlers: Array<() => void> = [];
       const res: any = {
         statusCode: 200,
-        headers: { 'message-id': '<mdn-msg-id@FDA-CESUB>' },
+        headers: { 'message-id': '<mdn-msg-id@FDA-CESUB>', ...mdnFixture.headers },
         on: (evt: string, h: any) => {
           if (evt === 'data') dataHandlers.push(h);
           if (evt === 'end') endHandlers.push(h);
@@ -273,6 +280,8 @@ beforeEach(() => {
   activeTransmittalRow.value = null;
   mdnFixture.originalMessageId = null;
   mdnFixture.disposition = 'automatic-action/MDN-sent-automatically; processed';
+  mdnFixture.body = null;
+  mdnFixture.headers = {};
 });
 
 /* ─── FIX 2 ─────────────────────────────────────────────────────── */
@@ -364,12 +373,66 @@ describe('SFTP path — the application number is required, never invented', () 
 
 /* ─── MDN acceptance ────────────────────────────────────────────── */
 
-describe('AS2 MDN — a 2xx is not an acceptance until the MDN says so', () => {
-  const rejectedUpdate = () =>
-    poolQueries.find((q) => /UPDATE submission_transmittals/i.test(q.sql) && q.args.some((a) => a === 'rejected'));
-  const receivedUpdate = () =>
-    poolQueries.find((q) => /UPDATE submission_transmittals/i.test(q.sql) && q.args.some((a) => a === 'received'));
+/* 2026-09-23 (W5/D7, round-3 review, second pass): the MDN helpers moved
+   out of the describe block below so the second-pass cases could get their
+   own block (the first exceeded max-lines-per-function). */
+const rejectedUpdate = () =>
+  poolQueries.find((q) => /UPDATE submission_transmittals/i.test(q.sql) && q.args.some((a) => a === 'rejected'));
+const receivedUpdate = () =>
+  poolQueries.find((q) => /UPDATE submission_transmittals/i.test(q.sql) && q.args.some((a) => a === 'received'));
 
+const mdnPart = (fields: string) =>
+  '------=_Part_FDA_MDN\r\n' +
+  'Content-Type: message/disposition-notification\r\n\r\n' +
+  'Reporting-UA: FDA-CESUB\r\n' +
+  'Final-Recipient: rfc822; FDA-CESUB\r\n' +
+  fields +
+  '------=_Part_FDA_MDN--\r\n';
+const ACCEPTING = 'Disposition: automatic-action/MDN-sent-automatically; processed\r\n';
+
+/**
+ * The row a delivered-but-unconfirmed AS2 send leaves: the last status
+ * UPDATE records a status the duplicate-send lock holds (read from
+ * findActiveTransmittal's query and from sub_trans_active_lock_idx, not
+ * restated here), the raw MDN, the error the caller was thrown, and the
+ * transmission id — the MDN's own Message-ID header — without which
+ * checkStatus() reports the row "never transmitted".
+ */
+async function expectDeliveredUnconfirmed(err: any, reason: RegExp): Promise<void> {
+  // 'rejected' is outside the lock and freed the same bundle for a second send.
+  expect(err).toBeInstanceOf(Error);
+  expect(rejectedUpdate()).toBeUndefined();
+  // Still not FDA's acceptance of THIS message: no 'received' row, and the
+  // caller is told — in words that forbid a blind resend.
+  expect(receivedUpdate()).toBeUndefined();
+  expect(err.message).toMatch(reason);
+  expect(err.message).toMatch(/may hold it/);
+  expect(err.message).toMatch(/before any resend/);
+
+  const updates = poolQueries.filter((q) => /UPDATE submission_transmittals/i.test(q.sql) && /status\s*=/.test(q.sql));
+  const last = updates[updates.length - 1];
+  const recordedStatus = last.args[Number(last.sql.match(/status = \$(\d+)/)![1]) - 1] as string;
+  expect(last.sql).toMatch(/mdn_raw\s*=/);
+  expect(last.args).toContain(err.message);
+  // 2026-09-23 (W5/D7, round-3 review): the transmission id was set but no
+  // test pinned it; removing it left every test green.
+  expect(last.sql).toMatch(/transmission_id\s*=/);
+  expect(last.args).toContain('<mdn-msg-id@FDA-CESUB>');
+
+  poolQueries.length = 0;
+  await findActiveTransmittal({ organizationId: 7, packageId: 99, bundleSha256: 'a'.repeat(64) });
+  const lockSql = poolQueries.find((q) => /SELECT\s+id,\s+status\s+FROM submission_transmittals/i.test(q.sql))!.sql;
+  const lockStatuses = [...lockSql.match(/status IN \(([^)]*)\)/)![1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  expect(lockStatuses.length).toBeGreaterThan(0);
+  expect(lockStatuses).toContain(recordedStatus);
+  const indexSql = readFileSync(
+    new URL('../../../../migrations/20260629_submission_transmittals_active_lock.sql', import.meta.url), 'utf8',
+  );
+  const indexStatuses = [...indexSql.match(/WHERE status IN \(([^)]*)\)/)![1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  expect(indexStatuses).toContain(recordedStatus);
+}
+
+describe('AS2 MDN — a 2xx is not an acceptance until the MDN says so', () => {
   it('a failed disposition records the transmittal rejected, keeps the raw MDN, and throws', async () => {
     mdnFixture.disposition = 'automatic-action/MDN-sent-automatically; failed/failure: signature verification failed';
     await expect(new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).rejects.toThrow(/did not accept/);
@@ -379,26 +442,125 @@ describe('AS2 MDN — a 2xx is not an acceptance until the MDN says so', () => {
     expect(rejected!.sql).toMatch(/mdn_raw\s*=/);
   });
 
-  it('processed/error is a refusal; processed/warning is an acceptance', async () => {
+  it('processed/error is a rejection; processed/warning is an acceptance', async () => {
     mdnFixture.disposition = 'automatic-action/MDN-sent-automatically; processed/error: unsupported MIC algorithm';
     await expect(new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).rejects.toThrow(/did not accept/);
+    expect(rejectedUpdate()).toBeDefined();
     poolQueries.length = 0;
     mdnFixture.disposition = 'automatic-action/MDN-sent-automatically; processed/warning: duplicate document';
     const result = await new FdaEsgGateway().transmit(SMALL_AS2_REQUEST());
     expect(result.status).toBe('received');
   });
 
-  it('an MDN for a different message is refused', async () => {
-    mdnFixture.originalMessageId = '<some-other-message@SPONSOR-AS2>';
-    await expect(new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).rejects.toThrow(/different message/);
-    expect(receivedUpdate()).toBeUndefined();
+  /* 2026-09-23 (W5/D7, round-2 review). RFC 5322 §2.2.3 folding: a field body
+     may continue on a line that begins with WSP. A folded Original-Message-ID
+     parsed as absent and the agency's acceptance was recorded 'rejected'. */
+  it('an accepting MDN with a folded Original-Message-ID is the receipt of the message sent', async () => {
+    mdnFixture.body = (sent) => mdnPart(`Original-Message-ID:\r\n ${sent}\r\n` + ACCEPTING);
+    const result = await new FdaEsgGateway().transmit(SMALL_AS2_REQUEST());
+    expect(result.status).toBe('received');
+    expect(rejectedUpdate()).toBeUndefined();
   });
 
-  it('a body with no disposition at all is refused', async () => {
-    mdnFixture.disposition = null;
-    await expect(new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).rejects.toThrow(/no MDN disposition/);
+  it('an accepting MDN with a folded Disposition is the receipt of the message sent', async () => {
+    mdnFixture.body = (sent) => mdnPart(
+      `Original-Message-ID: ${sent}\r\n` +
+      'Disposition: automatic-action/MDN-sent-automatically;\r\n\tprocessed\r\n',
+    );
+    const result = await new FdaEsgGateway().transmit(SMALL_AS2_REQUEST());
+    expect(result.status).toBe('received');
+    expect(rejectedUpdate()).toBeUndefined();
+  });
+
+  /* 2026-09-23 (W5/D7, round-3 review): a msg-id may carry a trailing RFC 5322
+     comment (msg-id = [CFWS] "<" id-left "@" id-right ">" [CFWS]). Round 2's
+     unfolding made `<our-id>\r\n (FDA ESG)` read as a different message, which
+     was recorded 'rejected' — FDA's acceptance of THIS message turned into a
+     rejection that freed a resend. */
+  it('an accepting MDN whose msg-id carries a folded trailing comment is the receipt of the message sent', async () => {
+    mdnFixture.body = (sent) => mdnPart(`Original-Message-ID: ${sent}\r\n (FDA ESG)\r\n` + ACCEPTING);
+    const result = await new FdaEsgGateway().transmit(SMALL_AS2_REQUEST());
+    expect(result.status).toBe('received');
+    expect(rejectedUpdate()).toBeUndefined();
+  });
+
+  it('an accepting MDN that names no message stays inside the duplicate-send lock with its transmission id, and throws', async () => {
+    mdnFixture.body = () => mdnPart(ACCEPTING);
+    const err = await new FdaEsgGateway().transmit(SMALL_AS2_REQUEST()).catch((e) => e);
+    await expectDeliveredUnconfirmed(err, /names no Original-Message-ID/);
+  });
+
+  /* 2026-09-23 (W5/D7, round-3 review): every 2xx without an explicit
+     non-accepting disposition is delivery FDA may hold. These were recorded
+     'rejected' — outside the lock — and the same bundle could be sent again.
+     Two tests here used to pin that defect: "an MDN for a different message is
+     refused" and "a body with no disposition at all is refused" (which
+     asserted a 'rejected' UPDATE). They are the last two cases below, now
+     asserting the send stays in transit inside the lock. */
+  it.each([
+    ['an empty Original-Message-ID (trailing space only)', () => mdnPart('Original-Message-ID: \r\n' + ACCEPTING), /names no Original-Message-ID/],
+    ['an empty msg-id "<>"', () => mdnPart('Original-Message-ID: <>\r\n' + ACCEPTING), /names no Original-Message-ID/],
+    ['an Original-Message-ID folded onto a whitespace-only line', () => mdnPart('Original-Message-ID:\r\n \r\n' + ACCEPTING), /names no Original-Message-ID/],
+    ['an accepting MDN naming a different message', () => mdnPart('Original-Message-ID: <some-other-message@SPONSOR-AS2>\r\n' + ACCEPTING), /different message/],
+    ['a body with no disposition at all', () => mdnPart('Original-Message-ID: <x@y>\r\n'), /no MDN disposition/],
+    ['an empty 2xx body', () => '', /no MDN disposition/],
+    /* 2026-09-23 (W5/D7, round-3 review, second pass): a refusal of ANOTHER
+       message was recorded 'rejected' and freed a resend of ours; an unknown
+       modifier or an unclosed comment was recorded 'received'. */
+    ['a failed MDN naming a different message',
+      () => mdnPart('Original-Message-ID: <someone-else@FDA>\r\nDisposition: automatic-action/MDN-sent-automatically; failed/failure: unsupported format\r\n'),
+      /different message/],
+    ['a processed/error MDN naming a different message',
+      () => mdnPart('Original-Message-ID: <someone-else@FDA>\r\nDisposition: automatic-action/MDN-sent-automatically; processed/error: x\r\n'),
+      /different message/],
+    ['a Disposition with an unclosed comment',
+      (sent: string) => mdnPart(`Original-Message-ID: ${sent}\r\nDisposition: automatic-action/MDN-sent-automatically; processed (see note /error: decryption-failed\r\n`),
+      /neither/],
+    ['an unknown processed modifier',
+      (sent: string) => mdnPart(`Original-Message-ID: ${sent}\r\nDisposition: automatic-action/MDN-sent-automatically; processed/superseded\r\n`),
+      /neither/],
+  ])('%s is delivered-unconfirmed: in transit inside the lock, never rejected', async (_label, body, reason) => {
+    mdnFixture.body = body;
+    const err = await new FdaEsgGateway().transmit(SMALL_AS2_REQUEST()).catch((e) => e);
+    await expectDeliveredUnconfirmed(err, reason);
+  });
+
+});
+
+describe('AS2 MDN — failure modifiers, bare msg-ids and the HTTP Content-Type boundary', () => {
+  it.each([
+    ['processed/failed: signature check failed'],
+    ['processed/decryption-failed'],
+  ])('%s naming our message is recorded rejected, never received', async (d) => {
+    mdnFixture.disposition = `automatic-action/MDN-sent-automatically; ${d}`;
+    await expect(new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).rejects.toThrow(/did not accept/);
     expect(receivedUpdate()).toBeUndefined();
     expect(rejectedUpdate()).toBeDefined();
+  });
+
+  it('an Original-Message-ID echoed without angle brackets naming our message is the receipt', async () => {
+    mdnFixture.body = (sent) => mdnPart(`Original-Message-ID: ${sent.slice(1, -1)}\r\n` + ACCEPTING);
+    expect((await new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).status).toBe('received');
+  });
+
+  it('reads the MIME boundary from the HTTP Content-Type of an unsigned multipart/report', async () => {
+    // A delimiter-like line inside the text part is not a part boundary once the
+    // real boundary is known; without it the two notifications are ambiguous.
+    mdnFixture.headers = { 'content-type': 'multipart/report; report-type=disposition-notification; boundary="outer"' };
+    mdnFixture.body = (sent) =>
+      '--outer\r\nContent-Type: text/plain\r\n\r\nquoted:\r\n--fake\r\nContent-Type: message/disposition-notification\r\n\r\n' +
+      `Original-Message-ID: ${sent}\r\n${ACCEPTING}\r\n--outer\r\nContent-Type: message/disposition-notification\r\n\r\n` +
+      `Original-Message-ID: ${sent}\r\nDisposition: automatic-action/MDN-sent-automatically; failed/failure: x\r\n\r\n--outer--\r\n`;
+    await expect(new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).rejects.toThrow(/did not accept/);
+    expect(rejectedUpdate()).toBeDefined();
+  });
+
+  it('accepts an unsigned multipart/report whose human part declares a nested boundary', async () => {
+    mdnFixture.headers = { 'content-type': 'multipart/report; report-type=disposition-notification; boundary="outer"' };
+    mdnFixture.body = (sent) =>
+      '--outer\r\nContent-Type: multipart/alternative; boundary="alt"\r\n\r\n--alt\r\nContent-Type: text/plain\r\n\r\nreceived\r\n--alt--\r\n\r\n' +
+      `--outer\r\nContent-Type: message/disposition-notification\r\n\r\nOriginal-Message-ID: ${sent}\r\n${ACCEPTING}\r\n--outer--\r\n`;
+    expect((await new FdaEsgGateway().transmit(SMALL_AS2_REQUEST())).status).toBe('received');
   });
 });
 

@@ -72,7 +72,7 @@ import {
   deleteBundle,
   readBundleBytes,
 } from '../services/submission-bundle-storage';
-import { leafFileName, isFinalizedStatus } from '../services/ectd/leaf-source-resolver';
+import { leafFileName } from '../services/ectd/leaf-source-resolver';
 import type { LeafBytes } from '../services/ectd/package-leaf-bytes';
 import {
   planSequence,
@@ -81,6 +81,7 @@ import {
   type SequencePlan,
 } from '../services/ectd/package-sequence-lifecycle';
 import {
+  artifactApproval,
   assessPackageContent,
   fingerprintPackageContent,
   sha256Hex,
@@ -2221,12 +2222,22 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
     // only 80% readiness, and the governed transmit reads no artifact status,
     // so a draft artifact rendered into a leaf and reached the agency. The
     // sequence spine refuses that (`unfinalized`); this one did not. Each
-    // shipping leaf built from an artifact that is not finalized — by the
-    // leaf-source resolver's own definition, isFinalizedStatus — is recorded
+    // shipping leaf built from an artifact that is not filable is recorded
     // here by its path, and becomes an error-severity LEAF-UNAPPROVED finding
     // once the lifecycle has decided which leaves ship, so executeGovernedTransmit
     // refuses the bundle (BUNDLE_VALIDATION_ERRORS). leaf path → its artifacts.
-    const unapprovedByLeafPath = new Map<string, Array<{ label: string; status: string }>>();
+    // 2026-09-23 (W5/D7, round-2 skeptic): "filable" is artifactApproval
+    // (package-content-fingerprint.ts) — finalized by the leaf-source
+    // resolver's isFinalizedStatus AND at the version the status route
+    // approved (approvedVersionId) — and, when locked, locked (publishedVersionId)
+    // at that same approved version (round 3: a lock after an unreviewed edit
+    // recorded the edited version and was trusted on its own). Status alone
+    // was trusted before, and an approved artifact edited after approval keeps
+    // status 'approved' (PUT …/artifacts/:id, rollback, the AnA content
+    // writers), so unreviewed content shipped labelled approved. The same
+    // reduction goes into the content fingerprint, so an approval revoked
+    // after assembly reads as BUNDLE_CONTENT_DRIFT at transmit.
+    const unapprovedByLeafPath = new Map<string, Array<{ label: string; problem: string; remedy: string }>>();
     // An artifact ships as ONE leaf. The section map has no uniqueness on
     // (artifact, section), so a duplicate row — or the same artifact mapped
     // into two sections — used to ship a second copy under a suffixed name with
@@ -2256,8 +2267,11 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           // unchanged content produces the same bytes and the sequence lifecycle
           // can see that nothing changed. See services/ectd/leaf-pdf.ts.
           updatedAt: concept2cureArtifacts.updatedAt,
-          // Whether the artifact may be filed at all (LEAF-UNAPPROVED).
+          // Whether the artifact may be filed at all (LEAF-UNAPPROVED): its
+          // status, and the version that status was granted to (artifactApproval).
           status: concept2cureArtifacts.status,
+          approvedVersionId: concept2cureArtifacts.approvedVersionId,
+          publishedVersionId: concept2cureArtifacts.publishedVersionId,
         })
         .from(c2cArtifactSectionMap)
         .innerJoin(
@@ -2277,12 +2291,16 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         contentRows.push({
           sectionDbId: section.id, sectionKey: section.sectionKey, sectionLabel: section.sectionLabel,
           sortOrder: Number(section.sortOrder ?? 0),
-          artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null,
+          artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null, filable: null,
         });
       }
+      // One filability judgement per mapped artifact, shared by the finding and
+      // the fingerprint below.
+      const approvalOf = new Map(mapped.map((a) => [a, artifactApproval(a)] as const));
       for (const a of mapped) {
         // Title and version are embedded in the leaf (index.xml title, PDF
-        // heading), so they are part of what the zip was built from.
+        // heading), so they are part of what the zip was built from; whether it
+        // is filable is what the transmit recompute re-judges.
         contentRows.push({
           sectionDbId: section.id,
           sectionKey: section.sectionKey,
@@ -2293,6 +2311,7 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           version: Number(a.version ?? 0),
           ctdSection: a.ctdSection ?? null,
           contentSha256: sha256Hex(a.content ?? ''),
+          filable: approvalOf.get(a)!.filable,
         });
       }
 
@@ -2333,9 +2352,12 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           content: await buildLeafPdf({ title: sectionLabel, markdown, contentModifiedAt: sectionContentAt(mapped) }),
         });
         // Every artifact merged into this section's leaf is filed with it.
-        const unapproved = mapped
-          .filter((a) => !isFinalizedStatus(a.status, 'concept2cure_artifacts'))
-          .map((a) => ({ label: `${a.title} (${a.artifactId} v${a.version}) in ${sectionLabel}`, status: a.status }));
+        const unapproved = mapped.flatMap((a) => {
+          const approval = approvalOf.get(a)!;
+          return approval.filable
+            ? []
+            : [{ label: `${a.title} (${a.artifactId} v${a.version}) in ${sectionLabel}`, problem: approval.problem, remedy: approval.remedy }];
+        });
         if (unapproved.length > 0) unapprovedByLeafPath.set(leafPath, unapproved);
         continue;
       }
@@ -2433,8 +2455,9 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         });
         ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title, modulePath });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
-        if (artifact && !isFinalizedStatus(artifact.status, 'concept2cure_artifacts')) {
-          unapprovedByLeafPath.set(modulePath, [{ label: unitLabel, status: artifact.status }]);
+        const approval = artifact ? approvalOf.get(artifact)! : null;
+        if (approval && !approval.filable) {
+          unapprovedByLeafPath.set(modulePath, [{ label: unitLabel, problem: approval.problem, remedy: approval.remedy }]);
         }
         if (shipKey) shippedArtifacts.set(shipKey, sectionLabel);
       }
@@ -2526,7 +2549,11 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         validation.findings.push({
           severity: 'error',
           ruleId: 'LEAF-UNAPPROVED',
-          message: `${u.label}: its status is '${u.status}', not approved. Only an approved or locked artifact is filed with an agency; approve it, or remove it from the package, then assemble again.`,
+          // 2026-09-23 (W5/D7, round-2 skeptic, round 3): the remedy was "approve
+          // it (again)", which the status route cannot do — approved → approved is
+          // not a valid transition. artifactApproval now names the transitions
+          // (u.remedy), and a lock counts only when it covers the approved version.
+          message: `${u.label}: ${u.problem}. Only an approved or locked artifact, at the version that was approved (and, when locked, locked), is filed with an agency; ${u.remedy}, or remove it from the package, then assemble again.`,
           filePath: leaf.path,
         });
         validation.errorCount += 1;

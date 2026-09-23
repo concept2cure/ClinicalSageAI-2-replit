@@ -237,10 +237,11 @@ vi.mock('../../server/services/part11/reverify-signer-deps', () => ({
     comparePassword: async (plain: string, hash: string) => plain === 'correct-horse-battery' && hash === 'stored-hash',
     isMfaEnabled: async () => false,
     verifyMfaToken: async () => false,
+    isAccountActive: async () => true,
+    isAccountLocked: async () => false,
+    recordFailedAttempt: async () => {},
     warn: () => {},
   }),
-  // Imported directly by routes/esignature.ts (its password pre-check reads
-  // through the same loader the signing path uses).
   loadPasswordHash: async () => 'stored-hash',
 }));
 

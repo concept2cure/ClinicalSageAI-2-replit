@@ -1,0 +1,13 @@
+# Mutation check of the signup's atomicity, tests/db/signup-launch-catalog.dbtest.ts (real PostgreSQL, RLS_ENFORCE=on), 2026-09-23T14:18:20.455575Z
+# Each mutant applied alone to server/routes/auth.ts, the refused-write case run, the source restored. Tokens in responses are redacted.
+
+S1 the workspace error swallowed inside the signup transaction: KILLED
+   × tests/db/signup-launch-catalog.dbtest.ts > a refused workspace write takes the whole organisation with it > answers 500 AUTH_010 and leaves no organisation, user, membership or workspace behind 497ms
+   → {"success":true,"token":"<token redacted>","organization":{"id":54,"name":"dbtsu refused 15467_mue6uekr","uuid":"d1f46da2-181e-4bf9-b8e1-29a1b68cd0d7","industryMode":"medtech"},"user":{"id":463,"email":"dbtsu-refused-15467_mue6uekr@example.invalid","name":"Lane Signup"}}: expected 201 to be 500 // Object.is equality
+   Tests  1 failed | 15 skipped (16)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+S2 the workspace written after the signup transaction commits: KILLED
+   × tests/db/signup-launch-catalog.dbtest.ts > a refused workspace write takes the whole organisation with it > answers 500 AUTH_010 and leaves no organisation, user, membership or workspace behind 474ms
+   → expected [ Array(1) ] to deeply equal [ { organizations: +0, …(3) } ]
+   Tests  1 failed | 15 skipped (16)
+   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

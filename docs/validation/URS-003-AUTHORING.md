@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-003 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-003 (`tests/validation/oq/authoring/run.mjs`) |
@@ -15,6 +15,7 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | Drafted from `server/routes/authoring.router.ts` (docs, sections, revisions, freeze, e-sign, review, workflow, AI draft), `server/routes/review-board-routes.ts`, `server/routes/c2c/templates.ts` and the `DocumentAuthoring`, `Review`, `TemplateLibrary` surfaces. |
+| 0.2 | 2026-09-23 | W3 | URS-AUTH-010 restated for the platform's one signing ceremony, which replaces the signing PIN (VSR-001 §13.3 item 3, decided under the owner's delegation): the account password, the enrolled second factor, and the account's lockout. The PIN route is removed. |
 
 ## 1. Intended use
 
@@ -33,7 +34,7 @@ Authoring is where governed regulatory text is written: a document (CTD module) 
 | URS-AUTH-007 | A comment can be recorded on a section and listed under the document, attributed to the actor. | none | low | `authoring.router.ts:2932, 3278` |
 | URS-AUTH-008 | The document's audit trail lists every operation with type, actor, timestamp, reason and before/after content hashes. | §11.10(e) | high | `authoring.router.ts:6803-6831` |
 | URS-AUTH-009 | Freezing a document stores an immutable snapshot with a content hash and a version; a frozen record is retrievable and hash-verified; a second freeze is refused. | §11.70 | high | `authoring.router.ts:4438, 4848` |
-| URS-AUTH-010 | An electronic signature requires the actor's PIN (a second component held only by the signer, enrolled and rotated only by the signer with the current PIN), a meaning from {AUTHOR, REVIEWER, APPROVER} and an intent; a wrong PIN answers 401 and an invalid meaning 400 with nothing stored; a valid signature stores signer, meaning, digest and the covered freeze version/hash and is listed with `pin_verified`. | §11.50 §11.70 §11.200 | high | `authoring.router.ts:4647-4790, 6748-6775, 6833` |
+| URS-AUTH-010 | An electronic signature re-verifies the signer at signing with the platform's one ceremony (`server/services/part11/reverify-signer.ts`): the account password, and the current code of the second factor when one is enrolled. It requires a meaning from {AUTHOR, REVIEWER, APPROVER} and an intent. A wrong password or code answers 401 and counts against the account's lockout; a missing code where a factor is enrolled answers 400 `MFA_TOKEN_REQUIRED`; an invalid meaning answers 400; nothing is stored on any refusal. A signing PIN signs nothing, and no route sets one (404). A valid signature stores signer, meaning, the method verified (`password` or `password+mfa`), digest and the covered freeze version/hash. | §11.50 §11.70 §11.200 §11.300 | high | `authoring.router.ts` (`reverifyAuthoringSigner`, `/docs/:docId/e-sign`, `/docs/:docId/sign`), `server/services/part11/reverify-signer.ts` |
 | URS-AUTH-011 | Only a role with signing authority may apply a signature (403 `ESIGNATURE_NO_AUTHORITY` otherwise). | §11.10(g) | high | `authoring.router.ts:567-583` |
 | URS-AUTH-012 | AI drafting runs only through the governed gateway; with no provider configured the request fails closed with an error and never returns draft text; with a PQ-passed provider it returns a candidate for human acceptance with provenance. | none | high | `authoring.router.ts:3523, 3911`, `server/services/ai-gateway/` |
 | URS-AUTH-013 | A review can be requested from named reviewers and the document submitted into an approval workflow whose steps name their approver; the document moves to IN_REVIEW; a reviewer sees the pending review on the Review surface and records a decision with a meaning. | §11.10(e) | medium | `authoring.router.ts:3476, 6259, 6394`, `server/routes/review-board-routes.ts:852` |

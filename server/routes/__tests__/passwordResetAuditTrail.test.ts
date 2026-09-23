@@ -130,7 +130,7 @@ vi.mock('../../auth/dev-auth-policy', () => ({
   isDevAuthAllowed: () => false, devAuthDenialReason: () => 'disabled',
 }));
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import authRoutes from '../auth';
@@ -196,6 +196,43 @@ describe('requesting a password reset is audited', () => {
 
     expect(found.status).toBe(missing.status);
     expect(found.body).toEqual(missing.body);
+  });
+});
+
+describe('a reset link is built on the deployment\'s address, never the request\'s Host (D6)', () => {
+  const saved = { NODE_ENV: process.env.NODE_ENV, APP_URL: process.env.APP_URL };
+  afterEach(() => {
+    process.env.NODE_ENV = saved.NODE_ENV;
+    if (saved.APP_URL === undefined) delete process.env.APP_URL;
+    else process.env.APP_URL = saved.APP_URL;
+  });
+
+  it('in production, a forged Host does not become the link the victim is emailed', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.APP_URL = 'https://app.example.test';
+    dbState.selectRows = [{ id: 7, email: 'victim@example.test' }];
+    const res = await request(app)
+      .post('/api/auth/forgot-password')
+      .set('Host', 'attacker.example')
+      .send({ email: 'victim@example.test' });
+
+    expect(res.status).toBe(200);
+    const resetUrl = String((sendPasswordResetEmail.mock.calls[0] as unknown[] | undefined)?.[2]);
+    expect(resetUrl.startsWith('https://app.example.test/'), `the emailed link was ${resetUrl}`).toBe(true);
+  });
+
+  it('in production without APP_URL, every address is refused alike and no token is issued', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.APP_URL;
+    dbState.selectRows = [{ id: 7, email: 'victim@example.test' }];
+    const known = await request(app).post('/api/auth/forgot-password').set('Host', 'attacker.example').send({ email: 'victim@example.test' });
+    dbState.selectRows = [];
+    const unknown = await request(app).post('/api/auth/forgot-password').set('Host', 'attacker.example').send({ email: 'nobody@example.test' });
+
+    expect(sendPasswordResetEmail, 'a reset link was emailed with the attacker\'s Host as its origin').not.toHaveBeenCalled();
+    expect(dbState.updates, 'a reset token was stored for a link that cannot be built').toEqual([]);
+    expect(known.status).toBe(503);
+    expect([unknown.status, unknown.body]).toEqual([known.status, known.body]);
   });
 });
 

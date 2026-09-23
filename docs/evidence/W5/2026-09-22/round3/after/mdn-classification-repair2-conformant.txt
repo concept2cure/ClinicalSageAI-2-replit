@@ -1,0 +1,70 @@
+A1 unsigned report, HTTP CT quoted boundary (Axway-style ----=_Part) [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A1 unsigned report, HTTP CT quoted boundary (Axway-style ----=_Part) [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A2 same, no HTTP CT [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A2 same, no HTTP CT [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A3 unsigned, HTTP CT unquoted boundary [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A3 unsigned, HTTP CT unquoted boundary [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A4 unsigned, HTTP CT param "Boundary=" capitalised, extra spaces [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A4 unsigned, HTTP CT param "Boundary=" capitalised, extra spaces [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A5 unsigned, boundary with spaces in quotes [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A5 unsigned, boundary with spaces in quotes [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A6 unsigned, preamble "This is a multi-part message in MIME format." [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A6 unsigned, preamble "This is a multi-part message in MIME format." [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A7 unsigned, delimiter lines carry transport padding (trailing spaces) [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A7 unsigned, delimiter lines carry transport padding (trailing spaces) [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A8 unsigned, DN Content-Type folded onto continuation [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A8 unsigned, DN Content-Type folded onto continuation [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A9 unsigned, DN Content-Type lower-case header + charset param [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A9 unsigned, DN Content-Type lower-case header + charset param [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A10 unsigned, Disposition folded after ";" [CRLF]  HEAD=REFUSED  NEW=ACCEPT
+A10 unsigned, Disposition folded after ";" [LF]  HEAD=REFUSED  NEW=ACCEPT
+A11 unsigned, Disposition with comments in mode and type [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A11 unsigned, Disposition with comments in mode and type [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A12 unsigned, Original-Message-ID folded onto its own line [CRLF]  HEAD=REFUSED  NEW=ACCEPT
+A12 unsigned, Original-Message-ID folded onto its own line [LF]  HEAD=REFUSED  NEW=ACCEPT
+A13 unsigned, Original-Message-ID with trailing comment [CRLF]  HEAD=REFUSED  NEW=ACCEPT
+A13 unsigned, Original-Message-ID with trailing comment [LF]  HEAD=REFUSED  NEW=ACCEPT
+A14 unsigned, processed/Warning: duplicate-document [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A14 unsigned, processed/Warning: duplicate-document [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A15 unsigned, "Processed" capitalised [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A15 unsigned, "Processed" capitalised [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A16 unsigned, epilogue after closing delimiter [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A16 unsigned, epilogue after closing delimiter [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A17 unsigned, third part text/rfc822-headers echoing ours [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A17 unsigned, third part text/rfc822-headers echoing ours [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A18 unsigned, extension field X-Foo in DN [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A18 unsigned, extension field X-Foo in DN [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A19 unsigned, HTTP CT duplicated (array) [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A19 unsigned, HTTP CT duplicated (array) [LF]  HEAD=ACCEPT  NEW=ACCEPT
+A20 unsigned, HTTP CT present but lacks a boundary param [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+A20 unsigned, HTTP CT present but lacks a boundary param [LF]  HEAD=ACCEPT  NEW=ACCEPT
+S1 signed MDN (multipart/signed in HTTP, inner report declared in body) [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+S1 signed MDN (multipart/signed in HTTP, inner report declared in body) [LF]  HEAD=ACCEPT  NEW=ACCEPT
+S2 signed MDN, no HTTP CT [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+S2 signed MDN, no HTTP CT [LF]  HEAD=ACCEPT  NEW=ACCEPT
+S3 signed MDN, body starts with its own MIME headers (headers-in-body style) [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+S3 signed MDN, body starts with its own MIME headers (headers-in-body style) [LF]  HEAD=ACCEPT  NEW=ACCEPT
+S4 signed MDN, inner report CT folded across lines [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+S4 signed MDN, inner report CT folded across lines [LF]  HEAD=ACCEPT  NEW=ACCEPT
+S5 signed MDN, HTTP CT with MISMATCHED boundary (proxy rewrote?) [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+S5 signed MDN, HTTP CT with MISMATCHED boundary (proxy rewrote?) [LF]  HEAD=ACCEPT  NEW=ACCEPT
+B1 bare DN body, HTTP CT message/disposition-notification [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+B1 bare DN body, HTTP CT message/disposition-notification [LF]  HEAD=ACCEPT  NEW=ACCEPT
+B2 bare DN with its own Content-Type header then blank [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+B2 bare DN with its own Content-Type header then blank [LF]  HEAD=ACCEPT  NEW=ACCEPT
+B3 bare DN, HTTP CT multipart/report with boundary but body bare (no delimiters) [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+B3 bare DN, HTTP CT multipart/report with boundary but body bare (no delimiters) [LF]  HEAD=ACCEPT  NEW=ACCEPT
+I1 id echoed bare, no brackets [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+I1 id echoed bare, no brackets [LF]  HEAD=ACCEPT  NEW=ACCEPT
+I2 id echoed with different case [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+I2 id echoed with different case [LF]  HEAD=ACCEPT  NEW=ACCEPT
+I3 id with whitespace inside brackets < id > [CRLF]  HEAD=REFUSED  NEW=ACCEPT
+I3 id with whitespace inside brackets < id > [LF]  HEAD=REFUSED  NEW=ACCEPT
+D1 mode-less Disposition "processed" [CRLF]  HEAD=REFUSED  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): processed)
+D1 mode-less Disposition "processed" [LF]  HEAD=REFUSED  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): processed)
+D2 processed/ (empty modifier) [CRLF]  HEAD=ACCEPT  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-s)
+D2 processed/ (empty modifier) [LF]  HEAD=ACCEPT  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-s)
+D3 Disposition with trailing ";" extension parameter? [CRLF]  HEAD=ACCEPT  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-s)
+D3 Disposition with trailing ";" extension parameter? [LF]  HEAD=ACCEPT  NEW=UNCONFIRMED   <-- not accepted  (Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-s)
+D4 manual-action mode [CRLF]  HEAD=ACCEPT  NEW=ACCEPT
+D4 manual-action mode [LF]  HEAD=ACCEPT  NEW=ACCEPT

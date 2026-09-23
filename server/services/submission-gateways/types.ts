@@ -372,7 +372,17 @@ export class TransmitAuthorizationError extends Error {
   }
 }
 
-/** Thrown when an (org, environment) is missing required credentials. */
+/**
+ * Thrown when an (org, environment) is missing required credentials.
+ *
+ * refusedBeforeWire (index.ts) reads every CredentialError as proof nothing was
+ * sent, so a transmit claim is released on it. Throw it only from a credential
+ * check made before any request is opened — never after bytes may have left.
+ * The audited sites are pinned in __tests__/refused-before-wire.test.ts.
+ * 2026-09-23 (W5/D7, round-3 skeptic): it was not recognised, so a >1 GiB FDA
+ * sequence refused by transmitViaSftp for missing SFTP credentials (which
+ * isConfigured, AS2 only, does not check) was stranded at 'transmitting'.
+ */
 export class CredentialError extends Error {
   readonly errorClass = 'auth' as const;
   constructor(
@@ -389,12 +399,40 @@ export class CredentialError extends Error {
   }
 }
 
-/** Thrown by transports when the network call itself fails (TLS, DNS, timeout). */
+/**
+ * Thrown by transports when the network call itself fails (TLS, DNS, timeout),
+ * or when the transport cannot be used at all.
+ *
+ * Delivery is unknown unless the throw site passed NOTHING_TRANSMITTED. The
+ * proof may be passed only by a site that HAS proof:
+ *   - a refusal made before any connection is opened (e.g. the transport's
+ *     client module is unavailable); or
+ *   - a NOT_DELIVERED verdict of the delivery classifier (classifyDelivery,
+ *     ./as2-transport.ts), which is itself the proof that nothing reached an
+ *     authenticated agency server: a failure before the server accepted our
+ *     client (the request still corked, not a byte written) or the server's
+ *     own TLS refusal alert. That verdict never rests on the timing of Node's
+ *     request 'finish', which can trail the server's read of the whole
+ *     body (2026-09-23, W5/D7, MDN close, repair).
+ * Never for a DELIVERED_UNCONFIRMED verdict, and never from a connect/send
+ * failure that has not been through the classifier: the agency may hold the
+ * bytes, and a false proof resets the sequence to 'pending' and invites a
+ * second transmission.
+ * 2026-09-23 (W5/D7, round-3 skeptic): the proof was added for the FDA SFTP
+ * client-module refusal, which stranded a >1 GiB sequence at 'transmitting'.
+ * 2026-09-23 (W5/D7, MDN close): extended to the classifier's NOT_DELIVERED
+ * (FDA ESG recordAs2Outcome), which recorded its row 'rejected' but left the
+ * sequence claim 'transmitting' — e.g. after FDA refused our client
+ * certificate.
+ */
 export class TransportError extends Error {
   readonly errorClass = 'transport' as const;
-  constructor(message: string, readonly cause?: unknown) {
+  /** `false` only when the throw site passed NOTHING_TRANSMITTED; absent proves nothing. */
+  readonly transmitted?: false;
+  constructor(message: string, readonly cause?: unknown, proof?: typeof NOTHING_TRANSMITTED) {
     super(message);
     this.name = 'TransportError';
+    if (proof?.transmitted === false) this.transmitted = false;
   }
 }
 
@@ -406,7 +444,10 @@ export class TransportError extends Error {
  * platform will not guess the agency's API". Nothing is transmitted, no
  * transmittal row is created, no identifier is minted. `transmitted` is a
  * literal false so a caller reading the error as data cannot mistake it for an
- * acknowledgement.
+ * acknowledgement — and so refusedBeforeWire (index.ts) releases a transmit
+ * claim on it. 2026-09-23 (W5/D7, round-2 skeptic): it did not, so every FDA
+ * sequence transmit with FDA_ESG_TRANSPORT=rest was stranded at 'transmitting'.
+ * Throw it only where nothing can have left the process.
  *
  * Today: the FDA ESG NextGen REST transport (`FDA_ESG_TRANSPORT=rest`). FDA
  * retired WebTrader in April 2025 and offers a REST API beside AS2; the request
@@ -456,21 +497,49 @@ export class GatewayError extends Error {
 export function requiredAgencyMetadata(req: GatewayTransmitRequest): { sequenceNumber: string; submissionType: string } {
   const raw = req.metadata?.sequence;
   const sequenceNumber = typeof raw === 'string' ? raw.trim() : typeof raw === 'number' ? String(raw).padStart(4, '0') : '';
+  // 2026-09-23 (W5/D7, round-2 skeptic): both refusals carry the typed
+  // `transmitted: false` proof. This is a pure check of the request, and every
+  // gateway runs it before its transmittal row and before any socket, so a
+  // claim held by the caller is released (refusedBeforeWire) instead of left
+  // 'transmitting' for a sequence that was never sent.
   if (!/^\d{4}$/.test(sequenceNumber)) {
-    throw new ValidationError('Transmit requires the four-digit eCTD sequence number in metadata.sequence; nothing is sent without it.', []);
+    throw new ValidationError('Transmit requires the four-digit eCTD sequence number in metadata.sequence; nothing is sent without it.', [], NOTHING_TRANSMITTED);
   }
   const submissionType = typeof req.submissionType === 'string' ? req.submissionType.trim() : '';
   if (!submissionType) {
-    throw new ValidationError('Transmit requires the submission type; nothing is sent without it.', []);
+    throw new ValidationError('Transmit requires the submission type; nothing is sent without it.', [], NOTHING_TRANSMITTED);
   }
   return { sequenceNumber, submissionType };
 }
 
+/**
+ * The typed proof a throw site passes when it can show nothing was sent — a
+ * check made before any connection is opened and before any byte leaves the
+ * process. ValidationError and TransportError accept it. Read only by
+ * refusedBeforeWire (index.ts). Never pass it from a site that can run after a
+ * request was opened, with ONE exception: the delivery classifier's
+ * NOT_DELIVERED verdict (see TransportError), whose rule is exactly the proof
+ * that the request never reached an authenticated agency server. A false
+ * proof resets a sequence that may be at the agency to 'pending' and invites
+ * a second transmission. A site after the gateway's transmittal row may pass
+ * it only when that row is then recorded as refused. 2026-09-23 (W5/D7,
+ * round-2 skeptic; round-3 skeptic: extended to TransportError; MDN close:
+ * the classifier's NOT_DELIVERED).
+ */
+export const NOTHING_TRANSMITTED = Object.freeze({ transmitted: false as const });
+
 /** Thrown when the package fails pre-transmit validation. */
 export class ValidationError extends Error {
   readonly errorClass = 'validation' as const;
-  constructor(message: string, readonly findings: unknown[]) {
+  /**
+   * `false` only when the throw site passed NOTHING_TRANSMITTED; absent means
+   * delivery is unknown and the error proves nothing. 2026-09-23 (W5/D7,
+   * round-2 skeptic).
+   */
+  readonly transmitted?: false;
+  constructor(message: string, readonly findings: unknown[], proof?: typeof NOTHING_TRANSMITTED) {
     super(message);
     this.name = 'ValidationError';
+    if (proof?.transmitted === false) this.transmitted = false;
   }
 }

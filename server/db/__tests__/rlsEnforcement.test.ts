@@ -172,8 +172,25 @@ describe('buildRlsStartupOptions', () => {
 });
 
 describe('RLS catalog posture', () => {
-  function posturePool(role: Record<string, unknown>, tables: Array<Record<string, unknown>>) {
-    return { query: async (sql: string) => ({ rows: sql.includes('pg_roles') ? [role] : tables }) } as any;
+  /**
+   * Three catalog queries now, so the stub must route by which one is asked:
+   * the role probe, the public tenant-table probe, and the owner-exemption
+   * probe. Routing by `tenant_tables` rather than by call order, because a
+   * stub that answers every query with the same rows silently fed the
+   * tenant-table fixture to the owner-exemption check and invented findings.
+   */
+  function posturePool(
+    role: Record<string, unknown>,
+    tables: Array<Record<string, unknown>>,
+    ownerExempt: Array<Record<string, unknown>> = [],
+  ) {
+    return {
+      query: async (sql: string) => {
+        if (sql.includes('pg_roles')) return { rows: [role] };
+        if (sql.includes('tenant_tables')) return { rows: tables };
+        return { rows: ownerExempt };
+      },
+    } as any;
   }
 
   it('accepts a non-bypass role when every tenant table is forced and governed', async () => {
@@ -198,6 +215,106 @@ describe('RLS catalog posture', () => {
     await expect(assertRlsCatalogPosture(posturePool(
       { role: 'app', rolsuper: false, rolbypassrls: false }, [],
     ))).rejects.toThrow(/no tenant-keyed public tables/);
+  });
+
+  /**
+   * The owner exemption. Postgres exempts a table's OWNER from its own policies
+   * unless FORCE ROW LEVEL SECURITY is set, so an RLS-enabled, policied,
+   * non-FORCE table owned by the runtime role is readable across tenants and
+   * its policy never runs.
+   *
+   * Nothing checked this. The tenant-table probe above reads `public` alone,
+   * and the product's Part 11 core is outside it — vault.documents,
+   * identity.users, signing.signatures, evidence.hash_ledger. Measured on the
+   * reference database before the fix: 117 such tables across 16 schemas, every
+   * one owned by the runtime role, and the assessment returned ZERO failures.
+   * Demonstrated end to end there too — two organisations' rows in one policied
+   * owner-owned non-FORCE table, a session with app.rls_enforce=on and
+   * app.current_org_id=1, and the session read both.
+   */
+  it('fails closed when the runtime role owns an RLS-enabled table that is not FORCEd', async () => {
+    const { assertRlsCatalogPosture } = await import('../rlsEnforcement');
+
+    await expect(assertRlsCatalogPosture(posturePool(
+      { role: 'c2c', rolsuper: false, rolbypassrls: false },
+      // Everything the OLD assessment looked at is in good order...
+      [{ table_name: 'projects', relrowsecurity: true, relforcerowsecurity: true, policy_count: 1 }],
+      // ...and the Part 11 core is wide open.
+      [
+        { schema_name: 'vault', table_name: 'documents', owner: 'c2c', policy_count: 4 },
+        { schema_name: 'identity', table_name: 'users', owner: 'c2c', policy_count: 2 },
+        { schema_name: 'signing', table_name: 'signatures', owner: 'c2c', policy_count: 1 },
+      ],
+    ))).rejects.toThrow(/OWNS 3 RLS-enabled table\(s\) that are not FORCE ROW LEVEL SECURITY/);
+  });
+
+  it('names the remedy in the refusal, both halves of it', async () => {
+    const { assessRlsCatalogPosture } = await import('../rlsEnforcement');
+
+    const report = await assessRlsCatalogPosture(posturePool(
+      { role: 'c2c', rolsuper: false, rolbypassrls: false },
+      [{ table_name: 'projects', relrowsecurity: true, relforcerowsecurity: true, policy_count: 1 }],
+      [{ schema_name: 'vault', table_name: 'documents', owner: 'c2c', policy_count: 4 }],
+    ));
+
+    // An operator reading a boot refusal needs the fix, not just the fault.
+    expect(report.failures[0]).toMatch(/APP_SERVICE_DB_PASSWORD/);
+    expect(report.failures[0]).toMatch(/APP_DATABASE_URL/);
+    expect(report.failures[0]).toMatch(/FORCE ROW LEVEL SECURITY/);
+    expect(report.failures[0]).toMatch(/vault\.documents/);
+  });
+
+  it('reports the exemption as ONE failure, however many tables are open', async () => {
+    // 117 separate boot errors is a boot error nobody reads, and the remedy is
+    // the same sentence for every table. The full list stays on the report.
+    const { assessRlsCatalogPosture } = await import('../rlsEnforcement');
+
+    const many = Array.from({ length: 30 }, (_, i) => ({
+      schema_name: 'cortex', table_name: `t${i}`, owner: 'c2c', policy_count: 1,
+    }));
+    const report = await assessRlsCatalogPosture(posturePool(
+      { role: 'c2c', rolsuper: false, rolbypassrls: false },
+      [{ table_name: 'projects', relrowsecurity: true, relforcerowsecurity: true, policy_count: 1 }],
+      many,
+    ));
+
+    expect(report.failures).toHaveLength(1);
+    expect(report.failures[0]).toMatch(/\+25 more/);
+    expect(report.ownerExempt).toHaveLength(30);
+  });
+
+  it('PASSES in the production posture: the runtime role owns none of them', async () => {
+    // The other direction, and the one that matters for not bricking a correct
+    // deployment. Running as the non-owner app role, the catalog query matches
+    // nothing, so the new check contributes no failure at all.
+    const { assertRlsCatalogPosture } = await import('../rlsEnforcement');
+
+    const report = await assertRlsCatalogPosture(posturePool(
+      { role: 'app_service', rolsuper: false, rolbypassrls: false },
+      [{ table_name: 'projects', relrowsecurity: true, relforcerowsecurity: true, policy_count: 1 }],
+      [],
+    ));
+
+    expect(report.failures).toEqual([]);
+    expect(report.ownerExempt).toEqual([]);
+  });
+
+  it('does not double-report an allowlisted public table through the new check', async () => {
+    // The allowlist names tables deliberately left unpolicied. The tenant-table
+    // loop already skips them; the owner-exemption check must skip them too, or
+    // a deliberate exception becomes a boot refusal by a different route.
+    const { assessRlsCatalogPosture } = await import('../rlsEnforcement');
+    const { RLS_ALLOWLIST } = await import('../rlsAllowlist');
+    const allowlisted = RLS_ALLOWLIST[0];
+
+    const report = await assessRlsCatalogPosture(posturePool(
+      { role: 'c2c', rolsuper: false, rolbypassrls: false },
+      [{ table_name: 'projects', relrowsecurity: true, relforcerowsecurity: true, policy_count: 1 }],
+      [{ schema_name: 'public', table_name: allowlisted, owner: 'c2c', policy_count: 1 }],
+    ));
+
+    expect(report.ownerExempt).toEqual([]);
+    expect(report.failures).toEqual([]);
   });
 
   it('does NOT flag an allowlisted tenant table that is intentionally unpolicied', async () => {

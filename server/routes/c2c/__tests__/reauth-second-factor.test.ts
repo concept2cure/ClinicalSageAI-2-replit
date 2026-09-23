@@ -23,12 +23,18 @@ const h = vi.hoisted(() => ({
   hash: '' as string | null,
   mfaEnabled: false as boolean | Error,
   validCode: '246810',
+  /** users.status: 'active', or how the account was taken out of use. */
+  status: 'active',
 }));
 
 vi.mock('../../../db.js', () => ({
   pool: {
     query: async (sql: string) =>
-      /password_hash/.test(sql) ? { rows: h.hash ? [{ password_hash: h.hash }] : [] } : { rows: [] },
+      /password_hash/.test(sql)
+        ? { rows: h.hash ? [{ password_hash: h.hash }] : [] }
+        : /SELECT status FROM users/.test(sql)
+          ? { rows: [{ status: h.status }] }
+          : { rows: [] },
     connect: async () => ({ query: async () => ({ rows: [] }), release: () => {} }),
   },
 }));
@@ -47,6 +53,20 @@ const PASSWORD = 'correct horse battery staple';
 beforeEach(() => {
   h.hash = bcrypt.hashSync(PASSWORD, 4);
   h.mfaEnabled = false;
+  h.status = 'active';
+});
+
+describe('an account taken out of use (VSR-001 F-28)', () => {
+  it('cannot sign a governed action, with the right password and code', async () => {
+    h.mfaEnabled = true;
+    for (const status of ['suspended', 'inactive']) {
+      h.status = status;
+      expect(await verifyReauth(7, { password: PASSWORD, totp: h.validCode })).toEqual({
+        ok: false,
+        error: 'REAUTH_ACCOUNT_INACTIVE',
+      });
+    }
+  });
 });
 
 describe('a signer with a second factor enrolled', () => {

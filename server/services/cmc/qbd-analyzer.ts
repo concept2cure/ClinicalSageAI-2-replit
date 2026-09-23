@@ -19,6 +19,7 @@
 import { getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { loadProjectStabilityStudies } from './stability-source';
+import { loadProjectAnalyticalMethods } from './analytical-method-source';
 import {
   extractParameterNames, extractImpurityNames, extractCharacterizationAttrs,
   extractCppEntries, extractCppFromPayload,
@@ -123,7 +124,7 @@ export async function analyzeQbdFromSources(
       // the project filter alone let any organization read another sponsor's
       // register through this analysis. quality_specifications carries
       // `tenant_id`; the other three carry `organization_id`.
-  const [specs, methods, stabilityResult, processes, drugSubs, sourceObjects] = await Promise.all([
+  const [specs, methodResult, stabilityResult, processes, drugSubs, sourceObjects] = await Promise.all([
     safeQuery(pool, unavailable, 'specs', `
       SELECT material_type AS "materialType",
              material_name AS "materialName",
@@ -132,14 +133,12 @@ export async function analyzeQbdFromSources(
       FROM quality_specifications
       WHERE project_id = $1::text::uuid AND tenant_id::text = $2
     `, [projectIdParam, String(orgId)]),
-    safeQuery(pool, unavailable, 'methods', `
-      SELECT method_name AS "methodName",
-             method_type AS "methodType",
-             purpose,
-             validation_status AS "validationStatus"
-      FROM analytical_methods
-      WHERE project_id = $1::text::uuid AND organization_id = $2
-    `, [projectIdParam, orgId]),
+    // Methods come from the canonical project-scoped source-object store, for
+    // the same reason as stability below: `public.analytical_methods` is an
+    // ORGANIZATION method library with no project_id, method_type, purpose or
+    // validation_status, so this query raised 42703 on every provisioned
+    // database. See analytical-method-source.ts.
+    loadProjectAnalyticalMethods(pool, orgId, projectIdParam),
     // Stability comes from the canonical project-scoped source-object store.
     // `public.stability_studies` has no `project_id` column (it is org-scoped)
     // and no `study_name` / `storage_condition` / `results` columns, so the
@@ -169,6 +168,11 @@ export async function analyzeQbdFromSources(
         AND project_id::text = $2
     `, [orgId, projectIdParam]),
   ]);
+
+  if (!methodResult.available) {
+    unavailable.methods = methodResult.reason;
+  }
+  const methods = methodResult.methods;
 
   if (!stabilityResult.available) {
     unavailable.stability = stabilityResult.reason;

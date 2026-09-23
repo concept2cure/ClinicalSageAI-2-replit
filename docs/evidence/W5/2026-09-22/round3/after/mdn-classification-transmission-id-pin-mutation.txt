@@ -1,0 +1,17 @@
+=== Final code with 'transmissionId: wire.mdnId' REMOVED from recordMdnRefusal (restored afterwards) ===
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN that names no message stays inside the duplicate-send lock with its transmission id, and throws 15ms
+   → expected 'UPDATE submission_transmittals SET st…' to match /transmission_id\s*=/
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an empty Original-Message-ID (trailing space only) is delivered-unconfirmed: in transit inside the lock, never rejected 6ms
+   → expected 'UPDATE submission_transmittals SET st…' to match /transmission_id\s*=/
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an empty msg-id "<>" is delivered-unconfirmed: in transit inside the lock, never rejected 3ms
+   → expected 'UPDATE submission_transmittals SET st…' to match /transmission_id\s*=/
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an Original-Message-ID folded onto a whitespace-only line is delivered-unconfirmed: in transit inside the lock, never rejected 5ms
+   → expected 'UPDATE submission_transmittals SET st…' to match /transmission_id\s*=/
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an accepting MDN naming a different message is delivered-unconfirmed: in transit inside the lock, never rejected 3ms
+   → expected 'UPDATE submission_transmittals SET st…' to match /transmission_id\s*=/
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > a body with no disposition at all is delivered-unconfirmed: in transit inside the lock, never rejected 2ms
+   → expected 'UPDATE submission_transmittals SET st…' to match /transmission_id\s*=/
+ × server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts > AS2 MDN — a 2xx is not an acceptance until the MDN says so > an empty 2xx body is delivered-unconfirmed: in transit inside the lock, never rejected 2ms
+   → expected 'UPDATE submission_transmittals SET st…' to match /transmission_id\s*=/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 17 skipped (24)

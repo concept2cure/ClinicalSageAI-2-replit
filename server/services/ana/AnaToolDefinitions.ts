@@ -1306,17 +1306,33 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
       product_name:    { type: 'string' },
       leaves: {
         type: 'array',
-        description: 'List of eCTD leaves. Each leaf is { ctd_section, operation, source_path, file_name, title }.',
+        // 2026-09-23 (W5/D7, round-2 skeptic): source_path was required on every
+        // leaf, delete included, and there was no modified_file, so every
+        // withdrawal declared here shipped the withdrawn document's bytes with no
+        // pointer at the filed copy. A delete now names the filed leaf through
+        // modified_file and carries no source_path; the packager refuses one that
+        // does, and the handler refuses any other leaf without one.
+        // 2026-09-23 (W5/D7, round-2 skeptic, second pass): a delete in 0000 was
+        // exempt from modified_file and packaged as a delete of a file on record
+        // nowhere; the packager now refuses every delete in 0000, and the
+        // descriptions say so.
+        description:
+          'List of eCTD leaves. Each leaf is { ctd_section, operation, source_path, file_name, title, modified_file }. ' +
+          'new / append / replace leaves carry the file to ship in source_path. A delete (withdrawal) ships no content: ' +
+          'omit source_path and give modified_file, the withdrawn leaf\'s path in the prior sequence (e.g. ../0000/m3/3-2-s-2/file.pdf). ' +
+          'replace / append also take modified_file, pointing at the filed leaf they act on. ' +
+          'Sequence 0000 cannot carry a delete: nothing is on file to withdraw.',
         items: {
           type: 'object',
           properties: {
-            ctd_section: { type: 'string' },
-            operation:   { type: 'string', enum: ['new', 'append', 'replace', 'delete'] },
-            source_path: { type: 'string' },
-            file_name:   { type: 'string' },
-            title:       { type: 'string' },
+            ctd_section:   { type: 'string' },
+            operation:     { type: 'string', enum: ['new', 'append', 'replace', 'delete'] },
+            source_path:   { type: 'string', description: 'The file to ship. Required for new / append / replace; must be omitted for delete.' },
+            file_name:     { type: 'string' },
+            title:         { type: 'string' },
+            modified_file: { type: 'string', description: 'Path, from this sequence root, of the filed leaf this one acts on (e.g. ../0000/m3/3-2-s-2/file.pdf). Required for every delete (a delete in sequence 0000 is refused).' },
           },
-          required: ['ctd_section', 'operation', 'source_path', 'file_name', 'title'],
+          required: ['ctd_section', 'operation', 'file_name', 'title'],
         },
       },
       output_dir: { type: 'string', description: 'Where to write the zip. Defaults to tmp/submissions.' },

@@ -1,0 +1,241 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-23T08:37:03.201Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T08:37:03.202Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-23T08:37:03.202Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts > readPackageContentRows on a real engine > yields exactly the rows assemble builds: this package’s sections, this org’s mappings joined to their artifacts, unmapped sections as null rows, and a database digest equal to the JS digest 8ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts > readPackageContentRows on a real engine > CHANGES when the sections are reordered — that changes the order the leaves appear in the backbone — and when an artifact is cascade-deleted 8ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts > readPackageContentRows on a real engine > is scoped to the org: another tenant asking about the same package sees only its own mappings 2ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts > readPackageContentRows on a real engine > reads an approval revoked after assembly (no content change) as DRIFT, and a lock at the approved version as no change 11ms
+ × server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts > readPackageContentRows on a real engine > an artifact approved at v1, edited to v2 and then locked at v2 reads NOT filable; re-approving v2 before the lock makes it filable 12ms
+   → expected true to be false // Object.is equality
+stderr | tests/submission-ops-assemble-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-assemble-routes.test.ts
+{
+  "timestamp": "2026-09-23T08:37:08.001Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/submission-ops-assemble-routes.test.ts > package identity: one id contract across the package API > GET /packages/:packageId resolves the numeric row id as well as the pkg_ text id (tenant-scoped either way) 29ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 404s when the package is not in the tenant 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 409s when the package is not locked 4ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REQUIRES the operator’s reason — no placeholder is ever written into the audit row 5ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles for Health Canada (the gate’s own remediation for a CA transmit) 23ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES to store a bundle whose identifiers changed while it was being assembled (STALE_ASSEMBLY), and never reverts the newer metadata 21ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES to store a bundle whose CONTENT changed while it was being assembled: a mapping added or removed meanwhile bumps the package’s content revision 11ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > captures the revision BEFORE reading content: a mapping change that lands during the content read discards the zip too 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > stores the new bundle WITHOUT the previous bundle’s preflight summary (a summary that outlives its bundle is aggregated as current) 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a package that never recorded a content revision is protected too: the first mapping change during assembly discards the bundle 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > records the CONTENT FINGERPRINT the bundle was built from (sections, mappings, declared placements, artifact content) so the transmit gate can prove the zip still reflects the package 19ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > walks the sections in a DETERMINISTIC order: the row id breaks a tie on sortOrder, so identical content cannot assemble to different bytes 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > records the content fingerprint for a DEVICE format too (eSTAR), where the leaf model differs 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a discarded stale assembly removes its durable (S3) copy too, and says so 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > merges the descriptor onto the package’s CURRENT metadata, not the pre-assembly snapshot 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles ONE LEAF PER ARTIFACT at each artifact's own CTD section, persists, and returns the descriptor 31ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > FAILS CLOSED on an unplaceable section: LEAF-UNPLACED error, leaf excluded, counts match what shipped 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REJECTS a declared code that is not a real heading (3.foo) instead of nesting it under a container 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > SURFACES a module disagreement (CSR section, artifact filed under Module 3) instead of filing it silently 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > ships an artifact mapped twice (duplicate row, or into two sections) as ONE leaf and surfaces the duplicate mapping 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > the same document at two DIFFERENT sections (a reference cited from 4.3 and 5.4) is two leaves, not a duplicate 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > composes leaf file names inside the 64-character eCTD rule, keeping the artifact discriminator 15ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > BLOCKS when the package records no agency identifiers — never ships an internal id as the application number 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REJECTS a malformed application number (it becomes a filesystem path component) 7ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s on a sequence that is not four digits (path-traversal vector) and never reaches the packager 3ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > accepts a four-digit sequence and passes it through, once there is a filing for it to follow 22ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a submission type the region has no code for — 'amendment' reached the packager and 500'd 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > names the accepted terms when a follow-up declares no submission type at all 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a changed leaf reaches the PACKAGER as a replace, pointing at the sequence that holds the version it supersedes 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a leaf byte-identical to the one on file is NOT handed to the packager — a sequence carries what changed 32ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > the descriptor and its validation describe the leaves that SHIPPED, not the ones the drop removed 54ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a follow-up in which nothing changed rather than storing a leafless bundle as transmittable 16ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a gap and a backfill: a sequence out of order is diffed against filings made after it 16ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > stores the leaf manifest on the descriptor — the inventory the NEXT sequence diffs against 7ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembling does NOT file the sequence: only a successful transmit puts a leaf on file 12ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles the same content to the same bytes twice — the lifecycle diff and the signed digest both depend on it 1119ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a follow-up sequence on a package that has transmitted nothing — an assembled-but-unsent bundle is not on file 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s when region and format disagree (FDA + pmda_ectd) 2ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a packager REFUSAL answers 422 with its findings persisted and clears the stale bundle — never a bare 500 with an old zip left transmittable 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s a region override that contradicts a DEVICE family (510k is an FDA eSTAR; PMDA cannot be its region) 2ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a PMDA region override re-derives the format, and the descriptor records the format the packager BUILT 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > a DRAFT artifact in an IND package assembles with an error-severity LEAF-UNAPPROVED finding, and governed transmit refuses the stored bundle 17ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > an all-approved package (approved and locked) has no LEAF-UNAPPROVED finding and no error 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > every non-approved status counts (review, and a status outside the vocabulary), one finding per artifact 19ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > applies to a DEVICE format too: a review artifact in a 510(k) eSTAR bundle is refused at transmit 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > an APPROVED artifact edited after approval (v2, approved v1) is LEAF-UNAPPROVED, and governed transmit refuses the stored bundle 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > a LOCKED artifact is bound to the version it was locked at, and an approval that recorded no version is not proof 16ms
+ × tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > approved v1, edited to v2, then LOCKED at v2 is LEAF-UNAPPROVED, names the way back, and governed transmit refuses 17ms
+   → expected [] to have a length of 1 but got +0
+ × tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > the remedy for an approved artifact edited after approval names approved → review, then review → approved 47ms
+   → expected 'Artifact co (artifact_co v2) in Clini…' to match /approved → review/
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > the approval an artifact had at assembly is part of the content fingerprint (filable) 36ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > describes the leaves that SHIP: a draft whose leaf is byte-identical to the one on file is not in the sequence, and is not a finding 48ms
+stdout | server/services/ectd/__tests__/package-content-fingerprint.test.ts
+{
+  "timestamp": "2026-09-23T08:37:11.342Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T08:37:11.343Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/package-content-fingerprint.test.ts
+{
+  "timestamp": "2026-09-23T08:37:11.343Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/package-content-fingerprint.test.ts
+[database] Database connection successful
+
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > fingerprintPackageContent > is deterministic, independent of the order rows ARRIVE in, and versioned 3ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > fingerprintPackageContent > CHANGES for every covered field: content, title, version, declared placement, section key, section label, section order, a mapping added or removed, an empty section 2ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > fingerprintPackageContent > cannot be forged through a key containing the separator or a newline 0ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > assessPackageContent > matches when the package still holds what the bundle was built from, and reports DRIFT with both fingerprints when it does not 1ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > assessPackageContent > is UNPROVEN, without reading anything, for a missing or older-scheme fingerprint — and says WHICH 1ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > assessPackageContent > the two unproven wordings each say what is actually true of the bundle 0ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > readPackageContentRows > reads the package’s sections with this org’s mappings joined to their artifacts, in the shape assemble builds, transporting a content DIGEST rather than content 2ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > readPackageContentRows > reads an approval revoked, or an approved artifact edited, as a different row — so the transmit recompute reports DRIFT 1ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > artifactApproval — the one filability rule for a concept2cure artifact > is filable only when approved at its approved version, or locked at the version that was both approved and locked 1ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > artifactApproval — the one filability rule for a concept2cure artifact > an approved artifact edited after approval is NOT filable, and says so with both versions 0ms
+ × server/services/ectd/__tests__/package-content-fingerprint.test.ts > artifactApproval — the one filability rule for a concept2cure artifact > approved v1, edited to v2, then LOCKED at v2 is NOT filable: the locked version was never approved 7ms
+   → expected true to be false // Object.is equality
+ × server/services/ectd/__tests__/package-content-fingerprint.test.ts > artifactApproval — the one filability rule for a concept2cure artifact > names a remedy an operator can actually perform, per reason 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > artifactApproval — the one filability rule for a concept2cure artifact > an approval that recorded no version cannot be shown to cover the current content: not filable 0ms
+ ✓ server/services/ectd/__tests__/package-content-fingerprint.test.ts > artifactApproval — the one filability rule for a concept2cure artifact > any status outside approved | locked is not filable, whatever the versions say 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > approved v1, edited to v2, then LOCKED at v2 is LEAF-UNAPPROVED, names the way back, and governed transmit refuses
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/submission-ops-assemble-routes.test.ts:1163:15
+    1161|     expect(res.status).toBe(200);
+    1162|     const f = unapproved(res);
+    1163|     expect(f).toHaveLength(1);
+       |               ^
+    1164|     expect(f[0].severity).toBe('error');
+    1165|     expect(f[0].message).toMatch(/artifact_lk v2/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > the remedy for an approved artifact edited after approval names approved → review, then review → approved
+AssertionError: expected 'Artifact co (artifact_co v2) in Clini…' to match /approved → review/
+
+- Expected:
+/approved → review/
+
++ Received:
+"Artifact co (artifact_co v2) in Clinical Overview (2.5): it was edited after approval — the current content is v2, the approved version is v1 — so the approved version was edited since approval and what would ship is unreviewed. Only an approved or locked artifact, at the version that was approved or locked, is filed with an agency; approve it (again), or remove it from the package, then assemble again."
+
+ ❯ tests/submission-ops-assemble-routes.test.ts:1189:26
+    1187|     const f = unapproved(res);
+    1188|     expect(f).toHaveLength(1);
+    1189|     expect(f[0].message).toMatch(/approved → review/);
+       |                          ^
+    1190|     expect(f[0].message).toMatch(/review → approved/);
+    1191|     expect(f[0].message).not.toMatch(/approve it \(again\)/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts > readPackageContentRows on a real engine > an artifact approved at v1, edited to v2 and then locked at v2 reads NOT filable; re-approving v2 before the lock makes it filable
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/package-content-fingerprint.pglite.integration.test.ts:169:32
+    167|     // approved → locked: published_version_id = the current version.
+    168|     await pg.exec(`UPDATE concept2cure_artifacts SET status = 'locked'…
+    169|     expect(await filableOf1()).toBe(false);
+       |                                ^
+    170|     // The way back: locked → draft → review → approved (records v2) →…
+    171|     await pg.exec(`UPDATE concept2cure_artifacts SET status = 'approve…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ectd/__tests__/package-content-fingerprint.test.ts > artifactApproval — the one filability rule for a concept2cure artifact > approved v1, edited to v2, then LOCKED at v2 is NOT filable: the locked version was never approved
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/package-content-fingerprint.test.ts:215:23
+    213|   it('approved v1, edited to v2, then LOCKED at v2 is NOT filable: the…
+    214|     const l = facts('locked', 2, 1, 2);
+    215|     expect(l.filable).toBe(false);
+       |                       ^
+    216|     if (l.filable) return;
+    217|     expect(l.reason).toBe('edited-after-approval');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/ectd/__tests__/package-content-fingerprint.test.ts > artifactApproval — the one filability rule for a concept2cure artifact > names a remedy an operator can actually perform, per reason
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ server/services/ectd/__tests__/package-content-fingerprint.test.ts:240:24
+    238|       expect(a.filable).toBe(false);
+    239|       if (a.filable) continue;
+    240|       expect(a.remedy).toMatch(/approved → review/);
+       |                        ^
+    241|       expect(a.remedy).toMatch(/review → approved/);
+    242|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  5 failed | 65 passed (70)
+   Start at  08:37:01
+   Duration  10.50s (transform 1.81s, setup 139ms, import 5.02s, tests 4.69s, environment 0ms)
+

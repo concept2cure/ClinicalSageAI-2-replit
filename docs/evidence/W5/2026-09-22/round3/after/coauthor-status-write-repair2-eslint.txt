@@ -1,0 +1,21 @@
+
+/home/user/ClinicalSageAI-2-replit/server/routes/coauthor.ts
+  151:75  warning  Async arrow function has a complexity of 18. Maximum allowed is 15     complexity
+  433:91  warning  Async arrow function has a complexity of 19. Maximum allowed is 15     complexity
+  501:35  warning  Async arrow function has a complexity of 19. Maximum allowed is 15     complexity
+  628:91  warning  Async arrow function has too many lines (107). Maximum allowed is 100  max-lines-per-function
+  628:91  warning  Async arrow function has a complexity of 24. Maximum allowed is 15     complexity
+  681:1   warning  File has too many lines (759). Maximum allowed is 500                  max-lines
+
+/home/user/ClinicalSageAI-2-replit/server/routes/ectd-documents.ts
+  114:90  warning  Async arrow function has a complexity of 18. Maximum allowed is 15  complexity
+  169:88  warning  Async arrow function has a complexity of 19. Maximum allowed is 15  complexity
+  229:90  warning  Async arrow function has a complexity of 19. Maximum allowed is 15  complexity
+
+/home/user/ClinicalSageAI-2-replit/server/services/coauthor/coauthor-snapshot.ts
+  168:8   warning  Async function 'takeAuthoringSnapshot' has too many lines (153). Maximum allowed is 100  max-lines-per-function
+  204:62  warning  Async arrow function has too many lines (121). Maximum allowed is 100                    max-lines-per-function
+  204:62  warning  Async arrow function has a complexity of 20. Maximum allowed is 15                       complexity
+
+✖ 12 problems (0 errors, 12 warnings)
+

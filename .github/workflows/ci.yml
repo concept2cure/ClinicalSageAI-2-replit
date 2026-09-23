@@ -327,6 +327,16 @@ jobs:
           npm run ci:unapproved-model-pins:selftest
           npm run ci:unapproved-model-pins
 
+      # A request's client address is req.ip, resolved by the trust-proxy hop
+      # count and read through server/utils/client-ip.ts. A forwarding header's
+      # left-most entry is whatever the client sent; ~20 sites put it into
+      # e-signature and audit rows until 2026-09-23 (D6).
+      - name: Guardrails — one source for the client address (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:client-ip-single-source:selftest
+          npm run ci:client-ip-single-source
+
       - name: Guardrails — validation traceability resolves (with selftest)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: |
@@ -528,6 +538,16 @@ jobs:
         run: |
           npm run ci:dead-audit-catch:self-test
           npm run ci:dead-audit-catch
+
+      - name: Guardrails — a sign ledger row comes from a signature ceremony (Part 11)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # recordGovernedAction(…, command: 'sign') is read as an electronic
+        # signature and checks nothing itself. Every such write must sit with a
+        # signer re-verification and an electronic_signatures row. The selftest
+        # runs first and fails on the pre-2026-09-23 protocol finalize route.
+        run: |
+          npm run ci:sign-ceremony:selftest
+          npm run ci:sign-ceremony
 
       - name: Guardrails — route mount authority audit (no regressions)
         if: "!cancelled() && steps.install.conclusion == 'success'"

@@ -106,6 +106,23 @@ export interface EsignSigner {
   role?: string;
 }
 
+/**
+ * The signer the dialog shows, from the signed-in user as a host already holds
+ * it (useAuth().user). Undefined when there is no name to show; the dialog then
+ * reads "You". Display only: the server resolves the signer from the session.
+ */
+export function esignSignerOf(
+  user:
+    | { displayName?: string | null; name?: string | null; firstName?: string | null; lastName?: string | null; email?: string | null }
+    | null
+    | undefined,
+): EsignSigner | undefined {
+  if (!user) return undefined;
+  const name =
+    user.displayName || user.name || [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || user.email || '';
+  return name ? { name, ...(user.email ? { email: user.email } : {}) } : undefined;
+}
+
 export interface EsignModalProps {
   open: boolean;
   /** Human-readable action, e.g. "Release batch". */
@@ -116,6 +133,13 @@ export interface EsignModalProps {
   targetMeta?: string;
   /** Pre-select a meaning. Defaults to 'approval'. */
   defaultMeaning?: EsigMeaning;
+  /**
+   * The meanings this act can carry, when its store has a closed vocabulary
+   * narrower than the five (the authoring store takes authorship, review and
+   * approval). The dialog then never offers a meaning the server would refuse.
+   * Defaults to all five.
+   */
+  meanings?: ReadonlyArray<EsigMeaning>;
   /** Identity shown as the signer. Server is the source of truth at /sign. */
   signer?: EsignSigner;
   /** Require a TOTP second factor (set when the signer is MFA-enrolled). */
@@ -158,6 +182,7 @@ export function EsignModal({
   target,
   targetMeta,
   defaultMeaning,
+  meanings,
   signer,
   requireMfa = false,
   onClose,
@@ -165,7 +190,14 @@ export function EsignModal({
 }: EsignModalProps) {
   const esig = useEsignature();
 
-  const [meaning, setMeaning] = React.useState<EsigMeaning>(defaultMeaning ?? 'approval');
+  const offered = React.useMemo(
+    () => (meanings ? MEANINGS.filter((m) => meanings.includes(m.id)) : MEANINGS),
+    [meanings],
+  );
+  const initialMeaning: EsigMeaning = offered.some((m) => m.id === (defaultMeaning ?? 'approval'))
+    ? (defaultMeaning ?? 'approval')
+    : (offered[0]?.id ?? 'approval');
+  const [meaning, setMeaning] = React.useState<EsigMeaning>(initialMeaning);
   const [reason, setReason] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [totp, setTotp] = React.useState('');
@@ -191,7 +223,7 @@ export function EsignModal({
   React.useEffect(() => {
     if (open) {
       restoreFocusRef.current = document.activeElement as HTMLElement | null;
-      setMeaning(defaultMeaning ?? 'approval');
+      setMeaning(initialMeaning);
       setReason('');
       setPassword('');
       setTotp('');
@@ -202,7 +234,7 @@ export function EsignModal({
       return () => window.clearTimeout(t);
     }
     return undefined;
-  }, [open, defaultMeaning]);
+  }, [open, initialMeaning]);
 
   // Restore focus to the trigger when closing.
   React.useEffect(() => {
@@ -306,7 +338,7 @@ export function EsignModal({
     }
   };
 
-  const meaningObj = MEANINGS.find((m) => m.id === meaning) ?? MEANINGS[2];
+  const meaningObj = offered.find((m) => m.id === meaning) ?? offered[0] ?? MEANINGS[2];
   const signerName = signer?.name ?? 'You';
   const committing = phase === 'committing';
 
@@ -418,7 +450,7 @@ export function EsignModal({
             <fieldset className="es-field" style={{ border: 0, margin: 0, padding: 0 }}>
               <legend className="es-field-lbl">Signature meaning {'·'} {'§'}11.50</legend>
               <div className="es-meaning" role="radiogroup" aria-label="Signature meaning">
-                {MEANINGS.map((m) => (
+                {offered.map((m) => (
                   <button
                     key={m.id}
                     type="button"

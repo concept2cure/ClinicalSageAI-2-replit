@@ -6,24 +6,36 @@
  * Wired to the real quality backend (server/routes/quality-management-api.ts,
  * mounted /api/quality, org-scoped from the tenant context). NOTE: these
  * endpoints return RAW JSON (a bare array / bare object), not a {data} envelope.
- *   • GET   /plans            — the org's quality-management plans (bare array)
- *   • POST  /plans            — create a plan (returns the created row)
- *   • PATCH /plans/:id        — update status/metadata (returns the updated row)
- *   • GET   /dashboard/:qmpId — completeness, section gate-levels, factor risk
- *                               profile for the selected plan
+ *   • GET    /plans            — the org's quality-management plans (bare array)
+ *   • POST   /plans            — create a plan (returns the created row)
+ *   • PATCH  /plans/:id        — update status/metadata (returns the updated row)
+ *   • DELETE /plans/:id        — delete a plan that is not active and that no
+ *                                section gating rule uses
+ *   • GET    /dashboard/:qmpId — completeness, section gate-levels, factor risk
+ *                                profile for the selected plan
+ *
+ * GOVERNED: a plan sets the gates every governed document is validated against,
+ * so create, activate, archive and delete each open a C2CForm that captures a
+ * reason (≥ 8 characters, the server's floor) and send nothing until it is
+ * confirmed. The server writes the plan and its ledger entry in one
+ * transaction, and refuses a viewer (403) — shown as a refusal, like any other.
+ * The active plan is offered Archive, never Delete: its gates are the ones in
+ * force, and archiving retires it while keeping the record (the server refuses
+ * that delete too).
  *
  * HONESTY: the plan list and dashboard render live org data, an honest empty, or
- * an honest error — never a fixture. Create/activate are real awaited writes
- * that adopt the server's returned row and refetch; nothing is fabricated.
+ * an honest error — never a fixture. Writes are real awaited requests that
+ * adopt the server's returned row; a refusal is shown as an error in the
+ * server's own words and the plan is left as it was.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
-import type { C2CFormConfig } from '../C2CForm';
-import { apiRequest } from '@/lib/queryClient';
+import type { C2CFormConfig, C2CFormField } from '../C2CForm';
+import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
@@ -36,31 +48,92 @@ interface Dashboard {
   riskProfile: { highRiskPercentage: number; mediumRiskPercentage: number; lowRiskPercentage: number };
 }
 
-/** Reads the RAW body (QMP endpoints are not {data}-wrapped); never throws. */
-async function rawJson<T = any>(method: 'GET' | 'POST' | 'PATCH', path: string, body?: unknown): Promise<{ ok: boolean; status: number; body: T | null }> {
+interface RawResult<T> { ok: boolean; status: number; body: T | null; message: string | null; code: string | null }
+
+/** Reads the RAW body (QMP endpoints are not {data}-wrapped); never throws.
+ *  `apiRequest` THROWS on a non-2xx (other than 401), so a refusal's status
+ *  and the server's sentence are read off the ApiRequestError — catching it
+ *  bare reported every refusal as "HTTP 0" with the reason discarded. */
+async function rawJson<T = any>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<RawResult<T>> {
   try {
     const res = await apiRequest(method, path, body);
     const parsed = (await res.json().catch(() => null)) as T | null;
-    return { ok: res.ok, status: res.status, body: parsed };
-  } catch { return { ok: false, status: 0, body: null }; }
+    return { ok: res.ok, status: res.status, body: parsed, message: res.ok ? null : serverMessage(parsed), code: null };
+  } catch (e) {
+    if (e instanceof ApiRequestError) {
+      const payloadCode = (e.payload as { error?: unknown } | null | undefined)?.error;
+      return { ok: false, status: e.status, body: null, message: e.message || null, code: e.code ?? (typeof payloadCode === 'string' ? payloadCode : null) };
+    }
+    return { ok: false, status: 0, body: null, message: null, code: null };
+  }
+}
+/** Whether the server could not say if the change landed: no answer at all, or a COMMIT it could not confirm. */
+const outcomeUnknown = (r: RawResult<unknown>) => r.status === 0 || r.code === 'OUTCOME_UNKNOWN';
+/** A refused write, in the server's words when it sent any. When the outcome
+ *  is unknown it is never called a refusal: say that, and re-read. */
+function refusalText(r: RawResult<unknown>, refused: string, verb: string): string {
+  if (outcomeUnknown(r)) return r.message && r.status !== 0 ? r.message : `No response from the server. Reload to check whether the plan was ${verb}.`;
+  return r.message ? `${refused} — ${r.message}` : `${refused} (HTTP ${r.status}).`;
 }
 function statusTone(s: string | null | undefined) {
   const v = String(s ?? '').toLowerCase();
   return v === 'active' ? 'ok' : v === 'archived' ? 'dim' : 'warn';
 }
 
+/* The banner states what the server actually does: the plan write and its
+   ledger entry commit together, so a failed audit write changes nothing. The
+   default banner's e-signature clause does not apply to these changes. */
+const GOVERNED_NOTE = 'Governed change — your reason is recorded with it in the audit trail. If the audit entry cannot be written, nothing is changed.';
+const REASON_FIELD: C2CFormField = { key: 'reason', label: 'Reason (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the change.' };
+const MIN_REASON = 8;
+
 const CREATE_FORM: C2CFormConfig = {
-  eyebrow: 'Quality management',
+  eyebrow: 'Quality management · governed change',
   title: 'New quality-management plan',
   sub: 'A QMP governs the gate levels and risk factors your documents are validated against.',
+  governed: GOVERNED_NOTE,
   submitLabel: 'Create plan',
   fields: [
     { key: 'name', label: 'Plan name', type: 'text', required: true, placeholder: 'e.g. CER Quality Plan 2026' },
     { key: 'version', label: 'Version', type: 'text', default: '1.0', half: true },
     { key: 'status', label: 'Status', type: 'seg', options: ['draft', 'active', 'archived'], default: 'draft', half: true },
     { key: 'description', label: 'Description', type: 'textarea', placeholder: 'Scope and intent of this quality plan' },
+    REASON_FIELD,
   ],
 };
+const ACTIVATE_FORM = (p: Plan): C2CFormConfig => ({
+  eyebrow: 'Quality management · governed change',
+  title: `Activate “${p.name}”`,
+  sub: 'Marks this plan active in the register. Validation applies a plan’s gates whenever a document is checked against it, whatever its status.',
+  governed: GOVERNED_NOTE,
+  submitLabel: 'Activate plan',
+  fields: [REASON_FIELD],
+});
+const ARCHIVE_FORM = (p: Plan): C2CFormConfig => ({
+  eyebrow: 'Quality management · governed change',
+  title: `Archive “${p.name}”`,
+  sub: 'Marks the plan archived. It stays in the register, and can then be deleted if it is no longer needed.',
+  governed: GOVERNED_NOTE,
+  submitLabel: 'Archive plan',
+  fields: [REASON_FIELD],
+});
+const DELETE_FORM = (p: Plan): C2CFormConfig => ({
+  eyebrow: 'Quality management · governed change',
+  title: `Delete “${p.name}”`,
+  sub: 'Removes the plan from the register. A plan that section gating rules or other quality records still use is refused. The audit trail keeps a full copy of the plan as it was.',
+  governed: GOVERNED_NOTE,
+  submitLabel: 'Delete plan',
+  fields: [REASON_FIELD],
+});
+
+/** The two governed status moves the register offers, and the words for each. */
+const TRANSITION = {
+  active: { form: ACTIVATE_FORM, done: 'Plan activated', refused: 'Plan not activated', verb: 'activated' },
+  archived: { form: ARCHIVE_FORM, done: 'Plan archived', refused: 'Plan not archived', verb: 'archived' },
+} as const;
+type PlanTransition = keyof typeof TRANSITION;
+
+type PlanDialog = { kind: 'create' } | { kind: 'status'; plan: Plan; to: PlanTransition } | { kind: 'delete'; plan: Plan };
 
 export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
   /* AnA on this surface. It took SurfaceViewProps and discarded the whole
@@ -73,7 +146,7 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
   const [active, setActive] = useState<number | null>(null);
   const [dash, setDash] = useState<Dashboard | null>(null);
   const [dashState, setDashState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const [creating, setCreating] = useState(false);
+  const [dialog, setDialog] = useState<PlanDialog | null>(null);
   const [toast, fireToast] = useToast();
 
   const loadPlans = useCallback(async () => {
@@ -98,24 +171,66 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
   }, []);
   useEffect(() => { if (active != null) void loadDashboard(active); else { setDash(null); setDashState('idle'); } }, [active, loadDashboard]);
 
+  /* The server's floor, checked first so a request it would refuse is never
+     sent. The drawer stays open on any refusal so the reason can be fixed. */
+  const reasonOf = useCallback((v: Record<string, string>): string | null => {
+    const reason = String(v.reason ?? '').trim();
+    if (reason.length >= MIN_REASON) return reason;
+    fireToast(`Give a reason of at least ${MIN_REASON} characters. It is recorded with the change.`, 'error');
+    return null;
+  }, [fireToast]);
+
+  /* One governed write at a time. C2CForm submits without waiting, so a double
+     click sent two requests: two plans, or a success toast then "not found"
+     for a delete that had in fact happened. */
+  const writing = useRef(false);
+  const once = useCallback(<A extends unknown[]>(fn: (...a: A) => Promise<void>) => async (...a: A) => {
+    if (writing.current) return;
+    writing.current = true;
+    try { await fn(...a); } finally { writing.current = false; }
+  }, []);
+
   const create = useCallback(async (v: Record<string, string>) => {
-    const { ok, status, body } = await rawJson<Plan>('POST', '/api/quality/plans', {
-      name: v.name, version: v.version || '1.0', status: v.status || 'draft', description: v.description || undefined,
+    const reason = reasonOf(v);
+    if (reason === null) return;
+    const r = await rawJson<Plan>('POST', '/api/quality/plans', {
+      name: v.name, version: v.version || '1.0', status: v.status || 'draft', description: v.description || undefined, reason,
     });
-    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t create the plan — check the name (3–100 chars).' : `Couldn’t create the plan (HTTP ${status}).`, 'error'); return; }
-    setCreating(false);
+    if (!r.ok) { fireToast(refusalText(r, 'Plan not created', 'created'), 'error'); if (outcomeUnknown(r)) void loadPlans(); return; }
+    setDialog(null);
+    const body = r.body;
+    // A 2xx without a readable row still created the plan: reload rather than guess.
+    if (!body?.id) { fireToast('Quality-management plan created. Reloading the register.'); void loadPlans(); return; }
     fireToast('Quality-management plan created · ' + body.name);
     setPlans((ps) => [body, ...ps.filter((p) => p.id !== body.id)]);
     setActive(body.id);
-  }, [fireToast]);
+  }, [reasonOf, loadPlans, fireToast]);
 
-  const activate = useCallback(async (id: number) => {
-    const { ok, status, body } = await rawJson<Plan>('PATCH', `/api/quality/plans/${id}`, { status: 'active' });
-    if (!ok || !body) { fireToast(`Couldn’t activate the plan (HTTP ${status}).`, 'error'); return; }
-    fireToast('Plan activated · ' + (body.name ?? id));
-    setPlans((ps) => ps.map((p) => (p.id === id ? { ...p, ...body } : p)));
-    if (active === id) void loadDashboard(id);
-  }, [active, loadDashboard, fireToast]);
+  const transition = useCallback(async (plan: Plan, to: PlanTransition, v: Record<string, string>) => {
+    const reason = reasonOf(v);
+    if (reason === null) return;
+    const words = TRANSITION[to];
+    const r = await rawJson<Plan>('PATCH', `/api/quality/plans/${plan.id}`, { status: to, reason });
+    if (!r.ok) { fireToast(refusalText(r, words.refused, words.verb), 'error'); if (outcomeUnknown(r)) void loadPlans(); return; }
+    setDialog(null);
+    const body = r.body;
+    if (!body) { fireToast(`${words.done}. Reloading the register.`); void loadPlans(); return; }
+    fireToast(`${words.done} · ` + (body.name ?? plan.name));
+    setPlans((ps) => ps.map((p) => (p.id === plan.id ? { ...p, ...body } : p)));
+    if (active === plan.id) void loadDashboard(plan.id);
+  }, [active, reasonOf, loadPlans, loadDashboard, fireToast]);
+
+  const remove = useCallback(async (plan: Plan, v: Record<string, string>) => {
+    const reason = reasonOf(v);
+    if (reason === null) return;
+    const r = await rawJson('DELETE', `/api/quality/plans/${plan.id}`, { reason });
+    if (!r.ok) { fireToast(refusalText(r, 'Plan not deleted', 'deleted'), 'error'); if (outcomeUnknown(r)) void loadPlans(); return; }
+    setDialog(null);
+    fireToast('Plan deleted · ' + plan.name);
+    const rest = plans.filter((p) => p.id !== plan.id);
+    setPlans(rest);
+    setActive((cur) => (cur === plan.id ? rest[0]?.id ?? null : cur));
+  }, [plans, reasonOf, loadPlans, fireToast]);
 
   /* WHAT ANA SEES HERE. A QMP defines the gates every other document is
      validated against, so the payload carries the gate-level split and the risk
@@ -178,7 +293,7 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
           <span className="t">Quality management plans</span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {ask && <button className="reg-cta" onClick={() => ask('Explain what this quality-management plan enforces: what a hard, soft and info gate each block, which risk factors are required, and what changes for documents already in flight if I activate it. Say which figures are unavailable rather than assuming zero.')}>{I.sparkles} Explain this plan</button>}
-            <button className="nda-open" onClick={() => setCreating(true)}>{I.plus} New plan</button>
+            <button className="nda-open" onClick={() => setDialog({ kind: 'create' })}>{I.plus} New plan</button>
           </span>
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
@@ -200,7 +315,12 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
                   <td><span className={'rd-chip tone-' + statusTone(p.status)}>{p.status ?? '—'}</span></td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <button className="nda-open" onClick={() => setActive(p.id)}>{I.eye} View</button>
-                    {p.status !== 'active' && <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => activate(p.id)}>{I.check} Activate</button>}
+                    {p.status === 'active'
+                      ? <button className="nda-open" style={{ marginLeft: 6 }} aria-label={`Archive ${p.name}`} onClick={() => setDialog({ kind: 'status', plan: p, to: 'archived' })}>{I.lock} Archive</button>
+                      : <>
+                          <button className="nda-open" style={{ marginLeft: 6 }} aria-label={`Activate ${p.name}`} onClick={() => setDialog({ kind: 'status', plan: p, to: 'active' })}>{I.check} Activate</button>
+                          <button className="nda-open" style={{ marginLeft: 6 }} aria-label={`Delete ${p.name}`} onClick={() => setDialog({ kind: 'delete', plan: p })}>{I.close} Delete</button>
+                        </>}
                   </td>
                 </tr>))}</tbody></table>}
         </div>
@@ -239,7 +359,9 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
         </div>
       )}
 
-      {creating && <C2CForm config={CREATE_FORM} onCancel={() => setCreating(false)} onSubmit={create} />}
+      {dialog?.kind === 'create' && <C2CForm config={CREATE_FORM} onCancel={() => setDialog(null)} onSubmit={once(create)} />}
+      {dialog?.kind === 'status' && <C2CForm key={`${dialog.to}-${dialog.plan.id}`} config={TRANSITION[dialog.to].form(dialog.plan)} onCancel={() => setDialog(null)} onSubmit={once((v: Record<string, string>) => transition(dialog.plan, dialog.to, v))} />}
+      {dialog?.kind === 'delete' && <C2CForm key={`delete-${dialog.plan.id}`} config={DELETE_FORM(dialog.plan)} onCancel={() => setDialog(null)} onSubmit={once((v: Record<string, string>) => remove(dialog.plan, v))} />}
       <C2CToast msg={toast} />
     </div>
   );
