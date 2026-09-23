@@ -23,7 +23,7 @@ import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import { finalizePdfA } from '../pdfa-pipeline';
-import { hasPdfHeader } from '../pdfa-detect';
+import { isPdfLeaf } from '../pdfa-detect';
 import { assessLeafPdfSecurity } from '../leaf-pdf-security';
 import { buildMd5Index } from '../../submission-gateways/regional-packager';
 import { listVendoredSchemas } from '../schema-bundler';
@@ -64,7 +64,9 @@ export interface RpsPackageResult {
  */
 async function finalizeBytes(buf: Buffer, mediaType: string, href: string): Promise<{ bytes: Buffer; sha256: string }> {
   let bytes = buf;
-  if (mediaType === 'application/pdf' || hasPdfHeader(buf)) {
+  // The shared predicate (name .pdf OR %PDF- header, pdfa-detect isPdfLeaf), or a
+  // declared PDF media type. 2026-09-23 (W5/D7, round-2 review).
+  if (mediaType === 'application/pdf' || isPdfLeaf(href, buf)) {
     const security = await assessLeafPdfSecurity(buf, null);
     if (security.verdict === 'secured') {
       throw new Error(`RPS packager: document ${href} is an encrypted/secured PDF (${security.reason}); refusing to package it.`);

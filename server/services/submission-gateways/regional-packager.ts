@@ -38,7 +38,7 @@ import { ValidationError, resolveToRegistryEntry, getSubmissionTypeLabel } from 
 // also need its `Region` type, and the packager is their entry point.
 export type { Region } from './types';
 import { finalizePdfA } from '../ectd/pdfa-pipeline';
-import { hasPdfHeader } from '../ectd/pdfa-detect';
+import { isPdfLeaf } from '../ectd/pdfa-detect';
 import { assessLeafPdfSecurity } from '../ectd/leaf-pdf-security';
 import {
   evaluateSubmissionGrade,
@@ -216,8 +216,10 @@ async function finalizeLeafBytes(
      It ran only for a name ending .pdf, so secured PDF bytes under any other
      name shipped unexamined. Conversion still keys on the declared type: a
      PDF under a non-.pdf name is judged for security and shipped unchanged,
-     never rewritten by the PDF/A pipeline. */
-  const pdfBytes = namedPdf || hasPdfHeader(buf);
+     never rewritten by the PDF/A pipeline.
+     2026-09-23 (W5/D7, round-2 review): name .pdf OR %PDF- header is the one
+     shared predicate, pdfa-detect isPdfLeaf, not an inline copy. */
+  const pdfBytes = isPdfLeaf(fileName, buf);
   if (!pdfBytes) return { bytes: buf, isPdf: false, converted: false, encrypted: false };
   // Security is judged here on every path, including the deterministic one that
   // skips PDF/A. finalizePdfA used to note it only as a warning string the

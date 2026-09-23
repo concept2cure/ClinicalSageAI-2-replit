@@ -116,11 +116,27 @@ export function pdfNameOffsets(bytes: Uint8Array, name: string): number[] {
 /**
  * True when `%PDF-` appears in the first 1 KB — the same test readers apply
  * (pdf.js and Acrobat tolerate a short preamble), and the one classifyPdfA
- * uses for `isPdf`. Callers deciding whether bytes are a PDF use this, not the
- * file name.
+ * uses for `isPdf`. Callers asking whether the BYTES are a PDF use this;
+ * callers deciding whether a leaf is judged as a PDF use isPdfLeaf.
  */
 export function hasPdfHeader(bytes: Uint8Array): boolean {
   return /%PDF-\d+\.\d+/.test(toLatin1(bytes, 0, HEAD_BYTES));
+}
+
+/**
+ * The one predicate for "this leaf is a PDF, and is judged as one": its name
+ * ends in .pdf, OR `%PDF-` is in its first 1 KB (hasPdfHeader). The name makes
+ * it a PDF to the agency whatever the bytes are; the header makes it one to
+ * every reader whatever it is called, so secured PDF bytes cannot leave the
+ * security rule by being renamed.
+ *
+ * 2026-09-23 (W5/D7, round-2 review): the packager, the transmit guard and the
+ * market formatting validator each carried their own copy, and the validator's
+ * was header-only — a .pdf whose header sits past 1 KB was refused at packaging
+ * and transmit yet reported 'conformant'. Every caller uses this one.
+ */
+export function isPdfLeaf(fileName: string, bytes: Uint8Array): boolean {
+  return fileName.toLowerCase().endsWith('.pdf') || hasPdfHeader(bytes);
 }
 
 function toLatin1(bytes: Uint8Array, start: number, end: number): string {
@@ -193,4 +209,4 @@ export function classifyPdfA(input: Uint8Array | ArrayBuffer): PdfAClassificatio
   };
 }
 
-export default { classifyPdfA, pdfNameOffsets, hasPdfHeader };
+export default { classifyPdfA, pdfNameOffsets, hasPdfHeader, isPdfLeaf };
