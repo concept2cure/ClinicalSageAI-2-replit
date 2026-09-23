@@ -197,11 +197,49 @@ describe('the review surface does not fabricate an electronic signature', () => 
     expect(guard).toBeLessThan(modal.indexOf('apiRequest('));
   });
 
-  it('points at the path that does perform a binding signature', () => {
+  it('points at the path that does perform a binding signature, and says truly how it verifies the signer', () => {
     // Removing a false claim without saying where the real capability lives
     // just moves the confusion.
-    expect(src).toMatch(/authoring workspace/i);
-    expect(src).toMatch(/PIN-verified/i);
+    //
+    // HOW the signer is verified is a claim about the product too, so it is
+    // pinned to the implementation, not to whatever the copy last said. Both
+    // authoring signature routes, POST /api/authoring/docs/:docId/e-sign and
+    // /sign (server/routes/authoring.router.ts), call reverifyAuthoringSigner ->
+    // reverifySigner (server/services/part11/reverify-signer.ts): the account
+    // PASSWORD every time, and a 6-digit authenticator code on top of it only
+    // when that signer has MFA enrolled (isMfaEnabled reads users.mfa_enabled,
+    // per account). The dialog is the shared EsignModal, which asks for the
+    // password and then the code when the server says one is enrolled.
+    //
+    // There is no signing PIN. 6f79a000f (2026-09-23, VSR-001 §13.3 item 3)
+    // deleted verifyUserPin, POST /api/authoring/users/pin and
+    // services/part11/pin-verification.ts, and corrected this surface's copy
+    // from "PIN-verified" to "the signer's password is re-verified". This
+    // assertion still required /PIN-verified/, so it pinned the retired
+    // mechanism and failed on the copy that had been made true.
+    //
+    // Both places the surface tells the user where to sign are checked on
+    // their own: the persistent banner and the decision dialog's manifest.
+    // Whitespace is collapsed the way JSX renders it, so a copy line wrapped in
+    // the source reads as the sentence the user sees.
+    const disclosure = (anchor: string) => {
+      const start = src.indexOf(anchor);
+      expect(start, `${anchor} not found in ${REVIEW}`).toBeGreaterThan(-1);
+      const end = src.indexOf('</div>', start);
+      expect(end, `${anchor} is not closed`).toBeGreaterThan(start);
+      return src.slice(start, end).replace(/\s+/g, ' ');
+    };
+    const places: Array<[string, string]> = [
+      ['signature banner', disclosure('Decisions recorded on this surface are not electronic signatures')],
+      ['decision dialog manifest', disclosure('className="esign-manifest"')],
+    ];
+    for (const [where, text] of places) {
+      expect(text, where).toMatch(/authoring workspace/i);
+      expect(text, where).toMatch(/password is re-verified/i);
+      expect(text, where).not.toMatch(/\bpin\b/i);
+    }
+    // Nowhere on the surface: the PIN signs nothing.
+    expect(src).not.toMatch(/\bPIN\b/);
   });
 
   it('no longer labels the action as signing or sealing', () => {

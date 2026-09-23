@@ -6,7 +6,8 @@
  * (assertSequencePackageable), reproduced here over PGlite with the REAL
  * freezeSequence / dispatchSequence / upsertLeaf / removeLeaf, the REAL
  * assembleSequence and the REAL leaf-manifest digest (deriveGovernedTargetBinding).
- * Only the readiness assessor and the audit writer are stubbed.
+ * Only the readiness assessor and the best-effort secondary audit log
+ * (auditService.logAction) are stubbed; see the note on the auditService mock.
  *
  *  1. TOCTOU. The gate assembles (seconds of PDF rendering) while the sequence
  *     is still 'validated', so upsertLeaf / removeLeaf are allowed; the state
@@ -97,14 +98,23 @@ vi.mock('../../../db', () => {
     });
   }
 });
-vi.mock('../../auditService', () => ({
+/*
+ * 2026-09-23 (ci:audit-logs-fixture). The best-effort secondary log — logAction,
+ * which recordAuditRow calls beside a committed leaf write — is stubbed; it has
+ * its own tests. The chained §11.10(e) write is NOT: every freeze and dispatch
+ * here commits with the REAL writeChainedAuditRow, in its own transaction, into
+ * the shared AUDIT_LOGS_PGLITE_DDL table.
+ *
+ * It used to be a five-column stand-in INSERT over a six-column local
+ * audit_logs, so no governed transition in this file ever ran the writer it
+ * commits with — or the spent-signature check against the row that writer
+ * actually produces. Against the shared DDL that stand-in fails on `id`, and
+ * the fail-closed transaction rolls back every freeze and dispatch expected to
+ * succeed (11 of the 18 cases).
+ */
+vi.mock('../../auditService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../auditService')>()),
   default: { logAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })) },
-  writeChainedAuditRow: vi.fn(async (client: any, row: any) => {
-    await client.query(
-      `INSERT INTO audit_logs (tenant_id, table_name, record_id, action, new_values) VALUES ($1,$2,$3,$4,$5)`,
-      [row.organizationId, row.resourceType, String(row.resourceId), row.action, JSON.stringify(row.details)],
-    );
-  }),
 }));
 vi.mock('../../ectd/assess-dispatch-readiness', () => ({
   assessSequenceDispatchReadiness: async () => ({
@@ -126,7 +136,7 @@ vi.mock('../../ectd/assemble-from-core', async (orig) => {
   };
 });
 
-import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { createIndPgliteDb, AUDIT_LOGS_PGLITE_DDL, type IndPgliteDb } from '../../../db/pglite-harness';
 import { assembleSequence } from '../../ectd/assemble-from-core';
 import { deriveGovernedTargetBinding } from '../../part11/signature-persistence';
 import { freezeSequence, dispatchSequence, upsertLeaf, removeLeaf } from '../submission-service';
@@ -173,6 +183,14 @@ const statusOf = async (id: number) =>
 const liveLeaves = async (seqId: number) =>
   Number(((await h.pglite.query(`SELECT count(*)::int AS n FROM submission_leaves WHERE sequence_id=$1 AND deleted_at IS NULL`, [seqId])).rows[0] as { n: number }).n);
 const outcome = (p: Promise<unknown>) => p.then(() => null, (e: any) => e);
+/** The §11.10(e) chain rows the governed transitions wrote for a sequence. */
+const chainRows = async (seqId: number) =>
+  (await h.pglite.query(
+    `SELECT action, tenant_id, actor_id, target, sha256_chain IS NOT NULL AS chained,
+            new_values::jsonb ->> 'signatureActionId' AS signature
+       FROM audit_logs WHERE table_name = 'ectd_sequence' AND record_id = $1 ORDER BY occurred_at, id`,
+    [String(seqId)],
+  )).rows;
 
 beforeAll(async () => {
   h = await createIndPgliteDb({ submissionCore: true, leafSources: true });
@@ -181,7 +199,7 @@ beforeAll(async () => {
   await h.pglite.exec(`
     CREATE TABLE c2c_ana_actions (id TEXT PRIMARY KEY, org_id INTEGER, command TEXT, target TEXT, state TEXT, proposed_by INTEGER, payload JSONB);
     CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT, bound_payload_digest TEXT, binding_basis TEXT, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT);
-    CREATE TABLE IF NOT EXISTS audit_logs (id SERIAL PRIMARY KEY, tenant_id INTEGER, table_name TEXT, record_id TEXT, action TEXT, new_values TEXT);
+    ${AUDIT_LOGS_PGLITE_DDL}
     CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1, 'race', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
@@ -261,9 +279,15 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
       message: expect.stringMatching(/leaves changed while this freeze was being checked/),
     });
     expect((await statusOf(2)).status).toBe('validated');
-    // With nothing moving, the same sequence freezes under a fresh signature.
-    await freezeSequence(2, ctx, await sign(2, 'freeze'));
+    expect(await chainRows(2), 'a refused freeze left a row in the audit chain').toEqual([]);
+    // With nothing moving, the same sequence freezes under a fresh signature —
+    // and the freeze commits with its chained §11.10(e) row, not without it.
+    const fresh = await sign(2, 'freeze');
+    await freezeSequence(2, ctx, fresh);
     expect((await statusOf(2)).status).toBe('frozen');
+    expect(await chainRows(2), 'the freeze committed without the chained audit row it is written with').toEqual([
+      { action: 'SEQUENCE_FROZEN', tenant_id: ORG, actor_id: USER, target: 'ectd_sequence:2', chained: true, signature: fresh },
+    ]);
   }, 120_000);
 
   it('upsertLeaf re-checks the status under the sequence row lock, not only before it', async () => {
