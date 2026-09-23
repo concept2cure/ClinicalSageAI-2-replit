@@ -14,7 +14,7 @@
 import React from 'react';
 import { C2CForm, type C2CFormConfig, type C2CFormField } from '../C2CForm';
 import {
-  addBudgetItem, addScheduleVisit, addSoaAssessment, optionalNumber, recordReviewDisposition,
+  addBudgetItem, addScheduleVisit, addSoaAssessment, optionalNumber,
   removeScheduleVisit, removeSoaAssessment, renameScheduleVisit, requestProtocolReview,
   setBudgetParams, startProtocolDocument, updateProtocolHeader, updateProtocolRisk,
 } from './ProtocolDevWrites';
@@ -36,6 +36,8 @@ export interface PdevFormTarget {
   label?: string;
   /** Current values, so an edit form opens on the record rather than blank. */
   defaults?: Record<string, string>;
+  /** A review's assigned user; null when it names a reviewer with no account. */
+  reviewerUserId?: number | null;
 }
 
 const REASON: C2CFormField = {
@@ -146,11 +148,11 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
   },
   'review-disposition': {
     eyebrow: 'Protocol · review', title: 'Record disposition',
-    sub: 'The reviewer’s decision on this protocol. Recorded as a signature-grade governed action.',
-    governed: true, submitLabel: 'Record disposition',
+    sub: 'The reviewer’s decision on this protocol. Next you sign it: the meaning, the reason and your password.',
+    governed: 'This is an electronic signature (21 CFR 11.50, 11.200). Nothing is recorded until you sign in the next step.',
+    submitLabel: 'Continue to signature',
     fields: [
       { key: 'disposition', label: 'Disposition', type: 'select', options: DISPOSITION, default: 'approve' },
-      REASON,
     ],
   },
   'cover-page': {
@@ -245,9 +247,6 @@ async function submitRegister(
     case 'review-request':
       await requestProtocolReview(documentId, { reviewerName: v.reviewerName, role: v.role, dueDate: v.dueDate, reason: v.reason });
       return true;
-    case 'review-disposition':
-      await recordReviewDisposition(rowId, { disposition: v.disposition, reason: v.reason });
-      return true;
     case 'cover-page':
       await updateProtocolHeader(documentId, { sponsor: v.sponsor, principalInvestigator: v.principalInvestigator, reason: v.reason });
       return true;
@@ -280,10 +279,20 @@ export interface ProtocolDevFormProps {
   /** Fires only once the server has confirmed the write. */
   onDone: (kind: PdevFormKind) => void;
   onError: (message: string) => void;
+  /**
+   * A disposition is signed, not submitted: the drawer collects the decision
+   * and hands it here, and the caller opens the e-signature step.
+   */
+  onSignRequest?: (kind: 'review-disposition', target: PdevFormTarget | undefined, values: Record<string, string>) => void;
 }
 
-export function ProtocolDevForm({ kind, documentId, target, onCancel, onDone, onError }: ProtocolDevFormProps) {
+export function ProtocolDevForm({ kind, documentId, target, onCancel, onDone, onError, onSignRequest }: ProtocolDevFormProps) {
   const submit = async (v: Record<string, string>) => {
+    if (kind === 'review-disposition') {
+      if (onSignRequest) onSignRequest(kind, target, v);
+      else onError('A disposition is an electronic signature and cannot be recorded from here. Nothing was recorded.');
+      return;
+    }
     try {
       await submitPdevForm(kind, documentId, target, v);
       onDone(kind);

@@ -10739,6 +10739,23 @@ registerToolHandler('generate_ctgov_registration_draft', async (input, ctx) => {
 // are read-only.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * AnA cannot sign. An act that is an electronic signature needs the signer to
+ * re-enter their password (21 CFR 11.200), and a chat turn cannot collect it.
+ * Nine tools used to perform such acts from chat and write a `sign` ledger row
+ * nobody had signed, reachable in every organization whatever its launch scope
+ * (weekly review 2026-09-22, P1 follow-up). They now write nothing and hand the
+ * act to the person. finalize_protocol_document follows the same rule.
+ */
+function refuseSignatureInChat(tool: string, act: string, where: string): string {
+  return JSON.stringify({
+    ok: false,
+    signatureRequired: true,
+    tool,
+    message: `${act} is an electronic signature, and AnA cannot sign: it needs your password, which a chat turn cannot collect. Nothing was recorded or changed. Do it from ${where}.`,
+  });
+}
+
 async function governedPdev(ctx: any, command: string, target: string, fallbackReason: string, input: Record<string, unknown>, run: (client: any) => Promise<Record<string, unknown>>): Promise<string> {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
@@ -10980,16 +10997,7 @@ registerToolHandler('review_dms_plan_completeness', async (input, ctx) => {
   }
 });
 
-registerToolHandler('finalize_dms_plan', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_dms_plan requires tenant + user context.' });
-  const planId = typeof input.plan_id === 'number' ? input.plan_id : NaN;
-  if (!Number.isInteger(planId)) return JSON.stringify({ error: 'plan_id is required.' });
-  const { finalizePlanTx } = await import('../dmsp/dmsp-service.js');
-  return governedPdev(ctx, 'sign', `dms-plan:${planId}`, 'DMS plan finalized via AnA', input, async (client) => {
-    const result = await finalizePlanTx(client, ctx.organizationId!, ctx.userId!, planId);
-    return { dmsPlanId: planId, finalized: result.finalized, addressedPct: result.completeness.addressedPct };
-  });
-});
+registerToolHandler('finalize_dms_plan', async () => refuseSignatureInChat('finalize_dms_plan', 'Finalizing a data management and sharing plan', 'the DMS plan in its workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NIH Other Support (C2C-24A). create/add/certify are governed/audited
@@ -11050,16 +11058,7 @@ registerToolHandler('review_other_support', async (input, ctx) => {
   }
 });
 
-registerToolHandler('certify_other_support', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'certify_other_support requires tenant + user context.' });
-  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
-  const { certifyDocumentTx } = await import('../other-support/other-support-service.js');
-  return governedPdev(ctx, 'sign', `other-support:${documentId}`, 'Other Support certified via AnA', input, async (client) => {
-    const result = await certifyDocumentTx(client, ctx.organizationId!, ctx.userId!, documentId);
-    return { otherSupportId: documentId, certified: result.certified, activePersonMonths: result.readiness.summary.active.total };
-  });
-});
+registerToolHandler('certify_other_support', async () => refuseSignatureInChat('certify_other_support', 'Certifying Other Support', 'the Other Support document in its workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NIH Biosketch (C2C-24B). create/update/finalize are governed/audited
@@ -11107,16 +11106,7 @@ registerToolHandler('review_biosketch_completeness', async (input, ctx) => {
   }
 });
 
-registerToolHandler('finalize_biosketch', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_biosketch requires tenant + user context.' });
-  const biosketchId = typeof input.biosketch_id === 'number' ? input.biosketch_id : NaN;
-  if (!Number.isInteger(biosketchId)) return JSON.stringify({ error: 'biosketch_id is required.' });
-  const { finalizeBiosketchTx } = await import('../biosketch/biosketch-service.js');
-  return governedPdev(ctx, 'sign', `biosketch:${biosketchId}`, 'Biosketch finalized via AnA', input, async (client) => {
-    const result = await finalizeBiosketchTx(client, ctx.organizationId!, ctx.userId!, biosketchId);
-    return { biosketchId, finalized: result.finalized, addressedPct: result.completeness.addressedPct };
-  });
-});
+registerToolHandler('finalize_biosketch', async () => refuseSignatureInChat('finalize_biosketch', 'Finalizing a biosketch', 'the biosketch in its workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Invention Disclosure / Tech Transfer (C2C-25). create/update/submit are
@@ -11246,16 +11236,7 @@ registerToolHandler('review_export_control', async (input, ctx) => {
   }
 });
 
-registerToolHandler('finalize_export_control_determination', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_export_control_determination requires tenant + user context.' });
-  const id = typeof input.review_id === 'number' ? input.review_id : NaN;
-  if (!Number.isInteger(id)) return JSON.stringify({ error: 'review_id is required.' });
-  const { determineReviewTx } = await import('../export-control/export-control-service.js');
-  return governedPdev(ctx, 'sign', `export-control:${id}`, 'Export-control determination finalized via AnA', input, async (client) => {
-    const result = await determineReviewTx(client, ctx.organizationId!, ctx.userId!, id);
-    return { reviewId: id, determined: result.determined, licenseRequired: result.readiness.assessment.licenseRequired, freApplies: result.readiness.assessment.freApplies };
-  });
-});
+registerToolHandler('finalize_export_control_determination', async () => refuseSignatureInChat('finalize_export_control_determination', 'Finalizing an export-control determination', 'the determination in the export-control workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Research Agreements MTA/DUA/CDA (C2C-27). create/update/execute are
@@ -11329,16 +11310,7 @@ registerToolHandler('review_research_agreement', async (input, ctx) => {
   }
 });
 
-registerToolHandler('execute_research_agreement', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'execute_research_agreement requires tenant + user context.' });
-  const id = typeof input.agreement_id === 'number' ? input.agreement_id : NaN;
-  if (!Number.isInteger(id)) return JSON.stringify({ error: 'agreement_id is required.' });
-  const { executeAgreementTx } = await import('../research-agreements/research-agreements-service.js');
-  return governedPdev(ctx, 'sign', `research-agreement:${id}`, 'Research agreement executed via AnA', input, async (client) => {
-    const result = await executeAgreementTx(client, ctx.organizationId!, ctx.userId!, id);
-    return { agreementId: id, executed: result.executed };
-  });
-});
+registerToolHandler('execute_research_agreement', async () => refuseSignatureInChat('execute_research_agreement', 'Executing a research agreement', 'the agreement in its workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Protocol Risk Register (C2C-19). add is governed/audited; review is read-only.
@@ -11513,26 +11485,40 @@ registerToolHandler('review_protocol_completeness', async (input, ctx) => {
   }
 });
 
+// Finalizing a protocol is an electronic signature (21 CFR 11.50/11.200). A chat
+// turn cannot collect the signer's password, so AnA never finalizes: this tool
+// used to, and wrote a `sign` ledger row nobody had signed. It now answers
+// whether the protocol can be finalized and who has to do it. It writes nothing.
 registerToolHandler('finalize_protocol_document', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant + user context.' });
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant context.' });
   const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
   if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { finalizeProtocolTx } = await import('../protocol-development/protocol-development-service.js');
-  const client = await getPool().connect();
+  const { getCompleteness, getProtocolDocument } = await import('../protocol-development/protocol-development-service.js');
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const result = await finalizeProtocolTx(client, ctx.organizationId, ctx.userId, documentId);
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'sign', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol finalized via AnA'), payload: { version: result.version }, domain: 'protocol_development', surface: 'ana' });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, documentId, version: result.version, message: `Finalized protocol ${documentId} as version ${result.version}.` });
+    const doc = await getProtocolDocument(ctx.organizationId, documentId);
+    if (!doc) return JSON.stringify({ error: `Protocol ${documentId} was not found in this organization.` });
+    if (doc.status === 'finalized' || doc.status === 'superseded') {
+      return JSON.stringify({
+        ok: false,
+        documentId,
+        status: doc.status,
+        message: `Protocol ${documentId} is already ${doc.status}${doc.version ? ` (version ${doc.version})` : ''}; there is nothing to finalize.`,
+      });
+    }
+    const c = await getCompleteness(ctx.organizationId, documentId);
+    return JSON.stringify({
+      ok: false,
+      signatureRequired: true,
+      documentId,
+      readyToFinalize: c.readyToFinalize,
+      requiredCompletionPct: c.requiredCompletionPct,
+      findings: c.findings,
+      message: c.readyToFinalize
+        ? `Protocol ${documentId} passes the completeness check but was not finalized. Finalizing is an electronic signature: the user finalizes it from the protocol workspace and enters their password.`
+        : `Protocol ${documentId} cannot be finalized yet and was not finalized. Resolve the findings, then the user finalizes it from the protocol workspace with their password.`,
+    });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `finalize_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
   }
 });
 
@@ -11784,34 +11770,7 @@ registerToolHandler('cast_committee_vote', async (input, ctx) => {
   }
 });
 
-registerToolHandler('finalize_committee_determination', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_committee_determination requires tenant + user context.' });
-  const agendaItemId = typeof input.agenda_item_id === 'number' ? input.agenda_item_id : NaN;
-  if (!Number.isInteger(agendaItemId)) return JSON.stringify({ error: 'agenda_item_id is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { finalizeAgendaItemTx, getActorTrainingStatus } = await import('../committees/committee-service.js');
-  const client = await getPool().connect();
-  try {
-    // CITI training gate (read) before opening the transaction.
-    const ct = await client.query(`SELECT committee_type FROM committee_agenda_items WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [agendaItemId, ctx.organizationId]);
-    if (ct.rows.length === 0) { client.release(); return JSON.stringify({ error: 'Agenda item not found.' }); }
-    const training = await getActorTrainingStatus(ctx.organizationId, ctx.userId, ct.rows[0].committee_type);
-    if (!training.trained) { client.release(); return JSON.stringify({ error: `Cannot finalize: ${training.reason}` }); }
-
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const determination = await finalizeAgendaItemTx(client, ctx.organizationId, ctx.userId, agendaItemId);
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'sign', target: `committee-agenda:${agendaItemId}`, reason: fcoiReason(input, 'Committee determination finalized via AnA'), payload: { outcome: determination.outcome }, domain: 'committee', surface: 'ana' });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, agendaItemId, outcome: determination.outcome, rationale: determination.rationale, tally: determination.tally });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({ error: `finalize_committee_determination failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+registerToolHandler('finalize_committee_determination', async () => refuseSignatureInChat('finalize_committee_determination', "Finalizing a committee's determination", 'the agenda item in the committee workspace, by a member holding the approve privilege'));
 
 registerToolHandler('review_protocol_portfolio', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_portfolio requires tenant context.' });
@@ -12186,33 +12145,7 @@ registerToolHandler('update_grant_closeout', async (input, ctx) => {
   }
 });
 
-registerToolHandler('finalize_grant_closeout', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_grant_closeout requires tenant + user context.' });
-  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
-  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { finalizeCloseoutTx } = await import('../grants/grants-service.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { closedAward } = await finalizeCloseoutTx(client, ctx.organizationId, ctx.userId, awardId);
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
-      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Grant closeout finalized via AnA'),
-      payload: { closeout: 'completed', closedAward }, domain: 'grants', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, awardId, closedAward, message: `Closeout finalized — award ${awardId} is closed (all 2 CFR 200.344 items complete).` });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    // The deterministic gate blocks finalize with outstanding items — surface it.
-    return JSON.stringify({ error: `finalize_grant_closeout failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+registerToolHandler('finalize_grant_closeout', async () => refuseSignatureInChat('finalize_grant_closeout', 'Finalizing a grant closeout', 'the closeout in the grant workspace'));
 
 registerToolHandler('record_subaward', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'record_subaward requires tenant + user context.' });
@@ -12287,33 +12220,7 @@ registerToolHandler('screen_subaward', async (input, ctx) => {
   }
 });
 
-registerToolHandler('execute_subaward', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'execute_subaward requires tenant + user context.' });
-  const subawardId = typeof input.subaward_id === 'number' ? input.subaward_id : NaN;
-  if (!Number.isInteger(subawardId)) return JSON.stringify({ error: 'subaward_id is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { executeSubawardTx } = await import('../grants/grants-service.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    await executeSubawardTx(client, ctx.organizationId, ctx.userId, subawardId);
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
-      target: `grant-subaward:${subawardId}`, reason: fcoiReason(input, 'Subaward executed via AnA'),
-      payload: { status: 'executed' }, domain: 'grants', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, subawardId, status: 'executed', message: `Subaward ${subawardId} executed (cleared screen + risk assessment, 2 CFR 200.214/200.332).` });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    // The eligibility gate blocks execution of an unscreened/excluded/unassessed subaward — surface it.
-    return JSON.stringify({ error: `execute_subaward failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+registerToolHandler('execute_subaward', async () => refuseSignatureInChat('execute_subaward', 'Executing a subaward', 'the subaward in the grant workspace'));
 
 const BUDGET_CATEGORIES = ['personnel', 'fringe', 'equipment', 'travel', 'supplies', 'contractual', 'construction', 'other_direct', 'indirect'];
 
@@ -12486,34 +12393,7 @@ registerToolHandler('request_no_cost_extension', async (input, ctx) => {
   }
 });
 
-registerToolHandler('approve_no_cost_extension', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'approve_no_cost_extension requires tenant + user context.' });
-  const nceId = typeof input.nce_id === 'number' ? input.nce_id : NaN;
-  const authority = typeof input.authority === 'string' ? input.authority : '';
-  if (!Number.isInteger(nceId) || !['grantee', 'sponsor'].includes(authority)) return JSON.stringify({ error: 'nce_id and authority (grantee|sponsor) are required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { approveNceTx } = await import('../grants/grants-service.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { newEndDate } = await approveNceTx(client, ctx.organizationId, ctx.userId, nceId, authority as any);
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
-      target: `grant-nce:${nceId}`, reason: fcoiReason(input, 'No-cost extension approved via AnA'),
-      payload: { status: 'approved', authority, newEndDate }, domain: 'grants', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, nceId, newEndDate, message: `Approved NCE ${nceId} (${authority}); award period now ends ${newEndDate}.` });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    // The gate rejects grantee self-approval of an extension that needs the sponsor — surface it.
-    return JSON.stringify({ error: `approve_no_cost_extension failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+registerToolHandler('approve_no_cost_extension', async () => refuseSignatureInChat('approve_no_cost_extension', 'Approving a no-cost extension', 'the extension in the grant workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Cross-domain briefing + coverage-gap fills (HA fulfill/readiness, CS substance).

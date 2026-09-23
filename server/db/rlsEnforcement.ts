@@ -126,17 +126,64 @@ export interface RlsPostureFinding {
   policyCount: number;
 }
 
+/**
+ * A table whose RLS policy provably cannot run: RLS is enabled, FORCE is not,
+ * and the runtime role OWNS the table. Postgres exempts a table's owner from
+ * its policies unless FORCE ROW LEVEL SECURITY is set, so every policy on such
+ * a table is inert for this connection however correct the policy itself is.
+ */
+export interface RlsOwnerExemptionFinding {
+  /** schema-qualified, because these are overwhelmingly not in `public`. */
+  table: string;
+  owner: string;
+  policyCount: number;
+}
+
 export interface RlsPostureReport {
   role: string;
   roleIsSuperuser: boolean;
   roleBypassesRls: boolean;
   tables: RlsPostureFinding[];
+  /** Tables the runtime role owns whose policies are inert. See above. */
+  ownerExempt: RlsOwnerExemptionFinding[];
   failures: string[];
 }
 
-/** Runtime form of the existing RLS catalog checks used by readiness tooling. */
+/**
+ * Runtime form of the RLS catalog checks used by readiness tooling and by the
+ * production boot gate.
+ *
+ * ── What this answers, and what it used to miss ──────────────────────────────
+ * Three questions, not two:
+ *
+ *   1. Is the runtime role itself exempt?  (superuser, or BYPASSRLS)
+ *   2. Is every tenant-keyed table in `public` RLS-enabled, FORCEd and policied?
+ *   3. Does the runtime role OWN any RLS-enabled table that is not FORCEd?
+ *
+ * The third was missing, and it is the one that matters most on a real
+ * deployment. Postgres exempts a table's owner from its own policies unless
+ * FORCE ROW LEVEL SECURITY is set — so a runtime that connects as the table
+ * owner reads every tenant's rows on such a table with RLS_ENFORCE=on, a
+ * correct policy installed, and nothing anywhere reporting a problem.
+ *
+ * Question 2 could not catch it because it reads `table_schema = 'public'`
+ * alone, and this product keeps its Part 11 core outside public:
+ * vault.documents, identity.users, signing.signatures, evidence.hash_ledger.
+ * Measured on the reference database: 117 RLS-enabled, non-FORCE tables across
+ * 16 schemas, every one owned by the runtime role — and this assessment
+ * returned ZERO failures. Reproduced end to end before the fix: two rows for
+ * two organisations in a policied, owner-owned, non-FORCE table, a session
+ * with app.rls_enforce=on and app.current_org_id=1, and the session read both.
+ *
+ * The single-role posture install-fresh warns about ("Production boot will FAIL
+ * CLOSED if it connects as a superuser under RLS_ENFORCE=on") is therefore
+ * narrower than the risk: a non-superuser that merely OWNS the tables was the
+ * same bypass and boot did not fail closed on it. IQ-07 already checks
+ * ownership (scripts/validation/run-iq.mjs raises IQ-DEV-006 on exactly this);
+ * the server did not, so a deployment could pass boot and fail its own IQ.
+ */
 export async function assessRlsCatalogPosture(pool: Pick<Pool, 'query'>): Promise<RlsPostureReport> {
-  const [roleResult, tableResult] = await Promise.all([
+  const [roleResult, tableResult, ownerExemptResult] = await Promise.all([
     pool.query(`SELECT current_user AS role, r.rolsuper, r.rolbypassrls
       FROM pg_roles r WHERE r.rolname = current_user`),
     pool.query(`WITH tenant_tables AS (
@@ -165,6 +212,38 @@ export async function assessRlsCatalogPosture(pool: Pick<Pool, 'query'>): Promis
       LEFT JOIN pg_policies pol ON pol.schemaname = tt.table_schema AND pol.tablename = tt.table_name
       GROUP BY tt.table_name, cls.relrowsecurity, cls.relforcerowsecurity
       ORDER BY tt.table_name`),
+    /* ── The bypass the two checks above cannot see ────────────────────────
+       Postgres exempts a table's OWNER from its own policies unless FORCE ROW
+       LEVEL SECURITY is set. So an RLS-enabled, policied, non-FORCE table that
+       the runtime role owns is fully readable across tenants, and the policy on
+       it is inert however correct the policy is.
+
+       Neither check above catches that. The tenant-table probe reads
+       `table_schema = 'public'` only, and the product keeps its Part 11 core
+       outside public — vault.documents, identity.users, signing.signatures,
+       evidence.hash_ledger. On the reference database 117 tables across 16
+       schemas are in exactly this state and the whole assessment returned zero
+       failures.
+
+       Deliberately NOT keyed on a tenant column: an RLS-ENABLED table is one
+       somebody decided to police, and a policy that cannot run is a defect
+       whatever the column is called. That also means no heuristic and no false
+       positives — a table with RLS off is not reported here, and one the
+       runtime role does not own is not either, because for that connection the
+       policy does run. */
+    pool.query(`SELECT ns.nspname AS schema_name, cls.relname AS table_name,
+             pg_get_userbyid(cls.relowner) AS owner,
+             (SELECT count(*) FROM pg_policies p
+               WHERE p.schemaname = ns.nspname AND p.tablename = cls.relname)::int AS policy_count
+      FROM pg_class cls
+      JOIN pg_namespace ns ON ns.oid = cls.relnamespace
+      WHERE cls.relkind = 'r'
+        AND cls.relrowsecurity
+        AND NOT cls.relforcerowsecurity
+        AND pg_get_userbyid(cls.relowner) = current_user
+        AND ns.nspname NOT IN ('pg_catalog', 'information_schema')
+        AND ns.nspname NOT LIKE 'pg\\_%'
+      ORDER BY ns.nspname, cls.relname`),
   ]);
   const roleRow = roleResult.rows[0] ?? {};
   const tables = tableResult.rows.map(row => ({
@@ -193,11 +272,35 @@ export async function assessRlsCatalogPosture(pool: Pick<Pool, 'query'>): Promis
     if (!table.rlsForced) failures.push(`${table.table}: FORCE ROW LEVEL SECURITY is not enabled`);
     if (table.policyCount < 1) failures.push(`${table.table}: no RLS policy exists`);
   }
+  /* The owner exemption is reported as ONE failure, not 117. A boot error the
+     operator cannot read is a boot error nobody acts on, and the remedy is the
+     same sentence for every table on the list. The full list stays on the
+     report for readiness tooling and for the evidence file. */
+  const ownerExempt: RlsOwnerExemptionFinding[] = ownerExemptResult.rows
+    .map(row => ({
+      table: `${String(row.schema_name)}.${String(row.table_name)}`,
+      owner: String(row.owner ?? ''),
+      policyCount: Number(row.policy_count ?? 0),
+    }))
+    .filter(f => !(f.table.startsWith('public.') && allowlisted.has(f.table.slice('public.'.length))));
+  if (ownerExempt.length > 0) {
+    const shown = ownerExempt.slice(0, 5).map(f => f.table).join(', ');
+    const more = ownerExempt.length > 5 ? `, +${ownerExempt.length - 5} more` : '';
+    failures.push(
+      `runtime role ${roleRow.role} OWNS ${ownerExempt.length} RLS-enabled table(s) that are not ` +
+        `FORCE ROW LEVEL SECURITY (${shown}${more}). Postgres exempts a table's owner from its own ` +
+        'policies unless FORCE is set, so every policy on those tables is inert on this connection ' +
+        'and they are readable across tenants. Remedy: connect as the non-owner runtime role ' +
+        '(set APP_SERVICE_DB_PASSWORD when provisioning and APP_DATABASE_URL for the runtime), or ' +
+        'apply FORCE ROW LEVEL SECURITY to the tables listed.'
+    );
+  }
   return {
     role: String(roleRow.role ?? ''),
     roleIsSuperuser: Boolean(roleRow.rolsuper),
     roleBypassesRls: Boolean(roleRow.rolbypassrls),
     tables,
+    ownerExempt,
     failures,
   };
 }

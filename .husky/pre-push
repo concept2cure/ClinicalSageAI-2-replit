@@ -336,6 +336,24 @@ if ! npm run --silent ci:client-ip-single-source 2>&1; then
 fi
 echo "   ✅ One source for the client address."
 
+# ── A `sign` ledger row must come from a signature ceremony ──────────────────
+#
+# recordGovernedAction(…, command: 'sign') is read by an inspector as an
+# electronic signature, and the primitive checks nothing. Until 2026-09-23 the
+# protocol finalize and review-disposition routes, and an AnA tool, wrote such
+# rows with no password re-entry and no electronic_signatures row. The baseline
+# caps the remaining sites per file, each with a written reason; never grow it.
+echo "   Checking that every sign ledger row comes from a signature ceremony..."
+if ! npm run --silent ci:sign-ceremony 2>&1; then
+  echo ""
+  echo "🚫 ERROR: a sign ledger write without the signature ceremony."
+  echo "   Re-verify the signer (verifyReauth) and write the signature row on the same"
+  echo "   transaction -- see server/services/protocol-development/protocol-signature.ts."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Every new sign ledger row has its ceremony."
+
 # ── The commit has to build for somebody other than you ──────────────────────
 #
 # On 19 Sep 2026 an unanchored `uploads/` in .gitignore -- meant for the runtime

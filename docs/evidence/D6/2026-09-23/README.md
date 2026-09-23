@@ -53,11 +53,11 @@ one at a time and the real-database suite run.
 ## 3. Tests added or changed
 
 - `tests/db/one-time-credentials.dbtest.ts`: new, 17 cases.
-- `tests/db/sign-in-posture.dbtest.ts`: new, 10 cases.
+- `tests/db/sign-in-posture.dbtest.ts`: new, 8 cases.
 - `tests/db/sign-in-audit-trail.dbtest.ts`: its enterprise block moved to a
   second member. It had presented step N-1 after N+1 was accepted, and passed
   only because of the defect.
-- `tests/services/mfaService.test.ts`: consume-once, pre-check, QR and setup
+- `tests/services/mfaService.test.ts`: consume-once, pre-check, QR, and a unit case for F-26's setup
   guard.
 - `server/services/__tests__/mfa-enrolment.test.ts`.
 - `server/utils/__tests__/client-ip.test.ts`.

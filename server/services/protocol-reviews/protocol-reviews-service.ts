@@ -24,7 +24,7 @@ interface Queryable {
 }
 
 export class ProtocolReviewError extends Error {
-  constructor(public code: 'NOT_FOUND' | 'INVALID_STATE' | 'BAD_INPUT', message: string) {
+  constructor(public code: 'NOT_FOUND' | 'INVALID_STATE' | 'BAD_INPUT' | 'FORBIDDEN', message: string) {
     super(message);
     this.name = 'ProtocolReviewError';
   }
@@ -63,24 +63,63 @@ export async function assignReviewerTx(
   return { id: Number(rows[0].id), role };
 }
 
-/** Record a reviewer's disposition; marks the assignment completed. */
+/**
+ * Record a reviewer's disposition; marks the assignment completed. It is signed
+ * (routes/protocol-reviews.ts), so who may sign it, and with which meaning,
+ * depends on who the assignment names:
+ *   - a user account: only that user, signing as `review` or `approval`;
+ *   - a name with no account: anyone may record that person's decision, but only
+ *     by taking `responsibility` for the record. A `review` signature from them
+ *     would claim a review they did not do.
+ */
 export async function setDispositionTx(
   client: Queryable,
   orgId: number,
   assignmentId: number,
   disposition: string,
-): Promise<{ id: number; disposition: string }> {
+  signerId: number,
+  meaning: string,
+): Promise<{ id: number; disposition: string; protocolDocumentId: number; reviewerName: string; onBehalfOf: string | null }> {
   if (!DISPOSITIONS.includes(disposition)) throw new ProtocolReviewError('BAD_INPUT', `Invalid disposition "${disposition}".`);
   const a = await client.query(
-    `SELECT id FROM protocol_review_assignments WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    `SELECT id, protocol_document_id, reviewer_name, reviewer_user_id, status, disposition
+       FROM protocol_review_assignments WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1
+       FOR UPDATE`,
     [assignmentId, orgId],
   );
   if (a.rows.length === 0) throw new ProtocolReviewError('NOT_FOUND', 'Review assignment not found for this organization.');
+  const row = a.rows[0];
+  // A signed disposition is final. Signing again would overwrite the decision
+  // while the first signature stayed live, with nothing saying which decision it
+  // signed; a changed mind needs the first signature withdrawn, which this path
+  // does not offer.
+  if (row.status === 'completed' || row.disposition != null) {
+    throw new ProtocolReviewError('INVALID_STATE', 'A disposition is already signed for this review. Nothing was recorded.');
+  }
+  const assignedTo = row.reviewer_user_id == null ? null : Number(row.reviewer_user_id);
+  if (assignedTo !== null && assignedTo !== signerId) {
+    throw new ProtocolReviewError('FORBIDDEN', 'This review is assigned to another user. Only they can sign its disposition. Nothing was recorded.');
+  }
+  if (assignedTo === signerId && meaning !== 'review' && meaning !== 'approval') {
+    throw new ProtocolReviewError('BAD_INPUT', 'Sign your own review as "review" or "approval". Nothing was recorded.');
+  }
+  if (assignedTo === null && meaning !== 'responsibility') {
+    throw new ProtocolReviewError(
+      'BAD_INPUT',
+      `${row.reviewer_name} has no account here, so their decision can only be recorded by someone taking responsibility for the record. Sign as "responsibility", or reassign the review to a user. Nothing was recorded.`,
+    );
+  }
   await client.query(
     `UPDATE protocol_review_assignments SET disposition = $3, status = 'completed', updated_at = now() WHERE id = $1 AND organization_id = $2`,
     [assignmentId, orgId, disposition],
   );
-  return { id: assignmentId, disposition };
+  return {
+    id: assignmentId,
+    disposition,
+    protocolDocumentId: Number(row.protocol_document_id),
+    reviewerName: String(row.reviewer_name),
+    onBehalfOf: assignedTo === null ? String(row.reviewer_name) : null,
+  };
 }
 
 // ─── Comments ────────────────────────────────────────────────────────────────

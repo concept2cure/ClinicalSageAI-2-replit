@@ -1,0 +1,73 @@
+{
+  "$note": "Per-file COUNT of `sign` ledger writes whose handler does not both re-verify the signer (verifyReauth / verifySigningPin) and write the electronic_signatures row. Written 2026-09-23 from the census in docs/evidence/D5-GOVERNED-PATH/2026-09-22/. Shrink only. Every entry is a DEFECT or a proof the gate cannot see across a function boundary; the reason says which. None of these is reachable from a launch-catalog surface except where the reason says so.",
+  "files": {
+    "server/api/cmc/batchRecordRoutes.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (CMC). Batch-record release re-authenticates (verifyReauth) but writes no electronic_signatures row, so the ledger's sign has no 11.50 manifestation or 11.70 binding. Fix: persistGovernedActionSignature on the same client, as module3OperatingSystemRoutes.ts does."
+    },
+    "server/api/cmc/routes.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (CMC). Re-authenticates but writes no electronic_signatures row. Same fix as batchRecordRoutes.ts."
+    },
+    "server/api/cmc/specificationRoutes.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (CMC). Specification approval re-authenticates but writes no electronic_signatures row. Same fix as batchRecordRoutes.ts."
+    },
+    "server/routes/biopharma/bla-workbench.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog. BLA assessment sign-off (called only from NdaCockpit, not a launch surface) writes a sign ledger row and sets signed_by with no re-authentication and no signature row."
+    },
+    "server/routes/biosketch.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (research administration). Finalize writes a sign ledger row with no re-authentication and no signature row. Route it through the ceremony, or record it under a command that does not claim a signature, before the module is enabled."
+    },
+    "server/routes/committees.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (research administration). Committee determination: sign ledger row, no re-authentication, no signature row. Same remedy as biosketch.ts."
+    },
+    "server/routes/coverage-analysis.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (research administration). Coverage-analysis finalize: sign ledger row, no re-authentication, no signature row. Same remedy as biosketch.ts."
+    },
+    "server/routes/dmsp.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (research administration). DMS plan finalize: sign ledger row, no re-authentication, no signature row. Same remedy as biosketch.ts."
+    },
+    "server/routes/effort-certification.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (research administration). Effort certification: sign ledger row, no re-authentication, no signature row. Same remedy as biosketch.ts."
+    },
+    "server/routes/export-control.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (research administration). Export-control determination: sign ledger row, no re-authentication, no signature row. Same remedy as biosketch.ts."
+    },
+    "server/routes/grants.ts": {
+      "count": 3,
+      "reason": "DEFECT, outside the launch catalog (research administration). Award closeout finalize and two other grant sign-offs: sign ledger rows, no re-authentication, no signature row. Same remedy as biosketch.ts."
+    },
+    "server/routes/other-support.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (research administration). Other Support certification: sign ledger row, no re-authentication, no signature row. Same remedy as biosketch.ts."
+    },
+    "server/routes/research-agreements.ts": {
+      "count": 1,
+      "reason": "DEFECT, outside the launch catalog (research administration). Agreement execution: sign ledger row, no re-authentication, no signature row. Same remedy as biosketch.ts."
+    },
+    "server/routes/protocol-consent.ts": {
+      "count": 1,
+      "reason": "DEFECT. Consent-form approve: sign ledger row, no re-authentication, no signature row. No launch surface calls it (grep of client/src, 2026-09-23); the protocol workspace reads consent and does not approve it. Route it through server/services/protocol-development/protocol-signature.ts before any surface does."
+    },
+    "server/routes/protocol-deviations.ts": {
+      "count": 1,
+      "reason": "DEFECT. Deviation close: sign ledger row, no re-authentication, no signature row. No launch surface calls it (grep of client/src, 2026-09-23). Route it through protocol-signature.ts, or record it as a non-sign closure, before any surface does."
+    },
+    "server/services/pathway-engines/estar/estar-submission-service.ts": {
+      "count": 1,
+      "reason": "PROOF ACROSS A BOUNDARY, verified 2026-09-23. applySignedFiling writes the ledger pair and the signature row on the caller's client; the route that calls it (server/routes/510k-estar-routes.ts ~2031) runs verifyReauth first. The gate measures one top-level function and cannot see the route's check."
+    },
+    "server/services/submission-gateways/governed-transmit.ts": {
+      "count": 1,
+      "reason": "PROOF ACROSS A BOUNDARY, by contract. executeGovernedTransmit writes the ledger pair and the signature row, and requires the caller to hand in `reauthVerifiedAt` (module header, lines ~30-35): the HTTP route (mdx-submission-gateway.ts) runs verifyReauth inline. The AnA caller (mdx-command-handlers.ts) is documented as verifying before dispatch; that path was not re-traced in this change."
+    }
+  }
+}
