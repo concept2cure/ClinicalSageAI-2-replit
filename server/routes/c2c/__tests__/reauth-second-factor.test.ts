@@ -38,6 +38,14 @@ vi.mock('../../../db.js', () => ({
     connect: async () => ({ query: async () => ({ rows: [] }), release: () => {} }),
   },
 }));
+// The account's lockout (auth-security-service). Before F-30 an unreadable
+// lockout read as "not locked", so this file never had to model it; the
+// lockout itself is pinned by tests/db/signing-lockout.dbtest.ts.
+vi.mock('../../../services/auth-security-service.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../services/auth-security-service.js')>()),
+  isAccountLocked: async () => ({ locked: false }),
+  recordFailedLogin: async () => ({ locked: false, remainingAttempts: 5 }),
+}));
 vi.mock('../../../services/mfaService.js', () => ({
   verifyToken: vi.fn(async (_userId: number, code: string) => code === h.validCode),
   isMfaEnabled: vi.fn(async () => {
