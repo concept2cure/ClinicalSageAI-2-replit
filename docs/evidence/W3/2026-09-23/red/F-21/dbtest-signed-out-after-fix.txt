@@ -1,0 +1,61 @@
+
+ RUN  v4.1.7 <repo>
+
+{"level":30,"time":"2026-09-23T04:03:01.347Z","pid":22272,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-23T04:03:01.348Z","pid":22272,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-23T04:03:01.348Z","pid":22272,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/sign-in-audit-trail.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-23T04:03:01.624Z', poolSize: 1 }
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/sign-in-audit-trail.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[mfa] MFA enabled for user 46
+
+{"level":30,"time":"2026-09-23T04:03:02.479Z","pid":22272,"hostname":"vm","context":{"userId":46,"tenantId":91800,"resourceId":"46"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-23T04:03:02.514Z","pid":22272,"hostname":"vm","context":{"userId":46,"tenantId":"91800","resourceId":"46"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+{"level":30,"time":"2026-09-23T04:03:02.534Z","pid":22272,"hostname":"vm","context":{"userId":46,"tenantId":"91800","resourceId":"46"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the MFA challenge a password sign-in issues, against the organisation 68ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong authenticator code 14ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the session /mfa/verify issues 20ms
+{"level":30,"time":"2026-09-23T04:03:02.555Z","pid":22272,"hostname":"vm","context":{"userId":46,"tenantId":91800,"resourceId":"46"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-23T04:03:02.627Z","pid":22272,"hostname":"vm","context":{"resourceId":"unknown"},"msg":"[audit-service] [AUDIT] user_logout user"}
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong password on a real account, against its organisation 23ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > does not let a token the server never signed write into the organisation chain 73ms
+{"level":30,"time":"2026-09-23T04:03:02.660Z","pid":22272,"hostname":"vm","context":{"userId":"46","tenantId":"91800","resourceId":"46"},"msg":"[audit-service] [AUDIT] user_logout user"}
+stderr | tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens nothing once it is signed out (AUTH-03)
+[Enterprise Auth] select-organization error: SessionEndedError: This session has ended. Sign in again.
+    at verifyLiveToken (<repo>/server/services/token-revocation.ts:202:42)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at <repo>/server/routes/authEnterprise.ts:723:22
+
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens the API with the session /mfa/verify issued 17ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the end of a session the server issued, against its organisation 12ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens nothing once it is signed out (AUTH-03) 32ms
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong password
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the challenge a correct password receives
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong code
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the session it issues
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records entering an organisation, against that organisation
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > ends the session it reports ending, and records it
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/users/login asks for the code instead of issuing a session
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/user/login asks for the code instead of issuing a session
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > creates no account outside signup
+ ↓ tests/db/sign-in-audit-trail.dbtest.ts > the organisation audit chain > verifies end to end over every row the organisation holds
+
+ Test Files  1 passed (1)
+      Tests  8 passed | 11 skipped (19)
+   Start at  04:02:59
+   Duration  4.05s (transform 1.51s, setup 71ms, import 228ms, tests 3.46s, environment 0ms)
+
