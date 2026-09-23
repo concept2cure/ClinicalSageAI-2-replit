@@ -21,10 +21,19 @@
  * | the template's own acceptance rules | the file is embedded, and DELETED on first save |
  * | content the resolver could not produce | a manifest entry pointing at nothing |
  * | an unsubstantive section | an unreviewed machine draft filed as a submission |
+ * | a PDF with security settings | a secured file CDRH receives inside the eSTAR |
  *
- * The last one is the reason `AuthoredDeviceSection.substantive` exists. The
- * draft package `/build` produces is allowed to contain drafts — that is what
- * it says on the label. A named CDRH attachment slot is not.
+ * The unsubstantive-section refusal is the reason
+ * `AuthoredDeviceSection.substantive` exists. The draft package `/build`
+ * produces is allowed to contain drafts — that is what it says on the label. A
+ * named CDRH attachment slot is not.
+ *
+ * The security refusal (2026-09-23, W5/D7, round-2 review): an embedded file is
+ * enciphered with the eSTAR's own key, so its own security settings are not in
+ * the filled form's raw bytes, and nothing that later reads the form sees them.
+ * The slot is where the file is still its own bytes, so it is judged here, by
+ * the one leaf rule (ectd/leaf-pdf-security) with no exception: an attachment
+ * is never an FDA form as issued.
  *
  * ── The seed is load-bearing ────────────────────────────────────────────────
  *
@@ -49,6 +58,8 @@ import { createHash } from 'node:crypto';
 import { pool } from '../../../db';
 import { readVerifiedVaultBytes } from '../../../routes/c2c/project-vault';
 import { renderStructuredLeafPdf } from '../../ectd/leaf-pdf-renderer';
+import { assessLeafPdfSecurity } from '../../ectd/leaf-pdf-security';
+import { isPdfLeaf } from '../../ectd/pdfa-detect';
 import { readXfaDatasetsValues } from '../../forms/fill-official-pdf';
 import { loadAuthoredDeviceSections, type DeviceContentClient } from './estar-content-leaves';
 import {
@@ -221,6 +232,23 @@ export function manifestSeed(current: string | null): string {
   return current;
 }
 
+/**
+ * The security refusal, by the one leaf rule (ectd/leaf-pdf-security) for the
+ * eSTAR's destination, FDA: an FDA form attached as FDA issued it keeps FDA's
+ * security settings, as FDA asks; any other secured PDF is refused. Empty when
+ * the file is not a PDF or carries no security settings. (2026-09-23, W5/D7:
+ * this judged with no exception, which refused a filled FDA form.)
+ */
+async function securityRefusals(fileName: string, bytes: Buffer): Promise<string[]> {
+  const security = isPdfLeaf(fileName, bytes) ? await assessLeafPdfSecurity(bytes, 'fda') : null;
+  return security?.verdict === 'secured'
+    ? [
+        `"${fileName}" is a PDF with security settings (${security.reason}). Embedded in the eSTAR it ` +
+          'would reach CDRH with them; remove the security settings and attach the file again.',
+      ]
+    : [];
+}
+
 /** Index the template's slots by SOM path — the identity a request names. */
 function slotsByPath(slots: readonly EstarAttachmentSlot[]): Map<string, EstarAttachmentSlot> {
   return new Map(slots.map((s) => [s.somPath, s]));
@@ -295,8 +323,11 @@ export async function planEstarAttachments(
       dataObjectName,
       existingPaths: takenPaths,
     });
-    if (!acceptance.accepted) {
-      refuse(fileName, ...acceptance.refusals);
+    // 2026-09-23 (W5/D7, round-2 review): once embedded, the file is enciphered
+    // with the eSTAR's key and its own security is invisible; judge it now.
+    const refusals = [...acceptance.refusals, ...(await securityRefusals(fileName, content.bytes))];
+    if (refusals.length > 0) {
+      refuse(fileName, ...refusals);
       continue;
     }
 

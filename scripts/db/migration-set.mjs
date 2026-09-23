@@ -103,6 +103,12 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260604_shadow_review.sql',
   'migrations/20260609_audit_hmac_seal.sql',
+  // audit_logs chain order key (WA 2026-09-21, VSR-001 F-1 / row D5): adds
+  // chain_seq + the BEFORE INSERT trigger that assigns it for writers that
+  // announce a chain position, so the sha256 chain has an order key of its own
+  // and is one chain per tenant. Depends on sha256_chain/occurred_at from
+  // mutation_primitives, so it follows the seal file; additive and idempotent.
+  'migrations/20260921_audit_logs_chain_seq.sql',
   // ── End golden-journey prerequisites ────────────────────────────────────────
 
   // ── The canonical submission core ───────────────────────────────────────────
@@ -340,6 +346,14 @@ export const C2C_MIGRATION_FILES = [
   // inventing a regulatory class for a past record would be worse than leaving
   // it unbound.
   'migrations/20260728_authoring_document_governed_binding.sql',
+  // Provenance for authoring documents (WM, 2026-09-21): a nullable JSONB
+  // column that says whether AnA drafted the document (source 'ana' with the
+  // conversation/turn and the model the gateway reported), a seed produced it,
+  // or it was imported; NULL keeps meaning "a person authored it". Guarded on
+  // to_regclass like the program-scope ALTER above, so it lands for real once
+  // the authoring bundle is provisioned and no-ops with a NOTICE otherwise.
+  // Additive, idempotent, no backfill.
+  'migrations/20260921_authoring_document_provenance.sql',
   // Reconcile lumen_data_atoms embeddings onto 1536 dimensions (audit P0c). The
   // superseded db/migrations/20260125_add_atom_embeddings.sql declared the column
   // and the search_atoms_* functions at vector(3072) and was never in this set, so
@@ -441,6 +455,22 @@ export const C2C_MIGRATION_FILES = [
   // get the columns from shared/schema.ts via push. Additive ALTER … ADD COLUMN
   // IF NOT EXISTS, idempotent, safe to re-run.
   'db/migrations/20260730_ectd_compilations_sequence_columns.sql',
+  // The per-sequence leaf manifest (added to the set 2026-09-22, WO-09 Click 6).
+  // package-from-core reads the PRIOR sequence's ectd_compilations.leaf_manifest to
+  // derive every replace/append/delete and its modified-file pointer, and the
+  // compile route writes it. The column reached FRESH installs through drizzle
+  // push, but this file — the existing-database half — was on no applier, and
+  // deploy-migrate runs no push. On a database provisioned before 2026-07-30 the
+  // compile's manifest INSERT failed, was caught as a warning, and every later
+  // sequence was diffed against no prior state at all. Proven on a copy of such a
+  // database: drop the column, run this applier, the column stays absent; with
+  // this entry, it returns. ADD COLUMN IF NOT EXISTS: idempotent, RULE 1 safe.
+  'db/migrations/20260730_ectd_compilations_leaf_manifest.sql',
+  // An imported agency-validator (LORENZ eValidator) report, kept with the
+  // compilation whose package it covered (2026-09-23, W5/D7, WO-9 Click 6).
+  // ADD COLUMN IF NOT EXISTS on a table already under the tenant sweep:
+  // idempotent, additive, RULE 1 safe.
+  'db/migrations/20260923_ectd_compilations_external_validation.sql',
   // ── Part 11 DB-level immutability (added 2026-07-30, auth/e-sig audit) ────
   // electronic_signatures: DELETE always refused; UPDATE refused except the
   // write-once supersession transition (superseded_by NULL → id).
@@ -484,6 +514,23 @@ export const C2C_MIGRATION_FILES = [
   // All idempotent (IF NOT EXISTS / DROP CONSTRAINT IF EXISTS + re-ADD /
   // to_regclass guards).
   'db/migrations/20260224_ai_trace_chain.sql',
+
+  /* verifier_flags on ai_claims — written by the chat send-message path
+     (`INSERT INTO ai_claims (… verifier_flags)`) and read by the IVDR pack
+     manifest's flagged-claim counts. The column was on no applier, so both
+     raised 42703 on every deployed database: claim persistence failed and the
+     manifest could not count flags. Measured 2026-09-20 against a database
+     built by install-fresh plus the whole set. Immediately after its creator so
+     the replay order is create-then-widen (CLAUDE.md RULE 1); guarded and
+     idempotent. */
+  'db/migrations/20260224_ai_claims_verifier_flags.sql',
+
+  /* source_type / source_atom_id / source_retrieval_chunk_id on
+     ivdr_binder_evidence — the IVDR pack manifest SELECTs all three and
+     ai-claims-routes INSERTs source_type, so attaching evidence to a claim and
+     building the manifest both raised 42703. Same pair of 2026-02-24/25 files
+     that fell off the applier together; same measurement. */
+  'db/migrations/20260224_binder_evidence_source_types.sql',
   'db/migrations/20260730_cmc_projects_reconstruction.sql',
   'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
   'db/migrations/20260730_fk_delete_policies_port.sql',
@@ -611,6 +658,14 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260206_phase5_evidence_fabric.sql',
   'db/migrations/20260207_phase6_6_predicate_intelligence.sql',
   'db/migrations/20260223_ivdr_binder_packs.sql',
+
+  /* The artifact hashes, sizes and warnings ivdr-pack-worker writes in its
+     final promotion step (`UPDATE ivdr_packs SET … manifest_sha256 … zip_sha256,
+     has_warnings, warnings_jsonb`). Ten columns, all absent because this file
+     was on no applier — so every IVDR pack build did its whole job and then
+     failed 42703 at the last statement. Same date, same measurement, same
+     create-then-widen ordering. */
+  'db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql',
   'db/migrations/20260306_chat_tool_runs.sql',
   'db/migrations/20260317_global_regulatory_compliance.sql',
   'db/migrations/20260322_regulatory_precedent_intelligence.sql',
@@ -776,11 +831,19 @@ export const C2C_MIGRATION_FILES = [
   // which the clearance-universe file creates — which is exactly why it failed
   // the earlier screen in isolation.
   //
-  // These tables carry NO tenant column, verified against the live instance: the
-  // FDA 510(k) clearance universe and regulatory precedents are public reference
-  // data every tenant reads, so the isolation sweep correctly leaves them alone.
+  // The FDA 510(k) clearance universe carries NO tenant column: public reference
+  // data every tenant reads, so the isolation sweep correctly leaves it alone.
+  // precedent.regulatory_precedents carries a NULLABLE organization_id (NULL =
+  // public precedent, else private to that org), added and policied by the
+  // 20260617 file directly below.
   'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
   'db/migrations/20260306_precedent_engine.sql',
+  // Wired 2026-09-22, and it must follow its creator: before 20260306 its
+  // IF EXISTS guard would no-op on a blank database and the column would arrive
+  // only on the SECOND deploy. It was on no applier until then, so every corpus
+  // search raised 42703 (`column "organization_id" does not exist`) on every
+  // database, swallowed to [] — precedent search could only ever answer "none".
+  'db/migrations/20260617_precedent_org_isolation.sql',
   'db/migrations/20260208_phase6_6a_risk_rollups.sql',
 
   // ── C-38: the three identity collisions, reconciled to canonical ─────────
@@ -2343,6 +2406,162 @@ export const C2C_MIGRATION_FILES = [
   // recurring DROP rule 1 forbids. Above the final pair because
   // ci:migration-set-order pins those two last.
   'migrations/20260919_capa_code_uniqueness_per_program.sql',
+
+  // ── Claude connector (D8): OAuth 2.1 clients, PKCE codes, refresh tokens ──
+  // server/mcp/ is an MCP resource server that must also act as the OAuth
+  // authorization server (the platform had none). Two of the three tables are
+  // public + organization_id INTEGER NOT NULL so the sweep below policies them,
+  // and each grant row also cascades from the organization_users membership
+  // that authorised it, so removing a member revokes their connector grants
+  // and tenant off-boarding purges them through the cascade ci:purge-coverage
+  // measures. Above the final pair because ci:migration-set-order pins those
+  // two last. Additive and IF NOT EXISTS throughout.
+  'migrations/20260920_mcp_oauth.sql',
+
+  // ── Protocol documents: sponsor + principal investigator (WO, 2026-09-21) ─
+  // Two nullable TEXT columns on protocol_documents, ADD COLUMN IF NOT EXISTS,
+  // no DROP. The creator (migrations/20260621_protocol_development.sql) is on
+  // the install-fresh overlay only, so the ALTER is guarded on to_regclass and
+  // NOTICE-skips on a database the set alone provisioned. Above the final pair
+  // because ci:migration-set-order pins those two last.
+  'migrations/20260921_protocol_documents_sponsor_pi.sql',
+
+  // ── Protocol document → study design link (PROTOCOL-CONVERGENCE, 2026-09-22) ─
+  // Three nullable columns + one partial index on protocol_documents, all
+  // ADD/CREATE ... IF NOT EXISTS, no DROP. It is the link that makes the
+  // protocol a projection of the design-as-data spine
+  // (docs/design/PROTOCOL_DESIGN_CONVERGENCE.md step 1). Deliberately a SOFT
+  // link: the FK target, cdisc_prm_studies(study_id), is created by the
+  // Drizzle schema install-fresh pushes and by NO file in this set, so a
+  // REFERENCES clause would be the same defect the IRB file above had to have
+  // removed before it could be registered. Guarded on to_regclass because
+  // protocol_documents is overlay-only, so it NOTICE-skips on a set-only
+  // database. Above the final pair because ci:migration-set-order pins those
+  // two last.
+  'migrations/20260922_protocol_document_study_design.sql',
+
+  // ── The ICH M11 discontinuation / withdrawal section, backfilled ─────────
+  // Registered 2026-09-22. SECTION_TEMPLATES.clinical claimed ICH M11 as the
+  // basis of all twelve of its sections and covered neither discontinuation of
+  // trial intervention nor participant withdrawal, so a protocol could pass
+  // the finalize gate with every required section complete and say nothing
+  // about either. The template now carries it; this file fixes the documents
+  // already in a deployed database. Replayable: the inserted row is its own
+  // guard, so a document that has the section is skipped including the
+  // order_index shift. Finalized and superseded protocols are left alone --
+  // rewriting an approved record to improve its score is the opposite of the
+  // point. Guarded on to_regclass; above the final pair, which
+  // ci:migration-set-order pins last.
+  'migrations/20260922b_protocol_discontinuation_section.sql',
+
+  // ── The design as it stood when an amendment was opened ─────────────────
+  // Registered 2026-09-22. EU CTR 536/2014 Article 16 makes a modification
+  // substantial by its EFFECT, which needs a before and an after. Nothing
+  // captured a before: protocol_versions.snapshot holds sections only, and the
+  // bound design is overwritten in place as it is edited. Three additive
+  // columns, ADD COLUMN IF NOT EXISTS, no DROP and no backfill -- an amendment
+  // that predates the column keeps a NULL snapshot and its assessment reports
+  // not-assessed rather than comparing against an invented baseline. Guarded on
+  // to_regclass; above the final pair, which ci:migration-set-order pins last.
+  'migrations/20260922c_amendment_design_snapshot.sql',
+
+  // ── IRB / IEC submissions, reviews, amendments, reportable events ────────
+  // Registered 2026-09-22. The file was written on 2026-06-10 with a service,
+  // three deterministic engines and nine mounted routes — and was never put on
+  // an applier, so on every deployed database the tables did not exist and the
+  // whole capability was dead. Six tables, all CREATE TABLE IF NOT EXISTS, no
+  // DROP. Its hard FK to clinical_studies was removed in place before this
+  // registration (see the file's dated note): nothing on the applier creates
+  // that table and it is not in the schema install-fresh pushes, so the
+  // constraint would have failed the first deploy to run this file. Above the
+  // final pair so the tenant sweep policies these six tables.
+  'migrations/20260610_irb_submissions.sql',
+
+  // ── The four facts an IRB package manifest needs (registered 2026-09-22) ──
+  // Four columns on irb_submissions: involves_children, is_ind_study, uses_phi,
+  // uses_recruitment_material. package-manifest.ts gates five artifact slots on
+  // them (assent, Form FDA 1572, financial disclosure, HIPAA authorization,
+  // recruitment material) and the table recorded none, so all five came back
+  // `undetermined` on every submission and a package could never be ready.
+  //
+  // All four are NULLABLE with NO DEFAULT, deliberately, and that is the point
+  // of the file rather than an oversight: three states have to survive to the
+  // manifest — true (required), false (a RECORDED statement, not required) and
+  // NULL (NOT RECORDED, stays undetermined). `NOT NULL DEFAULT false` would
+  // collapse "nobody answered" into "the sponsor said no" and drop Form FDA
+  // 1572 out of a package on a claim nobody made, which is the exact failure
+  // package-manifest.ts was written to prevent. The sibling columns on this
+  // table are NOT NULL DEFAULT false and that is correct for them; it is the
+  // pattern that must not be copied here. Pinned by a test that fails if a
+  // default or a NOT NULL is ever added.
+  //
+  // Additive: ADD COLUMN IF NOT EXISTS, no DROP, no backfill — a row predating
+  // the file keeps NULL and keeps reporting undetermined. Guarded on
+  // to_regclass with every statement including the COMMENTs inside the DO
+  // block. Ordered after its creator above and above the final pair, which
+  // ci:migration-set-order pins last.
+  'migrations/20260922d_irb_submission_context.sql',
+
+  // ── Amendment consent/risk declarations: NULL = not declared ────────────
+  // Registered 2026-09-22. affects_consent / affects_risk were NOT NULL
+  // DEFAULT false and the writer sent `?? false`, so every amendment the
+  // product's form created (it never asked either question) was stored as a
+  // sponsor declaration of "affects neither", and substantiality.ts accused
+  // sponsors of contradicting it. DROP NOT NULL + DROP DEFAULT only: no DROP of
+  // any object, no backfill (a pre-change false cannot be told from a real
+  // No). Idempotent. The creator, 20260629_protocol_amendments.sql, is
+  // install-fresh-only and was amended in place to match. Guarded on
+  // to_regclass; above the final pair, which ci:migration-set-order pins last.
+  'migrations/20260922e_amendment_declarations_nullable.sql',
+
+  // ── Every organisation gets its own client workspace ─────────────────────
+  // The repair half of the fix for NO_CLIENT_WORKSPACE. The three organisation
+  // creators now write the workspace inside their own transaction
+  // (services/c2c/organization-default-workspace.ts); this sweep covers the
+  // organisations that already exist, including any a seed script wrote
+  // directly. Without it, projects.client_workspace_id — NOT NULL — has no
+  // value to take, ensureProgramProjectAnchor skips for EVERY program in that
+  // tenant, and its governed artifacts never reach concept2cure_artifacts.
+  //
+  // Creates no table, so it needs nothing from the isolation sweep below; it is
+  // placed before the final pair because it is a data repair, not a sweep. It
+  // writes only where an organisation has NO workspace: a second one would turn
+  // the anchor writer's unambiguous case into AMBIGUOUS_CLIENT_WORKSPACE and
+  // stop anchoring programs that anchor today. Its only prerequisites,
+  // organizations and client_workspaces, are far earlier in the set.
+  'migrations/20260923_organization_default_client_workspace.sql',
+
+  // ── A TOTP code is accepted once (RFC 6238 §5.2; D6, VSR-001 §13.3 item 1) ─
+  // Registered 2026-09-23. users.mfa_totp_last_step: the time step of the last
+  // accepted code, compared-and-set by mfaService so a verified code cannot open
+  // a second session. ADD COLUMN IF NOT EXISTS only, nullable, no backfill.
+  // public.users has no tenant column and no policy, so nothing for the sweep.
+  // Must precede any server carrying shared/schema.ts's mfaTotpLastStep (bare
+  // select().from(users) expands to every declared column — the C-20 mode).
+  'migrations/20260923_users_mfa_totp_last_step.sql',
+
+  // ── An approval does not outlive the status that carries it (W5/D7) ──────
+  // Registered 2026-09-23 (final pass). A BEFORE INSERT OR UPDATE trigger on
+  // concept2cure_artifacts clears approved_version_id and published_version_id
+  // whenever the status is not approved/locked, so a revoked approval
+  // (approved → review, locked → draft, → archived) cannot be resurrected by a
+  // later arrival at 'approved' that is not the governed approval act, plus a
+  // backfill of rows that already break that rule. No DROP: the trigger is
+  // created only when absent (the 20260921_audit_logs_chain_seq idiom). No new
+  // table, nothing for the sweep. concept2cure_artifacts is a push-provisioned
+  // base table; the file NOTICE-skips where it is absent.
+  'migrations/20260923b_artifact_approval_follows_status.sql',
+
+  // ── Protocol deviations: unassessed is NOT ASSESSED, not "minor" ─────────
+  // Registered 2026-09-22. severity / category / is_reportable were NOT NULL
+  // with defaults that stored an unassessed deviation as minor and not
+  // reportable. DROP NOT NULL + DROP DEFAULT, plus ADD COLUMN IF NOT EXISTS for
+  // affects_safety and the assessment record. No DROP of any object, no
+  // backfill: legacy rows keep their values and read as "assessment required"
+  // because affects_safety is NULL. The creator, 20260629_protocol_deviations,
+  // is install-fresh-only and was amended in place to match. Guarded on
+  // to_regclass; above the final pair, which ci:migration-set-order pins last.
+  'migrations/20260922f_protocol_deviation_assessment.sql',
 
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the

@@ -9,7 +9,7 @@
  * it has to get four things right, and each of them is a case where the
  * comfortable rendering is the dishonest one:
  *
- *   1. the hardcoded-template fallback is not a draft and cannot be accepted;
+ *   1. a deployment with no AI provider is refused — no draft body is ever shown;
  *   2. a retrieval OUTAGE and an empty corpus are opposite facts;
  *   3. a draft with no parked candidate cannot carry citations at all;
  *   4. an edited draft is no longer the model's words.
@@ -93,17 +93,11 @@ const MODEL_DRAFT = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-/** The server's degraded answer: 200, success:false, usable template body. */
-const TEMPLATE_DRAFT = {
-  success: false,
-  degraded: true,
-  source: 'template',
-  draft: {
-    content: 'QUALITY OVERALL SUMMARY\n[Detailed information]',
-    metadata: { model: 'template-based', source: 'template', degraded: true },
-  },
-  message: 'AI generation was unavailable; returned a hardcoded section template.',
-};
+/** The server's refusal when the deployment has no AI provider (VSR-001 F-10):
+ *  503 GATEWAY_UNAVAILABLE, no draft body. Delivered the way apiRequest delivers
+ *  every non-2xx — as a thrown ApiRequestError carrying the code. */
+const NO_PROVIDER_MESSAGE =
+  'No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed.';
 
 const onAccepted = vi.fn();
 const onClose = vi.fn();
@@ -140,11 +134,10 @@ afterEach(() => cleanup());
 
 /* ── 1 + 2: the grounding statement, as a pure decision ─────────────────── */
 describe('describeGrounding', () => {
-  const base = (meta: Record<string, unknown>, degraded = false): PendingAiDraft => ({
+  const base = (meta: Record<string, unknown>): PendingAiDraft => ({
     sectionId: 'S1',
     generated: 'x',
-    draftId: degraded ? null : 'DC-1',
-    degraded,
+    draftId: 'DC-1',
     metadata: meta,
   });
 
@@ -186,12 +179,6 @@ describe('describeGrounding', () => {
     expect(g.text).toMatch(/2 Data Room sources, all of which can carry citations/);
   });
 
-  it('calls the template fallback a template, not a draft', () => {
-    const g = describeGrounding(base({ model: 'template-based', degraded: true }, true));
-    expect(g.text).toMatch(/not model-generated/i);
-    expect(g.text).toMatch(/placeholders are literal/i);
-    expect(g.text).toMatch(/cannot be accepted/i);
-  });
 });
 
 /* ── The two refusals that are not "errors" ─────────────────────────────── */
@@ -237,20 +224,22 @@ describe('AuthoringAiDraft', () => {
     expect(screen.getByText(/not saved/i)).toBeTruthy();
   });
 
-  it('offers the degraded template as a scaffold, and refuses to let it be accepted', async () => {
-    apiRequest.mockResolvedValue(res(200, TEMPLATE_DRAFT));
+  it('a deployment with no AI provider is refused on the panel: no draft body, no accept, a refusal that stays', async () => {
+    apiRequest.mockImplementation(rejects(503, 'GATEWAY_UNAVAILABLE', NO_PROVIDER_MESSAGE));
     mount();
-    await generate();
+    fireEvent.click(screen.getByTestId('ai-draft-generate'));
 
-    // success:false is NOT an error here — the body the server chose to return
-    // is still offered.
+    // The refusal is rendered in the persistent alert, not a fading toast — a
+    // deployment fact the author must still be able to read a minute later.
+    const refusal = await screen.findByTestId('ai-draft-refusal');
+    expect(refusal.textContent).toMatch(/no ai provider is configured for this deployment/i);
+    expect(refusal.textContent).toMatch(/server setting, not your connection/i);
     expect(fireToast).not.toHaveBeenCalled();
-    expect((screen.getByTestId('ai-draft-body') as HTMLTextAreaElement).value).toMatch(
-      /QUALITY OVERALL SUMMARY/,
-    );
-    expect(screen.getByTestId('ai-draft-grounding').textContent).toMatch(/not model-generated/i);
-    // No draft candidate exists behind it, so there is nothing to accept.
+    // Nothing that looks like a draft: no body to edit, nothing to accept.
+    expect(screen.queryByTestId('ai-draft-body')).toBeNull();
     expect(screen.queryByTestId('ai-draft-accept')).toBeNull();
+    expect(screen.queryByTestId('ai-draft-grounding')).toBeNull();
+    expect(onAccepted).not.toHaveBeenCalled();
   });
 
   it('a transport failure yields no draft body and says nothing changed', async () => {

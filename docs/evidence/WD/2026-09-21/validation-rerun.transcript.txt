@@ -1,0 +1,121 @@
+# started 2026-09-21T01:02:35Z
+$ VALIDATION_BASE_URL=http://localhost:5700 npm run validation:iq
+IQ-001 Installation Qualification
+  IQ-01  pass
+  IQ-02  pass
+  IQ-03  pass
+  IQ-04  deviation
+  IQ-05  pass
+  IQ-06  pass
+  IQ-07  pass
+  IQ-08  deviation
+  IQ-09  deviation
+  IQ-10  deviation
+  IQ-11  pass
+  IQ-12  deviation
+  IQ-13  pass
+  IQ-14  pass
+  IQ-15  pass
+
+IQ-001: 10 pass, 0 fail, 5 deviation → docs/evidence/W3/2026-09-20/IQ
+# iq exit=0
+
+$ VALIDATION_BASE_URL=http://localhost:5700 VALIDATION_SERVER_LOG=/tmp/wd-server.log npm run validation:oq -- projects vault authoring submission-readiness qms
+
+=== projects ===
+  OQ-PROJ-01  pass
+  OQ-PROJ-02  pass
+  OQ-PROJ-03  pass
+  OQ-PROJ-04  pass
+  OQ-PROJ-05  pass
+  OQ-PROJ-06  FAIL  (verify-chain expected ok, got 409)
+  OQ-PROJ-06b  FAIL  (audit-trail ledger surface has no entries although governed writes were made this run)
+  OQ-PROJ-07  pass
+  OQ-PROJ-08  pass
+  OQ-PROJ-09  pass
+    (browser hit 11 × 429 loading /concept2cure/tasks; waiting 62s, reload 1)
+  OQ-PROJ-10  pass
+  OQ-PROJ-11  pass
+  OQ-PROJ-12  pass
+  OQ-PROJ-13  pass
+  OQ-PROJ-14  pass
+  OQ-PROJ-15  pass
+
+OQ-001 Projects: 14 pass, 2 fail, 0 deviation, 0 not-executed → docs/evidence/W3/2026-09-20/OQ-PROJECTS
+
+=== vault ===
+  OQ-VAULT-00  pass
+  OQ-VAULT-01  pass
+  OQ-VAULT-02  pass
+  OQ-VAULT-03  pass
+  OQ-VAULT-04  pass
+  OQ-VAULT-05  pass
+  OQ-VAULT-06  pass
+  OQ-VAULT-07  pass
+  OQ-VAULT-08  FAIL  (verify-chain expected ok, got 409)
+  OQ-VAULT-08b  FAIL  (ledger surface did not grow (0 → 0) although ingest and filing were audited)
+  OQ-VAULT-09  FAIL  (page text does not contain "OQ-002 Protocol 20260921010434")
+  OQ-VAULT-10  pass
+
+OQ-002 Vault: 9 pass, 3 fail, 0 deviation, 0 not-executed → docs/evidence/W3/2026-09-20/OQ-VAULT
+
+=== authoring ===
+  OQ-AUTH-00  pass
+  OQ-AUTH-01  pass
+  OQ-AUTH-02  pass
+  OQ-AUTH-03  pass
+  OQ-AUTH-04  pass
+  OQ-AUTH-05  pass
+  OQ-AUTH-06  pass
+  OQ-AUTH-07  pass
+  OQ-AUTH-08  pass
+  OQ-AUTH-09  pass
+  OQ-AUTH-10  pass
+  OQ-AUTH-17  pass
+  OQ-AUTH-17b  FAIL  (authoring review request is not on the Review board queue)
+  OQ-AUTH-11  FAIL  (expected 200, got 409)
+  OQ-AUTH-12  pass
+  OQ-AUTH-13  not-executed  (prerequisite step OQ-AUTH-11 did not pass)
+  OQ-AUTH-14  not-executed  (prerequisite step OQ-AUTH-13 did not pass)
+  OQ-AUTH-15  FAIL  (a draft was returned without a provider)
+  OQ-AUTH-16  deviation  (AnA unavailable: no provider configured; unexpected non-5xx answer recorded for review.)
+  OQ-AUTH-18  pass
+  OQ-AUTH-19  pass
+  OQ-AUTH-20  pass
+
+OQ-003 Authoring: 16 pass, 3 fail, 1 deviation, 2 not-executed → docs/evidence/W3/2026-09-20/OQ-AUTHORING
+
+=== submission-readiness ===
+    (429 on POST /api/submissions/42/sequences; waiting 19s, retry 1)
+  OQ-SRDY-00  pass
+  OQ-SRDY-01  pass
+  OQ-SRDY-02  pass
+  OQ-SRDY-03  pass
+  OQ-SRDY-04  pass
+  OQ-SRDY-05  pass
+  OQ-SRDY-06  pass
+  OQ-SRDY-07  FAIL  (page text does not contain /0000/)
+  OQ-SRDY-08  pass
+
+OQ-005 Submission Readiness: 8 pass, 1 fail, 0 deviation, 0 not-executed → docs/evidence/W3/2026-09-20/OQ-SUBMISSION-READINESS
+
+=== qms ===
+  OQ-QMS-01  pass
+  OQ-QMS-02  pass
+  OQ-QMS-03  pass
+  OQ-QMS-04  pass
+  OQ-QMS-05  FAIL  (expected 200, got 400)
+  OQ-QMS-06a  pass
+  OQ-QMS-06  pass
+  OQ-QMS-07  not-executed  (prerequisite step OQ-QMS-05 did not pass)
+  OQ-QMS-08  pass
+  OQ-QMS-09  FAIL  (docB not listed as review-due)
+  OQ-QMS-10  pass
+  OQ-QMS-11  pass
+  OQ-QMS-12  pass
+  OQ-QMS-13  pass
+  OQ-QMS-14  pass
+  OQ-QMS-15  pass
+
+OQ-006 QMS controlled documents: 13 pass, 2 fail, 0 deviation, 1 not-executed → docs/evidence/W3/2026-09-20/OQ-QMS
+# oq exit=1 finished 2026-09-21T01:07:25Z

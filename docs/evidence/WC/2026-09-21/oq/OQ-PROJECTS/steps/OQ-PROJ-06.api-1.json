@@ -1,0 +1,41 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5600/api/c2c/projects/8b66eb77-68eb-4d01-b7f5-b397f4d415bd/activity",
+    "anonymous": false,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 11,
+    "rateLimitRetries": 0,
+    "body": {
+      "activity": [
+        {
+          "id": "d83c6c51-1c2d-47cb-9618-9f45f0ae0aad",
+          "action": "c2c.project.create",
+          "resource_type": "regulatory_programs",
+          "resource_id": "8b66eb77-68eb-4d01-b7f5-b397f4d415bd",
+          "actor_id": 1,
+          "details": {
+            "project_id": "8b66eb77-68eb-4d01-b7f5-b397f4d415bd",
+            "name": "OQ-001 IND program 20260921011333",
+            "code": "OIP2-XINK",
+            "program_type": "ind",
+            "product_type": "biologic",
+            "primary_agency": "FDA",
+            "created_via": "v2-new-project-wizard",
+            "submission_id": 45,
+            "submission_created": true,
+            "submission_application_type": "ind",
+            "project_anchor_id": null,
+            "project_anchor_skipped": "NO_CLIENT_WORKSPACE"
+          },
+          "occurred_at": "2026-09-21T01:13:38.523Z",
+          "ip_address": null
+        }
+      ]
+    }
+  }
+}

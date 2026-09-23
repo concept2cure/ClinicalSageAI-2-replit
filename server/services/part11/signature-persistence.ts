@@ -129,6 +129,14 @@ export const BINDING_BASIS = {
    */
   FILED_ESTAR_ARTIFACT: 'filed-estar-artifact-sha256',
   /**
+   * sha256 over a protocol's content at signing time: cover page, synopsis,
+   * sections, objectives, eligibility, visits, schedule of assessments and
+   * team. No version, workflow status or timestamp, so the signature survives
+   * finalization when the content did not change. A reviewer's disposition
+   * binds what they reviewed; a finalization binds what it froze.
+   */
+  PROTOCOL_DOCUMENT_CONTENT: 'protocol-document-content-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target
@@ -398,16 +406,69 @@ export async function deriveGovernedTargetBinding(
   try {
     switch (prefix) {
       case 'ectd-sequence': {
+        /* ── `status` is deliberately NOT bound (amended 2026-09-21) ──────────
+           It used to be in this SELECT, and that made a signature destroy
+           itself through the act it authorized. applyGovernedSequenceTransition
+           signs for 'dispatch' while the sequence is frozen and then UPDATEs
+           status to 'dispatched'. Gate 1 never sees it, because each signature
+           is verified BEFORE its own transition. The release-signature gate
+           re-derives that same dispatch signature at TRANSMIT time, after the
+           status has moved, so the digest could not match: verdict 'invalid' —
+           the TAMPERING verdict, which blocks unconditionally — reported as
+           "the sequence changed after it was signed" when no content had
+           changed at all. Transmit was unreachable for every submission type
+           that requires a release signature. Reproduced against the real
+           migrations in sequence-release-signature.pglite.integration.test.ts
+           ("survives the dispatch it authorized").
+
+           What remains is identity and content: the sequence's id, submission,
+           region, number and type, plus its ordered leaf manifest below. That
+           is what the basis name and note have always claimed
+           (`ectd-sequence-leaf-manifest-sha256`), and what a §11.70 signature
+           is for — a signature that stops verifying the moment it is used is
+           not durable evidence of anything. The workflow state it was signed
+           under is still recorded, on the governed action and the audit chain,
+           which is where an event belongs rather than inside a content hash.
+           `frozen_at`, `dispatch_status` and `updated_at` were already
+           excluded on the same reasoning; `status` was the one mutable column
+           left in.
+
+           NOTE: a signature taken before this change binds the old digest and
+           will now be refused — honestly, by Gate 1, with "re-sign the current
+           content". The dispatch-intent signatures it affects were already
+           unverifiable the instant they were used, so nothing that worked
+           stops working.
+
+           The `document:` and `section:` branches below select a `status`
+           column of their own and have the same shape, but no caller
+           re-derives either binding after a status transition (the only two
+           consumers of this function, sequence-release-signature.ts:181 and
+           submission-service.ts:503, are both ectd-sequence). They are left
+           alone rather than changed on an unproven hunch. */
         const seq = await client.query(
-          `SELECT id, submission_id, region, sequence_number, type, status
+          `SELECT id, submission_id, region, sequence_number, type
              FROM ectd_sequences
             WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
             LIMIT 1`,
           [rest, orgId],
         );
         if (seq.rows.length === 0) return ledgerFallback('sequence row not readable at signing time');
+        /* ── document_uuid and document_content_sha256 are bound (2026-09-22,
+           W5/D7) ──────────────────────────────────────────────────────────────
+           A vault leaf names its document by document_uuid (its document_id is
+           NULL), and the content pin records what the source held when it was
+           placed. Neither was digested, so re-pointing a signed vault leaf at a
+           different PDF — upsertLeaf re-pins, so DOCUMENT_CONTENT_MISMATCH does
+           not fire either — left this digest byte-identical, and Gate 1 accepted
+           a signature over a document the signer never saw. Both columns are
+           written only by upsertLeaf, when a leaf is placed or changed, never by
+           a workflow transition, so this cannot recreate the self-invalidating
+           signature described above. A signature taken before this change binds
+           the old digest and is refused by Gate 1 with "re-sign the current
+           content", as with the 2026-09-21 amendment. */
         const leaves = await client.query(
-          `SELECT id, section_code, lifecycle_op, document_table, document_id, checksum, title
+          `SELECT id, section_code, lifecycle_op, document_table, document_id, document_uuid,
+                  document_content_sha256, checksum, title
              FROM submission_leaves
             WHERE sequence_id = $1::int AND organization_id = $2 AND deleted_at IS NULL
             ORDER BY section_code, id`,
@@ -417,7 +478,7 @@ export async function deriveGovernedTargetBinding(
         return {
           digest: sha256Hex(payload),
           basis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST,
-          note: `sha256 over the ectd_sequences row and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id) at signing time.`,
+          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid and content pin) at signing time.`,
         };
       }
       case 'document': {
@@ -465,6 +526,11 @@ export async function deriveGovernedTargetBinding(
           note: 'sha256 over the section content + version at signing time.',
         };
       }
+      case 'protocol-document':
+      case 'protocol-review-assignment':
+        // `return await`, not `return`: the helper's queries must reject INSIDE
+        // this try so a 42P01 still falls back to the ledger basis below.
+        return await protocolContentBinding(client, prefix, rest, orgId, ledgerFallback);
       default:
         return ledgerFallback(`no content-digest derivation implemented for target type '${prefix}'`);
     }
@@ -477,6 +543,68 @@ export async function deriveGovernedTargetBinding(
     // Any other DB error is real — fail closed (roll back the whole sign).
     throw err;
   }
+}
+
+/**
+ * The protocol-document / protocol-review-assignment case of
+ * deriveGovernedTargetBinding. Errors propagate to that function's catch,
+ * which owns the 42P01 ledger fallback and the fail-closed rethrow.
+ */
+async function protocolContentBinding(
+  client: SignatureDbClient,
+  prefix: 'protocol-document' | 'protocol-review-assignment',
+  rest: string,
+  orgId: number,
+  ledgerFallback: (why: string) => GovernedBinding,
+): Promise<GovernedBinding> {
+  // A disposition is a signature over the protocol the reviewer read, so
+  // it binds that protocol's content, not the assignment row.
+  //
+  // CONTENT ONLY. No version, no workflow status, no timestamps: finalize
+  // bumps the version and moves section status, and a reviewer's
+  // signature taken before that must still re-derive afterwards when no
+  // content changed (the ectd-sequence lesson in deriveGovernedTargetBinding).
+  // And ALL of the content, not just the prose: the cover page, synopsis,
+  // objectives, eligibility, schedule of visits, schedule of assessments
+  // and study team are what a reviewer approves too.
+  if (!/^\d+$/.test(rest)) return ledgerFallback('malformed protocol pointer');
+  let docId = rest;
+  if (prefix === 'protocol-review-assignment') {
+    const a = await client.query(
+      `SELECT protocol_document_id FROM protocol_review_assignments
+        WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+        LIMIT 1`,
+      [rest, orgId],
+    );
+    if (a.rows.length === 0) return ledgerFallback('review assignment not readable at signing time');
+    docId = String(a.rows[0].protocol_document_id);
+  }
+  const doc = await client.query(
+    `SELECT id, protocol_kind, protocol_number, title, design_type, phase, therapeutic_area,
+            synopsis, sponsor, principal_investigator
+       FROM protocol_documents
+      WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+      LIMIT 1`,
+    [docId, orgId],
+  );
+  if (doc.rows.length === 0) return ledgerFallback('protocol document not readable at signing time');
+  const rows = async (sql: string) => (await client.query(sql, [docId, orgId])).rows;
+  const live = 'protocol_document_id = $1::int AND organization_id = $2';
+  const content = {
+    protocol: doc.rows[0],
+    sections: await rows(`SELECT section_key, title, content, required, order_index FROM protocol_sections WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, section_key`),
+    objectives: await rows(`SELECT objective_type, objective, endpoint, timepoint, order_index FROM protocol_objectives WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
+    eligibility: await rows(`SELECT kind, criterion, order_index FROM protocol_eligibility_criteria WHERE ${live} AND deleted_at IS NULL ORDER BY kind, order_index, id`),
+    visits: await rows(`SELECT id, visit_name, timepoint, procedures, order_index FROM protocol_schedule_visits WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
+    assessments: await rows(`SELECT id, name, category, order_index FROM protocol_soa_assessments WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
+    cells: await rows(`SELECT assessment_id, visit_id, required, notes FROM protocol_soa_cells WHERE ${live} ORDER BY assessment_id, visit_id`),
+    team: await rows(`SELECT member_name, role, responsibilities, personnel_id, user_id FROM protocol_team_members WHERE ${live} AND deleted_at IS NULL ORDER BY id`),
+  };
+  return {
+    digest: sha256Hex(canonicalJson(content)),
+    basis: BINDING_BASIS.PROTOCOL_DOCUMENT_CONTENT,
+    note: `sha256 over the protocol's content at signing time: cover page and synopsis (protocol_documents), ${content.sections.length} section(s), ${content.objectives.length} objective(s), ${content.eligibility.length} eligibility criteria, ${content.visits.length} visit(s), ${content.assessments.length} SoA assessment(s) and ${content.cells.length} cell(s), ${content.team.length} team member(s). No version, workflow status or timestamp is bound.`,
+  };
 }
 
 // ── Governed sign composition ────────────────────────────────────────────────
@@ -499,6 +627,14 @@ export interface GovernedSignParams {
   secondFactorVerified: boolean;
   ipAddress?: string | null;
   occurredAt: Date;
+  /**
+   * Extra manifest members, APPENDED after the shared ones. Appending (never
+   * interleaving) keeps the persisted manifest bytes — and therefore the
+   * §11.200 attribution hash — byte-identical for callers that pass none.
+   * Use it for what the signer decided when the target alone does not say
+   * (a reviewer's approve or reject), so the signature row states it itself.
+   */
+  extraManifest?: Record<string, unknown>;
 }
 
 /**
@@ -520,12 +656,6 @@ export interface GovernedActionSignatureParams extends GovernedSignParams {
   command?: string;
   /** Overrides the default §11 compliance statement. */
   complianceStatement?: string;
-  /**
-   * Extra manifest members, APPENDED after the shared ones. Appending (never
-   * interleaving) keeps the persisted manifest bytes — and therefore the
-   * §11.200 attribution hash — byte-identical for callers that pass none.
-   */
-  extraManifest?: Record<string, unknown>;
 }
 
 /**

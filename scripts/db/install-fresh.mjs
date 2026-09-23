@@ -38,7 +38,9 @@
  *      schema and Part-11 tamper-proof audit tables — then re-run the canonical
  *      tenant-isolation sweep, because that tree creates tenant-keyed tables
  *      AFTER 0021 swept in step 5 and they would otherwise carry no policy.
- *   7. Provision the non-superuser runtime role (opt-in, APP_SERVICE_DB_PASSWORD).
+ *   7. The runtime role: mint app_service (APP_SERVICE_DB_PASSWORD) or refresh
+ *      grants for an existing runtime role identified from RUNTIME_DB_ROLE /
+ *      APP_DATABASE_URL (2026-09-21, IQ-DEV-001); single-role installs skip it.
  *   8. Verify: table count, pg_policies count, the core route tables and the
  *      authoring subsystem, the required-object contract (columns, primary keys,
  *      foreign keys, indexes and RLS posture per capability, each reported with
@@ -87,7 +89,7 @@ import {
   AUTHORING_SUBSYSTEM_TABLES,
 } from './authoring-subsystem.mjs';
 import { resolveDatabaseUrl, sslFor, INSTALL_URL_VARS } from './connection.mjs';
-import { provisionAppServiceRole, resolveAppServiceRole } from './provision-app-role.mjs';
+import { ensureRuntimeRole } from './provision-app-role.mjs';
 import { declaredTableEntries, unresolvedSchemaReceivers } from './lib/declared-tables.mjs';
 
 dotenv.config();
@@ -117,6 +119,9 @@ const url = CHECK_SCHEMA_ENTRYPOINTS
   ? 'postgresql://schema-check:unused@127.0.0.1:1/schema-check'
   : resolveDatabaseUrl(INSTALL_URL_VARS);
 const pool = new Pool({ connectionString: url, ssl: sslFor(url) });
+
+/** Step 7's verdict on the runtime role, read by step 8's posture check. */
+let runtimeRoleResult = null;
 
 /**
  * `--allow-incomplete` — finish and exit 0 even when part of the install did
@@ -756,12 +761,44 @@ async function main() {
       // `echo ""` answers drizzle-kit's interactive prompt; a fresh DB has no
       // destructive changes so it proceeds. Inherit env so drizzle.config.ts
       // resolves the same DATABASE_URL.
+      //
+      // The single '\n' answers exactly ONE prompt: the final "apply these
+      // statements?" confirmation. That is the only prompt drizzle-kit push
+      // asks against a genuinely empty database — there is nothing pre-existing
+      // to disambiguate a rename against. Point this at a database that already
+      // carries an OLDER version of the schema (a local dev DB re-used after
+      // days of upstream migrations, rather than one this script itself just
+      // created) and push can ask a disambiguation question PER ambiguous
+      // rename before it ever reaches that confirmation. stdin is already
+      // closed after the one '\n', so drizzle-kit is left reading from a
+      // stream that will never produce another byte — and it does not error
+      // on that, it blocks. Observed directly: 11+ minutes of silence, zero
+      // CPU, zero output, indistinguishable from "still working" to whoever
+      // is waiting on it. `timeout` bounds that hang and turns it into a
+      // diagnosis instead of an indefinite freeze.
       const res = spawnSync('npx', ['drizzle-kit', 'push'], {
         cwd: path.resolve(__dirname, '..', '..'),
         input: '\n',
         encoding: 'utf8',
         env: process.env,
+        timeout: 5 * 60 * 1000,
       });
+      if (res.signal) {
+        throw new Error(
+          `drizzle-kit push was killed (${res.signal}) after 5 minutes with no exit. The ` +
+            `single '\\n' this script sends answers one prompt — drizzle-kit push's final ` +
+            `"apply these statements?" confirmation — and nothing else. A database that already ` +
+            `carries an OLDER schema than what shared/schema.ts declares now (a re-used local dev ` +
+            `database, not one this script created fresh) can make push ask a disambiguation ` +
+            `question per ambiguous rename BEFORE that confirmation; stdin is already closed by ` +
+            `then, and push blocks reading from it rather than failing. It leaves no error, no ` +
+            `output, and no CPU use — nothing to distinguish it from still working. If the target ` +
+            `database is disposable, the fix is to drop and recreate it so push runs against a ` +
+            `genuinely empty schema (its only supported starting point); this script is safe to ` +
+            `re-run afterward. If it holds data worth keeping, resolve the drift with drizzle-kit's ` +
+            `own migration path instead of push.`,
+        );
+      }
       if (res.status !== 0) {
         console.error(res.stdout || '');
         console.error(res.stderr || '');
@@ -942,7 +979,21 @@ async function main() {
       encoding: 'utf8',
       env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
       maxBuffer: 64 * 1024 * 1024,
+      // Same one-prompt assumption as the pgvector-present push above, and the
+      // same failure mode against a database with pre-existing drift: push can
+      // ask more than the one question this answers and then block on a closed
+      // stdin forever, silently. Bounded rather than diagnosed in detail here —
+      // the explanation lives on the pgvector-present call above.
+      timeout: 5 * 60 * 1000,
     });
+    if (res.signal) {
+      throw new Error(
+        `drizzle-kit push --verbose --strict was killed (${res.signal}) after 5 minutes with no ` +
+          `exit — see the timeout comment on the pgvector-present push call above for why. If the ` +
+          `target database is disposable, drop and recreate it so push runs against a genuinely ` +
+          `empty schema.`,
+      );
+    }
     const out = `${res.stdout || ''}\n${res.stderr || ''}`.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '');
     if (/No changes detected/.test(out) && !/about to execute current statements/.test(out)) {
       console.log('  • push reports no changes — schema already present');
@@ -1572,7 +1623,7 @@ async function main() {
 
   recordSchemaSource('governed content (db/migrations/*_gcc_*)', await snapshotPublicTables());
 
-  await step('7/8 Runtime role — non-superuser app_service grants', async () => {
+  await step('7/8 Runtime role — non-superuser grants', async () => {
     // The RLS unlock. Everything above ran as the owner/admin (DATABASE_URL),
     // which is a superuser on most managed providers — a connection RLS never
     // filters. Mint a dedicated NOSUPERUSER / NOBYPASSRLS LOGIN role and grant
@@ -1581,17 +1632,25 @@ async function main() {
     //
     // This runs LAST among the schema steps so `GRANT ... ON ALL TABLES` reaches
     // every table the prior steps created; ALTER DEFAULT PRIVILEGES (inside the
-    // helper) covers tables future migrations add. It is a NO-OP unless
-    // APP_SERVICE_DB_PASSWORD is set, so an install that has not opted into the
-    // split role behaves exactly as before.
-    const result = await provisionAppServiceRole(pool, {
+    // helper) covers tables future migrations add. ensureRuntimeRole mints when
+    // APP_SERVICE_DB_PASSWORD is set, refreshes grants for any other runtime
+    // role identifiable from RUNTIME_DB_ROLE / APP_DATABASE_URL (a role this
+    // script did not mint still needs the grants — IQ-DEV-001), and is a NO-OP
+    // on a single-role install (runtime = owner), which behaves exactly as before.
+    runtimeRoleResult = await ensureRuntimeRole(pool, {
       log: (m) => console.log(m),
     });
-    if (result.skipped) {
+    if (runtimeRoleResult.mode === 'single-role') {
       console.log(
-        `  • ${result.role} not provisioned (APP_SERVICE_DB_PASSWORD unset). Production boot ` +
-          'will FAIL CLOSED if it connects as a superuser under RLS_ENFORCE=on — set ' +
-          'APP_SERVICE_DB_PASSWORD here and APP_DATABASE_URL for the runtime before going live.',
+        `  • no runtime role distinct from the owner (${runtimeRoleResult.owner}). Production boot ` +
+          'will FAIL CLOSED under RLS_ENFORCE=on — not only for a superuser, but for ANY role ' +
+          'that owns the tables. Postgres exempts a table owner from its own policies unless ' +
+          'FORCE ROW LEVEL SECURITY is set, so on this database the policies on every ' +
+          'RLS-enabled, non-FORCE table are inert and its rows are readable across tenants. ' +
+          'Set APP_SERVICE_DB_PASSWORD here and APP_DATABASE_URL for the runtime before going ' +
+          'live. (The narrower "superuser" wording this line used to carry was true but ' +
+          'incomplete, and the boot gate it described could not see the owner case at all until ' +
+          'server/db/rlsEnforcement.ts learned to.)',
       );
     }
   });
@@ -1762,14 +1821,14 @@ async function main() {
       );
     }
 
-    // Runtime role posture — only asserted when the split role was requested
-    // (APP_SERVICE_DB_PASSWORD set). Confirms the role exists and is genuinely
-    // least-privilege (not a superuser, no BYPASSRLS) and can actually read a
-    // core tenant table — so a green install can never hand over a role that
-    // would fail the production boot posture check or be locked out of its
-    // tables. Mirrors server/db/rlsEnforcement.ts → assertRlsCatalogPosture.
-    if (process.env.APP_SERVICE_DB_PASSWORD) {
-      const role = resolveAppServiceRole();
+    // Runtime role posture — asserted whenever step 7 minted or granted a
+    // runtime role. Confirms the role exists and is genuinely least-privilege
+    // (not a superuser, no BYPASSRLS) and can actually read a core tenant
+    // table — so a green install can never hand over a role that would fail
+    // the production boot posture check or be locked out of its tables.
+    // Mirrors server/db/rlsEnforcement.ts → assertRlsCatalogPosture.
+    if (runtimeRoleResult && !runtimeRoleResult.skipped) {
+      const role = runtimeRoleResult.role;
       const roleRow = (
         await pool.query(
           'SELECT rolsuper, rolbypassrls, rolcanlogin FROM pg_roles WHERE rolname = $1',

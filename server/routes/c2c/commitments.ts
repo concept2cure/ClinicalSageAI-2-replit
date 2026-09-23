@@ -255,7 +255,7 @@ async function writeCommitmentAudit(
     const payloadHash = hashPayload({ id, status });
     const target = `commitment:${id}`;
     const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
-      action: 'c2c.commitment.status', actor_id: userId, target, payload_hash: payloadHash, occurred_at: occurredAt,
+      tenant_id: orgId, action: 'c2c.commitment.status', actor_id: userId, target, payload_hash: payloadHash, occurred_at: occurredAt,
     });
     await client.query(
       `INSERT INTO audit_logs

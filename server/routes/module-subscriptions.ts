@@ -42,6 +42,7 @@ import { authenticateToken } from '../middleware/auth.js';
 import { pool } from '../db.js';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { launchScopeEnforced } from '../services/entitlements/launch-scope.js';
 
 const logger = createScopedLogger('module-subscriptions');
 
@@ -59,7 +60,10 @@ router.get('/catalog', async (req: Request, res: Response) => {
     }
 
     const catalog = await getModuleCatalog(Number(orgId));
-    return res.json({ modules: catalog });
+    // `launchScope.enforced` is the deployment's answer, sent with the rows it
+    // applies to, so the catalog can label a 'later' module "in a later
+    // release" only when that is actually what locks it.
+    return res.json({ modules: catalog, launchScope: { enforced: launchScopeEnforced() } });
   } catch (error) {
     logger.error('catalog error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load module catalog' });
@@ -209,7 +213,11 @@ router.put('/:moduleId/toggle', async (req: Request, res: Response) => {
     }
 
     // Check if module is available for this org's tier
-    const access = await canAccessModule(Number(orgId), moduleId);
+    // The plan question, not the use question: an administrator must be able to
+    // turn back on a module they turned off, so an existing revocation is not a
+    // reason to refuse the toggle. canAccessModule's default (revocation denies)
+    // is what the gate and /check want.
+    const access = await canAccessModule(Number(orgId), moduleId, { ignoreRevocation: true });
     if (!access.allowed) {
       return res.status(403).json({
         error: access.reason,

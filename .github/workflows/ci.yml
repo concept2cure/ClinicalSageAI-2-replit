@@ -111,6 +111,18 @@ jobs:
         # referenced table. Baselined; anything new fails.
         run: npm run ci:migration-reachability
 
+      - name: Guardrails — server SQL references a COLUMN no applier creates
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # The same question one level down. A migration that only ALTERs creates
+        # no table, so the guard above never looks at it: six columns (the Part 11
+        # seal verifier's hmac_seal, DSAR execution_evidence, ai_claims
+        # verifier_flags, IVDR binder/pack columns) sat in db/migrations/ on no
+        # applier while every endpoint naming them raised 42703. Reads the same
+        # durable surface and server files as the table guard; resolves each
+        # column through the clause it appears in, not by word co-occurrence.
+        # Baseline entries need a written reason.
+        run: npm run ci:column-reachability
+
       - name: Guardrails — server SQL references a table nothing creates
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit
@@ -254,6 +266,82 @@ jobs:
       - name: Guardrails — surfaces are discoverable, or declared not to be
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:surface-discoverability
+
+      # Two more that the note above missed: both still lived only in
+      # pr-checks.yml on 2026-09-20, so neither had run on the trunk either.
+      # fixture-fallback is the "no fixture data in governed paths" rule from
+      # CLAUDE.md; ana-surface-context is what keeps AnA grounded on the screen.
+      - name: Guardrails — no ungated fixture fallback in client surfaces
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:fixture-fallback
+
+      - name: Guardrails — every routable surface publishes screen state to AnA
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:ana-surface-context
+
+      # The launch catalog (shared/constants/launch-scope.ts) is routable,
+      # registered, seeded, and imports no un-explained fixture symbol; the
+      # selftest shows the gate refusing a seeded violation before it is trusted.
+      - name: Guardrails — launch scope is real and fixture-free (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:launch-scope:selftest
+          npm run ci:launch-scope
+
+      # The AnA-draft → canvas → editor → vault path (docs/design/ANA_DOCUMENT_CANVAS.md).
+      # Five editor generations were built and deleted as "unreachable" before
+      # this gate existed (CLAUDE.md, "Deleting a user-facing capability"); it
+      # fails the build when the thread stops mounting the canvas, the canvas
+      # or the Authoring surface stops mounting the one workbench, the AnA tool
+      # is unregistered, the vault read or the file-to-vault route is cut. The
+      # selftest shows each cut refused before the gate is trusted.
+      - name: Guardrails — AnA document canvas path is wired (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:canvas-path:selftest
+          npm run ci:canvas-path
+
+      # D4's URS documents cite the code each requirement is implemented by.
+      # `validation:traceability` joins those rows to the executed OQ results;
+      # it cannot notice that a cited file was deleted, because a deleted file
+      # simply stops being mentioned and the row still renders. This gate makes
+      # the citation load-bearing. The selftest shows each refusal on a
+      # constructed case before the gate is trusted.
+      # AIGateway.evaluateModel runs one named model with no routing, no fallback
+      # and no high-risk approval check — what performance qualification needs,
+      # and anywhere else a way to have an unapproved model draft regulated
+      # content. Only server/eval/pq/ may call it.
+      - name: Guardrails — only the PQ runner calls evaluateModel (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:pq-evaluation-callers:selftest
+          npm run ci:pq-evaluation-callers
+
+      # A pin to a model not approved for high-risk work serves any request that
+      # is not declared high-risk, whatever it drafts. Every such pin in server
+      # code is listed with the reason it is safe; a new one, or one removed
+      # without tightening the list, fails.
+      - name: Guardrails — no new pin to an unapproved model (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:unapproved-model-pins:selftest
+          npm run ci:unapproved-model-pins
+
+      # A request's client address is req.ip, resolved by the trust-proxy hop
+      # count and read through server/utils/client-ip.ts. A forwarding header's
+      # left-most entry is whatever the client sent; ~20 sites put it into
+      # e-signature and audit rows until 2026-09-23 (D6).
+      - name: Guardrails — one source for the client address (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:client-ip-single-source:selftest
+          npm run ci:client-ip-single-source
+
+      - name: Guardrails — validation traceability resolves (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:validation-traceability:selftest
+          npm run ci:validation-traceability
 
       - name: Guardrails — no API route or table name in user-visible copy
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -451,6 +539,16 @@ jobs:
           npm run ci:dead-audit-catch:self-test
           npm run ci:dead-audit-catch
 
+      - name: Guardrails — a sign ledger row comes from a signature ceremony (Part 11)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # recordGovernedAction(…, command: 'sign') is read as an electronic
+        # signature and checks nothing itself. Every such write must sit with a
+        # signer re-verification and an electronic_signatures row. The selftest
+        # runs first and fails on the pre-2026-09-23 protocol finalize route.
+        run: |
+          npm run ci:sign-ceremony:selftest
+          npm run ci:sign-ceremony
+
       - name: Guardrails — route mount authority audit (no regressions)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:audit-route-mounts:no-regression
@@ -595,7 +693,9 @@ jobs:
       # mocked config. This fails the PR that would undo that separation.
       - name: Guardrails — real-database tests never inherit the pg mock
         if: "!cancelled() && steps.install.conclusion == 'success'"
-        run: npm run ci:db-test-isolation
+        run: |
+          npm run ci:db-test-isolation:selftest
+          npm run ci:db-test-isolation
 
       - name: Guardrails — embedding runtime canonicality (corpus policy)
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -1528,6 +1628,15 @@ jobs:
           AUDIT_HMAC_KEY: ci-boot-smoke-audit-hmac-key-min-32-chars-eee
           MFA_ENCRYPTION_KEY: ci-boot-smoke-mfa-encryption-key-min-32-chars-fff
           CONNECTOR_ENCRYPTION_KEY: ci-boot-smoke-connector-encryption-key-32-ggg
+          # server/services/signature/signer-mode.ts refuses to boot production
+          # without a signer posture (unset and `dev` are both refused). This
+          # throwaway container has no KMS key, so it takes the one other
+          # production-legal posture: the HMAC seal keyed by AUDIT_HMAC_KEY
+          # above, with the symmetric-seal risk accepted explicitly. It proves
+          # boot, not signer non-repudiation — a real deployment chooses kms or
+          # records the same acceptance (docs/SOP_KEY_MANAGEMENT.md).
+          CONCEPT2CURE_SIGNER_MODE: hmac
+          CONCEPT2CURE_SIGNER_ACCEPT_HMAC: 'true'
           # This job has no AI provider, and since /readyz gained its `ana`
           # dependency (startup/ana-readiness-state.ts) that is no longer a
           # silent condition: a process where AnA cannot answer refuses to

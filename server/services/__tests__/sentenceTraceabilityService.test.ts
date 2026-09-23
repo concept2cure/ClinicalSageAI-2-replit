@@ -197,7 +197,9 @@ describe('mapSentencesToSources', () => {
     expect(src.linkType).toBe('supports');
     expect(src.documentPath).toBe('/p.pdf');
     expect(src.pageNumber).toBe(3);
-    expect(src.excerpt).toBe('cited excerpt');
+    // 'cited excerpt' is not in the source, so the source's own text is kept:
+    // until 2026-09-23 the model's composed excerpt was stored as its quotation.
+    expect(src.excerpt).toBe('baseline');
     expect(link.claimType).toBe('efficacy');
     expect(link.overallConfidence).toBeCloseTo(0.9);
     expect(link.isSupported).toBe(true);
@@ -241,6 +243,52 @@ describe('mapSentencesToSources', () => {
     expect(link.isSupported).toBe(false);
   });
 
+  it('keeps the model excerpt when it is verbatim in the source', async () => {
+    primeSourceQueries([
+      { id: 'ev1', title: 'Study A', type: 'evidence_object', excerpt: 'HbA1c fell by 1.2% at week 26 versus placebo.' },
+    ]);
+    aiMapping([
+      { sentenceIdx: 0, sources: [{ sourceIdx: 0, linkType: 'supports', confidence: 0.9, excerpt: 'HbA1c fell by 1.2%' }] },
+    ]);
+    const [link] = await mapSentencesToSources(detectSentences('HbA1c fell by 1.2% at week 26.'), 1, 2);
+    expect(link.sources[0].excerpt).toBe('HbA1c fell by 1.2%');
+  });
+
+  it('a missing or unknown link type is a reference, never support', async () => {
+    primeSourceQueries([{ id: 'ev1', title: 'A', type: 'evidence_object', excerpt: 'foo' }]);
+    aiMapping([
+      { sentenceIdx: 0, sources: [{ sourceIdx: 0, confidence: 0.95 }] },
+      { sentenceIdx: 1, sources: [{ sourceIdx: 0, linkType: 'proves', confidence: 0.95 }] },
+    ]);
+    const links = await mapSentencesToSources(detectSentences('First claim here. Second claim here.'), 1, 2, {
+      minConfidence: 0.2,
+    });
+    for (const link of links) {
+      expect(link.sources[0].linkType).toBe('references');
+      expect(link.isSupported).toBe(false);
+    }
+  });
+
+  it('a sentence the reply skipped is reported unsupported, not left out', async () => {
+    primeSourceQueries([{ id: 'ev1', title: 'A', type: 'evidence_object', excerpt: 'foo' }]);
+    aiMapping([{ sentenceIdx: 0, sources: [{ sourceIdx: 0, linkType: 'supports', confidence: 0.9 }] }]);
+    const links = await mapSentencesToSources(detectSentences('Mapped claim here. Skipped claim here.'), 1, 2, {
+      minConfidence: 0.2,
+    });
+    expect(links).toHaveLength(2);
+    const skipped = links.find(l => l.sentenceSpan.text.startsWith('Skipped'));
+    expect(skipped).toMatchObject({ isSupported: false, needsReview: true, sources: [] });
+  });
+
+  it('is routed as regulatory_review with no model pinned', async () => {
+    primeSourceQueries([{ id: 'ev1', title: 'A', type: 'evidence_object', excerpt: 'foo' }]);
+    aiMapping([]);
+    await mapSentencesToSources(detectSentences('A claim.'), 1, 2);
+    const [req] = chatMock.mock.calls[0];
+    expect(req.taskType).toBe('regulatory_review');
+    expect(req.model).toBeUndefined();
+  });
+
   it('falls back to keyword matching when the AI call throws', async () => {
     // Source excerpt shares many >3-char words with the sentence so the
     // keyword Jaccard-style overlap clears the 0.3 threshold.
@@ -263,7 +311,9 @@ describe('mapSentencesToSources', () => {
     expect(link.sources).toHaveLength(1);
     expect(link.sources[0].detectionMethod).toBe('keyword');
     expect(link.sources[0].linkType).toBe('references');
-    expect(link.isSupported).toBe(true);
+    // A keyword match is a reference, not support: the model path counts only
+    // 'supports' links, and a failed mapping must not mark a claim backed.
+    expect(link.isSupported).toBe(false);
     // Keyword-fallback links are always flagged for human review.
     expect(link.needsReview).toBe(true);
   });

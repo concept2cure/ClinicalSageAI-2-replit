@@ -219,6 +219,107 @@ describe('ICH rules: unavailable input is reported, never asserted as absence', 
     expect(f[0].status).toBe('pass');
   });
 
+  /**
+   * ICH Q2 and a method with NO recorded validation status.
+   *
+   * Until the analytical-method read moved onto the canonical source-object
+   * store this case was unreachable — the read raised 42703 and Q2 never ran
+   * on any deployed database. Reachable now, and it is the one that must not
+   * fabricate: an absent validation status is not a failed validation. Saying
+   * so would put an ICH Q2(R1) finding on a project for a fact nobody entered.
+   */
+  it('reports a method with NO recorded validation status as not evaluated, not as unvalidated', () => {
+    const inp = emptyInputs();
+    inp.methods = [{ methodName: 'HPLC assay', purpose: 'identity' }];
+
+    const f = checkQ2(inp);
+
+    expect(f.some(x => x.ruleId === 'Q2_UNVALIDATED_METHODS')).toBe(false);
+    const notRecorded = f.find(x => x.ruleId === 'Q2_VALIDATION_STATUS_NOT_RECORDED');
+    expect(notRecorded?.status).toBe('not_evaluated');
+    expect(notRecorded?.evidence?.[0]).toMatch(/no validation status recorded/);
+  });
+
+  it('still fails a method whose RECORDED status is not a validated one', () => {
+    // The distinction has to cut both ways, or it is an amnesty.
+    const inp = emptyInputs();
+    inp.methods = [{ methodName: 'HPLC assay', purpose: 'identity', validationStatus: 'draft' }];
+
+    const f = checkQ2(inp);
+
+    const unvalidated = f.find(x => x.ruleId === 'Q2_UNVALIDATED_METHODS');
+    expect(unvalidated?.status).toBe('fail');
+    expect(f.some(x => x.ruleId === 'Q2_VALIDATION_STATUS_NOT_RECORDED')).toBe(false);
+  });
+
+  it('separates the two when a project holds one of each', () => {
+    const inp = emptyInputs();
+    inp.methods = [
+      { methodName: 'Validated HPLC', purpose: 'identity', validationStatus: 'validated' },
+      { methodName: 'Draft HPLC', purpose: 'identity', validationStatus: 'draft' },
+      { methodName: 'Unrecorded HPLC', purpose: 'identity' },
+    ];
+
+    const f = checkQ2(inp);
+
+    expect(f.find(x => x.ruleId === 'Q2_UNVALIDATED_METHODS')?.message).toMatch(/^1 method/);
+    expect(f.find(x => x.ruleId === 'Q2_VALIDATION_STATUS_NOT_RECORDED')?.message).toMatch(/^1 method/);
+  });
+
+  /**
+   * ICH Q3A and the impurity register.
+   *
+   * `impurities` on the drug-substance record is ONE place a project carries
+   * impurity data; `source_type = 'impurity_profile'` is the other, and it is
+   * the one the impurity-profile surface writes. Concluding absence from the
+   * first alone puts a FAILED Q3A(R2) finding on a dossier that carries a
+   * complete impurity register — measured on the reference database, where a
+   * project held four impurity_profile source objects while the drug
+   * substance's own field was null.
+   *
+   * Unreachable until the drug-substance read was moved onto the canonical
+   * store, because Q3A never ran at all.
+   */
+  it('does NOT fail Q3A when the impurity register carries the data', () => {
+    const inp = emptyInputs();
+    inp.drugSubs = [{ substanceName: 'BX-701', impurities: null }];
+    inp.sourceObjects = [
+      { sourceType: 'impurity_profile', sourceKey: 'impurity:1', sourcePayload: {} },
+      { sourceType: 'impurity_profile', sourceKey: 'impurity:2', sourcePayload: {} },
+    ];
+
+    const f = checkQ3AandQ3B(inp);
+
+    expect(f.some(x => x.ruleId === 'Q3A_NO_IMPURITY_PROFILE')).toBe(false);
+  });
+
+  it('still fails Q3A when NEITHER store carries impurity data', () => {
+    // The corroboration must not become an amnesty: a dossier with a drug
+    // substance and no impurity data anywhere is genuinely deficient.
+    const inp = emptyInputs();
+    inp.drugSubs = [{ substanceName: 'BX-701', impurities: null }];
+    inp.sourceObjects = [{ sourceType: 'specification', sourceKey: 'spec:1', sourcePayload: {} }];
+
+    const f = checkQ3AandQ3B(inp);
+
+    const noProfile = f.find(x => x.ruleId === 'Q3A_NO_IMPURITY_PROFILE');
+    expect(noProfile?.status).toBe('fail');
+    expect(noProfile?.message).toMatch(/impurity register/);
+  });
+
+  it('reports not-evaluated rather than failing when the source-object read is blocked', () => {
+    // Absence across two stores cannot be concluded when one of them could not
+    // be read — the same standard Q3D already holds itself to.
+    const inp = emptyInputs();
+    inp.drugSubs = [{ substanceName: 'BX-701', impurities: null }];
+    inp.unavailable = { sourceObjects: 'timeout' };
+
+    const f = checkQ3AandQ3B(inp);
+
+    expect(f.some(x => x.ruleId === 'Q3A_NO_IMPURITY_PROFILE')).toBe(false);
+    expect(f.some(x => x.ruleId === 'Q3A_NOT_EVALUATED' && x.status === 'not_evaluated')).toBe(true);
+  });
+
   it('leaves every rule untouched when no input is unavailable', () => {
     // Guards must be inert on the normal path.
     const inp = emptyInputs();

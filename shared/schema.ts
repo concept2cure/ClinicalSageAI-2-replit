@@ -2592,6 +2592,9 @@ export const users = pgTable('users', {
   mfaBackupCodes: json('mfa_backup_codes'), // encrypted backup codes array
   mfaMethod: text('mfa_method').default('email'), // totp, sms, email
   mfaVerifiedAt: timestamp('mfa_verified_at'),
+  // Time step (floor(unix/30)) of the last TOTP code accepted; a code is accepted
+  // only for a greater step (RFC 6238 §5.2). migrations/20260923_users_mfa_totp_last_step.sql
+  mfaTotpLastStep: bigint('mfa_totp_last_step', { mode: 'number' }),
   // Email OTP fields (for email-based 2FA)
   emailOtpHash: text('email_otp_hash'),
   emailOtpExpiresAt: timestamp('email_otp_expires_at'),
@@ -8799,6 +8802,11 @@ export const ectdCompilations = pgTable(
     version: text('version').default('1.0'),
     changeLog: json('change_log'), // Track changes in compilation
     validationResults: json('validation_results'), // ICH validation results
+    // An agency-validator (LORENZ eValidator) report run OUTSIDE the product over
+    // this compilation's exported package, imported with who/when/sha256 and its
+    // findings. Nullable: no report imported. See
+    // db/migrations/20260923_ectd_compilations_external_validation.sql.
+    externalValidation: jsonb('external_validation'),
     lockReason: text('lock_reason'), // Reason for locking granules
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

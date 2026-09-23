@@ -66,6 +66,7 @@ import { coauthorDocuments } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger.js';
 
 import { acceptedMachineText } from '../services/authoring/revision-ledger';
+import { coauthorReadOnlyRefusal, isCoauthorVerdictStatus } from '../services/coauthor/coauthor-status-write';
 
 const logger = createScopedLogger('batch-draft-routes');
 
@@ -419,6 +420,21 @@ export default function createBatchDraftRoutes(): Router {
         await rdb.execute(sql`ROLLBACK`);
         inTransaction = false;
         return res.status(404).json({ success: false, error: 'Document not found' });
+      }
+
+      /* 2026-09-23 (W5/D7, co-author final pass): a verdict row (approved,
+         finalized, signed, locked — the shared rule in services/coauthor/
+         coauthor-status-write.ts) is the copy placed into a filing. This
+         route replaced its content anyway, so any member could put AnA prose
+         into an approved snapshot under its approved status. It is refused on
+         the row just locked, and nothing is written: no content, no version
+         row, no lineage, no audit. */
+      const currentStatus = String((docRows[0] as { status: string | null }).status ?? '');
+      if (isCoauthorVerdictStatus(currentStatus)) {
+        await rdb.execute(sql`ROLLBACK`);
+        inTransaction = false;
+        const refusal = coauthorReadOnlyRefusal(currentStatus);
+        return res.status(refusal.httpStatus).json({ success: false, ...refusal.body });
       }
 
       const previousContent = (docRows[0] as { content: string | null }).content;

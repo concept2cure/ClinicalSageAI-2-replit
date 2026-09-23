@@ -12,16 +12,32 @@
  * placement decision — applied by `AIGateway.assertSensitiveDispatchAllowed`
  * immediately before every primary or fallback dispatch.
  *
- * Enforcement is env-configurable (AI_PII_ENFORCEMENT) and governs
- * NON-PRODUCTION behavior only — production always enforces the explicit
- * placement contract at dispatch, regardless of this setting:
+ * Enforcement is env-configurable (AI_PII_ENFORCEMENT):
  *   - 'off'   — no screening.
- *   - 'audit' — detect + record a content-free placement signal, never block
- *               (DEFAULT). Makes the previously invisible exposure visible
- *               without breaking pilot AI flows on the heuristic's false
- *               positives (e.g. an email in a document).
- *   - 'block' — fail closed: the placement contract is enforced at dispatch
- *               exactly as in production.
+ *   - 'audit' — detect + record a content-free placement signal, never block.
+ *               The NON-PRODUCTION default: makes the previously invisible
+ *               exposure visible without breaking pilot AI flows on the
+ *               heuristic's false positives (e.g. an email in a document).
+ *   - 'block' — fail closed: the placement contract is enforced at dispatch.
+ *
+ * ── Production posture (runbook B19, fixed 2026-09-20) ──────────────────────
+ * In production the DEFAULT is 'block'. An explicit 'audit' or 'off' is a
+ * deliberate, operator-owned degraded posture and must be recorded as such
+ * with AI_GOVERNANCE_ACCEPT_PERMISSIVE=true — exactly the shape of
+ * AUDIT_SEAL_ACCEPT_UNSEALED for the audit seal. Without the acceptance the
+ * boot gate (server/startup/ai-governance-posture.ts, fired on import from
+ * server/config/environment.ts) REFUSES TO BOOT, and — defence in depth, for
+ * any code path that reads the gate without the boot gate having fired — this
+ * resolver returns 'block' rather than the unaccepted permissive value. The
+ * dispatch path already enforced the placement contract in production
+ * regardless of this setting; what changed is that the configured posture
+ * can no longer silently disagree with the enforced one.
+ *
+ * Non-production behaviour is unchanged: unset → 'audit', explicit values
+ * honoured, unrecognized → 'audit', no acceptance needed.
+ *
+ * `resolvePiiEnforcement` is pure and env-injectable so the boot gate can
+ * import it instead of carrying a duplicate that drifts.
  *
  * @module server/services/ai-gateway/pii-screen
  */
@@ -30,9 +46,52 @@ import type { GatewayRequest } from './types';
 
 export type PiiEnforcement = 'off' | 'audit' | 'block';
 
+/** The written-acceptance variable for a permissive AI-governance gate in production. */
+export const AI_GOVERNANCE_ACCEPT_PERMISSIVE_VAR = 'AI_GOVERNANCE_ACCEPT_PERMISSIVE';
+
+/** True when the operator has explicitly accepted a permissive gate in production. */
+export function acceptsPermissiveAiGovernance(env: NodeJS.ProcessEnv = process.env): boolean {
+  return (env[AI_GOVERNANCE_ACCEPT_PERMISSIVE_VAR] ?? '').trim().toLowerCase() === 'true';
+}
+
+export function isProductionEnv(env: NodeJS.ProcessEnv = process.env): boolean {
+  return (env.NODE_ENV ?? '').trim().toLowerCase() === 'production';
+}
+
+export interface ResolvedPiiEnforcement {
+  /** The value AI_PII_ENFORCEMENT carries, when it is one of the three modes; undefined when unset or unrecognized. */
+  configured: PiiEnforcement | undefined;
+  /** The mode the gateway runs with. */
+  effective: PiiEnforcement;
+  /**
+   * True when `effective` was forced to 'block' because production carried an
+   * explicit permissive value without AI_GOVERNANCE_ACCEPT_PERMISSIVE=true.
+   * The boot gate refuses that configuration; this flag is the runtime echo.
+   */
+  forcedByProductionDefault: boolean;
+}
+
+/** Pure resolution of the PII screen mode from an environment. */
+export function resolvePiiEnforcement(env: NodeJS.ProcessEnv = process.env): ResolvedPiiEnforcement {
+  const raw = (env.AI_PII_ENFORCEMENT ?? '').trim().toLowerCase();
+  const configured: PiiEnforcement | undefined =
+    raw === 'off' || raw === 'audit' || raw === 'block' ? raw : undefined;
+  const production = isProductionEnv(env);
+
+  if (!production) {
+    return { configured, effective: configured ?? 'audit', forcedByProductionDefault: false };
+  }
+  if (configured === undefined || configured === 'block') {
+    return { configured, effective: 'block', forcedByProductionDefault: false };
+  }
+  if (acceptsPermissiveAiGovernance(env)) {
+    return { configured, effective: configured, forcedByProductionDefault: false };
+  }
+  return { configured, effective: 'block', forcedByProductionDefault: true };
+}
+
 export function getPiiEnforcement(): PiiEnforcement {
-  const raw = (process.env.AI_PII_ENFORCEMENT || 'audit').trim().toLowerCase();
-  return raw === 'off' || raw === 'block' ? raw : 'audit';
+  return resolvePiiEnforcement(process.env).effective;
 }
 
 /**

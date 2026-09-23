@@ -24,6 +24,8 @@ import { enforceAuthorLineage } from '../../services/clinical-regulatory-evidenc
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService';
 import { createTraceId, emitTraceEvent } from '../../services/generation-guard.js';
 import { markPackagesContentChangedForArtifact } from '../../services/ectd/package-content-change';
+import { artifactApproval } from '../../services/ectd/package-content-fingerprint';
+import { reviewQuorumVerdict } from '../../services/artifact-approval-act';
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
 import * as crypto from 'crypto';
@@ -36,22 +38,18 @@ import {
   type Artifact,
   calculateContentHash,
   concept2cureRateLimiter,
-  getClientIp,
   getOrganizationId,
   getUserId,
   logAuditEntry,
   logConcept2cureError,
   paramStr,
   sanitizeContent,
-  sanitizeObject,
   sendError,
   sendSuccess,
   verifyIntegrityChain,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
-import { isSigningAuthorized } from '../../services/part11/signing-authority.js';
-import { reverifySigner } from '../../services/part11/reverify-signer.js';
-import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
+import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-artifacts');
 const router = Router();
@@ -63,10 +61,6 @@ router.use(tenantContextMiddleware);
 router.use(requireOrganizationContext);
 
 /* ── Helpers this domain owns ─────────────────────────────────────────────── */
-
-function calculateSignatureHash(payload: Record<string, unknown>): string {
-  return crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
-}
 
 /**
  * Emit a provenance event for an artifact.
@@ -196,23 +190,6 @@ const createArtifactSchema = z.object({
     .optional(),
 });
 
-/* `authenticationMethod` and `secondFactorVerified` are DELIBERATELY ABSENT.
-   They used to be accepted here — a free string and a boolean, taken from the
-   request body and persisted verbatim onto the Part 11 signature row. That is an
-   assertion by the party being authenticated, and it is the exact defect POST
-   /api/part11/signatures was deleted for (see routes/part11-compliance.ts:359-380).
-   Both are now DERIVED from what reverifySigner actually checked. */
-const createSignatureSchema = z.object({
-  signatureType: z.string().min(1).max(50).optional(),
-  signaturePurpose: z.string().min(1).max(500),
-  signatureMeaning: z.string().max(500).optional(),
-  /** Re-authenticated server-side at the moment of signing (§11.200). */
-  password: z.string().min(1),
-  /** Required when the signer has MFA enrolled; verified server-side. */
-  mfaToken: z.string().optional(),
-  signatureManifest: z.record(z.any()).optional(),
-  version: z.number().int().min(1).optional(),
-});
 
 async function getArtifactsFromDb(projectId: number, organizationId: number): Promise<Artifact[]> {
   const dbArtifacts = await db
@@ -629,7 +606,7 @@ router.post(
           : 'Manual document creation',
         backendRoute: 'POST /api/concept2cure/projects/:projectId/artifacts',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
 
       // RIM: capture artifact creation signal (non-blocking)
@@ -1037,7 +1014,7 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         sourceDescription: `Updated from v${dbArtifact.version} to v${newVersion}`,
         backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
     }
 
@@ -1294,7 +1271,7 @@ router.put(
         } → ${toSection} — ${reason.trim()}`,
         backendRoute: 'PUT /api/concept2cure/projects/:projectId/artifacts/:artifactId/placement',
         backendService: 'concept2cure',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
       });
 
       logger.info('Artifact placement updated', {
@@ -1518,164 +1495,20 @@ router.get(
   }
 );
 
-/**
- * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
- * Create an electronic signature for an artifact version (21 CFR Part 11).
- */
-router.post(
-  '/projects/:projectId/artifacts/:artifactId/signatures',
-  async (req: Request, res: Response) => {
-    try {
-      const organizationId = getOrganizationId(req);
-      const userId = getUserId(req);
-      const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-
-      if (!hasAccess) {
-        return sendError(res, 404, 'Project not found');
-      }
-
-      /* §11.10(g) — identity is not authority. This used to inline
-         ['admin','approver','reviewer'], which is the DEFAULT of the shared
-         policy but ignores the ESIGNATURE_SIGNING_ROLES override, so a
-         deployment that narrowed its signing roles was still wide open here. */
-      const signerRole = (req.userRole || 'user').toLowerCase();
-      if (!isSigningAuthorized(signerRole)) {
-        return sendError(
-          res,
-          403,
-          'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-        );
-      }
-
-      const data = createSignatureSchema.parse(req.body);
-
-      /* §11.200(a)(1) — re-verify the signer HERE, at the moment of signing,
-         against stored credentials. The route previously reached the INSERT with
-         nothing but a role check. */
-      const reverified = await reverifySigner(
-        userId,
-        { password: data.password, mfaToken: data.mfaToken },
-        signerReverificationDeps(),
-      );
-      if (!reverified.ok) {
-        return sendError(res, reverified.status, reverified.error);
-      }
-
-      const [artifact] = await db
-        .select()
-        .from(concept2cureArtifacts)
-        .where(
-          and(
-            eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
-            eq(concept2cureArtifacts.organizationId, organizationId)
-          )
-        )
-        .limit(1);
-
-      if (!artifact) {
-        return sendError(res, 404, 'Artifact not found');
-      }
-
-      const targetVersion = data.version ?? artifact.version;
-      const [versionRow] = await db
-        .select()
-        .from(concept2cureArtifactVersions)
-        .where(
-          and(
-            eq(concept2cureArtifactVersions.artifactId, artifact.id),
-            eq(concept2cureArtifactVersions.version, targetVersion)
-          )
-        )
-        .limit(1);
-
-      if (!versionRow) {
-        return sendError(res, 404, 'Artifact version not found');
-      }
-
-      const signedAt = new Date();
-      const signatureId = `sig_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-      const signatureType = data.signatureType ?? 'approval';
-      const signaturePurpose = sanitizeContent(data.signaturePurpose);
-      const signatureMeaning = data.signatureMeaning
-        ? sanitizeContent(data.signatureMeaning)
-        : null;
-      const signatureManifest = data.signatureManifest
-        ? sanitizeObject(data.signatureManifest)
-        : null;
-
-      const signatureHash = calculateSignatureHash({
-        signatureId,
-        artifactId: artifact.artifactId,
-        version: targetVersion,
-        contentHash: versionRow.contentHash,
-        signerId: userId,
-        signatureType,
-        signaturePurpose,
-        signatureMeaning,
-        signedAt: signedAt.toISOString(),
-      });
-
-      const signerName = (req as any).userName || req.userEmail || 'unknown';
-      const signerEmail = req.userEmail || 'unknown';
-
-      const [signature] = await db
-        .insert(concept2cureSignatures)
-        .values({
-          organizationId,
-          signatureId,
-          artifactId: artifact.id,
-          artifactVersionId: versionRow.id,
-          signatureType,
-          signaturePurpose,
-          signatureMeaning,
-          signerId: userId,
-          signerName,
-          signerEmail,
-          signerRole: req.userRole || 'user',
-          // Server-derived from the re-verification above — never a client value.
-          authenticationMethod: reverified.authenticationMethod,
-          authenticationTimestamp: signedAt,
-          secondFactorVerified: reverified.secondFactorVerified,
-          signatureHash,
-          signatureManifest,
-          ipAddress: getClientIp(req),
-          deviceInfo: null,
-          status: 'active',
-          signedAt,
-        })
-        .returning();
-
-      await logAuditEntry(req, 'CREATE', 'signature', signatureId, null, {
-        artifactId: paramStr(req.params.artifactId),
-        version: targetVersion,
-        signatureType,
-        signaturePurpose,
-        signatureHash,
-      });
-
-      res.status(201);
-      return sendSuccess(res, {
-        id: signature.signatureId,
-        artifactId: paramStr(req.params.artifactId),
-        version: targetVersion,
-        signatureType,
-        signaturePurpose,
-        signatureMeaning,
-        signerId: userId,
-        signerName,
-        signerEmail,
-        signedAt: signature.signedAt,
-        signatureHash,
-      });
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        return sendError(res, 400, 'Validation failed', error.errors);
-      }
-      logConcept2cureError('create signature', error, { artifactId: req.params.artifactId });
-      return sendError(res, 500, 'Failed to create signature');
-    }
-  }
-);
+/* POST /projects/:projectId/artifacts/:artifactId/signatures — REMOVED 2026-09-20.
+   It was the second signature substrate: it wrote `concept2cure_signatures`
+   with its own hash recipe (sha256 over a locally assembled object), no
+   §11.70 binding basis, no supersession chain, and a signer name taken from
+   `req.userName || req.userEmail || 'unknown'`. VAULT_DATA_ROOM_ASSESSMENT
+   _2026-09-05.md §4.3 named it; the 2026-09-05 fix put reverifySigner in
+   front of it but left the second write path in place. Zero duplication: the
+   ONE signing substrate is `electronic_signatures` through
+   server/services/part11/signature-persistence.ts, reached by
+   POST /api/esignature/sign (documents) and POST /api/c2c/actions/sign
+   (governed typed targets, e.g. `document:<id>`). No client called this
+   route (grep client/src for the path: none). The GET below stays: rows
+   already written are §11.70 history and must remain readable.
+   Pinned by server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts. */
 
 /**
  * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
@@ -2515,6 +2348,16 @@ router.post(
           ctdSection: artifact.ctdSection,
           lockedAt: now,
           lockedById: userId,
+          // 2026-09-23 (W5/D7, residual repair): a lock records the version it
+          // locked, as the status route's approved → locked does
+          // (publishedVersionId / publishedAt). approvedVersionId is left unset
+          // on purpose: this report is generated and frozen as an inspection
+          // record, and nobody approved it. Recording an approval here would
+          // fabricate one, and would make an unreviewed report filable; unset,
+          // the filing rule (artifactApproval) refuses it as
+          // 'no-approved-version' (fail closed).
+          publishedVersionId: 1,
+          publishedAt: now,
           metadata: {
             sourceArtifactId: artifact.artifactId,
             harness: {
@@ -2560,7 +2403,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/audit-report/export`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           exportedArtifactId: exportArtifactId,
           reportMode: 'detailed',
@@ -2754,6 +2597,35 @@ router.put(
         }
       }
 
+      // ── A lock must cover the approval ───────────────────────────────
+      // 2026-09-23 (W5/D7, residual repair): approved → locked used to check
+      // status alone and stamp published_version_id = the CURRENT version, so
+      // approved v1 → PUT edit to v2 (status stays 'approved') → lock recorded
+      // "locked at v2" over content no one reviewed. The filing rule already
+      // refuses that artifact; the lock is now refused too, so an unreviewed
+      // edit is never recorded as locked. The verdict is artifactApproval's —
+      // the one filing rule, imported, not restated: an approved artifact may
+      // be locked only when it is filable as approved (version =
+      // approved_version_id, and an approval that recorded no version fails
+      // closed). Its remedy names the re-approval (approved → review → approved).
+      if (previousStatus === 'approved' && status === 'locked') {
+        const approval = artifactApproval({
+          status: previousStatus,
+          version: artifact.version,
+          approvedVersionId: artifact.approvedVersionId,
+          publishedVersionId: artifact.publishedVersionId,
+        });
+        if (!approval.filable) {
+          return sendError(
+            res,
+            409,
+            `Cannot lock: ${approval.problem}. Re-approval is required first: ${approval.remedy}.`,
+            { reason: approval.reason },
+            'LOCK_NOT_COVERED_BY_APPROVAL'
+          );
+        }
+      }
+
       // ── Contradiction governance gate ───────────────────────────────
       // Hard block promotion if unresolved contradictions with blocks_promotion authority
       if (status === 'approved' || status === 'locked') {
@@ -2800,63 +2672,16 @@ router.put(
       // ── P12: Review quorum gate ─────────────────────────────────────
       // Block review → approved if reviewers are assigned but not all approved.
       // Withdrawn assignments are excluded from the quorum check.
+      // 2026-09-23 (W5/D7, residual repair, round 3; amended final pass): the
+      // gate moved, unchanged, to server/services/artifact-approval-act.ts
+      // (reviewQuorumVerdict), the one implementation this route and
+      // authoring-actions approve-artifact — the two governed approval acts —
+      // apply. A quorum that cannot be read throws, and the catch below
+      // answers 500 before anything is written: an unread quorum is not met.
       if (previousStatus === 'review' && status === 'approved') {
-        const roundAssignments = await db
-          .select()
-          .from(concept2cureReviewAssignments)
-          .where(
-            and(
-              eq(concept2cureReviewAssignments.artifactId, artifact.id),
-              eq(concept2cureReviewAssignments.organizationId, organizationId)
-            )
-          )
-          .orderBy(desc(concept2cureReviewAssignments.reviewRound));
-
-        if (roundAssignments.length > 0) {
-          const latestRound = roundAssignments[0].reviewRound;
-          // Exclude withdrawn assignments from quorum
-          const activeAssignments = roundAssignments.filter(
-            a => a.reviewRound === latestRound && a.status !== 'withdrawn'
-          );
-
-          if (activeAssignments.length === 0) {
-            // All were withdrawn — no quorum to enforce, allow approval
-          } else {
-            const pendingReviews = activeAssignments.filter(a => a.status !== 'completed');
-
-            if (pendingReviews.length > 0) {
-              return sendError(
-                res,
-                400,
-                `Cannot approve: ${pendingReviews.length} of ${activeAssignments.length} reviewers have not yet submitted their decision`
-              );
-            }
-
-            // All completed — verify all decisions are "approve"
-            const roundDecisions = await db
-              .select()
-              .from(concept2cureReviewDecisions)
-              .where(
-                and(
-                  eq(concept2cureReviewDecisions.artifactId, artifact.id),
-                  eq(concept2cureReviewDecisions.reviewRound, latestRound),
-                  eq(concept2cureReviewDecisions.organizationId, organizationId)
-                )
-              );
-
-            const nonApprovals = roundDecisions.filter(d => d.decision !== 'approve');
-            if (nonApprovals.length > 0) {
-              return sendError(
-                res,
-                400,
-                `Cannot approve: ${
-                  nonApprovals.length
-                } reviewer(s) did not approve (decisions: ${nonApprovals
-                  .map(d => d.decision)
-                  .join(', ')})`
-              );
-            }
-          }
+        const quorum = await reviewQuorumVerdict(pool, artifact.id, organizationId);
+        if (!quorum.met) {
+          return sendError(res, 400, quorum.message);
         }
       }
 
@@ -2864,6 +2689,11 @@ router.put(
         status,
         updatedAt: new Date(),
       };
+      // Leaving approved/locked (approved → review, locked → draft) clears
+      // approvedVersionId and publishedVersionId in this same write: the
+      // concept2cure_artifacts trigger does it for every writer
+      // (migrations/20260923b_artifact_approval_follows_status.sql, 2026-09-23
+      // W5/D7 final pass), so a revoked approval cannot be resurrected.
       if (status === 'approved') {
         updateData.approvedVersionId = artifact.version;
       }
@@ -3009,7 +2839,7 @@ router.put(
                 previousStatus,
                 newStatus: status,
               },
-              ipAddress: getClientIp(req),
+              ipAddress: clientIpKey(req),
               deviceInfo: null,
               status: 'active',
               signedAt,
@@ -3095,7 +2925,7 @@ router.put(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/status`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           previousStatus,
           newStatus: status,
@@ -3297,7 +3127,7 @@ router.put(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/ctd-section`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { previousSection, newSection: ctdSection },
       });
 
@@ -3585,7 +3415,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/rollback`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           rolledBackFromVersion: artifact.version,
           targetVersion,
@@ -3692,7 +3522,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/comments`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { commentId, version: artifact.version },
       });
 
@@ -3983,7 +3813,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviewers`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           reviewerIds: numericIds,
           reviewRound,
@@ -4183,7 +4013,7 @@ router.delete(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviewers/${req.params.assignmentId}`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { assignmentId: req.params.assignmentId, reviewerId: assignment.reviewerId },
       });
 
@@ -4443,7 +4273,7 @@ router.post(
         actorEmail: req.userEmail || 'unknown',
         backendRoute: `/projects/${req.params.projectId}/artifacts/${req.params.artifactId}/reviews/submit`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: {
           decisionId,
           decision,

@@ -3,9 +3,10 @@
  *
  * The gateway's OpenAI and Moonshot paths both speak the OpenAI chat-completions
  * wire format, so they share one streaming decoder. These helpers isolate the
- * fiddly part — pulling the text delta, the reasoning delta, the finish reason,
- * and the (final-chunk) usage out of a stream chunk — so the gateway's async
- * loop stays thin and this logic is unit-tested without a live API.
+ * fiddly part — pulling the text delta, the reasoning delta, the tool-call
+ * fragments, the finish reason, and the (final-chunk) usage out of a stream
+ * chunk — so the gateway's async loop stays thin and this logic is unit-tested
+ * without a live API.
  *
  * Reasoning surfaces under different keys across OpenAI-compatible providers:
  * Moonshot/Kimi and DeepSeek emit `delta.reasoning_content`; some gateways
@@ -77,4 +78,82 @@ export function parseOpenAIStreamDelta(chunk: any): OpenAIStreamDelta {
 export function extractOpenAIReasoning(message: any): string {
   if (!message) return '';
   return str(message.reasoning_content) || str(message.reasoning);
+}
+
+/**
+ * One piece of a streamed tool call, as it arrives in `delta.tool_calls[]`.
+ *
+ * A call is spread across many chunks: `id` and `function.name` come on its
+ * first fragment and `function.arguments` arrives a few characters at a time
+ * after that, split at arbitrary points (mid-key, mid-value). Parallel calls
+ * interleave, so `index` — not arrival order, not `id`, which later fragments
+ * do not repeat — is the only thing that says which call a fragment belongs to.
+ */
+export interface OpenAIToolCallFragment {
+  index: number;
+  /** Present on the call's first fragment ('' elsewhere). */
+  id: string;
+  /** Present on the call's first fragment ('' elsewhere). */
+  name: string;
+  /** This fragment's slice of the arguments JSON ('' when it carries none). */
+  arguments: string;
+}
+
+/**
+ * Decode the tool-call fragments in one OpenAI-compatible stream chunk. Pure
+ * and defensive in the same way as {@link parseOpenAIStreamDelta}: a chunk
+ * without tool calls, or with a malformed entry, yields no fragment for it
+ * rather than throwing.
+ *
+ * Kept apart from parseOpenAIStreamDelta so that decoder's shape — which
+ * callers compare whole — does not change for the text-only chunks that are
+ * nearly all of them.
+ *
+ * `index` is required by the wire format. An entry without one is keyed by its
+ * position in this chunk's array, which is what `index` is on every server
+ * that sends it.
+ */
+export function parseOpenAIToolCallFragments(chunk: any): OpenAIToolCallFragment[] {
+  const calls = chunk?.choices?.[0]?.delta?.tool_calls;
+  if (!Array.isArray(calls)) return [];
+  const fragments: OpenAIToolCallFragment[] = [];
+  calls.forEach((call: any, position: number) => {
+    if (!call || typeof call !== 'object') return;
+    fragments.push({
+      index: Number.isInteger(call.index) ? call.index : position,
+      id: str(call.id),
+      name: str(call.function?.name),
+      arguments: str(call.function?.arguments),
+    });
+  });
+  return fragments;
+}
+
+/** A complete tool call off a NON-streaming OpenAI-compatible message. */
+export interface OpenAIToolCall {
+  id: string;
+  name: string;
+  /** The arguments exactly as sent: a JSON string, not yet parsed. */
+  arguments: string;
+}
+
+/**
+ * Pull the tool calls off a NON-streaming OpenAI-compatible message — the
+ * blocking-path counterpart of {@link parseOpenAIToolCallFragments}. Arguments
+ * are returned unparsed: whether they parse is the caller's to report, per
+ * call, not a reason to lose the others. Pure.
+ */
+export function extractOpenAIToolCalls(message: any): OpenAIToolCall[] {
+  const calls = message?.tool_calls;
+  if (!Array.isArray(calls)) return [];
+  const out: OpenAIToolCall[] = [];
+  for (const call of calls) {
+    if (!call || typeof call !== 'object') continue;
+    out.push({
+      id: str(call.id),
+      name: str(call.function?.name),
+      arguments: str(call.function?.arguments),
+    });
+  }
+  return out;
 }

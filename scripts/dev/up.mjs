@@ -26,6 +26,7 @@ import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import pg from 'pg';
+import { envLocalContents } from './env-local.mjs';
 
 const PORT = process.env.PORT || '5000';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'jm.smith@concept2cure.pro';
@@ -137,15 +138,7 @@ async function main() {
 
   // ── 6. Write the two values the runtime needs ─────────────────────────
   say('Writing .env.local');
-  const lines = [
-    '# Written by `npm run up`. Git-ignored. Delete and re-run to regenerate.',
-    `APP_DATABASE_URL=${appUrl}`,
-    `DATABASE_URL=${ownerUrl}`,
-    `PORT=${PORT}`,
-    'NODE_ENV=development',
-    '',
-  ].join('\n');
-  fs.writeFileSync('.env.local', lines);
+  fs.writeFileSync('.env.local', envLocalContents({ appUrl, ownerUrl, port: PORT }));
   ok('.env.local written (APP_DATABASE_URL is the one the server reads)');
 
   // ── 7. An account to sign in as ───────────────────────────────────────

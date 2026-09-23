@@ -1,0 +1,82 @@
+### GREEN — every test touching the convergence, after the implementation.
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > reports a thrown 401 as an unauthenticated session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > does not swallow a failure that is not an API refusal 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 409 SECTION_CHANGED as the conflict 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 401 as an unauthenticated session 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a reason under eight characters with no request at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a cover-page save with no field to change 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the section save carries the concurrency token and the status > sends expectedUpdatedAt, status and the reason on the section PATCH 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > is deterministic 3ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > maps phase, masking, model, allocation and condition 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > renders arms with registry arm types and typed interventions 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > renders the primary outcome with its time frame 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > reports fields the design object cannot carry as gaps, never invented 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > marks a primary outcome with no time frame as partial 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > marks interventions partial when the product type is unknown 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > reports allocation N/A for a single-group design 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > maps the EU trial phase and the concerned member states 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > derives controlled, randomised and blinding 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > gaps the member states when no EU member state is targeted 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > reports sponsor and EU-specific enrollment as gaps 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > SoA-derived outcome timing > reads the outcome time frame from the schedule when the endpoint has no timepoint 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > SoA-derived outcome timing > still reports a partial outcome when neither a timepoint nor a schedule supplies the time frame 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectAllRegistrations > projects both registries from one design 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > templateFor > provides cited templates per kind 2ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > templateFor > returns empty for an unknown kind 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > is ready when all required sections complete + objectives + eligibility + visits (clinical) 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > blocks finalize when a required section is incomplete 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > requires objectives and (clinical) a schedule of assessments 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness > does not require eligibility/visits for IACUC 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > nextVersion > bumps minor by default and major on release 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness — an unsectioned protocol is not a finished one > publishes no percentage and does not finalize 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-development-logic.test.ts > evaluateCompleteness — an unsectioned protocol is not a finished one > a fully complete protocol still finalizes 0ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > is deterministic 3ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > projects a SAP in ICH E9 section order 1ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > reuses the protocol estimand renderer verbatim 1ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > scores a complete design as fully complete 0ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > defers the sample size honestly when the assumptions are absent, never fabricating them 1ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > flags a missing missing-data strategy and ties it to the estimand 1ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > states no adjustment for a single confirmatory endpoint 0ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > flags an uncontrolled testing hierarchy 1ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > flags non-inferiority without a per-protocol primary set 1ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > marks safety missing rather than inventing it 0ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > projects an ICH M11-ordered protocol with a synopsis 4ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > renders trial design from the framework 1ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > reuses the SAP estimand renderer for objectives and estimands 1ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > scores a complete design as highly complete 0ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > flags a missing safety section rather than inventing one 1ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > flags a non-inferiority frame with no margin as a gap 0ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > lowers completeness when sections are missing 1ms
+ ✓ server/services/study-design/__tests__/trial-feasibility-service.test.ts > assessTrialFeasibility (service) > maps CT.gov trials, computes empirical rates, and cites the query 6ms
+ ✓ server/services/study-design/__tests__/trial-feasibility-service.test.ts > assessTrialFeasibility (service) > clamps maxComparators into the page size and requires a condition 2ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > wilsonInterval > brackets the point estimate and stays in [0,1] 2ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > wilsonInterval > is degenerate for n = 0 2ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — insufficient evidence guard > returns insufficient_evidence and null rates when too few trials resolved 1ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > computes completion rate over resolved trials with a Wilson CI 1ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > summarizes completed-trial enrollment distribution 1ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > counts active competitors, distinct sponsors, and median duration 0ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > grades a low completion rate as challenging and flags high discontinuation 0ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > an objective with no endpoint is unmet under ICH M11 objectives/endpoints 3ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > a null vulnerable-population flag is not-assessed, never met 1ms
+ ✓ server/services/protocol-development/__tests__/protocol-rule-pack.test.ts > rule pack — red-first > an IACUC protocol gets no 21 CFR 50.25 findings but an IRB one does 1ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > projects the design onto PRM columns and stores the canonical object in metadata 2ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > classifies arm types and splits subjects by the allocation ratio 1ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > maps endpoint role and measurement type, and pulls the analysis method 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > generates a study id when absent and preserves a supplied one 1ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > round-trips losslessly through metadata 1ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > returns null for a row that is not a design spine 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > promotes a UUID programId to the canonical project column 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > leaves program_id null when programId is not a UUID, without dropping protocol_id 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > leaves program_id null when no programId is supplied 1ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > isUuid > accepts a canonical UUID and rejects everything else 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > extracts a primaryEffect object with a standard error 1ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > derives the standard error from a confidence interval 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > converts a hazard ratio to a benefit-oriented log effect when lower is better 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > returns null when no machine-readable effect is present 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > down-weights evidence from a different indication 0ms
+ ✓ server/services/study-design/__tests__/csr-evidence-source.test.ts > extractEffectObservation — ratio (HR/OR) shape > maps a beneficial hazard ratio (<1) to a POSITIVE benefit-oriented log effect 2ms
+ ✓ server/services/study-design/__tests__/csr-evidence-source.test.ts > extractEffectObservation — ratio (HR/OR) shape > maps a harmful hazard ratio (>1) to a NEGATIVE benefit-oriented log effect 1ms
+ ✓ server/services/study-design/__tests__/csr-evidence-source.test.ts > extractEffectObservation — ratio (HR/OR) shape > orients ratio benefit independently of the continuous endpoint direction 0ms
+ Test Files  31 passed (31)
+      Tests  345 passed (345)

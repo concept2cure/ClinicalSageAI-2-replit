@@ -47,6 +47,7 @@ import { dirname } from 'path';
 
 import { pool } from '../../db';
 import { getGateway } from './index';
+import { preTransmitFindings } from './pre-transmit-findings';
 import type { GatewayName, GatewayTransmitResult, Region, SubmissionBundle } from './types';
 import { findActiveTransmittal } from './fda-esg';
 import { getBundle } from '../submission-bundle-storage';
@@ -54,7 +55,7 @@ import { recordFiledSequence } from '../ectd/package-content-change';
 import { isFiledLeaf } from '../ectd/package-sequence-lifecycle';
 import {
   assessPackageContent,
-  isCurrentContentFingerprint,
+  isContentFingerprintOfAnyScheme,
   CONTENT_DRIFT_MESSAGE,
   unprovenMessage,
   type ContentAssessment,
@@ -140,9 +141,13 @@ export interface ResolvedBundle {
   // (device formats) too.
   builtRegion?: Region;
   // Fingerprint of the content (sections, mappings, declared placements,
-  // artifact content) the zip was built from, as the assemble route recorded
-  // it. Recomputed from the database at transmit; a difference refuses. Only
-  // a value from the CURRENT scheme is carried — anything else is unproven.
+  // artifact content, each artifact's approval) the zip was built from, as the
+  // assemble route recorded it. Recomputed from the database at transmit; a
+  // difference refuses. A well-formed value of ANY scheme is carried, and
+  // assessPackageContent reads an older scheme as unproven with the wording
+  // that is true of it (2026-09-23, W5/D7, round-2 skeptic: only the current
+  // scheme used to be carried, so an older one was refused as "records no
+  // fingerprint"); anything else is dropped and reads as absent.
   contentFingerprint?: string;
   /** The sequence this bundle files, what it declares itself to be, and the
    *  leaf inventory the packager published — the record the NEXT sequence
@@ -261,7 +266,7 @@ async function loadStoredBundle(
     dtdStatus: isDtdStatus(stored.dtdStatus) ? stored.dtdStatus : undefined,
     regionalBackbone: isRegionalBackbone(stored.regionalBackbone) ? stored.regionalBackbone : undefined,
     builtRegion: builtRegionOf(stored.region),
-    contentFingerprint: isCurrentContentFingerprint(stored.contentFingerprint) ? stored.contentFingerprint : undefined,
+    contentFingerprint: isContentFingerprintOfAnyScheme(stored.contentFingerprint) ? stored.contentFingerprint : undefined,
     sequence: typeof stored.sequence === 'string' && /^\d{4}$/.test(stored.sequence) ? stored.sequence : undefined,
     submissionType: typeof stored.submissionType === 'string' ? stored.submissionType : undefined,
     // Shape-checked with the SAME guard the reader applies, and dropped whole
@@ -372,6 +377,16 @@ export interface GovernedTransmitOutcome {
     | 'no-sequence'          // not an eCTD sequence filing (or a dev/test client bundle)
     | 'no-usable-manifest'   // an eCTD sequence whose leaf inventory is absent or unreadable
     | 'write-failed';        // the append itself did not land
+  /**
+   * Package checks the transmit guard ran that FAILED without blocking (a
+   * flag-gated check not enforced here), as "name: detail", and the guard's
+   * warnings — the same facts transmitSequence records (preTransmitFindings).
+   * null = the guard reported nothing, which is not "all passed". Also on the
+   * sign ledger payload and the electronic-signature manifest.
+   * 2026-09-23 (W5/D7, round-2 review): this path kept them off its record.
+   */
+  preTransmitFailedChecks: string[] | null;
+  preTransmitWarnings: string[] | null;
 }
 
 /** Operator wording for a content change that landed during the send. */
@@ -510,14 +525,18 @@ export async function executeGovernedTransmit(
   }
 
   // Content integrity: the zip must still reflect the package. The descriptor
-  // carries the fingerprint of the sections, mappings, declared placements and
-  // artifact content it was built from; it is recomputed from the database
-  // here and any difference refuses. The mapping routes clear a stale bundle
-  // when a mapping changes, but an artifact edited after assembly changes
-  // nothing on the package row — only this comparison catches it. A stored
-  // descriptor without a fingerprint (assembled before it existed) is UNKNOWN,
-  // and UNKNOWN blocks wherever descriptor trust is enforced, exactly like
-  // missing structural-validation evidence.
+  // carries the fingerprint of the sections, mappings, declared placements,
+  // artifact content and each artifact's approval it was built from; it is
+  // recomputed from the database here and any difference refuses. The mapping
+  // routes clear a stale bundle when a mapping changes, but an artifact edited
+  // after assembly — or whose approval is revoked after assembly (2026-09-23,
+  // W5/D7, round-2 skeptic: the status route marks nothing on the package) —
+  // changes nothing on the package row; only this comparison catches it. A
+  // stored descriptor without a fingerprint, or with one from an older scheme
+  // (every bundle assembled before the current CONTENT_FINGERPRINT_VERSION),
+  // is UNKNOWN, and UNKNOWN blocks wherever descriptor trust is enforced,
+  // exactly like missing structural-validation evidence; the refusal names the
+  // recovery, re-assembling the package.
   // The assessment is the one the preflight route reports, so the two never
   // disagree about a bundle. A match is kept as evidence for the sign row.
   let provenAgainst: { assembled: string; atTransmit: string } | null = null;
@@ -593,6 +612,16 @@ export async function executeGovernedTransmit(
       dtdStatus: bundle.dtdStatus,
       regionalBackbone: bundle.regionalBackbone,
       builtRegion: bundle.builtRegion,
+      // The leaves that ship, so the guard judges THIS package as it does on
+      // the sequence spine (transmitSequence hands it the packager's whole
+      // bundle). 2026-09-23 (W5/D7, round-2 skeptic): it was left out, so the
+      // Module 3 regional gate — which reads the shipped CTD sections from
+      // here — recorded a failed module3-regional-section check for every
+      // region without an authored 3.2.R template (UK, CN, AU, CH, BR, IN, KR,
+      // SG) on a package that ships a 3.2.R leaf, and with
+      // M3_REQUIRE_REGIONAL_SECTION=true refused it in production. Pinned by
+      // __tests__/governed-transmit-leaf-manifest.test.ts.
+      leafManifest: bundle.leafManifest,
     },
     environment,
     submissionType: input.submissionType,
@@ -607,6 +636,16 @@ export async function executeGovernedTransmit(
       reauthVerifiedAt,
     },
   });
+
+  // What the guard checked on the package, including checks that FAILED
+  // without blocking: on the sign record and the outcome, as transmitSequence
+  // records them. 2026-09-23 (W5/D7, round-2 review) — a package that failed
+  // dtd-self-contained went out on this path with no transmit-time trace.
+  const pre = preTransmitFindings(result);
+  const preTransmitFacts = {
+    preTransmitFailedChecks: pre.failedChecks,
+    preTransmitWarnings: pre.warnings,
+  };
 
   // Re-assess the content AFTER the gateway accepted the bytes: the window
   // between the pre-transmit check and the send is evidenced, not assumed
@@ -691,6 +730,7 @@ export async function executeGovernedTransmit(
           transmittalId: result.transmittalId,
           transmissionId: result.transmissionId ?? null,
           ...filedSequenceFacts,
+          ...preTransmitFacts,
       };
       const recorded = await recordGovernedAction(client, {
         orgId: organizationId,
@@ -714,6 +754,7 @@ export async function executeGovernedTransmit(
             ? { assembled: provenAgainst.assembled, atTransmit: provenAgainst.atTransmit, afterTransmit: contentAfterTransmit }
             : null,
           ...filedSequenceFacts,
+          ...preTransmitFacts,
         },
         domain: 'mdx',
         surface: input.surface ?? 'submission-gateway',
@@ -743,8 +784,10 @@ export async function executeGovernedTransmit(
         },
         // In the attributed record itself, not only in the digest it is bound
         // to: the manifest is what an auditor reads, and "which eCTD sequence
-        // did this signature file" is not answerable from a hash.
-        extraManifest: filedSequenceFacts,
+        // did this signature file" is not answerable from a hash. Nor is
+        // "which package checks had failed when it was signed" (2026-09-23,
+        // W5/D7, round-2 review).
+        extraManifest: { ...filedSequenceFacts, ...preTransmitFacts },
         manifestKind: 'governed-transmit',
       });
       await client.query('COMMIT');
@@ -770,5 +813,6 @@ export async function executeGovernedTransmit(
     contentAfterTransmit,
     filedSequenceRecorded,
     filedSequenceReason,
+    ...preTransmitFacts,
   };
 }

@@ -194,9 +194,15 @@ export function AuthoringPlaceIntoFiling({
 
   const canPlace =
     !placing && !dirty && seq != null && !isLocked(seq.status) && section.trim() !== '' && sectionIsPlaceable;
+  /* Where a placement goes, or null when one cannot be made. It files at the
+     code the note announces ("Files as 3.2.S.4.2"), not at the keystrokes:
+     upsertLeaf stores a section code as sent, and the Vault filing dialog,
+     sharing this judgement, sends the canonical form too. */
+  const filing = canPlace && seq && sectionJudged.canonical ? { seq, sectionCode: sectionJudged.canonical } : null;
 
   const place = async () => {
-    if (!canPlace || !seq) return;
+    if (!filing) return;
+    const { sectionCode } = filing;
     setPlacing(true);
     setVerdict(null);
     setPlacement(null);
@@ -229,7 +235,7 @@ export function AuthoringPlaceIntoFiling({
       // 2. File the snapshot into the renderable store the leaves can reference.
       const snap = await mutateVerbatim<{ document?: { id?: number } }>('POST', '/api/coauthor/documents', {
         title: docTitle,
-        moduleNumber: section.trim(),
+        moduleNumber: sectionCode,
         content: body,
         /* Names the source so the server can read ITS governed state. The
            snapshot's status is derived there, never sent from here: a
@@ -252,8 +258,8 @@ export function AuthoringPlaceIntoFiling({
       }
 
       // 3. The canonical write: the leaf, pointing at the snapshot. Verdict verbatim.
-      const put = await mutateVerbatim<PlacedLeaf>('PUT', `/api/submissions/sequences/${seq.id}/leaves`, {
-        sectionCode: section.trim(),
+      const put = await mutateVerbatim<PlacedLeaf>('PUT', `/api/submissions/sequences/${filing.seq.id}/leaves`, {
+        sectionCode,
         title: docTitle,
         lifecycleOp: op,
         documentTable: 'coauthor_documents',
@@ -269,7 +275,7 @@ export function AuthoringPlaceIntoFiling({
         });
         return;
       }
-      const sequenceLabel = `${seq.sequenceNumber} · ${seq.type}`;
+      const sequenceLabel = `${filing.seq.sequenceNumber} · ${filing.seq.type}`;
       setPlacement({ leafId: put.data.id, sectionCode: put.data.sectionCode, sequenceLabel, snapshotId });
       setVerdict({
         tone: 'ok',
@@ -277,7 +283,7 @@ export function AuthoringPlaceIntoFiling({
           `Placed as leaf ${put.data.sectionCode} in sequence ${sequenceLabel} — ` +
           `server-confirmed (leaf #${put.data.id}, from ${documentSourceLabel('coauthor_documents', snapshotId)}).`,
       });
-      fireToast(`Placed into filing — leaf ${put.data.sectionCode} in sequence ${seq.sequenceNumber}.`);
+      fireToast(`Placed into filing — leaf ${put.data.sectionCode} in sequence ${filing.seq.sequenceNumber}.`);
     } finally {
       setPlacing(false);
     }

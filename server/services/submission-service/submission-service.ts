@@ -43,7 +43,11 @@ import { writeChainedAuditRow } from '../auditService';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { deriveGovernedTargetBinding, BINDING_BASIS, isSignatureWithdrawn } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
-import { normalizeCtdCode } from '../ectd/section-to-ctd';
+import {
+  validateSectionCode,
+  vocabularyForApplicationType,
+  type PlacementVocabulary,
+} from '../../../shared/regulatory/placement-vocabulary';
 
 const logger = createScopedLogger('submission-service');
 
@@ -347,11 +351,28 @@ export async function transitionSequence(
     throw new SubmissionError('INVALID_STATE', `Cannot transition sequence from ${seq.status} to ${toStatus}.`);
   }
   const frozenAt = toStatus === 'frozen' ? new Date() : undefined;
+  /* Same compare-and-set as the governed twin: `seq.status` was read above and
+     canTransitionSequence was evaluated against it, so the write must apply only
+     while the row still holds that value. Without the predicate two concurrent
+     callers both passed the check and both wrote, and the second overwrote a
+     transition it never saw. */
   const [row] = await db
     .update(ectdSequences)
     .set({ status: toStatus, updatedAt: new Date(), ...(frozenAt ? { frozenAt } : {}) })
-    .where(and(eq(ectdSequences.id, id), eq(ectdSequences.organizationId, ctx.organizationId)))
+    .where(
+      and(
+        eq(ectdSequences.id, id),
+        eq(ectdSequences.organizationId, ctx.organizationId),
+        eq(ectdSequences.status, seq.status),
+      ),
+    )
     .returning();
+  if (!row) {
+    throw new SubmissionError(
+      'INVALID_STATE',
+      `Sequence ${id} is no longer in state '${seq.status}' — it changed while this transition was being applied. Re-read the sequence and retry if the transition still applies.`,
+    );
+  }
   // Part 11 §11.10(e). The UPDATE above is committed; the status is not moved
   // back when this write fails. `SEQUENCE_FROZEN` appears in the action below
   // only because it is the action name for a `frozen` target — `frozen` is in
@@ -409,6 +430,23 @@ async function governedSignatureRefusal(
   ctx: { organizationId: number; userId: number },
   step: GovernedSequenceStep,
 ): Promise<string | null> {
+  return (await governedSignatureVerdict(signatureActionId, target, ctx, step)).refusal;
+}
+
+/**
+ * governedSignatureRefusal, plus the leaf-manifest digest the signature binds
+ * when it does authorize the step. 2026-09-23 (W5/D7, round-2 skeptic): the
+ * governed freeze/dispatch re-derives that digest under the sequence row lock
+ * and refuses when it moved, so the verdict is bound to what is frozen, not
+ * only to what was there when Gate 1 ran.
+ */
+async function governedSignatureVerdict(
+  signatureActionId: string,
+  target: string,
+  ctx: { organizationId: number; userId: number },
+  step: GovernedSequenceStep,
+): Promise<{ refusal: string; boundDigest: null } | { refusal: null; boundDigest: string }> {
+  const refuse = (refusal: string) => ({ refusal, boundDigest: null }) as const;
   const action = await db.execute(sql`
     SELECT id, payload FROM c2c_ana_actions
     WHERE id = ${signatureActionId}
@@ -420,12 +458,12 @@ async function governedSignatureRefusal(
     LIMIT 1
   `);
   const row = ((action as { rows?: Array<{ payload?: unknown }> }).rows ?? [])[0];
-  if (!row) return 'no executed sign action on this sequence by this actor';
+  if (!row) return refuse('no executed sign action on this sequence by this actor');
 
   const payload = typeof row.payload === 'string' ? safeJson(row.payload) : (row.payload as Record<string, unknown> | null);
   const intent = typeof payload?.intent === 'string' ? payload.intent : null;
   if (intent !== step) {
-    return `the sign action declares intent '${intent ?? 'none'}', not '${step}'; sign this step with its own meaning`;
+    return refuse(`the sign action declares intent '${intent ?? 'none'}', not '${step}'; sign this step with its own meaning`);
   }
 
   const sequenceId = target.slice(target.indexOf(':') + 1);
@@ -439,7 +477,7 @@ async function governedSignatureRefusal(
     LIMIT 1
   `);
   if (((spent as { rows?: unknown[] }).rows?.length ?? 0) > 0) {
-    return 'this sign action already authorized a governed transition; each step needs its own signature';
+    return refuse('this sign action already authorized a governed transition; each step needs its own signature');
   }
 
   /* The withdrawal columns are selected, not just the binding ones. A governed
@@ -476,12 +514,12 @@ async function governedSignatureRefusal(
       verification_status: unknown;
     }>;
   }).rows ?? [])[0];
-  if (!sig) return 'no electronic signature record is bound to this sign action';
+  if (!sig) return refuse('no electronic signature record is bound to this sign action');
   if (isSignatureWithdrawn(sig)) {
-    return 'the electronic signature authorizing this step has been revoked; obtain a new signature';
+    return refuse('the electronic signature authorizing this step has been revoked; obtain a new signature');
   }
   if (sig.binding_basis !== BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST || !sig.bound_payload_digest) {
-    return 'the signature is not bound to this sequence\'s leaf manifest; re-sign the sequence';
+    return refuse('the signature is not bound to this sequence\'s leaf manifest; re-sign the sequence');
   }
   const current = await deriveGovernedTargetBinding(
     { query: (text: string, params?: unknown[]) => pool.query(text, params) as Promise<{ rows: any[] }> },
@@ -489,9 +527,9 @@ async function governedSignatureRefusal(
     ctx.organizationId,
   );
   if (current.digest !== sig.bound_payload_digest) {
-    return 'the sequence changed after it was signed (leaf manifest digest differs); re-sign the current content';
+    return refuse('the sequence changed after it was signed (leaf manifest digest differs); re-sign the current content');
   }
-  return null;
+  return { refusal: null, boundDigest: sig.bound_payload_digest };
 }
 
 function safeJson(text: string): Record<string, unknown> | null {
@@ -509,14 +547,36 @@ function safeJson(text: string): Record<string, unknown> | null {
  * change back.
  */
 async function applySequenceChangeWithAudit(
-  update: { text: string; params: unknown[] },
+  update: {
+    text: string;
+    params: unknown[];
+    /**
+     * What zero affected rows MEANS for this caller. When the UPDATE carries a
+     * compare-and-set predicate, zero rows is a LOST RACE (the state moved after
+     * it was read), not a missing sequence, and reporting "not found" for it
+     * would send the operator looking for the wrong problem.
+     */
+    noRowsRefusal?: string;
+    /**
+     * Runs inside the transaction, after BEGIN and before the UPDATE, on the
+     * same client — where a caller takes its row locks and re-checks what it
+     * judged, so the UPDATE applies only to the state that was judged
+     * (2026-09-23, W5/D7, round-2 skeptic). A throw rolls everything back.
+     */
+    underLock?: (client: PoolClient) => Promise<void>;
+  },
   audit: { organizationId: number; userId: number; action: string; resourceId: number; details: Record<string, unknown> },
 ): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    if (update.underLock) await update.underLock(client);
     const res = (await client.query(update.text, update.params)) as { rowCount?: number | null };
-    if (!res.rowCount) throw new SubmissionError('NOT_FOUND', 'Sequence not found for this organization.');
+    if (!res.rowCount) {
+      throw update.noRowsRefusal
+        ? new SubmissionError('INVALID_STATE', update.noRowsRefusal)
+        : new SubmissionError('NOT_FOUND', 'Sequence not found for this organization.');
+    }
     await writeChainedAuditRow(client, {
       organizationId: audit.organizationId,
       userId: audit.userId,
@@ -534,6 +594,269 @@ async function applySequenceChangeWithAudit(
   }
 }
 
+/** The one query surface the governed-transition checks run on: the pool, or the transaction's client. */
+type SequenceQueryable = { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> };
+
+const asQueryable = (q: Pick<PoolClient, 'query'> | typeof pool): SequenceQueryable => ({
+  query: (text, params) => (q.query as (t: string, p?: unknown[]) => Promise<{ rows: any[] }>)(text, params),
+});
+
+/**
+ * The leaf-manifest digest of a sequence — the Gate-1 binding
+ * (deriveGovernedTargetBinding), read on `q` so it sees that client's view.
+ */
+async function sequenceLeafManifestDigest(q: SequenceQueryable, id: number, organizationId: number): Promise<string | null> {
+  return (await deriveGovernedTargetBinding(q, `ectd-sequence:${id}`, organizationId)).digest;
+}
+
+/** The columns of a submission_leaves row that decide its lifecycle key. */
+type LifecycleKeyLeaf = {
+  section_code: string | null;
+  lifecycle_op: string | null;
+  document_table: string | null;
+  document_id: number | null;
+  document_uuid: string | null;
+};
+
+/**
+ * The lifecycle keys two sequences' leaves share, described for a refusal, or
+ * null when neither can move the other (2026-09-23, W5/D7, residual repair).
+ *
+ * A leaf's key is its section plus its document reference — the inputs of the
+ * leaf file name the lifecycle operator keys by (leafFileName over
+ * leafSourceKey, passed in so this uses the one canonical key). The same
+ * document in the same section is a shared key. A withdrawal row that names no
+ * document has no key of its own: package-from-core binds it by SECTION, so it
+ * shares the whole section with every leaf the other sequence files there.
+ * A non-withdrawal leaf that names no document has no key at all (it cannot be
+ * packaged, and the package gate refuses it).
+ */
+function sharedLifecycleKeys(
+  mine: LifecycleKeyLeaf[],
+  theirs: LifecycleKeyLeaf[],
+  leafSourceKey: (table: string | null | undefined, id: number | null | undefined, uuid?: string | null) => string,
+): string | null {
+  const sectionOf = (l: LifecycleKeyLeaf) => String(l.section_code ?? '').trim().toLowerCase();
+  const documentOf = (l: LifecycleKeyLeaf): string | null =>
+    l.document_table && String(l.document_table).trim() && (l.document_id || l.document_uuid)
+      ? leafSourceKey(String(l.document_table).trim(), l.document_id, l.document_uuid).toLowerCase()
+      : null;
+  const bindsBySection = (l: LifecycleKeyLeaf) =>
+    documentOf(l) === null && String(l.lifecycle_op ?? '').trim().toLowerCase() === 'delete';
+  const found: string[] = [];
+  const sections = new Set(mine.map(sectionOf));
+  for (const section of [...sections].sort()) {
+    const a = mine.filter((l) => sectionOf(l) === section);
+    const b = theirs.filter((l) => sectionOf(l) === section);
+    if (b.length === 0) continue;
+    const label = String(a[0].section_code ?? '').trim();
+    if (a.some(bindsBySection) || b.some(bindsBySection)) {
+      found.push(`${label}: a withdrawal there names no document, so it binds by section`);
+      continue;
+    }
+    const theirDocs = new Set(b.map(documentOf).filter((k): k is string => k !== null));
+    const same = [...new Set(a.map(documentOf).filter((k): k is string => k !== null && theirDocs.has(k)))].sort();
+    if (same.length > 0) found.push(`${label}: document ${same.join(', ')}`);
+  }
+  return found.length > 0 ? found.join('; ') : null;
+}
+
+/**
+ * Why this sequence may not be frozen/dispatched because of another sequence of
+ * the same submission it shares a section with, or null.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic). The package gate judges lifecycle binding
+ * against the FILED inventory: the sequences numbered BELOW this one whose
+ * dispatch_status is sent or acknowledged (loadLatestPriorManifestBySubmission).
+ * A verdict holds at transmit only if that inventory cannot move after the lock,
+ * and a sequence judged against it must not be filed behind one it never saw.
+ * So one rule, two directions:
+ *   - LOWER: a lower sequence is frozen/dispatched and not yet sent. Sending it
+ *     changes what this one binds to, so wait until it is sent.
+ *   - HIGHER: a higher sequence is frozen or dispatched, WHATEVER its dispatch
+ *     status. This one can no longer be filed ahead of it; its leaves belong in
+ *     a new sequence numbered after it.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic, second pass). The higher direction first
+ * refused only while the higher sequence was unsent, and told the operator to
+ * "send it first, then freeze this one". Doing that let this one freeze,
+ * dispatch and transmit judged against the inventory BELOW it only — the
+ * loader never reads a higher number — so its withdrawal bound to a leaf the
+ * higher sequence had already replaced, and it shipped with no blockers. A
+ * lower sequence can never be filed correctly after a higher one in a shared
+ * section; the remedy is a new number, and the refusal now holds once the
+ * higher one is sent.
+ *
+ * The one exception is a pair the governed path can no longer produce: this
+ * sequence is already frozen (the dispatch step) and the higher one is only
+ * frozen, not dispatched and not filed — both locked before this rule existed.
+ * Refusing both directions there deadlocked the pair ('frozen' has no way out
+ * but 'dispatched'). The lower one dispatches: the higher one is still refused
+ * by the lower direction until this one is sent, and is then judged at its own
+ * dispatch against an inventory that includes this one. When the higher one of
+ * such a pair is already dispatched or filed, this one stays refused — it may be
+ * sent at any time, and this one would then transmit a lifecycle judged without
+ * it.
+ *
+ * DEPENDENCY — a shared LIFECYCLE KEY, not a shared section (see
+ * sharedLifecycleKeys). The lifecycle operator identifies a leaf by section +
+ * file name, and the file name is derived from the leaf's document reference
+ * (leafFileName over leafSourceKey), so a leaf of this sequence — a declared
+ * replace/append/delete, or a declared 'new' whose operation the operator
+ * derives from what is on file — is moved only by another sequence's leaf for
+ * the SAME document in the SAME section. The one binding that is not by
+ * document is a withdrawal row that names no document: package-from-core binds
+ * it by section, so a sequence with one depends on every leaf the other files
+ * in that section, in both directions. Sections compare case- and
+ * whitespace-insensitively and document keys case-insensitively: a spelling
+ * difference must not hide a dependency.
+ *
+ * 2026-09-23 (W5/D7, residual repair). This used to be "shares a section".
+ * Every IND sequence carries its own Form FDA 1571 (m1.1) and cover letter
+ * (m1.2) (ind-lifecycle-persistence withTransmittalPair), so for an IND that
+ * narrowing never applied: filing became strictly serial per submission, and
+ * because the higher direction holds once the higher sequence is sent, an
+ * urgent safety report numbered 0002 filed ahead of a protocol amendment 0001
+ * stranded 0001 for good — although 0001's package was all 'new', with no
+ * modified-file, and nothing 0002 filed could move it. Two sequences that each
+ * file their own document in a section now move independently.
+ *
+ * REGIONS. Not scoped by region, on purpose: the prior-state loader it guards
+ * reads every region of the submission, so an EMA 0000 being sent moves an FDA
+ * 0001's inventory exactly as an FDA 0000 would. Scoping only this rule would
+ * reopen the defect across regions. The refusal names the other sequence's
+ * region so the operator can see why.
+ *
+ * Reported as its own refusal, not as a package defect: the leaves are not
+ * wrong, and the only remedy is ordering (issue 3 of the same review).
+ */
+async function filingOrderRefusal(
+  q: SequenceQueryable,
+  seq: { id: number; submissionId: number; sequenceNumber: string; status: string },
+  organizationId: number,
+  step: GovernedSequenceStep,
+): Promise<string | null> {
+  const res = await q.query(
+    `SELECT o.id, o.sequence_number, o.status, o.dispatch_status, o.region
+       FROM ectd_sequences o
+      WHERE o.submission_id = $1 AND o.organization_id = $2 AND o.deleted_at IS NULL
+        AND o.id <> $3 AND o.sequence_number <> $4
+        AND o.status IN ('frozen', 'dispatched')
+      ORDER BY o.sequence_number`,
+    [seq.submissionId, organizationId, seq.id, seq.sequenceNumber],
+  );
+  type Other = { id: number; sequence_number: string; status: string; dispatch_status: string | null; region: string | null; shared_sections: string };
+  const locked = (res.rows ?? []) as Other[];
+  if (locked.length === 0) return null;
+  const leafRes = await q.query(
+    `SELECT sequence_id, section_code, lifecycle_op, document_table, document_id, document_uuid
+       FROM submission_leaves
+      WHERE organization_id = $1 AND deleted_at IS NULL AND sequence_id = ANY($2::int[])`,
+    [organizationId, [seq.id, ...locked.map((r) => Number(r.id))]],
+  );
+  const leavesOf = new Map<number, LifecycleKeyLeaf[]>();
+  for (const l of (leafRes.rows ?? []) as Array<LifecycleKeyLeaf & { sequence_id: number }>) {
+    const id = Number(l.sequence_id);
+    leavesOf.set(id, [...(leavesOf.get(id) ?? []), l]);
+  }
+  const { leafSourceKey } = await import('../ectd/leaf-source-resolver');
+  const mine = leavesOf.get(seq.id) ?? [];
+  const dependent: Other[] = [];
+  for (const r of locked) {
+    const shared = sharedLifecycleKeys(mine, leavesOf.get(Number(r.id)) ?? [], leafSourceKey);
+    if (shared) dependent.push({ ...r, shared_sections: shared });
+  }
+  const isFiled = (r: Other) => r.dispatch_status === 'sent' || r.dispatch_status === 'acknowledged';
+  // Zero-padded fixed-width sequence numbers: lexical order is filing order,
+  // the same assumption the prior-sequence loaders rely on.
+  const lower = dependent.filter((r) => String(r.sequence_number) < seq.sequenceNumber && !isFiled(r));
+  // The pre-rule frozen pair (see above): only a higher one that is dispatched
+  // or filed holds back an already-frozen lower one.
+  const legacyFrozenPair = (r: Other) => seq.status === 'frozen' && r.status === 'frozen' && !isFiled(r);
+  const higher = dependent.filter((r) => String(r.sequence_number) > seq.sequenceNumber && !legacyFrozenPair(r));
+  const state = (r: Other) =>
+    `${r.status}, dispatch status '${r.dispatch_status ?? 'none'}', region '${r.region ?? 'none'}'`;
+  if (lower.length > 0) {
+    const first = lower[0];
+    const others = lower.slice(1).map((r) => r.sequence_number);
+    return (
+      `Refusing to ${step}: sequence ${first.sequence_number} is not yet filed; ${step} this one after it is sent` +
+      `${others.length > 0 ? ` (also not yet filed: ${others.join(', ')})` : ''}. ` +
+      `It is ${state(first)}, and it files the same lifecycle key — ${first.shared_sections} — where this sequence's lifecycle ` +
+      'operations are bound against what is on file — sending it changes that, so a verdict taken now would not hold at transmit. ' +
+      'This is a filing-order constraint, not a defect in this sequence\'s leaves.'
+    );
+  }
+  if (higher.length > 0) {
+    const last = higher[higher.length - 1];
+    const first = higher[0];
+    const filed = isFiled(first);
+    return (
+      `Refusing to ${step}: sequence ${first.sequence_number} is ${filed ? 'already filed' : `${first.status} and not yet filed`} ` +
+      `(${state(first)}) and files the same lifecycle key — ${first.shared_sections} — where this sequence's lifecycle operations bind. ` +
+      'This sequence can no longer be filed ahead of it: it is judged only against the sequences numbered below it, ' +
+      (filed
+        ? `so its lifecycle operations would bind to what ${first.sequence_number} has already changed. `
+        : `and ${first.sequence_number}'s lifecycle operations were judged without this one on file, so whichever is sent ` +
+          'second would transmit a lifecycle judged against the wrong inventory. ') +
+      `Place these leaves in a new sequence numbered after ${last.sequence_number}, where they are judged against what it files. ` +
+      'This is a filing-order constraint, not a defect in this sequence\'s leaves.'
+    );
+  }
+  return null;
+}
+
+/**
+ * Refuse a governed step when the package this sequence would transmit is not
+ * transmittable — the rule transmitSequence applies (assembledTransmitBlockers),
+ * run on the same assembly before the sequence is locked.
+ *
+ * Returns the leaf-manifest digest the assembly ran against, read BEFORE it
+ * started (2026-09-23, W5/D7, round-2 skeptic): the caller compares it with the
+ * digest under the sequence row lock, so a leaf placed or removed while the
+ * package was assembling is refused instead of frozen unjudged.
+ */
+async function assertSequencePackageable(
+  id: number,
+  ctx: { organizationId: number; userId: number },
+  step: GovernedSequenceStep,
+): Promise<string | null> {
+  const assembledAgainst = await sequenceLeafManifestDigest(asQueryable(pool), id, ctx.organizationId);
+  const { assembleSequence, assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
+  let assembled: Awaited<ReturnType<typeof assembleSequence>>;
+  try {
+    // The agency identifiers only fill backbone text; the blockers do not
+    // depend on them, and nothing assembled here is sent.
+    assembled = await assembleSequence({
+      sequenceId: id,
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      applicationId: `UNASSIGNED-SEQ-${id}`,
+      sponsorId: `UNASSIGNED-ORG-${ctx.organizationId}`,
+      sponsorName: `UNASSIGNED (organization ${ctx.organizationId})`,
+    });
+  } catch (err) {
+    throw new SubmissionError(
+      'DISPATCH_BLOCKED',
+      `Refusing to ${step}: the sequence does not assemble into a package (${err instanceof Error ? err.message : String(err)}). ` +
+        'Fix it while the leaves can still be changed.',
+    );
+  }
+  try {
+    const gaps = assembledTransmitBlockers(assembled);
+    if (gaps.length > 0) {
+      throw new SubmissionError(
+        'DISPATCH_BLOCKED',
+        `Refusing to ${step}: ${gaps.join('; ')}. Transmit would refuse this package, and once the sequence is ` +
+          `${step === 'freeze' ? 'frozen' : 'dispatched'} its leaves can no longer be changed.`,
+      );
+    }
+  } finally {
+    await assembled.cleanup();
+  }
+  return assembledAgainst;
+}
+
 async function applyGovernedSequenceTransition(
   id: number,
   toStatus: 'frozen' | 'dispatched',
@@ -549,11 +872,11 @@ async function applyGovernedSequenceTransition(
   // signed by THIS actor, unspent, and bound to the current leaf manifest.
   const target = `ectd-sequence:${id}`;
   const step: GovernedSequenceStep = toStatus === 'frozen' ? 'freeze' : 'dispatch';
-  const refusal = await governedSignatureRefusal(signatureActionId, target, ctx, step);
-  if (refusal !== null) {
+  const verdict = await governedSignatureVerdict(signatureActionId, target, ctx, step);
+  if (verdict.refusal !== null) {
     throw new SubmissionError(
       'GOVERNED_REQUIRED',
-      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent '${step}', then pass its actionId. Refused: ${refusal}.`
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent '${step}', then pass its actionId. Refused: ${verdict.refusal}.`
     );
   }
 
@@ -574,15 +897,82 @@ async function applyGovernedSequenceTransition(
     );
   }
 
+  // Gate 3 — the package this sequence would transmit (2026-09-23, W5/D7).
+  // Transmit refuses a package that leaves out a placed leaf, carries an
+  // unapproved document, or cannot materialize a source (assembledTransmit-
+  // Blockers). Readiness does not assemble, so those refusals used to surface
+  // only at transmit — after freeze had made the leaves immutable and dispatch
+  // had removed every way back: a signed sequence that could never be sent.
+  // The same assembly and the same rule run here, while the author can still act.
+  //
+  // 2026-09-23 (W5/D7, round-2 skeptic): the filing-order rule runs FIRST, so a
+  // sequence waiting on a lower one is told to wait rather than told its leaves
+  // cannot be packaged — the lifecycle binding it would fail on is judged
+  // against an inventory that is about to change.
+  const orderRefusal = await filingOrderRefusal(asQueryable(pool), seq, ctx.organizationId, step);
+  if (orderRefusal) throw new SubmissionError('DISPATCH_BLOCKED', orderRefusal);
+  const assembledAgainst = await assertSequencePackageable(id, ctx, step);
+
   // The state change and its chained audit row commit together, or neither.
   // 'dispatched' queues the sequence for transmit (dispatch_status pending);
   // it is not yet sent.
   await applySequenceChangeWithAudit(
     {
+      /* 2026-09-23 (W5/D7, round-2 skeptic): bind the gates to what is frozen.
+         The CAS below is on status only, and the gate above assembles for
+         seconds while the sequence is still unlocked — a leaf placed or removed
+         in that window was frozen without having been judged, and no gate
+         re-checked it. Under the lock:
+           - the submission row, so governed transitions of one submission
+             serialize and the filing-order rule cannot be passed by two
+             sequences at once;
+           - the sequence row — the lock upsertLeaf/removeLeaf take for their
+             writes (lockSequenceForLeafWrite), so no leaf write through them
+             interleaves. 2026-09-23 (residual repair): ingestion's
+             classifyDocument, the last direct submission_leaves writer outside
+             the seed scripts, now places through upsertLeaf too, so every
+             product leaf write takes this lock (the second-pass note that it
+             did not is superseded);
+           - the leaf-manifest digest (the Gate-1 binding) must still be the one
+             the package gate assembled against AND the one the signature binds;
+           - the filing-order rule is re-read. */
+      underLock: async (client) => {
+        await client.query(`SELECT id FROM submissions WHERE id = $1 AND organization_id = $2 FOR UPDATE`, [
+          seq.submissionId,
+          ctx.organizationId,
+        ]);
+        await client.query(
+          `SELECT id FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+          [id, ctx.organizationId],
+        );
+        const q = asQueryable(client);
+        const now = await sequenceLeafManifestDigest(q, id, ctx.organizationId);
+        if (now === null || now !== assembledAgainst || now !== verdict.boundDigest) {
+          throw new SubmissionError(
+            'INVALID_STATE',
+            `Sequence ${id}'s leaves changed while this ${step} was being checked (the leaf manifest no longer matches ` +
+              'the one the package gate assembled and the signature binds). Nothing was changed; re-check the leaves and sign again.',
+          );
+        }
+        const lockedOrderRefusal = await filingOrderRefusal(q, seq, ctx.organizationId, step);
+        if (lockedOrderRefusal) throw new SubmissionError('DISPATCH_BLOCKED', lockedOrderRefusal);
+      },
+      /* COMPARE-AND-SET on the status this transition was authorized against.
+         `seq.status` was read at the top of this function, and everything since —
+         three queries in governedSignatureRefusal, deriveGovernedTargetBinding,
+         and the whole dispatch readiness assessment including an external
+         validator call — is a window in which another author can move the same
+         sequence. Without the predicate both callers' UPDATEs applied, each
+         spending its own signature and each writing a §11.10(e) row, so the
+         ledger recorded two irreversible transitions from a state only one of
+         them actually observed. */
       text: toStatus === 'frozen'
-        ? `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), frozen_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL`
-        : `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), dispatch_status = 'pending' WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL`,
-      params: [toStatus, id, ctx.organizationId],
+        ? `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), frozen_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND status = $4`
+        : `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), dispatch_status = 'pending' WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND status = $4`,
+      params: [toStatus, id, ctx.organizationId, seq.status],
+      noRowsRefusal:
+        `Sequence ${id} is no longer in state '${seq.status}' — it changed while this ${step} was being authorized. ` +
+        `Re-check the sequence and sign again if the transition still applies.`,
     },
     {
       organizationId: ctx.organizationId,
@@ -746,6 +1136,14 @@ export interface TransmitSequenceResult {
   transmissionId?: string | null;
   status?: string;
   dispatchStatus: string;
+  /**
+   * Package checks the transmit guard ran that FAILED without blocking (a
+   * flag-gated check not enforced here), as "name: detail". null = the guard
+   * reported nothing, which is not "all passed". Set on a performed transmit.
+   */
+  preTransmitFailedChecks?: string[] | null;
+  /** The transmit guard's warnings (e.g. evidence it could not check). */
+  preTransmitWarnings?: string[] | null;
 }
 
 /**
@@ -847,7 +1245,7 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     throw new SubmissionError('VALIDATION', `No transmit gateway is mapped for region "${seq.region}".`);
   }
 
-  const { getGateway } = await import('../submission-gateways/index');
+  const { getGateway, preTransmitFindings } = await import('../submission-gateways/index');
   // gwRegion and gwName are always valid Region/GatewayName values returned by selectGateway
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const gw = getGateway(route.gwRegion as any, route.gwName as any);
@@ -954,6 +1352,24 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     );
   }
 
+  // 2026-09-22 (W5/D7): two more ways a sequence reached the gateway missing
+  // what the author placed — a leaf left out of the ZIP (`skipped`) and a draft
+  // leaf shipped in it (`unfinalized`) — both computed by assembly and read by
+  // nobody here. See assembledTransmitBlockers. The governed freeze and dispatch
+  // now refuse on the same rule before the leaves lock (assertSequencePackageable),
+  // so this is the re-check at the irreversible step; the claim is released
+  // because nothing was sent.
+  const { assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
+  const gaps = assembledTransmitBlockers(assembled);
+  if (gaps.length > 0) {
+    await assembled.cleanup();
+    await releaseTransmitSlot(sequenceId, ctx.organizationId);
+    throw new SubmissionError(
+      'DISPATCH_BLOCKED',
+      `Transmit blocked — ${gaps.join('; ')}. A transmitted sequence must carry every placed leaf, and only approved documents.`,
+    );
+  }
+
   let result;
   try {
     result = await gw.transmit({
@@ -974,6 +1390,14 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
         actorUserId: ctx.userId,
       },
     });
+  } catch (err) {
+    // The guard refused before handing anything to the gateway: nothing was
+    // sent, so the claim is released and the sequence stays transmittable.
+    // Any other failure may have reached the agency and is left for a human.
+    // 2026-09-23 (W5/D7).
+    const { refusedBeforeWire } = await import('../submission-gateways/index');
+    if (refusedBeforeWire(err)) await releaseTransmitSlot(sequenceId, ctx.organizationId);
+    throw err;
   } finally {
     // The gateway has consumed the bundle bytes (or failed); either way the
     // staged temp package is no longer needed.
@@ -981,6 +1405,10 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   }
 
   const dispatchStatus = toDispatchStatus(result.status);
+  // null = the guard reported nothing (never read as "all passed"). The one
+  // reduction the governed transmit records too (2026-09-23, W5/D7, round-2
+  // review) — it used to be computed inline here only.
+  const preTransmit = preTransmitFindings(result);
   await applySequenceChangeWithAudit(
     {
       // Predicated on the claim taken before the wire: this row is the one that
@@ -990,6 +1418,10 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
       // resolve, not 'pending', which silently invited a second send.
       text: `UPDATE ectd_sequences SET dispatch_status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 AND dispatch_status = $4`,
       params: [dispatchStatus, sequenceId, ctx.organizationId, TRANSMITTING_STATUS],
+      noRowsRefusal:
+        `Sequence ${sequenceId} was no longer the in-flight transmit when the result came back; ` +
+        `its dispatch status was resolved by something else. The package WAS handed to the gateway — ` +
+        `confirm at the agency before any further action.`,
     },
     {
       organizationId: ctx.organizationId,
@@ -1004,6 +1436,10 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
         status: result.status,
         environment,
         signatureActionId,
+        // The package checks that FAILED without blocking, and the guard's
+        // warnings, on the §11.10(e) record of the send (2026-09-22, W5/D7).
+        preTransmitFailedChecks: preTransmit.failedChecks,
+        preTransmitWarnings: preTransmit.warnings,
       },
     },
   );
@@ -1017,6 +1453,8 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     transmissionId: result.transmissionId,
     status: result.status,
     dispatchStatus,
+    preTransmitFailedChecks: preTransmit.failedChecks,
+    preTransmitWarnings: preTransmit.warnings,
   };
 }
 
@@ -1312,6 +1750,75 @@ async function verifyLeafSource(
 export type UpsertedLeaf = SubmissionLeaf & { auditTrail: AuditRowOutcome };
 
 /** Create or update a leaf placement. Refuses if the parent sequence is locked. */
+/**
+ * The section-code vocabulary this sequence's leaves are judged against, read
+ * from its submission's `applicationType`.
+ *
+ * Fails SAFE, not open: a submission row that cannot be read gives `ctd`, the
+ * strictest vocabulary and the one every submission in this product uses
+ * today. A lookup failure must never widen what may be written into a package.
+ */
+async function placementVocabularyForSequence(
+  seq: EctdSequence,
+  ctx: { organizationId: number },
+): Promise<PlacementVocabulary> {
+  const rows = await db
+    .select({ applicationType: submissions.applicationType })
+    .from(submissions)
+    .where(and(eq(submissions.id, seq.submissionId), eq(submissions.organizationId, ctx.organizationId)))
+    .limit(1);
+  // Defensive destructure rather than `const [row] =`: this read only decides
+  // how STRICT the code gate is, and a shape it did not expect must narrow to
+  // `ctd`, never throw a placement away.
+  const applicationType = Array.isArray(rows) ? rows[0]?.applicationType : undefined;
+  return vocabularyForApplicationType(applicationType ?? null);
+}
+
+/** A transaction handle from `db.transaction` — what a locked leaf write runs on. */
+type LeafWriteTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * Run a leaf write in one transaction holding the sequence row lock
+ * (SELECT … FOR UPDATE) — the lock the governed freeze/dispatch takes before
+ * its compare-and-set — and re-check, UNDER that lock, that the sequence is not
+ * frozen or dispatched.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic). upsertLeaf and removeLeaf read the
+ * status, then did several more round-trips (vocabulary, tenancy, parent),
+ * then wrote with no lock, so a freeze that committed in between left a leaf
+ * written into (or taken out of) a frozen sequence; and a write landing while
+ * the freeze gate assembled was frozen unjudged. With both sides taking this
+ * lock, a leaf write either commits before the freeze's lock — and the freeze
+ * sees the changed leaf-manifest digest and refuses — or waits for it, and
+ * then sees 'frozen' here and refuses. Both interleavings are exercised on two
+ * real Postgres connections in __tests__/freeze-gate-row-lock.pg.test.ts.
+ *
+ * 2026-09-23 (W5/D7, round-2 skeptic, second pass): this serializes the leaf
+ * writers that go through it — upsertLeaf and removeLeaf — and no others.
+ * 2026-09-23 (W5/D7, residual repair): ingestion-service's classifyDocument,
+ * which inserted into submission_leaves directly (no status check, no lock),
+ * now places through upsertLeaf and reports its refusal on the classification
+ * result, so the product has no leaf writer that bypasses this lock.
+ */
+async function lockSequenceForLeafWrite<T>(
+  sequenceId: number,
+  ctx: { organizationId: number },
+  write: (tx: LeafWriteTx) => Promise<T>,
+): Promise<T> {
+  return db.transaction(async (tx) => {
+    const locked = await tx.execute(sql`
+      SELECT status FROM ectd_sequences
+       WHERE id = ${sequenceId} AND organization_id = ${ctx.organizationId} AND deleted_at IS NULL
+       FOR UPDATE`);
+    const row = ((locked as unknown as { rows?: Array<{ status: string }> }).rows ?? [])[0];
+    if (!row) throw new SubmissionError('NOT_FOUND', 'Sequence not found for this organization.');
+    if (isSequenceLocked(row.status)) {
+      throw new SubmissionError('INVALID_STATE', `Sequence is ${row.status}; its leaves are immutable.`);
+    }
+    return write(tx);
+  });
+}
+
 export async function upsertLeaf(
   input: UpsertLeafInput,
   ctx: { organizationId: number; userId: number }
@@ -1341,16 +1848,25 @@ export async function upsertLeaf(
      was written (the IND checklist looks for `m1.1.1`), so canonicalising here
      would silently detach them from their own rows; the packager canonicalises
      when it derives the layout. */
-  const canonicalSection = normalizeCtdCode(input.sectionCode);
-  if (canonicalSection === null || !canonicalSection.includes('.')) {
-    // A bare module ('3') is a CONTAINER — m3-quality holds sub-headings, never
-    // leaves — so it is code-shaped and still not a place a document can go.
-    throw new SubmissionError(
-      'VALIDATION',
-      `Section code "${input.sectionCode}" does not name a CTD section a document can be filed at. ` +
-        `Use a CTD section code — for example 1.2, 2.7.3 or 3.2.S.4.2 — since it decides where the ` +
-        `document is filed in the package. A bare module number is a container, not a section.`,
-    );
+  /* WHICH vocabulary the code is judged against is a property of the
+     SUBMISSION TYPE, not of this function.
+
+     This gate ran `normalizeCtdCode` on every code, which is right for an eCTD
+     sequence and refused two whole submission types that do not file on CTD
+     headings: a 510(k) files on eSTAR sections, and an IRB package files on
+     artifact slots that are not numbered at all. The refusal read as a
+     validation error about a malformed code, so it looked like a caller bug
+     rather than a missing capability.
+
+     Each type is now judged against its own vocabulary, strictly — the CTD
+     branch is byte-for-byte the rule that was here, and an unknown or absent
+     application type resolves to `ctd`, so every existing caller behaves
+     exactly as before. A bare module ('3') is still a CONTAINER, never a
+     place a document can go. */
+  const vocabulary = await placementVocabularyForSequence(seq, ctx);
+  const verdict = validateSectionCode(input.sectionCode, vocabulary);
+  if (!verdict.ok) {
+    throw new SubmissionError('VALIDATION', verdict.message ?? `Section code "${input.sectionCode}" is not valid for this submission.`);
   }
 
   /* The leaf's document pointer is POLYMORPHIC — `document_table` is a plain
@@ -1446,7 +1962,9 @@ export async function upsertLeaf(
   }
 
   if (input.leafId) {
-    const [row] = await db
+    const leafId = input.leafId;
+    // Under the sequence row lock (2026-09-23, W5/D7, round-2 skeptic).
+    const [row] = await lockSequenceForLeafWrite(input.sequenceId, ctx, (tx) => tx
       .update(submissionLeaves)
       .set({
         sectionCode: input.sectionCode,
@@ -1469,12 +1987,12 @@ export async function upsertLeaf(
       })
       .where(
         and(
-          eq(submissionLeaves.id, input.leafId),
+          eq(submissionLeaves.id, leafId),
           eq(submissionLeaves.sequenceId, input.sequenceId),
           eq(submissionLeaves.organizationId, ctx.organizationId)
         )
       )
-      .returning();
+      .returning());
     if (!row) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
     // Part 11 §11.10(e). The UPDATE above is committed (and NOT_FOUND has already
     // been thrown if it matched nothing), so the re-placement is never undone
@@ -1491,7 +2009,8 @@ export async function upsertLeaf(
     return { ...(row as SubmissionLeaf), auditTrail };
   }
 
-  const [row] = await db
+  // Under the sequence row lock (2026-09-23, W5/D7, round-2 skeptic).
+  const [row] = await lockSequenceForLeafWrite(input.sequenceId, ctx, (tx) => tx
     .insert(submissionLeaves)
     .values({
       sequenceId: input.sequenceId,
@@ -1510,7 +2029,7 @@ export async function upsertLeaf(
       organizationId: ctx.organizationId,
       createdBy: ctx.userId,
     })
-    .returning();
+    .returning());
   // Part 11 §11.10(e), on the same terms as the update branch: the INSERT above
   // is committed, the placement stands, and the outcome rides out on the row.
   const auditTrail = await recordAuditRow({
@@ -1583,7 +2102,8 @@ export async function removeLeaf(
     );
   }
 
-  const [row] = await db
+  // Under the sequence row lock (2026-09-23, W5/D7, round-2 skeptic).
+  const [row] = await lockSequenceForLeafWrite(sequenceId, ctx, (tx) => tx
     .update(submissionLeaves)
     .set({ deletedAt: new Date(), updatedAt: new Date() })
     .where(
@@ -1594,7 +2114,7 @@ export async function removeLeaf(
         isNull(submissionLeaves.deletedAt)
       )
     )
-    .returning();
+    .returning());
   if (!row) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
 
   // Part 11 §11.10(e). The soft delete above is committed and is not reinstated

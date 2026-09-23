@@ -18,7 +18,7 @@
 import type { Server as SocketIOServer, Socket } from 'socket.io';
 
 import { createScopedLogger } from '../../utils/logger.js';
-import { verifyJwtWithRotation } from '../../utils/jwtVerify.js';
+import { verifyLiveToken } from '../token-revocation';
 import type { GatewayRequest } from '../ai-gateway/types.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import { selectToolsForTurn, type ToolSelectionContext } from './tool-selection.js';
@@ -168,17 +168,20 @@ export function registerAnaRealtime(io: SocketIOServer, runTurn: RunTurn = runAg
   const ns = io.of('/ana');
 
   ns.use((socket: AuthedSocket, next) => {
-    try {
-      const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-      if (!token) return next(new Error('Missing bearer token'));
-      const decoded = verifyJwtWithRotation(token as string) as { organizationId?: unknown; userId?: unknown };
-      if (!decoded?.organizationId || !decoded?.userId) return next(new Error('Invalid token claims'));
-      socket.orgId = String(decoded.organizationId);
-      socket.authUserId = String(decoded.userId);
-      next();
-    } catch {
-      next(new Error('Invalid token'));
-    }
+    void (async () => {
+      try {
+        const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+        if (!token) return next(new Error('Missing bearer token'));
+        // A signed-out session opens no AnA socket (AUTH-03).
+        const decoded = (await verifyLiveToken(token as string)) as { organizationId?: unknown; userId?: unknown };
+        if (!decoded?.organizationId || !decoded?.userId) return next(new Error('Invalid token claims'));
+        socket.orgId = String(decoded.organizationId);
+        socket.authUserId = String(decoded.userId);
+        next();
+      } catch {
+        next(new Error('Invalid token'));
+      }
+    })();
   });
 
   ns.on('connection', (socket: AuthedSocket) => {

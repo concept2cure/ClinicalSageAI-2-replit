@@ -24,6 +24,20 @@ vi.mock('../../../db', () => ({
   pool: { query: (...args: unknown[]) => queryMock(...args) },
 }));
 
+/**
+ * The CMC → artifact-spine resolution, stated per case.
+ *
+ * The Module 3 branch asks this BEFORE querying concept2cure_artifacts,
+ * because the artifact query joins through projects.regulatory_program_id and
+ * therefore cannot match for a program with no anchor however much has been
+ * compiled. Mocked rather than exercised so each case below says which of the
+ * three spine states it is testing.
+ */
+const resolveSpineMock = vi.fn();
+vi.mock('../../../services/cmc/resolve-cmc-artifact-project.js', () => ({
+  resolveCmcArtifactProject: (...args: unknown[]) => resolveSpineMock(...args),
+}));
+
 import createProjectVaultRoutes from '../project-vault';
 
 const PROJECT = '11111111-2222-3333-4444-555555555555';
@@ -57,7 +71,12 @@ function seedBase() {
 const folders = (body: any): Record<string, any> =>
   Object.fromEntries((body?.data?.tree ?? []).map((f: any) => [f.id, f]));
 
-beforeEach(() => queryMock.mockReset());
+beforeEach(() => {
+  queryMock.mockReset();
+  resolveSpineMock.mockReset();
+  // Anchored is the normal state; a case that tests otherwise says so.
+  resolveSpineMock.mockResolvedValue({ state: 'linked', artifactProjectId: 42, via: 'program-anchor' });
+});
 
 describe('GET /api/c2c/project-vault/:id — derived branches', () => {
   it('lists CMC-compiled Module 3 artifacts organized by CTD section', async () => {
@@ -153,6 +172,61 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
       expect.objectContaining({ branch: 'Uploaded files' }),
       expect.objectContaining({ branch: 'Data room' }),
     ]);
+  });
+
+  it('reports an UNANCHORED program as unavailable, not as a missing Module 3 branch', async () => {
+    // The defect: `module3Branch` returned null for two different facts — "this
+    // program is anchored and nothing is filed" and "this program has no
+    // PM-spine anchor, so the registry cannot be asked about it at all" — and
+    // the surface rendered both as no Module 3 section. A user with a compiled,
+    // approved and placed Module 3 saw an empty data room and concluded nothing
+    // had been compiled. CLAUDE.md: an error is never rendered as an empty
+    // result.
+    seedBase();
+    resolveSpineMock.mockResolvedValue({
+      state: 'unanchored',
+      artifactProjectId: null,
+      detail:
+        'This program has no PM-spine anchor (projects.regulatory_program_id), so the governed ' +
+        'artifact registry cannot be addressed for it.',
+    });
+    queryMock
+      .mockResolvedValueOnce({ rows: [] }) // uploads
+      .mockResolvedValueOnce({ rows: [{ total: '0', unfiled: '0' }] }) // upload counts
+      .mockResolvedValueOnce({ rows: [] }); // data-room sources
+
+    const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
+
+    expect(res.status).toBe(200);
+    expect(folders(res.body)['m3-cmc']).toBeUndefined();
+    expect(res.body.data.unavailable).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          branch: 'Module 3 (CMC)',
+          reason: expect.stringContaining('no PM-spine anchor'),
+        }),
+      ]),
+    );
+  });
+
+  it('an ANCHORED program with nothing filed yet is an honest empty, not an unavailable', async () => {
+    // The other side of the same discrimination: "addressable, and nothing
+    // there" must NOT be reported as a store that cannot be reached, or the
+    // notice would cry wolf on every new project.
+    seedBase();
+    queryMock
+      .mockResolvedValueOnce({ rows: [] }) // M3 artifacts: anchored, none filed
+      .mockResolvedValueOnce({ rows: [] }) // uploads
+      .mockResolvedValueOnce({ rows: [{ total: '0', unfiled: '0' }] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
+
+    expect(res.status).toBe(200);
+    expect(folders(res.body)['m3-cmc']).toBeUndefined();
+    expect(
+      (res.body.data.unavailable ?? []).some((u: { branch: string }) => u.branch === 'Module 3 (CMC)'),
+    ).toBe(false);
   });
 
   it('a real failure in a branch is still a failure — not silently degraded', async () => {

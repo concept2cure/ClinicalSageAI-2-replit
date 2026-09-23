@@ -453,36 +453,66 @@ for (const [id, label, varName, module] of [
 // ── 3. Agency credentials ───────────────────────────────────────────────────
 
 for (const gw of GATEWAY_CREDENTIALS) {
-  const missing = missingVars(gw.vars);
+  // W5 2026-09-20 (B16): FDA ESG has a second transport option. With
+  // FDA_ESG_TRANSPORT=rest the gateway reads the REST (NextGen) variables, and
+  // even fully provisioned it REFUSES to transmit (UnverifiedTransportError)
+  // until the NextGen wire contract is verified in FDA's UAT — so that
+  // configuration is reported blocked, with the reason, never ready.
+  const esgTransport = gw.key === 'fda:esg' ? (process.env.FDA_ESG_TRANSPORT ?? 'as2').trim().toLowerCase() : null;
+  const restSelected = esgTransport === 'rest';
+  const vars = restSelected
+    ? ['FDA_ESG_REST_URL', 'FDA_ESG_REST_CLIENT_ID', 'FDA_ESG_REST_CLIENT_SECRET', 'FDA_ESG_REST_SUBMITTER_ID']
+    : gw.vars;
+  const missing = missingVars(vars);
+  const badTransport = esgTransport !== null && esgTransport !== 'as2' && esgTransport !== 'rest';
   record({
     id: `gateway:${gw.key}`,
     group: 'Agency gateway credentials (production)',
-    label: gw.label,
-    status: missing.length === 0 ? 'ready' : 'blocked',
+    label: restSelected ? `${gw.label} — transport: rest (NextGen)` : gw.label,
+    status: missing.length === 0 && !restSelected && !badTransport ? 'ready' : 'blocked',
     // Only FDA ESG is on a GA critical path; the rest are per-market expansion.
     severity: gw.key === 'fda:esg' ? 'blocker' : 'advisory',
-    observed: missing.length === 0 ? `all ${gw.vars.length} credential vars set` : `missing: ${missing.join(', ')}`,
+    observed: badTransport
+      ? `FDA_ESG_TRANSPORT='${esgTransport}' is not 'as2' or 'rest'; the gateway refuses every transmit as a configuration error`
+      : missing.length === 0
+        ? (restSelected
+            ? `all ${vars.length} REST credential vars set — but the ESG NextGen wire contract is unverified; transmit raises UnverifiedTransportError (transmitted:false) until FDA UAT completes`
+            : `all ${vars.length} credential vars set`)
+        : `missing: ${missing.join(', ')}`,
     gate: 'server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()',
     owner: 'Regulatory Ops (agency account) + Ops (secrets manager)',
-    unblock: 'Register with the agency, obtain the credentials, load them into the production secrets manager.',
+    unblock: restSelected
+      ? 'Set FDA_ESG_TRANSPORT=as2 with the AS2 credentials for the verified path, or complete the ESG NextGen REST UAT and replace transmitViaNextGenRest in fda-esg.ts.'
+      : 'Register with the agency, obtain the credentials, load them into the production secrets manager.',
   });
 }
 
 {
+  // W5 2026-09-20 (runbook B7): the transport client IS implemented now —
+  // transmitIcsr attempts the real AS2 (shared as2-transport) or HTTPS Basic
+  // call whenever a gateway is configured, and refuses (typed) otherwise. This
+  // row therefore reads like the other credential rows: present ⇒ ready.
   const url = isSet('ICSR_GATEWAY_URL');
-  const creds = isSet('ICSR_GATEWAY_PASSWORD') || isSet('ICSR_GATEWAY_CERT_PATH');
+  const cert = isSet('ICSR_GATEWAY_CERT_PATH');
+  const password = isSet('ICSR_GATEWAY_PASSWORD');
+  const protocol = (process.env.ICSR_GATEWAY_PROTOCOL ?? '').trim().toLowerCase() || (cert ? 'as2' : 'https');
+  const needed = protocol === 'as2'
+    ? ['ICSR_GATEWAY_URL', 'ICSR_GATEWAY_USERNAME', 'ICSR_GATEWAY_CERT_PATH', 'ICSR_GATEWAY_KEY_PATH', 'ICSR_GATEWAY_AS2_TO']
+    : ['ICSR_GATEWAY_URL', 'ICSR_GATEWAY_USERNAME', 'ICSR_GATEWAY_PASSWORD'];
+  const missing = missingVars(needed);
   record({
     id: 'icsr-gateway',
     group: 'Agency gateway credentials (production)',
     label: 'E2B(R3) ICSR gateway',
-    status: 'blocked',
+    status: missing.length === 0 ? 'ready' : 'blocked',
     severity: 'advisory',
     observed:
-      `ICSR_GATEWAY_URL ${url ? 'set' : 'not set'}, credentials ${creds ? 'set' : 'not set'} — ` +
-      'NOTE: credentials alone do not unblock this; the transport client itself is not implemented',
-    gate: 'server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — throws "transport client is not implemented" whenever a gateway IS configured',
-    owner: 'Engineering (build the AS2/SFTP client) + Regulatory Ops (credentials)',
-    unblock: 'Implement the ICSR transport client, THEN provision ICSR_GATEWAY_URL + password/cert.',
+      `ICSR_GATEWAY_URL ${url ? 'set' : 'not set'}, credentials ${cert || password ? 'set' : 'not set'} ` +
+      `(protocol ${protocol}) — ` +
+      (missing.length === 0 ? `all ${needed.length} vars set` : `missing: ${missing.join(', ')}`),
+    gate: 'server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — configured ⇒ real AS2/HTTPS call (transmitted only on an accepting 2xx); unconfigured ⇒ IcsrGatewayNotConfiguredError in production',
+    owner: 'Regulatory Ops (agency gateway account + AS2 identity/certs) + Ops (secrets manager)',
+    unblock: 'Provision ICSR_GATEWAY_URL + (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_CERT_PATH, ICSR_GATEWAY_KEY_PATH, ICSR_GATEWAY_AS2_TO) for AS2, or (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD) for an HTTPS upload endpoint; then round-trip one ICSR in the agency test environment.',
   });
 }
 
@@ -644,6 +674,136 @@ for (const f of ENFORCEMENT_FLAGS) {
   });
 }
 
+// ── 5b. AI governance ───────────────────────────────────────────────────────
+
+/*
+ * Performance qualification for the models that may serve high-risk regulatory
+ * drafting. `docs/LAUNCH_DEFINITION_OF_DONE.md`: "Only models with a passed PQ
+ * … are approved for high-risk regulatory drafting. For launch that is Claude
+ * Opus 5 (primary) and one validated fallback." D4 lists it as owed.
+ *
+ * Read from the registry source as text, the same way the eSTAR rows read
+ * estar-field-map.ts: this probe runs under plain node and must not need a TS
+ * loader. If the source cannot be parsed the row says so and is NOT ready — an
+ * unreadable registry is not a qualified one.
+ */
+{
+  const src = readFile('server/services/ai-governance/approved-models.ts');
+  const entries = [];
+  if (src) {
+    for (const chunk of src.split(/\n\s+id: '/).slice(1)) {
+      const id = chunk.slice(0, chunk.indexOf("'"));
+      const approved = /\n\s+approvedForHighRisk: true,/.test(chunk);
+      const pqMatch = chunk.match(/\n\s+pq: \{ status: '([a-z]+)', reference: (null|'([^']*)') \}/);
+      const pinned = (chunk.match(/\n\s+pinnedVersion: '([^']+)'/) ?? [])[1] ?? null;
+      let pq = pqMatch ? pqMatch[1] : null;
+      let note = '';
+      /* A "passed" claim counts only if the record it cites says so — the same
+         rules as verifyPqClaim in server/eval/pq/pq-verdict.ts, which is the
+         canonical check and runs in CI. Repeated here because this probe runs
+         under plain node, and a green dashboard row on a claim CI would reject
+         is the thing this report exists not to be. */
+      if (pq === 'passed') {
+        const ref = pqMatch[3] ?? null;
+        let rec = null;
+        try {
+          rec = ref ? JSON.parse(readFile(ref) ?? 'null') : null;
+        } catch {
+          rec = null;
+        }
+        const ok =
+          rec?.kind === 'pq-record' &&
+          rec.modelId === id &&
+          rec.pinnedVersion === pinned &&
+          rec.verdict === 'PASS' &&
+          rec.protocolStatus === 'approved';
+        if (!ok) {
+          pq = 'unverified';
+          note = ref ? ` (claims passed; ${ref} does not support it)` : ' (claims passed; cites no record)';
+        }
+      }
+      if (/\n\s+approvedForHighRisk: (true|false),/.test(chunk)) entries.push({ id, approved, pq, note });
+    }
+  }
+  /**
+   * The gold bank measured against the protocol's own sample floor, rather
+   * than asserted. This line used to read "the seed has 4", which stopped
+   * being true the moment the bank was expanded and would have sent the next
+   * session to re-do finished work — the failure the CLAUDE.md working
+   * agreement describes. Counted the way run-pq.ts counts: generation tasks
+   * carrying an input, because a task with no input is never given to a model
+   * and so does not raise the floor.
+   */
+  function goldBankState() {
+    const floorLine = 'a gold bank at the protocol floor';
+    try {
+      const protocol = JSON.parse(readFile('server/eval/pq/pq-protocol.json') ?? 'null');
+      const bank = JSON.parse(readFile('server/eval/doc-quality/gold-tasks.json') ?? 'null');
+      const floor = protocol?.components?.generation?.criteria?.minTasksPerDocType;
+      const tasks = Array.isArray(bank?.tasks) ? bank.tasks : null;
+      if (typeof floor !== 'number' || !tasks) return floorLine;
+      const counts = new Map();
+      for (const t of tasks) {
+        if (t?.taskType !== 'generation') continue;
+        if (typeof t.input !== 'string' || !t.input.trim()) continue;
+        counts.set(t.docType, (counts.get(t.docType) ?? 0) + 1);
+      }
+      const short = [...counts].filter(([, n]) => n < floor);
+      return short.length
+        ? `${floorLine} (${floor}+ generation tasks per document type; below it: ${short.map(([d, n]) => `${d}=${n}`).join(', ')})`
+        : `the gold bank reaches the protocol floor of ${floor} per document type (${[...counts].map(([d, n]) => `${d}=${n}`).join(', ')}) — done`;
+    } catch {
+      return floorLine;
+    }
+  }
+
+  /**
+   * Which required PQ components still cannot execute, read from the protocol
+   * rather than listed here. Same reason as goldBankState: this line named "a
+   * live extraction path" after extraction became executable, and a dashboard
+   * that keeps naming finished work sends the next session to redo it.
+   */
+  function unexecutableComponentsState() {
+    try {
+      const protocol = JSON.parse(readFile('server/eval/pq/pq-protocol.json') ?? 'null');
+      const components = protocol?.components;
+      if (!components || typeof components !== 'object') return 'the components that cannot execute yet';
+      const blocked = Object.entries(components)
+        .filter(([, c]) => c?.required && !c?.executable)
+        .map(([name]) => name);
+      return blocked.length
+        ? `the required component(s) that still cannot execute: ${blocked.join(', ')}`
+        : 'every required component can execute';
+    } catch {
+      return 'the components that cannot execute yet';
+    }
+  }
+
+  const approved = entries.filter((e) => e.approved);
+  const passed = approved.filter((e) => e.pq === 'passed');
+  const primaryPassed = passed.some((e) => e.id === 'claude-opus-4');
+  const ok = primaryPassed && passed.length >= 2;
+  record({
+    id: 'high-risk-model-pq',
+    group: 'AI governance',
+    label: 'PQ executed for the models approved for high-risk drafting (Opus 5 + one fallback)',
+    status: ok ? 'ready' : 'blocked',
+    severity: 'blocker',
+    observed:
+      approved.length === 0
+        ? 'could not read approvedForHighRisk from server/services/ai-governance/approved-models.ts — treated as not qualified'
+        : `${passed.length} of ${approved.length} approved model(s) have a passed PQ: ` +
+          approved.map((e) => `${e.id}=${e.pq ?? 'unknown'}${e.note}`).join(', '),
+    gate:
+      'server/services/ai-gateway/gateway.ts approvedForTask — only approvedForHighRisk models serve document_drafting / regulatory_review, at primary, fallback and explicit selection; PQ status in approved-models.ts',
+    owner: 'Engineering (execute the PQ) + Ops (a product provider key)',
+    unblock:
+      'System owner approves server/eval/pq/pq-protocol.json (it is draft; a PQ against unapproved criteria cannot PASS). Engineering: ' +
+      `${goldBankState()}; ${unexecutableComponentsState()}. ` +
+      'Ops: a product ANTHROPIC_API_KEY. Then `npm run pq:run -- --model claude-opus-4 --record` and cite the record as pq.reference — verifyPqClaim refuses anything but a PASS for that exact pinned version.',
+  });
+}
+
 // ── 6. Observability & operational posture ──────────────────────────────────
 
 record({
@@ -679,19 +839,34 @@ record({
 }
 
 {
-  const pii = flag('AI_PII_ENFORCEMENT') || 'audit (default)';
-  const grounded = flag('AI_GROUNDEDNESS_ENFORCE');
-  const ok = pii === 'block' && (grounded === '1' || grounded === 'true');
+  // Resolved the way the PRODUCTION boot resolves it (2026-09-20): unset is
+  // strict for both gates; an explicit permissive value refuses to boot unless
+  // AI_GOVERNANCE_ACCEPT_PERMISSIVE=true records the accepted risk. This row
+  // therefore reads the configured values through that rule, not the raw text.
+  const piiRaw = (flag('AI_PII_ENFORCEMENT') || '').toLowerCase();
+  const piiConfigured = ['off', 'audit', 'block'].includes(piiRaw) ? piiRaw : undefined;
+  const groundedRaw = flag('AI_GROUNDEDNESS_ENFORCE') || '';
+  const groundedOff = ['0', 'false', 'off'].includes(groundedRaw.toLowerCase());
+  const accepted = (flag('AI_GOVERNANCE_ACCEPT_PERMISSIVE') || '').toLowerCase() === 'true';
+  const piiPermissive = piiConfigured !== undefined && piiConfigured !== 'block';
+  const permissive = piiPermissive || groundedOff;
   record({
     id: 'ai-governance-posture',
     group: 'Observability & operational posture',
-    label: 'AI content-safety gates (AI_PII_ENFORCEMENT=block, AI_GROUNDEDNESS_ENFORCE=1)',
-    status: ok ? 'ready' : 'blocked',
+    label: 'AI content-safety gates strict in production (AI_PII_ENFORCEMENT=block, AI_GROUNDEDNESS_ENFORCE=1)',
+    status: permissive ? 'blocked' : 'ready',
     severity: 'advisory',
-    observed: `AI_PII_ENFORCEMENT="${pii}", AI_GROUNDEDNESS_ENFORCE="${grounded || '(unset)'}"`,
-    gate: 'server/startup/ai-governance-posture.ts assertAiGovernancePostureForProduction (fails closed only under AI_GOVERNANCE_REQUIRE_ENFORCE=true)',
+    observed:
+      `AI_PII_ENFORCEMENT="${piiConfigured ?? `${piiRaw || '(unset)'} → block (production default)`}", ` +
+      `AI_GROUNDEDNESS_ENFORCE="${groundedRaw || '(unset → enforced, production default)'}"` +
+      (permissive
+        ? accepted
+          ? ' — permissive, accepted via AI_GOVERNANCE_ACCEPT_PERMISSIVE=true (boots with a warning)'
+          : ' — permissive and NOT accepted: production REFUSES TO BOOT on this configuration'
+        : ''),
+    gate: 'server/startup/ai-governance-posture.ts assertAiGovernancePostureForProduction (production default strict; explicit permissive refuses to boot without AI_GOVERNANCE_ACCEPT_PERMISSIVE=true; AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses regardless)',
     owner: 'Ops + AI governance owner',
-    unblock: 'Set both gates to enforcing before any real-PHI tenant; then set AI_GOVERNANCE_REQUIRE_ENFORCE=true so the posture is boot-checked.',
+    unblock: 'Unset or set strict both gates and clear AI_GOVERNANCE_ACCEPT_PERMISSIVE; then set AI_GOVERNANCE_REQUIRE_ENFORCE=true so the posture cannot regress.',
   });
 }
 

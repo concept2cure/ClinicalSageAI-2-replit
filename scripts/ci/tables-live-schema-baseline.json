@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-18T20:45:44.972Z",
   "liveRelationCount": 1282,
   "referencedCount": 752,
-  "count": 47,
+  "count": 42,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"

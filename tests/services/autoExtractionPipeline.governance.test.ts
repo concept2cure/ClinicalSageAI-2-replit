@@ -44,16 +44,26 @@ async function waitForStatus(
 describe('autoExtractionPipeline governed artifact enforcement', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // The classifier's reply in the shape its prompt asks for:
+    // { metadata, sections, entities }. It was a flat object, which the
+    // pipeline read as documentType 'Other'. Since f15be97 an unreadable
+    // classification fails the job ("classification reply had no metadata"),
+    // so that fixture stopped this test before the governed-storage refusal it
+    // exists to pin.
     mockAiChat.mockResolvedValue({
       content: JSON.stringify({
-        documentType: 'evidence_memo',
-        submissionModule: null,
-        therapeuticArea: null,
-        compoundName: null,
-        studyId: null,
-        phase: null,
-        language: 'en',
-        confidence: 0.9,
+        metadata: {
+          documentType: 'evidence_memo',
+          submissionModule: null,
+          therapeuticArea: null,
+          compoundName: null,
+          studyId: null,
+          phase: null,
+          language: 'en',
+          regulatoryContext: null,
+        },
+        sections: [],
+        entities: [],
       }),
     });
     mockResolveGovernedContext.mockReturnValue({

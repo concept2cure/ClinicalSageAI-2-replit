@@ -51,10 +51,13 @@ export type {
   RunControlStatus,
   UseAnaChatReturn,
   DriveSseEvent,
+  DriveTurnControls,
+  AnaSendOptions,
   AnaProgressPhase,
 } from './useAnaChat.types';
 
 import { advanceProgress, closeProgress, settleRunningCalls, CLIENT_PHASE_LABELS } from './anaProgress';
+import { getAnaLockedScreens } from './anaLockedScreens';
 
 import type {
   AnaChatAction,
@@ -70,6 +73,8 @@ import type {
   RunControlStatus,
   UseAnaChatReturn,
   DriveSseEvent,
+  DriveTurnControls,
+  AnaSendOptions,
 } from './useAnaChat.types';
 
 
@@ -277,7 +282,13 @@ export function hydrateToolTrace(
     const label = typeof t.label === 'string' && t.label ? t.label : toolLabel(name);
     const humanStep = label.charAt(0).toLowerCase() + label.slice(1);
     if (t.status === 'success') {
-      calls.push({ name, label, status: 'success' });
+      // The persisted result summary rides along as the call's `result`: it
+      // is the server's capped copy of what the tool returned, and it is how
+      // a reopened thread still knows which authoring document a
+      // draft_authoring_document step produced (ConversationThread reads the
+      // ids out of it). Absent when the trace carried none.
+      const result = typeof t.resultSummary === 'string' && t.resultSummary ? t.resultSummary : undefined;
+      calls.push({ name, label, status: 'success', ...(result ? { result } : {}) });
     } else if (t.status === 'not_found') {
       calls.push({
         name,
@@ -303,6 +314,18 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const [isLoadingThread, setIsLoadingThread] = useState(false);
   const threadIdRef = useRef<string | null>(options.initialThreadId || null);
   const abortRef = useRef<AbortController | null>(null);
+  /* The latest options, read by `send` at call time. `send` is memoized and
+     its dependency list had drifted from what its body reads — `driveMode` and
+     `selectedSourceIds` were missing — so a demonstration started while Live
+     Drive was already on was sent as an ordinary turn (3 moves, then silence).
+     Reading through a ref makes that class of drift impossible. */
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+  /* True while the in-flight turn is DRIVING the screen (it received an
+     enabled `drive_state`). Such a turn is not aborted when the hosting panel
+     unmounts — its first navigation is what unmounts it — and it reports its
+     end to the shell so the drive is released. */
+  const drivingRef = useRef(false);
   // Live mirror of isStreaming for send()'s re-entrancy guard. The state value
   // is a render-time snapshot: a caller that aborts (reset/stop) and re-sends
   // in the same tick would be wrongly no-opped by the stale closure — the
@@ -386,12 +409,23 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     }
     abortRef.current?.abort();
   }, [control]);
+  const stopRef = useRef(stop);
+  stopRef.current = stop;
 
   // Abort any in-flight stream when the hosting panel unmounts — otherwise the
   // fetch keeps the connection (and the server-side generation) alive until
   // completion or the idle timeout.
+  //
+  // Except a turn that is driving the screen. AnA moving the person to another
+  // screen is what unmounts a panel that owns its conversation, and aborting
+  // there killed every driven turn at its first move: the screen changed once,
+  // the answer stopped mid-sentence and the server closed the run as
+  // `client_disconnected`. A driving turn runs to its end — its moves keep
+  // reaching the shell through `onDriveEvent` — and Take over / Stop still end
+  // it on request.
   useEffect(() => {
     return () => {
+      if (drivingRef.current) return;
       abortRef.current?.abort();
     };
   }, []);
@@ -490,10 +524,20 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     async (
       rawText: string,
       attachments?: MessageAttachment[],
-      sendOpts?: { toolsOverride?: string[] },
+      sendOpts?: AnaSendOptions,
     ) => {
+      // Read at call time, never from the memoized closure (see optionsRef).
+      const options = optionsRef.current;
       const text = rawText.trim();
       if (!text || isStreamingRef.current) return;
+      drivingRef.current = false;
+      // Handed to the shell with every drive event (see DriveTurnControls).
+      const driveControls: DriveTurnControls = {
+        stop: () => {
+          void stopRef.current?.();
+        },
+        interject: (message: string) => control('interject', message),
+      };
 
       const sentAt = Date.now();
       const userMsg: AnaChatMessage = {
@@ -686,11 +730,20 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         model_override: options.modelOverride ?? undefined,
         // Live Drive opt-in — sent only while the toggle is on, so the common
         // case stays byte-identical and the server does zero extra work.
-        live_drive: options.liveDrive === true ? true : undefined,
+        // Screens closed to this person (launch scope, plan, grants) — AnA's
+        // self-drive tools refuse them instead of moving onto a locked panel.
+        locked_screens: (() => {
+          const locked = getAnaLockedScreens();
+          return locked.length > 0 ? locked : undefined;
+        })(),
+        live_drive: (sendOpts?.liveDrive ?? options.liveDrive) === true ? true : undefined,
         // Demonstration mode rides only on opted-in turns (the server ignores
         // it otherwise), so a stale mode can never outlive the toggle.
         drive_mode:
-          options.liveDrive === true && options.driveMode === 'demo' ? 'demo' : undefined,
+          (sendOpts?.liveDrive ?? options.liveDrive) === true &&
+          (sendOpts?.driveMode ?? options.driveMode) === 'demo'
+            ? 'demo'
+            : undefined,
       });
 
       let streamedText = '';
@@ -705,7 +758,21 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         });
 
         if (!res.ok || !res.body) {
-          throw new Error(`Stream request failed: ${res.status}`);
+          /* Carry the server's own reason. A 503 GATEWAY_UNAVAILABLE means the
+             deployment has no AI provider configured — nothing about the
+             network or the user's connection — and the message below must
+             say that, not "unreachable". */
+          let code: string | undefined;
+          try {
+            const j = (await res.clone().json()) as { error?: { code?: string } };
+            code = j?.error?.code;
+          } catch {
+            /* not JSON: keep the status-only error */
+          }
+          const e = new Error(`Stream request failed: ${res.status}`) as Error & { code?: string; status?: number };
+          e.code = code;
+          e.status = res.status;
+          throw e;
         }
 
         const reader = res.body.getReader();
@@ -991,8 +1058,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // applies (v2/liveDrive.ts + v2/surfaceActions.ts). A listener
               // throw must not kill the stream: the turn's answer matters more
               // than the drive.
+              if (event.type === 'drive_state') drivingRef.current = event.enabled === true;
               try {
-                options.onDriveEvent?.(event as DriveSseEvent);
+                options.onDriveEvent?.(event as DriveSseEvent, driveControls);
               } catch {
                 /* listener error — drive skips, stream continues */
               }
@@ -1131,11 +1199,32 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               const title: string = event.title || 'Generated document';
               const content: string = event.content || '';
               const documentType: string | undefined = event.documentType;
-              if (content) {
+              // A draft persisted as an authoring document carries its id and
+              // program (docs/design/ANA_DOCUMENT_CANVAS.md); the thread reads
+              // the document itself from the authoring store, so such a draft
+              // is recorded even when the event carries no inline content.
+              const authoringDocId: string | undefined =
+                typeof event.authoringDocId === 'string' && event.authoringDocId.trim()
+                  ? event.authoringDocId.trim()
+                  : undefined;
+              const programId: string | undefined =
+                typeof event.programId === 'string' && event.programId.trim()
+                  ? event.programId.trim()
+                  : undefined;
+              if (content || authoringDocId) {
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
-                      ? { ...m, generatedDraft: { title, content, documentType } }
+                      ? {
+                          ...m,
+                          generatedDraft: {
+                            title,
+                            content,
+                            documentType,
+                            ...(authoringDocId ? { authoringDocId } : {}),
+                            ...(programId ? { programId } : {}),
+                          },
+                        }
                       : m
                   )
                 );
@@ -1277,7 +1366,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 text:
                   m.text.length > 0
                     ? m.text
-                    : 'AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved.',
+                    : (err as { code?: string } | undefined)?.code === 'GATEWAY_UNAVAILABLE'
+                      ? 'No AI provider is configured for this deployment, so AnA cannot answer. This is a server setting, not your connection. Prior turns are preserved.'
+                      : 'AnA is unreachable — the network or the AI gateway did not respond. Prior turns are preserved.',
                 streaming: false,
                 statusPhase: undefined,
                 completedAt: Date.now(),
@@ -1289,6 +1380,16 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         }
       } finally {
         clearIdleTimer();
+        // A driving turn tells the shell it is over, whichever way it ended —
+        // the shell cannot see another chat instance's streaming state.
+        if (drivingRef.current && abortRef.current === abortCtl) {
+          drivingRef.current = false;
+          try {
+            options.onDriveEvent?.({ type: 'drive_turn_end' }, driveControls);
+          } catch {
+            /* listener error — the drive is released on the next turn anyway */
+          }
+        }
         // Only clean up if this stream still owns the shared refs: an aborted
         // stream's finally runs asynchronously, and by then a replacement
         // send() may already be live — clobbering its controller/flags would

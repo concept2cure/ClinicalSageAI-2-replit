@@ -92,6 +92,12 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'pdev', label: 'Program Development (PDEV→IND)', description: 'The PDEV → IND workflow surface. May be feature-gated.', scope: 'global', group: 'global' },
   { id: 'deep-research', label: 'Deep Research', description: 'The full-screen deep-research chat surface.', scope: 'global', group: 'global' },
   { id: 'apps', label: 'Apps', description: 'The specialist-tools launcher (precedent intelligence, biostatistics, report engine, etc.).', scope: 'global', group: 'global' },
+  // The two Part 11 surfaces the catalog never gates (21 CFR §11.10(e)) —
+  // shell surfaces in shared/constants/launch-scope.ts. Registered here so a
+  // demonstration can end where a regulator would start: at the record of
+  // every governed act. Read-only screens; nothing here signs or changes.
+  { id: 'audit-trail', label: 'Audit trail', description: 'The tenant audit trail — the hash-chained record of every governed act, with the server verdict on the chain.', scope: 'global', group: 'global' },
+  { id: 'part11-console', label: 'Part 11 console', description: 'How 21 CFR Part 11 compliance is evidenced: signer modes, signature manifestations and the audit-chain verifier.', scope: 'global', group: 'global' },
   {
     id: 'artifacts-center', label: 'Artifacts Center', description: 'The cross-project artifacts center.', scope: 'global', group: 'global',
     // Declared because it is already CONSUMED (the surface focuses/scrolls to
@@ -217,6 +223,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   },
   { id: 'change-assessment', label: 'Change assessment', description: 'The 510(k)-change / MDR significant-change worklist with FDA and EU determinations.', scope: 'global', group: 'module' },
   { id: 'doc-journey', label: 'Document journey', description: 'A document’s lifecycle rail — the read-only reconstruction of its real audit trail.', scope: 'global', group: 'module' },
+  { id: 'dispatch-readiness', label: 'Dispatch readiness', description: 'The deterministic dispatch gate for the open program’s newest sequence: validation errors, unacknowledged shadow-review criticals and the release signature, each a named blocker until it is cleared.', scope: 'project', group: 'module' },
   { id: 'ectd-publishing', label: 'eCTD publishing reference', description: 'Spec versions and controlled vocabularies — read-only; nothing here publishes, transmits, or freezes a sequence.', scope: 'global', group: 'module' },
   { id: 'inconsistency', label: 'Inconsistency board', description: 'The cross-document inconsistency submission gate for the project in context (fails closed).', scope: 'project', group: 'module' },
   { id: 'intelligence-catalog', label: 'Capability catalog', description: 'The catalog of AnA’s deterministic tools, filterable by name.', scope: 'global', group: 'module' },
@@ -225,7 +232,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'program-journey', label: 'Program journey', description: 'The end-to-end program arc — nine stages with readiness and blockers.', scope: 'global', group: 'module' },
   { id: 'pyramid', label: 'Submission pyramid', description: 'The submission work-breakdown pyramid — phases, tasks and critical path per submission type.', scope: 'global', group: 'module' },
   { id: 'authoring-engine', label: 'Authoring engine', description: 'What the authoring engine is built to do per document type — capability reference, no program data.', scope: 'global', group: 'module' },
-  { id: 'orchestration', label: 'Orchestration', description: 'Workflow runs, human-in-the-loop approval gates, and dispatch readiness.', scope: 'global', group: 'module' },
+  { id: 'orchestration', label: 'Orchestration', description: 'Workflow runs and human-in-the-loop approval gates.', scope: 'global', group: 'module' },
   { id: 'usage', label: 'Usage', description: 'The org\'s real-time usage metering — API calls, storage, seats, against plan limits.', scope: 'global', group: 'module' },
   { id: 'billing', label: 'Billing', description: 'The org\'s billing and invoices — plan, payment method, and invoice history.', scope: 'global', group: 'module' },
   { id: 'report-governance', label: 'Report governance', description: 'The sealed-report lifecycle — integrity verification, provenance, seal and revoke ceremonies.', scope: 'global', group: 'module' },

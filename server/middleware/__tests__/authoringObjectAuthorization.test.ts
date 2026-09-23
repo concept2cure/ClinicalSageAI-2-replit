@@ -218,6 +218,32 @@ describe('mandatory authoring object authorization middleware', () => {
     expect(editRes.statusCode).toBe(403);
   });
 
+  it('classes /docs/:id/e-sign as an approval action, so a FROZEN document can be signed (VSR-001 F-12)', async () => {
+    // A signature binds to the frozen snapshot, so the route only makes sense
+    // on a FROZEN document. actionFromPath matched `sign` as a whole segment
+    // only; the segment here is `e-sign`, which fell through to `edit` and was
+    // refused as an edit of an immutable document — no signature could ever be
+    // applied. Revert-proven: this case fails with the old alternatives list.
+    installQueryBehavior({ status: 'FROZEN', roles: ['APPROVER'] });
+    const approver = { ...author, id: 'approver-user', userId: 'approver-user', email: 'approver@example.com' };
+
+    const signReq = request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/e-sign`, user: approver });
+    const signRes = response();
+    const signNext = vi.fn();
+    await authoringObjectAuthorization(signReq, signRes, signNext);
+    expect(signNext).toHaveBeenCalledOnce();
+
+    // The same caller with no approval grant is still refused: the fix widens
+    // the action class, not who may act.
+    installQueryBehavior({ status: 'FROZEN', roles: ['REVIEWER'] });
+    const deniedReq = request({ method: 'POST', path: `/authoring/docs/${DOC_ID}/e-sign`, user: approver });
+    const deniedRes = response();
+    const deniedNext = vi.fn();
+    await authoringObjectAuthorization(deniedReq, deniedRes, deniedNext);
+    expect(deniedNext).not.toHaveBeenCalled();
+    expect(deniedRes.statusCode).toBe(403);
+  });
+
   it('blocks content mutation after the document becomes immutable', async () => {
     installQueryBehavior({ status: 'APPROVED', roles: ['OWNER', 'AUTHOR'] });
     const req = request({

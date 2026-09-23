@@ -1,0 +1,1 @@
+tsc (npx tsc --noEmit -p tsconfig.json), filtered to files touched by W3b: no diagnostics. 2026-09-20.

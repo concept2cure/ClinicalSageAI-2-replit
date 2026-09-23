@@ -1,0 +1,42 @@
+{
+  "$comment": "The performance-qualification protocol a model must pass to be approved for high-risk regulatory drafting. DRAFT until the system owner approves it: a PQ run against unapproved acceptance criteria cannot produce a PASS, by construction in server/eval/pq/pq-verdict.ts. Every criterion names where its value came from; none was chosen for this file.",
+  "protocolId": "PQ-DRAFT-001",
+  "title": "Performance qualification of a model for high-risk regulatory drafting",
+  "version": "0.1.0",
+  "status": "draft",
+  "approvedBy": null,
+  "approvedOn": null,
+  "basis": "docs/LAUNCH_DEFINITION_OF_DONE.md: 'Only models with a passed PQ against server/eval/rag/ and server/eval/doc-quality/ are approved for high-risk regulatory drafting.' No validation document defined drafting PQ criteria before this file: docs/validation/VMP-001 section 2 puts model PQ out of scope, and the registry cited docs/validation/PQ-CORTEX-001 PQ-007/008, which measure pathway-prediction accuracy and 'regulatory intuition' for a different product, not drafting.",
+  "components": {
+    "generation": {
+      "required": true,
+      "executable": true,
+      "harness": "server/eval/doc-quality/gold-tasks.json, generation tasks that carry an input; scored by server/eval/doc-quality/doc-quality-metrics.ts scoreGenerationTask",
+      "criteria": {
+        "minSectionCoverage": 0.85,
+        "maxForbiddenHits": 0,
+        "minTasksPerDocType": 10
+      },
+      "criteriaSource": "server/eval/doc-quality/README.md: '--min-coverage 0.85' (the documented CI gate), 'a hard fail on any forbidden/overclaim phrase', and '10+ tasks per docType' to make per-document-type accuracy publishable."
+    },
+    "extraction": {
+      "required": true,
+      "executable": true,
+      "criteria": {
+        "minF1": 0.8
+      },
+      "criteriaSource": "server/eval/doc-quality/README.md: '--min-f1 0.8'.",
+      "harness": "server/eval/doc-quality/gold-tasks.json, extraction tasks that carry an input and expectedFields; the pinned model is asked directly by server/eval/pq/run-pq.ts (buildExtractionPrompt) and scored by doc-quality-metrics scoreExtractionTask. It is deliberately NOT routed through a per-document-type extraction service: that would measure the service and whichever model it selects, which is the attribution failure the rag component is still blocked on."
+    },
+    "rag": {
+      "required": true,
+      "executable": false,
+      "notExecutableReason": "server/services/ragRouter.ts ragQuery takes no model parameter — the answer is generated inside the RAG pipeline by whatever it selects — so a RAG run cannot be attributed to the model under qualification. It also needs a populated corpus (ENABLE_CORPUS_INGESTION is off; see ga-readiness-report 'Precedent corpus ingestion sweep'), and its faithfulness judge (server/eval/rag/run-eval.ts) is itself an unpinned model.",
+      "criteria": {
+        "minHitRate": 0.6,
+        "minFaithfulness": 0.7
+      },
+      "criteriaSource": "server/eval/rag/README.md: '--min-hit-rate 0.6 --min-faithfulness 0.7   # gate CI'."
+    }
+  }
+}

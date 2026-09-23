@@ -1,0 +1,131 @@
+[
+  {
+    "name": "00-login-demo-access",
+    "urlPath": "/concept2cure/login",
+    "file": "00-login-demo-access.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › Biotech & Pharma › Home Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run a command ⌘K Tas"
+  },
+  {
+    "name": "01-projects",
+    "urlPath": "/concept2cure/projects",
+    "file": "01-projects.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › Biotech & Pharma › Projects Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run a command ⌘K"
+  },
+  {
+    "name": "02-project-home",
+    "urlPath": "/concept2cure/project-home",
+    "file": "02-project-home.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › Biotech & Pharma › Project home Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run a comman"
+  },
+  {
+    "name": "03-vault",
+    "urlPath": "/concept2cure/vault",
+    "file": "03-vault.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › Biotech & Pharma › Vault (DMS) Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run a command"
+  },
+  {
+    "name": "04-authoring",
+    "urlPath": "/concept2cure/document-authoring",
+    "file": "04-authoring.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › Biotech & Pharma › Document editor & authoring Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, "
+  },
+  {
+    "name": "04b-authoring-all-status",
+    "urlPath": "/concept2cure/document-authoring",
+    "file": "04b-authoring-all-status.png",
+    "missing": [
+      "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101",
+      "[Demo · Biotech] IB Summary of Data and Guidance for the Investigator — C2C-101"
+    ],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › Biotech & Pharma › Document editor & authoring Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, "
+  },
+  {
+    "name": "05-review-board",
+    "urlPath": "/concept2cure/review",
+    "file": "05-review-board.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › Biotech & Pharma › Review & approval Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run a c"
+  },
+  {
+    "name": "06-protocol-dev",
+    "urlPath": "/concept2cure/protocol-dev",
+    "file": "06-protocol-dev.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › Biotech & Pharma › Protocol development Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run "
+  },
+  {
+    "name": "07-submission-center",
+    "urlPath": "/concept2cure/submission-center",
+    "file": "07-submission-center.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › Biotech & Pharma › Submission center Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run a c"
+  },
+  {
+    "name": "07b-submission-center-sequence-0000",
+    "urlPath": "/concept2cure/submission-center",
+    "file": "07b-submission-center-sequence-0000.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › Biotech & Pharma › Submission center Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run a c"
+  },
+  {
+    "name": "08-dispatch-readiness",
+    "urlPath": "/concept2cure/dispatch-readiness",
+    "file": "08-dispatch-readiness.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › › Dispatch readiness Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run a command ⌘K Task 4"
+  },
+  {
+    "name": "09-quality-sop-register",
+    "urlPath": "/concept2cure/quality",
+    "file": "09-quality-sop-register.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › › Quality & Assurance Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run a command ⌘K Task "
+  },
+  {
+    "name": "09b-quality-change-control",
+    "urlPath": "/concept2cure/quality",
+    "file": "09b-quality-change-control.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › › Quality & Assurance Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run a command ⌘K Task "
+  },
+  {
+    "name": "10-audit-trail",
+    "urlPath": "/concept2cure/audit-trail",
+    "file": "10-audit-trail.png",
+    "missing": [],
+    "browser429": 0,
+    "pageErrors": [],
+    "textSample": "CLIENT CATEGORIES WORKSPACE SCIENCE & INTELLIGENCE EXPLORE QUICK ACCESS JS Concept2Cure.RI › Admin › Audit trail Biotech & Pharma CT Concept2Cure Therapeutics Search, jump, or run a command ⌘K Task 4 "
+  }
+]

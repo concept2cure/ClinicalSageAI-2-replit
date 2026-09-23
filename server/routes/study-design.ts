@@ -5,6 +5,12 @@
  * authenticated, tenant-scoped request. Endpoints:
  *
  *   POST /validate   run the deterministic defensibility gates over a design (read-only)
+ *   POST /burden     participant burden + protocol complexity over the SoA (read-only)
+ *   POST /burden/compare  the burden delta an amendment introduces (read-only)
+ *   POST /eligibility  the eligibility criteria read as data: conflict assessment plus the
+ *                    registry eligibility block (read-only)
+ *   POST /registry-filing  what a registry filing needs and lacks, with its statutory
+ *                    clocks; the anchoring dates are caller-supplied (read-only)
  *   POST /simulate   run the seeded synthetic-twin outcome simulation; the prior can be
  *                    grounded in this tenant's prior CSRs (`useCsrEvidence`)
  *   POST /persist    upsert the design onto the CDISC PRM tables; a governed mutation —
@@ -12,6 +18,15 @@
  *   GET  /           list this tenant's persisted designs
  *   GET  /:studyId   load one design with its current defensibility report
  *   DELETE /:studyId remove a design (governed mutation)
+ *
+ * Every projection is served twice, in one shape: `POST /<name>` projects a design carried in
+ * the body, and `GET /:studyId/<name>` projects a design this tenant has persisted. Both are
+ * built by `projectionPost` / `projectionRoute` below rather than copied per projection, so a
+ * new projection cannot ship a second design loader, a different 404, or no 404 at all —
+ * `loadStudyDesign(studyId, orgId)` is the one loader and it is tenant-scoped.
+ *
+ * Reading an assessment is not a governed action, so none of these records one: they compute
+ * over the design and change nothing.
  *
  * Validation is intentionally light at the edge (the request must look like a design);
  * the real, citeable validation is the gate engine, which runs inside the handlers.
@@ -33,6 +48,9 @@ import {
   projectAllRegistrations,
   projectCrfShell,
   projectSap,
+  assessEligibility,
+  projectRegistryEligibility,
+  buildRegistryFiling,
   buildEffectPrior,
   gatherCsrEffectEvidence,
   persistStudyDesignTx,
@@ -43,7 +61,11 @@ import {
   type StudyDesign,
   type EffectPrior,
   type EvidenceObservation,
+  type PlacedRecord,
+  type RegistryFilingContext,
 } from '../services/study-design';
+import { burdenProfileForDesign } from '../services/study-design/burden-adapters';
+import { compareBurden } from '../services/study-design/burden-delta';
 
 const router = Router();
 
@@ -252,52 +274,10 @@ router.post('/sample-size', async (req: Request, res: Response) => {
   }
 });
 
-// ─── POST /protocol (project the design as an ICH M11 protocol) ───────────────
-
-router.post('/protocol', (req: Request, res: Response) => {
-  const orgId = resolveOrgId(req);
-  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
-  const design = parseDesign(req, res);
-  if (!design) return;
-  try {
-    return res.json({ protocol: projectProtocol(design) });
-  } catch (err: any) {
-    console.error('[study-design/protocol]', err?.message);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-});
-
-// ─── POST /sap (project the design as a SAP skeleton) ─────────────────────────
-
-router.post('/sap', (req: Request, res: Response) => {
-  const orgId = resolveOrgId(req);
-  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
-  const design = parseDesign(req, res);
-  if (!design) return;
-  try {
-    return res.json({ sap: projectSap(design) });
-  } catch (err: any) {
-    console.error('[study-design/sap]', err?.message);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-});
-
-// ─── POST /schedule-of-activities (project the design's SoA grid) ─────────────
-
-router.post('/schedule-of-activities', (req: Request, res: Response) => {
-  const orgId = resolveOrgId(req);
-  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
-  const design = parseDesign(req, res);
-  if (!design) return;
-  try {
-    return res.json({ scheduleOfActivities: projectScheduleOfActivities(design) });
-  } catch (err: any) {
-    console.error('[study-design/soa]', err?.message);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-});
-
-// ─── POST /registration (project the design as a registry record) ────────────
+// ─── Projection responses ─────────────────────────────────────────────────────
+//
+// One function per projection, returning exactly what the engine returns, under a named key.
+// `projectionPost` and `projectionRoute` below turn each into its POST and its GET route.
 
 /** Resolve the requested registry and project the matching record(s). */
 function registrationResponse(design: StudyDesign, registry: unknown): Record<string, unknown> {
@@ -307,33 +287,194 @@ function registrationResponse(design: StudyDesign, registry: unknown): Record<st
   return { registrations: projectAllRegistrations(design) };
 }
 
-router.post('/registration', (req: Request, res: Response) => {
+/**
+ * The structured eligibility engine, verbatim: its conflict assessment and its registry
+ * eligibility block. `projectRegistryEligibility` is given no recorded facts, because
+ * `StudyDesign.population` carries none — so sex and healthy-volunteer eligibility come back
+ * absent, each naming the field that would settle it, rather than guessed from criterion text.
+ */
+function eligibilityResponse(design: StudyDesign): Record<string, unknown> {
+  const criteria = design.population?.eligibility ?? [];
+  return { assessment: assessEligibility(criteria), registryEligibility: projectRegistryEligibility(criteria) };
+}
+
+const filingContextSchema = z.object({
+  isApplicableClinicalTrial: z.boolean().nullish(),
+  firstEnrollmentDate: z.string().nullish(),
+  primaryCompletionDate: z.string().nullish(),
+  endOfTrialDate: z.string().nullish(),
+  asOfDate: z.string().nullish(),
+});
+
+const placedSchema = z.array(
+  z.object({ slot: z.string().min(1), leafId: z.number().int(), title: z.string(), resolvable: z.boolean() }),
+);
+
+const registryFilingBodySchema = z.object({
+  registry: z.string().optional(),
+  context: filingContextSchema.optional(),
+  placed: placedSchema.optional(),
+});
+
+/** Only the literal `true` / `false` are read. Anything else, absent included, stays unrecorded. */
+function booleanParam(raw: unknown): boolean | undefined {
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  return undefined;
+}
+
+function stringParam(raw: unknown): string | undefined {
+  return typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : undefined;
+}
+
+/**
+ * The filing context a GET carries in its query string. An absent or unreadable value is left
+ * ABSENT: `registry-filing.ts` then reports the obligation `undetermined` and names the field
+ * that would settle it. That is the point of the engine — an absence is never read as a "no".
+ */
+function filingContextFromQuery(q: Request['query']): RegistryFilingContext {
+  return {
+    isApplicableClinicalTrial: booleanParam(q.isApplicableClinicalTrial),
+    firstEnrollmentDate: stringParam(q.firstEnrollmentDate),
+    primaryCompletionDate: stringParam(q.primaryCompletionDate),
+    endOfTrialDate: stringParam(q.endOfTrialDate),
+    asOfDate: stringParam(q.asOfDate),
+  };
+}
+
+/**
+ * What a registry filing needs, and what it lacks, for the requested registry.
+ *
+ * `placed` is what the CALLER states has been placed against the registry slots; this route
+ * looks nothing up, so an empty list means "none was supplied", not "none is placed". That
+ * errs toward unsatisfied rows, which is the safe direction: the engine reports what a record
+ * contains and what it lacks, and never that one reached a registry.
+ */
+function registryFilingResponse(
+  design: StudyDesign,
+  registry: unknown,
+  ctx: RegistryFilingContext,
+  placed: readonly PlacedRecord[],
+): Record<string, unknown> {
+  const which = String(registry ?? 'both').toLowerCase();
+  if (which === 'ctgov') return { registryFiling: buildRegistryFiling(projectRegistration(design, 'ctgov'), ctx, placed) };
+  if (which === 'ctis') return { registryFiling: buildRegistryFiling(projectRegistration(design, 'ctis'), ctx, placed) };
+  const both = projectAllRegistrations(design);
+  return {
+    registryFilings: {
+      ctgov: buildRegistryFiling(both.ctgov, ctx, placed),
+      ctis: buildRegistryFiling(both.ctis, ctx, placed),
+    },
+  };
+}
+
+// ─── The two read-only route shapes ───────────────────────────────────────────
+
+type ProjectFromDesign = (design: StudyDesign, req: Request) => Record<string, unknown>;
+
+/** `POST /<path>` — project a design carried in the request body. Read-only, so ungoverned. */
+function projectionPost(path: string, tag: string, project: ProjectFromDesign): void {
+  router.post(`/${path}`, (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+    const design = parseDesign(req, res);
+    if (!design) return;
+    try {
+      return res.json(project(design, req));
+    } catch (err: any) {
+      console.error(`[study-design/${tag}]`, err?.message);
+      return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    }
+  });
+}
+
+/**
+ * `GET /:studyId/<path>` — project a design this tenant has persisted, with its current
+ * defensibility report. `loadStudyDesign` is the ONE loader and it is tenant-scoped, so a
+ * design another tenant owns is indistinguishable from one that does not exist: both 404.
+ * A missing design is never answered with an empty projection.
+ */
+function projectionRoute(path: string, tag: string, project: ProjectFromDesign): void {
+  router.get(`/:studyId/${path}`, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+    try {
+      const loaded = await loadStudyDesign(String(req.params.studyId), orgId);
+      if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
+      return res.json({ ...project(loaded.design, req), validation: loaded.validation });
+    } catch (err: any) {
+      console.error(`[study-design/${tag}]`, err?.message);
+      return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    }
+  });
+}
+
+// ─── POST /<projection> (project a design carried in the body) ────────────────
+
+projectionPost('protocol', 'protocol', d => ({ protocol: projectProtocol(d) }));
+projectionPost('sap', 'sap', d => ({ sap: projectSap(d) }));
+projectionPost('schedule-of-activities', 'soa', d => ({ scheduleOfActivities: projectScheduleOfActivities(d) }));
+projectionPost('burden', 'burden', d => ({ burden: burdenProfileForDesign(d) }));
+projectionPost('crf-shell', 'crf-shell', d => ({ crfShell: projectCrfShell(d) }));
+projectionPost('eligibility', 'eligibility', d => eligibilityResponse(d));
+projectionPost('registration', 'registration', (d, req) =>
+  registrationResponse(d, req.body?.registry ?? req.query.registry));
+
+// ─── POST /registry-filing ────────────────────────────────────────────────────
+//
+// Its own handler rather than a `projectionPost`, because the context and the placements are
+// caller-recorded facts: a malformed one is rejected, never quietly dropped into an absence
+// the engine would then report as `undetermined`.
+
+router.post('/registry-filing', (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
   const design = parseDesign(req, res);
   if (!design) return;
+  const params = registryFilingBodySchema.safeParse(req.body ?? {});
+  if (!params.success) {
+    return res.status(400).json({ error: 'INVALID_PARAMS', details: params.error.issues });
+  }
   try {
-    return res.json(registrationResponse(design, req.body?.registry ?? req.query.registry));
+    const { registry, context, placed } = params.data;
+    return res.json(registryFilingResponse(design, registry ?? req.query.registry, context ?? {}, placed ?? []));
   } catch (err: any) {
-    console.error('[study-design/registration]', err?.message);
+    console.error('[study-design/registry-filing]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
 
-// ─── POST /crf-shell (project the design as a blank CRF set) ───────────────────
+// ─── POST /burden/compare (the burden delta between two designs) ─────────────
+//
+// Read-only. The amendment question: what did this change do to the participant.
+// Body: { before: <design>, after: <design> }.
 
-router.post('/crf-shell', (req: Request, res: Response) => {
+router.post('/burden/compare', (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
-  const design = parseDesign(req, res);
-  if (!design) return;
+  const before = designSchema.safeParse(req.body?.before);
+  const after = designSchema.safeParse(req.body?.after);
+  const issues = [
+    ...(before.success ? [] : before.error.issues),
+    ...(after.success ? [] : after.error.issues),
+  ];
+  if (!before.success || !after.success) {
+    return res.status(400).json({ error: 'INVALID_DESIGN', details: issues });
+  }
   try {
-    return res.json({ crfShell: projectCrfShell(design) });
+    const beforeProfile = burdenProfileForDesign(before.data as unknown as StudyDesign);
+    const afterProfile = burdenProfileForDesign(after.data as unknown as StudyDesign);
+    return res.json({
+      before: beforeProfile,
+      after: afterProfile,
+      delta: compareBurden(beforeProfile, afterProfile),
+    });
   } catch (err: any) {
-    console.error('[study-design/crf-shell]', err?.message);
+    console.error('[study-design/burden-compare]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
+
 
 // ─── POST /persist (governed mutation) ────────────────────────────────────────
 
@@ -392,88 +533,19 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// ─── GET /:studyId/protocol (load + project) ──────────────────────────────────
+// ─── GET /:studyId/<projection> (load + project) ──────────────────────────────
+//
+// Read-only, one per projection, all through `projectionRoute`: one loader, one 404.
 
-router.get('/:studyId/protocol', async (req: Request, res: Response) => {
-  const orgId = resolveOrgId(req);
-  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
-  const studyId = String(req.params.studyId);
-  try {
-    const loaded = await loadStudyDesign(studyId, orgId);
-    if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
-    return res.json({ protocol: projectProtocol(loaded.design), validation: loaded.validation });
-  } catch (err: any) {
-    console.error('[study-design/protocol-load]', err?.message);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-});
-
-// ─── GET /:studyId/sap (load + project) ───────────────────────────────────────
-
-router.get('/:studyId/sap', async (req: Request, res: Response) => {
-  const orgId = resolveOrgId(req);
-  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
-  const studyId = String(req.params.studyId);
-  try {
-    const loaded = await loadStudyDesign(studyId, orgId);
-    if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
-    return res.json({ sap: projectSap(loaded.design), validation: loaded.validation });
-  } catch (err: any) {
-    console.error('[study-design/sap-load]', err?.message);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-});
-
-// ─── GET /:studyId/schedule-of-activities (load + project) ────────────────────
-
-router.get('/:studyId/schedule-of-activities', async (req: Request, res: Response) => {
-  const orgId = resolveOrgId(req);
-  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
-  const studyId = String(req.params.studyId);
-  try {
-    const loaded = await loadStudyDesign(studyId, orgId);
-    if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
-    return res.json({
-      scheduleOfActivities: projectScheduleOfActivities(loaded.design),
-      validation: loaded.validation,
-    });
-  } catch (err: any) {
-    console.error('[study-design/soa-load]', err?.message);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-});
-
-// ─── GET /:studyId/registration (load + project) ──────────────────────────────
-
-router.get('/:studyId/registration', async (req: Request, res: Response) => {
-  const orgId = resolveOrgId(req);
-  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
-  const studyId = String(req.params.studyId);
-  try {
-    const loaded = await loadStudyDesign(studyId, orgId);
-    if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
-    return res.json({ ...registrationResponse(loaded.design, req.query.registry), validation: loaded.validation });
-  } catch (err: any) {
-    console.error('[study-design/registration-load]', err?.message);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-});
-
-// ─── GET /:studyId/crf-shell (load + project) ─────────────────────────────────
-
-router.get('/:studyId/crf-shell', async (req: Request, res: Response) => {
-  const orgId = resolveOrgId(req);
-  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
-  const studyId = String(req.params.studyId);
-  try {
-    const loaded = await loadStudyDesign(studyId, orgId);
-    if (!loaded) return res.status(404).json({ error: 'NOT_FOUND' });
-    return res.json({ crfShell: projectCrfShell(loaded.design), validation: loaded.validation });
-  } catch (err: any) {
-    console.error('[study-design/crf-shell-load]', err?.message);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-});
+projectionRoute('protocol', 'protocol-load', d => ({ protocol: projectProtocol(d) }));
+projectionRoute('sap', 'sap-load', d => ({ sap: projectSap(d) }));
+projectionRoute('schedule-of-activities', 'soa-load', d => ({ scheduleOfActivities: projectScheduleOfActivities(d) }));
+projectionRoute('burden', 'burden-load', d => ({ burden: burdenProfileForDesign(d) }));
+projectionRoute('crf-shell', 'crf-shell-load', d => ({ crfShell: projectCrfShell(d) }));
+projectionRoute('eligibility', 'eligibility-load', d => eligibilityResponse(d));
+projectionRoute('registration', 'registration-load', (d, req) => registrationResponse(d, req.query.registry));
+projectionRoute('registry-filing', 'registry-filing-load', (d, req) =>
+  registryFilingResponse(d, req.query.registry, filingContextFromQuery(req.query), []));
 
 // ─── GET /:studyId (load) ─────────────────────────────────────────────────────
 

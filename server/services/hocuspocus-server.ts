@@ -67,7 +67,7 @@ import type { Duplex } from 'stream';
 import { WebSocketServer, type WebSocket } from 'ws';
 import * as Y from 'yjs';
 import { createScopedLogger } from '../utils/logger.js';
-import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { verifyLiveToken } from './token-revocation';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { checkOrgMembership, parseFiniteInt } from '../middleware/orgMembership';
 import { getTenantAccessPosture } from './tenant/tenant-lifecycle';
@@ -214,8 +214,14 @@ export async function authenticateCollabConnection({
   //    environment: an unverifiable token is not a user.
   let payload: CollabTokenClaims;
   try {
-    payload = verifyJwtWithRotation<CollabTokenClaims>(token);
-  } catch {
+    payload = await verifyLiveToken<CollabTokenClaims>(token);
+  } catch (err) {
+    // A signed-out session opens no editing session (AUTH-03), nor does the
+    // session of an account taken out of use since it was issued (F-29).
+    const ended = err as { name?: string; reason?: string };
+    if (ended?.name === 'SessionEndedError') {
+      throw denied(ended.reason === 'account-inactive' ? 'account-inactive' : 'session-ended');
+    }
     throw denied('invalid-token');
   }
 

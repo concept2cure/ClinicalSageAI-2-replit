@@ -1,0 +1,19 @@
+verify-audit-chain @ 2026-09-20T23:55:49.484Z
+verdict: OK
+
+audit.tamper_proof_log: OK
+  rows: 0
+  chainedRows: 0
+  signedRows: 0
+  secretSource: development-fallback (same value the writer used)
+  lastChainHash: 0000000000000000000000000000000000000000000000000000000000000000
+public.audit_logs: OK
+  rows: 0
+  chainedRows: 0
+  sealedRows: 0
+public.audit_events: OK
+  rows: 0
+  chainedRows: 0
+  unchainedRows: 0
+  sealedRows: 0
+exit=0

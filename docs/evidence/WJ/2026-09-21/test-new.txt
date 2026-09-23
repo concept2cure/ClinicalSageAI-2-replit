@@ -1,0 +1,109 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > ships both good and bad samples (a linter only seen passing has not been tested) 2ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-short-fact 4ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-three-paragraphs-one-bold-one-citation 3ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-user-asked-for-list 2ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-first-turn-greeting 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-tool-result-as-sentence 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-good-consequential-next-move 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-bad-memo-shape 1ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-bad-bold-table-reintroduction 1ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-bad-restates-filler-menu-long-paragraph 1ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > chat-bad-too-many-paragraphs 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written chat samples > classifies every chat sample as chat 1ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written artifact samples > artifact-good-section-draft 1ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written artifact samples > artifact-bad-chat-interjection 1ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — hand-written artifact samples > a chat-shaped memo is not mistaken for an artifact by one header 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > strips ana-grounding / ana-action blocks before measuring 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > counts a bold-only line as a header in disguise, not as bold 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > allows one bold term and flags the second 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > a genuinely enumerable list of three passes; a two-item list fails; the user asking for one passes 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > a greeting is a ritual after the first turn and a human reply on it 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > a consequential next move in prose is not a next-step ritual; a labelled block is 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > paragraph ceilings are configurable 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > score never goes below zero and deducts per violation 0ms
+ ✓ server/eval/register/__tests__/register-linter.test.ts > register linter — mechanics > summarizes a batch 1ms
+stdout | server/services/ana-ri/__tests__/response-register.test.ts
+{
+  "timestamp": "2026-09-21T17:51:24.673Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-21T17:51:24.675Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/response-register.test.ts
+{
+  "timestamp": "2026-09-21T17:51:24.675Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/response-register.test.ts
+[database] Database connection successful
+
+stdout | server/services/ana-ri/__tests__/response-register.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/response-register.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/response-register.test.ts
+{
+  "timestamp": "2026-09-21T17:51:26.307Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > composes chat, artifact and switch blocks, each headed once 2ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > states every chat-register rule the founder asked for 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > keeps the artifact register and the chat-voice-interjection rule 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > renders a tool result as a sentence plus the figures, never a section 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > response register — one definition > holds the voice floor itself (no exclamation, no emoji) 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > carries the register exactly once 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > carries the register under every role and lens overlay 13ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Structure responses with headers, bullets, and bold key terms" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Clear headers and section structure" 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Always greet users by name" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "offer 2-3 specific things you can help with" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "After every substantive response" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "suggest the logical next step" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Use bullet points heavily" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Structured responses with clear headings" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Greet them as \"" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "Don't just say hello back" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "give them a status check and a recommended next action" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## How to Communicate" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Conversation Style" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Momentum" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Formatting" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Your Voice" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Communication Principles" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "## Personality & Tone" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > does not contain the memo-forcing phrase "I don't see a specific document status" 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > has one formatting section: no second one survives in the core 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > has one tone section (ANA_PERSONALITY_CORE), not a duplicate in the core 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > keeps the substance the founder wants: warmth, project awareness, one-line risk flags, evidence 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > keeps every governance anchor the register refers to 0ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > stream path — orchestrate() prompt, what stream.ts sends > document-state behaviour still reaches the prompt — from the orchestrator, only when a status exists 2ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > cortex-unified: BASE_SYSTEM_PROMPT 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > ana-cortex: ANA_SYSTEM_PROMPT and ANA_COMPACT_PROMPT 1ms
+ ✓ server/services/ana-ri/__tests__/response-register.test.ts > the other AnA prompt stacks compose the same register, once > lumen-context-builder user-identity overlay no longer forces bullets, headings or a greeting 4ms
+
+ Test Files  2 passed (2)
+      Tests  58 passed (58)
+   Start at  17:51:22
+   Duration  5.23s (transform 3.37s, setup 151ms, import 5.00s, tests 60ms, environment 0ms)
+

@@ -180,10 +180,12 @@
   .ed-tree-row[data-blocker='true'] .ed-num {
     color: var(--error);
   }
+  /* 10px --text-400 on the tree's --bg-050 measures 4.43:1 — under the
+     floor, and at 10px there is no large-text exemption to fall back on. */
   .ed-num {
     font-family: var(--font-mono);
     font-size: 10px;
-    color: var(--text-400);
+    color: var(--text-300);
     min-width: 32px;
   }
   .ed-lbl {
@@ -235,6 +237,11 @@
     flex: 1 1 auto;
     min-width: var(--ed-crumbs-floor);
     white-space: nowrap;
+    /* `min-width` floors the track but nothing clipped what overflowed it, so
+       the trail kept painting past its box and the actions beside it printed
+       on top of the section number. It clips instead; `.doc-title` ellipses
+       first, so what is lost is the tail of the longest part. */
+    overflow: hidden;
   }
   .ed-crumbs .doc-title {
     min-width: 0;
@@ -401,10 +408,12 @@
     margin-bottom: 22px;
     border-bottom: 1px solid var(--border);
   }
+  /* --accent-200 for the same reason as .dcv-sec-num: --accent-100 is
+     2.96:1 on --bg-000 and this is 12px. */
   .ed-mast-num {
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--accent-100);
+    color: var(--accent-200);
     font-weight: 600;
   }
   .ed-mast-t {
@@ -1461,6 +1470,826 @@
     font-weight: 600;
     color: var(--text-200);
   }
+
+  /* ══ Document canvas · project files · review tasks (2026-09-21) ═══════════
+     The AnA document canvas in the conversation thread, the editor's workbench
+     chrome when it is mounted inside that canvas, and the two new rails
+     (Project files, Tasks). Tokens only; motion is 180ms ease-out on
+     opacity/transform and is removed under prefers-reduced-motion.
+     docs/design/ANA_DOCUMENT_CANVAS.md. */
+  /* ── The card ── */
+  .dcv {
+    margin-top: 4px;
+    min-width: 0;
+  }
+  .dcv-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 12px);
+    background: var(--bg-000);
+    padding: 16px 18px 14px;
+    display: grid;
+    gap: 12px;
+  }
+  .dcv-card[hidden] {
+    display: none;
+  }
+  .dcv-head {
+    display: grid;
+    gap: 4px;
+  }
+  .dcv-kind {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-400);
+  }
+  .dcv-kind svg {
+    width: 12px;
+    height: 12px;
+  }
+  .dcv-title {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-100);
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .dcv-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font-size: 12px;
+    color: var(--text-300);
+  }
+  .dcv-project {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+  }
+  .dcv-project svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+  .dcv-project-none {
+    color: var(--warning);
+  }
+  .dcv-prov {
+    font-size: 11.5px;
+    color: var(--text-400);
+  }
+  .dcv-prov[data-source='ana']::before {
+    content: '✻ ';
+    color: var(--accent-200);
+  }
+  .dcv-body {
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    display: grid;
+    gap: 14px;
+  }
+  .dcv-sec {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+  .dcv-sec-h {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  /* --accent-200, not --accent-100. The brand orange measures 2.96:1 on
+     --bg-000 (measured at 390px and 1440px, docs/evidence/CANVAS-POLISH/
+     2026-09-21/audit-light.json) and this is 12px text, so it failed 1.4.3
+     outright; --accent-200 is the same hue at 4.98:1 and is what
+     .ct-head-open and .ph-eyebrow already use for exactly this reason. */
+  .dcv-sec-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-200);
+  }
+  .dcv-sec-t {
+    font-family: var(--font-serif);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text-100);
+  }
+  .dcv-sec-body {
+    max-height: 380px;
+    overflow: hidden;
+    position: relative;
+    -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent);
+    mask-image: linear-gradient(to bottom, #000 82%, transparent);
+  }
+  .dcv[data-expanded] .dcv-sec-body,
+  .dcv-body:has(.dcv-showall[aria-expanded='true']) .dcv-sec-body {
+    max-height: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .dcv-sec-empty,
+  .dcv-empty {
+    font-size: 13px;
+    color: var(--text-400);
+    font-style: italic;
+    margin: 0;
+  }
+  .dcv-showall {
+    justify-self: start;
+  }
+  .dcv-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+  /* The four card actions were sized by an inline `height: 30` on each
+     button, which no stylesheet and therefore no breakpoint could reach. The
+     size lives here instead, so the phone block below can raise it. */
+  .dcv-actions .btn {
+    min-height: 32px;
+  }
+  .dcv-open-surface {
+    margin-left: auto;
+  }
+
+  /* ── The card, expanded into the editor ── */
+  .dcv-expanded {
+    border: 1px solid var(--accent-muted);
+    border-radius: var(--radius-lg, 12px);
+    background: var(--bg-000);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    /* The conversation keeps its composer below: the editor takes the
+       viewport minus the thread header and composer, never the whole page. */
+    height: clamp(520px, calc(100vh - 250px), 1080px);
+    animation: dc-open 180ms ease-out;
+  }
+  .dcv-expanded[hidden] {
+    display: none;
+  }
+  @keyframes dc-open {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dcv-expanded {
+      animation: none;
+    }
+  }
+  .dcv-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-050);
+    flex-shrink: 0;
+    min-width: 0;
+  }
+  .dcv-bar-t {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-100);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* --text-300, not --text-400: 11.5px --text-400 on --bg-050 measures
+     4.3:1, under the 4.5:1 floor. Same for the Esc hint below. */
+  .dcv-bar-p {
+    font-size: 12px;
+    color: var(--text-300);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dcv-bar-hint {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-300);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    flex-shrink: 0;
+  }
+  .dcv-workbench {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .dcv-workbench > .ed {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+  }
+  /* Inside a canvas the editor floats its rail over the document from a
+     narrower width than the surface does — the card is the conversation's
+     measure, not the page. */
+  @media (max-width: 1500px) {
+    .dcv-workbench > .ed[data-comments='true'] {
+      position: relative;
+      grid-template-columns: 220px minmax(0, 1fr);
+    }
+    .dcv-workbench > .ed[data-comments='true'] > .ed-comments {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(380px, 100%);
+      z-index: 5;
+      box-shadow: -8px 0 24px color-mix(in oklab, var(--black) 10%, transparent);
+    }
+  }
+  /* ══ Phone (≤760px) ════════════════════════════════════════════════════
+     Measured at 390×844 before any of this existed
+     (docs/evidence/CANVAS-POLISH/2026-09-21/): the conversation column was
+     0px wide, so the canvas was not on the screen at all; the card that did
+     render measured 185px; five of its strings were under 12px; its two link
+     actions were 17px tall; and the editor's toolbar ran 1,180px past the
+     right edge of a 390px screen. Each rule below is one of those.
+
+     760px, not 640px: the shell already treats ≤640 as "rail becomes a
+     drawer", but the conversation loses its reading measure well before
+     that — a 384px side dock beside a 768px measure needs 1,150px to be
+     two columns at all. */
+  @media (max-width: 760px) {
+    /* ── The conversation stacks ──
+       `.ct-main` is a flex ROW of `.ct-conv` (min-width:0) and `.ct-side`
+       (a fixed 384px dock). On a 390px screen the dock took the width and
+       the conversation was flexed to zero: the thread rendered, the canvas
+       rendered, and neither was visible. Stacked, the conversation keeps the
+       screen and the dock takes a capped share beneath it — nothing is
+       removed, so "Hide side panel" still means what it says.
+
+       These three selectors belong beside `.ct-side` in app-v2.css. They are
+       here because that file is another workstream's this week; the canvas
+       block already reaches into `.ct-wrap` for the same reason (below), and
+       both should move together when app-v2.css is next opened. */
+    .ct-main {
+      flex-direction: column;
+    }
+    .ct-conv {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .ct-side {
+      flex: 0 0 auto;
+      max-height: 38%;
+    }
+    .ct-side-work,
+    .ct-artifacts {
+      width: 100%;
+      border-left: 0;
+      border-top: 1px solid var(--border);
+    }
+    /* A turn's gutters cost 89px of a 334px column — 24px of column padding
+       each side, a 28px avatar and a 13px gap — which left the canvas card
+       185px wide. The reading measure is not the constraint at this width;
+       the screen is. */
+    .ct-col {
+      padding: 18px 14px 28px;
+    }
+    .ct-ana {
+      gap: 8px;
+    }
+    .ct-ana-av {
+      width: 22px;
+      height: 22px;
+      font-size: 12px;
+    }
+
+    /* ── The card ── */
+    .dcv-card {
+      padding: 14px 14px 12px;
+    }
+    /* 12px is the floor: five strings on this card were set between 10px and
+       11.5px, which is a size to glance at a number in, not to read a
+       provenance line in at arm's length. */
+    .dcv-kind,
+    .dcv-prov,
+    .dcv-sec-num,
+    .dcv-bar-p,
+    .dcv-bar-hint,
+    .dcv-showall,
+    .dcv-open-surface {
+      font-size: 12px;
+    }
+    /* 44×44 (WCAG 2.2 Target Size). The `.btn` actions were 30px tall by an
+       inline style and the two `.nda-open` links 17px — a link-shaped control
+       is still a control. `min-height` rather than `height`, so a label that
+       wraps still gets its second line. */
+    .dcv-actions .btn,
+    .dcv-actions .nda-open,
+    .dcv-showall,
+    .dcv-bar .ed-back {
+      min-height: 44px;
+      min-width: 44px;
+      justify-content: center;
+    }
+    .dcv-actions .btn,
+    .dcv-actions .nda-open {
+      flex: 1 1 auto;
+    }
+    /* Left-aligned, `margin-left:auto` sends it to its own row on a phone. */
+    .dcv-open-surface {
+      margin-left: 0;
+    }
+
+    /* ── The editor, expanded ── */
+    .dcv-expanded {
+      height: clamp(420px, calc(100vh - 210px), 900px);
+    }
+    .dcv-bar {
+      flex-wrap: wrap;
+      row-gap: 4px;
+    }
+    .dcv-bar-hint {
+      /* The keyboard hint is for a keyboard. There is not one here. */
+      display: none;
+    }
+    .dcv-workbench > .ed,
+    .dcv-workbench > .ed[data-comments='true'] {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+    .dcv-workbench > .ed > .ed-tree {
+      max-height: 180px;
+      border-right: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .dcv-workbench > .ed[data-comments='true'] > .ed-comments {
+      width: 100%;
+    }
+    /* ── The editor's own chrome at phone width ──
+       Not scoped to `.dcv-workbench`: this is the editor, and it is the same
+       editor on the Authoring surface. The measurements below were taken
+       inside the canvas at 390px because that is the state this change was
+       asked to prove, and they hold wherever `.ed` is mounted.
+
+       The header's action row stays the horizontal scroller it is on the
+       desktop. Wrapping it was tried and measured: eighteen controls became a
+       ten-row header 470px tall, which pushed the document off the screen and
+       left the rail overlaying the rows below it. A scroller keeps the
+       document where it is, and every control in it is still reached by Tab. */
+    .ed-doc-h {
+      --ed-crumbs-floor: 0px;
+      padding: 8px 12px;
+    }
+    .ed-doc-actions .btn,
+    .ed-doc-h .btn,
+    .ed-viewtoggle .btn {
+      min-height: 44px;
+    }
+    /* The outline tree: 96 rows at 26px each. */
+    .ed-tree-row {
+      min-height: 44px;
+    }
+    /* The rich-text toolbar's 22 icon buttons, its two selects, and the
+       inline link actions beside a section heading. */
+    .rse-rb,
+    .rse-sel,
+    .ed-doc .nda-open,
+    .ed-comments .nda-open {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    /* 12px floor on the editor chrome that sets its own smaller size. */
+    .ed-tree-m,
+    .ed-basis-chip,
+    .ed-basis-l,
+    .ed-basis-d,
+    .ed-num,
+    .ed-vol-l,
+    .ed-provline,
+    .rse-track,
+    .rse-save,
+    .rse-foot-sep,
+    .rse-foot,
+    .cmt-av,
+    .ed .nda-open,
+    .dcv .nda-open {
+      font-size: 12px;
+    }
+  }
+
+  /* The thread widens its reading measure while a canvas is expanded, so the
+     editor gets the conversation's full width. Attribute selector outranks
+     the measure rules in app-v2.css whatever the order. */
+  .ct-wrap[data-canvas-expanded='true'] .ct-col {
+    max-width: none;
+  }
+
+  /* ── Workbench chrome shared by both hosts ── */
+  .ed-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-200);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 5px 9px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .ed-back:hover {
+    background: var(--bg-100);
+    color: var(--text-100);
+  }
+  .ed-back svg {
+    width: 14px;
+    height: 14px;
+  }
+  .ed-program {
+    color: var(--text-200);
+    font-weight: 500;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 34ch;
+  }
+  .ed-provline {
+    font-size: 11.5px;
+    color: var(--text-400);
+    margin-top: 6px;
+  }
+  .ed-provline[data-source='ana']::before {
+    content: '✻ ';
+    color: var(--accent-100);
+  }
+
+  /* ── Project files rail ── */
+  .pf-search {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pf-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 6px 0;
+  }
+  .pf-count {
+    font-size: 11px;
+    color: var(--text-400);
+    padding: 4px 12px 6px;
+  }
+  .pf-folder {
+    display: block;
+    min-width: 0;
+  }
+  .pf-folder-h {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-200);
+  }
+  .pf-folder-h:hover {
+    background: var(--bg-100);
+  }
+  .pf-folder-h svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: var(--text-400);
+  }
+  .pf-folder-chev {
+    display: inline-flex;
+    transition: transform 150ms ease-out;
+  }
+  .pf-folder-chev[data-open] {
+    transform: rotate(90deg);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pf-folder-chev {
+      transition: none;
+    }
+  }
+  .pf-folder-l {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pf-folder-n {
+    font-size: 10.5px;
+    color: var(--text-400);
+    font-variant-numeric: tabular-nums;
+  }
+  .pf-folder-empty {
+    font-size: 11.5px;
+    color: var(--text-400);
+    padding: 2px 10px 6px;
+    font-style: italic;
+  }
+  .pf-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    padding: 6px 10px;
+    color: var(--text-100);
+  }
+  .pf-row:hover {
+    background: var(--bg-100);
+  }
+  .pf-row[data-active] {
+    background: color-mix(in srgb, var(--accent-100) 8%, transparent);
+  }
+  .pf-row-ic {
+    display: inline-flex;
+    color: var(--text-400);
+    flex-shrink: 0;
+  }
+  .pf-row-ic svg {
+    width: 14px;
+    height: 14px;
+  }
+  .pf-row-b {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 1px;
+  }
+  .pf-row-t {
+    font-size: 12.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pf-row-m {
+    font-size: 10.5px;
+    color: var(--text-400);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pf-sel {
+    border-top: 1px solid var(--border);
+    padding: 10px 12px;
+    display: grid;
+    gap: 6px;
+    background: var(--bg-050);
+    flex-shrink: 0;
+  }
+  .pf-sel-t {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-100);
+    overflow-wrap: anywhere;
+  }
+  .pf-sel-m {
+    font-size: 11.5px;
+    color: var(--text-400);
+    line-height: 1.5;
+  }
+  .pf-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 4px;
+  }
+  .pf-viewer {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .pf-viewer-h {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pf-viewer-t {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-100);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pf-viewer-hash {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-400);
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pf-viewer-frame {
+    flex: 1;
+    min-height: 320px;
+    width: 100%;
+    border: 0;
+    background: var(--bg-100);
+  }
+  .pf-viewer .pf-actions {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Review tasks rail ── */
+  .rt-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11.5px;
+    color: var(--text-400);
+  }
+  .rt-bar-n {
+    flex: 1;
+    min-width: 0;
+  }
+  .rt-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 12px;
+    display: grid;
+    gap: 8px;
+    align-content: start;
+  }
+  .rt-row {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md, 8px);
+    padding: 9px 11px;
+    display: grid;
+    gap: 4px;
+    background: var(--bg-000);
+  }
+  .rt-row[data-status='completed'] {
+    opacity: 0.8;
+  }
+  .rt-row-h {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .rt-row-t {
+    flex: 1;
+    min-width: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-100);
+    overflow-wrap: anywhere;
+  }
+  .rt-row-m {
+    font-size: 11.5px;
+    color: var(--text-400);
+    line-height: 1.5;
+  }
+  .rt-row-d {
+    font-size: 12px;
+    color: var(--text-200);
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .rt-row-a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-top: 2px;
+  }
+  .rt-row-id {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-400);
+    max-width: 14ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ══ Phone (≤760px) · the two rails and the two dialogs ═══════════════════
+     The rails and the dialogs are reached from both hosts — the canvas
+     (`.dcv`) and the Authoring surface — and both render them inside the
+     workbench root (`.ed`) or the canvas root, so the two roots are named
+     rather than the page. Measured at 390×844: the rails' rows were 10.5px
+     and 26px tall, and the dialogs' close control 30×30. */
+  @media (max-width: 760px) {
+    .pf-count,
+    .pf-folder-n,
+    .pf-folder-empty,
+    .pf-row-m,
+    .pf-sel-m,
+    .pf-viewer-hash,
+    .rt-bar,
+    .rt-row-m,
+    .rt-row-id {
+      font-size: 12px;
+    }
+    .pf-folder-h,
+    .pf-row {
+      min-height: 44px;
+    }
+    .pf-actions .btn,
+    .rt-row-a .btn,
+    .rt-row-a .nda-open {
+      min-height: 44px;
+    }
+    /* A 30×30 close control beside a full-height drawer. The footer's Cancel
+       is the other way out and is already large enough. */
+    .dcv .de-x,
+    .ed .de-x {
+      width: 44px;
+      height: 44px;
+    }
+    .dcv .de-btn,
+    .ed .de-btn {
+      min-height: 44px;
+    }
+    /* Radio and checkbox rows in the dialogs: the label is the target, so it
+       carries the height rather than the 13px control inside it. */
+    .dcv .de-field label,
+    .ed .de-field label {
+      min-height: 44px;
+    }
+    .dcv .c2c-input,
+    .ed .c2c-input {
+      min-height: 44px;
+    }
+    /* The drawer's own small type: the eyebrow is 10px, the field help 11px
+       and the governance note 11.5px. */
+    .dcv .de-h-eye,
+    .ed .de-h-eye,
+    .dcv .de-desc,
+    .ed .de-desc,
+    .dcv .de-gov-t,
+    .ed .de-gov-t {
+      font-size: 12px;
+    }
+    /* A 13px radio is the control; the 44px label around it is the target.
+       Enlarged anyway, so the control is not a speck inside its own row. */
+    .dcv .de-field input[type='radio'],
+    .ed .de-field input[type='radio'],
+    .dcv .de-field input[type='checkbox'],
+    .ed .de-field input[type='checkbox'] {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  /* The drawer's primary button is white on --accent-100: 3.12:1 at 13px,
+     under the 4.5:1 floor, in every drawer in the product. Corrected here for
+     the two this change owns — File to vault and Assign review, both of which
+     render inside the canvas or the workbench — with the same token pair
+     `.btn.primary` already uses (--accent-strong / --accent-on-strong,
+     5.25:1). The other 34 call sites of `.de-btn` are journey-v2.css's and
+     are recorded in docs/evidence/CANVAS-POLISH/2026-09-21/README.md. */
+  .dcv .de-btn.primary,
+  .ed .de-btn.primary {
+    background: var(--accent-strong);
+    color: var(--accent-on-strong);
+  }
+  /* No hover override: `.de-btn.primary:hover` already resolves to
+     --accent-200, which is --accent-strong in light and --accent-strong in
+     dark, and the colour above applies through the hover state. */
 }
 
 @keyframes edcaret {

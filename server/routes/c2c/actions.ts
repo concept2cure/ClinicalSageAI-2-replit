@@ -33,16 +33,29 @@
 
 import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
-import bcrypt from 'bcryptjs';
 import type { PoolClient } from 'pg';
 import { pool } from '../../db.js';
-import { computeAuditChainSealed, hashPayload, verifyAuditChain } from '../../services/audit/chain.js';
+import {
+  computeAuditChainSealed,
+  hashPayload,
+  verifyAuditChain,
+  AuditChainPartialViewError,
+  AuditChainSchemaMissingError,
+} from '../../services/audit/chain.js';
+import { withTenantConnection } from '../../db/withTenantConnection.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
-import { verifyToken as verifyMfaToken } from '../../services/mfaService.js';
+import {
+  reverifySigner,
+  type ReverifySignerDeps,
+  type SignerRefused,
+} from '../../services/part11/reverify-signer.js';
+import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
 import {
   assertSignerIsNotAuthor,
+  SeparationOfDutiesAuthorUnresolvedError,
   SeparationOfDutiesError,
+  SeparationOfDutiesUnverifiedError,
 } from '../../services/governance/separation-of-duties.js';
 import { can } from '../../services/governance/permissions.js';
 import {
@@ -50,6 +63,7 @@ import {
   persistGovernedSignatureRevocation,
   SignatureRevocationUnresolvedError,
 } from '../../services/part11/signature-persistence.js';
+import { clientIpOf } from '../../utils/client-ip';
 
 const router = Router();
 
@@ -117,10 +131,18 @@ function resolveOrgId(req: Request): number | null {
 // Postgres SQLSTATE for "undefined_table".
 const PG_UNDEFINED_TABLE = '42P01';
 
+/**
+ * `rowBacked` is true only when an org-scoped row was actually found. A pointer
+ * type with no table yet, or a table not migrated, is accepted for claim /
+ * transition bookkeeping but is NOT row-backed, and a Part 11 signature or a
+ * lock must attach to a real record (checked by the handler).
+ */
+type ResolvedTarget = { exists: boolean; table: string; id: string; rowBacked: boolean };
+
 async function resolveTarget(
   target: string,
   orgId: number,
-): Promise<{ exists: boolean; table: string; id: string } | null> {
+): Promise<ResolvedTarget | null> {
   const colonIdx = target.indexOf(':');
   if (colonIdx === -1) return null;
 
@@ -134,14 +156,14 @@ async function resolveTarget(
           `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
           [rest, orgId],
         );
-        return r.rows.length > 0 ? { exists: true, table: 'regulatory_programs', id: rest } : null;
+        return r.rows.length > 0 ? { exists: true, table: 'regulatory_programs', id: rest, rowBacked: true } : null;
       }
       case 'document': {
         const r = await pool.query(
           `SELECT id FROM c2c_documents WHERE id = $1 AND org_id = $2 LIMIT 1`,
           [rest, orgId],
         );
-        return r.rows.length > 0 ? { exists: true, table: 'c2c_documents', id: rest } : null;
+        return r.rows.length > 0 ? { exists: true, table: 'c2c_documents', id: rest, rowBacked: true } : null;
       }
       case 'section': {
         // format: section:<docId>:<sectionKey>. Sections have no org column of
@@ -158,7 +180,7 @@ async function resolveTarget(
             LIMIT 1`,
           [docId, sectionKey, orgId],
         );
-        return r.rows.length > 0 ? { exists: true, table: 'c2c_document_sections', id: rest } : null;
+        return r.rows.length > 0 ? { exists: true, table: 'c2c_document_sections', id: rest, rowBacked: true } : null;
       }
       case 'blocker': {
         // C-9: match on blocker_id (text business key), not serial PK
@@ -166,21 +188,21 @@ async function resolveTarget(
           `SELECT id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`,
           [rest, orgId],
         );
-        return r.rows.length > 0 ? { exists: true, table: 'c2c_blockers', id: rest } : null;
+        return r.rows.length > 0 ? { exists: true, table: 'c2c_blockers', id: rest, rowBacked: true } : null;
       }
       case 'task': {
         const r = await pool.query(
           `SELECT id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`,
           [rest, orgId],
         );
-        return r.rows.length > 0 ? { exists: true, table: 'c2c_project_work_items', id: rest } : null;
+        return r.rows.length > 0 ? { exists: true, table: 'c2c_project_work_items', id: rest, rowBacked: true } : null;
       }
       case 'submission': {
         const r = await pool.query(
           `SELECT id FROM pma_submissions WHERE id = $1 AND organization_id = $2 LIMIT 1`,
           [rest, orgId],
         );
-        return r.rows.length > 0 ? { exists: true, table: 'pma_submissions', id: rest } : null;
+        return r.rows.length > 0 ? { exists: true, table: 'pma_submissions', id: rest, rowBacked: true } : null;
       }
       case 'ectd-sequence': {
         // eCTD sequence freeze/dispatch e-signature target (the SUBMIT step).
@@ -188,25 +210,29 @@ async function resolveTarget(
           `SELECT id FROM ectd_sequences WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
           [rest, orgId],
         );
-        return r.rows.length > 0 ? { exists: true, table: 'ectd_sequences', id: rest } : null;
+        return r.rows.length > 0 ? { exists: true, table: 'ectd_sequences', id: rest, rowBacked: true } : null;
       }
       case 'specification': {
         const r = await pool.query(
-          `SELECT id FROM quality_specifications WHERE id = $1 LIMIT 1`, [rest],
+          // Tenant-scoped (2026-09-22): this looked up by id alone, so a user in
+          // one organization could act on — and sign — another's specification.
+          `SELECT id FROM quality_specifications WHERE id = $1 AND tenant_id = $2 LIMIT 1`, [rest, orgId],
         );
-        return r.rows.length > 0 ? { exists: true, table: 'quality_specifications', id: rest } : null;
+        return r.rows.length > 0 ? { exists: true, table: 'quality_specifications', id: rest, rowBacked: true } : null;
       }
       case 'batch': {
         const r = await pool.query(
-          `SELECT id FROM cmc_batch_records WHERE id = $1 LIMIT 1`, [rest],
+          `SELECT id FROM cmc_batch_records WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId],
         );
-        return r.rows.length > 0 ? { exists: true, table: 'cmc_batch_records', id: rest } : null;
+        return r.rows.length > 0 ? { exists: true, table: 'cmc_batch_records', id: rest, rowBacked: true } : null;
       }
       case 'correspondence-issue': {
         const r = await pool.query(
-          `SELECT id FROM c2c_correspondence_issues WHERE id = $1 LIMIT 1`, [rest],
+          `SELECT i.id FROM c2c_correspondence_issues i
+             JOIN c2c_correspondence c ON c.id = i.correspondence_id
+            WHERE i.id = $1 AND c.organization_id = $2 LIMIT 1`, [rest, orgId],
         );
-        return r.rows.length > 0 ? { exists: true, table: 'c2c_correspondence_issues', id: rest } : null;
+        return r.rows.length > 0 ? { exists: true, table: 'c2c_correspondence_issues', id: rest, rowBacked: true } : null;
       }
       case 'gate':
       case 'haq':
@@ -214,7 +240,8 @@ async function resolveTarget(
       case 'interaction':
       case 'paragraph': {
         // Not yet resolvable to real rows — accept pointer as valid but unresolved.
-        return { exists: true, table: prefix, id: rest };
+        // Not row-backed: it may be claimed or transitioned, never signed or locked.
+        return { exists: true, table: prefix, id: rest, rowBacked: false };
       }
       default:
         return null;
@@ -223,7 +250,7 @@ async function resolveTarget(
     // A missing table (e.g. c2c_documents pre-Phase-9) is an expected,
     // tolerable state: treat as unresolved-but-valid so the action records.
     if (err?.code === PG_UNDEFINED_TABLE) {
-      return { exists: false, table: prefix, id: rest };
+      return { exists: false, table: prefix, id: rest, rowBacked: false };
     }
     // Any other DB error is real — do not silently accept the target. Surface
     // it so the handler returns 500 rather than recording an unverified target.
@@ -233,28 +260,50 @@ async function resolveTarget(
 
 // ── Re-auth gate ──────────────────────────────────────────────────────────────
 
+/** The canonical refusal, in the REAUTH_* vocabulary this route's clients read. */
+const REAUTH_ERROR: Record<SignerRefused['code'], string> = {
+  PASSWORD_REQUIRED: 'REAUTH_PASSWORD_REQUIRED',
+  PASSWORD_VERIFICATION_FAILED: 'REAUTH_PASSWORD_INVALID',
+  MFA_TOKEN_REQUIRED: 'REAUTH_TOTP_REQUIRED',
+  MFA_VERIFICATION_FAILED: 'REAUTH_TOTP_INVALID',
+  MFA_STATE_UNKNOWN: 'REAUTH_MFA_STATE_UNKNOWN',
+  ACCOUNT_INACTIVE: 'REAUTH_ACCOUNT_INACTIVE',
+  ACCOUNT_LOCKED: 'REAUTH_ACCOUNT_LOCKED',
+  ACCOUNT_STATE_UNKNOWN: 'REAUTH_ACCOUNT_STATE_UNKNOWN',
+};
+
+/**
+ * §11.200 re-authentication for every high-risk governed action: the release
+ * signature, CMC batch release, Module 3 approval, 510(k) eSTAR filing, gateway
+ * transmittals.
+ *
+ * The rule is the canonical one (services/part11/reverify-signer): the password
+ * always, and the second factor whenever the signer has one enrolled. It used
+ * to verify a TOTP only when the caller chose to send one, so a signer who had
+ * enrolled an authenticator could sign with the password alone here while the
+ * QMS approval and /api/esignature/sign refused the same signature.
+ *
+ * One rule is added on top: a code that is presented must verify, even for a
+ * signer with no second factor enrolled (where the canonical rule does not look
+ * at it). Five callers record the signature's factors from the request —
+ * 'password+totp' whenever a code is present — and this keeps that record true.
+ */
 export async function verifyReauth(
   userId: number,
   reauth: ActionEnvelope['reauth'],
+  deps: ReverifySignerDeps = signerReverificationDeps(),
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!reauth?.password) {
-    return { ok: false, error: 'REAUTH_PASSWORD_REQUIRED' };
-  }
-
-  const userRow = await pool.query(
-    `SELECT password_hash FROM users WHERE id = $1 LIMIT 1`, [userId],
+  const verified = await reverifySigner(
+    userId,
+    { password: reauth?.password, mfaToken: reauth?.totp },
+    deps,
   );
-  const hash: string | undefined = userRow.rows[0]?.password_hash as string | undefined;
-  if (!hash) return { ok: false, error: 'REAUTH_USER_NOT_FOUND' };
+  if (!verified.ok) return { ok: false, error: REAUTH_ERROR[verified.code] };
 
-  const passwordOk = await bcrypt.compare(reauth.password, hash);
-  if (!passwordOk) return { ok: false, error: 'REAUTH_PASSWORD_INVALID' };
-
-  if (reauth.totp) {
-    const totpOk = await verifyMfaToken(userId, reauth.totp);
-    if (!totpOk) return { ok: false, error: 'REAUTH_TOTP_INVALID' };
+  if (reauth?.totp && !verified.secondFactorVerified) {
+    const presentedCodeVerifies = await deps.verifyMfaToken(userId, reauth.totp).catch(() => false);
+    if (!presentedCodeVerifies) return { ok: false, error: 'REAUTH_TOTP_INVALID' };
   }
-
   return { ok: true };
 }
 
@@ -311,6 +360,7 @@ export async function recordGovernedAction(
   const targetId     = target.slice(targetType.length + 1);
 
   const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
+    tenant_id:    orgId,
     action:       `c2c.work.${command}`,
     actor_id:     userId,
     target,
@@ -529,6 +579,42 @@ export async function writeMutation(
   }
 }
 
+/**
+ * The answer to a separation-of-duties refusal, or null for any other error.
+ * One mapping for every route that runs the check (this handler, and
+ * POST /api/c2c/documents/:id/lock), so they cannot answer it differently.
+ */
+export function separationOfDutiesRefusal(
+  err: unknown,
+  label: string,
+): { status: number; body: { error: string; detail: string } } | null {
+  if (err instanceof SeparationOfDutiesError) {
+    return { status: 403, body: { error: err.code, detail: err.message } };
+  }
+  if (err instanceof SeparationOfDutiesAuthorUnresolvedError) {
+    // The check ran, but the record has no recorded author (or its type has
+    // none modelled), so independence cannot be shown. A retry will not fix it.
+    return { status: 409, body: { error: err.code, detail: err.message } };
+  }
+  if (err instanceof SeparationOfDutiesUnverifiedError) {
+    // The check did not run, which is not the same as the check refusing.
+    // 503, not 403: the user is not the problem, and a retry may succeed.
+    // The error's own message carries the failed lookup's cause, which is
+    // internal; it goes to the log, and the caller gets an authored
+    // sentence (ci:server-error-leaks, 2026-09-23).
+    console.error(`[${label}]`, err.message);
+    return {
+      status: 503,
+      body: {
+        error: err.code,
+        detail:
+          'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.',
+      },
+    };
+  }
+  return null;
+}
+
 // ── Request handler factory ───────────────────────────────────────────────────
 
 function makeHandler(command: Command) {
@@ -571,8 +657,14 @@ function makeHandler(command: Command) {
       // Separation of duties (un-disableable): the signer/approver must not be
       // the author/owner of the target. Admin may only tighten (four-eyes),
       // never loosen — so this is a hard code path, not a permission row.
+      if ((command === 'sign' || command === 'lock') && !resolved.rowBacked) {
+        return res.status(400).json({
+          error: 'TARGET_NOT_SIGNABLE',
+          detail: 'A signature or lock must attach to a real record in this organization; this target does not resolve to one.',
+        });
+      }
       if (command === 'sign' || command === 'lock') {
-        await assertSignerIsNotAuthor(body.target, orgId, userId);
+        await assertSignerIsNotAuthor(body.target, orgId, userId, { command, meaning: body.payload?.meaning });
       }
 
       // RBAC authority gate (dark-launched behind GOVERNANCE_RBAC_ENFORCE).
@@ -605,10 +697,7 @@ function makeHandler(command: Command) {
         {
           // Honest attribution on the Part 11 signature row a `sign` persists:
           // the real client IP when resolvable, null otherwise (never fabricated).
-          ipAddress:
-            (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-            req.socket?.remoteAddress ||
-            null,
+          ipAddress: clientIpOf(req),
         },
       );
       return res.json(result);
@@ -625,9 +714,8 @@ function makeHandler(command: Command) {
           detail: g.reason,
         });
       }
-      if (err instanceof SeparationOfDutiesError) {
-        return res.status(403).json({ error: err.code, detail: err.message });
-      }
+      const sod = separationOfDutiesRefusal(err, `c2c/actions/${command}`);
+      if (sod) return res.status(sod.status).json(sod.body);
       if (err instanceof SignatureRevocationUnresolvedError) {
         // Nothing was written (the transaction rolled back). Say so plainly
         // rather than returning an opaque 500 that reads as "maybe it worked".
@@ -645,6 +733,12 @@ function makeHandler(command: Command) {
 // This is the verification counterpart to computeAuditChain — without it the
 // tamper-evident chain is written but never checked. Returns only a verdict +
 // the id/hashes of the first break (no audit record content is exposed).
+//
+// The chain is one chain per tenant (see services/audit/chain.ts), and this
+// verifies EVERY tenant's chain. A pooled connection under RLS_ENFORCE=on
+// carries no tenant and would see no rows — a false pass — so the walk runs
+// on a super-admin-scoped connection (the pattern system jobs use), and the
+// verifier itself refuses a tenant-scoped view (AuditChainPartialViewError).
 
 router.get('/verify-chain', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -653,15 +747,25 @@ router.get('/verify-chain', async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'AUTH_REQUIRED' });
   }
 
-  const client = await pool.connect();
   try {
-    const result = await verifyAuditChain(client);
+    const result = await withTenantConnection(
+      { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'c2c/actions/verify-chain' },
+      (client) => verifyAuditChain(client),
+    );
     return res.status(result.ok ? 200 : 409).json(result);
   } catch (err: any) {
+    if (err instanceof AuditChainPartialViewError || err instanceof AuditChainSchemaMissingError) {
+      // The chain could not be verified — say so; never an empty "ok". The
+      // error's message names a migration and a database setting, so it goes
+      // to the log, not the body (ci:server-error-leaks, 2026-09-23).
+      console.error('[c2c/actions/verify-chain]', err.message);
+      return res.status(503).json({
+        error: err.code,
+        detail: 'The audit chain could not be verified, so no result is given.',
+      });
+    }
     console.error('[c2c/actions/verify-chain]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  } finally {
-    client.release();
   }
 });
 

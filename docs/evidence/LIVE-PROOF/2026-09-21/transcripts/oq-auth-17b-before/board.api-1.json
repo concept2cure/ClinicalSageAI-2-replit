@@ -1,0 +1,30 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/review/board",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 20,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "queue": [],
+        "workflows": {},
+        "thread": [],
+        "meta": {
+          "scope": "all",
+          "total": 0,
+          "threadItemId": null,
+          "threadDocumentId": null,
+          "generatedAt": "2026-09-21T16:26:59.741Z"
+        }
+      }
+    }
+  }
+}

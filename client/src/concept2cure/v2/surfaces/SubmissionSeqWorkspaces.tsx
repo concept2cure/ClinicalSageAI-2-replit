@@ -25,7 +25,7 @@
  *                GET /api/submissions/shadow-review/:runId/findings
  *   Cross-region POST /api/submissions/:id/cross-region
  *   Dispatch     GET /api/submissions/sequences/:seqId/dispatch-readiness
- *                POST /api/submissions/:id/dispatch-qc  (AI advisory)
+ *                POST /api/submissions/:id/dispatch-qc  (deterministic verdict; model narrates)
  */
 import React from 'react';
 import { I } from '../icons';
@@ -224,7 +224,70 @@ interface LeafRow {
   lifecycleOp: string; // new|replace|append|delete
   documentTable: string | null;
   documentId: number | null;
+  /** The uuid half of the polymorphic reference — set for uuid-keyed stores
+   *  (vault_documents), where documentId is null. */
+  documentUuid?: string | null;
   documentType: string | null;
+  /** What the leaf's pointer resolves to, computed by the server from the SAME
+   *  resolver the dispatch gate uses (server/services/ectd/leaf-document-resolver).
+   *  Absent on a server that predates it; the column then falls back to the
+   *  pointer alone. */
+  sourceDocument?: LeafSourceResolution | null;
+}
+
+interface LeafSourceResolution {
+  status: 'resolved' | 'no_pointer' | 'unplaceable_table' | 'missing' | 'content_changed';
+  keyKind: 'integer' | 'uuid' | null;
+  pinnedSha256: string | null;
+  storedSha256: string | null;
+  pin: 'match' | 'mismatch' | 'unpinned' | 'unverifiable';
+  reason: string | null;
+}
+
+/* The Builder's "Source document" cell. "unlinked" is reserved for a leaf that
+   carries NO pointer. A leaf that carries one is named by its store and key —
+   a vault leaf by its uuid (documentId is null there; the column used to test
+   documentId alone, and six vault leaves the platform had just filed read
+   "unlinked": MDX demo pack, 2026-09-21, finding F5) — and, when the server
+   has resolved it, by the verdict: the pin verified, no pin taken, the content
+   changed since filing, or the document not found. Server words, never a
+   client guess. */
+const SOURCE_VERDICT: Record<LeafSourceResolution['status'], { chip: string; tone: string } | null> = {
+  resolved: null, // the pin verdict says it
+  no_pointer: null,
+  unplaceable_table: { chip: 'store not placeable', tone: 'tone-err' },
+  missing: { chip: 'not found in this organization', tone: 'tone-err' },
+  content_changed: { chip: 'content changed since filing', tone: 'tone-warn' },
+};
+function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
+  const key = leaf.documentUuid ?? (leaf.documentId != null ? String(leaf.documentId) : null);
+  if (!leaf.documentTable || key == null) return <>unlinked</>;
+  const isUuid = leaf.documentUuid != null;
+  /* The source row, named rather than related. The key stays — it is how an
+     auditor ties this leaf to its source — but it is qualified by a store name
+     a reader can act on instead of by a relation name (documentSourceLabel).
+     A uuid is shown short with the full value on hover. */
+  const label = documentSourceLabel(leaf.documentTable, isUuid ? `${key.slice(0, 8)}…` : key);
+  const r = leaf.sourceDocument ?? null;
+  const verdict = r
+    ? SOURCE_VERDICT[r.status] ??
+      (r.pin === 'match'
+        ? { chip: 'source verified', tone: 'tone-ok' }
+        : r.pin === 'unpinned'
+          ? { chip: 'no content pin', tone: 'tone-idle' }
+          : null)
+    : null;
+  return (
+    <>
+      <span className="sc-mono" title={isUuid ? key : undefined}>{label}</span>
+      {verdict && (
+        <>
+          {' '}
+          <span className={`rd-chip ${verdict.tone}`} title={r?.reason ?? undefined}>{verdict.chip}</span>
+        </>
+      )}
+    </>
+  );
 }
 
 // GET /api/coauthor/documents → { documents } (coauthor_documents rows).
@@ -424,15 +487,7 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
                   </td>
                   <td>{l.granularity ?? '—'}</td>
                   <td>
-                    {l.documentTable && l.documentId != null ? (
-                      /* The source row, named rather than related. The id stays —
-                         it is how an auditor ties this leaf to its source — but
-                         it is qualified by a store name a reader can act on
-                         instead of by a relation name (documentSourceLabel). */
-                      <span className="sc-mono">{documentSourceLabel(l.documentTable, l.documentId)}</span>
-                    ) : (
-                      'unlinked'
-                    )}
+                    <LeafSourceCell leaf={l} />
                   </td>
                 </tr>
               ))}
@@ -462,12 +517,15 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
 
 // GET /sequences/:seqId/dispatch-readiness → assessSequenceDispatchReadiness
 // (server/services/ectd/assess-dispatch-readiness.ts). Server-computed inputs;
-// findings' `code` is the validation-rule id (traceable to /validation-rules).
+// Each finding arrives with the corpus rule it is an instance of (or null when
+// the corpus names none) — the same enriched shape the dispatch-readiness
+// surface renders, so the two views cannot tell a finding's rule differently.
 interface ReadinessFinding {
   severity: 'error' | 'warning' | 'info';
   code: string;
   sectionCode: string | null;
   message: string;
+  rule?: { id: string; title: string; regions: string[]; severity: string; enforcementStatement: string } | null;
 }
 interface ReadinessAssessment {
   sequenceId: number;
@@ -564,8 +622,8 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
               Sequence {seq.sequenceNumber} · {a.leafCount} {a.leafCount === 1 ? 'leaf' : 'leaves'} ·{' '}
               {a.readiness.errors} {a.readiness.errors === 1 ? 'error' : 'errors'} ·{' '}
               {a.readiness.warnings} {a.readiness.warnings === 1 ? 'warning' : 'warnings'} ·{' '}
-              {a.readiness.infos} info · computed server-side from the canonical leaves. Each
-              finding&#39;s code is a rule id in the validation corpus.
+              {a.readiness.infos} info · computed server-side from the canonical leaves, each
+              shown as the validation-corpus rule it is an instance of.
             </div>
             {findings.length === 0 ? (
               <EmptyState
@@ -587,6 +645,11 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
                             {I.dot} <span className="sc-mono">{f.sectionCode}</span>
                           </>
                         ) : null}
+                      </span>
+                      <span className="sp-row-s">
+                        {f.rule
+                          ? `${f.rule.title} · ${f.rule.regions.map((r) => r.toUpperCase()).join(' · ')} · ${f.rule.severity} · ${f.rule.enforcementStatement}`
+                          : 'Not in the rule corpus, so no rule stands behind this finding.'}
                       </span>
                       <span className="sp-row-s">{f.message}</span>
                     </span>
@@ -1044,13 +1107,25 @@ export function CrossRegionWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow }
 
 /* ═══ Dispatch — the deterministic gate + governed freeze/dispatch ══════════ */
 
-// POST /:id/dispatch-qc → runDispatchQc (AI advisory; server recomputes the
-// gate inputs from the sequence when sequenceId is supplied).
+// POST /:id/dispatch-qc → runDispatchQc. Since 2026-09-21 (VSR-001 F-9) the
+// verdict is the deterministic dispatch gate — with sequenceId, the SAME
+// composed gate the assessment above and freeze/dispatch enforce — and the
+// model, when a provider exists, only narrates it. `narrative` is prose;
+// nothing in it is a verdict.
 interface DispatchQcResult {
   clearedToDispatch: boolean;
   blockers: string[];
   warnings: string[];
   checklist: Array<{ item: string; pass: boolean }>;
+  verdictSource: 'assess-dispatch-readiness' | 'dispatch-gate';
+  narrative: {
+    source: 'model';
+    label: string;
+    promptVersion: string;
+    summary: string;
+    observations: string[];
+  } | null;
+  narrativeUnavailable: { code: string; message: string } | null;
 }
 
 export function DispatchWorkspace({
@@ -1217,33 +1292,53 @@ export function DispatchWorkspace({
                 onClick={runQc}
               >
                 {I.shieldCheck}{' '}
-                {qc.phase === 'running' ? 'Running dispatch QC…' : 'Run dispatch QC (AI advisory)'}
+                {qc.phase === 'running' ? 'Running dispatch QC…' : 'Run dispatch QC'}
               </button>
             </div>
             {qc.phase === 'error' && (
               <div className="sc-verdict tone-err sc-mt" role="status">
-                The dispatch QC advisory did not complete — {qc.error}. The deterministic gate
-                above is unaffected.
+                Dispatch QC did not complete — {qc.error}. The deterministic gate above is
+                unaffected.
               </div>
             )}
             {qc.phase === 'done' && qc.data && (
               <div className="sc-mt">
-                {/* The advisory's verdict is floored on the STRUCTURAL gate only —
-                    not the shadow-presence or external-validation gates the
-                    deterministic assessment merges in — so it could sit green
-                    under "Dispatch blocked" with no qualifier. It never outranks
-                    the gate, and says so; under a blocked gate it is never green. */}
+                {/* With a sequence the QC verdict IS the composed dispatch gate
+                    (verdictSource 'assess-dispatch-readiness'); it cannot disagree
+                    with the assessment above. The counts-only fallback covers
+                    less and says so in its warnings. Either way the tone follows
+                    the gate, never a model. */}
                 <div
                   className={`sc-verdict ${qc.data.clearedToDispatch && a?.gate.cleared ? 'tone-ok' : 'tone-warn'}`}
                   role="status"
                 >
-                  QC advisory: {qc.data.clearedToDispatch ? 'cleared to dispatch' : 'not cleared'}
+                  Dispatch QC: {qc.data.clearedToDispatch ? 'cleared to dispatch' : 'not cleared'}
                   {qc.data.blockers.length > 0 ? ` — ${qc.data.blockers.join(' ')}` : ''}
                   {qc.data.warnings.length > 0 ? ` Warnings: ${qc.data.warnings.join(' ')}` : ''}
                   {a && !a.gate.cleared
-                    ? ' The deterministic gate above still blocks dispatch; this advisory does not override it.'
-                    : ' Advisory only — the deterministic gate above decides.'}
+                    ? ' The deterministic gate above still blocks dispatch; this verdict does not override it.'
+                    : qc.data.verdictSource === 'dispatch-gate'
+                      ? ' Verdict from the count-based gate only; the sequence-level checks above were not part of it.'
+                      : ' Verdict from the deterministic sequence dispatch gate.'}
                 </div>
+                {qc.data.narrative ? (
+                  <div className="sc-verdict sc-mt" role="note">
+                    <span className="sp-row-s">{qc.data.narrative.label}</span>
+                    <p>{qc.data.narrative.summary}</p>
+                    {qc.data.narrative.observations.length > 0 && (
+                      <ul>
+                        {qc.data.narrative.observations.map((o, i) => (
+                          <li key={i}>{o}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ) : qc.data.narrativeUnavailable ? (
+                  <div className="sc-verdict sc-mt" role="note">
+                    No model narrative: {qc.data.narrativeUnavailable.message} The verdict above is
+                    unaffected.
+                  </div>
+                ) : null}
                 <div className="sp-list">
                   {qc.data.checklist.map((c, i) => (
                     <div key={i} className="sp-row">

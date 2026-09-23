@@ -1,0 +1,835 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > does not count a document referenced only by a delete toward unfinalized 96ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > keys every unresolved entry exactly as the ref it came from 10ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-09-23T09:36:22.786Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-09-23T09:36:22.874Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it 152ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-09-23T09:36:22.963Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing 86ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly 87ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-09-23T09:36:23.043Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 8,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section 88ms
+   → expected 'withdrawal of 3-2-coauthor-documents-…' to match /coauthor_documents:408.*no filed leaf…/
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-09-23T09:36:23.171Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-09-23T09:36:23.226Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 9999,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-09-23T09:36:23.227Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal 120ms
+   → expected 'withdrawal of 3-2-coauthor-documents-…' to match /coauthor_documents:410.*no filed leaf…/
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf 55ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-09-23T09:36:23.304Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 13,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-09-23T09:36:23.362Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 17,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section 81ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section 55ms
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:23.449Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 41,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 600,
+        "documentUuid": null,
+        "reason": "coauthor_documents row not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:23.451Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 41,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 1
+  }
+}
+
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > neither stages nor reports as unresolved a document referenced only by a delete 13ms
+   → expected [ { …(4) }, { …(4) } ] to deeply equal []
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees 63ms
+   → expected [ { …(4) } ] to deeply equal []
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:23.522Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 43,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "coauthor_documents",
+        "documentId": 601,
+        "documentUuid": null,
+        "reason": "coauthor document \"Emptied\" has no authored content — not materialized"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:23.524Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 43,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 1
+  }
+}
+
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:23.600Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 45,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "ctd_onboarding_documents",
+        "documentId": 700,
+        "documentUuid": null,
+        "reason": "uploaded file bytes not readable at storage_path (missing/rotated) — cannot materialize leaf"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:23.601Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 45,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 1
+  }
+}
+
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees 72ms
+   → expected [ { …(4) } ] to deeply equal []
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees 78ms
+   → expected [ { …(4) } ] to deeply equal []
+stderr | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:23.676Z",
+  "level": "warn",
+  "message": "[assemble-from-core] Assemble dropped no leaf silently, but some sources could not be materialized",
+  "context": {
+    "sequenceId": 47,
+    "organizationId": 7,
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "77777777-7777-4777-8777-777777777777",
+        "reason": "vault document bytes are not on the storage provider yet (storage_version_id is null) — run scripts/backfill-vault-storage.mjs for this organization, then re-assemble"
+      }
+    ]
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:23.677Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 47,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 1
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-09-23T09:36:23.772Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 49,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees 77ms
+   → expected [ { …(4) } ] to deeply equal []
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped 96ms
+   → expected '<leaf operation="delete" modified-fil…' to be '' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+AssertionError: expected 'withdrawal of 3-2-coauthor-documents-…' to match /coauthor_documents:408.*no filed leaf…/
+
+- Expected:
+/coauthor_documents:408.*no filed leaf in m3\.2\.s\.2 is this document/
+
++ Received:
+"withdrawal of 3-2-coauthor-documents-408.pdf: no filed leaf in m3.2.s.2 is this document (coauthor_documents:408) — it was never filed there, or has already been withdrawn; no other filed document is withdrawn in its place"
+
+ ❯ expectRefusedWithoutDelete server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:281:30
+    279|       const mine = r.skipped.filter((s) => s.sectionCode === section);
+    280|       expect(mine).toHaveLength(1);
+    281|       expect(mine[0].reason).toMatch(reason);
+       |                              ^
+    282|       expect(assembledTransmitBlockers(r).length).toBeGreaterThan(0);
+    283|     } finally {
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:292:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+AssertionError: expected 'withdrawal of 3-2-coauthor-documents-…' to match /coauthor_documents:410.*no filed leaf…/
+
+- Expected:
+/coauthor_documents:410.*no filed leaf in m3\.2\.s\.5 is this document/
+
++ Received:
+"withdrawal of 3-2-coauthor-documents-410.pdf: no filed leaf in m3.2.s.5 is this document (coauthor_documents:410) — it was never filed there, or has already been withdrawn; no other filed document is withdrawn in its place"
+
+ ❯ expectRefusedWithoutDelete server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:281:30
+    279|       const mine = r.skipped.filter((s) => s.sectionCode === section);
+    280|       expect(mine).toHaveLength(1);
+    281|       expect(mine[0].reason).toMatch(reason);
+       |                              ^
+    282|       expect(assembledTransmitBlockers(r).length).toBeGreaterThan(0);
+    283|     } finally {
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:296:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > neither stages nor reports as unresolved a document referenced only by a delete
+AssertionError: expected [ { …(4) }, { …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "documentId": 600,
++     "documentTable": "coauthor_documents",
++     "documentUuid": null,
++     "reason": "coauthor_documents row not found in this organization",
++   },
++   {
++     "documentId": 700,
++     "documentTable": "ctd_onboarding_documents",
++     "documentUuid": null,
++     "reason": "uploaded file bytes not readable at storage_path (missing/rotated) — cannot materialize leaf",
++   },
++ ]
+
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:428:28
+    426|         organizationId: ORG, stageDir,
+    427|       });
+    428|       expect(r.unresolved).toEqual([]);
+       |                            ^
+    429|       expect(r.byKey.size).toBe(0);
+    430|       expect(r.materialized).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+AssertionError: expected [ { …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "documentId": 600,
++     "documentTable": "coauthor_documents",
++     "documentUuid": null,
++     "reason": "coauthor_documents row not found in this organization",
++   },
++ ]
+
+ ❯ expectWithdrawnAndAgreed server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:463:34
+    461|       expect(files.some((f) => f.includes('coauthor-documents-301'))).…
+    462|       // … and nothing stops it at transmit.
+    463|       expect(r.unresolvedLeaves).toEqual([]);
+       |                                  ^
+    464|       expect(r.skipped).toEqual([]);
+    465|       expect(assembledTransmitBlockers(r)).toEqual([]);
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:477:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+AssertionError: expected [ { …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "documentId": 601,
++     "documentTable": "coauthor_documents",
++     "documentUuid": null,
++     "reason": "coauthor document \"Emptied\" has no authored content — not materialized",
++   },
++ ]
+
+ ❯ expectWithdrawnAndAgreed server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:463:34
+    461|       expect(files.some((f) => f.includes('coauthor-documents-301'))).…
+    462|       // … and nothing stops it at transmit.
+    463|       expect(r.unresolvedLeaves).toEqual([]);
+       |                                  ^
+    464|       expect(r.skipped).toEqual([]);
+    465|       expect(assembledTransmitBlockers(r)).toEqual([]);
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:481:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+AssertionError: expected [ { …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "documentId": 700,
++     "documentTable": "ctd_onboarding_documents",
++     "documentUuid": null,
++     "reason": "uploaded file bytes not readable at storage_path (missing/rotated) — cannot materialize leaf",
++   },
++ ]
+
+ ❯ expectWithdrawnAndAgreed server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:463:34
+    461|       expect(files.some((f) => f.includes('coauthor-documents-301'))).…
+    462|       // … and nothing stops it at transmit.
+    463|       expect(r.unresolvedLeaves).toEqual([]);
+       |                                  ^
+    464|       expect(r.skipped).toEqual([]);
+    465|       expect(assembledTransmitBlockers(r)).toEqual([]);
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:485:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+AssertionError: expected [ { …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "documentId": null,
++     "documentTable": "vault_documents",
++     "documentUuid": "77777777-7777-4777-8777-777777777777",
++     "reason": "vault document bytes are not on the storage provider yet (storage_version_id is null) — run scripts/backfill-vault-storage.mjs for this organization, then re-assemble",
++   },
++ ]
+
+ ❯ expectWithdrawnAndAgreed server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:463:34
+    461|       expect(files.some((f) => f.includes('coauthor-documents-301'))).…
+    462|       // … and nothing stops it at transmit.
+    463|       expect(r.unresolvedLeaves).toEqual([]);
+       |                                  ^
+    464|       expect(r.skipped).toEqual([]);
+    465|       expect(assembledTransmitBlockers(r)).toEqual([]);
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:489:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+AssertionError: expected '<leaf operation="delete" modified-fil…' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ <leaf operation="delete" modified-file="../0000/m3/3-2-s-5/3-2-coauthor-documents-602.pdf" checksum="cccccccccccccccccccccccccccccccc" checksum-type="md5" xlink:href="../0000/m3/3-2-s-5/3-2-coauthor-documents-602.pdf" xlink:type="simple" ID="leaf-m3-2-s-5-3-2-coauthor-documents-602">
+
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:496:19
+    494|     try {
+    495|       const { del } = await zipOf(r.bundle.path);
+    496|       expect(del).toBe('');
+       |                   ^
+    497|       expect(r.unresolvedLeaves).toEqual([]);
+    498|       expect(r.skipped).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 8 passed (16)
+   Start at  09:36:15
+   Duration  8.32s (transform 1.74s, setup 93ms, import 2.87s, tests 4.94s, environment 0ms)
+
+
+===== PASS 2: resolver + package-from-core fixed, dispatch-readiness still raising DOCUMENT_CONTENT_MISMATCH on a delete =====
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > does not count a document referenced only by a delete toward unfinalized 64ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > materializeLeafSources — approval tally and key space > keys every unresolved entry exactly as the ref it came from 3ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it
+{
+  "timestamp": "2026-09-23T09:36:42.020Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 2,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing
+{
+  "timestamp": "2026-09-23T09:36:42.110Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 4,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > withdraws a document now under revision without an approval refusal, shipping none of it 108ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly
+{
+  "timestamp": "2026-09-23T09:36:42.187Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 6,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a named withdrawal by its document identity when the derived file name changed since filing 83ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > reports an unbindable named withdrawal in skipped instead of aborting the assembly 80ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section
+{
+  "timestamp": "2026-09-23T09:36:42.256Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 8,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal
+{
+  "timestamp": "2026-09-23T09:36:42.327Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 11,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document when the named one was never filed in the section 65ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not withdraw a different filed document on a stale re-withdrawal 71ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf
+{
+  "timestamp": "2026-09-23T09:36:42.392Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 15,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section
+{
+  "timestamp": "2026-09-23T09:36:42.463Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 13,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > does not bind a named withdrawal whose document cannot be read to the section leaf 71ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > binds a renamed document by its identity even when another document shares the section 70ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section
+{
+  "timestamp": "2026-09-23T09:36:42.538Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 17,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:42.625Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 41,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > assembleSequence — declared withdrawals > still binds a row that names no document by its unambiguous section 71ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > neither stages nor reports as unresolved a document referenced only by a delete 4ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:42.718Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 43,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > row deleted: zero transmit blockers, a backbone-only delete of the filed copy, and readiness agrees 88ms
+ × server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees 94ms
+   → expected [ { severity: 'error', …(4) } ] to deeply equal []
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:42.803Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 45,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees
+{
+  "timestamp": "2026-09-23T09:36:42.873Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 47,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > upload bytes rotated: zero transmit blockers, and readiness agrees 70ms
+stdout | server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped
+{
+  "timestamp": "2026-09-23T09:36:42.925Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 49,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > vault bytes missing from the storage provider: zero transmit blockers, and readiness agrees 71ms
+ ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > a document filed twice in the section is reported, never guessed and never dropped 42ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts > a withdrawal of a filed document whose source can no longer be read > content emptied since the withdrawal was pinned: zero transmit blockers, and readiness agrees
+AssertionError: expected [ { severity: 'error', …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "code": "DOCUMENT_CONTENT_MISMATCH",
++     "message": "Leaf \"Emptied\" (m3.2.s.2) was filed against content with SHA-256 bd0a1afb41fd5edac58f13690a9104b289d1d50bf1b1f04aef0df21eed104245, but coauthor_documents 601 now yields no content digest — the pinned content cannot be verified: the document has no authored content. Re-file the leaf against the current document, or restore the filed content, before dispatch.",
++     "rule": {
++       "category": "integrity",
++       "enforcement": "dispatch-readiness",
++       "enforcementStatement": "Enforced here — this assessment checks it every time it runs.",
++       "id": "DOCUMENT_CONTENT_MISMATCH",
++       "regions": [
++         "ich",
++       ],
++       "severity": "high",
++       "source": "ICH eCTD Specification (v3.2.2 / v4.0)",
++       "title": "Every leaf’s source document still carries the content it was filed with",
++     },
++     "sectionCode": "m3.2.s.2",
++     "severity": "error",
++   },
++ ]
+
+ ❯ expectWithdrawnAndAgreed server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:472:20
+    470|     const a = await assessSequenceDispatchReadiness({ sequenceId, orga…
+    471|     const errors = a.readiness.findings.filter((f) => f.severity === '…
+    472|     expect(errors).toEqual([]);
+       |                    ^
+    473|     expect(a.validationErrors).toBe(0);
+    474|   };
+ ❯ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts:481:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  09:36:33
+   Duration  9.71s (transform 2.32s, setup 192ms, import 3.46s, tests 5.61s, environment 0ms)
+
+
+===== PASS 3: dispatch-readiness.test.ts with the delete guard on DOCUMENT_CONTENT_MISMATCH removed =====
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports zero errors for a clean, resolvable sequence 3ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an empty sequence as an error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > treats a sequence of only deletes as empty (error) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a non-delete leaf with no document as UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT flag a delete leaf with no document 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags an invalid lifecycle operation 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > reports missing required sections as non-blocking warnings (not errors) 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > matches required sections across module-prefix/format differences 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a true sub-section satisfies a required parent section 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > a numerically-adjacent section does NOT satisfy a required section 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > emits an info for duplicate "new" leaves in one section without erroring 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > warnings and infos never inflate the authoritative error count 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags replace/append/delete in an ORIGINAL sequence as errors 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > allows new leaves in an original sequence (no lifecycle error) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > does NOT apply the original-sequence rule to amendments 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > says a follow-up's declared acts were not bound here, rather than reading clean (2026-09-22 W5/D7) 1ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > accepts a valid 4-digit sequence number 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness > flags a malformed sequence number as an error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags a leaf whose document_table no resolver can materialize 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does NOT flag the tables the assembler can resolve 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > has no external table today, and the vault leaf it used to flag now reads clear 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > flags an invented document_table on a DELETE leaf — the completeness exemption is not a pointer exemption 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > still exempts a delete leaf that carries NO pointer — that is the legitimate shape 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > computeDispatchReadiness — document-pointer rules > does not double-report a delete leaf that points at a table the assembler CAN resolve 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a uuid-keyed vault leaf (documentId null) is a complete pointer — no UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed leaf still resolves 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > a vault leaf carrying only an integer names nothing — UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > an integer-keyed table carrying only a uuid names nothing — UNRESOLVED_DOCUMENT 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > document pointer completeness is judged per key space > hasCompleteDocumentPointer: uuid for the vault, integer elsewhere, either for an unknown table 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a resolved leaf whose pin matches carries no error 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > an unpinned leaf says its content was not verified, rather than reading like a match (2026-09-22 W5/D7) 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a pinned hash that differs from the stored document is DOCUMENT_CONTENT_MISMATCH — its own code, never silently passed 1ms
+ × server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a delete whose source changed since it was pinned is not DOCUMENT_CONTENT_MISMATCH; the leaf that ships it still is 9ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a document the resolver could not find stays UNRESOLVED_DOCUMENT, naming the pointer 0ms
+ ✓ server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a missing document on a DELETE leaf is not a completeness error (a delete ships no file) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/dispatch-readiness.test.ts > resolver verdicts become findings > a delete whose source changed since it was pinned is not DOCUMENT_CONTENT_MISMATCH; the leaf that ships it still is
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ectd/__tests__/dispatch-readiness.test.ts:352:76
+    350|       { ...vaultLeaf(changed), lifecycleOp: 'delete' },
+    351|     ]);
+    352|     expect(del.findings.some(x => x.code === 'DOCUMENT_CONTENT_MISMATC…
+       |                                                                            ^
+    353|     expect(del.errors).toBe(0);
+    354|     const shipped = computeDispatchReadiness([{ ...vaultLeaf(changed),…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 34 passed (35)
+   Start at  09:37:09
+   Duration  636ms (transform 203ms, setup 149ms, import 82ms, tests 27ms, environment 0ms)
+

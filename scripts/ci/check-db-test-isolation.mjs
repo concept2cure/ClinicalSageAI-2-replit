@@ -22,7 +22,8 @@
  * ── What it checks ───────────────────────────────────────────────────────────
  *   1. every config whose setupFiles include the mocking setup excludes the
  *      db-test glob;
- *   2. `tests/setup.db.ts` does not itself mock `pg`;
+ *   2. `tests/setup.db.ts` does not itself mock `pg`, or import the mocking
+ *      setup;
  *   3. no `*.dbtest.ts` file imports the mocking setup (which would reinstate
  *      the mock from inside the unmocked project);
  *   4. at least one `*.dbtest.ts` file exists, so the guard cannot pass by
@@ -32,6 +33,8 @@
  * mocked when the suite boots. This guard is the static half: it fails the PR
  * that would cause that, instead of the deploy that discovers it.
  *
+ * Self-test: scripts/ci/__tests__/db-test-isolation.test.mjs (npm run test:ci-scripts).
+ *
  * Usage:
  *   node scripts/ci/check-db-test-isolation.mjs
  *   node scripts/ci/check-db-test-isolation.mjs --json
@@ -40,10 +43,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 
 const TAG = '[ci:db-test-isolation]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const asJson = process.argv.includes('--json');
 
 /** The setup file that installs `vi.mock('pg')`. */
 const MOCKING_SETUP = 'tests/setup.ts';
@@ -60,9 +63,6 @@ const CONFIGS = ['vitest.config.ts', 'vitest.workspace.ts', 'vitest.db.config.ts
 /** Roots a test file may live under (mirrors scripts/ci/check-unrun-tests.mjs). */
 const ROOTS = ['tests', 'server', 'client', 'shared'];
 const SKIP_DIRS = new Set(['node_modules', 'dist', '_archive', '_deprecated', '.git', 'coverage']);
-
-const failures = [];
-const read = rel => fs.readFileSync(path.join(REPO, rel), 'utf8');
 
 /**
  * Strip comments before inspecting a file.
@@ -107,8 +107,108 @@ function setupFilesOf(source) {
   return entries;
 }
 
+// ── Which modules does a file load? ──────────────────────────────────────────
+//
+// Checks 2 and 3 ask whether a file loads tests/setup. That is a question about
+// MODULE SPECIFIERS, so it is answered from the parsed syntax tree, not from the
+// text. The version before this matched "any quoted string ending in /setup"
+// and was wrong both ways: it failed tests/db/second-factor-binding.dbtest.ts
+// and tests/db/sign-in-posture.dbtest.ts — which import '../setup.db' exactly
+// as they should — because they POST to '/api/auth/mfa/setup', and it passed
+// `import '../setup.ts'`, which loads the mock, because that string does not
+// END at `setup`. A parser knows an import from a URL and a comment from code,
+// so neither mistake is available to it.
+
+/** `vi.<name>(specifier, …)` calls that load, or automock, the named module. */
+const VI_MODULE_CALLS = new Set(['mock', 'doMock', 'unmock', 'doUnmock', 'importActual', 'importMock']);
+
+/** Extensions a specifier may spell out and still mean the same module. */
+const MODULE_EXTENSION = /\.(?:[cm]?[jt]s|[jt]sx)$/;
+
+/** tests/setup.ts as a module id: repo-relative, extensionless. */
+const MOCKING_SETUP_MODULE = MOCKING_SETUP.replace(MODULE_EXTENSION, '');
+
+function scriptKindFor(fileName) {
+  if (/\.tsx$/.test(fileName)) return ts.ScriptKind.TSX;
+  if (/\.jsx$/.test(fileName)) return ts.ScriptKind.JSX;
+  if (/\.[cm]?js$/.test(fileName)) return ts.ScriptKind.JS;
+  return ts.ScriptKind.TS;
+}
+
+/**
+ * Every module specifier `source` names, with how and where it names it:
+ * static `import … from` and side-effect `import`, `export … from`,
+ * `import x = require()`, `require()`, dynamic `import()`, `typeof import()`,
+ * and vitest's `vi.mock` / `vi.doMock` / `vi.unmock` / `vi.doUnmock` /
+ * `vi.importActual` / `vi.importMock`. Only literal specifiers are returned — a
+ * computed one cannot be resolved statically, and the runtime backstop in
+ * tests/setup.db.ts is what catches the mock arriving that way.
+ */
+export function moduleSpecifiers(source, fileName = 'module.ts') {
+  const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, false, scriptKindFor(fileName));
+  const found = [];
+  const add = (node, kind) => {
+    if (!node || !(ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node))) return;
+    const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
+    found.push({ specifier: node.text, kind, line: line + 1 });
+  };
+  const visit = node => {
+    if (ts.isImportDeclaration(node)) {
+      add(node.moduleSpecifier, 'import');
+    } else if (ts.isExportDeclaration(node)) {
+      add(node.moduleSpecifier, 'export-from');
+    } else if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) {
+      add(node.moduleReference.expression, 'import-require');
+    } else if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument)) {
+      add(node.argument.literal, 'import-type');
+    } else if (ts.isCallExpression(node)) {
+      const callee = node.expression;
+      const [first] = node.arguments;
+      if (callee.kind === ts.SyntaxKind.ImportKeyword) {
+        add(first, 'dynamic-import');
+      } else if (ts.isIdentifier(callee) && callee.text === 'require') {
+        add(first, 'require');
+      } else if (
+        ts.isPropertyAccessExpression(callee) &&
+        ts.isIdentifier(callee.expression) &&
+        (callee.expression.text === 'vi' || callee.expression.text === 'vitest') &&
+        VI_MODULE_CALLS.has(callee.name.text)
+      ) {
+        add(first, `vi.${callee.name.text}`);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return found;
+}
+
+/**
+ * Does `specifier`, written in the repo-relative file `importerRel`, name
+ * tests/setup? Relative specifiers resolve against the importer's directory, so
+ * `'./setup'` means tests/setup only from a file in tests/ — from tests/db/ it
+ * is tests/db/setup, a different module. `/tests/setup` (Vite's root-relative
+ * form) and a bare `tests/setup` (what a tsconfig `paths` or `baseUrl` entry
+ * would make of it) are treated as repo-relative. Any spelled-out extension is
+ * the same module, and a `?query` suffix does not change which file it is.
+ */
+export function namesMockingSetup(specifier, importerRel, repoRoot = REPO) {
+  const request = specifier.replace(/[?#].*$/, '');
+  const importerDir = path.posix.dirname(importerRel.split(path.sep).join('/'));
+  let target;
+  if (request.startsWith('./') || request.startsWith('../')) target = path.posix.join(importerDir, request);
+  else if (path.isAbsolute(request) && request.startsWith(`${repoRoot}${path.sep}`)) target = path.relative(repoRoot, request).split(path.sep).join('/');
+  else target = path.posix.normalize(request.replace(/^\/+/, ''));
+  return target.replace(MODULE_EXTENSION, '') === MOCKING_SETUP_MODULE;
+}
+
+/** Every reference in `source` (the repo-relative file `importerRel`) that loads tests/setup. */
+export function mockingSetupImports(source, importerRel, repoRoot = REPO) {
+  return moduleSpecifiers(source, importerRel).filter(ref => namesMockingSetup(ref.specifier, importerRel, repoRoot));
+}
+
 /** Every file under ROOTS whose name ends in the db-test suffix. */
-function findDbTests() {
+function findDbTests(repoRoot) {
   const found = [];
   const walk = dir => {
     let entries;
@@ -121,127 +221,141 @@ function findDbTests() {
       if (SKIP_DIRS.has(entry.name)) continue;
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
-      else if (entry.name.endsWith(DB_TEST_SUFFIX)) found.push(path.relative(REPO, full));
+      else if (entry.name.endsWith(DB_TEST_SUFFIX)) found.push(path.relative(repoRoot, full));
     }
   };
-  for (const root of ROOTS) walk(path.join(REPO, root));
+  for (const root of ROOTS) walk(path.join(repoRoot, root));
   return found.sort();
 }
 
-// ── 1. Mocked configs must exclude the db tests ──────────────────────────────
-for (const config of CONFIGS) {
-  let source;
-  try {
-    source = read(config);
-  } catch {
-    failures.push({
-      check: 'config-missing',
-      where: config,
-      detail: `${config} is listed as a vitest config but does not exist. Update CONFIGS in this guard, or restore the file.`,
-    });
-    continue;
+/**
+ * Run every check against the tree rooted at `repoRoot`. Returns the db-test
+ * files found and the violations; it neither prints nor exits, so the self-test
+ * can drive it against a synthetic tree.
+ */
+export function checkDbTestIsolation(repoRoot = REPO) {
+  const failures = [];
+  const read = rel => fs.readFileSync(path.join(repoRoot, rel), 'utf8');
+
+  // ── 1. Mocked configs must exclude the db tests ────────────────────────────
+  for (const config of CONFIGS) {
+    let source;
+    try {
+      source = read(config);
+    } catch {
+      failures.push({
+        check: 'config-missing',
+        where: config,
+        detail: `${config} is listed as a vitest config but does not exist. Update CONFIGS in this guard, or restore the file.`,
+      });
+      continue;
+    }
+
+    // A config is "mocking" when it actually LOADS the mocking setup, not when
+    // it mentions it — vitest.db.config.ts names the file in order to say it
+    // deliberately does not load it.
+    if (!setupFilesOf(source).includes(MOCKING_SETUP)) continue;
+
+    if (!stripComments(source).includes(REQUIRED_EXCLUDE)) {
+      failures.push({
+        check: 'missing-exclude',
+        where: config,
+        detail:
+          `${config} loads ${MOCKING_SETUP} (which mocks \`pg\`) but does not exclude ` +
+          `'${REQUIRED_EXCLUDE}'. Database tests picked up by this config would query a stub ` +
+          `that answers { rows: [], rowCount: 0 } and pass without opening a socket.`,
+      });
+    }
   }
 
-  // A config is "mocking" when it actually LOADS the mocking setup, not when
-  // it mentions it — vitest.db.config.ts names the file in order to say it
-  // deliberately does not load it.
-  if (!setupFilesOf(source).includes(MOCKING_SETUP)) continue;
+  // ── 2. The db-project setup must not mock pg ───────────────────────────────
+  {
+    let source = null;
+    try {
+      source = read(DB_SETUP);
+    } catch {
+      failures.push({
+        check: 'db-setup-missing',
+        where: DB_SETUP,
+        detail: `${DB_SETUP} does not exist — the real-database project has no setup file.`,
+      });
+    }
+    if (source !== null && /vi\.mock\(\s*['"]pg['"]/.test(stripComments(source))) {
+      failures.push({
+        check: 'db-setup-mocks-pg',
+        where: DB_SETUP,
+        detail:
+          `${DB_SETUP} mocks \`pg\`. This file exists specifically so the real-database ` +
+          'project does NOT mock the driver.',
+      });
+    }
+    // Same question as check 3, same answer. The literal this used to look for,
+    // './tests/setup.ts', is not how tests/setup.db.ts would ever name its
+    // sibling ('./setup'), so the check could not fire.
+    for (const ref of source === null ? [] : mockingSetupImports(source, DB_SETUP, repoRoot)) {
+      failures.push({
+        check: 'db-setup-imports-mocking-setup',
+        where: `${DB_SETUP}:${ref.line}`,
+        detail:
+          `${DB_SETUP} loads ${MOCKING_SETUP} via ${ref.kind} '${ref.specifier}', which would ` +
+          'reinstall the pg mock.',
+      });
+    }
+  }
 
-  if (!stripComments(source).includes(REQUIRED_EXCLUDE)) {
+  // ── 3. No db test may import the mocking setup ─────────────────────────────
+  const dbTests = findDbTests(repoRoot);
+  for (const file of dbTests) {
+    // Parsed, not pattern-matched: see moduleSpecifiers above for why.
+    for (const ref of mockingSetupImports(read(file), file, repoRoot)) {
+      failures.push({
+        check: 'db-test-imports-mocking-setup',
+        where: `${file}:${ref.line}`,
+        detail:
+          `${file} loads tests/setup (the mocking setup) via ${ref.kind} '${ref.specifier}'. ` +
+          'Loading it executes its `vi.mock(\'pg\')`, so every query in this file would hit a ' +
+          `stub. Import '${DB_SETUP}' instead.`,
+      });
+    }
+  }
+
+  // ── 4. The guard must be guarding something ────────────────────────────────
+  if (dbTests.length === 0) {
     failures.push({
-      check: 'missing-exclude',
-      where: config,
+      check: 'no-db-tests',
+      where: ROOTS.join(', '),
       detail:
-        `${config} loads ${MOCKING_SETUP} (which mocks \`pg\`) but does not exclude ` +
-        `'${REQUIRED_EXCLUDE}'. Database tests picked up by this config would query a stub ` +
-        `that answers { rows: [], rowCount: 0 } and pass without opening a socket.`,
+        `no ${DB_TEST_SUFFIX} files exist. A guard with nothing to check reports green ` +
+        'forever, which is the failure mode it was written to prevent. If the real-database ' +
+        'suite was deliberately removed, remove this guard and its CI step in the same change.',
     });
   }
-}
 
-// ── 2. The db-project setup must not mock pg ─────────────────────────────────
-{
-  let source = null;
-  try {
-    source = read(DB_SETUP);
-  } catch {
-    failures.push({
-      check: 'db-setup-missing',
-      where: DB_SETUP,
-      detail: `${DB_SETUP} does not exist — the real-database project has no setup file.`,
-    });
-  }
-  if (source !== null && /vi\.mock\(\s*['"]pg['"]/.test(stripComments(source))) {
-    failures.push({
-      check: 'db-setup-mocks-pg',
-      where: DB_SETUP,
-      detail:
-        `${DB_SETUP} mocks \`pg\`. This file exists specifically so the real-database ` +
-        'project does NOT mock the driver.',
-    });
-  }
-  if (source !== null && stripComments(source).includes(`'./${MOCKING_SETUP}'`)) {
-    failures.push({
-      check: 'db-setup-imports-mocking-setup',
-      where: DB_SETUP,
-      detail: `${DB_SETUP} pulls in ${MOCKING_SETUP}, which would reinstall the pg mock.`,
-    });
-  }
-}
-
-// ── 3. No db test may import the mocking setup ───────────────────────────────
-const dbTests = findDbTests();
-for (const file of dbTests) {
-  const source = stripComments(read(file));
-  // Any quoted specifier ending in `/setup` — which covers `from '../setup'`,
-  // the bare side-effect form `import '../setup'`, and `require('../setup')`
-  // alike. Matching only the `from` spelling would miss the side-effect import,
-  // and that is the form someone reaches for when they want the mock: it exists
-  // to run the module, not to name anything from it. `../setup.db` does not
-  // match, because the specifier must END at `setup`.
-  if (/['"][^'"]*\/setup['"]/.test(source)) {
-    failures.push({
-      check: 'db-test-imports-mocking-setup',
-      where: file,
-      detail:
-        `${file} imports tests/setup (the mocking setup). Importing it executes its ` +
-        '`vi.mock(\'pg\')`, so every query in this file would hit a stub. Import ' +
-        `'${DB_SETUP}' instead.`,
-    });
-  }
-}
-
-// ── 4. The guard must be guarding something ──────────────────────────────────
-if (dbTests.length === 0) {
-  failures.push({
-    check: 'no-db-tests',
-    where: ROOTS.join(', '),
-    detail:
-      `no ${DB_TEST_SUFFIX} files exist. A guard with nothing to check reports green ` +
-      'forever, which is the failure mode it was written to prevent. If the real-database ' +
-      'suite was deliberately removed, remove this guard and its CI step in the same change.',
-  });
+  return { dbTests, failures };
 }
 
 // ── Report ───────────────────────────────────────────────────────────────────
-if (asJson) {
-  process.stdout.write(`${JSON.stringify({ dbTests, failures }, null, 2)}\n`);
-} else if (failures.length === 0) {
-  console.log(
-    `${TAG} OK — ${dbTests.length} real-database test file(s) run unmocked, and every ` +
-      'mocked vitest config excludes them.'
-  );
-} else {
-  console.error(`${TAG} FAIL — ${failures.length} violation(s):\n`);
-  for (const f of failures) {
-    console.error(`  ${f.where}  [${f.check}]`);
-    console.error(`    ${f.detail}\n`);
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  const { dbTests, failures } = checkDbTestIsolation(REPO);
+  if (process.argv.includes('--json')) {
+    process.stdout.write(`${JSON.stringify({ dbTests, failures }, null, 2)}\n`);
+  } else if (failures.length === 0) {
+    console.log(
+      `${TAG} OK — ${dbTests.length} real-database test file(s) run unmocked, and every ` +
+        'mocked vitest config excludes them.'
+    );
+  } else {
+    console.error(`${TAG} FAIL — ${failures.length} violation(s):\n`);
+    for (const f of failures) {
+      console.error(`  ${f.where}  [${f.check}]`);
+      console.error(`    ${f.detail}\n`);
+    }
+    console.error(
+      '  Real-database tests (*.dbtest.ts) run under vitest.db.config.ts with tests/setup.db.ts.\n' +
+        '  They must never be reachable from a config that mocks `pg` — a mocked database test\n' +
+        '  passes against { rows: [], rowCount: 0 } and proves nothing while reporting green.\n'
+    );
   }
-  console.error(
-    '  Real-database tests (*.dbtest.ts) run under vitest.db.config.ts with tests/setup.db.ts.\n' +
-      '  They must never be reachable from a config that mocks `pg` — a mocked database test\n' +
-      '  passes against { rows: [], rowCount: 0 } and proves nothing while reporting green.\n'
-  );
+  process.exit(failures.length === 0 ? 0 : 1);
 }
-
-process.exit(failures.length === 0 ? 0 : 1);

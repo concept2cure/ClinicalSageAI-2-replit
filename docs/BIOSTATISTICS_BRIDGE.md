@@ -211,3 +211,41 @@ table — they add columns and replace constraints — so all three defects were
 invisible to it, and to every other gate. A guard for "column the server reads,
 added only by a file on no applier" is the missing one; it is not built here
 because it needs the reference schema this session had to construct by hand.
+
+---
+
+## Second pass of the same audit — 2026-09-20
+
+The audit above was re-run after ten days and 517 commits from other sessions,
+against a reference schema brought current (install-fresh plus the whole set:
+**290 of 290 applied, zero failures**, 974 tables). The six ranked follow-ups
+were still on no applier, and the 27 migrations other sessions added in that
+window introduced no new ones — they were wired correctly.
+
+Three of the six were confirmed against the schema AND their consumers, and are
+now on the applier. All three raised `42703` on every deployed database:
+
+| Column(s) | Consumer | What failed |
+|---|---|---|
+| `ai_claims.verifier_flags` | `routes/chat/send-message.ts` INSERT; `ivdrPackManifest.ts` flagged-claim counts | claim persistence in the chat path, and the manifest's flag counts |
+| `ivdr_binder_evidence.source_type`, `source_atom_id`, `source_retrieval_chunk_id` | `ivdrPackManifest.ts` SELECT; `ai-claims-routes.ts` INSERT | attaching evidence to an IVDR claim, and the pack manifest's evidence fetch |
+| `ivdr_packs` — ten columns: four artifact hashes, four sizes, `has_warnings`, `warnings_jsonb` | `ivdr-pack-worker.ts` promotion step | every IVDR pack build did its whole job and then failed on the last statement |
+
+The two 2026-02-24/25 IVDR files fell off the applier together, which is why the
+pack and its evidence broke as a pair. Each is additive, now `to_regclass`-guarded
+(the binder file keeps its own transaction, with the guard inside it), and
+idempotent — re-applied with zero errors, and the set still applies 290/290.
+Pinned in `tests/schema-contract/governed-command-vocabulary.contract.test.ts`,
+shown failing with the entries removed.
+
+### The remaining three, and why they are not wired here
+
+- `ana_kernel_decision_log.prev_hash` — the reader **fails soft by design**:
+  `persistent-queries.ts` enumerates `'unavailable' // the table or its
+  entry_hash/prev_hash columns are absent`. Nothing crashes; the kernel
+  hash-chain verification simply can never report `verified`. Wiring it turns an
+  inert verifier live, which is a product decision rather than a defect fix.
+- `document_audit_trail` / `document_chunks` tenant keys — `tenant-offboarding.ts`
+  already documents that the `public` versions of these tables do not exist and
+  resolves tenancy another way. Needs its own reading before anything is wired.
+- `organizations.template_count` — no server reference, twice checked. Dead.

@@ -1,0 +1,360 @@
+# The new test file run against PUT /api/ectd-documents/:id as committed at HEAD (git show HEAD:server/routes/ectd-documents.ts), for the ectd-route cases only.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule
+stdout | server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+{
+  "timestamp": "2026-09-23T05:50:06.358Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 2,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands 201ms
+   → a caller stamped approved on a draft: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings 9ms
+   → status "finalized" was accepted: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done 15ms
+   → status 'signed' was accepted: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own 9ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict 8ms
+   → approved -> 'finalized' was accepted: expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule 7ms
+   → expected 200 to be 400 // Object.is equality
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing 7ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim 6ms
+   → expected null to be undefined // Object.is equality
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change 10ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too 8ms
+   → row signed was rewritten: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion 13ms
+   → the restate rewrote the stored spelling: expected 'Approved' to be 'approved' // Object.is equality
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction)
+ ↓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/coauthor/documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone
+ ✓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > saves a content-only PUT on a draft — the one client caller, EctdCoauthor.saveContent 8ms
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling 12ms
+   → expected 'In-Progress' to be 'in-progress' // Object.is equality
+ ✓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > lets a verdict be withdrawn to a working state (the fail-safe direction) 6ms
+ ✓ server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone 8ms
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > PUT /api/ectd-documents/:id — route-specific fields > refuses moving an approved document to another module (it would land its verdict on another section) 5ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a refused status write neither bumps the version nor logs an update (its own approved-list branch is gone) 5ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/zzTmpEctdHead.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a no-op restate logs no lifecycle event either 7ms
+   → expected { id: 601, title: 'Form 3674', …(7) } to match object { status: 'approved', version: '0001' }
+(7 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses {status:'approved'} on a draft with 400, writes nothing, and the transmit refusal stands
+AssertionError: a caller stamped approved on a draft: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:219:64
+    217|     const res = await put(DRAFT, { status: 'approved' });
+    218|
+    219|     expect(res.status, 'a caller stamped approved on a draft').toBe(40…
+       |                                                                ^
+    220|     expect(res.body.error).toBe('STATUS_NOT_SETTABLE');
+    221|     expect(res.body.governedPath).toMatch(/sourceAuthoringDocId/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses every value outside the working states — verdicts, spellings, whitespace, unknown strings
+AssertionError: status "finalized" was accepted: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:242:75
+    240|     ]) {
+    241|       const res = await put(DRAFT, { status });
+    242|       expect(res.status, `status ${JSON.stringify(status)} was accepte…
+       |                                                                           ^
+    243|     }
+    244|     const after = await row(DRAFT);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses 'signed' and 'locked' on Form 1571, and the IND checklist still reads it not done
+AssertionError: status 'signed' was accepted: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:254:61
+    252|     for (const status of ['signed', 'locked']) {
+    253|       const res = await put(FORM_1571, { status });
+    254|       expect(res.status, `status '${status}' was accepted`).toBe(400);
+       |                                                             ^
+    255|       expect(await form1571Done(), `'${status}' marked Form 1571 done`…
+    256|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > writes none of a refused request, including the fields that were allowed on their own
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:263:24
+    261|     const res = await put(DRAFT, { status: 'approved', title: 'Retitle…
+    262|
+    263|     expect(res.status).toBe(400);
+       |                        ^
+    264|     expect(await row(DRAFT)).toMatchObject({ status: 'draft', title: '…
+    265|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > does not let a verdict be relabelled as a different verdict
+AssertionError: approved -> 'finalized' was accepted: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:270:66
+    268|     for (const status of ['finalized', 'signed', 'locked']) {
+    269|       const res = await put(APPROVED, { status });
+    270|       expect(res.status, `approved -> '${status}' was accepted`).toBe(…
+       |                                                                  ^
+    271|     }
+    272|     expect((await row(APPROVED)).status).toBe('approved');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot award a verdict > refuses a status that is not a string, rather than failing inside the rule
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:277:24
+    275|   it('refuses a status that is not a string, rather than failing insid…
+    276|     const res = await put(DRAFT, { status: { value: 'approved' } });
+    277|     expect(res.status).toBe(400);
+       |                        ^
+    278|     expect((await row(DRAFT)).status).toBe('draft');
+    279|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a content change to an approved row with 409, names the governed path, and writes nothing
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:291:24
+    289|     const res = await put(APPROVED, { content: '<p>FORGED unapproved c…
+    290|
+    291|     expect(res.status).toBe(409);
+       |                        ^
+    292|     expect(res.body.error).toBe('FINALIZED_DOCUMENT_READ_ONLY');
+    293|     expect(res.body.message).toMatch(/source authoring document/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > shows the refusal to the user: the client error reader lifts the message verbatim
+AssertionError: expected null to be undefined // Object.is equality
+
+- Expected:
+undefined
+
++ Received:
+null
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:307:37
+    305|        where to go. */
+    306|     const res = await put(APPROVED, { content: '<p>x</p>' });
+    307|     expect(serverMessage(res.body)).toBe(res.body.message);
+       |                                     ^
+    308|   });
+    309|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses a restate combined with a content change, and a title change
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:312:28
+    310|   it('refuses a restate combined with a content change, and a title ch…
+    311|     const restate = await put(APPROVED, { status: 'approved', content:…
+    312|     expect(restate.status).toBe(409);
+       |                            ^
+    313|
+    314|     const retitle = await put(APPROVED, { title: 'Retitled' });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > refuses content changes to signed and locked rows too
+AssertionError: row signed was rewritten: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:324:64
+    322|       const before = await row(id);
+    323|       const res = await put(id, { content: '<p>changed</p>' });
+    324|       expect(res.status, `row ${before.status} was rewritten`).toBe(40…
+       |                                                                ^
+    325|       expect(await row(id)).toMatchObject({ status: before.status, con…
+    326|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' cannot rewrite a document that carries a verdict > treats 'Approved' on an 'approved' row as a no-op restate, not a promotion
+AssertionError: the restate rewrote the stored spelling: expected 'Approved' to be 'approved' // Object.is equality
+
+Expected: "approved"
+Received: "Approved"
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:334:69
+    332|     expect(res.status).toBe(200);
+    333|     const after = await row(APPROVED);
+    334|     expect(after.status, 'the restate rewrote the stored spelling').to…
+       |                                                                     ^
+    335|     expect(stamp(after), 'a no-op restate touched the row').toBe(STAMP…
+    336|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > 'PUT /api/ectd-documents/:id' — every working edit keeps working > moves between working states and writes the canonical spelling
+AssertionError: expected 'In-Progress' to be 'in-progress' // Object.is equality
+
+Expected: "in-progress"
+Received: "In-Progress"
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:359:41
+    357|       const res = await put(DRAFT, { status: sent });
+    358|       expect(res.status, `working state ${JSON.stringify(sent)} was re…
+    359|       expect((await row(DRAFT)).status).toBe(stored);
+       |                                         ^
+    360|     }
+    361|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > PUT /api/ectd-documents/:id — route-specific fields > refuses moving an approved document to another module (it would land its verdict on another section)
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:384:24
+    382|   it('refuses moving an approved document to another module (it would …
+    383|     const res = await put(APPROVED, { module: 'm1.1.1' });
+    384|     expect(res.status).toBe(409);
+       |                        ^
+    385|     expect((await row(APPROVED)).module_number).toBe('m1.1.3');
+    386|     expect(await form1571Done()).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a refused status write neither bumps the version nor logs an update (its own approved-list branch is gone)
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:393:24
+    391|        and bumped metadata.version to 0002 when a PUT stamped approved…
+    392|     const res = await put(DRAFT, { status: 'approved' });
+    393|     expect(res.status).toBe(400);
+       |                        ^
+    394|     const meta = (
+    395|       await h.pglite.query<{ metadata: { version?: string; lifecycle?:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  server/routes/__tests__/zzTmpEctdHead.test.ts > PUT /api/ectd-documents/:id — route-specific fields > a no-op restate logs no lifecycle event either
+AssertionError: expected { id: 601, title: 'Form 3674', …(7) } to match object { status: 'approved', version: '0001' }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "status": "approved",
++   "status": "APPROVED",
+    "version": "0001",
+  }
+
+ ❯ server/routes/__tests__/zzTmpEctdHead.test.ts:407:31
+    405|     const res = await put(APPROVED, { status: 'APPROVED' });
+    406|     expect(res.status).toBe(200);
+    407|     expect(res.body.document).toMatchObject({ status: 'approved', vers…
+       |                               ^
+    408|     const meta = (
+    409|       await h.pglite.query<{ metadata: { lifecycle?: unknown[] } }>(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed | 3 passed | 15 skipped (33)
+   Start at  05:50:00
+   Duration  6.29s (transform 1.90s, setup 77ms, import 3.17s, tests 2.75s, environment 0ms)
+

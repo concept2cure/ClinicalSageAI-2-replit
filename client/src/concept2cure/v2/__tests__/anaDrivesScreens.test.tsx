@@ -184,7 +184,10 @@ describe('Vault — AnA operates the real surface', () => {
       <Vault surface={{ id: 'vault', label: 'Vault' } as any} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />,
     );
     await waitFor(() => expect(registeredSurfaceId()).toBe('vault'));
-    await screen.findByText('stability-summary-24m');
+    // The title is on screen twice before a search: once in the browse tree and
+    // once in the Uploaded files lane, which projects the same cabinet read
+    // (2026-09-21). Assert on the count, not on a single element.
+    await waitFor(() => expect(screen.queryAllByText('stability-summary-24m').length).toBeGreaterThan(0));
 
     let outcome: unknown;
     act(() => {

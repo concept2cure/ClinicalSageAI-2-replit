@@ -137,6 +137,34 @@ export const SAVE_DOCUMENT_TO_VAULT: AnaTool = {
   },
 };
 
+export const DRAFT_AUTHORING_DOCUMENT: AnaTool = {
+  name: 'draft_authoring_document',
+  description:
+    "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content } with the content stored as sanitized HTML, provenance recorded as drafted by AnA, a genesis revision and a Part 11 CREATE audit row per section. The person then sees it as a canvas in the conversation, can open it in the full editor, and can file it into the project vault. Use this — not save_document_to_vault — whenever the deliverable is a document with sections (a Module 2.5 excerpt, an IB section set, a 510(k) summary). Requires an open project; refuses otherwise. Tenant-scoped. Returns { status: 'generated', authoringDocId, programId, title, sectionCount, content }.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string', description: 'Document title.' },
+      module: { type: 'string', description: "CTD module, e.g. 'M2', 'M3'. Default 'M2'." },
+      documentType: { type: 'string', description: "Document type / product code, e.g. 'clinical_overview'." },
+      sections: {
+        type: 'array',
+        description: 'The sections in reading order. content is HTML (p, h1-h6, ul/ol/li, table, strong/em); scripts and unknown markup are stripped.',
+        items: {
+          type: 'object',
+          properties: {
+            code: { type: 'string', description: "Section code, e.g. '2.5.1'." },
+            title: { type: 'string', description: 'Section title.' },
+            content: { type: 'string', description: 'Section body as HTML.' },
+          },
+          required: ['code', 'title', 'content'],
+        },
+      },
+    },
+    required: ['title', 'sections'],
+  },
+};
+
 export const UPDATE_VAULT_DOCUMENT: AnaTool = {
   name: 'update_vault_document',
   description:

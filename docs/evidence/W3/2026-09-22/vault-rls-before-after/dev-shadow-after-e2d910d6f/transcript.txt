@@ -1,0 +1,16 @@
+
+=== vault ===
+  OQ-VAULT-00  pass
+  OQ-VAULT-01  pass
+  OQ-VAULT-02  pass
+  OQ-VAULT-03  FAIL  (ingest expected 201, got 500)
+  OQ-VAULT-04  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-05  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-06  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-07  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-08  not-executed  (prerequisite step OQ-VAULT-07 did not pass)
+  OQ-VAULT-08b  not-executed  (prerequisite step OQ-VAULT-07 did not pass)
+  OQ-VAULT-09  not-executed  (prerequisite step OQ-VAULT-03 did not pass)
+  OQ-VAULT-10  pass
+
+OQ-002 Vault: 4 pass, 1 fail, 0 deviation, 7 not-executed → <scratch>/OQ-VAULT

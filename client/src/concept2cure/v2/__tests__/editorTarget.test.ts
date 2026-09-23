@@ -99,7 +99,8 @@ describe('hostile / malformed window values', () => {
     ['a string', 'k510'],
     ['a number', 42],
     ['an empty object', {}],
-    ['an unknown docType', { docType: 'bla', setAt: Date.now() }],
+    ['a non-string docType', { docType: 7, setAt: Date.now() }],
+    ['an empty-string docType', { docType: '   ', setAt: Date.now() }],
     ['a missing setAt', { docType: 'k510' }],
     ['a non-numeric setAt', { docType: 'k510', setAt: 'now' }],
   ])('%s on the window is refused without throwing', (_name, value) => {

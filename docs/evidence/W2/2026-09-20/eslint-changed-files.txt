@@ -1,0 +1,32 @@
+# 2026-09-20T23:58:36Z
+/home/user/ClinicalSageAI-2-replit/server/startup/services.ts
+   98:8   warning  Async function 'verifyDatabaseConnection' has a complexity of 19. Maximum allowed is 15       complexity
+  110:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  245:8   warning  Async function 'initializeEarlyServices' has too many lines (127). Maximum allowed is 100     max-lines-per-function
+  245:8   warning  Async function 'initializeEarlyServices' has a complexity of 19. Maximum allowed is 15        complexity
+  249:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  251:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  259:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  262:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  272:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  303:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  355:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  387:11  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  410:11  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  423:8   warning  Async function 'initializeParallelServices' has too many lines (112). Maximum allowed is 100  max-lines-per-function
+  423:8   warning  Async function 'initializeParallelServices' has a complexity of 27. Maximum allowed is 15     complexity
+  443:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  448:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  464:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  472:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  486:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  497:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  524:11  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  555:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  557:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  576:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+  585:3   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info       no-console
+
+✖ 41 problems (0 errors, 41 warnings)
+
+exit=0

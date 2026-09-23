@@ -21,8 +21,9 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
 
   // Admin security-health endpoint. Lives under /api/admin so the
   // global /api auth gate runs first (auth + admin role enforced
-  // by the router itself). Returns the security self-test report
-  // on demand for ops dashboards and SOC tooling.
+  // on its one route, never router-wide: every /api/admin/* request
+  // enters this router first, VSR-001 F-31). Returns the security
+  // self-test report on demand for ops dashboards and SOC tooling.
   app.use('/api/admin', adminSecurityRouter);
 
   // /healthz and /readyz are NOT registered here.
@@ -99,7 +100,8 @@ export async function registerPlatformRoutes({ app, pool, authMiddleware }: Plat
     if (usersRouter && (typeof usersRouter === 'function' || (usersRouter as any).handle)) {
       // These mounts sit BEFORE the global /api gate, so the gate's
       // authMiddleware (and the scope lever) never runs for them. The router is
-      // MIXED: pre-auth routes (/login, /register, /logout) alongside
+      // MIXED: /login, /register and /logout (307s to the canonical /api/auth
+      // routes since they were found issuing sessions without MFA) alongside
       // authenticated ones (/, /me, /:id, /me/preferences, …), and it verifies
       // JWTs inline rather than via a mount middleware — so it opens no tenant
       // scope of its own. Under RLS_ENFORCE=on the authenticated routes then

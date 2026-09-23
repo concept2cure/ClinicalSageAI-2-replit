@@ -51,7 +51,8 @@ export interface PdevBudget { params: BudgetParams; items: BudgetItem[]; }
 export interface AmendmentChange { sec: string; from: string; to: string; }
 export interface PdevAmendment {
   id: string; num: string; summary: string; status: string;
-  reconsent: boolean; path: string; changes: AmendmentChange[];
+  /** true = a declared consent or risk impact needs an IRB re-consent determination; null = not declared. */
+  reconsent: boolean | null; path: string; changes: AmendmentChange[];
 }
 export interface CapaAction { id: string; action: string; status: string; }
 export interface PdevDeviation {
@@ -65,6 +66,28 @@ export interface PdevReview {
   id: string; reviewer: string; role: string; status: string; comments: ReviewComment[];
 }
 export interface ConsentElement { id: string; el: string; present: boolean; }
+
+/** A design-gate finding, as `validateDesign()` produced it on the server.
+ *  `sev` / `text` match the shape every other register's findings use. */
+export interface PdevDesignFinding {
+  code: string; section: string; sev: string; title: string; text: string;
+  standard: string; endpoint: string; fix: string;
+}
+
+/** The study design this protocol is a projection of, or null when none is
+ *  bound. Never an empty report: an unbound protocol has been checked against
+ *  nothing, and `resolved: false` says the link names a design this
+ *  organisation cannot read. */
+export interface PdevStudyDesign {
+  studyId: string;
+  resolved: boolean;
+  title: string; phase: string; indication: string; status: string;
+  linkedAt: string;
+  riskLevel: string; canAdvance: boolean; blocksApproval: boolean;
+  counts: { critical: number; major: number; minor: number; info: number };
+  summary: string; standardsChecked: string[];
+  findings: PdevDesignFinding[];
+}
 
 export interface PdevDoc {
   id: string; title: string; shortTitle: string; kind: string;
@@ -84,6 +107,39 @@ export interface PdevDoc {
   reviews: PdevReview[];
   consent: ConsentElement[];
   completenessFindings: SevText[];
+  /** The bound study design and the design gates' findings, or null. */
+  studyDesign: PdevStudyDesign | null;
+  /**
+   * Deterministic regulatory findings from `protocol-rule-pack.ts` — one per
+   * rule, each citing its clause. This is depth alongside `completenessFindings`
+   * (the five checks the finalize gate enforces), not a replacement for it.
+   *
+   * `notAssessed` is a first-class count, not a rounding error: a rule the
+   * protocol does not record enough to decide is reported as not-assessed and
+   * is NEVER folded into `assessed`. A percentage over rules that did not run
+   * is the defect this platform has already been burned by.
+   */
+  ruleFindings: PdevRuleFindings;
+}
+
+export interface PdevRuleFinding {
+  ruleId: string;
+  standard: string;
+  clause: string;
+  title: string;
+  status: 'met' | 'unmet' | 'attention' | 'not-assessed';
+  sev: 'critical' | 'warning' | 'info';
+  message: string;
+  remediation: string;
+}
+
+export interface PdevRuleFindings {
+  findings: PdevRuleFinding[];
+  /** Rules that reached a verdict. */
+  assessed: number;
+  unmet: number;
+  /** Rules that could not be decided from what the protocol records. */
+  notAssessed: number;
 }
 
 

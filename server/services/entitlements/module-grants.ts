@@ -95,25 +95,32 @@ export async function writeModuleGrant(input: ModuleGrantWrite): Promise<ModuleG
   // A revocation carries no end date — see ModuleGrantWrite.expiresAt.
   const expiresAt = enabled ? (input.expiresAt ?? null) : null;
 
+  // $4 and $5 carry explicit casts. Both are legitimately NULL on the two
+  // provisioning paths (the platform, not a person, grants; a plan-included
+  // module never expires), and Postgres cannot infer a type for a NULL
+  // parameter that first appears inside a CASE — it answered "could not
+  // determine data type of parameter $5" and no grant was written. The
+  // PGlite harness inferred it, which is why the tests were green.
   const result = await query(
     `INSERT INTO module_subscriptions
        (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by,
         expires_at, expiry_set_by, expiry_set_at, updated_at)
      VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,
-             CASE WHEN $3 THEN $4 END, CASE WHEN $3 THEN NULL ELSE $4 END,
-             $5, CASE WHEN $5 IS NOT NULL THEN $4 END, CASE WHEN $5 IS NOT NULL THEN now() END,
+             CASE WHEN $3 THEN $4::text END, CASE WHEN $3 THEN NULL ELSE $4::text END,
+             $5::timestamptz, CASE WHEN $5::timestamptz IS NOT NULL THEN $4::text END,
+             CASE WHEN $5::timestamptz IS NOT NULL THEN now() END,
              now())
      ON CONFLICT (organization_id, module_id) DO UPDATE
        SET enabled = EXCLUDED.enabled,
            enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,
            disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,
-           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4 ELSE module_subscriptions.enabled_by END,
-           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4 END,
+           enabled_by = CASE WHEN EXCLUDED.enabled THEN $4::text ELSE module_subscriptions.enabled_by END,
+           disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4::text END,
            -- Written unconditionally, including to NULL. The caller has stated
            -- which it means; carrying the old date forward is the silent no-op
            -- this signature exists to prevent.
            expires_at = EXCLUDED.expires_at,
-           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4 END,
+           expiry_set_by = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN $4::text END,
            expiry_set_at = CASE WHEN EXCLUDED.expires_at IS NOT NULL THEN now() END,
            updated_at = now()
      RETURNING organization_id, module_id, enabled, expires_at, updated_at`,

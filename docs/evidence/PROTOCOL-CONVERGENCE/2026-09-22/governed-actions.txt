@@ -1,0 +1,62 @@
+### The governed ledger rows the live bind / unbind wrote (org 2, protocol_documents.id = 2)
+### c2c_ana_actions — domain protocol_development, target protocol-document:2
+-[ RECORD 1 ]---+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+id              | act_04846d7e4137476ba2406885c4d40b77
+org_id          | 2
+domain          | protocol_development
+surface         | api
+command         | update
+target          | protocol-document:2
+state           | executed
+decision_reason | Binding the demo protocol to its persisted USDM design object through the surface.
+payload         | {"studyDesignId": "sd_cf7dfded17fb4c60a1344648fec9c0f9", "studyDesignTitle": "[Demo · Biotech] C2C-101 Phase 2 dose-ranging study in moderate-to-severe plaque psoriasis"}
+-[ RECORD 2 ]---+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+id              | act_400b0b617a6844f2983c455faf3c45e5
+org_id          | 2
+domain          | protocol_development
+surface         | api
+command         | update
+target          | protocol-document:2
+state           | executed
+decision_reason | Capturing the unbound state for the convergence evidence pack.
+payload         | {"studyDesignId": null}
+-[ RECORD 3 ]---+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+id              | act_aceda5322efb401ab51c898b15376f0a
+org_id          | 2
+domain          | protocol_development
+surface         | api
+command         | update
+target          | protocol-document:2
+state           | executed
+decision_reason | Converging the demo protocol onto its USDM study design object per PROTOCOL_DESIGN_CONVERGENCE step 1.
+payload         | {"studyDesignId": "sd_cf7dfded17fb4c60a1344648fec9c0f9", "studyDesignTitle": "[Demo · Biotech] C2C-101 Phase 2 dose-ranging study in moderate-to-severe plaque psoriasis"}
+-[ RECORD 4 ]---+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+id              | act_d809ede1e89d41fcb81c66129105da3f
+org_id          | 2
+domain          | protocol_development
+surface         | api
+command         | update
+target          | protocol-document:2
+state           | executed
+decision_reason | Recording the cover-page sponsor and principal investigator
+payload         | {"fields": ["sponsor", "principalInvestigator"]}
+
+
+### the persisted design's own governed row
+-[ RECORD 1 ]---+------------------------------------------------------------------------------------------------
+id              | act_dd44d6c4fa3d4216b1ae7a090e9462fe
+org_id          | 2
+domain          | mdx
+command         | persist
+target          | study-design:sd_cf7dfded17fb4c60a1344648fec9c0f9
+state           | executed
+decision_reason | Persisting the demo programme's study design so the protocol can be bound to its design object.
+
+
+### the link on the record
+ id | organization_id | protocol_number |           study_design_id           | study_design_linked_by |    study_design_linked_at     
+----+-----------------+-----------------+-------------------------------------+------------------------+-------------------------------
+  1 |               2 | WI-SMOKE-001    |                                     |                        | 
+  2 |               2 | C2C-101-201     | sd_cf7dfded17fb4c60a1344648fec9c0f9 |                      1 | 2026-09-22 03:50:34.550656+00
+(2 rows)
+

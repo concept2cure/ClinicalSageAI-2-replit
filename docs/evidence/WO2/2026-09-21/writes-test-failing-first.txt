@@ -1,0 +1,60 @@
+### The write layer BEFORE the fix — send() reads only res.ok, and apiRequest throws.
+
+ × client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > turns a thrown 409 SECTION_CHANGED into the editor’s conflict, not a generic failure 8ms
+   → expected ApiRequestError: This section was changed… { …(4) } to be an instance of ProtocolSectionConflict
+ × client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > names the act and says nothing was written, carrying the server’s sentence 3ms
+   → expected [Function] to throw error matching /Couldn.t add the visit — This protoco…/ but got 'This protocol is finalized and cannot…'
+ × client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > reports a thrown 401 as an unauthenticated session 1ms
+   → expected [Function] to throw error matching /isn.t authenticated/ but got 'Unauthorized'
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > does not swallow a failure that is not an API refusal 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 409 SECTION_CHANGED as the conflict 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 401 as an unauthenticated session 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a reason under eight characters with no request at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a cover-page save with no field to change 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the section save carries the concurrency token and the status > sends expectedUpdatedAt, status and the reason on the section PATCH 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > turns a thrown 409 SECTION_CHANGED into the editor’s conflict, not a generic failure
+AssertionError: expected ApiRequestError: This section was changed… { …(4) } to be an instance of ProtocolSectionConflict
+ ❯ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts:53:86
+     51|       { error: { code: 'SECTION_CHANGED' } }, 'SECTION_CHANGED',
+     52|     ));
+     53|     await expect(saveProtocolSection({ sectionId: 13, content: 'x', re…
+       |                                                                                      ^
+     54|       .rejects.toBeInstanceOf(ProtocolSectionConflict);
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > names the act and says nothing was written, carrying the server’s sentence
+AssertionError: expected [Function] to throw error matching /Couldn.t add the visit — This protoco…/ but got 'This protocol is finalized and cannot…'
+
+- Expected:
+/Couldn.t add the visit — This protocol is finalized and cannot be edited\. Nothing was written\./
+
++ Received:
+"This protocol is finalized and cannot be edited."
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts:59:79
+     57|   it('names the act and says nothing was written, carrying the server’…
+     58|     throws(new ApiRequestError('This protocol is finalized and cannot …
+     59|     await expect(addScheduleVisit(2, { visitName: 'Week 12', reason: R…
+
+### After the fix — send() reads BOTH shapes.
+
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > turns a thrown 409 SECTION_CHANGED into the editor’s conflict, not a generic failure 3ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > names the act and says nothing was written, carrying the server’s sentence 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > reports a thrown 401 as an unauthenticated session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest throws — the write layer reads the thrown error > does not swallow a failure that is not an API refusal 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 409 SECTION_CHANGED as the conflict 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > apiRequest resolves — the same refusals, read off the response > reads a resolved 401 as an unauthenticated session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a reason under eight characters with no request at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the reason floor is enforced before anything leaves the browser > refuses a cover-page save with no field to change 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevWrites.test.ts > the section save carries the concurrency token and the status > sends expectedUpdatedAt, status and the reason on the section PATCH 1ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  00:38:49
+   Duration  360ms (transform 126ms, setup 81ms, import 103ms, tests 12ms, environment 0ms)
+

@@ -1,0 +1,108 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > 403 without org context 21ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > 400 when projectId is missing — a project-readiness read requires it, no org-wide fallback 4ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > 400 when projectId is not a positive integer 3ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > returns the real-store module map for the acting org + project, source = project_sections 5ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > honest empty list when the project tracks no CTD sections — no fallback data 4ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > resolves a program UUID through the anchor lookup — never parseInt — and reads the anchored project (F-7) 4ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > a program in the org with no PM-spine anchor answers an honest empty map that SAYS it is unanchored (F-7) 3ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > a program UUID that is not in the acting org answers 404, and nothing is read for it (F-7) 2ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > an id that parseInt would truncate ("12abc") is 400, never project 12 (F-7) 5ms
+ ✓ server/routes/__tests__/dossier-map-read.test.ts > GET /api/dossier-map > fails closed to an honest empty list when the store is not provisioned (42P01) 3ms
+stderr | server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > unauthenticated: the per-IP bucket still trips at exactly the per-IP ceiling
+{
+  "timestamp": "2026-09-21T01:15:17.644Z",
+  "level": "warn",
+  "message": "Rate limit exceeded for api",
+  "context": {
+    "subject": "ip:10.0.0.1",
+    "ip": "10.0.0.1",
+    "path": "/api/things",
+    "count": 60,
+    "limit": 60,
+    "remainingMs": 59887
+  }
+}
+
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > documents an authenticated ceiling above the per-IP one 2ms
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > unauthenticated: the per-IP bucket still trips at exactly the per-IP ceiling 129ms
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > authenticated: one user is NOT tripped by ordinary shell traffic beyond the per-IP ceiling 105ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > platform numbers: api and concept2cure carry an authenticated ceiling above the per-IP one, and a per-IP guard above that 2ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > no credential: the per-IP bucket trips at exactly the per-IP ceiling 36ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > bearer credential: not tripped at the per-IP ceiling, tripped at the credential ceiling 32ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > two credentials behind one address have their own buckets; anonymous traffic from it keeps its own 36ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > rotating credentials from one address is bounded by the per-IP credentialed guard 39ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > a verified identity wins over the credential: two tokens for one user share the user bucket 24ms
+ ✓ server/middleware/__tests__/redisRateLimiter-identity-key.test.ts > redisRateLimiter — credential key for authenticated traffic (F-5) > the headers name the ceiling that applied 10ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > asks for the open program by its UUID, verbatim, and renders the anchored map 76ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > an unanchored program is shown as "no section store", not as an empty dossier 48ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > a program whose anchored project tracks no sections keeps the genuine empty state 16ms
+ ✓ client/src/concept2cure/v2/__tests__/dossierMapProgramScope.test.tsx > DossierMap — program UUID scope (F-7) > with no program open, nothing is fetched and the surface says so 11ms
+stderr | server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > authenticated: the per-user ceiling still exists and trips at exactly that number
+{
+  "timestamp": "2026-09-21T01:15:18.590Z",
+  "level": "warn",
+  "message": "Rate limit exceeded for api",
+  "context": {
+    "subject": "user:8",
+    "ip": "10.0.0.3",
+    "path": "/api/things",
+    "count": 600,
+    "limit": 600,
+    "remainingMs": 59164
+  }
+}
+
+stderr | server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > two users behind one NAT address do not share a bucket, and anonymous traffic from it keeps its own
+{
+  "timestamp": "2026-09-21T01:15:19.432Z",
+  "level": "warn",
+  "message": "Rate limit exceeded for api",
+  "context": {
+    "subject": "user:21",
+    "ip": "10.0.0.4",
+    "path": "/api/things",
+    "count": 600,
+    "limit": 600,
+    "remainingMs": 59164
+  }
+}
+
+stderr | server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > two users behind one NAT address do not share a bucket, and anonymous traffic from it keeps its own
+{
+  "timestamp": "2026-09-21T01:15:19.505Z",
+  "level": "warn",
+  "message": "Rate limit exceeded for api",
+  "context": {
+    "subject": "ip:10.0.0.4",
+    "ip": "10.0.0.4",
+    "path": "/api/things",
+    "count": 60,
+    "limit": 60,
+    "remainingMs": 59931
+  }
+}
+
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > authenticated: the per-user ceiling still exists and trips at exactly that number 841ms
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > two users behind one NAT address do not share a bucket, and anonymous traffic from it keeps its own 913ms
+ ✓ server/middleware/__tests__/rateLimiter-identity-key.test.ts > legacy rateLimiter — identity key for authenticated traffic (F-5) > the 429 and the headers name the ceiling that applied 6ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > gates the open program's sequence, not the organisation's first submission 73ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program whose submission has no sequence yet is an honest empty state — never another program's gate 13ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > does NOT clear an unreviewed sequence the server blocks 61ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > clears only when the SERVER says every composed gate is clear 31ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a program with no submission at all says so, naming the program 12ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > with no program open the gate is not run against anything 7ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessProgramScope.test.tsx > DispatchReadiness — scoped to the open program (F-8) > a failed discovery is an error, not an empty state 13ms
+ ✓ client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx > DispatchReadiness — renders the server gate, not a local recomputation > treats a response carrying no gate as UNANSWERED, never as cleared 18ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses a .exe with 400 FILE_TYPE_NOT_ALLOWED and stores nothing (F-4) 28ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses an upload under the wrong field name with 400, not 500 (multer LIMIT_UNEXPECTED_FILE) 6ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > still admits an allowed type to the governed ingest (the happy path is untouched) 8ms
+
+ Test Files  7 passed (7)
+      Tests  38 passed (38)
+   Start at  01:15:16
+   Duration  3.28s (transform 1.47s, setup 608ms, import 3.04s, tests 2.67s, environment 2.03s)
+

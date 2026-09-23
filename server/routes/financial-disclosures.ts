@@ -43,6 +43,7 @@ import {
   recordFcoiSignatureInvalidation,
   recordFcoiReview,
 } from '../services/fcoi-metrics';
+import { clientIpOf } from '../utils/client-ip';
 
 const router = Router();
 
@@ -61,11 +62,7 @@ function resolveOrgId(req: Request): number | null {
 
 /** Real client IP for the Part 11 signature row, or null — never fabricated. */
 function resolveIpAddress(req: Request): string | null {
-  return (
-    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
-    req.socket?.remoteAddress ||
-    null
-  );
+  return clientIpOf(req);
 }
 
 const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400 };

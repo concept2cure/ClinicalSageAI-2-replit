@@ -1,0 +1,16 @@
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/dispatchReadinessServerGate.test.tsx
+  123:19  warning  '_omitted' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx
+  254:8  warning  Function 'DispatchReadiness' has too many lines (322). Maximum allowed is 100  max-lines-per-function
+  254:8  warning  Function 'DispatchReadiness' has a complexity of 52. Maximum allowed is 15     complexity
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/DossierMap.tsx
+  83:8  warning  Function 'DossierMap' has too many lines (141). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/middleware/redisRateLimiter.ts
+  466:10  warning  Async function 'redisRateLimiterMiddleware' has a complexity of 17. Maximum allowed is 15  complexity
+
+✖ 5 problems (0 errors, 5 warnings)
+

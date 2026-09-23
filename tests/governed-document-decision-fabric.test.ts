@@ -659,6 +659,10 @@ describe('Governed Document Evaluator — Full Integration', () => {
         hasProvenance: true,
         unresolvedContradictionCount: 0,
         criticalContradictionCount: 0,
+        // Fully ready includes freshness having been computed. This fixture
+        // used to omit it and pass only because an uncomputed staleness was
+        // read as "Document is current" (2026-09-22).
+        isStale: false,
       },
       exportState: {
         humanReviewApproved: true,
@@ -669,6 +673,53 @@ describe('Governed Document Evaluator — Full Integration', () => {
 
     expect(result.evaluation.decision.outcome).toBe('allow');
     expect(result.evaluation.exportGate.outcome).toBe('eligible');
+    // Recorded as not AI-generated is a recorded, passing check, not an absent one.
+    const review = result.evaluation.exportGate.gateChecks.find((c) => c.checkId === 'export_human_review');
+    expect(review).toMatchObject({ passed: true, required: true });
+  });
+
+  /* The absent-as-clean cases. Same fully-ready document, one fact unrecorded:
+     each must block and name what is missing, never pass by default. */
+  describe('an unrecorded fact blocks export instead of passing by default', () => {
+    const ready = () => ({
+      context: makeBaseContext({
+        intendedAction: 'export' as const,
+        artifactId: 'art-1',
+        documentType: 'clinical_overview',
+        regulatorBody: 'FDA',
+        ctdSection: 'm2.5',
+      }),
+      documentState: {
+        hasContent: true, hasEvidence: true, evidenceCount: 5, hasBeenReviewed: true,
+        reviewApprovalCount: 1, hasApproval: true, hasPlacement: true, placementValid: true,
+        hasProvenance: true, unresolvedContradictionCount: 0, criticalContradictionCount: 0,
+        isStale: false as boolean | undefined,
+      },
+      exportState: { humanReviewApproved: true, aiGenerated: false, provenanceComplete: true } as
+        | { humanReviewApproved: boolean; aiGenerated: boolean; provenanceComplete: boolean }
+        | undefined,
+    });
+
+    it('staleness never computed → blocked, "freshness not evaluated" (was: "Document is current")', () => {
+      const input = ready();
+      delete input.documentState.isStale;
+      const gate = evaluateGovernedDocument(input).evaluation.exportGate;
+      expect(gate.outcome).toBe('blocked');
+      const stale = gate.gateChecks.find((c) => c.checkId === 'export_not_stale');
+      expect(stale).toMatchObject({ passed: false, required: true });
+      expect(stale?.detail).toMatch(/Freshness not evaluated/);
+    });
+
+    it('no export state at all → blocked, AI provenance not recorded (was: check absent)', () => {
+      const input = ready();
+      input.exportState = undefined;
+      const gate = evaluateGovernedDocument(input).evaluation.exportGate;
+      expect(gate.outcome).toBe('blocked');
+      const review = gate.gateChecks.find((c) => c.checkId === 'export_human_review');
+      expect(review).toBeDefined();
+      expect(review).toMatchObject({ passed: false, required: true });
+      expect(review?.detail).toMatch(/not recorded/);
+    });
   });
 
   it('blocks placement with invalid CTD reference', () => {

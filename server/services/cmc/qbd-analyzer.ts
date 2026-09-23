@@ -19,6 +19,8 @@
 import { getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { loadProjectStabilityStudies } from './stability-source';
+import { loadProjectAnalyticalMethods } from './analytical-method-source';
+import { loadProjectDrugSubstances } from './drug-substance-source';
 import {
   extractParameterNames, extractImpurityNames, extractCharacterizationAttrs,
   extractCppEntries, extractCppFromPayload,
@@ -123,7 +125,7 @@ export async function analyzeQbdFromSources(
       // the project filter alone let any organization read another sponsor's
       // register through this analysis. quality_specifications carries
       // `tenant_id`; the other three carry `organization_id`.
-  const [specs, methods, stabilityResult, processes, drugSubs, sourceObjects] = await Promise.all([
+  const [specs, methodResult, stabilityResult, processes, drugSubResult, sourceObjects] = await Promise.all([
     safeQuery(pool, unavailable, 'specs', `
       SELECT material_type AS "materialType",
              material_name AS "materialName",
@@ -132,14 +134,12 @@ export async function analyzeQbdFromSources(
       FROM quality_specifications
       WHERE project_id = $1::text::uuid AND tenant_id::text = $2
     `, [projectIdParam, String(orgId)]),
-    safeQuery(pool, unavailable, 'methods', `
-      SELECT method_name AS "methodName",
-             method_type AS "methodType",
-             purpose,
-             validation_status AS "validationStatus"
-      FROM analytical_methods
-      WHERE project_id = $1::text::uuid AND organization_id = $2
-    `, [projectIdParam, orgId]),
+    // Methods come from the canonical project-scoped source-object store, for
+    // the same reason as stability below: `public.analytical_methods` is an
+    // ORGANIZATION method library with no project_id, method_type, purpose or
+    // validation_status, so this query raised 42703 on every provisioned
+    // database. See analytical-method-source.ts.
+    loadProjectAnalyticalMethods(pool, orgId, projectIdParam),
     // Stability comes from the canonical project-scoped source-object store.
     // `public.stability_studies` has no `project_id` column (it is org-scoped)
     // and no `study_name` / `storage_condition` / `results` columns, so the
@@ -154,13 +154,10 @@ export async function analyzeQbdFromSources(
       FROM manufacturing_processes
       WHERE project_id = $1::text::uuid AND organization_id = $2
     `, [projectIdParam, orgId]),
-    safeQuery(pool, unavailable, 'drugSubs', `
-      SELECT substance_name AS "substanceName",
-             impurities,
-             characterization_data AS "characterizationData"
-      FROM drug_substances
-      WHERE project_id = $1::text::uuid AND organization_id = $2
-    `, [projectIdParam, orgId]),
+    // Drug substances come from the canonical source-object store: see
+    // drug-substance-source.ts. public.drug_substances is org-scoped with no
+    // project_id and no characterization column, so this read raised 42703.
+    loadProjectDrugSubstances(pool, orgId, projectIdParam),
     safeQuery(pool, unavailable, 'sourceObjects', `
       SELECT source_type AS "sourceType",
              source_payload AS "sourcePayload"
@@ -169,6 +166,16 @@ export async function analyzeQbdFromSources(
         AND project_id::text = $2
     `, [orgId, projectIdParam]),
   ]);
+
+  if (!methodResult.available) {
+    unavailable.methods = methodResult.reason;
+  }
+  const methods = methodResult.methods;
+
+  if (!drugSubResult.available) {
+    unavailable.drugSubs = drugSubResult.reason;
+  }
+  const drugSubs = drugSubResult.drugSubstances as unknown as Array<Record<string, unknown>>;
 
   if (!stabilityResult.available) {
     unavailable.stability = stabilityResult.reason;

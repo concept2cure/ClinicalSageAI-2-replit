@@ -1,0 +1,40 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/submission-ops-preflight-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-preflight-routes.test.ts
+{
+  "timestamp": "2026-09-23T07:10:35.306Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > 404s when the package is not in the tenant 42ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > 409s when the package has no metadata.bundle 6ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > returns 200 with internal findings and unconfigured agency validators (no network) 12ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > reports CONTENT DRIFT as a blocking finding when an artifact was edited after assembly — the same assessment transmit refuses on 6ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > a bundle with NO content fingerprint is UNPROVEN: a warning where descriptor trust is relaxed, a blocking error where transmit would refuse it 13ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > a bundle fingerprinted under an OLDER scheme says so, rather than claiming it records none 10ms
+stderr | tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > still returns the computed findings when the metadata persist fails
+[submission-ops] preflight-persist-failed simulated metadata write failure
+
+stderr | tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > when the lock cannot be taken after the bundle was superseded, the findings are NOT returned as the package’s (409, not 200 persisted:false)
+[submission-ops] preflight-persist-failed pool exhausted
+
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > a content read that fails is an error, never a pass 7ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > marks blocking:true when the stored validation has an error 5ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > still returns the computed findings when the metadata persist fails 5ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > REFUSES to persist a run whose bundle was cleared or replaced meanwhile, and never writes its pre-run snapshot over the row 3ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > cannot identify a bundle without a sha256: such a run is superseded, never stored against whatever is there now 3ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > when the lock cannot be taken after the bundle was superseded, the findings are NOT returned as the package’s (409, not 200 persisted:false) 3ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > persists against the LOCKED row: a change that landed while the validator ran is kept, not reverted 4ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  07:10:31
+   Duration  4.40s (transform 2.19s, setup 129ms, import 3.71s, tests 126ms, environment 0ms)
+

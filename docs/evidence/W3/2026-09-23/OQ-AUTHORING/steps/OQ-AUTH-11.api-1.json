@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/docs/5db22e8b-c512-4256-87df-75ce11faf202/freeze",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "reason": "OQ-003 step 11 freeze",
+      "version": "1.0"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 18,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "contentHash": "951ecab75b5e28f2cacfdf4092a2123bcf4f5472571f82a785117cccd92a79a0",
+      "version": "1.0",
+      "frozenAt": "2026-09-23T02:50:32.471Z"
+    }
+  }
+}

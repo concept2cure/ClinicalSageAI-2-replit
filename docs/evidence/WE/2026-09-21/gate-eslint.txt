@@ -1,0 +1,7 @@
+# npx eslint on every changed file — 2026-09-21T01:54:06Z
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/authoringAiDraft.test.tsx
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/AuthoringAiDraft.tsx
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Vault.tsx
+/home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts
+   841:7   warning  There is no `cause` attached to the symptom error being thrown                           preserve-caught-error
+✖ 52 problems (0 errors, 52 warnings)

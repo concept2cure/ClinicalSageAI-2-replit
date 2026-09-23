@@ -14,6 +14,8 @@
  * - Literature search services
  */
 
+import { isGovernedContentWriteTool } from './governed-write-tools.js';
+import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
 // Region + gateway taxonomy — shared with the tool schemas in
 // AnaToolDefinitions so an accepted value and an advertised one are the same
@@ -194,6 +196,13 @@ import { assertWithinDocumentWorkspace } from './document-workspace.js';
  * submission-twin, precedent-engine) read from this.
  */
 export interface ToolContext {
+  /**
+   * The model whose response produced this tool call, as the gateway reported
+   * it. A tool that stores model-authored text in a governed record refuses
+   * unless this model is approved for high-risk work; absent means refused.
+   * See server/services/ana/governed-write-tools.ts.
+   */
+  servingModel?: { provider?: string | null; model?: string | null } | null;
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
@@ -215,6 +224,15 @@ export interface ToolContext {
    * interview session unbound to the program it was run for.
    */
   projectRef?: string | null;
+  /**
+   * The conversation this turn belongs to, its turn id and the model the
+   * gateway is answering with — recorded as provenance by tools that create a
+   * document (draft_authoring_document). Optional: the stream's dispatch does
+   * not pass them yet, and a tool never claims a model it was not told about.
+   */
+  threadId?: string | null;
+  turnId?: string | null;
+  model?: string | null;
   /** Tenant UUID — required to scope project_knowledge_search retrieval. */
   organizationUuid?: string | null;
   /** Active UI surface/screen (e.g. 'nonclinical', 'cmc', 'sponsored_programs') — situational context. */
@@ -231,6 +249,20 @@ export interface ToolContext {
    * additional authority — it only changes the narration contract.
    */
   liveDrive?: boolean | null;
+  /**
+   * Navigation targets whose screen is closed to this person (launch scope,
+   * plan tier, module grant), with the reason — from the shell's copy of the
+   * server's own verdict set (services/ana-ri/drive-context). The self-drive
+   * tools refuse these instead of moving the person onto a locked panel.
+   */
+  lockedScreens?: ReadonlyMap<string, string> | null;
+  /**
+   * State that lives for ONE turn and changes as AnA works: the program she
+   * has opened on the person's screen so far. The request's `projectRef` is
+   * what was open when the turn began; after she opens a program mid-turn,
+   * the next project screen must not ask again which one.
+   */
+  turnState?: { program: { id: string; name?: string; code?: string } | null } | null;
 }
 
 type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
@@ -262,6 +294,15 @@ function getRequiredInputKeys(tool: string): string[] {
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
     const orgId = ctx?.organizationId ?? undefined;
+    /* Governed content is written only by an approved model. Wrapped HERE, at
+       registration, so every way of reaching the handler is covered: the
+       stream's dispatch, the agentic loop, and a tool that calls another
+       tool's handler directly. The refusal is a tool result the model reads
+       and relays, not a throw, so the turn continues honestly. */
+    if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
+      recordToolOutcome(name, 'failure', 0, 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE', orgId);
+      return JSON.stringify(governedWriteRefusal(name, ctx?.servingModel));
+    }
     // Report-only contract check: note when the model omitted required fields.
     const missing = getRequiredInputKeys(name).filter(k => input?.[k] === undefined);
     if (missing.length > 0) recordContractViolation(name, orgId);
@@ -281,6 +322,30 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
     }
   };
   toolHandlers.set(name, instrumented);
+}
+
+/** The model a gateway response says served it, in the shape ToolContext.servingModel takes. */
+export function servedModelOf(
+  response: { provider?: string | null; model?: string | null } | null | undefined,
+): { provider: string | null; model: string | null } {
+  return { provider: response?.provider ?? null, model: response?.model ?? null };
+}
+
+/** What a governed-write tool returns instead of writing, when the model is not approved. */
+export function governedWriteRefusal(
+  tool: string,
+  served: { provider?: string | null; model?: string | null } | null | undefined,
+) {
+  const who = served?.model ? `${served.provider ?? 'unknown'}/${served.model}` : 'an unidentified model';
+  return {
+    error: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
+    tool,
+    servedBy: served?.model ?? null,
+    message:
+      `${tool} was not run: it stores text the model wrote in a governed record, and this turn was answered by ` +
+      `${who}, which is not approved for regulatory drafting. Nothing was saved. Ask again with Thorough effort ` +
+      'to have an approved model draft it.',
+  };
 }
 
 /** Retrieve a registered tool handler, or undefined if the name is unknown. */
@@ -947,6 +1012,7 @@ registerToolHandler('run_submission_premortem', async (input, ctx) => {
     //    an unavailable corpus degrades to n=0 honest output, never an error.
     let precedentCount = 0;
     let precedentCitations: Array<{ id: string; label: string; outcome: string }> = [];
+    let precedentQueryFailed: string | undefined;
     if (submissionType) {
       try {
         const { precedentEngine } = await import('../precedent-engine.js');
@@ -960,8 +1026,10 @@ registerToolHandler('run_submission_premortem', async (input, ctx) => {
           label: r.clearanceNumber || r.deviceName || r.applicant || r.id,
           outcome: r.decisionOutcome,
         }));
-      } catch {
-        /* corpus unavailable — honest n=0 read */
+      } catch (err) {
+        // The corpus was not read — say so, rather than presenting n=0 as an
+        // empty corpus.
+        precedentQueryFailed = err instanceof Error ? err.message : String(err);
       }
     }
 
@@ -971,6 +1039,7 @@ registerToolHandler('run_submission_premortem', async (input, ctx) => {
       precedentCitations,
       submissionType,
       agency,
+      precedentQueryFailed,
     });
 
     return JSON.stringify({
@@ -1044,6 +1113,7 @@ registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
     let precedentCount = 0;
     let precedentCitations: Array<{ id: string; label: string; outcome: string }> = [];
     let precedentOutcomes: Array<{ id: string; label: string; outcome: string }> = [];
+    let precedentQueryFailed: string | undefined;
     if (submissionType) {
       try {
         const { precedentEngine } = await import('../precedent-engine.js');
@@ -1060,8 +1130,9 @@ registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
           outcome: r.decisionOutcome,
         }));
         precedentCitations = precedentOutcomes.slice(0, 5);
-      } catch {
-        /* corpus unavailable — honest n=0 read (artifact: not_assessed) */
+      } catch (err) {
+        // Not read, not empty — see run_submission_premortem above.
+        precedentQueryFailed = err instanceof Error ? err.message : String(err);
       }
     }
 
@@ -1071,6 +1142,7 @@ registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
       precedentCitations,
       submissionType,
       agency,
+      precedentQueryFailed,
     });
 
     const artifact = assembleCrlPremortemArtifact({
@@ -6518,7 +6590,7 @@ registerToolHandler('lookup_regulatory_precedents', async (input, ctx) => {
   }
 });
 
-registerToolHandler('compare_submission_against_precedent', async (input) => {
+registerToolHandler('compare_submission_against_precedent', async (input, ctx) => {
   const precedentId = input.precedent_id as string;
   const submissionType = input.submission_type as string;
   if (!precedentId || !submissionType) {
@@ -6540,7 +6612,8 @@ registerToolHandler('compare_submission_against_precedent', async (input) => {
         testingApproach: input.testing_approach as string | undefined,
         predicateDevice: input.predicate_device as string | undefined,
       },
-      precedentId
+      precedentId,
+      ctx?.organizationId ?? undefined
     );
     return JSON.stringify(comparison);
   } catch (err: any) {
@@ -8462,6 +8535,19 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (leaves.length === 0) {
     return JSON.stringify({ error: 'leaves[] is required and must be non-empty.' });
   }
+  // 2026-09-23 (W5/D7, round-2 skeptic): source_path is no longer required by
+  // the schema, because a delete has none. Every other leaf must still name the
+  // file it ships — refused here, by name, rather than read from an empty path.
+  const missingSource = leaves.filter(
+    (l) => String(l.operation) !== 'delete' && !(typeof l.source_path === 'string' && l.source_path.trim()),
+  );
+  if (missingSource.length > 0) {
+    return JSON.stringify({
+      error:
+        `package_ectd_for_region: a ${missingSource.map((l) => String(l.operation)).join(' / ')} leaf must carry source_path, ` +
+        `the file it ships (${missingSource.map((l) => String(l.file_name)).join(', ')}). Only a delete omits it.`,
+    });
+  }
   try {
     const { packageEctdSubmission } = await import('../submission-gateways/index.js');
     const path = await import('path');
@@ -8484,12 +8570,19 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
       sponsorId:     String(input.sponsor_id),
       sponsorName:   String(input.sponsor_name),
       productName:   String(input.product_name),
+      // A delete's source_path is passed through as given, never dropped: the
+      // packager refuses a delete that carries one, by name, instead of this
+      // mapping silently ignoring what the caller asked to ship. modified_file
+      // names the filed leaf a delete (or replace / append) acts on.
       leaves: leaves.map((l) => ({
         ctdSection: String(l.ctd_section),
         operation:  (String(l.operation) as 'new' | 'append' | 'replace' | 'delete'),
-        sourcePath: String(l.source_path),
+        sourcePath: typeof l.source_path === 'string' ? l.source_path : '',
         fileName:   String(l.file_name),
         title:      String(l.title),
+        ...(typeof l.modified_file === 'string' && l.modified_file.trim()
+          ? { modifiedFile: l.modified_file.trim() }
+          : {}),
       })),
       outputDir,
     });
@@ -10666,6 +10759,23 @@ registerToolHandler('generate_ctgov_registration_draft', async (input, ctx) => {
 // are read-only.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * AnA cannot sign. An act that is an electronic signature needs the signer to
+ * re-enter their password (21 CFR 11.200), and a chat turn cannot collect it.
+ * Nine tools used to perform such acts from chat and write a `sign` ledger row
+ * nobody had signed, reachable in every organization whatever its launch scope
+ * (weekly review 2026-09-22, P1 follow-up). They now write nothing and hand the
+ * act to the person. finalize_protocol_document follows the same rule.
+ */
+function refuseSignatureInChat(tool: string, act: string, where: string): string {
+  return JSON.stringify({
+    ok: false,
+    signatureRequired: true,
+    tool,
+    message: `${act} is an electronic signature, and AnA cannot sign: it needs your password, which a chat turn cannot collect. Nothing was recorded or changed. Do it from ${where}.`,
+  });
+}
+
 async function governedPdev(ctx: any, command: string, target: string, fallbackReason: string, input: Record<string, unknown>, run: (client: any) => Promise<Record<string, unknown>>): Promise<string> {
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
@@ -10747,7 +10857,7 @@ registerToolHandler('report_protocol_deviation', async (input, ctx) => {
       affectsSafety: typeof input.affects_safety === 'boolean' ? input.affects_safety : undefined,
       rootCause: typeof input.root_cause === 'string' ? input.root_cause : null,
     });
-    return { deviationId: r.id, reportable: r.reportable, timelinessDays: r.timelinessDays };
+    return { deviationId: r.id, assessed: r.assessed, reportabilityStatus: r.status, reportable: r.reportable, basis: r.basis, conditionalClocks: r.conditionalClocks };
   });
 });
 
@@ -10801,7 +10911,8 @@ registerToolHandler('add_protocol_review_comment', async (input, ctx) => {
   const comment = typeof input.comment === 'string' ? input.comment.trim() : '';
   if (!Number.isInteger(protocolDocumentId) || !comment) return JSON.stringify({ error: 'protocol_document_id and comment are required.' });
   const { addCommentTx } = await import('../protocol-reviews/protocol-reviews-service.js');
-  return governedPdev(ctx, 'update', `protocol-document:${protocolDocumentId}`, 'Review comment added via AnA', input, async (client) => {
+  // 'create', as the HTTP route records it: a comment is review, not an edit of the protocol.
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Review comment added via AnA', input, async (client) => {
     const { id, severity } = await addCommentTx(client, ctx.organizationId!, ctx.userId!, protocolDocumentId, {
       comment, assignmentId: typeof input.assignment_id === 'number' ? input.assignment_id : null,
       sectionRef: typeof input.section_ref === 'string' ? input.section_ref : null, severity: typeof input.severity === 'string' ? input.severity : null,
@@ -10907,16 +11018,7 @@ registerToolHandler('review_dms_plan_completeness', async (input, ctx) => {
   }
 });
 
-registerToolHandler('finalize_dms_plan', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_dms_plan requires tenant + user context.' });
-  const planId = typeof input.plan_id === 'number' ? input.plan_id : NaN;
-  if (!Number.isInteger(planId)) return JSON.stringify({ error: 'plan_id is required.' });
-  const { finalizePlanTx } = await import('../dmsp/dmsp-service.js');
-  return governedPdev(ctx, 'sign', `dms-plan:${planId}`, 'DMS plan finalized via AnA', input, async (client) => {
-    const result = await finalizePlanTx(client, ctx.organizationId!, ctx.userId!, planId);
-    return { dmsPlanId: planId, finalized: result.finalized, addressedPct: result.completeness.addressedPct };
-  });
-});
+registerToolHandler('finalize_dms_plan', async () => refuseSignatureInChat('finalize_dms_plan', 'Finalizing a data management and sharing plan', 'the DMS plan in its workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NIH Other Support (C2C-24A). create/add/certify are governed/audited
@@ -10977,16 +11079,7 @@ registerToolHandler('review_other_support', async (input, ctx) => {
   }
 });
 
-registerToolHandler('certify_other_support', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'certify_other_support requires tenant + user context.' });
-  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
-  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
-  const { certifyDocumentTx } = await import('../other-support/other-support-service.js');
-  return governedPdev(ctx, 'sign', `other-support:${documentId}`, 'Other Support certified via AnA', input, async (client) => {
-    const result = await certifyDocumentTx(client, ctx.organizationId!, ctx.userId!, documentId);
-    return { otherSupportId: documentId, certified: result.certified, activePersonMonths: result.readiness.summary.active.total };
-  });
-});
+registerToolHandler('certify_other_support', async () => refuseSignatureInChat('certify_other_support', 'Certifying Other Support', 'the Other Support document in its workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NIH Biosketch (C2C-24B). create/update/finalize are governed/audited
@@ -11034,16 +11127,7 @@ registerToolHandler('review_biosketch_completeness', async (input, ctx) => {
   }
 });
 
-registerToolHandler('finalize_biosketch', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_biosketch requires tenant + user context.' });
-  const biosketchId = typeof input.biosketch_id === 'number' ? input.biosketch_id : NaN;
-  if (!Number.isInteger(biosketchId)) return JSON.stringify({ error: 'biosketch_id is required.' });
-  const { finalizeBiosketchTx } = await import('../biosketch/biosketch-service.js');
-  return governedPdev(ctx, 'sign', `biosketch:${biosketchId}`, 'Biosketch finalized via AnA', input, async (client) => {
-    const result = await finalizeBiosketchTx(client, ctx.organizationId!, ctx.userId!, biosketchId);
-    return { biosketchId, finalized: result.finalized, addressedPct: result.completeness.addressedPct };
-  });
-});
+registerToolHandler('finalize_biosketch', async () => refuseSignatureInChat('finalize_biosketch', 'Finalizing a biosketch', 'the biosketch in its workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Invention Disclosure / Tech Transfer (C2C-25). create/update/submit are
@@ -11173,16 +11257,7 @@ registerToolHandler('review_export_control', async (input, ctx) => {
   }
 });
 
-registerToolHandler('finalize_export_control_determination', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_export_control_determination requires tenant + user context.' });
-  const id = typeof input.review_id === 'number' ? input.review_id : NaN;
-  if (!Number.isInteger(id)) return JSON.stringify({ error: 'review_id is required.' });
-  const { determineReviewTx } = await import('../export-control/export-control-service.js');
-  return governedPdev(ctx, 'sign', `export-control:${id}`, 'Export-control determination finalized via AnA', input, async (client) => {
-    const result = await determineReviewTx(client, ctx.organizationId!, ctx.userId!, id);
-    return { reviewId: id, determined: result.determined, licenseRequired: result.readiness.assessment.licenseRequired, freApplies: result.readiness.assessment.freApplies };
-  });
-});
+registerToolHandler('finalize_export_control_determination', async () => refuseSignatureInChat('finalize_export_control_determination', 'Finalizing an export-control determination', 'the determination in the export-control workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Research Agreements MTA/DUA/CDA (C2C-27). create/update/execute are
@@ -11256,16 +11331,7 @@ registerToolHandler('review_research_agreement', async (input, ctx) => {
   }
 });
 
-registerToolHandler('execute_research_agreement', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'execute_research_agreement requires tenant + user context.' });
-  const id = typeof input.agreement_id === 'number' ? input.agreement_id : NaN;
-  if (!Number.isInteger(id)) return JSON.stringify({ error: 'agreement_id is required.' });
-  const { executeAgreementTx } = await import('../research-agreements/research-agreements-service.js');
-  return governedPdev(ctx, 'sign', `research-agreement:${id}`, 'Research agreement executed via AnA', input, async (client) => {
-    const result = await executeAgreementTx(client, ctx.organizationId!, ctx.userId!, id);
-    return { agreementId: id, executed: result.executed };
-  });
-});
+registerToolHandler('execute_research_agreement', async () => refuseSignatureInChat('execute_research_agreement', 'Executing a research agreement', 'the agreement in its workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Protocol Risk Register (C2C-19). add is governed/audited; review is read-only.
@@ -11440,26 +11506,40 @@ registerToolHandler('review_protocol_completeness', async (input, ctx) => {
   }
 });
 
+// Finalizing a protocol is an electronic signature (21 CFR 11.50/11.200). A chat
+// turn cannot collect the signer's password, so AnA never finalizes: this tool
+// used to, and wrote a `sign` ledger row nobody had signed. It now answers
+// whether the protocol can be finalized and who has to do it. It writes nothing.
 registerToolHandler('finalize_protocol_document', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant + user context.' });
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant context.' });
   const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
   if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { finalizeProtocolTx } = await import('../protocol-development/protocol-development-service.js');
-  const client = await getPool().connect();
+  const { getCompleteness, getProtocolDocument } = await import('../protocol-development/protocol-development-service.js');
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const result = await finalizeProtocolTx(client, ctx.organizationId, ctx.userId, documentId);
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'sign', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol finalized via AnA'), payload: { version: result.version }, domain: 'protocol_development', surface: 'ana' });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, documentId, version: result.version, message: `Finalized protocol ${documentId} as version ${result.version}.` });
+    const doc = await getProtocolDocument(ctx.organizationId, documentId);
+    if (!doc) return JSON.stringify({ error: `Protocol ${documentId} was not found in this organization.` });
+    if (doc.status === 'finalized' || doc.status === 'superseded') {
+      return JSON.stringify({
+        ok: false,
+        documentId,
+        status: doc.status,
+        message: `Protocol ${documentId} is already ${doc.status}${doc.version ? ` (version ${doc.version})` : ''}; there is nothing to finalize.`,
+      });
+    }
+    const c = await getCompleteness(ctx.organizationId, documentId);
+    return JSON.stringify({
+      ok: false,
+      signatureRequired: true,
+      documentId,
+      readyToFinalize: c.readyToFinalize,
+      requiredCompletionPct: c.requiredCompletionPct,
+      findings: c.findings,
+      message: c.readyToFinalize
+        ? `Protocol ${documentId} passes the completeness check but was not finalized. Finalizing is an electronic signature: the user finalizes it from the protocol workspace and enters their password.`
+        : `Protocol ${documentId} cannot be finalized yet and was not finalized. Resolve the findings, then the user finalizes it from the protocol workspace with their password.`,
+    });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `finalize_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
   }
 });
 
@@ -11711,34 +11791,7 @@ registerToolHandler('cast_committee_vote', async (input, ctx) => {
   }
 });
 
-registerToolHandler('finalize_committee_determination', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_committee_determination requires tenant + user context.' });
-  const agendaItemId = typeof input.agenda_item_id === 'number' ? input.agenda_item_id : NaN;
-  if (!Number.isInteger(agendaItemId)) return JSON.stringify({ error: 'agenda_item_id is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { finalizeAgendaItemTx, getActorTrainingStatus } = await import('../committees/committee-service.js');
-  const client = await getPool().connect();
-  try {
-    // CITI training gate (read) before opening the transaction.
-    const ct = await client.query(`SELECT committee_type FROM committee_agenda_items WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [agendaItemId, ctx.organizationId]);
-    if (ct.rows.length === 0) { client.release(); return JSON.stringify({ error: 'Agenda item not found.' }); }
-    const training = await getActorTrainingStatus(ctx.organizationId, ctx.userId, ct.rows[0].committee_type);
-    if (!training.trained) { client.release(); return JSON.stringify({ error: `Cannot finalize: ${training.reason}` }); }
-
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const determination = await finalizeAgendaItemTx(client, ctx.organizationId, ctx.userId, agendaItemId);
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'sign', target: `committee-agenda:${agendaItemId}`, reason: fcoiReason(input, 'Committee determination finalized via AnA'), payload: { outcome: determination.outcome }, domain: 'committee', surface: 'ana' });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, agendaItemId, outcome: determination.outcome, rationale: determination.rationale, tally: determination.tally });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    return JSON.stringify({ error: `finalize_committee_determination failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+registerToolHandler('finalize_committee_determination', async () => refuseSignatureInChat('finalize_committee_determination', "Finalizing a committee's determination", 'the agenda item in the committee workspace, by a member holding the approve privilege'));
 
 registerToolHandler('review_protocol_portfolio', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_portfolio requires tenant context.' });
@@ -12113,33 +12166,7 @@ registerToolHandler('update_grant_closeout', async (input, ctx) => {
   }
 });
 
-registerToolHandler('finalize_grant_closeout', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_grant_closeout requires tenant + user context.' });
-  const awardId = typeof input.award_id === 'number' ? input.award_id : NaN;
-  if (!Number.isInteger(awardId)) return JSON.stringify({ error: 'award_id is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { finalizeCloseoutTx } = await import('../grants/grants-service.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { closedAward } = await finalizeCloseoutTx(client, ctx.organizationId, ctx.userId, awardId);
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
-      target: `grant-award:${awardId}`, reason: fcoiReason(input, 'Grant closeout finalized via AnA'),
-      payload: { closeout: 'completed', closedAward }, domain: 'grants', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, awardId, closedAward, message: `Closeout finalized — award ${awardId} is closed (all 2 CFR 200.344 items complete).` });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    // The deterministic gate blocks finalize with outstanding items — surface it.
-    return JSON.stringify({ error: `finalize_grant_closeout failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+registerToolHandler('finalize_grant_closeout', async () => refuseSignatureInChat('finalize_grant_closeout', 'Finalizing a grant closeout', 'the closeout in the grant workspace'));
 
 registerToolHandler('record_subaward', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'record_subaward requires tenant + user context.' });
@@ -12214,33 +12241,7 @@ registerToolHandler('screen_subaward', async (input, ctx) => {
   }
 });
 
-registerToolHandler('execute_subaward', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'execute_subaward requires tenant + user context.' });
-  const subawardId = typeof input.subaward_id === 'number' ? input.subaward_id : NaN;
-  if (!Number.isInteger(subawardId)) return JSON.stringify({ error: 'subaward_id is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { executeSubawardTx } = await import('../grants/grants-service.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    await executeSubawardTx(client, ctx.organizationId, ctx.userId, subawardId);
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
-      target: `grant-subaward:${subawardId}`, reason: fcoiReason(input, 'Subaward executed via AnA'),
-      payload: { status: 'executed' }, domain: 'grants', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, subawardId, status: 'executed', message: `Subaward ${subawardId} executed (cleared screen + risk assessment, 2 CFR 200.214/200.332).` });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    // The eligibility gate blocks execution of an unscreened/excluded/unassessed subaward — surface it.
-    return JSON.stringify({ error: `execute_subaward failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+registerToolHandler('execute_subaward', async () => refuseSignatureInChat('execute_subaward', 'Executing a subaward', 'the subaward in the grant workspace'));
 
 const BUDGET_CATEGORIES = ['personnel', 'fringe', 'equipment', 'travel', 'supplies', 'contractual', 'construction', 'other_direct', 'indirect'];
 
@@ -12413,34 +12414,7 @@ registerToolHandler('request_no_cost_extension', async (input, ctx) => {
   }
 });
 
-registerToolHandler('approve_no_cost_extension', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'approve_no_cost_extension requires tenant + user context.' });
-  const nceId = typeof input.nce_id === 'number' ? input.nce_id : NaN;
-  const authority = typeof input.authority === 'string' ? input.authority : '';
-  if (!Number.isInteger(nceId) || !['grantee', 'sponsor'].includes(authority)) return JSON.stringify({ error: 'nce_id and authority (grantee|sponsor) are required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { approveNceTx } = await import('../grants/grants-service.js');
-  const client = await getPool().connect();
-  try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const { newEndDate } = await approveNceTx(client, ctx.organizationId, ctx.userId, nceId, authority as any);
-    await recordGovernedAction(client, {
-      orgId: ctx.organizationId, userId: ctx.userId, command: 'sign',
-      target: `grant-nce:${nceId}`, reason: fcoiReason(input, 'No-cost extension approved via AnA'),
-      payload: { status: 'approved', authority, newEndDate }, domain: 'grants', surface: 'ana',
-    });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, nceId, newEndDate, message: `Approved NCE ${nceId} (${authority}); award period now ends ${newEndDate}.` });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    // The gate rejects grantee self-approval of an extension that needs the sponsor — surface it.
-    return JSON.stringify({ error: `approve_no_cost_extension failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
-  }
-});
+registerToolHandler('approve_no_cost_extension', async () => refuseSignatureInChat('approve_no_cost_extension', 'Approving a no-cost extension', 'the extension in the grant workspace'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Cross-domain briefing + coverage-gap fills (HA fulfill/readiness, CS substance).
@@ -15290,7 +15264,14 @@ export async function executeAgenticLoop(
             errorMessage: 'no handler registered',
           };
         }
-        return runOneTool(handler, call, options?.toolContext, signal);
+        // The calls in this round came from finalResponse; the governed-write
+        // gate in registerToolHandler reads which model that was.
+        return runOneTool(
+          handler,
+          call,
+          { ...(options?.toolContext ?? {}), servingModel: servedModelOf(finalResponse) },
+          signal,
+        );
       },
       4,
     );
@@ -16861,13 +16842,15 @@ registerToolHandler('assess_analytical_method_validation', async (input: Record<
 });
 
 // AnA self-navigation — discover navigable screens from the governed registry.
-registerToolHandler('list_app_screens', async (input: Record<string, unknown>) => {
+registerToolHandler('list_app_screens', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   try {
     const { NAVIGATION_TARGETS } = await import('../../../shared/navigation/index.js');
     const group = typeof input.group === 'string' ? input.group : undefined;
     const scope = input.scope === 'global' || input.scope === 'project' ? input.scope : undefined;
+    const locked = ctx?.lockedScreens ?? null;
     const screens = NAVIGATION_TARGETS
       .filter(t => (group ? t.group === group : true) && (scope ? t.scope === scope : true))
+      .filter(t => !locked?.has(t.id))
       .map(t => ({
         id: t.id,
         label: t.label,
@@ -16880,8 +16863,11 @@ registerToolHandler('list_app_screens', async (input: Record<string, unknown>) =
       status: 'ok',
       count: screens.length,
       screens,
+      ...(locked && locked.size > 0
+        ? { notAvailableHere: [...locked.keys()].slice(0, 100) }
+        : {}),
       instruction:
-        "Navigate with navigate_to using a screen id verbatim. 'project'-scope screens require an active project in context. Pass any listed params (e.g. intelligenceTab).",
+        "Navigate with navigate_to using a screen id verbatim. For a 'project'-scope screen, pass `program` (its id, code or name) to open that program there, or rely on the one already open. Pass any listed params (e.g. intelligenceTab). Screens under notAvailableHere are closed to this workspace — do not offer them.",
     });
   } catch (err: any) {
     return JSON.stringify({ error: `list_app_screens failed: ${err?.message || 'unknown error'}` });
@@ -16897,7 +16883,25 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
     if (!target) {
       return JSON.stringify({ status: 'needs_parameters', message: 'target is required — call list_app_screens to discover screen ids.' });
     }
-    const params = input.params && typeof input.params === 'object' ? (input.params as Record<string, unknown>) : {};
+    const rawParams = input.params && typeof input.params === 'object' ? (input.params as Record<string, unknown>) : {};
+    // `program` is not a registry param — it names the program a project
+    // screen should show, resolved below against the tenant's own programs.
+    const { program: paramProgram, ...params } = rawParams as Record<string, unknown> & { program?: unknown };
+    const programRef =
+      typeof input.program === 'string' && input.program.trim()
+        ? input.program.trim()
+        : typeof paramProgram === 'string' && paramProgram.trim()
+          ? paramProgram.trim()
+          : '';
+    const locked = ctx?.lockedScreens?.get(target);
+    if (locked) {
+      return JSON.stringify({
+        status: 'not_available',
+        message: `The "${target}" screen is not available in this workspace (${locked}).`,
+        instruction:
+          'Do not say you are taking them there. Tell them plainly it is not available here and why, and offer what you can do instead.',
+      });
+    }
     const { resolveNavigation } = await import('../../../shared/navigation/index.js');
     const res = resolveNavigation(target, params);
     if (!res.ok) {
@@ -16907,15 +16911,74 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
         ...(res.code === 'unknown_target' ? { validTargets: res.validTargets } : {}),
       });
     }
+    const directive: Record<string, unknown> = { ...res.directive };
+    // A project screen shows ONE program. Resolve the one named, or refuse to
+    // move onto an empty "open a program" state when none is open.
+    if (res.directive.scope === 'project') {
+      const drive = await import('../ana-ri/drive-context.js');
+      if (programRef) {
+        const found = await drive.resolveProgramRef(ctx?.organizationId ?? null, programRef);
+        if (found.status === 'found') {
+          directive.program = {
+            id: found.program.id,
+            name: found.program.name,
+            ...(found.program.code ? { code: found.program.code } : {}),
+          };
+          if (ctx?.turnState) ctx.turnState.program = directive.program as { id: string; name?: string; code?: string };
+        } else if (found.status === 'ambiguous') {
+          return JSON.stringify({
+            status: 'needs_parameters',
+            message: `"${programRef}" matches more than one program — name one exactly.`,
+            programs: drive.programChoices(found.matches),
+          });
+        } else if (found.status === 'not_found') {
+          return JSON.stringify({
+            status: 'needs_parameters',
+            message: `No program matching "${programRef}" in this workspace.`,
+            programs: drive.programChoices(found.candidates),
+          });
+        } else {
+          return JSON.stringify({
+            status: 'error',
+            error: 'The program list could not be read, so the program could not be opened.',
+          });
+        }
+      } else if (ctx?.turnState?.program) {
+        // AnA opened a program earlier this turn — the screen follows it.
+        directive.program = ctx.turnState.program;
+      } else if (!ctx?.projectRef) {
+        const listed = await drive.listProgramCandidates(ctx?.organizationId ?? null, 25);
+        return JSON.stringify({
+          status: 'needs_project',
+          message: listed.ok
+            ? listed.programs.length > 0
+              ? `"${res.directive.label}" shows one program and none is open. Call navigate_to again with \`program\` set to one of these (ask the person which if it is not clear from the conversation).`
+              : `"${res.directive.label}" shows one program and this workspace has none yet. Offer to create one with them from Projects.`
+            : 'The program list could not be read, so no program could be opened.',
+          ...(listed.ok ? { programs: drive.programChoices(listed.programs) } : {}),
+        });
+      }
+    }
+    // What the destination lets AnA do once she is there — so the next move
+    // (an act_on_screen) needs no discovery round.
+    const { SURFACE_ACTIONS } = await import('../../../shared/navigation/surface-actions.js');
+    const screenActions = SURFACE_ACTIONS.filter(a => a.surfaceId === res.directive.targetId).map(a => ({
+      id: a.id,
+      label: a.label,
+      ...(a.params && a.params.length > 0
+        ? { params: a.params.map(p => ({ name: p.name, required: p.required, ...(p.enum ? { enum: p.enum } : {}) })) }
+        : {}),
+    }));
     return JSON.stringify({
       status: 'navigation_ready',
-      directive: res.directive,
+      directive,
+      ...(screenActions.length > 0 ? { screenActions } : {}),
       // The instruction must match what actually happens on screen: under Live
       // Drive the directive is applied as it streams (the user opted in and is
       // watching); otherwise it is offered as a chip the user activates.
       instruction: ctx?.liveDrive
-        ? 'Live Drive is on: this navigation is being applied to the user’s screen now — they are watching you drive. Narrate where you have taken them and why, then continue the work there. Project-scoped screens require an active project.'
-        : 'A navigation directive was produced and is OFFERED to the user as an action they activate — the screen does not change on its own. Say where you can take them and why, not that you have taken them. Project-scoped screens require an active project.',
+        ? 'Live Drive is on: this navigation is being applied to the person’s screen now. Say where you have taken them in a few words, then continue the work there — screenActions lists what you can do on that screen with act_on_screen. If a screen report says a move did not happen, tell them and take another route.'
+        : 'A navigation directive was produced and is OFFERED to the user as an action they activate — the screen does not change on its own. Say where you can take them and why, not that you have taken them.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });
@@ -16924,11 +16987,14 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
 
 // AnA self-operation — discover the ungoverned on-screen operations from the
 // governed surface-action registry (the sibling of list_app_screens).
-registerToolHandler('list_screen_actions', async (input: Record<string, unknown>) => {
+registerToolHandler('list_screen_actions', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   try {
     const { SURFACE_ACTIONS } = await import('../../../shared/navigation/surface-actions.js');
     const surface = typeof input.surface === 'string' ? input.surface.trim() : '';
-    const actions = SURFACE_ACTIONS.filter(a => (surface ? a.surfaceId === surface : true)).map(
+    const locked = ctx?.lockedScreens ?? null;
+    const actions = SURFACE_ACTIONS.filter(a => (surface ? a.surfaceId === surface : true))
+      .filter(a => !locked?.has(a.surfaceId))
+      .map(
       a => ({
         id: a.id,
         surface: a.surfaceId,
@@ -16966,8 +17032,32 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       input.params && typeof input.params === 'object'
         ? (input.params as Record<string, unknown>)
         : {};
-    const { resolveSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
+    const { resolveSurfaceAction, findSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
+    const known = findSurfaceAction(action);
+    const lockedReason = known ? ctx?.lockedScreens?.get(known.surfaceId) : undefined;
+    if (known && lockedReason) {
+      return JSON.stringify({
+        status: 'not_available',
+        message: `"${known.label}" works on the "${known.surfaceId}" screen, which is not available in this workspace (${lockedReason}).`,
+        instruction: 'Do not say you did it. Tell them plainly it is not available here and why.',
+      });
+    }
     const res = resolveSurfaceAction(action, params);
+    // Opening a program changes which program the next project screen shows.
+    if (res.ok && res.directive.actionId === 'projects.open-program' && ctx?.turnState) {
+      const ref = String(res.directive.params?.program ?? '').trim();
+      if (ref) {
+        const { resolveProgramRef } = await import('../ana-ri/drive-context.js');
+        const found = await resolveProgramRef(ctx.organizationId ?? null, ref);
+        if (found.status === 'found') {
+          ctx.turnState.program = {
+            id: found.program.id,
+            name: found.program.name,
+            ...(found.program.code ? { code: found.program.code } : {}),
+          };
+        }
+      }
+    }
     if (!res.ok) {
       return JSON.stringify({
         status:
@@ -16986,7 +17076,7 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
       // The instruction must match what actually happens on screen, exactly as
       // navigate_to's does.
       instruction: ctx?.liveDrive
-        ? `Live Drive is on: this operation is being performed on the user's screen now (on the "${res.directive.surfaceId}" surface — make sure you have navigated there). Narrate what you did and what it shows, then continue.`
+        ? `Live Drive is on: this operation is being performed on the person's screen now (on the "${res.directive.surfaceId}" screen — AnA's move queue takes them there first if needed). Say what you did in a few words and continue. If a screen report says it did not happen, tell them and take another route.`
         : `An action directive was produced and is OFFERED to the user as a chip they activate — the screen does not change on its own. Say what the action will do when they tap it, not that you have done it.`,
     });
   } catch (err: any) {
@@ -16995,17 +17085,42 @@ registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?
 });
 
 // AnA demonstrations — list the curated demo scripts (training + sales).
-registerToolHandler('list_demo_scripts', async (input: Record<string, unknown>) => {
+/** The screens a demonstration script moves through (navigation targets). */
+async function demoScriptScreens(demoId: string): Promise<string[]> {
+  const { findDemoScript } = await import('../../../shared/navigation/demo-scripts.js');
+  const { findSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
+  const script = findDemoScript(demoId);
+  if (!script) return [];
+  const out: string[] = [];
+  for (const step of script.steps) {
+    if (step.navigate) out.push(step.navigate.target);
+    if (step.act) {
+      const a = findSurfaceAction(step.act.actionId);
+      if (a) out.push(a.surfaceId);
+    }
+  }
+  return out;
+}
+
+registerToolHandler('list_demo_scripts', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   try {
     const { listDemoScripts } = await import('../../../shared/navigation/demo-scripts.js');
     const kind = input.kind === 'training' || input.kind === 'sales' ? input.kind : undefined;
-    const scripts = listDemoScripts().filter(s => (kind ? s.kind === kind : true));
+    const locked = ctx?.lockedScreens ?? null;
+    const all = listDemoScripts().filter(s => (kind ? s.kind === kind : true));
+    // A demonstration that would walk onto a locked screen fails in front of
+    // the person it was run for — it is not offered here.
+    const scripts: typeof all = [];
+    for (const sc of all) {
+      const screens = locked && locked.size > 0 ? await demoScriptScreens(sc.id) : [];
+      if (!screens.some(id => locked?.has(id))) scripts.push(sc);
+    }
     return JSON.stringify({
       status: 'ok',
       count: scripts.length,
       scripts,
       instruction:
-        'Fetch the chosen script with start_product_demo. Demonstrations run best under Live Drive demonstration mode — the user starts it from the AnA rail (Control → Run a demonstration).',
+        'Fetch the chosen script with start_product_demo and run it. With Live Drive on, you drive it on their screen stop by stop.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `list_demo_scripts failed: ${err?.message || 'unknown error'}` });
@@ -17036,6 +17151,20 @@ registerToolHandler('start_product_demo', async (input: Record<string, unknown>,
         scripts: listDemoScripts(),
       });
     }
+    const lockedStops = (await demoScriptScreens(script.id)).filter(id => ctx?.lockedScreens?.has(id));
+    if (lockedStops.length > 0) {
+      const available: Array<{ id: string; title: string }> = [];
+      for (const sc of listDemoScripts()) {
+        const screens = await demoScriptScreens(sc.id);
+        if (!screens.some(id => ctx?.lockedScreens?.has(id))) available.push({ id: sc.id, title: sc.title });
+      }
+      return JSON.stringify({
+        status: 'not_available',
+        message: `"${script.title}" visits screens that are not available in this workspace (${[...new Set(lockedStops)].join(', ')}).`,
+        availableDemos: available,
+        instruction: 'Tell them plainly, and offer one of availableDemos instead.',
+      });
+    }
     // Belt: scripts are registry-validated by the test suite; refuse rather
     // than run a script that somehow references a screen that no longer exists.
     const defects = validateDemoScript(script);
@@ -17046,12 +17175,23 @@ registerToolHandler('start_product_demo', async (input: Record<string, unknown>,
         defects,
       });
     }
+    const driven = ctx?.liveDrive === true;
+    // The workspace's real programs: stops that open one (projects.open-program,
+    // and every project-scoped screen via navigate_to's `program`) are filled
+    // from here, never from a name in the script's talking points.
+    const { listProgramCandidates, programChoices } = await import('../ana-ri/drive-context.js');
+    const listed = await listProgramCandidates(ctx?.organizationId ?? null, 12);
     return JSON.stringify({
       status: 'demo_ready',
+      // Read by services/ana-ri/navigation-actions demoStartFromToolResult:
+      // an OFFERED demonstration (driven: false) becomes a "Start
+      // demonstration" chip on the answer; a driven one is already playing.
+      driven,
       script,
-      instruction: ctx?.liveDrive
-        ? `Run the demonstration now, stop by stop and briskly: for each step, narrate its "say" talking point in your own words (adapted to the user's real data on screen — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). A step without pinned params (e.g. which program to open) is filled from the on-screen context; if the workspace has no programs yet, narrate from the portfolio and offer to set one up together instead. Answer any question the user asks mid-demo, then resume from the next stop. If the turn ends before the script does, say which stop you reached so you can continue from the next one.`
-        : `Live Drive is NOT on for this turn, so the moves below can only be OFFERED as chips, not performed. Tell the user a demonstration works best with Live Drive on (AnA rail → Control → Live Drive, or the Run a demonstration button) and offer to proceed chip-by-chip if they prefer.`,
+      ...(listed.ok ? { programs: programChoices(listed.programs) } : {}),
+      instruction: driven
+        ? `Run the demonstration now, all the way through, one stop per step: for each step, say its talking point in one or two sentences of your own (adapted to their real data — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). Make ONE move per round so each screen lands before the next. Pick ONE program from \`programs\` at the start (the first is fine) and use it throughout: pass its name as \`program\` to projects.open-program, and as navigate_to's \`program\` for project screens. If \`programs\` is empty, narrate from the portfolio and offer to set one up together. If a screen report says a move did not happen, say so briefly and continue with the next stop. Answer any question they ask mid-demo, then resume. If the turn ends before the script does, say which stop you reached.`
+        : `Live Drive is NOT on for this turn, so the moves below can only be OFFERED as chips, not performed — do not narrate the stops as if you had made them. This answer carries a "Start demonstration: ${script.title}" chip: tell the user that pressing it starts the demonstration with you driving (Live Drive switches on visibly and they can take over at any time), and offer to proceed chip-by-chip instead if they prefer. Give a one-paragraph preview of what the demonstration covers (${script.steps.length} stops, about ${script.minutes} minutes) and stop there.`,
     });
   } catch (err: any) {
     return JSON.stringify({ error: `start_product_demo failed: ${err?.message || 'unknown error'}` });
@@ -19554,6 +19694,20 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
   }
 });
 
+/* draft_authoring_document — an AnA-built document IS an authoring document
+   (docs/design/ANA_DOCUMENT_CANVAS.md, WM 2026-09-21). The body lives in
+   services/authoring/authoring-draft-tool.ts so it is testable through this
+   handler without a model turn; it refuses verbatim without an open project,
+   exactly like save_document_to_vault above, and writes through the same
+   service POST /api/authoring/docs/from-draft uses. */
+registerToolHandler('draft_authoring_document', async (input, ctx) => {
+  const [{ getPool }, { draftAuthoringDocumentTool }] = await Promise.all([
+    import('../../db.js'),
+    import('../authoring/authoring-draft-tool.js'),
+  ]);
+  return draftAuthoringDocumentTool(getPool(), input, ctx);
+});
+
 registerToolHandler('update_vault_document', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx.userId) return JSON.stringify({ error: 'update_vault_document requires tenant + user context.' });
   const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
@@ -20088,5 +20242,197 @@ registerToolHandler('list_report_definitions', async (_input, ctx) => {
     return JSON.stringify({ ok: true, count: definitions.length, definitions });
   } catch (err) {
     return JSON.stringify({ error: `list_report_definitions failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol ⇄ study-design loop (docs/design/PROTOCOL_INTELLIGENCE.md, §"AnA's
+// part"). Definitions in ./protocol-design-tool-defs.ts.
+//
+// AnA decides nothing here. `bind_*` and `apply_*` are governed and audited on
+// the SAME ceremony as create_protocol_document above — BEGIN, tenant context,
+// the domain Tx, recordGovernedAction on the same client, COMMIT, ROLLBACK on
+// error, release in finally — so the change and its 21 CFR Part 11 row commit or
+// roll back together. The three `review_*` tools record NO governed action:
+// looking at a diff or a rule finding is not a governed action, and an audit row
+// claiming otherwise is a false record.
+//
+// The verdicts and counts come from the engines that already exist and are
+// returned VERBATIM. Nothing in this block computes a number, a percentage or a
+// severity of its own (CLAUDE.md Rule 2), and nothing here writes protocol prose
+// or claims a transmission to any authority.
+//
+// `readDerivation`/`applyDerivationTx` need a Queryable, so the read tool opens a
+// read-only transaction purely to carry the RLS tenant variable, which
+// `setTenantContextTx` sets transaction-locally. It issues SELECTs only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Map a ProtocolDevError / DerivationError onto the tool's error envelope. */
+function pdevToolError(tool: string, err: unknown): string {
+  const code = (err as { code?: string } | null)?.code;
+  const message = err instanceof Error ? err.message : String(err);
+  return JSON.stringify(code ? { error: `${tool} failed: ${message}`, code } : { error: `${tool} failed: ${message}` });
+}
+
+/**
+ * The protocol row out of the surface's own assembler, so AnA and the screen
+ * report the same numbers from the same engines. Returns null when this org has
+ * no such protocol — which the callers report as not-found rather than as an
+ * empty finding list.
+ *
+ * These tools first reached through `assembleOrgPdevDocs`, which assembles the
+ * WHOLE ORGANISATION, and filtered to one document — the only exported path at
+ * the time, and a deliberate trade against copying the register queries and the
+ * rule-input mapping into this file. `assembleOnePdevDocFacets` now exists and
+ * does exactly this for one protocol, calling the same `ruleFindingsFor` and
+ * `loadBoundDesigns` the page assembly calls. So AnA's numbers are identical to
+ * the screen's by construction rather than by inspection, and answering about
+ * one protocol no longer reads every protocol the tenant has.
+ */
+async function loadAssembledPdevDoc(orgId: number, documentId: number): Promise<Record<string, unknown> | null> {
+  const { assembleOnePdevDocFacets } = await import('../protocol-development/pdev-view-assembler.js');
+  const facets = await assembleOnePdevDocFacets(orgId, documentId);
+  return facets ? (facets as unknown as Record<string, unknown>) : null;
+}
+
+registerToolHandler('bind_protocol_to_study_design', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'bind_protocol_to_study_design requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const studyDesignId = typeof input.study_design_id === 'string' ? input.study_design_id.trim() : '';
+  if (!Number.isInteger(documentId) || !studyDesignId) return JSON.stringify({ error: 'document_id and study_design_id are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { bindStudyDesignTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const bound = await bindStudyDesignTx(client, ctx.organizationId, documentId, studyDesignId, ctx.userId);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol bound to study design via AnA'), payload: { studyDesignId: bound.studyDesignId }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, documentId, studyDesignId: bound.studyDesignId, designTitle: bound.title, message: `Bound protocol ${documentId} to study design ${bound.studyDesignId}. The derivation, the design gates and the projections can now run against it.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return pdevToolError('bind_protocol_to_study_design', err);
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_design_derivation', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_design_derivation requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { readDerivation } = await import('../protocol-development/design-derivation-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const view = await readDerivation(client, ctx.organizationId, documentId);
+    await client.query('COMMIT');
+    const d = view.derivation;
+    return JSON.stringify({
+      ok: true,
+      documentId,
+      studyDesignId: view.studyDesignId,
+      counts: { proposed: d.proposed.length, conflicts: d.conflicts.length, unchanged: d.unchanged.length, unevidenced: d.unevidenced.length, incomplete: d.incomplete.length },
+      derivation: d,
+      note: 'Derived by deriveDesignFromProtocol. Report the buckets and counts verbatim. An unevidenced or incomplete path is not agreement and not a pass. Nothing was written; to apply any path, ask the human which ones and call apply_protocol_design_derivation.',
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return pdevToolError('review_protocol_design_derivation', err);
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('apply_protocol_design_derivation', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'apply_protocol_design_derivation requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const raw = Array.isArray(input.accepted_paths) ? input.accepted_paths : [];
+  const acceptedPaths = raw.filter((p): p is string => typeof p === 'string' && p.trim().length > 0);
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  if (acceptedPaths.length === 0) return JSON.stringify({ error: 'accepted_paths must be a non-empty array of derivation path strings. Paths only — the engine supplies the values.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { applyDerivationTx } = await import('../protocol-development/design-derivation-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const result = await applyDerivationTx(client, ctx.organizationId, documentId, acceptedPaths, ctx.userId);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `study-design:${result.studyDesignId}`, reason: fcoiReason(input, 'Protocol derivation applied to study design via AnA'), payload: { documentId, requested: acceptedPaths, applied: result.applied, rejected: result.rejected.length }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({
+      ok: true,
+      documentId,
+      studyDesignId: result.studyDesignId,
+      applied: result.applied,
+      rejected: result.rejected,
+      derivation: result.derivation,
+      message: result.applied.length === 0
+        ? `No path was applied to study design ${result.studyDesignId}. The engine refused every accepted path; report its reasons verbatim and do not describe this as an update.`
+        : `Applied ${result.applied.length} path(s) to study design ${result.studyDesignId}: ${result.applied.join(', ')}.`,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return pdevToolError('apply_protocol_design_derivation', err);
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_regulatory_rules', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_regulatory_rules requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  try {
+    const doc = await loadAssembledPdevDoc(ctx.organizationId, documentId);
+    if (!doc) return JSON.stringify({ error: `Protocol document ${documentId} was not found for this organization. No rules were evaluated.` });
+    const rules = doc.ruleFindings as { findings: unknown[]; assessed: number; unmet: number; notAssessed: number } | undefined;
+    if (!rules) return JSON.stringify({ error: `The rule pack returned no evaluation for protocol ${documentId}, so nothing was assessed. Report this as a gap, not as a clean protocol.` });
+    return JSON.stringify({
+      ok: true,
+      documentId,
+      kind: doc.kind,
+      assessed: rules.assessed,
+      unmet: rules.unmet,
+      notAssessed: rules.notAssessed,
+      findings: rules.findings,
+      note: 'Evaluated by evaluateProtocolRules. Report the findings and the three counts verbatim; compute no score or percentage. A not-assessed rule is not a pass, and an attention finding on a complete section means the content was not inspected.',
+    });
+  } catch (err) {
+    return pdevToolError('review_protocol_regulatory_rules', err);
+  }
+});
+
+registerToolHandler('review_protocol_design_gates', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_design_gates requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  try {
+    const doc = await loadAssembledPdevDoc(ctx.organizationId, documentId);
+    if (!doc) return JSON.stringify({ error: `Protocol document ${documentId} was not found for this organization. No design gates were run.` });
+    const design = doc.studyDesign as Record<string, unknown> | null;
+    if (!design) return JSON.stringify({ error: `No study design is bound to protocol ${documentId}, so the design gates did not run. This is not a clean gate result — bind a design with bind_protocol_to_study_design first.` });
+    if (design.resolved !== true) return JSON.stringify({ error: `Protocol ${documentId} names study design ${String(design.studyId)}, but that design could not be read for this organization, so the gates did not run. The link is unresolved; this is not a clean gate result.`, studyDesignId: design.studyId });
+    return JSON.stringify({
+      ok: true,
+      documentId,
+      studyDesignId: design.studyId,
+      designTitle: design.title,
+      riskLevel: design.riskLevel,
+      canAdvance: design.canAdvance,
+      blocksApproval: design.blocksApproval,
+      counts: design.counts,
+      summary: design.summary,
+      standardsChecked: design.standardsChecked,
+      findings: design.findings,
+      note: 'Produced by validateDesign — the same ICH E9 / E9(R1) / E10 / E3 / ICH M11 gate engine /api/study-design serves. Report the findings, counts and verdicts verbatim; do not re-rank, drop or total them yourself. These are the DESIGN gates; the protocol document\'s own rules come from review_protocol_regulatory_rules.',
+    });
+  } catch (err) {
+    return pdevToolError('review_protocol_design_gates', err);
   }
 });

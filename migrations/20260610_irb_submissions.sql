@@ -19,7 +19,14 @@
 CREATE TABLE IF NOT EXISTS irb_submissions (
   id                                 serial PRIMARY KEY,
   organization_id                    integer NOT NULL REFERENCES organizations(id),
-  study_id                           integer REFERENCES clinical_studies(id),
+  -- 2026-09-22: the hard FK to clinical_studies was REMOVED before this file
+  -- was registered on the applier (Rule 1: amend the creator in place, never
+  -- append a DROP). No migration in C2C_MIGRATION_FILES creates
+  -- clinical_studies, and it is not in the Drizzle schema install-fresh
+  -- pushes, so the constraint would have failed the first deploy that ran
+  -- this file. It stays a soft link — the same shape consent_forms uses for
+  -- protocol_document_id — and the reading code already tolerates a null.
+  study_id                           integer,
   submission_id                      integer REFERENCES submissions(id),
   protocol_number                    text NOT NULL,
   title                              text NOT NULL,

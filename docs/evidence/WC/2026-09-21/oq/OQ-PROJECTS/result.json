@@ -1,0 +1,526 @@
+{
+  "protocolId": "OQ-001",
+  "protocolTitle": "Operational Qualification — Projects",
+  "app": "PROJECTS",
+  "appLabel": "Projects",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "automated runner tests/validation/oq/projects/run.mjs",
+  "executedAt": "2026-09-21T01:13:32.516Z",
+  "finishedAt": "2026-09-21T01:14:13.719Z",
+  "environment": {
+    "baseUrl": "http://localhost:5600",
+    "node": "v22.22.2",
+    "chromium": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+    "playwrightCore": "1.63.0",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "debdd9664f5759eb9a4a5b024b73c333027baf18"
+    },
+    "testUser": "jonmichaelpsmith@gmail.com",
+    "organizationId": "2",
+    "readyz": {
+      "status": 503,
+      "body": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY / KIMI_API_KEY) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE."
+      }
+    }
+  },
+  "counts": {
+    "pass": 14,
+    "fail": 2,
+    "deviation": 0,
+    "not-executed": 0
+  },
+  "steps": [
+    {
+      "id": "OQ-PROJ-01",
+      "title": "Anonymous access refused",
+      "urs": [
+        "URS-PROJ-001"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/projects with no Authorization header",
+      "expected": "HTTP 401 (or 403); no program data returned",
+      "status": "pass",
+      "observed": "HTTP 401",
+      "startedAt": "2026-09-21T01:13:33.221Z",
+      "finishedAt": "2026-09-21T01:13:33.477Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-PROJ-01.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/c2c/projects",
+          "status": 401
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-02",
+      "title": "Login page and Demo Access (dev-login) in the browser",
+      "urs": [
+        "URS-PROJ-001",
+        "URS-PROJ-005"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/login unauthenticated; click \"Demo Access\"; observe redirect into the shell",
+      "expected": "Login page renders; after Demo Access the URL leaves /concept2cure/login and the shell renders",
+      "status": "pass",
+      "observed": "landed on /concept2cure",
+      "startedAt": "2026-09-21T01:13:33.477Z",
+      "finishedAt": "2026-09-21T01:13:37.694Z",
+      "evidence": [
+        "steps/OQ-PROJ-02.login-page.png",
+        "steps/OQ-PROJ-02.after-demo-access.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T01:13:33.893Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        },
+        {
+          "at": "2026-09-21T01:13:36.014Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": "Demo Access calls POST /api/auth/dev-login, which is only mounted when NODE_ENV=development and ALLOW_DEV_AUTH=1 (server/auth/dev-auth-policy.ts). It skips the password/MFA factor by design; every later step authenticates through the same dev-login token.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-03",
+      "title": "Program creation validates its inputs",
+      "urs": [
+        "URS-PROJ-002"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/c2c/projects with (a) no name, (b) programType \"not-a-type\"",
+      "expected": "Both refused with HTTP 400 and a message naming the field",
+      "status": "pass",
+      "observed": "missing name → 400 ({\"error\":\"name is required\"}); bad type → 400 ({\"error\":\"programType must be one of: 510k, de_novo, pma, ivd, device, cer, ide, ind, cta, bla, biologic, nda, maa, jnda, anda, mdr, ivdr, dmf\"})",
+      "startedAt": "2026-09-21T01:13:37.694Z",
+      "finishedAt": "2026-09-21T01:13:38.214Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-PROJ-03.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/c2c/projects",
+          "status": 400
+        },
+        {
+          "file": "steps/OQ-PROJ-03.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/c2c/projects",
+          "status": 400
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-04",
+      "title": "Create an IND program",
+      "urs": [
+        "URS-PROJ-002",
+        "URS-PROJ-003"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/c2c/projects {name, programType:\"ind\", primaryAgency:\"FDA\", indication}",
+      "expected": "HTTP 201; data.id is a UUID; the row carries the given name; meta reports what else the intake created (scaffolded document, canonical submission)",
+      "status": "pass",
+      "observed": "program 8b66eb77-68eb-4d01-b7f5-b397f4d415bd created (ws=Biotech, code=OIP2-XINK); intake also created: document=doc_da6b508c6164426eb3fe3ef8a49e0c60 (92 sections), submission=45; projectAnchor=NO_CLIENT_WORKSPACE",
+      "startedAt": "2026-09-21T01:13:38.214Z",
+      "finishedAt": "2026-09-21T01:13:38.531Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-PROJ-04.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/c2c/projects",
+          "status": 201
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-05",
+      "title": "Program is listed and readable for the organisation",
+      "urs": [
+        "URS-PROJ-003"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/projects; GET /api/c2c/projects/:id",
+      "expected": "List contains the new program; detail returns the same name",
+      "status": "pass",
+      "observed": "listed (26 programs) and readable; product class shown as \"undefined\"",
+      "startedAt": "2026-09-21T01:13:38.531Z",
+      "finishedAt": "2026-09-21T01:13:39.069Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-PROJ-05.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/c2c/projects?limit=50",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-PROJ-05.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/c2c/projects/8b66eb77-68eb-4d01-b7f5-b397f4d415bd",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-06",
+      "title": "Program creation is attributable in the activity feed and the hash-chained audit log verifies",
+      "urs": [
+        "URS-PROJ-004"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/projects/:id/activity; GET /api/c2c/actions/verify-chain",
+      "expected": "Activity has ≥1 entry for the creation with an actor and time; the audit_logs chain verifier answers ok",
+      "status": "fail",
+      "observed": {
+        "ok": false,
+        "rowsChecked": 100,
+        "brokenAt": {
+          "id": "a9989a0f-d67a-41ad-afae-db7f867f6d47",
+          "expected": "d713147801fa786d605f3b84e4bbf61c5640820acd9476ef917bd136ca3a9479",
+          "stored": "5b992f989c3f35290fd2e1b8d3b09e3a6bcef48ba0cb3a41df230aa0e431603e"
+        }
+      },
+      "startedAt": "2026-09-21T01:13:39.069Z",
+      "finishedAt": "2026-09-21T01:13:39.645Z",
+      "evidence": [
+        "steps/OQ-PROJ-06.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-PROJ-06.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/c2c/projects/8b66eb77-68eb-4d01-b7f5-b397f4d415bd/activity",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-PROJ-06.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/c2c/actions/verify-chain",
+          "status": 409
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "failure": "verify-chain expected ok, got 409",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-06b",
+      "title": "Program creation appears on the organisation audit ledger surface",
+      "urs": [
+        "URS-PROJ-004"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/audit-trail/ledger?limit=50 (the read model behind /concept2cure/audit-trail)",
+      "expected": "At least one hash-chained entry exists for the organisation after a program was created",
+      "status": "fail",
+      "observed": {
+        "success": true,
+        "data": []
+      },
+      "startedAt": "2026-09-21T01:13:39.645Z",
+      "finishedAt": "2026-09-21T01:13:39.974Z",
+      "evidence": [
+        "steps/OQ-PROJ-06b.at-failure.png"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-PROJ-06b.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/audit-trail/ledger?limit=50",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": "The ledger surface reads audit_events (server/routes/audit-trail-ledger.routes.ts:173); program intake writes its chained row to audit_logs (server/routes/c2c/projects.ts). If this step fails the two stores are not the same store.",
+      "failure": "audit-trail ledger surface has no entries although governed writes were made this run",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-07",
+      "title": "Projects surface renders the program",
+      "urs": [
+        "URS-PROJ-005"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/projects in Chromium (authenticated)",
+      "expected": "The program name is visible on the page",
+      "status": "pass",
+      "observed": "program name visible on Projects",
+      "startedAt": "2026-09-21T01:13:39.974Z",
+      "finishedAt": "2026-09-21T01:13:46.426Z",
+      "evidence": [
+        "steps/OQ-PROJ-07.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T01:13:44.419Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-08",
+      "title": "Project home renders for the open program",
+      "urs": [
+        "URS-PROJ-005"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/project-home with the program selected in the shell",
+      "expected": "Project home renders with the program name and no runtime page error",
+      "status": "pass",
+      "observed": "project home shows the program",
+      "startedAt": "2026-09-21T01:13:46.426Z",
+      "finishedAt": "2026-09-21T01:13:53.136Z",
+      "evidence": [
+        "steps/OQ-PROJ-08.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T01:13:50.873Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-09",
+      "title": "Create a task and see it on the task board",
+      "urs": [
+        "URS-PROJ-006"
+      ],
+      "kind": "scripted",
+      "action": "POST /api/tasks/tasks {title, moduleType:\"projects\", priority:\"high\"}; GET /api/task-management/board",
+      "expected": "Task created (2xx) with a taskId; the board lists it",
+      "status": "pass",
+      "observed": "task TASK-1789953233393-da9ea89f created and listed (board total 7)",
+      "startedAt": "2026-09-21T01:13:53.136Z",
+      "finishedAt": "2026-09-21T01:13:53.711Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-PROJ-09.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5600/api/tasks/tasks",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-PROJ-09.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/task-management/board",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-10",
+      "title": "Tasks surface renders the task",
+      "urs": [
+        "URS-PROJ-006"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/tasks",
+      "expected": "The task title is visible",
+      "status": "pass",
+      "observed": "task visible on Tasks",
+      "startedAt": "2026-09-21T01:13:53.711Z",
+      "finishedAt": "2026-09-21T01:14:00.086Z",
+      "evidence": [
+        "steps/OQ-PROJ-10.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T01:13:58.165Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-11",
+      "title": "Program journey read model answers",
+      "urs": [
+        "URS-PROJ-007"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/program-journey",
+      "expected": "HTTP 200 with data[] (empty is honest for a new program)",
+      "status": "pass",
+      "observed": "HTTP 200, 0 journeys",
+      "startedAt": "2026-09-21T01:14:00.086Z",
+      "finishedAt": "2026-09-21T01:14:00.347Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-PROJ-11.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/program-journey",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-12",
+      "title": "Filings catalog surface renders",
+      "urs": [
+        "URS-PROJ-007"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/filings-catalog",
+      "expected": "Surface renders (screenshot) without a runtime page error",
+      "status": "pass",
+      "observed": "rendered",
+      "startedAt": "2026-09-21T01:14:00.347Z",
+      "finishedAt": "2026-09-21T01:14:06.476Z",
+      "evidence": [
+        "steps/OQ-PROJ-12.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T01:14:04.731Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-13",
+      "title": "Launch scope is enforced in the navigation verdicts",
+      "urs": [
+        "URS-PROJ-008"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/module-subscriptions/navigation",
+      "expected": "launchScope.enforced=true; the out-of-scope surface \"rbm\" is not entitled with source \"launch-scope\"; all six launch apps' primary surfaces are entitled",
+      "status": "pass",
+      "observed": "101 verdicts; rbm locked by launch-scope; launch surfaces entitled",
+      "startedAt": "2026-09-21T01:14:06.476Z",
+      "finishedAt": "2026-09-21T01:14:06.739Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-PROJ-13.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/module-subscriptions/navigation",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-14",
+      "title": "Deep link to an out-of-scope surface shows the launch-scope gate",
+      "urs": [
+        "URS-PROJ-008"
+      ],
+      "kind": "scripted",
+      "action": "Open /concept2cure/rbm",
+      "expected": "The page explains the surface is not in this release (no RBM content, no upsell)",
+      "status": "pass",
+      "observed": "launch-scope gate rendered",
+      "startedAt": "2026-09-21T01:14:06.739Z",
+      "finishedAt": "2026-09-21T01:14:13.351Z",
+      "evidence": [
+        "steps/OQ-PROJ-14.png"
+      ],
+      "api": [],
+      "consoleErrors": [
+        {
+          "at": "2026-09-21T01:14:11.175Z",
+          "kind": "console.error",
+          "message": "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+        }
+      ],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-PROJ-15",
+      "title": "A program id the organisation does not own is not readable",
+      "urs": [
+        "URS-PROJ-009"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/c2c/projects/<random uuid>",
+      "expected": "HTTP 404 (never 200, never 500)",
+      "status": "pass",
+      "observed": "HTTP 404",
+      "startedAt": "2026-09-21T01:14:13.351Z",
+      "finishedAt": "2026-09-21T01:14:13.611Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-PROJ-15.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5600/api/c2c/projects/00000000-0000-4000-8000-000000000000",
+          "status": 404
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    }
+  ]
+}

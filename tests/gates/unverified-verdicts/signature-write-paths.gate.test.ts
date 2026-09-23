@@ -13,8 +13,8 @@
  *       local-part, and stored `${stage}-${Date.now()}` as the "hash".
  *
  * There is ONE conforming signature write path (services/part11/
- * signature-persistence.ts, behind /api/esignature/sign, password verified by
- * part11ComplianceService.verifyUserCredentials). The precedent for a second
+ * signature-persistence.ts, behind /api/esignature/sign, the signer re-verified
+ * by services/part11/reverify-signer.ts). The precedent for a second
  * one is server/services/__tests__/signature-write-path-single.test.ts: the
  * writer is deleted and the route answers 410 naming the canonical one. This
  * file extends that contract to the two writers WO-16B found. Source-level on

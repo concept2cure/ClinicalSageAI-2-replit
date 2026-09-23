@@ -203,7 +203,17 @@ export function computeLifecycleOperations(
         ctdSection: prev.ctdSection,
         fileName: prev.fileName,
         title: base.title || prev.title || prev.fileName,
-        sourcePath: base.sourcePath || prev.sourcePath || '',
+        // A withdrawal carries no content (2026-09-23, W5/D7). It used to keep
+        // the resolved source path, and the packager then packaged a delete
+        // that had one as an ordinary file: the withdrawn document's bytes
+        // shipped in the withdrawing sequence, under an href into THIS sequence
+        // rather than the filed copy. Empty sourcePath → backbone-only delete
+        // whose href is the modified-file pointer at the filed leaf.
+        // 2026-09-23 (W5/D7, round-2 skeptic): the packager now refuses a
+        // delete that carries a sourcePath, or (after 0000) one with no
+        // modified-file, so this is also what keeps the emitted delete
+        // packageable.
+        sourcePath: '',
         md5: prev.md5,
         operation: 'delete',
         ...(modifiedFile ? { modifiedFile } : {}),

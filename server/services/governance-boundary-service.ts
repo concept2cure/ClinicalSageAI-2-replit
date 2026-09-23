@@ -30,6 +30,7 @@ import {
   UNRESOLVED_DECISION_ACTION_STATES,
   rankConfidence,
 } from '../../shared/constants/operating-system-vocab';
+import { normalizeCtdCode } from '../../shared/regulatory/section-code';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -71,6 +72,78 @@ const BOUNDARY_ORDER: Record<BoundaryLevel, number> = {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SERVICE
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOCUMENT READINESS (gate 4) — pure
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** The columns gate 4 reads from `concept2cure_artifacts`. */
+export interface ArtifactReadinessRow {
+  status: string | null;
+  content: string | null;
+  content_hash: string | null;
+  citations: unknown;
+  ctd_section: string | null;
+  type: string | null;
+}
+
+/** What the artifact row actually records — and nothing it does not. */
+export interface DocumentReadinessFacts {
+  status: string | null;
+  hasContent: boolean;
+  evidenceCount: number;
+  hasApproval: boolean;
+  ctdSection: string | null;
+  placementValid: boolean;
+  documentType: string | null;
+}
+
+export function documentReadinessFacts(row: ArtifactReadinessRow): DocumentReadinessFacts {
+  const citations = Array.isArray(row.citations) ? row.citations : [];
+  const ctd = typeof row.ctd_section === 'string' && row.ctd_section.trim() ? row.ctd_section.trim() : null;
+  return {
+    status: row.status ?? null,
+    hasContent: typeof row.content === 'string' && row.content.trim().length > 0,
+    evidenceCount: citations.length,
+    hasApproval: row.status === 'approved' || row.status === 'locked',
+    ctdSection: ctd,
+    placementValid: ctd !== null && normalizeCtdCode(ctd) !== null,
+    documentType: row.type ?? null,
+  };
+}
+
+/**
+ * The hard requirements a document must meet to ENTER a boundary, enforced by
+ * gate 4 and nowhere else. Kept to what document control plainly demands, so
+ * the gate does not invent policy:
+ *   - any promotion past governed_draft needs content — an empty record
+ *     cannot be approved, locked or submitted;
+ *   - submission_ready needs the artifact to have been LOCKED (the boundary
+ *     is locked → submission_ready, and the route does not check it), and a
+ *     valid CTD placement, because an eCTD leaf with no section has nowhere
+ *     to be filed.
+ * Status preconditions for approve (in review) and lock (approved) stay with
+ * those routes, which already enforce them.
+ */
+export function documentBoundaryRequirements(toBoundary: BoundaryLevel, facts: DocumentReadinessFacts): string[] {
+  const reasons: string[] = [];
+  if (!facts.hasContent) {
+    reasons.push(`Document readiness gate: the artifact has no content, so it cannot be moved to ${toBoundary}.`);
+  }
+  if (toBoundary === 'submission_ready') {
+    if (facts.status !== 'locked') {
+      reasons.push(
+        `Document readiness gate: the artifact is "${facts.status ?? 'unknown'}"; only a locked artifact can be marked submission-ready.`
+      );
+    }
+    if (facts.ctdSection === null) {
+      reasons.push('Document readiness gate: the artifact has no CTD placement, so there is nowhere in the submission to file it.');
+    } else if (!facts.placementValid) {
+      reasons.push(`Document readiness gate: "${facts.ctdSection}" is not a valid CTD section code.`);
+    }
+  }
+  return reasons;
+}
 
 export class GovernanceBoundaryService {
   private static instance: GovernanceBoundaryService;
@@ -321,66 +394,131 @@ export class GovernanceBoundaryService {
       }
     }
 
-    // 3. Contradiction gate — block if unresolved blocking contradictions exist
+    // Counts from gate 3, handed to gate 4 so the readiness fabric judges the
+    // contradictions that were actually found rather than an asserted zero.
+    let contradictionCounts: { unresolved: number; critical: number } | null = null;
+
+    // 3. Contradiction gate — block if unresolved blocking contradictions exist.
+    //
+    // FAIL CLOSED (2026-09-22). This catch, and the one on gate 4, used to be
+    // empty with the comment "non-blocking degradation". `allowed` below is
+    // `blockedReasons.length === 0`, so a gate that threw was arithmetically
+    // the same as a gate that passed, and the append-only row recorded
+    // `transitionAllowed: true, blockedReasons: []` for a lock whose
+    // contradiction check never ran. Gates 2, the confidence gate and the audit
+    // insert in this same method already fail closed; these two now match. A
+    // missing `checkPromotionBlocked` is the same case — the gate cannot run —
+    // and is no longer a silent skip.
     if (request.projectId && request.artifactId != null && request.toBoundary !== 'advisory') {
       try {
         const { contradictionEngineService } = await import('./contradiction-engine-service.js');
-        if (contradictionEngineService?.checkPromotionBlocked) {
-          const contradictionCheck = await contradictionEngineService.checkPromotionBlocked(
-            request.organizationId,
-            request.projectId,
-            request.artifactId ?? 0
-          );
-          if (contradictionCheck?.blocked) {
-            const blockingCount = contradictionCheck.blockingFindings?.length ?? 0;
-            blockedReasons.push(
-              `${blockingCount} unresolved blocking contradiction(s) must be resolved before transitioning to ${request.toBoundary}.`
-            );
-          }
+        if (typeof contradictionEngineService?.checkPromotionBlocked !== 'function') {
+          throw new Error('contradiction engine does not expose checkPromotionBlocked');
         }
-      } catch {
-        // Contradiction engine unavailable — continue without gate (non-blocking degradation)
+        const contradictionCheck = await contradictionEngineService.checkPromotionBlocked(
+          request.organizationId,
+          request.projectId,
+          request.artifactId
+        );
+        contradictionCounts = {
+          unresolved: (contradictionCheck?.blockingFindings?.length ?? 0) + (contradictionCheck?.warningFindings?.length ?? 0),
+          critical: contradictionCheck?.blockingFindings?.length ?? 0,
+        };
+        if (contradictionCheck?.blocked) {
+          const blockingCount = contradictionCheck.blockingFindings?.length ?? 0;
+          blockedReasons.push(
+            `${blockingCount} unresolved blocking contradiction(s) must be resolved before transitioning to ${request.toBoundary}.`
+          );
+        }
+      } catch (err) {
+        blockedReasons.push(
+          `Contradiction gate could not be evaluated ` +
+          `(${err instanceof Error ? err.message : 'unknown error'}). ` +
+          `Failing closed: transition to ${request.toBoundary} is blocked until unresolved contradictions can be checked.`
+        );
       }
     }
 
-    // 4. Readiness gate — delegates to canonical governed document decision fabric
-    //    GovernanceBoundaryService no longer computes readiness independently.
-    //    The fabric evaluator (readiness-gates.ts) is the single readiness authority.
-    if (request.projectId &&
+    // 4. Document readiness gate — the artifact's REAL state.
+    //
+    // Rewritten 2026-09-22. This gate used to hand the readiness fabric
+    // `hasContent: true, hasEvidence: true, hasProvenance: true`, and derived
+    // `hasBeenReviewed` / `hasApproval` from the boundary being REQUESTED — so it
+    // judged facts nobody had checked, about a document it never read. And the
+    // fabric turns only contradictions, staleness and missing context into
+    // blockers, so for content, placement and status the gate could not block
+    // at all. `mark-submission-ready` relied on it and checks neither the
+    // artifact's status nor its placement itself.
+    //
+    // Now: the artifact row is read, org- and project-scoped; a missing row
+    // fails closed; the fabric is fed only what that row records; and the
+    // boundary's own hard requirements (`documentBoundaryRequirements`) are
+    // enforced here, once, as the single readiness authority. It applies to
+    // DOCUMENT transitions only: a transition with no artifactId (a decision or
+    // assumption) has no document to judge and is not judged as one.
+    if (request.projectId && request.artifactId != null &&
         (request.toBoundary === 'approved' || request.toBoundary === 'locked' || request.toBoundary === 'submission_ready')) {
       try {
-        const { evaluateGovernedDocument } = await import('../src/control-plane/governed-document-evaluator.js');
-        const fabricResult = evaluateGovernedDocument({
-          context: {
-            organizationId: String(request.organizationId),
-            projectId: String(request.projectId),
-            actorId: String(request.actorId || 'system'),
-            intendedAction: 'promote',
-            artifactId: request.artifactId ? String(request.artifactId) : undefined,
-            actorRole: request.actorRole,
-          },
-          documentState: {
-            hasContent: true,
-            hasEvidence: true,
-            hasBeenReviewed: request.toBoundary !== 'approved',
-            hasApproval: request.toBoundary === 'locked' || request.toBoundary === 'submission_ready',
-            hasPlacement: false,
-            placementValid: false,
-            hasProvenance: true,
-            unresolvedContradictionCount: 0, // already checked in contradiction gate above
-            criticalContradictionCount: 0,
-          },
-        });
-        const readiness = fabricResult.evaluation.readiness;
-        if (readiness.level === 'blocked' && readiness.blockers.length > 0) {
-          for (const blocker of readiness.blockers) {
-            blockedReasons.push(
-              `Fabric readiness gate: ${blocker.message}`
-            );
+        const res = await database.execute(sql`
+          SELECT status, content, content_hash, citations, ctd_section, type
+          FROM concept2cure_artifacts
+          WHERE id = ${request.artifactId}
+            AND project_id = ${request.projectId}
+            AND organization_id = ${request.organizationId}
+          LIMIT 1
+        `);
+        const rows = ((res as unknown as { rows?: ArtifactReadinessRow[] }).rows ?? res) as ArtifactReadinessRow[];
+        const row = rows[0];
+        if (!row) {
+          blockedReasons.push(
+            `Document readiness gate: artifact ${request.artifactId} was not found in this organization and project. ` +
+            `Failing closed: a document that cannot be read cannot be judged ready.`
+          );
+        } else {
+          const facts = documentReadinessFacts(row);
+          blockedReasons.push(...documentBoundaryRequirements(request.toBoundary, facts));
+
+          const { evaluateGovernedDocument } = await import('../src/control-plane/governed-document-evaluator.js');
+          const fabricResult = evaluateGovernedDocument({
+            context: {
+              organizationId: String(request.organizationId),
+              projectId: String(request.projectId),
+              actorId: String(request.actorId || 'system'),
+              intendedAction: 'promote',
+              artifactId: String(request.artifactId),
+              actorRole: request.actorRole,
+              documentType: facts.documentType ?? undefined,
+              ctdSection: facts.ctdSection ?? undefined,
+            },
+            documentState: {
+              hasContent: facts.hasContent,
+              hasEvidence: facts.evidenceCount > 0,
+              evidenceCount: facts.evidenceCount,
+              // An approval implies a completed review; nothing else here
+              // records one, so nothing else is claimed.
+              hasBeenReviewed: facts.hasApproval,
+              hasApproval: facts.hasApproval,
+              hasPlacement: facts.ctdSection !== null,
+              placementValid: facts.placementValid,
+              // Not evaluated by this gate. The content hash is an integrity
+              // check, not a provenance chain, and is not passed off as one.
+              hasProvenance: false,
+              unresolvedContradictionCount: contradictionCounts?.unresolved ?? 0,
+              criticalContradictionCount: contradictionCounts?.critical ?? 0,
+            },
+          });
+          const readiness = fabricResult.evaluation.readiness;
+          if (readiness.level === 'blocked') {
+            blockedReasons.push(...readiness.blockers.map((b) => `Fabric readiness gate: ${b.message}`));
           }
         }
-      } catch {
-        // Fabric readiness gate unavailable — continue without (non-blocking degradation)
+      } catch (err) {
+        // Fail closed — see gate 3.
+        blockedReasons.push(
+          `Fabric readiness gate could not be evaluated ` +
+          `(${err instanceof Error ? err.message : 'unknown error'}). ` +
+          `Failing closed: transition to ${request.toBoundary} is blocked until readiness can be evaluated.`
+        );
       }
     }
 

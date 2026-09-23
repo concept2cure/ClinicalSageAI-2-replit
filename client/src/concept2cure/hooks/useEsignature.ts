@@ -58,6 +58,12 @@ export type EsigMeaning =
 export interface VerifyResult {
   valid: boolean;
   error?: string;
+  /**
+   * verify-password only, and only when the password verified: whether the
+   * signer has a second factor enrolled, which the server will then require at
+   * signing (§11.200).
+   */
+  mfaRequired?: boolean;
 }
 
 export interface SignArgs {

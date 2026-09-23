@@ -1,0 +1,4 @@
+ × server/services/market-specs/__tests__/market-formatting-verdict.test.ts > the file name decides the type; the declared format is checked against it > a real extension is still read: letters, digits, letter-digit mixes and longer extensions 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: dm.sas7bdat: expected false to be true // Object.is equality
+      Tests  1 failed | 45 skipped (46)

@@ -5,8 +5,12 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
+import { isLaunchScopeLocked, useNavEntitlements } from '../navEntitlements';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
 import { useChatUpload, attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
+import { updateShellProject } from '../shellProject';
+import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
+import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals — cross-surface project selection handoff ──
@@ -71,7 +75,27 @@ interface ProgramRow {
   primary_agency: string | null;
   target_submission_date: string | null;
   progress_percent: number | null;
+  /** The device taxonomy intake stores for a device / IVD program
+   *  (regulatory_programs columns + the metadata-held fields the read lifts).
+   *  Every one is null for a drug program, and absent on a server that predates
+   *  them — the block renders only from what is present. */
+  product_type?: string | null;
+  device_class?: string | null;
+  regulatory_path?: string | null;
+  product_code?: string | null;
+  predicate_devices?: Array<{ kNumber?: string | null }> | null;
+  review_panel?: string | null;
+  regulation_number?: string | null;
+  device_flags?: string[] | null;
 }
+
+/** regulatory_path values as a reader says them. */
+const REGULATORY_PATH_LABEL: Record<string, string> = {
+  '510k': '510(k)', de_novo: 'De Novo', pma: 'PMA', hde: 'HDE', ide: 'IDE', exempt: '510(k)-exempt',
+};
+const DEVICE_FLAG_LABEL: Record<string, string> = Object.fromEntries(DEVICE_FLAGS.map((f) => [f.id, f.label]));
+const isDeviceProgram = (productType: string | null | undefined): boolean =>
+  (DEVICE_FAMILY_PRODUCT_TYPES as readonly string[]).includes(String(productType ?? '').toLowerCase());
 
 /** GET /api/c2c/projects/:id/team → { team: [...] } (project_members ∪ users). */
 interface TeamRow {
@@ -877,6 +901,8 @@ function AuthorWorkspace({
   wsState: DataState<{ workstreams: WorkstreamRow[] }>;
   draftsState: DataState<{ drafts: DraftRow[] }>;
 }) {
+  /* Launch-scope verdicts, for the workspace tool grid below. */
+  const { verdictFor } = useNavEntitlements();
   /* The program's own AnA threads — REAL. Threads carry the program they were
      started in (chat_threads.metadata.programId, written when the stream
      mints the thread), so this lists exactly the conversations held on this
@@ -897,7 +923,19 @@ function AuthorWorkspace({
         {/* Workspace tools — canonical registry navigation (not data) */}
         <section className="pj-sec">
           <div className="pj-sec-h"><h2>Workspace</h2><span className="sec-sub">Every capability, scoped to this project</span></div>
-          {getSegmentModules(seg).map((grp: { label: string; items: string[] }) => (
+          {getSegmentModules(seg)
+            /* Tools outside the launch scope are not offered here: this grid
+               is "what you can do in this project", and a card that opens a
+               "not in this release" panel is not a thing you can do. The
+               Apps catalog remains the honest full list. A group left empty
+               by the filter is dropped rather than rendered as a heading
+               over nothing. */
+            .map((grp: { label: string; items: string[] }) => ({
+              label: grp.label,
+              items: grp.items.filter((id: string) => !isLaunchScopeLocked(verdictFor(id))),
+            }))
+            .filter((grp) => grp.items.length > 0)
+            .map((grp: { label: string; items: string[] }) => (
             <div key={grp.label} className="pj-toolgrp">
               <div className="pj-toolgrp-l">{grp.label}</div>
               <div className="pj-tools">
@@ -1172,6 +1210,23 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   const priority = prog?.priority ?? null;
   const phase = prog?.phase ?? null;
   const completion = prog?.progress_percent ?? null;
+  /* The device taxonomy, read from the row only. A device / IVD program shows
+     its class, path, product code, regulation, panel, predicate and flags —
+     each field stated as absent when the row lacks it; a drug program shows
+     the drug facts and no device block. */
+  const deviceProgram = isDeviceProgram(prog?.product_type);
+  const predicateKs = (prog?.predicate_devices ?? [])
+    .map((p) => String(p?.kNumber ?? '').trim())
+    .filter(Boolean);
+  const deviceFlags = prog?.device_flags ?? null;
+
+  /* Tell the shell what this program IS, so its segment label can follow the
+     program's product type rather than the stored preference. A no-op when
+     nothing changes, so it may run on every load of the read model. */
+  useEffect(() => {
+    const productType = prog?.product_type;
+    if (pid && productType) updateShellProject({ productType });
+  }, [pid, prog?.product_type]);
 
   const seg = sel
     ? ({ MDX: 'medtech', Biotech: 'biotech', Pharma: 'pharma', CRO: 'cro' }[sel.ws ?? ''] ?? 'biotech')
@@ -1327,7 +1382,25 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
               <dl className="pj-fact"><dt>Sponsor</dt><dd>{sponsorName ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
               <dl className="pj-fact"><dt>Product</dt><dd>{prog.product_name ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
               <dl className="pj-fact"><dt>Indication</dt><dd>{indication ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
-              <dl className="pj-fact"><dt>{applicationNumberLabel}</dt><dd>{applicationNumber ?? <span className="pj-fact-none">not assigned</span>}</dd></dl>
+              {deviceProgram ? (
+                <>
+                  <dl className="pj-fact"><dt>Device class</dt><dd>{prog.device_class ? `Class ${prog.device_class}` : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Regulatory path</dt><dd>{prog.regulatory_path ? (REGULATORY_PATH_LABEL[prog.regulatory_path] ?? prog.regulatory_path) : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Product code</dt><dd>{prog.product_code ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Regulation</dt><dd>{prog.regulation_number ? `21 CFR ${prog.regulation_number}` : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Review panel</dt><dd>{prog.review_panel ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Predicate</dt><dd>{predicateKs.length ? predicateKs.join(', ') : <span className="pj-fact-none">not recorded</span>}</dd></dl>
+                  <dl className="pj-fact"><dt>Device flags</dt><dd>{
+                    deviceFlags == null
+                      ? <span className="pj-fact-none">not recorded</span>
+                      : deviceFlags.length === 0
+                        ? <span className="pj-fact-none">none declared</span>
+                        : deviceFlags.map((f) => DEVICE_FLAG_LABEL[f] ?? f).join(' · ')
+                  }</dd></dl>
+                </>
+              ) : (
+                <dl className="pj-fact"><dt>{applicationNumberLabel}</dt><dd>{applicationNumber ?? <span className="pj-fact-none">not assigned</span>}</dd></dl>
+              )}
             </section>
           )}
         </div>

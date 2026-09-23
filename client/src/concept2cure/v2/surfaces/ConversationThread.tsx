@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
+import { AnaActionChips } from '../AnaActionChips';
+import { LiveDriveSwitch } from '../LiveDriveSwitch';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
@@ -16,6 +18,8 @@ import { C2CToast, useToast, type FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
+import { AnaMarkdown } from '../AnaMarkdown';
+import { DocumentCanvas } from '../editor/DocumentCanvas';
 import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
 } from '../fixtures/conversation-thread-data';
@@ -34,6 +38,7 @@ const SIDE_DOCK_KEY = 'c2c-v2-ct-side-dock';
 function toTurn(m: AnaChatMessage): CtTurn {
   if (m.role === 'user') return { role: 'user', text: m.text };
   const grounding = (m.groundingSources || []).map((s) => ({ src: s, ok: true }));
+  const authoringDoc = authoringDocOf(m);
   /* Everything the turn reported about how it was answered — the SAME mapping
      `adaptChatMessage` in V2App.tsx hands the shell rail. It was dropped here:
      `toTurn` carried `thinking` and discarded the phase, the tools, the rounds,
@@ -77,7 +82,73 @@ function toTurn(m: AnaChatMessage): CtTurn {
      */
     executedActions: m.executedActions?.length ? m.executedActions : undefined,
     pendingSignoffs: m.pendingSignoffs?.length ? m.pendingSignoffs : undefined,
+    /* The authoring document this turn drafted, when it drafted one — the
+       canvas beneath the turn is rendered from THIS, not from the draft's
+       inline content (docs/design/ANA_DOCUMENT_CANVAS.md). */
+    authoringDoc: authoringDoc ?? undefined,
   };
+}
+
+/**
+ * The authoring document a turn produced, by id, or null.
+ *
+ * The live stream says it directly: `artifact_draft` carries `authoringDocId`
+ * (+ `programId`) when the `draft_authoring_document` tool persisted the
+ * draft, and useAnaChat records both on `generatedDraft`. A rehydrated thread
+ * carries no draft record (loadThread restores messages and the tool trace,
+ * not drafts), so the tool trace is the second place to look: the tool's
+ * result, when the stream kept it, is the JSON the tool returned, and its
+ * `authoringDocId` is the same id. Nothing is parsed out of prose.
+ */
+export function authoringDocOf(
+  m: AnaChatMessage,
+): { docId: string; programId: string | null; title: string | null } | null {
+  const d = m.generatedDraft;
+  if (d?.authoringDocId) {
+    return { docId: d.authoringDocId, programId: d.programId ?? null, title: d.title || null };
+  }
+  return authoringDocFromTrace(m.toolCalls);
+}
+
+function authoringDocFromTrace(
+  calls: AnaChatMessage['toolCalls'],
+): { docId: string; programId: string | null; title: string | null } | null {
+  for (const call of calls ?? []) {
+    if (call.name !== 'draft_authoring_document' || typeof call.result !== 'string') continue;
+    const found = authoringDocFromToolResult(call.result);
+    if (found) return found;
+  }
+  return null;
+}
+
+const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const DOC_ID_RE = new RegExp(`"authoringDocId"\\s*:\\s*"(${UUID})"`, 'i');
+const PROGRAM_ID_RE = new RegExp(`"programId"\\s*:\\s*"(${UUID})"`, 'i');
+const TITLE_RE = /"title"\s*:\s*"((?:[^"\\]|\\.){1,300})"/;
+
+/**
+ * The tool's JSON result, read for its ids. A regex over the two id fields
+ * rather than JSON.parse, because the persisted trace keeps a CAPPED copy of
+ * the result (server/services/ana/tool-trace.ts summarizeToolResult, 180
+ * characters) that is not always whole JSON — and the ids are at its head.
+ * Only a well-formed UUID counts; nothing is read out of prose.
+ */
+export function authoringDocFromToolResult(
+  result: string,
+): { docId: string; programId: string | null; title: string | null } | null {
+  const doc = DOC_ID_RE.exec(result)?.[1];
+  if (!doc) return null;
+  const program = PROGRAM_ID_RE.exec(result)?.[1] ?? null;
+  const rawTitle = TITLE_RE.exec(result)?.[1];
+  let title: string | null = null;
+  if (rawTitle) {
+    try {
+      title = String(JSON.parse(`"${rawTitle}"`)).trim() || null;
+    } catch {
+      title = null;
+    }
+  }
+  return { docId: doc.toLowerCase(), programId: program ? program.toLowerCase() : null, title };
 }
 
 /** True when the activity record has something real to show for this turn.
@@ -99,10 +170,22 @@ function hasReportableWork(a: AnaActivityProps): boolean {
 interface AnaTurnProps {
   turn: CtTurn;
   onRefine: () => void;
-  onNav?: (id: string) => void;
+  onNav: (id: string) => void;
+  /** Starts a demonstration from a "Start demonstration" chip — on every turn,
+   *  not only the ones that drafted a document (which is all `canvas` covers). */
+  onStartDemo?: (demoId: string, title: string) => void;
+  /** The document canvas beneath this turn, when the turn drafted a document. */
+  canvas?: {
+    conversationId: string | null;
+    expanded: boolean;
+    onExpandedChange: (expanded: boolean) => void;
+    onAsk: (text: string) => void;
+    fireToast: FireToast;
+    liveDrive?: OwnedSurfaceViewProps['liveDrive'];
+  };
 }
 
-function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
+function AnaTurn({ turn, onRefine, onNav, onStartDemo, canvas }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
@@ -153,7 +236,29 @@ function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
             surface is `pendingSignoffs`, rendered by EctdSignoffs below from
             what the server actually sent. If a proposal workflow is built
             later it starts from a server-issued proposal, not from this. */}
-        {turn.answer && <div className="ct-ana-text">{turn.answer}</div>}
+        {/* The answer as prose. This was `<div className="ct-ana-text">{turn.answer}</div>`
+            — plain text, so every heading, emphasis and list the model wrote
+            reached the reader as `##`, `**` and `-`. AnaMarkdown is the ONE
+            markdown renderer (marked → DOMPurify → React elements, no
+            innerHTML); the person's own turn above stays as typed. */}
+        {turn.answer && <AnaMarkdown text={turn.answer} className="ct-ana-text ana-md" />}
+        {/* The document canvas: the authoring document this turn drafted,
+            read from the store and expandable into THE editor in place. */}
+        {turn.authoringDoc && canvas && (
+          <DocumentCanvas
+            docId={turn.authoringDoc.docId}
+            programId={turn.authoringDoc.programId}
+            conversationId={canvas.conversationId}
+            fromThisConversation
+            draftTitle={turn.authoringDoc.title}
+            expanded={canvas.expanded}
+            onExpandedChange={canvas.onExpandedChange}
+            onNav={onNav}
+            onAsk={canvas.onAsk}
+            fireToast={canvas.fireToast}
+            liveDrive={canvas.liveDrive}
+          />
+        )}
         {turn.links && (
           <div className="ct-refs">
             {turn.links.map((l, i) => (
@@ -173,15 +278,11 @@ function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
         )}
         {turn.executedActions && (
           <div className="ana-msg-executed">
-            {turn.executedActions.map((a, i) => (
-              <span
-                key={i}
-                className={`ana-exec-chip${a.executed ? ' is-done' : ''}${a.error ? ' is-err' : ''}`}
-                title={a.error || a.label}
-              >
-                {a.error ? I.alertTriangle : a.executed ? I.check : I.zap} {a.label}
-              </span>
-            ))}
+            <AnaActionChips
+              actions={turn.executedActions}
+              onNav={onNav}
+              onStartDemo={onStartDemo}
+            />
           </div>
         )}
         {/* The §11.50 prompt. Rendered here for the same reason RbmSurfaces
@@ -261,6 +362,11 @@ export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] 
   for (const m of messages) {
     const d = m.generatedDraft;
     if (!d || !d.title) continue;
+    /* A draft persisted as an AUTHORING DOCUMENT is the document canvas
+       beneath its turn, not a side-panel card — one place per document, and
+       the card's own draft→review transition is for the artifact store this
+       document is not in. The panel keeps the non-document canvases. */
+    if (d.authoringDocId) continue;
     out.push({
       id: d.artifactId || unsavedDraftId(m.id),
       kind: 'document',
@@ -617,10 +723,13 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, setCollapsed, proj
 
 /* ---- Conversation thread (main export) ---- */
 
-export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) {
+export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurfaceViewProps) {
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
-  // conversation; the default is a fresh conversation.
+  // conversation; the default is a fresh conversation. `current` means "the
+  // conversation already in progress" — what this screen shows when the person
+  // comes back to it after AnA took them elsewhere mid-answer.
   const sel = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };
+  const isCurrent = sel.id === 'current';
   const isNew = sel.id === 'new';
 
   // The conversation runs on the REAL streaming assistant (POST /api/ana-ri/stream
@@ -646,17 +755,27 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
     return p ? p.id : null;
   })();
 
-  const anaChat = useAnaChat({
-    initialThreadId: isNew ? null : sel.id,
+  /* The conversation runs on the SHELL's chat when the shell provides it —
+     the one instance that outlives this screen. A private instance here was
+     unmounted by the first navigation AnA made from it, which aborted the
+     turn: the screen moved once and the answer stopped mid-sentence. The
+     private instance remains only for a host that provides no shell chat
+     (tests, an embed), and then it holds no thread of its own. */
+  const ownChat = useAnaChat({
+    initialThreadId: shellChat || isNew || isCurrent ? null : sel.id,
     screenName: 'conversation-thread',
     projectId: shellProjectId,
     liveDrive: liveDrive?.on,
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
+  const anaChat = shellChat ?? ownChat;
   const [toast, fireToast] = useToast();
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  /* The one document canvas expanded into the editor, by document id. One
+     at a time: the expanded canvas takes the conversation's full width. */
+  const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
   /* Whether the side column — AnA's work dock over the governed outputs — is
      hidden. Read once on mount so the choice survives navigating away and
      back; see SIDE_DOCK_KEY for the convention. */
@@ -710,6 +829,13 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
   /* `@app` in the thread composer — the same hook the rail uses (appMentions.tsx). */
   const draftRef = useRef<HTMLTextAreaElement>(null);
   const mentions = useAppMentions(draft, setDraft, draftRef);
+  /* An ask from inside a document canvas lands HERE — in this composer, with
+     focus — so the person keeps talking to AnA about the document she is
+     looking at. Not auto-sent: it is her message to send. */
+  const prefillComposer = (text: string) => {
+    setDraft(text);
+    draftRef.current?.focus();
+  };
   /* Scoped to the open project so extracted text lands in THAT project's
      memory, exactly as the shell composer and ProjectHome do. Null when no
      project is open, which the hook accepts — the file is still read, it just
@@ -748,7 +874,15 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
         : 'Conversation';
 
   useEffect(() => {
+    if (isCurrent) {
+      // The conversation in progress — already in the shell chat. Nothing to
+      // load, nothing to reset.
+      return;
+    }
     if (!isNew) {
+      // Returning to the conversation the shell chat already holds must not
+      // reload it: a reload aborts the turn that may still be running.
+      if (shellChat && shellChat.threadId === sel.id) return;
       setLoadErr(false);
       Promise.resolve(anaChat.loadThread(sel.id)).catch(() => setLoadErr(true));
     } else if (sel.seed) {
@@ -763,13 +897,21 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
       const seed = sel.seed;
       let cancelled = false;
       const t = setTimeout(() => {
-        if (!cancelled) void anaChat.send(seed);
+        if (cancelled) return;
+        // A new conversation starts clean in the shared chat.
+        if (shellChat) shellChat.reset();
+        void anaChat.send(seed);
       }, 0);
-      (window as any).C2C_CONVO = { ...sel, seed: null };
+      // From here on this screen shows the conversation in progress.
+      (window as any).C2C_CONVO = shellChat ? { id: 'current', seed: null } : { ...sel, seed: null };
       return () => {
         cancelled = true;
         clearTimeout(t);
       };
+    } else if (shellChat) {
+      // An explicitly new, empty conversation.
+      shellChat.reset();
+      (window as any).C2C_CONVO = { id: 'current', seed: null };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -819,7 +961,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
   const loadingHistory = !isNew && anaChat.isLoadingThread && turns.length === 0;
 
   return (
-    <div className="ct-wrap">
+    <div className="ct-wrap" data-canvas-expanded={expandedDocId ? 'true' : undefined}>
       <div className="ct-head">
         <button className="ct-back" onClick={() => onNav && onNav('project-home')}>{I.left} Project</button>
         <div className="ct-head-mid">
@@ -876,7 +1018,23 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
               )}
               {turns.map((t, i) => t.role === 'user'
                 ? (<div key={i} className="ct-turn ct-user"><div className="ct-user-b">{t.text}</div></div>)
-                : (<AnaTurn key={i} turn={t} onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }} onNav={onNav} />)
+                : (
+                  <AnaTurn
+                    key={i}
+                    turn={t}
+                    onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }}
+                    onNav={onNav}
+                    onStartDemo={liveDrive?.onStartDemo}
+                    canvas={t.authoringDoc ? {
+                      conversationId: anaChat.threadId ?? (isNew || isCurrent ? null : sel.id),
+                      expanded: expandedDocId === t.authoringDoc.docId,
+                      onExpandedChange: (open) => setExpandedDocId(open ? t.authoringDoc!.docId : null),
+                      onAsk: prefillComposer,
+                      fireToast,
+                      liveDrive,
+                    } : undefined}
+                  />
+                )
               )}
               {/* No trailing "typing" turn. The in-flight message is already
                   the last turn above — `useAnaChat` appends it, streaming and
@@ -953,6 +1111,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
               </div>
             )}
             <span className="sr-only" aria-live="polite">{statusMessage}</span>
+            <div className="ct-comp-foot"><LiveDriveSwitch /></div>
             <div className="ct-comp-foot">{I.lock} Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>
         </div>
@@ -963,7 +1122,9 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
             so the conversation takes the full width rather than the width
             minus a stub. `data-artifacts` lets the stylesheet cap the dock's
             height only when there is something below it to make room for. */}
-        {!panelCollapsed && (
+        {/* Not drawn while a document canvas is expanded: the editor takes
+            the conversation's full width, and its own rails are on screen. */}
+        {!panelCollapsed && !expandedDocId && (
           <div className="ct-side" id={sideId} data-artifacts={artifacts.length > 0 ? 'true' : 'false'}>
             <div className="ct-side-work">
               <AnaWorkPanel

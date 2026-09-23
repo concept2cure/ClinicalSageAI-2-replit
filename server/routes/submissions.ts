@@ -904,13 +904,24 @@ router.post('/sequences/:seqId/transition', limiter, requireRole(AUTHOR), async 
 });
 
 // ── Builder leaves ──────────────────────────────────────────────────────────
+// Each leaf carries `sourceDocument`: what the leaf's document pointer resolves
+// to in this organization, from the SAME resolver the dispatch-readiness
+// assessment (and so the freeze / dispatch gate) uses. The Builder used to
+// decide "linked" on the client from `documentId != null`, which is null for
+// every vault leaf (uuid-keyed) — six leaves the platform had just filed read
+// "Source document: unlinked" (MDX demo pack, 2026-09-21, finding F5). The
+// resolution is computed here, once, so the column and the gate cannot
+// disagree.
 router.get('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   try {
-    res.json(await listLeaves(seqId, ctx));
+    const leaves = await listLeaves(seqId, ctx);
+    const { resolveLeafDocuments } = await import('../services/ectd/leaf-document-resolver');
+    const sourceDocuments = await resolveLeafDocuments(leaves, ctx.organizationId);
+    res.json(leaves.map((leaf, i) => ({ ...leaf, sourceDocument: sourceDocuments[i] })));
   } catch (err) {
     fail(res, err);
   }
@@ -1031,11 +1042,14 @@ router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) 
   }
 });
 
-// ── Dispatch QC gate (AI; does NOT transmit) ─────────────────────────────────
-// When `sequenceId` is supplied the gate inputs are computed SERVER-SIDE from the
-// canonical core (never the client numbers) — the AI advisory then floors on real
-// values. Without a sequenceId it falls back to the supplied numbers (advisory
-// only); prefer GET /sequences/:seqId/dispatch-readiness for the tamper-proof gate.
+// ── Dispatch QC (deterministic verdict + optional model narrative; does NOT transmit)
+// VSR-001 F-9: the verdict is computed by the platform's deterministic gates and
+// the model, when configured, only narrates under `narrative` (null without a
+// provider — never a 502). When `sequenceId` is supplied the full server-side
+// assessment (assessSequenceDispatchReadiness — the gate freeze/dispatch enforce)
+// IS the verdict and the client numbers are ignored. Without one the verdict is
+// the hard gate over the supplied counts, with a warning naming what was not
+// checked; prefer GET /sequences/:seqId/dispatch-readiness for the full gate.
 const dispatchQcSchema = z.object({
   region: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
   sequenceId: z.number().int().positive().optional(),
@@ -1053,13 +1067,14 @@ router.post('/:id/dispatch-qc', limiter, requireRole(AUTHOR), async (req, res) =
   try {
     await getSubmission(id, ctx);
     let input = parsed.data;
+    let assessment = null;
     if (parsed.data.sequenceId) {
       // Authoritative, tamper-proof gate inputs from server state.
       const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
-      const a = await assessSequenceDispatchReadiness({ sequenceId: parsed.data.sequenceId, organizationId: ctx.organizationId });
-      input = { ...parsed.data, validationErrors: a.validationErrors, unresolvedShadowCriticals: a.unacknowledgedShadowCriticals };
+      assessment = await assessSequenceDispatchReadiness({ sequenceId: parsed.data.sequenceId, organizationId: ctx.organizationId });
+      input = { ...parsed.data, validationErrors: assessment.validationErrors, unresolvedShadowCriticals: assessment.unacknowledgedShadowCriticals };
     }
-    res.json(await runDispatchQc(input, { ...ctx, submissionId: id }));
+    res.json(await runDispatchQc(input, { ...ctx, submissionId: id }, { assessment }));
   } catch (err) {
     fail(res, err);
   }
@@ -1408,6 +1423,15 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
     } finally {
       await result.cleanup();
     }
+    // 2026-09-23 (W5/D7, residual repair): the leaves no technical-file slot
+    // claims are returned and reported BY NAME (they were visible only folded
+    // into `skipped`); `unmappedTechnicalDocumentation` lists the Annex II/III
+    // ones, which are why `ready` is false. IV.* conformity / registration
+    // leaves are listed in unmappedLeaves and do not count.
+    // 2026-09-23 (W5/D7, final pass): `matchedByTitleOnly` names each placed
+    // source a slot matched by its title alone (a Vault-built CER, say). It
+    // does not change `ready`; it is reported so it is never mistaken for a
+    // keyed placement.
     const report = {
       ready: result.ready,
       fileCount: result.bundle.fileCount,
@@ -1415,6 +1439,9 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       skipped: result.skipped.length,
       unresolved: result.unresolvedLeaves.length,
       unfinalized: result.unfinalized,
+      unmapped: result.unmappedLeaves.length,
+      unmappedTechnicalDocumentation: result.unmappedLeaves.filter((u) => u.inTechnicalDocumentation).map((u) => u.source),
+      matchedByTitleOnly: result.matchedByTitleOnly,
     };
     const consequence = await deliverTechnicalFile(ctx, {
       bytes,
@@ -1439,6 +1466,8 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       materialized: result.materialized,
       skipped: result.skipped,
       unresolvedLeaves: result.unresolvedLeaves,
+      unmappedLeaves: result.unmappedLeaves,
+      matchedByTitleOnly: result.matchedByTitleOnly,
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,
@@ -1494,6 +1523,9 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       orgId: ctx.organizationId,
       context: 'submissions.technical-file.export',
     });
+    // 2026-09-23 (W5/D7, residual repair): unmapped leaves by name — see the
+    // sequence assemble route above. (Final pass, same date: and the
+    // title-only placements, likewise.)
     const report = {
       ready: result.ready,
       fileCount: result.fileCount,
@@ -1502,6 +1534,9 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       skipped: result.skipped.length,
       unresolved: result.unresolvedLeaves.length,
       unfinalized: result.unfinalized,
+      unmapped: result.unmappedLeaves.length,
+      unmappedTechnicalDocumentation: result.unmappedLeaves.filter((u) => u.inTechnicalDocumentation).map((u) => u.source),
+      matchedByTitleOnly: result.matchedByTitleOnly,
     };
     const consequence = await deliverTechnicalFile(ctx, {
       bytes: result.buffer,
@@ -1527,6 +1562,8 @@ router.post('/programs/:programId/technical-file/export', limiter, requireRole(A
       leafCount: result.leafCount,
       skipped: result.skipped,
       unresolvedLeaves: result.unresolvedLeaves,
+      unmappedLeaves: result.unmappedLeaves,
+      matchedByTitleOnly: result.matchedByTitleOnly,
       unfinalized: result.unfinalized,
       unfinalizedSections: result.unfinalizedSections,
       ...consequence,
@@ -1553,7 +1590,7 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
   const parsed = assembleSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    const { assembleSequence } = await import('../services/ectd/assemble-from-core');
+    const { assembleSequence, assembledTransmitBlockers } = await import('../services/ectd/assemble-from-core');
     const result = await assembleSequence({
       sequenceId: seqId,
       organizationId: ctx.organizationId,
@@ -1576,6 +1613,11 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
       materialized: result.materialized,
       skipped: result.skipped,
       unresolvedLeaves: result.unresolvedLeaves,
+      // 2026-09-22 (W5/D7): assembled is not ready-to-send. A draft leaf is IN
+      // the package; transmit refuses it, so the response says so.
+      unfinalized: result.unfinalized,
+      unfinalizedSections: result.unfinalizedSections,
+      transmitBlockers: assembledTransmitBlockers(result),
     });
   } catch (err) {
     fail(res, err);

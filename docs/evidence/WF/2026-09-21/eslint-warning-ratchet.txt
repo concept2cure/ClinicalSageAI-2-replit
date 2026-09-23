@@ -1,0 +1,5 @@
+[ci:eslint-warning-ratchet] --since HEAD (d05e88140) -- 20 lintable file(s) changed; linting both versions of each...
+
+    -2  server/routes/authoring.router.ts  (43 -> 41)
+
+[ci:eslint-warning-ratchet] net -2 warning(s) across the files changed since HEAD.

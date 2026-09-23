@@ -1,0 +1,45 @@
+# git: 923d1491b + working tree (the fix)
+# npx vitest run tests/routes/ana-apply-rewrite-signature.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+{
+  "timestamp": "2026-09-23T14:57:17.108Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T14:57:17.110Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+{
+  "timestamp": "2026-09-23T14:57:17.110Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+[database] Database connection successful
+
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied 2076ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a second factor the caller asserts is not a second factor 10ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a wrong password is refused and counted against the account 9ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > an account taken out of use cannot sign it (F-28) 3ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a verified signer: the service is handed what the ceremony verified, never the credentials 5ms
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a rewrite applied without a signature asks for no credential 3ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  14:57:14
+   Duration  2.61s (transform 1.34s, setup 128ms, import 189ms, tests 2.11s, environment 0ms)
+

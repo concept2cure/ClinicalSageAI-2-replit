@@ -1,0 +1,10 @@
+{
+  "role": "c2c",
+  "attrs": {
+    "rolname": "c2c",
+    "rolsuper": false,
+    "rolbypassrls": false
+  },
+  "deniedCount": 0,
+  "denied": []
+}

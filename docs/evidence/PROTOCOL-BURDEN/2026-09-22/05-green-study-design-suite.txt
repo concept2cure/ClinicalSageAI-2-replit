@@ -1,0 +1,283 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > buildEffectPrior — honesty of the prior > refuses to invent a prior with no evidence and no planned effect 10ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > buildEffectPrior — honesty of the prior > marks a no-evidence prior as an assumption and widens it 1ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > buildEffectPrior — honesty of the prior > pools evidence by inverse variance and reports the sources 1ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > buildEffectPrior — honesty of the prior > flags an optimistic planned effect against the evidence 13ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > buildEffectPrior — honesty of the prior > widens the prior when sources disagree 1ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — agency derivation > derives no agency, and in particular does not default to FDA, when no region is recorded 5ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — agency derivation > derives FDA and EMA from US and EU member-state target regions 1ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — agency derivation > derives every supported agency from its region aliases, deduplicated and in a stable order 0ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — agency derivation > also derives agencies from framework.mrct.regions 0ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — local representation > never infers local subject representation from targetRegions 1ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — local representation > derives local representation from framework.mrct.regions, without a fraction 5ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > accounts for every RegionDesignInput field: derived from the design, or listed in unmapped 2ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > lists a derivable field in unmapped whenever this design does not in fact carry it 0ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > names exactly the unmapped fields for a design without an MRCT block 1ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > drops the MRCT-dependent gaps once framework.mrct is recorded 5ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > gives every unmapped entry a non-empty reason 0ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > studyDesignToRegionInput — the unmapped contract > maps the phase families onto the engine phase vocabulary 0ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > returns no agency, no finding and the explicit note when the design records no region 0ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > flags a target region that maps to no supported agency instead of silently dropping it 0ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > maps a US + EU design to FDA and EMA and produces findings from both scopes 29ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > reports a rule that is unmet under every assumption as unmet, not as not-assessed 20ms
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > sampleSizeForPower > reproduces the textbook two-sample size for a standardized effect 2ms
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > sampleSizeForPower > grows as the effect shrinks 17ms
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > sampleSizeForAssurance > needs more subjects than power for the same target when the prior is uncertain 14ms
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > sampleSizeForAssurance > reports a ceiling and returns null when the target exceeds it 0ms
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > solveSampleSize > returns both sizes and reconciles with the planned N 15ms
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > solveSampleSize > flags an unreachable assurance target with a caveat 1ms
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > solveSampleSize > inflates enrollment for the dropout rate 14ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > reports no rule as met when every field that could produce met is unmapped 281ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > reports met only from fields the design actually carries 14ms
+ ✓ server/services/study-design/__tests__/sample-size.test.ts > solveSampleSize > cross-checks: the assurance-based N reproduces the target PoS in the simulator 289ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — reproducibility and validity > is reproducible: same inputs and seed give the identical report 129ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — reproducibility and validity > matches the closed-form assurance integral for the continuous case 50ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > counts every rule that rests on an unmapped field as not assessed and names the field 134ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > does not assert a QT or Orbis verdict the design cannot support 90ms
+ ✓ server/services/study-design/__tests__/region-rules-adapter.test.ts > evaluateDesignRegionRules > is deterministic — byte-identical output for the same design 23ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > is deterministic 13ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > renders visits in column order, grouped into epoch spans 10ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > orders rows by category then row order 0ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > renders the sparse grid with marks and per-row scheduled counts 1ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > resolves only the referenced footnotes, in definition order 0ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > scores a sound, covering SoA as fully complete 0ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > projectScheduleOfActivities > is empty with an explicit gap when no SoA is attached 1ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > returns no issues for a sound, covering SoA 8ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > does not treat a missing SoA as a gate finding 1ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags a visit that references an undefined epoch 1ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags cells that reference an undefined activity or visit 0ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags duplicate ids 0ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags an undefined footnote reference 0ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags the absence of a baseline anchor visit as major 0ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags a primary endpoint the schedule does not collect as major 0ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags an uncollected key-secondary endpoint as minor 0ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags an activity that names an endpoint the design does not declare 0ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > analyzeScheduleOfActivities — §7 checks > flags an activity scheduled at no visit 8ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > integration with validateDesign and the protocol projection > a defensible design with a covering SoA stays low risk 2ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > integration with validateDesign and the protocol projection > surfaces an uncovered primary endpoint in validateDesign 1ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > integration with validateDesign and the protocol projection > renders protocol §7 from the SoA, listing where the primary is collected 1ms
+ ✓ server/services/study-design/__tests__/schedule-of-activities.test.ts > integration with validateDesign and the protocol projection > marks protocol §7 rendered with an SoA and partial without one 10ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > baseline design > clears every gate 12ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > baseline design > validates as low risk and may advance 1ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §2 estimand gate > flags a primary endpoint with no estimand as critical 13ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §2 estimand gate > flags an incomplete estimand as major 1ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §2 estimand gate > surfaces a missing-rationale intercurrent event as a minor warning 1ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §2 estimand gate > requires an estimand for key secondary endpoints, not plain secondary 1ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §3 endpoint red-flags > flags a surrogate primary without accepted precedent 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §3 endpoint red-flags > flags a time-to-event endpoint with no event definition 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §3 endpoint red-flags > flags a patient-reported endpoint with no validated instrument 1ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §3 endpoint red-flags > flags more than one primary endpoint 13ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §3 endpoint red-flags > flags a design with no primary endpoint as critical 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §4 framework rules > flags non-inferiority without a margin as critical 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §4 framework rules > flags non-inferiority without per-protocol as a co-primary set 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §4 framework rules > flags an external control without an ICH E10 justification 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §10/§17 multiplicity gate > flags a testing hierarchy with no multiplicity control as critical 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §10/§17 multiplicity gate > does not flag a single confirmatory endpoint 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §6 power red-flags > flags underpowered designs 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §6 power red-flags > flags missing sensitivity analyses 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §6 power red-flags > flags an assumed effect that exceeds the prior-phase observed (optimism bias) 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > defensibility report > rates a critical finding as blocking 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > defensibility report > rates a major finding as high risk and non-advanceable but not approval-blocking 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > defensibility report > orders findings worst-first and lists the standards checked 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §9 analysis populations > flags a superiority trial whose only primary set is per-protocol 25ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §9 analysis populations > flags a plan with no primary analysis set and no safety population 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §9 analysis populations > flags a design with no populations at all as major 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §11 method–endpoint matching > flags a t-test planned on a time-to-event primary endpoint 1ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §11 method–endpoint matching > accepts a Cox model on the same endpoint 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §11 method–endpoint matching > flags a chi-square on an ordinal endpoint and ANOVA without baseline on a continuous one 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §11 method–endpoint matching > flags a primary endpoint with no planned analysis 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §12 missing data > flags an absent strategy as major 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §12 missing data > flags LOCF as primary — major without sensitivity analyses, minor with 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §12 missing data > flags censoring at discontinuation under a treatment-policy estimand 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §13 interim analysis > flags interims with no spending function as critical and no DMC as major 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §13 interim analysis > flags a schedule that does not end at the final analysis 12ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §13 interim analysis > clears a properly specified group-sequential plan 0ms
+ ✓ server/services/study-design/__tests__/design-gates.test.ts > §13 interim analysis > is silent when no interim is planned 0ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — reproducibility and validity > holds its size: empirical type-I error under the null is near alpha 212ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — reproducibility and validity > is honestly un-confident: a diffuse prior yields assurance below the point power 48ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — reproducibility and validity > produces a monotonically increasing sensitivity curve 12ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — defensibility and refusals > attaches the slice-1 gates and flags an indefensible design 2ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — defensibility and refusals > refuses to simulate a single-arm / no-control design 0ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — defensibility and refusals > refuses to simulate without a sample size 0ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — defensibility and refusals > refuses to simulate a design with no primary endpoint 0ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — binary and time-to-event endpoints > simulates a binary endpoint event-level and increases with the effect 2904ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — binary and time-to-event endpoints > falls back to a normal approximation for binary with no control rate, and says so 5ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — binary and time-to-event endpoints > simulates a time-to-event endpoint when an event probability is supplied 10ms
+ ✓ server/services/study-design/__tests__/trial-simulator.test.ts > simulateTrial — binary and time-to-event endpoints > keeps its size for a non-inferiority frame at the margin 63ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > counts visits and scheduled procedures from the SoA grid 3ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > reports the study-day span when every scheduled visit carries a study day 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > identifies the heaviest single visit and the median load 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > breaks the load down per visit, preserving column order and cell state 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > counts how many visits each assessment is scheduled at 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > reports the complexity indicators with their basis 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > emits no burden findings for a schedule with no outlier and no empty visit 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses participant time when the activities carry no duration 2ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses the invasive-procedure count and says it will not guess from names 2ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > lists every refused measure, with a reason, on the profile 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > publishes no composite index 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses the study-day span when any scheduled visit has no study day 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > reports the absent profile for a design with no Schedule of Activities 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > computes the participant total when every scheduled activity carries a duration 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > goes absent — not to 30, not to 0 — when one activity loses its duration 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > counts invasive procedures only when the activities carry invasiveness 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit far heavier than the rest (BRD-010) 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit with nothing scheduled (BRD-011) 15ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > asks about an assessment scheduled at every single visit (BRD-012) 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > emits findings in the repo DesignFinding shape 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > counts one visit and its load 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > reports a zero-day span, which is a real zero and says so 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > runs no outlier check with too few visits to have a distribution 2ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > reports the net change in visits, procedures and span 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > names the visit the amendment added and the assessment it dropped 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > reports which retained visits changed load 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > raises the amendment finding on an increase (BRD-030) 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > carries a delta as absent when either side could not compute the measure 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > is not comparable when a side has no Schedule of Activities 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > takes the study-design SoA 3ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > takes the protocol read model SoA matrix through the same engine 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > refuses the study-day and arm measures the protocol read model does not carry 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > refuses the category count when the activities carry no category 0ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > composeSimulationResult — disclaimer + upload prompt > ALWAYS attaches the disclaimer 2ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > composeSimulationResult — disclaimer + upload prompt > requests a history upload only when there is no history 1ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > computes a probability of success from the deterministic engine 17ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > reports no probability — honestly — when the design has no effect assumption 0ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > reports no probability for a single-arm design rather than faking one 0ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > treats supplied grounding text as history (no upload request) 22ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > simulateStudyTwin — computed, not guessed > marks grounded when csr_reports exist for the org 6ms
+ ✓ server/services/study-design/__tests__/study-twin-service.test.ts > composeTwinPrediction — figures come from the engine > renders the computed probability and the defensibility risk 0ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > wilsonInterval > brackets the point estimate and stays in [0,1] 2ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > wilsonInterval > is degenerate for n = 0 1ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — insufficient evidence guard > returns insufficient_evidence and null rates when too few trials resolved 9ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > computes completion rate over resolved trials with a Wilson CI 1ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > summarizes completed-trial enrollment distribution 0ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > counts active competitors, distinct sponsors, and median duration 0ms
+ ✓ server/services/study-design/__tests__/trial-feasibility.test.ts > assessFeasibility — empirical rates > grades a low completion rate as challenging and flags high discontinuation 0ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > is deterministic 15ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > emits demographics and concomitant medications as marked standard scaffolds 1ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > builds the eligibility CRF from the design criteria, scheduled at screening 1ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > makes a form per assessment activity, with endpoint-derived items at the scheduled visits 1ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > does not give safety, eligibility or administrative activities their own forms 0ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > does not duplicate exposure when a drug-administration activity exists 7ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > grounds the adverse-events form in the safety design and schedules it at the safety visits 0ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > projectCrfShell > counts forms and scores grounding completeness 1ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > endpoint item typing > maps a binary endpoint to a boolean item 1ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > endpoint item typing > maps a time-to-event endpoint to an occurred flag and an event date 1ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > endpoint item typing > maps a composite endpoint to one item per component 1ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > endpoint item typing > flags a patient-reported endpoint with no validated instrument as a placeholder 0ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > honest gaps > flags an activity with no endpoint link as a placeholder, with a gap 0ms
+ ✓ server/services/study-design/__tests__/crf-shell.test.ts > honest gaps > falls back to one form per endpoint and emits exposure when no SoA is attached 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > is deterministic 7ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > maps phase, masking, model, allocation and condition 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > renders arms with registry arm types and typed interventions 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > renders the primary outcome with its time frame 5ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > reports fields the design object cannot carry as gaps, never invented 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > marks a primary outcome with no time frame as partial 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > marks interventions partial when the product type is unknown 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — ClinicalTrials.gov > reports allocation N/A for a single-group design 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > maps the EU trial phase and the concerned member states 1ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > derives controlled, randomised and blinding 5ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > gaps the member states when no EU member state is targeted 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectRegistration — EU CTIS > reports sponsor and EU-specific enrollment as gaps 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > SoA-derived outcome timing > reads the outcome time frame from the schedule when the endpoint has no timepoint 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > SoA-derived outcome timing > still reports a partial outcome when neither a timepoint nor a schedule supplies the time frame 0ms
+ ✓ server/services/study-design/__tests__/registration-projection.test.ts > projectAllRegistrations > projects both registries from one design 0ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > is deterministic 3ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > projects a SAP in ICH E9 section order 1ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > reuses the protocol estimand renderer verbatim 1ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > scores a complete design as fully complete 0ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > defers the sample size honestly when the assumptions are absent, never fabricating them 1ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > flags a missing missing-data strategy and ties it to the estimand 0ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > states no adjustment for a single confirmatory endpoint 0ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > flags an uncontrolled testing hierarchy 1ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > flags non-inferiority without a per-protocol primary set 1ms
+ ✓ server/services/study-design/__tests__/sap-projection.test.ts > projectSap > marks safety missing rather than inventing it 0ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > projects an ICH M11-ordered protocol with a synopsis 5ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > renders trial design from the framework 1ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > reuses the SAP estimand renderer for objectives and estimands 1ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > scores a complete design as highly complete 0ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > flags a missing safety section rather than inventing one 1ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > flags a non-inferiority frame with no margin as a gap 0ms
+ ✓ server/services/study-design/__tests__/protocol-projection.test.ts > projectProtocol > lowers completeness when sections are missing 0ms
+ ✓ server/services/study-design/__tests__/trial-feasibility-service.test.ts > assessTrialFeasibility (service) > maps CT.gov trials, computes empirical rates, and cites the query 20ms
+ ✓ server/services/study-design/__tests__/trial-feasibility-service.test.ts > assessTrialFeasibility (service) > clamps maxComparators into the page size and requires a condition 2ms
+stdout | server/services/study-design/__tests__/persistence.test.ts
+{
+  "timestamp": "2026-09-22T03:56:20.974Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-22T03:56:20.975Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/study-design/__tests__/persistence.test.ts
+{
+  "timestamp": "2026-09-22T03:56:20.975Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/study-design/__tests__/persistence.test.ts
+[database] Database connection successful
+
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > projects the design onto PRM columns and stores the canonical object in metadata 2ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > classifies arm types and splits subjects by the allocation ratio 1ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > maps endpoint role and measurement type, and pulls the analysis method 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > generates a study id when absent and preserves a supplied one 5ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > round-trips losslessly through metadata 1ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > returns null for a row that is not a design spine 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > promotes a UUID programId to the canonical project column 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > leaves program_id null when programId is not a UUID, without dropping protocol_id 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > studyDesignToRows / rowsToStudyDesign > leaves program_id null when no programId is supplied 1ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > isUuid > accepts a canonical UUID and rejects everything else 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > extracts a primaryEffect object with a standard error 8ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > derives the standard error from a confidence interval 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > converts a hazard ratio to a benefit-oriented log effect when lower is better 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > returns null when no machine-readable effect is present 0ms
+ ✓ server/services/study-design/__tests__/persistence.test.ts > extractEffectObservation > down-weights evidence from a different indication 0ms
+stdout | server/services/study-design/__tests__/csr-evidence-source.test.ts
+{
+  "timestamp": "2026-09-22T03:56:21.431Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-22T03:56:21.432Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/study-design/__tests__/csr-evidence-source.test.ts
+{
+  "timestamp": "2026-09-22T03:56:21.432Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/study-design/__tests__/csr-evidence-source.test.ts
+[database] Database connection successful
+
+ ✓ server/services/study-design/__tests__/csr-evidence-source.test.ts > extractEffectObservation — ratio (HR/OR) shape > maps a beneficial hazard ratio (<1) to a POSITIVE benefit-oriented log effect 2ms
+ ✓ server/services/study-design/__tests__/csr-evidence-source.test.ts > extractEffectObservation — ratio (HR/OR) shape > maps a harmful hazard ratio (>1) to a NEGATIVE benefit-oriented log effect 0ms
+ ✓ server/services/study-design/__tests__/csr-evidence-source.test.ts > extractEffectObservation — ratio (HR/OR) shape > orients ratio benefit independently of the continuous endpoint direction 0ms
+
+ Test Files  15 passed (15)
+      Tests  219 passed (219)
+   Start at  03:56:14
+   Duration  7.49s (transform 3.20s, setup 667ms, import 7.95s, tests 4.87s, environment 2ms)
+

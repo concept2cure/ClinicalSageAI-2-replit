@@ -15,6 +15,8 @@
 import { getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { loadProjectStabilityStudies } from './stability-source';
+import { loadProjectAnalyticalMethods } from './analytical-method-source';
+import { loadProjectDrugSubstances } from './drug-substance-source';
 import {
   checkQ1A, checkQ2, checkQ3AandQ3B, checkQ3D,
   checkQ6AandQ6B, checkQ8, checkQ9, checkQ10,
@@ -166,7 +168,7 @@ async function gatherInputs(orgId: number, projectId: string): Promise<ProjectIn
       // the project filter alone let any organization read another sponsor's
       // register through this report. quality_specifications carries
       // `tenant_id`; the other three carry `organization_id`.
-  const [specs, methods, stabilityResult, drugSubs, processes, sourceObjects, sections] =
+  const [specs, methodResult, stabilityResult, drugSubResult, processes, sourceObjects, sections] =
     await Promise.all([
       safe('specs',
         `SELECT material_type AS "materialType", material_name AS "materialName",
@@ -176,29 +178,27 @@ async function gatherInputs(orgId: number, projectId: string): Promise<ProjectIn
          FROM quality_specifications
           WHERE project_id = $1::text::uuid AND tenant_id::text = $2`,
         [projectIdParam, String(orgId)]),
-      safe('methods',
-        `SELECT method_name AS "methodName", method_type AS "methodType",
-                purpose, validation_status AS "validationStatus",
-                specificity_data AS "specificityData",
-                linearity_data AS "linearityData",
-                accuracy_data AS "accuracyData",
-                precision_data AS "precisionData",
-                robustness_data AS "robustnessData"
-         FROM analytical_methods
-          WHERE project_id = $1::text::uuid AND organization_id = $2`,
-        [projectIdParam, orgId]),
+      // Methods come from the canonical project-scoped source-object store,
+      // for the same reason as stability below. `public.analytical_methods` is
+      // an ORGANIZATION method library: no project_id, no method_type, no
+      // purpose, no validation_status, none of the *_data columns. The query
+      // this replaced raised 42703 on every provisioned database, so ICH Q2 —
+      // the analytical-validation check — has never once run. See
+      // analytical-method-source.ts.
+      loadProjectAnalyticalMethods(pool, orgId, projectIdParam),
       // Stability comes from the canonical project-scoped source-object store,
       // not from `public.stability_studies`. That table has no `project_id`
       // column at all (it is org-scoped) and no `study_name` /
       // `storage_condition` / `results` columns — see stability-source.ts for
       // the full rationale.
       loadProjectStabilityStudies(pool, orgId, projectIdParam),
-      safe('drugSubs',
-        `SELECT substance_name AS "substanceName", impurities,
-                characterization_data AS "characterizationData"
-         FROM drug_substances
-          WHERE project_id = $1::text::uuid AND organization_id = $2`,
-        [projectIdParam, orgId]),
+      // Drug substances come from the canonical project-scoped source-object
+      // store, the last of the three. `public.drug_substances` is org-scoped
+      // with no project_id, spells the impurity field impurities_profile and
+      // has no characterization column, so this query raised 42703 on every
+      // provisioned database and ICH Q3A/Q3B has never run. See
+      // drug-substance-source.ts.
+      loadProjectDrugSubstances(pool, orgId, projectIdParam),
       safe('processes',
         `SELECT process_name AS "processName", process_type AS "processType",
                 process_steps AS "processSteps",
@@ -224,6 +224,18 @@ async function gatherInputs(orgId: number, projectId: string): Promise<ProjectIn
          WHERE organization_id = $1 AND project_id::text = $2`,
         [orgId, projectIdParam]),
     ]);
+
+  if (!methodResult.available) {
+    unavailable.methods = methodResult.reason;
+  }
+  // Widened exactly as `stability` is below: ProjectInputs carries its
+  // inputs as plain records, and the rules read them by field name.
+  const methods = methodResult.methods as unknown as Array<Record<string, unknown>>;
+
+  if (!drugSubResult.available) {
+    unavailable.drugSubs = drugSubResult.reason;
+  }
+  const drugSubs = drugSubResult.drugSubstances as unknown as Array<Record<string, unknown>>;
 
   if (!stabilityResult.available) {
     unavailable.stability = stabilityResult.reason;

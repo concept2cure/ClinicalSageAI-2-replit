@@ -2,7 +2,8 @@
  * Every password-reset event reaches the audit trail.
  *
  * ── The defect ───────────────────────────────────────────────────────────────
- * `auth.ts` defines `auditAuthEvent`, and its docstring states the requirement
+ * `auth.ts` defined `auditAuthEvent` (now `recordAuthEvent`,
+ * server/services/audit/auth-event-audit.ts), and its docstring stated the requirement
  * exactly: "21 CFR Part 11 §11.10(e) requires an independent, tamper-evident
  * audit trail for every login attempt, logout, and CREDENTIAL-CHANGING EVENT."
  *
@@ -61,6 +62,9 @@ vi.mock('../../services/auditService', () => ({
 const dbState = vi.hoisted(() => ({
   selectRows: [] as unknown[],
   updates: [] as unknown[],
+  // What a conditional UPDATE ... RETURNING answers: the row when its WHERE
+  // still held, nothing when another request had already used the token.
+  returningRows: [] as unknown[],
 }));
 vi.mock('../../db', () => {
   const chain = (rows: unknown[]) => ({
@@ -73,10 +77,16 @@ vi.mock('../../db', () => {
     select: () => chain(dbState.selectRows),
     update: () => ({
       set: (v: unknown) => ({
-        where: async () => {
-          dbState.updates.push(v);
-          return undefined;
-        },
+        where: () => ({
+          returning: async () => {
+            dbState.updates.push(v);
+            return dbState.returningRows;
+          },
+          then: (resolve: (x: unknown) => unknown, reject?: (e: unknown) => unknown) => {
+            dbState.updates.push(v);
+            return Promise.resolve(undefined).then(resolve, reject);
+          },
+        }),
       }),
     }),
   };
@@ -101,7 +111,7 @@ vi.mock('../../services/emailService', () => ({
 }));
 vi.mock('../../services/mfaService', () => ({
   generateSecret: vi.fn(), enableMfa: vi.fn(), disableMfa: vi.fn(),
-  verifyToken: vi.fn(), detectVerificationMethod: vi.fn(),
+  verifyToken: vi.fn(), verifySecondFactor: vi.fn(),
 }));
 vi.mock('../../services/emailOtpService', () => ({
   createEmailOtp: vi.fn(), verifyEmailOtp: vi.fn(),
@@ -120,7 +130,7 @@ vi.mock('../../auth/dev-auth-policy', () => ({
   isDevAuthAllowed: () => false, devAuthDenialReason: () => 'disabled',
 }));
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import authRoutes from '../auth';
@@ -137,6 +147,7 @@ beforeEach(() => {
   sendPasswordResetEmail.mockClear();
   dbState.selectRows = [];
   dbState.updates = [];
+  dbState.returningRows = [{ id: 7 }];
 });
 
 describe('requesting a password reset is audited', () => {
@@ -188,6 +199,43 @@ describe('requesting a password reset is audited', () => {
   });
 });
 
+describe('a reset link is built on the deployment\'s address, never the request\'s Host (D6)', () => {
+  const saved = { NODE_ENV: process.env.NODE_ENV, APP_URL: process.env.APP_URL };
+  afterEach(() => {
+    process.env.NODE_ENV = saved.NODE_ENV;
+    if (saved.APP_URL === undefined) delete process.env.APP_URL;
+    else process.env.APP_URL = saved.APP_URL;
+  });
+
+  it('in production, a forged Host does not become the link the victim is emailed', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.APP_URL = 'https://app.example.test';
+    dbState.selectRows = [{ id: 7, email: 'victim@example.test' }];
+    const res = await request(app)
+      .post('/api/auth/forgot-password')
+      .set('Host', 'attacker.example')
+      .send({ email: 'victim@example.test' });
+
+    expect(res.status).toBe(200);
+    const resetUrl = String((sendPasswordResetEmail.mock.calls[0] as unknown[] | undefined)?.[2]);
+    expect(resetUrl.startsWith('https://app.example.test/'), `the emailed link was ${resetUrl}`).toBe(true);
+  });
+
+  it('in production without APP_URL, every address is refused alike and no token is issued', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.APP_URL;
+    dbState.selectRows = [{ id: 7, email: 'victim@example.test' }];
+    const known = await request(app).post('/api/auth/forgot-password').set('Host', 'attacker.example').send({ email: 'victim@example.test' });
+    dbState.selectRows = [];
+    const unknown = await request(app).post('/api/auth/forgot-password').set('Host', 'attacker.example').send({ email: 'nobody@example.test' });
+
+    expect(sendPasswordResetEmail, 'a reset link was emailed with the attacker\'s Host as its origin').not.toHaveBeenCalled();
+    expect(dbState.updates, 'a reset token was stored for a link that cannot be built').toEqual([]);
+    expect(known.status).toBe(503);
+    expect([unknown.status, unknown.body]).toEqual([known.status, known.body]);
+  });
+});
+
 describe('changing the password is audited — the credential-changing event', () => {
   const future = () => new Date(Date.now() + 60_000);
 
@@ -210,6 +258,22 @@ describe('changing the password is audited — the credential-changing event', (
     expect(row!.resourceId).toBe('7');
     // The password itself never reaches the audit trail.
     expect(JSON.stringify(row)).not.toContain('Str0ng-Passphrase!42');
+  });
+
+  it('refuses, and records, a token another request used first — no second success', async () => {
+    // The read found the token, but by the time the conditional write ran it
+    // had been used (two requests racing one reset link). Until 2026-09-23 the
+    // write was by account id alone and both requests reported success.
+    dbState.selectRows = [{ id: 7, resetToken: 'x', resetTokenExpiresAt: future() }];
+    dbState.returningRows = [];
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'raw-token', newPassword: 'Str0ng-Passphrase!42' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('AUTH_006');
+    expect(actions()).toContain('user_password_reset_failed');
+    expect(actions(), 'a refused reset was recorded as a password change').not.toContain('user_password_changed');
   });
 
   it('records a token that matched no account', async () => {

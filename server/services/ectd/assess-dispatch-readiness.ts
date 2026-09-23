@@ -16,12 +16,17 @@
  * @module server/services/ectd/assess-dispatch-readiness
  */
 
+import { ruleView, DISPATCH_GATE_RULE_IDS, type RuleView } from './validation-rule-corpus';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
 import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
-import { getSubmissionRegionProfile } from '../region-profiles/region-profile-service';
-import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
+import {
+  getSubmissionRegionProfile,
+  requiredModule1CodesForRegion,
+} from '../region-profiles/region-profile-service';
+import { computeDispatchReadiness, type DispatchReadinessReport, type ReadinessFinding } from './dispatch-readiness';
+import { resolveLeafDocuments } from './leaf-document-resolver';
 import {
   evaluateDispatchGate,
   mergeDispatchGates,
@@ -51,6 +56,41 @@ export interface AssessDispatchReadinessParams {
    * fail-closed rule applies under ECTD_REQUIRE_EVALIDATOR in production.
    */
   externalValidationReport?: ExternalValidationReport | null;
+}
+
+/** A composed dispatch gate, keyed as composeDispatchGates takes it. */
+export type DispatchGateKey = keyof typeof DISPATCH_GATE_RULE_IDS;
+
+/** One part of the dispatch verdict, as the corpus rule it enforces. */
+export interface DispatchGateView {
+  key: DispatchGateKey;
+  rule: RuleView | null;
+  cleared: boolean;
+  blockers: string[];
+}
+
+/** composeDispatchGates' merge order — the gate views follow it, so the list
+ *  reads exactly as the verdict it explains. */
+const GATE_ORDER: DispatchGateKey[] = ['structural', 'external', 'shadowPresence', 'releaseSignature'];
+
+/**
+ * The dispatch verdict, gate by gate. Every gate the verdict composes appears,
+ * named by its corpus rule and carrying its OWN blockers, so a blocker is read
+ * as the rule it enforces — not as prose under a pass/fail icon — and the
+ * gates' blockers, in order, are exactly the verdict's.
+ */
+export function dispatchGateViews(gates: Record<DispatchGateKey, DispatchGateResult>): DispatchGateView[] {
+  return GATE_ORDER.map((key) => ({
+    key,
+    rule: ruleView(DISPATCH_GATE_RULE_IDS[key]),
+    cleared: gates[key].cleared,
+    blockers: [...gates[key].blockers],
+  }));
+}
+
+/** Each finding with the corpus rule it is an instance of (null when the corpus names none). */
+export function withRules<F extends ReadinessFinding>(findings: F[]): Array<F & { rule: RuleView | null }> {
+  return findings.map((f) => ({ ...f, rule: ruleView(f.code) }));
 }
 
 export interface DispatchReadinessAssessment {
@@ -99,7 +139,11 @@ export interface DispatchReadinessAssessment {
    *  is not transmit and carries its own Part 11 signature; see
    *  composeDispatchGatesForStep. */
   freezeGate: DispatchGateResult;
-  /** Full structural breakdown (errors + non-blocking warnings/infos). */
+  /** The DISPATCH verdict gate by gate, each as the corpus rule it enforces;
+   *  their blockers, in order, are exactly `gate.blockers`. */
+  gates: DispatchGateView[];
+  /** Full structural breakdown (errors + non-blocking warnings/infos); every
+   *  finding carries the corpus rule it is an instance of. */
   readiness: DispatchReadinessReport;
   leafCount: number;
 }
@@ -243,26 +287,17 @@ async function countCompletedShadowRuns(
 
 /**
  * Flatten a region profile's Module-1 tree to the section codes marked required
- * for this application type. A section that declares `requiredFor` is required
- * only for those application types (a debarment certification for a marketing
- * application, the general investigational plan for an IND); when the
- * application type is unknown every required section is kept — conservative,
- * as before.
+ * for this application type.
+ *
+ * The walk now lives beside the profile it reads
+ * (`region-profile-service.requiredModule1CodesForRegion`) because a second
+ * copy of "what Module 1 does this application need" had grown in
+ * `ectd4-validator`, as a hand-written literal set that disagreed with this one
+ * on four codes. This name is kept as the export the dispatch path already
+ * uses; it is now a thin delegation rather than a parallel implementation.
  */
 export function requiredModule1Codes(region: string, applicationType?: string | null): string[] {
-  const profile = getSubmissionRegionProfile(region);
-  if (!profile) return [];
-  const app = applicationType ? String(applicationType).toLowerCase() : null;
-  const out: string[] = [];
-  const walk = (sections: typeof profile.module1Sections): void => {
-    for (const s of sections) {
-      const applies = !s.requiredFor || !app || s.requiredFor.includes(app);
-      if (s.required && applies) out.push(s.number);
-      if (s.childSections?.length) walk(s.childSections);
-    }
-  };
-  walk(profile.module1Sections);
-  return out;
+  return requiredModule1CodesForRegion(region, applicationType);
 }
 
 /**
@@ -312,14 +347,26 @@ export async function assessSequenceDispatchReadiness(
       )
     );
 
+  // 2b. Resolve every leaf's document pointer — by whichever key its table is
+  //     addressed by (integer document_id, or document_uuid for the vault) —
+  //     in this organization, and compare the content hash pinned at filing
+  //     with what the store holds now. ONE resolver, shared with the Builder's
+  //     read model; the freeze / dispatch / transmit gates compose this
+  //     assessment, so they cannot disagree with it. Until 2026-09-21 the
+  //     validator was handed the integer column alone and every vault-backed
+  //     leaf read UNRESOLVED_DOCUMENT (MDX demo pack, finding F5).
+  const documents = await resolveLeafDocuments(leaves, organizationId);
+
   // 3. Deterministic structural validation over the canonical core.
   const readiness = computeDispatchReadiness(
-    leaves.map(l => ({
+    leaves.map((l, i) => ({
       sectionCode: l.sectionCode,
       title: l.title,
       lifecycleOp: l.lifecycleOp,
       documentTable: l.documentTable,
       documentId: l.documentId,
+      documentUuid: l.documentUuid,
+      document: documents[i],
     })),
     {
       requiredSections: requiredModule1Codes(sequence.region, submissionApplicationType),
@@ -419,6 +466,11 @@ export async function assessSequenceDispatchReadiness(
     // own governed path reads as unsigned — which made dispatch and transmit
     // unreachable for every submission type the gate applies to.
     sequenceId,
+    // And its REGION. Sequence numbers restart per region, so '0000' is the FDA
+    // original and the EU original both; without this a release over one clears
+    // the dispatch gate for the other. Resolved through the region registry on
+    // the far side, because the two spines spell one jurisdiction differently.
+    region: sequence.region,
   });
   const signatureRequired = isReleaseSignatureRequired(submissionApplicationType);
   const signatureInput = {
@@ -441,6 +493,15 @@ export async function assessSequenceDispatchReadiness(
   };
   const gate = composeDispatchGatesForStep(gateParts, 'dispatch');
   const freezeGate = composeDispatchGatesForStep(gateParts, 'freeze');
+  // The same four results `gate` merged: the dispatch-step release-signature
+  // evaluation is releaseSignatureGate (required as the type requires).
+  const gates = dispatchGateViews({
+    structural: structuralGate,
+    external: gateParts.external,
+    shadowPresence: shadowPresenceGate,
+    releaseSignature: releaseSignatureGate,
+  });
+  readiness.findings = withRules(readiness.findings);
 
   return {
     sequenceId,
@@ -473,6 +534,7 @@ export async function assessSequenceDispatchReadiness(
     },
     gate,
     freezeGate,
+    gates,
     readiness,
     leafCount: leaves.length,
   };

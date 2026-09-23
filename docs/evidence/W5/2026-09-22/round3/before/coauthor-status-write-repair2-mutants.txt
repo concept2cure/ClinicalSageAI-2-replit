@@ -1,0 +1,76 @@
+=== m_aliasconflict
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > DOCUMENT_ALIAS_CONFLICT: an alias naming another organization's row is refused, and neither row nor alias changes 29ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 28 passed (29)
+=== m_blank
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses a source whose sections are headings with no text — the body would be empty 20ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses whitespace-only sections the same way 13ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 27 passed (29)
+=== m_latest
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze) 34ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 28 passed (29)
+=== m_noaudit_recreate
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > re-creating a deleted copy is recorded against the same id 38ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 28 passed (29)
+=== m_noaudit_update
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > a re-take that changes the copy writes one audit event with the text it replaced — even saved co-author edits 39ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 28 passed (29)
+=== m_noseal
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing 21ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was 32ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode) 13ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved 13ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established 12ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections 16ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash 18ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze) 20ms
+ × server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to file sections apply-template rewrote after the seal, and creates nothing 50ms
+ × server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to re-take an existing sealed copy from rewritten sections, and the copy is untouched 64ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  10 failed | 19 passed (29)
+=== m_nosealrow
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established 42ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 28 passed (29)
+=== m_sealhash
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash 34ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 28 passed (29)
+=== m_sealsections
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing 35ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was 32ms
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode) 13ms
+ × server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to file sections apply-template rewrote after the seal, and creates nothing 52ms
+ × server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > refuses to re-take an existing sealed copy from rewritten sections, and the copy is untouched 64ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  5 failed | 24 passed (29)
+=== m_sealstub
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections 21ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 28 passed (29)
+=== m_sealtitle
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved 22ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 28 passed (29)
+=== m_sourcechanged
+ × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > SOURCE_CHANGED: a source approved between the first read and the lock is refused, and nothing is written 24ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 28 passed (29)
+ Test Files  2 passed (2)
+      Tests  29 passed (29)

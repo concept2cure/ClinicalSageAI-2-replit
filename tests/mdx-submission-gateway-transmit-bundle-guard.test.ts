@@ -35,6 +35,21 @@ import { createHash } from 'crypto';
 const queryFn = vi.fn();
 const connectFn = vi.fn();
 
+// The signing ceremony reads the signer's account standing (VSR-001 F-28);
+// every signer here is active. Suspended and deprovisioned signers are pinned
+// by reverify-signer.test.ts and tests/db/account-standing.dbtest.ts.
+vi.mock('../server/services/account-standing', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../server/services/account-standing')>()),
+  isAccountActive: async () => true,
+}));
+// ...and its lockout (auth-security-service), which no signer here is under.
+// Before F-30 an unreadable lockout read as "not locked", so this file never
+// had to say so. Pinned by tests/db/signing-lockout.dbtest.ts.
+vi.mock('../server/services/auth-security-service', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../server/services/auth-security-service')>()),
+  isAccountLocked: async () => ({ locked: false }),
+  recordFailedLogin: async () => ({ locked: false, remainingAttempts: 5 }),
+}));
 vi.mock('../server/db', () => ({
   pool: {
     query:   (...args: unknown[]) => queryFn(...args),
@@ -55,6 +70,10 @@ vi.mock('bcryptjs', () => ({
 }));
 vi.mock('../server/services/mfaService', () => ({
   verifyToken: vi.fn().mockResolvedValue(true),
+  // The operator has no second factor enrolled. verifyReauth asks (the canonical
+  // §11.200 rule: the code is required whenever one is enrolled) and refuses when
+  // the answer cannot be read, so the fixture has to state it.
+  isMfaEnabled: vi.fn().mockResolvedValue(false),
 }));
 
 // §11.50: a transmit is signed under a meaning the signer declares; the body carries it.
@@ -135,7 +154,7 @@ const packageSelects: Array<unknown[]> = [];
 /** The package's content as the transmit gate re-reads it. A good descriptor
  *  carries the fingerprint of CONTENT; a test edits `contentRows` to drift it. */
 const CONTENT: PackageContentRow[] = [
-  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
+  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text'), filable: true },
 ];
 const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
 const EDITED_CONTENT = CONTENT.map((r) => ({ ...r, contentSha256: sha256Hex('Clinical overview text, edited after assembly') }));
@@ -175,6 +194,10 @@ function installDb() {
         rows: contentRows.map((r) => ({
           section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, sort_order: r.sortOrder, artifact_db_id: r.artifactDbId,
           title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
+        // 2026-09-23 (W5/D7, round-2 skeptic): the approval facts the fingerprint
+        // now covers — a filable row is approved AT its version, as the status route writes it.
+        status: r.filable == null ? null : r.filable ? 'approved' : 'review',
+        approved_version_id: r.filable ? r.version : null, published_version_id: null,
         })),
         rowCount: contentRows.length,
       });
@@ -684,16 +707,29 @@ describe('POST transmit — content changed since assembly (C2C-SUB-003)', () =>
   });
 
   it('refuses a stored descriptor with NO content fingerprint, or one from an older scheme (UNKNOWN is blocking, never a match)', async () => {
+    // 2026-09-23 (W5/D7, round-2 skeptic): this case pinned a false wording.
+    // loadStoredBundle dropped an older-scheme fingerprint, so a bundle that
+    // RECORDS one was refused as recording none (while preflight, reading the
+    // descriptor raw, said "older scheme"). Every bundle assembled before the
+    // v4 bump (approval covered) is in that state; each wording must be true
+    // and name the recovery.
     const { contentFingerprint: _none, ...withoutFingerprint } = goodDescriptor() as any;
-    for (const bundle of [withoutFingerprint, goodDescriptor({ contentFingerprint: 'v1:' + 'a'.repeat(64) })]) {
+    const cases: Array<[unknown, RegExp]> = [
+      [withoutFingerprint, /no content fingerprint/i],
+      [goodDescriptor({ contentFingerprint: 'v1:' + 'a'.repeat(64) }), /fingerprinted under an older scheme/i],
+      [goodDescriptor({ contentFingerprint: 'v3:' + 'b'.repeat(64) }), /fingerprinted under an older scheme/i],
+    ];
+    for (const [bundle, wording] of cases) {
       transmitFn.mockReset();
       packages = [{ id: 5, orgId: CALLER_ORG, bundle }];
       const res = await request(makeApp())
         .post('/api/mdx/gateways/fda/esg/transmit')
         .send({ packageId: 5, environment: 'staging', ...REAUTH });
-      expect(res.status, JSON.stringify(bundle.contentFingerprint)).toBe(422);
-      expect(res.body.error).toMatch(/no content fingerprint/i);
+      const label = JSON.stringify((bundle as { contentFingerprint?: unknown }).contentFingerprint);
+      expect(res.status, label).toBe(422);
+      expect(res.body.error, label).toMatch(wording);
       expect(res.body.error).toMatch(/UNKNOWN/);
+      expect(res.body.error).toMatch(/re-assemble the package before transmitting/);
       expect(transmitFn).not.toHaveBeenCalled();
     }
   });

@@ -60,3 +60,9 @@
 .c2c-v2 .sc-field { display: flex; flex-direction: column; gap: 4px; }
 .c2c-v2 .sc-field label { font-size: 11px; font-weight: 600; color: var(--text-300); }
 .c2c-v2 .sc-field input.sc-subpick { min-width: 180px; }
+
+/* Planner → region profile. A wrapping chip row for the required Module 1
+   sections, agency forms and gateway rules the profile codifies. `gap` rather
+   than per-chip margins so the row survives direct-manipulation edits and
+   reorders (the layout rule in the design skill). */
+.c2c-v2 .sc-chiprow { display: flex; flex-wrap: wrap; gap: 6px; }

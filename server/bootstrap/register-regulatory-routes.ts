@@ -70,8 +70,8 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // payloads, CER reports, manufacturing batch records, PV case files,
   // clinical operations data — all per-org. None should reach the
   // public internet unauthenticated. The "no path" mount
-  // (documentOrchestration) attaches to the root router,
-  // so it gets auth applied at app.use() level.
+  // (documentOrchestration) attaches to the root router, with its
+  // authentication scoped to its own /api/510k paths.
   // ── FDA/CERV2/Device regulatory routes (parallelized) ──
   {
     const regulatoryRouteResults = await Promise.allSettled([
@@ -82,31 +82,37 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
       import('../routes/documentOrchestrationRoutes.js'),
     ]);
 
-    const routeMap = [
+    // A router mounted at a path is gated at that path. One with no mount path
+    // declares absolute paths and must name the prefix its gate covers.
+    const routeMap: Array<{ path: string; label: string } | { path: null; gate: string; label: string }> = [
       { path: '/api/510k/estar', label: 'FDA 510(k) eSTAR' },
       { path: '/api/510k/device', label: 'FDA 510(k) device profile' },
       { path: '/api/cerv2/export', label: 'CERV2 Export' },
       { path: '/api/cerv2/ai', label: 'CERV2 AI' },
-      { path: null, label: 'Doc Orchestration' },
+      // No mount path: this router declares absolute /api/510k/... paths.
+      // `gate` is the prefix its authentication covers, and nothing wider.
+      { path: null, gate: '/api/510k', label: 'Doc Orchestration' },
     ];
 
     regulatoryRouteResults.forEach((result, i) => {
-      const { path: mountPath, label } = routeMap[i];
+      const entry = routeMap[i];
+      const { label } = entry;
       if (result.status === 'fulfilled') {
         const router = result.value.default;
-        if (mountPath) {
-          app.use(mountPath, authenticateToken, router);
+        if (entry.path !== null) {
+          app.use(entry.path, authenticateToken, router);
         } else {
-          // No path: these routers declare absolute /api/510k/... paths, so
-          // they must mount at app root for those paths to resolve. But a
-          // bare `app.use(authenticateToken, router)` runs authenticateToken
-          // on EVERY request — including the SPA shell and Vite dev assets —
-          // which 401s the entire frontend. Scope the gate to /api paths so
-          // non-API requests fall through to the frontend handler.
-          app.use((req, res, next) => {
-            if (!req.path.startsWith('/api')) return next();
-            return authenticateToken(req, res, next);
-          }, router);
+          // No path: the router declares absolute paths, so it mounts at the
+          // app root for them to resolve, and its gate is scoped to its own
+          // prefix. Middleware at the root runs for every request that reaches
+          // it, including requests for routers registered later. A bare
+          // `app.use(authenticateToken, router)` 401'd the whole frontend; the
+          // gate that replaced it covered every /api path, and 401'd every
+          // endpoint the global /api gate leaves open and that registers after
+          // this one: Stripe's webhook, the public pricing figures, the
+          // X-API-Key public API, /api/cortex/health (VSR-001 F-32).
+          app.use(entry.gate, authenticateToken);
+          app.use(router);
         }
         console.log(`✅ ${label} routes mounted (auth-gated)`);
       } else {

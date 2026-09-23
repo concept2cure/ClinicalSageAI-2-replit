@@ -51,6 +51,11 @@ export interface DriveStep {
   targetId: string;
   label: string;
   round?: number;
+  /**
+   * Set when the move did NOT land — the screen's own reason. The strip shows
+   * it as a failure; it is never counted as a move made.
+   */
+  failed?: string;
 }
 
 export interface DriveLock {
@@ -96,6 +101,8 @@ export type DriveAction =
   | { kind: 'navigation'; directive: NavigationDirective; round?: number }
   /** An applied screen operation (already validated + performed/stashed). */
   | { kind: 'action'; actionId: string; label: string; round?: number }
+  /** A move that could not be made (refused, never ready, screen missing). */
+  | { kind: 'move_failed'; targetId: string; label: string; reason: string }
   | { kind: 'take_over' }
   | { kind: 'turn_end' }
   /**
@@ -179,6 +186,19 @@ export function driveReducer(state: LiveDriveState, action: DriveAction): LiveDr
         },
       ].slice(-MAX_DRIVE_TRAIL);
       return { ...state, steps, turnActionsApplied: state.turnActionsApplied + 1 };
+    }
+    case 'move_failed': {
+      if (!state.active) return state;
+      const steps = [
+        ...state.steps,
+        {
+          kind: 'act' as const,
+          targetId: action.targetId,
+          label: action.label,
+          failed: action.reason,
+        },
+      ].slice(-MAX_DRIVE_TRAIL);
+      return { ...state, steps };
     }
     case 'take_over':
       return { ...state, active: false, takenOver: true };

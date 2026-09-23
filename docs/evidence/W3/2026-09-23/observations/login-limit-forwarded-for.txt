@@ -1,0 +1,15 @@
+# 12 POST /api/auth/login attempts for an account that does not exist, each claiming a different client
+# in X-Forwarded-For. Six sign-ins by the validation identities had already been made from this host
+# in the same 15-minute window. Status per attempt:
+attempt  1  X-Forwarded-For: 203.0.113.1   → 401
+attempt  2  X-Forwarded-For: 203.0.113.2   → 401
+attempt  3  X-Forwarded-For: 203.0.113.3   → 401
+attempt  4  X-Forwarded-For: 203.0.113.4   → 401
+attempt  5  X-Forwarded-For: 203.0.113.5   → 429
+attempt  6  X-Forwarded-For: 203.0.113.6   → 429
+attempt  7  X-Forwarded-For: 203.0.113.7   → 429
+attempt  8  X-Forwarded-For: 203.0.113.8   → 429
+attempt  9  X-Forwarded-For: 203.0.113.9   → 429
+attempt 10  X-Forwarded-For: 203.0.113.10  → 429
+attempt 11  X-Forwarded-For: 203.0.113.11  → 429
+attempt 12  X-Forwarded-For: 203.0.113.12  → 429

@@ -1,0 +1,47 @@
+
+> concept2cure-riai@1.0.0 validation:lint
+> eslint --no-ignore tests/validation/lib tests/validation/oq tests/validation/run-all.mjs scripts/validation
+
+
+/home/user/ClinicalSageAI-2-replit/scripts/validation/build-traceability.mjs
+  104:7  warning  'RANK' is assigned a value but never used                                                @typescript-eslint/no-unused-vars
+  190:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/home/user/ClinicalSageAI-2-replit/scripts/validation/build-traceability.selftest.mjs
+  41:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  49:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  51:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/home/user/ClinicalSageAI-2-replit/scripts/validation/run-iq.mjs
+   45:5  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   66:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  240:7  warning  The value assigned to 'pw' is not used in subsequent statements                          no-useless-assignment
+  299:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/home/user/ClinicalSageAI-2-replit/tests/validation/lib/harness.mjs
+   94:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                   max-depth
+  171:10  warning  Async function 'api' has a complexity of 24. Maximum allowed is 15                       complexity
+  202:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  206:9   warning  The value assigned to 'json' is not used in subsequent statements                        no-useless-assignment
+  284:8   warning  Async function 'createRun' has too many lines (242). Maximum allowed is 100              max-lines-per-function
+  328:3   warning  Async function 'step' has too many lines (169). Maximum allowed is 100                   max-lines-per-function
+  328:3   warning  Async function 'step' has a complexity of 28. Maximum allowed is 15                      complexity
+  357:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  441:11  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  450:13  warning  The value assigned to 'text' is not used in subsequent statements                        no-useless-assignment
+  466:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  472:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  496:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  501:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  505:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  552:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+  603:1   warning  File has too many lines (528). Maximum allowed is 500                                    max-lines
+
+/home/user/ClinicalSageAI-2-replit/tests/validation/lib/harness.selftest.mjs
+  50:1  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+/home/user/ClinicalSageAI-2-replit/tests/validation/run-all.mjs
+  19:3  warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 28 problems (0 errors, 28 warnings)
+

@@ -275,6 +275,117 @@ describe('resolveReleaseSignatureStatus — the verdict is about THIS sequence',
    answers still win, an integrity failure on either spine still blocks, and an
    undetermined orchestrator lookup is never rescued by the other spine — an
    outage there is an 'invalid' we cannot see. */
+/* ── Region ───────────────────────────────────────────────────────────────────
+   A submission holds sequences in several REGIONS, and sequence numbers restart
+   per region: '0000' exists as the FDA original and again as the EU original.
+   The resolver narrowed candidate runs by submission and then matched only
+   descriptor.sequenceNumber, so a release signed over the EU 0000 package
+   cleared the FDA 0000 dispatch gate — the same defect as the submission-vs-
+   sequence grain, one dimension over, and with the same consequence: a gate
+   cleared by a signature that does not cover the package being shipped.
+
+   Comparing regions is not a string compare. The platform names one
+   jurisdiction four ways (shared/regulatory/region-identity.ts reconciles them):
+   'EU' as a taxonomy Region, 'ema' as a gateway slug, 'eu' as a rule region,
+   'EMA' as a market. ectd_sequences.region holds a slug-ish value while the
+   signed descriptor carries a canonical code, so a naive !== would have
+   REFUSED EVERY DISPATCH. Both sides are resolved through the registry first.
+
+   And an unresolvable region must never exclude: "I do not recognise this
+   region" is not evidence that it differs, and treating it as a mismatch would
+   block a submission for an unrecognised string. */
+describe('the verdict is about THIS region', () => {
+  function signedForRegion(sequenceNumber: string, region: string, runId: string) {
+    const d = signedFor(sequenceNumber, runId);
+    return { ...d, descriptor: { ...d.descriptor, region } };
+  }
+
+  it('does NOT clear on a signature over the same sequence number in another region', async () => {
+    runsAre('run-eu');
+    mockResolveSignedPackageForExport.mockResolvedValue(
+      signedForRegion(THIS_SEQUENCE, 'EU', 'run-eu'),
+    );
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      region: 'fda',
+    });
+
+    expect(status.verdict, "another region's signature cleared this sequence").toBe('unsigned');
+    expect(String(status.detail)).toMatch(/region/i);
+  });
+
+  it('DOES clear when the two spines spell the same region differently', async () => {
+    // The sequence row says 'fda'; the signed descriptor says 'US'. Same
+    // jurisdiction. A string compare would refuse this — and refuse every real
+    // dispatch with it.
+    runsAre('run-us');
+    mockResolveSignedPackageForExport.mockResolvedValue(
+      signedForRegion(THIS_SEQUENCE, 'US', 'run-us'),
+    );
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      region: 'fda',
+    });
+
+    expect(status.verdict, 'the same region spelled two ways was read as two regions').toBe('signed');
+  });
+
+  it('picks the run for THIS region out of several', async () => {
+    runsAre('run-eu', 'run-us', 'run-jp');
+    mockResolveSignedPackageForExport.mockImplementation(async ({ runId }: { runId: string }) =>
+      signedForRegion(THIS_SEQUENCE, runId === 'run-us' ? 'US' : runId === 'run-eu' ? 'EU' : 'JP', runId),
+    );
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      region: 'fda',
+    });
+
+    expect(status.verdict).toBe('signed');
+    expect(status.runId).toBe('run-us');
+  });
+
+  it('does NOT exclude when the region cannot be resolved — unknown is not different', async () => {
+    // A region string the registry does not know must not block a dispatch.
+    runsAre('run-a');
+    mockResolveSignedPackageForExport.mockResolvedValue(
+      signedForRegion(THIS_SEQUENCE, 'not-a-region', 'run-a'),
+    );
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      region: 'fda',
+    });
+
+    expect(status.verdict, 'an unrecognised region blocked a dispatch').toBe('signed');
+  });
+
+  it('is unchanged when the caller names no region at all', async () => {
+    runsAre('run-eu');
+    mockResolveSignedPackageForExport.mockResolvedValue(
+      signedForRegion(THIS_SEQUENCE, 'EU', 'run-eu'),
+    );
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+    });
+
+    expect(status.verdict).toBe('signed');
+  });
+});
+
 describe('a release signed on the submissions spine', () => {
   /** The orchestrator spine holds nothing for this submission. */
   function noOrchestratorRuns() {
@@ -442,6 +553,18 @@ describe('the assessor actually passes the sequence', () => {
       /sequenceNumber:\s*sequence\.sequenceNumber/.test(calls[0] ?? ''),
       'the assessor resolves a release signature WITHOUT naming its sequence, so a ' +
         'signature over any other sequence of the same submission clears this one',
+    ).toBe(true);
+  });
+
+  it('hands the resolver this sequence\'s REGION', () => {
+    // Typed optional so a region-less caller keeps compiling, which leaves the
+    // region filter one deleted argument away from being dead code — and its
+    // absence reads as "signed", the false clear this pair of changes removes.
+    const calls = src.match(/resolveReleaseSignatureStatus\(\{[\s\S]*?\}\)/g) ?? [];
+    expect(
+      /region:\s*sequence\.region/.test(calls[0] ?? ''),
+      'the assessor no longer names the sequence region, so a release signed over ' +
+        'another region of the same submission clears this one',
     ).toBe(true);
   });
 

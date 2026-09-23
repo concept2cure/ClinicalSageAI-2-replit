@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/dossier-map?projectId=29d3383d-40bb-4ca0-aec8-fd3de7bbb635",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 38,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [],
+      "meta": {
+        "count": 0,
+        "source": "project_sections",
+        "programId": "29d3383d-40bb-4ca0-aec8-fd3de7bbb635",
+        "projectId": null,
+        "anchored": false,
+        "reason": "PROGRAM_UNANCHORED"
+      }
+    }
+  }
+}

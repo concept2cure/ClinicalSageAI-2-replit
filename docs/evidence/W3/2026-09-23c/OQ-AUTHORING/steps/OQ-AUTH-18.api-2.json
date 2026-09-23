@@ -1,0 +1,302 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/templates",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 18,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "templates": [
+        {
+          "id": "75165f5f-6113-49b8-8c26-a8080af64a26",
+          "name": "2.5 Clinical Overview",
+          "template_name": "2.5 Clinical Overview",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "cross_agency"
+          ],
+          "description": "The clinical \"expert report\": a critical analysis of the clinical data, the benefit–risk assessment, and the conclusions supporting the proposed labeling. Typically 30 pages or fewer.",
+          "section_count": 7,
+          "created_at": "2026-09-23T16:23:52.104Z",
+          "active": true
+        },
+        {
+          "id": "dd4acdb6-7945-49f4-9d48-9f7b6012c27c",
+          "name": "2.7.3 Summary of Clinical Efficacy",
+          "template_name": "2.7.3 Summary of Clinical Efficacy",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "cross_agency"
+          ],
+          "description": "Detailed factual summarisation of all clinical efficacy data for a single indication, study by study and across studies. Written to be read alongside 2.5.4.",
+          "section_count": 6,
+          "created_at": "2026-09-23T16:23:52.112Z",
+          "active": true
+        },
+        {
+          "id": "85e1c1c9-59ad-44c4-b619-4e7329a40426",
+          "name": "3.2.P Drug Product",
+          "template_name": "3.2.P Drug Product",
+          "template_type": "cmc",
+          "category": "Regulatory reference",
+          "regions": [
+            "cross_agency"
+          ],
+          "description": "The complete drug-product quality section set, P.1 through P.8, with the same section identity the Module 3 operating system compiles and places. One set per product presentation.",
+          "section_count": 8,
+          "created_at": "2026-09-23T16:23:52.144Z",
+          "active": true
+        },
+        {
+          "id": "b32ceff5-dfaf-4aff-b8df-f13c4afbcbdc",
+          "name": "3.2.S Drug Substance",
+          "template_name": "3.2.S Drug Substance",
+          "template_type": "cmc",
+          "category": "Regulatory reference",
+          "regions": [
+            "cross_agency"
+          ],
+          "description": "The complete drug-substance quality section set, S.1 through S.7, with the same section identity the Module 3 operating system compiles and places. One set per substance and manufacturer.",
+          "section_count": 7,
+          "created_at": "2026-09-23T16:23:52.129Z",
+          "active": true
+        },
+        {
+          "id": "22f18463-8c6d-4180-8d62-f3bba0b8d723",
+          "name": "Agency response letter (cross-agency)",
+          "template_name": "Agency response letter (cross-agency)",
+          "template_type": "response_letter",
+          "category": "Regulatory reference",
+          "regions": [
+            "cross_agency"
+          ],
+          "description": null,
+          "section_count": 6,
+          "created_at": "2026-09-23T16:23:52.082Z",
+          "active": true
+        },
+        {
+          "id": "16b80381-6004-4865-aa3e-097c896974fb",
+          "name": "CTD outline (cross-agency baseline)",
+          "template_name": "CTD outline (cross-agency baseline)",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "cross_agency"
+          ],
+          "description": "Cross-agency CTD outline. Agency-specific variants extend this baseline with regional Module 1 content.",
+          "section_count": 18,
+          "created_at": "2026-09-23T16:23:51.151Z",
+          "active": true
+        },
+        {
+          "id": "a6ca8c36-af60-44ca-9dd5-d60cc5b0e341",
+          "name": "Clinical protocol (ICH E6 outline)",
+          "template_name": "Clinical protocol (ICH E6 outline)",
+          "template_type": "protocol",
+          "category": "Regulatory reference",
+          "regions": [
+            "cross_agency"
+          ],
+          "description": null,
+          "section_count": 15,
+          "created_at": "2026-09-23T16:23:51.778Z",
+          "active": true
+        },
+        {
+          "id": "9f2424b0-2f69-4d58-8651-95801ed63cb6",
+          "name": "EMA MAA — Module 1 (EU regional)",
+          "template_name": "EMA MAA — Module 1 (EU regional)",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "ema"
+          ],
+          "description": null,
+          "section_count": 7,
+          "created_at": "2026-09-23T16:23:51.988Z",
+          "active": true
+        },
+        {
+          "id": "29c5663b-b4d7-42c9-97fa-b2df206ab128",
+          "name": "EMA Type IB variation",
+          "template_name": "EMA Type IB variation",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "ema"
+          ],
+          "description": null,
+          "section_count": 4,
+          "created_at": "2026-09-23T16:23:51.996Z",
+          "active": true
+        },
+        {
+          "id": "e889467f-38b5-4074-904a-623d70cf2167",
+          "name": "FDA 510(k) — Substantial Equivalence package",
+          "template_name": "FDA 510(k) — Substantial Equivalence package",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "fda"
+          ],
+          "description": null,
+          "section_count": 8,
+          "created_at": "2026-09-23T16:23:51.930Z",
+          "active": true
+        },
+        {
+          "id": "15053c12-9406-41c5-a5a8-b1fc4b7b3903",
+          "name": "FDA IND application",
+          "template_name": "FDA IND application",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "fda"
+          ],
+          "description": null,
+          "section_count": 7,
+          "created_at": "2026-09-23T16:23:51.982Z",
+          "active": true
+        },
+        {
+          "id": "46f21d4a-19af-4bef-baed-a39aafe5f495",
+          "name": "FDA NDA — Module 1 (administrative & prescribing)",
+          "template_name": "FDA NDA — Module 1 (administrative & prescribing)",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "fda"
+          ],
+          "description": null,
+          "section_count": 5,
+          "created_at": "2026-09-23T16:23:51.863Z",
+          "active": true
+        },
+        {
+          "id": "aede717d-8888-4763-890b-267e923de5a2",
+          "name": "FDA PMA — Class III device application",
+          "template_name": "FDA PMA — Class III device application",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "fda"
+          ],
+          "description": null,
+          "section_count": 7,
+          "created_at": "2026-09-23T16:23:51.973Z",
+          "active": true
+        },
+        {
+          "id": "52ca4d56-1be0-4920-abce-f3c8c35de166",
+          "name": "FDA Pre-Submission briefing package (Q-Sub)",
+          "template_name": "FDA Pre-Submission briefing package (Q-Sub)",
+          "template_type": "briefing_package",
+          "category": "Regulatory reference",
+          "regions": [
+            "fda"
+          ],
+          "description": null,
+          "section_count": 6,
+          "created_at": "2026-09-23T16:23:52.173Z",
+          "active": true
+        },
+        {
+          "id": "0351b463-3223-409b-b1a2-24396f0b9905",
+          "name": "Health Canada Clinical Trial Application",
+          "template_name": "Health Canada Clinical Trial Application",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "hc"
+          ],
+          "description": null,
+          "section_count": 5,
+          "created_at": "2026-09-23T16:23:52.030Z",
+          "active": true
+        },
+        {
+          "id": "0ab63ed9-ed46-4165-890b-0eaad8f9aea8",
+          "name": "Health Canada NDS — Module 1",
+          "template_name": "Health Canada NDS — Module 1",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "hc"
+          ],
+          "description": null,
+          "section_count": 4,
+          "created_at": "2026-09-23T16:23:52.020Z",
+          "active": true
+        },
+        {
+          "id": "45114f11-8864-4323-9d70-dd2b0fc79256",
+          "name": "Investigator Brochure (cross-agency)",
+          "template_name": "Investigator Brochure (cross-agency)",
+          "template_type": "ib",
+          "category": "Regulatory reference",
+          "regions": [
+            "cross_agency"
+          ],
+          "description": null,
+          "section_count": 6,
+          "created_at": "2026-09-23T16:23:51.830Z",
+          "active": true
+        },
+        {
+          "id": "055350d9-ec29-480c-9580-77c4588ceaad",
+          "name": "MHRA GB Marketing Authorisation — Module 1",
+          "template_name": "MHRA GB Marketing Authorisation — Module 1",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "mhra"
+          ],
+          "description": null,
+          "section_count": 5,
+          "created_at": "2026-09-23T16:23:52.012Z",
+          "active": true
+        },
+        {
+          "id": "7e312e09-b1ef-4155-bb3a-bbed1f82fb9c",
+          "name": "PMDA NDA — Module 1 (Japan)",
+          "template_name": "PMDA NDA — Module 1 (Japan)",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "pmda"
+          ],
+          "description": null,
+          "section_count": 6,
+          "created_at": "2026-09-23T16:23:52.003Z",
+          "active": true
+        },
+        {
+          "id": "2ed3a0f2-32b2-4de9-a21b-13d619d920be",
+          "name": "Swissmedic MA — Module 1 (Switzerland)",
+          "template_name": "Swissmedic MA — Module 1 (Switzerland)",
+          "template_type": "section",
+          "category": "Regulatory reference",
+          "regions": [
+            "swissmedic"
+          ],
+          "description": null,
+          "section_count": 4,
+          "created_at": "2026-09-23T16:23:52.041Z",
+          "active": true
+        }
+      ],
+      "globalCatalog": "ok",
+      "count": 20
+    }
+  }
+}

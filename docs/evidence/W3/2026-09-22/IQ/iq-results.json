@@ -1,0 +1,154 @@
+{
+  "protocolId": "IQ-001",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "scripts/validation/run-iq.mjs",
+  "executedAt": "2026-09-22T22:40:22.650Z",
+  "environment": {
+    "baseUrl": "http://localhost:5200",
+    "node": "v22.22.2",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "32569d4963ea61913c2e0923a41dae51b3695ff5"
+    },
+    "host": "linux"
+  },
+  "counts": {
+    "pass": 11,
+    "fail": 0,
+    "deviation": 4,
+    "not-executed": 0
+  },
+  "checks": [
+    {
+      "id": "IQ-01",
+      "title": "Node runtime matches the declared engine range",
+      "expected": "process.version satisfies package.json engines.node",
+      "status": "pass",
+      "observed": "node v22.22.2; engines.node = >=22.0.0 <23.0.0",
+      "evidence": []
+    },
+    {
+      "id": "IQ-02",
+      "title": "Deployment artefacts are present in the checkout",
+      "expected": "Dockerfile.optimized, docker-compose.yml, docker-compose.staging.yml, terraform production environment and modules, .github/workflows/deploy-aws.yml",
+      "status": "pass",
+      "observed": "all 11 present; terraform modules on disk: alb, cloudfront, compliance-evidence, ecr, ecs-fargate, rds, secrets, vpc-secure; production main.tf uses: vpc, ecr, secrets, rds, alb, ecs, evidence, cdn",
+      "evidence": []
+    },
+    {
+      "id": "IQ-03",
+      "title": "Container image definition matches the runbook",
+      "expected": "node:22-slim base; non-root user; migrations and scripts/db copied; HEALTHCHECK probes /readyz; assets vendored",
+      "status": "pass",
+      "observed": "Dockerfile checks pass; deploy-aws.yml jobs: push → test → security-gate → build-push → migrate → deploy-api → deploy-frontend → smoke-test",
+      "evidence": []
+    },
+    {
+      "id": "IQ-04",
+      "title": "Required configuration is declared and (locally) set",
+      "expected": "Every variable docker-compose.yml marks as required exists in .env.example; report which are set in the local env files, .env.local then .env (values never printed)",
+      "status": "deviation",
+      "observed": "IQ-DEV-002: local environment is a development install, not the production boot contract — compose-required: DB_PASSWORD, APP_SERVICE_DB_PASSWORD, APP_DATABASE_URL, JWT_SECRET, SESSION_SECRET, REFRESH_TOKEN_SECRET, MFA_ENCRYPTION_KEY, AUDIT_HMAC_KEY, AUDIT_HMAC_SECRET, CONNECTOR_ENCRYPTION_KEY; not documented in .env.example: none; set in local .env.local/.env: APP_DATABASE_URL, JWT_SECRET; unset locally: DB_PASSWORD, APP_SERVICE_DB_PASSWORD, SESSION_SECRET, REFRESH_TOKEN_SECRET, MFA_ENCRYPTION_KEY, AUDIT_HMAC_KEY, AUDIT_HMAC_SECRET, CONNECTOR_ENCRYPTION_KEY; AI provider key present locally: no",
+      "evidence": []
+    },
+    {
+      "id": "IQ-05",
+      "title": "Database is reachable and carries the application schema",
+      "expected": "PostgreSQL ≥ 15 reachable on DATABASE_URL; pgvector installed; critical tables organizations/users present; migration journal present",
+      "status": "pass",
+      "observed": "database 127.0.0.1:5432/c2c_oq_w3_20260922b; PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); extensions: pgcrypto@1.3, uuid-ossp@1.1, vector@0.6.0; public tables: 977; critical present: audit_logs, organization_users, organizations, platform_role_grants, projects, revoked_tokens, users; c2c_migration_journal rows: 300",
+      "evidence": [
+        "db-schema.json"
+      ]
+    },
+    {
+      "id": "IQ-06",
+      "title": "Migration set files listed by scripts/db/migration-set.mjs exist on disk",
+      "expected": "Every .sql path named in C2C_MIGRATION_FILES resolves to a file",
+      "status": "pass",
+      "observed": "300 migration files named in the set, all present on disk",
+      "evidence": []
+    },
+    {
+      "id": "IQ-07",
+      "title": "Runtime database role can reach the tables the launch apps read and write",
+      "expected": "The role in DATABASE_URL (or APP_DATABASE_URL) holds SELECT/INSERT on every public table; RLS-relevant role attributes recorded; the role owns no table whose row-level security is not forced",
+      "status": "pass",
+      "observed": "role app_service (superuser=false, bypassrls=false); tables without SELECT: 0; launch-relevant among them: none; owns 0 RLS-enabled table(s) without FORCE",
+      "evidence": [
+        "db-grants-before.txt",
+        "db-role-denied-tables.json"
+      ]
+    },
+    {
+      "id": "IQ-08",
+      "title": "Tenant-isolation posture of this installation",
+      "expected": "RLS_ENFORCE recorded; APP_DATABASE_URL (non-superuser app_service role) recorded; production requires RLS_ENFORCE=on on a non-superuser role (D3)",
+      "status": "pass",
+      "observed": "RLS_ENFORCE=on; APP_DATABASE_URL set; APP_SERVICE_DB_PASSWORD unset",
+      "evidence": []
+    },
+    {
+      "id": "IQ-09",
+      "title": "Application boots and reports readiness honestly",
+      "expected": "GET /healthz 200; GET /readyz JSON names every dependency; database and schema ok; an absent AI provider is reported as ana=down (503), never hidden",
+      "status": "deviation",
+      "observed": "IQ-DEV-004: no AI provider configured — /healthz 200; /readyz 503: {\"database\":\"ok\",\"schema\":\"ok\",\"ana\":\"down\",\"redis\":\"skipped\",\"worker\":\"skipped\"}; schemaState=ready; anaState=no_provider; capabilityRegistry=seeded. Readiness correctly fails closed (503); every AnA/model step in the OQs is a deviation for this reason.",
+      "evidence": [
+        "readyz.json"
+      ]
+    },
+    {
+      "id": "IQ-10",
+      "title": "Development authentication policy is as configured",
+      "expected": "POST /api/auth/dev-login answers only when NODE_ENV=development and ALLOW_DEV_AUTH=1 (server/auth/dev-auth-policy.ts); in production it must be 404",
+      "status": "deviation",
+      "observed": "dev-login → 200 (NODE_ENV=development, ALLOW_DEV_AUTH=1). The production refusal (404) cannot be exercised on a development install; verify on staging with NODE_ENV=production.",
+      "evidence": []
+    },
+    {
+      "id": "IQ-11",
+      "title": "Launch scope is enforced by the server",
+      "expected": "LAUNCH_SCOPE_ENFORCE=on and GET /api/module-subscriptions/navigation reports launchScope.enforced=true",
+      "status": "pass",
+      "observed": "LAUNCH_SCOPE_ENFORCE=unset; enforced=true; 101 verdicts, 80 locked by launch-scope, 21 entitled",
+      "evidence": [
+        "navigation-summary.json"
+      ]
+    },
+    {
+      "id": "IQ-12",
+      "title": "Security middleware is active on responses",
+      "expected": "Content-Security-Policy and X-Content-Type-Options present; API responses carry rate-limit headers",
+      "status": "deviation",
+      "observed": "IQ-DEV-005: CSP report-only (development build: server/middleware/enterprise-security.ts:165); nosniff=nosniff; referrer-policy=no-referrer; HSTS=absent (plain http locally); api rate limit 600/min (remaining 592). Enforced CSP and HSTS are production-mode behaviour; verify on staging.",
+      "evidence": [
+        "security-headers.json"
+      ]
+    },
+    {
+      "id": "IQ-13",
+      "title": "Vendored agency artefacts are present",
+      "expected": "assets/estar-templates with checksums.txt; assets/ectd-dtd; assets/ectd-schema; assets/fda-recognized-standards",
+      "status": "pass",
+      "observed": "assets/estar-templates: 4 entries; assets/ectd-dtd: 4 entries; assets/ectd-schema: 3 entries; assets/fda-recognized-standards: 2 entries; checksums.txt present",
+      "evidence": []
+    },
+    {
+      "id": "IQ-14",
+      "title": "CI gates named by the launch definition are declared",
+      "expected": "package.json declares ci:migration-drop-safety, ci:migration-set-order, ci:launch-scope, ci:fixture-fallback, ci:no-mock-in-prod-routes",
+      "status": "pass",
+      "observed": "all present; 197 ci:* scripts declared",
+      "evidence": []
+    },
+    {
+      "id": "IQ-15",
+      "title": "Validation toolchain is installed",
+      "expected": "playwright-core resolvable from tests/validation; Chromium binary present at CHROMIUM_PATH",
+      "status": "pass",
+      "observed": "playwright-core 1.63.0; chromium /opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+      "evidence": []
+    }
+  ]
+}

@@ -707,8 +707,11 @@ export async function preflightModule(
  *
  * Fail-closed: with no FDA ESG credentials the gateway raises `CredentialError`
  * naming exactly which FDA_ESG_* variables are missing, and that is returned as
- * a structured refusal. No simulated success, no fabricated acknowledgement
- * number, no transactionId that has no agency meaning.
+ * a structured refusal. With `FDA_ESG_TRANSPORT=rest` (the ESG NextGen REST
+ * adapter) the gateway raises `UnverifiedTransportError` until that contract is
+ * verified in FDA's UAT, returned as TRANSPORT_NOT_VERIFIED. No simulated
+ * success, no fabricated acknowledgement number, no transactionId that has no
+ * agency meaning.
  *
  * NOTE ON `projectId`. The old parameter named an `fda_510k_projects` row, and
  * the deleted service "packaged" it as a zip of JSON documents plus a
@@ -848,6 +851,14 @@ export async function esgTransmit(
        ledger entry is written inside executeGovernedTransmit, which reports its
        own failure as `outcome.ledgerWriteFailed`, recorded in this row's details
        below. */
+    // The package checks the transmit guard ran that FAILED without blocking,
+    // and its warnings (preTransmitFindings, via the governed transmit): on this
+    // row and in the returned data, where they were dropped. null = the guard
+    // reported nothing. 2026-09-23 (W5/D7, round-2 review).
+    const preTransmitFacts = {
+      preTransmitFailedChecks: outcome.preTransmitFailedChecks,
+      preTransmitWarnings: outcome.preTransmitWarnings,
+    };
     const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
@@ -863,6 +874,7 @@ export async function esgTransmit(
         bundleSha256: outcome.bundle.sha256,
         ledgerWriteFailed: outcome.ledgerWriteFailed,
         contentAfterTransmit: outcome.contentAfterTransmit,
+        ...preTransmitFacts,
       },
     });
 
@@ -879,6 +891,7 @@ export async function esgTransmit(
         region: 'fda',
         gateway: 'esg',
         environment,
+        ...preTransmitFacts,
         agentAuditTrail,
       },
       message:
@@ -966,6 +979,21 @@ function mapTransmitError(action: string, err: unknown): CommandResult {
         `Nothing was transmitted. ${detail} ` +
         'No submission was made and no FDA acknowledgement exists.',
       error: 'GATEWAY_NOT_CONFIGURED',
+    };
+  }
+  if (name === 'UnverifiedTransportError') {
+    // The selected transport (today: FDA_ESG_TRANSPORT=rest, the ESG NextGen
+    // REST adapter) resolved its credentials but refuses to put bytes on a wire
+    // contract the platform has not verified. Distinct from GATEWAY_NOT_CONFIGURED
+    // (missing variables) and TRANSMIT_FAILED (the agency answered); no
+    // transmittal row exists and no identifier was minted.
+    return {
+      success: false,
+      action,
+      message:
+        `Nothing was transmitted. ${detail} ` +
+        'No submission was made and no FDA acknowledgement exists.',
+      error: 'TRANSPORT_NOT_VERIFIED',
     };
   }
   if (name === 'TransmitAuthorizationError') {

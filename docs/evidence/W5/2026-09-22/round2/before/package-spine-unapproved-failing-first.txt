@@ -1,0 +1,153 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/submission-ops-assemble-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-assemble-routes.test.ts
+{
+  "timestamp": "2026-09-23T05:02:59.055Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/submission-ops-assemble-routes.test.ts > package identity: one id contract across the package API > GET /packages/:packageId resolves the numeric row id as well as the pkg_ text id (tenant-scoped either way) 25ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 404s when the package is not in the tenant 12ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 409s when the package is not locked 4ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REQUIRES the operator’s reason — no placeholder is ever written into the audit row 5ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles for Health Canada (the gate’s own remediation for a CA transmit) 27ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES to store a bundle whose identifiers changed while it was being assembled (STALE_ASSEMBLY), and never reverts the newer metadata 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES to store a bundle whose CONTENT changed while it was being assembled: a mapping added or removed meanwhile bumps the package’s content revision 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > captures the revision BEFORE reading content: a mapping change that lands during the content read discards the zip too 17ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > stores the new bundle WITHOUT the previous bundle’s preflight summary (a summary that outlives its bundle is aggregated as current) 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a package that never recorded a content revision is protected too: the first mapping change during assembly discards the bundle 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > records the CONTENT FINGERPRINT the bundle was built from (sections, mappings, declared placements, artifact content) so the transmit gate can prove the zip still reflects the package 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > walks the sections in a DETERMINISTIC order: the row id breaks a tie on sortOrder, so identical content cannot assemble to different bytes 10ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > records the content fingerprint for a DEVICE format too (eSTAR), where the leaf model differs 13ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a discarded stale assembly removes its durable (S3) copy too, and says so 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > merges the descriptor onto the package’s CURRENT metadata, not the pre-assembly snapshot 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles ONE LEAF PER ARTIFACT at each artifact's own CTD section, persists, and returns the descriptor 24ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > FAILS CLOSED on an unplaceable section: LEAF-UNPLACED error, leaf excluded, counts match what shipped 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REJECTS a declared code that is not a real heading (3.foo) instead of nesting it under a container 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > SURFACES a module disagreement (CSR section, artifact filed under Module 3) instead of filing it silently 9ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > ships an artifact mapped twice (duplicate row, or into two sections) as ONE leaf and surfaces the duplicate mapping 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > the same document at two DIFFERENT sections (a reference cited from 4.3 and 5.4) is two leaves, not a duplicate 12ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > composes leaf file names inside the 64-character eCTD rule, keeping the artifact discriminator 14ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > BLOCKS when the package records no agency identifiers — never ships an internal id as the application number 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REJECTS a malformed application number (it becomes a filesystem path component) 7ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s on a sequence that is not four digits (path-traversal vector) and never reaches the packager 2ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > accepts a four-digit sequence and passes it through, once there is a filing for it to follow 17ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a submission type the region has no code for — 'amendment' reached the packager and 500'd 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > names the accepted terms when a follow-up declares no submission type at all 7ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a changed leaf reaches the PACKAGER as a replace, pointing at the sequence that holds the version it supersedes 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a leaf byte-identical to the one on file is NOT handed to the packager — a sequence carries what changed 25ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > the descriptor and its validation describe the leaves that SHIPPED, not the ones the drop removed 45ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a follow-up in which nothing changed rather than storing a leafless bundle as transmittable 15ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a gap and a backfill: a sequence out of order is diffed against filings made after it 15ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > stores the leaf manifest on the descriptor — the inventory the NEXT sequence diffs against 7ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembling does NOT file the sequence: only a successful transmit puts a leaf on file 7ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > assembles the same content to the same bytes twice — the lifecycle diff and the signed digest both depend on it 1118ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > REFUSES a follow-up sequence on a package that has transmitted nothing — an assembled-but-unsent bundle is not on file 7ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s when region and format disagree (FDA + pmda_ectd) 2ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a packager REFUSAL answers 422 with its findings persisted and clears the stale bundle — never a bare 500 with an old zip left transmittable 8ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > 400s a region override that contradicts a DEVICE family (510k is an FDA eSTAR; PMDA cannot be its region) 2ms
+ ✓ tests/submission-ops-assemble-routes.test.ts > POST /api/submission-ops/packages/:packageId/assemble > a PMDA region override re-derives the format, and the descriptor records the format the packager BUILT 7ms
+ × tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > a DRAFT artifact in an IND package assembles with an error-severity LEAF-UNAPPROVED finding, and governed transmit refuses the stored bundle 22ms
+   → expected [] to have a length of 1 but got +0
+ ✓ tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > an all-approved package (approved and locked) has no LEAF-UNAPPROVED finding and no error 11ms
+ × tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > every non-approved status counts (review, and a status outside the vocabulary), one finding per artifact 19ms
+   → expected [] to deeply equal [ 'rv', 'ar' ]
+ × tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > applies to a DEVICE format too: a review artifact in a 510(k) eSTAR bundle is refused at transmit 7ms
+   → expected [] to have a length of 1 but got +0
+ × tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > describes the leaves that SHIP: a draft whose leaf is byte-identical to the one on file is not in the sequence, and is not a finding 25ms
+   → expected [] to have a length of 1 but got +0
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > a DRAFT artifact in an IND package assembles with an error-severity LEAF-UNAPPROVED finding, and governed transmit refuses the stored bundle
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/submission-ops-assemble-routes.test.ts:1025:15
+    1023|     expect(res.status).toBe(200);
+    1024|     const f = unapproved(res);
+    1025|     expect(f).toHaveLength(1);
+       |               ^
+    1026|     expect(f[0].severity).toBe('error');
+    1027|     expect(f[0].message).toMatch(/Artifact dp \(artifact_dp v1\) in De…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > every non-approved status counts (review, and a status outside the vocabulary), one finding per artifact
+AssertionError: expected [] to deeply equal [ 'rv', 'ar' ]
+
+- Expected
++ Received
+
+- [
+-   "rv",
+-   "ar",
+- ]
++ []
+
+ ❯ tests/submission-ops-assemble-routes.test.ts:1065:73
+    1063|     expect(res.status).toBe(200);
+    1064|     const f = unapproved(res);
+    1065|     expect(f.map((x) => x.message.match(/\(artifact_(\w+) v1\)/)?.[1])…
+       |                                                                         ^
+    1066|     expect(f.every((x) => x.severity === 'error')).toBe(true);
+    1067|     expect(res.body.data.bundle.validation.errorCount).toBe(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > applies to a DEVICE format too: a review artifact in a 510(k) eSTAR bundle is refused at transmit
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/submission-ops-assemble-routes.test.ts:1079:15
+    1077|     expect(res.body.data.bundle.format).toBe('estar');
+    1078|     const f = unapproved(res);
+    1079|     expect(f).toHaveLength(1);
+       |               ^
+    1080|     expect(f[0].message).toMatch(/artifact_dd/);
+    1081|     expect(f[0].message).toMatch(/'review'/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/submission-ops-assemble-routes.test.ts > only approved documents reach the agency on the package spine (LEAF-UNAPPROVED) > describes the leaves that SHIP: a draft whose leaf is byte-identical to the one on file is not in the sequence, and is not a finding
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/submission-ops-assemble-routes.test.ts:1113:15
+    1111|     expect(packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => …
+    1112|     const f = unapproved(res);
+    1113|     expect(f).toHaveLength(1);
+       |               ^
+    1114|     expect(f[0].message).toMatch(/artifact_cover/);
+    1115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 42 passed (46)
+   Start at  05:02:56
+   Duration  4.38s (transform 1.29s, setup 73ms, import 2.34s, tests 1.67s, environment 0ms)
+

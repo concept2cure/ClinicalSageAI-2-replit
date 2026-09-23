@@ -31,6 +31,7 @@ import { interceptChatResponse } from '../../services/intelligence/rim-intercept
 import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
+import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
 import { resolveMaxRounds } from '../../services/ana/agentic-loop.js';
 import {
   isSubstantiveTurn,
@@ -56,6 +57,10 @@ import {
   toSurfaceActionChips,
   type NavigationAction,
   type SurfaceActionChip,
+  type DemoStartChip,
+  demoStartFromToolResult,
+  toDemoStartChips,
+  type DemoStartDirective,
 } from '../../services/ana-ri/navigation-actions.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
@@ -427,6 +432,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // Surface actions ride the same carrier: act_on_screen results become
     // offer-chips here too (this route never applies anything live).
     const collectedSurfaceActions: SurfaceActionDirective[] = [];
+    const collectedDemoStarts: DemoStartDirective[] = [];
 
     // ── STEP 6: GENERATE (no silent demo fallback) ─────────────────────
     const gw = ensureGateway();
@@ -706,6 +712,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         submissionType: orchestratorResult.detectedSubmissionType,
         hasEvidence: sources.length > 0,
         requestedMaxTokens: GENERATION_MAX_TOKENS,
+        requestsGovernedDraft: requestsGovernedDraft(message),
       });
       const policyHint = await getKernelPolicyHint({
         organizationId: numericOrgId ?? null,
@@ -751,6 +758,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const governedTools = await governedToolsetFor(pool, numericOrgId);
       const baseRequest = {
         taskType: routingPlan.taskType,
+        // The kernel's risk judgment; see GatewayRequest.riskTier.
+        riskTier: routingPlan.riskTier,
         messages: gwMessages,
         temperature: routingPlan.temperature,
         maxTokens: routingPlan.maxTokens,
@@ -810,6 +819,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           // becomes an offer-chip the same way (refusals yield null).
           const actionDirective = surfaceActionFromToolResult(toolName, result);
           if (actionDirective) collectedSurfaceActions.push(actionDirective);
+          // A demonstration fetched without Live Drive becomes a start chip.
+          const demoStart = demoStartFromToolResult(toolName, result);
+          if (demoStart) collectedDemoStarts.push(demoStart);
           // Persist the invocation for usage analytics. Latency is 0 here
           // because the agentic-loop hook fires post-success without a
           // start timestamp; the streaming path captures real latency.
@@ -909,6 +921,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         }
       | NavigationAction
       | SurfaceActionChip
+      | DemoStartChip
     > = [];
 
     if (numericOrgId && project_id) {
@@ -949,6 +962,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // Surface-action chips under the identical offered-not-performed contract.
     if (collectedSurfaceActions.length > 0) {
       executedActions = [...executedActions, ...toSurfaceActionChips(collectedSurfaceActions)];
+    }
+    if (collectedDemoStarts.length > 0) {
+      executedActions = [...executedActions, ...toDemoStartChips(collectedDemoStarts)];
     }
 
     // Save to legacy chat_messages for backward compat

@@ -1,0 +1,38 @@
+server/mcp/__tests__/mcp-connector.dbtest.ts(21,10): error TS2614: Module '"*.js"' has no exported member 'Client'. Did you mean to use 'import Client from "*.js"' instead?
+server/mcp/__tests__/mcp-connector.dbtest.ts(22,10): error TS2614: Module '"*.js"' has no exported member 'StreamableHTTPClientTransport'. Did you mean to use 'import StreamableHTTPClientTransport from "*.js"' instead?
+server/mcp/__tests__/mcp-connector.dbtest.ts(173,31): error TS7006: Parameter 't' implicitly has an 'any' type.
+server/mcp/__tests__/mcp-connector.dbtest.ts(175,26): error TS7006: Parameter 't' implicitly has an 'any' type.
+server/mcp/__tests__/mcp-connector.dbtest.ts(175,79): error TS7006: Parameter 't' implicitly has an 'any' type.
+server/mcp/auth/platform-token.ts(21,15): error TS2614: Module '"*.js"' has no exported member 'AuthInfo'. Did you mean to use 'import AuthInfo from "*.js"' instead?
+server/mcp/auth/platform-token.ts(22,10): error TS2614: Module '"*.js"' has no exported member 'InvalidTokenError'. Did you mean to use 'import InvalidTokenError from "*.js"' instead?
+server/mcp/auth/provider.ts(19,15): error TS2614: Module '"*.js"' has no exported member 'OAuthServerProvider'. Did you mean to use 'import OAuthServerProvider from "*.js"' instead?
+server/mcp/auth/provider.ts(19,36): error TS2614: Module '"*.js"' has no exported member 'AuthorizationParams'. Did you mean to use 'import AuthorizationParams from "*.js"' instead?
+server/mcp/auth/provider.ts(20,15): error TS2614: Module '"*.js"' has no exported member 'OAuthRegisteredClientsStore'. Did you mean to use 'import OAuthRegisteredClientsStore from "*.js"' instead?
+server/mcp/auth/provider.ts(21,15): error TS2614: Module '"*.js"' has no exported member 'OAuthClientInformationFull'. Did you mean to use 'import OAuthClientInformationFull from "*.js"' instead?
+server/mcp/auth/provider.ts(21,43): error TS2614: Module '"*.js"' has no exported member 'OAuthTokens'. Did you mean to use 'import OAuthTokens from "*.js"' instead?
+server/mcp/auth/provider.ts(22,15): error TS2614: Module '"*.js"' has no exported member 'AuthInfo'. Did you mean to use 'import AuthInfo from "*.js"' instead?
+server/mcp/auth/provider.ts(23,10): error TS2614: Module '"*.js"' has no exported member 'InvalidGrantError'. Did you mean to use 'import InvalidGrantError from "*.js"' instead?
+server/mcp/auth/provider.ts(23,29): error TS2614: Module '"*.js"' has no exported member 'InvalidScopeError'. Did you mean to use 'import InvalidScopeError from "*.js"' instead?
+server/mcp/auth/provider.ts(23,48): error TS2614: Module '"*.js"' has no exported member 'InvalidTargetError'. Did you mean to use 'import InvalidTargetError from "*.js"' instead?
+server/mcp/auth/provider.ts(34,19): error TS7006: Parameter 'clientId' implicitly has an 'any' type.
+server/mcp/auth/provider.ts(35,24): error TS7006: Parameter 'client' implicitly has an 'any' type.
+server/mcp/auth/store.ts(17,15): error TS2614: Module '"*.js"' has no exported member 'OAuthClientInformationFull'. Did you mean to use 'import OAuthClientInformationFull from "*.js"' instead?
+server/mcp/client-transcript.ts(13,10): error TS2614: Module '"*.js"' has no exported member 'Client'. Did you mean to use 'import Client from "*.js"' instead?
+server/mcp/client-transcript.ts(14,10): error TS2614: Module '"*.js"' has no exported member 'StreamableHTTPClientTransport'. Did you mean to use 'import StreamableHTTPClientTransport from "*.js"' instead?
+server/mcp/client-transcript.ts(48,36): error TS7006: Parameter 't' implicitly has an 'any' type.
+server/mcp/index.ts(26,10): error TS2614: Module '"*.js"' has no exported member 'mcpAuthRouter'. Did you mean to use 'import mcpAuthRouter from "*.js"' instead?
+server/mcp/index.ts(26,25): error TS2614: Module '"*.js"' has no exported member 'getOAuthProtectedResourceMetadataUrl'. Did you mean to use 'import getOAuthProtectedResourceMetadataUrl from "*.js"' instead?
+server/mcp/index.ts(27,10): error TS2614: Module '"*.js"' has no exported member 'requireBearerAuth'. Did you mean to use 'import requireBearerAuth from "*.js"' instead?
+server/mcp/index.ts(28,10): error TS2614: Module '"*.js"' has no exported member 'StreamableHTTPServerTransport'. Did you mean to use 'import StreamableHTTPServerTransport from "*.js"' instead?
+server/mcp/server.ts(8,10): error TS2614: Module '"*.js"' has no exported member 'McpServer'. Did you mean to use 'import McpServer from "*.js"' instead?
+server/mcp/tools/runtime.ts(17,15): error TS2614: Module '"*.js"' has no exported member 'McpServer'. Did you mean to use 'import McpServer from "*.js"' instead?
+server/mcp/tools/runtime.ts(18,15): error TS2614: Module '"*.js"' has no exported member 'CallToolResult'. Did you mean to use 'import CallToolResult from "*.js"' instead?
+server/mcp/tools/runtime.ts(18,31): error TS2614: Module '"*.js"' has no exported member 'ToolAnnotations'. Did you mean to use 'import ToolAnnotations from "*.js"' instead?
+server/mcp/tools/runtime.ts(179,121): error TS2694: Namespace '"*.js"' has no exported member 'AuthInfo'.
+server/services/signature/__tests__/fake-kms.ts(14,65): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/__tests__/fake-kms.ts(77,21): error TS18046: 'command' is of type 'unknown'.
+server/services/signature/__tests__/fake-kms.ts(87,21): error TS18046: 'command' is of type 'unknown'.
+server/services/signature/__tests__/kms-signer.test.ts(8,22): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/kms-signer.ts(26,85): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/kms-signer.ts(165,26): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.
+server/services/signature/kms-signer.ts(167,24): error TS2307: Cannot find module '@aws-sdk/client-kms' or its corresponding type declarations.

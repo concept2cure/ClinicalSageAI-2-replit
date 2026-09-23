@@ -6,14 +6,34 @@
  *
  * Features:
  * - Sliding window algorithm for smooth rate limiting
- * - Per-user, per-organization, and per-IP limits
+ * - Per-user, per-credential, per-organization, and per-IP limits
  * - Configurable rules per endpoint category
  * - Graceful fallback to in-memory when Redis unavailable
+ *
+ * ── Keyed by credential before auth (VSR-001 F-5, 2026-09-21) ────────────────
+ * `createRedisRateLimiter()` is mounted on `/api` by startup/middleware.ts
+ * BEFORE the auth boundary, so `req.userId` — the key the generator preferred
+ * — was never set when it ran. Every request was keyed by IP at `api`
+ * 100/minute, and one browser session (or one office behind a NAT) tripped it
+ * during ordinary use.
+ *
+ * A request this early cannot be verified, but its credential can be SEEN. So:
+ *   • a verified identity (`req.userId`, when the limiter runs after auth)
+ *     → key `user:<id>`, ceiling `maxRequestsAuthenticated`;
+ *   • else a presented bearer credential → key `cred:<sha256 prefix>`,
+ *     ceiling `maxRequestsAuthenticated`, AND a second count against
+ *     `ipcred:<ip>` at `maxRequestsPerIpAuthenticated`, because an unverified
+ *     credential can be minted per request and the guard is what bounds that;
+ *   • else → key `ip:<ip>`, ceiling `maxRequests`. Nothing anonymous got looser.
+ * A bucket that declares no authenticated ceiling is keyed the same way at
+ * its one ceiling. The numbers and their reasoning live in
+ * server/config/platform-limits.ts.
  *
  * @module server/middleware/redisRateLimiter
  * @version 1.0.0
  */
 
+import { createHash } from 'node:crypto';
 import { Request, Response, NextFunction } from 'express';
 import Redis from 'ioredis';
 import { createScopedLogger } from '../utils/logger';
@@ -23,6 +43,8 @@ import {
   RATE_LIMIT_STORE,
   REDIS,
 } from '../config/platform-limits';
+import { ipKeyGenerator } from 'express-rate-limit';
+import { clientIpKey } from '../utils/client-ip';
 
 const logger = createScopedLogger('redis-rate-limiter');
 
@@ -33,8 +55,12 @@ const logger = createScopedLogger('redis-rate-limiter');
 interface RateLimitRule {
   /** Time window in milliseconds */
   windowMs: number;
-  /** Maximum requests allowed in window */
+  /** Maximum requests allowed in window, per IP, for traffic presenting no identity */
   maxRequests: number;
+  /** Ceiling for ONE identity (verified user id, or presented credential). Absent → `maxRequests`. */
+  maxRequestsAuthenticated?: number;
+  /** Ceiling for ALL credentialed traffic from one IP (bounds credential rotation). Absent → no guard. */
+  maxRequestsPerIpAuthenticated?: number;
   /** Message to return when rate limited */
   message: string;
   /** Optional: skip limit for certain roles */
@@ -343,9 +369,42 @@ export function getCategory(path: string): string {
 }
 
 /**
- * Generate rate limit key based on request context.
+ * The client address, as the rest of the platform reads it
+ * (server/utils/client-ip.ts), IPv6 bucketed by /56. It fell back to the
+ * left-most X-Forwarded-For entry, which every client writes (D6).
  */
-function getRateLimitKey(req: Request, category: string, perOrganization: boolean): string {
+function clientIp(req: Request): string {
+  return ipKeyGenerator(clientIpKey(req));
+}
+
+/**
+ * A fingerprint of the presented bearer credential, or null when none is
+ * presented. The token is not verified here (this can run before auth) and
+ * never stored: only a truncated SHA-256 becomes part of a key.
+ */
+function credentialFingerprint(req: Request): string | null {
+  const header = req.headers.authorization;
+  if (typeof header !== 'string') return null;
+  const m = /^Bearer\s+(\S+)\s*$/i.exec(header);
+  if (!m) return null;
+  return createHash('sha256').update(m[1]).digest('hex').slice(0, 32);
+}
+
+/**
+ * Who this request counts against, and at what ceiling.
+ *   verified user  → user:<id>   at maxRequestsAuthenticated
+ *   credential     → cred:<hash> at maxRequestsAuthenticated, plus the
+ *                    per-IP credentialed guard (ipGuard) when the rule sets one
+ *   neither        → ip:<ip>     at maxRequests
+ */
+interface RateLimitSubject {
+  key: string;
+  limit: number;
+  /** Second bucket for credentialed traffic from this address, if the rule guards it. */
+  ipGuard: { key: string; limit: number } | null;
+}
+
+function resolveSubject(req: Request, category: string, rule: RateLimitRule, perOrganization: boolean): RateLimitSubject {
   const parts: string[] = [category];
 
   // Add organization ID if per-org limiting enabled
@@ -353,17 +412,39 @@ function getRateLimitKey(req: Request, category: string, perOrganization: boolea
     parts.push(`org:${req.tenantContext.organizationId}`);
   }
 
-  // Add user ID if authenticated
+  const authenticatedLimit = rule.maxRequestsAuthenticated ?? rule.maxRequests;
+
   if (req.userId) {
-    parts.push(`user:${req.userId}`);
-  } else {
-    // Fall back to IP
-    const ip =
-      req.ip || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 'unknown';
-    parts.push(`ip:${ip}`);
+    return { key: [...parts, `user:${req.userId}`].join(':'), limit: authenticatedLimit, ipGuard: null };
   }
 
-  return parts.join(':');
+  const cred = credentialFingerprint(req);
+  if (cred) {
+    const ipGuard =
+      rule.maxRequestsPerIpAuthenticated != null
+        ? { key: [...parts, `ipcred:${clientIp(req)}`].join(':'), limit: rule.maxRequestsPerIpAuthenticated }
+        : null;
+    return { key: [...parts, `cred:${cred}`].join(':'), limit: authenticatedLimit, ipGuard };
+  }
+
+  return { key: [...parts, `ip:${clientIp(req)}`].join(':'), limit: rule.maxRequests, ipGuard: null };
+}
+
+/**
+ * Count the request against its subject's bucket and, for credentialed
+ * traffic, against its address too — so rotating unverified credentials cannot
+ * escape the per-IP bound. The guard only decides when the identity bucket
+ * allowed the request; a refusal is reported with the ceiling that refused it.
+ */
+async function checkSubject(
+  keyPrefix: string,
+  subject: RateLimitSubject,
+  windowMs: number,
+): Promise<{ result: RateLimitResult; limit: number }> {
+  const result = await checkRedisRateLimit(keyPrefix + subject.key, subject.limit, windowMs);
+  if (!result.allowed || !subject.ipGuard) return { result, limit: subject.limit };
+  const guard = await checkRedisRateLimit(keyPrefix + subject.ipGuard.key, subject.ipGuard.limit, windowMs);
+  return guard.allowed ? { result, limit: subject.limit } : { result: guard, limit: subject.ipGuard.limit };
 }
 
 /**
@@ -387,12 +468,26 @@ export function createRedisRateLimiter(config: Partial<RateLimitConfig> = {}) {
   const rules = { ...DEFAULT_RULES, ...config.rules };
   const keyPrefix = config.keyPrefix || '';
   const perOrganization = config.perOrganization ?? true;
+  /*
+   * One request is one request to this limiter (VSR-001 F-33). A limiter a
+   * router applies with router.use runs for every request that enters that
+   * router, and register-concept2cure-routes.ts stacks fifteen routers that
+   * share one limiter at /api/concept2cure: a request answered by the
+   * fifteenth was counted fifteen times against the same key, so the
+   * 600-a-minute bucket allowed forty. The mark is this instance's own, so
+   * two limiters remain two policies.
+   */
+  const counted = Symbol('rate-limit-counted');
 
   return async function redisRateLimiterMiddleware(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
+    const marks = req as unknown as Record<symbol, true | undefined>;
+    if (marks[counted]) return next();
+    marks[counted] = true;
+
     // In development, never throttle interactive auth entry points.
     // This prevents local/demo lockouts while keeping production controls intact.
     if (
@@ -418,13 +513,13 @@ export function createRedisRateLimiter(config: Partial<RateLimitConfig> = {}) {
       return next();
     }
 
-    const key = keyPrefix + getRateLimitKey(req, category, perOrganization);
+    const subject = resolveSubject(req, category, rule, perOrganization);
 
     try {
-      const result = await checkRedisRateLimit(key, rule.maxRequests, rule.windowMs);
+      const { result, limit } = await checkSubject(keyPrefix, subject, rule.windowMs);
 
-      // Set rate limit headers
-      res.setHeader('X-RateLimit-Limit', rule.maxRequests);
+      // Set rate limit headers — the ceiling that applied to THIS subject
+      res.setHeader('X-RateLimit-Limit', limit);
       res.setHeader('X-RateLimit-Remaining', Math.max(0, result.remaining));
       res.setHeader('X-RateLimit-Reset', Math.ceil(result.resetAt / 1000));
 

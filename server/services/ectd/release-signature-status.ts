@@ -34,6 +34,7 @@ import {
 } from './signed-package-export.js';
 import type { ReleaseSignatureVerdict } from './dispatch-gate.js';
 import { resolveSequenceReleaseSignature } from './sequence-release-signature.js';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
 const log = createScopedLogger('release-signature-status');
@@ -164,12 +165,20 @@ async function resolveOrchestratorReleaseSignature(params: {
   organizationId: number;
   /** The eCTD sequence being assessed, e.g. '0001'. */
   sequenceNumber?: string | null;
+  /** That sequence's region, in any of the platform's vocabularies. */
+  region?: string | null;
 }): Promise<ReleaseSignatureStatus> {
   const { submissionId, organizationId } = params;
   const sequenceNumber =
     typeof params.sequenceNumber === 'string' && params.sequenceNumber.trim() !== ''
       ? params.sequenceNumber.trim()
       : null;
+  /* Resolved through the region registry, never compared as a string: the two
+     spines spell one jurisdiction differently ('fda' on the sequence row, 'US'
+     on the signed descriptor), so a !== would refuse every real dispatch.
+     undefined means the registry does not recognise it, which is not evidence
+     that it differs — see the region tests. */
+  const region = canonicalRegionOf(params.region);
 
   if (!Number.isFinite(submissionId) || submissionId <= 0) {
     return { verdict: 'undetermined', detail: 'invalid submission id' };
@@ -246,6 +255,8 @@ async function resolveOrchestratorReleaseSignature(params: {
   let firstNonUnsigned: ReleaseSignatureStatus | null = null;
   /** Runs that carry a valid signature over a DIFFERENT sequence. */
   let signedOtherSequences = 0;
+  /** Runs that signed this sequence NUMBER, but in another region. */
+  let signedOtherRegions = 0;
 
   for (const runId of runIds) {
     const result = await resolveSignedPackageForExport({ runId, organizationId });
@@ -258,6 +269,16 @@ async function resolveOrchestratorReleaseSignature(params: {
       // clear the gate nor block it.
       if (sequenceNumber !== null && String(signedSequence ?? '').trim() !== sequenceNumber) {
         signedOtherSequences++;
+        continue;
+      }
+      /* Same number, different jurisdiction. Sequence numbers restart per
+         region, so '0000' is the FDA original AND the EU original; a release
+         over one is no evidence about the other. Excluded only when BOTH sides
+         resolve to a known region and they differ — an unresolvable region is
+         unknown, not different, and must not block a dispatch. */
+      const signedRegion = canonicalRegionOf(result.descriptor.region);
+      if (region !== undefined && signedRegion !== undefined && signedRegion !== region) {
+        signedOtherRegions++;
         continue;
       }
       return {
@@ -292,6 +313,15 @@ async function resolveOrchestratorReleaseSignature(params: {
   // and "there is a signature, over a different sequence" send an operator to
   // completely different places, and the second one is the one that used to
   // clear this gate.
+  if (signedOtherRegions > 0) {
+    return {
+      verdict: 'unsigned',
+      detail:
+        `no release signature covers sequence ${sequenceNumber} in region ${region} — ` +
+        `${signedOtherRegions} run(s) signed that sequence number in a different region`,
+    };
+  }
+
   if (signedOtherSequences > 0) {
     return {
       verdict: 'unsigned',
@@ -354,6 +384,8 @@ export async function resolveReleaseSignatureStatus(params: {
   sequenceNumber?: string | null;
   /** `ectd_sequences.id` — the key the submissions spine's signature is on. */
   sequenceId?: number | null;
+  /** That sequence's region, in any of the platform's vocabularies. */
+  region?: string | null;
 }): Promise<ReleaseSignatureStatus> {
   const orchestrator = await resolveOrchestratorReleaseSignature(params);
   if (orchestrator.verdict !== 'unsigned') return orchestrator;

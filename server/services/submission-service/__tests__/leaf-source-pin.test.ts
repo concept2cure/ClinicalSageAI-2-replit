@@ -29,8 +29,8 @@ const selectChain = vi.fn();
 const insertValues = vi.fn();
 const updateSet = vi.fn();
 
-vi.mock('../../../db', () => ({
-  db: {
+vi.mock('../../../db', () => {
+  const db: any = {
     select: (..._a: unknown[]) => ({
       from: () => ({ where: () => ({ limit: () => selectChain() }) }),
     }),
@@ -38,14 +38,19 @@ vi.mock('../../../db', () => ({
     update: () => ({
       set: (v: unknown) => ({ where: () => ({ returning: () => updateSet(v) }) }),
     }),
-  },
-}));
+  };
+  // 2026-09-23 (W5/D7, round-2 skeptic): the leaf write now runs inside a
+  // transaction holding the sequence row lock; the stub's lock read reports an
+  // unlocked sequence, and the write goes through the same stubs as before.
+  db.transaction = async (fn: (tx: any) => unknown) => fn({ ...db, execute: async () => ({ rows: [{ status: 'draft' }] }) });
+  return { db };
+});
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 
 import { upsertLeaf } from '../submission-service';
 
 const CTX = { organizationId: 7, userId: 3 };
-const SEQ = { id: 1, status: 'draft' };
+const SEQ = { id: 1, status: 'draft', submissionId: 21 };
 
 beforeEach(() => {
   selectChain.mockReset();
@@ -58,6 +63,9 @@ beforeEach(() => {
 /** getSequence runs first, then the document lookup when a pointer is given. */
 function seedSelects(docRow?: Record<string, unknown> | null) {
   selectChain.mockResolvedValueOnce([SEQ]);
+  // The submission lookup that decides the section-code vocabulary. An IND
+  // files on CTD headings, so the CTD gate these tests exercise is unchanged.
+  selectChain.mockResolvedValueOnce([{ applicationType: 'ind' }]);
   if (docRow !== undefined) selectChain.mockResolvedValueOnce(docRow === null ? [] : [docRow]);
 }
 

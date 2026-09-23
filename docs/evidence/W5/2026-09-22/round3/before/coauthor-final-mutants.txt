@@ -1,0 +1,162 @@
+=== mutant m_nostitle  [server/services/coauthor/coauthor-snapshot.ts]
+    find:    JSON.stringify([s.code ?? null, s.title ?? null, s.content ?? null])
+    replace: JSON.stringify([s.code ?? null, null, s.content ?? null])
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (a) a section heading renamed after the seal, same text: 409, nothing written 25ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  1 failed | 45 passed (46)
+=== mutant m_nocode  [server/services/coauthor/coauthor-snapshot.ts]
+    find:    JSON.stringify([s.code ?? null, s.title ?? null, s.content ?? null])
+    replace: JSON.stringify([null, s.title ?? null, s.content ?? null])
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (b) a section code changed after the seal: 409, nothing written 31ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  1 failed | 45 passed (46)
+=== mutant m_noorder  [server/services/coauthor/coauthor-snapshot.ts]
+    find:    sealedKeys.every((k, i) => k === liveKeys[i])
+    replace: sealedKeys.every((k) => liveKeys.includes(k))
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (c) two sections swapped in order after the seal, texts unchanged: 409, nothing written 33ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  1 failed | 45 passed (46)
+=== mutant m_notenant  [server/services/coauthor/coauthor-snapshot.ts]
+    find:    WHERE document_id = $1 AND tenant_id = $2
+    replace: WHERE document_id = $1 AND $2::int IS NOT NULL
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (d) another tenant's seal of the same document id does not seal this tenant's document: 409, nothing written 27ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  1 failed | 45 passed (46)
+=== mutant m_stub_after_hash  [server/services/coauthor/coauthor-snapshot.ts]
+    find:      if (sealed && !('document' in sealed) && !('sections' in sealed)) return notSealed();
+    replace: 
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections 18ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  1 failed | 38 passed (39)
+=== mutant m_aba_second_read  [server/services/coauthor/coauthor-snapshot.ts]
+    find:    const live: SectionRow[] = body.sections ?? [];
+    replace: const live: SectionRow[] = (await q.query<SectionRow>('SELECT id, code, title, content, order_index FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id', [sourceId, organizationId])).rows;
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the filed text is the text the seal check read > a section changed before the read and restored after it is refused, not filed 24ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  1 failed | 38 passed (39)
+=== mutant m_nonstring_guard  [server/routes/coauthor.ts]
+    find:    if (sourceAuthoringDocId !== undefined && sourceAuthoringDocId !== null && typeof sourceAuthoringDocId !== 'string') {
+    replace: if (false) {
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > ["0a000000-0000-4000-8000-000000000001"] is refused 400 and nothing is written 29ms
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > {"id":"0a000000-0000-4000-8000-000000000001"} is refused 400 and nothing is written 7ms
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > 42 is refused 400 and nothing is written 5ms
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > true is refused 400 and nothing is written 4ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  4 failed | 35 passed (39)
+=== mutant m_bridge_order  [server/services/ana/authoring-canonical-bridge.ts]
+    find:    ORDER BY order_index, created_at, id`
+    replace: ORDER BY order_index`
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order 39ms
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing 23ms
+     × server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing 47ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  3 failed | 41 passed (44)
+=== mutant m_freeze_order  [server/routes/authoring.router.ts]
+    find:          // (order_index, created_at; id makes it total), the order the filing copy assembles in.
+      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id',
+      [docId, tenantId]
+    );
+
+    /* ── A FROZEN
+    replace:       'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
+      [docId, tenantId]
+    );
+
+    /* ── A FROZEN
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing 47ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  1 failed | 4 passed (5)
+=== mutant m_applytpl_lock  [server/routes/authoring.router.ts]
+    find:        if (!lock.writable) {
+    replace:     if (false) {
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files 79ms
+     × server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section 67ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  2 failed | 3 passed (5)
+=== mutant m_batch_guard  [server/routes/batch-draft-routes.ts]
+    find:    if (isCoauthorVerdictStatus(currentStatus)) {
+    replace: if (false) {
+    restored (cmp identical)
+     × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 47ms
+     × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 25ms
+     × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 30ms
+     × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 24ms
+     × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 32ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  5 failed | 3 passed (8)
+=== mutant m_ind_map  [server/services/ind-lifecycle/ind-checklist-view-assembler.ts]
+    find:      finalized: 'locked',
+    replace:   finalized: 'signed',
+    restored (cmp identical)
+     × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists > maps a full real IND into the IndLifecycle contract (placed-leaf path) 65ms
+     × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > completes a form and enriches a blueprint section whatever the stored spelling 23ms
+     × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > maps finalized to 'locked', never 'signed'; a signed or approved copy of the same section outranks it 23ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  3 failed | 16 passed (19)
+=== mutant m_ind_rank  [server/services/ind-lifecycle/ind-checklist-view-assembler.ts]
+    find:    qa_review: 4, locked: 5, approved: 6, signed: 7,
+    replace: qa_review: 4, approved: 5, signed: 6, locked: 7,
+    restored (cmp identical)
+     × server/services/ind-lifecycle/__tests__/ind-checklist-view-assembler.pglite.integration.test.ts > assembleOrgIndChecklists — a section is the same section however it was spelled > maps finalized to 'locked', never 'signed'; a signed or approved copy of the same section outranks it 36ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  1 failed | 18 passed (19)
+=== mutant m_seed112_noseal  [scripts/seed/ga-demo.d/112-ind-authoring-doc.mjs]
+    find:      await sealAuthoringDocument(client, {
+    replace:   void ({
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotSeeds.test.ts > GA demo seeds produce documents "Place into filing" accepts > 112-ind-authoring-doc: the IND demo document is sealed and files as approved (201) 119ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  1 failed | 1 passed (2)
+=== mutant a_reason  [server/services/coauthor/coauthor-audit.ts]
+    find:          event.reason,
+    replace:       'x',
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > both events carry their reason and are flagged regulatory-significant and GxP-relevant 91ms
+     × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > writes the deleted event with its reason, actor and Part 11 flags 2044ms
+     × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > writes the deleted event with its reason, actor and Part 11 flags 13ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  3 failed | 44 passed (47)
+=== mutant a_gxp  [server/services/coauthor/coauthor-audit.ts]
+    find:    NOW(), $8, $9, true, true, NOW())
+    replace: NOW(), $8, $9, false, true, NOW())
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > both events carry their reason and are flagged regulatory-significant and GxP-relevant 54ms
+     × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > writes the deleted event with its reason, actor and Part 11 flags 1827ms
+     × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > writes the deleted event with its reason, actor and Part 11 flags 13ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  3 failed | 44 passed (47)
+=== mutant a_gxp2  [server/services/coauthor/coauthor-audit.ts]
+    find:    NOW(), $8, $9, true, true, NOW())
+    replace: NOW(), $8, $9, true, false, NOW())
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > both events carry their reason and are flagged regulatory-significant and GxP-relevant 152ms
+     × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > writes the deleted event with its reason, actor and Part 11 flags 2367ms
+     × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > writes the deleted event with its reason, actor and Part 11 flags 14ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  3 failed | 44 passed (47)
+=== mutant m_no_tiebreak  [server/services/coauthor/coauthor-snapshot.ts]
+    find:    Number(a.order_index) - Number(b.order_index) || tieOrder(a, b)
+    replace: Number(a.order_index) - Number(b.order_index)
+    restored (cmp identical)
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a seal the router wrote before it ordered ties (storage order) is read in the editor order, not refused 30ms
+     × server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing 17ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  2 failed | 43 passed (45)
+=== mutant a_reason_after_reorder  [server/services/coauthor/coauthor-audit.ts]
+    find:          event.reason,
+    replace:       'x',
+    restored (cmp identical)
+     × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/ectd-documents) > writes the deleted event with its reason, actor and Part 11 flags 13ms
+     × server/__tests__/security/coauthor-document-delete-audit.contract.test.ts > Part 11 — coauthor_documents delete audit (../../routes/coauthor) > writes the deleted event with its reason, actor and Part 11 flags 8ms
+    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+          Tests  2 failed | 6 passed (8)

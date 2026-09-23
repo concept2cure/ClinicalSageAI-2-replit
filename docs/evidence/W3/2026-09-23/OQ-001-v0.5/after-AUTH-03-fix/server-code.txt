@@ -1,0 +1,2 @@
+Runner and server: d3556910a, unmodified. The server was restarted on the
+restored tree before this run.

@@ -1,0 +1,44 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5800/api/authoring/docs",
+    "body": {
+      "title": "WE F-10 proof 20260921015253",
+      "module": "M2"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "body": {
+      "success": true,
+      "document": {
+        "id": "3668045d-4301-4771-b9ec-ef8df4447cb2",
+        "title": "WE F-10 proof 20260921015253",
+        "module": "M2",
+        "product_code": null,
+        "locale": "en-US",
+        "status": "draft",
+        "created_by": "1",
+        "template_id": null,
+        "submitted_at": null,
+        "current_workflow_id": null,
+        "approved_at": null,
+        "frozen_at": null,
+        "locked_at": null,
+        "locked_by": null,
+        "version": null,
+        "tenant_id": 2,
+        "created_at": "2026-09-21T01:52:53.100Z",
+        "updated_at": "2026-09-21T01:52:53.100Z",
+        "client_program_id": null,
+        "c2c_document_id": null
+      },
+      "message": "Document created successfully",
+      "governance": {
+        "bound": false,
+        "reason": "No project is open, so this document is org-wide and not bound to a filing."
+      }
+    }
+  }
+}

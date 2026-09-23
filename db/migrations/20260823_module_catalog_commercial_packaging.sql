@@ -1,3 +1,23 @@
+-- ══ AMENDED IN PLACE 2026-09-22 (CLAUDE.md Rule 1) ══════════════════════════
+-- WHAT CHANGED: 'ectd-publishing' is assigned 'standard', beside ectd-compile,
+-- ectd-coauthor and dossier-map — the same eCTD publishing group.
+--
+-- WHY: this file refuses to finish while any LIVE catalog module has no tier
+-- (the "catalog modules with no tier assigned" guard below). It was written
+-- while 20260810 was re-deprecating ectd-publishing on every deploy, so the row
+-- was invisible to that guard and never assigned. 20260810 was amended the same
+-- day to stop doing that (it is a launch module); the row became live, and on
+-- the next replay this guard failed the deploy:
+--   ✗ failed: 20260823_module_catalog_commercial_packaging.sql —
+--     catalog modules with no tier assigned: ectd-publishing
+-- Found by replaying the whole set a second time on a deploy-shaped database
+-- (scripts/db/provision-test-db.sh, then deploy-migrate again) before the two
+-- amendments were allowed to ship together. The guard did its job.
+--
+-- Launch organisations hold this module through an explicit grant regardless
+-- of tier (provisionLaunchModules); the tier governs everyone else.
+-- ═════════════════════════════════════════════════════════════════════════════
+
 -- Apply commercial packaging to the module catalog.
 --
 -- 20260810_reconcile_module_catalog.sql seeded all 84 modules UNRESTRICTED
@@ -201,6 +221,7 @@ INSERT INTO module_packaging (module_id, min_tier) VALUES
   ('dossier-map', 'standard'),
   ('ectd-coauthor', 'standard'),
   ('ectd-compile', 'standard'),
+  ('ectd-publishing', 'standard'),   -- added 2026-09-22; see the amendment note at the top
   ('global-ri', 'standard'),
   ('haq-manager', 'standard'),
   ('inconsistency', 'standard'),

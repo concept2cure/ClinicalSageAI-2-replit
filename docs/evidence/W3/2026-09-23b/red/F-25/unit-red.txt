@@ -1,0 +1,42 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ × server/services/__tests__/contradiction-scan-project-scope.test.ts > a project the organisation does not hold > is refused, not scanned clean 6ms
+   → expected { findings: [], summary: { …(3) } } to be an instance of ContradictionScanScopeError
+ × server/services/__tests__/contradiction-scan-project-scope.test.ts > a program id, which is not a project id > is refused before anything is read, not scanned across the organisation 1ms
+   → expected { findings: [], summary: { …(3) } } to be an instance of ContradictionScanScopeError
+ ✓ server/services/__tests__/contradiction-scan-project-scope.test.ts > a project the organisation holds > is scanned, and every read is filtered to it 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/contradiction-scan-project-scope.test.ts > a project the organisation does not hold > is refused, not scanned clean
+AssertionError: expected { findings: [], summary: { …(3) } } to be an instance of ContradictionScanScopeError
+ ❯ server/services/__tests__/contradiction-scan-project-scope.test.ts:72:21
+     70|     );
+     71|
+     72|     expect(outcome).toBeInstanceOf(ContradictionScanScopeError);
+       |                     ^
+     73|     expect(outcome).toMatchObject({ status: 404 });
+     74|     expect(h.searches).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/__tests__/contradiction-scan-project-scope.test.ts > a program id, which is not a project id > is refused before anything is read, not scanned across the organisation
+AssertionError: expected { findings: [], summary: { …(3) } } to be an instance of ContradictionScanScopeError
+ ❯ server/services/__tests__/contradiction-scan-project-scope.test.ts:85:21
+     83|     );
+     84|
+     85|     expect(outcome).toBeInstanceOf(ContradictionScanScopeError);
+       |                     ^
+     86|     expect(outcome).toMatchObject({ status: 400 });
+     87|     expect(h.searches).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  08:25:43
+   Duration  340ms (transform 129ms, setup 75ms, import 83ms, tests 10ms, environment 0ms)
+

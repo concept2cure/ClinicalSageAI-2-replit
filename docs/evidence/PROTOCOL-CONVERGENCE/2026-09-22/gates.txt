@@ -1,0 +1,36 @@
+### GATES
+
+$ npm run ci:migration-set-order
+[ci:migration-set-order] OK — 296 migrations, sweep last, uuid step in the final pair, all present, no duplicates.
+
+$ npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 296 migrations, 33 DROP(s), none re-created by the set, 2 reviewed exception(s); 16 dynamic DROP(s) in 16 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+
+$ npm run db:sync-manifest:check
+Manifest is in sync.
+
+$ npm run ci:launch-scope
+[ci:launch-scope] 6 apps · 41 surfaces · 21 modules · 36 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+
+$ npm run ci:ana-surface-context
+
+[ci:ana-surface-context] OK — 114 of 120 routable surface ids publish screen state (baseline 114 exact), 6 exempt, 0 still blind.
+  111 through usePublishSurfaceContext; 3 through their own useAnaChat moduleContext (document-authoring, ectd-coauthor, rbm) — surfaces that own the
+  conversation are grounded on that channel, because the shell draws no rail there.
+  122 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router
+  rewrites before the shell has an active id, so they are not routable and cannot be
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (77 surface file(s) hold a call).
+
+
+$ npm run ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+$ npm run ci:design-system
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+
+$ node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD
+[ci:eslint-warning-ratchet] --since HEAD (806bb5acc) -- 9 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.

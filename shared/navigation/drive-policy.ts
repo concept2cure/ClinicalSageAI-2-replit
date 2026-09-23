@@ -36,8 +36,12 @@ export interface DriveBudget {
  * live-drive server test pins that equality.
  */
 export const DRIVE_BUDGETS: Readonly<Record<DriveMode, DriveBudget>> = {
-  assist: { navigations: 3, actions: 3 },
-  demo: { navigations: 12, actions: 16 },
+  /* Raised from 3/3: an ordinary request — "open BX-301, take me to its
+     Vault and find the stability report" — is three moves before AnA has done
+     anything with what she found, and the budget cut her off mid-task while
+     she narrated moves that no longer happened. */
+  assist: { navigations: 6, actions: 8 },
+  demo: { navigations: 16, actions: 20 },
 };
 
 /**

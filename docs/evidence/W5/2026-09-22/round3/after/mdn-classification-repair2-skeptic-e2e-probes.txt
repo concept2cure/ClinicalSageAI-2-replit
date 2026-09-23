@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+[failed for a DIFFERENT message (agency may hold ours)]
+  attempt1: code=GATEWAY_TRANSMIT_FAILED transmitted=false msg=ICSR was NOT transmitted to FDA_FAERS; the transmission remains 'prepared'. Gateway transport failed: ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): Agency MDN answers a different message (<someone-else@FDA>). The gateway answered HTTP 200 to AS2 message <584367e2-de31-4e1a-b30b-5ee6353cd5e5@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any resend.
+  attempt2: code=GATEWAY_TRANSMIT_FAILED
+  https POSTs to the agency: 2 (message-ids <584367e2-de31-4e1a-b30b-5ee6353cd5e5@SPONSOR-AS2>, <4e5aa0c6-a05c-4c24-b7df-7d57e4a7ef37@SPONSOR-AS2>)
+[processed/superseded for OUR message]
+  attempt1: code=GATEWAY_TRANSMIT_FAILED transmitted=false msg=ICSR was NOT transmitted to FDA_FAERS; the transmission remains 'prepared'. Gateway transport failed: ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-sent-automatically; processed/superseded The gateway answered HTTP 200 to AS2 message <76939208-65b3-44e4-9229-524571723d77@SPO
+  attempt2: code=GATEWAY_TRANSMIT_FAILED
+  https POSTs to the agency: 2 (message-ids <76939208-65b3-44e4-9229-524571723d77@SPONSOR-AS2>, <6ad9b861-c822-470a-9fdc-179e0d088231@SPONSOR-AS2>)
+[accepting MDN naming no message]
+  attempt1: code=GATEWAY_TRANSMIT_FAILED transmitted=false msg=ICSR was NOT transmitted to FDA_FAERS; the transmission remains 'prepared'. Gateway transport failed: ICSR delivery to FDA_FAERS is unconfirmed (receipt-unproven): Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent. The gateway answered HTTP 200 to AS2 message <e11160fd-a551-41f1-9321-3eb32e99c1e7@SPONSOR-AS2> and may hold it; confirm receipt at the agency before any
+  attempt2: code=GATEWAY_TRANSMIT_FAILED
+  https POSTs to the agency: 2 (message-ids <e11160fd-a551-41f1-9321-3eb32e99c1e7@SPONSOR-AS2>, <ff644328-24d1-424b-bd18-35f5abe06477@SPONSOR-AS2>)
+T1 timeout-after-write :: body writes=1 :: recorded status=rejected (inside lock: false) :: THREW TransportError: ESG AS2 POST timeout
+T2 ECONNRESET-after-write :: body writes=1 :: recorded status=rejected (inside lock: false) :: THREW TransportError: ESG AS2 POST failed: socket hang up
+T3 control accept :: body writes=1 :: recorded status=received (inside lock: true) :: RETURNED status=received
+T4 failed-other :: body writes=1 :: recorded status=in_transit (inside lock: true) :: THREW GatewayError: Agency MDN answers a different message (<other@SPONSOR-AS2>). The bundle was delivered (HTTP 200, AS2 Message-ID <d3797f95-48ca-4ee9-882e-88e4fd60e609@SPONSOR-AS2>) and FDA may hold it: transmittal 42
+T7 in_transit-write-transient-failure :: body writes=1 :: recorded status=in_transit (inside lock: true) :: THREW GatewayError: Agency MDN answers a different message (<other@SPONSOR-AS2>). The bundle was delivered (HTTP 200, AS2 Message-ID <e59bd175-59d6-4e25-a646-16282c57a8ac@SPONSOR-AS2>) and FDA may hold it: transmittal 42
+T8 received-write-transient-failure :: body writes=1 :: recorded status=in_transit (inside lock: true) :: THREW GatewayError: Transmit failed after the bundle left: transient: connection terminated. The bundle was delivered (HTTP 200, AS2 Message-ID <a90684cc-b6cb-49ba-b4fb-a16a645d4f7a@SPONSOR-AS2>) and FDA may hold it: tra
+T5 processed-colon-error :: body writes=1 :: recorded status=in_transit (inside lock: true) :: THREW GatewayError: Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-sent-automatically; processed: error The bundle was delivered (HTTP 200, AS2 Message-ID <86
+T6 x-no-errors :: body writes=1 :: recorded status=in_transit (inside lock: true) :: THREW GatewayError: Agency MDN disposition neither accepts nor refuses the message (unknown or unreadable): automatic-action/MDN-sent-automatically; processed/x-no-errors The bundle was delivered (HTTP 200, AS2 Message-I
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  08:06:49
+   Duration  2.23s (transform 639ms, setup 180ms, import 1.26s, tests 331ms, environment 0ms)
+

@@ -11,6 +11,7 @@
 
 import {
   GatewayPolicyError,
+  ModelNotApprovedError,
   GatewayNoProviderError,
   GatewayAllProvidersFailedError,
 } from './gateway';
@@ -69,6 +70,28 @@ export function classifyGatewayError(err: unknown): ClassifiedGatewayError {
   }
   if (err instanceof GatewayNoProviderError) {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is available to handle this request.' };
+  }
+  // Before the general policy branch: it is a GatewayPolicyError subclass, and
+  // "blocked by AI gateway policy" would tell the author nothing they can act on.
+  if (err instanceof ModelNotApprovedError) {
+    return {
+      code: 'PROVIDER_UNAVAILABLE',
+      message:
+        'No model approved for regulatory drafting and review is available right now, ' +
+        'so this request was not sent to one that is not approved for it. Try again shortly.',
+    };
+  }
+  // Matched by its code, not `instanceof MediaNotCarriedError`: route tests mock
+  // the gateway module with a hand-listed set of error classes, and an
+  // `instanceof` against a class the mock omits throws — which turned every
+  // classified refusal on those routes into a 500 (authoringAiDraftNoProvider).
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'MEDIA_NOT_CARRIED') {
+    return {
+      code: 'PROVIDER_UNAVAILABLE',
+      message:
+        'No model that can read the attached file is available right now, so the request was not ' +
+        'answered without it. Try again shortly.',
+    };
   }
   if (err instanceof GatewayPolicyError) {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'This request was blocked by AI gateway policy.' };

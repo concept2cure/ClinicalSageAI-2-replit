@@ -1,0 +1,40 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://127.0.0.1:5400/api/c2c/projects",
+    "body": {
+      "name": "WA F-2 ledger probe",
+      "domain": "biopharma",
+      "programType": "ind"
+    }
+  },
+  "response": {
+    "status": 201,
+    "body": {
+      "data": {
+        "id": "ea1c10ad-91fa-41b7-bd98-407179fc921d",
+        "title": "WA F-2 ledger probe",
+        "ws": "Biotech",
+        "code": "WFLP",
+        "stage": "Planning",
+        "readiness": 0,
+        "status": "active",
+        "lead": "JM Smith",
+        "blocker": null,
+        "due": "\u2014",
+        "activity": "Updated Sep 21"
+      },
+      "meta": {
+        "created": true,
+        "documentId": "doc_330991d40f154f8dab24c86c90fe36d6",
+        "scaffoldedSections": 92,
+        "submissionId": 50,
+        "submissionCreated": true,
+        "projectAnchorId": null,
+        "projectAnchorSkipped": "NO_CLIENT_WORKSPACE",
+        "projectAnchorDetail": "This organization has no client workspace, and projects.client_workspace_id is NOT NULL. The program was created; it carries no PM-spine anchor until a workspace exists."
+      }
+    }
+  },
+  "note": "The governed write whose audit_logs rows (c2c.work.transition, c2c.project.create) the ledger and verifier responses below show as chain_seq 36 and 37."
+}

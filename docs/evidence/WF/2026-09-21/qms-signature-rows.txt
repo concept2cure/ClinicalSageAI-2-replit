@@ -1,0 +1,51 @@
+# Inspection queries (superuser postgres, read-only) after the final OQ-006 run — qms_documents ids: 25,27,28
+
+## electronic_signatures rows bound to those documents
+ id |  signed_target  |    signature_type     | signature_meaning | signer_id |        signer_email        | authentication_method | second_factor_verified |            binding_basis            |                       bound_payload_digest                       | is_valid |        signed_at        
+----+-----------------+-----------------------+-------------------+-----------+----------------------------+-----------------------+------------------------+-------------------------------------+------------------------------------------------------------------+----------+-------------------------
+  6 | qms-document:25 | qms-document-approval | APPROVED          |        42 | oq-signer@validation.local | password              | f                      | qms-document-version-content-sha256 | 366a5a9cdfc4ae5682df7a9f35abec09c1441b92f1ff5e8ff7d0ff5136ee9c80 | t        | 2026-09-21 01:47:45.062
+  7 | qms-document:27 | qms-document-approval | APPROVED          |        42 | oq-signer@validation.local | password              | f                      | qms-document-version-content-sha256 | aa5433bc231c6eef47c2f5ba408cb61d6d62d10662ac11a24dc6af9c5f069bc5 | t        | 2026-09-21 01:47:50.183
+(2 rows)
+
+## count per target (must be exactly 1 for the two signed documents, 0 for the refused ones)
+     target      | count 
+-----------------+-------
+ qms-document:25 |     1
+ qms-document:27 |     1
+ qms-document:28 |     0
+(3 rows)
+
+## qms_documents approval metadata
+ id |       doc_number        | status  | version | author_id | approver_id |        approved_at         |                          content_digest                          | two_person_rule 
+----+-------------------------+---------+---------+-----------+-------------+----------------------------+------------------------------------------------------------------+-----------------
+ 25 | SOP-OQ-20260921014742   | draft   | 2.0     |         1 |             |                            | 366a5a9cdfc4ae5682df7a9f35abec09c1441b92f1ff5e8ff7d0ff5136ee9c80 | enforced
+ 27 | SOP-OQ-B-20260921014742 | retired | 1.0     |         1 |          42 | 2026-09-21 01:47:50.183+00 | aa5433bc231c6eef47c2f5ba408cb61d6d62d10662ac11a24dc6af9c5f069bc5 | enforced
+ 28 | SOP-OQ-C-20260921014742 | draft   | 1.0     |        42 |             |                            |                                                                  | 
+(3 rows)
+
+## c2c_ana_actions (command approve) and audit_logs for the signed targets
+ERROR:  column "reason" does not exist
+LINE 1: select id, command, target, state, proposed_by, reason from ...
+                                                        ^
+                  id                  |      action      |  table_name  | record_id | user_id |   chain_prefix   
+--------------------------------------+------------------+--------------+-----------+---------+------------------
+ 3582b08a-cfe4-45e3-b1a7-ab10e73ca0f3 | c2c.work.approve | qms-document | 27        |      42 | 64865cf218837f6e
+ f86b5311-797f-47df-845c-34219a913e97 | c2c.work.approve | qms-document | 25        |      42 | 409e51a545be6f8f
+(2 rows)
+
+
+## ectd-sequence signature from the scratchpad OQ-004 run (OQ-SUBC-08, record not regenerated under W3)
+ id |  signed_target   | signature_type  | signer_id |        signer_email        | authentication_method |           binding_basis            | is_valid |        signed_at        
+----+------------------+-----------------+-----------+----------------------------+-----------------------+------------------------------------+----------+-------------------------
+  5 | ectd-sequence:25 | governed-action |        42 | oq-signer@validation.local | password              | ectd-sequence-leaf-manifest-sha256 | t        | 2026-09-21 01:46:12.103
+  4 | ectd-sequence:24 | governed-action |        42 | oq-signer@validation.local | password              | ectd-sequence-leaf-manifest-sha256 | t        | 2026-09-21 01:45:00.101
+(2 rows)
+
+
+## c2c_ana_actions (command approve) for the signed targets
+                  id                  | command |     target      |  state   | proposed_by | meaning  |  digest_prefix   
+--------------------------------------+---------+-----------------+----------+-------------+----------+------------------
+ act_3b0525ff19de4c96bee5a3c404ffc176 | approve | qms-document:27 | executed |          42 | APPROVED | aa5433bc231c6eef
+ act_cc289e932d47437d8f9f8ddff9de8446 | approve | qms-document:25 | executed |          42 | APPROVED | 366a5a9cdfc4ae56
+(2 rows)
+

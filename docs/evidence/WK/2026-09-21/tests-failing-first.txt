@@ -1,0 +1,2672 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > reads the org-scoped GET /api/review/board endpoint 66ms
+   → expected '/api/review/board' to be '/api/review/board?scope=all' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > POSTs the verdict and the note to the authoring review transition 648ms
+   → expected '/api/review/workflows/3f2c1a10-0000-4…' to be '/api/authoring/documents/3f2c1a10-000…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > switches scope — awaiting my review / requested by me / all open — by re-reading the board 739ms
+   → Unable to find an accessible element with the role "button" and name `/Awaiting my review/`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Review & approval":
+  [36m<h1[39m
+    [33mclass[39m=[32m"ph-title"[39m
+  [36m/>[39m
+
+  Name "Clinical Overview §2.5":
+  [36m<h3[39m
+    [33mclass[39m=[32m"dt-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Ask AnA":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Review Clinical Overview §2.5":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "NDA 200100in-review Clinical Overview §2.5 Dana Chen · Reviewer 1 cmt":
+  [36m<button[39m
+    [33mclass[39m=[32m"lrow"[39m
+    [33mdata-on[39m=[32m"true"[39m
+  [36m/>[39m
+
+  Name "Delegate...":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Request changes...":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Record review decision":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary"[39m
+  [36m/>[39m
+
+  Name "Open in editor":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 28px;"[39m
+  [36m/>[39m
+
+  Name "Resolve":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 26px;"[39m
+  [36m/>[39m
+
+  Name "Comment":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"rv-doc-text"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "":
+  [36m<input[39m
+    [33mclass[39m=[32m"rv-reply-in"[39m
+    [33mplaceholder[39m=[32m"Add a comment..."[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "Review threads assigned to you":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Review threads assigned to you"[39m
+    [33mstyle[39m=[32m"margin-top: 20px;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+    [33mstyle[39m=[32m"padding: 10px 4px;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mReview & approval[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mWhat is waiting on your approval right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m document[0m
+          [0m [0m
+          [0mis[0m
+          [0m at your [0m
+          [36m<b>[39m
+            [0msign-off step[0m
+          [36m</b>[39m
+          [0m and [0m
+          [0mneeds[0m
+          [0m your sign-off[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+      ...
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > renders the real queue, workflow and thread — never a "Sample data" pill 108ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest empty > shows the empty state, not a fabricated queue, when the org has nothing in review 11ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — honest error > shows the error state, not a fabricated queue, when the load fails 10ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review view-model module — no fixtures > exports render-contract types + config only, and no fabricated data constants 0ms
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-21T18:23:25.048Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-21T18:23:26.544Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "column \"program_type\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+Error creating document: error: column "client_program_id" of relation "authoring_documents" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 150,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '143',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1073',
+  routine: 'checkInsertTargets',
+  query: 'INSERT INTO authoring_documents (id, title, module, product_code, locale, status, created_by, created_at, updated_at, tenant_id, template_id, client_program_id)\n' +
+    "       VALUES ($1, $2, $3, $4, $5, 'draft', $6, NOW(), NOW(), $7, $8, $9)\n" +
+    '       RETURNING *',
+  params: [
+    'f73a3baa-8b40-49fb-967a-d124193976ed',
+    'IND 12345 — Module 2.5 Clinical Overview',
+    'M2',
+    null,
+    'en-US',
+    '5a1c2a10-0000-4000-8000-000000000001',
+    1,
+    null,
+    'a0000000-0000-4000-8000-00000000000a'
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-09-21T18:23:26.550Z",
+  "level": "error",
+  "message": "[authoring-router] saving docs failed",
+  "context": {
+    "err": "column \"client_program_id\" of relation \"authoring_documents\" does not exist",
+    "correlationId": null,
+    "code": "42703"
+  }
+}
+
+ ↓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > before any request: the board is an honest empty queue, not an error
+ ↓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested)
+ ↓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > the passage under review is the document’s own first section, and the thread is its comments
+ ↓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > another tenant never sees it
+ ↓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one
+ ↓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail
+ ↓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+ ↓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+ × client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > a decline is the authoring "rejected" verdict, and needs grounds 5159ms
+   → Unable to find role="button" and name `/Record rejection/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mReview & approval[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mWhat is waiting on your approval right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m document[0m
+          [0m [0m
+          [0mis[0m
+          [0m at your [0m
+          [36m<b>[39m
+            [0msign-off step[0m
+          [36m</b>[39m
+          [0m and [0m
+          [0mneeds[0m
+          [0m your sign-off[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mReview & approval[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mWhat is waiting on your approval right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m document[0m
+          [0m [0m
+          [0mis[0m
+          [0m at your [0m
+          [36m<b>[39m
+            [0msign-off step[0m
+          [36m</b>[39m
+          [0m and [0m
+          [0mneeds[0m
+          [0m your sign-off[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+      ...
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > re-reads the board after the decision, so the row comes from the record 136ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > says the decision was NOT recorded when the server refuses, and stays open 130ms
+ × client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > offers no signature meaning — the board does not sign 91ms
+   → expected <select id="rv-meaning">…(4)</select> to be null
+ × client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > requesting changes > is the authoring "changes_requested" verdict with the reason, and re-reads the board 138ms
+   → expected '/api/review/workflows/3f2c1a10-0000-4…' to be '/api/authoring/documents/3f2c1a10-000…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > there is no delegate on the board > the authoring workflow has no delegate transition, so the board offers none 72ms
+   → expected <button class="btn ghost">…(1)</button> to be null
+ × client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > POSTs a comment to the document’s section through the authoring router and re-reads the board 77ms
+   → expected '/api/review/workflows/3f2c1a10-0000-4…' to be '/api/authoring/sections/3f2c1a10-0000…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > resolving a comment PATCHes it through the authoring router, and a refusal puts it back to open 74ms
+   → expected '/api/review/comments/9/resolve' to be '/api/authoring/comments/9' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > the hero call to action > "Open the queue" selects a document still in review instead of doing nothing 60ms
+ × client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > does not report a clear queue when a refresh fails under a stale queue 5055ms
+   → expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mProject · review[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mReview & approval[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-lead al-calm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-k"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mWhat is waiting on your approval right now[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-h"[39m
+          [36m>[39m
+            [0mNothing is blocked on your signature — [0m
+            [36m<b>[39m
+              [0m1[0m
+            [36m</b>[39m
+            [0m document[0m
+            [0m still moving through review.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-b"[39m
+          [36m>[39m
+            [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-re"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-act"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"al-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [3...
+ ✓ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > does not say nothing is in review when the response carried no board 12ms
+ × client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > still reports a clear queue when the rows were read and none is waiting on the caller 32ms
+   → clearance must stay reachable when it is earned: expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > names a document awaiting my review, and one at my sign-off step, and says nothing is in review when nothing is 5013ms
+   → expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mProject · review[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mReview & approval[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-lead al-urgent"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-k"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-clock"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mWhat is waiting on your approval right now[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-h"[39m
+          [36m>[39m
+            [36m<b>[39m
+              [0m1[0m
+            [36m</b>[39m
+            [0m document[0m
+            [0m [0m
+            [0mis[0m
+            [0m at your [0m
+            [36m<b>[39m
+              [0msign-off step[0m
+            [36m</b>[39m
+            [0m and [0m
+            [0mneeds[0m
+            [0m your sign-off[0m
+            [0m.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-b"[39m
+          [36m>[39m
+            [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-re"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-act"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"al-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[3...
+ × client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > a review or sign-off the caller does not own is not reported as 'yours' 5015ms
+   → expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mProject · review[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mReview & approval[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-lead al-calm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-k"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mWhat is waiting on your approval right now[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-h"[39m
+          [36m>[39m
+            [0mNothing is blocked on your signature — [0m
+            [36m<b>[39m
+              [0m1[0m
+            [36m</b>[39m
+            [0m document[0m
+            [0m still moving through review.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-b"[39m
+          [36m>[39m
+            [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-re"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-act"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"al-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [3...
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts [ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts ]
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ mk server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:137:22
+    135|   const mk = async (title: string, programId: string | null) => {
+    136|     const r = await as(AUTHOR)(request(app).post('/api/authoring/docs'…
+    137|     expect(r.status).toBe(201);
+       |                      ^
+    138|     return r.body.document.id as string;
+    139|   };
+ ❯ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts:140:10
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/routes/__tests__/review-board-reads-authoring-store.test.ts [ server/routes/__tests__/review-board-reads-authoring-store.test.ts ]
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/server/services/review/authoring-review-board.ts'
+ ❯ server/routes/__tests__/review-board-reads-authoring-store.test.ts:30:15
+     28|
+     29| const ROUTE = readFileSync(join(__dirname, '../review-board-routes.ts'…
+     30| const MODEL = readFileSync(join(__dirname, '../../services/review/auth…
+       |               ^
+     31|
+     32| /** Match executable code, not the prose about it. */
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/ClinicalSageAI-2-replit/server/services/review/authoring-review-board.ts' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > reads the org-scoped GET /api/review/board endpoint
+AssertionError: expected '/api/review/board' to be '/api/review/board?scope=all' // Object.is equality
+
+Expected: "/api/review/board?scope=all"
+Received: "/api/review/board"
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx:130:49
+    128|     // The board is read for the organisation's open review work by de…
+    129|     // the scope is explicit in the URL so the server never guesses it.
+    130|     expect(String(apiRequest.mock.calls[0][1])).toBe('/api/review/boar…
+       |                                                 ^
+    131|   });
+    132|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx > Review board — real data > switches scope — awaiting my review / requested by me / all open — by re-reading the board
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/Awaiting my review/`
+
+Here are the accessible roles:
+
+  heading:
+
+  Name "Review & approval":
+  [36m<h1[39m
+    [33mclass[39m=[32m"ph-title"[39m
+  [36m/>[39m
+
+  Name "Clinical Overview §2.5":
+  [36m<h3[39m
+    [33mclass[39m=[32m"dt-title"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Ask AnA":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Review Clinical Overview §2.5":
+  [36m<button[39m
+    [33mclass[39m=[32m"al-btn"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "NDA 200100in-review Clinical Overview §2.5 Dana Chen · Reviewer 1 cmt":
+  [36m<button[39m
+    [33mclass[39m=[32m"lrow"[39m
+    [33mdata-on[39m=[32m"true"[39m
+  [36m/>[39m
+
+  Name "Delegate...":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Request changes...":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+  [36m/>[39m
+
+  Name "Record review decision":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn primary"[39m
+  [36m/>[39m
+
+  Name "Open in editor":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 28px;"[39m
+  [36m/>[39m
+
+  Name "Resolve":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mstyle[39m=[32m"height: 26px;"[39m
+  [36m/>[39m
+
+  Name "Comment":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn ghost"[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"rv-doc-text"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "":
+  [36m<input[39m
+    [33mclass[39m=[32m"rv-reply-in"[39m
+    [33mplaceholder[39m=[32m"Add a comment..."[39m
+    [33mvalue[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "Review threads assigned to you":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Review threads assigned to you"[39m
+    [33mstyle[39m=[32m"margin-top: 20px;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"scaf-note"[39m
+    [33mrole[39m=[32m"status"[39m
+    [33mstyle[39m=[32m"padding: 10px 4px;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mReview & approval[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mWhat is waiting on your approval right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m document[0m
+          [0m [0m
+          [0mis[0m
+          [0m at your [0m
+          [36m<b>[39m
+            [0msign-off step[0m
+          [36m</b>[39m
+          [0m and [0m
+          [0mneeds[0m
+          [0m your sign-off[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+      ...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx:137:28
+    135|     render(<Review {...props()} />);
+    136|     await screen.findAllByText('Clinical Overview §2.5');
+    137|     fireEvent.click(screen.getByRole('button', { name: /Awaiting my re…
+       |                            ^
+    138|     await waitFor(() =>
+    139|       expect(apiRequest.mock.calls.some((c) => String(c[1]) === '/api/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > does not report a clear queue when a refresh fails under a stale queue
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mProject · review[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mReview & approval[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-lead al-calm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-k"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mWhat is waiting on your approval right now[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-h"[39m
+          [36m>[39m
+            [0mNothing is blocked on your signature — [0m
+            [36m<b>[39m
+              [0m1[0m
+            [36m</b>[39m
+            [0m document[0m
+            [0m still moving through review.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-b"[39m
+          [36m>[39m
+            [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-re"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-act"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"al-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [3...
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx:95:52
+     93|     serve([ok({ queue: [ROW], workflows: WF, thread: [] }), boom()]);
+     94|     mount();
+     95|     await waitFor(() => expect(CLEAR.test(text())).toBe(true));
+       |                                                    ^
+     96|
+     97|     fireEvent.change(screen.getByPlaceholderText(/Add a comment/i), {
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > still reports a clear queue when the rows were read and none is waiting on the caller
+AssertionError: clearance must stay reachable when it is earned: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx:122:83
+    120|     mount();
+    121|     await waitFor(() => expect(screen.getAllByText(ROW.doc).length).to…
+    122|     expect(CLEAR.test(text()), 'clearance must stay reachable when it …
+       |                                                                                   ^
+    123|     expect(/1 document still moving through review/i.test(text())).toB…
+    124|     expect(/0 open/.test(text())).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > names a document awaiting my review, and one at my sign-off step, and says nothing is in review when nothing is
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mProject · review[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mReview & approval[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-lead al-urgent"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-k"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-clock"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"12"[39m
+                [33mcy[39m=[32m"12"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<polyline[39m
+                [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mWhat is waiting on your approval right now[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-h"[39m
+          [36m>[39m
+            [36m<b>[39m
+              [0m1[0m
+            [36m</b>[39m
+            [0m document[0m
+            [0m [0m
+            [0mis[0m
+            [0m at your [0m
+            [36m<b>[39m
+              [0msign-off step[0m
+            [36m</b>[39m
+            [0m and [0m
+            [0mneeds[0m
+            [0m your sign-off[0m
+            [0m.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-b"[39m
+          [36m>[39m
+            [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-re"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-act"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"al-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[3...
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx:131:68
+    129|     serve([ok({ queue: [{ ...ROW, awaitingMyReview: true, mine: true }…
+    130|     let view = mount();
+    131|     await waitFor(() => expect(/awaits your review/i.test(text())).toB…
+       |                                                                    ^
+    132|     expect(CLEAR.test(text())).toBe(false);
+    133|     view.unmount();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx > Review — a queue that was not read is not a clear queue > a review or sign-off the caller does not own is not reported as 'yours'
+AssertionError: expected false to be true // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mProject · review[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mReview & approval[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-lead al-calm"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-k"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mWhat is waiting on your approval right now[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-h"[39m
+          [36m>[39m
+            [0mNothing is blocked on your signature — [0m
+            [36m<b>[39m
+              [0m1[0m
+            [36m</b>[39m
+            [0m document[0m
+            [0m still moving through review.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-b"[39m
+          [36m>[39m
+            [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-re"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"al-act"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"al-btn"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [3...
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx:150:52
+    148|     serve([ok({ queue: [{ ...ROW, mine: false }], workflows: WF, threa…
+    149|     mount();
+    150|     await waitFor(() => expect(CLEAR.test(text())).toBe(true));
+       |                                                    ^
+    151|     expect(/awaits your review|at your sign-off step/i.test(text())).t…
+    152|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > POSTs the verdict and the note to the authoring review transition
+AssertionError: expected '/api/review/workflows/3f2c1a10-0000-4…' to be '/api/authoring/documents/3f2c1a10-000…' // Object.is equality
+
+Expected: "/api/authoring/documents/3f2c1a10-0000-4000-8000-000000000055/review"
+Received: "/api/review/workflows/3f2c1a10-0000-4000-8000-000000000055/decision"
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx:99:18
+     97|     const [method, path, body] = writes()[0];
+     98|     expect(method).toBe('POST');
+     99|     expect(path).toBe(`/api/authoring/documents/${DOC}/review`);
+       |                  ^
+    100|     expect(body).toEqual({ review_status: 'approved', review_comments:…
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > a decline is the authoring "rejected" verdict, and needs grounds
+TestingLibraryElementError: Unable to find role="button" and name `/Record rejection/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mReview & approval[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mWhat is waiting on your approval right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m document[0m
+          [0m [0m
+          [0mis[0m
+          [0m at your [0m
+          [36m<b>[39m
+            [0msign-off step[0m
+          [36m</b>[39m
+          [0m and [0m
+          [0mneeds[0m
+          [0m your sign-off[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+      ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mProject · review[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mReview & approval[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0mReview queue, threaded comments, reject-with-reason, delegate a step.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 3v4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M22 5h-4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M4 17v2"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M5 18H3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Ask AnA[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"al-lead al-urgent"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-k"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-clock"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"12"[39m
+              [33mcy[39m=[32m"12"[39m
+              [33mr[39m=[32m"10"[39m
+            [36m/>[39m
+            [36m<polyline[39m
+              [33mpoints[39m=[32m"12 6 12 12 16 14"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mWhat is waiting on your approval right now[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-h"[39m
+        [36m>[39m
+          [36m<b>[39m
+            [0m1[0m
+          [36m</b>[39m
+          [0m document[0m
+          [0m [0m
+          [0mis[0m
+          [0m at your [0m
+          [36m<b>[39m
+            [0msign-off step[0m
+          [36m</b>[39m
+          [0m and [0m
+          [0mneeds[0m
+          [0m your sign-off[0m
+          [0m.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-b"[39m
+        [36m>[39m
+          [0mEach document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-re"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m9 12 2 2 4-4"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m [0m
+          [0mI'll surface exactly which step you own and pre-read the document so your sign-off is one informed click.[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"al-act"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"al-btn"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+      ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx:106:30
+    104|     await openModal();
+    105|     fireEvent.change(screen.getByLabelText('Decision'), { target: { va…
+    106|     const btn = await screen.findByRole('button', { name: /Record reje…
+       |                              ^
+    107|     expect((btn as HTMLButtonElement).disabled).toBe(true);
+    108|     fireEvent.click(btn);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > recording a review decision > offers no signature meaning — the board does not sign
+AssertionError: expected <select id="rv-meaning">…(4)</select> to be null
+
+- Expected:
+null
+
++ Received:
+<select
+  id="rv-meaning"
+>
+  <option
+    value="APPROVER"
+  >
+    APPROVER
+  </option>
+  <option
+    value="REVIEWER"
+  >
+    REVIEWER
+  </option>
+  <option
+    value="AUTHOR"
+  >
+    AUTHOR
+  </option>
+  <option
+    value="VERIFIER"
+  >
+    VERIFIER
+  </option>
+</select>
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx:137:61
+    135|   it('offers no signature meaning — the board does not sign', async ()…
+    136|     await openModal();
+    137|     expect(screen.queryByLabelText(/Meaning of signature/)).toBeNull();
+       |                                                             ^
+    138|     expect(document.body.textContent).toMatch(/not a 21 CFR §11\.50 si…
+    139|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > requesting changes > is the authoring "changes_requested" verdict with the reason, and re-reads the board
+AssertionError: expected '/api/review/workflows/3f2c1a10-0000-4…' to be '/api/authoring/documents/3f2c1a10-000…' // Object.is equality
+
+Expected: "/api/authoring/documents/3f2c1a10-0000-4000-8000-000000000055/review"
+Received: "/api/review/workflows/3f2c1a10-0000-4000-8000-000000000055/change-request"
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx:154:18
+    152|     const [method, path, body] = writes()[0];
+    153|     expect(method).toBe('POST');
+    154|     expect(path).toBe(`/api/authoring/documents/${DOC}/review`);
+       |                  ^
+    155|     expect(body).toEqual({ review_status: 'changes_requested', review_…
+    156|     await waitFor(() => expect(boardReads().length).toBeGreaterThan(be…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > there is no delegate on the board > the authoring workflow has no delegate transition, so the board offers none
+AssertionError: expected <button class="btn ghost">…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="btn ghost"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-user"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"
+    />
+    <circle
+      cx="12"
+      cy="7"
+      r="4"
+    />
+  </svg>
+   Delegate...
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx:163:64
+    161|   it('the authoring workflow has no delegate transition, so the board …
+    162|     await mount();
+    163|     expect(screen.queryByRole('button', { name: /Delegate/ })).toBeNul…
+       |                                                                ^
+    164|   });
+    165| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > POSTs a comment to the document’s section through the authoring router and re-reads the board
+AssertionError: expected '/api/review/workflows/3f2c1a10-0000-4…' to be '/api/authoring/sections/3f2c1a10-0000…' // Object.is equality
+
+Expected: "/api/authoring/sections/3f2c1a10-0000-4000-8000-000000000101/comment"
+Received: "/api/review/workflows/3f2c1a10-0000-4000-8000-000000000055/comments"
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx:177:18
+    175|     const [method, path, body] = writes()[0];
+    176|     expect(method).toBe('POST');
+    177|     expect(path).toBe(`/api/authoring/sections/${SECTION}/comment`);
+       |                  ^
+    178|     expect(body).toEqual({ body: 'Aligned with the CSR §7.1 table.', d…
+    179|     await waitFor(() => expect(boardReads().length).toBeGreaterThan(be…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx > review comments > resolving a comment PATCHes it through the authoring router, and a refusal puts it back to open
+AssertionError: expected '/api/review/comments/9/resolve' to be '/api/authoring/comments/9' // Object.is equality
+
+Expected: "/api/authoring/comments/9"
+Received: "/api/review/comments/9/resolve"
+
+ ❯ client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx:189:18
+    187|     const [method, path, body] = writes()[0];
+    188|     expect(method).toBe('PATCH');
+    189|     expect(path).toBe('/api/authoring/comments/9');
+       |                  ^
+    190|     expect(body).toEqual({ status: 'resolved' });
+    191|     await waitFor(() => expect(screen.getByRole('button', { name: 'Res…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  5 failed (5)
+      Tests  13 failed | 8 passed | 8 skipped (29)
+   Start at  18:23:19
+   Duration  19.26s (transform 2.84s, setup 428ms, import 2.68s, tests 28.65s, environment 2.12s)
+
