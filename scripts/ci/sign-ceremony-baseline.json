@@ -1,5 +1,5 @@
 {
-  "$note": "Per-file COUNT of `sign` ledger writes whose handler does not both re-verify the signer (verifyReauth / verifySigningPin) and write the electronic_signatures row. Written 2026-09-23 from the census in docs/evidence/D5-GOVERNED-PATH/2026-09-22/. Shrink only. Every entry is a DEFECT or a proof the gate cannot see across a function boundary; the reason says which. None of these is reachable from a launch-catalog surface except where the reason says so.",
+  "$note": "Per-file COUNT of `sign` ledger writes whose handler does not both re-verify the signer (verifyReauth / reverifySigner) and write the electronic_signatures row. Written 2026-09-23 from the census in docs/evidence/D5-GOVERNED-PATH/2026-09-22/. Shrink only. Every entry is a DEFECT or a proof the gate cannot see across a function boundary; the reason says which. None of these is reachable from a launch-catalog surface except where the reason says so.",
   "files": {
     "server/api/cmc/batchRecordRoutes.ts": {
       "count": 1,

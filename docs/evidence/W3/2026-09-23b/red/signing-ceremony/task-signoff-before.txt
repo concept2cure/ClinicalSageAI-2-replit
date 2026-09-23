@@ -1,0 +1,227 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | server/services/tasking/__tests__/task-signoff.test.ts
+{
+  "timestamp": "2026-09-23T09:29:04.586Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T09:29:04.588Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-signoff.test.ts
+{
+  "timestamp": "2026-09-23T09:29:04.588Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/tasking/__tests__/task-signoff.test.ts
+[database] Database connection successful
+
+stderr | server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires a signer the server can re-verify (an account id)
+{
+  "timestamp": "2026-09-23T09:29:04.671Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/part11/pin-verification.ts:40:31",
+    "queryPreview": "SELECT pin_hash, failed_attempts, locked_until FROM user_pins WHERE email = $1 AND tenant_id = $2",
+    "enforcement": "off"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > not required for a non-completion transition 2ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > not required when the task carries no approval gate 0ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > not required while the gate still reads approved 0ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > required again after a reopen has retired the signature 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — when a signature is (not) required > 428 ESIGN_REQUIRED when completing the gate without a signature 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > rejects an unknown meaning before any credential is checked 1ms
+ ✓ server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires a reason 0ms
+ × server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires a signer the server can re-verify (an account id) 13ms
+   → expected { required: true, ok: false, …(3) } to match object { ok: false, status: 401, …(1) }
+(2 matching properties omitted from actual)
+ × server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a signing PIN signs nothing: the password is required 3ms
+   → expected { required: true, ok: false, …(3) } to match object { ok: false, status: 400, …(1) }
+(2 matching properties omitted from actual)
+ × server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > refuses a wrong password as the refusal of the act (403), not of the session, and counts it 2ms
+   → expected { required: true, ok: false, …(3) } to match object { ok: false, status: 403, …(1) }
+(2 matching properties omitted from actual)
+ × server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires the enrolled code, and refuses a wrong one 1ms
+   → expected { required: true, ok: false, …(3) } to match object { ok: false, status: 400, …(1) }
+(2 matching properties omitted from actual)
+ × server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a locked account cannot sign 1ms
+   → expected { required: true, ok: false, …(3) } to match object { ok: false, status: 423, …(1) }
+(2 matching properties omitted from actual)
+ × server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a verified signer yields the §11.50 manifestation, recording what was verified and never the credentials 1ms
+   → expected ok
+ × server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > records a password-only signature as such 1ms
+   → expected ok
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires a signer the server can re-verify (an account id)
+AssertionError: expected { required: true, ok: false, …(3) } to match object { ok: false, status: 401, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "ESIGN_IDENTITY_REQUIRED",
++   "code": "ESIGN_NO_PIN",
+    "ok": false,
+-   "status": 401,
++   "status": 403,
+  }
+
+ ❯ server/services/tasking/__tests__/task-signoff.test.ts:116:15
+    114|       signature: { password: 'right-password', meaning: 'APPROVED' }, …
+    115|     });
+    116|     expect(r).toMatchObject({ ok: false, status: 401, code: 'ESIGN_IDE…
+       |               ^
+    117|   });
+    118|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a signing PIN signs nothing: the password is required
+AssertionError: expected { required: true, ok: false, …(3) } to match object { ok: false, status: 400, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "ESIGN_PASSWORD_REQUIRED",
++   "code": "ESIGN_NO_PIN",
+    "ok": false,
+-   "status": 400,
++   "status": 403,
+  }
+
+ ❯ server/services/tasking/__tests__/task-signoff.test.ts:124:15
+    122|       signature: { pin: '246810', meaning: 'APPROVED' } as never, reas…
+    123|     });
+    124|     expect(r).toMatchObject({ ok: false, status: 400, code: 'ESIGN_PAS…
+       |               ^
+    125|   });
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > refuses a wrong password as the refusal of the act (403), not of the session, and counts it
+AssertionError: expected { required: true, ok: false, …(3) } to match object { ok: false, status: 403, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "ESIGN_PASSWORD_VERIFICATION_FAILED",
++   "code": "ESIGN_NO_PIN",
+    "ok": false,
+    "status": 403,
+  }
+
+ ❯ server/services/tasking/__tests__/task-signoff.test.ts:133:15
+    131|       signature: { password: 'wrong', meaning: 'APPROVED' }, reason: '…
+    132|     });
+    133|     expect(r).toMatchObject({ ok: false, status: 403, code: 'ESIGN_PAS…
+       |               ^
+    134|     expect(deps.recordFailedAttempt).toHaveBeenCalledWith(7);
+    135|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > requires the enrolled code, and refuses a wrong one
+AssertionError: expected { required: true, ok: false, …(3) } to match object { ok: false, status: 400, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "ESIGN_MFA_TOKEN_REQUIRED",
++   "code": "ESIGN_NO_PIN",
+    "ok": false,
+-   "status": 400,
++   "status": 403,
+  }
+
+ ❯ server/services/tasking/__tests__/task-signoff.test.ts:142:21
+    140|       signature: { password: 'right-password', meaning: 'APPROVED' }, …
+    141|     });
+    142|     expect(without).toMatchObject({ ok: false, status: 400, code: 'ESI…
+       |                     ^
+    143|     const wrong = await requireTaskSignoff({
+    144|       organizationId: 2, task: gatedTask, toStatus: 'completed', actor…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a locked account cannot sign
+AssertionError: expected { required: true, ok: false, …(3) } to match object { ok: false, status: 423, …(1) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "ESIGN_ACCOUNT_LOCKED",
++   "code": "ESIGN_NO_PIN",
+    "ok": false,
+-   "status": 423,
++   "status": 403,
+  }
+
+ ❯ server/services/tasking/__tests__/task-signoff.test.ts:156:15
+    154|       signature: { password: 'right-password', meaning: 'APPROVED' }, …
+    155|     });
+    156|     expect(r).toMatchObject({ ok: false, status: 423, code: 'ESIGN_ACC…
+       |               ^
+    157|   });
+    158|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > a verified signer yields the §11.50 manifestation, recording what was verified and never the credentials
+Error: expected ok
+ ❯ server/services/tasking/__tests__/task-signoff.test.ts:166:53
+    164|     });
+    165|     expect(r.required).toBe(true);
+    166|     if (!r.required || !('ok' in r) || !r.ok) throw new Error('expecte…
+       |                                                     ^
+    167|     expect(r.manifestation).toMatchObject({
+    168|       signedById: 7,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/tasking/__tests__/task-signoff.test.ts > requireTaskSignoff — ceremony validation > records a password-only signature as such
+Error: expected ok
+ ❯ server/services/tasking/__tests__/task-signoff.test.ts:184:53
+    182|       signature: { password: 'right-password', meaning: 'APPROVED' }, …
+    183|     });
+    184|     if (!r.required || !('ok' in r) || !r.ok) throw new Error('expecte…
+       |                                                     ^
+    185|     expect(r.manifestation.method).toBe('password');
+    186|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 7 passed (14)
+   Start at  09:29:02
+   Duration  2.38s (transform 1.20s, setup 122ms, import 2.03s, tests 32ms, environment 0ms)
+

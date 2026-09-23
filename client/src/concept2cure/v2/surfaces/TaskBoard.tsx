@@ -4,6 +4,9 @@ import { useDialog } from '../useDialog';
 import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
+import { EsignModal, esignSignerOf, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
+import type { EsigMeaning } from '../../hooks/useEsignature';
+import { describeSignatureMethod } from '@shared/part11/signature-method';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -450,7 +453,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   //     next states) rather than leaving the board looking stuck;
   //   · a 409 CONFLICT_STALE (lost race) reloads to the authoritative state;
   //   · a 428 ESIGN_REQUIRED (approval-gated completion, backed by
-  //     task-signoff -> part11/pin-verification) opens the §11.50 PIN ceremony.
+  //     task-signoff -> part11/reverify-signer) opens the §11.50 signing dialog.
   const move = async (t: TaskItem, dir: number) => {
     // Explicit map, not index arithmetic over TB_COLS. Blocked now has a column
     // (so a blocked task is visible and movable at all), but it is NOT a step on
@@ -655,7 +658,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         'Advance or move a task back through pending → in-progress → review → completed',
         'Create a task, or start a workflow from a template',
         'Archive a task (requires a reason, written to the audit trail)',
-        'Complete an approval-gated task (requires a PIN e-signature)',
+        'Complete an approval-gated task (requires an electronic signature)',
         'Filter the board by module, priority, assignee or search text',
       ],
     };
@@ -1031,6 +1034,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         <ESignTaskModal
           req={signReq}
           taskTitle={signReq.t.title}
+          signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
           onClose={() => setSignReq(null)}
           onSigned={() => { setSignReq(null); setReloadKey((k) => k + 1); }}
         />
@@ -1132,7 +1136,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
           <div className="tb-detail-sec">
             <div className="tb-detail-sec-h">Approval checkpoint <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus.replace('_', ' ')}</span></div>
             {/* §11.50 manifestation. This section previously showed only the
-                status badge, so a signature could be captured, PIN-verified and
+                status badge, so a signature could be captured, verified and
                 written to the ledger with no way for anyone to see who signed,
                 when, or what they meant by it — the signed record was invisible
                 to the person relying on it. approvalHistory now rides the board
@@ -1149,22 +1153,23 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
                       <time dateTime={s.signedAt}>{fmtSigned(s.signedAt)}</time>
                     </div>
                     {s.reason && <div className="tb-sig-reason">{s.reason}</div>}
-                    <div className="tb-sig-meta">Signed with a verified PIN ({s.method}).</div>
+                    <div className="tb-sig-meta">{describeSignatureMethod(s.method, s.method === 'pin')}.</div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="tb-detail-note">
                 Not signed yet. Completing this task requires an electronic signature — your
-                signing PIN, the meaning of the signature, and a reason — recorded under
+                password (and your authenticator code, if you use one), the meaning of the
+                signature, and a reason — recorded under
                 21 CFR Part 11 §11.50.
               </div>
             )}
             {/* The copy here used to claim "Quorum/role-based gate types
                 supported." Neither is implemented. What IS enforced: where a
                 task names designated approvers, only they can sign (see
-                task-signoff.ts); where it names none, any org member with an
-                enrolled PIN can. Saying so plainly beats advertising a control
+                task-signoff.ts); where it names none, any org member who can
+                sign can. Saying so plainly beats advertising a control
                 that does not exist. */}
             {t.approvalStatus === 'pending' && t.approvalHistory.length > 0 && (
               <div className="tb-detail-note" data-warn="true">
@@ -1237,95 +1242,73 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
 }
 
 /* ── E-signature ceremony — approval-gated task completion (21 CFR 11 §11.50).
-   Opened when the server answers 428 ESIGN_REQUIRED on a completion. This is a
-   REAL signature: the PIN is verified server-side by
-   server/services/tasking/task-signoff.ts via
-   server/services/part11/pin-verification.ts — the same credential store and
-   lockout policy as document sealing — and the manifestation (printed name,
-   time, meaning) is appended to the task's approval history and the governed
-   audit ledger. The PIN is never logged, audited, or echoed back. ── */
+   Opened when the server answers 428 ESIGN_REQUIRED on a completion. It is the
+   product's one signing dialog, the shared EsignModal: meaning, reason, the
+   account password, and the authenticator code when one is enrolled. The
+   server re-verifies them in server/services/tasking/task-signoff.ts through
+   server/services/part11/reverify-signer.ts, the ceremony every other
+   signature uses, and only then writes the transition with the manifestation
+   (printed name, time, meaning, method) into the task's approval history and
+   the governed audit ledger. The credentials are never logged, audited, or
+   echoed back. Until 2026-09-23 this was a bespoke dialog asking for a
+   separate signing PIN (VSR-001 §13.3 item 3). ── */
 
-const SIGN_MEANINGS = ['APPROVED', 'REVIEWED', 'RESPONSIBILITY', 'AUTHORSHIP'] as const;
+/** The task sign-off vocabulary (TASK_SIGNATURE_MEANINGS), as the shared dialog names it. */
+const TASK_MEANING: Partial<Record<EsigMeaning, string>> = {
+  approval: 'APPROVED',
+  review: 'REVIEWED',
+  responsibility: 'RESPONSIBILITY',
+  authorship: 'AUTHORSHIP',
+};
+const TASK_MEANINGS: ReadonlyArray<EsigMeaning> = ['approval', 'review', 'responsibility', 'authorship'];
 
 interface ESignTaskModalProps {
   req: { t: TaskItem; status: string; progress: number };
   taskTitle: string;
+  /** Who the dialog shows as signing (the board's signed-in user). */
+  signer?: EsignSigner;
   onClose: () => void;
   onSigned: () => void;
 }
 
-function ESignTaskModal({ req, taskTitle, onClose, onSigned }: ESignTaskModalProps) {
-  const [meaning, setMeaning] = useState<string>('APPROVED');
-  const [reason, setReason] = useState('');
-  const [pin, setPin] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
+function ESignTaskModal({ req, taskTitle, signer, onClose, onSigned }: ESignTaskModalProps) {
+  // Set once the server has confirmed the signature, so closing the dialog's
+  // confirmation reloads the board rather than reading as a cancel.
+  const signed = useRef(false);
 
-  // Re-run the same transition, now carrying the signature. The server verifies
-  // the PIN and, only if it holds, writes the transition + the §11.50
-  // manifestation atomically; a bad PIN / lockout comes back as an ESIGN_* error.
-  const sign = async () => {
-    if (busy || !pin || reason.trim().length < 3) return;
-    setBusy(true);
-    setErr('');
-    try {
-      const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(req.t.taskId), {
-        status: req.status,
-        progress: req.progress,
-        reason: reason.trim(),
-        signature: { pin, meaning },
-      });
-      if (res.ok) { onSigned(); return; }
-    } catch (e) {
-      // A rejected PIN comes back as an ESIGN_* code beside a sentence that says
-      // what a signer must do next (retry, wait out a lockout). Reading
-      // `payload.error` first showed the code and threw the sentence away;
-      // ApiRequestError.message is the sentence.
-      setErr(e instanceof ApiRequestError && e.message ? e.message : 'The signature was not accepted.');
-    }
-    setBusy(false);
-    setPin(''); // never leave a rejected PIN in the field
+  // Re-run the same transition, now carrying the signature. The server
+  // verifies it and, only if it holds, writes the transition + the §11.50
+  // manifestation atomically. A refusal (ESIGN_*) is thrown by apiRequest with
+  // the server's sentence, which the dialog shows; nothing is written.
+  const onSign = async (input: { meaning: EsigMeaning; reason: string; password: string; totp?: string }): Promise<EsigSignedManifest> => {
+    const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(req.t.taskId), {
+      status: req.status,
+      progress: req.progress,
+      reason: input.reason,
+      signature: {
+        password: input.password,
+        ...(input.totp ? { mfaToken: input.totp } : {}),
+        meaning: TASK_MEANING[input.meaning] ?? input.meaning,
+      },
+    });
+    // apiRequest RETURNS a 401 rather than throwing it: the session, not the signature.
+    if (!res.ok) throw new Error('Your session is not signed in any more. Sign in again; the task was not completed.');
+    signed.current = true;
+    return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString() };
   };
 
-  const dialogRef = useDialog(onClose);
-
   return (
-    <div className="tb-detail-bd" onClick={onClose}>
-      <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="Electronic signature required" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
-        <div className="tb-detail-h">
-          <div><h3>{I.lock} Sign to complete</h3></div>
-          <button className="tb-detail-x" onClick={onClose} aria-label="Cancel signing">{I.close}</button>
-        </div>
-        <div className="tb-form">
-          <div className="tb-detail-note" style={{ marginBottom: 8 }}>
-            <b>{taskTitle}</b> is approval-gated. Completing it applies your electronic
-            signature — your identity is verified with your signing PIN, and your printed
-            name, the date and time, and the meaning below are recorded with the task and
-            in the audit ledger (21 CFR Part 11 §11.50).
-          </div>
-          <div className="tb-frow">
-            <div className="tb-field"><label htmlFor="tb-sign-meaning">Meaning of signature</label>
-              <select id="tb-sign-meaning" value={meaning} onChange={e => setMeaning(e.target.value)}>
-                {SIGN_MEANINGS.map(m => <option key={m} value={m}>{m.charAt(0) + m.slice(1).toLowerCase()}</option>)}
-              </select>
-            </div>
-            <div className="tb-field"><label htmlFor="tb-sign-pin">Signing PIN<i>*</i></label>
-              <input id="tb-sign-pin" type="password" autoComplete="off" value={pin} onChange={e => setPin(e.target.value)} placeholder="Your signing PIN" />
-            </div>
-          </div>
-          <div className="tb-field full"><label htmlFor="tb-sign-reason">Reason for sign-off<i>*</i></label>
-            <textarea id="tb-sign-reason" rows={2} value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g. Reviewed the deliverable against the acceptance criteria" />
-          </div>
-          {err && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
-        </div>
-        <div className="tb-detail-f">
-          <button className="btn ghost" onClick={onClose}>Cancel — leave incomplete</button>
-          <button className="btn primary" disabled={busy || !pin || reason.trim().length < 3} onClick={sign}>
-            {I.shieldCheck} {busy ? 'Verifying…' : 'Sign & complete'}
-          </button>
-        </div>
-      </div>
-    </div>
+    <EsignModal
+      open
+      action="Complete approval-gated task"
+      target={taskTitle}
+      targetMeta="Completing it applies your electronic signature, recorded with the task and in the audit ledger."
+      defaultMeaning="approval"
+      meanings={TASK_MEANINGS}
+      signer={signer}
+      onClose={() => (signed.current ? onSigned() : onClose())}
+      onSign={onSign}
+    />
   );
 }
 

@@ -416,23 +416,40 @@ describe('signing: the pre-check does not use the code, the signature does', () 
     expect(await sign(code(d, 1))).toMatchObject({ ok: false, code: 'MFA_VERIFICATION_FAILED' });
   });
 
-  it('the pre-check is limited per signer, since it answers without using the code', async () => {
+  /* Two meters bound the pre-checks, since each answers "is this right?" to
+     whoever holds the session. The per-signer rate limit caps every check (10
+     per 5 minutes: 429). And a WRONG answer counts against the account's own
+     allowance, the one sign-in and signing share (5, then locked: 423; VSR-001
+     F-27, tests/db/signing-lockout.dbtest.ts). Each case starts from a cleared
+     count so it measures its own guesses, not the earlier cases'. */
+  const clearAllowance = (m: Member) =>
+    owner.query('UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1', [m.id]);
+  const locked = async (m: Member) =>
+    (await owner.query('SELECT locked_until > now() AS locked FROM users WHERE id = $1', [m.id])).rows[0].locked === true;
+
+  it('the code pre-check is metered per signer, and a wrong code counts against the account', async () => {
     at(0);
-    // 3 checks so far (two above, one in the previous case); the limit is 10.
+    const d = members.d;
+    await clearAllowance(d);
+    // 3 checks so far (two above, one in the previous case); the rate limit is 10.
     const statuses: number[] = [];
     for (let i = 0; i < 8; i++) statuses.push((await precheck('000000')).status);
-    expect(statuses).toEqual([200, 200, 200, 200, 200, 200, 200, 429]);
+    expect(statuses).toEqual([200, 200, 200, 200, 200, 423, 423, 429]);
+    expect(await locked(d)).toBe(true);
   });
 
-  it('the password pre-check is limited per signer too, on its own budget', async () => {
+  it('the password pre-check is metered per signer too, on its own budget, and a wrong password counts', async () => {
     at(0);
+    const d = members.d;
+    await clearAllowance(d);
     const check = (password: string) =>
       request(app).post('/api/esignature/verify-password').set(bearer).send({ password });
     const first = await check(PASSWORD);
     expect(first.body).toEqual({ valid: true, mfaRequired: true });
     const statuses: number[] = [];
     for (let i = 0; i < 10; i++) statuses.push((await check('not-the-password')).status);
-    expect(statuses).toEqual([200, 200, 200, 200, 200, 200, 200, 200, 200, 429]);
+    expect(statuses).toEqual([200, 200, 200, 200, 200, 423, 423, 423, 423, 429]);
+    expect(await locked(d)).toBe(true);
   });
 });
 

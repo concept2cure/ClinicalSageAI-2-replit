@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T10:03:08.885Z",
+  "generatedAt": "2026-09-23T10:11:42.434Z",
   "git": {
-    "sha": "c104848b0f1bb334f8abd2038783effa8bf34dda",
+    "sha": "ff1ebcccebe69992aaa36528918404580c88000c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1995,11 +1995,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 280005
+        "bytes": 277720
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 242759
+        "bytes": 242912
       },
       {
         "file": "server/statistics-service.ts",
@@ -2165,7 +2165,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6482
+        "lines": 6382
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2177,7 +2177,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5275
+        "lines": 5277
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2492,10 +2492,6 @@
         "lines": 1726
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1706
-      },
-      {
         "file": "server/routes/submissions.ts",
         "lines": 1701
       },
@@ -2506,6 +2502,10 @@
       {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1693
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1689
       },
       {
         "file": "server/routes/c2c/projects.ts",

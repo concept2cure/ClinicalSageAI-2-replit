@@ -49,13 +49,15 @@ export interface SignerReverified {
 /** Why the signature was refused. `status` is the HTTP status to return. */
 export interface SignerRefused {
   ok: false;
-  status: 400 | 401;
+  status: 400 | 401 | 423;
   code:
     | 'PASSWORD_REQUIRED'
     | 'PASSWORD_VERIFICATION_FAILED'
     | 'MFA_TOKEN_REQUIRED'
     | 'MFA_VERIFICATION_FAILED'
-    | 'MFA_STATE_UNKNOWN';
+    | 'MFA_STATE_UNKNOWN'
+    | 'ACCOUNT_LOCKED'
+    | 'ACCOUNT_STATE_UNKNOWN';
   error: string;
 }
 
@@ -70,6 +72,13 @@ export interface ReverifySignerDeps {
   isMfaEnabled: (userId: number) => Promise<boolean>;
   /** Verify a TOTP/backup code for this signer. */
   verifyMfaToken: (userId: number, token: string) => Promise<boolean>;
+  /**
+   * Whether the account is locked after repeated failed attempts: the sign-in's
+   * lockout (auth-security-service), so the account has one allowance.
+   */
+  isAccountLocked: (userId: number) => Promise<boolean>;
+  /** Count one wrong factor against the account. The count may lock it. */
+  recordFailedAttempt: (userId: number) => Promise<void>;
   /** Where refusals are noted. Defaults to console.warn. */
   warn?: (message: string) => void;
 }
@@ -82,31 +91,52 @@ export interface SignerCredentials {
 const SIX_DIGITS = /^\d{6}$/;
 
 /**
- * Re-verify a signer's credentials. Returns what was verified, or why it was
- * refused — never throws for a failed factor, so a caller cannot accidentally
- * turn a refusal into a 500 and lose the distinction between "wrong password"
- * and "the server broke".
+ * The first factor, under the account's allowance: the password check every
+ * signature starts with, and the one the signing dialog runs on its own before
+ * it asks for a code (POST /api/esignature/verify-password). One implementation,
+ * so a guess counts the same wherever it is made (F-27).
  *
- * Fails closed at every branch, including the one that is easy to miss: if the
- * MFA-enrolment state cannot be READ, the signature is refused rather than
- * treated as "no second factor required". An unreachable MFA service must not
- * be a way to sign with one factor.
+ * Checks the lockout before comparing anything: a locked account's guesses are
+ * neither compared nor counted.
  */
-export async function reverifySigner(
+export async function verifySignerPassword(
   userId: number,
-  credentials: SignerCredentials,
-  deps: ReverifySignerDeps,
-): Promise<SignerReverification> {
+  password: unknown,
+  deps: Pick<
+    ReverifySignerDeps,
+    'loadPasswordHash' | 'comparePassword' | 'isAccountLocked' | 'recordFailedAttempt' | 'warn'
+  >,
+): Promise<{ ok: true } | SignerRefused> {
   const warn = deps.warn ?? ((m: string) => console.warn(m));
-  const { password, mfaToken } = credentials;
-
-  // ── First factor ──────────────────────────────────────────────────────────
   if (typeof password !== 'string' || password.length === 0) {
     return {
       ok: false,
       status: 400,
       code: 'PASSWORD_REQUIRED',
       error: 'password is required to sign (21 CFR Part 11 §11.200).',
+    };
+  }
+
+  // ── The account's allowance, before anything is compared ──────────────────
+  let locked: boolean;
+  try {
+    locked = await deps.isAccountLocked(userId);
+  } catch (err: unknown) {
+    warn(`[part11] account lockout check failed during sign: ${errText(err)}`);
+    return {
+      ok: false,
+      status: 401,
+      code: 'ACCOUNT_STATE_UNKNOWN',
+      error: 'Signature rejected: unable to verify the account (§11.200).',
+    };
+  }
+  if (locked) {
+    return {
+      ok: false,
+      status: 423,
+      code: 'ACCOUNT_LOCKED',
+      error:
+        'Signature rejected: the account is locked after repeated failed attempts. Try again later (§11.300).',
     };
   }
 
@@ -124,6 +154,7 @@ export async function reverifySigner(
   // same message as a wrong password — the distinction is not the caller's to
   // learn.
   if (!passwordVerified) {
+    await countFailure(deps, userId, warn);
     return {
       ok: false,
       status: 401,
@@ -131,6 +162,40 @@ export async function reverifySigner(
       error: 'Signature rejected: password verification failed (§11.200).',
     };
   }
+  return { ok: true };
+}
+
+/**
+ * Re-verify a signer's credentials. Returns what was verified, or why it was
+ * refused — never throws for a failed factor, so a caller cannot accidentally
+ * turn a refusal into a 500 and lose the distinction between "wrong password"
+ * and "the server broke".
+ *
+ * Fails closed at every branch, including the one that is easy to miss: if the
+ * MFA-enrolment state cannot be READ, the signature is refused rather than
+ * treated as "no second factor required". An unreachable MFA service must not
+ * be a way to sign with one factor.
+ *
+ * A wrong password or code counts against the account, and a locked account
+ * cannot sign (VSR-001 F-27). Sign-in locks an account for 30 minutes after
+ * five wrong passwords; this check neither consulted nor fed that count, so
+ * every signing endpoint was an unmetered oracle for the password, and then the
+ * code, to whoever held a session, and a locked account could still sign
+ * (tests/db/signing-lockout.dbtest.ts). §11.300(d). The count is the sign-in's
+ * own, so the account has one allowance wherever its password is guessed. A
+ * missing or malformed factor is not a guess and is not counted.
+ */
+export async function reverifySigner(
+  userId: number,
+  credentials: SignerCredentials,
+  deps: ReverifySignerDeps,
+): Promise<SignerReverification> {
+  const warn = deps.warn ?? ((m: string) => console.warn(m));
+  const { password, mfaToken } = credentials;
+
+  // ── First factor ──────────────────────────────────────────────────────────
+  const first = await verifySignerPassword(userId, password, deps);
+  if (!first.ok) return first;
 
   // ── Second factor, when enrolled ──────────────────────────────────────────
   let mfaRequired: boolean;
@@ -171,6 +236,7 @@ export async function reverifySigner(
     secondFactorVerified = false;
   }
   if (!secondFactorVerified) {
+    await countFailure(deps, userId, warn);
     return {
       ok: false,
       status: 401,
@@ -181,6 +247,19 @@ export async function reverifySigner(
   }
 
   return { ok: true, authenticationMethod: 'password+mfa', secondFactorVerified: true };
+}
+
+/** Count a wrong factor. A failure to count is noted; the refusal stands either way. */
+async function countFailure(
+  deps: Pick<ReverifySignerDeps, 'recordFailedAttempt'>,
+  userId: number,
+  warn: (message: string) => void,
+): Promise<void> {
+  try {
+    await deps.recordFailedAttempt(userId);
+  } catch (err: unknown) {
+    warn(`[part11] failed signing attempt was not counted: ${errText(err)}`);
+  }
 }
 
 function errText(err: unknown): string {

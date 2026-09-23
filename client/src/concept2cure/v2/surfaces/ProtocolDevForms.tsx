@@ -11,12 +11,14 @@
  * Nothing here is optimistic: the caller re-reads GET /api/protocol-dev after
  * a confirmed write, so the screen shows the record and not the form.
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { C2CForm, type C2CFormConfig, type C2CFormField } from '../C2CForm';
+import { useAuthUser } from '@/services/portal/authService';
 import {
-  addBudgetItem, addScheduleVisit, addSoaAssessment, optionalNumber,
+  addBudgetItem, addScheduleVisit, addSoaAssessment, listReviewerCandidates, optionalNumber,
   removeScheduleVisit, removeSoaAssessment, renameScheduleVisit, requestProtocolReview,
   setBudgetParams, startProtocolDocument, updateProtocolHeader, updateProtocolRisk,
+  type ReviewerCandidate,
 } from './ProtocolDevWrites';
 
 export type PdevFormKind =
@@ -140,7 +142,9 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
     sub: 'Assigns a reviewer to this protocol. Recorded as a governed action.',
     governed: true, submitLabel: 'Request review',
     fields: [
-      { key: 'reviewerName', label: 'Reviewer', type: 'text', required: true, placeholder: 'The person who will review this protocol' },
+      // Options and help text come from the member list (reviewerFieldFor).
+      { key: 'reviewerUserId', label: 'Reviewer account', type: 'select', options: [] },
+      { key: 'reviewerName', label: 'Reviewer name', type: 'text', placeholder: 'Defaults to the account’s name; required when there is no account' },
       { key: 'role', label: 'Review role', type: 'select', options: REVIEW_ROLE, default: 'scientific', half: true },
       { key: 'dueDate', label: 'Due date', type: 'date', half: true },
       REASON,
@@ -180,13 +184,49 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
   },
 };
 
+/** Who a review can be assigned to, as far as this session could find out. */
+export type ReviewerChoice =
+  | { state: 'loading' }
+  | { state: 'ready'; members: ReviewerCandidate[] }
+  | { state: 'failed'; message: string }
+  | { state: 'unavailable' };
+
+const NO_ACCOUNT = { value: '', label: 'No account here: their decision is recorded on their behalf' };
+
+const candidateLabel = (m: ReviewerCandidate) => `${m.name || m.email} · ${m.role}`;
+
+/** The reviewer-account select for the member list's current state. It never
+ *  shows a failed read as an organization with no one to assign. */
+function reviewerFieldFor(field: C2CFormField, choice: ReviewerChoice): C2CFormField {
+  const signsOwn = 'The assigned account signs its own review, as review or approval.';
+  switch (choice.state) {
+    case 'ready':
+      return {
+        ...field,
+        options: [NO_ACCOUNT, ...choice.members.map((m) => ({ value: String(m.id), label: candidateLabel(m) }))],
+        desc: choice.members.length
+          ? `${signsOwn} Without an account, someone takes responsibility for recording the decision.`
+          : 'No member of this organization can sign a review, so name the reviewer below; their decision is recorded on their behalf.',
+      };
+    case 'failed':
+      return { ...field, options: [NO_ACCOUNT], desc: `The organization’s members could not be loaded (${choice.message}), so only a reviewer without an account can be named here.` };
+    case 'unavailable':
+      return { ...field, options: [NO_ACCOUNT], desc: 'This session has no organization, so only a reviewer without an account can be named here.' };
+    default:
+      return { ...field, options: [NO_ACCOUNT], desc: 'Loading the organization’s members…' };
+  }
+}
+
 /** The drawer for `kind`, opened on the row it acts on. */
-export function configFor(kind: PdevFormKind, target?: PdevFormTarget): C2CFormConfig {
+export function configFor(kind: PdevFormKind, target?: PdevFormTarget, reviewers?: ReviewerChoice): C2CFormConfig {
   const base = FORMS[kind];
   const defaults = target?.defaults;
-  const fields = defaults
+  const withDefaults = defaults
     ? base.fields.map((f) => (defaults[f.key] == null ? f : { ...f, default: defaults[f.key] }))
     : base.fields;
+  const fields = kind === 'review-request'
+    ? withDefaults.map((f) => (f.key === 'reviewerUserId' ? reviewerFieldFor(f, reviewers ?? { state: 'unavailable' }) : f))
+    : withDefaults;
   const sub = target?.label ? `${target.label} — ${base.sub ?? ''}`.trim() : base.sub;
   return { ...base, sub, fields };
 }
@@ -244,9 +284,14 @@ async function submitRegister(
         indirectRatePct: optionalNumber(v.indirectRatePct), reason: v.reason,
       });
       return true;
-    case 'review-request':
-      await requestProtocolReview(documentId, { reviewerName: v.reviewerName, role: v.role, dueDate: v.dueDate, reason: v.reason });
+    case 'review-request': {
+      const reviewerName = (v.reviewerName ?? '').trim();
+      if (!reviewerName) throw new Error('Name the reviewer, or choose their account. Nothing was recorded.');
+      await requestProtocolReview(documentId, {
+        reviewerName, reviewerUserId: optionalNumber(v.reviewerUserId), role: v.role, dueDate: v.dueDate, reason: v.reason,
+      });
       return true;
+    }
     case 'cover-page':
       await updateProtocolHeader(documentId, { sponsor: v.sponsor, principalInvestigator: v.principalInvestigator, reason: v.reason });
       return true;
@@ -286,19 +331,44 @@ export interface ProtocolDevFormProps {
   onSignRequest?: (kind: 'review-disposition', target: PdevFormTarget | undefined, values: Record<string, string>) => void;
 }
 
+/** The members a review can be assigned to; read only while that drawer is open. */
+function useReviewerChoice(active: boolean): ReviewerChoice {
+  const organizationId = useAuthUser()?.organizationId;
+  const [choice, setChoice] = useState<ReviewerChoice>({ state: 'loading' });
+  useEffect(() => {
+    if (!active) return undefined;
+    if (!organizationId) { setChoice({ state: 'unavailable' }); return undefined; }
+    let live = true;
+    setChoice({ state: 'loading' });
+    listReviewerCandidates(organizationId).then(
+      (members) => { if (live) setChoice({ state: 'ready', members }); },
+      (e: unknown) => { if (live) setChoice({ state: 'failed', message: e instanceof Error ? e.message : String(e) }); },
+    );
+    return () => { live = false; };
+  }, [active, organizationId]);
+  return choice;
+}
+
 export function ProtocolDevForm({ kind, documentId, target, onCancel, onDone, onError, onSignRequest }: ProtocolDevFormProps) {
+  const reviewers = useReviewerChoice(kind === 'review-request');
   const submit = async (v: Record<string, string>) => {
     if (kind === 'review-disposition') {
       if (onSignRequest) onSignRequest(kind, target, v);
       else onError('A disposition is an electronic signature and cannot be recorded from here. Nothing was recorded.');
       return;
     }
+    let values = v;
+    if (kind === 'review-request' && v.reviewerUserId && !(v.reviewerName ?? '').trim() && reviewers.state === 'ready') {
+      // A chosen account supplies the name the review is listed under.
+      const m = reviewers.members.find((x) => String(x.id) === v.reviewerUserId);
+      if (m) values = { ...v, reviewerName: m.name || m.email };
+    }
     try {
-      await submitPdevForm(kind, documentId, target, v);
+      await submitPdevForm(kind, documentId, target, values);
       onDone(kind);
     } catch (e) {
       onError(e instanceof Error ? e.message : String(e));
     }
   };
-  return <C2CForm config={configFor(kind, target)} onCancel={onCancel} onSubmit={submit} />;
+  return <C2CForm config={configFor(kind, target, reviewers)} onCancel={onCancel} onSubmit={submit} />;
 }
