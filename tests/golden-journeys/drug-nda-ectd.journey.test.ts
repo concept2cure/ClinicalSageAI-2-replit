@@ -250,10 +250,13 @@ beforeAll(async () => {
     [ORG, OTHER_ORG],
   );
   // Leaf targets: one document in each org (the cross-tenant probe needs both).
+  // The journey freezes a package holding document 100, so it is approved: since
+  // cd76c7b67 (2026-09-23) freeze refuses a leaf document transmit would refuse,
+  // and the column default is 'draft'.
   await jdb.pool.query(
-    `INSERT INTO coauthor_documents (id, organization_id, title, content, module_number) VALUES
-       (100,$1,'Clinical Overview','<h1>Clinical Overview</h1><p>Benefit-risk narrative.</p>','2.5'),
-       (300,$2,'Other-Tenant Secret','<p>must never be placed</p>','2.5')`,
+    `INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
+       (100,$1,'Clinical Overview','<h1>Clinical Overview</h1><p>Benefit-risk narrative.</p>','2.5','approved'),
+       (300,$2,'Other-Tenant Secret','<p>must never be placed</p>','2.5','draft')`,
     [ORG, OTHER_ORG],
   );
 
