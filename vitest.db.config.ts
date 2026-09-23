@@ -19,6 +19,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   resolve: {
+    // esbuild's resolution order — the one scripts/build-server.mjs ships with
+    // (esbuild's default resolveExtensions), NOT Vite's, which tries .js before
+    // .ts. Three extensionless imports in server/ name a .js/.ts pair whose two
+    // halves genuinely differ: server/db (the .js is a legacy wrapper whose
+    // query() retries every failure three times with backoff; production's
+    // db.ts does not), server/utils/logger and server/middleware/auth. Under
+    // Vite's order this project exercised the .js halves, which production
+    // never loads — so a refusal production reports once was retried here, and
+    // a real-database test of "a failure is logged once" took 52 s of retries.
+    // The suite's whole premise is "what production runs", so it resolves the
+    // way production does. Found 2026-09-22 (tests/db/entitlement-grants-
+    // resolution.dbtest.ts, tests/db/master-licensing-console.dbtest.ts).
+    extensions: ['.tsx', '.ts', '.jsx', '.js', '.css', '.json', '.mjs', '.mts'],
     alias: [
       // server/middleware/auth WAS a live .js/.ts shadow pair (KNOWN_ISSUES_LEDGER
       // M-5): Vite's extension order preferred the legacy auth.js while tsx and

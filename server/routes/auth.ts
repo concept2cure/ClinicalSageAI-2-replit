@@ -96,6 +96,7 @@ import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 import { config } from '../config/environment';
 import { isDevAuthAllowed, devAuthDenialReason } from '../auth/dev-auth-policy';
 import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
+import { runWithTenantScope } from '../db/tenantStore';
 
 const router = Router();
 
@@ -906,37 +907,65 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       return { org, user };
     });
 
-    // Launch catalog on by default (docs/LAUNCH_DEFINITION_OF_DONE.md, D2).
+    // Launch catalog on by default (docs/LAUNCH_DEFINITION_OF_DONE.md, D2), and
+    // the governed industry profile — both under the NEW organisation's own
+    // tenant scope.
+    //
+    // Until 2026-09-22 both ran under the pre-auth scope every /api/auth request
+    // carries (tenant '0', no role). module_subscriptions and
+    // organization_industry_profiles are RLS-enabled and FORCED, so the policy's
+    // WITH CHECK refused every row: a self-serve organisation started with 0 of
+    // 21 launch modules and no industry profile, the failures were logged per
+    // module and as a warn, and signup answered 201. Proven on a deploy-shaped
+    // database as the non-superuser runtime role by
+    // tests/db/signup-launch-catalog.dbtest.ts, which drives this handler.
+    //
+    // The scope is the one establishRequestTenantScope would build for this
+    // organisation's admin on their next request — least privilege, never the
+    // system scope: nothing here needs to reach any other tenant.
+    //
     // Outside the transaction on purpose: the grant writer holds its own
-    // connection, and an organisation that fails to provision must still
-    // exist so an administrator can provision it by hand. Failures are
-    // logged by the service and returned; they do not fail the signup.
-    await provisionLaunchModules(result.org.id, { actorEmail: null });
+    // connection, and an organisation that fails to provision must still exist
+    // so an administrator can provision it by hand. A failure does not fail the
+    // signup; provisionLaunchModules logs it as one error-level line with the
+    // remediation command.
+    await runWithTenantScope(
+      {
+        tenantId: String(result.org.id),
+        orgUuid: result.org.uuid ?? null,
+        role: 'admin',
+        source: 'request',
+        caller: 'POST /api/auth/signup (new-organisation provisioning)',
+      },
+      async () => {
+        await provisionLaunchModules(result.org.id, { actorEmail: null });
 
-    // Seed the governed org industry profile from the signup signals so the
-    // effective-context resolver has a real organization layer from day one.
-    // Best-effort: a failure here must never fail signup — the resolver
-    // fails open to biopharma defaults when the profile row is absent.
-    try {
-      await db
-        .insert(organizationIndustryProfiles)
-        .values({
-          organizationId: result.org.id,
-          primaryIndustry: primaryIndustryForIndustryMode(industryMode),
-          mdxSpecialization: mdxSpecialization ?? null,
-          defaultMarkets: defaultMarkets ?? [],
-          defaultPathways: pathwaysForUseCases(primaryUseCases),
-          // default_approval_rigor left null — the resolver derives a
-          // per-industry default (see defaultRigorForPrimaryIndustry).
-          updatedBy: result.user.id,
-        })
-        .onConflictDoNothing({ target: organizationIndustryProfiles.organizationId });
-    } catch (err) {
-      logger.warn('Org industry profile seed failed (non-fatal)', {
-        organizationId: result.org.id,
-        err: err instanceof Error ? err.message : String(err),
-      });
-    }
+        // Seed the governed org industry profile from the signup signals so the
+        // effective-context resolver has a real organization layer from day one.
+        // Best-effort: a failure here must never fail signup — the resolver
+        // fails open to biopharma defaults when the profile row is absent.
+        try {
+          await db
+            .insert(organizationIndustryProfiles)
+            .values({
+              organizationId: result.org.id,
+              primaryIndustry: primaryIndustryForIndustryMode(industryMode),
+              mdxSpecialization: mdxSpecialization ?? null,
+              defaultMarkets: defaultMarkets ?? [],
+              defaultPathways: pathwaysForUseCases(primaryUseCases),
+              // default_approval_rigor left null — the resolver derives a
+              // per-industry default (see defaultRigorForPrimaryIndustry).
+              updatedBy: result.user.id,
+            })
+            .onConflictDoNothing({ target: organizationIndustryProfiles.organizationId });
+        } catch (err) {
+          logger.warn('Org industry profile seed failed (non-fatal)', {
+            organizationId: result.org.id,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        }
+      },
+    );
 
     const token = jwt.sign(
       {
