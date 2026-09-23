@@ -107,7 +107,7 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // anchor intake writes when the organisation has exactly one client
     // workspace, and signup creates none. In every organisation signup creates,
     // the Orchestration board found no program and the Inconsistency board
-    // refused the program's id (VSR-001 §14.3, decided §15). Their code stays;
+    // refused the program's id (VSR-001 §14.3, decided §16). Their code stays;
     // they return when the review and the scan read the program spine.
     surfaces: ['dispatch-readiness'],
     modules: ['dispatch-readiness'],

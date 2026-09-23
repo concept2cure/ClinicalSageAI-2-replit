@@ -16,7 +16,7 @@
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | Drafted from `server/services/ectd/assess-dispatch-readiness.ts` (via `server/routes/submissions.ts:1590`), `server/routes/submissions.ts:1040-1066` (dispatch QC), `server/routes/orchestration.ts`, `server/services/orchestration/templates/submission-readiness-review.ts`, `server/routes/assumption-decision-contradiction.ts` and the `DispatchReadiness`, `Orchestration`, `Inconsistency` surfaces. |
 | 0.2 | 2026-09-23 | W3 | URS-SRDY-005 requires the review to state what it read, and is high risk. The review had completed, for a program none of whose data it could read, with "No critical issues found", and the requirement asked only that the execution be readable (VSR-001 F-23). |
-| 0.3 | 2026-09-23 | W3 | Launch scope decided (VSR-001 §15): the app is the dispatch gate; the Orchestration and Inconsistency boards are not in this release, because both read the integer project spine that no program in an organisation created by signup reaches. URS-SRDY-008 now requires them to be locked by launch scope. URS-SRDY-006 requires a scan never to report a project it cannot read as clean, and is high risk (F-25). |
+| 0.3 | 2026-09-23 | W3 | Launch scope decided (VSR-001 §16): the app is the dispatch gate; the Orchestration and Inconsistency boards are not in this release, because both read the integer project spine that no program in an organisation created by signup reaches. URS-SRDY-008 now requires them to be locked by launch scope. URS-SRDY-006 requires a scan never to report a project it cannot read as clean, and is high risk (F-25). |
 
 ## 1. Intended use
 
