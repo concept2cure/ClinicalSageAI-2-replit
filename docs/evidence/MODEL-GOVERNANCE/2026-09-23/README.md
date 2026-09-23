@@ -305,6 +305,10 @@ Found on the way, for the owner:
   of 125 lines.
 - New untracked files linted directly: clean.
 - The broad suite is recorded in `after/broad-suite.txt`.
+- On the pushed tree after all three batches (`after/final-suite-pushed.txt`):
+  1,817 test files and 19,519 tests passed, 35 skipped, 0 failed. `tsc` exit 0.
+  The pin gate and the PQ caller gate are clean. The ESLint ratchet is net −2
+  for batch three.
 
 ## Decisions that belong to the owner
 
