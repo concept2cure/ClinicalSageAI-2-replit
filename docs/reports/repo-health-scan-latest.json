@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T11:21:55.637Z",
+  "generatedAt": "2026-09-23T15:20:50.821Z",
   "git": {
-    "sha": "34fe0a37529bad35a9d88fff8ef7507b023117e6",
+    "sha": "6ef9ee220ba81132faf2149d2b48ecdc695de452",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1999,7 +1999,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 202599
+        "bytes": 207159
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2011,15 +2011,15 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 172853
+        "bytes": 174008
+      },
+      {
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 159607
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
         "bytes": 157277
-      },
-      {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 156838
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2172,16 +2172,16 @@
         "lines": 5425
       },
       {
+        "file": "server/services/ana-ri/command-executor.ts",
+        "lines": 5299
+      },
+      {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
         "lines": 5277
       },
       {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5211
-      },
-      {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4475
+        "lines": 4474
       },
       {
         "file": "server/storage.ts",
@@ -2189,7 +2189,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3636
+        "lines": 3685
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2497,7 +2497,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1701
+        "lines": 1723
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
