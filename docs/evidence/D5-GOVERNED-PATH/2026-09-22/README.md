@@ -571,22 +571,82 @@ entry removed: red against the HEAD route, 0 → 9 (`t-gate-red.txt`); green
 against the fix (`t-gate-green.txt`). 115/115 across the 14 task suites. Scoped
 typecheck: no errors in the changed files.
 
-**Open, next.**
+### Follow-up: the cascade, the minor findings, and the second task router
 
-- The completion cascade (`task-side-effects.ts`) unblocks dependents after
-  COMMIT, on the pool, with no ledger row. A cascade error after a committed
-  completion is also reported as "Failed to update task".
-- The reviewers' minor findings:
-  - the dependency route takes its locks in the opposite order from PATCH;
-  - a non-audit failure part-way through bulk-create or auto-assign is reported
-    as a plain failure;
-  - notify's connection is acquired outside its try;
-  - auto-assign can assign an archived task;
-  - `actorContext` duplicates `governedActorId`;
-  - the archive message is wrong over 1000 characters;
-  - `autoAssignCreated` treats any 2xx as assigned.
-- `unifiedTasks.routes.ts` writes the same table with no role gate and a
-  best-effort ledger (3 baselined sites), so T2 holds for this router only.
+Each item was written test-first and closed.
+
+- **The completion cascade is part of the completion.**
+  `cascadeUnblockOnCompletionInTx` (in `task-side-effects.ts`) runs on the
+  completion's own transaction. It reads and updates the dependents there and
+  returns one ledger row for each dependent whose record changed, whether its
+  status moved or only its `blockedBy[]`. The rows are written after the
+  completion's own row. The notices go out after COMMIT.
+  - Archived dependents are out of its reach.
+  - A failure anywhere in the cascade rolls the completion back.
+  - A COMMIT whose result never arrived is answered 500 `OUTCOME_UNKNOWN`
+    ("whether this change was saved is unknown"). It is never reported as a
+    plain failure.
+- **The reviewers' minor findings:**
+  - The dependency route takes its locks in the same order as PATCH and
+    auto-assign: row locks first, the audit-chain lock last.
+  - A failure part-way through bulk-create or auto-assign reports how many tasks
+    were saved and recorded.
+  - Auto-assign cannot assign an archived task.
+  - `actorContext` is gone. One `governedWriter`, plus `auditWriteFailed` and
+    `outcomeUnknown`, live in `services/tasking/governed-task-write.ts`, and
+    both task routers import them.
+  - A reason over 1000 characters is refused with a sentence that says so.
+  - `autoAssignCreated` reads the answer, not just the status. A 200 that left
+    tasks out says how many were not assigned.
+- **`/api/regulatory/tasks` (`unifiedTasks.routes.ts`) meets the same rules.**
+  - `requireEditorAccess` gates every write.
+  - Each write and its ledger row run on one request-scoped transaction
+    (`requestDb(req).transaction`). This includes the status change and the
+    cascade it triggers.
+  - The router's `ci:discarded-audit-write` baseline entry (3) is removed.
+  T2 now holds for both routers.
+- **Module sync from Vault answers 501 `SYNC_NOT_AVAILABLE`.** Its source, the
+  legacy `document_approvals` table, has no organization column, and nothing on
+  any applier creates it. A sync would have imported every tenant's pending
+  approvals into the caller's organization. The other module syncs are now
+  scoped to the caller's organization, and the actor who ran the sync is
+  recorded as each task's creator. No client calls the Vault sync. A task is
+  still created through `POST /api/regulatory/tasks/unified`.
+- **The editor's Review tasks panel.** An `OUTCOME_UNKNOWN`, or a gateway 502,
+  503 or 504, on a transition says the outcome is unknown and re-reads the
+  task list. It is no longer shown as a failure over a change that may have
+  landed.
+- **A regression caught before it shipped.** A refactor of the router's
+  imports dropped `governedActorId`, which `GET /my-work` and `POST /messages`
+  still use. Both would have answered 500 with a `ReferenceError`. Lint caught
+  it (`no-undef`). `task-management-session-reads.test.ts` was red against the
+  broken import and is green with it restored: 401 without a session.
+
+**Proof.**
+- The eight task suites, run against the HEAD files: red, 101 failed of 162
+  (`t2-red.txt`). Against the fix: green, 162/162 (`t2-green.txt`).
+- `ci:discarded-audit-write` with the `unifiedTasks.routes.ts` entry removed:
+  red against the HEAD router, 0 → 3 at lines 108, 269 and 448
+  (`t2-gate-red.txt`). Green against the fix, with 148 baselined across 70
+  files (`t2-gate-green.txt`).
+- 716 tests across the 42 touched and adjacent suites pass.
+- `ci:requestdb-coverage --strict-no-regression`: 229/229.
+- Scoped typecheck: no errors in the changed files.
+
+**Still open.**
+- The AnA command executor calls the cascade with no transaction, so the
+  dependents it unblocks there have no ledger row.
+- `cross_module_task_links.updated_at` is declared in the Drizzle model, but no
+  migration creates it. `POST /api/regulatory/tasks/:id/link` therefore answers
+  500 on a real database. It fails honestly and records nothing. The PGlite
+  suite adds the column itself.
+- A dependency link racing a completion of the same pair can deadlock.
+  Postgres aborts one side (40P01), which rolls back and is answered as a
+  failure.
+- The request-scoped transaction is exercised through a mock of `requestDb`.
+  The real `LazyRequestDbClient` path (BEGIN and COMMIT on the request's own
+  connection) rests on Drizzle's node-postgres driver, which the release guard
+  in `lazyRequestDbClient.ts` backs up.
 
 ## Known limits
 

@@ -1,0 +1,13 @@
+tree: b6d7a7d7b~1 (before the fix)
+Terraform v1.9.8
+
+Error: Invalid for_each argument
+
+  on ../../modules/secrets/main.tf line 4, in resource "aws_secretsmanager_secret" "this":
+   4:   for_each = var.secrets
+    ├────────────────
+    │ var.secrets has a sensitive value
+
+Sensitive values, or values derived from sensitive values, cannot be used as
+for_each arguments. If used, the sensitive value could be exposed as a
+resource instance key.

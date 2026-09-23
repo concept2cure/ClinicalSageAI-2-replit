@@ -33,7 +33,6 @@
     "server/routes/reg-change.routes.ts": 1,
     "server/routes/safety-narrative.ts": 1,
     "server/routes/se-matrix.ts": 4,
-    "server/routes/unifiedTasks.routes.ts": 3,
     "server/services/ai-actions/handlers/promote-artifact.ts": 1,
     "server/services/ana-ri/command-executor.ts": 2,
     "server/services/ana/ana-input-guard.ts": 1,
