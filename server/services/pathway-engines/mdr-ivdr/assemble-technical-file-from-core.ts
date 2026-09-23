@@ -44,12 +44,15 @@ import {
 } from '../../ectd/leaf-source-resolver';
 import { coreLeafFromSubmissionLeaf, type LeafFileResolver, type CoreLeaf } from '../../ectd/core-to-packager';
 import { assembleTechDoc, type EuRegulation } from './tech-doc-assembler';
-import { buildTechnicalFileManifest, type TechnicalFileManifest } from '../technical-file-manifest';
+import { buildTechnicalFileManifest } from '../technical-file-manifest';
 import {
   buildTechnicalFilePlan,
   materializeTechnicalFile,
+  techDocInputLeaves,
+  type ReconciledTechnicalFileManifest,
   type TechnicalFileBundle,
   type TechnicalFilePlan,
+  type TechnicalFileUnmappedLeaf,
 } from './technical-file-packager';
 import {
   loadGovernedDeviceSections,
@@ -93,8 +96,29 @@ export interface AssembleTechnicalFileResult {
   unfinalized: number;
   unfinalizedSections: Array<{ sectionCode: string; status: string }>;
   /**
-   * Every required Annex II/III slot has a source leaf AND every leaf is in
-   * the ZIP. False when the plan left a leaf out (`skipped`).
+   * Leaves no slot of this regulation claims. They also appear in `skipped` as
+   * 'unmapped'. 2026-09-23 (W5/D7, round-2 skeptic, second pass): each is
+   * marked `inTechnicalDocumentation`. An Annex II/III key no slot claims is
+   * technical documentation the ZIP does not hold and makes `ready` false; the
+   * eu-mdr / eu-ivdr outlines' IV.* conformity / registration sections are
+   * reported and do not count (they are outside the Annex II/III technical
+   * documentation — see tech-doc-assembler.ts). 2026-09-23 (W5/D7, residual
+   * repair): the IVDR outline's II.6.3 / II.6.4 / II.6.5 now have slots; the
+   * example this note gave (II.6.3 unclaimed) no longer occurs.
+   */
+  unmappedLeaves: TechnicalFileUnmappedLeaf[];
+  /**
+   * 2026-09-23 (W5/D7, final pass): placed sources a slot matched by title
+   * alone (ReconciledTechnicalFileManifest.matchedByTitleOnly — the same list
+   * as in manifest.json and the audit row). Reported; does not change `ready`.
+   */
+  matchedByTitleOnly: ReconciledTechnicalFileManifest['matchedByTitleOnly'];
+  /**
+   * The plan's reconciled readiness (buildTechnicalFilePlan — the one rule):
+   * every required Annex II/III slot has a source placed in the ZIP, no
+   * required slot lost a source, no leaf source went unresolved, and no
+   * Annex II/III leaf went unmapped. The same value is in the ZIP's
+   * manifest.json and the audit row.
    */
   ready: boolean;
 }
@@ -142,27 +166,38 @@ interface PackageTechnicalFileParams {
  */
 async function packageTechnicalFile(
   params: PackageTechnicalFileParams,
-): Promise<{ manifest: TechnicalFileManifest; plan: TechnicalFilePlan; bundle: TechnicalFileBundle; ready: boolean }> {
+): Promise<{ manifest: ReconciledTechnicalFileManifest; plan: TechnicalFilePlan; bundle: TechnicalFileBundle; ready: boolean }> {
   const { leaves, regulation, organizationId, userId, unresolvedLeaves, materialized } = params;
 
-  const techDocResult = assembleTechDoc({
-    regulation,
-    leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, documentType: l.documentType ?? undefined })),
-  });
+  // 2026-09-23 (W5/D7, residual repair): the leaves are projected through the
+  // ONE CoreLeaf → tech-doc input (techDocInputLeaves) that buildTechnicalFilePlan
+  // also uses, so the plan places, per entry, exactly the leaves this projection
+  // matched — by leaf, not by re-finding a section-code string.
+  const techDocResult = assembleTechDoc({ regulation, leaves: techDocInputLeaves(leaves) });
   const manifest = buildTechnicalFileManifest(techDocResult, {
     productName: params.productName,
     manufacturer: params.manufacturer,
   });
 
-  const plan = buildTechnicalFilePlan({ manifest, leaves, resolveFile: params.resolveFile });
-  const bundle = await materializeTechnicalFile(plan, { outputDir: params.outputDir, applicationId: params.applicationId });
-
   // 2026-09-23 (W5/D7, round-2 review): `ready` was manifest.ready — slot
   // presence, decided from the leaves BEFORE the plan resolved them. A leaf
   // placed in a required slot whose source did not resolve was left out of the
-  // ZIP (plan.skipped) while the response still said ready: true. A technical
-  // file that left a leaf out is not ready.
-  const ready = manifest.ready && plan.skipped.length === 0;
+  // ZIP while the response still said ready: true.
+  // 2026-09-23 (W5/D7, round-2 skeptic): the first fix, `manifest.ready &&
+  // plan.skipped.length === 0`, counted leaves no Annex slot claims (skipped
+  // as 'unmapped' — the eu-mdr outline's mandatory IV.* sections) and so
+  // refused every complete MDR program; and the ZIP's manifest.json still said
+  // ready: true with the CER 'present'. Readiness is now the plan's reconciled
+  // manifest (the one rule, in buildTechnicalFilePlan): required-slot sources,
+  // unresolved leaves and unmapped Annex II/III leaves count; unmapped IV.*
+  // leaves are reported only (second pass, same date: an unmapped IVDR II.6.3
+  // leaf had been reported only, and two same-code leaves in one slot placed
+  // the first twice). The ZIP, the result and the audit row carry one value.
+  // (Residual repair, same date: a slot's leaves are carried by identity, so a
+  // same-code leaf another slot matched can no longer fill this one.)
+  const plan = buildTechnicalFilePlan({ manifest, leaves, resolveFile: params.resolveFile, unresolvedLeaves });
+  const bundle = await materializeTechnicalFile(plan, { outputDir: params.outputDir, applicationId: params.applicationId });
+  const ready = plan.manifest.ready;
 
   if (unresolvedLeaves.length > 0) {
     logger.warn('Technical-file assemble could not materialize some leaf sources (not dropped silently)', {
@@ -191,6 +226,12 @@ async function packageTechnicalFile(
       sizeBytes: bundle.sizeBytes,
       skipped: plan.skipped.length,
       unresolved: unresolvedLeaves.length,
+      unmappedLeaves: plan.unmappedLeaves.map((u) => u.source),
+      // 2026-09-23 (W5/D7, round-2 skeptic, second pass): the unmapped leaves
+      // that are Annex II/III technical documentation and made ready false.
+      unmappedTechnicalDocumentation: plan.unmappedLeaves.filter((u) => u.inTechnicalDocumentation).map((u) => u.source),
+      // 2026-09-23 (W5/D7, final pass): placements that rest on a title alone.
+      matchedByTitleOnly: plan.manifest.matchedByTitleOnly,
       ...params.extraAudit,
     },
   });
@@ -204,7 +245,7 @@ async function packageTechnicalFile(
     unresolved: unresolvedLeaves.length,
   });
 
-  return { manifest, plan, bundle, ready };
+  return { manifest: plan.manifest, plan, bundle, ready };
 }
 
 /**
@@ -308,6 +349,8 @@ export async function assembleTechnicalFileFromCore(
       unresolvedLeaves,
       unfinalized,
       unfinalizedSections,
+      unmappedLeaves: plan.unmappedLeaves,
+      matchedByTitleOnly: plan.manifest.matchedByTitleOnly,
       ready,
     };
   } finally {
@@ -340,11 +383,17 @@ export interface AssembleTechnicalFileFromProgramResult {
   materialized: number;
   /** Authored sections projected into leaves (empty sections are not leaves). */
   leafCount: number;
-  manifest: TechnicalFileManifest;
+  /** The manifest.json written into the ZIP (reconciled with the plan). */
+  manifest: ReconciledTechnicalFileManifest;
   skipped: Array<{ sectionId: string; source: string; reason: string }>;
   unresolvedLeaves: UnresolvedLeaf[];
   unfinalized: number;
   unfinalizedSections: Array<{ sectionCode: string; status: string }>;
+  /** See AssembleTechnicalFileResult.unmappedLeaves. */
+  unmappedLeaves: TechnicalFileUnmappedLeaf[];
+  /** See AssembleTechnicalFileResult.matchedByTitleOnly. */
+  matchedByTitleOnly: ReconciledTechnicalFileManifest['matchedByTitleOnly'];
+  /** See AssembleTechnicalFileResult.ready — the same value as manifest.ready. */
   ready: boolean;
 }
 
@@ -457,6 +506,8 @@ export async function assembleTechnicalFileFromProgram(
       unresolvedLeaves,
       unfinalized,
       unfinalizedSections,
+      unmappedLeaves: plan.unmappedLeaves,
+      matchedByTitleOnly: plan.manifest.matchedByTitleOnly,
       ready,
     };
   } finally {
