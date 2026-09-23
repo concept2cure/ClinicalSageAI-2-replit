@@ -444,6 +444,52 @@ describe('governed freeze — the real e-sign chain, never bypassed', () => {
     // The refused credential does not stay in the field: a retry re-enters it.
     expect((screen.getByLabelText(/Password/) as HTMLInputElement).value).toBe('');
   });
+  // The server re-verifies the second factor whenever the signer has one
+  // enrolled (§11.200; POST /api/c2c/actions/sign refuses REAUTH_TOTP_REQUIRED).
+  // The modal must therefore ask for the code before it sends anything — a
+  // signer with an authenticator must never be sent into a refusal they have no
+  // field to answer.
+  it('asks an MFA-enrolled signer for the code and forwards it with the sign request', async () => {
+    const calls: Array<{ method: string; url: string; body?: unknown }> = [];
+    mockApi((method, url, body) => {
+      if (method === 'POST' && (url === '/api/c2c/actions/sign' || url === '/api/submissions/sequences/21/freeze')) {
+        calls.push({ method, url, body });
+      }
+      if (method === 'POST' && url === '/api/c2c/actions/sign') {
+        return { ok: true, status: 200, json: async () => signBody };
+      }
+      if (method === 'POST' && url === '/api/submissions/sequences/21/freeze') {
+        return { ok: true, status: 200, json: async () => ({ ...SEQS[0], status: 'frozen' }) };
+      }
+      return undefined;
+    });
+    verifyPassword.mockResolvedValue({ valid: true, mfaRequired: true } as never);
+    render(<SubmissionCenter {...props()} />);
+    await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
+    await openWorkspace('Sequences');
+    fireEvent.click((await screen.findAllByRole('button', { name: /Frozen/ }))[0]);
+    fireEvent.change(await screen.findByLabelText('Reason for this action'), {
+      target: { value: 'Locking sequence 0000 for FDA filing.' },
+    });
+    fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'hunter22' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign and commit/ }));
+
+    // The code is asked for; nothing has been sent and nothing signed.
+    const code = await screen.findByLabelText(/Authenticator code/);
+    expect(calls).toHaveLength(0);
+    expect(document.body.textContent).not.toContain('Signature applied');
+
+    fireEvent.change(code, { target: { value: '246810' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sign and commit/ }));
+
+    await waitFor(() => expect(document.body.textContent).toContain('Signature applied'));
+    expect(verifyMfa).toHaveBeenCalledWith('246810');
+    expect(calls[0]).toMatchObject({
+      url: '/api/c2c/actions/sign',
+      body: { reauth: { password: 'hunter22', totp: '246810' } },
+    });
+    verifyPassword.mockResolvedValue({ valid: true });
+  });
 });
 
 describe('dispatch workspace — the server gate, verbatim', () => {
