@@ -285,7 +285,72 @@ connection. Both handlers that open transactions on this client (`governedScoped
 and the QMP plan writes) commit before they respond, so a completed request is
 unaffected.
 
-## T1–T4, P2, P3
+## P2: quality-management plans
+
+**The defect.** A QMP sets the gates governed documents are validated against.
+Creating, activating (any change) or deleting one was a bare Drizzle write, with
+no reason and no ledger row. One click activated a plan, and nothing recorded
+who did it.
+
+**The fix** (`server/routes/quality-management-api.ts`, `QmpWorkspace.tsx`),
+written test-first, then read by three independent reviewers and repaired:
+
+- **The governed path.** A reason (at least 8 characters, trimmed) is required.
+  `BEGIN` → tenant variables → plan write → `recordGovernedAction` → `COMMIT`
+  all run on the request-scoped connection that the Drizzle write also uses, so
+  the plan and its ledger row commit together. A ledger failure changes
+  nothing: 500 `AUDIT_WRITE_FAILED`.
+- **Nothing overwritten is lost (§11.10(e)).** The ledger carries the whole row
+  on create and on delete, and each changed field's before and after value on a
+  change, including `metadata`, which holds `allowWaivers`.
+- **Authority (§11.10(g)).** `requireEditorAccess` gates all three writes, so a
+  viewer gets 403. The actor comes from the canonical `governedActorId`. The
+  first version had a second resolver of its own.
+- **The active plan is archived, never deleted.** Deleting it is refused with
+  409 `PLAN_ACTIVE`, enforced on the server. The UI offers Archive, a governed
+  change, in its place.
+- **Honest outcomes.**
+  - A change to values the plan already holds (a double click, a stale board) is
+    refused 409 `NO_CHANGES`, so no `active → active` ledger row is written.
+  - A plan that CTQ factors or traceability rows still reference is refused 409
+    `PLAN_IN_USE`, not an unexplained 500.
+  - A COMMIT that fails is answered `OUTCOME_UNKNOWN`: "could not be confirmed;
+    reload to check". It is never "nothing was changed". The UI does not call
+    that a refusal, and it re-reads the register.
+  - One write runs at a time from the UI.
+- **Copy.** The activation dialog said the plan's gates "apply once active".
+  Validation selects a plan by id, whatever its status, so the dialog now says
+  what activation actually does.
+
+**Proof.** The new route and client suites were run against the unfixed files
+from HEAD: red 34/38 (`p2-red.txt`). Green 38/38 (`p2-green.txt`). A mutation of
+each reviewer fix fails a named test: value compare, commit stage, FK mapping,
+changed-fields-only, the canonical actor, the in-flight guard, the unknown
+outcome, and the copy. Gates: `ci:discarded-audit-write`,
+`ci:regulated-delete-audit`, `ci:server-error-leaks`, `ci:internals-in-copy`,
+`ci:empty-state-honesty`, `check:microcopy`. Scoped typecheck: no errors in
+the changed files.
+
+The two cases in `qmpWorkspace.test.tsx` that pinned the one-click,
+reasonless writes were removed. Once rewritten they duplicated the governed
+suite.
+
+**Validation owed (D4/W3).** OQ-006 is now v0.5, and OQ-QMS-12 refuses a
+reasonless create before creating with a reason. It is **not executed** at
+that version. Before signature, through change control:
+
+- steps for the viewer refusal, the active-plan delete refusal and the ledger
+  row;
+- URS-QMS-011 restated;
+- its RA-001 classification re-assessed (still `low`, no Part 11 relevance);
+- TM-001 updated;
+- then re-execution.
+
+**Open, for the control tower.** The other QMS writes on this router (CTQ
+factors, section gating, quality validation, batch validate) have no authority
+gate and no ledger row. They are the same gap, and they are outside this item.
+
+## T1–T4, P3
 
 *In progress, not yet verified. These fixes are being written test-first and
 adversarially reviewed; this section is filled in when they land.*
