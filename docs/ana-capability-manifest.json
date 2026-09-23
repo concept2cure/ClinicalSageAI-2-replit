@@ -20,18 +20,18 @@
     "none": "No dedicated rendering (discovery/utility)."
   },
   "totals": {
-    "tools": 742,
+    "tools": 762,
     "byCategory": {
-      "Authoring & rendering": 27,
-      "Biostatistics": 10,
+      "Authoring & rendering": 28,
+      "Biostatistics": 11,
       "Clinical (M5 / M2)": 29,
       "Clinical pharmacology": 8,
-      "CMC / Quality (M3)": 25,
+      "CMC / Quality (M3)": 27,
       "Device / IVD": 24,
-      "Evidence & intelligence": 49,
+      "Evidence & intelligence": 51,
       "Governance & data": 13,
       "Nonclinical (M4)": 13,
-      "Other": 489,
+      "Other": 503,
       "Platform control": 2,
       "Quality management": 17,
       "Submission / eCTD": 36
@@ -391,6 +391,49 @@
       "requiredInputs": [
         "name",
         "protocol_kind"
+      ],
+      "derived": true
+    },
+    {
+      "name": "draft_authoring_document",
+      "category": {
+        "id": "authoring",
+        "label": "Authoring & rendering"
+      },
+      "description": "Turn a document AnA has drafted into a REAL authoring document in the open project: the editor's own store (authoring_documents / authoring_sections), status draft, one section per { code, title, content } with the content stored as sanitized HTML, provenance recorded as drafted by AnA, a genesis revision and a Part 11 CREATE audit row per section. The person then sees it as a canvas in the conversation, can open it in the full editor, and can file it into the project vault. Use this — not save_document_to_vault — whenever the deliverable is a document with sections (a Module 2.5 excerpt, an IB section set, a 510(k) summary). Requires an open project; refuses otherwise. Tenant-scoped. Returns { status: 'generated', authoringDocId, programId, title, sectionCount, content }.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "title",
+          "type": "string",
+          "required": true,
+          "description": "Document title."
+        },
+        {
+          "name": "module",
+          "type": "string",
+          "required": false,
+          "description": "CTD module, e.g. 'M2', 'M3'. Default 'M2'."
+        },
+        {
+          "name": "documentType",
+          "type": "string",
+          "required": false,
+          "description": "Document type / product code, e.g. 'clinical_overview'."
+        },
+        {
+          "name": "sections",
+          "type": "array",
+          "required": true,
+          "description": "The sections in reading order. content is HTML (p, h1-h6, ul/ol/li, table, strong/em); scripts and unknown markup are stripped."
+        }
+      ],
+      "requiredInputs": [
+        "title",
+        "sections"
       ],
       "derived": true
     },
@@ -1126,6 +1169,12 @@
           "type": "string",
           "required": false,
           "description": "One-line note for the audit trail describing what this draft covers (e.g. \"drafted SE discussion citing K251234 + reference device\")."
+        },
+        {
+          "name": "sources",
+          "type": "array",
+          "required": false,
+          "description": "The passages the text was grounded in, exactly as project_knowledge_search returned them: pass each passage's evidence_source_id (or artifact_id) and its text as excerpt. Every clause of the content that quotes an excerpt verbatim is record"
         }
       ],
       "requiredInputs": [
@@ -1611,6 +1660,43 @@
         "studyType",
         "objectiveType",
         "endpointType"
+      ],
+      "derived": true
+    },
+    {
+      "name": "bind_protocol_to_study_design",
+      "category": {
+        "id": "biostatistics",
+        "label": "Biostatistics"
+      },
+      "description": "Bind a protocol document to a study design object, so the protocol and the design describe the same study. This is the join the whole protocol ⇄ design loop depends on: until it exists, review_protocol_design_derivation, apply_protocol_design_derivation and review_protocol_design_gates have nothing to work against and say so. Governed and audited: the link and its 21 CFR Part 11 audit row commit or roll back together, and a reason for change is recorded. The binding engine (bindStudyDesignTx) enforces the tenant boundary on BOTH sides — a design id from another organization, or one that does not exist, is refused and nothing is written. Report the engine's result verbatim: if it refuses, say it refused and why; do not report a bind that did not happen, and do not guess a study design id — ask the user for it or find it first. Binding writes no protocol prose and claims no submission to any authority.",
+      "scope": "project",
+      "governed": true,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        },
+        {
+          "name": "study_design_id",
+          "type": "string",
+          "required": true,
+          "description": "cdisc_prm_studies.study_id for the design to bind. Must belong to the same organization; a guessed or copied id is refused."
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "required": false,
+          "description": "Reason for change, in the human's own words, recorded on the 21 CFR Part 11 audit row. Ask for it; do not invent one."
+        }
+      ],
+      "requiredInputs": [
+        "document_id",
+        "study_design_id"
       ],
       "derived": true
     },
@@ -2314,7 +2400,7 @@
         "id": "biostatistics",
         "label": "Biostatistics"
       },
-      "description": "Choose a primary estimator and a set of sensitivity analyses for missing data, aligned to the estimand's intercurrent-event strategy and the assumed missingness mechanism (MCAR/MAR/MNAR). Selects among MMRM, multiple imputation under MAR, ANCOVA on completers, GEE, and reference-based imputation as the primary estimator; and proposes sensitivity analyses including control-based / jump-to-reference / copy-reference imputation, delta-adjustment tipping-point, pattern-mixture and selection models. Returns the primary estimator with rationale and assumption, the sensitivity analyses with purpose and assumption, an estimand-alignment note, cautions (LOCF/BOCF discouraged; conduct is the first defense), and citations (ICH E9(R1) §A.4, ICH E9 §5.3, NRC 2010). Use when the user needs a missing-data analysis plan for the SAP. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Choose a primary estimator and a set of sensitivity analyses for missing data, aligned to the estimand's intercurrent-event strategy and the assumed missingness mechanism (MCAR/MAR/MNAR). Selects among MMRM, multiple imputation under MAR, ANCOVA on completers, GEE, and reference-based imputation as the primary estimator; and proposes sensitivity analyses including control-based / jump-to-reference / copy-reference imputation, delta-adjustment tipping-point, pattern-mixture and selection models. Returns the primary estimator with rationale and assumption, the sensitivity analyses with purpose and assumption, an estimand-alignment note, cautions (LOCF/BOCF discouraged; conduct is the first defense), and citations (ICH E9(R1) §A.5.2, ICH E9 §5.3, NRC 2010). Use when the user needs a missing-data analysis plan for the SAP. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -5523,6 +5609,30 @@
       "derived": true
     },
     {
+      "name": "assess_recorded_stability_trend",
+      "category": {
+        "id": "cmc_quality",
+        "label": "CMC / Quality (M3)"
+      },
+      "description": "Out-of-trend assessment of a stability study ALREADY RECORDED in the register — the PhRMA CMC Statistics regression control chart: each pull point is judged against the two-sided 95% prediction interval of the line fitted to all prior points of the same attribute at the same storage condition, and the series reports its slope with a 95% CI, whether the slope is established, and the projected time to the recorded acceptance limit if the trend continues. Takes a study id and reads its own results; use it for \"is anything trending toward a limit\", \"any out-of-trend results\", \"OOT\". Refuses per series, with the reason, when the criterion is not recorded or unreadable, when fewer than five numeric points (four prior) exist, or when the study spans storage conditions its results do not separate — relay a refusal verbatim. Writes nothing; an OOT result is a signal to investigate, never a disposition. DETERMINISTIC. Deterministic engine — report the returned numbers/decision verbatim and relay validation errors rather than guessing.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "study_id",
+          "type": "number",
+          "required": true,
+          "description": "The stability study id. Use list_cmc_registers to find it if the user named a product or batch."
+        }
+      ],
+      "requiredInputs": [
+        "study_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "assess_shelf_life_stability",
       "category": {
         "id": "cmc_quality",
@@ -5911,6 +6021,40 @@
       "requiredInputs": [
         "storageCondition"
       ],
+      "derived": true
+    },
+    {
+      "name": "list_cmc_registers",
+      "category": {
+        "id": "cmc_quality",
+        "label": "CMC / Quality (M3)"
+      },
+      "description": "List what the CMC registers actually hold for this organization — stability studies, analytical methods, specifications, batch records, QC results, container closure systems, reference standards, impurities, dissolution profiles, materials, formulations, manufacturing processes, characterisation studies — with the ids the recorded-data tools need. Call this FIRST whenever the user names a product, a batch or a study by name rather than by id, and whenever you are about to run a recorded assessment. Returns identity and status per row (never the full result series), so it is safe to call broadly. Reads only; writes nothing. Say honestly when a register is empty rather than implying data exists.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "register",
+          "type": "string",
+          "required": false,
+          "description": "Which register to list. Omit for a summary count of every register."
+        },
+        {
+          "name": "search",
+          "type": "string",
+          "required": false,
+          "description": "Case-insensitive filter on the row's name/title/number — e.g. a product name or a batch number the user said."
+        },
+        {
+          "name": "limit",
+          "type": "number",
+          "required": false,
+          "description": "Maximum rows (default 25, max 100)."
+        }
+      ],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -8878,6 +9022,36 @@
       "derived": true
     },
     {
+      "name": "search_document_passages",
+      "category": {
+        "id": "evidence",
+        "label": "Evidence & intelligence"
+      },
+      "description": "Search INSIDE the client's filed documents and get back the actual passages — the sentences that answer the question, with the document they came from and, for a paged format whose pages could be located, the page. This is the tool for \"what does the stability data show at 6 months\", \"which batch failed\", \"what did the sponsor commit to in the meeting minutes\": questions the text settles. It searches the passage index built from every vault upload, so it reaches the contents, not just the titles or the summaries. Prefer it over reading a whole document when you need a fact; prefer read_project_document when you need to UNDERSTAND a document (and you must read all of it before cataloging it — passages are not a substitute for that). Use search_project_documents instead to find WHICH file covers a topic. The response states how many documents are not in the passage index, so a miss is never evidence of absence; if the index or the embedding provider is unavailable it says so rather than returning nothing.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "query",
+          "type": "string",
+          "required": true,
+          "description": "The question or phrase to find, in the words you expect the document to use. Specific terms — an assay, a batch id, an endpoint — retrieve better than a paraphrase."
+        },
+        {
+          "name": "limit",
+          "type": "number",
+          "required": false,
+          "description": "Maximum passages to return (default 8, max 25)."
+        }
+      ],
+      "requiredInputs": [
+        "query"
+      ],
+      "derived": true
+    },
+    {
       "name": "search_drug_approvals",
       "category": {
         "id": "evidence",
@@ -9281,6 +9455,36 @@
           "type": "number",
           "required": false,
           "description": "Maximum preprints to return (default: 5, max: 25)."
+        }
+      ],
+      "requiredInputs": [
+        "query"
+      ],
+      "derived": true
+    },
+    {
+      "name": "search_project_documents",
+      "category": {
+        "id": "evidence",
+        "label": "Evidence & intelligence"
+      },
+      "description": "Semantic search over the CATALOGED project files — \"which of the client's documents covers X?\". Matches against the comprehension records written by catalog_project_document (kind, purpose, summary, key data after a full read), so every hit is a document that has actually been studied. The response also states how many documents are NOT yet searchable (uncataloged or failed extraction) — absence from these results never means the file does not exist; use list_project_documents for full discovery. If the semantic index is unavailable the tool says so instead of returning an empty result.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "query",
+          "type": "string",
+          "required": true,
+          "description": "What to look for — a topic, identifier, study, batch, section, or question."
+        },
+        {
+          "name": "limit",
+          "type": "number",
+          "required": false,
+          "description": "Maximum hits to return (default 8, max 25)."
         }
       ],
       "requiredInputs": [
@@ -12663,17 +12867,23 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Submit an answer to the current intelligence question in an active flow. The engine validates the answer, runs issue checks, and advances to the next question or completes the flow with a structured output. The engine is stateless: pass back the entire `flow_state` object returned by the previous start_intelligence_flow / answer_intelligence_question call (not just an id) so it can resume.",
-      "scope": "global",
+      "description": "Submit an answer to the current intelligence question in an active flow. The engine validates the answer, runs issue checks, and advances to the next question or completes the flow with a structured output. Pass the `session_id` from start_intelligence_flow: the engine loads the interview state from the session, records the step, and returns the session_id again — flow_state is then not needed and is ignored. Only when there is NO session (the flow was started without an organization context) pass back the entire `flow_state` object returned by the previous call.",
+      "scope": "project",
       "governed": false,
       "renderer": "findings-list",
       "example": "",
       "inputs": [
         {
+          "name": "session_id",
+          "type": "string",
+          "required": false,
+          "description": "The persisted interview session id returned by start_intelligence_flow. When given, the state is loaded from and saved to the session; flow_state is ignored."
+        },
+        {
           "name": "flow_state",
           "type": "object",
-          "required": true,
-          "description": "The full flow state object returned by the previous call (start_intelligence_flow or the prior answer_intelligence_question). Round-trip it verbatim — the engine holds no state of its own."
+          "required": false,
+          "description": "Only when no session_id exists: the full flow state object returned by the previous call (start_intelligence_flow or the prior answer_intelligence_question), round-tripped verbatim."
         },
         {
           "name": "node_id",
@@ -12689,7 +12899,6 @@
         }
       ],
       "requiredInputs": [
-        "flow_state",
         "node_id",
         "answers"
       ],
@@ -12747,6 +12956,43 @@
       "requiredInputs": [
         "factId",
         "reason"
+      ],
+      "derived": true
+    },
+    {
+      "name": "apply_protocol_design_derivation",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Write into the study design ONLY the derivation paths a human explicitly accepted. Governed and audited: the design change and its 21 CFR Part 11 audit row commit or roll back together, through the same writer the surface uses. You pass PATHS, never values. There is no value parameter and you must not attempt to supply one: naming a path says \"I accept what the protocol evidences here\", and the derivation engine recomputes that value from the live protocol rows at apply time. A value you typed would be a fabricated governed number. What accepting each kind of path MEANS, and what you must say before calling this: a PROPOSED path fills a design field the design did not carry; a CONFLICT path OVERWRITES the design's current value with the protocol's — the human is choosing the protocol over the design, and you must state both values and get that choice explicitly, never infer it; an INCOMPLETE path CANNOT be applied at all — the engine refuses it and returns it in `rejected` with the design field the protocol does not record, which a human must supply first; an UNEVIDENCED field is not a path and cannot be named here. A path the current derivation no longer offers — because the protocol changed since the diff was shown — is also rejected, and nothing is written for it. Report the engine's `applied` and `rejected` lists verbatim. An empty `applied` list means nothing was written: say exactly that, with the engine's reasons, and never describe it as a successful update. This writes no protocol prose and claims no submission to any authority.",
+      "scope": "project",
+      "governed": true,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        },
+        {
+          "name": "accepted_paths",
+          "type": "array",
+          "required": true,
+          "description": "The derivation paths the human accepted, copied exactly from review_protocol_design_derivation (for example \"title\", \"phase\", \"objectives\", \"endpoints\", \"population.eligibility\", \"scheduleOfActivities.visits\"). Paths only — the engine suppl"
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "required": false,
+          "description": "Reason for change, in the human's own words, recorded on the 21 CFR Part 11 audit row. Ask for it; do not invent one."
+        }
+      ],
+      "requiredInputs": [
+        "document_id",
+        "accepted_paths"
       ],
       "derived": true
     },
@@ -14555,7 +14801,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Compute the f2 similarity factor and f1 difference factor for two dissolution profiles (test vs. reference) and provide regulatory interpretation. The f2 factor is the primary FDA/EMA/ICH criterion for dissolution profile comparison: f2 >= 50 indicates similarity (equivalent to <= 10% mean difference at all time points). The engine applies the FDA rule that only one time point at or above 85% dissolved may be included. Also detects \"very rapidly dissolving\" products (>= 85% in 15 min) where f2 comparison is not required. Returns f2, f1, pass/fail for each, regulatory interpretation, warnings about methodology, and citations (FDA Dissolution Guidance 1997, SUPAC-IR 1995, Moore & Flanner 1996, ICH M9). Use when the user has dissolution data and needs to determine if test and reference profiles are similar. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Compute the f2 similarity factor and f1 difference factor for two dissolution profiles (test vs. reference) and provide regulatory interpretation. The f2 factor is the primary FDA/EMA/ICH criterion for dissolution profile comparison: f2 >= 50 indicates similarity (equivalent to <= 10% mean difference at all time points). The engine applies the FDA rule that only one time point at or above 85% dissolved may be included. Also detects \"very rapidly dissolving\" products (>= 85% in 15 min) where f2 comparison is not required. Returns f2, f1, pass/fail for each, regulatory interpretation, warnings about methodology, and citations (FDA Dissolution Guidance 1997, SUPAC-IR 1995, Moore & Flanner 1996, ICH M9). Use when the user has dissolution data and needs to determine if test and reference profiles are similar. REFUSES rather than computing a void number when the eligibility conditions are not met: profiles sampled at different times, fewer than three comparable timepoints after excluding t=0 and truncating above 85%, no recorded unit count (it is NEVER assumed to be 12), no recorded SD or %RSD (without which the 20%/10% variability limits cannot be evaluated), or variability above those limits. Relay a refusal verbatim rather than restating the inputs as a conclusion. When the profiles are already ON FILE in the CMC dissolution register, use compare_recorded_dissolution instead, which reads them. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -14577,7 +14823,7 @@
           "name": "unitsPerProduct",
           "type": "number",
           "required": false,
-          "description": "Number of individual dosage units tested per product (default 12). FDA recommends >= 12 units per product for f2 comparison."
+          "description": "Number of individual dosage units tested per product. REQUIRED unless each timepoint carries its own count: it is never assumed to be 12, and f2 is refused without it. FDA recommends >= 12 units per product."
         }
       ],
       "requiredInputs": [
@@ -15236,7 +15482,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Recommend, for each intercurrent event, which of the five ICH E9(R1) strategies (treatment-policy, hypothetical, composite, while-on-treatment, principal-stratum) best matches the clinical question, given the endpoint type, therapeutic context, and regulatory objective. Handles treatment discontinuation (for lack of efficacy / due to adverse event), rescue medication, death, treatment switching, dose modification, non-compliance, and non-fatal terminal events. Returns the recommended strategy plus an alternative, the rationale, the typical estimator, the sensitivity-analysis approach, and citations (ICH E9(R1) §A.3.4 / §A.4, FDA Multiple Endpoints 2022 §V). Use when the user needs to decide how to handle rescue, discontinuation, switching, or death in an estimand. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
+      "description": "Recommend, for each intercurrent event, which of the five ICH E9(R1) strategies (treatment-policy, hypothetical, composite, while-on-treatment, principal-stratum) best matches the clinical question, given the endpoint type, therapeutic context, and regulatory objective. Handles treatment discontinuation (for lack of efficacy / due to adverse event), rescue medication, death, treatment switching, dose modification, non-compliance, and non-fatal terminal events. Returns the recommended strategy plus an alternative, the rationale, the typical estimator, the sensitivity-analysis approach, and citations (ICH E9(R1) §A.3.4 / §A.5.2, FDA Multiple Endpoints 2022 §V). Use when the user needs to decide how to handle rescue, discontinuation, switching, or death in an estimand. Deterministic — identical input always yields identical output. No LLM, no network. Report the returned numbers and regulatory citations verbatim. Do NOT recompute, round differently, or substitute your own regulatory interpretation — a fabricated or misattributed regulatory citation in a generic drug submission is a critical defect.",
       "scope": "global",
       "governed": false,
       "renderer": "result-card",
@@ -16129,6 +16375,28 @@
       "requiredInputs": [
         "study_ids"
       ],
+      "derived": true
+    },
+    {
+      "name": "assess_recorded_process_capability",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Process capability over the batch results ALREADY RECORDED in the CMC QC register for a project — the same Pp/Ppk/Cp/Cpk the compiled §3.2.S.4.4 and §3.2.P.5.4 carry. Groups the results of each test across batches, reads the acceptance criterion they were recorded against, and reports, per test and per side (drug substance / drug product): the batch count, mean, overall sd, Pp/Ppk from that sd, Cp/Cpk from the moving-range sigma (MR-bar / 1.128, the individuals-chart convention for a batch result), the capable / marginal / not-capable grade, and any batch outside the specification. Use it for \"is the process capable\", \"what is our Cpk\", \"can we meet the spec batch after batch\". REFUSES per test, with the reason, when the rows disagree on the acceptance criterion, when fewer than six batches are on file, when the criterion cannot be read, or when the series has no variation — and marks an estimate from fewer than 25 batches preliminary. Relay a refusal verbatim: it is a property of the recorded data. Writes nothing. DETERMINISTIC. Deterministic engine — report the returned numbers/decision verbatim and relay validation errors rather than guessing.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "project_id",
+          "type": "string",
+          "required": false,
+          "description": "The program/project id whose QC register is assessed. Defaults to the active project when omitted."
+        }
+      ],
+      "requiredInputs": [],
       "derived": true
     },
     {
@@ -17429,6 +17697,57 @@
       "derived": true
     },
     {
+      "name": "catalog_project_document",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Record durable comprehension of a vault document you have just read IN FULL: what kind of document it is, what it is for, a faithful summary, and the key data inside it (study IDs, dates, doses, endpoints, sample sizes, batch numbers — whatever the document actually carries). This is what makes the file remembered: the record is embedded for semantic recall and surfaced at the start of future sessions alongside the document's filed location. The write is REFUSED unless your read receipts cover the entire extracted text — if refused, the response lists the exact unread ranges; go read them with read_project_document and try again. Never invent content to fill key_data: record only what the text states.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "string",
+          "required": true,
+          "description": "The vault document UUID. A chat upload's file_id cannot be cataloged — durable comprehension records live on vault documents."
+        },
+        {
+          "name": "document_kind",
+          "type": "string",
+          "required": true,
+          "description": "What the document IS, specifically (e.g. \"GLP 28-day rat toxicology study report\", \"Certificate of Analysis, batch 23-104\", \"Investigator CV\")."
+        },
+        {
+          "name": "purpose",
+          "type": "string",
+          "required": true,
+          "description": "One or two sentences: what this document is FOR in the program (what it evidences, which section it supports, why the client uploaded it)."
+        },
+        {
+          "name": "summary",
+          "type": "string",
+          "required": true,
+          "description": "A faithful summary of the whole document — its structure, findings, and conclusions. Grounded in the text you read; no extrapolation."
+        },
+        {
+          "name": "key_data",
+          "type": "object",
+          "required": false,
+          "description": "Structured facts extracted from the text: identifiers, dates, quantities, endpoints, results. Keys of your choosing; values exactly as stated in the document."
+        }
+      ],
+      "requiredInputs": [
+        "document_id",
+        "document_kind",
+        "purpose",
+        "summary"
+      ],
+      "derived": true
+    },
+    {
       "name": "certify_other_support",
       "category": {
         "id": "other",
@@ -18689,6 +19008,42 @@
       "derived": true
     },
     {
+      "name": "commit_intelligence_flow",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Commit a COMPLETED CMC interview to the CMC registers that feed Module 3: the answers are projected onto register records (drug substance, drug product, container closure system, drug substance and drug product manufacturing processes, formulation record, novel excipient material spec, structural characterisation study) and written through the registers' own write paths. Refuses when the session is not complete or is not bound to a project. A failure mid-way is reported with exactly which records were written and which were not; a retry writes only the remainder. Answers no register can take are listed with the reason — say so to the user. Use dry_run to show the user what would be recorded before writing.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "session_id",
+          "type": "string",
+          "required": true,
+          "description": "The interview session id returned by start_intelligence_flow."
+        },
+        {
+          "name": "project_id",
+          "type": "string",
+          "required": false,
+          "description": "Binds a session that was started without a project. Never overrides the project the session already has."
+        },
+        {
+          "name": "dry_run",
+          "type": "boolean",
+          "required": false,
+          "description": "When true, return the commit plan (register + body per record) without writing anything."
+        }
+      ],
+      "requiredInputs": [
+        "session_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "compare_global_pathways",
       "category": {
         "id": "other",
@@ -18723,6 +19078,37 @@
         "productType",
         "indication",
         "targetMarkets"
+      ],
+      "derived": true
+    },
+    {
+      "name": "compare_recorded_dissolution",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Compute f2 similarity between two dissolution profiles ALREADY RECORDED in the CMC dissolution register, reading their timepoints, means, unit counts and variability from the register rather than taking them typed in. Takes two register ids (use list_cmc_registers to find them). Applies every eligibility condition and REFUSES with the reason when one fails: profiles sampled at different times, fewer than three comparable timepoints after excluding t=0 and truncating above 85% dissolution, no recorded unit count (never assumed to be 12), no recorded SD or %RSD, or variability above the 20% early / 10% later limits. Both profiles reaching 85% within 15 minutes is reported as \"no f2 needed\", not as a number. Relay a refusal verbatim rather than falling back to assess_dissolution_similarity with typed-in numbers: that would be the same comparison with the eligibility check removed. Reports the timepoints it used, what it discarded and every condition it evaluated. Writes nothing. DETERMINISTIC. Deterministic engine — report the returned numbers/decision verbatim and relay validation errors rather than guessing.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "reference_profile_id",
+          "type": "number",
+          "required": true,
+          "description": "The dissolution register id of the REFERENCE profile."
+        },
+        {
+          "name": "test_profile_id",
+          "type": "number",
+          "required": true,
+          "description": "The dissolution register id of the TEST profile."
+        }
+      ],
+      "requiredInputs": [
+        "reference_profile_id",
+        "test_profile_id"
       ],
       "derived": true
     },
@@ -20473,7 +20859,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Open a protocol amendment against a protocol document. Type (major/minor/administrative) plus the affects-consent / affects-risk flags drive the deterministic review path and reconsent trigger (45 CFR 46.109 / 21 CFR 56.110). Governed + audited.",
+      "description": "Open a protocol amendment against a protocol document. Type (major/minor/administrative) and the affects-consent / affects-risk flags are recorded as the sponsor's declaration, and the substantiality assessment compares that declaration against what actually changed in the study design. Pass a flag only if it has been assessed: an omitted flag is stored as NOT DECLARED, never as No. Snapshots the bound study design as the 'before' side. Governed + audited.",
       "scope": "project",
       "governed": true,
       "renderer": "result-card",
@@ -20513,13 +20899,13 @@
           "name": "affects_consent",
           "type": "boolean",
           "required": false,
-          "description": ""
+          "description": "Does the change affect the informed-consent content? Omit if not assessed."
         },
         {
           "name": "affects_risk",
           "type": "boolean",
           "required": false,
-          "description": ""
+          "description": "Does the change INCREASE risk to subjects or worsen the risk/benefit balance? A risk-reducing change is false. Omit if not assessed."
         },
         {
           "name": "reason",
@@ -23654,6 +24040,30 @@
       "derived": true
     },
     {
+      "name": "estimate_recorded_shelf_life",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Fit the shelf life supported by a stability study ALREADY RECORDED in the register, per ICH Q1E — ordinary least squares with the one-sided 95% mean confidence limit against the recorded acceptance criterion, one attribute at a time, reporting the LIMITING attribute. Takes a study id and reads that study's own pull-point results; use this instead of estimate_shelf_life whenever the data are on file, which is the normal case. Refuses and says why when the study has no recorded results, spans more than one storage condition, has fewer than 3 numeric timepoints for an attribute, or has no numeric acceptance criterion recorded — relay the refusal verbatim rather than falling back to typed-in numbers. Single batch: batch poolability is assess_recorded_batch_poolability and is NOT implied by this estimate. Nothing is written: the registered shelf life is set by a person on the study close-out. DETERMINISTIC. Deterministic engine — report the returned numbers/decision verbatim and relay validation errors rather than guessing.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "study_id",
+          "type": "number",
+          "required": true,
+          "description": "The stability study id. Use list_cmc_registers to find it if the user named a product or batch."
+        }
+      ],
+      "requiredInputs": [
+        "study_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "estimate_shelf_life",
       "category": {
         "id": "other",
@@ -23952,6 +24362,62 @@
       "derived": true
     },
     {
+      "name": "file_chat_upload_to_vault",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "File a chat-uploaded document into the project vault, so it becomes a real project-folder document: placed in the dossier, catalogable, semantically searchable, and retrievable passage-by-passage in future sessions. A chat upload alone is reachable only by its file_id and carries no durable comprehension record; this is what gives it one. Use it when a client attaches something that belongs to the program — a study report, a CoA, a protocol — rather than a throwaway. It performs the SAME governed admission as an upload through the Vault surface (virus scan, stored bytes, 21 CFR Part 11 audit entry, filing proposal), so tell the user the file was filed and where. Returns the vault document_id: read it with read_project_document and record what it is with catalog_project_document.",
+      "scope": "global",
+      "governed": true,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "file_id",
+          "type": "string",
+          "required": true,
+          "description": "The chat upload's file_id, from list_project_documents' `chatUploads` array (e.g. \"file_1712345678_ab12cd\")."
+        },
+        {
+          "name": "document_title",
+          "type": "string",
+          "required": true,
+          "description": "The document's title as it should read in the vault (e.g. \"28-Day Rat Tox Study TOX-77-A\")."
+        },
+        {
+          "name": "document_type",
+          "type": "string",
+          "required": true,
+          "description": "The regulatory document type. Choose the one the document IS; use OTHER when unsure — a filename is not grounds to claim a type."
+        },
+        {
+          "name": "program_id",
+          "type": "string",
+          "required": false,
+          "description": "Regulatory program UUID to file it under. Defaults to the active project's program."
+        },
+        {
+          "name": "document_code",
+          "type": "string",
+          "required": false,
+          "description": "Optional stable code for the document within the program. Defaults to one derived from the file name."
+        },
+        {
+          "name": "folder_id",
+          "type": "string",
+          "required": false,
+          "description": "Optional explicit dossier folder. Omit to let the classifier propose a placement (which a person then confirms) — do not guess a folder to avoid an unfiled state."
+        }
+      ],
+      "requiredInputs": [
+        "file_id",
+        "document_title",
+        "document_type"
+      ],
+      "derived": true
+    },
+    {
       "name": "finalize_biosketch",
       "category": {
         "id": "other",
@@ -24107,9 +24573,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Finalize a protocol document. Gated on the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB); rejected with the gaps otherwise. On success it snapshots a major version. Governed + audited (signature).",
+      "description": "Check whether a protocol document can be finalized, against the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB), and return the gaps. This tool does not finalize: finalizing is an electronic signature and AnA cannot sign. Tell the user to finalize from the protocol workspace, where they enter their password.",
       "scope": "project",
-      "governed": true,
+      "governed": false,
       "renderer": "findings-list",
       "example": "",
       "inputs": [
@@ -24383,7 +24849,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Generate a CDISC define.xml v2.0 (ODM-based) document from a dataset spec (datasets, variables, codelists) for SDTM or ADaM. Runs structural conformance first and returns the XML plus the conformance findings. Covers mechanical metadata rules — NOT a full Pinnacle21/CDISC-CT rule engine. Deterministic engine — report the returned values/artifacts verbatim; do not recompute or reformat. Relay any validation error or finding exactly and ask for missing inputs rather than guessing.",
+      "description": "Generate a CDISC define.xml (ODM-based) document from a dataset spec (datasets, variables, codelists) for SDTM or ADaM, at Define-XML 2.1 (default) or 2.0. Returns the XML, the version emitted, and a gap report (datasets with no key variables, variables citing an undefined codelist, missing labels). Structural conformance is the separate check_dataset_conformance tool; neither is a full Pinnacle21/CDISC-CT rule engine. Deterministic engine — report the returned values/artifacts verbatim; do not recompute or reformat. Relay any validation error or finding exactly and ask for missing inputs rather than guessing.",
       "scope": "global",
       "governed": false,
       "renderer": "artifact-xml",
@@ -24395,6 +24861,12 @@
           "type": "object",
           "required": true,
           "description": ""
+        },
+        {
+          "name": "defineVersion",
+          "type": "string",
+          "required": false,
+          "description": "Define-XML version to emit. Default '2.1'."
         }
       ],
       "requiredInputs": [
@@ -26432,6 +26904,34 @@
       "derived": true
     },
     {
+      "name": "list_project_documents",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "List every document in the project vault (the client's project folder) — the durable store uploads land in, across sessions. Returns, per document: its id, title, file name, WHERE it is filed (folder, CTD section, placement status), and its catalog state — \"cataloged\" (read in full and understood; kind + purpose shown), \"extracted\" (text ready, not yet studied), \"extraction_failed\" (with the recorded reason), or \"uncataloged\" (predates cataloging). Use this FIRST whenever the user mentions their files, a prior upload, or asks what exists — never assume a file is gone because it was uploaded in an earlier session. Also returns the organization's CHAT-UPLOADED files (the Data Room evidence spine) with each one's file_id, so a file attached in a past conversation can be reopened with inspect_uploaded_document / read_uploaded_document. Follow up with read_project_document to study a vault document and catalog_project_document to record what it is.",
+      "scope": "global",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "program_id",
+          "type": "string",
+          "required": false,
+          "description": "Optional regulatory program UUID to scope to. Default: the active project's program, else every program in the organization."
+        },
+        {
+          "name": "limit",
+          "type": "number",
+          "required": false,
+          "description": "Maximum documents to return (default 100, max 200)."
+        }
+      ],
+      "requiredInputs": [],
+      "derived": true
+    },
+    {
       "name": "list_regulatory_capabilities",
       "category": {
         "id": "other",
@@ -27027,7 +27527,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Navigate the app to a screen/surface by its target id (from list_app_screens). Validates the target and any params against the governed navigation registry and returns a navigation directive the UI applies; refuses unknown targets or invalid/missing params rather than guessing. Use when the user asks to go somewhere, or to take them to the right surface to complete a task (e.g. open CMC, the dossier map, or the intelligence 'clinical' group). Project-scoped targets require an active project in context. Tell the user where you're taking them.",
+      "description": "Take the person to a screen of the app — go to, open, show, switch to, bring up — by its target id (from list_app_screens). Validates the target and any params against the governed navigation registry and returns a navigation directive the UI applies; refuses unknown targets, invalid params and screens closed to this workspace rather than guessing. Use whenever the person asks to go somewhere or see something, and to take them to the right screen to complete a task (e.g. open CMC, the Vault, the dossier map, the intelligence 'clinical' group, settings, billing). Project-scope screens show one program: pass `program` to open a specific one. Say where you are taking them.",
       "scope": "global",
       "governed": false,
       "renderer": "navigation",
@@ -27045,6 +27545,12 @@
           "type": "object",
           "required": false,
           "description": "Optional params for the target (e.g. { \"intelligenceTab\": \"clinical\" }, { \"sectionCode\": \"3.2.P.8\" })."
+        },
+        {
+          "name": "program",
+          "type": "string",
+          "required": false,
+          "description": "For a project-scope screen: the program to open there — its id, code (e.g. \"BX-301\") or name. Omit to use the program already open. When none is open and none is named, the tool answers with the workspace's programs to choose from."
         }
       ],
       "requiredInputs": [
@@ -27253,7 +27759,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Place a document into an eCTD sequence of the canonical submission core — create or update a submission_leaves row (upsert semantics: pass leaf_id to update an existing leaf, omit it to create one). Tenant and acting user come from the active context; the write is audited (LEAF_CREATED / LEAF_UPDATED). The server REFUSES a frozen or dispatched sequence (its leaves are immutable) and a coauthor document not owned by the caller's organization — surface that refusal verbatim, never claim a placement the server declined. document_table/document_id link the leaf to its source: coauthor_documents and unified_documents are the locally-renderable sources the assembler can materialize into the package; an unknown table fails closed at assembly as an unresolved leaf, so prefer those. Use this when a user asks to file a drafted document into a sequence.",
+      "description": "Place a document into an eCTD sequence of the canonical submission core — create or update a submission_leaves row (upsert semantics: pass leaf_id to update an existing leaf, omit it to create one). Tenant and acting user come from the active context; the write is audited (LEAF_CREATED / LEAF_UPDATED). The server REFUSES a frozen or dispatched sequence (its leaves are immutable) and a source document not owned by the caller's organization (coauthor_documents, unified_documents, ctd_onboarding_documents, rendered_leaf_files and c2c_document_sections are all tenancy-checked at placement) — surface that refusal verbatim, never claim a placement the server declined. document_table/document_id link the leaf to its source. document_table is a CLOSED set — the server REFUSES (400) any value outside it, so a guessed or misspelled table is never placed; pick the table the document actually lives in. coauthor_documents, unified_documents, ctd_onboarding_documents, rendered_leaf_files and c2c_document_sections are materialized into the package; vault_documents is a documented pointer the assembler cannot materialize: the dispatch-readiness gate reports it as an ERROR (EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE) and transmit fails closed on it, so do not place one unless the user explicitly asks for that pointer. Use this when a user asks to file a drafted document into a sequence.",
       "scope": "project",
       "governed": true,
       "renderer": "document-canvas",
@@ -27287,7 +27793,7 @@
           "name": "document_table",
           "type": "string",
           "required": false,
-          "description": "Source document table, e.g. 'coauthor_documents' or 'unified_documents'."
+          "description": "Source document table the leaf points at. Must be one of the listed values — anything else is refused at placement."
         },
         {
           "name": "document_id",
@@ -27324,6 +27830,67 @@
         "sequence_id",
         "section_code",
         "title"
+      ],
+      "derived": true
+    },
+    {
+      "name": "place_project_document",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "File a project-vault document into its dossier folder — the act that turns \"we have this\" into \"it is where it belongs\". At upload a classifier PROPOSES a placement from the file name and a sample of the text; a document it could not place sits in the Unfiled queue and one it guessed wrong sits under \"suggested\", and nothing revisits either. Use this once you have READ the document and recorded what it is: the placement then rests on comprehension instead of a filename. It is a governed, 21 CFR Part 11 audited move (the prior and new locations are both recorded), so say what you moved and where. Refused for a document you have not cataloged — read it with read_project_document and record it with catalog_project_document first. If you genuinely cannot tell where it belongs, pass unfile:true: the visible Unfiled queue is the honest answer, and a guessed folder is worse than an admitted gap.",
+      "scope": "project",
+      "governed": true,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "string",
+          "required": true,
+          "description": "The vault document UUID, from list_project_documents or read_project_document."
+        },
+        {
+          "name": "folder_id",
+          "type": "string",
+          "required": false,
+          "description": "The taxonomy folder to file it into (e.g. \"module-4\"). It must exist in this program's vault view; a folder from another modality's tree is refused rather than stored."
+        },
+        {
+          "name": "confirm_suggested",
+          "type": "boolean",
+          "required": false,
+          "description": "Confirm the classifier's existing suggestion in place, without naming a folder. Refused when there is no suggestion to confirm."
+        },
+        {
+          "name": "unfile",
+          "type": "boolean",
+          "required": false,
+          "description": "Move it to the Unfiled queue — the honest answer when the document does not belong anywhere you can justify."
+        },
+        {
+          "name": "ctd_section",
+          "type": "string",
+          "required": false,
+          "description": "Finer CTD placement when the document states one (e.g. \"4.2.3.2\"). Omit rather than infer."
+        },
+        {
+          "name": "evidence_kind",
+          "type": "string",
+          "required": false,
+          "description": "What the document IS in the vault taxonomy, when you know it. Omitted leaves the existing value — which is better than a kind you had to reach for."
+        },
+        {
+          "name": "rationale",
+          "type": "string",
+          "required": true,
+          "description": "Why this is the right folder, in one sentence, grounded in what the document says. Recorded on the row and in the audit trail."
+        }
+      ],
+      "requiredInputs": [
+        "document_id",
+        "rationale"
       ],
       "derived": true
     },
@@ -28612,6 +29179,42 @@
       "derived": true
     },
     {
+      "name": "read_project_document",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Read the full extracted text of a vault document by document id (from list_project_documents), windowed with offset/max_chars. Scanned PDFs were OCRed at ingest — the text here IS the document's content, so read it, do not treat the file as an opaque image. Every window you read is recorded as a read receipt; the response reports your exact coverage so far and the character ranges still unread. To truly review a document, page through ALL of it (advance offset until coverage is complete) — catalog_project_document will refuse a partial read. If extraction failed, this tool says so with the recorded reason instead of returning empty text; report that honestly rather than guessing at the content.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "string",
+          "required": true,
+          "description": "The vault document UUID from list_project_documents' `documents` array. NOT a chat upload's file_id (file_1712345678_ab12cd) — those come from the `chatUploads` array and are read with read_uploaded_document."
+        },
+        {
+          "name": "max_chars",
+          "type": "number",
+          "required": false,
+          "description": "Maximum characters to return in this window (default 30000, max 80000)."
+        },
+        {
+          "name": "offset",
+          "type": "number",
+          "required": false,
+          "description": "Character offset to start from (default 0; advance it to page through the whole document)."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "read_spreadsheet",
       "category": {
         "id": "other",
@@ -29656,15 +30259,39 @@
       "derived": true
     },
     {
+      "name": "resume_intelligence_flow",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "Resume a persisted intelligence questioning flow by its session_id — after a dropped conversation, a new thread, or when the user asks to continue an interview. Returns the current question (or the completion summary if the interview already finished, with the register records it was committed to, if any).",
+      "scope": "global",
+      "governed": false,
+      "renderer": "document-canvas",
+      "example": "",
+      "inputs": [
+        {
+          "name": "session_id",
+          "type": "string",
+          "required": true,
+          "description": "The interview session id returned by start_intelligence_flow."
+        }
+      ],
+      "requiredInputs": [
+        "session_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "review_amendment",
       "category": {
         "id": "other",
         "label": "Other"
       },
-      "description": "Read-only amendment readiness: change count, computed review path / reconsent trigger, and any blockers before submission.",
+      "description": "Read-only amendment review. Returns submission readiness (a draft with at least one change line item) and a deterministic impact classification: IRB review is ALWAYS required (45 CFR 46.108(a)(3)(iii); 21 CFR 56.108(a)(4)) and the result says whether it is expedited-eligible or convened; re-consent is always reported as the IRB's determination, never as required or not required; and FDA protocol-amendment status under 21 CFR 312.30 for IND studies. Phase and IND status come back with their recorded source; unrecorded inputs are reported as undetermined. Relay the statuses and bases as given — do not upgrade 'undetermined' or 'sponsor_determination_required' to a yes or no.",
       "scope": "global",
       "governed": false,
-      "renderer": "result-card",
+      "renderer": "document-canvas",
       "example": "",
       "inputs": [
         {
@@ -30192,6 +30819,54 @@
       "derived": true
     },
     {
+      "name": "review_protocol_design_derivation",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Show what a protocol document evidences about its bound study design, as the deterministic derivation engine (deriveDesignFromProtocol) computes it. Writes nothing, changes nothing, and records no audit row — looking at a diff is not a governed action. The engine returns five buckets and you report them VERBATIM, with the engine's own counts; never estimate, round, re-derive or summarise a number it did not give you: PROPOSED — the protocol evidences a value the design does not carry, with provenance naming the exact protocol row; CONFLICTS — the protocol and the design disagree, and BOTH values are reported because neither wins automatically and only a human may choose; UNCHANGED — the two already agree, so there is nothing to do; UNEVIDENCED — the protocol says nothing about that design field, so it is left exactly as it is and is never set to null, zero or a default; INCOMPLETE — the protocol evidences part of a value but not a field the design requires, which a human must supply before it can be applied. An unevidenced or incomplete field is NOT agreement and NOT a pass — say that the protocol records nothing there rather than presenting it as clean. If no design is bound to the protocol, the tool returns an explanatory error; that is a different fact from an empty diff and you must not report it as \"the protocol and design agree\". To act on any of it, present the buckets and ask the human which paths to accept, then call apply_protocol_design_derivation.",
+      "scope": "project",
+      "governed": true,
+      "renderer": "result-card",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
+      "name": "review_protocol_design_gates",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Return the study-design gate findings for the design bound to a protocol document, from the same deterministic validation engine (validateDesign) that /api/study-design and the Protocol Development surface serve — ICH E9, E9(R1), E10, E3 and ICH M11. Nothing is recomputed here and nothing is written; no audit row is recorded. Report the engine's findings, its severity counts (critical, major, minor, info), its risk level and its canAdvance / blocksApproval verdicts VERBATIM. Do not re-rank a finding, do not drop one, do not total the counts yourself, and do not produce a readiness percentage the engine did not return. If no design is bound, or the bound design cannot be read for this organization, the tool returns an explanatory error and NOT an empty finding list — tell the user the gates did not run. A gate run that is absent is not a pass: \"no findings\" would say the protocol cleared gates that were never run on it. Use bind_protocol_to_study_design first when nothing is bound. These are the DESIGN's gates; the protocol document's own rules come from review_protocol_regulatory_rules.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "findings-list",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
+      "derived": true
+    },
+    {
       "name": "review_protocol_portfolio",
       "category": {
         "id": "other",
@@ -30219,6 +30894,30 @@
       "example": "",
       "inputs": [],
       "requiredInputs": [],
+      "derived": true
+    },
+    {
+      "name": "review_protocol_regulatory_rules",
+      "category": {
+        "id": "other",
+        "label": "Other"
+      },
+      "description": "READ-ONLY. Run the deterministic protocol regulatory rule pack (evaluateProtocolRules) over a protocol document's recorded registers and return one finding per rule in scope for its kind, each citing its clause — ICH M11, E8(R1), E9/E9(R1), E6(R3), 21 CFR 312.23(a)(6), 50.25 and 56.111, 45 CFR 46 Subparts B/C/D, EU CTR 536/2014 Annex I section D, FDORA §3601, and for non-clinical kinds the 3Rs and the NIH Guidelines. Writes nothing and records no audit row. This is deeper than review_protocol_completeness, which is the five-check finalize gate; a protocol can pass that and fail here. The engine returns three counts — assessed, unmet, not-assessed — and you report them and the findings VERBATIM. Never compute a compliance percentage, a score or a readiness verdict of your own, and never fill in a figure the engine did not return. A NOT-ASSESSED rule means the recorded input could not support a judgement: it is not a pass, and an unassessed protocol is not a clean one. Say \"not assessed\", with the engine's reason. An ATTENTION finding on a complete section means the section's CONTENT was not inspected, only its status — say so rather than implying the content was reviewed. An optional flag the protocol does not record (children, pregnant women, prisoners, IND status) is absent, not \"no\": report it as not recorded.",
+      "scope": "project",
+      "governed": false,
+      "renderer": "ranked-cards",
+      "example": "",
+      "inputs": [
+        {
+          "name": "document_id",
+          "type": "number",
+          "required": true,
+          "description": "protocol_documents.id. Must belong to the caller's organization."
+        }
+      ],
+      "requiredInputs": [
+        "document_id"
+      ],
       "derived": true
     },
     {
@@ -30393,7 +31092,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Run the full CDISC pipeline over a dataset spec (SDTM/ADaM): structural + deeper conformance rules (required identifier vars, naming, types, codelist resolution + hygiene, duplicate vars, ADaM ADSL presence), generate define.xml v2.0, and return a consolidated submission-readiness report (error/warning counts + submissionReady). Honest scope: mechanical rules only, not a Pinnacle21/CDISC-CT substitute. Deterministic engine — report the returned numbers verbatim. Relay validation errors and ask for missing inputs rather than guessing.",
+      "description": "Run the full CDISC pipeline over a dataset spec (SDTM/ADaM): structural + deeper conformance rules (required identifier vars, naming, types, codelist resolution + hygiene, duplicate vars, ADaM ADSL presence), generate define.xml, and return a consolidated submission-readiness report (error/warning counts + submissionReady + the Define-XML version emitted). Honest scope: mechanical rules only, not a Pinnacle21/CDISC-CT substitute. Deterministic engine — report the returned numbers verbatim. Relay validation errors and ask for missing inputs rather than guessing.",
       "scope": "global",
       "governed": false,
       "renderer": [
@@ -30407,7 +31106,7 @@
           "name": "spec",
           "type": "object",
           "required": true,
-          "description": "The dataset spec (same shape as generate_define_xml): { studyName, standard, datasets[], codelists[] }."
+          "description": "The dataset spec (same shape as generate_define_xml): { studyName, standard, datasets[], codelists[], defineVersion? }. defineVersion is '2.0' or '2.1' (default '2.1')."
         }
       ],
       "requiredInputs": [
@@ -32608,8 +33307,8 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Start an intelligence questioning flow for a regulatory document type. When a user wants to build a protocol, CSR, IND, SOP, 510(k), CER, or other regulatory document, invoke this tool to launch the guided questioning flow. The engine will return structured questions that the user answers step by step, with branching logic, validation, and regulatory issue detection.",
-      "scope": "global",
+      "description": "Start an intelligence questioning flow for a regulatory document type. When a user wants to build a protocol, CSR, IND, SOP, 510(k), CER, CMC specification, or other regulatory document, invoke this tool to launch the guided questioning flow. The engine will return structured questions that the user answers step by step, with branching logic, validation, and regulatory issue detection. Under an organization context the interview is PERSISTED: the response carries a `session_id`, and every later answer_intelligence_question / resume_intelligence_flow / commit_intelligence_flow call needs only that id — not the flow_state. Keep the session_id; it is how a dropped conversation is resumed.",
+      "scope": "project",
       "governed": false,
       "renderer": "result-card",
       "example": "",
@@ -32618,7 +33317,13 @@
           "name": "document_type",
           "type": "string",
           "required": true,
-          "description": "The type of regulatory document to build. Examples: \"protocol\", \"csr\", \"ind\", \"sop\", \"510k\", \"cer\", \"clinical protocol\", \"clinical study report\", \"IND submission\", \"standard operating procedure\"."
+          "description": "The type of regulatory document to build. Examples: \"protocol\", \"csr\", \"ind\", \"sop\", \"510k\", \"cer\", \"cmc\", \"clinical protocol\", \"clinical study report\", \"IND submission\", \"standard operating procedure\"."
+        },
+        {
+          "name": "project_id",
+          "type": "string",
+          "required": false,
+          "description": "The program / project id (text) to bind the session to when the conversation has no active project. Ignored when the active project is known. A CMC interview can only be committed to the registers of a bound project."
         }
       ],
       "requiredInputs": [
@@ -33149,6 +33854,12 @@
           "type": "string",
           "required": false,
           "description": ""
+        },
+        {
+          "name": "sources",
+          "type": "array",
+          "required": false,
+          "description": "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room"
         }
       ],
       "requiredInputs": [
@@ -33191,6 +33902,12 @@
           "type": "string",
           "required": false,
           "description": ""
+        },
+        {
+          "name": "sources",
+          "type": "array",
+          "required": false,
+          "description": "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room"
         }
       ],
       "requiredInputs": [
@@ -33233,6 +33950,12 @@
           "type": "string",
           "required": false,
           "description": ""
+        },
+        {
+          "name": "sources",
+          "type": "array",
+          "required": false,
+          "description": "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room"
         }
       ],
       "requiredInputs": [
@@ -33551,6 +34274,12 @@
           "type": "string",
           "required": false,
           "description": ""
+        },
+        {
+          "name": "sources",
+          "type": "array",
+          "required": false,
+          "description": "The passages the text was grounded in, as project_knowledge_search returned them: each passage's evidence_source_id (or artifact_id) and its text as excerpt. Clauses that quote an excerpt verbatim are recorded as citations of that Data Room"
         },
         {
           "name": "reason",
@@ -34709,7 +35438,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Compute the HONEST assembly state of a 510(k) or De Novo eSTAR submission using the DETERMINISTIC device-assembly engine. Given the canonical content leaves (section code + title) and which official FDA eSTAR templates are present, it returns the producible artifactKind ('official-estar' = sections complete AND official template available; 'content-package-draft' = content exists but no official template, NOT submittable; 'none' = required content missing), whether an official eSTAR can be produced, the eSTAR section readiness summary, the template-availability gate, an optional target-market readiness overlay, and a de-duplicated list of every blocker. It does NOT render or transmit anything — it tells you exactly what can be assembled and what blocks a submittable artifact. Report the returned values verbatim. Do NOT recompute or soften them. If the engine reports a validation error or a blocker, relay it exactly and ask the user for any missing input rather than guessing.",
+      "description": "Compute the HONEST assembly state of a 510(k), De Novo or PMA eSTAR submission using the DETERMINISTIC device-assembly engine. Given the canonical content leaves (section code + title) and which official FDA eSTAR templates are present, it returns the producible artifactKind ('official-estar' = sections complete AND official template available; 'content-package-draft' = content exists but no official template, NOT submittable; 'none' = required content missing), whether an official eSTAR can be produced, the section readiness summary (eSTAR slots for 510(k)/De Novo; the 21 CFR 814 PMA modules for a PMA), the template-availability gate, an optional target-market readiness overlay, and a de-duplicated list of every blocker. It does NOT render or transmit anything — it tells you exactly what can be assembled and what blocks a submittable artifact. Report the returned values verbatim. Do NOT recompute or soften them. If the engine reports a validation error or a blocker, relay it exactly and ask the user for any missing input rather than guessing.",
       "scope": "project",
       "governed": false,
       "renderer": "readiness-panel",
@@ -34720,7 +35449,13 @@
           "name": "pathway",
           "type": "string",
           "required": true,
-          "description": "eSTAR pathway. PMA / MDR-IVDR assembly are separate and out of scope."
+          "description": "FDA device pathway: 510(k), De Novo, or PMA (scored against the 21 CFR 814 modules). EU MDR/IVDR technical documentation is a separate tool."
+        },
+        {
+          "name": "pmaSubmissionType",
+          "type": "string",
+          "required": false,
+          "description": "PMA only: original application vs a 21 CFR 814.39 supplement/notice, which scopes the modules the filing owes. Defaults to 'original'."
         },
         {
           "name": "variant",
@@ -35520,7 +36255,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Assemble a regional eCTD zip (FDA us-regional.xml / EMA eu-regional.xml / PMDA jp-regional.xml / Health Canada ca-regional.xml) from a set of CTD leaves. Produces the correct Module 1 folder structure per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Use after AnA has gathered the leaf manifest for a submission.",
+      "description": "Assemble a regional eCTD zip from a set of CTD leaves, for any of the twelve regions the gateway layer supports: FDA (United States), EMA / EUDAMED (European Union), PMDA (Japan), Health Canada, MHRA (United Kingdom), NMPA / CDE (China), TGA (Australia), Swissmedic (Switzerland), ANVISA (Brazil), CDSCO / SUGAM (India), MFDS (South Korea), HSA (Singapore). Produces that region's Module 1 folder structure and regional backbone (us-regional.xml / eu-regional.xml / jp-regional.xml / ca-regional.xml / …), computes SHA-256, and returns the bundle metadata for downstream transmit. The bundle carries a regionalBackbone status recording whether the backbone is built to the agency's own Module 1 structure or reuses another region's as a placeholder — read it before telling a user a package is agency-conformant. Use after AnA has gathered the leaf manifest for a submission.",
       "scope": "global",
       "governed": true,
       "renderer": "artifact-xml",
@@ -35549,6 +36284,12 @@
           "type": "string",
           "required": true,
           "description": "original | amendment | response | annual_report | safety."
+        },
+        {
+          "name": "application_type",
+          "type": "string",
+          "required": false,
+          "description": "REQUIRED for region \"fda\": what is being filed — nda | snda | anda | bla | ind | dmf. The us-regional backbone carries this as the application-type attribute, and it is a statement about the filing, so the packager refuses to guess it. Devi"
         },
         {
           "name": "sponsor_id",
@@ -36072,7 +36813,7 @@
         "id": "submission",
         "label": "Submission / eCTD"
       },
-      "description": "Explains how to transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.",
+      "description": "Explains how to transmit an already-packaged bundle to any of the thirteen regulatory gateways the registry binds: FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG, MHRA Product Submissions (UK), NMPA / CDE (China), TGA eBusiness Services (Australia), Swissmedic eGateway, ANVISA SOLICITA (Brazil), CDSCO SUGAM (India), MFDS dBio (South Korea) and HSA PRISM (Singapore). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.",
       "scope": "global",
       "governed": true,
       "renderer": "result-card",
@@ -36257,6 +36998,12 @@
           "type": "string",
           "required": false,
           "description": "Optional one-line note for the audit trail."
+        },
+        {
+          "name": "sources",
+          "type": "array",
+          "required": false,
+          "description": "The passages the text was grounded in, exactly as project_knowledge_search returned them: pass each passage's evidence_source_id (or artifact_id) and its text as excerpt. Every clause of the content that quotes an excerpt verbatim is record"
         }
       ],
       "requiredInputs": [
