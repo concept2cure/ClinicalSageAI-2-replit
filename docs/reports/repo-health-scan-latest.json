@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T05:40:35.669Z",
+  "generatedAt": "2026-09-23T06:57:38.762Z",
   "git": {
-    "sha": "03a95e108640d110a50ba5e7c3063b5a6019c17a",
+    "sha": "232ed4ffa198acd48e9fec34d69a55796afce74d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2051,12 +2051,12 @@
         "bytes": 146764
       },
       {
-        "file": "server/storage.ts",
-        "bytes": 145065
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 145235
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 143475
+        "file": "server/storage.ts",
+        "bytes": 145065
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2214,7 +2214,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 3424
+        "lines": 3460
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2441,12 +2441,12 @@
         "lines": 1849
       },
       {
-        "file": "server/services/vaccine/vaccine-knowledge.ts",
-        "lines": 1836
+        "file": "server/services/ana/citation-engine.ts",
+        "lines": 1844
       },
       {
-        "file": "server/services/ana/citation-engine.ts",
-        "lines": 1828
+        "file": "server/services/vaccine/vaccine-knowledge.ts",
+        "lines": 1836
       },
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
@@ -2538,7 +2538,7 @@
       },
       {
         "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1569
+        "lines": 1587
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
