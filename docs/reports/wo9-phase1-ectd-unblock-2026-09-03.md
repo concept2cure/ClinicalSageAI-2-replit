@@ -1507,3 +1507,134 @@ Checks run on `4cc0df494`, the merged tree this section was pushed on:
 - Every pre-push gate passed.
 - Golden journeys: 9 of 9 green.
 - This path's suites: 577 server tests and 234 client tests.
+
+## 19. Clicks 4–6 built — what can be clicked, what is blocked, and the one decision left (2026-09-23)
+
+**Row and evidence.** JM's "Continue to enhance and complete" (2026-09-22) is the
+decision §18 left open. This work moves **D7, one real sequence** (workstream W5).
+The failing-first runs are filed under `docs/evidence/W5/2026-09-23-ind-ectd/`.
+D7 is **not green**: its remaining rows are licensed agency files and FDA ESG
+credentials (§ "Blocked", below).
+
+**Numbering.** eCTD numbers an original `0000`, and the seed creates it. The work
+order's "0001 / 0002" are read as `0000` (the original, Click 4) and `0001` (the
+first lifecycle sequence, Click 6).
+
+### Click 4 — compile (`EctdCompile.tsx` → `POST /api/ectd-compile/:projectIdent/compile`)
+
+A compile returns the package it assembled, not only its backbone. Commits:
+`5da80b2c2`, `20bafbe7a`, `6ffa59afa`, `201280252`.
+
+- **Files.** Every file in the ZIP, including `m1/us/us-regional.xml`, which
+  `index.xml` now references (`f0eb87baa`), and the MD5 index.
+- **Leaf hierarchy.** Both backbones render as a hierarchy you can open and
+  close, including Module 1 from the regional file.
+- **PDF/A.** The outcome is stated. An FDA form shipped as FDA issued, with its
+  security intact (`leaf-pdf-security.ts`), is named on its own line, not
+  counted as a conversion failure.
+- **Leaf manifest.** Written to `ectd_compilations.leaf_manifest`. The compile
+  says whether it was recorded.
+- **Blocked: the ICH stylesheet view.** The ICH/FDA DTDs and stylesheet are not
+  vendored. Egress to fda.gov and ich.org is refused by this environment's
+  policy, and nothing was routed around it. The product renders the hierarchy
+  itself; the stylesheet view waits for the vendored files.
+- **Blocked: PDF/A conversion.** Ghostscript is absent from this sandbox, so the
+  compile names every leaf that was not converted.
+
+### Click 5 — dispatch readiness (`DispatchReadiness.tsx`)
+
+- Every finding, and every one of the four gates, renders as a named corpus rule
+  (`validation-rule-corpus.ts`), with:
+  - its region and severity;
+  - its enforcement statement: enforced here, guaranteed by packager
+    construction, or requires the agency validator.
+- There is no percentage and no bare pass/fail.
+- The invariant holds: every `findingCode` the assessor can emit is catalogued.
+  The source scan fails if one is not.
+- Commits: `be4164e09`, `bda0b217f`.
+
+### Click 6 — the lifecycle sequence, the export, and the agency validator's report
+
+Built and pushed:
+
+- **Start the next sequence.** Submission Center → Sequences → "Start sequence
+  0001" (`44880f611`). The number follows the highest in the submission's own
+  region. The type is the author's to state; `original` is never offered.
+- **What a follow-up sequence does to the filed state.** The compile shows every
+  act (operation, section, file, `modified-file`) and every declared act left
+  out, with the reason. It names the filed sequence the prior state folds up to.
+  All of it is read from the leaf manifest the compile records, which is the
+  record the next sequence is diffed against (`50ecbb688`).
+- **Export.** The compile surface's download pins the compiled sequence number.
+- **The agency validator's report.** A LORENZ eValidator JSON report is imported
+  against the compilation whose package it covered (`a280f5790`), through the
+  compile surface's own validate route; no new route. The import:
+  - reads the report fail closed (`a38139c6b`);
+  - stores it with its sha256, who imported it and when, in the same
+    transaction as its §11.10(e) audit row;
+  - never replaces a report silently: the surface asks first, and the replaced
+    report stays listed;
+  - renders every finding in the product, stating that the product did not run
+    the validator.
+
+  An imported report does not clear the dispatch gate. The product cannot bind
+  it to the bytes a later transmit would assemble.
+
+Defects found on this path and fixed, each test failing first:
+
+1. **A withdrawal shipped the document it withdrew**, inside the withdrawing
+   sequence, at a path in that sequence.
+   - Fixed at its source, in the lifecycle operator (`59893f059`, the parallel D7
+     session). This session's copy was removed (`a23adc73e`).
+   - `lifecycle-declared-acts.pglite.test.ts` pins it end to end.
+2. **A withdrawal was never recorded.** The leaf manifest omitted a backbone-only
+   `delete`, so the prior-state fold could not drop the leaf, and a leaf withdrawn
+   in 0001 stayed on file for every later sequence.
+   - The fold's own test held a `delete` that the packager could not produce.
+   - The two single-sequence loaders now leave a withdrawn leaf out, so the AnA
+     lifecycle tool does not read it as on file.
+3. **The compile called a package ready that transmit refuses.** It read neither
+   the declared acts assembly left out nor unapproved leaf documents. It now
+   reports both, in transmit's words. A withdrawal no longer counts as a
+   placement.
+4. **The eValidator JSON parser failed open.** An envelope it did not know, or a
+   severity it could not map, read as a clean pass.
+5. **`drug-nda-ectd.journey` was red on origin (`3b3864261`).** `cd76c7b67` made
+   freeze refuse an unapproved leaf document, and the journey froze a draft. The
+   fixture now files an approved document (`a2cb4d136`).
+
+### Open — JM's decision
+
+**How does 0000 become the filed state that 0001's `replace` and `delete` bind
+against?**
+
+- The prior-state loader counts a sequence only when its `dispatch_status` is
+  `sent` or `acknowledged`, and only a real gateway transmit writes those.
+- FDA ESG credentials are one of D7's blocked rows.
+- Until this is decided, a compile of 0001 says "No filed sequence is on record".
+  It leaves every declared `replace` and `delete` out of the package, named, and
+  the compile blocks.
+
+### Blocked — outside code
+
+- The ICH/FDA DTDs and the ICH stylesheet: egress refused.
+- FDA ESG test-environment credentials and certificates.
+- Ghostscript and an sRGB ICC profile in the runtime image, for PDF/A.
+- The eValidator run itself: JM runs it and hands over the JSON. Whether the
+  current parser reads LORENZ eValidator Basic's JSON is known only from that
+  file. A shape it does not read is refused on import, not guessed.
+
+### Not done
+
+- The screen recording of all six clicks (JM).
+- eValidator returning zero errors on the exported package (JM's run).
+- `docs/reports/wo9-demo-proof-<date>.md`, which is written from the recording.
+
+Checks run on `a2cb4d136`, the merged tree:
+
+- `ci:typecheck:no-regression`: 0 errors.
+- ESLint ratchet: no file's warning count grew.
+- Every pre-push gate passed.
+- Golden journeys: 11 of 11 green.
+- Suites: v2 client, UI contract and route suites, 342 files and 3,878 tests;
+  eCTD, gateway and submission-service suites, 121 files and 1,148 tests.

@@ -57,7 +57,7 @@ vi.mock('../../clinical-regulatory-evidence/retrieval-source-link', () => ({
 vi.mock('../../cerv2/section-version', () => ({ recordCerv2SectionVersion: vi.fn(async () => undefined) }));
 vi.mock('../../auditService', () => ({ auditLog: vi.fn(async () => undefined) }));
 
-import { getToolHandler } from '../AnaToolExecutor';
+import { approvedToolHandler } from './support/approved-tool-handler';
 
 const CTX = { organizationId: 5, userId: 41, organizationUuid: 'org-uuid' };
 const Q_SUB = '11111111-2222-4333-8444-555555555555';
@@ -72,7 +72,7 @@ beforeEach(() => {
 
 describe('write_q_sub_section', () => {
   it('records the resolvable sources through the source-and-author gate and NAMES the one it dropped', async () => {
-    const handler = getToolHandler('write_q_sub_section')!;
+    const handler = approvedToolHandler('write_q_sub_section')!;
     const out = JSON.parse(
       await handler(
         {
@@ -112,7 +112,7 @@ describe('write_q_sub_section', () => {
   });
 
   it('without sources, every clause is the author\'s assertion — the author-only gate, and the result says so', async () => {
-    const handler = getToolHandler('write_q_sub_section')!;
+    const handler = approvedToolHandler('write_q_sub_section')!;
     const out = JSON.parse(
       await handler({ q_sub_id: Q_SUB, section_key: 'device_description', content: PROSE }, CTX as never),
     );
@@ -126,7 +126,7 @@ describe('write_q_sub_section', () => {
 
 describe('write_kit_section', () => {
   it('refuses without an identified author, before touching the database', async () => {
-    const handler = getToolHandler('write_kit_section')!;
+    const handler = approvedToolHandler('write_kit_section')!;
     const out = JSON.parse(
       await handler(
         { section_key: 'substantial-equivalence', content: PROSE },
@@ -138,7 +138,7 @@ describe('write_kit_section', () => {
   });
 
   it('runs the source-and-author gate against the kit section row inside the write transaction', async () => {
-    const handler = getToolHandler('write_kit_section')!;
+    const handler = approvedToolHandler('write_kit_section')!;
     const out = JSON.parse(
       await handler(
         {

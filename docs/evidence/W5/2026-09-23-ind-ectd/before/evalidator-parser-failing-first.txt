@@ -1,0 +1,127 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > normalizeSeverity > maps engine tokens to error/warning/info 3ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport > parses the native findings shape 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport > parses a bare array + alternate field names 1ms
+ × server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses an envelope it does not know, naming what it found 10ms
+   → expected [Function] to throw an error
+ × server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a "findings" member that is not an array 2ms
+   → expected [Function] to throw an error
+ × server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a finding whose severity it cannot map, instead of counting it as info 2ms
+   → expected [Function] to throw an error
+ × server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a finding with no severity at all 1ms
+   → expected [Function] to throw an error
+ × server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a row that is not an object 2ms
+   → expected [Function] to throw an error
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > still reads an empty findings list as no findings — a clean report is a clean report 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > reads the agency severity words: High is an error, Medium and Low are warnings, Pass is info 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorXmlReport > parses a LORENZ-style XML report (attrs + child message) 7ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorReport (sniff) > routes XML vs JSON by leading character 3ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > adapter configuration + fail-closed helper > is not configured without EVALIDATOR_BINARY/ENDPOINT 1ms
+ ✓ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > adapter configuration + fail-closed helper > runExternalValidation returns a fail-closed un-run report when no engine is configured 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses an envelope it does not know, naming what it found
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts:53:8
+     51|   it('refuses an envelope it does not know, naming what it found', () …
+     52|     expect(() => parseEvalidatorJsonReport(JSON.stringify({ results: […
+     53|       .toThrow(/not an eValidator report this product reads.*results/);
+       |        ^
+     54|   });
+     55|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a "findings" member that is not an array
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts:57:95
+     55|
+     56|   it('refuses a "findings" member that is not an array', () => {
+     57|     expect(() => parseEvalidatorJsonReport(JSON.stringify({ findings: …
+       |                                                                                               ^
+     58|   });
+     59|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a finding whose severity it cannot map, instead of counting it as info
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts:62:8
+     60|   it('refuses a finding whose severity it cannot map, instead of count…
+     61|     expect(() => parseEvalidatorJsonReport(JSON.stringify([{ ruleId: '…
+     62|       .toThrow(/finding 1.*severity "Blocker"/);
+       |        ^
+     63|   });
+     64|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a finding with no severity at all
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts:67:8
+     65|   it('refuses a finding with no severity at all', () => {
+     66|     expect(() => parseEvalidatorJsonReport(JSON.stringify([{ ruleId: '…
+     67|       .toThrow(/finding 1.*no severity/);
+       |        ^
+     68|   });
+     69|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts > parseEvalidatorJsonReport — fails closed > refuses a row that is not an object
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ectd/external-validator/__tests__/lorenz-adapter.test.ts:71:77
+     69|
+     70|   it('refuses a row that is not an object', () => {
+     71|     expect(() => parseEvalidatorJsonReport(JSON.stringify(['1734 error…
+       |                                                                             ^
+     72|   });
+     73|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 9 passed (14)
+   Start at  04:02:37
+   Duration  679ms (transform 166ms, setup 93ms, import 129ms, tests 41ms, environment 0ms)
+
