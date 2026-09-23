@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T10:56:19.646Z",
+  "generatedAt": "2026-09-23T11:18:08.094Z",
   "git": {
-    "sha": "15e8501ed2954996c3ac68cfe4e8e450a28f2ec1",
+    "sha": "923d1491bbc54a450a13b7b3becc4991c8502bda",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 208,
+    "duplicateBasenames": 207,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
@@ -1228,14 +1228,6 @@
         "paths": [
           "client/src/types/global.d.ts",
           "server/types/global.d.ts"
-        ]
-      },
-      {
-        "basename": "governed-action-signoff.test",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx",
-          "server/services/ana-ri/__tests__/governed-action-signoff.test.ts"
         ]
       },
       {
@@ -2577,7 +2569,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 406,
+      "duplicateGroups": 405,
       "largeByBytes": 33,
       "largeByLines": 84
     },
@@ -2595,7 +2587,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 56,
+      "duplicateGroups": 55,
       "largeByBytes": 5,
       "largeByLines": 13
     },
