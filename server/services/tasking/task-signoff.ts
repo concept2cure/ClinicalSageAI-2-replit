@@ -7,24 +7,25 @@
  * "e-signature on regulated task sign-off"). Completing such a task now
  * demands a signature ceremony:
  *
- *   · the signer re-authenticates with their signing PIN (same `user_pins`
- *     store + bcrypt + lockout policy as document sealing — see
- *     services/part11/pin-verification),
+ *   · the signer is re-verified by the platform's one signing ceremony
+ *     (services/part11/reverify-signer.ts): the account password, the second
+ *     factor when one is enrolled, and the account's lockout. Until
+ *     2026-09-23 this was a separate signing PIN, which a session could set
+ *     and which ignored the second factor (VSR-001 §13.3 item 3),
  *   · states the §11.50(a)(3) meaning of the signature and a reason,
  *   · and the verified manifestation (printed name, date/time, meaning) is
  *     appended to the task's `approvalHistory` and written to the governed
  *     audit ledger by the route.
  *
  * Without a signature the route answers 428 ESIGN_REQUIRED so clients open
- * the ceremony instead of silently failing. The PIN itself never reaches any
+ * the ceremony instead of silently failing. The credentials never reach any
  * log, audit payload, or response.
  *
  * @module server/services/tasking/task-signoff
  */
-import {
-  verifySigningPin,
-  TASK_SIGNATURE_MEANINGS,
-} from '../part11/pin-verification';
+import { reverifySigner, type ReverifySignerDeps } from '../part11/reverify-signer';
+import { signerReverificationDeps } from '../part11/reverify-signer-deps';
+import { TASK_SIGNATURE_MEANINGS } from '../part11/signature-meanings';
 
 export interface SignoffActor {
   userId: number | null;
@@ -33,7 +34,9 @@ export interface SignoffActor {
 }
 
 export interface SignoffSignature {
-  pin: string;
+  password: string;
+  /** The enrolled authenticator's current code; required when one is enrolled. */
+  mfaToken?: string;
   meaning: string;
 }
 
@@ -44,7 +47,8 @@ export interface SignoffManifestation {
   meaning: string;
   reason: string;
   signedAt: string;
-  method: 'pin';
+  /** What the ceremony verified. Signatures taken before 2026-09-23 read 'pin'. */
+  method: 'password' | 'password+mfa' | 'pin';
 }
 
 export type SignoffResult =
@@ -74,9 +78,51 @@ function normaliseApprovers(raw: unknown): number[] {
   });
 }
 
+/** A refusal of the transition, shaped as the route returns it. */
+type SignoffRefused = Extract<SignoffResult, { ok: false }>;
+
+const refuse = (status: number, code: string, error: string): SignoffRefused => ({
+  required: true,
+  ok: false,
+  status,
+  code,
+  error,
+});
+
+/**
+ * What the ceremony needs before any credential is checked: a signature, a
+ * meaning from the task vocabulary, a reason, and a signer the server can
+ * re-verify (an account id). The refusal, or the four, checked.
+ */
+function ceremonyInput(
+  signature: SignoffSignature | undefined,
+  reason: string | undefined,
+  userId: number | null,
+): SignoffRefused | { signature: SignoffSignature; reason: string; signerId: number } {
+  if (!signature) {
+    return refuse(
+      428, // Precondition Required — the client must run the ceremony
+      'ESIGN_REQUIRED',
+      'Completing this task requires an electronic signature: your password ' +
+        '(and your authenticator code, if you use one), the meaning of the signature, and a reason.',
+    );
+  }
+  if (!(TASK_SIGNATURE_MEANINGS as readonly string[]).includes(signature.meaning)) {
+    return refuse(400, 'ESIGN_MEANING_INVALID', `Signature meaning must be one of: ${TASK_SIGNATURE_MEANINGS.join(', ')}.`);
+  }
+  if (!reason || reason.trim().length < 3) {
+    return refuse(400, 'ESIGN_REASON_REQUIRED', 'A reason for the sign-off is required.');
+  }
+  if (userId === null || !Number.isInteger(userId) || userId <= 0) {
+    return refuse(401, 'ESIGN_IDENTITY_REQUIRED', 'A verified signer identity is required to sign.');
+  }
+  return { signature, reason: reason.trim(), signerId: userId };
+}
+
 /**
  * Decide whether this transition needs a signature and, if so, verify it.
- * Pure apart from the PIN check; the caller persists the manifestation.
+ * Pure apart from the signer's re-verification, whose dependencies default to
+ * the production wiring; the caller persists the manifestation.
  */
 export async function requireTaskSignoff(params: {
   organizationId: number;
@@ -93,8 +139,10 @@ export async function requireTaskSignoff(params: {
   actor: SignoffActor;
   signature?: SignoffSignature;
   reason?: string;
+  /** The ceremony's dependencies; production wiring unless a test injects them. */
+  deps?: ReverifySignerDeps;
 }): Promise<SignoffResult> {
-  const { organizationId, task, toStatus, actor, signature, reason } = params;
+  const { task, toStatus, actor, signature, reason } = params;
 
   const needsSignoff =
     toStatus === 'completed' &&
@@ -105,12 +153,12 @@ export async function requireTaskSignoff(params: {
   // Designated-approver scoping.
   //
   // `unified_tasks.approvers` names who may clear this checkpoint. Where it is
-  // populated we enforce it: identity alone is not authority, and a verified PIN
+  // populated we enforce it: identity alone is not authority, and a verified signer
   // proves only that the signer is who they say they are, not that they are the
   // person the workflow nominated.
   //
-  // Where it is EMPTY the gate stays open to any org member with an enrolled
-  // PIN, and that is a real, known limitation rather than an oversight: nothing
+  // Where it is EMPTY the gate stays open to any org member who can sign, and
+  // that is a real, known limitation rather than an oversight: nothing
   // in the product writes this column yet and there is no UI to nominate
   // approvers, so enforcing an empty list would lock every approval-gated task
   // permanently. Quorum and role-based gate types are NOT implemented — the
@@ -128,53 +176,24 @@ export async function requireTaskSignoff(params: {
     };
   }
 
-  if (!signature) {
-    return {
-      required: true,
-      ok: false,
-      status: 428, // Precondition Required — the client must run the ceremony
-      code: 'ESIGN_REQUIRED',
-      error:
-        'Completing this task requires an electronic signature: your signing PIN, ' +
-        'the meaning of the signature, and a reason.',
-    };
-  }
-  if (!(TASK_SIGNATURE_MEANINGS as readonly string[]).includes(signature.meaning)) {
-    return {
-      required: true,
-      ok: false,
-      status: 400,
-      code: 'ESIGN_MEANING_INVALID',
-      error: `Signature meaning must be one of: ${TASK_SIGNATURE_MEANINGS.join(', ')}.`,
-    };
-  }
-  if (!reason || reason.trim().length < 3) {
-    return {
-      required: true,
-      ok: false,
-      status: 400,
-      code: 'ESIGN_REASON_REQUIRED',
-      error: 'A reason for the sign-off is required.',
-    };
-  }
-  if (!actor.email) {
-    return {
-      required: true,
-      ok: false,
-      status: 401,
-      code: 'ESIGN_IDENTITY_REQUIRED',
-      error: 'A verified signer identity is required to sign.',
-    };
-  }
+  const input = ceremonyInput(signature, reason, actor.userId);
+  if ('ok' in input) return input;
+  const { signature: sig, reason: why, signerId } = input;
 
-  const verification = await verifySigningPin(actor.email, signature.pin, organizationId);
-  if (!verification.ok) {
+  const verified = await reverifySigner(
+    signerId,
+    { password: sig.password, mfaToken: sig.mfaToken },
+    params.deps ?? signerReverificationDeps(),
+  );
+  if (!verified.ok) {
     return {
       required: true,
       ok: false,
-      status: verification.code === 'UNAVAILABLE' ? 503 : 403,
-      code: `ESIGN_${verification.code}`,
-      error: verification.message,
+      // A wrong password or code refuses the act, not the session: 403, as the
+      // PIN's refusals were, so the client does not read it as signed out.
+      status: verified.status === 401 ? 403 : verified.status,
+      code: `ESIGN_${verified.code}`,
+      error: verified.error,
     };
   }
 
@@ -182,12 +201,12 @@ export async function requireTaskSignoff(params: {
     required: true,
     ok: true,
     manifestation: {
-      signedById: actor.userId,
-      signedByName: actor.name || actor.email,
-      meaning: signature.meaning,
-      reason: reason.trim(),
+      signedById: signerId,
+      signedByName: actor.name || actor.email || `User ${signerId}`,
+      meaning: sig.meaning,
+      reason: why,
       signedAt: new Date().toISOString(),
-      method: 'pin',
+      method: verified.authenticationMethod,
     },
   };
 }

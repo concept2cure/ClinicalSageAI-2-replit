@@ -262,11 +262,14 @@ const updateTaskStatusSchema = z.object({
   status: taskStatusSchema,
   progress: z.number().min(0).max(100).optional(),
   reason: z.string().max(1000).optional(),
-  // The e-signature ceremony for approval-gated completion. The PIN is used
-  // for verification only — it is never logged, audited, or echoed back.
+  // The e-signature ceremony for approval-gated completion: the signer's
+  // password, and the authenticator code when one is enrolled, re-verified by
+  // services/part11/reverify-signer.ts. Used for verification only — never
+  // logged, audited, or echoed back.
   signature: z
     .object({
-      pin: z.string().min(4).max(64),
+      password: z.string().min(1).max(256),
+      mfaToken: z.string().max(12).optional(),
       meaning: z.string().max(40),
     })
     .optional(),
@@ -309,7 +312,7 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
     }
 
     // Approval-gated completion demands the §11.50 signature ceremony —
-    // PIN-verified identity, stated meaning, reason. 428 tells the client to
+    // re-verified identity, stated meaning, reason. 428 tells the client to
     // run the ceremony; nothing is written until it verifies.
     const signoff = await requireTaskSignoff({
       organizationId,
@@ -348,7 +351,7 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
         // the record as it stood at first completion; once the task is reopened
         // and worked on, that attestation is stale, so the gate has to close
         // again. Without this, a task signed once could be reopened, changed
-        // and re-completed indefinitely with no new PIN, meaning or reason —
+        // and re-completed indefinitely with no new signature, meaning or reason —
         // and it rendered "approved" the whole time it sat back in progress.
         ...(isReopen ? { approvalStatus: 'pending' as string } : {}),
         // Placed after the reopen reset so a real signature always wins.
@@ -368,7 +371,7 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
       })
       // Compare-and-set on the status we read above. The state machine
       // constrains what each request BELIEVES the row holds, not what it
-      // actually holds, and the PIN bcrypt comparison sits between the read and
+      // actually holds, and the signer's re-verification sits between the read and
       // this write — a window of order-100ms. Without this predicate two
       // concurrent transitions both pass isLegalTransition and both commit.
       .where(
@@ -401,7 +404,7 @@ router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
           from: existing.status,
           to: parsed.status,
           progress: progress ?? null,
-          // Signature manifestation (never the PIN) rides the governed record.
+          // Signature manifestation (never the credentials) rides the governed record.
           ...(manifestation
             ? {
                 signature: {

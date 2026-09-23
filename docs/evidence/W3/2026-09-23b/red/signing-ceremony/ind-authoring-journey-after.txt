@@ -1,0 +1,165 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stderr | tests/golden-journeys/ind-authoring.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts
+✅ Template tables initialized
+
+stderr | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-09-23T09:39:31.877Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "914d4017-d6c0-492c-9919-ce59e1b7e2d4",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-09-23T09:39:31.926Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 914d4017-d6c0-492c-9919-ce59e1b7e2d4 by author@journey.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T09:39:31.927Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "author@journey.example",
+    "tenantId": 1,
+    "resourceId": "01b6f707-e39b-4c24-9bac-a801ce1d37fe"
+  }
+}
+
+stderr | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-09-23T09:39:31.992Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc 914d4017-d6c0-492c-9919-ce59e1b7e2d4 by author@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-09-23T09:39:32.045Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc 914d4017-d6c0-492c-9919-ce59e1b7e2d4 by author@journey.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T09:39:32.045Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.REVERT authoring_section",
+  "context": {
+    "userId": "author@journey.example",
+    "tenantId": 1,
+    "resourceId": "01b6f707-e39b-4c24-9bac-a801ce1d37fe"
+  }
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-09-23T09:39:32.070Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 914d4017-d6c0-492c-9919-ce59e1b7e2d4 by approver@journey.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T09:39:32.070Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.comment_added authoring_document",
+  "context": {
+    "userId": "approver@journey.example",
+    "tenantId": 1,
+    "resourceId": "914d4017-d6c0-492c-9919-ce59e1b7e2d4"
+  }
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-09-23T09:39:32.149Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_resolved on doc 914d4017-d6c0-492c-9919-ce59e1b7e2d4 by author@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-09-23T09:39:32.248Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 914d4017-d6c0-492c-9919-ce59e1b7e2d4 by author@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-09-23T09:39:32.259Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: VIEW_FROZEN on doc 914d4017-d6c0-492c-9919-ce59e1b7e2d4 by author@journey.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T09:39:32.259Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document",
+  "context": {
+    "userId": "author@journey.example",
+    "tenantId": 1,
+    "resourceId": "914d4017-d6c0-492c-9919-ce59e1b7e2d4"
+  }
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-09-23T09:39:32.320Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 914d4017-d6c0-492c-9919-ce59e1b7e2d4 by author@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-09-23T09:39:32.348Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc 914d4017-d6c0-492c-9919-ce59e1b7e2d4 by approver@journey.example",
+  "context": {}
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+{
+  "timestamp": "2026-09-23T09:39:32.411Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc 914d4017-d6c0-492c-9919-ce59e1b7e2d4 by author@journey.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T09:39:32.411Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.EXPORT authoring_document",
+  "context": {
+    "userId": "author@journey.example",
+    "tenantId": 1,
+    "resourceId": "914d4017-d6c0-492c-9919-ce59e1b7e2d4"
+  }
+}
+
+stdout | tests/golden-journeys/ind-authoring.journey.test.ts
+[journey] manifest: <repo>/tests/golden-journeys/__reports__/ind-authoring.manifest.json
+[journey] report:   <repo>/tests/golden-journeys/__reports__/ind-authoring.report.md
+
+ ✓ tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine 670ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  09:39:23
+   Duration  8.83s (transform 2.37s, setup 86ms, import 820ms, tests 7.74s, environment 0ms)
+

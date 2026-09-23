@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { parseDraftEnvelope } from './authoring-draft-envelope.js';
-import bcrypt from 'bcryptjs';
 import fs from 'fs';
 import path from 'path';
 // spawn — reserved for future PDF generation pipeline
@@ -14,6 +13,8 @@ import { getPool } from '../db';
 import auditService, { writeChainedAuditRow } from '../services/auditService';
 import { isSigningAuthorized } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
+import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer.js';
+import { signerReverificationDeps } from '../services/part11/reverify-signer-deps.js';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
 // c2c_documents is the system of record for a filing; this router is the
@@ -757,69 +758,38 @@ const ensureTokenTableExists = async () => {};
 // runtime DDL (see authoring-schema-contract test).
 const ensureTemplateTablesExist = async () => {};
 
-// 21 CFR Part 11 compliant PIN verification with lockout policy
-const verifyUserPin = async (email: string, pin: string, tenantId: number): Promise<boolean> => {
-  const MAX_ATTEMPTS = 3;
-  const LOCKOUT_DURATION = 30 * 60 * 1000; // 30 minutes
-
-  try {
-    // Get user PIN record
-    const result = await pool.query(
-      'SELECT pin_hash, failed_attempts, locked_until FROM user_pins WHERE email = $1 AND tenant_id = $2',
-      [email, tenantId]
-    );
-
-    if (((result.rowCount ?? 0) === 0)) {
-      console.warn(`PIN verification failed: No PIN record for ${email}`);
-      return false;
-    }
-
-    const { pin_hash, failed_attempts, locked_until } = result.rows[0];
-
-    // Check if account is locked
-    if (locked_until && new Date(locked_until) > new Date()) {
-      const remainingTime = Math.ceil((new Date(locked_until).getTime() - Date.now()) / 60000);
-      console.warn(`Account locked for ${email}. ${remainingTime} minutes remaining.`);
-      return false;
-    }
-
-    // Verify PIN using bcrypt
-    const isValid = await bcrypt.compare(pin, pin_hash);
-
-    if (isValid) {
-      // Reset failed attempts on successful verification
-      await pool.query(
-        'UPDATE user_pins SET failed_attempts = 0, last_attempt = NOW(), locked_until = NULL WHERE email = $1 AND tenant_id = $2',
-        [email, tenantId]
-      );
-      console.log(`PIN verified successfully for ${email}`);
-      return true;
-    } else {
-      // Increment failed attempts
-      const newAttempts = (failed_attempts || 0) + 1;
-      let lockUntil = null;
-
-      if (newAttempts >= MAX_ATTEMPTS) {
-        // Lock account after max attempts
-        lockUntil = new Date(Date.now() + LOCKOUT_DURATION);
-        console.warn(`Account locked for ${email} after ${newAttempts} failed attempts`);
-      }
-
-      await pool.query(
-        'UPDATE user_pins SET failed_attempts = $1, last_attempt = NOW(), locked_until = $2 WHERE email = $3 AND tenant_id = $4',
-        [newAttempts, lockUntil, email, tenantId]
-      );
-
-      console.warn(
-        `PIN verification failed for ${email}. Attempt ${newAttempts} of ${MAX_ATTEMPTS}`
-      );
-      return false;
-    }
-  } catch (error) {
-    console.error('Error verifying PIN:', error);
-    return false;
+/**
+ * §11.200(a)(1): re-verify the signer at the moment of signing, with the
+ * platform's one ceremony (services/part11/reverify-signer.ts): the account
+ * password, the second factor whenever one is enrolled, and the account's
+ * lockout. Answers the refusal itself and returns null when the signature must
+ * not be applied.
+ *
+ * This router verified a separate "signing PIN" instead (VSR-001 §13.3 item 3).
+ * A signer with an authenticator enrolled signed without it; the PIN was first
+ * set by POST /users/pin with a session alone, so possession of a session was
+ * possession of the signing credential; and the product had two credential
+ * stores with two lockouts for one act. The PIN routes and verifier are deleted;
+ * the replacement for each is named where it stood.
+ *
+ * Called after every other check, so a code is consumed only by a signature
+ * that is otherwise ready to apply.
+ */
+async function reverifyAuthoringSigner(req: Request, res: Response): Promise<SignerReverified | null> {
+  const actor = getActorId(req);
+  const userId = actor !== null && /^\d+$/.test(actor) ? Number(actor) : null;
+  if (userId === null) {
+    res.status(401).json({ error: 'Signing requires an account the server can re-verify', code: 'SIGNER_NOT_VERIFIABLE' });
+    return null;
   }
-};
+  const { password, mfaToken } = (req.body ?? {}) as { password?: unknown; mfaToken?: unknown };
+  const verified = await reverifySigner(userId, { password, mfaToken }, signerReverificationDeps());
+  if (!verified.ok) {
+    res.status(verified.status).json({ error: verified.error, code: verified.code });
+    return null;
+  }
+  return verified;
+}
 
 /**
  * The signer's PRINTED NAME, for 21 CFR §11.50(a)(1).
@@ -3690,6 +3660,9 @@ router.get('/stats', async (req: Request, res: Response) => {
  * after this deletion the column has no writer either. Enforcing expiry would
  * start locking real signers out of a governed action, which is a product
  * decision and not a cleanup.
+ *
+ * 2026-09-23: moot. /users/pin and verifyUserPin are deleted as well, and the
+ * PIN signs nothing; see "Signing credential" below.
  */
 
 
@@ -3902,11 +3875,11 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/authoring/docs/:docId/e-sign - Electronic signature with PIN verification
+// POST /api/authoring/docs/:docId/e-sign - Electronic signature, re-verified by the platform ceremony
 router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
-    const { pin, meaning, intent } = req.body;
+    const { meaning, intent } = req.body;
     // Part 11 §11.100 attribution: the SIGNER identity on an electronic
     // signature must come from the verified JWT, never from client-supplied
     // headers. x-user-email here meant anyone could sign as anyone.
@@ -3917,14 +3890,10 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    // §11.10(g) authority, checked BEFORE the PIN. Order matters: an
-    // unauthorized caller must not learn whether a PIN is correct, and must not
-    // be able to use this endpoint as a PIN oracle.
+    // §11.10(g) authority, checked BEFORE the credentials. Order matters: an
+    // unauthorized caller must not learn whether a password is correct, and
+    // must not be able to use this endpoint as a password oracle.
     if (!(await assertSigningAuthority(req, res))) return;
-
-    if (!pin) {
-      return res.status(400).json({ error: 'PIN required for signature' });
-    }
 
     if (!meaning || !SIGNATURE_MEANINGS.includes(meaning)) {
       return res.status(400).json({ error: 'Invalid signature meaning' });
@@ -3944,11 +3913,10 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
     // which this router never populates, and never the email in its place.
     const name = await resolveSignerName(email);
 
-    // Verify PIN
-    const pinValid = await verifyUserPin(email, pin, tenantId);
-    if (!pinValid) {
-      return res.status(401).json({ error: 'Invalid PIN' });
-    }
+    // §11.200(a)(1): the signer re-verified, last, so a refusal costs nothing
+    // and a code is spent only on a signature that is otherwise ready.
+    const signer = await reverifyAuthoringSigner(req, res);
+    if (!signer) return;
 
     // Compute document hash
     const docHash = await computeDocHash(docId, tenantId);
@@ -3982,12 +3950,15 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
     try {
       await client.query('BEGIN');
 
+      // `method` is what the ceremony verified ('password' or 'password+mfa'),
+      // never a claim from the request. `pin_verified` stays false: no PIN is
+      // involved, and rows signed with one keep 'PIN' and true.
       await client.query(
         `INSERT INTO authoring_signatures
          (id, doc_id, signer_email, signer_name, meaning, reason, method,
           content_hash, signature_digest, covered_freeze_version, covered_content_hash,
           pin_verified, ip_address, user_agent, tenant_id)
-         VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11, $12, $13, $14)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, FALSE, $12, $13, $14)`,
         [
           signatureId,
           docId,
@@ -3995,11 +3966,11 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
           name,
           meaning,
           intent,
+          signer.authenticationMethod,
           docHash,
           signatureDigest,
           covered?.version ?? null,
           covered?.contentHash ?? null,
-          true,
           req.ip,
           req.headers['user-agent'],
           tenantId,
@@ -5471,7 +5442,7 @@ async function computeSignatureBinding(
 router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
-    const { pin, meaning = 'REVIEWER', reason } = req.body;
+    const { meaning = 'REVIEWER', reason } = req.body;
     const tenantId = getTenantId(req);
     // Part 11 §11.100: the signer is the VERIFIED principal. This took its
     // identity from `x-user-email || req.body.signer_email || 'system'`, so a
@@ -5488,15 +5459,15 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     // address as a printed name.
     const signerName = await resolveSignerName(signerEmail as string);
 
-    // §11.10(g) authority, before the PIN — same reasoning as /e-sign. This
-    // path also advances a workflow step, and it already consulted the caller's
-    // roles to decide THAT (below); it never consulted them to decide whether
-    // the signature itself could be applied.
+    // §11.10(g) authority, before the credentials — same reasoning as /e-sign.
+    // This path also advances a workflow step, and it already consulted the
+    // caller's roles to decide THAT (below); it never consulted them to decide
+    // whether the signature itself could be applied.
     if (!(await assertSigningAuthority(req, res))) return;
 
     // Validate required fields
-    if (!pin || !reason) {
-      return res.status(400).json({ error: 'PIN and reason are required for signing' });
+    if (!reason) {
+      return res.status(400).json({ error: 'A reason is required for signing' });
     }
 
     // §11.50(a)(3) — the MEANING of the signature is a closed set, and this
@@ -5513,11 +5484,9 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // Verify PIN
-    const pinValid = await verifyUserPin(signerEmail as string, pin, tenantId);
-    if (!pinValid) {
-      return res.status(401).json({ error: 'Invalid PIN' });
-    }
+    // §11.200(a)(1): the signer re-verified by the platform ceremony, last.
+    const signer = await reverifyAuthoringSigner(req, res);
+    if (!signer) return;
 
     const { contentHash, covered, signatureDigest } = await computeSignatureBinding(
       String(docId),
@@ -5541,11 +5510,12 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     try {
       await client.query('BEGIN');
 
+      // `method`: the factors the ceremony verified, as /e-sign records them.
       await client.query(
         `INSERT INTO authoring_signatures
          (id, doc_id, signer_email, signer_name, meaning, reason, method, content_hash,
           signature_digest, covered_freeze_version, covered_content_hash, tenant_id, signed_at)
-         VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11, NOW())`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())`,
         [
           signatureId,
           docId,
@@ -5553,6 +5523,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
           signerName,
           meaning,
           reason,
+          signer.authenticationMethod,
           contentHash,
           signatureDigest,
           covered?.version ?? null,
@@ -5711,97 +5682,26 @@ router.get('/docs/:docId/audit', async (req: Request, res: Response) => {
   }
 });
 
-// ============= PIN Management =============
+// ============= Signing credential =============
 
-// POST /api/authoring/users/pin - Set or update user PIN
-router.post('/users/pin', async (req: Request, res: Response) => {
-  try {
-    const { pin, old_pin } = req.body;
-    const tenantId = getTenantId(req);
-
-    /* SECURITY (21 CFR Part 11 §11.200 / §11.10(d)) — the PIN is the credential
-       that gates EVERY electronic signature in this router. Two holes were open
-       on the endpoint that manages it.
-
-       IDENTITY came from `req.headers['x-user-email'] || req.body.email`. The
-       router's middleware clears any client-supplied x-user-email and re-derives
-       it from the JWT, so the header is safe — but only when the token carries
-       an email claim. Without one it fell through to `req.body.email`, which the
-       caller controls, so a request could set ANOTHER user's signing PIN. This
-       is the same fallback that was closed at export (see the comment there);
-       the PIN endpoint was missed, and it is the worst place to miss it.
-
-       OLD-PIN verification was conditional — `if (old_pin)`. An existing PIN
-       could therefore be overwritten by simply omitting the field. Possession of
-       a session became possession of the signing credential, which is precisely
-       what §11.200(a)(1) requires two distinct components to prevent.
-
-       No caller anywhere sets another user's PIN (grep: the endpoint has no
-       client callers at all), so scoping it to the authenticated actor breaks
-       nothing and closes both. */
-    const email = getActorEmail(req);
-    if (!email) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-    if (!pin) {
-      return res.status(400).json({ error: 'PIN is required' });
-    }
-
-    // Check if PIN exists
-    const existing = await pool.query(
-      'SELECT pin_hash FROM user_pins WHERE email = $1 AND tenant_id = $2',
-      [email, tenantId]
-    );
-
-    const isUpdate = (existing.rowCount ?? 0) > 0;
-    if (isUpdate) {
-      if (!old_pin) {
-        return res.status(400).json({ error: 'Current PIN is required to change it' });
-      }
-      const valid = await bcrypt.compare(old_pin, existing.rows[0].pin_hash);
-      if (!valid) {
-        return res.status(401).json({ error: 'Invalid old PIN' });
-      }
-    }
-
-    // Hash new PIN
-    const pinHash = await bcrypt.hash(pin, 10);
-
-    // Insert or update
-    if (((existing.rowCount ?? 0) === 0)) {
-      await pool.query(
-        `INSERT INTO user_pins (email, pin_hash, tenant_id, created_at, last_changed)
-         VALUES ($1, $2, $3, NOW(), NOW())`,
-        [email, pinHash, tenantId]
-      );
-    } else {
-      await pool.query(
-        `UPDATE user_pins SET pin_hash = $1, last_changed = NOW(), failed_attempts = 0
-         WHERE email = $2 AND tenant_id = $3`,
-        [pinHash, email, tenantId]
-      );
-    }
-
-    /* A change to the signing credential is itself a governed event: §11.10(e)
-       wants the record of who did what and when, and this endpoint wrote none.
-       The PIN never appears in the trail — only that it was set or rotated. */
-    await createAuditTrail(
-      req,
-      undefined,
-      null,
-      isUpdate ? 'SIGNING_PIN_ROTATED' : 'SIGNING_PIN_CREATED',
-      null,
-      null,
-      isUpdate ? 'Signing PIN rotated by its owner' : 'Signing PIN created',
-      { email },
-    );
-
-    res.json({ success: true, message: 'PIN set successfully' });
-  } catch (error) {
-    console.error('PIN management error:', error);
-    res.status(500).json({ error: 'Failed to set PIN' });
-  }
-});
+/* POST /api/authoring/users/pin has been DELETED (2026-09-23, VSR-001 §13.3
+ * item 3). It set the "signing PIN" this router's two signature routes used to
+ * verify. The first PIN needed only a session, so whoever held one could set
+ * the credential that signed as its owner; and it made a second credential
+ * store, with its own lockout, for the one act the rest of the product
+ * re-verifies with the account password and enrolled second factor.
+ *
+ * Replacement, by path: the signature routes above re-verify through
+ * reverifyAuthoringSigner -> server/services/part11/reverify-signer.ts, the
+ * ceremony every other signing surface runs; the credentials are the account
+ * password and the authenticator enrolled through POST /api/auth/mfa/setup and
+ * /mfa/enable (server/routes/auth.ts). Reachability: authoring-sign-ceremony
+ * .test.ts drives both signature routes with them and pins this route's 404.
+ * The client panel that called it (SigningPinPanel in AuthoringSignatures.tsx)
+ * is deleted with it; the e-sign dialog asks for the password and code.
+ *
+ * `user_pins` is left in place with its rows (Rule 1: no DROP of an object a
+ * migration in the set creates). Nothing reads or writes it now. */
 
 // ============= AI ANALYSIS & SUGGESTIONS =============
 

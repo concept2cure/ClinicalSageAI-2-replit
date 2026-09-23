@@ -57,6 +57,7 @@ import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
 import { apiRequest, serverMessage, ApiRequestError, redactInternals } from '@/lib/queryClient';
 import { AuthoringFilingBar } from '../surfaces/AuthoringFilingBar';
+import { esignSignerOf } from '../../_shared/components/EsignModal';
 import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from '../surfaces/AuthoringCollab';
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
@@ -3562,6 +3563,7 @@ export function DocumentWorkbench({
                   if (activeDocId) void loadSections(activeDocId);
                 }}
                 fireToast={fireToast}
+                signer={esignSignerOf(user as Parameters<typeof esignSignerOf>[0])}
               />
             )}
             {/* The authoring → filing seam: place the OPEN document into an
