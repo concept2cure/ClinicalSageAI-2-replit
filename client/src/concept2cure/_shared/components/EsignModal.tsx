@@ -280,7 +280,7 @@ export function EsignModal({
       if (needCode) {
         const mfa = await esig.verifyMfa(totp);
         if (!mfa.valid) {
-          setError('Authenticator code could not be verified. Enter a current code.');
+          setError('Authenticator code could not be verified. Each code works once — if you just used this one, wait for the next.');
           setTotp('');
           setPhase('form');
           return;

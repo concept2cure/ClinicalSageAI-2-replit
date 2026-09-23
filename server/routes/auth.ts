@@ -32,7 +32,7 @@ import {
 const logger = createScopedLogger('auth');
 
 import { sql } from 'drizzle-orm';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, gt } from 'drizzle-orm';
 import {
   users,
   organizations,
@@ -1390,7 +1390,10 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
       });
       return res.status(401).json({
         success: false,
-        error: { code: 'AUTH_004', message: 'Invalid or expired verification code' },
+        error: {
+          code: 'AUTH_004',
+          message: 'Invalid or expired verification code. Each code works once; if you just used it, wait for the next.',
+        },
       });
     }
 
@@ -1936,7 +1939,13 @@ async function handleResetPassword(req: Request, res: Response) {
     // Hash new password and clear reset token
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
-    await db
+    // Set the password only if the token is STILL this account's and unexpired,
+    // in the same statement that clears it: a reset token is used once. Until
+    // 2026-09-23 the row was read above and then written by id alone, so two
+    // requests carrying one token — both past the read during the bcrypt hash —
+    // both reported success and the later password silently won (D6, the class
+    // of VSR-001 §13.3 item 1).
+    const reset = await db
       .update(users)
       .set({
         passwordHash,
@@ -1945,7 +1954,29 @@ async function handleResetPassword(req: Request, res: Response) {
         passwordChangedAt: new Date(),
         mustChangePassword: false,
       })
-      .where(eq(users.id, userData.id));
+      .where(
+        and(
+          eq(users.id, userData.id),
+          eq(users.resetToken, tokenHash),
+          gt(users.resetTokenExpiresAt, new Date())
+        )
+      )
+      .returning({ id: users.id });
+
+    if (reset.length !== 1) {
+      await recordAuthEvent({
+        action: 'user_password_reset_failed',
+        userId: userData.id,
+        outcome: 'failure',
+        reason: 'reset token was used or expired before this request completed',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
+      });
+    }
 
     /* THE CREDENTIAL CHANGE ITSELF. This was a `logger.info` and nothing more
        — a line in an application log, which is not an audit trail: not

@@ -39,6 +39,8 @@ blocks new instances, and fixes or records every existing one it found.
 | `unifiedDocumentIngestion.js` `searchDocuments` read `unified_documents.text_content` (42703) | Deleted with `getProcessingStats` and the unused pool import; never user-facing. Canonical document search: `GET /api/c2c/project-vault/:id/search` (`server/routes/c2c/project-vault.ts`) | same |
 
 | The 16 tables read only from `.js` files that exist on no provisioned database | All seven files deleted after adversarial triage (investigator + reachability + resolution skeptic each, 27 agents): `routes/content-plan.js` and `routes/smart-blocks.js` (mounted, no caller since 7a144fd1e, 500 or fabricated content), `hooks/refModel.js`, `events/eventBus.js` (+ its only other import `lib/db.js`, the ancestor shadow of the governed pool), `services/enhancedFaersService.js` (+ `drugClassService.js`, `sql/faers_schema.sql`), `services/semanticSearch.js` + `pipelines/{indexDocs,bulk_import}.js`, `api/enterprise/rbac-routes.js` (+ the `/rbac/*` block of `enterprise/routes.js` and the now-unused `auditService.js` shim). Replacements named by path in the commit. Every baseline entry they held removed by hand: live-schema 58 → 42, table-reachability 1 → 0, unkeyed-request-tables −3, unreferenced-modules −6, gateway-bypass −1, server-error-leaks −3, referenced-tables −1 | `table-gate-roles-red-first.txt` (the table guard fails on `roles` with its entry removed, passes after the deletion); `ci:tables-live-schema` on the reference DB: 42 baselined, no stale entries |
+| **Precedent search could only ever answer "none".** `precedent.regulatory_precedents.organization_id` was added only by `db/migrations/20260617_precedent_org_isolation.sql`, on no applier, so every corpus query raised 42703; a catch turned it into `[]`, and the board told users "your organization's corpus has none". (The column guard could not see this: the column lives in a relation-less fragment spliced in as `${whereClause}`.) | The file is wired directly after its creator and amended in place to carry its RLS policy: public rows readable by all; under enforcement a tenant writes only its own rows. The engine lets a failed corpus read surface; compare-by-id, strategy and claim-check now apply tenant isolation (compare bypassed it); ingest stamps and requires the ingesting org; the outcome ingestor stamps the sponsor's org and mints nothing it cannot attribute — a sponsor's outcomes never land in the public corpus by default. Pre-mortems say "corpus could not be read" instead of "populate the corpus" | `precedent-rls-coverage-red-first.txt` (CI's RLS coverage check names the table without the policy, clean with it); `precedent-tenant-isolation-real-db.txt` (as the app role with enforcement on: tenant 7 sees public + its own, not tenant 9's; public and cross-tenant writes refused; the real engine reads the corpus without error); a fixture that rejected every query — and so encoded the swallow — replaced, with a test that fails when the swallow is restored |
+| **Stability studies: every create failed, and two updates faked success.** `POST /api/stability/studies` wrote `'DRAFT'` (and `'PAUSED'` verbatim) into `stab_studies.status`, whose CHECK allows only ONGOING/ON_HOLD/COMPLETED — every create was a 500; an unlisted storage condition was written with an invented 5°C; the create's audit record was written AFTER COMMIT on another connection, so an audit failure left a committed, unaudited study; `PUT /studies/:id` and `PATCH /studies/:id/status` answered "updated successfully" and wrote nothing | Status mapped onto the constraint (omitted → ONGOING, the column default; DRAFT/CANCELLED refused 400); only LT/INT/ACC with their ICH Q1A settings (others 400); actor required before anything is written (401) and the audit record written inside the create's transaction; PUT/PATCH answer 501 "nothing was changed"; validation moved before the pooled connection, closing an early return that left a transaction open | `stability-router-honesty.txt` (real DB in a real tenant scope: before, every create 500 and PATCH 200 with no write; after, 201 ONGOING / 201 ON_HOLD each with exactly one audit row, 400, 400, 401 with no row, 501); `stability-router-honesty.test.ts` 8/8 |
 
 ## Recorded, not fixed — with a written reason in its baseline
 
@@ -66,3 +68,21 @@ server/mcp/client-transcript.ts), `ci:unkeyed-request-tables`
 phantoms). Each is red identically on the tree without these changes;
 regenerating any of those baselines would have absorbed another session's
 finding.
+
+**Founder decision owed before deploying the precedent change.** Until now the
+ingest route wrote precedents with no organization. Any such rows already in
+production become `organization_id IS NULL` — public to every tenant — once the
+column exists (as they were before 2026-06, when no isolation existed). Their
+owner cannot be recovered (`created_by = 'system'`). Count them first:
+`SELECT source_type, count(*) FROM precedent.regulatory_precedents WHERE source_type IN ('Manual','outcome_ingestor') GROUP BY 1;`
+and decide whether they stay public or are removed.
+
+**Recorded for the CMC / stability workstream (RULE 2 — not fixed here).** The
+same commit-then-audit ordering remains in about twenty other handlers of
+`server/src/routes/stability.router.ts` (`condition_update`, `tp_update`,
+`result_add`, `capa_create`, `bulk_assign`, …): a failed audit after COMMIT
+leaves an unaudited change. `audit()` now accepts the transaction client, so
+each is a local change. There are also two stability-study stores —
+`stab_studies` behind `/api/stability` (no client caller) and
+`public.stability_studies` behind `/api/cmc/stability-studies` (the CMC UI);
+which is canonical is a product decision.

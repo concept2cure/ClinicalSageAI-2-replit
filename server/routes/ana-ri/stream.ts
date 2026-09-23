@@ -2182,6 +2182,7 @@ export function mountStreamRoute(router: Router): void {
 
           // Steers: splice each queued redirect into the next model turn. The
           // drain is atomic, so a steer cannot be applied twice.
+          const drainedSteers: string[] = [];
           for (const inj of await consumeInterjections(getPool(), runId)) {
             const framed = buildSteerMessage(inj);
             if (framed) {
@@ -2196,12 +2197,33 @@ export function mountStreamRoute(router: Router): void {
                 content: framed,
               });
             }
-            emitControl({ type: 'interjected', round: upcomingRound, message: inj });
+            drainedSteers.push(inj);
           }
 
           if (runHandle.cancelSignal.aborted || status === 'cancelled') {
             emitControl({ type: 'cancelled', round: upcomingRound });
             return 'abort';
+          }
+
+          /* `interjected` is announced AFTER the cancel check, not beside the
+             drain above.
+
+             The client renders this event as "You steered AnA:" on the turn.
+             Emitted at drain time it could say so and then be immediately
+             followed by an abort on the very next line — the steer drained out
+             of the queue, never reached a model turn, and the transcript
+             claimed it had. Cancel is the one outcome reachable between the two
+             points, so moving the announcement past it removes that window
+             entirely rather than retracting the claim afterwards.
+
+             This is an announcement of delivery-to-the-next-turn, which is what
+             the person is told. The AUDIT record is a different thing and is
+             written elsewhere, at queue time by the control endpoint
+             (services/ana/run-control.ts queueSteer) — where it means "the
+             operator submitted this steer", which is true whether or not the
+             run went on to consume it. The two must not be conflated. */
+          for (const inj of drainedSteers) {
+            emitControl({ type: 'interjected', round: upcomingRound, message: inj });
           }
           return 'continue';
         };
