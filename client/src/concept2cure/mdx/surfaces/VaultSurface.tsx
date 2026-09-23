@@ -57,10 +57,25 @@ const KIND_TO_FRAMEWORK: Record<string, string> = {
   cert: 'qms',
 };
 
-function toDocStatus(status: VaultFile['status']): DocStatus {
+export function toDocStatus(status: VaultFile['status']): DocStatus {
   if (status === 'locked') return 'locked';
   if (status === 'final') return 'ready';
   return status;
+}
+
+/** How far through authoring a document is — or NULL when nobody has assessed
+ *  that. An uploaded file has no sections and no authoring workflow, so every
+ *  number here would be invented. It used to get 64 (the else-branch of a
+ *  ternary written for authored documents), which read on screen as a document
+ *  two-thirds written. Advancing the ingest pipeline's status would have made
+ *  it 100 instead — a worse lie, because it asserts a completion nobody
+ *  assessed. The repo's own precedent is `assessed: false` in
+ *  readinessEvaluator.ts, for exactly this. */
+export function completionOf(status: VaultFile['status']): number | null {
+  if (status === 'uploaded') return null;
+  if (status === 'locked' || status === 'final') return 100;
+  if (status === 'review') return 88;
+  return 64;
 }
 
 function fileToDoc(f: VaultFile): KitDocument {
@@ -71,7 +86,7 @@ function fileToDoc(f: VaultFile): KitDocument {
     title: f.name,
     ver: f.ver,
     status: toDocStatus(f.status),
-    completion: f.status === 'locked' || f.status === 'final' ? 100 : f.status === 'review' ? 88 : 64,
+    completion: completionOf(f.status),
     blocker: f.blocker === true,
     owner: f.author,
     reviewers: [],

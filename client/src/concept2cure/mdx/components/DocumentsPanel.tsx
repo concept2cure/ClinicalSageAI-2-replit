@@ -21,7 +21,7 @@ import { I } from '../icons';
 // other *-docs.js files). Optional fields are surface-specific and most
 // surfaces omit them entirely — DocumentsPanel renders only when present.
 
-export type DocStatus = 'draft' | 'review' | 'ready' | 'locked';
+export type DocStatus = 'draft' | 'review' | 'ready' | 'locked' | 'uploaded';
 export type DocEsigState = 'na' | 'pending' | 'signed';
 
 export interface KitDocument {
@@ -33,7 +33,10 @@ export interface KitDocument {
   title: string;
   ver: string;
   status: DocStatus;
-  completion: number;
+  /** NULL when nothing assessed this document's completion — an ingested file
+   *  has no sections to be part-way through. Rendered as an em dash, never as
+   *  a number: a percentage is a claim, and 0% and 64% are both false here. */
+  completion: number | null;
   blocker?: boolean;
   blockerNote?: string;
   owner: string;
@@ -173,16 +176,26 @@ export function DocumentsPanel({
                 <div className="docs-meta">
                   <span className="mono small docs-ver">{d.ver}</span>
                   <span className="dot-sep" aria-hidden="true">·</span>
-                  <span>
-                    {d.sectionsComplete}/{d.sections} sections
-                  </span>
-                  <span className="docs-progress">
-                    <span
-                      className="docs-progress-fill"
-                      style={{ width: `${d.completion}%` }}
-                    />
-                  </span>
-                  <span className="mono small docs-pct">{d.completion}%</span>
+                  {d.completion !== null && (
+                    <span>
+                      {d.sectionsComplete}/{d.sections} sections
+                    </span>
+                  )}
+                  {d.completion !== null ? (
+                    <>
+                      <span className="docs-progress">
+                        <span
+                          className="docs-progress-fill"
+                          style={{ width: `${d.completion}%` }}
+                        />
+                      </span>
+                      <span className="mono small docs-pct">{d.completion}%</span>
+                    </>
+                  ) : (
+                    <span className="mono small docs-pct" title="No authoring completion is assessed for an uploaded file.">
+                      —
+                    </span>
+                  )}
                   <span className="dot-sep" aria-hidden="true">·</span>
                   <span className="docs-owner">{d.owner}</span>
                   {d.reviewers && d.reviewers.length > 0 && (
