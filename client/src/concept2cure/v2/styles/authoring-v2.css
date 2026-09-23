@@ -1470,26 +1470,13 @@
     font-weight: 600;
     color: var(--text-200);
   }
-}
 
-@keyframes edcaret {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  50.01%,
-  100% {
-    opacity: 0;
-  }
-}
-
-/* ══ Document canvas · project files · review tasks (2026-09-21) ═══════════
-   The AnA document canvas in the conversation thread, the editor's workbench
-   chrome when it is mounted inside that canvas, and the two new rails
-   (Project files, Tasks). Tokens only; motion is 180ms ease-out on
-   opacity/transform and is removed under prefers-reduced-motion.
-   docs/design/ANA_DOCUMENT_CANVAS.md. */
-.c2c-v2 {
+  /* ══ Document canvas · project files · review tasks (2026-09-21) ═══════════
+     The AnA document canvas in the conversation thread, the editor's workbench
+     chrome when it is mounted inside that canvas, and the two new rails
+     (Project files, Tasks). Tokens only; motion is 180ms ease-out on
+     opacity/transform and is removed under prefers-reduced-motion.
+     docs/design/ANA_DOCUMENT_CANVAS.md. */
   /* ── The card ── */
   .dcv {
     margin-top: 4px;
@@ -2303,4 +2290,15 @@
   /* No hover override: `.de-btn.primary:hover` already resolves to
      --accent-200, which is --accent-strong in light and --accent-strong in
      dark, and the colour above applies through the hover state. */
+}
+
+@keyframes edcaret {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
 }

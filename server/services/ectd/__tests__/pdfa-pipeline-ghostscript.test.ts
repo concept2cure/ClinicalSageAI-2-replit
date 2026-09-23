@@ -49,6 +49,7 @@ describe('finalizePdfA — a successful Ghostscript exit is not a conversion', (
   let dir: string;
   const originalGs = process.env.GHOSTSCRIPT_BINARY;
   const originalVera = process.env.VERAPDF_BINARY;
+  const originalIcc = process.env.PDFA_SRGB_ICC;
 
   /**
    * Write an executable stub that answers `--version` (so the pipeline's
@@ -80,6 +81,18 @@ describe('finalizePdfA — a successful Ghostscript exit is not a conversion', (
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfa-gs-stub-'));
     // veraPDF must not be picked up: this file is about the Ghostscript branch.
     process.env.VERAPDF_BINARY = path.join(dir, 'definitely-not-verapdf');
+    /* The conversion now refuses before invoking Ghostscript at all when no
+       sRGB ICC profile is readable for the PDF/A OutputIntent (W2, 2026-09-20:
+       without one Ghostscript emits a file carrying pdfaid:part that veraPDF
+       rejects). On a host with no Ghostscript install that refusal fired first
+       and these cases never reached the branch they pin. Point PDFA_SRGB_ICC —
+       the same override the deployment uses — at a readable file so the stub
+       is actually invoked; the stub ignores the prelude, so its contents are
+       immaterial here. The no-profile refusal is its own behaviour and is not
+       what this file tests. */
+    const icc = path.join(dir, 'srgb.icc');
+    fs.writeFileSync(icc, 'stub icc profile');
+    process.env.PDFA_SRGB_ICC = icc;
   });
 
   afterAll(() => {
@@ -87,6 +100,8 @@ describe('finalizePdfA — a successful Ghostscript exit is not a conversion', (
     else process.env.GHOSTSCRIPT_BINARY = originalGs;
     if (originalVera === undefined) delete process.env.VERAPDF_BINARY;
     else process.env.VERAPDF_BINARY = originalVera;
+    if (originalIcc === undefined) delete process.env.PDFA_SRGB_ICC;
+    else process.env.PDFA_SRGB_ICC = originalIcc;
     fs.rmSync(dir, { recursive: true, force: true });
   });
 

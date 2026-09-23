@@ -93,6 +93,18 @@ export const ENTRY_POINTS = [
   // consolidation; deleting this file is deferred until those honesty pins are
   // re-homed, because deleting it today would break the tests that read it.
   'server/services/medicalDeviceService.ts',
+  // Standalone CLI processes, run as `npx tsx <path>` — a shell command line,
+  // never an import, so no module-path literal names them. Each is the
+  // documented producer of filed evidence, and was run to produce it:
+  //   - server/eval/register/run-eval.ts: the register-eval scorer
+  //     (server/eval/register/README.md). `--samples` run recorded in
+  //     docs/evidence/WJ/2026-09-21/README.md; the owed live evaluation is
+  //     `--transcript <file> --min-pass-rate 0.8` over captured AnA turns.
+  //   - server/mcp/client-transcript.ts: the separate-process MCP SDK client
+  //     (docs/connector/README.md) that produced
+  //     docs/evidence/W7/2026-09-20/transcript-mcp-client.md.
+  'server/eval/register/run-eval.ts',
+  'server/mcp/client-transcript.ts',
 ];
 
 const SOURCE_EXT = ['.ts', '.tsx', '.js', '.jsx'];

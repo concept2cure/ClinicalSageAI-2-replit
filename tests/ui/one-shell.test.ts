@@ -150,12 +150,21 @@ describe('one shell', () => {
     //                          destination for `window.C2C_CONVO` seeds from
     //                          Home, ProjectHome and the shell's own ⌘K.
     //   Rbm.tsx                the RBM co-monitor dock, study-scoped.
-    //   DocumentAuthoring.tsx  the editor's right-rail pane, section-scoped via
+    //   editor/DocumentWorkbench.tsx
+    //                          the editor's right-rail pane, section-scoped via
     //                          authoringContext. The editor cannot give the
     //                          rail's column back (`.ed` has a hard 940px
     //                          minimum with a rail mode open) and its asks are
     //                          about the section under the cursor, so the
     //                          answer has to arrive without leaving the editor.
+    //                          It lived in surfaces/DocumentAuthoring.tsx until
+    //                          2026-09-21, when the editing core moved, unchanged,
+    //                          into the workbench (docs/design/ANA_DOCUMENT_CANVAS.md);
+    //                          DocumentAuthoring no longer calls the hook. The
+    //                          workbench is also mounted inside the conversation
+    //                          thread's canvas, so there it must hand every ask
+    //                          to the host's `onAsk` and never send on its own
+    //                          thread — asserted below.
     //   EctdCoauthor.tsx       the co-author's middle intelligence pane,
     //                          document-scoped. The pane already had a
     //                          composer; it had no answer.
@@ -163,9 +172,10 @@ describe('one shell', () => {
       'client/src/concept2cure/v2/V2App.tsx',
       'client/src/concept2cure/v2/surfaces/ConversationThread.tsx',
       'client/src/concept2cure/v2/surfaces/Rbm.tsx',
-      'client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx',
+      'client/src/concept2cure/v2/editor/DocumentWorkbench.tsx',
       'client/src/concept2cure/v2/surfaces/EctdCoauthor.tsx',
     ]);
+    const WORKBENCH = 'client/src/concept2cure/v2/editor/DocumentWorkbench.tsx';
 
     const sources: string[] = [];
     const walk = (dir: string) => {
@@ -196,6 +206,17 @@ describe('one shell', () => {
       'a second conversation: this file starts its own AnA thread. Route through the ' +
         "shell's `onAsk`, or add it here with a note saying which named conversation it owns.",
     ).toEqual([]);
+
+    // The workbench's own thread is only spoken on when no host owns the
+    // conversation: inside the thread's canvas the ask goes to `onAsk` and
+    // returns before the pane's `ana.send`, so one conversation stays on screen.
+    const wb = read(WORKBENCH);
+    const askAna = wb.slice(wb.indexOf('const askAna = useCallback('), wb.indexOf('const askAnaToDraft'));
+    expect(askAna.length, 'askAna not found in ' + WORKBENCH).toBeGreaterThan(0);
+    const handOff = askAna.search(/if \(onAsk\) \{\s*onAsk\(clean\);\s*return;\s*\}/);
+    expect(handOff, 'the workbench must hand the ask to its host when one owns the conversation').toBeGreaterThan(-1);
+    expect(askAna.indexOf('ana.send(')).toBeGreaterThan(handOff);
+    expect(wb.split('ana.send(').length - 1, 'a second send path on the workbench thread').toBe(1);
   });
 
   it('no surface takes the AnA rail column and still calls the shell onAsk', () => {
