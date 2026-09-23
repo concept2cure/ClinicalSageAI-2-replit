@@ -1091,3 +1091,270 @@ depended on the replay. From this change on:
 - per-task rate-limit stores;
 - the ALB ingress;
 - item 3, with the reviewer.
+
+## 16. Addendum 2026-09-23 — one signing ceremony, account standing, and ten defects found on the way; one execution on a fresh installation (W3 session)
+
+§14 filed an execution at `0d7b85e50` and named what was still owed. Since
+then this session:
+
+- decided §13.3 item 3 (the signing PIN) and moved every signing path onto
+  the platform's one ceremony, `server/services/part11/reverify-signer.ts`
+  (§16.3);
+- decided §14.3 item 1 (Submission Readiness is the dispatch gate) and the
+  F-15 decision (development runs the production isolation posture), both
+  under the system owner's delegation;
+- closed §14.3 item 2 (attribution coverage for Authoring sections);
+- fixed ten defects, F-24 to F-33, each shown failing before its fix
+  (§16.2);
+- added URS-PROJ-012 and OQ-PROJ-18: an account taken out of use can do
+  nothing (§16.4).
+
+Then it executed IQ-001 and all six OQ protocols at one commit carrying all
+of it, `bfdb0a08`, into `docs/evidence/W3/2026-09-23c/`.
+
+**A fresh installation.** The container that held the §12 database was
+replaced during this work, and the database with it. The set was therefore
+executed on a new installation, provisioned from empty by the procedure the
+2026-09-22 set used, `C2C_DB_NAME=c2c_oq_w3_20260923c npm run up`, then the
+migration set re-applied at the run commit as a deploy does it (307 of 307
+files, readiness contract 8 of 8). Two installation steps were caught on the
+way, and both are recorded rather than hidden:
+
+- the new container had no pgvector. `install-fresh` refused to report
+  success ("Install INCOMPLETE", three areas); pgvector was installed and the
+  database provisioned again, empty;
+- the validation toolchain (`tests/validation`, `playwright-core`) was not
+  installed. The first IQ attempt recorded IQ-15 **fail** ("playwright-core
+  not installed under tests/validation"), and every OQ protocol stopped at
+  launch. It was installed as IQ-15 says, and the whole set executed again.
+  The first attempt's IQ record is kept (`first-attempt/`).
+
+Four identities, all in organisation 1, each with an authenticator enrolled
+through the production sign-in (the password, the emailed code, which the
+development mail sink writes to the server log because no SMTP is
+configured, then `/api/auth/mfa/setup` and `/enable`):
+
+| User | Identity | Provisioned by | Role |
+|---|---|---|---|
+| 1 | run identity `oq-runner@validation.local` | `npm run up` | organisation admin |
+| 2 | second signer `oq-signer@validation.local` | `scripts/seed-admin.mjs` | organisation admin |
+| 3 | platform administrator `oq-platform@validation.local` | owner SQL: a member, and an active `platform_role_grants` row | member |
+| 4 | standing subject `oq-standing@validation.local` | owner SQL | member |
+
+Passwords and secrets exist only in the session scratchpad.
+
+### 16.1 Results
+
+| Record | Pass | Fail | Deviation | Not executed |
+|---|---|---|---|---|
+| IQ-001 (v0.4) | 12 | 0 | 3 | 0 |
+| OQ-001 Projects (v0.7) | 19 | 0 | 0 | 0 |
+| OQ-002 Vault (v0.3) | 12 | 0 | 0 | 0 |
+| OQ-003 Authoring (v0.4) | 23 | 0 | 1 | 0 |
+| OQ-004 Submission Center (v0.3) | 15 | 0 | 0 | 0 |
+| OQ-005 Submission Readiness (v0.5) | 11 | 0 | 0 | 0 |
+| OQ-006 QMS controlled documents (v0.6) | 20 | 0 | 0 | 0 |
+| **OQ total** | **100** | **0** | **1** | **0** |
+
+- Every record is at `bfdb0a08` and names `authentication: password+totp`.
+- The OQ server's log shows 10 password attempts and 8 code verifications,
+  and no 429:
+  - the run identity and the signer, once each;
+  - OQ-PROJ-02, through the form;
+  - OQ-PROJ-16's three attempts and two codes;
+  - OQ-PROJ-17's one;
+  - OQ-PROJ-18's three: the subject, the platform administrator, and the
+    subject's refused attempt, which issues no challenge.
+
+  The IQ server's log shows IQ-11's one.
+- Neither log shows a row-level-security refusal, a permission denial or a
+  500. The only errors are OQ-AUTH-16's two 503s (no provider).
+- The one OQ deviation is OQ-AUTH-16 (no provider). The IQ deviations are
+  the development-install ones: IQ-DEV-002, 004 and 005.
+- OQ-SRDY-05b and 06b were deviations in `2026-09-23b` for want of a
+  project anchor. Here they executed and passed. Every organisation now
+  holds its own client workspace (`a264e291`,
+  `services/c2c/organization-default-workspace.ts`), so intake anchors each
+  program. URS-SRDY-005 is no longer partial.
+- OQ-PROJ-18 passed on the fresh installation:
+  - the platform administrator, not an organisation admin, suspended the
+    subject (200);
+  - the subject's session then read projects 401 `ACCOUNT_INACTIVE`, the
+    session check answered 401 `AUTH_ACCOUNT_INACTIVE`, and the password
+    step answered 403 with no challenge;
+  - the refusal was on the ledger, chained;
+  - once restored, the same session read projects 200.
+- Kinds recorded, as the protocols give them: 81 scripted, 9 unscripted,
+  6 ad-hoc, 5 prerequisite.
+
+TM-001 was regenerated from this set (`runDate 2026-09-23c`): 70
+requirements, 69 pass, 1 partial (URS-AUTH-012, no provider), 0 fail,
+0 open, 0 uncovered. The default run date in the three runners moved to
+`2026-09-23c`.
+
+### 16.2 Findings
+
+Every row was reproduced before its fix: on real PostgreSQL as a freshly
+minted NOBYPASSRLS runtime role with production's route registration where
+the defect lives in data or sign-in, live against the validation server
+where it lives in routing. Evidence is under
+`docs/evidence/W3/2026-09-23b/red/<id>/`.
+
+| Id | What | Shown failing first | State |
+|---|---|---|---|
+| **F-24** (§11.10(e), §11.300) | **Behind the load balancer every user shared one sign-in allowance, and the audit trail recorded the proxy.** Express trusted no proxy, so `req.ip` was the load balancer's: the per-address sign-in and code limits (10 in 15 minutes) were one allowance for a whole deployment, and every audit row recorded the load balancer. | Unit 1 fail / 13 pass; live, the eleventh different client refused 429 | **Fixed** `eefac757b`: one trusted hop in production (`server/config/trust-proxy.ts`, `TRUST_PROXY_HOPS`, validated). 14/14; live, twelve clients each their own allowance, a rotating client stopped at the eleventh, each audit row the client's own address. Two hops through CloudFront wait on D1's ingress change. |
+| **F-25** (honest state) | **A contradiction scan reported a project it could not read as clean.** `scanProject` never checked that the organisation holds the project, and a program's uuid became "no filter", so the scan read every assumption and decision in the organisation and reported them as this project's. OQ-SRDY-06 passed on it. | Unit 2 fail / 1 pass; OQ-005 v0.5 on the pre-fix server: OQ-SRDY-06 and OQ-SRDY-08 fail (`OQ-005-v0.5/before-F-25-and-rescope/`) | **Fixed** `1b6dc0fab`: a non-integer id is refused 400 and an unheld project 404, before anything is read. 3/3; OQ-005 v0.5 passes (`after-…`). With the §14.3 item 1 decision (§16.5). |
+| **F-26** (§11.300, §11.200(a)(1)) | **A signed-in session could replace an enrolled authenticator.** `POST /api/auth/mfa/setup` wrote a new secret over the stored one and handed it back, with two-step verification left on. Session plus password then signed as the owner, and the owner's own codes were refused. Nothing was recorded. | `second-factor-binding.dbtest.ts`: 7 fail / 2 pass | **Fixed** `0c912e67e`: a secret is written only while MFA is off, in one conditional statement; setup answers 409 otherwise; each change is recorded. 9/9. |
+| **F-27** (§11.300(d)) | **A wrong password or code at signing never counted, and a locked account could sign.** The ceremony and the signing dialog's own checks neither consulted nor fed the sign-in's lockout: an unmetered oracle for the password, then the code, to whoever held a session. | `signing-lockout.dbtest.ts`: signing 4 fail / 4 pass; the dialog's checks 3 fail | **Fixed** `c3e891bba`: the lockout is checked before anything is compared (423 `ACCOUNT_LOCKED`), and a wrong factor counts against the sign-in's own allowance. 11/11. |
+| **F-28** (§11.10(d), §11.300(b)) | **A suspended or deprovisioned account could sign.** `users.status` is how an account is taken out of use; the ceremony never read it. The one path that did, the release signature's own password check, was about to be replaced. | Unit 3 fail / 23 pass; `account-standing.dbtest.ts` 8 fail / 5 pass | **Fixed** `759489424`: `services/account-standing.ts` is the one reading; the ceremony reads it first (401 `ACCOUNT_INACTIVE`, before any compare or count). 26/26; the signing cases 6/6. |
+| **F-29** (§11.10(d), §11.300(b)) | **A suspended or deprovisioned account signed in and kept every session it held.** Sign-in issued the challenge; a challenge issued before a suspension became a session after it; a held session kept opening the API, and its refresh token minted new ones. Offboarding in the identity provider revoked nothing. | The same dbtest's five sign-in cases; OQ-PROJ-18 on the pre-fix server: fail, the suspended account's session read projects 200, its session check 200, its password accepted (`OQ-001-v0.7/before-F-29-fix/`) | **Fixed** `171e02dfc`: sign-in refuses after the password (403 `AUTH_ACCOUNT_INACTIVE`, recorded), `/mfa/verify` and `/refresh` refuse, both gates and `verifyLiveToken` read the standing on every request (401, or 503 when unreadable). 13/13; OQ-PROJ-18 passes (`after-F-29-fix/`). |
+| **F-30** (§11.300(d)) | **An unreadable lockout read as unlocked.** `isAccountLocked` answered "not locked" on any error, so a lost connection or the lockout columns missing (ledger C-20's drift) removed the lockout at sign-in and at signing. The ceremony's fail-closed branch was unreachable in production wiring. | Unit 2 fail / 1 pass, driving the database's 42703 | **Fixed** `bb5588d10`: the error propagates and every caller already refuses on it. 3/3. |
+| **F-31** (§11.10(d)) | **A platform administrator could not reach Master Administration unless also an organisation admin.** `routes/admin-security.ts`, mounted at `/api/admin`, applied its org-admin gate with `router.use`, which runs for every request entering the router, so all six routers under `/api/admin` required an organisation admin first. Suspending an account, the SCIM consoles, designating personnel, the Business Center and the SIEM feed's compliance officer were each refused by another endpoint's gate. | OQ-PROJ-18's first execution: the suspension answered 403 twice (`red/F-31/first-run-*`); unit 6 fail / 4 pass | **Fixed** `916027a98`: the gate sits on its one route. 10/10 with the three security-health controls; three mutants caught. Every router under `/api/admin` was read to confirm it carries its own gate. |
+| **F-32** (availability; D8/D9 surfaces) | **Stripe's webhook, the public pricing figures, the X-API-Key public API and `/api/cortex/health` answered 401 to everyone.** The Doc Orchestration router mounts at the app root, and its gate covered every `/api` path, so every endpoint the global gate leaves open, registered later, needed a bearer token. No Stripe webhook could have been processed. | Live, 401 `AUTH_001` on all four; unit (the real `registerRegulatoryRoutes`) 6 fail / 2 pass | **Fixed** `2dd78265d`: the gate covers `/api/510k`, its own prefix. Two `/api/v1/drafting` routes that needed a session only because of it (audit API-01) now require one themselves. 8/8; live, each endpoint reaches its handler. |
+| **F-33** (availability) | **A request at `/api/concept2cure` was counted once per router it passed.** Fifteen routers share one rate limiter there; a request answered by the fifteenth cost fifteen counts, so the 600-a-minute bucket allowed forty, and the AI and document buckets were divided the same way. | Live, `X-RateLimit-Remaining` 598 → 583 → 568; unit 2 fail / 1 pass | **Fixed** `c16c3cb6d`: a limiter counts a request once (a per-instance mark). 3/3; two mutants caught; live, one count per request. |
+| #53 (§11.200) | **Three signing sites took the session's word.** The release signature signed on the password alone for a signer with an authenticator; the AnA rewrite signature wrote `authenticationMethod` and `secondFactorVerified` from the request body; `POST /api/c2c/documents/:id/lock` ran neither the re-authentication nor the separation-of-duties check its sibling runs. | Release 6 fail / 12 pass; rewrite 5 fail; lock 4 fail | **Fixed** `759489424`, `ccccd4645`: all three re-verify with the ceremony and record what it verified; the lock refuses the document's author. 18/18, 6/6, 5/5. |
+| #27 (honest state) | **Authoring sections had no attribution coverage.** `GET /api/data-origins/document` refused `authoring_sections`, the only table the Authoring editor asks about, so every section read "not available here" (§14.3 item 2). | Unit 2 fail / 7 pass; live 400 `UNSUPPORTED_DOCUMENT_TABLE` | **Fixed** `591b48ac3`: the whitelist names each table's content and organisation columns. 9/9; live, 24 of 24 characters attributed for a saved section, none stale. |
+
+### 16.3 One signing ceremony
+
+§13.3 item 3 asked whether Authoring's signing PIN should stay. It was
+decided under the owner's delegation: no. Every signature in the product now
+re-verifies the signer through `services/part11/reverify-signer.ts` with its
+production wiring: the account's standing, then its lockout, then the
+password, then the enrolled second factor. The signature row records the
+method the ceremony verified, never one a caller claims.
+
+| Change | What moved onto the ceremony | Shown failing first |
+|---|---|---|
+| `6f79a000f` | Authoring's `/e-sign` and `/sign`, and the approval-gated task sign-off. The PIN signed without the enrolled second factor, and its first value could be set by a session alone. | Routes 13 fail; task sign-off 7 fail / 7 pass; client 5 fail / 8 pass. After: 13/13, 14/14, 13/13; the IND authoring journey signs end to end on PGlite with the real ceremony |
+| `204c11347` | QMS controlled-document approval, the RBM approvals, AnA's governed sign-off and sealing. They used a second implementation (`governed-action-signoff.ts`) that kept no lockout. | QMS suite against the twin 9 fail / 3 pass; after 12/12 |
+| `759489424`, `ccccd4645` | The release signature, the AnA rewrite signature, the document lock (#53) | See #53 |
+
+Capabilities deleted, and what now delivers the same outcome (history
+searched, as the working agreement requires):
+
+- `POST /api/authoring/users/pin`, `verifyUserPin`, `SigningPinPanel` and
+  `services/part11/pin-verification.ts`: nothing replaces a PIN. A signer
+  signs with the account password and the authenticator enrolled through
+  `/api/auth/mfa/setup` and `/enable`. Pinned by
+  `authoring-sign-ceremony.test.ts`, the IND authoring golden journey, and
+  OQ-AUTH-12 to 14. `user_pins` keeps its rows (Rule 1); nothing reads it.
+- The Task board's bespoke signature dialog: the shared `EsignModal`, pinned
+  by `taskBoardSignature.test.tsx`.
+- `services/ana-ri/governed-action-signoff.ts`: `reverify-signer.ts`, pinned
+  by its unit test and `tests/db/signing-lockout.dbtest.ts`.
+- `part11ComplianceService.verifyUserCredentials`: the same, reached by the
+  release route and pinned by `submission-sign-release-route.test.ts` (18/18)
+  and the release golden journey.
+
+### 16.4 Validation changes
+
+| Document | Version | Change |
+|---|---|---|
+| URS-003, OQ-003, RA-001 | 0.2, 0.4, 0.6 | URS-AUTH-010 restated for the ceremony; OQ-AUTH-12 to 14 rewritten (the PIN route is gone and a PIN signs nothing; a wrong password, a missing code and a wrong meaning are refused) |
+| OQ-006 | 0.6 | The approval answers with the ceremony's codes: OQ-QMS-05's password-only attempt 400 `MFA_TOKEN_REQUIRED` (was 401), OQ-QMS-06b 401 `PASSWORD_VERIFICATION_FAILED` |
+| URS-005, OQ-005, RA-001 | 0.3, 0.5, 0.5 | The launch scope decision; OQ-SRDY-06 requires the program id (400) and an unheld project (404) to be refused; OQ-SRDY-06b new; OQ-SRDY-08 scripted. Falsified (`OQ-005-v0.5/`) |
+| URS-001, OQ-001, RA-001 | 0.4, 0.7, 0.7 | URS-PROJ-012 (high, scripted); OQ-PROJ-18, credentialed through `OQ_PLATFORM_ADMIN_*` and `OQ_STANDING_*`. Before F-29: 18 pass, 1 fail. After: 19/19 (`OQ-001-v0.7/`). What the OQ run cannot reach (signing, a challenge issued before the suspension, the refresh token, the per-router gate, SCIM's deprovisioning) is proven by `tests/db/account-standing.dbtest.ts`, each check shown to catch its own removal |
+
+OQ-001 §1 records the sign-in budget this adds: the OQ run makes ten sign-ins
+and the server allows ten per address in fifteen minutes, so the IQ, which
+makes one more, runs on its own server process. This set did.
+
+### 16.5 Decisions taken under the owner's delegation
+
+1. **§13.3 item 3, the signing PIN:** retired (§16.3).
+2. **§14.3 item 1, Submission Readiness:** option (c). The app is the
+   dispatch gate, which is program- and sequence-keyed and validated by
+   OQ-SRDY-02, 03 and 07. The Orchestration and Inconsistency boards are
+   locked by launch scope, not deleted: they return when the review and the
+   scan read the program spine. Anchoring every program (option a) would have
+   pointed both engines at the legacy artifact registry, which holds none of
+   a program's documents.
+3. **F-15 (§12.2):** option (a), `7f41a3eb`. `npm run up` writes
+   `RLS_ENFORCE=on`, so development runs the posture production runs, in
+   which the Vault accepts uploads. `dev-up-env-local.test.ts` 4 fail / 1
+   pass before, 5/5 after (`red/F-15/`). This set was provisioned by that
+   path.
+
+### 16.6 Observations for other rows (not dispositioned by this package)
+
+Found by sweeping for F-31's class: a gate or limiter at a mount prefix that
+answers requests meant for routers registered after it. Verified at the
+mount in source; runtime effect not measured.
+
+1. `/api/cortex`: the Cortex AI rate limiter (50 a minute) also counts `/api/cortex/management` traffic
+   (`routes/cortex-unified.ts:145`, mounted before the management router).
+2. `/api/ana`: the weekly usage cap mounted with `anaFeatures` also applies
+   to `/api/ana/platform` (POST, PUT and PATCH), including its settings
+   writes, none of which calls a model.
+3. `/api/ai`: `POST /api/ai/claims/:claimId/add-to-binder`, a route with no
+   model call, passes the shared AI circuit breaker twice (two `/api/ai`
+   mounts apply it). It is refused whenever the breaker is open, and each of
+   its 5xx responses counts twice towards opening it for every AI surface.
+4. `/api/user`: `GET /:id` (`routes/users.ts:678`) answers
+   `GET /api/user/preferences` before `notification_routes` can.
+5. The rate limiter chooses its bucket from the router-relative path, so the
+   configured `concept2cure` rule never applies to `/api/concept2cure`.
+6. `/api/claude/health` and `/api/claude/models` are on the global gate's
+   open list, but the `/api/claude` mount applies `authenticateToken`, so
+   both need a session.
+7. `server/middleware/__tests__/authoringObjectAuthorization-from-draft.test.ts`
+   mocks a module by an absolute path on this machine, which resolves only
+   where the checkout sits at the same path.
+
+### 16.7 Limits recorded
+
+- Reactivating an account restores its unexpired sessions: the gates read
+  the standing, they do not revoke.
+- The enterprise sign-in router (`/api/auth/enterprise/*`), which no client
+  calls, still completes a sign-in for an account out of use; both gates and
+  every route that verifies through `verifyLiveToken` refuse the session it
+  issues. Removing its duplicate session issuers is for D6.
+- `ci:sign-ceremony` counts only `sign` ledger writes, so the document lock
+  and the rewrite signature were never in its count; both are now pinned by
+  their own tests.
+- `recordFailedLogin` logs and continues when the count cannot be written;
+  the attempt it records has already been refused. `isPasswordReused`
+  allows on a read error.
+- The product has no screen to enrol an authenticator; enrolment is the API
+  only.
+- `6f79a000f` left the `regulatory-honesty` contract test red on CI; the D6
+  session fixed it (`811be46c0`).
+
+### 16.8 What this changes in the records above
+
+- §13.3 item 3 and §14.3 items 1 and 2 are closed (§16.3, §16.5, #27).
+- The F-15 decision, owed since §12, is taken (§16.5).
+- The `2026-09-23b` records predate F-24 to F-33 and the ceremony. They stay
+  in the tree, unchanged. OQ-AUTH-12 to 14 and OQ-QMS-05 there were executed
+  against the PIN and the twin verifier; the protocols' current versions
+  govern.
+- TM-001 is built from `2026-09-23c`.
+
+### 16.9 Disposition summary after this section
+
+| Item | State |
+|---|---|
+| F-24 to F-33, #53, #27 | Fixed (§16.2). F-29 and F-31 are covered by OQ-PROJ-18, passing in this set; the rest by the automated tests named in §16.2 |
+| §13.3 item 3, the signing PIN | Decided and closed (§16.3) |
+| §14.3 item 1, Submission Readiness | Decided, option (c) (§16.5). OQ-SRDY-05b and 06b pass in this set |
+| §14.3 item 2, attribution coverage | Closed by #27 |
+| F-15 | Decided, option (a) (§16.5) |
+| OQ-AUTH-16 / URS-AUTH-012 partial | Open: a PQ-passed provider |
+| IQ-DEV-002, 004, 005 | Open: development install; staging closes them |
+| §16.6 observations 1 to 7 | Not dispositioned by this package; for their owners |
+
+### 16.10 What the package still owes before signature
+
+- the production image (`NODE_ENV=production`: the dev-login refusal on
+  that branch, the HMAC-sealed chain, enforcing CSP and HSTS), on staging;
+- a real second account created through user administration;
+- a witness;
+- a PQ-passed provider (OQ-AUTH-16, URS-AUTH-012);
+- a live release signature;
+- the contractor's review;
+- signatures.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+No result was edited after execution. The runners wrote every record, and the
+matrix builder regenerated TM-001.
