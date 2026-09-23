@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RA-001 |
-| Version | 0.6 |
+| Version | 0.7 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §3 |
 | Method | FDA CSA (Sept 2025 final; Feb 2026 update): identify intended use → determine risk (process risk and whether the feature can cause a quality/patient/data-integrity failure) → choose the least-burdensome assurance activity that gives confidence → record the result. Risk levels and activities are defined in VMP-001 §3.1. |
@@ -18,6 +18,7 @@
 | 0.4 | 2026-09-23 | W3 | URS-SRDY-005 reassessed: high, scripted (was medium, unscripted). A readiness review that reports an all-clear it did not compute is a silent failure (VSR-001 F-23). |
 | 0.5 | 2026-09-23 | W3 | URS-SRDY-006 reassessed: high, scripted (was medium). A clean scan is read by Authoring's preflights as "no blocking contradictions" (VSR-001 F-25). URS-SRDY-008 reassessed: medium, scripted (was low, ad-hoc); it is now the launch boundary. |
 | 0.6 | 2026-09-23 | W3 | URS-AUTH-010 reassessed for the signing ceremony that replaces the PIN (URS-003 v0.2): still high, scripted; the assurance now covers the PIN's removal, the password, the enrolled second factor, and §11.300. |
+| 0.7 | 2026-09-23 | W3 | URS-PROJ-012 (an account taken out of use can do nothing) assessed: high, scripted, with the refusals the OQ run cannot reach covered by an automated test on real PostgreSQL (VSR-001 §16, F-28, F-29). |
 
 ## 1. Risk model
 
@@ -42,6 +43,7 @@ The columns below are parsed by `scripts/validation/build-traceability.mjs`; kee
 | URS-PROJ-009 | Refuse foreign/unknown program ids | high — cross-tenant read | scripted | negative test; full RLS under D3 |
 | URS-PROJ-010 | Enter every sign-in attempt in the organisation's audit trail | high — without it an attack on an account, or a session opened on it, leaves no record an inspector can read (§11.10(e)); F-19 showed the trail empty under RLS while every other check passed | scripted | the attempts made by the step itself, read back on the ledger in order, hash-chained, with the server's chain verdict |
 | URS-PROJ-011 | End the session when its user signs out | high — a session that survives sign-out stays usable by whoever holds its token, on a shared machine or from a copied header, for up to 24 hours, and everything done with it is attributed to the user who signed out (§11.10(d)); F-21 showed logout answering success while ending nothing, and no step checked | scripted | a session opened by the step itself, refused by the API and the session check once it is signed out, and the sign-out read back on the ledger, hash-chained |
+| URS-PROJ-012 | Refuse an account taken out of use | high — suspension and deprovisioning are how an organisation recalls a person's access (§11.10(d), §11.300(b)); F-28 and F-29 showed that neither changed anything the person could observe: the account signed in, signed, and kept every session it held, so offboarding in the identity provider revoked nothing | scripted, credentialed (a platform administrator); automated on real PostgreSQL for what the OQ run cannot reach | a dedicated account suspended through the product's own route, then refused by the API, the session check and sign-in, the refusal read back on the ledger, hash-chained, and the account restored; `tests/db/account-standing.dbtest.ts` for signing, the challenge, the refresh token, the per-router gate and SCIM's deprovisioning, each shown to catch its own removal |
 | URS-VAULT-001 | Gate vault endpoints | high | scripted | Part 11 §11.10(d) |
 | URS-VAULT-002 | Ingest a document with a recorded SHA-256 | high — the hash is the identity of the evidence | scripted | hash recomputed locally and compared |
 | URS-VAULT-003 | Refuse disallowed file types | medium — a refused upload is visible; an accepted executable is a security defect | scripted | negative test with `.exe` |
