@@ -137,7 +137,17 @@ function bareStatementLiterals(src: string): { file: string; line: number }[] {
       const text = src.slice(start, i + 1);
       const m = /^'(db\/migrations\/[^']+\.sql)'$/.exec(text);
       const enclosing = stack.length ? stack[stack.length - 1] : '';
-      if (m && (enclosing === '' || enclosing === '{') && STATEMENT_START.has(prev)) {
+      // An object-literal KEY also sits directly in a `{` after `{` or `,`, and
+      // is not a statement: `{ 'db/migrations/x.sql': ['t.c'] }` maps a file to
+      // data (column-reachability-guard's HISTORICAL table, added 2026-09-22,
+      // was reported here five times). A string followed by `:` can only be a
+      // key there — as a statement it is a syntax error, and `case`/`?` are
+      // excluded by `prev` already — so it cannot hide the bare `'…',` or
+      // `'…';` this rule exists for.
+      let next = i + 1;
+      while (next < src.length && /\s/.test(src[next])) next++;
+      const isObjectKey = src[next] === ':';
+      if (m && (enclosing === '' || enclosing === '{') && STATEMENT_START.has(prev) && !isObjectKey) {
         out.push({ file: m[1], line: src.slice(0, start).split('\n').length });
       }
       prev = "'";

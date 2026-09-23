@@ -793,6 +793,14 @@ export interface TransmitSequenceResult {
   transmissionId?: string | null;
   status?: string;
   dispatchStatus: string;
+  /**
+   * Package checks the transmit guard ran that FAILED without blocking (a
+   * flag-gated check not enforced here), as "name: detail". null = the guard
+   * reported nothing, which is not "all passed". Set on a performed transmit.
+   */
+  preTransmitFailedChecks?: string[] | null;
+  /** The transmit guard's warnings (e.g. evidence it could not check). */
+  preTransmitWarnings?: string[] | null;
 }
 
 /**
@@ -1001,6 +1009,22 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     );
   }
 
+  // 2026-09-22 (W5/D7): two more ways a sequence reached the gateway missing
+  // what the author placed — a leaf left out of the ZIP (`skipped`) and a draft
+  // leaf shipped in it (`unfinalized`) — both computed by assembly and read by
+  // nobody here. See assembledTransmitBlockers. The claim is released so the
+  // sequence stays transmittable once the cause is fixed.
+  const { assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
+  const gaps = assembledTransmitBlockers(assembled);
+  if (gaps.length > 0) {
+    await assembled.cleanup();
+    await releaseTransmitSlot(sequenceId, ctx.organizationId);
+    throw new SubmissionError(
+      'DISPATCH_BLOCKED',
+      `Transmit blocked — ${gaps.join('; ')}. A transmitted sequence must carry every placed leaf, and only approved documents.`,
+    );
+  }
+
   let result;
   try {
     result = await gw.transmit({
@@ -1028,6 +1052,10 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   }
 
   const dispatchStatus = toDispatchStatus(result.status);
+  // null = the guard reported nothing (never read as "all passed").
+  const failedPreTransmitChecks = result.preTransmit
+    ? result.preTransmit.checks.filter((c) => !c.passed).map((c) => `${c.name}: ${c.detail}`)
+    : null;
   await applySequenceChangeWithAudit(
     {
       // Predicated on the claim taken before the wire: this row is the one that
@@ -1055,6 +1083,10 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
         status: result.status,
         environment,
         signatureActionId,
+        // The package checks that FAILED without blocking, and the guard's
+        // warnings, on the §11.10(e) record of the send (2026-09-22, W5/D7).
+        preTransmitFailedChecks: failedPreTransmitChecks,
+        preTransmitWarnings: result.preTransmit?.warnings ?? null,
       },
     },
   );
@@ -1068,6 +1100,8 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     transmissionId: result.transmissionId,
     status: result.status,
     dispatchStatus,
+    preTransmitFailedChecks: failedPreTransmitChecks,
+    preTransmitWarnings: result.preTransmit?.warnings ?? null,
   };
 }
 

@@ -756,6 +756,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       const governedTools = await governedToolsetFor(pool, numericOrgId);
       const baseRequest = {
         taskType: routingPlan.taskType,
+        // The kernel's risk judgment; see GatewayRequest.riskTier.
+        riskTier: routingPlan.riskTier,
         messages: gwMessages,
         temperature: routingPlan.temperature,
         maxTokens: routingPlan.maxTokens,

@@ -15,6 +15,12 @@
         "text = fs.readFileSync(filePath, 'utf8');"
       ],
       "reason": "FALSE POSITIVE for THIS gate. `filePath` is `req.file.path` at every site — the path MULTER generated for the upload it just wrote, not a client-supplied string, so no request value reaches the path and there is nothing to contain. The client controls `originalname`, used only for path.extname. RE-VERIFIED 2026-09-19 after the two new sites appeared: they are the real PDF/DOCX extraction in POST /analyze-file replacing a hardcoded constant, reading the same multer-written path the .txt branch beside them already read — a new line, not a new source of path input. Both handlers read in full: POST /analyze-file binds filePath at :371 behind assertUploadSafe at :362, and POST /upload-and-optimize binds it at :713 behind assertUploadSafe at :704. (An earlier revision of this reason claimed that guard at both sites when only the first had it; the second has had it since.)"
+    },
+    "server/routes/analytics-routes.ts": {
+      "sites": [
+        "fs.writeFileSync(tempFilePath, text);"
+      ],
+      "reason": "FALSE POSITIVE for THIS gate. `text` is the request BODY's protocol text and is the file's CONTENT, never its path: the path is `path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-')), 'protocol.txt')`, built entirely by the server. The detector matches on the name `text`, which is bound from req.body on the same line as the sink. Reviewed 2026-09-23, and in the same change the temp path was moved from a shared `<cwd>/temp/protocol-${Date.now()}.txt` (same-millisecond requests collided on one file) to a per-request mkdtemp directory. The handler (POST protocol text analysis) was read in full: the length bounds (50..100000 chars) precede the write, and both exits remove the directory."
     }
   }
 }

@@ -15,6 +15,17 @@ import {
   expectJson,
 } from '../setup';
 
+/* The transactional client the canonical signing route checks out
+   (BEGIN / signature INSERT / audit INSERT / COMMIT). Hoisted so the signature
+   tests can read what was persisted; every other statement answers empty, as
+   the client did before. */
+const sign = vi.hoisted(() => ({
+  clientQuery: vi.fn(async (sql: unknown) =>
+    typeof sql === 'string' && /INSERT INTO electronic_signatures/i.test(sql)
+      ? { rows: [{ id: 42, signed_at: new Date('2026-09-23T00:00:00Z') }], rowCount: 1 }
+      : { rows: [], rowCount: 0 }),
+}));
+
 // Mock dependencies used by concept2cure routes
 vi.mock('../../server/db', () => {
   const baseProject = {
@@ -154,17 +165,33 @@ vi.mock('../../server/db', () => {
    */
   const pool = {
     query: vi.fn(async (sql: unknown, params?: unknown[]) => {
+      const p = (params as unknown[] | undefined) ?? [];
       if (typeof sql === 'string' && /client_workspaces/i.test(sql)) {
-        const wsId = Number((params as unknown[] | undefined)?.[0] ?? 1);
-        const orgId = Number((params as unknown[] | undefined)?.[1] ?? 1);
+        const wsId = Number(p[0] ?? 1);
+        const orgId = Number(p[1] ?? 1);
         return wsId === 1 && orgId === 1
           ? { rows: [{ id: 1 }], rowCount: 1 }
+          : { rows: [], rowCount: 0 };
+      }
+      /* The canonical signing route (POST /api/esignature/sign) resolves the
+         §11.50 signer from the org-scoped membership record and the §11.70
+         content from the tenant-scoped version. Same discipline as the
+         workspace fixture: a row only for user 1 in org 1, and version 1 of a
+         document in org 1 — anything else is "not in your organization". */
+      if (typeof sql === 'string' && /FROM users u\s+JOIN organization_users/i.test(sql)) {
+        return Number(p[0]) === 1 && Number(p[1]) === 1
+          ? { rows: [{ name: 'Test Signer', email: 'tester@example.com', title: 'Regulatory Lead' }], rowCount: 1 }
+          : { rows: [], rowCount: 0 };
+      }
+      if (typeof sql === 'string' && /FROM document_versions/i.test(sql)) {
+        return Number(p[0]) === 1 && Number(p[1]) === 1
+          ? { rows: [{ document_id: 10, version_number: '1', content: 'signed body' }], rowCount: 1 }
           : { rows: [], rowCount: 0 };
       }
       return { rows: [], rowCount: 0 };
     }),
     connect: vi.fn(async () => ({
-      query: vi.fn(async () => ({ rows: [], rowCount: 0 })),
+      query: sign.clientQuery,
       release: vi.fn(),
     })),
   };
@@ -212,6 +239,9 @@ vi.mock('../../server/services/part11/reverify-signer-deps', () => ({
     verifyMfaToken: async () => false,
     warn: () => {},
   }),
+  // Imported directly by routes/esignature.ts (its password pre-check reads
+  // through the same loader the signing path uses).
+  loadPasswordHash: async () => 'stored-hash',
 }));
 
 vi.mock('../../server/middleware/redisRateLimiter', () => ({
@@ -226,6 +256,14 @@ import artifactRouter from '../../server/routes/c2c/artifacts';
 import aiEditingRouter from '../../server/routes/c2c/ai-editing';
 // Conversation mutations moved to their own router (L53, slice 6).
 import conversationRouter from '../../server/routes/c2c/conversations';
+/* Signature creation. POST /projects/:projectId/artifacts/:artifactId/signatures
+   was REMOVED on 2026-09-20 — it was a second signature substrate
+   (concept2cure_signatures, its own hash recipe, no §11.70 binding); see the
+   note in server/routes/c2c/artifacts.ts and its pin,
+   server/routes/c2c/__tests__/artifact-signature-route-removed.test.ts. The one
+   substrate is electronic_signatures, reached for a document version by
+   POST /api/esignature/sign — so that is where these signature tests now drive. */
+import esignatureRouter from '../../server/routes/esignature';
 
 describe('Concept2Cure API', () => {
   beforeEach(() => {
@@ -462,58 +500,85 @@ describe('Concept2Cure API', () => {
     );
   });
 
-  it('should create a signature for an artifact version', async () => {
-    const req = createMockRequest({
-      params: { projectId: 'proj_1', artifactId: 'artifact_test' },
-      body: {
-        signaturePurpose: 'Approved for submission',
-        password: 'correct-horse-battery',
-      },
-    }) as any;
+  /** The canonical signing request, as an authenticated signer in org 1. */
+  const signingRequest = (body: Record<string, unknown>) => {
+    const req = createMockRequest({ body }) as any;
     req.headers = { 'x-forwarded-for': '127.0.0.1' };
     req.userId = 1;
     req.userEmail = 'tester@example.com';
     req.userRole = 'admin';
+    req.user = { id: 1, email: 'tester@example.com', organizationId: 1 };
     req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
+    return req;
+  };
+  const signHandler = () => {
+    const layer = (esignatureRouter as any).stack.find((l: any) => l.route?.path === '/sign' && l.route?.methods?.post);
+    expect(layer, 'POST /api/esignature/sign is the one signing route for a document version').toBeTruthy();
+    return layer.route.stack[layer.route.stack.length - 1].handle;
+  };
+  /** The one electronic_signatures INSERT the transaction issued, as column → value. */
+  const persistedSignature = () => {
+    const calls = sign.clientQuery.mock.calls.filter((c: unknown[]) =>
+      /INSERT INTO electronic_signatures/i.test(String(c[0])));
+    expect(calls).toHaveLength(1);
+    const [sql, params] = calls[0] as [string, unknown[]];
+    const cols = sql.slice(sql.indexOf('(') + 1, sql.indexOf(')')).split(',').map((c) => c.trim());
+    return Object.fromEntries(cols.map((c, i) => [c, params[i]]));
+  };
 
+  it('should create a signature for an artifact version — through the one signing substrate', async () => {
+    // The artifact route's second substrate is gone (see the import note); a
+    // document version is signed through POST /api/esignature/sign.
+    expect(
+      artifactRouter.stack.some((l: any) =>
+        l.route?.path === '/projects/:projectId/artifacts/:artifactId/signatures' && l.route?.methods?.post),
+      'the removed second signature substrate is back',
+    ).toBe(false);
+
+    const req = signingRequest({
+      documentId: 10,
+      versionId: 1,
+      signaturePurpose: 'Approved for submission',
+      signatureMeaning: 'I approve this version for submission',
+      action: 'approved',
+      password: 'correct-horse-battery',
+      // Claims about HOW identity was established, asserted by the party being
+      // authenticated. They must not reach the record.
+      authenticationMethod: 'sso',
+      secondFactorVerified: true,
+    });
     const res = createMockResponse();
 
-    const layer = artifactRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts/:artifactId/signatures' && l.route?.methods?.post);
-    const handler = layer.route.stack[layer.route.stack.length - 1].handle;
-
-    await handler(req, res);
+    await signHandler()(req, res);
 
     expectStatus(res, 201);
-    expectJson(res, {
-      success: true,
-      data: expect.objectContaining({
-        signaturePurpose: 'Approved for submission',
-        signerId: 1,
-      }),
-    });
+    expectJson(res, { signatureId: 42, signatureHash: expect.any(String) });
+    const row = persistedSignature();
+    expect(row.signature_purpose).toBe('Approved for submission');
+    expect(row.signer_id).toBe(1);
+    expect(row.organization_id).toBe(1);
     // What is persisted about HOW identity was established is derived from the
     // re-verification, never taken from the request body.
-    const { db } = await import('../../server/db');
-    const inserted = (db.insert as any).mock.results
-      .flatMap((r: any) => r.value.values.mock.calls.map((c: any[]) => c[0]))
-      .find((payload: any) => payload?.signatureId);
-    expect(inserted).toBeTruthy();
-    expect(inserted.authenticationMethod).toBe('password');
-    expect(inserted.secondFactorVerified).toBe(false);
+    expect(row.authentication_method).toBe('password');
+    expect(row.second_factor_verified).toBe(false);
+    // Signature and audit row committed together (§11.10(e)).
+    const sqls = sign.clientQuery.mock.calls.map((c: unknown[]) => String(c[0]));
+    expect(sqls.some((s) => /INSERT INTO audit_logs/i.test(s))).toBe(true);
+    expect(sqls.some((s) => /^\s*COMMIT/i.test(s))).toBe(true);
   });
 
   it('refuses a signature whose password does not verify — identity is checked at the moment of signing', async () => {
-    const req = createMockRequest({
-      params: { projectId: 'proj_1', artifactId: 'artifact_test' },
-      body: { signaturePurpose: 'Approved for submission', password: 'wrong' },
-    }) as any;
-    req.headers = { 'x-forwarded-for': '127.0.0.1' };
-    req.userId = 1;
-    req.userRole = 'admin';
-    req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
+    const req = signingRequest({
+      documentId: 10,
+      versionId: 1,
+      signaturePurpose: 'Approved for submission',
+      action: 'approved',
+      password: 'wrong',
+    });
     const res = createMockResponse();
-    const layer = artifactRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts/:artifactId/signatures' && l.route?.methods?.post);
-    await layer.route.stack[layer.route.stack.length - 1].handle(req, res);
+    await signHandler()(req, res);
     expectStatus(res, 401);
+    // Refused before anything is written: no transaction was opened.
+    expect(sign.clientQuery).not.toHaveBeenCalled();
   });
 });

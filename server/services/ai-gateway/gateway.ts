@@ -78,7 +78,7 @@ import {
 import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { getContentClassifier } from '../ai-governance/classification/index.js';
-import { isApprovedForHighRisk, isHighRiskTask } from '../ai-governance/approved-models.js';
+import { isApprovedForHighRisk, isHighRiskRequest } from '../ai-governance/approved-models.js';
 import {
   extractRequestText,
   getPiiEnforcement,
@@ -1190,6 +1190,53 @@ export class AIGateway {
   /**
    * Simple completion helper — wraps a single user message.
    */
+  /**
+   * Performance qualification: run a request on EXACTLY one model, by registry
+   * id, and return what it produced — for `server/eval/pq/run-pq.ts` only.
+   *
+   * Why this exists rather than `route({ model })`. Routing now refuses an
+   * explicit request for a model that is not approved for high-risk work, and
+   * `docs/LAUNCH_DEFINITION_OF_DONE.md` says an unapproved model (GPT, Kimi,
+   * `local`) earns approval by passing its PQ. The PQ therefore has to be able
+   * to exercise an unapproved model on a drafting task. An exemption flag on
+   * `route()` would be a bypass any caller could set; this is a separate,
+   * narrower door instead:
+   *
+   *   - one named model, no selection, no fallback, no retry — a PQ result
+   *     attributed to a model that did not answer is not a PQ result;
+   *   - the last-mile sensitive-dispatch gate still runs (it lives in
+   *     executeProvider), so evaluation cannot move data a tenant's placement
+   *     policy forbids;
+   *   - every call is audited with `purpose: 'performance-qualification'`;
+   *   - `scripts/ci/check-pq-evaluation-callers.mjs` fails the build if anything
+   *     outside `server/eval/pq/` calls it. Its output is never a governed
+   *     artifact.
+   */
+  async evaluateModel(
+    modelId: string,
+    request: Omit<GatewayRequest, 'provider' | 'model' | 'strategy'>,
+  ): Promise<GatewayResponse> {
+    const model = this.models.find(m => m.id === modelId);
+    if (!model) {
+      throw new GatewayNoProviderError(`PQ: "${modelId}" is not a model the gateway knows.`);
+    }
+    if (!model.enabled) {
+      throw new GatewayNoProviderError(
+        `PQ: "${modelId}" is known but its provider (${model.provider}) is not configured — nothing was evaluated.`,
+      );
+    }
+    const requestId = randomUUID();
+    const startTime = Date.now();
+    const tagged: GatewayRequest = {
+      ...request,
+      model: model.id,
+      metadata: { ...(request.metadata ?? {}), purpose: 'performance-qualification' },
+    };
+    const response = await this.executeProvider(model, tagged, requestId, startTime);
+    await this.logAudit(tagged, response, 'explicit', true, undefined, [model.id]);
+    return response;
+  }
+
   async complete(prompt: string, options?: Partial<GatewayRequest>): Promise<string> {
     const response = await this.route({
       taskType: options?.taskType || 'general',
@@ -2489,7 +2536,7 @@ export class AIGateway {
       // says why. Rerouting would hide the violation in the caller; honouring
       // it would be the violation.
       const explicit = matches.find(m => this.approvedForTask(m, request));
-      if (!explicit && matches.length > 0 && isHighRiskTask(request.taskType)) {
+      if (!explicit && matches.length > 0 && isHighRiskRequest(request.taskType, request.riskTier)) {
         throw new ModelNotApprovedError(request.taskType, matches.map(m => m.id), 'explicit');
       }
       if (explicit && this.isProviderHealthy(explicit.provider)) return explicit;
@@ -2524,7 +2571,7 @@ export class AIGateway {
          a misleading "no AI provider is configured" inside it. A governance
          refusal is its own terminal outcome, and it says which models were
          withheld. */
-      if (isHighRiskTask(request.taskType)) {
+      if (isHighRiskRequest(request.taskType, request.riskTier)) {
         const withheld = this.models.filter(
           m =>
             m.enabled &&
@@ -2627,7 +2674,7 @@ export class AIGateway {
    * not know is not approved. Tasks that are not high-risk are unaffected.
    */
   private approvedForTask(model: ModelConfig, request: GatewayRequest): boolean {
-    return !isHighRiskTask(request.taskType) || isApprovedForHighRisk(model.id);
+    return !isHighRiskRequest(request.taskType, request.riskTier) || isApprovedForHighRisk(model.id);
   }
 
   /**
@@ -2990,6 +3037,7 @@ export class AIGateway {
             code: refusal.code,
             reason: refusal.reason,
             withheldModelIds: refusal.withheldModelIds,
+            declaredRiskTier: request.riskTier ?? null,
           },
         },
       });

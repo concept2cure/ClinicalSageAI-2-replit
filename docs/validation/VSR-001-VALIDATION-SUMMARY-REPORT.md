@@ -753,3 +753,64 @@ Product change in this section: `828faf809` (F-18). Validation-tooling changes:
 `9b77ee3d8`, `ebd0edd42`, `52e3acc94`, `c33e43d26`, `0e2b3a971`. No result was
 edited after execution. The runners wrote every record, and the matrix builder
 regenerated TM-001.
+
+### 13.7 Postscript: F-19 fixed, and its scope corrected
+
+**Scope correction to §13.2.** F-19 is not limited to users with a second
+factor. Outside development the login route challenges every password sign-in:
+email OTP by default, TOTP when enrolled (`server/routes/auth.ts`, "Always
+require 2FA"). So before this fix, under RLS, *every* sign-in left no audit
+record. The events §13.2 marked "from source, not yet observed live" have now
+been observed on real PostgreSQL:
+- a wrong password on a real account, which was refused;
+- a logout, which was refused;
+- the session `/mfa/verify` issues, which was never written at all.
+
+The login route's own comment pointed to a success audit "near `res.json({
+success: true, accessToken … })`". That call survives only on the development
+path; mandatory MFA moved session creation to `/mfa/verify`, and the audit
+call was not moved with it.
+
+**Fix.**
+- `recordAuthEvent` (`server/services/audit/auth-event-audit.ts`) replaces
+  the route-local helper at all eleven call sites.
+- For an event that names an organisation, it writes the row in a scope for
+  exactly that organisation, with no role, and around the write alone. The
+  request's own queries stay in the pre-auth scope.
+- An event that names no organisation is written as before, as tenant 0.
+- New-organisation provisioning at signup uses the same least-privilege
+  shape, fixed on trunk for the same cause.
+- `POST /api/auth/mfa/verify` now records its outcome:
+  - `user_login_mfa_failed` for a wrong code (against the organisation) or
+    for an invalid or expired challenge (tenant 0);
+  - `user_login` success, reason `mfa_verified`, for the session it issues.
+- A write that fails is still logged and does not fail the sign-in. That is
+  a deliberate policy, now no longer the steady state.
+
+**The source of the organisation is now a security boundary.** A row is
+written into whichever organisation the event names, so that name must come
+from the server: the user record, or the server-signed MFA challenge.
+`/logout` took it from a token it had only *decoded*. With the scope fix
+alone, a token signed with any key could write a `user_logout` row into any
+organisation's audit chain. Before the fix, RLS refused that row along with
+every other one. `/logout` now attributes a logout only when the token's
+signature verifies against the server's keys (expiry ignored, because a logout
+from an expired session is still an event). Anything else is recorded as an
+anonymous logout (tenant 0).
+
+**Shown failing first.** Evidence: `docs/evidence/W3/2026-09-23/red/F-19/`.
+
+| Check | Original code | Scope fix, `/logout` still decoding | Final |
+|---|---|---|---|
+| `tests/db/sign-in-audit-trail.dbtest.ts`: production route registration, a freshly minted non-superuser `NOBYPASSRLS` role, `app.rls_enforce=on` | 6 fail / 2 pass, with 4 policy refusals logged. The forged-token case passes only because RLS refused every tenant-named write | 3 fail / 5 pass. A token signed with a foreign key writes `user_logout` into the organisation's chain | 8 / 8, 0 refusals. The challenge, wrong code, session, wrong password and genuine logout are recorded against the organisation. The forged logout is not. The product's chain verifier reads the organisation's 5 rows `ok` |
+| `server/services/audit/__tests__/auth-event-audit.test.ts` (the scope rule, in the default CI job) | The write without its scope: 2 fail / 8 pass | — | 10 / 10 |
+| Live, the MFA-posture server, after the fix | §13.2: 6 of 6 challenge rows refused, 0 rows | — | Sign-in, wrong code, wrong password: 7 rows in org 1's chain, 0 refusals. On the final code, a forged-token logout is recorded as tenant 0, and the genuine logout as org 1 / user 17. The chain verifier reads `ok` over 273 rows in 2 tenants |
+
+§13.5 after this postscript: **F-19 closed** locally; the staging
+re-execution is owed with the rest. §13.6 no longer owes the F-19 fix.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+Product change: the one that files this note. No record in
+`docs/evidence/W3/2026-09-23/` was re-executed or edited. Those records were
+made before this fix; the OQ protocols do not exercise the audit trail of a
+sign-in. That gap is noted for the next URS/OQ revision.

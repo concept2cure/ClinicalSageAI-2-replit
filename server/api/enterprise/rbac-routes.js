@@ -48,53 +48,18 @@ router.get('/roles', async (req, res) => {
   }
 });
 
-// Get role details with permissions breakdown
-router.get('/roles/:roleId', async (req, res) => {
-  try {
-    const { roleId } = req.params;
-
-    const result = await rbacService.pool.query(
-      `
-      SELECT 
-        r.*,
-        COUNT(ur.id) as active_users
-      FROM roles r
-      LEFT JOIN user_roles ur ON r.id = ur.role_id AND ur.is_active = true
-      WHERE r.id = $1
-      GROUP BY r.id
-    `,
-      [roleId]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Role not found' });
-    }
-
-    const role = result.rows[0];
-    role.permissions = role.permissions || [];
-
-    // Get permission breakdown by category
-    const permissionCategories = {};
-    role.permissions.forEach(perm => {
-      const [resource, action] = perm.split(':');
-      if (!permissionCategories[resource]) {
-        permissionCategories[resource] = [];
-      }
-      permissionCategories[resource].push(action);
-    });
-
-    res.json({
-      role: {
-        ...role,
-        permissions: role.permissions,
-        permission_categories: permissionCategories,
-      },
-    });
-  } catch (error) {
-    console.error('Get role details error:', error);
-    res.status(500).json({ error: 'Failed to retrieve role details' });
-  }
-});
+// GET /roles/:roleId and GET /stats were removed 2026-09-23. Both read the
+// `roles` and `user_roles` tables through `rbacService.pool`, and neither
+// exists: RBACService (server/services/roleBasedAccess.ts) has no `pool`
+// property, so every request threw a TypeError and returned 500, and the two
+// tables are created only by db/migrations/_consolidated/006_roles.sql, a tree
+// scripts/db/migration-set.mjs refuses on purpose. They are deliberately not
+// provisioned (server/db/ensureCoreTables.ts, server/startup/services.ts):
+// the role lives on organization_users.role. Nothing in client/src called
+// either route. The same data is served by the mounted tenant-users router
+// (server/routes/tenant-users.ts, /api/tenant-users): GET /:tenantId lists
+// each member with their organization_users.role, and PATCH
+// /:organizationId/:userId changes it. Found by ci:migration-reachability.
 
 // Assign role with advanced options
 router.post('/assign', rbacService.requirePermission('users', 'update'), async (req, res) => {
@@ -360,47 +325,6 @@ router.post('/check-permission', async (req, res) => {
   } catch (error) {
     console.error('Permission check error:', error);
     res.status(500).json({ error: 'Permission check failed' });
-  }
-});
-
-// Get organization role statistics
-router.get('/stats', rbacService.requirePermission('audit', 'read'), async (req, res) => {
-  try {
-    const stats = await rbacService.pool.query(
-      `
-      SELECT 
-        r.name as role_name,
-        r.level,
-        r.color_code,
-        COUNT(ur.id) as user_count,
-        COUNT(CASE WHEN ur.expires_at IS NOT NULL AND ur.expires_at > NOW() THEN 1 END) as temporary_assignments
-      FROM roles r
-      LEFT JOIN user_roles ur ON r.id = ur.role_id 
-        AND ur.tenant_id = $1 
-        AND ur.is_active = true
-      GROUP BY r.id, r.name, r.level, r.color_code
-      ORDER BY r.level ASC
-    `,
-      [req.tenantId]
-    );
-
-    const totalUsers = await rbacService.pool.query(
-      `
-      SELECT COUNT(DISTINCT user_id) as total
-      FROM user_roles 
-      WHERE tenant_id = $1 AND is_active = true
-    `,
-      [req.tenantId]
-    );
-
-    res.json({
-      role_distribution: stats.rows,
-      total_users: totalUsers.rows[0].total,
-      organization_id: req.tenantId,
-    });
-  } catch (error) {
-    console.error('Get RBAC stats error:', error);
-    res.status(500).json({ error: 'Failed to get RBAC statistics' });
   }
 });
 

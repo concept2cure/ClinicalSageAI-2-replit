@@ -307,6 +307,16 @@ jobs:
       # simply stops being mentioned and the row still renders. This gate makes
       # the citation load-bearing. The selftest shows each refusal on a
       # constructed case before the gate is trusted.
+      # AIGateway.evaluateModel runs one named model with no routing, no fallback
+      # and no high-risk approval check — what performance qualification needs,
+      # and anywhere else a way to have an unapproved model draft regulated
+      # content. Only server/eval/pq/ may call it.
+      - name: Guardrails — only the PQ runner calls evaluateModel (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:pq-evaluation-callers:selftest
+          npm run ci:pq-evaluation-callers
+
       - name: Guardrails — validation traceability resolves (with selftest)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: |

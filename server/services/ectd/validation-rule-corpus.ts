@@ -191,6 +191,34 @@ export const RULE_CORPUS: ValidationRule[] = [
     findingCode: 'LIFECYCLE_OP_IN_ORIGINAL',
   },
   {
+    // 2026-09-22 (W5/D7).
+    id: 'LIFECYCLE_BINDING_NOT_ASSESSED',
+    title: 'A follow-up sequence\'s declared replace/append/delete is bound at assembly, not at readiness',
+    category: 'lifecycle',
+    regions: ['ich'],
+    severity: 'medium',
+    rationale:
+      'Which filed leaf a declared act supersedes is established against the filed inventory when the sequence is assembled; ' +
+      'an act that cannot be bound is refused at assembly and at transmit. Readiness reports that it did not assess this, rather than reading clean.',
+    source: ICH_SPEC,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'LIFECYCLE_BINDING_NOT_ASSESSED',
+  },
+  {
+    // 2026-09-22 (W5/D7).
+    id: 'DOCUMENT_CONTENT_NOT_PINNED',
+    title: 'A placed leaf carries a pin of its source content',
+    category: 'integrity',
+    regions: ['ich'],
+    severity: 'medium',
+    rationale:
+      'Without a content pin taken at placement, the platform cannot say whether the document behind a leaf still holds what was placed. ' +
+      'This is reported as not verified rather than passed as matching.',
+    source: ICH_SPEC,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'DOCUMENT_CONTENT_NOT_PINNED',
+  },
+  {
     id: 'LIFECYCLE_TARGET_EXISTS',
     title: 'replace/append/delete reference an existing prior leaf',
     category: 'lifecycle',

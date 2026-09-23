@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import fs from 'fs';
+import os from 'os';
 import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import path from 'path';
 import { execFile } from 'child_process';
@@ -309,16 +310,16 @@ router.post('/analyze-protocol-text', async (req, res) => {
 
     log.debug(`Processing protocol text analysis (${text.length} characters)`);
 
-    // Save the text to a temporary file for processing
-    const tempDir = path.join(process.cwd(), 'temp');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
-
-    const tempId = Date.now();
-    const tempFilePath = path.join(tempDir, `protocol-${tempId}.txt`);
-
+    // Save the text to a temporary file for processing — in a directory made
+    // for THIS request (mkdtemp: unique name, mode 0700). It was
+    // `<cwd>/temp/protocol-${Date.now()}.txt`, shared by every request, so two
+    // analyses started in the same millisecond wrote the same file and one
+    // caller could be handed the other's protocol analysis. (2026-09-23)
+    let tempDir: string;
+    let tempFilePath: string;
     try {
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-'));
+      tempFilePath = path.join(tempDir, 'protocol.txt');
       fs.writeFileSync(tempFilePath, text);
     } catch (error) {
       log.error('Error saving temporary file:', error);
@@ -339,9 +340,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
     } catch (error) {
       // Clean up temporary file
       try {
-        if (fs.existsSync(tempFilePath)) {
-          fs.unlinkSync(tempFilePath);
-        }
+        fs.rmSync(tempDir, { recursive: true, force: true });
       } catch (e) {
         log.error('Error cleaning up temp file:', e);
       }
@@ -372,9 +371,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
 
     // Clean up temporary file
     try {
-      if (fs.existsSync(tempFilePath)) {
-        fs.unlinkSync(tempFilePath);
-      }
+      fs.rmSync(tempDir, { recursive: true, force: true });
     } catch (e) {
       log.error('Error cleaning up temp file:', e);
     }

@@ -1,0 +1,4 @@
+ × server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts > transmit guard — the result carries what was checked > returns a failed, non-blocking check and the leaf-security report with the gateway result 23ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to match object { passed: false }
+      Tests  1 failed (1)
