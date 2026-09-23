@@ -350,10 +350,144 @@ that version. Before signature, through change control:
 factors, section gating, quality validation, batch validate) have no authority
 gate and no ledger row. They are the same gap, and they are outside this item.
 
-## T1–T4, P3
+## P3: resolving a contradiction
 
-*In progress, not yet verified. These fixes are being written test-first and
-adversarially reviewed; this section is filled in when they land.*
+**The defect.** Resolving a contradiction finding takes it off the submission
+gate. The surface flipped the row locally and stamped it `resolvedBy: 'AnA +
+you'`, a resolver nobody recorded. It then sent a bare POST whose answer it
+never read. The server wrote the state with no reason and no ledger row.
+
+**The fix** (`contradiction-engine-service.ts`,
+`assumption-decision-contradiction.ts`, `Inconsistency.tsx`), written
+test-first, then read by three independent reviewers and repaired:
+
+- **The governed path.** `transitionReviewState` is a governed write. It checks
+  the state, the reason (at least 8 characters) and a numeric actor before
+  anything is opened; it never records against `system`. Then, in one
+  transaction: lock the row, update it, write `recordGovernedAction` on the same
+  client, COMMIT. The ledger command is `resolve`, `reopen` or `transition`, in
+  domain `governed_intelligence`, with payload `{from, to}`. The orchestrator
+  calls the same function, so its transitions are audited too.
+- **The resolver fields.** `resolved_by` and `resolved_at` are set only by a
+  resolution and cleared on re-open. A re-opened finding used to keep its old
+  `resolved_at`, and the pdev bridge counted it as resolved.
+- **The route.** `requireEditorAccess` (a viewer gets 403) and the canonical
+  `governedActorId` (401 without one). The state and reason checks live in the
+  service only; the route used to repeat them.
+- **Repeated decisions.** A decision already on the record is refused (409
+  `REVIEW_STATE_UNCHANGED`), so no second ledger row is written and the
+  recorded resolver is not re-stamped.
+- **Honest outcomes.**
+  - The row is mapped before COMMIT, so anything that throws still rolls back.
+  - A failed COMMIT is `OUTCOME_UNKNOWN`, never "left unchanged".
+  - On the surface, a gateway error (502/503/504), a COMMIT the server could not
+    confirm, no answer at all, and a 2xx it cannot read are all "cannot confirm,
+    re-reading", not a refusal and not a claimed audit write. The form closes,
+    so the decision cannot be sent twice.
+- **The surface.** It shows the server's persisted resolver ("user 7", or the
+  stored value), never a composed one. It says "recorded on the audit trail"
+  only for a decision this screen saw committed.
+
+**The golden journey.** The HAQ correction journey (`test:proof-tier`, a
+blocking CI step) resolves a finding through this function. It now builds its
+database with the real `audit_logs` and `c2c_ana_actions`. It reads the ledger
+row back (`resolve`, `governed_intelligence`, `decided_by` 2, a hash chain), so
+it is the test that exercises the real ledger insert on this path. It also
+asserts the persisted state; before, it fell back to a literal.
+
+**Proof.** The new route, client and journey suites were run against the
+unfixed files from HEAD: red 30/31 (`p3-red.txt`). Green 31/31
+(`p3-green.txt`). 144/144 across the 14 suites that touch this service or
+surface. Each reviewer fix, mutated, fails a named test:
+
+- the commit-failure distinction;
+- a gateway error treated as a refusal;
+- an unreadable 2xx claiming the audit write.
+
+Gates: `ci:discarded-audit-write`, `ci:dead-audit-catch`,
+`ci:server-error-leaks`, `ci:audit-logs-fixture`, `check:microcopy`. Scoped
+typecheck: no errors in the changed files.
+
+**Open.** `contradiction-consequence-service.ts:680` still sets `review_state =
+'under_review'` with a bare pool query and no ledger row. `under_review` does
+not clear the gate, so this is not a bypass, but it is an unaudited state
+change. Findings resolved before this change have no ledger row, and the
+surface does not claim one for them.
+
+## T1, T2, T4: task writes
+
+**The defects.**
+
+- **T1.** Every task ledger write in `taskManagement.routes.ts` was
+  best-effort, and its outcome was discarded at nine sites. A signed completion
+  could commit with no ledger row and answer 200.
+- **T2.** Task writes had no role gate, so a viewer could create, transition,
+  link and archive.
+- **T4.** An archive needed no reason.
+
+**The fix**, written test-first, then read by three independent reviewers and
+repaired:
+
+- **One transaction for the write and its ledger row.**
+  `auditTaskActionInTx` (in `task-audit.ts`) writes the ledger row on the task
+  write's own Drizzle transaction, via `queryableFromDrizzle`. A failed row
+  throws, the write rolls back, and the answer is 500 `AUDIT_WRITE_FAILED`:
+  - create, transition (the signed completion and its §11.50 manifestation are
+    one fact), archive, dependency link (the link, the successor block and both
+    rows) and from-template: one transaction each;
+  - bulk-create and auto-assign: one transaction per task, and a partial
+    outcome says how many were saved;
+  - notify: its ledger row is written after delivery and its outcome is
+    checked.
+
+  The `taskManagement.routes.ts` baseline entry (9) is removed from
+  `ci:discarded-audit-write`.
+- **Same-status requests.** A PATCH to the status a task already has, carrying
+  no signature and no progress change, is refused 409 `CONFLICT_STALE`. Before,
+  it rewrote a signed record's completion time with no ledger row. A late
+  signature, or a progress change, commits with its ledger row. Only one late
+  signature can clear the approval gate.
+- **Authority (T2).** `requireEditorAccess` gates every write on this router.
+- **Archive reason (T4).** Required: trimmed, at least 3 and at most 1000
+  characters.
+- **The board.** Refusals are shown in the server's words, inside the panel
+  where the user is looking: a viewer's 403, `AUDIT_WRITE_FAILED`, an expired
+  session. Before, they read "Network error", or nothing at all.
+
+**Upstream, mid-repair.** Commit `6f79a000f` from another session retired the
+task signing PIN in favour of the platform's password ceremony. Merging it into
+the agent's in-flight work conflicted in the route and in `TaskBoard.tsx`:
+
+- the route keeps the agent's transactional version, with upstream's wording;
+- the dialog is upstream's shared `EsignModal`;
+- the test fixtures moved to `{password, meaning}`.
+
+During that merge this session emptied `TaskBoard.tsx` by mistake. It was
+rebuilt from the agent's own backup and merged again; the merge helper no longer
+writes a conflicted merge into a file an agent owns.
+
+**Proof.** The new suites were run against the unfixed HEAD files: red 36/40
+(`t-red.txt`). Green 40/40 (`t-green.txt`). `ci:discarded-audit-write` with the
+entry removed: red against the HEAD route, 0 → 9 (`t-gate-red.txt`); green
+against the fix (`t-gate-green.txt`). 115/115 across the 14 task suites. Scoped
+typecheck: no errors in the changed files.
+
+**Open, next.**
+
+- The completion cascade (`task-side-effects.ts`) unblocks dependents after
+  COMMIT, on the pool, with no ledger row. A cascade error after a committed
+  completion is also reported as "Failed to update task".
+- The reviewers' minor findings:
+  - the dependency route takes its locks in the opposite order from PATCH;
+  - a non-audit failure part-way through bulk-create or auto-assign is reported
+    as a plain failure;
+  - notify's connection is acquired outside its try;
+  - auto-assign can assign an archived task;
+  - `actorContext` duplicates `governedActorId`;
+  - the archive message is wrong over 1000 characters;
+  - `autoAssignCreated` treats any 2xx as assigned.
+- `unifiedTasks.routes.ts` writes the same table with no role gate and a
+  best-effort ledger (3 baselined sites), so T2 holds for this router only.
 
 ## Known limits
 
@@ -365,10 +499,12 @@ Open items, left as they are on purpose:
   reviewer), used by `/api/esignature/sign`, submission sign-release and
   MDx QMS. Choosing one is a policy decision for QA and the founder. It is not a
   change to make inside a defect fix.
-- **The signer IP on the signature row is the first `X-Forwarded-For` entry**,
-  which the client controls unless the edge overwrites it. The canonical handler
-  does the same thing. The fix is to use `req.ip` behind a correct
-  `trust proxy`, in both places, in one change.
+- ~~**The signer IP on the signature row is the first `X-Forwarded-For`
+  entry.**~~ Closed the same day by the D6 workstream:
+  `server/utils/client-ip.ts` (`clientIpOf`, which is `req.ip` behind the
+  configured `trust proxy`) is now the one source, and
+  `check-client-ip-single-source` keeps the header from being read anywhere
+  else. `signerIpAddress` in `protocol-signature.ts` delegates to it.
 - **The signing modal offers every meaning.** The server refuses a meaning the
   act cannot carry, with a 400, before it re-authenticates. The attempt still
   counts against the limiter.

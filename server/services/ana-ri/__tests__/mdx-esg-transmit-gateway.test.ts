@@ -329,8 +329,11 @@ describe('the 510(k) transmit affordance reaches the real FDA ESG AS2 transport'
 
   it('records a rejected transmittal — never an acknowledgement — on an agency HTTP error', async () => {
     configureEsgCredentials();
-    mdnResponse.statusCode = 500;
-    mdnResponse.body = 'gateway unavailable';
+    // 2026-09-23 (W5/D7, MDN close): a 4xx — the agency answered and refused.
+    // This sent HTTP 500, which the delivery classifier (as2-transport.ts)
+    // records in transit: a 5xx after the whole bundle may be held upstream.
+    mdnResponse.statusCode = 403;
+    mdnResponse.body = 'forbidden: unknown AS2-From';
 
     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
     expect(r.success).toBe(false);
@@ -343,6 +346,34 @@ describe('the 510(k) transmit affordance reaches the real FDA ESG AS2 transport'
     expect(rejected).toBeDefined();
     // Nothing anywhere claims a receipt.
     expect(poolQueries.some((q) => q.args.includes('ack3_received'))).toBe(false);
+  });
+
+  // 2026-09-23 (W5/D7, MDN close): an HTTP 500 after the whole bundle was sent
+  // neither accepts nor refuses it — the agency's backend may hold it. The
+  // transmittal is recorded in transit, inside the duplicate-send lock, with
+  // the HTTP status; never rejected (which frees a resend) and never an
+  // acknowledgement.
+  it('records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle', async () => {
+    configureEsgCredentials();
+    mdnResponse.statusCode = 500;
+    mdnResponse.body = 'gateway unavailable';
+
+    const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    expect(r.success).toBe(false);
+    expect(r.error).toBe('TRANSMIT_FAILED');
+    expect(r.message).toMatch(/may hold it/);
+    expect(r.data).toBeUndefined();
+
+    expect(httpsRequests).toHaveLength(1);
+    const statusWrites = poolQueries.filter((q) => q.sql.includes('UPDATE submission_transmittals') && /status\s*=/.test(q.sql));
+    const last = statusWrites[statusWrites.length - 1];
+    expect(last.args).toContain('in_transit');
+    // Tracked under the response's Message-ID; the error names ours.
+    expect(last.args).toContain('<mdn-from-fda@esg.fda.gov>');
+    expect(r.message).toContain(httpsRequests[0].options.headers['Message-ID']);
+    expect(last.args).toContain(500);
+    expect(poolQueries.some((q) => q.sql.includes('UPDATE submission_transmittals') && q.args.includes('rejected'))).toBe(false);
+    expect(poolQueries.some((q) => q.args.includes('ack3_received') || q.args.includes('received'))).toBe(false);
   });
 });
 

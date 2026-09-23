@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T10:11:42.434Z",
+  "generatedAt": "2026-09-23T10:56:19.646Z",
   "git": {
-    "sha": "ff1ebcccebe69992aaa36528918404580c88000c",
+    "sha": "15e8501ed2954996c3ac68cfe4e8e450a28f2ec1",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 104
+    "largeFilesByLines": 105
   },
   "findings": {
     "duplicateBasenames": [
@@ -1995,7 +1995,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 277720
+        "bytes": 279311
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2165,7 +2165,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6382
+        "lines": 6405
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2428,6 +2428,10 @@
         "lines": 1864
       },
       {
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 1857
+      },
+      {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
         "lines": 1849
       },
@@ -2488,6 +2492,10 @@
         "lines": 1756
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1730
+      },
+      {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
       },
@@ -2498,14 +2506,6 @@
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
         "lines": 1698
-      },
-      {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1693
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1689
       },
       {
         "file": "server/routes/c2c/projects.ts",
@@ -2560,6 +2560,10 @@
         "lines": 1531
       },
       {
+        "file": "server/routes/taskManagement.routes.ts",
+        "lines": 1507
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
         "lines": 1506
       },
@@ -2575,7 +2579,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 406,
       "largeByBytes": 33,
-      "largeByLines": 83
+      "largeByLines": 84
     },
     {
       "owner": "Unassigned (TBD)",

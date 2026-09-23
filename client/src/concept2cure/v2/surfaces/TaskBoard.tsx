@@ -128,6 +128,22 @@ function isOverdue(t: TaskItem): boolean {
 }
 
 /**
+ * Refusal copy shared by every write on this board. `apiRequest` THROWS for a
+ * non-OK status except 401, which it RETURNS — so each write needs both
+ * halves, and a missing `!res.ok` branch turns an expired session into a
+ * silent no-op. `notDone` names what did not happen.
+ */
+function sessionExpired(notDone: string): string {
+  return `Your session has expired — sign in again. ${notDone}`;
+}
+/** A caught write failure as user copy: the server's sentence (a viewer's 403,
+ *  an AUDIT_WRITE_FAILED) when it sent one, else this surface's own fallback.
+ *  A browser-native throw ("Failed to fetch") is never shown. */
+function refusalText(e: unknown, fallback: string): string {
+  return e instanceof ApiRequestError && e.message ? e.message : fallback;
+}
+
+/**
  * Resolve a task's assignee id to a display name, from the org's real roster.
  *
  * Completes the "projects/roster follow-up flag" this file already carried. The
@@ -487,7 +503,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         // the card stayed put, no banner, no explanation.
         setActionErr(
           res.status === 401
-            ? 'Your session has expired — sign in again to move this task.'
+            ? sessionExpired('The task was not moved.')
             : `Could not move "${t.title}" (HTTP ${res.status}).`,
         );
       }
@@ -523,6 +539,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   ): Promise<{ ok: boolean; error?: string }> => {
     try {
       const res = await apiRequest('POST', '/api/tasks/tasks', payload);
+      if (res.status === 401) return { ok: false, error: sessionExpired('The task was not created.') };
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.data?.taskId) {
         // `body.error` is a code as often as it is a sentence, so stringifying it
@@ -562,8 +579,10 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       // Still ok: the task itself persisted. Returning ok:false would keep the
       // modal open and invite a duplicate create.
       return { ok: true };
-    } catch {
-      return { ok: false, error: 'Network error while creating the task.' };
+    } catch (e) {
+      // A viewer's 403 or an unrecorded create (500 AUDIT_WRITE_FAILED) throws
+      // here; calling either a "network error" misstated why nothing was made.
+      return { ok: false, error: refusalText(e, 'Network error while creating the task.') };
     }
   };
 
@@ -1009,10 +1028,12 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         <WorkflowStart
           proj={proj}
           onClose={() => setWf(false)}
-          onInstantiate={(createdCount) => {
+          onInstantiate={(createdCount, warning) => {
             setWf(false);
             setReloadKey((k) => k + 1);
             setView('path');
+            // The dialog is gone, so a partial outcome must outlive it.
+            if (warning) setActionErr(warning);
             onAsk && onAsk('Created ' + createdCount + ' task' + (createdCount === 1 ? '' : 's') + ' from the workflow template.');
           }}
         />
@@ -1026,7 +1047,6 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           onAsk={onAsk}
           onMove={move}
           nameOf={nameOf}
-          onErr={setActionErr}
           onArchived={() => { setSel(null); setReloadKey((k) => k + 1); }}
         />
       )}
@@ -1054,13 +1074,11 @@ interface TaskDetailProps {
   onMove: (t: TaskItem, dir: number) => void;
   /** Resolves a real assignee id to a name; see makeNameOf. */
   nameOf: (id: string | null | undefined) => string;
-  /** Surface an archive failure in the board's banner. */
-  onErr: (msg: string) => void;
   /** Called after a successful soft-delete so the board closes + refetches. */
   onArchived: () => void;
 }
 
-function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr, onArchived }: TaskDetailProps) {
+function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArchived }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = nameOf(t.assignee) || 'Unassigned';
   const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
@@ -1080,7 +1098,12 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
   // reason field: it reads to an auditor as a captured justification when
   // nothing was ever captured.
   const [archiveReason, setArchiveReason] = useState('');
+  // The server enforces the same minimum (archiveTaskSchema), so this gate and
+  // the 400 it would otherwise answer agree.
   const archiveReasonOk = archiveReason.trim().length >= 3;
+  // A refusal, shown IN this panel: the board's banner sits behind the
+  // backdrop, where the user who just clicked Confirm cannot see it.
+  const [archiveErr, setArchiveErr] = useState('');
   // There used to be a 4s timer that silently disarmed the confirm. With a
   // reason textarea in the flow that would wipe a half-written justification
   // mid-sentence, so disarming is now an explicit Cancel button instead.
@@ -1088,21 +1111,24 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
     if (!confirmArchive) { setConfirmArchive(true); return; }
     if (archiving || !archiveReasonOk) return;
     setArchiving(true);
+    setArchiveErr('');
     try {
       const res = await apiRequest('DELETE', '/api/tasks/tasks/' + encodeURIComponent(t.taskId), {
         reason: archiveReason.trim(),
       });
       if (res.ok) { onArchived(); return; }
+      // Only a 401 arrives here (apiRequest throws the rest). It used to fall
+      // through and reset the form, so an expired session looked like nothing.
+      setArchiveErr(res.status === 401
+        ? sessionExpired('The task was not archived.')
+        : `The task was not archived (HTTP ${res.status}).`);
     } catch (e) {
-      // Reading `payload.error` first showed the refusal's enum (FORBIDDEN,
-      // PENDING_STORE) rather than the sentence the server sent with it.
-      // ApiRequestError.message is that sentence, already stripped of enum
-      // tokens and driver text; anything else caught here is a browser-native
-      // throw whose message ("Failed to fetch") is not user copy.
-      onErr(e instanceof ApiRequestError && e.message ? e.message : 'Could not archive the task.');
+      // ApiRequestError.message is the server's sentence (a viewer's 403, an
+      // unrecorded archive), already stripped of enum tokens and driver text.
+      setArchiveErr(refusalText(e, 'Could not archive the task.'));
     }
+    // The confirm and the reason stay put, so the user can retry as they were.
     setArchiving(false);
-    setConfirmArchive(false);
   };
 
   const dialogRef = useDialog(onClose);
@@ -1189,9 +1215,10 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
         {/* Same correction as the board's engineering-reality block: this said
             the change "would not be written to the c2c_ana_actions ledger",
             beside the very buttons that write it. Advance/Move back PATCH
-            /api/tasks/tasks/:taskId, and that handler awaits
-            `auditTaskAction({ command: 'task.transition' })` — with the §11.50
-            manifestation in the payload when the transition was signed. Archive
+            /api/tasks/tasks/:taskId, and that handler writes `task.transition`
+            on the transition's own transaction (auditTaskActionInTx) — with the
+            §11.50 manifestation in the payload when the transition was signed —
+            so a change whose ledger row fails is rolled back, not kept. Archive
             is audited as `task.delete`. Telling a regulated user their action is
             unaudited when it is audited is not a conservative error. */}
         <div className="tb-detail-sec">
@@ -1217,12 +1244,13 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
                 placeholder="e.g. Superseded by TASK-1043 after the content-lock plan changed."
               />
             </div>
+            {archiveErr && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{archiveErr}</span></div>}
           </div>
         )}
         <div className="tb-detail-f">
           <button className="btn ghost" onClick={() => { onAsk && onAsk('Draft a status update for ' + t.taskId + ': ' + t.title); onClose(); }}>{I.sparkles} Ask AnA</button>
           {confirmArchive && (
-            <button className="btn ghost" onClick={() => { setConfirmArchive(false); setArchiveReason(''); }}>Cancel</button>
+            <button className="btn ghost" onClick={() => { setConfirmArchive(false); setArchiveReason(''); setArchiveErr(''); }}>Cancel</button>
           )}
           <button
             className="btn ghost"
@@ -1466,7 +1494,7 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
             </div>
           </div>
           {f.assignee === 'auto' && <div className="tb-auto-note"><span className="ico">{I.sparkles}</span><span>Auto-assign picks the lowest-workload member of this organization for <b>{f.moduleType}</b> — balanced server-side via <code>getOptimalAssignee()</code>.</span></div>}
-          {err && <div className="tb-auto-note" data-warn="true"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
+          {err && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
         </div>
         <div className="tb-detail-f">
           
@@ -1486,7 +1514,25 @@ interface WorkflowStartProps {
   /** Called with the COUNT the server actually created — the tasks themselves
    *  are already persisted, so the board reloads rather than being handed
    *  client-built rows. */
-  onInstantiate: (createdCount: number) => void;
+  /** `warning` names a follow-up step that did not happen (auto-assign), so
+   *  the board can keep saying so after this dialog closes. */
+  onInstantiate: (createdCount: number, warning?: string) => void;
+}
+
+/**
+ * Workload-balanced auto-assign for the tasks a workflow just created. Resolves
+ * to the sentence to show when the assignment did NOT happen, else undefined.
+ */
+async function autoAssignCreated(ids: string[], created: number): Promise<string | undefined> {
+  const notAssigned = `${created} tasks were created but not assigned — assign them on the board.`;
+  try {
+    const res = await apiRequest('POST', '/api/tasks/tasks/auto-assign', { taskIds: ids });
+    if (res.status === 401) return sessionExpired(notAssigned);
+    return res.ok ? undefined : notAssigned;
+  } catch (e) {
+    const why = refusalText(e, 'the service could not be reached.');
+    return `${created} tasks were created, but auto-assignment failed: ${why}`;
+  }
 }
 
 /** GET /api/task-management/templates render contract. */
@@ -1563,6 +1609,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
           adjustDates: true,
         },
       );
+      if (res.status === 401) { setErr(sessionExpired('No tasks were created.')); return; }
       const body = await res.json().catch(() => null);
       /* The route replies { success, data: <created tasks ARRAY>, count, template }.
          This used to read `data.tasks`, which is undefined on an array — so the
@@ -1583,26 +1630,20 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
       /* Auto-assign is a SEPARATE governed step; the instantiate route takes no
          assignee. It runs against the ids that were just created, and a failure
          here is reported without pretending the tasks were not created — they
-         were. */
-      if (autoAssign) {
-        const ids = createdTasks
-          .map(t => (t as { taskId?: string })?.taskId)
-          .filter((x): x is string => typeof x === 'string' && x.length > 0);
-        if (ids.length) {
-          try {
-            await apiRequest('POST', '/api/tasks/tasks/auto-assign', { taskIds: ids });
-          } catch {
-            setErr(created + ' tasks were created, but auto-assignment failed — assign them on the board.');
-          }
-        }
-      }
-      onInstantiate(created);
+         were. The report travels OUT with onInstantiate: it used to be set on
+         this dialog's own error line and then the dialog closed, so it was
+         never seen — and a 401 (returned, not thrown) was not caught at all. */
+      const ids = createdTasks
+        .map(t => (t as { taskId?: string })?.taskId)
+        .filter((x): x is string => typeof x === 'string' && x.length > 0);
+      const warning = autoAssign && ids.length ? await autoAssignCreated(ids, created) : undefined;
+      onInstantiate(created, warning);
     } catch (e) {
       // `e instanceof Error` also matched a browser-native fetch rejection, so a
       // dropped connection surfaced as "Failed to fetch" / "Load failed" in the
       // dialog. Only ApiRequestError carries a message that has been reduced to
       // user copy; everything else falls back to this surface's own sentence.
-      setErr(e instanceof ApiRequestError && e.message ? e.message : 'Could not reach the task service.');
+      setErr(refusalText(e, 'Could not reach the task service.'));
     } finally {
       setBusy(false);
     }
