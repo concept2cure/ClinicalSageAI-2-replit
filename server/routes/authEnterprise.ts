@@ -29,6 +29,8 @@ import {
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { verifyLiveToken } from '../services/token-revocation';
+import { recordAuthEvent } from '../services/audit/auth-event-audit';
+import { runWithTenantScope } from '../db/tenantStore';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { authMiddleware } from '../auth';
 import * as emailOtpService from '../services/emailOtpService';
@@ -281,6 +283,14 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       .limit(1);
 
     if (!userResult.length) {
+      await recordAuthEvent({
+        action: 'user_login',
+        email: normalizedEmail,
+        outcome: 'failure',
+        reason: 'unknown_email',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password',
@@ -292,6 +302,16 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     // Check account lockout
     const lockStatus = await isAccountLocked(user.id);
     if (lockStatus.locked) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: user.defaultOrganizationId,
+        email: user.email,
+        outcome: 'failure',
+        reason: 'account_locked',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(423).json({
         error: 'ACCOUNT_LOCKED',
         message: 'Account is temporarily locked due to too many failed attempts. Try again later.',
@@ -308,6 +328,16 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     if (!passwordValid) {
       // Record failed attempt
       const failResult = await recordFailedLogin(user.id);
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: user.id,
+        tenantId: user.defaultOrganizationId,
+        email: user.email,
+        outcome: 'failure',
+        reason: failResult?.locked ? 'wrong_password_threshold_exceeded' : 'wrong_password',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password',
@@ -345,6 +375,18 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     const mfaMethod = (user as any).mfaMethod || 'email';
     const hasTotpSetup = user.mfaEnabled === true && mfaMethod === 'totp';
     let maskedEmail: string | undefined;
+
+    // Password verified, second factor requested: the same event /api/auth/login records.
+    await recordAuthEvent({
+      action: 'user_login_mfa_challenge',
+      userId: user.id,
+      tenantId: user.defaultOrganizationId,
+      email: user.email,
+      outcome: 'success',
+      reason: hasTotpSetup ? 'mfa_challenge_totp' : 'mfa_challenge_email',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     if (!hasTotpSetup) {
       // Email OTP — generate and send
@@ -409,6 +451,13 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     try {
       decoded = verifyJwtWithRotation(partialToken) as any;
     } catch {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        outcome: 'failure',
+        reason: 'invalid_or_expired_challenge',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'TOKEN_EXPIRED',
         message: 'MFA session expired. Please re-enter your password.',
@@ -416,6 +465,13 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     }
 
     if (!decoded.mfaPending) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        outcome: 'failure',
+        reason: 'invalid_or_expired_challenge',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(400).json({
         error: 'INVALID_TOKEN',
         message: 'Token is not a valid MFA partial token',
@@ -440,6 +496,17 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     }
 
     if (!isValid) {
+      // The organisation comes from the partial token this server signed.
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'invalid_code',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         error: 'INVALID_MFA_CODE',
         message: 'Invalid or expired verification code. Please try again.',
@@ -475,6 +542,18 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       config.jwt.secret,
       { expiresIn: '24h' }
     );
+
+    // The session is created here: the sign-in's success event.
+    await recordAuthEvent({
+      action: 'user_login',
+      userId,
+      tenantId: decoded.organizationId,
+      email: user?.email || decoded.email,
+      outcome: 'success',
+      reason: 'mfa_verified',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     res.json({
       success: true,
@@ -793,25 +872,34 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     // origin in metadata, because that is the direction a reviewer reads it from.
     // Fire-and-forget: an audit-sink outage must not break a legitimate switch,
     // and the failure is logged rather than swallowed.
+    //
+    // Written in the scope of the organisation being entered, with no role. The
+    // request runs in the pre-auth scope (tenant '0'), whose audit_logs policy
+    // refused this row under RLS like every other tenant-named auth event (F-19).
+    // Membership was validated above.
     void import('../services/audit/auditLogger')
       .then(({ logAuditEvent }) =>
-        logAuditEvent({
-          category: 'authorization',
-          severity: 'info',
-          action: 'organization_switch',
-          userId: String(userId),
-          organizationId: String(organizationId),
-          resourceType: 'organization',
-          resourceId: String(organizationId),
-          success: true,
-          metadata: {
-            fromOrganizationId: decoded.organizationId != null ? String(decoded.organizationId) : null,
-            toOrganizationId: String(organizationId),
-            roleInTarget: selectOrgRole,
-          },
-          ipAddress: req.ip,
-          userAgent: req.get('user-agent'),
-        })
+        runWithTenantScope(
+          { tenantId: String(organizationId), role: null, source: 'request', caller: 'auth audit: organization_switch' },
+          () =>
+            logAuditEvent({
+              category: 'authorization',
+              severity: 'info',
+              action: 'organization_switch',
+              userId: String(userId),
+              organizationId: String(organizationId),
+              resourceType: 'organization',
+              resourceId: String(organizationId),
+              success: true,
+              metadata: {
+                fromOrganizationId: decoded.organizationId != null ? String(decoded.organizationId) : null,
+                toOrganizationId: String(organizationId),
+                roleInTarget: selectOrgRole,
+              },
+              ipAddress: req.ip,
+              userAgent: req.get('user-agent'),
+            })
+        )
       )
       .catch(auditError => {
         console.warn(

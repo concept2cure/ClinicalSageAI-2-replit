@@ -459,7 +459,9 @@ describe('the enterprise sign-in reaches the same audit trail', () => {
 
     const rows = (await auditRows('user_logout')).slice(before);
     expect(rows, 'the enterprise logout recorded nothing').toHaveLength(1);
-    const { rows: revoked } = await owner.query('SELECT 1 FROM revoked_tokens WHERE token_hash = encode(sha256($1::bytea), \'hex\') OR token_hash = $2 LIMIT 1', [token, token]).catch(() => ({ rows: [] as unknown[] }));
+    const { rows: revoked } = await owner.query('SELECT 1 FROM revoked_tokens WHERE token_hash = $1', [
+      createHash('sha256').update(token).digest('hex'),
+    ]);
     const session = await request(app).get('/api/auth/session').set('Authorization', `Bearer ${token}`);
     expect(
       session.body?.authenticated === true ? 'still signed in' : 'signed out',
