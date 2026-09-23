@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T08:34:26.907Z",
+  "generatedAt": "2026-09-23T08:41:12.429Z",
   "git": {
-    "sha": "e7b8a5213b5d073dfc737894be1dbbc75a5dbe25",
+    "sha": "6774b16cddcf7b8da18daf15c19d0385f8d241de",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1979,7 +1979,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1062692
+        "bytes": 1063112
       },
       {
         "file": "shared/schema.ts",
@@ -2007,7 +2007,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 202559
+        "bytes": 202599
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2153,7 +2153,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 20530
+        "lines": 20538
       },
       {
         "file": "shared/schema.ts",
@@ -2328,12 +2328,12 @@
         "lines": 2155
       },
       {
-        "file": "server/services/biomarkers/biomarker-knowledge.ts",
-        "lines": 2093
+        "file": "server/services/precedent-engine.ts",
+        "lines": 2097
       },
       {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 2082
+        "file": "server/services/biomarkers/biomarker-knowledge.ts",
+        "lines": 2093
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
@@ -2504,12 +2504,12 @@
         "lines": 1698
       },
       {
-        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
-        "lines": 1678
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 1693
       },
       {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1656
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1678
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
