@@ -326,6 +326,19 @@ for (const t of TEMPLATES) {
       expect(plan.refused[0].reasons.join(' ')).toMatch(/security settings/);
     });
 
+    it('accepts a filled FDA form as FDA issued it in a slot — FDA asks for its forms with their own settings', async () => {
+      const { generateIndForm } = await import('../../../ind-forms/ind-form-fill-service');
+      const form = Buffer.from((await generateIndForm('FDA_3674', { sponsorName: 'C2C', indNumber: '162045' } as never)).pdfBytes);
+      const plan = await planEstarAttachments({
+        templateBytes: bytes,
+        requests: [{ slot: COVER_LETTER, source: { kind: 'vault_document', documentId: 'd1' } }],
+        resolve: stubResolver(form, 'form-fda-3674.pdf'),
+        at: AT,
+      });
+      expect(plan.refused).toEqual([]);
+      expect(plan.attachments).toHaveLength(1);
+    }, 120_000);
+
     it("resolves the User Fee Form from the template's OWN jurisdiction radio, not a guess", async () => {
       // Both templates ship ApplicationType.ATRadioButton100 = "1" (FDA), so the
       // one conditional slot resolves to CH1.09 — the same computation FDA's

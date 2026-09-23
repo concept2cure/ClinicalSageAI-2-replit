@@ -36,8 +36,9 @@
  *      final startxref points at and each /Prev back to the template's own —
  *      carries /Encrypt to FDA's dictionary and FDA's /ID[0], and none lists
  *      FDA's encryption dictionary as an object of its own;
- *   6. every file embedded in it is judged by this rule with no exception (an
- *      attachment is never an FDA form as issued).
+ *   6. every file embedded in it is judged by this same rule for FDA: an FDA
+ *      form attached as FDA issued it passes, any other secured PDF refuses
+ *      the form, and embedding is followed at most MAX_EMBEDDED_DEPTH deep.
  * Anything else with an /Encrypt entry is refused, with the reason.
  *
  * Why step 4 (2026-09-22, adversarial review of this module): steps 1-3 read
@@ -537,11 +538,22 @@ function templateTrailer(bytes: Buffer): { id0: Buffer; startxref: number } | nu
  * Each embedded PDF is judged by this rule with no exception; one that cannot
  * be read cannot be judged, and is refused.
  */
-async function embeddedFilesProblem(files: EmbeddedFile[] | null): Promise<string | null> {
+/** How deep embedded files are followed before the form is refused as unjudgeable. */
+const MAX_EMBEDDED_DEPTH = 3;
+
+async function embeddedFilesProblem(files: EmbeddedFile[] | null, depth: number): Promise<string | null> {
   if (files === null) return 'a reader cannot list the files embedded in it, so their security settings cannot be established';
+  if (files.length > 0 && depth >= MAX_EMBEDDED_DEPTH) {
+    return `its embedded files are nested more than ${MAX_EMBEDDED_DEPTH} deep, so their security settings cannot be established`;
+  }
   for (const f of files) {
     if (f.content === null) return `its embedded file "${f.name}" cannot be read, so its security settings cannot be established`;
-    const inner = isPdfLeaf(f.name, f.content) ? await assessLeafPdfSecurity(f.content, null) : null;
+    // Judged by this same rule for the same destination (FDA), not with no
+    // exception: an FDA form attached as FDA issued it keeps FDA's settings,
+    // which is what FDA asks for. Anything else secured is refused.
+    // 2026-09-23 (W5/D7): it was region null, which refused a filled Form 3674
+    // attached inside an eSTAR.
+    const inner = isPdfLeaf(f.name, f.content) ? await assessLeafPdfSecurity(f.content, 'fda', depth + 1) : null;
     if (inner?.verdict === 'secured') {
       return `its embedded file "${f.name}" is a secured PDF (${inner.reason}); remove the security settings from that file and attach it again`;
     }
@@ -643,6 +655,8 @@ const SPEC_REASON = 'the eCTD PDF specification prohibits security settings';
 export async function assessLeafPdfSecurity(
   bytes: Uint8Array,
   region: string | null,
+  /** Embedding depth, for files embedded in an FDA form (internal). */
+  depth = 0,
 ): Promise<LeafPdfSecurity> {
   const offsets = pdfNameOffsets(bytes, 'Encrypt');
   if (offsets.length === 0) return { verdict: 'unsecured' };
@@ -704,7 +718,7 @@ export async function assessLeafPdfSecurity(
     // conformant reader starts from is read from the bytes; and a file embedded
     // in the form is enciphered with the form's key, so it is judged on its own.
     const sections = appendedSectionsProblem(view(bytes), t.length, t);
-    const problem = sections === null ? await embeddedFilesProblem(reader.attachments) : `${sections}; submit the form with FDA's own security settings`;
+    const problem = sections === null ? await embeddedFilesProblem(reader.attachments, depth) : `${sections}; submit the form with FDA's own security settings`;
     if (problem !== null) return { verdict: 'secured', reason: `it is Form ${t.formId} but ${problem}` };
     return { verdict: 'fda-form-as-issued', formId: t.formId, edition: t.edition };
   }

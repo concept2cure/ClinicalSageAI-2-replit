@@ -111,8 +111,8 @@ describe('FDA form whose appended cross-reference section a conformant reader fo
  * 2026-09-23 (W5/D7, round-2 review). A file embedded in a filled eSTAR is
  * enciphered with the eSTAR's own key, so its own /Encrypt is not in the raw
  * bytes, and the eSTAR passed as "an FDA form as issued" with a secured PDF
- * inside it. An attachment is never an FDA form as issued: it is judged by the
- * rule with no exception.
+ * inside it. An attachment is judged by the same rule for FDA: a secured PDF
+ * is refused, and an FDA form attached as FDA issued it keeps FDA's settings.
  */
 describe('FDA form carrying an embedded file', () => {
   it('is refused when an embedded PDF is itself secured, and names the attachment', async () => {
@@ -121,6 +121,13 @@ describe('FDA form carrying an embedded file', () => {
     const v = await assessLeafPdfSecurity(filled!, 'fda');
     expect(v.verdict).toBe('secured');
     if (v.verdict === 'secured') expect(v.reason).toMatch(/biocompatibility-report\.pdf/);
+  }, 120_000);
+
+  it('accepts an eSTAR carrying a filled FDA form as FDA issued it — FDA asks for its forms with their own settings', async () => {
+    const form = Buffer.from((await generateIndForm('FDA_3674', { sponsorName: 'C2C', indNumber: '162045' } as never)).pdfBytes);
+    const filled = await estarWithAttachment(form, 'form-fda-3674.pdf');
+    expect(filled, 'a verified vendored eSTAR template').not.toBeNull();
+    expect((await assessLeafPdfSecurity(filled!, 'fda')).verdict).toBe('fda-form-as-issued');
   }, 120_000);
 
   it('still accepts an eSTAR whose embedded PDF has no security settings', async () => {

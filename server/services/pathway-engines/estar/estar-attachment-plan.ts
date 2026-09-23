@@ -233,12 +233,14 @@ export function manifestSeed(current: string | null): string {
 }
 
 /**
- * The security refusal, by the one leaf rule (ectd/leaf-pdf-security) with no
- * exception: an attachment is never an FDA form as issued. Empty when the file
- * is not a PDF or carries no security settings.
+ * The security refusal, by the one leaf rule (ectd/leaf-pdf-security) for the
+ * eSTAR's destination, FDA: an FDA form attached as FDA issued it keeps FDA's
+ * security settings, as FDA asks; any other secured PDF is refused. Empty when
+ * the file is not a PDF or carries no security settings. (2026-09-23, W5/D7:
+ * this judged with no exception, which refused a filled FDA form.)
  */
 async function securityRefusals(fileName: string, bytes: Buffer): Promise<string[]> {
-  const security = isPdfLeaf(fileName, bytes) ? await assessLeafPdfSecurity(bytes, null) : null;
+  const security = isPdfLeaf(fileName, bytes) ? await assessLeafPdfSecurity(bytes, 'fda') : null;
   return security?.verdict === 'secured'
     ? [
         `"${fileName}" is a PDF with security settings (${security.reason}). Embedded in the eSTAR it ` +
