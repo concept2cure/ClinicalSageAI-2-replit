@@ -565,12 +565,25 @@ jobs:
           # Without it those flows refuse every request rather than put the
           # request's Host header in front of a live token (password-reset
           # poisoning, D6). The server boots; no account could be recovered.
+          # A plain value is checked here, as the server checks it (trimmed, an
+          # https URL). A value from `secrets` cannot be read here; its name is
+          # enough, and the server refuses reset and invitation requests if it
+          # is not an https origin.
           APP_URL_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
             .containerDefinitions[] | select(.name == $c)
             | (.environment // []) | map(select(.name == "APP_URL")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json | tr -d '[:space:]')
+          APP_URL_SECRET=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.secrets // []) | map(select(.name == "APP_URL")) | length
           ' /tmp/api-td-preflight.json)
-          if [[ ! "$APP_URL_VALUE" =~ ^https://[^/]+ ]]; then
-            echo "::error::APP_URL must be the deployment's public https origin in the task definition (password-reset and invitation links are built on it, never on the Host header); got '${APP_URL_VALUE:-<unset>}'."
+          if [[ -n "$APP_URL_VALUE" ]]; then
+            if [[ ! "${APP_URL_VALUE,,}" =~ ^https://[^/]+ ]]; then
+              echo "::error::APP_URL must be the deployment's public https origin (password-reset and invitation links are built on it, never on the Host header); got '$APP_URL_VALUE'."
+              FAIL=1
+            fi
+          elif [[ "$APP_URL_SECRET" == "0" ]]; then
+            echo "::error::APP_URL is missing from the task definition (environment or secrets). Password-reset and invitation links are built on it in production, never on the Host header."
             FAIL=1
           fi
           [[ "$FAIL" -eq 0 ]] || exit 1
