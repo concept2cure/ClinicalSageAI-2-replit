@@ -16,7 +16,7 @@ import { db } from '../db';
 import { createScopedLogger } from '../utils/logger.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { requireAccessTokenReason } from '../middleware/tokenType';
-import auditService from '../services/auditService';
+import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import {
   PASSWORD_RESET_TTL_MS,
   hashPasswordSetupToken,
@@ -30,44 +30,6 @@ import {
 // scrubbed even if they accidentally appear in a context object.
 const logger = createScopedLogger('auth');
 
-/**
- * Best-effort audit-log call for authentication events. 21 CFR Part 11
- * §11.10(e) requires an independent, tamper-evident audit trail for
- * every login attempt, logout, and credential-changing event. We swallow
- * errors here so a transient audit-pipeline failure never breaks the
- * auth path itself; auditService logs its own failures internally.
- */
-async function auditAuthEvent(entry: {
-  action: string;
-  userId?: number | string | null;
-  tenantId?: number | string | null;
-  email?: string;
-  outcome: 'success' | 'failure';
-  reason?: string;
-  ipAddress?: string;
-  userAgent?: string;
-}): Promise<void> {
-  const authAudit = await auditService.logAction({
-    tenantId: entry.tenantId ?? undefined,
-    userId: entry.userId ?? undefined,
-    action: entry.action,
-    resourceType: 'user',
-    resourceId: entry.userId?.toString() ?? entry.email ?? 'unknown',
-    ipAddress: entry.ipAddress,
-    userAgent: entry.userAgent,
-    details: {
-      outcome: entry.outcome,
-      reason: entry.reason,
-      email: entry.email,
-    },
-  });
-  if (!authAudit.persisted) {
-    logger.warn('Audit log write failed (non-fatal)', {
-      err: authAudit.error ?? 'no durable store accepted the row',
-      action: entry.action,
-    });
-  }
-}
 import { sql } from 'drizzle-orm';
 import { eq, and } from 'drizzle-orm';
 import {
@@ -395,7 +357,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       // credential-stuffing attempts. We deliberately store the email
       // (not just the hash) on the audit row — regulators want to see
       // the literal attacker-supplied value.
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         email: normalizedEmail,
         outcome: 'failure',
@@ -414,7 +376,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // ── Account Lockout Check ─────────────────────────────────────────────
     const lockStatus = await isAccountLocked(userData.id);
     if (lockStatus.locked) {
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
         tenantId: userData.defaultOrganizationId,
@@ -446,7 +408,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     if (!isPasswordValid) {
       // Record failed attempt and potentially lock
       const failResult = await recordFailedLogin(userData.id);
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
         tenantId: userData.defaultOrganizationId,
@@ -465,10 +427,10 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     // Successful password check — reset lockout counter
     await resetFailedLogins(userData.id);
-    // NOTE: the final "success" audit fires below after JWT issuance,
-    // so that MFA-required logins are recorded as challenge-issued, not
-    // session-created. See the audit call near `res.json({ success:
-    // true, accessToken, ... })`.
+    // NOTE: the "success" audit fires where the session is created: on the
+    // development path below, or on /mfa/verify for every other sign-in. This
+    // route records the MFA challenge it issues, so a sign-in is recorded as
+    // challenge-issued here and session-created there.
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
     let organizationId = defaultOrganizationId;
@@ -557,7 +519,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       // Audit: successful login (dev path, MFA bypassed). The bypass
       // itself is recorded as part of `reason` so an inspector can
       // distinguish dev-mode sessions from production logins.
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
         tenantId: organizationId,
@@ -603,7 +565,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // Audit: password verified, MFA challenge issued. Recorded as a
     // separate event from the eventual session creation (which happens
     // on /mfa/verify). Inspectors can correlate the two via userId.
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_login_mfa_challenge',
       userId: userData.id,
       tenantId: organizationId,
@@ -1034,10 +996,13 @@ router.post('/logout', async (req: Request, res: Response) => {
   try {
     const { revokeToken } = await import('../services/token-revocation.js');
 
-    // Extract token from Authorization header and revoke it. We also
-    // try to decode the token (without verifying — it might be
-    // expired) so we can attribute the logout audit event to the
-    // user/tenant whose session ended.
+    // Extract token from Authorization header and revoke it. The logout audit
+    // event is attributed to the user and tenant whose session ended, read from
+    // the token only when the server signed it. Expiry is ignored, since a logout
+    // from an expired session still means something to an inspector. Claims
+    // from a token that does not verify are not attributed: the audit row is
+    // written in the scope of the tenant it names (recordAuthEvent), so a
+    // forged token would otherwise write into any organisation's audit chain.
     const authHeader = req.headers.authorization;
     let auditUserId: string | number | undefined;
     let auditOrgId: string | number | undefined;
@@ -1046,12 +1011,12 @@ router.post('/logout', async (req: Request, res: Response) => {
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
       try {
-        const decoded = jwt.decode(token) as Record<string, unknown> | null;
-        auditUserId = (decoded?.userId as string) ?? (decoded?.sub as string);
-        auditOrgId = decoded?.organizationId as string | undefined;
-        auditEmail = decoded?.email as string | undefined;
+        const verified = verifyJwtWithRotation<Record<string, unknown>>(token, { ignoreExpiration: true });
+        auditUserId = (verified?.userId as string) ?? (verified?.sub as string);
+        auditOrgId = verified?.organizationId as string | undefined;
+        auditEmail = verified?.email as string | undefined;
       } catch {
-        /* decode failed — log anonymous logout */
+        /* not a token this server signed: record an anonymous logout */
       }
       await revokeToken(token);
     }
@@ -1065,7 +1030,7 @@ router.post('/logout', async (req: Request, res: Response) => {
     // token was valid — a logout request from an expired session is
     // still a meaningful event for inspectors (e.g. shows the user
     // explicitly ended the session vs. just walking away).
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_logout',
       userId: auditUserId,
       tenantId: auditOrgId,
@@ -1354,6 +1319,13 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     // Verify the challenge token
     const challenge = mfaService.verifyMfaChallengeToken(challengeId);
     if (!challenge) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        outcome: 'failure',
+        reason: 'invalid_or_expired_challenge',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         success: false,
         error: {
@@ -1379,6 +1351,16 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     }
 
     if (!isValid) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        userId,
+        tenantId: challenge.organizationId,
+        email: challenge.email,
+        outcome: 'failure',
+        reason: 'invalid_code',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_004', message: 'Invalid or expired verification code' },
@@ -1439,6 +1421,19 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         .limit(1);
       mfaOrgName = org?.name || 'Organization';
     }
+
+    // Audit: the session is created here, not at /login, which recorded only the
+    // challenge. Every sign-in outside development ends on this route.
+    await recordAuthEvent({
+      action: 'user_login',
+      userId,
+      tenantId: challenge.organizationId,
+      email: userData.email,
+      outcome: 'success',
+      reason: 'mfa_verified',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     res.json({
       success: true,
@@ -1767,7 +1762,7 @@ async function handleForgotPassword(req: Request, res: Response) {
          that does not exist if only successes are logged. The RESPONSE is
          unchanged, so this leaks nothing: enumeration protection is a property
          of what we return, not of what we record. */
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_password_reset_requested',
         email: String(email).toLowerCase(),
         outcome: 'failure',
@@ -1801,7 +1796,7 @@ async function handleForgotPassword(req: Request, res: Response) {
        wrote no audit row of any kind, only a logger line on failure. The claim
        is the right one to make about a credential-changing event, so it is made
        true here rather than deleted from the email. */
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_password_reset_requested',
       userId: user[0].id,
       email: user[0].email,
@@ -1874,7 +1869,7 @@ async function handleResetPassword(req: Request, res: Response) {
          else in this flow would preserve that. No email is known here — the
          token is all the caller supplied — so the row is attributed to the
          token attempt rather than to a user we cannot identify. */
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_password_reset_failed',
         outcome: 'failure',
         reason: 'reset token matched no account',
@@ -1897,7 +1892,7 @@ async function handleResetPassword(req: Request, res: Response) {
         .set({ resetToken: null, resetTokenExpiresAt: null })
         .where(eq(users.id, userData.id));
 
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_password_reset_failed',
         userId: userData.id,
         outcome: 'failure',
@@ -1935,7 +1930,7 @@ async function handleResetPassword(req: Request, res: Response) {
 
        The logger line stays: operators read logs, inspectors read audit
        trails, and they are not substitutes for one another. */
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_password_changed',
       userId: userData.id,
       outcome: 'success',

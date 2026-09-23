@@ -68,6 +68,25 @@ const A_DRAFTER = 'client/src/concept2cure/mdx/components/AnaDrafter.tsx';
 const DOC_JOURNEY = 'client/src/concept2cure/v2/surfaces/DocJourney.tsx';
 const PROTOCOL_DEV = 'client/src/concept2cure/v2/surfaces/ProtocolDev.tsx';
 const REGISTER_FORMS = 'client/src/concept2cure/v2/surfaces/ProtocolRegisterForms.tsx';
+/* ProtocolDev.tsx was split on 2026-09-21 when its registers became writable
+   (see that file's header): the loaded document and the register-form mount are
+   ProtocolDevWorkspace.tsx, the schedule-of-assessments grid ProtocolDevSoa.tsx,
+   and the other panes their ProtocolDev*.tsx siblings. The contract follows the
+   code there: positive assertions read the file that now holds the behaviour,
+   and every "must not" scans the whole family, not just the entry file. */
+const PROTOCOL_DEV_WORKSPACE = 'client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx';
+const PROTOCOL_DEV_SOA = 'client/src/concept2cure/v2/surfaces/ProtocolDevSoa.tsx';
+
+/** ProtocolDev.tsx and every ProtocolDev*.ts(x) sibling, repo-relative. */
+function protocolDevFamily(): string[] {
+  const dir = path.dirname(PROTOCOL_DEV);
+  const files = fs.readdirSync(path.join(REPO_ROOT, dir))
+    .filter((n) => /^ProtocolDev.*\.tsx?$/.test(n) && !/\.test\.tsx?$/.test(n))
+    .map((n) => dir + '/' + n);
+  // An anchor, so a rename cannot shrink the scan to nothing unnoticed.
+  for (const must of [PROTOCOL_DEV, PROTOCOL_DEV_WORKSPACE, PROTOCOL_DEV_SOA]) expect(files).toContain(must);
+  return files;
+}
 
 describe('no surface mints its own audit identifier', () => {
   it('audit ids come from the server or not at all', () => {
@@ -135,20 +154,35 @@ describe('ProtocolDev does not present unpersisted actions as filed', () => {
      signature ceremony returns. */
 
   it('its governed acts reach the server — the no-op dialog and its disclosure are gone together', () => {
-    const src = code(PROTOCOL_DEV);
     // The old honest disclosure must not reappear (it would now be a false
-    // claim of NON-persistence), and neither may the dialog it excused.
-    expect(src).not.toMatch(/not yet connected to the record/i);
-    expect(src).not.toMatch(/GovernedActionDialog/);
+    // claim of NON-persistence), and neither may the dialog it excused —
+    // anywhere in the surface.
+    for (const f of protocolDevFamily()) {
+      const src = code(f);
+      expect(src, f).not.toMatch(/not yet connected to the record/i);
+      expect(src, f).not.toMatch(/GovernedActionDialog/);
+    }
+    // The surface renders the workspace that owns the register-form mount.
+    expect(code(PROTOCOL_DEV)).toMatch(/import \{ ProtocolWorkspaceDoc \} from '\.\/ProtocolDevWorkspace'/);
+    expect(code(PROTOCOL_DEV)).toMatch(/<ProtocolWorkspaceDoc\b/);
     // The one real path: the governed register form (POST + server-enforced
-    // reason). Its success copy lives in onDone — which fires only after the
-    // 201 — and the surface then RE-READS the governed row (onChanged) rather
-    // than appending locally.
+    // reason). Its success copy is produced in onDone — which fires only after
+    // the 201 — and the surface then RE-READS the governed row (onChanged)
+    // rather than appending locally.
+    const src = code(PROTOCOL_DEV_WORKSPACE);
     expect(src).toMatch(/<ProtocolRegisterForm/);
     const mount = src.slice(src.indexOf('<ProtocolRegisterForm'), src.indexOf('<C2CToast'));
     expect(mount).toContain('onDone=');
-    expect(mount).toContain('was written to the governed register');
+    expect(mount).toContain('registerDoneMessage(');
     expect(mount).toContain('onChanged?.()');
+    // The copy moved out of the JSX into registerDoneMessage. It is said there
+    // and nowhere else, and registerDoneMessage is called from that onDone
+    // and nowhere else — so it still cannot be shown on any other path.
+    const copyFn = src.slice(src.indexOf('function registerDoneMessage'));
+    expect(src.indexOf('function registerDoneMessage')).toBeGreaterThan(-1);
+    expect(copyFn).toContain('was written to the governed register');
+    expect(src.split('was written to the governed register').length - 1).toBe(1);
+    expect(src.split('registerDoneMessage(').length - 1).toBe(2); // the definition + the onDone call
   });
 
   it('the write path fails closed: reason floor, no success without the server', () => {
@@ -166,22 +200,31 @@ describe('ProtocolDev does not present unpersisted actions as filed', () => {
   });
 
   it('offers no client-side e-signature — governed acts are audited server-side, not "signed" in the browser', () => {
-    const src = code(PROTOCOL_DEV);
     // The deleted dialog's ceremony (esign flag, password re-auth, a claimed
     // Part 11 signature with nothing behind it) must not come back in either
-    // polarity.
-    expect(src).not.toMatch(/\besign\s*[:=]/);
-    expect(src).not.toMatch(/type="password"/);
-    expect(src).not.toMatch(/Part 11 e-signature/);
+    // polarity, in any file of the surface.
+    for (const f of protocolDevFamily()) {
+      const src = code(f);
+      expect(src, f).not.toMatch(/\besign\s*[:=]/);
+      expect(src, f).not.toMatch(/type="password"/);
+      expect(src, f).not.toMatch(/Part 11 e-signature/);
+    }
     // What IS offered instead: the SoA grid stays read-only until a governed
     // reason of at least 8 characters is given, and every tick posts to the
-    // audited SoA router.
-    expect(src).toMatch(/reason\.trim\(\)\.length >= 8/);
-    expect(src).toContain("'/api/protocol-soa/cells'");
-    expect(src).toContain("'/api/protocol-soa/cells/clear'");
+    // audited SoA router. (The grid lives in ProtocolDevSoa.tsx since the
+    // split; the literal 8 became MIN_REASON there.)
+    const soa = code(PROTOCOL_DEV_SOA);
+    expect(soa).toMatch(/const MIN_REASON = 8;/);
+    expect(soa).toMatch(/const editable = Boolean\(canWrite\) && reason\.trim\(\)\.length >= MIN_REASON;/);
+    expect(soa).toMatch(/if \(!editable \|\| saving\) return;/);
+    expect(soa).toContain("'/api/protocol-soa/cells'");
+    expect(soa).toContain("'/api/protocol-soa/cells/clear'");
+    // The workspace mounts that grid, so the gate above is the one users meet.
+    expect(code(PROTOCOL_DEV_WORKSPACE)).toMatch(/import \{ SoaTab \} from '\.\/ProtocolDevSoa'/);
+    expect(code(PROTOCOL_DEV_WORKSPACE)).toMatch(/<SoaTab\b/);
   });
 
   it('does not claim the document body autosaves', () => {
-    expect(code(PROTOCOL_DEV)).not.toMatch(/Autosaved/);
+    for (const f of protocolDevFamily()) expect(code(f), f).not.toMatch(/Autosaved/);
   });
 });

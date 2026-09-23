@@ -34,7 +34,7 @@ import {
   recordApprovalDecision,
 } from '../../services/ana/run-control.js';
 import { resolveOrgId } from '../../types/auth-request.js';
-import { getPool } from '../../db.js';
+import { requestPgClient } from '../../db/requestDb';
 import { handleSealVerifiedVersion } from './seal-verified.js';
 import auditService from '../../services/auditService.js';
 import { createScopedLogger } from '../../utils/logger.js';
@@ -93,7 +93,7 @@ async function resolveAuthorisedAction(
   }
 
   const runOrgId = resolveOrgId(req);
-  const pendingForRun = runOrgId === null ? null : await readPendingApproval(getPool(), runId, runOrgId);
+  const pendingForRun = runOrgId === null ? null : await readPendingApproval(requestPgClient(req), runId, runOrgId);
   if (!pendingForRun) {
     return {
       error: 'That run is not waiting on an approval',
@@ -130,6 +130,7 @@ async function resolveAuthorisedAction(
  * is the worse of the two lies.
  */
 async function releaseWaitingRun(
+  req: Request,
   runId: string,
   toolUseId: string,
   userId: number,
@@ -137,7 +138,7 @@ async function releaseWaitingRun(
   outcome: { result?: unknown; error?: string },
 ): Promise<void> {
   try {
-    await recordApprovalDecision(getPool(), runId, {
+    await recordApprovalDecision(requestPgClient(req), runId, {
       toolUseId,
       decided: outcome.error ? 'denied' : 'approved',
       decidedAt: new Date().toISOString(),
@@ -527,7 +528,7 @@ export function mountUtilityRoutes(router: Router): void {
       // what a person's decision produced, and there is still one execution,
       // one signature and one audit row.
       if (pendingForRun) {
-        await releaseWaitingRun(runId, toolUseId, userId, reasonForChange, { result });
+        await releaseWaitingRun(req, runId, toolUseId, userId, reasonForChange, { result });
       }
       return sendSuccess(res, result);
     } catch (error: any) {
@@ -535,7 +536,7 @@ export function mountUtilityRoutes(router: Router): void {
       // at a gate nobody will ever answer again until the pause ceiling expires
       // — the person signed, something broke, and AnA is left silent.
       if (pendingForRun) {
-        await releaseWaitingRun(runId, toolUseId, userId, reasonForChange, {
+        await releaseWaitingRun(req, runId, toolUseId, userId, reasonForChange, {
           error: error?.message || 'Governed action failed',
         });
       }
