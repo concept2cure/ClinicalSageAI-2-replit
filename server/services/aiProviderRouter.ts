@@ -96,7 +96,8 @@ export interface AIRequest {
 
 export interface AIResponse {
   content: string;
-  provider: AIProvider;
+  /** The provider and model that actually served the request (from the gateway). */
+  provider: AIProvider | GatewayProviderName;
   model: string;
   usage: {
     inputTokens: number;
@@ -107,6 +108,13 @@ export interface AIResponse {
   latencyMs: number;
   requestId: string;
   cached: boolean;
+}
+
+/** One execution's output, and the provider and model that produced it. */
+interface ExecutionResult {
+  content: string;
+  usage: { inputTokens: number; outputTokens: number };
+  served: { provider: AIResponse['provider']; model: string };
 }
 
 export interface ProviderHealth {
@@ -121,7 +129,7 @@ export interface ProviderHealth {
 export interface AuditLogEntry {
   id: string;
   timestamp: Date;
-  provider: AIProvider;
+  provider: AIProvider | GatewayProviderName;
   model: string;
   taskType: TaskType;
   inputTokens: number;
@@ -464,7 +472,7 @@ export class AIProviderRouter {
   private async executeViaGateway(
     request: AIRequest,
     modelConfig: ModelConfig
-  ): Promise<{ content: string; usage: { inputTokens: number; outputTokens: number } }> {
+  ): Promise<ExecutionResult> {
     const response = await this.gateway.route({
       taskType: mapToGatewayTaskType(request.taskType),
       messages: request.messages.map(m => ({ role: m.role, content: m.content })),
@@ -485,6 +493,8 @@ export class AIProviderRouter {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
       },
+      // The gateway chooses the model for the provider; this is what served.
+      served: { provider: response.provider, model: response.model },
     };
   }
 
@@ -576,7 +586,7 @@ export class AIProviderRouter {
       .digest('hex')
       .slice(0, 16);
 
-    let result: { content: string; usage: { inputTokens: number; outputTokens: number } };
+    let result: ExecutionResult;
     let liteLLMResult: AIResponse | null = null;
     let success = true;
     let errorMessage: string | undefined;
@@ -607,6 +617,7 @@ export class AIProviderRouter {
             inputTokens: liteLLMResult.usage.inputTokens,
             outputTokens: liteLLMResult.usage.outputTokens,
           },
+          served: { provider: liteLLMResult.provider, model: liteLLMResult.model },
         };
       } else {
         result = await this.executeViaGateway(request, modelConfig);
@@ -647,6 +658,7 @@ export class AIProviderRouter {
                 inputTokens: liteLLMResult.usage.inputTokens,
                 outputTokens: liteLLMResult.usage.outputTokens,
               },
+              served: { provider: liteLLMResult.provider, model: liteLLMResult.model },
             };
           } else {
             result = await this.executeViaGateway(request, fallbackConfig);
@@ -673,12 +685,19 @@ export class AIProviderRouter {
       (result.usage.inputTokens / 1000) * executedModelConfig.costPer1kInput +
         (result.usage.outputTokens / 1000) * executedModelConfig.costPer1kOutput;
 
+    // Record what served, not the router's logical config: the gateway picks
+    // the live model for the chosen provider (and may fall back within it), so
+    // MODEL_CONFIGS names like claude-3-5-sonnet-20241022 were never the model
+    // that answered. Until 2026-09-23 those names went into
+    // ai_provider_audit_log, Langfuse and the response.
+    const served = result.served;
+
     // Log audit entry
     await this.logAudit({
       id: requestId,
       timestamp: new Date(),
-      provider: executedModelConfig.provider,
-      model: executedModelConfig.model,
+      provider: served.provider,
+      model: served.model,
       taskType: request.taskType,
       inputTokens: result.usage.inputTokens,
       outputTokens: result.usage.outputTokens,
@@ -696,8 +715,8 @@ export class AIProviderRouter {
       name: success ? 'ai_request_success' : 'ai_request_failure',
       traceId: requestId,
       metadata: {
-        provider: executedModelConfig.provider,
-        model: executedModelConfig.model,
+        provider: served.provider,
+        model: served.model,
         taskType: request.taskType,
         organizationId: request.organizationId,
         userId: request.userId,
@@ -715,8 +734,8 @@ export class AIProviderRouter {
 
     return {
       content: result.content,
-      provider: executedModelConfig.provider,
-      model: executedModelConfig.model,
+      provider: served.provider,
+      model: served.model,
       usage: {
         inputTokens: result.usage.inputTokens,
         outputTokens: result.usage.outputTokens,

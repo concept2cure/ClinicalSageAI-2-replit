@@ -158,7 +158,12 @@ router.post(
       // Build the summarization prompt
       const summaryPrompt = buildWorkingMemoryPrompt(messages, previousSummary);
 
-      // Use OpenAI to generate the structured summary
+      // Generate the structured summary. A summary that was not produced is not
+      // stored: working memory is chained into the next summary and
+      // consolidated into project memory, so until 2026-09-23 the placeholder
+      // written on failure ("Conversation with N messages", or "Unable to parse
+      // summary" with every list empty) became the conversation's remembered
+      // state as though a model had written it.
       let structured: any;
       try {
         const aiResult = await ai.chat({
@@ -175,35 +180,21 @@ router.post(
           temperature: 0.3,
         });
 
-        const responseText = aiResult.content || '{}';
         // Extract JSON from response (handle markdown code blocks)
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        structured = jsonMatch
-          ? JSON.parse(jsonMatch[0])
-          : {
-              objective: 'Unable to parse summary',
-              lockedFacts: [],
-              decisions: [],
-              openQuestions: [],
-              nextActions: [],
-              createdArtifacts: [],
-              exclusions: [],
-            };
+        const jsonMatch = (aiResult.content || '').match(/\{[\s\S]*\}/);
+        structured = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+        if (!structured || typeof structured.objective !== 'string') {
+          throw new Error('the summary reply was unreadable');
+        }
       } catch (aiError: any) {
         logger.error(`AI summarization failed: ${aiError.message}`);
-        // Fallback: generate a basic summary without AI
-        structured = {
-          objective: `Conversation with ${messages.length} messages`,
-          lockedFacts: [],
-          decisions: [],
-          openQuestions: messages
-            .filter((m: any) => m.role === 'user' && m.content?.trim().endsWith('?'))
-            .slice(-5)
-            .map((m: any) => m.content.trim().slice(0, 200)),
-          nextActions: [],
-          createdArtifacts: [],
-          exclusions: [],
-        };
+        return sendError(
+          res,
+          503,
+          'The summary could not be generated, so nothing was saved. The previous summary, if any, is unchanged.',
+          undefined,
+          'NO_SUMMARY_PRODUCED'
+        );
       }
 
       // Format as readable summary

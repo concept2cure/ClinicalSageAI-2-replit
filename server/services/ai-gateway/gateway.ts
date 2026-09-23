@@ -854,6 +854,26 @@ function toOpenAIChatMessages(
   return fillEmptyBodyMessages(messages.map(m => ({ role: m.role, content: m.content })));
 }
 
+/** Providers whose executor forwards contentBlocks — the Anthropic family. */
+const CONTENT_BLOCK_PROVIDERS: ReadonlySet<ProviderName> = new Set(['anthropic', 'bedrock', 'vertex']);
+
+/**
+ * Refuse to send an image or document to a provider that would never see it.
+ *
+ * The OpenAI-compatible and Moonshot executors send message text only
+ * (toOpenAIChatMessages). Until 2026-09-23 a vision request that reached one —
+ * a pinned Sonnet that was down, then the fallback ladder — was answered from
+ * the instructions alone, and the reply came back as an extraction of a scan
+ * the model had not been given. Terminal (GatewayPolicyError): no rung that
+ * drops the image can answer this request, so none is tried.
+ */
+function assertContentBlocksCarried(modelConfig: ModelConfig, request: GatewayRequest): void {
+  if (CONTENT_BLOCK_PROVIDERS.has(modelConfig.provider)) return;
+  const carriesMedia = request.messages.some(m => m.contentBlocks?.some(b => b.type !== 'text'));
+  if (!carriesMedia) return;
+  throw new MediaNotCarriedError(modelConfig);
+}
+
 export class AIGateway {
   private config: GatewayConfig;
   private models: ModelConfig[];
@@ -1339,6 +1359,7 @@ export class AIGateway {
     requestId: string,
     startTime: number
   ): Promise<GatewayResponse> {
+    assertContentBlocksCarried(modelConfig, request);
     await this.assertSensitiveDispatchAllowed(modelConfig, request, requestId, startTime);
     // Bound concurrent in-flight outbound calls. This is the single chokepoint
     // for every provider invocation (primary + fallback paths), so wrapping it
@@ -3343,6 +3364,21 @@ export class ModelNotApprovedError extends GatewayPolicyError {
         `for it is available. Withheld: ${withheldModelIds.join(', ') || 'none'} ` +
         `(${reason === 'explicit' ? 'named by the caller' : 'the only models remaining'}). ` +
         'See approvedForHighRisk in server/services/ai-governance/approved-models.ts.',
+    );
+  }
+}
+
+/**
+ * The request carries an image or document, and the model it reached receives
+ * message text only. Terminal like every GatewayPolicyError: answering without
+ * the file would be answering about something the model never saw.
+ */
+export class MediaNotCarriedError extends GatewayPolicyError {
+  readonly code = 'MEDIA_NOT_CARRIED' as const;
+  constructor(readonly modelConfig: Pick<ModelConfig, 'id' | 'provider'>) {
+    super(
+      `MEDIA_NOT_CARRIED: ${modelConfig.id} (${modelConfig.provider}) receives message text only, and this ` +
+        'request carries images or documents it would not see, so it was not sent.',
     );
   }
 }

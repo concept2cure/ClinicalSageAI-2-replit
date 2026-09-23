@@ -158,6 +158,87 @@ through `server/services/multi-agent-council.ts`.
 
 Evidence: `after/council.txt` (38 tests) and mutations C1–C9 (all caught).
 
+## 8. The sweep of explicit pins to unapproved models
+
+The owner list below originally said "39 explicit pins to unapproved models
+remain". This session classified them instead of leaving them as a count. A
+grep found 40 lines in 16 files. The regulatory digital twin (Rule 2) and doc
+comments were excluded, leaving 14 call sites. One agent classified each site,
+and a second agent tried to refute that classification (28 agents in all). The
+table is `after/pin-sweep-classification.md`. Four sites are governed and
+reachable, one is governed but cannot run, and nine are not governed. Each fix
+below was mutation-tested (`after/mutations-batch2.txt`).
+
+- **Citation verdicts (Submission Readiness):**
+  - Half of each sentence's blended relevance score comes from an LLM judge, and
+    that score decides supported vs gap and `filing_blocked`. The judge was
+    routed as `structured_output`, with gpt-4o first. It now runs in
+    governed-verdict mode:
+    - It is routed as `regulatory_review`.
+    - An unreadable or partial score throws instead of defaulting to 0.5.
+    - A failed rerank fails the sentence instead of silently scoring it on
+      embeddings alone, on the wrong scale.
+  - A sentence whose retrieval failed is still a gap, but it is flagged
+    `RETRIEVAL_FAILED` and counted in the run, so it is not read as a finding
+    about the content.
+  - `aiProviderRouter` now records the model the gateway served. Until now it
+    wrote its own config names (`claude-3-5-sonnet-20241022`) into
+    `ai_provider_audit_log`, Langfuse and the response.
+- **Estimand method recommendation:** it is routed as `regulatory_review` and
+  its shape is checked before storing. It is labelled `source: model` with the
+  serving model, or `deterministic`. The deterministic fallback no longer
+  asserts "FDA, EMA, and PMDA have accepted this approach in recent approvals"
+  for every estimand.
+- **CMC blueprint and CMC playbook AI tools:**
+  - Both are now routed as `document_drafting`. They pinned `gpt-4` and
+    `gpt-5`, which match no configured model, so a `general` request reached
+    whatever the unfiltered fallback ladder did.
+  - A failed draft is now a 503 `NO_DRAFT_PRODUCED`. It used to be HTTP 200
+    with placeholder content stored as `completed`.
+  - The blueprint is drafted before its project row, so a failure leaves no
+    orphan row.
+- **`/api/claude/quick`** wrote the literal `claude-sonnet-4-6` into every
+  HMAC-sealed audit row. It now records the model that served.
+- **Document data center uploads** recorded `model: 'gpt-4o'` whatever tagged
+  them. The keyword fallback was stored under that label with an invented
+  confidence of 0.6, the invented category `bench_test`, and the IP
+  `127.0.0.1` in the Part 11 entry. Now the service records the served model
+  or `keyword`, with no invented values.
+- **Vision and attachments:** the OpenAI-compatible and Moonshot executors send
+  text only. A request carrying an image or document that fell back onto one of
+  them was answered as if the model had read the file. The gateway now refuses
+  it (`MediaNotCarriedError`, terminal). This also covers AnA's PDF
+  attachments.
+- **`ai.embeddings`** sent text to a chat completion and returned `[]`, so it
+  never produced a vector. It now uses the gateway embedding provider that
+  `enhancedEmbeddingService` uses, and throws on failure. It is a wrapper, not
+  a second implementation.
+- **GCC drafting** (`/api/gcc/drafting/generate`): the pin was dropped and the
+  provenance now comes from the response. The route still cannot complete: its
+  search functions exist only in a legacy migration that no applier runs, yet
+  `/api/gcc/health` declares the module `available`. Whether to retire it onto
+  the canonical authoring draft is an owner decision.
+
+- **`/conversations/:id/summarize`** stored a placeholder whenever the model
+  failed or its reply was unreadable: "Conversation with N messages", or
+  "Unable to parse summary" with every list empty. The placeholder became the
+  conversation's working memory, which later summaries chain onto and nightly
+  consolidation promotes into project memory. The route now stores nothing and
+  answers 503 `NO_SUMMARY_PRODUCED`.
+- **Section predictions** reported a model failure as "the model had nothing
+  to add". The response now says `aiSuggestions: 'included' | 'unavailable'`.
+
+Not changed, and recorded for the owner:
+- `openai-orchestrator.ts` is dead, unreachable code that would draft SUSAR
+  timelines and write "approved" facts if it were ever wired up.
+- `agent-swarm` shows a literal `gpt-4o` as each agent's model.
+
+The mutation results are in `after/mutations-batch2.txt`: 35 mutations, 34
+caught and one equivalent, with the reason given. The broad suite is in
+`after/broad-suite-batch2.txt`: 17,164 passed and 1 failed. This batch caused
+that failure (a stale test mock met a new `instanceof`); it was fixed and the
+file re-run.
+
 ## Gates run on the final tree
 
 - `tsc --noEmit -p tsconfig.json`: exit 0.
@@ -178,8 +259,10 @@ Evidence: `after/council.txt` (38 tests) and mutations C1–C9 (all caught).
    Bedrock and Vertex "same weights" claim is unverified.
 4. **VMP-001 puts model PQ out of scope,** while the DoD owes it. One of the two
    documents has to change.
-5. **39 explicit pins to unapproved models remain repo-wide** on paths not yet
-   classified as governed. A ratchet could stop the count growing.
+5. **Explicit pins to unapproved models**: classified in section 8, and the
+   governed ones fixed. A ratchet on the remaining non-governed pins would stop
+   new ones appearing unreviewed. The GCC drafting module's `available` state
+   and the dead `openai-orchestrator.ts` need a decision.
 6. `pdf_overlay` is a false-success stub. It is gated as a write so it fails
    closed rather than being exempted.
 7. The `run_validation` verdict and the biostat CSR numbers are still partly
