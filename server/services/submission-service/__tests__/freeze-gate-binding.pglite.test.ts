@@ -127,6 +127,25 @@ let h: IndPgliteDb;
 const ctx = { organizationId: ORG, userId: USER };
 const { sign, file, statusOf, liveLeaves } = freezeGateHelpers(() => h);
 const outcome = (p: Promise<unknown>) => p.then(() => null, (e: any) => e);
+/**
+ * The §11.10(e) chain rows the governed transitions wrote for a sequence. The
+ * freeze is fail-closed on this row — it and the status change commit together
+ * or neither does — so a freeze that "succeeds" without one means the writer is
+ * not the one it commits with.
+ */
+// Status-transition rows only: assembling the gate legitimately chains
+// ECTD_PACKAGED_FROM_CORE / ECTD_ASSEMBLED rows for the same sequence even when
+// the freeze it was assembling for is then refused.
+const chainRows = async (seqId: number) =>
+  (await h.pglite.query(
+    `SELECT action, tenant_id, actor_id, target, sha256_chain IS NOT NULL AS chained,
+            new_values::jsonb ->> 'signatureActionId' AS signature
+       FROM audit_logs
+      WHERE table_name = 'ectd_sequence' AND record_id = $1
+        AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_TRANSITIONED')
+      ORDER BY occurred_at, id`,
+    [String(seqId)],
+  )).rows;
 
 beforeAll(async () => {
   h = await createIndPgliteDb({ submissionCore: true, leafSources: true });
@@ -172,9 +191,15 @@ describe('TOCTOU: the gate is bound to the leaf manifest it assembled', () => {
       message: expect.stringMatching(/leaves changed while this freeze was being checked/),
     });
     expect((await statusOf(2)).status).toBe('validated');
-    // With nothing moving, the same sequence freezes under a fresh signature.
-    await freezeSequence(2, ctx, await sign(2, 'freeze'));
+    expect(await chainRows(2), 'a refused freeze left a status transition in the audit chain').toEqual([]);
+    // With nothing moving, the same sequence freezes under a fresh signature —
+    // and the freeze commits with its chained §11.10(e) row, not without it.
+    const fresh = await sign(2, 'freeze');
+    await freezeSequence(2, ctx, fresh);
     expect((await statusOf(2)).status).toBe('frozen');
+    expect(await chainRows(2), 'the freeze committed without the chained audit row it is written with').toEqual([
+      { action: 'SEQUENCE_FROZEN', tenant_id: ORG, actor_id: USER, target: 'ectd_sequence:2', chained: true, signature: fresh },
+    ]);
   }, 120_000);
 
   it('upsertLeaf re-checks the status under the sequence row lock, not only before it', async () => {

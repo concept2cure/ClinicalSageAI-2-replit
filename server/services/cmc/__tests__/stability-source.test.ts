@@ -266,6 +266,60 @@ describe('ICH rules: unavailable input is reported, never asserted as absence', 
     expect(f.find(x => x.ruleId === 'Q2_VALIDATION_STATUS_NOT_RECORDED')?.message).toMatch(/^1 method/);
   });
 
+  /**
+   * ICH Q3A and the impurity register.
+   *
+   * `impurities` on the drug-substance record is ONE place a project carries
+   * impurity data; `source_type = 'impurity_profile'` is the other, and it is
+   * the one the impurity-profile surface writes. Concluding absence from the
+   * first alone puts a FAILED Q3A(R2) finding on a dossier that carries a
+   * complete impurity register — measured on the reference database, where a
+   * project held four impurity_profile source objects while the drug
+   * substance's own field was null.
+   *
+   * Unreachable until the drug-substance read was moved onto the canonical
+   * store, because Q3A never ran at all.
+   */
+  it('does NOT fail Q3A when the impurity register carries the data', () => {
+    const inp = emptyInputs();
+    inp.drugSubs = [{ substanceName: 'BX-701', impurities: null }];
+    inp.sourceObjects = [
+      { sourceType: 'impurity_profile', sourceKey: 'impurity:1', sourcePayload: {} },
+      { sourceType: 'impurity_profile', sourceKey: 'impurity:2', sourcePayload: {} },
+    ];
+
+    const f = checkQ3AandQ3B(inp);
+
+    expect(f.some(x => x.ruleId === 'Q3A_NO_IMPURITY_PROFILE')).toBe(false);
+  });
+
+  it('still fails Q3A when NEITHER store carries impurity data', () => {
+    // The corroboration must not become an amnesty: a dossier with a drug
+    // substance and no impurity data anywhere is genuinely deficient.
+    const inp = emptyInputs();
+    inp.drugSubs = [{ substanceName: 'BX-701', impurities: null }];
+    inp.sourceObjects = [{ sourceType: 'specification', sourceKey: 'spec:1', sourcePayload: {} }];
+
+    const f = checkQ3AandQ3B(inp);
+
+    const noProfile = f.find(x => x.ruleId === 'Q3A_NO_IMPURITY_PROFILE');
+    expect(noProfile?.status).toBe('fail');
+    expect(noProfile?.message).toMatch(/impurity register/);
+  });
+
+  it('reports not-evaluated rather than failing when the source-object read is blocked', () => {
+    // Absence across two stores cannot be concluded when one of them could not
+    // be read — the same standard Q3D already holds itself to.
+    const inp = emptyInputs();
+    inp.drugSubs = [{ substanceName: 'BX-701', impurities: null }];
+    inp.unavailable = { sourceObjects: 'timeout' };
+
+    const f = checkQ3AandQ3B(inp);
+
+    expect(f.some(x => x.ruleId === 'Q3A_NO_IMPURITY_PROFILE')).toBe(false);
+    expect(f.some(x => x.ruleId === 'Q3A_NOT_EVALUATED' && x.status === 'not_evaluated')).toBe(true);
+  });
+
   it('leaves every rule untouched when no input is unavailable', () => {
     // Guards must be inert on the normal path.
     const inp = emptyInputs();

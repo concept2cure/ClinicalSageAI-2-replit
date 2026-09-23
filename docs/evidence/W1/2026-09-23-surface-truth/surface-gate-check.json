@@ -1,0 +1,1026 @@
+{
+ "commit": "d2f1c4fd3",
+ "capturedAt": "2026-09-23T20:05Z",
+ "posture": {
+  "NODE_ENV": "development",
+  "LAUNCH_SCOPE_ENFORCE": "on",
+  "RLS_ENFORCE": "on",
+  "runtimeRole": "app_service (non-superuser)",
+  "database": "fresh, provisioned from empty by npm run up",
+  "org": "fresh org 1, no programs"
+ },
+ "surfaces": [
+  {
+   "id": "admin-console",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "master-licensing",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "403 GET /api/admin/master/licensing",
+    "403 GET /api/admin/master/licensing"
+   ]
+  },
+  {
+   "id": "access-requests",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "agency-meetings",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ana-command",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "404 GET /api/report-os/portfolio/org",
+    "404 GET /api/report-os/portfolio/org"
+   ]
+  },
+  {
+   "id": "ana-memory",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "apps",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [],
+   "note": "in scope; its text names the not-in-this-release reason for locked apps, which is what the catalog is for"
+  },
+  {
+   "id": "artifacts-center",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "audit-trail",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "authoring-engine",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "batch-draft",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "biostatistics",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "biostat-workbench",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "mission-control",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "503 GET /api/mission-control/programs",
+    "503 GET /api/mission-control/programs"
+   ]
+  },
+  {
+   "id": "filing-strategy",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "change-assessment",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "clinical-ops",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "client-portal",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "403 GET /api/client-portal/overview",
+    "403 GET /api/client-portal/overview"
+   ]
+  },
+  {
+   "id": "cmc",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "communication-center",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "conversation-thread",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "coverage",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "crl-library",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "404 GET /api/clinical-regulatory-evidence/findings",
+    "404 GET /api/clinical-regulatory-evidence/findings"
+   ]
+  },
+  {
+   "id": "cro-portfolio",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "csr-workflow",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "decision-lineage",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "deep-research",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "design-controls",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-510k",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-analytics",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-cer",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-clinical-studies",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-diagnostics",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-engineering",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-pma",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-postmarket",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-presub",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-software",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-submission",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-tasks",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-udi",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-validation",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-vault",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "device-workstream",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "dispatch-readiness",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "doc-journey",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "document-authoring",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "dossier",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "dossier-map",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ectd-coauthor",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ectd-compile",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ectd-publishing",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "etmf",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "evidence-search",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "filings-catalog",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "global-ri",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "haq-manager",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "human-factors",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "inconsistency",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ind-checklist",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ind-lifecycle",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "investigator-brochure",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "insights",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "intelligence-catalog",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "ivd-completeness",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "labeling",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "labeling-pi",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "labeling-smpc",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "licensing",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "lifecycle-mgmt",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "maa-cockpit",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "market-access",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "nda-cockpit",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "nonclinical",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "onboarding",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "onboarding-ingest",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "orchestration",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "404 GET /api/report-os/portfolio/org",
+    "404 GET /api/report-os/portfolio/org"
+   ]
+  },
+  {
+   "id": "orphan",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "pdev",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "pdev-clinical",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "pdev-cmc",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "net::ERR_ABORTED GET /api/regulatory-programs",
+    "net::ERR_ABORTED GET /api/regulatory-programs"
+   ]
+  },
+  {
+   "id": "pdev-contradictions",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "pdev-fda-interactions",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "pdev-ind-assembly",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "pdev-nonclinical",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "pdev-regulatory",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "pediatric",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "pharmacovigilance",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "pv-cockpit",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "precedent-intelligence",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "program-journey",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "project-home",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "projects",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "protocol-dev",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "pyramid",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "rbm",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "reg-change",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "registrations",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "regulatory-workspace",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "report-engine",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "research-admin",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "review",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "risk",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "safety-narrative",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "setup",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "net::ERR_ABORTED GET /api/mdx/industry-profile"
+   ]
+  },
+  {
+   "id": "shadow-review",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "source-tracer",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "qmp",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "quality",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "net::ERR_ABORTED GET /api/mdx/qms/documents",
+    "net::ERR_ABORTED GET /api/mdx/qms/templates",
+    "net::ERR_ABORTED GET /api/mdx/qms/documents/review-due?within=120",
+    "net::ERR_ABORTED GET /api/mdx/qms/training/compliance",
+    "net::ERR_ABORTED GET /api/mdx/qms/changes"
+   ]
+  },
+  {
+   "id": "part11-console",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "identity-console",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [
+    "403 GET /api/admin/scim-tenants",
+    "403 GET /api/admin/scim-ip-allowlist",
+    "403 GET /api/admin/scim-tenants",
+    "403 GET /api/admin/scim-ip-allowlist"
+   ]
+  },
+  {
+   "id": "report-governance",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "submission-center",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "submission-twin",
+   "launchScope": false,
+   "rendered": "not-in-this-release panel",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "gateway-transmittals",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "task-board",
+   "launchScope": false,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": [],
+   "note": "DEEP_LINK_ALIASES resolves task-board to the in-scope tasks surface before the gate (routing.ts surfaceIdFromLocation)"
+  },
+  {
+   "id": "tasks",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "template-library",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "training",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "billing",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "usage",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  },
+  {
+   "id": "vault",
+   "launchScope": true,
+   "rendered": "surface",
+   "crashed": false,
+   "exceptions": 0,
+   "apiFailures": []
+  }
+ ]
+}
