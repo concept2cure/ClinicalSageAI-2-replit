@@ -1,0 +1,14 @@
+[ci:sign-ceremony:selftest]
+  ✓ the pre-fix protocol finalize route fails the gate
+  ✓ an AnA tool that signs from a chat turn fails the gate
+  ✓ re-authentication without a signature row still fails
+  ✓ the full ceremony passes
+  ✓ a ceremony in another handler does not count for this one
+  ✓ writeMutation("sign") needs the caller to re-authenticate
+  ✓ comments, type annotations and other commands are not sites
+  ✓ the baseline is a ceiling per file, not a pass
+  ✓ a baseline entry without a written reason fails
+[ci:sign-ceremony:selftest] 9 passed — the gate fails on what it exists to catch.
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 28 baselined site(s) remain; the baseline may only shrink.
+server/routes/protocol-development.ts @ HEAD (pre-fix): [{"line":483,"reauth":false,"signatureRow":false,"ok":false}]
+server/routes/protocol-reviews.ts @ HEAD (pre-fix): [{"line":148,"reauth":false,"signatureRow":false,"ok":false}]

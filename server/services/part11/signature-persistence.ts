@@ -129,6 +129,13 @@ export const BINDING_BASIS = {
    */
   FILED_ESTAR_ARTIFACT: 'filed-estar-artifact-sha256',
   /**
+   * sha256 over a protocol's identity, version and ordered live sections at
+   * signing time. Finalization binds the version it froze (the same sections
+   * finalizeProtocolTx writes to protocol_versions.snapshot); a reviewer's
+   * disposition binds the content of the protocol they reviewed.
+   */
+  PROTOCOL_DOCUMENT_CONTENT: 'protocol-document-content-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target
@@ -516,6 +523,43 @@ export async function deriveGovernedTargetBinding(
           digest: sha256Hex(payload),
           basis: BINDING_BASIS.C2C_DOCUMENT_SECTION,
           note: 'sha256 over the section content + version at signing time.',
+        };
+      }
+      case 'protocol-document':
+      case 'protocol-review-assignment': {
+        // A disposition is a signature over the protocol the reviewer read, so
+        // it binds that protocol's content, not the assignment row.
+        if (!/^\d+$/.test(rest)) return ledgerFallback('malformed protocol pointer');
+        let docId = rest;
+        if (prefix === 'protocol-review-assignment') {
+          const a = await client.query(
+            `SELECT protocol_document_id FROM protocol_review_assignments
+              WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+              LIMIT 1`,
+            [rest, orgId],
+          );
+          if (a.rows.length === 0) return ledgerFallback('review assignment not readable at signing time');
+          docId = String(a.rows[0].protocol_document_id);
+        }
+        const doc = await client.query(
+          `SELECT id, protocol_kind, protocol_number, title, version
+             FROM protocol_documents
+            WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+            LIMIT 1`,
+          [docId, orgId],
+        );
+        if (doc.rows.length === 0) return ledgerFallback('protocol document not readable at signing time');
+        const sections = await client.query(
+          `SELECT section_key, title, content, status, order_index
+             FROM protocol_sections
+            WHERE protocol_document_id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+            ORDER BY order_index, section_key`,
+          [docId, orgId],
+        );
+        return {
+          digest: sha256Hex(canonicalJson({ protocol: doc.rows[0], sections: sections.rows })),
+          basis: BINDING_BASIS.PROTOCOL_DOCUMENT_CONTENT,
+          note: `sha256 over the protocol_documents identity and version and its ${sections.rows.length} live protocol_sections row(s) (key, title, content, status, order; ordered by order_index, section_key) at signing time.`,
         };
       }
       default:
