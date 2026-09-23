@@ -39,7 +39,13 @@ vi.mock('../../server/db', () => {
       }),
     })),
   };
-  return { db, pool: { query: vi.fn() } };
+  // The session check reads the account's standing (F-29): the session user is in use.
+  const pool = {
+    query: vi.fn(async (sql: string) =>
+      /SELECT status FROM users/.test(sql) ? { rows: [{ status: 'active' }] } : { rows: [] },
+    ),
+  };
+  return { db, pool };
 });
 
 const SECRET = process.env.JWT_SECRET || 'test-jwt-secret-for-unit-tests-min-32-chars-long';

@@ -19,6 +19,11 @@ import { verifyLiveToken } from '../services/token-revocation';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import {
+  ACCOUNT_INACTIVE_MESSAGE,
+  isAccountActive,
+  isActiveAccountStatus,
+} from '../services/account-standing';
+import {
   PASSWORD_RESET_TTL_MS,
   hashPasswordSetupToken,
   mintPasswordSetupToken,
@@ -318,7 +323,14 @@ router.get('/session', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     if (error.name === 'SessionEndedError') {
-      // Signed out: the token is signed and unexpired, and its session is over (AUTH-03).
+      // Signed out (AUTH-03), or its account taken out of use (F-29): the token
+      // is signed and unexpired, and its session is over.
+      if (error.reason === 'account-inactive') {
+        return res.status(401).json({
+          authenticated: false,
+          error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
+        });
+      }
       return res.status(401).json({
         authenticated: false,
         error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' },
@@ -433,6 +445,27 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         success: false,
         error: { code: 'AUTH_001', message: 'Invalid credentials' },
         // SECURITY: Don't leak remainingAttempts or locked status (enables enumeration)
+      });
+    }
+
+    // An account taken out of use (suspended by an administrator, deprovisioned
+    // by the identity provider) signs in to nothing (VSR-001 F-29). Checked
+    // after the password, so only whoever holds it learns the account's state;
+    // a wrong password was refused and counted above, as for any account.
+    if (!isActiveAccountStatus(userData.status)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId: userData.id,
+        tenantId: userData.defaultOrganizationId,
+        email: userData.email,
+        outcome: 'failure',
+        reason: 'account_inactive',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
       });
     }
 
@@ -1134,6 +1167,14 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 
     const refreshUserData = refreshUser[0];
+    // A refresh token outlives the access token it came with; an account taken
+    // out of use gets no new session from it (VSR-001 F-29).
+    if (!isActiveAccountStatus(refreshUserData.status)) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
+      });
+    }
     const refreshMemberships = await db
       .select({ organizationId: organizationUsers.organizationId, role: organizationUsers.role })
       .from(organizationUsers)
@@ -1361,6 +1402,26 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     }
 
     const userId = parseInt(challenge.userId);
+
+    // A challenge issued before the account was suspended or deprovisioned does
+    // not become a session after it (VSR-001 F-29). Checked before the code, so
+    // an account out of use spends none.
+    if (!(await isAccountActive(userId))) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId,
+        tenantId: challenge.organizationId,
+        email: challenge.email,
+        outcome: 'failure',
+        reason: 'account_inactive',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
+      });
+    }
 
     // Verify the code — try email OTP first (default), then TOTP
     const verificationMethod = method || 'email';
