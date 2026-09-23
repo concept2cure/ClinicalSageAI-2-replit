@@ -414,9 +414,80 @@ not clear the gate, so this is not a bypass, but it is an unaudited state
 change. Findings resolved before this change have no ledger row, and the
 surface does not claim one for them.
 
-## T1–T4
+## T1, T2, T4: task writes
 
-*In progress, not yet verified. This section is filled in when it lands.*
+**The defects.**
+
+- **T1.** Every task ledger write in `taskManagement.routes.ts` was
+  best-effort, and its outcome was discarded at nine sites. A signed completion
+  could commit with no ledger row and answer 200.
+- **T2.** Task writes had no role gate, so a viewer could create, transition,
+  link and archive.
+- **T4.** An archive needed no reason.
+
+**The fix**, written test-first, then read by three independent reviewers and
+repaired:
+
+- **One transaction for the write and its ledger row.**
+  `auditTaskActionInTx` (in `task-audit.ts`) writes the ledger row on the task
+  write's own Drizzle transaction, via `queryableFromDrizzle`. A failed row
+  throws, the write rolls back, and the answer is 500 `AUDIT_WRITE_FAILED`:
+  - create, transition (the signed completion and its §11.50 manifestation are
+    one fact), archive, dependency link (the link, the successor block and both
+    rows) and from-template: one transaction each;
+  - bulk-create and auto-assign: one transaction per task, and a partial
+    outcome says how many were saved;
+  - notify: its ledger row is written after delivery and its outcome is
+    checked.
+
+  The `taskManagement.routes.ts` baseline entry (9) is removed from
+  `ci:discarded-audit-write`.
+- **Same-status requests.** A PATCH to the status a task already has, carrying
+  no signature and no progress change, is refused 409 `CONFLICT_STALE`. Before,
+  it rewrote a signed record's completion time with no ledger row. A late
+  signature, or a progress change, commits with its ledger row. Only one late
+  signature can clear the approval gate.
+- **Authority (T2).** `requireEditorAccess` gates every write on this router.
+- **Archive reason (T4).** Required: trimmed, at least 3 and at most 1000
+  characters.
+- **The board.** Refusals are shown in the server's words, inside the panel
+  where the user is looking: a viewer's 403, `AUDIT_WRITE_FAILED`, an expired
+  session. Before, they read "Network error", or nothing at all.
+
+**Upstream, mid-repair.** Commit `6f79a000f` from another session retired the
+task signing PIN in favour of the platform's password ceremony. Merging it into
+the agent's in-flight work conflicted in the route and in `TaskBoard.tsx`:
+
+- the route keeps the agent's transactional version, with upstream's wording;
+- the dialog is upstream's shared `EsignModal`;
+- the test fixtures moved to `{password, meaning}`.
+
+During that merge this session emptied `TaskBoard.tsx` by mistake. It was
+rebuilt from the agent's own backup and merged again; the merge helper no longer
+writes a conflicted merge into a file an agent owns.
+
+**Proof.** The new suites were run against the unfixed HEAD files: red 36/40
+(`t-red.txt`). Green 40/40 (`t-green.txt`). `ci:discarded-audit-write` with the
+entry removed: red against the HEAD route, 0 → 9 (`t-gate-red.txt`); green
+against the fix (`t-gate-green.txt`). 115/115 across the 14 task suites. Scoped
+typecheck: no errors in the changed files.
+
+**Open, next.**
+
+- The completion cascade (`task-side-effects.ts`) unblocks dependents after
+  COMMIT, on the pool, with no ledger row. A cascade error after a committed
+  completion is also reported as "Failed to update task".
+- The reviewers' minor findings:
+  - the dependency route takes its locks in the opposite order from PATCH;
+  - a non-audit failure part-way through bulk-create or auto-assign is reported
+    as a plain failure;
+  - notify's connection is acquired outside its try;
+  - auto-assign can assign an archived task;
+  - `actorContext` duplicates `governedActorId`;
+  - the archive message is wrong over 1000 characters;
+  - `autoAssignCreated` treats any 2xx as assigned.
+- `unifiedTasks.routes.ts` writes the same table with no role gate and a
+  best-effort ledger (3 baselined sites), so T2 holds for this router only.
 
 ## Known limits
 
