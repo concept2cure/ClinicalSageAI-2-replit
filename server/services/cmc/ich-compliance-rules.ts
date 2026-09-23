@@ -339,15 +339,45 @@ export function checkQ3AandQ3B(inp: ProjectInputs): IchCheckFinding[] {
     return findings;
   }
 
-  if (totalImpurities === 0) {
-    findings.push({
-      guideline: 'Q3A(R2)',
-      ruleId: 'Q3A_NO_IMPURITY_PROFILE',
-      status: 'fail',
-      message: 'Drug substance records have no impurity profile data.',
-      evidence: inp.drugSubs.map(ds => `Substance: ${ds.substanceName}`),
-      citation: 'ICH Q3A(R2) §2 — Identification and qualification thresholds.',
-    });
+  /* The impurity register is its own source type. `impurities` on the
+     drug-substance record is ONE place a project may carry impurity data;
+     `source_type = 'impurity_profile'` is the other, and it is the one the
+     impurity-profile surface actually writes. On the reference database a
+     project held FOUR impurity_profile source objects while the drug
+     substance's own `impurities` field was null — so concluding absence from
+     that field alone puts a failed ICH Q3A(R2) finding on a dossier that
+     carries a complete impurity register.
+
+     Unreachable until now, because the drug-substance read itself raised
+     42703 and Q3A never ran. Making the read work is exactly what makes this
+     conclusion reachable, so both land together. Same shape as Q3D below,
+     which already corroborates across specs and source objects before
+     concluding that no assessment exists. */
+  const impurityRegisterEntries = inp.sourceObjects.filter(
+    o => String(o.sourceType ?? '').toLowerCase() === 'impurity_profile',
+  ).length;
+
+  if (totalImpurities === 0 && impurityRegisterEntries === 0) {
+    const blockedForAbsence = blockedInputs(inp, ['sourceObjects']);
+    findings.push(
+      blockedForAbsence.length > 0
+        ? notEvaluatedFinding(
+            'Q3A(R2)',
+            'Q3A_NOT_EVALUATED',
+            blockedForAbsence,
+            'ICH Q3A(R2) §2 — Identification and qualification thresholds.',
+          )
+        : {
+            guideline: 'Q3A(R2)',
+            ruleId: 'Q3A_NO_IMPURITY_PROFILE',
+            status: 'fail',
+            message:
+              'No impurity data is recorded for this project, on the drug substance record or in ' +
+              'the impurity register.',
+            evidence: inp.drugSubs.map(ds => `Substance: ${ds.substanceName}`),
+            citation: 'ICH Q3A(R2) §2 — Identification and qualification thresholds.',
+          },
+    );
   }
 
   // The Q3B sub-check reasons over specifications. If the spec read failed we

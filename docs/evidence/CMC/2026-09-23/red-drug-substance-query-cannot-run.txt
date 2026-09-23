@@ -1,0 +1,22 @@
+-- The query the ICH checker and the QbD analyzer used for drug substances,
+-- against the provisioned table:
+
+ERROR:  column "impurities" does not exist
+LINE 1: SELECT substance_name AS "substanceName", impurities, charac...
+                                                  ^
+
+-- (Postgres names the first missing column it reaches. The predicate is worse:
+--  the query filters on project_id, and public.drug_substances has no such
+--  column at all -- it is org-scoped only. characterization_data is absent too.)
+
+-- What public.drug_substances actually has:
+id, organization_id, substance_name, structural_formula, molecular_formula,
+molecular_weight, cas_number, inn, manufacturing_process, specifications,
+impurities_profile, stability, control_of_materials, modality,
+biological_origin, source_organism, cell_line, viral_safety_evaluation,
+tse_status, status, development_phase, created_at, updated_at
+
+-- Three of the four names the query used are not there, so the read raised
+-- 42703 on every project on every deployed database and ICH Q3A(R2) has never
+-- run. safe() reported that honestly as Q3A_NOT_EVALUATED; nothing was
+-- fabricated, and nothing was checked either.

@@ -117,9 +117,15 @@ beforeAll(async () => {
               '{"methodName":"THEIR HPLC METHOD","methodType":"chromatographic","purpose":"assay","validationStatus":"validated"}'::jsonb),
              (${MINE},   '${MY_PROJECT}',    'method', 'method:mine-1',
               '{"methodName":"My HPLC","methodType":"chromatographic","purpose":"assay","validationStatus":"validated"}'::jsonb);
-    INSERT INTO drug_substances (organization_id, project_id, substance_name)
-      VALUES (${THEIRS}, '${THEIR_PROJECT}', 'THEIR SUBSTANCE'),
-             (${MINE},   '${MY_PROJECT}',    'My substance');
+    -- Drug substances, like the methods above, live in the canonical
+    -- source-object store. public.drug_substances is org-scoped with no
+    -- project_id at all, so the query this replaced raised 42703 in production
+    -- and the scoping it proved was of a read that could never run.
+    INSERT INTO cmc_source_objects (organization_id, project_id, source_type, source_key, source_payload)
+      VALUES (${THEIRS}, '${THEIR_PROJECT}', 'drug_substance', 'drug_substance:their-1',
+              '{"name":"THEIR SUBSTANCE"}'::jsonb),
+             (${MINE},   '${MY_PROJECT}',    'drug_substance', 'drug_substance:mine-1',
+              '{"name":"My substance"}'::jsonb);
     INSERT INTO manufacturing_processes (organization_id, project_id, process_name, process_type)
       VALUES (${THEIRS}, '${THEIR_PROJECT}', 'THEIR PROCESS', 'synthesis'),
              (${MINE},   '${MY_PROJECT}',    'My process',    'synthesis');
@@ -190,10 +196,10 @@ describe('analyzeQbdFromSources — QbD analyzer', () => {
        is still 0, so nothing leaked, and the report does not additionally
        assert a clean ICH Q2 result it has no basis for. */
     expect(
-      out.unevaluatedInputs.filter(u => u.input !== 'methods'),
+      out.unevaluatedInputs.filter(u => u.input !== 'methods' && u.input !== 'drugSubs'),
       'a read failed, so the zeros above prove nothing',
     ).toEqual([]);
-    expect(out.unevaluatedInputs.map(u => u.input)).toEqual(['methods']);
+    expect([...out.unevaluatedInputs.map(u => u.input)].sort()).toEqual(['drugSubs', 'methods']);
   });
 
   it("still counts the caller's own records — the fix is not 'scope everything to nothing'", async () => {
