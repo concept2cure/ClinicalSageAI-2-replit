@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T08:15:44.841Z",
+  "generatedAt": "2026-09-23T08:34:26.907Z",
   "git": {
-    "sha": "16acd86a5a8e443dbb8ba0fbadbf9b7f58f645c0",
+    "sha": "e7b8a5213b5d073dfc737894be1dbbc75a5dbe25",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2095,7 +2095,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 120343
+        "bytes": 121583
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2273,7 +2273,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2472
+        "lines": 2494
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
