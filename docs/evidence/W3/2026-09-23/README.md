@@ -54,6 +54,7 @@ still owed is listed in VSR-001 §13.6 and at the end of this file.
 | `red/F-19/dbtest-scope-without-logout-check.txt` | F-19. The scope fix without `/logout` verifying its token: a token signed with a foreign key writes `user_logout` into the organisation's chain (3 fail). The final fix attributes a logout only from a token the server signed |
 | `red/F-19/unit-without-scope.txt`, `unit-after-fix.txt` | F-19. The scope rule, in the default CI job: 2 fail / 8 pass with the write unscoped; 10 / 10 with it |
 | `red/F-19/live-after-fix.json`, `live-logout-after-fix.json` | F-19. The fixed server, live: sign-in events recorded in org 1's chain, 0 refusals. On the final code, a forged-token logout is recorded as tenant 0, and the genuine logout as org 1 / user 17. The chain verifier reads `ok` (273 rows) |
+| `OQ-001-v0.4/before-F-19-fix/`, `after-F-19-fix/` | OQ-PROJ-16 (URS-PROJ-010), the step added after F-19, at `5a53d2db2`. On the pre-F-19 auth code: **fail**, 0 ledger entries added by 5 sign-in attempts. On the fixed code: 17 / 0 / 0 / 0. Its first draft passed on the unfixed code, because it read entries an earlier run had left (VSR-001 §13.8) |
 | `red/login-limit.transcript.txt` | P-9. A re-run inside 15 minutes. OQ-PROJ-02's sign-in through the form never reaches the code step. Every protocol after it fails to open its session: 429 `RATE_LIMIT` |
 | `IQ-falsification/v0.3-dev-login-closed/` | P-10. The v0.3 runner (`c33e43d26`) on this server records IQ-10 as a deviation, "cannot be exercised on a development install", while observing the refusal. IQ-11: "no session (IQ-10)" |
 | `IQ-falsification/v0.3-dev-login-open/` | P-10. The same runner on a server with dev-login open, configured to refuse it, also records a deviation: the check cannot fail |
@@ -96,4 +97,4 @@ run was discarded rather than redacted by hand. The harness was fixed
 4. The qualified contractor's review. §11.5 item 5 now also covers the
    Authoring PIN signature (VSR-001 §13.3 item 3). Then signatures.
 5. **The F-15 decision** (VSR-001 §12.2).
-6. The OQ protocols do not exercise the audit trail of a sign-in. F-19 was found in the server log, not by a step. A URS/OQ revision should add that step.
+6. A full execution that includes OQ-PROJ-16. This set predates the step, so TM-001 shows URS-PROJ-010 uncovered.

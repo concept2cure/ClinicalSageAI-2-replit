@@ -54,6 +54,8 @@ All scripted steps pass; unscripted/ad-hoc observations reviewed and accepted by
 
 ## 5. Result of the local execution (2026-09-23, production posture with production authentication — VSR-001 §13)
 
+*v0.4 (OQ-PROJ-16) was executed on its own at `5a53d2db2`, after the full set below. On a server still running the pre-F-19 authentication code: 16 pass, 1 fail (OQ-PROJ-16, 0 entries added). On the fixed code: 17 pass, 0 fail. Records: `docs/evidence/W3/2026-09-23/OQ-001-v0.4/`; VSR-001 §13.8.*
+
 **16 pass, 0 fail, 0 deviation, 0 not-executed** (record `docs/evidence/W3/2026-09-23/OQ-PROJECTS/`, executed 2026-09-23T02:49:00Z UTC at `0e2b3a971`). Same installation and RLS posture as the 2026-09-22 execution below: database `c2c_oq_w3_20260922b`, `RLS_ENFORCE=on`, runtime role `app_service`, no AI provider configured. It adds the authentication production requires. The server refuses dev-login (`ALLOW_DEV_AUTH=0`; IQ-10 pass, `docs/evidence/W3/2026-09-23/IQ/`). Every session was opened by a password sign-in that completed the TOTP challenge of the identity's enrolled factor, once per identity per run (OQ-001 §1; VSR-001 §13). Run identity: user 17 `oq-runner@validation.local`. Second signer: user 11 `oq-signer@validation.local`. Both enrolled their authenticator through the product's own enrolment endpoints. OQ-PROJ-02 (v0.3) signed in through the form with password and authenticator code, and landed on `/concept2cure`. OQ-PROJ-06: `verify-chain` ok over 213 rows. OQ-PROJ-06b: 50 ledger entries, all hash-chained; the server chain verdict is ok=true over 213 rows.
 
 ### 5.1 Result of the local execution (2026-09-22, production posture — VSR-001 §12; superseded by the 2026-09-23 execution)

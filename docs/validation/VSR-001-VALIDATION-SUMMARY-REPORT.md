@@ -814,3 +814,42 @@ Product change: the one that files this note. No record in
 `docs/evidence/W3/2026-09-23/` was re-executed or edited. Those records were
 made before this fix; the OQ protocols do not exercise the audit trail of a
 sign-in. That gap is noted for the next URS/OQ revision.
+
+### 13.8 Postscript: the protocol set now covers the sign-in audit trail
+
+F-19 was found in a server log, not by a step. No requirement asked whether
+a sign-in reached the audit trail, so no step could fail when it did not.
+
+- **URS-001 v0.2, URS-PROJ-010** (§11.10(e), high). Every sign-in attempt by
+  a user of an organisation is entered in that organisation's hash-chained
+  audit log and shown on its audit ledger. A refused attempt reads as
+  refused, never as a sign-in. RA-001 v0.2 assesses it: high, scripted.
+- **OQ-001 v0.4, OQ-PROJ-16.** The step makes the attempts itself: a wrong
+  password; a correct password, then a wrong code; a correct password, then
+  the current code. It then requires exactly five new entries for the run
+  identity on the ledger, in order and hash-chained, and the server's chain
+  verdict. The sign-in calls bypass the recorded API client, so no password
+  or code reaches a record.
+- **The ledger's wording.** An authentication event was shown by its action
+  name, so a refused sign-in and a successful one both read "User Login".
+  `recordAuthEvent` now writes the sentence the ledger shows first, for
+  example "Sign-in refused: wrong password".
+
+**The check was first seen to pass when it should not have.** The first
+draft compared the *newest* five sign-in entries with the expected
+sentences. Run at `092718c9d` against a server still on the pre-F-19 auth
+code, it passed. None of that run's attempts had reached the trail; the
+newest five were identical sentences an earlier run had left. That record
+was overwritten by the corrected run and is not filed. The false pass is
+described here and in the commit that corrected the step (`5a53d2db2`). The step now counts only the
+entries it adds.
+
+| OQ-001 v0.4 at `5a53d2db2` | Result | OQ-PROJ-16 observed |
+|---|---|---|
+| Server on the pre-F-19 auth code | 16 pass / **1 fail** | "the sign-in attempts this step made added 0 ledger entr(ies) for user:17"; 5 policy refusals in that server's log |
+| Server on the fixed code | **17 / 0 / 0 / 0** | 401, 200, 401, 200, 200; 5 new entries, newest first "Signed in: password and second factor verified" … "Sign-in refused: wrong password"; all chained; chain verdict ok |
+
+Evidence: `docs/evidence/W3/2026-09-23/OQ-001-v0.4/`. TM-001 was regenerated
+from the 2026-09-23 set: 68 requirements, 66 pass, 1 partial, 1 uncovered
+(URS-PROJ-010). The uncovered row is true of that set, which was executed
+before the step existed. The next full execution, on staging, covers it.
