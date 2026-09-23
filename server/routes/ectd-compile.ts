@@ -735,21 +735,40 @@ interface SpineLeafRow {
   lifecycle_op: string | null;
   document_table: string | null;
   document_id: number | null;
+  /** The uuid half of the reference, for uuid-keyed stores (vault.documents);
+   *  set instead of document_id. */
+  document_uuid?: string | null;
   /** form_<number> for a filed FDA form; how a form proves its requirement. */
   document_type?: string | null;
 }
 
 /** The sequence's placed (not deleted) leaves, org-scoped: the one read that
- *  compile, validate and status share. */
+ *  compile, validate and status share.
+ *
+ *  2026-09-23 (W5/D7, round-2 review): document_uuid is read too. Without it a
+ *  vault leaf (document_id NULL) that the assembler packages by its uuid was
+ *  reported "could not be materialized" by the compile, shown as
+ *  'unresolved-source', and not counted as placed by the status roll-up. */
 async function loadSpineLeaves(sequenceId: number, orgId: number): Promise<SpineLeafRow[]> {
   const leafRes = await pool.query(
-    `SELECT section_code, title, lifecycle_op, document_table, document_id, document_type
+    `SELECT section_code, title, lifecycle_op, document_table, document_id, document_uuid, document_type
        FROM submission_leaves
       WHERE sequence_id = $1 AND organization_id = $2 AND deleted_at IS NULL
       ORDER BY section_code`,
     [sequenceId, orgId],
   );
   return leafRes.rows as SpineLeafRow[];
+}
+
+/**
+ * Does the leaf name a document? A table plus either key: integer-keyed stores
+ * carry document_id, uuid-keyed ones (vault.documents) carry document_uuid —
+ * the rule the assembler's resolveFile applies. Requiring document_id read
+ * every vault leaf as having nothing behind it (2026-09-23, W5/D7, round-2
+ * review).
+ */
+function namesLeafDocument(l: SpineLeafRow): boolean {
+  return !!l.document_table && (!!l.document_id || !!l.document_uuid);
 }
 
 /** A declared withdrawal: it acts on a filed leaf and places no content. */
@@ -915,6 +934,9 @@ async function compileFromSpine(
   // Canonical assembler (dynamic import keeps the draft-only path light and
   // lets route tests that stub the pool avoid loading the drizzle stack).
   const { assembleSequence, assembledTransmitBlockers } = await import('../services/ectd/assemble-from-core');
+  // The assembler's own leaf key (table + uuid, else table + id), so what the
+  // compile calls materialized is decided by the key the assembly staged under.
+  const { leafSourceKey } = await import('../services/ectd/leaf-source-resolver');
 
   let xmlBackbone = '';
   let materialized = 0;
@@ -962,7 +984,7 @@ async function compileFromSpine(
       leftOut = assembledTransmitBlockers(assembled);
       unresolvedCount = assembled.unresolvedLeaves.length;
       unresolvedKeys = new Set(
-        assembled.unresolvedLeaves.map((u) => `${u.documentTable ?? ''}:${u.documentId ?? ''}`),
+        assembled.unresolvedLeaves.map((u) => leafSourceKey(u.documentTable, u.documentId, u.documentUuid)),
       );
       dtdSelfContained = assembled.bundle.dtdStatus?.selfContained ?? null;
       packageSha256 = assembled.bundle.sha256;
@@ -1014,11 +1036,14 @@ async function compileFromSpine(
   // so its key ':' was never in unresolvedKeys and a required section read as
   // satisfied by a leaf that has nothing behind it. Nothing renders without a
   // document — a declared delete included, which withdraws rather than places.
+  // 2026-09-23 (W5/D7, round-2 review): a document is named by either key, and
+  // the leaf is looked up by the assembler's key — a vault leaf the package
+  // holds was reported "could not be materialized" when this required
+  // document_id and keyed by it alone.
   const isMaterialized = (l: SpineLeafRow) =>
     assembleFailure == null &&
-    !!l.document_table &&
-    !!l.document_id &&
-    !unresolvedKeys.has(`${l.document_table}:${l.document_id}`);
+    namesLeafDocument(l) &&
+    !unresolvedKeys.has(leafSourceKey(l.document_table, l.document_id, l.document_uuid));
 
   const initialSequence = seq.sequenceNumber === '0000';
   const validationResults = leafPlacementFindings(leaves, { initialSequence, required, isMaterialized });
@@ -1191,7 +1216,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
     // placed section is never read as an approved one.
     const placedLeaves =
       spine?.sequence && spine.sequence.leafCount > 0
-        ? (await loadSpineLeaves(spine.sequence.id, orgId)).filter((l) => l.document_table && l.document_id)
+        ? (await loadSpineLeaves(spine.sequence.id, orgId)).filter(namesLeafDocument)
         : null;
 
     const moduleReadiness = required.modules.map((def) => {

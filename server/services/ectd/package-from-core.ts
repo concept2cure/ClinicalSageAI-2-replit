@@ -20,7 +20,7 @@ import { db, pool } from '../../db';
 import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
 import { packageEctdSubmission } from '../submission-gateways/regional-packager';
 import type { SubmissionBundle } from '../submission-gateways/types';
-import { buildPackagerInputFromCore, type LeafFileResolver } from './core-to-packager';
+import { buildPackagerInputFromCore, coreLeafFromSubmissionLeaf, type LeafFileResolver } from './core-to-packager';
 import { loadLatestPriorManifestBySubmission } from './prior-sequence-loader';
 import { computeLifecycleOperations, type DesiredLeaf } from './lifecycle-operator';
 import { computeSequencePrefix } from './sequence-manifest';
@@ -130,22 +130,15 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
   const { input, skipped } = buildPackagerInputFromCore({
     sequence: { sequenceNumber: sequence.sequenceNumber, region: sequence.region, type: sequence.type },
     submission: { applicationType: submission.applicationType, productName: submission.productName },
-    leaves: leafRows.map((l) => ({
-      sectionCode: l.sectionCode,
-      title: l.title,
-      lifecycleOp: l.lifecycleOp,
-      checksum: l.checksum,
-      documentTable: l.documentTable,
-      documentId: l.documentId,
-      // 2026-09-22 (W5/D7): the uuid half of the reference. Without it every
-      // vault-backed leaf reached resolveFile with documentId null and no uuid,
-      // resolved to nothing and landed in `skipped` — AFTER materialization had
-      // staged it, so it was never `unresolved` either, and transmit (which read
-      // only unresolvedLeaves) sent the sequence without the document.
-      documentUuid: l.documentUuid,
-      granularity: l.granularity,
-      documentType: l.documentType,
-    })),
+    // 2026-09-22 (W5/D7): the projection must carry the uuid half of the
+    // reference. Without it every vault-backed leaf reached resolveFile with
+    // documentId null and no uuid, resolved to nothing and landed in `skipped` —
+    // AFTER materialization had staged it, so it was never `unresolved` either,
+    // and transmit (which read only unresolvedLeaves) sent the sequence without
+    // the document. 2026-09-23 (W5/D7, round-2 review): the row is read through
+    // the one shared projection, so this packager and the device technical-file
+    // assembler cannot drift apart on it again.
+    leaves: leafRows.map(coreLeafFromSubmissionLeaf),
     resolveFile: params.resolveFile,
     applicationId: params.applicationId,
     sponsorId: params.sponsorId,
