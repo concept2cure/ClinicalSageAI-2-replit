@@ -619,7 +619,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     if (!result.success) {
       return res.status(400).json({
         error: 'INVALID_CODE',
-        message: 'Invalid verification code. MFA not enabled.',
+        message: 'Invalid verification code. MFA not enabled. Each code works once; if you just used it, wait for the next.',
       });
     }
 

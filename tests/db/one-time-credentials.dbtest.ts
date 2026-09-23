@@ -89,7 +89,7 @@ let owner: Pool;
 let runtime: Runtime;
 let mfa: Mfa;
 let app: express.Express;
-const members: Record<'a' | 'b' | 'c' | 'd' | 'e' | 'f', Member> = {} as never;
+const members: Record<'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g', Member> = {} as never;
 
 const inScope = <T>(caller: string, fn: () => Promise<T>) =>
   runWithTenantScope({ tenantId: String(ORG), role: 'admin', source: 'test', caller: `dbtrp:${caller}` }, fn);
@@ -247,6 +247,7 @@ beforeAll(async () => {
   members.d = await addMember('d', true);
   members.e = await addMember('e', false);
   members.f = await addMember('f', false);
+  members.g = await addMember('g', true);
 }, 180_000);
 
 afterAll(async () => {
@@ -283,7 +284,7 @@ describe('the posture is the one production runs in', () => {
   });
 
   it('enrolment used the step it presented', async () => {
-    for (const m of [members.a, members.b, members.c, members.d]) expect(await lastStep(m)).toBe(S0);
+    for (const m of [members.a, members.b, members.c, members.d, members.g]) expect(await lastStep(m)).toBe(S0);
     expect(await lastStep(members.e)).toBeNull();
   });
 });
@@ -449,6 +450,22 @@ describe('the email one-time code is used once, and its attempts are counted onc
     expect(outcomes.filter(Boolean)).toHaveLength(1);
   });
 
+  it.each([
+    [4, true],
+    [5, false],
+  ])('after %i wrong guesses the right code is accepted: %s (the limit is exactly five)', async (wrongGuesses, accepted) => {
+    at(0);
+    const { createEmailOtp, verifyEmailOtp } = await emailOtp();
+    const e = members.e;
+    const outcome = await inScope('email-boundary', async () => {
+      const sent = await createEmailOtp(e.id);
+      const wrong = sent === '000000' ? '111111' : '000000';
+      for (let i = 0; i < wrongGuesses; i++) await verifyEmailOtp(e.id, wrong);
+      return verifyEmailOtp(e.id, sent);
+    });
+    expect(outcome).toBe(accepted);
+  });
+
   it('twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused', async () => {
     at(0);
     const { createEmailOtp, verifyEmailOtp } = await emailOtp();
@@ -486,5 +503,21 @@ describe('a password-reset token is used once', () => {
     const { rows } = await owner.query('SELECT password_hash, reset_token FROM users WHERE id = $1', [f.id]);
     expect(rows[0].reset_token).toBeNull();
     expect(await bcrypt.compare(winner, rows[0].password_hash), 'the reported password is not the one stored').toBe(true);
+  });
+});
+
+describe('replay state belongs to one secret', () => {
+  it("a new authenticator's first code is not refused for the old one's last step", async () => {
+    at(0);
+    const g = members.g;
+    const fresh = await inScope('reenrol', async () => {
+      // The owner removes the old authenticator with a current code (step S0+1 used)...
+      if (!(await mfa.disableMfa(g.id, code(g, 1)))) throw new Error('[dbtrp] disable refused');
+      // ...and enrols a new one inside the same 30 s. Its code for S0+1 has never been presented.
+      const secret = (await mfa.generateSecret(g.id, g.email)).secret;
+      return { secret, enabled: await mfa.enableMfa(g.id, totp(secret, T0 + 30_000)) };
+    });
+    expect(fresh.enabled.success, 'the new authenticator was refused a code it had never presented').toBe(true);
+    expect(await lastStep(g)).toBe(S0 + 1);
   });
 });
