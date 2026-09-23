@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T08:41:12.429Z",
+  "generatedAt": "2026-09-23T08:52:52.417Z",
   "git": {
-    "sha": "6774b16cddcf7b8da18daf15c19d0385f8d241de",
+    "sha": "b715e76562319aba20996ae966c0e8c08de3de2e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1983,7 +1983,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 858926
+        "bytes": 859174
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2157,7 +2157,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20195
+        "lines": 20198
       },
       {
         "file": "server/statistics-service.ts",
@@ -2312,12 +2312,12 @@
         "lines": 2240
       },
       {
-        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
-        "lines": 2197
+        "file": "server/routes/auth.ts",
+        "lines": 2226
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2195
+        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
+        "lines": 2197
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
@@ -2508,6 +2508,10 @@
         "lines": 1693
       },
       {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1682
+      },
+      {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
       },
@@ -2546,10 +2550,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 1531
-      },
-      {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1522
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
