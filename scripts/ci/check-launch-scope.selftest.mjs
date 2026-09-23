@@ -79,6 +79,37 @@ if (replay.status === 0 || !replayCaught) {
 }
 console.log("✅ selftest: gate exits 1 and names 'ectd-publishing' when it is missing from the 20260810 keep-list");
 
+// ── Rule 2c: a routable id the server never gives a verdict ────────────────
+// Route a new, unregistered key to a real component in a copy of
+// surfaceViews.ts. With enforcement on it would render: the server locks only
+// ids it knows. The gate must name it. A second key that is an alias of a
+// registered surface must NOT be named — aliases are judged by their target.
+const viewsSrcPath = path.join(ROOT, 'client/src/concept2cure/v2/surfaceViews.ts');
+const viewsCopy = path.join(tmp, 'surfaceViews.ts');
+const viewsText = fs.readFileSync(viewsSrcPath, 'utf8');
+const closeAt = viewsText.indexOf('\n};', viewsText.indexOf('export const SURFACE_VIEWS'));
+fs.writeFileSync(
+  viewsCopy,
+  `${viewsText.slice(0, closeAt)}\n  'selftest-unregistered': { component: TaskBoard },${viewsText.slice(closeAt)}`,
+);
+const ungated = run({ LAUNCH_SCOPE_VIEWS_FILE: viewsCopy });
+let ungatedParsed;
+try {
+  ungatedParsed = JSON.parse(ungated.stdout);
+} catch {
+  console.error('selftest: gate did not emit JSON for the ungated case\n', ungated.stdout, ungated.stderr);
+  process.exit(1);
+}
+const gatedFindings = ungatedParsed.findings.filter((f) => f.rule === 'gated');
+const ungatedCaught = gatedFindings.some((f) => /'selftest-unregistered'/.test(f.detail));
+const aliasMisjudged = gatedFindings.some((f) => /'task-board'/.test(f.detail));
+if (ungated.status === 0 || !ungatedCaught || aliasMisjudged || gatedFindings.length !== 1) {
+  console.error('selftest FAILED: the gate did not name exactly the unregistered routable key');
+  console.error(JSON.stringify(ungatedParsed, null, 2));
+  process.exit(1);
+}
+console.log("✅ selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route");
+
 const good = run({});
 if (good.status !== 0) {
   console.error('selftest FAILED: the gate does not pass on the real tree\n', good.stdout);

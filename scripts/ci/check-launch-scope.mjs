@@ -22,6 +22,9 @@
  *      database while every local check stays green. Found 2026-09-22 by
  *      tests/db/entitlement-grants-resolution.dbtest.ts; this rule catches the
  *      next one before a database is needed.
+ *   2c. Every SURFACE_VIEWS key outside the scope (after DEEP_LINK_ALIASES)
+ *      is in UI_SURFACES, so the server emits the 'launch-scope' verdict
+ *      that locks its deep link. An unregistered one renders ungated.
  *   3. No file that implements a launch surface imports a symbol from
  *      client/src/concept2cure/v2/fixtures/ unless
  *      scripts/ci/launch-scope-fixture-allowlist.json names that symbol with a
@@ -36,6 +39,8 @@
  * overrides the surfaces directory (the selftest points it at a copy carrying
  * a deliberate violation). LAUNCH_SCOPE_RECONCILE_FILE overrides the 20260810
  * file for rule 2b (the selftest points it at a copy missing a launch id).
+ * LAUNCH_SCOPE_VIEWS_FILE overrides surfaceViews.ts for rule 2c (the selftest
+ * points it at a copy carrying an unregistered key).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -46,7 +51,10 @@ const JSON_MODE = process.argv.includes('--json');
 const SURFACES_DIR = process.env.LAUNCH_SCOPE_SURFACES_DIR
   ? path.resolve(process.env.LAUNCH_SCOPE_SURFACES_DIR)
   : path.join(ROOT, 'client/src/concept2cure/v2/surfaces');
-const VIEWS = path.join(ROOT, 'client/src/concept2cure/v2/surfaceViews.ts');
+const VIEWS = process.env.LAUNCH_SCOPE_VIEWS_FILE
+  ? path.resolve(process.env.LAUNCH_SCOPE_VIEWS_FILE)
+  : path.join(ROOT, 'client/src/concept2cure/v2/surfaceViews.ts');
+const ALIASES = path.join(ROOT, 'client/src/concept2cure/v2/registryModel.ts');
 const SCOPE = path.join(ROOT, 'shared/constants/launch-scope.ts');
 const REGISTRIES = [
   path.join(ROOT, 'shared/constants/ui-surface-registry.ts'),
@@ -92,6 +100,37 @@ for (const id of launchSurfaces) {
   if (id === 'home') continue;
   if (!viewKeys.has(id)) findings.push({ rule: 'routable', detail: `launch surface '${id}' is not a SURFACE_VIEWS key` });
   if (!registryIds.has(id)) findings.push({ rule: 'registered', detail: `launch surface '${id}' is not in UI_SURFACES` });
+}
+
+// ── 2c. Gated: every routable id outside the scope receives a verdict ──────
+// The server locks an out-of-scope surface by emitting a 'launch-scope'
+// verdict for it (applyLaunchScope), and it can only do that for ids it knows:
+// catalog rows and UI_SURFACES. LaunchScopeGate treats "no verdict" as "no
+// lock" — deliberately, since a fabricated refusal is as dishonest as a
+// fabricated permission. So a SURFACE_VIEWS key that is neither in the scope
+// nor registered renders in production with enforcement on, and nothing else
+// notices. The deep link resolves DEEP_LINK_ALIASES first (routing.ts
+// surfaceIdFromLocation), so an alias is judged by its target: 'task-board'
+// renders as the in-scope 'tasks', 'ind-lifecycle' as the locked
+// 'ind-checklist'. Checked 2026-09-23 on all 122 routable ids with enforcement
+// on: none leaks today; this keeps it that way.
+const aliasSrc = read(ALIASES);
+const aliasBlock = aliasSrc.match(/export const DEEP_LINK_ALIASES[^=]*=\s*\{([^]*?)\n\};/);
+if (!aliasBlock) {
+  findings.push({ rule: 'gated', detail: `could not find DEEP_LINK_ALIASES in ${path.relative(ROOT, ALIASES)}` });
+} else {
+  const aliases = Object.fromEntries(
+    [...stripComments(aliasBlock[1]).matchAll(/^\s*'?([a-z0-9-]+)'?\s*:\s*'([a-z0-9-]+)'/gm)].map((m) => [m[1], m[2]]),
+  );
+  const inScope = new Set(launchSurfaces);
+  for (const key of viewKeys) {
+    const id = aliases[key] ?? key;
+    if (inScope.has(id) || registryIds.has(id)) continue;
+    findings.push({
+      rule: 'gated',
+      detail: `SURFACE_VIEWS key '${key}'${id === key ? '' : ` (alias of '${id}')`} is outside the launch scope and not in UI_SURFACES, so the server emits no verdict for it and a deep link renders it with enforcement on — register it, alias it to a registered surface, or add it to the scope`,
+    });
+  }
 }
 
 // ── 3. Licensable ─────────────────────────────────────────────────────────
