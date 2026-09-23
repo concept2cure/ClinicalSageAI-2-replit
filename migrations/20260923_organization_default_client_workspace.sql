@@ -13,8 +13,9 @@
 -- workspace:
 --
 --   * POST /api/clients (server/routes/clients-routes.ts) is the server's only
---     writer of client_workspaces, and it is mounted in no application file,
---     only in its own tenant-isolation test. No client calls it either.
+--     writer of client_workspaces. It IS mounted (bootstrap/
+--     register-tenant-routes.ts), but no client in this repository calls it, so
+--     nothing reaches it on a normal signup.
 --   * The three organisation creators — self-serve signup (routes/auth.ts),
 --     first-run setup (routes/setup.ts) and the boot seed
 --     (db/bootstrap/seed-default-org.ts) — wrote organisations, users,
@@ -39,10 +40,11 @@
 -- ── ONLY where the organisation has NONE ────────────────────────────────────
 -- The NOT EXISTS predicate is not merely an idempotence guard, it is the rule.
 -- An organisation that already has exactly one workspace is the unambiguous
--- case the anchor writer is waiting for; adding a second would flip it to
--- AMBIGUOUS_CLIENT_WORKSPACE and stop anchoring programs that anchor today.
--- A CRO's several client workspaces are likewise left exactly as they are:
--- this file never expresses an opinion about an organisation that has made one.
+-- case the anchor writer is waiting for, and a CRO's several client workspaces
+-- are its own arrangement: this file never expresses an opinion about an
+-- organisation that has already made one. Only the empty case is repaired,
+-- which is also why this sweep can never give an organisation a second
+-- workspace and so can never be the cause of an AMBIGUOUS skip.
 --
 -- ── Re-runnable, per CLAUDE.md RULE 1 ───────────────────────────────────────
 -- Every entry of C2C_MIGRATION_FILES executes on every deploy. This file is
@@ -72,7 +74,7 @@
 --   the workspace rows that no project references, by hand, per organisation.
 -- ============================================================================
 
-INSERT INTO client_workspaces (organization_id, name, slug, description, status, created_by_id)
+INSERT INTO client_workspaces (organization_id, name, slug, description, status, created_by_id, metadata)
 SELECT
   o.id,
   btrim(o.name),
@@ -88,7 +90,15 @@ SELECT
   ),
   'Default workspace for ' || btrim(o.name),
   'active',
-  NULL
+  NULL,
+  -- The organisation's OWN workspace, as opposed to a client workspace a CRO
+  -- created for a customer. ensureProgramProjectAnchor prefers this row over
+  -- counting, so a tenant that later adds client workspaces through the live
+  -- POST /api/clients keeps anchoring its programs instead of flipping to
+  -- AMBIGUOUS_CLIENT_WORKSPACE the moment it has two. The key is
+  -- DEFAULT_WORKSPACE_MARKER in services/c2c/organization-default-workspace.ts;
+  -- the two must spell it identically.
+  '{"defaultForOrganization": true}'::json
 FROM organizations o
 WHERE btrim(o.name) <> ''
   AND NOT EXISTS (

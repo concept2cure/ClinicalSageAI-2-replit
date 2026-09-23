@@ -56,6 +56,14 @@ CODE=$(req program POST /api/c2c/projects '{"name":"BX-701 IND","productName":"B
 PROGRAM=$(cat "$OUT/program.json" | JQ '.data.id // .id // empty')
 [ "$CODE" = 201 ] && [ -n "$PROGRAM" ] && ok "program $PROGRAM created" || { bad "program create failed ($CODE): $(head -c400 "$OUT/program.json")"; exit 1; }
 echo "   meta: $(cat "$OUT/program.json" | JQ '.meta // .data.meta // empty' | head -c 400)"
+# The PM-spine anchor, asserted HERE rather than discovered 700 lines later at
+# the artifact bridge. Without it the program carries no projects row, the
+# governed artifact registry cannot be addressed for it, and the run failed at
+# step 11 with "no artifacts bridged - unanchored" - the symptom, at the point
+# furthest from its cause. The creation step is the cause, so it fails here.
+ANCHOR=$(cat "$OUT/program.json" | JQ '.meta.projectAnchorId // .data.meta.projectAnchorId // empty')
+[ -n "$ANCHOR" ] && ok "program anchored to PM-spine project $ANCHOR" \
+  || bad "program created with NO PM-spine anchor: $(cat "$OUT/program.json" | JQ '.meta.projectAnchorSkipped // empty') - $(cat "$OUT/program.json" | JQ '.meta.projectAnchorDetail // empty' | head -c 220)"
 
 step "3. Process development registers the drug substance (feeds 3.2.S.1/S.2)"
 CODE=$(req ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-701\",\"inn\":\"belantezumab\",\"casNumber\":\"1234-56-7\",\"molecularFormula\":\"C6H8O6\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Biologics\",\"route\":\"CHO cell culture\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$PROGRAM\",\"modality\":\"biologic\",\"biologicalOrigin\":\"CHO cell culture, fed-batch\",\"cellLine\":\"CHO-K1; MCB lot MCB-2401, WCB lot WCB-2403\",\"sourceOrganism\":\"Cricetulus griseus (Chinese hamster ovary)\",\"viralSafetyEvaluation\":\"Two orthogonal clearance steps validated per ICH Q5A(R2): low-pH hold (>= 4.8 log10 X-MuLV) and 20 nm nanofiltration (>= 5.2 log10 MVM). In-process bioburden, mycoplasma and adventitious-agent testing at harvest.\",\"tseStatus\":\"Chemically defined, animal-component-free media throughout; no animal-derived raw material enters the process. EMA EMEA/410/01 rev. 3 risk assessment on file.\"}")

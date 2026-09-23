@@ -7,13 +7,14 @@
  * one writer of the program → PM-spine anchor, and it will not invent a
  * workspace: with none, it reports `NO_CLIENT_WORKSPACE` and the program is
  * created unanchored. That is the correct behaviour for that module — it must
- * never guess an access-control value — but nothing anywhere created the first
+ * never guess an access-control value — but nothing created the FIRST
  * workspace, so on a fresh organisation the skip was not an edge case, it was
  * every program:
  *
- *   • `POST /api/clients` is the only writer of `client_workspaces` in the
- *     server, and it is mounted in no application file — only in its own
- *     tenant-isolation test. No client calls `/api/clients` either.
+ *   • `POST /api/clients` (routes/clients-routes.ts) is the server's only
+ *     writer of `client_workspaces`. It IS mounted — bootstrap/
+ *     register-tenant-routes.ts mounts it at `/api/clients` — but no client in
+ *     this repository calls it, so nothing reaches it on a normal signup.
  *   • The three organisation creators — self-serve signup (routes/auth.ts),
  *     first-run setup (routes/setup.ts) and the boot seed
  *     (db/bootstrap/seed-default-org.ts) — write organisations, users and
@@ -28,7 +29,7 @@
  * workspace — nothing else changed.
  *
  * ── Why a default here is honest, when the anchor's would not be ─────────────
- * The anchor module refuses to pick BETWEEN workspaces, because
+ * The anchor module refuses to pick BETWEEN client workspaces, because
  * `client_workspace_id` is what services/project-module-bridge.ts checks to
  * decide who may see a project: choosing the wrong one grants or denies
  * visibility to the wrong people. That reasoning is about a CHOICE. This module
@@ -37,12 +38,25 @@
  * organisation restated as its own workspace. A sponsor is its own client; a
  * CRO adds its clients afterwards.
  *
- * Restricting the write to the zero case is load-bearing in the other
- * direction too. An organisation that already has exactly one workspace is the
- * unambiguous case the anchor writer is waiting for; adding a second would
- * flip it to `AMBIGUOUS_CLIENT_WORKSPACE` and stop anchoring programs that
- * anchor today. This module must never be the reason an org acquires a second
- * workspace.
+ * ── Why the row is MARKED, and why that is not optional ──────────────────────
+ * `/api/clients` being live matters. Before this module existed, a tenant that
+ * created one client workspace through it had exactly one — the unambiguous
+ * case the anchor writer wants — and its programs anchored. Writing the
+ * organisation's own workspace alongside it would make two, flip the anchor to
+ * `AMBIGUOUS_CLIENT_WORKSPACE`, and stop anchoring programs that anchor today:
+ * this fix would have broken the tenants it was not written for.
+ *
+ * So the row carries `metadata.defaultForOrganization = true`, and the anchor
+ * writer prefers it over counting. That is not a tie-break dressed up as a
+ * rule — it is the answer to the question the count was standing in for. A
+ * regulatory program belongs to the sponsor organisation, not to one of its
+ * clients, so the organisation's own workspace is where its PM-spine project
+ * belongs however many client workspaces sit beside it. Ambiguity remains a
+ * real state, and is still reported: several workspaces and none of them the
+ * organisation's own.
+ *
+ * The write still happens only at zero, so this module never gives an
+ * organisation a second workspace.
  *
  * ── One rule, two bindings ───────────────────────────────────────────────────
  * The decision lives here once. The callers differ only in how they talk to
@@ -104,6 +118,23 @@ export interface WorkspaceStore {
 }
 
 const SLUG_FALLBACK = 'workspace';
+
+/**
+ * The mark on the organisation's OWN workspace, as opposed to a client
+ * workspace a CRO created for one of its customers.
+ *
+ * `ensureProgramProjectAnchor` reads it to answer "which workspace does a
+ * program of this organisation belong to" without counting rows, so a tenant
+ * that later adds client workspaces through /api/clients keeps anchoring.
+ * Exported because that reader and this writer must agree on the exact key;
+ * a second spelling would silently return the anchor to counting.
+ */
+export const DEFAULT_WORKSPACE_MARKER = 'defaultForOrganization';
+
+/** The metadata every row this module writes carries. */
+export const defaultWorkspaceMetadata = (): Record<string, unknown> => ({
+  [DEFAULT_WORKSPACE_MARKER]: true,
+});
 
 /** `organizations.slug` rules: lowercase, hyphen-separated, never empty. */
 function slugify(value: string): string {
@@ -186,11 +217,18 @@ export function poolClientWorkspaceStore(client: PoolClient): WorkspaceStore {
     async insertWorkspace(orgId, identity, createdById) {
       const res = await client.query<{ id: string | number }>(
         `INSERT INTO client_workspaces
-           (organization_id, name, slug, description, status, created_by_id)
-         VALUES ($1, $2, $3, $4, 'active', $5)
+           (organization_id, name, slug, description, status, created_by_id, metadata)
+         VALUES ($1, $2, $3, $4, 'active', $5, $6::json)
          ON CONFLICT (organization_id, slug) DO NOTHING
          RETURNING id`,
-        [orgId, identity.name, identity.slug, identity.description, createdById],
+        [
+          orgId,
+          identity.name,
+          identity.slug,
+          identity.description,
+          createdById,
+          JSON.stringify(defaultWorkspaceMetadata()),
+        ],
       );
       return res.rows[0]?.id == null ? null : Number(res.rows[0].id);
     },
@@ -230,6 +268,7 @@ export function drizzleWorkspaceStore(tx: DrizzleWorkspaceExecutor): WorkspaceSt
           description: identity.description,
           status: 'active',
           createdById,
+          metadata: defaultWorkspaceMetadata(),
         })
         .onConflictDoNothing({ target: [clientWorkspaces.organizationId, clientWorkspaces.slug] })
         .returning({ id: clientWorkspaces.id });

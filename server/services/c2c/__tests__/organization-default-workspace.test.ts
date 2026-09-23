@@ -1,6 +1,11 @@
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_WORKSPACE_MARKER,
   defaultWorkspaceIdentity,
+  defaultWorkspaceMetadata,
   ensureOrganizationDefaultWorkspace,
   type DefaultWorkspaceIdentity,
   type WorkspaceStore,
@@ -161,5 +166,87 @@ describe('ensureOrganizationDefaultWorkspace', () => {
     await ensureOrganizationDefaultWorkspace(store, { orgId: 7, orgName: 'Acme Bio', userId: null });
 
     expect(inserts[0].createdById).toBeNull();
+  });
+});
+
+describe('the mark on the row is what keeps a CRO anchoring', () => {
+  it('marks every workspace it writes as the organisation’s own', async () => {
+    // Load-bearing, not decoration. POST /api/clients is mounted and live, so a
+    // tenant can acquire a second workspace at any time; without this mark the
+    // anchor writer falls back to counting, sees two, and reports
+    // AMBIGUOUS_CLIENT_WORKSPACE for every program created afterwards.
+    const rows: Array<Record<string, unknown>> = [];
+    const store: WorkspaceStore = {
+      async readWorkspaces() {
+        return { count: 0, firstWorkspaceId: null };
+      },
+      async insertWorkspace(orgId, identity, createdById) {
+        rows.push({ orgId, identity, createdById, metadata: defaultWorkspaceMetadata() });
+        return 1;
+      },
+    };
+
+    await ensureOrganizationDefaultWorkspace(store, { orgId: 7, orgName: 'Acme Bio' });
+
+    expect(rows[0].metadata).toEqual({ [DEFAULT_WORKSPACE_MARKER]: true });
+  });
+
+  it('spells the marker key exactly as the anchor reader queries it', () => {
+    // The anchor's preflight does `(metadata ->> $2) = 'true'` with this
+    // constant. A second spelling here would silently return it to counting.
+    expect(DEFAULT_WORKSPACE_MARKER).toBe('defaultForOrganization');
+    expect(defaultWorkspaceMetadata()).toEqual({ defaultForOrganization: true });
+  });
+});
+
+describe('every organisation creator writes the workspace', () => {
+  /**
+   * The defect being fixed is precisely "an organisation creator that forgets
+   * to write the workspace". Gating only the decision function leaves the next
+   * creator added — or a refactor that drops one of these three lines — free to
+   * reintroduce it with the deploy green. This reads the call sites.
+   */
+  const CREATORS = [
+    { name: 'self-serve signup', file: 'server/routes/auth.ts' },
+    { name: 'first-run setup', file: 'server/routes/setup.ts' },
+    { name: 'boot seed', file: 'server/db/bootstrap/seed-default-org.ts' },
+  ] as const;
+
+  /**
+   * Matches the CALL, not the mention. Asserting `toContain(name)` passes on
+   * the import line alone — seen to do exactly that when the call was removed
+   * from setup.ts and the import left behind, which is the likeliest shape of
+   * this regression.
+   */
+  const CALL = /\bawait\s+ensureOrganizationDefaultWorkspace\s*\(/;
+
+  it.each(CREATORS)('$name calls ensureOrganizationDefaultWorkspace', ({ file }) => {
+    const source = readFileSync(resolve(process.cwd(), file), 'utf8');
+
+    expect(source).toMatch(CALL);
+  });
+
+  it('knows of no organisation creator that does not', () => {
+    // If this fails, a new INSERT INTO organizations landed somewhere. Either
+    // it calls the writer, or it is added to the exemptions with a reason.
+    const EXEMPT = new Set([
+      // Multi-tenant provisioning API; it creates the org row only, and the
+      // migration sweep repairs it on the next deploy.
+      'server/routes/tenants-simple.ts',
+    ]);
+    const hits = execSync(
+      "grep -rln \"insert(organizations)\\|INSERT INTO organizations\" --include=*.ts server/ | grep -v __tests__ || true",
+      { cwd: process.cwd(), encoding: 'utf8' },
+    )
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    const unguarded = hits.filter((f) => {
+      if (EXEMPT.has(f)) return false;
+      return !CALL.test(readFileSync(resolve(process.cwd(), f), 'utf8'));
+    });
+
+    expect(unguarded).toEqual([]);
   });
 });
