@@ -84,6 +84,9 @@ function detailOf(json: unknown, status: number): string {
 function refusal(what: string, status: number, code: string | undefined, message: string): Error {
   // A signed act answers 401 for a password the server did not accept, which
   // is not the same as an expired session and must not be reported as one.
+  if (status === 401 && code?.startsWith('REAUTH_TOTP')) {
+    return new Error(`Couldn't ${what} — the authenticator code was ${code === 'REAUTH_TOTP_REQUIRED' ? 'required and not given' : 'not accepted'}. Nothing was signed.`);
+  }
   if (status === 401 && code?.startsWith('REAUTH')) {
     return new Error(`Couldn't ${what} — the password was not accepted. Nothing was signed.`);
   }
@@ -269,22 +272,54 @@ export async function setBudgetParams(
 
 export async function requestProtocolReview(
   documentId: number,
-  v: { reviewerName: string; role?: string; dueDate?: string; reason: string },
+  v: { reviewerName: string; reviewerUserId?: number; role?: string; dueDate?: string; reason: string },
 ): Promise<Record<string, unknown>> {
   const reason = requireReason(v.reason);
   return send('POST', `/api/protocol-reviews/documents/${documentId}/reviewers`, compact({
     reviewerName: v.reviewerName,
+    reviewerUserId: v.reviewerUserId,
     role: v.role,
     dueDate: v.dueDate,
     reason,
   }), 'request the review');
 }
 
+/** A member who can be assigned a review, and so can sign it. */
+export interface ReviewerCandidate {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}
+
+/**
+ * The organization's members who can sign a review: GET /api/tenant-users/:orgId,
+ * the member-readable list. Viewers are left out, because the server refuses to
+ * assign a review to someone who can never sign it. THROWS when the list cannot
+ * be read: an error is not an organization with no members.
+ */
+export async function listReviewerCandidates(organizationId: string | number): Promise<ReviewerCandidate[]> {
+  let res: Response;
+  try {
+    res = await apiRequest('GET', `/api/tenant-users/${encodeURIComponent(String(organizationId))}`);
+  } catch (e) {
+    throw new Error(e instanceof Error ? e.message : String(e), { cause: e });
+  }
+  if (!res.ok) throw new Error(`the server answered ${res.status}`);
+  const rows = (await res.json().catch(() => null)) as unknown;
+  if (!Array.isArray(rows)) throw new Error('the member list was not in the expected shape');
+  return rows
+    .map((r) => r as Record<string, unknown>)
+    .filter((r) => Number.isInteger(Number(r.id)) && String(r.role ?? '').toLowerCase() !== 'viewer')
+    .map((r) => ({ id: Number(r.id), name: String(r.name ?? '').trim(), email: String(r.email ?? ''), role: String(r.role ?? '') }));
+}
+
 /* ── Signed acts ───────────────────────────────────────────────────────────
    Finalizing and a reviewer's disposition are electronic signatures. The
-   shared EsignModal collects the meaning, the reason and the password; the
-   password (and TOTP when given) travel once, as `reauth`, for the server to
-   re-verify inside the signing transaction. Nothing here stores them. */
+   shared EsignModal collects the meaning, the reason, the password and, when
+   the signer has one enrolled, the authenticator code. It pre-checks the
+   password itself; the signing request then carries both as `reauth`, for the
+   server to re-verify inside the signing transaction. Nothing here stores them. */
 
 export interface ProtocolSignatureInput {
   meaning: string;

@@ -1,0 +1,33 @@
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > resolving a contradiction is a governed decision with a reason > asks for the reason before anything is sent 742ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > resolving a contradiction is a governed decision with a reason > POSTs the reason with the review state 652ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > resolving a contradiction is a governed decision with a reason > refuses a reason under 8 characters without sending 228ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > the resolver shown is the one the server recorded > never renders 'AnA + you' — it renders the server's resolver 218ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > the resolver shown is the one the server recorded > shows exactly the resolver value the server returned — never an invented one 174ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > the resolver shown is the one the server recorded > says the record names no resolver when the server returned none 206ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > the resolver shown is the one the server recorded > confirms success in a status toast 178ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > when the board may be stale, the confirmation closes and the board is re-read > a network failure closes the confirmation so the same decision cannot be re-submitted 331ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > when the board may be stale, the confirmation closes and the board is re-read > a 409 (the finding is already in that state) says so, closes the confirmation, and re-reads 179ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > refusals happen before anything is written > 400s a reviewState outside the service enum, and touches no row 55ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > refusals happen before anything is written > 400s a missing reviewState 7ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > refusals happen before anything is written > 400s a transition with no reason 8ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > refusals happen before anything is written > 400s a reason that is under 8 characters once trimmed 8ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > refusals happen before anything is written > 403s a viewer — the one organisation role that does not write 6ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > refusals happen before anything is written > 404s another tenant's finding and records nothing 10ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > a resolution is one transaction: the UPDATE and its ledger row > runs UPDATE and recordGovernedAction on the SAME client, then COMMITs 13ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > a resolution is one transaction: the UPDATE and its ledger row > returns the PERSISTED resolver and time, plus the governance ids 17ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > a resolution is one transaction: the UPDATE and its ledger row > records a re-open as `reopen` and clears the resolver it no longer has 28ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > a resolution is one transaction: the UPDATE and its ledger row > a ledger failure ROLLS BACK, answers 5xx, and leaves the finding as it was 12ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > an outcome nobody can confirm, and an unattributed caller > a COMMIT that fails is OUTCOME_UNKNOWN, never "left unchanged" 16ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > an outcome nobody can confirm, and an unattributed caller > 401s a session with no numeric user, before anything is opened 7ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > a decision already on the record is not recorded again > 409s resolving an already-resolved finding: no UPDATE, no ledger row, the recorded resolver kept 8ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > a decision already on the record is not recorded again > refuses a repeated non-clearing transition the same way (the orchestrator path) 14ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > the service refuses an unattributable transition > throws before opening a transaction when the actor is not a numeric user 3ms
+✓ server/routes/__tests__/contradiction-review-governed.pglite.integration.test.ts > the service refuses an unattributable transition > records the orchestrator’s non-clearing transition as `transition` 5ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > a refusal reads as a refusal > shows the server’s reason as an alert and leaves the finding open 178ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > re-opening, and outcomes this screen cannot confirm > re-open asks for its own reason, POSTs unresolved with it, and the resolver line goes 142ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > re-opening, and outcomes this screen cannot confirm > a 2xx whose reply cannot be read claims nothing about the audit trail, and re-reads 169ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > re-opening, and outcomes this screen cannot confirm > a gateway error is an unknown outcome, not "Nothing was changed" 154ms
+✓ client/src/concept2cure/v2/__tests__/inconsistencyResolveGoverned.test.tsx > re-opening, and outcomes this screen cannot confirm > no answer at all: the form closes and the board is re-read 115ms
+✓ tests/golden-journeys/haq-correction.journey.test.ts > Journey C — HAQ correction loop (service level, canonical DDL) > runs the full correction spine 700ms
+Test Files  3 passed (3)
+Tests  31 passed (31)

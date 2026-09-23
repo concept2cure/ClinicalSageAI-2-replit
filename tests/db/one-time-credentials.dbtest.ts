@@ -89,7 +89,7 @@ let owner: Pool;
 let runtime: Runtime;
 let mfa: Mfa;
 let app: express.Express;
-const members: Record<'a' | 'b' | 'c' | 'd' | 'e' | 'f', Member> = {} as never;
+const members: Record<'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g', Member> = {} as never;
 
 const inScope = <T>(caller: string, fn: () => Promise<T>) =>
   runWithTenantScope({ tenantId: String(ORG), role: 'admin', source: 'test', caller: `dbtrp:${caller}` }, fn);
@@ -247,6 +247,7 @@ beforeAll(async () => {
   members.d = await addMember('d', true);
   members.e = await addMember('e', false);
   members.f = await addMember('f', false);
+  members.g = await addMember('g', true);
 }, 180_000);
 
 afterAll(async () => {
@@ -283,7 +284,7 @@ describe('the posture is the one production runs in', () => {
   });
 
   it('enrolment used the step it presented', async () => {
-    for (const m of [members.a, members.b, members.c, members.d]) expect(await lastStep(m)).toBe(S0);
+    for (const m of [members.a, members.b, members.c, members.d, members.g]) expect(await lastStep(m)).toBe(S0);
     expect(await lastStep(members.e)).toBeNull();
   });
 });
@@ -415,23 +416,40 @@ describe('signing: the pre-check does not use the code, the signature does', () 
     expect(await sign(code(d, 1))).toMatchObject({ ok: false, code: 'MFA_VERIFICATION_FAILED' });
   });
 
-  it('the pre-check is limited per signer, since it answers without using the code', async () => {
+  /* Two meters bound the pre-checks, since each answers "is this right?" to
+     whoever holds the session. The per-signer rate limit caps every check (10
+     per 5 minutes: 429). And a WRONG answer counts against the account's own
+     allowance, the one sign-in and signing share (5, then locked: 423; VSR-001
+     F-27, tests/db/signing-lockout.dbtest.ts). Each case starts from a cleared
+     count so it measures its own guesses, not the earlier cases'. */
+  const clearAllowance = (m: Member) =>
+    owner.query('UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1', [m.id]);
+  const locked = async (m: Member) =>
+    (await owner.query('SELECT locked_until > now() AS locked FROM users WHERE id = $1', [m.id])).rows[0].locked === true;
+
+  it('the code pre-check is metered per signer, and a wrong code counts against the account', async () => {
     at(0);
-    // 3 checks so far (two above, one in the previous case); the limit is 10.
+    const d = members.d;
+    await clearAllowance(d);
+    // 3 checks so far (two above, one in the previous case); the rate limit is 10.
     const statuses: number[] = [];
     for (let i = 0; i < 8; i++) statuses.push((await precheck('000000')).status);
-    expect(statuses).toEqual([200, 200, 200, 200, 200, 200, 200, 429]);
+    expect(statuses).toEqual([200, 200, 200, 200, 200, 423, 423, 429]);
+    expect(await locked(d)).toBe(true);
   });
 
-  it('the password pre-check is limited per signer too, on its own budget', async () => {
+  it('the password pre-check is metered per signer too, on its own budget, and a wrong password counts', async () => {
     at(0);
+    const d = members.d;
+    await clearAllowance(d);
     const check = (password: string) =>
       request(app).post('/api/esignature/verify-password').set(bearer).send({ password });
     const first = await check(PASSWORD);
     expect(first.body).toEqual({ valid: true, mfaRequired: true });
     const statuses: number[] = [];
     for (let i = 0; i < 10; i++) statuses.push((await check('not-the-password')).status);
-    expect(statuses).toEqual([200, 200, 200, 200, 200, 200, 200, 200, 200, 429]);
+    expect(statuses).toEqual([200, 200, 200, 200, 200, 423, 423, 423, 423, 429]);
+    expect(await locked(d)).toBe(true);
   });
 });
 
@@ -447,6 +465,22 @@ describe('the email one-time code is used once, and its attempts are counted onc
       return Promise.all(Array.from({ length: 8 }, () => verifyEmailOtp(e.id, sent)));
     });
     expect(outcomes.filter(Boolean)).toHaveLength(1);
+  });
+
+  it.each([
+    [4, true],
+    [5, false],
+  ])('after %i wrong guesses the right code is accepted: %s (the limit is exactly five)', async (wrongGuesses, accepted) => {
+    at(0);
+    const { createEmailOtp, verifyEmailOtp } = await emailOtp();
+    const e = members.e;
+    const outcome = await inScope('email-boundary', async () => {
+      const sent = await createEmailOtp(e.id);
+      const wrong = sent === '000000' ? '111111' : '000000';
+      for (let i = 0; i < wrongGuesses; i++) await verifyEmailOtp(e.id, wrong);
+      return verifyEmailOtp(e.id, sent);
+    });
+    expect(outcome).toBe(accepted);
   });
 
   it('twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused', async () => {
@@ -486,5 +520,21 @@ describe('a password-reset token is used once', () => {
     const { rows } = await owner.query('SELECT password_hash, reset_token FROM users WHERE id = $1', [f.id]);
     expect(rows[0].reset_token).toBeNull();
     expect(await bcrypt.compare(winner, rows[0].password_hash), 'the reported password is not the one stored').toBe(true);
+  });
+});
+
+describe('replay state belongs to one secret', () => {
+  it("a new authenticator's first code is not refused for the old one's last step", async () => {
+    at(0);
+    const g = members.g;
+    const fresh = await inScope('reenrol', async () => {
+      // The owner removes the old authenticator with a current code (step S0+1 used)...
+      if (!(await mfa.disableMfa(g.id, code(g, 1)))) throw new Error('[dbtrp] disable refused');
+      // ...and enrols a new one inside the same 30 s. Its code for S0+1 has never been presented.
+      const secret = (await mfa.generateSecret(g.id, g.email)).secret;
+      return { secret, enabled: await mfa.enableMfa(g.id, totp(secret, T0 + 30_000)) };
+    });
+    expect(fresh.enabled.success, 'the new authenticator was refused a code it had never presented').toBe(true);
+    expect(await lastStep(g)).toBe(S0 + 1);
   });
 });

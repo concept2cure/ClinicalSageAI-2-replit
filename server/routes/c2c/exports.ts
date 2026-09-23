@@ -34,7 +34,6 @@ import { authMiddleware } from '../../auth';
 import { requireOrganizationContext, tenantContextMiddleware } from '../../middleware/tenantContext';
 import {
   concept2cureRateLimiter,
-  getClientIp,
   getOrganizationId,
   getUserId,
   logAuditEntry,
@@ -44,6 +43,7 @@ import {
   sendSuccess,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
+import { clientIpKey } from '../../utils/client-ip';
 
 const logger = createScopedLogger('concept2cure-exports');
 const router = Router();
@@ -484,7 +484,7 @@ router.get('/documents/download/:filename', async (req: Request, res: Response) 
         actorEmail,
         backendRoute: `/documents/download/${safe}`,
         backendService: 'concept2cure-api',
-        ipAddress: getClientIp(req),
+        ipAddress: clientIpKey(req),
         details: { filename: safe, fileSize: fileStat.size, exportHash },
       } as never);
 

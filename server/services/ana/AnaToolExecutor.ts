@@ -10891,7 +10891,8 @@ registerToolHandler('add_protocol_review_comment', async (input, ctx) => {
   const comment = typeof input.comment === 'string' ? input.comment.trim() : '';
   if (!Number.isInteger(protocolDocumentId) || !comment) return JSON.stringify({ error: 'protocol_document_id and comment are required.' });
   const { addCommentTx } = await import('../protocol-reviews/protocol-reviews-service.js');
-  return governedPdev(ctx, 'update', `protocol-document:${protocolDocumentId}`, 'Review comment added via AnA', input, async (client) => {
+  // 'create', as the HTTP route records it: a comment is review, not an edit of the protocol.
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Review comment added via AnA', input, async (client) => {
     const { id, severity } = await addCommentTx(client, ctx.organizationId!, ctx.userId!, protocolDocumentId, {
       comment, assignmentId: typeof input.assignment_id === 'number' ? input.assignment_id : null,
       sectionRef: typeof input.section_ref === 'string' ? input.section_ref : null, severity: typeof input.severity === 'string' ? input.severity : null,
@@ -11493,8 +11494,18 @@ registerToolHandler('finalize_protocol_document', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant context.' });
   const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
   if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
-  const { getCompleteness } = await import('../protocol-development/protocol-development-service.js');
+  const { getCompleteness, getProtocolDocument } = await import('../protocol-development/protocol-development-service.js');
   try {
+    const doc = await getProtocolDocument(ctx.organizationId, documentId);
+    if (!doc) return JSON.stringify({ error: `Protocol ${documentId} was not found in this organization.` });
+    if (doc.status === 'finalized' || doc.status === 'superseded') {
+      return JSON.stringify({
+        ok: false,
+        documentId,
+        status: doc.status,
+        message: `Protocol ${documentId} is already ${doc.status}${doc.version ? ` (version ${doc.version})` : ''}; there is nothing to finalize.`,
+      });
+    }
     const c = await getCompleteness(ctx.organizationId, documentId);
     return JSON.stringify({
       ok: false,

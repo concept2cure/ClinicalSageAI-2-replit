@@ -9,6 +9,16 @@ import { db, getPool } from '../../db';
 import { projectWorkflows, workflowTasks, cmcProjects } from '../../../shared/cmc-schema';
 import { eq, desc, and } from 'drizzle-orm';
 import { getGateway } from '../../services/ai-gateway/index.js';
+/* One classifier and one status table for every route that calls the gateway
+   directly — so a policy refusal, a context-window refusal and a real provider
+   outage are not all answered as "try again later". */
+import {
+  classifyGatewayError,
+  GATEWAY_ERROR_HTTP_STATUS,
+} from '../../services/ai-gateway/gateway-error-map.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('cmc-workflows');
 
 const router = express.Router();
 
@@ -710,11 +720,28 @@ router.post('/ai-command', async (req, res) => {
         metadata: { command, drugName, category: commandConfig.category },
       });
       generatedContent = gatewayResponse.content;
-    } catch (aiError: any) {
-      console.error('AI gateway error for CMC command:', aiError?.message || aiError);
-      return res.status(503).json({
+    } catch (aiError: unknown) {
+      /* Every gateway failure used to answer one 503 reading "AI gateway
+         unavailable — please try again later". A governance refusal is not an
+         outage: when the tenant's only enabled provider is not approved for
+         high-risk regulatory drafting, the gateway raises ModelNotApprovedError
+         and that request will NEVER succeed on a retry — so the message told
+         the user to do the one thing that cannot work, and discarded the
+         compliance reason at the route boundary. An input over the context
+         ceiling was equally indistinguishable from a provider outage.
+
+         Classified through the shared map, which already distinguishes them and
+         owns the status table, rather than growing a copy here. */
+      const classified = classifyGatewayError(aiError);
+      logger.warn('AI gateway refused or failed a CMC command', {
+        command,
+        code: classified.code,
+        err: aiError instanceof Error ? aiError.message : String(aiError),
+      });
+      return res.status(GATEWAY_ERROR_HTTP_STATUS[classified.code]).json({
         success: false,
-        error: 'AI gateway unavailable — unable to generate content. Please try again later.',
+        error: classified.message,
+        code: classified.code,
       });
     }
 

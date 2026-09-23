@@ -77,10 +77,38 @@ export interface RefineSectionInput {
 }
 
 /** Why a refinement fell back to the deterministic narrative (if it did). */
+/**
+ * Is this the gateway declining to substitute an unapproved model?
+ *
+ * Matched by its stable `code`, not by `instanceof ModelNotApprovedError`, for
+ * the reason gateway-error-map.ts records beside the same decision: tests mock
+ * the gateway module with a hand-listed set of error classes, and an
+ * `instanceof` against a class the mock omits throws — which would turn the
+ * refusal this function exists to recognise into an unhandled error.
+ */
+function isModelNotApprovedError(error: unknown): boolean {
+  return (error as { code?: unknown } | null)?.code === 'MODEL_NOT_APPROVED_FOR_HIGH_RISK';
+}
+
 export type FallbackReason =
   | 'empty_input'
   | 'empty_response'
   | 'hallucination_guard'
+  /**
+   * The gateway REFUSED on governance grounds: no model approved for
+   * high-risk regulatory drafting was available, so the request was not sent
+   * to one that is not approved for it.
+   *
+   * Distinct from `gateway_error` on purpose. Both fall back to the
+   * deterministic narrative, but they are different facts about the run and
+   * they need different answers: a gateway error may clear on a retry, a
+   * governance refusal will not until an approved model is configured. Folded
+   * together, the author and the audit reader could not tell a compliance
+   * control doing its job from a network blip — and the count the caller
+   * reports would have said "AI refinement failed" for a platform that was
+   * working exactly as designed.
+   */
+  | 'model_not_approved'
   | 'gateway_error';
 
 export interface RefineSectionOutput {
@@ -398,11 +426,17 @@ export async function refineSectionWithAI(
       fallback: false,
     };
   } catch (error) {
+    /* A governance refusal is not a gateway error. ModelNotApprovedError means
+       the approved-models registry has no PQ-passed model for high-risk
+       regulatory drafting right now, and the gateway declined to substitute an
+       unapproved one — the control working. Recording it as 'gateway_error'
+       told the author, and the audit reader, that the platform had failed. */
+    const notApproved = isModelNotApprovedError(error);
     // Deliberately do NOT log the prompt payload or source content — only the failure shape.
     logger.warn(
-      `refineSectionWithAI failed for section ${input.sectionKey}: ${
-        error instanceof Error ? error.message : 'unknown error'
-      }`,
+      `refineSectionWithAI ${notApproved ? 'refused (no approved model)' : 'failed'} for section ${
+        input.sectionKey
+      }: ${error instanceof Error ? error.message : 'unknown error'}`,
     );
     return {
       refinedNarrative: input.deterministicNarrative,
@@ -410,7 +444,7 @@ export async function refineSectionWithAI(
       model: '',
       tokenCost: 0,
       fallback: true,
-      fallbackReason: 'gateway_error',
+      fallbackReason: notApproved ? 'model_not_approved' : 'gateway_error',
     };
   }
 }
@@ -444,12 +478,21 @@ export interface BuildModule3Result {
   refinementMeta: SectionRefinementMeta[];
   totalTokenCost: number;
   /**
-   * Count of sections that fell back for COMPLIANCE / OPERATIONAL reasons
-   * (gateway error — e.g. policy violation, residency rejection, missing key)
-   * as distinct from quality fallbacks. Surfaced so UIs can warn the user
-   * that some sections were not AI-refined because of governance, not quality.
+   * Count of sections that fell back for OPERATIONAL reasons — a gateway
+   * error: residency rejection, missing key, every provider failing — as
+   * distinct from quality fallbacks.
    */
   gatewayErrorFallbackCount: number;
+  /**
+   * Count of sections the gateway REFUSED on governance grounds: no model
+   * approved for high-risk regulatory drafting was available, so none was
+   * substituted. Reported separately from the operational count because they
+   * call for different answers — an operational failure may clear on a retry,
+   * this one will not until an approved model is configured — and because a
+   * UI that says "AI refinement failed" over a working compliance control
+   * tells the author the platform is broken when it is doing its job.
+   */
+  modelNotApprovedFallbackCount: number;
 }
 
 /**
@@ -540,6 +583,7 @@ export async function buildModule3WithNarrative(
       refinementMeta: [],
       totalTokenCost: 0,
       gatewayErrorFallbackCount: 0,
+      modelNotApprovedFallbackCount: 0,
     };
   }
 
@@ -602,6 +646,15 @@ export async function buildModule3WithNarrative(
   const gatewayErrorFallbackCount = refinementMeta.filter(
     (m) => m.fallback && m.fallbackReason === 'gateway_error',
   ).length;
+  const modelNotApprovedFallbackCount = refinementMeta.filter(
+    (m) => m.fallback && m.fallbackReason === 'model_not_approved',
+  ).length;
 
-  return { sections: refined, refinementMeta, totalTokenCost, gatewayErrorFallbackCount };
+  return {
+    sections: refined,
+    refinementMeta,
+    totalTokenCost,
+    gatewayErrorFallbackCount,
+    modelNotApprovedFallbackCount,
+  };
 }

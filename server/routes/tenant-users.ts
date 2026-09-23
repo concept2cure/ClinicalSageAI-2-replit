@@ -124,13 +124,16 @@ async function issueInvitation(
   req: any,
   args: { userId: number; email: string; role: string; organizationId: number }
 ): Promise<InvitationDelivery> {
+  // First, so a deployment with no public origin (production without APP_URL:
+  // the Host header is never used for an emailed link) stores no token.
+  const appBaseUrl = resolveAppBaseUrl(req);
   const setup = mintPasswordSetupToken(INVITATION_TTL_MS);
   // tenant-isolation-safe: users is a global identity table; this id is the row atomicCreateUser just created for the organization the caller was verified to administer (authorizeOrgAccess), inside this same request.
   await pool.query(
     `UPDATE users SET reset_token = $1, reset_token_expires_at = $2, updated_at = NOW() WHERE id = $3`,
     [setup.tokenHash, setup.expiresAt, args.userId]
   );
-  const setupUrl = passwordSetupUrl(resolveAppBaseUrl(req), setup.token);
+  const setupUrl = passwordSetupUrl(appBaseUrl, setup.token);
 
   const orgRow = await pool.query('SELECT name FROM organizations WHERE id = $1', [
     args.organizationId,

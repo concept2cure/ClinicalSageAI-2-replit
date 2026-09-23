@@ -1,0 +1,18 @@
+# RED: 'an enrolled authenticator is replaced only by someone who holds it' (tests/db/sign-in-posture.dbtest.ts)
+# with server/services/mfaService.ts server/routes/auth.ts server/routes/authEnterprise.ts at HEAD dbf41866e; restored after. 2026-09-23T09:34:35Z. Database: c2c_d6_repro
+
+ ↓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ↓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > the three accounts are what their names say
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree
+ ↓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false
+ ↓ tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address
+ × tests/db/sign-in-posture.dbtest.ts > an enrolled authenticator is replaced only by someone who holds it > /api/auth/mfa/setup with a session alone is refused, and the enrolled secret is untouched 83ms
+   → a session alone replaced the enrolled authenticator: expected 200 to be 409 // Object.is equality
+ × tests/db/sign-in-posture.dbtest.ts > an enrolled authenticator is replaced only by someone who holds it > /api/auth/enterprise/mfa/setup with a session alone is refused, and the enrolled secret is untouched 27ms
+   → a session alone replaced the enrolled authenticator: expected 200 to be 409 // Object.is equality
+ × tests/db/sign-in-posture.dbtest.ts > an enrolled authenticator is replaced only by someone who holds it > after removing it with a current code, setup starts a new one 8ms
+   → {"success":false,"error":{"code":"AUTH_004","message":"Invalid verification code"}}: expected 401 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 7 skipped (10)
