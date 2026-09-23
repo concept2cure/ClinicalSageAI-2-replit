@@ -1,0 +1,1021 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/orchestration/executions/b32a1ed0-5457-4e85-b4b2-ba69943edace",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 15,
+    "rateLimitRetries": 0,
+    "body": {
+      "executionId": "b32a1ed0-5457-4e85-b4b2-ba69943edace",
+      "templateId": "submission_readiness_review",
+      "status": "completed",
+      "projectId": 5,
+      "organizationId": 1,
+      "module": "ind",
+      "steps": [
+        {
+          "stepId": "inspect_project_state",
+          "name": "Inspect project state",
+          "status": "completed",
+          "startedAt": "2026-09-23T16:30:19.206Z",
+          "result": {
+            "projectName": "OQ-005 Readiness program 20260923163015",
+            "projectStatus": "active",
+            "projectProgress": 0,
+            "documentCount": 0,
+            "artifactCount": 0,
+            "validationCount": 0,
+            "taskCount": 0,
+            "moduleCount": 5
+          },
+          "completedAt": "2026-09-23T16:30:19.207Z",
+          "durationMs": 1
+        },
+        {
+          "stepId": "inventory_documents",
+          "name": "Inventory documents and artifacts",
+          "status": "completed",
+          "startedAt": "2026-09-23T16:30:19.207Z",
+          "result": {
+            "total": 0,
+            "byStatus": {},
+            "unrouted": 0,
+            "unvalidated": 0
+          },
+          "completedAt": "2026-09-23T16:30:19.208Z",
+          "durationMs": 1
+        },
+        {
+          "stepId": "identify_gaps",
+          "name": "Identify gaps and weaknesses",
+          "status": "completed",
+          "startedAt": "2026-09-23T16:30:19.208Z",
+          "result": {
+            "overallScore": 0,
+            "status": "not_started",
+            "scores": {
+              "completeness": 0,
+              "quality": 0,
+              "compliance": null,
+              "routing": 0,
+              "consistency": null
+            },
+            "blockerCount": 5,
+            "blockers": [
+              {
+                "severity": "major",
+                "category": "missing_document",
+                "message": "Module 1 has no documents assigned",
+                "targetType": "module",
+                "targetId": "Module 1",
+                "targetTitle": "Module 1",
+                "module": "Module 1",
+                "suggestedResolution": "Draft or route content to Module 1"
+              },
+              {
+                "severity": "major",
+                "category": "missing_document",
+                "message": "Module 2 has no documents assigned",
+                "targetType": "module",
+                "targetId": "Module 2",
+                "targetTitle": "Module 2",
+                "module": "Module 2",
+                "suggestedResolution": "Draft or route content to Module 2"
+              },
+              {
+                "severity": "major",
+                "category": "missing_document",
+                "message": "Module 3 has no documents assigned",
+                "targetType": "module",
+                "targetId": "Module 3",
+                "targetTitle": "Module 3",
+                "module": "Module 3",
+                "suggestedResolution": "Draft or route content to Module 3"
+              },
+              {
+                "severity": "major",
+                "category": "missing_document",
+                "message": "Module 4 has no documents assigned",
+                "targetType": "module",
+                "targetId": "Module 4",
+                "targetTitle": "Module 4",
+                "module": "Module 4",
+                "suggestedResolution": "Draft or route content to Module 4"
+              },
+              {
+                "severity": "major",
+                "category": "missing_document",
+                "message": "Module 5 has no documents assigned",
+                "targetType": "module",
+                "targetId": "Module 5",
+                "targetTitle": "Module 5",
+                "module": "Module 5",
+                "suggestedResolution": "Draft or route content to Module 5"
+              }
+            ],
+            "moduleBreakdown": [
+              {
+                "module": "Module 1",
+                "label": "Administrative Information",
+                "score": 0,
+                "status": "not_started",
+                "documentCount": 0,
+                "expectedDocumentCount": 3,
+                "validatedCount": 0,
+                "routedCount": 0,
+                "missingItems": [
+                  "No documents assigned to Module 1"
+                ],
+                "blockerCount": 0
+              },
+              {
+                "module": "Module 2",
+                "label": "CTD Summaries",
+                "score": 0,
+                "status": "not_started",
+                "documentCount": 0,
+                "expectedDocumentCount": 5,
+                "validatedCount": 0,
+                "routedCount": 0,
+                "missingItems": [
+                  "No documents assigned to Module 2"
+                ],
+                "blockerCount": 0
+              },
+              {
+                "module": "Module 3",
+                "label": "Quality (CMC)",
+                "score": 0,
+                "status": "not_started",
+                "documentCount": 0,
+                "expectedDocumentCount": 4,
+                "validatedCount": 0,
+                "routedCount": 0,
+                "missingItems": [
+                  "No documents assigned to Module 3"
+                ],
+                "blockerCount": 0
+              },
+              {
+                "module": "Module 4",
+                "label": "Nonclinical Reports",
+                "score": 0,
+                "status": "not_started",
+                "documentCount": 0,
+                "expectedDocumentCount": 3,
+                "validatedCount": 0,
+                "routedCount": 0,
+                "missingItems": [
+                  "No documents assigned to Module 4"
+                ],
+                "blockerCount": 0
+              },
+              {
+                "module": "Module 5",
+                "label": "Clinical Reports",
+                "score": 0,
+                "status": "not_started",
+                "documentCount": 0,
+                "expectedDocumentCount": 4,
+                "validatedCount": 0,
+                "routedCount": 0,
+                "missingItems": [
+                  "No documents assigned to Module 5"
+                ],
+                "blockerCount": 0
+              }
+            ]
+          },
+          "completedAt": "2026-09-23T16:30:19.210Z",
+          "durationMs": 2
+        },
+        {
+          "stepId": "compute_readiness",
+          "name": "Compute readiness assessment",
+          "status": "completed",
+          "startedAt": "2026-09-23T16:30:19.210Z",
+          "result": {
+            "readiness": {
+              "projectId": 5,
+              "organizationId": 1,
+              "module": "ind",
+              "overallScore": 0,
+              "status": "not_started",
+              "scores": {
+                "completeness": 0,
+                "quality": 0,
+                "compliance": null,
+                "routing": 0,
+                "consistency": null
+              },
+              "unassessedDimensions": [
+                {
+                  "dimension": "compliance",
+                  "reason": "no validation runs and no CMC signals on this project — nothing to score regulatory compliance against"
+                },
+                {
+                  "dimension": "consistency",
+                  "reason": "no routed documents and no promoted artifacts — no cross-reference check applied"
+                }
+              ],
+              "moduleBreakdown": [
+                {
+                  "module": "Module 1",
+                  "label": "Administrative Information",
+                  "score": 0,
+                  "status": "not_started",
+                  "documentCount": 0,
+                  "expectedDocumentCount": 3,
+                  "validatedCount": 0,
+                  "routedCount": 0,
+                  "missingItems": [
+                    "No documents assigned to Module 1"
+                  ],
+                  "blockerCount": 0
+                },
+                {
+                  "module": "Module 2",
+                  "label": "CTD Summaries",
+                  "score": 0,
+                  "status": "not_started",
+                  "documentCount": 0,
+                  "expectedDocumentCount": 5,
+                  "validatedCount": 0,
+                  "routedCount": 0,
+                  "missingItems": [
+                    "No documents assigned to Module 2"
+                  ],
+                  "blockerCount": 0
+                },
+                {
+                  "module": "Module 3",
+                  "label": "Quality (CMC)",
+                  "score": 0,
+                  "status": "not_started",
+                  "documentCount": 0,
+                  "expectedDocumentCount": 4,
+                  "validatedCount": 0,
+                  "routedCount": 0,
+                  "missingItems": [
+                    "No documents assigned to Module 3"
+                  ],
+                  "blockerCount": 0
+                },
+                {
+                  "module": "Module 4",
+                  "label": "Nonclinical Reports",
+                  "score": 0,
+                  "status": "not_started",
+                  "documentCount": 0,
+                  "expectedDocumentCount": 3,
+                  "validatedCount": 0,
+                  "routedCount": 0,
+                  "missingItems": [
+                    "No documents assigned to Module 4"
+                  ],
+                  "blockerCount": 0
+                },
+                {
+                  "module": "Module 5",
+                  "label": "Clinical Reports",
+                  "score": 0,
+                  "status": "not_started",
+                  "documentCount": 0,
+                  "expectedDocumentCount": 4,
+                  "validatedCount": 0,
+                  "routedCount": 0,
+                  "missingItems": [
+                    "No documents assigned to Module 5"
+                  ],
+                  "blockerCount": 0
+                }
+              ],
+              "documentInventory": [],
+              "blockers": [
+                {
+                  "severity": "major",
+                  "category": "missing_document",
+                  "message": "Module 1 has no documents assigned",
+                  "targetType": "module",
+                  "targetId": "Module 1",
+                  "targetTitle": "Module 1",
+                  "module": "Module 1",
+                  "suggestedResolution": "Draft or route content to Module 1"
+                },
+                {
+                  "severity": "major",
+                  "category": "missing_document",
+                  "message": "Module 2 has no documents assigned",
+                  "targetType": "module",
+                  "targetId": "Module 2",
+                  "targetTitle": "Module 2",
+                  "module": "Module 2",
+                  "suggestedResolution": "Draft or route content to Module 2"
+                },
+                {
+                  "severity": "major",
+                  "category": "missing_document",
+                  "message": "Module 3 has no documents assigned",
+                  "targetType": "module",
+                  "targetId": "Module 3",
+                  "targetTitle": "Module 3",
+                  "module": "Module 3",
+                  "suggestedResolution": "Draft or route content to Module 3"
+                },
+                {
+                  "severity": "major",
+                  "category": "missing_document",
+                  "message": "Module 4 has no documents assigned",
+                  "targetType": "module",
+                  "targetId": "Module 4",
+                  "targetTitle": "Module 4",
+                  "module": "Module 4",
+                  "suggestedResolution": "Draft or route content to Module 4"
+                },
+                {
+                  "severity": "major",
+                  "category": "missing_document",
+                  "message": "Module 5 has no documents assigned",
+                  "targetType": "module",
+                  "targetId": "Module 5",
+                  "targetTitle": "Module 5",
+                  "module": "Module 5",
+                  "suggestedResolution": "Draft or route content to Module 5"
+                }
+              ],
+              "recommendations": [
+                {
+                  "id": "ab8ef9c9-2df8-4ab1-a78c-ccd9c78fcf19",
+                  "recommendationType": "readiness_gap",
+                  "severity": "critical",
+                  "targetObjectType": "module",
+                  "targetObjectId": "Module 1",
+                  "targetObjectTitle": "Module 1",
+                  "reason": "Module 1 has 0/3 expected documents.",
+                  "evidence": [
+                    "Current documents: 0",
+                    "Expected minimum: 3",
+                    "Completeness: 0%",
+                    "No documents assigned to Module 1"
+                  ],
+                  "suggestedAction": "Draft or assign content to Module 1",
+                  "sourceType": "rules_based",
+                  "confidence": null,
+                  "module": "Module 1",
+                  "generatedAt": "2026-09-23T16:30:19.211Z"
+                },
+                {
+                  "id": "26c837cd-deb2-4f9a-8e05-1dceb3efa467",
+                  "recommendationType": "readiness_gap",
+                  "severity": "critical",
+                  "targetObjectType": "module",
+                  "targetObjectId": "Module 2",
+                  "targetObjectTitle": "Module 2",
+                  "reason": "Module 2 has 0/5 expected documents.",
+                  "evidence": [
+                    "Current documents: 0",
+                    "Expected minimum: 5",
+                    "Completeness: 0%",
+                    "No documents assigned to Module 2"
+                  ],
+                  "suggestedAction": "Draft or assign content to Module 2",
+                  "sourceType": "rules_based",
+                  "confidence": null,
+                  "module": "Module 2",
+                  "generatedAt": "2026-09-23T16:30:19.211Z"
+                },
+                {
+                  "id": "995be897-9c24-428e-8dbc-eb7569f31f94",
+                  "recommendationType": "readiness_gap",
+                  "severity": "critical",
+                  "targetObjectType": "module",
+                  "targetObjectId": "Module 3",
+                  "targetObjectTitle": "Module 3",
+                  "reason": "Module 3 has 0/4 expected documents.",
+                  "evidence": [
+                    "Current documents: 0",
+                    "Expected minimum: 4",
+                    "Completeness: 0%",
+                    "No documents assigned to Module 3"
+                  ],
+                  "suggestedAction": "Draft or assign content to Module 3",
+                  "sourceType": "rules_based",
+                  "confidence": null,
+                  "module": "Module 3",
+                  "generatedAt": "2026-09-23T16:30:19.211Z"
+                },
+                {
+                  "id": "2a925bee-4c37-4fa4-b968-d5cae4748f7f",
+                  "recommendationType": "readiness_gap",
+                  "severity": "critical",
+                  "targetObjectType": "module",
+                  "targetObjectId": "Module 4",
+                  "targetObjectTitle": "Module 4",
+                  "reason": "Module 4 has 0/3 expected documents.",
+                  "evidence": [
+                    "Current documents: 0",
+                    "Expected minimum: 3",
+                    "Completeness: 0%",
+                    "No documents assigned to Module 4"
+                  ],
+                  "suggestedAction": "Draft or assign content to Module 4",
+                  "sourceType": "rules_based",
+                  "confidence": null,
+                  "module": "Module 4",
+                  "generatedAt": "2026-09-23T16:30:19.211Z"
+                },
+                {
+                  "id": "8e435b3b-9eff-464f-89e7-75094a4f717a",
+                  "recommendationType": "readiness_gap",
+                  "severity": "critical",
+                  "targetObjectType": "module",
+                  "targetObjectId": "Module 5",
+                  "targetObjectTitle": "Module 5",
+                  "reason": "Module 5 has 0/4 expected documents.",
+                  "evidence": [
+                    "Current documents: 0",
+                    "Expected minimum: 4",
+                    "Completeness: 0%",
+                    "No documents assigned to Module 5"
+                  ],
+                  "suggestedAction": "Draft or assign content to Module 5",
+                  "sourceType": "rules_based",
+                  "confidence": null,
+                  "module": "Module 5",
+                  "generatedAt": "2026-09-23T16:30:19.211Z"
+                },
+                {
+                  "id": "04839f49-26c2-41dc-afb4-a0d004ed6831",
+                  "recommendationType": "next_best_action",
+                  "severity": "critical",
+                  "targetObjectType": "module",
+                  "targetObjectId": "Module 1",
+                  "targetObjectTitle": "Module 1",
+                  "reason": "Highest-priority action: Module 1 has 0/3 expected documents.",
+                  "evidence": [
+                    "Current documents: 0",
+                    "Expected minimum: 3",
+                    "Completeness: 0%",
+                    "No documents assigned to Module 1"
+                  ],
+                  "suggestedAction": "Draft or assign content to Module 1",
+                  "sourceType": "rules_based",
+                  "confidence": null,
+                  "module": "Module 1",
+                  "generatedAt": "2026-09-23T16:30:19.211Z"
+                }
+              ],
+              "assessedAt": "2026-09-23T16:30:19.211Z"
+            }
+          },
+          "completedAt": "2026-09-23T16:30:19.211Z",
+          "durationMs": 1
+        },
+        {
+          "stepId": "generate_recommendations",
+          "name": "Generate recommendations",
+          "status": "completed",
+          "startedAt": "2026-09-23T16:30:19.211Z",
+          "result": {
+            "recommendations": [
+              {
+                "id": "75427fcb-da80-4c4b-b8ad-be7c53b2d637",
+                "recommendationType": "readiness_gap",
+                "severity": "critical",
+                "targetObjectType": "module",
+                "targetObjectId": "Module 1",
+                "targetObjectTitle": "Module 1",
+                "reason": "Module 1 has 0/3 expected documents.",
+                "evidence": [
+                  "Current documents: 0",
+                  "Expected minimum: 3",
+                  "Completeness: 0%",
+                  "No documents assigned to Module 1"
+                ],
+                "suggestedAction": "Draft or assign content to Module 1",
+                "sourceType": "rules_based",
+                "confidence": null,
+                "module": "Module 1",
+                "generatedAt": "2026-09-23T16:30:19.212Z"
+              },
+              {
+                "id": "81322431-2df1-4474-a533-0c72f1ba9c14",
+                "recommendationType": "readiness_gap",
+                "severity": "critical",
+                "targetObjectType": "module",
+                "targetObjectId": "Module 2",
+                "targetObjectTitle": "Module 2",
+                "reason": "Module 2 has 0/5 expected documents.",
+                "evidence": [
+                  "Current documents: 0",
+                  "Expected minimum: 5",
+                  "Completeness: 0%",
+                  "No documents assigned to Module 2"
+                ],
+                "suggestedAction": "Draft or assign content to Module 2",
+                "sourceType": "rules_based",
+                "confidence": null,
+                "module": "Module 2",
+                "generatedAt": "2026-09-23T16:30:19.212Z"
+              },
+              {
+                "id": "a29bd4d3-0f97-4a93-91d2-f259f086aa67",
+                "recommendationType": "readiness_gap",
+                "severity": "critical",
+                "targetObjectType": "module",
+                "targetObjectId": "Module 3",
+                "targetObjectTitle": "Module 3",
+                "reason": "Module 3 has 0/4 expected documents.",
+                "evidence": [
+                  "Current documents: 0",
+                  "Expected minimum: 4",
+                  "Completeness: 0%",
+                  "No documents assigned to Module 3"
+                ],
+                "suggestedAction": "Draft or assign content to Module 3",
+                "sourceType": "rules_based",
+                "confidence": null,
+                "module": "Module 3",
+                "generatedAt": "2026-09-23T16:30:19.212Z"
+              },
+              {
+                "id": "b885460e-69b9-49f5-8c09-5258c2322bd4",
+                "recommendationType": "readiness_gap",
+                "severity": "critical",
+                "targetObjectType": "module",
+                "targetObjectId": "Module 4",
+                "targetObjectTitle": "Module 4",
+                "reason": "Module 4 has 0/3 expected documents.",
+                "evidence": [
+                  "Current documents: 0",
+                  "Expected minimum: 3",
+                  "Completeness: 0%",
+                  "No documents assigned to Module 4"
+                ],
+                "suggestedAction": "Draft or assign content to Module 4",
+                "sourceType": "rules_based",
+                "confidence": null,
+                "module": "Module 4",
+                "generatedAt": "2026-09-23T16:30:19.212Z"
+              },
+              {
+                "id": "aaa34aab-624c-457d-a8cb-868385892c37",
+                "recommendationType": "readiness_gap",
+                "severity": "critical",
+                "targetObjectType": "module",
+                "targetObjectId": "Module 5",
+                "targetObjectTitle": "Module 5",
+                "reason": "Module 5 has 0/4 expected documents.",
+                "evidence": [
+                  "Current documents: 0",
+                  "Expected minimum: 4",
+                  "Completeness: 0%",
+                  "No documents assigned to Module 5"
+                ],
+                "suggestedAction": "Draft or assign content to Module 5",
+                "sourceType": "rules_based",
+                "confidence": null,
+                "module": "Module 5",
+                "generatedAt": "2026-09-23T16:30:19.212Z"
+              },
+              {
+                "id": "9b12b399-fc76-448d-88dc-fc1161c3bc52",
+                "recommendationType": "next_best_action",
+                "severity": "critical",
+                "targetObjectType": "module",
+                "targetObjectId": "Module 1",
+                "targetObjectTitle": "Module 1",
+                "reason": "Highest-priority action: Module 1 has 0/3 expected documents.",
+                "evidence": [
+                  "Current documents: 0",
+                  "Expected minimum: 3",
+                  "Completeness: 0%",
+                  "No documents assigned to Module 1"
+                ],
+                "suggestedAction": "Draft or assign content to Module 1",
+                "sourceType": "rules_based",
+                "confidence": null,
+                "module": "Module 1",
+                "generatedAt": "2026-09-23T16:30:19.212Z"
+              }
+            ],
+            "summary": {
+              "critical": 6,
+              "high": 0,
+              "medium": 0,
+              "low": 0,
+              "info": 0,
+              "total": 6
+            }
+          },
+          "completedAt": "2026-09-23T16:30:19.212Z",
+          "durationMs": 1
+        }
+      ],
+      "currentStepIndex": 4,
+      "progressPercent": 100,
+      "startedAt": "2026-09-23T16:30:19.187Z",
+      "requestedBy": {
+        "userId": 1,
+        "userName": "oq-runner@validation.local"
+      },
+      "auditTrail": [
+        {
+          "timestamp": "2026-09-23T16:30:19.187Z",
+          "action": "workflow_started",
+          "detail": "Started workflow: Submission Readiness Review",
+          "userId": 1
+        },
+        {
+          "timestamp": "2026-09-23T16:30:19.206Z",
+          "stepId": "inspect_project_state",
+          "action": "step_started",
+          "detail": "Step 1: Inspect project state",
+          "userId": 1
+        },
+        {
+          "timestamp": "2026-09-23T16:30:19.207Z",
+          "stepId": "inspect_project_state",
+          "action": "step_completed",
+          "detail": "Step completed: Inspect project state",
+          "userId": 1
+        },
+        {
+          "timestamp": "2026-09-23T16:30:19.207Z",
+          "stepId": "inventory_documents",
+          "action": "step_started",
+          "detail": "Step 2: Inventory documents and artifacts",
+          "userId": 1
+        },
+        {
+          "timestamp": "2026-09-23T16:30:19.208Z",
+          "stepId": "inventory_documents",
+          "action": "step_completed",
+          "detail": "Step completed: Inventory documents and artifacts",
+          "userId": 1
+        },
+        {
+          "timestamp": "2026-09-23T16:30:19.208Z",
+          "stepId": "identify_gaps",
+          "action": "step_started",
+          "detail": "Step 3: Identify gaps and weaknesses",
+          "userId": 1
+        },
+        {
+          "timestamp": "2026-09-23T16:30:19.210Z",
+          "stepId": "identify_gaps",
+          "action": "step_completed",
+          "detail": "Step completed: Identify gaps and weaknesses",
+          "userId": 1
+        },
+        {
+          "timestamp": "2026-09-23T16:30:19.210Z",
+          "stepId": "compute_readiness",
+          "action": "step_started",
+          "detail": "Step 4: Compute readiness assessment",
+          "userId": 1
+        },
+        {
+          "timestamp": "2026-09-23T16:30:19.211Z",
+          "stepId": "compute_readiness",
+          "action": "step_completed",
+          "detail": "Step completed: Compute readiness assessment",
+          "userId": 1
+        },
+        {
+          "timestamp": "2026-09-23T16:30:19.211Z",
+          "stepId": "generate_recommendations",
+          "action": "step_started",
+          "detail": "Step 5: Generate recommendations",
+          "userId": 1
+        },
+        {
+          "timestamp": "2026-09-23T16:30:19.212Z",
+          "stepId": "generate_recommendations",
+          "action": "step_completed",
+          "detail": "Step completed: Generate recommendations",
+          "userId": 1
+        },
+        {
+          "timestamp": "2026-09-23T16:30:19.213Z",
+          "action": "workflow_completed",
+          "detail": "Workflow completed: Workflow \"submission_readiness_review\" completed: 5/5 steps succeeded. Found 5 blocker(s).",
+          "userId": 1
+        }
+      ],
+      "completedAt": "2026-09-23T16:30:19.212Z",
+      "totalDurationMs": 25,
+      "result": {
+        "summary": "Workflow \"submission_readiness_review\" completed: 5/5 steps succeeded. Found 5 blocker(s).",
+        "blockers": [
+          {
+            "severity": "major",
+            "category": "missing_document",
+            "message": "Module 1 has no documents assigned",
+            "targetType": "module",
+            "targetId": "Module 1",
+            "suggestedAction": "Draft or route content to Module 1"
+          },
+          {
+            "severity": "major",
+            "category": "missing_document",
+            "message": "Module 2 has no documents assigned",
+            "targetType": "module",
+            "targetId": "Module 2",
+            "suggestedAction": "Draft or route content to Module 2"
+          },
+          {
+            "severity": "major",
+            "category": "missing_document",
+            "message": "Module 3 has no documents assigned",
+            "targetType": "module",
+            "targetId": "Module 3",
+            "suggestedAction": "Draft or route content to Module 3"
+          },
+          {
+            "severity": "major",
+            "category": "missing_document",
+            "message": "Module 4 has no documents assigned",
+            "targetType": "module",
+            "targetId": "Module 4",
+            "suggestedAction": "Draft or route content to Module 4"
+          },
+          {
+            "severity": "major",
+            "category": "missing_document",
+            "message": "Module 5 has no documents assigned",
+            "targetType": "module",
+            "targetId": "Module 5",
+            "suggestedAction": "Draft or route content to Module 5"
+          }
+        ],
+        "recommendations": [
+          {
+            "id": "bf5f0a12-4cf8-4d2e-af55-26456d628d91",
+            "recommendationType": "readiness_gap",
+            "severity": "critical",
+            "targetObjectType": "module",
+            "targetObjectId": "Module 1",
+            "targetObjectTitle": "Module 1",
+            "reason": "Module 1 has 0/3 expected documents.",
+            "evidence": [
+              "Current documents: 0",
+              "Expected minimum: 3",
+              "Completeness: 0%",
+              "No documents assigned to Module 1"
+            ],
+            "suggestedAction": "Draft or assign content to Module 1",
+            "sourceType": "rules_based",
+            "confidence": null,
+            "module": "Module 1",
+            "generatedAt": "2026-09-23T16:30:19.213Z"
+          },
+          {
+            "id": "23562e01-fe35-4b12-8238-fe12ac11bd83",
+            "recommendationType": "readiness_gap",
+            "severity": "critical",
+            "targetObjectType": "module",
+            "targetObjectId": "Module 2",
+            "targetObjectTitle": "Module 2",
+            "reason": "Module 2 has 0/5 expected documents.",
+            "evidence": [
+              "Current documents: 0",
+              "Expected minimum: 5",
+              "Completeness: 0%",
+              "No documents assigned to Module 2"
+            ],
+            "suggestedAction": "Draft or assign content to Module 2",
+            "sourceType": "rules_based",
+            "confidence": null,
+            "module": "Module 2",
+            "generatedAt": "2026-09-23T16:30:19.213Z"
+          },
+          {
+            "id": "ed834417-676e-42c5-9ee7-972a0a81912c",
+            "recommendationType": "readiness_gap",
+            "severity": "critical",
+            "targetObjectType": "module",
+            "targetObjectId": "Module 3",
+            "targetObjectTitle": "Module 3",
+            "reason": "Module 3 has 0/4 expected documents.",
+            "evidence": [
+              "Current documents: 0",
+              "Expected minimum: 4",
+              "Completeness: 0%",
+              "No documents assigned to Module 3"
+            ],
+            "suggestedAction": "Draft or assign content to Module 3",
+            "sourceType": "rules_based",
+            "confidence": null,
+            "module": "Module 3",
+            "generatedAt": "2026-09-23T16:30:19.213Z"
+          },
+          {
+            "id": "749452d5-d904-4cbf-93e3-b1987c1bdf65",
+            "recommendationType": "readiness_gap",
+            "severity": "critical",
+            "targetObjectType": "module",
+            "targetObjectId": "Module 4",
+            "targetObjectTitle": "Module 4",
+            "reason": "Module 4 has 0/3 expected documents.",
+            "evidence": [
+              "Current documents: 0",
+              "Expected minimum: 3",
+              "Completeness: 0%",
+              "No documents assigned to Module 4"
+            ],
+            "suggestedAction": "Draft or assign content to Module 4",
+            "sourceType": "rules_based",
+            "confidence": null,
+            "module": "Module 4",
+            "generatedAt": "2026-09-23T16:30:19.213Z"
+          },
+          {
+            "id": "4004a74b-a3b5-402d-bb10-d3648d1c7f66",
+            "recommendationType": "readiness_gap",
+            "severity": "critical",
+            "targetObjectType": "module",
+            "targetObjectId": "Module 5",
+            "targetObjectTitle": "Module 5",
+            "reason": "Module 5 has 0/4 expected documents.",
+            "evidence": [
+              "Current documents: 0",
+              "Expected minimum: 4",
+              "Completeness: 0%",
+              "No documents assigned to Module 5"
+            ],
+            "suggestedAction": "Draft or assign content to Module 5",
+            "sourceType": "rules_based",
+            "confidence": null,
+            "module": "Module 5",
+            "generatedAt": "2026-09-23T16:30:19.213Z"
+          },
+          {
+            "id": "a9631e63-25d0-448e-8d09-e5efd6256d74",
+            "recommendationType": "next_best_action",
+            "severity": "critical",
+            "targetObjectType": "module",
+            "targetObjectId": "Module 1",
+            "targetObjectTitle": "Module 1",
+            "reason": "Highest-priority action: Module 1 has 0/3 expected documents.",
+            "evidence": [
+              "Current documents: 0",
+              "Expected minimum: 3",
+              "Completeness: 0%",
+              "No documents assigned to Module 1"
+            ],
+            "suggestedAction": "Draft or assign content to Module 1",
+            "sourceType": "rules_based",
+            "confidence": null,
+            "module": "Module 1",
+            "generatedAt": "2026-09-23T16:30:19.213Z"
+          }
+        ],
+        "readiness": {
+          "overallScore": 0,
+          "status": "not_started",
+          "scores": {
+            "completeness": 0,
+            "quality": 0,
+            "compliance": null,
+            "routing": 0,
+            "consistency": null
+          },
+          "blockerCount": 5,
+          "blockers": [
+            {
+              "severity": "major",
+              "category": "missing_document",
+              "message": "Module 1 has no documents assigned",
+              "targetType": "module",
+              "targetId": "Module 1",
+              "targetTitle": "Module 1",
+              "module": "Module 1",
+              "suggestedResolution": "Draft or route content to Module 1"
+            },
+            {
+              "severity": "major",
+              "category": "missing_document",
+              "message": "Module 2 has no documents assigned",
+              "targetType": "module",
+              "targetId": "Module 2",
+              "targetTitle": "Module 2",
+              "module": "Module 2",
+              "suggestedResolution": "Draft or route content to Module 2"
+            },
+            {
+              "severity": "major",
+              "category": "missing_document",
+              "message": "Module 3 has no documents assigned",
+              "targetType": "module",
+              "targetId": "Module 3",
+              "targetTitle": "Module 3",
+              "module": "Module 3",
+              "suggestedResolution": "Draft or route content to Module 3"
+            },
+            {
+              "severity": "major",
+              "category": "missing_document",
+              "message": "Module 4 has no documents assigned",
+              "targetType": "module",
+              "targetId": "Module 4",
+              "targetTitle": "Module 4",
+              "module": "Module 4",
+              "suggestedResolution": "Draft or route content to Module 4"
+            },
+            {
+              "severity": "major",
+              "category": "missing_document",
+              "message": "Module 5 has no documents assigned",
+              "targetType": "module",
+              "targetId": "Module 5",
+              "targetTitle": "Module 5",
+              "module": "Module 5",
+              "suggestedResolution": "Draft or route content to Module 5"
+            }
+          ],
+          "moduleBreakdown": [
+            {
+              "module": "Module 1",
+              "label": "Administrative Information",
+              "score": 0,
+              "status": "not_started",
+              "documentCount": 0,
+              "expectedDocumentCount": 3,
+              "validatedCount": 0,
+              "routedCount": 0,
+              "missingItems": [
+                "No documents assigned to Module 1"
+              ],
+              "blockerCount": 0
+            },
+            {
+              "module": "Module 2",
+              "label": "CTD Summaries",
+              "score": 0,
+              "status": "not_started",
+              "documentCount": 0,
+              "expectedDocumentCount": 5,
+              "validatedCount": 0,
+              "routedCount": 0,
+              "missingItems": [
+                "No documents assigned to Module 2"
+              ],
+              "blockerCount": 0
+            },
+            {
+              "module": "Module 3",
+              "label": "Quality (CMC)",
+              "score": 0,
+              "status": "not_started",
+              "documentCount": 0,
+              "expectedDocumentCount": 4,
+              "validatedCount": 0,
+              "routedCount": 0,
+              "missingItems": [
+                "No documents assigned to Module 3"
+              ],
+              "blockerCount": 0
+            },
+            {
+              "module": "Module 4",
+              "label": "Nonclinical Reports",
+              "score": 0,
+              "status": "not_started",
+              "documentCount": 0,
+              "expectedDocumentCount": 3,
+              "validatedCount": 0,
+              "routedCount": 0,
+              "missingItems": [
+                "No documents assigned to Module 4"
+              ],
+              "blockerCount": 0
+            },
+            {
+              "module": "Module 5",
+              "label": "Clinical Reports",
+              "score": 0,
+              "status": "not_started",
+              "documentCount": 0,
+              "expectedDocumentCount": 4,
+              "validatedCount": 0,
+              "routedCount": 0,
+              "missingItems": [
+                "No documents assigned to Module 5"
+              ],
+              "blockerCount": 0
+            }
+          ]
+        },
+        "createdObjects": [],
+        "updatedObjects": []
+      }
+    }
+  }
+}

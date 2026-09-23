@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/quality/plans",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 51,
+    "rateLimitRetries": 0,
+    "body": []
+  }
+}

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T15:59:08.911Z",
+  "generatedAt": "2026-09-23T16:32:52.105Z",
   "git": {
-    "sha": "5b3a240a4d75120f616ae936627a942c2ce2d18d",
+    "sha": "c2568f76c49c78c2265f4d16fabcd266afbef093",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2484,12 +2484,12 @@
         "lines": 1773
       },
       {
-        "file": "server/services/ana/submission-chat-handler.ts",
-        "lines": 1756
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1769
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1730
+        "file": "server/services/ana/submission-chat-handler.ts",
+        "lines": 1756
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
@@ -2510,6 +2510,10 @@
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
+      },
+      {
+        "file": "server/routes/taskManagement.routes.ts",
+        "lines": 1668
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
@@ -2554,10 +2558,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 1531
-      },
-      {
-        "file": "server/routes/taskManagement.routes.ts",
-        "lines": 1507
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",

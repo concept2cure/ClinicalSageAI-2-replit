@@ -12,6 +12,14 @@
  * and a write whose ledger row failed with 500 AUDIT_WRITE_FAILED. Those arrive
  * as ApiRequestError, and must reach the user in the server's words where the
  * user is looking — not as "Network error", and not behind a modal backdrop.
+ *
+ * Three more of the same kind: an archive reason past the server's 1000-character
+ * ceiling, an auto-assign that answered 200 having assigned fewer than it was
+ * sent, and the sign-off's own 401 (no verified signer) shown as an expired session.
+ *
+ * And a move whose COMMIT was lost (500 OUTCOME_UNKNOWN): shown in the server's
+ * words — never as "not completed" — and followed by a re-read of the board, so
+ * what the user sees next is the state that actually holds.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -108,6 +116,24 @@ describe('archive — a refusal is shown in the panel, and the task is not repor
     expect(alert.textContent).toMatch(/Insufficient permissions/);
   });
 
+  it('refuses a reason over 1000 characters with a sentence that says so, and sends nothing', async () => {
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: `Open ${TASK.title}` }));
+    const detail = await screen.findByRole('dialog', { name: 'Task detail' });
+    fireEvent.click(within(detail).getByRole('button', { name: `Archive "${TASK.title}"` }));
+    const box = within(detail).getByLabelText(/Reason for archiving/) as HTMLTextAreaElement;
+    // The same ceiling as the server (archiveTaskSchema) — typing stops there.
+    expect(box.maxLength).toBe(1000);
+
+    // A value set past it (a paste, a programmatic fill) must still be refused.
+    fireEvent.change(box, { target: { value: 'x'.repeat(1001) } });
+    expect(within(detail).getByText(/at most 1000 characters/)).toBeTruthy();
+    const confirm = within(detail).getByRole('button', { name: `Confirm archiving "${TASK.title}"` }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(true);
+    fireEvent.click(confirm);
+    expect(apiRequest.mock.calls.some(([m]) => m === 'DELETE')).toBe(false);
+  });
+
   it('shows an unrecorded archive as a failure in the server’s words', async () => {
     const message = 'The archive could not be recorded in the audit trail, so nothing was changed. Try again.';
     writes = async () => {
@@ -143,6 +169,37 @@ describe('§11.50 signing — an expired session is not a silent reset', () => {
     expect(alert.textContent).toMatch(/not signed in/i);
     expect(alert.textContent).toMatch(/not completed/i);
   });
+
+  it('shows the sign-off’s own 401 sentence when the server sent one', async () => {
+    // task-signoff answers 401 ESIGN_IDENTITY_REQUIRED when the session carries
+    // no verified signer identity — a different fact from an expired session.
+    const sentence = 'A verified signer identity is required to sign.';
+    let signed = false;
+    writes = async (_m, path) => {
+      if (!path.startsWith('/api/tasks/tasks/')) return ok({ success: true });
+      if (!signed) {
+        signed = true;
+        throw new ApiRequestError('Signature required', 428, { code: 'ESIGN_REQUIRED' }, 'ESIGN_REQUIRED');
+      }
+      return {
+        ok: false,
+        status: 401,
+        json: async () => ({ success: false, code: 'ESIGN_IDENTITY_REQUIRED', error: sentence }),
+      } as Response;
+    };
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ valid: true }) })));
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Advance' }));
+    const modal = await screen.findByRole('dialog');
+    fireEvent.change(within(modal).getByLabelText(/Reason for this action/), { target: { value: 'Reviewed against the criteria.' } });
+    fireEvent.change(within(modal).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+    fireEvent.click(within(modal).getByRole('button', { name: /Sign and commit/ }));
+
+    const alert = await within(modal).findByRole('alert');
+    expect(alert.textContent).toContain(sentence);
+    expect(alert.textContent).toMatch(/not completed/i);
+    expect(alert.textContent).not.toMatch(/not signed in any more/i);
+  });
 });
 
 describe('stale board — a completion someone else already made is not reported as this user\'s', () => {
@@ -160,6 +217,50 @@ describe('stale board — a completion someone else already made is not reported
     const boardReads = () => apiRequest.mock.calls.filter(([m, p]) => m === 'GET' && p === '/api/task-management/board').length;
     await waitFor(() => expect(boardReads()).toBeGreaterThanOrEqual(2));
     expect(screen.queryByRole('dialog', { name: 'Electronic signature required' })).toBeNull();
+  });
+});
+
+describe('an unknown outcome — a move whose COMMIT was lost is not reported as failed', () => {
+  const unknown = 'Whether this change was saved is unknown. Reload to see the task’s current state before trying again.';
+  const lost = () => new ApiRequestError(unknown, 500, { success: false, error: 'OUTCOME_UNKNOWN', message: unknown }, 'OUTCOME_UNKNOWN');
+  const boardReads = () => apiRequest.mock.calls.filter(([m, p]) => m === 'GET' && p === '/api/task-management/board').length;
+
+  it('a board move shows the server’s sentence and re-reads the board', async () => {
+    writes = async () => {
+      throw lost();
+    };
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Advance' }));
+
+    await waitFor(() => expect(document.body.textContent).toContain(unknown));
+    await waitFor(() => expect(boardReads()).toBeGreaterThanOrEqual(2));
+  });
+
+  it('a signed completion says it is unknown, not "not completed", and closing the dialog re-reads the board', async () => {
+    let signed = false;
+    writes = async (_m, path) => {
+      if (!path.startsWith('/api/tasks/tasks/')) return ok({ success: true });
+      if (!signed) {
+        signed = true;
+        throw new ApiRequestError('Signature required', 428, { code: 'ESIGN_REQUIRED' }, 'ESIGN_REQUIRED');
+      }
+      throw lost();
+    };
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ valid: true }) })));
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Advance' }));
+    const modal = await screen.findByRole('dialog');
+    fireEvent.change(within(modal).getByLabelText(/Reason for this action/), { target: { value: 'Reviewed against the criteria.' } });
+    fireEvent.change(within(modal).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+    fireEvent.click(within(modal).getByRole('button', { name: /Sign and commit/ }));
+
+    const alert = await within(modal).findByRole('alert');
+    expect(alert.textContent).toContain(unknown);
+    expect(alert.textContent).not.toMatch(/not completed/i);
+
+    const before = boardReads();
+    fireEvent.click(within(modal).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(boardReads()).toBeGreaterThan(before));
   });
 });
 
@@ -198,6 +299,20 @@ describe('workflow auto-assign — an assignment that did not happen is not repo
     const banner = await screen.findByRole('alert');
     expect(banner.textContent).toMatch(/created/i);
     expect(banner.textContent).toMatch(/not assigned|auto-assignment/i);
+  });
+
+  it('reports the tasks auto-assign did not assign when it answers 200 with fewer than it was sent', async () => {
+    // The route answers 200 with the assignments it made: a task nobody could
+    // take, or one archived meanwhile, is simply absent from the count.
+    writes = async (_m, path) =>
+      path.includes('/auto-assign')
+        ? ok({ success: true, data: [{ taskId: 'TASK-9', assignedTo: 'Ana', assigneeId: 9 }], count: 1 })
+        : ok({ success: true, data: [{ taskId: 'TASK-9' }, { taskId: 'TASK-10' }] });
+    await startWorkflow();
+
+    const banner = await screen.findByRole('alert');
+    expect(banner.textContent).toMatch(/1 of 2/);
+    expect(banner.textContent).toMatch(/not assigned/i);
   });
 
   it('keeps a thrown auto-assign refusal visible after the dialog closes', async () => {

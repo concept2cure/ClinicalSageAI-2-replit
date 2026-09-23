@@ -467,7 +467,8 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   // machine's verdict instead of silently swallowing it:
   //   · a 409 illegal transition shows the server's message (with the legal
   //     next states) rather than leaving the board looking stuck;
-  //   · a 409 CONFLICT_STALE (lost race) reloads to the authoritative state;
+  //   · a 409 CONFLICT_STALE (lost race) reloads to the authoritative state,
+  //     as does a 500 OUTCOME_UNKNOWN (a lost COMMIT: saved or not, unknown);
   //   · a 428 ESIGN_REQUIRED (approval-gated completion, backed by
   //     task-signoff -> part11/reverify-signer) opens the §11.50 signing dialog.
   const move = async (t: TaskItem, dir: number) => {
@@ -514,7 +515,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           setSignReq({ t, status, progress });
           return;
         }
-        if (payload?.code === 'CONFLICT_STALE') setReloadKey((k) => k + 1);
+        if (payload?.code === 'CONFLICT_STALE' || e.code === 'OUTCOME_UNKNOWN') setReloadKey((k) => k + 1);
         // Display used to read `payload.error` FIRST. On the envelope the state
         // machine actually sends — { error: 'ILLEGAL_TRANSITION', message: '<the
         // legal next states>' } — the enum won and the banner showed the token
@@ -1078,6 +1079,9 @@ interface TaskDetailProps {
   onArchived: () => void;
 }
 
+/** archiveTaskSchema's ceiling on the archive reason (server/routes/taskManagement.routes.ts). */
+const ARCHIVE_REASON_MAX = 1000;
+
 function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArchived }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = nameOf(t.assignee) || 'Unassigned';
@@ -1098,9 +1102,13 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
   // reason field: it reads to an auditor as a captured justification when
   // nothing was ever captured.
   const [archiveReason, setArchiveReason] = useState('');
-  // The server enforces the same minimum (archiveTaskSchema), so this gate and
-  // the 400 it would otherwise answer agree.
-  const archiveReasonOk = archiveReason.trim().length >= 3;
+  // The server enforces the same bounds (archiveTaskSchema: 3 to 1000, trimmed),
+  // so this gate and the 400 it would otherwise answer agree. The textarea's
+  // maxLength stops typing at the ceiling; a value set past it is still refused.
+  const archiveReasonLen = archiveReason.trim().length;
+  const archiveReasonTooLong = archiveReasonLen > ARCHIVE_REASON_MAX;
+  const archiveReasonOk = archiveReasonLen >= 3 && !archiveReasonTooLong;
+  const archiveReasonTooLongText = `The reason can be at most ${ARCHIVE_REASON_MAX} characters; this one is ${archiveReasonLen}.`;
   // A refusal, shown IN this panel: the board's banner sits behind the
   // backdrop, where the user who just clicked Confirm cannot see it.
   const [archiveErr, setArchiveErr] = useState('');
@@ -1239,11 +1247,16 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
                 autoFocus
                 required
                 aria-required="true"
+                maxLength={ARCHIVE_REASON_MAX}
+                aria-describedby={archiveReasonTooLong ? 'tb-archive-reason-len' : undefined}
                 value={archiveReason}
                 onChange={(e) => setArchiveReason(e.target.value)}
                 placeholder="e.g. Superseded by TASK-1043 after the content-lock plan changed."
               />
             </div>
+            {archiveReasonTooLong && (
+              <div id="tb-archive-reason-len" className="tb-auto-note" data-warn="true"><span className="ico">{I.alertTriangle}</span><span>{archiveReasonTooLongText}</span></div>
+            )}
             {archiveErr && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{archiveErr}</span></div>}
           </div>
         )}
@@ -1257,7 +1270,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
             style={confirmArchive ? { color: 'var(--error)', borderColor: 'var(--error)' } : undefined}
             disabled={archiving || (confirmArchive && !archiveReasonOk)}
             onClick={archive}
-            title={confirmArchive && !archiveReasonOk ? 'Give a reason to archive' : undefined}
+            title={confirmArchive && !archiveReasonOk ? (archiveReasonTooLong ? archiveReasonTooLongText : 'Give a reason to archive') : undefined}
             aria-label={confirmArchive ? `Confirm archiving "${t.title}"` : `Archive "${t.title}"`}
           >{archiving ? 'Archiving…' : confirmArchive ? 'Confirm archive' : 'Archive'}</button>
           <span className="sp" />
@@ -1300,9 +1313,10 @@ interface ESignTaskModalProps {
 }
 
 function ESignTaskModal({ req, taskTitle, signer, onClose, onSigned }: ESignTaskModalProps) {
-  // Set once the server has confirmed the signature, so closing the dialog's
-  // confirmation reloads the board rather than reading as a cancel.
-  const signed = useRef(false);
+  // Set once the server has confirmed the signature — or could not say whether
+  // it landed (OUTCOME_UNKNOWN) — so closing the dialog reloads the board to
+  // the state that holds rather than reading as a cancel.
+  const reloadOnClose = useRef(false);
 
   // Re-run the same transition, now carrying the signature. The server
   // verifies it and, only if it holds, writes the transition + the §11.50
@@ -1318,10 +1332,24 @@ function ESignTaskModal({ req, taskTitle, signer, onClose, onSigned }: ESignTask
         ...(input.totp ? { mfaToken: input.totp } : {}),
         meaning: TASK_MEANING[input.meaning] ?? input.meaning,
       },
+    }).catch((e: unknown) => {
+      // The dialog shows the server's sentence; the board must not keep
+      // showing a state the lost COMMIT may have changed.
+      if (e instanceof ApiRequestError && e.code === 'OUTCOME_UNKNOWN') reloadOnClose.current = true;
+      throw e;
     });
-    // apiRequest RETURNS a 401 rather than throwing it: the session, not the signature.
-    if (!res.ok) throw new Error('Your session is not signed in any more. Sign in again; the task was not completed.');
-    signed.current = true;
+    // apiRequest RETURNS a 401 rather than throwing it. Usually that is the
+    // session — but the sign-off answers 401 ESIGN_IDENTITY_REQUIRED itself when
+    // the session names no verified signer (task-signoff.ts), a different fact
+    // with its own sentence. Branch on the code, never on the text.
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { code?: unknown } | null;
+      const own = typeof body?.code === 'string' && body.code.startsWith('ESIGN_') ? serverMessage(body) : null;
+      throw new Error(own
+        ? `${own} The task was not completed.`
+        : 'Your session is not signed in any more. Sign in again; the task was not completed.');
+    }
+    reloadOnClose.current = true;
     return { meaning: input.meaning, reason: input.reason, signedAt: new Date().toISOString() };
   };
 
@@ -1334,7 +1362,7 @@ function ESignTaskModal({ req, taskTitle, signer, onClose, onSigned }: ESignTask
       defaultMeaning="approval"
       meanings={TASK_MEANINGS}
       signer={signer}
-      onClose={() => (signed.current ? onSigned() : onClose())}
+      onClose={() => (reloadOnClose.current ? onSigned() : onClose())}
       onSign={onSign}
     />
   );
@@ -1521,14 +1549,25 @@ interface WorkflowStartProps {
 
 /**
  * Workload-balanced auto-assign for the tasks a workflow just created. Resolves
- * to the sentence to show when the assignment did NOT happen, else undefined.
+ * to the sentence to show when the assignment did NOT happen, or happened for
+ * only some of them, else undefined.
  */
 async function autoAssignCreated(ids: string[], created: number): Promise<string | undefined> {
   const notAssigned = `${created} tasks were created but not assigned — assign them on the board.`;
   try {
     const res = await apiRequest('POST', '/api/tasks/tasks/auto-assign', { taskIds: ids });
     if (res.status === 401) return sessionExpired(notAssigned);
-    return res.ok ? undefined : notAssigned;
+    if (!res.ok) return notAssigned;
+    // A 200 is not "all assigned": the route leaves out a task nobody could
+    // take, or one archived meanwhile, and answers with the count it made.
+    const body = (await res.json().catch(() => null)) as { count?: unknown; data?: unknown } | null;
+    const assigned = typeof body?.count === 'number' ? body.count : Array.isArray(body?.data) ? body.data.length : null;
+    if (assigned === null) {
+      return `${created} tasks were created, but whether auto-assign assigned them could not be confirmed — check the board.`;
+    }
+    if (assigned >= ids.length) return undefined;
+    const left = ids.length - assigned;
+    return `${created} tasks were created; ${assigned} of ${ids.length} were assigned and ${left} ${left === 1 ? 'was' : 'were'} not assigned — assign ${left === 1 ? 'it' : 'them'} on the board.`;
   } catch (e) {
     const why = refusalText(e, 'the service could not be reached.');
     return `${created} tasks were created, but auto-assignment failed: ${why}`;
