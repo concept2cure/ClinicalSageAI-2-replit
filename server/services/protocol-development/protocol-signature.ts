@@ -15,10 +15,13 @@
  *      GOVERNANCE_RBAC_ENFORCE is on runs here too
  *   3. §11.200 re-authentication (verifyReauth: the password, and the second
  *      factor whenever the signer has one enrolled), before anything is written
- *   4. BEGIN, the domain write
- *   5. the meaning checked against authorship, on the same client: an
- *      `authorship` signature only from an author; any other meaning only from
- *      someone independent of the authors
+ *   4. BEGIN, then the meaning checked against authorship on that client,
+ *      before the act writes anything (the canonical order: SoD before
+ *      writeMutation): an `authorship` signature only from an author; any other
+ *      meaning only from someone independent of the authors. Checked after the
+ *      write, the act's own rows (finalize snapshots a version under the
+ *      signer's id) made every signer an author of what they were signing.
+ *   5. the domain write
  *   6. the ledger pair and the electronic_signatures row, on the same client
  *   7. COMMIT, so the change and its signature land together or not at all
  *
@@ -33,7 +36,6 @@ import {
   resolveTargetAuthors,
   SeparationOfDutiesAuthorUnresolvedError,
   SeparationOfDutiesError,
-  SeparationOfDutiesUnverifiedError,
 } from '../governance/separation-of-duties';
 import { can } from '../governance/permissions';
 import { persistGovernedSignSignature } from '../part11/signature-persistence';
@@ -64,11 +66,16 @@ export interface ProtocolSignatureInput {
   ipAddress: string | null;
   /** The signer's org role, for the permission gate. */
   role: string;
-  /** The domain write. Runs first inside the transaction; throw to refuse. */
+  /**
+   * The domain write. Runs inside the transaction after the authorship check;
+   * throw to refuse. `act` is what was decided (a reviewer's approve or reject,
+   * the version finalized): it goes into the ledger payload AND onto the
+   * electronic_signatures manifest, so the signature row says what it signed.
+   */
   write: (
     client: PoolClient,
     meaning: ProtocolSignMeaning,
-  ) => Promise<{ payload?: Record<string, unknown>; body: Record<string, unknown> }>;
+  ) => Promise<{ act?: Record<string, unknown>; body: Record<string, unknown> }>;
 }
 
 /** What the signer is told for each re-authentication refusal (verifyReauth's codes). */
@@ -88,6 +95,43 @@ function asReauth(raw: unknown): { password?: string; totp?: string } | undefine
     ...(typeof r.password === 'string' ? { password: r.password } : {}),
     ...(typeof r.totp === 'string' && r.totp.length > 0 ? { totp: r.totp } : {}),
   };
+}
+
+const SOD_UNVERIFIED_MESSAGE =
+  'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.';
+
+async function checkMeaningAgainstAuthorship(
+  client: PoolClient,
+  target: string,
+  orgId: number,
+  userId: number,
+  meaning: ProtocolSignMeaning,
+): Promise<void> {
+  try {
+    if (meaning === 'authorship') {
+      // SoD does not examine an authorship signature, so the claim to be an
+      // author is checked here instead of being taken on the signer's word.
+      const authorship = await resolveTargetAuthors(target, orgId, client);
+      if (!authorship.authors.includes(userId)) {
+        throw new ProtocolSignatureRefusal(
+          403,
+          'NOT_AN_AUTHOR',
+          'You are not an author of this protocol, so you cannot sign it as its author. Sign as approval or responsibility. Nothing was signed.',
+        );
+      }
+    } else {
+      await assertSignerIsNotAuthor(target, orgId, userId, { command: 'sign', meaning, client });
+    }
+  } catch (err) {
+    if (err instanceof ProtocolSignatureRefusal) throw err;
+    if (err instanceof SeparationOfDutiesError) throw new ProtocolSignatureRefusal(403, err.code, err.message);
+    if (err instanceof SeparationOfDutiesAuthorUnresolvedError) throw new ProtocolSignatureRefusal(409, err.code, err.message);
+    // The check did not run (SeparationOfDutiesUnverifiedError), or the
+    // authorship lookup itself failed. The cause is internal, so it is logged
+    // and the signer gets the canonical handler's sentence (ci:server-error-leaks).
+    console.error('[protocol-signature] separation of duties unverified:', err instanceof Error ? err.message : err);
+    throw new ProtocolSignatureRefusal(503, 'SEPARATION_OF_DUTIES_UNVERIFIED', SOD_UNVERIFIED_MESSAGE);
+  }
 }
 
 export async function signProtocolAct(input: ProtocolSignatureInput): Promise<Record<string, unknown>> {
@@ -125,32 +169,10 @@ export async function signProtocolAct(input: ProtocolSignatureInput): Promise<Re
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, orgId);
-    const { payload = {}, body } = await input.write(client, meaning);
+    await checkMeaningAgainstAuthorship(client, target, orgId, userId, meaning);
+    const { act = {}, body } = await input.write(client, meaning);
 
-    try {
-      if (meaning === 'authorship') {
-        // SoD does not examine an authorship signature, so the claim to be an
-        // author is checked here instead of being taken on the signer's word.
-        const authorship = await resolveTargetAuthors(target, orgId, client);
-        if (!authorship.authors.includes(userId)) {
-          throw new ProtocolSignatureRefusal(
-            403,
-            'NOT_AN_AUTHOR',
-            'You are not an author of this protocol, so you cannot sign it as its author. Sign as approval or responsibility. Nothing was signed.',
-          );
-        }
-      } else {
-        await assertSignerIsNotAuthor(target, orgId, userId, { command: 'sign', meaning, client });
-      }
-    } catch (err) {
-      if (err instanceof ProtocolSignatureRefusal) throw err;
-      if (err instanceof SeparationOfDutiesError) throw new ProtocolSignatureRefusal(403, err.code, err.message);
-      if (err instanceof SeparationOfDutiesAuthorUnresolvedError) throw new ProtocolSignatureRefusal(409, err.code, err.message);
-      if (err instanceof SeparationOfDutiesUnverifiedError) throw new ProtocolSignatureRefusal(503, err.code, err.message);
-      throw err;
-    }
-
-    const signedPayload = { ...payload, meaning };
+    const signedPayload = { ...act, meaning };
     const gov = await recordGovernedAction(client, {
       orgId,
       userId,
@@ -175,6 +197,7 @@ export async function signProtocolAct(input: ProtocolSignatureInput): Promise<Re
       secondFactorVerified: Boolean(reauth?.totp),
       ipAddress: input.ipAddress,
       occurredAt: new Date(),
+      ...(Object.keys(act).length > 0 ? { extraManifest: { act } } : {}),
     });
     await client.query('COMMIT');
     return {

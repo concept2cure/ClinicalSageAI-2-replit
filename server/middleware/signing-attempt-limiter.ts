@@ -24,12 +24,22 @@ function signerId(req: Request): string {
   return Number.isFinite(n) ? String(n) : 'anonymous';
 }
 
+// One limiter per scope. express-rate-limit keeps its counts in the instance's
+// own store, so two instances under one scope name would each allow the full
+// budget: the protocol finalize and disposition routers, built separately,
+// gave a signer 20 guesses per window where the scope promised 10.
+const byScope = new Map<string, ReturnType<typeof rateLimit>>();
+
 /**
- * @param scope   keys the budget, so one surface's attempts do not spend another's
+ * @param scope   keys the budget, so one surface's attempts do not spend another's;
+ *                every caller naming the same scope shares one budget (and the
+ *                first caller's message)
  * @param message the body a refused attempt receives, in the caller's own vocabulary
  */
 export function signingAttemptLimiter(scope: string, message: Record<string, unknown>) {
-  return rateLimit({
+  const existing = byScope.get(scope);
+  if (existing) return existing;
+  const limiter = rateLimit({
     windowMs: 5 * 60 * 1000,
     max: 10,
     standardHeaders: true,
@@ -37,4 +47,6 @@ export function signingAttemptLimiter(scope: string, message: Record<string, unk
     keyGenerator: (req: Request) => `${scope}:user:${signerId(req)}`,
     message,
   });
+  byScope.set(scope, limiter);
+  return limiter;
 }

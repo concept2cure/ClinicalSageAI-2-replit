@@ -514,7 +514,7 @@ router.post('/documents/:id/finalize', requireEditorAccess, signingAttempts, asy
       role: String((req as any).userRole ?? (req as any).user?.role ?? ''),
       write: async (client) => {
         const result = await finalizeProtocolTx(client, orgId, userId, id);
-        return { payload: { version: result.version }, body: { documentId: id, ...result } };
+        return { act: { finalized: true, protocolVersion: result.version }, body: { documentId: id, ...result } };
       },
     });
     recordProtocolFinalized();

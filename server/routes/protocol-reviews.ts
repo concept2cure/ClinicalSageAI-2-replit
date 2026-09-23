@@ -184,9 +184,10 @@ router.patch('/assignments/:id/disposition', requireEditorAccess, signingAttempt
       write: async (client, meaning) => {
         const r = await setDispositionTx(client, orgId, id, parsed.data.disposition, userId, meaning);
         return {
-          payload: {
+          act: {
             disposition: r.disposition,
             protocolDocumentId: r.protocolDocumentId,
+            protocolVersion: r.protocolVersion,
             ...(r.onBehalfOf ? { recordedOnBehalfOf: r.onBehalfOf } : {}),
           },
           body: { assignmentId: id, disposition: r.disposition },

@@ -102,7 +102,7 @@ vi.mock('../../services/protocol-development/protocol-development-service', asyn
 const setDispositionTx = vi.fn(async () => {
   if (h.dispositionFail) throw h.dispositionFail;
   h.log.push('DISPOSITION');
-  return { id: 9, disposition: 'approve', protocolDocumentId: 5, reviewerName: 'Dr. R', onBehalfOf: null };
+  return { id: 9, disposition: 'approve', protocolDocumentId: 5, protocolVersion: '0.3', reviewerName: 'Dr. R', onBehalfOf: null };
 });
 vi.mock('../../services/protocol-reviews/protocol-reviews-service', async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
@@ -111,7 +111,7 @@ vi.mock('../../services/protocol-reviews/protocol-reviews-service', async (orig)
 
 import protocolDevelopment from '../protocol-development';
 import protocolReviews from '../protocol-reviews';
-import { SeparationOfDutiesError } from '../../services/governance/separation-of-duties';
+import { SeparationOfDutiesError, SeparationOfDutiesUnverifiedError } from '../../services/governance/separation-of-duties';
 import { ProtocolReviewError } from '../../services/protocol-reviews/protocol-reviews-service';
 
 const app = express();
@@ -178,10 +178,12 @@ describe('POST /documents/:id/finalize is a real electronic signature', () => {
   it('finalizes, checks independence, and writes the ledger AND the signature row in one transaction', async () => {
     const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
+    // Authorship is checked before the finalization writes anything, so the
+    // act's own rows cannot make the signer an author of what they sign.
     expect(h.log).toEqual([
       'BEGIN',
-      'FINALIZE',
       'AUTHORS',
+      'FINALIZE',
       'LEDGER:sign:protocol-document:5',
       'SIGNATURE:protocol-document:5',
       'COMMIT',
@@ -212,6 +214,8 @@ describe('POST /documents/:id/finalize is a real electronic signature', () => {
       secondFactorVerified: false,
     });
     expect((sig[1].payload as Record<string, unknown>).meaning).toBe('authorship');
+    // The signature row itself says which version was finalized.
+    expect(sig[1].extraManifest).toEqual({ act: { finalized: true, protocolVersion: '1.0' } });
     expect(r.body).toMatchObject({ documentId: 5, version: '1.0', signatureId: 314, meaning: 'authorship' });
   });
 
@@ -226,7 +230,7 @@ describe('POST /documents/:id/finalize is a real electronic signature', () => {
     const r = await finalize({ reason: REASON, meaning: 'authorship', reauth: REAUTH });
     expect(r.status).toBe(403);
     expect(r.body.error.code).toBe('NOT_AN_AUTHOR');
-    expect(h.log).toEqual(['BEGIN', 'FINALIZE', 'AUTHORS', 'ROLLBACK']);
+    expect(h.log).toEqual(['BEGIN', 'AUTHORS', 'ROLLBACK']);
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });
 
@@ -252,12 +256,25 @@ describe('POST /documents/:id/finalize is a real electronic signature', () => {
     expect(h.log).toEqual([]);
   });
 
-  it('an author approving their own protocol is refused, and the finalization rolls back', async () => {
+  it('an author approving their own protocol is refused before the finalization runs', async () => {
     h.sod = new SeparationOfDutiesError('you are an author of this record');
     const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
     expect(r.status).toBe(403);
-    expect(h.log).toEqual(['BEGIN', 'FINALIZE', 'ROLLBACK']);
+    expect(h.log).toEqual(['BEGIN', 'ROLLBACK']);
     expect(recordGovernedAction).not.toHaveBeenCalled();
+  });
+
+  it('an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned', async () => {
+    h.sod = new SeparationOfDutiesUnverifiedError('protocol-document:5', 'database error 57P01');
+    const err = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const r = await finalize({ reason: REASON, meaning: 'approval', reauth: REAUTH });
+    expect(r.status).toBe(503);
+    expect(r.body.error.code).toBe('SEPARATION_OF_DUTIES_UNVERIFIED');
+    expect(r.body.error.message).toMatch(/could not be verified, so nothing was signed/);
+    expect(JSON.stringify(r.body)).not.toMatch(/57P01|database error/);
+    expect(err).toHaveBeenCalled();
+    expect(h.log).toEqual(['BEGIN', 'ROLLBACK']);
+    err.mockRestore();
   });
 
   it('if the signature row cannot be written, nothing is committed', async () => {
@@ -292,20 +309,24 @@ describe('PATCH /assignments/:id/disposition is a real electronic signature', ()
     expect(setDispositionTx).toHaveBeenCalledWith(client, 2, 9, 'approve', 11, 'review');
     expect(h.log).toEqual([
       'BEGIN',
-      'DISPOSITION',
       'SOD',
+      'DISPOSITION',
       'LEDGER:sign:protocol-review-assignment:9',
       'SIGNATURE:protocol-review-assignment:9',
       'COMMIT',
     ]);
     expect(r.body).toMatchObject({ assignmentId: 9, disposition: 'approve', signatureId: 314, meaning: 'review' });
+    // The decision is on the signature row, not only in the ledger payload: an
+    // inspector reading electronic_signatures sees what the reviewer signed.
+    const sig = persistGovernedSignSignature.mock.calls[0] as unknown as [unknown, Record<string, unknown>];
+    expect(sig[1].extraManifest).toEqual({ act: { disposition: 'approve', protocolDocumentId: 5, protocolVersion: '0.3' } });
   });
 
   it('a review assigned to someone else is refused and rolled back', async () => {
     h.dispositionFail = new ProtocolReviewError('FORBIDDEN', 'This review is assigned to another user.');
     const r = await disposition({ disposition: 'approve', reason: REASON, meaning: 'review', reauth: REAUTH });
     expect(r.status).toBe(403);
-    expect(h.log).toEqual(['BEGIN', 'ROLLBACK']);
+    expect(h.log).toEqual(['BEGIN', 'SOD', 'ROLLBACK']);
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });
 
