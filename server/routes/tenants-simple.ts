@@ -10,6 +10,7 @@ import { requirePlatformAdmin, isPlatformAdmin } from '../middleware/requirePlat
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
+import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
 import { pool } from '../db';
 import {
   cancelDeletion,
@@ -192,6 +193,18 @@ router.post('/', requirePlatformAdmin, async (req, res) => {
 
     const newTenant = result[0];
     log.debug('Created tenant in database:', newTenant);
+
+    // Launch catalog on by default (docs/LAUNCH_DEFINITION_OF_DONE.md, D2: "six
+    // apps on by default for a NEW ORGANISATION" — not only a self-serve one).
+    // This path created tenants with no launch grants at all until 2026-09-22.
+    // It runs under the system scope ('/api/tenants' is in SYSTEM_SCOPE_PREFIXES),
+    // which RLS lets write the new tenant's module_subscriptions rows — proven on
+    // a deploy-shaped database by tests/db/signup-launch-catalog.dbtest.ts. A
+    // failure does not fail tenant creation (the tenant must exist to be repaired);
+    // provisionLaunchModules logs it as one error line with the repair command.
+    if (newTenant?.id != null) {
+      await provisionLaunchModules(Number(newTenant.id), { actorEmail: null });
+    }
 
     // Fire-and-forget: seed every regulatory precedent pattern library for
     // the new org. The seeders are idempotent and the orchestrator never

@@ -700,7 +700,7 @@ ${documentContent}`,
       organizationId?: string | number;
       userId?: string | number;
     }
-  ): Promise<string> {
+  ): Promise<{ content: string; provider: string; model: string }> {
     const gateway = getGateway();
 
     const messages: { role: 'system' | 'user'; content: string }[] = [];
@@ -723,7 +723,9 @@ ${documentContent}`,
       callerModule: 'AnaDocumentDraftingService.quickComplete',
     });
 
-    return response.content;
+    // The model that served, for the caller's provenance record: the pin above
+    // is a preference the gateway may fall back from, not a fact.
+    return { content: response.content, provider: response.provider, model: response.model };
   }
 }
 

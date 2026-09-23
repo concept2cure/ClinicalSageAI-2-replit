@@ -12,11 +12,7 @@
  * refusal surfaces as a structured `failed` compilation, not a bare 500.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import JSZip from 'jszip';
-import { createMockRequest, createMockResponse } from '../setup';
+import { createMockResponse } from '../setup';
 
 const { poolQuery, assembleSequenceMock } = vi.hoisted(() => ({
   poolQuery: vi.fn(),
@@ -28,94 +24,22 @@ vi.mock('../../server/db/requestDb', () => ({ requestDb: () => ({ query: poolQue
 // The route dynamic-imports the canonical assembler; intercept it here so the
 // test drives the ROUTE's translation of a real assembly result, not the
 // assembler itself (which has its own PGlite journey).
-vi.mock('../../server/services/ectd/assemble-from-core', () => ({
-  assembleSequence: assembleSequenceMock,
-}));
+// assembledTransmitBlockers is the REAL one: the compile must report what
+// transmit refuses on in transmit's own words, and a copy here would not show it.
+vi.mock('../../server/services/ectd/assemble-from-core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../server/services/ectd/assemble-from-core')>();
+  return { assembleSequence: assembleSequenceMock, assembledTransmitBlockers: actual.assembledTransmitBlockers };
+});
 
 import ectdCompileRoutes from '../../server/routes/ectd-compile';
 
-function getHandler(routePath: string, method: 'get' | 'post') {
-  const layer = (ectdCompileRoutes as any).stack.find(
-    (l: any) => l.route?.path === routePath && l.route?.methods?.[method],
-  );
-  if (!layer) throw new Error(`Missing route ${method.toUpperCase()} ${routePath}`);
-  return layer.route.stack[layer.route.stack.length - 1].handle;
-}
+import {
+  ORG, UUID, PROGRAM, REAL_BACKBONE, selfContained, handlerOf, mockSpineOn,
+  makeBundleZip, makeFdaPackageZip, assembledResult, makeReq,
+} from './ectd-compile-spine.harness';
 
-const ORG = 7;
-const UUID = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
-const PROGRAM = {
-  id: UUID,
-  code: 'BX-204',
-  name: 'BX-204 Program',
-  product_name: 'Examplinib',
-  program_type: 'ind',
-};
-
-/** Placed leaves covering M2 + M3; one points at an unresolvable source. */
-const LEAVES = [
-  { section_code: '2.5', title: 'Clinical Overview', lifecycle_op: 'new', document_table: 'coauthor_documents', document_id: 100 },
-  { section_code: '3.2.S', title: 'Drug Substance', lifecycle_op: 'new', document_table: 'unified_documents', document_id: 200 },
-];
-
-function mockSpine(opts: { leaves?: unknown[]; program?: Record<string, unknown> } = {}) {
-  const leaves = opts.leaves ?? LEAVES;
-  const program = opts.program ?? PROGRAM;
-  poolQuery.mockReset();
-  poolQuery.mockImplementation(async (sql: string) => {
-    if (/FROM regulatory_programs/i.test(sql)) return { rows: [program] };
-    if (/FROM submissions/i.test(sql)) return { rows: [{ id: 55, application_type: 'ind' }] };
-    if (/FROM ectd_sequences/i.test(sql)) {
-      return { rows: [{ id: 9, sequence_number: '0000', region: 'fda' }] };
-    }
-    if (/count\(\*\)::int AS n FROM submission_leaves/i.test(sql)) {
-      return { rows: [{ n: leaves.length }] };
-    }
-    if (/FROM submission_leaves/i.test(sql)) return { rows: leaves };
-    return { rows: [] };
-  });
-}
-
-/** A real ZIP on disk whose index.xml the route must hand back verbatim. */
-async function makeBundleZip(indexXml: string): Promise<{ dir: string; zipPath: string }> {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-spine-test-'));
-  const zip = new JSZip();
-  zip.file('index.xml', indexXml);
-  zip.file('m2/2-5/clinical-overview.pdf', '%PDF-1.4 fake');
-  const zipPath = path.join(dir, 'BX-204-0000-fda.zip');
-  await fs.writeFile(zipPath, await zip.generateAsync({ type: 'nodebuffer' }));
-  return { dir, zipPath };
-}
-
-const REAL_BACKBONE =
-  '<?xml version="1.0" encoding="UTF-8"?>\n' +
-  '<!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">\n' +
-  '<ectd:ectd xmlns:ectd="http://www.ich.org/ectd" dtd-version="3.2"></ectd:ectd>';
-
-function assembledResult(zipPath: string, over: Record<string, unknown> = {}) {
-  return {
-    bundle: {
-      path: zipPath,
-      sha256: 'a'.repeat(64),
-      sizeBytes: 1234,
-      format: 'ectd',
-      dtdStatus: { required: ['ich-ectd-3-2.dtd'], present: [], missing: ['ich-ectd-3-2.dtd'], selfContained: false },
-    },
-    skipped: [],
-    materialized: 2,
-    unresolvedLeaves: [],
-    governanceManifestPath: path.join(path.dirname(zipPath), 'package-governance.sha256.json'),
-    cleanup: vi.fn(async () => {}),
-    ...over,
-  };
-}
-
-function makeReq(body: Record<string, unknown> = {}) {
-  const r = createMockRequest({ params: { projectIdent: UUID }, body }) as any;
-  r.tenantId = ORG;
-  r.user = { id: 3 };
-  return r;
-}
+const getHandler = (routePath: string, method: 'get' | 'post') => handlerOf(ectdCompileRoutes, routePath, method);
+const mockSpine = mockSpineOn(poolQuery);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -348,5 +272,209 @@ describe('POST /:projectIdent/compile — which identifier reaches <application-
     await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
 
     expect(assembleSequenceMock.mock.calls[0][0].applicationId).toBe('BX-204');
+  });
+});
+
+/* ── Click 4: what a compile hands back, and what it must not hide ──────────── */
+
+describe('POST /:projectIdent/compile — the package, not just its backbone', () => {
+  it('returns every file the package holds, the FDA regional backbone and the MD5 index', async () => {
+    mockSpine();
+    const { zipPath } = await makeFdaPackageZip();
+    const base = assembledResult(zipPath);
+    assembleSequenceMock.mockResolvedValue({
+      ...base,
+      bundle: {
+        ...base.bundle,
+        dtdStatus: selfContained,
+        // The packager names its own regional backbone (classifyRegionalBackbone).
+        regionalBackbone: { region: 'fda', file: 'm1/us/us-regional.xml', regionConformant: true },
+      },
+    });
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    const payload = res.json.mock.calls[0][0];
+
+    expect(payload.package.sha256).toBe('a'.repeat(64));
+    expect(payload.package.files).toEqual([
+      'index-md5.txt',
+      'index.xml',
+      'm1/us/1-1/form-fda-1571.pdf',
+      'm1/us/us-regional.xml',
+      'm3/3-2-s-4-2/control-of-drug-substance.pdf',
+      'util/index-md5.txt',
+    ]);
+    // Module 1 lives in the regional backbone, which index.xml only points at:
+    // without it the IND's forms are invisible in anything the surface renders.
+    expect(payload.package.regionalBackbone).toEqual({
+      path: 'm1/us/us-regional.xml',
+      xml: '<?xml version="1.0"?><fda-regional:fda-regional/>',
+    });
+    expect(payload.package.indexMd5).toBe('d41d8cd98f00b204e9800998ecf8427e');
+  });
+
+  it('a package whose PDFs were not converted to PDF/A is not ready, and names them', async () => {
+    mockSpine();
+    const { zipPath } = await makeFdaPackageZip();
+    const base = assembledResult(zipPath);
+    assembleSequenceMock.mockResolvedValue({
+      ...base,
+      bundle: {
+        ...base.bundle,
+        dtdStatus: selfContained,
+        submissionGrade: {
+          total: 2, pdfLeaves: 2, pdfaConverted: 0, allPdfA: false,
+          notConverted: ['m1/us/1-1/form-fda-1571.pdf', 'm3/3-2-s-4-2/control-of-drug-substance.pdf'],
+        },
+      },
+    });
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    const payload = res.json.mock.calls[0][0];
+
+    expect(payload.submissionReady).toBe(false);
+    const blockers = payload.submissionBlockers.join(' ');
+    expect(blockers).toMatch(/2 of 2 PDF leaf file\(s\) were not converted to PDF\/A/);
+    expect(blockers).toMatch(/form-fda-1571\.pdf/);
+    expect(payload.package.pdfa).toEqual({ pdfLeaves: 2, pdfaConverted: 0, allPdfA: false,
+      notConverted: ['m1/us/1-1/form-fda-1571.pdf', 'm3/3-2-s-4-2/control-of-drug-substance.pdf'],
+      agencyFormsAsIssued: [] });
+  });
+
+  it('an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure', async () => {
+    mockSpine();
+    const { zipPath } = await makeFdaPackageZip();
+    const base = assembledResult(zipPath);
+    assembleSequenceMock.mockResolvedValue({
+      ...base,
+      bundle: {
+        ...base.bundle,
+        dtdStatus: selfContained,
+        submissionGrade: {
+          total: 2, pdfLeaves: 2, pdfaConverted: 1, allPdfA: true, notConverted: [],
+          agencyFormsAsIssued: ['m1/us/1-1/form-fda-1571.pdf'],
+        },
+      },
+    });
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    const payload = res.json.mock.calls[0][0];
+
+    expect(payload.package.pdfa).toEqual({ pdfLeaves: 2, pdfaConverted: 1, allPdfA: true, notConverted: [],
+      agencyFormsAsIssued: ['m1/us/1-1/form-fda-1571.pdf'] });
+    expect(payload.submissionBlockers.join(' ')).not.toMatch(/PDF\/A/);
+  });
+
+  it('a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against', async () => {
+    mockSpine({ failInsert: true });
+    const { zipPath } = await makeFdaPackageZip();
+    const base = assembledResult(zipPath);
+    assembleSequenceMock.mockResolvedValue({ ...base, bundle: { ...base.bundle, dtdStatus: selfContained } });
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    const payload = res.json.mock.calls[0][0];
+
+    expect(payload.recorded).toBe(false);
+    expect(payload.submissionReady).toBe(false);
+    expect(payload.submissionBlockers.join(' ')).toMatch(/was not recorded/);
+    expect(payload.submissionBlockers.join(' ')).toMatch(/leaf_manifest/);
+  });
+
+});
+
+describe('POST /:projectIdent/compile — the record, the forms, the region', () => {
+  it('a recorded compilation says so', async () => {
+    mockSpine();
+    const { zipPath } = await makeFdaPackageZip();
+    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath));
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    expect(res.json.mock.calls[0][0].recorded).toBe(true);
+  });
+
+  it('a form filed at 1.1 satisfies the pack\'s per-form requirement by its form type', async () => {
+    // FDA's Module 1 v2.3 files every form at 1.1 and tells them apart by type;
+    // the ind:fda pack keys each form's presence as 1.1.1 / 1.1.2 / 1.1.3.
+    mockSpine({
+      pack: [{ key: '1.1', mandatory: true }, { key: '1.1.1', mandatory: true }, { key: '1.1.2', mandatory: true }],
+      leaves: [
+        { section_code: 'm1.1', title: 'Form FDA 1571', lifecycle_op: 'new', document_table: 'rendered_leaf_files', document_id: 5, document_type: 'form_1571' },
+      ],
+    });
+    const { zipPath } = await makeFdaPackageZip();
+    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath, { materialized: 1 }));
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    const payload = res.json.mock.calls[0][0];
+
+    const bySection = (code: string) => payload.validationResults.filter((v: any) => v.sectionCode === code).map((v: any) => v.rule);
+    expect(bySection('1.1.1')).toContain('REQUIRED_SECTION_OK');
+    // 1572 was never filed: its requirement stays unmet, however 1.1 is satisfied.
+    expect(bySection('1.1.2')).toContain('REQUIRED_SECTION_UNPLACED');
+  });
+
+  it('refuses a region that is not the region the sequence was created for', async () => {
+    mockSpine(); // the sequence is region 'fda'
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq({ region: 'EMA' }), res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json.mock.calls[0][0].error.code).toBe('REGION_MISMATCH');
+    expect(assembleSequenceMock).not.toHaveBeenCalled();
+  });
+
+  it('accepts the sequence\'s own region however it is spelled', async () => {
+    mockSpine();
+    const { zipPath } = await makeFdaPackageZip();
+    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath));
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq({ region: 'FDA' }), res);
+    expect(res.status).not.toHaveBeenCalledWith(409);
+    expect(res.json.mock.calls[0][0].region).toBe('fda');
+  });
+});
+
+describe('GET /:projectIdent/history — which sequence, and whether it can anchor the next one', () => {
+  it('names the sequence each compilation covered and whether it carries a leaf manifest', async () => {
+    mockSpine({
+      history: [{ id: 4, compilation_name: 'IND Compilation — BX-204', compilation_type: 'initial', status: 'completed',
+        version: '1.0', compiled_at: '2026-09-22T10:00:00Z', created_at: '2026-09-22T10:00:00Z', sequence_number: '0000', has_manifest: true }],
+    });
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/history', 'get')(makeReq(), res);
+    const select = poolQuery.mock.calls.find((c) => /FROM ectd_compilations/i.test(String(c[0])));
+    expect(String(select![0])).toMatch(/sequence_number/);
+    expect(String(select![0])).toMatch(/leaf_manifest IS NOT NULL AS has_manifest/);
+    expect(res.json.mock.calls[0][0].compilations[0]).toMatchObject({ sequence_number: '0000', has_manifest: true });
+  });
+
+  it('a history that could not be read is an error, never an empty history', async () => {
+    mockSpine({ failHistory: true });
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/history', 'get')(makeReq(), res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json.mock.calls[0][0].compilations).toBeUndefined();
+  });
+});
+
+describe('GET /:projectIdent/status — a program\'s readiness comes from what is placed', () => {
+  it('counts required sections covered by placed leaves, and names the sequence and its region', async () => {
+    mockSpine({
+      pack: [{ key: '2.5', mandatory: true }, { key: '3.2.S', mandatory: true }, { key: '3.2.P', mandatory: true }],
+    });
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/status', 'get')(makeReq(), res);
+    const payload = res.json.mock.calls[0][0];
+
+    const m2 = payload.modules.find((m: any) => m.moduleCode === 'm2');
+    const m3 = payload.modules.find((m: any) => m.moduleCode === 'm3');
+    expect(m2).toMatchObject({ requiredSections: 1, completedRequired: 1 });
+    expect(m3).toMatchObject({ requiredSections: 2, completedRequired: 1 });
+    // Placement, not approval: the basis is stated so 100% is never read as "approved".
+    expect(payload.readinessBasis).toBe('placed');
+    expect(payload.sequence).toEqual({ sequenceNumber: '0000', region: 'fda', leafCount: 2 });
   });
 });

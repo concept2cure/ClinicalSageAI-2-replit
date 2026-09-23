@@ -12,6 +12,7 @@ import { db } from './db';
 import jwt from 'jsonwebtoken';
 import { config } from './config/environment';
 import { verifyJwtWithRotation } from './utils/jwtVerify';
+import { isTokenRevoked } from './services/token-revocation';
 import { requireAccessTokenReason } from './middleware/tokenType';
 import { runWithPreAuthScope } from './db/tenantStore';
 import { establishRequestTenantScope } from './middleware/establishRequestTenantScope';
@@ -142,6 +143,11 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       // positively asserted, not inferred from the absence of known-bad ones.
       if (requireAccessTokenReason(decoded)) {
         return res.status(401).json({ error: 'Token is not valid for this operation' });
+      }
+
+      // AUTH-03: a signed-out session opens nothing (see authenticateToken).
+      if (await isTokenRevoked(token)) {
+        return res.status(401).json({ error: 'This session has ended. Sign in again.', code: 'SESSION_ENDED' });
       }
 
       if (!decoded.userId || !decoded.organizationId) {

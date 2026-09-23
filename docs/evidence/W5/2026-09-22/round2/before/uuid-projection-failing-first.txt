@@ -1,0 +1,252 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > carries the uuid half of the document reference 6ms
+   → coreLeafFromSubmissionLeaf is not a function
+ × server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > carries every CoreLeaf field and nothing else from the row 2ms
+   → coreLeafFromSubmissionLeaf is not a function
+ × server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > is the projection both submission_leaves packagers use — neither builds a CoreLeaf by hand 4ms
+   → server/services/ectd/package-from-core.ts reads its rows through coreLeafFromSubmissionLeaf: expected false to be true // Object.is equality
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+{
+  "timestamp": "2026-09-23T04:55:04.065Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 3 leaf file(s) rendered, 1 unresolved | sha256 aaaaaaaaaaaa…
+
+ × tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized" 1716ms
+   → expected [ 'LEAF_SOURCE_UNRESOLVED' ] to deeply equal [ 'REQUIRED_SECTION_OK' ]
+ × tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not 8ms
+   → expected [ '5.3.5.1', '5.3.5.2' ] to deeply equal [ '5.3.5.1' ]
+ × tests/routes/ectd-compile-vault-uuid.test.ts > GET /:projectIdent/status — a vault leaf is a placed document > counts the required section a vault leaf covers 4ms
+   → expected { moduleCode: 'm5', …(6) } to match object { requiredSections: 1, …(1) }
+(5 matching properties omitted from actual)
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+{
+  "timestamp": "2026-09-23T04:55:06.191Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 1,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 8,
+    "skipped": 1,
+    "unresolved": 0
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-09-23T04:55:06.250Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "44444444-4444-4444-8444-444444444444",
+        "reason": "vault document not found in this organization"
+      }
+    ]
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-09-23T04:55:06.250Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ × server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it 133ms
+   → expected [ { …(3) } ] to deeply equal []
+ × server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP 57ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > is placed and rendered, not "could not be materialized"
+AssertionError: expected [ 'LEAF_SOURCE_UNRESOLVED' ] to deeply equal [ 'REQUIRED_SECTION_OK' ]
+
+- Expected
++ Received
+
+  [
+-   "REQUIRED_SECTION_OK",
++   "LEAF_SOURCE_UNRESOLVED",
+  ]
+
+ ❯ tests/routes/ectd-compile-vault-uuid.test.ts:88:40
+     86|
+     87|     const at = payload.validationResults.filter((v: any) => v.sectionC…
+     88|     expect(at.map((v: any) => v.rule)).toEqual(['REQUIRED_SECTION_OK']…
+       |                                        ^
+     89|     expect(at[0].message).toMatch(/is placed and rendered/);
+     90|     expect(payload.validationResults.some((v: any) => v.rule === 'LEAF…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  tests/routes/ectd-compile-vault-uuid.test.ts > POST /:projectIdent/compile — a vault leaf the assembly packaged > an unresolved vault leaf is still named, by its own uuid — a resolved one beside it is not
+AssertionError: expected [ '5.3.5.1', '5.3.5.2' ] to deeply equal [ '5.3.5.1' ]
+
+- Expected
++ Received
+
+  [
+    "5.3.5.1",
++   "5.3.5.2",
+  ]
+
+ ❯ tests/routes/ectd-compile-vault-uuid.test.ts:117:55
+    115|
+    116|     const unresolved = payload.validationResults.filter((v: any) => v.…
+    117|     expect(unresolved.map((v: any) => v.sectionCode)).toEqual(['5.3.5.…
+       |                                                       ^
+    118|     expect(payload.submissionReady).toBe(false);
+    119|     const m5 = payload.modules.find((m: any) => m.moduleCode === 'm5');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/routes/ectd-compile-vault-uuid.test.ts > GET /:projectIdent/status — a vault leaf is a placed document > counts the required section a vault leaf covers
+AssertionError: expected { moduleCode: 'm5', …(6) } to match object { requiredSections: 1, …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "completedRequired": 1,
++   "completedRequired": 0,
+    "requiredSections": 1,
+  }
+
+ ❯ tests/routes/ectd-compile-vault-uuid.test.ts:134:16
+    132|
+    133|     const m5 = payload.modules.find((m: any) => m.moduleCode === 'm5');
+    134|     expect(m5).toMatchObject({ requiredSections: 1, completedRequired:…
+       |                ^
+    135|   });
+    136| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > carries the uuid half of the document reference
+TypeError: coreLeafFromSubmissionLeaf is not a function
+ ❯ server/services/ectd/__tests__/core-leaf-projection.test.ts:41:12
+     39| describe('coreLeafFromSubmissionLeaf', () => {
+     40|   it('carries the uuid half of the document reference', () => {
+     41|     expect(coreLeafFromSubmissionLeaf(row).documentUuid).toBe('3333333…
+       |            ^
+     42|   });
+     43|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > carries every CoreLeaf field and nothing else from the row
+TypeError: coreLeafFromSubmissionLeaf is not a function
+ ❯ server/services/ectd/__tests__/core-leaf-projection.test.ts:56:12
+     54|       documentType: 'cer',
+     55|     };
+     56|     expect(coreLeafFromSubmissionLeaf(row)).toEqual(expected);
+       |            ^
+     57|   });
+     58|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/ectd/__tests__/core-leaf-projection.test.ts > coreLeafFromSubmissionLeaf > is the projection both submission_leaves packagers use — neither builds a CoreLeaf by hand
+AssertionError: server/services/ectd/package-from-core.ts reads its rows through coreLeafFromSubmissionLeaf: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ectd/__tests__/core-leaf-projection.test.ts:66:118
+     64|     ]) {
+     65|       const src = readFileSync(path.join(root, rel), 'utf8');
+     66|       expect(/\bcoreLeafFromSubmissionLeaf\b/.test(src), `${rel} reads…
+       |                                                                                                                      ^
+     67|       // A hand-built projection of the row is how the two drifted.
+     68|       expect(/lifecycleOp:\s*l\.lifecycleOp/.test(src), `${rel} builds…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+AssertionError: expected [ { …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "reason": "no resolvable source file for the leaf document",
++     "sectionId": "clinical-evaluation",
++     "source": "II.6.1.g",
++   },
++ ]
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts:104:25
+    102|     try {
+    103|       expect(r.unresolvedLeaves).toEqual([]);
+    104|       expect(r.skipped).toEqual([]);
+       |                         ^
+    105|       const zip = await JSZip.loadAsync(await fs.readFile(r.bundle.pat…
+    106|       const manifest = JSON.parse(await zip.file('manifest.json')!.asy…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts:134:23
+    132|         { sectionId: 'clinical-evaluation', source: 'II.6.1.g', reason…
+    133|       ]);
+    134|       expect(r.ready).toBe(false);
+       |                       ^
+    135|     } finally {
+    136|       await r.cleanup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  8 failed (8)
+   Start at  04:55:01
+   Duration  4.29s (transform 2.01s, setup 216ms, import 2.05s, tests 4.06s, environment 0ms)
+

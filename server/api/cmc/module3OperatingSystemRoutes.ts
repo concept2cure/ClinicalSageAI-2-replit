@@ -28,7 +28,7 @@ import {
   sha256CanonicalJson,
   BINDING_BASIS,
 } from '../../services/part11/signature-persistence';
-import { SIGNATURE_MEANINGS, resolveActorUserId } from './governance';
+import { SIGNATURE_MEANINGS, signatureMeaningSchema, resolveActorUserId } from './governance';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -736,15 +736,28 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
           ? (req.body as any).reason.trim()
           : `Approved Module 3 section ${sectionKey}`;
       /* §11.50(a)(3): the signed record must show the MEANING of the signature.
-         The signer's form has always offered one and this endpoint always wrote
-         the constant 'approval', so a signature applied as review or
-         responsibility was recorded as an approval. It is parsed here rather
-         than trusted: an unrecognised value falls back to 'approval' (what this
-         endpoint does) instead of writing whatever arrived into a signed
-         record. */
-      const signMeaning = SIGNATURE_MEANINGS.includes((req.body ?? {}).meaning)
-        ? ((req.body as { meaning: SignatureMeaning }).meaning)
-        : 'approval';
+         An unrecognised value used to fall back to the constant 'approval',
+         which recorded a meaning the signer did not declare: a caller sending
+         'TECHNICAL_APPROVAL' — a token the GCC signature-role vocabulary in
+         db/migrations/080 and client/src/concept2cure/v2/registryModel.ts both
+         carry — got 'approval' written into electronic_signatures and into the
+         hash-chained ledger, and nothing said so. Substituting a meaning is
+         fabricating the one field §11.50(a)(3) exists to preserve, so this
+         refuses instead, exactly as the sibling specification-approve and
+         batch-release endpoints do through the same schema. SIGNATURE_MEANINGS
+         is the regulation's own list (review, approval, responsibility,
+         authorship) and is what the CMC signature form offers. */
+      const meaningParse = signatureMeaningSchema.safeParse((req.body ?? {}).meaning);
+      if (!meaningParse.success) {
+        return res.status(400).json({
+          success: false,
+          error: 'INVALID_SIGNATURE_MEANING',
+          detail:
+            `A signature meaning must be one of ${SIGNATURE_MEANINGS.join(', ')} ` +
+            '(21 CFR 11.50(a)(3)). The signature was not recorded.',
+        });
+      }
+      const signMeaning: SignatureMeaning = meaningParse.data;
 
       // §11.10(e) hash-chained governed-action record (audit_logs + c2c_ana_actions),
       // the same ledger the specification-approve and batch-release endpoints write.
@@ -982,12 +995,18 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
       // than reaching for one shape: the gate refusal carries the governed
       // state it refused on, and 'nothing-placeable' carries the per-section
       // reasons nothing could be filed. Dropping the latter would leave the
-      // caller a bare "placed nothing" with no remedy.
-      return res.status(409).json(
-        result.refusedBy === 'final-export-gate'
-          ? { success: false, error: result.error, data: result.data }
-          : { success: false, error: result.error, skipped: result.skipped },
-      );
+      // caller a bare "placed nothing" with no remedy. 'wrong-submission-type'
+      // carries the vocabulary the target actually files on, so the answer
+      // names the target rather than the codes it rejected.
+      if (result.refusedBy === 'final-export-gate') {
+        return res.status(409).json({ success: false, error: result.error, data: result.data });
+      }
+      if (result.refusedBy === 'wrong-submission-type') {
+        return res
+          .status(409)
+          .json({ success: false, error: result.error, vocabulary: result.vocabulary });
+      }
+      return res.status(409).json({ success: false, error: result.error, skipped: result.skipped });
     }
     return res.json({ success: true, data: result });
   } catch (error) {

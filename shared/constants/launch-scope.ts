@@ -101,8 +101,16 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
   {
     id: 'submission-readiness',
     label: 'Submission Readiness',
-    surfaces: ['dispatch-readiness', 'orchestration', 'inconsistency'],
-    modules: ['dispatch-readiness', 'orchestration', 'inconsistency'],
+    // The deterministic dispatch gate, which is keyed to the program's sequence.
+    // The Orchestration and Inconsistency boards are not in this release: both
+    // read the integer project spine, which a program reaches only through the
+    // anchor intake writes when the organisation has exactly one client
+    // workspace, and signup creates none. In every organisation signup creates,
+    // the Orchestration board found no program and the Inconsistency board
+    // refused the program's id (VSR-001 §14.3, decided §15). Their code stays;
+    // they return when the review and the scan read the program spine.
+    surfaces: ['dispatch-readiness'],
+    modules: ['dispatch-readiness'],
   },
   {
     id: 'qms',

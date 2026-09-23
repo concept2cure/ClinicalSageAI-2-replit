@@ -17,10 +17,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { parseEnvFile, readEnvFiles, resolveEnv } from './env-files.mjs';
+import { passwordLogin, runCredential } from '../../tests/validation/lib/harness.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-22';
+const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-23b';
 const BASE_URL = (process.env.VALIDATION_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
 const OUT = path.join(ROOT, 'docs', 'evidence', 'W3', RUN_DATE, 'IQ');
 fs.mkdirSync(OUT, { recursive: true });
@@ -193,18 +194,41 @@ await record('IQ-09', 'Application boots and reports readiness honestly', 'GET /
 });
 
 let token = null;
-await record('IQ-10', 'Development authentication policy is as configured', 'POST /api/auth/dev-login answers only when NODE_ENV=development and ALLOW_DEV_AUTH=1 (server/auth/dev-auth-policy.ts); in production it must be 404', async () => {
+await record('IQ-10', 'Development authentication policy is as configured', 'POST /api/auth/dev-login answers only when NODE_ENV=development and ALLOW_DEV_AUTH=1 (server/auth/dev-auth-policy.ts); anywhere else — production included — it must be 404', async () => {
   const r = await fetch(`${BASE_URL}/api/auth/dev-login`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: BASE_URL }, body: JSON.stringify({ email: process.env.VALIDATION_USER_EMAIL || 'jonmichaelpsmith@gmail.com' }) });
   const j = await r.json().catch(() => ({}));
-  token = j.accessToken ?? null;
+  const devAuthConfigured = env.NODE_ENV === 'development' && env.ALLOW_DEV_AUTH === '1';
+  const expected = devAuthConfigured ? 200 : 404;
   const observed = `dev-login → ${r.status} (NODE_ENV=${env.NODE_ENV ?? 'unset'}, ALLOW_DEV_AUTH=${env.ALLOW_DEV_AUTH ?? 'unset'})`;
-  if (env.NODE_ENV === 'development' && env.ALLOW_DEV_AUTH === '1' && r.status !== 200) throw fail(observed);
-  return { status: 'deviation', observed: `${observed}. The production refusal (404) cannot be exercised on a development install; verify on staging with NODE_ENV=production.` };
+  if (r.status !== expected) throw fail(`${observed}; this configuration must answer ${expected}`);
+  // The refusal is the contract production must meet; observing it is a pass
+  // wherever it is observed. v0.3 recorded it as a deviation even then, so the
+  // check could not pass on staging either.
+  if (!devAuthConfigured) return `${observed}: refused, as a server without development authentication must`;
+  token = j.accessToken ?? null;
+  return { status: 'deviation', observed: `${observed}. This installation answers dev-login by configuration (development with ALLOW_DEV_AUTH=1); the refusal is verified on a server without it.` };
 });
 
+/**
+ * The run identity's session for the checks that need one: dev-login's where
+ * the configuration provides it (IQ-10; never a dev-login that answered against
+ * its configuration), otherwise a password sign-in completing the TOTP
+ * challenge (VALIDATION_USER_PASSWORD, VALIDATION_USER_TOTP_SECRET) through the
+ * same session opener as the OQ harness. Without it IQ-11 could only run where
+ * dev-login exists, which excludes every server it matters on.
+ */
+async function sessionToken() {
+  if (token) return token;
+  const credential = runCredential();
+  if (!credential) return null;
+  token = (await passwordLogin(BASE_URL, credential)).accessToken;
+  return token;
+}
+
 await record('IQ-11', 'Launch scope is enforced by the server', 'LAUNCH_SCOPE_ENFORCE=on and GET /api/module-subscriptions/navigation reports launchScope.enforced=true', async (rec) => {
-  if (!token) throw deviation('no session (IQ-10)');
-  const r = await fetch(`${BASE_URL}/api/module-subscriptions/navigation`, { headers: { Authorization: `Bearer ${token}`, Origin: BASE_URL } });
+  const session = await sessionToken();
+  if (!session) throw deviation('no session: dev-login is not a session source under this configuration (IQ-10) and VALIDATION_USER_PASSWORD is not set');
+  const r = await fetch(`${BASE_URL}/api/module-subscriptions/navigation`, { headers: { Authorization: `Bearer ${session}`, Origin: BASE_URL } });
   const j = await r.json().catch(() => ({}));
   const arr = Object.values(j).find((v) => Array.isArray(v) && v.some((x) => x && typeof x === 'object' && 'entitled' in x)) ?? [];
   const locked = arr.filter((v) => v.source === 'launch-scope').length;

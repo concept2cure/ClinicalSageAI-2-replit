@@ -34456,7 +34456,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Enforce a market's FORMATTING rules against a set of files. Given a market spec id (e.g. 'us-ectd', 'eu-ectd') and a list of file descriptors (fileName, optional filePath, fileSizeBytes, fileFormat, encrypted), it deterministically reports every formatting violation — file-naming pattern, name/path length caps, accepted file types, per-file and total size limits, and encryption ban — with each finding's rule aligned to the validation-rule-corpus id. Read-only; it checks bytes-level conformance before a filing, it does not transmit. Use it to pre-flight an assembled package against the target market.",
+      "description": "Check a market's FORMATTING rules (file-naming pattern, name/path length caps, accepted file types, per-file and total size limits, encryption ban) against a list of file descriptors, given a market spec id (e.g. 'us-ectd', 'eu-ectd'). It does NOT read file bytes: sizes and encryption you supply are treated as claims — a declared violation is reported, but a declared clean value never counts as checked, so those rules come back in notAssessed. The result carries verdict (conformant | conformant_with_warnings | nonconformant | not_assessed); when it is not_assessed, say which rules were not checked and do not call the files conformant. Read-only; it does not transmit.",
       "scope": "global",
       "governed": false,
       "renderer": "findings-list",

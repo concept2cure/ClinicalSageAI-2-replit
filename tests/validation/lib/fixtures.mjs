@@ -44,8 +44,16 @@ export async function createProgram(api, expect, name, programType = 'ind') {
   // Intake creates the program's canonical submission spine in the same
   // transaction and reports it as meta.submissionId (routes/c2c/projects.ts).
   // Carried on the returned program so a protocol that needs "the program's
-  // submission" can use it instead of creating an unrelated one.
-  return { ...r.json.data, spineSubmissionId: r.json.meta?.submissionId ?? null };
+  // submission" can use it instead of creating an unrelated one. Intake also
+  // reports the program's anchor on the integer project spine, or why there is
+  // none (services/c2c/program-project-anchor.ts).
+  return {
+    ...r.json.data,
+    spineSubmissionId: r.json.meta?.submissionId ?? null,
+    projectAnchorId: r.json.meta?.projectAnchorId ?? null,
+    projectAnchorSkipped: r.json.meta?.projectAnchorSkipped ?? null,
+    projectAnchorDetail: r.json.meta?.projectAnchorDetail ?? null,
+  };
 }
 
 export async function ingestPdf(api, expect, { programId, title, documentType = 'PROTOCOL', text }) {

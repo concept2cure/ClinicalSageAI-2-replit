@@ -159,9 +159,13 @@ describe('POST /licensing/trials', () => {
 
 describe('POST /licensing/trials/end — lapse, never revoke', () => {
   it('THE DISTINCTION: keeps the grant enabled and moves the expiry to now', async () => {
-    dbQuery
-      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-      .mockResolvedValueOnce({ rows: [{ module_id: 'pv-cockpit' }] });
+    /* /end now READS the grant before writing (tenant, module, then the row
+       itself) and refuses anything that is not an enabled grant carrying an end
+       date — a revocation, a perpetual grant, or no grant at all. Before that
+       read existed, /end on a revoked module rewrote it to enabled and
+       reported "trial ended". This case is a live trial, so the write goes
+       ahead. */
+    targetsResolve(FUTURE);
     const r = res();
     await handler('post', '/licensing/trials/end')(
       req({ organizationId: 1, moduleId: 'pv-cockpit', reason: 'customer declined' }),
@@ -177,9 +181,13 @@ describe('POST /licensing/trials/end — lapse, never revoke', () => {
   });
 
   it('says the plan is unaffected, so nobody reads it as a revocation', async () => {
-    dbQuery
-      .mockResolvedValueOnce({ rows: [{ id: 1 }] })
-      .mockResolvedValueOnce({ rows: [{ module_id: 'pv-cockpit' }] });
+    /* /end now READS the grant before writing (tenant, module, then the row
+       itself) and refuses anything that is not an enabled grant carrying an end
+       date — a revocation, a perpetual grant, or no grant at all. Before that
+       read existed, /end on a revoked module rewrote it to enabled and
+       reported "trial ended". This case is a live trial, so the write goes
+       ahead. */
+    targetsResolve(FUTURE);
     const r = res();
     await handler('post', '/licensing/trials/end')(
       req({ organizationId: 1, moduleId: 'pv-cockpit', reason: 'customer declined' }),

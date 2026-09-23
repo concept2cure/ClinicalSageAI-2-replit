@@ -547,9 +547,10 @@ function parseCitations(content, references) {
  */
 async function extractEntities(content, sectionCode, submissionId) {
   try {
-    // Use OpenAI to extract entities
+    // Knowledge-graph entity extraction (an index, not a governed record).
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'structured_output',
+      callerModule: 'indCopilot.extractEntities',
       messages: [
         {
           role: 'system',
@@ -603,9 +604,12 @@ async function extractEntities(content, sectionCode, submissionId) {
  */
 async function validateContent(content, sectionCode, context) {
   try {
-    // Use OpenAI to validate content
+    // Regulatory review of a draft: only a model approved for high-risk
+    // regulatory work may serve it (approved-models.ts). It pinned gpt-4o as a
+    // 'general' request, which the gateway's approval check never sees.
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'regulatory_review',
+      callerModule: 'indCopilot.validateContent',
       messages: [
         {
           role: 'system',
@@ -677,9 +681,14 @@ export async function generateSectionContent(submissionId, sectionCode, options 
     // 2. Create prompt for AI
     const prompt = createPrompt(sectionCode, context, guidelines, references);
 
-    // 3. Generate content using OpenAI
+    // 3. Draft the section. document_drafting: the gateway serves it with a
+    // model approved for high-risk regulatory drafting, and refuses a caller-
+    // named model that is not (options.model comes from the request body).
+    // It defaulted to gpt-4o as a 'general' request.
     const aiResult = await ai.chat({
-      model: options.model || 'gpt-4o',
+      taskType: 'document_drafting',
+      callerModule: 'indCopilot.generateSectionContent',
+      model: options.model,
       messages: [
         {
           role: 'system',
@@ -709,7 +718,8 @@ export async function generateSectionContent(submissionId, sectionCode, options 
     await supabase.from('ind_generation_events').insert({
       submission_id: submissionId,
       section_code: sectionCode,
-      model: options.model || 'gpt-4o',
+      // What served, not what was asked for (it recorded 'gpt-4o' by default).
+      model: aiResult.model,
       prompt_length: prompt.length,
       response_length: generatedContent.length,
       citation_count: contentWithCitations.citations.length,
@@ -726,7 +736,7 @@ export async function generateSectionContent(submissionId, sectionCode, options 
       prompt_tokens: Math.round(prompt.length / 4), // Rough estimate of token count
       completion_tokens: Math.round(generatedContent.length / 4), // Rough estimate
       section_code: sectionCode,
-      model: options.model || 'gpt-4o',
+      model: aiResult.model,
     };
   } catch (error) {
     logger.error(`Error generating content: ${error.message}`, error);
@@ -772,9 +782,11 @@ Maintain the same level of regulatory expertise and scientific accuracy.
 Reference relevant FDA guidelines or scientific literature as needed.
 `;
 
-    // Generate response using OpenAI
+    // Revising regulatory content: document_drafting, as for the first draft.
     const aiResult = await ai.chat({
-      model: options.model || 'gpt-4o',
+      taskType: 'document_drafting',
+      callerModule: 'indCopilot.generateFollowupResponse',
+      model: options.model,
       messages: [
         {
           role: 'system',
@@ -795,7 +807,7 @@ Reference relevant FDA guidelines or scientific literature as needed.
     await supabase.from('ind_generation_events').insert({
       submission_id: submissionId,
       section_code: sectionCode,
-      model: options.model || 'gpt-4o',
+      model: aiResult.model,
       event_type: 'followup',
       prompt_length: prompt.length,
       response_length: response.length,
@@ -952,9 +964,10 @@ export async function analyzeContent(submissionId, sectionCode) {
     // Get regulatory guidelines for this section
     const guidelines = await fetchRegulatoryGuidelines(sectionCode);
 
-    // Use OpenAI to analyze content
+    // Regulatory review of existing content (regulatory gaps, completeness).
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'regulatory_review',
+      callerModule: 'indCopilot.analyzeContent',
       messages: [
         {
           role: 'system',
@@ -1023,7 +1036,9 @@ export async function streamSectionContent(submissionId, sectionCode, options = 
   const prompt = createPrompt(sectionCode, context, guidelines, references);
 
   const stream = await ai.chat({
-    model: options.model || 'gpt-4o',
+    taskType: 'document_drafting',
+    callerModule: 'indCopilot.streamSectionContent',
+    model: options.model,
     messages: [
       {
         role: 'system',
@@ -1161,7 +1176,8 @@ Return only valid JSON.`;
   try {
     const completion = await withRetry(() =>
       ai.chat({
-        model: 'gpt-4o-mini',
+        taskType: 'regulatory_review',
+        callerModule: 'indCopilot.checkFDACompliance',
         messages: [
           {
             role: 'system',
@@ -1174,7 +1190,9 @@ Return only valid JSON.`;
       })
     );
 
-    const raw = aiResult.content.trim();
+    // Was `aiResult.content` — an undefined name here — so every check threw
+    // and was reported as a failed compliance check with score 0.
+    const raw = completion.content.trim();
     const jsonStart = raw.indexOf('{');
     const parsed = JSON.parse(raw.slice(jsonStart));
 

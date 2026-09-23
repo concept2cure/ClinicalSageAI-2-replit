@@ -1,7 +1,7 @@
 /**
  * Enterprise Authentication Security Service
  *
- * Handles MFA (TOTP via speakeasy), password policy enforcement,
+ * Handles password policy enforcement,
  * account lockout, and 21 CFR Part 11 electronic signature verification.
  *
  * @compliance FDA 21 CFR Part 11.10(d) — Session controls
@@ -12,9 +12,6 @@
  */
 
 import { BINDING_BASIS, manifestSignatureHash } from './part11/signature-persistence';
-import * as speakeasy from 'speakeasy';
-import * as QRCode from 'qrcode';
-import * as crypto from 'crypto';
 import { db } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { users, electronicSignatures } from '../../shared/schema';
@@ -33,8 +30,6 @@ const LOCKOUT_DURATION_MINUTES = 30; // Lockout duration
 const PASSWORD_MIN_LENGTH = 12;
 const PASSWORD_HISTORY_COUNT = 5; // Prevent reuse of last N passwords
 const PASSWORD_MAX_AGE_DAYS = 90; // Force rotation after 90 days
-const MFA_ISSUER = 'Concept2Cure';
-const BACKUP_CODE_COUNT = 10;
 
 // ─── Password Policy ────────────────────────────────────────────────────────
 
@@ -238,188 +233,16 @@ export async function resetFailedLogins(userId: number): Promise<void> {
   }
 }
 
-// ─── MFA (TOTP via Speakeasy) ───────────────────────────────────────────────
-
-/**
- * Generate a new MFA secret for a user
- * Returns the secret and a QR code URL for authenticator apps
- */
-export async function generateMFASecret(
-  userId: number,
-  userEmail: string
-): Promise<{
-  secret: string;
-  otpauthUrl: string;
-  qrCodeDataUrl: string;
-  backupCodes: string[];
-}> {
-  const secret = speakeasy.generateSecret({
-    name: `${MFA_ISSUER}:${userEmail}`,
-    issuer: MFA_ISSUER,
-    length: 32,
-  });
-
-  // Generate backup codes
-  const backupCodes = Array.from({ length: BACKUP_CODE_COUNT }, () =>
-    crypto.randomBytes(4).toString('hex').toUpperCase()
-  );
-
-  // Hash backup codes before storing
-  const hashedBackupCodes = backupCodes.map(code =>
-    crypto.createHash('sha256').update(code).digest('hex')
-  );
-
-  // Store the secret (encrypted) in the database
-  await db
-    .update(users)
-    .set({
-      mfaSecret: secret.base32,
-      mfaBackupCodes: hashedBackupCodes,
-      mfaMethod: 'totp',
-    })
-    .where(eq(users.id, userId));
-
-  // Generate QR code
-  const qrCodeDataUrl = await QRCode.toDataURL(secret.otpauth_url || '');
-
-  logger.info(`MFA secret generated for user ${userId}`);
-
-  return {
-    secret: secret.base32,
-    otpauthUrl: secret.otpauth_url || '',
-    qrCodeDataUrl,
-    backupCodes, // Return plaintext ONCE — user must save them
-  };
-}
-
-/**
- * Verify a TOTP code against a user's MFA secret
- */
-export async function verifyMFACode(
-  userId: number,
-  code: string
-): Promise<{
-  valid: boolean;
-  method: 'totp' | 'backup_code';
-}> {
-  try {
-    const result = await db
-      .select({
-        mfaSecret: users.mfaSecret,
-        mfaBackupCodes: users.mfaBackupCodes,
-        mfaEnabled: users.mfaEnabled,
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    if (!result.length || !result[0].mfaSecret) {
-      logger.warn(`MFA verification attempted for user ${userId} with no MFA secret`);
-      return { valid: false, method: 'totp' };
-    }
-
-    const { mfaSecret, mfaBackupCodes } = result[0];
-
-    // Try TOTP verification first
-    const totpValid = speakeasy.totp.verify({
-      secret: mfaSecret!,
-      encoding: 'base32',
-      token: code,
-      window: 1, // Allow 1 step tolerance (30 seconds before/after)
-    });
-
-    if (totpValid) {
-      // Update last verified timestamp
-      await db
-        .update(users)
-        .set({ mfaVerifiedAt: new Date() })
-        .where(eq(users.id, userId));
-
-      return { valid: true, method: 'totp' };
-    }
-
-    // Try backup code
-    if (mfaBackupCodes && Array.isArray(mfaBackupCodes)) {
-      const codeHash = crypto.createHash('sha256').update(code.toUpperCase()).digest('hex');
-      const backupCodes = mfaBackupCodes as string[];
-      const codeIndex = backupCodes.indexOf(codeHash);
-
-      if (codeIndex !== -1) {
-        // Remove used backup code
-        const updatedCodes = [...backupCodes];
-        updatedCodes.splice(codeIndex, 1);
-
-        await db
-          .update(users)
-          .set({
-            mfaBackupCodes: updatedCodes,
-            mfaVerifiedAt: new Date(),
-          })
-          .where(eq(users.id, userId));
-
-        logger.info(`Backup code used for user ${userId}. ${updatedCodes.length} remaining.`);
-        return { valid: true, method: 'backup_code' };
-      }
-    }
-
-    return { valid: false, method: 'totp' };
-  } catch (error) {
-    logger.error(`MFA verification failed for user ${userId}`, error);
-    return { valid: false, method: 'totp' };
-  }
-}
-
-/**
- * Enable MFA for a user after successful verification of their first code
- */
-export async function enableMFA(userId: number, code: string): Promise<boolean> {
-  const verification = await verifyMFACode(userId, code);
-
-  if (!verification.valid) {
-    return false;
-  }
-
-  await db
-    .update(users)
-    .set({
-      mfaEnabled: true,
-      mfaVerifiedAt: new Date(),
-    })
-    .where(eq(users.id, userId));
-
-  logger.info(`MFA enabled for user ${userId}`);
-  return true;
-}
-
-/**
- * Disable MFA for a user (requires re-authentication)
- */
-export async function disableMFA(userId: number): Promise<void> {
-  await db
-    .update(users)
-    .set({
-      mfaEnabled: false,
-      mfaSecret: null,
-      mfaBackupCodes: null,
-      mfaVerifiedAt: null,
-    })
-    .where(eq(users.id, userId));
-
-  logger.info(`MFA disabled for user ${userId}`);
-}
-
-/**
- * Check if a user has MFA enabled
- */
-export async function isMFAEnabled(userId: number): Promise<boolean> {
-  const result = await db
-    .select({ mfaEnabled: users.mfaEnabled })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  return result.length > 0 && result[0].mfaEnabled === true;
-}
+// ─── MFA ─────────────────────────────────────────────────────────────────────
+//
+// REMOVED 2026-09-23 — generateMFASecret, verifyMFACode, enableMFA, disableMFA,
+// isMFAEnabled: a second TOTP implementation (speakeasy) that nothing called and
+// that could not have verified a real enrolment — it stored the secret as plain
+// base32 where the live path stores it AES-256-GCM encrypted. The one TOTP
+// implementation is server/services/mfaService.ts (verifySecondFactor /
+// verifyToken), which every sign-in, enrolment and signing path reaches; its
+// replay refusal is pinned by tests/services/mfaService.test.ts and
+// tests/db/one-time-credentials.dbtest.ts.
 
 // ─── 21 CFR Part 11 Electronic Signatures ───────────────────────────────────
 

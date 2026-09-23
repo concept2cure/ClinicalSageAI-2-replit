@@ -1,7 +1,7 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server } from 'http';
 import { createScopedLogger } from './utils/logger.js';
-import { verifyJwtWithRotation } from './utils/jwtVerify.js';
+import { verifyLiveToken } from './services/token-revocation';
 import { shouldProcessTenantInBackground } from './services/tenant/tenant-lifecycle.js';
 // Twin-safe imports: tokenType has no `.js` counterpart, and the two socket/*
 // modules are `.ts`-only, so every resolver (tsc, vite/vitest, tsx) binds the
@@ -230,7 +230,8 @@ export function initializeSocketServer(server: Server) {
           return next(new Error('Missing bearer token'));
         }
 
-        const decoded = verifyJwtWithRotation(token as string) as any;
+        // A signed-out session opens no socket either (AUTH-03).
+        const decoded = (await verifyLiveToken(token as string)) as any;
         if (!decoded.organizationId || !decoded.userId) {
           return next(new Error('Invalid token claims'));
         }

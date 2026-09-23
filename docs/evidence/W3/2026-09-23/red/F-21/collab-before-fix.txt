@@ -1,0 +1,93 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stderr | server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a session that was signed out (AUTH-03)
+{
+  "timestamp": "2026-09-23T04:06:25.532Z",
+  "level": "warn",
+  "message": "[token-revocation] DB revoke failed",
+  "context": {
+    "error": "relation \"revoked_tokens\" does not exist"
+  }
+}
+
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > accepts a whole-document name and a section name
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > refuses an unknown resource kind rather than defaulting to permitted
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > refuses a malformed id before it can reach Postgres
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > does not treat a SQL-injection attempt as a document id
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member of the document owning tenant
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member for a section of their own document
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a missing token
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token signed with the wrong secret — no fallback identity
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses an expired token
+ × server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a session that was signed out (AUTH-03) 77ms
+   → promise resolved "{ user: { id: '7001', …(3) }, …(2) }" instead of rejecting
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (refresh)
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_challenge)
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_partial)
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfaPending flag)
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (pending_mfa role)
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a valid token whose organization membership has been revoked
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token with no tenant claim
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token with no usable subject claim
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open another tenant's document
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open a section of another tenant's document
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses another tenant's section even when paired with an owned document id
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a document that does not exist at all
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > is symmetric — the other tenant is refused in the other direction
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > reports an unwritten document as absent, not as an error
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > survives a restart: a fresh Y.Doc reloads what the first one wrote
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > preserves concurrent edits rather than last-write-wins
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > replaces rather than appends on a second store
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > does not serve one tenant the bytes another tenant stored under the same name
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > cascades the CRDT state away with the document it belongs to
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > an unprovisioned store > reports missing rather than looking like an empty document
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > admits a member of an ACTIVE tenant (the baseline)
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > REFUSES a member of a suspended tenant
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > DOWNGRADES a read-only tenant to a view-only socket rather than refusing
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses a read-only tenant when the socket cannot be downgraded
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses fail-closed when the posture cannot be read
+ ↓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > checks the posture AFTER membership — a revoked user never reveals tenant state
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a session that was signed out (AUTH-03)
+AssertionError: promise resolved "{ user: { id: '7001', …(3) }, …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "resource": {
++     "documentId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
++     "kind": "authoring-document",
++     "sectionId": null,
++   },
++   "tenantId": 4101,
++   "user": {
++     "color": "#3B82F6",
++     "email": "a@example.test",
++     "id": "7001",
++     "name": "Author A",
++   },
+  }
+
+ ❯ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts:273:5
+    271|     await expect(
+    272|       authenticateCollabConnection({ token: signedOut, documentName: `…
+    273|     ).rejects.toMatchObject({ reason: 'session-ended' });
+       |     ^
+    274|   });
+    275|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 35 skipped (36)
+   Start at  04:06:18
+   Duration  7.05s (transform 275ms, setup 85ms, import 354ms, tests 6.43s, environment 0ms)
+

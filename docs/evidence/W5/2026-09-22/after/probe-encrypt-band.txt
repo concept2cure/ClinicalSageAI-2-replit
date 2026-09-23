@@ -1,0 +1,12 @@
+After (HEAD de03a85da), synthetic PDF with trailer /Encrypt at the end of the file:
+  400 KB  encrypted=true   acceptableForEctd=false
+  500 KB  encrypted=true   acceptableForEctd=false
+  511 KB  encrypted=true   acceptableForEctd=false
+  513 KB  encrypted=true   acceptableForEctd=false
+  520 KB  encrypted=true   acceptableForEctd=false
+  540 KB  encrypted=true   acceptableForEctd=false
+  560 KB  encrypted=true   acceptableForEctd=false
+  575 KB  encrypted=true   acceptableForEctd=false
+  577 KB  encrypted=true   acceptableForEctd=false
+  600 KB  encrypted=true   acceptableForEctd=false
+ 2000 KB  encrypted=true   acceptableForEctd=false

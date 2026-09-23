@@ -1,0 +1,831 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "timestamp": "2026-09-23T05:06:49.118Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T05:06:49.119Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+{
+  "timestamp": "2026-09-23T05:06:49.119Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a coauthor_documents leaf to a real PDF (unchanged path) 65ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > counts a materialized-but-draft source as unfinalized (approved is not counted) 21ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > renders a unified_documents leaf (latest version content) to a real PDF 11ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a coauthor_documents leaf with no content as UNRESOLVED, not a title-only leaf 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a unified_documents leaf with no version rows as UNRESOLVED, not a title-only leaf 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports an external vault_documents leaf as UNRESOLVED, never silently dropped 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > treats a prototype-key document_table as unknown, not as an external store 1ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > materializes a PDF ctd_onboarding_documents upload AS the leaf (real bytes, real md5) 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a NON-PDF upload unresolved (no binary→PDF conversion) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF-mime-but-not-PDF-bytes upload unresolved (magic-byte guard) 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a PDF upload whose file is missing unresolved (fail closed) 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > leaves a cross-tenant ctd_onboarding upload unresolved (org-scoped lookup) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > reports a cross-tenant unified_documents leaf as UNRESOLVED (not dropped) 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > resolves a MIXED set: coauthor + unified rendered, vault unresolved 18ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver.test.ts > materializeLeafSources > deduplicates repeated table:id references (renders once) 22ms
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses {status:'approved'} on a draft with 400, names the governed path, and writes nothing 41ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > writes none of a refused request, including the fields that were allowed on their own 9ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses 'finalized' and any spelling the resolver counts as finalized 19ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > does not let an approved snapshot be relabelled as a different finalized status 7ms
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > leaves the transmit refusal the PUT used to clear standing
+{
+  "timestamp": "2026-09-23T05:06:50.039Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+stdout | server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > leaves the transmit refusal the PUT used to clear standing
+{
+  "timestamp": "2026-09-23T05:06:50.106Z",
+  "level": "info",
+  "message": "[assemble-from-core] Assembled sequence from core",
+  "context": {
+    "sequenceId": 1,
+    "organizationId": 7,
+    "materialized": 1,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > leaves the transmit refusal the PUT used to clear standing 212ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > a PUT cannot move a document into a finalized status > refuses a status that is not a string, rather than failing inside the rule 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > saves a content-only PUT — the one client caller, EctdCoauthor.saveContent 9ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > moves a document to a non-finalized status ({status:'draft'}, 'review') 12ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > accepts a PUT that restates an existing finalized status unchanged 6ms
+ ✓ server/routes/__tests__/coauthorPutStatus.test.ts > every other edit keeps working > still answers 404 for a document that is not this organization's, and leaves it alone 16ms
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.185Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.238Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.279Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.337Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.387Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.430Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.470Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.498Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.518Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.538Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.554Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.574Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.create cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "12"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.659Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.681Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "1"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.700Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "2"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.719Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "3"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.741Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "4"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.757Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "5"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.783Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "6"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.806Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "7"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.824Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.846Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "9"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.872Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "10"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.893Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "11"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:52.909Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] section.edit cerv2_510k_section",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "12"
+  }
+}
+
+stderr | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+[Renderers] No Puppeteer driver installed — every HTML export is rendered by the PDFKit fallback, which produces a plain-text document with no style-pack CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing Chromium, to restore styled rendering.
+
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > renders approved, locked and drafted sections to real PDFs; flags the draft as unfinalized 143ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never materializes an empty section — it is unresolved with an honest reason 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-governed-sections.test.ts > materializeLeafSources — c2c_document_sections > never renders a section whose parent document belongs to another organization 2ms
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:53.992Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] DEVICE_PROFILE_UPDATED regulatory_program",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "8c21282b-1492-4751-85ce-37c59c8d5c73"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:54.023Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ESTAR_REGISTRATION_CREATED estar_registration",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "ce527db4-df57-4a6b-838c-28996734ef23"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:54.037Z",
+  "level": "info",
+  "message": "[estar-registration-service] Created eSTAR registration",
+  "context": {
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:54.117Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ESTAR_REGISTRATION_UPDATED estar_registration",
+  "context": {
+    "userId": 1,
+    "tenantId": 1,
+    "resourceId": "ce527db4-df57-4a6b-838c-28996734ef23"
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey
+{
+  "timestamp": "2026-09-23T05:06:54.127Z",
+  "level": "info",
+  "message": "[estar-registration-service] Updated eSTAR registration",
+  "context": {
+    "organizationId": 1
+  }
+}
+
+stdout | tests/golden-journeys/device-510k-estar.journey.test.ts
+[journey] manifest: /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/device-510k-estar.manifest.json
+[journey] report:   /home/user/ClinicalSageAI-2-replit/tests/golden-journeys/__reports__/device-510k-estar.report.md
+
+ ✓ tests/golden-journeys/device-510k-estar.journey.test.ts > golden journey — device 510(k) eSTAR path > runs the device 510(k) journey 3020ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > materializes the filed bytes and carries the md5 recorded at render time 15ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses another organization's rendered file — it reads as absent, not as content 6ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes that no longer match the digest recorded at render time 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses a non-PDF render — the ICSR XML is transmitted, never shipped as a leaf 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses when the object is gone — an unretrievable file is a gap, never an empty leaf 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-rendered-files.test.ts > materializeLeafSources — rendered_leaf_files > refuses bytes whose digest matches but which are not a PDF 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports the alias table as absent, not the leaf as sourceless 62ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > reports a row that was never aliased as canonicalId null 60ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > names the authoring document a snapshot represents 38ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-lineage.test.ts > coauthor leaf lineage by identity > never crosses the tenant: another organization sees no alias for the same row 37ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > materializes the vault copy, staging the RAW bytes 16ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > fetches the bytes with the CALLER organization 10ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > materializeLeafSources — vault_documents > gives two vault leaves DISTINCT keys 7ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a LEGACY vault leaf addressed by an integer says an integer cannot name one 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a leaf with NEITHER pointer is skipped here and reported by the dispatch gate 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a malformed uuid is refused rather than raising 22P02 across the whole assembly 0ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > another organization vault document is not found 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a row that predates the storage provider names the backfill that fixes it 4ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes the provider will not return for this org are refused 3ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > bytes that do not match the recorded hash are REFUSED, not staged 2ms
+ ✓ server/services/ectd/__tests__/leaf-source-resolver-vault.test.ts > every refusal is explained, never a silent drop > a vault document that is not a PDF is refused on its BYTES, not its mime 2ms
+stdout | server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > packages the authored MDR sections into a real ZIP and returns the bytes
+{
+  "timestamp": "2026-09-23T05:07:00.520Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "regulatory_program",
+    "resourceId": "5b0f2f0e-9a7d-4a2e-8c3f-2d1e6f7a8b9c",
+    "organizationId": 8,
+    "regulation": "mdr",
+    "materialized": 4,
+    "skipped": 0,
+    "unresolved": 0
+  }
+}
+
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > packages the authored MDR sections into a real ZIP and returns the bytes 129ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > refuses honestly when the program has no authored content in the caller organization 3ms
+ ✓ server/services/pathway-engines/__tests__/assemble-technical-file-from-program.test.ts > assembleTechnicalFileFromProgram > filters by the requested regulation — an mdr-only program has no ivdr technical file 1ms
+ ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts > transmit guard refusal before the wire > releases the claim, so the sequence is not left "in flight" when nothing was sent 1234ms
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > refuses to freeze a sequence carrying an unapproved document, and changes nothing 247ms
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > reaches the state change when the package is transmittable 2ms
+ ✓ server/services/submission-service/__tests__/freeze-refuses-unpackageable.test.ts > governed freeze/dispatch — the package must be transmittable before the lock > applies to dispatch as well 1ms
+stderr | tests/submission-ops-section-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-section-routes.test.ts
+{
+  "timestamp": "2026-09-23T05:07:01.922Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | tests/submission-ops-section-routes.test.ts > POST /api/submission-ops/packages/:packageId/sections > a failure AFTER the insert rolls the row back with it
+{
+  "timestamp": "2026-09-23T05:07:02.311Z",
+  "level": "error",
+  "message": "[submission-ops] adding a package section failed",
+  "context": {
+    "err": "lock write failed",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ tests/submission-ops-section-routes.test.ts > POST /api/submission-ops/packages/:packageId/sections > adds a section, clears the bundle the old list produced, and records a governed action — row and bump in ONE transaction 32ms
+ ✓ tests/submission-ops-section-routes.test.ts > POST /api/submission-ops/packages/:packageId/sections > REQUIRES a reason and a key (governed change), and touches nothing without them 10ms
+ ✓ tests/submission-ops-section-routes.test.ts > POST /api/submission-ops/packages/:packageId/sections > 404s for a package outside the tenant 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > POST /api/submission-ops/packages/:packageId/sections > a failure AFTER the insert rolls the row back with it 5ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > renames a section, invalidating the bundle placed by the OLD key 5ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > a REORDER invalidates too — it changes the order the leaves appear in the backbone 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > a NO-OP changes nothing, invalidates nothing and records nothing 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > decides against the LOCKED row, never the one read before it: a rename that commits in between is not reverted 6ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > a patch whose target value the LOCKED row already holds is a no-op, not a bundle-destroying write 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > a section that vanished before the lock is a 404, not a write against nothing 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > NULL and 0 are the same sort order, so setting 0 on a NULL row is a no-op 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > TRIMS a padded key rather than storing it — the key becomes a leaf path component — and a trimmed no-op is still a no-op 5ms
+ ✓ tests/submission-ops-section-routes.test.ts > PATCH /api/submission-ops/packages/:packageId/sections/:sectionId > REFUSES an empty change and a missing reason, and 404s a section outside the package 6ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > REFUSES to remove a section that still holds artifacts — the cascade would unmap them with no record of its own 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > counts UNDER the lock: a mapping created after the request began is still refused, never cascaded away 3ms
+stderr | tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > reports a ledger outage instead of pretending the removal was audited
+[package-content-change] governed-action-ledger-write-failed audit db down
+
+stderr | tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/policies is not refused for a member
+{
+  "timestamp": "2026-09-23T05:07:02.427Z",
+  "level": "error",
+  "message": "[submission-ops] saving policies failed",
+  "context": {
+    "err": "__vite_ssr_import_6__.db.insert is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > put /api/submission-ops/policies/1 is not refused for a member
+{
+  "timestamp": "2026-09-23T05:07:02.430Z",
+  "level": "error",
+  "message": "[submission-ops] updating policies failed",
+  "context": {
+    "err": "__vite_ssr_import_6__.db.update is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/policies/1 is not refused for a member
+{
+  "timestamp": "2026-09-23T05:07:02.433Z",
+  "level": "error",
+  "message": "[submission-ops] deleting policies failed",
+  "context": {
+    "err": "__vite_ssr_import_6__.db.delete is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > patch /api/submission-ops/blockers/1 is not refused for a member
+{
+  "timestamp": "2026-09-23T05:07:02.436Z",
+  "level": "error",
+  "message": "[submission-ops] updating blockers failed",
+  "context": {
+    "err": "__vite_ssr_import_6__.db.update is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/digests/1/read stays open to a viewer — it writes nothing
+{
+  "timestamp": "2026-09-23T05:07:02.455Z",
+  "level": "error",
+  "message": "[submission-ops] marking read digests failed",
+  "context": {
+    "err": "__vite_ssr_import_6__.db.update is not a function",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > REFUSES a section a milestone still gates — that link cascades too, and is not an artifact mapping 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > NAMES the collateral the cascade takes — derived readiness rows removed, blockers unlinked — instead of losing it 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > removes an EMPTY section, invalidating the bundle that shipped its placeholder leaf 7ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > a section that vanished between the check and the delete is a 404 with nothing bumped 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > DELETE /api/submission-ops/packages/:packageId/sections/:sectionId > reports a ledger outage instead of pretending the removal was audited 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/sections is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > patch /api/submission-ops/packages/5/sections/11 is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/packages/5/sections/11 is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/artifact-section-map is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/artifact-section-map/3 is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/milestones is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/policies is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > put /api/submission-ops/policies/1 is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/policies/1 is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > patch /api/submission-ops/blockers/1 is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/automation/run is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/publish is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > put /api/submission-ops/packages/5/regulatory-identifiers is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/assemble is refused for a read-only viewer 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages is not refused for a member 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/sections is not refused for a member 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > patch /api/submission-ops/packages/5/sections/11 is not refused for a member 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/packages/5/sections/11 is not refused for a member 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/artifact-section-map is not refused for a member 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/artifact-section-map/3 is not refused for a member 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/milestones is not refused for a member 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/policies is not refused for a member 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > put /api/submission-ops/policies/1 is not refused for a member 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > delete /api/submission-ops/policies/1 is not refused for a member 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > patch /api/submission-ops/blockers/1 is not refused for a member 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/automation/run is not refused for a member 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/publish is not refused for a member 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > put /api/submission-ops/packages/5/regulatory-identifiers is not refused for a member 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/assemble is not refused for a member 4ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/policies/resolve stays open to a viewer — it writes nothing 2ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/packages/5/preflight stays open to a viewer — it writes nothing 3ms
+ ✓ tests/submission-ops-section-routes.test.ts > submission-ops — role gate on every write > post /api/submission-ops/digests/1/read stays open to a viewer — it writes nothing 3ms
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an APPROVED document files as approved — the case that was impossible
+{
+  "timestamp": "2026-09-23T05:07:02.845Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a FROZEN document files as finalized
+{
+  "timestamp": "2026-09-23T05:07:02.856Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a DRAFT document still files as a draft, and still fails completeness
+{
+  "timestamp": "2026-09-23T05:07:02.859Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an unrecognised state files as a draft, never as something better
+{
+  "timestamp": "2026-09-23T05:07:02.863Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a source with no status at all files as a draft
+{
+  "timestamp": "2026-09-23T05:07:02.867Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status sent in the body
+{
+  "timestamp": "2026-09-23T05:07:02.872Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status even with no source document named
+{
+  "timestamp": "2026-09-23T05:07:02.877Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > records which document the status came from
+{
+  "timestamp": "2026-09-23T05:07:02.889Z",
+  "level": "error",
+  "message": "[coauthor] Create document error",
+  "context": {
+    "err": "Document alias requires a canonical uuid"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > leaves an unsourced snapshot with no provenance claim
+{
+  "timestamp": "2026-09-23T05:07:02.894Z",
+  "level": "warn",
+  "message": "[coauthor] Document alias map absent; snapshot created without cross-store identity",
+  "context": {
+    "coauthorDocumentId": 101,
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an APPROVED document files as approved — the case that was impossible 36ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a FROZEN document files as finalized 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a DRAFT document still files as a draft, and still fails completeness 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > an unrecognised state files as a draft, never as something better 3ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the snapshot carries what the source document earned > a source with no status at all files as a draft 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status sent in the body 5ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > ignores a status even with no source document named 8ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > the caller cannot award the status itself > refuses a source document that is not this organization's 4ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > records which document the status came from 6ms
+ ✓ server/routes/__tests__/coauthorSnapshotStatus.test.ts > provenance > leaves an unsourced snapshot with no provenance claim 4ms
+stderr | tests/submission-ops-preflight-routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-preflight-routes.test.ts
+{
+  "timestamp": "2026-09-23T05:07:02.921Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > reports a fully authored package as complete 2ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > treats draft/review (unfinalized) leaves as incomplete, distinct from placeholders 1ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > a package whose every leaf is a draft is NOT submission-complete (the reported hole) 0ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > clamps unfinalized to the leaves left after placeholders 1ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > reports a package with placeholder leaves as incomplete with a percentage 0ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > treats an empty dossier (no leaves) as incomplete, not vacuously complete 0ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > computeEctdCompleteness > clamps a placeholder count that exceeds the leaf count 0ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > assertEctdSubmissionComplete > passes silently for a complete package 1ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > assertEctdSubmissionComplete > throws EctdCompletenessError carrying the report when placeholders remain 1ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > assertEctdSubmissionComplete > throws when the only shortfall is draft/review (unfinalized) content 0ms
+ ✓ server/services/ectd/__tests__/completeness.test.ts > eCTD submission-completeness gate > assertEctdSubmissionComplete > throws with an "nothing to file" message for an empty dossier 0ms
+stderr | tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > still returns the computed findings when the metadata persist fails
+[submission-ops] preflight-persist-failed simulated metadata write failure
+
+stderr | tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > when the lock cannot be taken after the bundle was superseded, the findings are NOT returned as the package’s (409, not 200 persisted:false)
+[submission-ops] preflight-persist-failed pool exhausted
+
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > 404s when the package is not in the tenant 29ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > 409s when the package has no metadata.bundle 5ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > returns 200 with internal findings and unconfigured agency validators (no network) 8ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > reports CONTENT DRIFT as a blocking finding when an artifact was edited after assembly — the same assessment transmit refuses on 5ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > a bundle with NO content fingerprint is UNPROVEN: a warning where descriptor trust is relaxed, a blocking error where transmit would refuse it 8ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > a bundle fingerprinted under an OLDER scheme says so, rather than claiming it records none 4ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > a content read that fails is an error, never a pass 4ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > marks blocking:true when the stored validation has an error 5ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > still returns the computed findings when the metadata persist fails 5ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > REFUSES to persist a run whose bundle was cleared or replaced meanwhile, and never writes its pre-run snapshot over the row 3ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > cannot identify a bundle without a sha256: such a run is superseded, never stored against whatever is there now 3ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > when the lock cannot be taken after the bundle was superseded, the findings are NOT returned as the package’s (409, not 200 persisted:false) 3ms
+ ✓ tests/submission-ops-preflight-routes.test.ts > POST /api/submission-ops/packages/:packageId/preflight > persists against the LOCKED row: a change that landed while the validator ran is kept, not reverted 4ms
+ ✓ server/routes/__tests__/governed-ledger-gap-surfaced.test.ts > the ledger gap is carried out to the caller > assemble surfaces ledgerWriteFailed rather than a plain success 3ms
+ ✓ server/routes/__tests__/governed-ledger-gap-surfaced.test.ts > the ledger gap is carried out to the caller > commitment status surfaces auditWriteFailed, and the double swallow is gone 1ms
+ ✓ server/routes/__tests__/governed-ledger-gap-surfaced.test.ts > the ledger gap is carried out to the caller > neither route fails the action over an audit outage 1ms
+stdout | server/services/ectd/__tests__/leaf-file-name.test.ts
+{
+  "timestamp": "2026-09-23T05:07:04.255Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T05:07:04.257Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ectd/__tests__/leaf-file-name.test.ts
+{
+  "timestamp": "2026-09-23T05:07:04.257Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ectd/__tests__/leaf-file-name.test.ts
+[database] Database connection successful
+
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 1: no options → ZIP-level validation only (backward compat) 31ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 2: options.region=FDA + non-regional leaves → MISSING_REGIONAL_FDA finding 10ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/export/:submissionId/validate > case 3: priorSequenceNumbers=["0000","0002"] + sequenceNumber="0003" → SEQUENCE_GAP for 0001 5ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 4: valid leaf array → leaf-only ValidationResult 5ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 5: authenticated principal WITHOUT organizationId → 403 (route uses requireTenant) 4ms
+ ✓ tests/unit/ectd-export-routes.test.ts > POST /api/ectd/validate/preflight > case 6: invalid region string ("XX") → 400 from zod enum guard 4ms
+ ✓ server/services/ectd/__tests__/leaf-file-name.test.ts > leafFileName > keeps the source key whole and gives the label way so the name fits 64 characters 2ms
+ ✓ server/services/ectd/__tests__/leaf-file-name.test.ts > leafFileName > a short label and key are unchanged in substance 0ms
+ ✓ server/services/ectd/__tests__/leaf-file-name.test.ts > leafFileName > never emits an uppercase letter, a space, or a trailing dash before the key 0ms
+
+ Test Files  17 passed (17)
+      Tests  156 passed (156)
+   Start at  05:06:43
+   Duration  21.24s (transform 6.62s, setup 409ms, import 19.81s, tests 38.39s, environment 2ms)
+

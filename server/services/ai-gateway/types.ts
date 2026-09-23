@@ -316,6 +316,23 @@ export interface GatewayRequest {
   /** Task categorization for routing decisions */
   taskType: TaskType;
 
+  /**
+   * The caller's risk classification for this request, where it has one — the
+   * kernel router's `riskTier` (server/services/kernel-router.ts).
+   *
+   * Used for one thing: deciding whether a `regulatory_review` request is
+   * high-risk work that only an approved model may serve. The kernel applies
+   * `regulatory_review` to EVERY turn on a regulatory surface as a context label
+   * ("take me to CMC" included) and makes its real risk judgment here. Reading
+   * the label as the judgment refused every ordinary AnA turn on 2026-09-22.
+   *
+   * It can only relax `regulatory_review`, never `document_drafting`, which is
+   * high-risk by category (server/services/ai-governance/risk-tiers.ts).
+   * Undeclared means undeclared: a `regulatory_review` with no riskTier is
+   * treated as high-risk.
+   */
+  riskTier?: 'low' | 'medium' | 'high';
+
   /** Conversation messages (system + user + assistant history) */
   messages: GatewayMessage[];
 

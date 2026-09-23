@@ -1,0 +1,83 @@
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.test.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/mdx/hooks/useEstarExport.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/home/user/ClinicalSageAI-2-replit/server/routes/510k-estar-routes.ts
+   491:105  warning  Async arrow function has too many lines (174). Maximum allowed is 100  max-lines-per-function
+   491:105  warning  Async arrow function has a complexity of 34. Maximum allowed is 15     complexity
+   702:1    warning  File has too many lines (1409). Maximum allowed is 500                 max-lines
+   799:90   warning  Async arrow function has a complexity of 18. Maximum allowed is 15     complexity
+  1085:108  warning  Async arrow function has too many lines (128). Maximum allowed is 100  max-lines-per-function
+  1085:108  warning  Async arrow function has a complexity of 24. Maximum allowed is 15     complexity
+  1814:67   warning  Async arrow function has a complexity of 23. Maximum allowed is 15     complexity
+
+/home/user/ClinicalSageAI-2-replit/server/routes/submissions.ts
+  610:1  warning  File has too many lines (1424). Maximum allowed is 500  max-lines
+
+/home/user/ClinicalSageAI-2-replit/server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts
+  118:9  warning  'setImmediate' is not defined  no-undef
+
+/home/user/ClinicalSageAI-2-replit/server/services/ana/submission-center-tool-defs.ts
+  545:1  warning  File has too many lines (836). Maximum allowed is 500  max-lines
+
+/home/user/ClinicalSageAI-2-replit/server/services/ectd/__tests__/dispatch-readiness.test.ts
+  31:41  warning  Arrow function has too many lines (115). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/services/ectd/assemble-from-core.ts
+  184:8  warning  Async function 'assembleSequence' has too many lines (107). Maximum allowed is 100        max-lines-per-function
+  443:8  warning  Async function 'assembleSubmissionEctd' has too many lines (107). Maximum allowed is 100  max-lines-per-function
+
+/home/user/ClinicalSageAI-2-replit/server/services/ectd/dispatch-readiness.ts
+  330:8  warning  Function 'computeDispatchReadiness' has a complexity of 25. Maximum allowed is 15  complexity
+
+/home/user/ClinicalSageAI-2-replit/server/services/ectd/leaf-pdf-security.ts
+  105:24  warning  Unexpected control character(s) in regular expression: \x00, \x00, \x00               no-control-regex
+  111:31  warning  Unexpected control character(s) in regular expression: \x00                           no-control-regex
+  137:11  warning  The value assigned to 'names' is not used in subsequent statements                    no-useless-assignment
+  198:8   warning  Async function 'assessLeafPdfSecurity' has a complexity of 17. Maximum allowed is 15  complexity
+
+/home/user/ClinicalSageAI-2-replit/server/services/ectd/package-from-core.ts
+   79:8   warning  Async function 'packageSequenceFromCore' has too many lines (151). Maximum allowed is 100  max-lines-per-function
+   79:8   warning  Async function 'packageSequenceFromCore' has a complexity of 23. Maximum allowed is 15     complexity
+  182:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                     max-depth
+  192:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4                                     max-depth
+
+/home/user/ClinicalSageAI-2-replit/server/services/ectd/validation-rule-corpus.ts
+  80:7  warning  'JP_SPEC' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/user/ClinicalSageAI-2-replit/server/services/market-specs/market-formatting-validator.ts
+  154:8  warning  Function 'validateLeavesAgainstMarketSpec' has too many lines (122). Maximum allowed is 100  max-lines-per-function
+  154:8  warning  Function 'validateLeavesAgainstMarketSpec' has a complexity of 40. Maximum allowed is 15     complexity
+
+/home/user/ClinicalSageAI-2-replit/server/services/part11/signature-persistence.ts
+  275:8  warning  Async function 'persistElectronicSignature' has a complexity of 23. Maximum allowed is 15  complexity
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/pre-transmit-check.ts
+  164:8  warning  Function 'evaluatePreTransmit' has too many lines (153). Maximum allowed is 100  max-lines-per-function
+  164:8  warning  Function 'evaluatePreTransmit' has a complexity of 32. Maximum allowed is 15     complexity
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-gateways/regional-packager.ts
+  384:1  warning  Function 'buildFdaBackbone' has a complexity of 20. Maximum allowed is 15                complexity
+  659:8  warning  Async function 'packageEctdSubmission' has too many lines (253). Maximum allowed is 100  max-lines-per-function
+  659:8  warning  Async function 'packageEctdSubmission' has a complexity of 38. Maximum allowed is 15     complexity
+  843:1  warning  File has too many lines (629). Maximum allowed is 500                                    max-lines
+
+/home/user/ClinicalSageAI-2-replit/server/services/submission-service/submission-service.ts
+   427:1  warning  Async function 'governedSignatureRefusal' has a complexity of 17. Maximum allowed is 15                complexity
+   687:8  warning  Function 'selectGateway' has a complexity of 17. Maximum allowed is 15                                 complexity
+   829:1  warning  File has too many lines (1063). Maximum allowed is 500                                                 max-lines
+   860:8  warning  Async function 'transmitSequence' has too many lines (181). Maximum allowed is 100                     max-lines-per-function
+   860:8  warning  Async function 'transmitSequence' has a complexity of 30. Maximum allowed is 15                        complexity
+   907:3  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  1424:8  warning  Async function 'upsertLeaf' has too many lines (132). Maximum allowed is 100                           max-lines-per-function
+  1424:8  warning  Async function 'upsertLeaf' has a complexity of 40. Maximum allowed is 15                              complexity
+
+/home/user/ClinicalSageAI-2-replit/shared/types/submission-api.ts
+  618:1  warning  File has too many lines (552). Maximum allowed is 500  max-lines
+
+✖ 43 problems (0 errors, 43 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

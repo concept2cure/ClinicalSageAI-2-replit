@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RA-001 |
-| Version | 0.1 |
+| Version | 0.5 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §3 |
 | Method | FDA CSA (Sept 2025 final; Feb 2026 update): identify intended use → determine risk (process risk and whether the feature can cause a quality/patient/data-integrity failure) → choose the least-burdensome assurance activity that gives confidence → record the result. Risk levels and activities are defined in VMP-001 §3.1. |
@@ -13,6 +13,10 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | One row per URS requirement; assurance chosen per CSA. |
+| 0.2 | 2026-09-23 | W3 | URS-PROJ-010 (the sign-in audit trail) assessed: high, scripted (VSR-001 §13, F-19). |
+| 0.3 | 2026-09-23 | W3 | URS-PROJ-011 (signing out ends the session) assessed: high, scripted (VSR-001 §13.9, F-21). |
+| 0.4 | 2026-09-23 | W3 | URS-SRDY-005 reassessed: high, scripted (was medium, unscripted). A readiness review that reports an all-clear it did not compute is a silent failure (VSR-001 F-23). |
+| 0.5 | 2026-09-23 | W3 | URS-SRDY-006 reassessed: high, scripted (was medium). A clean scan is read by Authoring's preflights as "no blocking contradictions" (VSR-001 F-25). URS-SRDY-008 reassessed: medium, scripted (was low, ad-hoc); it is now the launch boundary. |
 
 ## 1. Risk model
 
@@ -35,6 +39,8 @@ The columns below are parsed by `scripts/validation/build-traceability.mjs`; kee
 | URS-PROJ-007 | Honest empty/unavailable states for journey and catalog | low — informational | ad-hoc | render and record; no fixture data may appear |
 | URS-PROJ-008 | Enforce the launch boundary | medium — an out-of-scope surface reachable in production would expose unvalidated functions | scripted | payload verdicts plus deep-link gate |
 | URS-PROJ-009 | Refuse foreign/unknown program ids | high — cross-tenant read | scripted | negative test; full RLS under D3 |
+| URS-PROJ-010 | Enter every sign-in attempt in the organisation's audit trail | high — without it an attack on an account, or a session opened on it, leaves no record an inspector can read (§11.10(e)); F-19 showed the trail empty under RLS while every other check passed | scripted | the attempts made by the step itself, read back on the ledger in order, hash-chained, with the server's chain verdict |
+| URS-PROJ-011 | End the session when its user signs out | high — a session that survives sign-out stays usable by whoever holds its token, on a shared machine or from a copied header, for up to 24 hours, and everything done with it is attributed to the user who signed out (§11.10(d)); F-21 showed logout answering success while ending nothing, and no step checked | scripted | a session opened by the step itself, refused by the API and the session check once it is signed out, and the sign-out read back on the ledger, hash-chained |
 | URS-VAULT-001 | Gate vault endpoints | high | scripted | Part 11 §11.10(d) |
 | URS-VAULT-002 | Ingest a document with a recorded SHA-256 | high — the hash is the identity of the evidence | scripted | hash recomputed locally and compared |
 | URS-VAULT-003 | Refuse disallowed file types | medium — a refused upload is visible; an accepted executable is a security defect | scripted | negative test with `.exe` |
@@ -76,10 +82,10 @@ The columns below are parsed by `scripts/validation/build-traceability.mjs`; kee
 | URS-SRDY-002 | Deterministic dispatch gate with blockers | high — a false "cleared" dispatches an unready sequence | scripted | fresh sequence must be blocked with reasons |
 | URS-SRDY-003 | Dispatch QC uses server assessment; no model in the decision | high | scripted | client zeros vs server assessment; provider absence exposes any model dependency |
 | URS-SRDY-004 | Readiness review template registered; input validation | medium | scripted | template inventory, missing projectId |
-| URS-SRDY-005 | Readiness review executes and is readable | medium | unscripted | execution observed and recorded |
-| URS-SRDY-006 | Contradiction scan deterministic | medium | scripted | one scan call |
+| URS-SRDY-005 | Readiness review executes, is readable, and states what it read | high — a review that completes on reads that failed tells a regulatory lead "No critical issues found" about a program nobody examined, and nothing on the record shows it (F-23) | scripted | a program id the engine cannot read must be refused or fail with the reason; an anchored project must be assessed and named |
+| URS-SRDY-006 | Contradiction scan reads the project it names, or refuses | high — a clean scan of a project nothing was read from is read by Authoring's preflights as "no blocking contradictions", and nothing on the record shows it (F-25) | scripted | the program id and a project the organisation does not hold must be refused; an anchored project must be scanned |
 | URS-SRDY-007 | Surface shows the open program's sequence | high — gating the wrong sequence misleads a dispatch decision | scripted | sequence number visible for the open program |
-| URS-SRDY-008 | Orchestration / Inconsistency render honestly | low | ad-hoc | screenshots |
+| URS-SRDY-008 | Keep the Orchestration and Inconsistency boards out of the release | medium — an out-of-scope board reachable in production shows users a board that cannot see their programs | scripted | payload verdicts plus both deep-link gates |
 | URS-QMS-001 | Gate QMS endpoints | high | scripted | anonymous negative |
 | URS-QMS-002 | Validated, unique, audited document creation | high | scripted | 422, 201 with audit outcome, 409 duplicate |
 | URS-QMS-003 | Draft v1.0, listed, readable, tenant-scoped | medium | scripted | list and detail |

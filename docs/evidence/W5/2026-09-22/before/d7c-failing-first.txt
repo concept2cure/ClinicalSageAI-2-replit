@@ -1,0 +1,10 @@
+ × server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace the diff cannot bind, instead of filing it as new 119ms
+ × server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > files a declared append as an append, pointing at the filed leaf 47ms
+ × server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing 49ms
+ × server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts > declared lifecycle acts > refuses a declared replace in a first sequence 54ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' not to match /3-2-coauthor-documents-100\.pdf/
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' to match /operation="append"/
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' not to match /operation="replace"/
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8"?…' not to match /operation="replace"/
+      Tests  4 failed (4)

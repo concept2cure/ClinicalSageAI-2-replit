@@ -17,6 +17,7 @@ const stamp = helpers.stamp();
 await step(
   {
     id: 'OQ-SRDY-00',
+    kind: 'prerequisite',
     urs: [],
     title: 'Prerequisite: program, vault document, submission, sequence with one leaf',
     action: 'POST projects / vault ingest / submissions / sequences / leaves',
@@ -26,6 +27,9 @@ await step(
     const p = await createProgram(api, expect, `OQ-005 Readiness program ${stamp}`);
     state.programId = p.id;
     state.programName = p.title ?? p.name;
+    state.projectAnchorId = p.projectAnchorId;
+    state.projectAnchorSkipped = p.projectAnchorSkipped;
+    state.projectAnchorDetail = p.projectAnchorDetail;
     const ing = await ingestPdf(api, expect, { programId: p.id, title: `OQ-005 Protocol ${stamp}` });
     // The sequence goes on the PROGRAM's canonical submission (intake's spine),
     // so OQ-SRDY-07 exercises "the open program's sequence" rather than a
@@ -145,24 +149,78 @@ await step(
   },
 );
 
+/** What a review run says about the project it read: its first step, inspect_project_state. */
+function inspected(run) {
+  const first = (run?.steps ?? []).find((x) => x.stepId === 'inspect_project_state');
+  return { name: first?.result?.projectName ?? null, documents: first?.result?.documentCount ?? null };
+}
+
+/** How a run that should not have completed is described in a failure. */
+function assessedAnyway(run) {
+  const p = inspected(run);
+  return `ended "${run?.status}" for "${p.name}" with ${p.documents} document(s)`;
+}
+
 await step(
   {
     id: 'OQ-SRDY-05',
     urs: ['URS-SRDY-005'],
-    title: 'Execute the readiness review for the program',
-    action: 'POST /api/orchestration/execute {templateId:"submission_readiness_review", projectId}; GET /executions/:id',
-    expected: 'Execution starts (2xx) and its status is readable; steps are orchestrator_logic (no model call)',
+    title: 'The readiness review never assesses a project it cannot read',
+    action:
+      'POST /api/orchestration/execute {templateId:"submission_readiness_review", projectId:<the program id>, module:"ind"}. The review reads the integer project spine (projects.id); a program id is a uuid',
+    expected:
+      'Refused with a 4xx and no run, or a run that ends failed and says why. Never a completed review of a project the engine did not read',
     dependsOn: ['OQ-SRDY-00'],
+    note: 'VSR-001 F-23. Until v0.4 this step executed the review for the program and passed on any 2xx, and the protocol called it unscripted while the record called it a scripted pass. Every read behind the review failed on the program uuid, each failure was swallowed, and the review completed all five steps for "Project" with 0 documents, recommending "No critical issues found".',
   },
   async ({ api, expect }) => {
-    const e = await api('POST', '/api/orchestration/execute', { templateId: 'submission_readiness_review', projectId: state.programId, module: 'ind' });
-    expect(e.status < 300, `expected 2xx, got ${e.status}`, e.json);
-    const id = e.json?.executionId ?? e.json?.execution?.executionId ?? e.json?.id ?? e.json?.execution?.id;
-    expect(id, 'no execution id', e.json);
-    await new Promise((r) => setTimeout(r, 1500));
-    const s = await api('GET', `/api/orchestration/executions/${id}`);
-    expect(s.status === 200, `execution read expected 200, got ${s.status}`, s.json);
-    return `execution ${id}: ${JSON.stringify(s.json).slice(0, 300)}`;
+    const e = await api('POST', '/api/orchestration/execute', {
+      templateId: 'submission_readiness_review',
+      projectId: state.programId,
+      module: 'ind',
+    });
+    const refused = e.status >= 400 && e.status < 500;
+    const failedRun = e.status < 300 && e.json?.status === 'failed';
+    const why =
+      e.status < 300
+        ? `the review of program ${state.programId} ${assessedAnyway(e.json)}: a project it could not read was assessed`
+        : `the review answered HTTP ${e.status}: neither a refusal nor a failed run`;
+    expect(refused || failedRun, why, e.json);
+    if (refused) return `refused: HTTP ${e.status} ${JSON.stringify(e.json?.error ?? e.json)}`;
+    return `run ${e.json.executionId} ended failed: ${e.json.auditTrail?.at(-1)?.detail}`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-SRDY-05b',
+    urs: ['URS-SRDY-005'],
+    title: 'The readiness review names the project it assessed',
+    action:
+      'When intake anchored the program to a project (meta.projectAnchorId): POST /api/orchestration/execute {templateId:"submission_readiness_review", projectId:<the anchored project>, module:"ind"}; GET /api/orchestration/executions/:id',
+    expected:
+      'The run completes, its first step (inspect_project_state) names the program, and the execution is readable. A program intake did not anchor is a deviation naming the reason intake gave',
+    dependsOn: ['OQ-SRDY-00'],
+    note: 'The review reads the integer project spine. A program reaches it only through the anchor intake writes (services/c2c/program-project-anchor.ts), and intake writes one only when the organisation has exactly one client workspace. Signup creates none.',
+  },
+  async ({ api, expect, deviation }) => {
+    if (state.projectAnchorId == null) {
+      const reason = [state.projectAnchorSkipped, state.projectAnchorDetail].filter(Boolean).join(': ');
+      deviation(
+        `intake did not anchor program ${state.programId} to a project (${reason || 'no reason given'}). The review reads projects, so there is no project it can assess for this program`,
+      );
+    }
+    const e = await api('POST', '/api/orchestration/execute', {
+      templateId: 'submission_readiness_review',
+      projectId: state.projectAnchorId,
+      module: 'ind',
+    });
+    expect(e.status === 200 && e.json?.status === 'completed', `expected a completed run, got HTTP ${e.status}`, e.json);
+    const project = inspected(e.json);
+    expect(project.name === state.programName, `the review assessed "${project.name}", not the program "${state.programName}"`, e.json.steps?.[0]);
+    const read = await api('GET', `/api/orchestration/executions/${e.json.executionId}`);
+    expect(read.status === 200 && read.json?.executionId === e.json.executionId, `execution read expected 200, got ${read.status}`, read.json);
+    return `run ${e.json.executionId} completed for "${project.name}" (${project.documents} document(s)); the execution is readable`;
   },
 );
 
@@ -170,18 +228,41 @@ await step(
   {
     id: 'OQ-SRDY-06',
     urs: ['URS-SRDY-006'],
-    title: 'Contradiction (inconsistency) scan for a project',
-    action: 'POST /api/governed-intelligence/contradictions/scan/1',
-    expected: 'HTTP 200 with a deterministic scan result (possibly zero findings)',
+    title: 'A contradiction scan never reports a project it cannot read as clean',
+    action:
+      'POST /api/governed-intelligence/contradictions/scan/<the program id>; POST /api/governed-intelligence/contradictions/scan/<a project id the organisation does not hold>',
+    expected:
+      'The program id (not a project id) is refused 400 and the id the organisation does not hold 404; neither answers 200 with findings',
+    dependsOn: ['OQ-SRDY-00'],
+    note: 'VSR-001 F-25. Until v0.5 this step scanned project 1 and passed on 200 with zero findings, in an organisation that holds no project 1: a clean result for a project nothing was read from. A program id arrived as NaN, which the registry searches read as "no project filter", so the scan read the whole organisation.',
   },
-  async ({ api, expect, deviation, deniedTables }) => {
-    const r = await api('POST', '/api/governed-intelligence/contradictions/scan/1', {});
-    const needed = ['public.assumption_records', 'public.contradiction_links', 'public.decision_records'].filter((t) => deniedTables().includes(t));
-    if (r.status === 500 && needed.length) {
-      deviation(`IQ-DEV-001: ${needed.join(', ')} are listed as unreadable by the runtime role in IQ-07 (IQ/db-role-denied-tables.json); the scan answers 500. Re-execute after the grant is applied.`, r.json);
+  async ({ api, expect }) => {
+    const program = await api('POST', `/api/governed-intelligence/contradictions/scan/${state.programId}`, {});
+    const unheld = await api('POST', '/api/governed-intelligence/contradictions/scan/2147480000', {});
+    const clean = (r) => r.status === 200 && Array.isArray(r.json?.findings);
+    expect(!clean(program) && program.status === 400, `the scan of program ${state.programId} answered ${program.status}${clean(program) ? ` with ${program.json.findings.length} finding(s)` : ''}`, program.json);
+    expect(!clean(unheld) && unheld.status === 404, `the scan of a project the organisation does not hold answered ${unheld.status}${clean(unheld) ? ` with ${unheld.json.findings.length} finding(s)` : ''}`, unheld.json);
+    return `program id refused ${program.status}: ${program.json?.error}; unheld project refused ${unheld.status}: ${unheld.json?.error}`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-SRDY-06b',
+    urs: ['URS-SRDY-006'],
+    title: 'A contradiction scan of the program\'s project runs',
+    action: 'When intake anchored the program to a project (meta.projectAnchorId): POST /api/governed-intelligence/contradictions/scan/<the anchored project>',
+    expected: 'HTTP 200 with a deterministic result (possibly zero findings). A program intake did not anchor is a deviation naming the reason intake gave',
+    dependsOn: ['OQ-SRDY-00'],
+  },
+  async ({ api, expect, deviation }) => {
+    if (state.projectAnchorId == null) {
+      const reason = [state.projectAnchorSkipped, state.projectAnchorDetail].filter(Boolean).join(': ');
+      deviation(`intake did not anchor program ${state.programId} to a project (${reason || 'no reason given'}). The scan reads projects, so there is no project it can scan for this program`);
     }
-    expect(r.status === 200, `expected 200, got ${r.status}`, r.json);
-    return JSON.stringify(r.json).slice(0, 240);
+    const r = await api('POST', `/api/governed-intelligence/contradictions/scan/${state.projectAnchorId}`, {});
+    expect(r.status === 200 && Array.isArray(r.json?.findings), `expected 200 with findings, got ${r.status}`, r.json);
+    return `project ${state.projectAnchorId}: ${r.json.summary?.total ?? r.json.findings.length} finding(s)`;
   },
 );
 
@@ -208,18 +289,31 @@ await step(
   {
     id: 'OQ-SRDY-08',
     urs: ['URS-SRDY-008'],
-    title: 'Orchestration and Inconsistency surfaces render',
-    action: 'Open /concept2cure/orchestration and /concept2cure/inconsistency',
-    expected: 'Both render (screenshots); an unavailable store is shown as an error/empty state, never as data',
-    dependsOn: ['OQ-SRDY-00'],
+    title: 'The Orchestration and Inconsistency boards are not in this release',
+    action: 'GET /api/module-subscriptions/navigation; open /concept2cure/orchestration and /concept2cure/inconsistency',
+    expected:
+      'launchScope.enforced=true; "orchestration" and "inconsistency" are not entitled, source "launch-scope", while "dispatch-readiness" is entitled; each deep link explains the board is not in this release',
+    note: 'OQ-005 v0.5. Until then this ad-hoc step rendered both boards. In every organisation signup creates, the Orchestration board found no program and the Inconsistency board refused the program\'s id: both read the integer project spine, which a program reaches only through an anchor signup never creates (VSR-001 §14.3; decided §15).',
   },
   async (ctx) => {
+    const { api, expect } = ctx;
+    const nav = await api('GET', '/api/module-subscriptions/navigation');
+    expect(nav.status === 200, `expected 200, got ${nav.status}`, nav.json);
+    expect(nav.json?.launchScope?.enforced === true, 'launchScope.enforced is not true', nav.json?.launchScope);
+    const arr = Object.values(nav.json ?? {}).find((v) => Array.isArray(v) && v.some((x) => x && typeof x === 'object' && 'entitled' in x)) ?? [];
+    const byId = Object.fromEntries(arr.map((v) => [v.id, v]));
+    for (const id of ['orchestration', 'inconsistency']) {
+      expect(byId[id]?.entitled === false && byId[id]?.source === 'launch-scope', `${id} is not locked by launch-scope`, byId[id]);
+    }
+    expect(byId['dispatch-readiness']?.entitled === true, 'dispatch-readiness is not entitled', byId['dispatch-readiness']);
     await ctx.newPage({ id: state.programId, name: state.programName });
     await ctx.goto('/concept2cure/orchestration');
+    await ctx.expectText(/not in this release/i);
     await ctx.screenshot('orchestration');
     await ctx.goto('/concept2cure/inconsistency');
+    await ctx.expectText(/not in this release/i);
     await ctx.screenshot('inconsistency');
-    return 'rendered';
+    return 'orchestration and inconsistency locked by launch-scope; dispatch-readiness entitled; both deep links show the launch-scope gate';
   },
 );
 

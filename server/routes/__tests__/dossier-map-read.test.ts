@@ -23,7 +23,11 @@ const resolveProgramProjectAnchor = vi.fn();
 vi.mock('../../services/c2c/program-project-anchor', () => ({
   resolveProgramProjectAnchor: (...a: unknown[]) => resolveProgramProjectAnchor(...a),
 }));
-vi.mock('../../db/requestDb', () => ({ requestDb: () => ({}) }));
+vi.mock('../../db/requestDb', () => ({
+  requestDb: () => ({}),
+  // The program-existence read runs on the request-scoped client.
+  requestPgClient: () => ({ query: (...a: unknown[]) => poolQuery(...a) }),
+}));
 /* Org-scoped program existence read (regulatory_programs). */
 const poolQuery = vi.fn();
 vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => poolQuery(...a) } }));

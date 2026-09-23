@@ -452,8 +452,22 @@ export async function deriveGovernedTargetBinding(
           [rest, orgId],
         );
         if (seq.rows.length === 0) return ledgerFallback('sequence row not readable at signing time');
+        /* ── document_uuid and document_content_sha256 are bound (2026-09-22,
+           W5/D7) ──────────────────────────────────────────────────────────────
+           A vault leaf names its document by document_uuid (its document_id is
+           NULL), and the content pin records what the source held when it was
+           placed. Neither was digested, so re-pointing a signed vault leaf at a
+           different PDF — upsertLeaf re-pins, so DOCUMENT_CONTENT_MISMATCH does
+           not fire either — left this digest byte-identical, and Gate 1 accepted
+           a signature over a document the signer never saw. Both columns are
+           written only by upsertLeaf, when a leaf is placed or changed, never by
+           a workflow transition, so this cannot recreate the self-invalidating
+           signature described above. A signature taken before this change binds
+           the old digest and is refused by Gate 1 with "re-sign the current
+           content", as with the 2026-09-21 amendment. */
         const leaves = await client.query(
-          `SELECT id, section_code, lifecycle_op, document_table, document_id, checksum, title
+          `SELECT id, section_code, lifecycle_op, document_table, document_id, document_uuid,
+                  document_content_sha256, checksum, title
              FROM submission_leaves
             WHERE sequence_id = $1::int AND organization_id = $2 AND deleted_at IS NULL
             ORDER BY section_code, id`,
@@ -463,7 +477,7 @@ export async function deriveGovernedTargetBinding(
         return {
           digest: sha256Hex(payload),
           basis: BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST,
-          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id) at signing time.`,
+          note: `sha256 over the ectd_sequences identity (id, submission, region, sequence number, type — not its workflow status) and its ${leaves.rows.length} submission_leaves row(s) (ordered by section_code, id; each with its document pointer, uuid and content pin) at signing time.`,
         };
       }
       case 'document': {

@@ -88,7 +88,16 @@ export function mdnRefusal(mdn: ParsedMdn, messageId: string): string | null {
   if (mdn.disposition === null) return 'Agency returned success with no MDN disposition in the body.';
   if (!mdn.accepted) return `Agency MDN did not accept the message: ${mdn.disposition}`;
   const norm = (v: string) => v.trim().replace(/^<|>$/g, '').toLowerCase();
-  if (mdn.originalMessageId !== null && norm(mdn.originalMessageId) !== norm(messageId)) {
+  /* 2026-09-22 (W5/D7): an MDN that names no message used to pass, so a
+     receipt that cannot be tied to what was sent was recorded as the agency's
+     acceptance of it. The caller records the refusal with the raw MDN and the
+     sequence stays in flight for a human to confirm at the agency — it is not
+     re-sent. Received-Content-MIC and the MDN's own signature are still not
+     verified (residual; needs the agency's certificates and a UAT round trip). */
+  if (mdn.originalMessageId === null) {
+    return 'Agency MDN names no Original-Message-ID, so it cannot be tied to the message sent; confirm receipt at the agency.';
+  }
+  if (norm(mdn.originalMessageId) !== norm(messageId)) {
     return `Agency MDN acknowledges a different message (${mdn.originalMessageId}).`;
   }
   return null;

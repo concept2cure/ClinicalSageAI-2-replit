@@ -123,7 +123,11 @@ describe('packageLeafBytes — lifecycle operations after sequence 0000', () => 
       const indexXml = await zip.file('index.xml')!.async('string');
       expect(indexXml).toMatch(/operation="replace"/);
       expect(indexXml).toContain('../0001/m3/32-body-data/32s-drug-sub/drug-substance.pdf');
-      expect(indexXml).not.toMatch(/operation="new"/);
+      // Every sequence carries its own regional backbone, so index.xml's
+      // pointer to it is always "new"; no CONTENT leaf may be.
+      const m1 = /<m1-administrative-information-and-prescribing-information>[\s\S]*?<\/m1-administrative-information-and-prescribing-information>/;
+      expect(indexXml.match(m1)?.[0]).toMatch(/operation="new"[^>]*xlink:href="m1\/us\/us-regional\.xml"/);
+      expect(indexXml.replace(m1, '')).not.toMatch(/operation="new"/);
     } finally {
       await fs.rm(outputDir, { recursive: true, force: true });
     }

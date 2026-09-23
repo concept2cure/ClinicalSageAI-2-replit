@@ -72,7 +72,7 @@ import {
   deleteBundle,
   readBundleBytes,
 } from '../services/submission-bundle-storage';
-import { leafFileName } from '../services/ectd/leaf-source-resolver';
+import { leafFileName, isFinalizedStatus } from '../services/ectd/leaf-source-resolver';
 import type { LeafBytes } from '../services/ectd/package-leaf-bytes';
 import {
   planSequence,
@@ -2216,6 +2216,17 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
     // Placement findings (unplaced / disagreement), merged into the validation
     // result below so the governed transmit gate sees them.
     const placementFindings: Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> = [];
+    // ── Only approved documents are filed (2026-09-23, W5/D7, round-2 review) ──
+    // The mapped-artifact read below had no status predicate, publish needs
+    // only 80% readiness, and the governed transmit reads no artifact status,
+    // so a draft artifact rendered into a leaf and reached the agency. The
+    // sequence spine refuses that (`unfinalized`); this one did not. Each
+    // shipping leaf built from an artifact that is not finalized — by the
+    // leaf-source resolver's own definition, isFinalizedStatus — is recorded
+    // here by its path, and becomes an error-severity LEAF-UNAPPROVED finding
+    // once the lifecycle has decided which leaves ship, so executeGovernedTransmit
+    // refuses the bundle (BUNDLE_VALIDATION_ERRORS). leaf path → its artifacts.
+    const unapprovedByLeafPath = new Map<string, Array<{ label: string; status: string }>>();
     // An artifact ships as ONE leaf. The section map has no uniqueness on
     // (artifact, section), so a duplicate row — or the same artifact mapped
     // into two sections — used to ship a second copy under a suffixed name with
@@ -2245,6 +2256,8 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           // unchanged content produces the same bytes and the sequence lifecycle
           // can see that nothing changed. See services/ectd/leaf-pdf.ts.
           updatedAt: concept2cureArtifacts.updatedAt,
+          // Whether the artifact may be filed at all (LEAF-UNAPPROVED).
+          status: concept2cureArtifacts.status,
         })
         .from(c2cArtifactSectionMap)
         .innerJoin(
@@ -2319,6 +2332,11 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           mediaType: 'application/pdf',
           content: await buildLeafPdf({ title: sectionLabel, markdown, contentModifiedAt: sectionContentAt(mapped) }),
         });
+        // Every artifact merged into this section's leaf is filed with it.
+        const unapproved = mapped
+          .filter((a) => !isFinalizedStatus(a.status, 'concept2cure_artifacts'))
+          .map((a) => ({ label: `${a.title} (${a.artifactId} v${a.version}) in ${sectionLabel}`, status: a.status }));
+        if (unapproved.length > 0) unapprovedByLeafPath.set(leafPath, unapproved);
         continue;
       }
 
@@ -2415,6 +2433,9 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         });
         ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title, modulePath });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
+        if (artifact && !isFinalizedStatus(artifact.status, 'concept2cure_artifacts')) {
+          unapprovedByLeafPath.set(modulePath, [{ label: unitLabel, status: artifact.status }]);
+        }
         if (shipKey) shippedArtifacts.set(shipKey, sectionLabel);
       }
     }
@@ -2498,6 +2519,19 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
     // the descriptor and surfaced to the UI; transmit hard-blocks on errors.
     // This is INTERNAL structural validation only — NOT an agency validator.
     const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths, enforceFileNames: isEctdFormat });
+    // LEAF-UNAPPROVED, over the leaves that SHIP (after the lifecycle drop, like
+    // everything else here) and for every format — an eSTAR goes to FDA too.
+    for (const leaf of leafs) {
+      for (const u of unapprovedByLeafPath.get(leaf.path) ?? []) {
+        validation.findings.push({
+          severity: 'error',
+          ruleId: 'LEAF-UNAPPROVED',
+          message: `${u.label}: its status is '${u.status}', not approved. Only an approved or locked artifact is filed with an agency; approve it, or remove it from the package, then assemble again.`,
+          filePath: leaf.path,
+        });
+        validation.errorCount += 1;
+      }
+    }
 
     // Assemble the real zip buffer.
     //

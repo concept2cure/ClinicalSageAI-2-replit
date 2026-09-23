@@ -3,7 +3,7 @@
  * against the canonical authoring DDL on in-process Postgres (WM, 2026-09-21).
  *
  * No AI provider exists here, so the tool is exercised the way the executor
- * dispatches it: `getToolHandler(name)(input, ctx)`. Without an open project
+ * dispatches it: `approvedToolHandler(name)(input, ctx)`. Without an open project
  * it refuses verbatim and writes nothing; with one, the document, its sections
  * and its provenance exist in the authoring store and the result carries what
  * the stream's artifact_draft event needs (authoringDocId, programId, content).
@@ -12,6 +12,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
 import { PREREQ, PROGRAM, OTHER_PROGRAM, ORG, AUTHOR, M25_SECTIONS } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { DRAFT_AUTHORING_DOCUMENT_NO_PROJECT } from '../../authoring/authoring-draft-tool';
+import { approvedToolHandler } from './support/approved-tool-handler';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
 vi.mock('../../../db.js', () => ({
@@ -53,8 +54,8 @@ beforeAll(async () => {
   h.db = jdb.db;
   h.pool = jdb.pool;
   // Importing the executor registers every handler as an import side effect.
-  const { getToolHandler } = await import('../AnaToolExecutor');
-  const found = getToolHandler('draft_authoring_document');
+  await import('../AnaToolExecutor');
+  const found = approvedToolHandler('draft_authoring_document');
   expect(found, 'draft_authoring_document is not registered').toBeDefined();
   handler = found as typeof handler;
 }, T);
