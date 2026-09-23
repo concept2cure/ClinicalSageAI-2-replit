@@ -186,3 +186,21 @@ export function orgRequired(res: Response): Response {
 export function notFoundInTenant(res: Response, label = 'Resource'): Response {
   return clientError(res, 404, `${label} not found`);
 }
+
+/* ─── Binary attachments ───────────────────────────────────────────── */
+
+/**
+ * Stream a generated Word document as a download.
+ *
+ * The three headers below were inlined, identically, in every route that
+ * returned a DOCX (biotech-artifacts.ts carried its own copy). One helper, so
+ * a content-type or disposition fix lands once. `filename` is quoted as-is;
+ * callers pass the factory's own suggested filename, which is already safe.
+ */
+export function sendDocxAttachment(res: Response, buffer: Buffer, filename: string): Response {
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Content-Length', buffer.length);
+  return res.send(buffer);
+}
+

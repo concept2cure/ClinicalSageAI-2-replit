@@ -9,8 +9,9 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { getProtocolExport, getCtGovDraft } from '../services/protocol-export/protocol-export-service';
-import { recordProtocolExport, recordCtGovDraft } from '../services/protocol-export-metrics';
+import { getProtocolExport, getCtGovDraft, getProtocolDocx } from '../services/protocol-export/protocol-export-service';
+import { sendDocxAttachment } from '../lib/api-response';
+import { recordProtocolExport, recordCtGovDraft, recordProtocolDocxExport } from '../services/protocol-export-metrics';
 
 const router = Router();
 
@@ -40,6 +41,27 @@ router.get('/:id/ctgov-draft', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   try { const draft = await getCtGovDraft(orgId, id); recordCtGovDraft(); res.json(draft); } catch (err) { fail(res, err); }
+});
+
+/**
+ * GET /:id/docx — the assembled protocol as a Word document, through the one
+ * DOCX factory. The date on the cover is read from the clock HERE, at the
+ * boundary, and injected into the pure mapper; nothing below this line reads
+ * a clock. A section nobody wrote renders as a bracketed gap marker, never as
+ * prose (see protocol-export/protocol-docx.ts).
+ */
+router.get('/:id/docx', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  try {
+    const out = await getProtocolDocx(orgId, id, new Date().toISOString().slice(0, 10));
+    recordProtocolDocxExport();
+    return sendDocxAttachment(res, out.buffer, out.filename);
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 export default router;
