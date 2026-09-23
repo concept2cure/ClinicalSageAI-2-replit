@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RA-001 |
-| Version | 0.5 |
+| Version | 0.6 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §3 |
 | Method | FDA CSA (Sept 2025 final; Feb 2026 update): identify intended use → determine risk (process risk and whether the feature can cause a quality/patient/data-integrity failure) → choose the least-burdensome assurance activity that gives confidence → record the result. Risk levels and activities are defined in VMP-001 §3.1. |
@@ -17,6 +17,7 @@
 | 0.3 | 2026-09-23 | W3 | URS-PROJ-011 (signing out ends the session) assessed: high, scripted (VSR-001 §13.9, F-21). |
 | 0.4 | 2026-09-23 | W3 | URS-SRDY-005 reassessed: high, scripted (was medium, unscripted). A readiness review that reports an all-clear it did not compute is a silent failure (VSR-001 F-23). |
 | 0.5 | 2026-09-23 | W3 | URS-SRDY-006 reassessed: high, scripted (was medium). A clean scan is read by Authoring's preflights as "no blocking contradictions" (VSR-001 F-25). URS-SRDY-008 reassessed: medium, scripted (was low, ad-hoc); it is now the launch boundary. |
+| 0.6 | 2026-09-23 | W3 | URS-AUTH-010 reassessed for the signing ceremony that replaces the PIN (URS-003 v0.2): still high, scripted; the assurance now covers the PIN's removal, the password, the enrolled second factor, and §11.300. |
 
 ## 1. Risk model
 
@@ -60,7 +61,7 @@ The columns below are parsed by `scripts/validation/build-traceability.mjs`; kee
 | URS-AUTH-007 | Comments attributed | low | scripted | trivially scriptable |
 | URS-AUTH-008 | Document audit trail complete | high — §11.10(e) | scripted | events, actors, hashes |
 | URS-AUTH-009 | Freeze into an immutable, hash-verified snapshot | high — §11.70 record binding | scripted | freeze, retrieve, second freeze refused |
-| URS-AUTH-010 | PIN-based e-signature with meaning and intent; refusals; binding to the frozen snapshot | high — §11.50/§11.70/§11.200 | scripted | wrong PIN, wrong meaning, valid signature listed with `pin_verified` and covered hash |
+| URS-AUTH-010 | E-signature re-verified by the platform ceremony (password, enrolled second factor, lockout) with meaning and intent; refusals; binding to the frozen snapshot | high — §11.50/§11.70/§11.200/§11.300 | scripted | PIN refused and PIN route absent; wrong password, missing code, wrong meaning refused with nothing stored; valid signature listed with its verified method and covered hash |
 | URS-AUTH-011 | Signing authority by role | high — §11.10(g) | scripted (positive only locally) | negative case needs a second identity on staging |
 | URS-AUTH-012 | AI drafting fails closed without a provider; governed candidate with one | high — fabricated content in a filing | scripted (fail-closed) / deviation (drafting) | provider absent locally; drafting re-executed with a PQ-passed model |
 | URS-AUTH-013 | Review request, workflow submit, reviewer visibility, decision with meaning | medium | scripted | request, submit negatives/positive, board visibility |

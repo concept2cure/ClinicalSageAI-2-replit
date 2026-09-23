@@ -10,11 +10,13 @@
  * approval through the platform's ONE electronic-signature write path.
  *
  * ── Which credential, and why ────────────────────────────────────────────────
- * Two re-authentication mechanisms exist in the tree:
- *   - PIN (`server/services/part11/pin-verification.ts`) — used by the
- *     authoring loop's `/docs/:docId/e-sign`, which writes `authoring_signatures`,
- *     a separate store for UUID-keyed authoring documents ("the two are
- *     different concepts that collided on a name", authoring.router.ts).
+ * Until 2026-09-23 two re-authentication mechanisms existed in the tree:
+ *   - PIN (`server/services/part11/pin-verification.ts`, now deleted) — used by
+ *     the authoring loop's `/docs/:docId/e-sign`, which writes
+ *     `authoring_signatures`, a separate store for UUID-keyed authoring
+ *     documents ("the two are different concepts that collided on a name",
+ *     authoring.router.ts). The authoring loop now re-verifies with the
+ *     password ceremony too (services/part11/reverify-signer.ts).
  *   - Password (+ TOTP when the signer has MFA enabled) — `verifySignerCredentials`
  *     (`server/services/ana-ri/governed-action-signoff.ts`). This is what the
  *     governed `sign` action (`verifyReauth` in c2c/actions.ts), the RBM
@@ -60,7 +62,7 @@ import {
   sha256CanonicalJson,
   type SignatureDbClient,
 } from '../part11/signature-persistence';
-import { TASK_SIGNATURE_MEANINGS } from '../part11/pin-verification';
+import { TASK_SIGNATURE_MEANINGS } from '../part11/signature-meanings';
 
 /**
  * The §11.50(a)(3) meaning an approval carries. Taken from the platform's

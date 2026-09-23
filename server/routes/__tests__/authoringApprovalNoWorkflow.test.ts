@@ -24,7 +24,6 @@
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
-import bcrypt from 'bcryptjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mockQuery, mockClientQuery } = vi.hoisted(() => ({
@@ -47,6 +46,27 @@ vi.mock('../../services/part11/signing-authority.js', () => ({
   SIGNING_ROLES: ['QA'],
 }));
 
+// The signing routes re-verify the signer with the platform ceremony
+// (services/part11/reverify-signer.ts); its production wiring is stubbed to an
+// account whose password is PASSWORD, with no second factor enrolled. The
+// ceremony itself has its own suites (authoring-sign-ceremony.test.ts).
+vi.mock('../../services/part11/reverify-signer-deps', () => ({
+  signerReverificationDeps: () => ({
+    loadPasswordHash: async () => 'stored-hash',
+    comparePassword: async (plain: string) => plain === 'signer-password',
+    isMfaEnabled: async () => false,
+    verifyMfaToken: async () => false,
+    isAccountLocked: async () => false,
+    recordFailedAttempt: async () => {},
+    warn: () => {},
+  }),
+}));
+// A signer is a numeric account; its membership re-check has its own suite.
+vi.mock('../../middleware/orgMembership', () => ({
+  enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  invalidateOrgMembershipCache: () => undefined,
+}));
+
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-approval-chain';
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
@@ -55,7 +75,7 @@ import router from '../authoring.router';
 async function bearer(): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
   return `Bearer ${await new SignJWT({
-    sub: 'u1',
+    sub: '41', // a signer is a numeric account (membership re-check stubbed above)
     organizationId: 7,
     email: 'qa@test.co',
     roles: ['APPROVER', 'QA'],
@@ -80,16 +100,13 @@ const txStatements = () => mockClientQuery.mock.calls.map(c => String(c[0]));
  * A document with NO workflow steps — never submitted for approval.
  * `pendingSteps` therefore counts zero, which is the whole point.
  */
-let PIN_HASH = '';
+const PASSWORD = 'signer-password';
 
 function wireWorkflow(counts: { pending: string; total: string }) {
   mockQuery.mockImplementation(async (sql: unknown) => {
     const s = String(sql);
     if (s.includes('FROM authoring_documents')) {
       return { rowCount: 1, rows: [{ id: 'D1', title: 'Doc', status: 'draft' }] };
-    }
-    if (s.includes('user_pins')) {
-      return { rowCount: 1, rows: [{ pin_hash: PIN_HASH, failed_attempts: 0, locked_until: null }] };
     }
     return { rowCount: 0, rows: [] };
   });
@@ -106,7 +123,6 @@ function wireWorkflow(counts: { pending: string; total: string }) {
 }
 
 beforeEach(async () => {
-  PIN_HASH = await bcrypt.hash('123456', 4);
   mockQuery.mockReset();
   mockClientQuery.mockReset();
 });
@@ -118,7 +134,7 @@ describe('POST /docs/:docId/sign on a document with NO approval workflow', () =>
     await request(makeApp())
       .post('/api/authoring/docs/D1/sign')
       .set('Authorization', await bearer())
-      .send({ meaning: 'APPROVER', reason: 'looks fine', pin: '123456' });
+      .send({ meaning: 'APPROVER', reason: 'looks fine', password: PASSWORD });
 
     const approvals = txStatements().filter(
       s => s.includes('UPDATE authoring_documents') && s.includes("'APPROVED'"),
@@ -132,7 +148,7 @@ describe('POST /docs/:docId/sign on a document with NO approval workflow', () =>
     const res = await request(makeApp())
       .post('/api/authoring/docs/D1/sign')
       .set('Authorization', await bearer())
-      .send({ meaning: 'APPROVER', reason: 'looks fine', pin: '123456' });
+      .send({ meaning: 'APPROVER', reason: 'looks fine', password: PASSWORD });
 
     expect(res.status).toBe(200);
     expect(txStatements().some(s => s.includes('INSERT INTO authoring_signatures'))).toBe(true);
@@ -143,7 +159,7 @@ describe('POST /docs/:docId/sign on a document with NO approval workflow', () =>
     await request(makeApp())
       .post('/api/authoring/docs/D1/sign')
       .set('Authorization', await bearer())
-      .send({ meaning: 'APPROVER', reason: 'looks fine', pin: '123456' });
+      .send({ meaning: 'APPROVER', reason: 'looks fine', password: PASSWORD });
 
     // APPROVED is a sealed state — the flip also froze the record.
     expect(txStatements().some(s => s.includes('INSERT INTO frozen_documents'))).toBe(false);
@@ -157,7 +173,7 @@ describe('POST /docs/:docId/sign where an approval workflow DID exist', () => {
     await request(makeApp())
       .post('/api/authoring/docs/D1/sign')
       .set('Authorization', await bearer())
-      .send({ meaning: 'APPROVER', reason: 'final approval', pin: '123456' });
+      .send({ meaning: 'APPROVER', reason: 'final approval', password: PASSWORD });
 
     const approvals = txStatements().filter(
       s => s.includes('UPDATE authoring_documents') && s.includes("'APPROVED'"),
@@ -170,7 +186,7 @@ describe('POST /docs/:docId/sign where an approval workflow DID exist', () => {
     await request(makeApp())
       .post('/api/authoring/docs/D1/sign')
       .set('Authorization', await bearer())
-      .send({ meaning: 'APPROVER', reason: 'my turn', pin: '123456' });
+      .send({ meaning: 'APPROVER', reason: 'my turn', password: PASSWORD });
 
     const approvals = txStatements().filter(
       s => s.includes('UPDATE authoring_documents') && s.includes("'APPROVED'"),

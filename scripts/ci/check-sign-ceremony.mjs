@@ -25,7 +25,8 @@
  *     governedScoped(…), governedPdev(ctx, 'sign', …)
  *   - writeMutation('sign', …)   (writes the signature row, but re-auth is the caller's)
  * must sit in a handler that also re-verifies the signer (verifyReauth /
- * verifySigningPin) AND writes the signature row (persistGovernedActionSignature
+ * reverifySigner, the ceremony verifyReauth wraps; the signing PIN it also
+ * accepted was retired 2026-09-23) AND writes the signature row (persistGovernedActionSignature
  * / persistGovernedSignSignature / persistElectronicSignature / writeMutation).
  * "Handler" is the enclosing top-level statement: a `router.<verb>(…)` block, a
  * `registerToolHandler(…)` block, or a top-level function.
@@ -50,7 +51,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BASELINE = path.join(ROOT, 'scripts/ci/sign-ceremony-baseline.json');
 
-const REAUTH = /\b(?:verifyReauth|verifySigningPin)\s*\(/;
+const REAUTH = /\b(?:verifyReauth|reverifySigner)\s*\(/;
 const SIGNATURE_ROW = /\b(?:persistGovernedActionSignature|persistGovernedSignSignature|persistElectronicSignature|writeMutation)\s*\(/;
 
 /** Top-level statement starts: the unit a "handler" is measured over. */
@@ -232,7 +233,7 @@ function main() {
     console.error('[ci:sign-ceremony] FAIL — a `sign` ledger write without the signature ceremony:');
     for (const f of failures) {
       for (const s of f.sites) {
-        const why = [!s.reauth && 'no verifyReauth/verifySigningPin', !s.signatureRow && 'no signature-row write'].filter(Boolean).join(', ');
+        const why = [!s.reauth && 'no verifyReauth/reverifySigner', !s.signatureRow && 'no signature-row write'].filter(Boolean).join(', ');
         console.error(`  ✗ ${f.file}:${s.line}  (${why})`);
       }
       if (f.allowed) console.error(`    ${f.file}: ${f.count} site(s), baseline allows ${f.allowed}.`);

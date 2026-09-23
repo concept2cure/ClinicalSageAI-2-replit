@@ -22,7 +22,6 @@
 import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
-import bcrypt from 'bcryptjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => {
@@ -70,18 +69,38 @@ vi.mock('../../services/c2c/commit-section-to-filing.js', () => ({
   commitSectionToFiling: vi.fn(async () => ({ committed: false, reason: 'unbound' })),
 }));
 
+// The signing routes re-verify the signer with the platform ceremony
+// (services/part11/reverify-signer.ts); its production wiring is stubbed to an
+// account whose password is PASSWORD, with no second factor enrolled. The
+// ceremony itself has its own suites (authoring-sign-ceremony.test.ts).
+vi.mock('../../services/part11/reverify-signer-deps', () => ({
+  signerReverificationDeps: () => ({
+    loadPasswordHash: async () => 'stored-hash',
+    comparePassword: async (plain: string) => plain === 'signer-password',
+    isMfaEnabled: async () => false,
+    verifyMfaToken: async () => false,
+    isAccountLocked: async () => false,
+    recordFailedAttempt: async () => {},
+    warn: () => {},
+  }),
+}));
+// A signer is a numeric account; its membership re-check has its own suite.
+vi.mock('../../middleware/orgMembership', () => ({
+  enforceOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  invalidateOrgMembershipCache: () => undefined,
+}));
+
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-authoring-atomic';
 process.env.JWT_SECRET_DEV = process.env.JWT_SECRET;
 
 import router from '../authoring.router';
 
-const PIN = '246810';
-let PIN_HASH = '';
+const PASSWORD = 'signer-password';
 
 async function bearer(roles?: string[]): Promise<string> {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
   const token = await new SignJWT({
-    sub: 'u1', // non-numeric subject → membership re-check is skipped
+    sub: '41', // a signer is a numeric account (membership re-check stubbed above)
     organizationId: 7,
     email: 'author@test.co',
     ...(roles ? { roles } : {}),
@@ -114,7 +133,6 @@ const writeIndex = (re: RegExp) => clientSql().findIndex((s) => re.test(s));
 let failOn: RegExp | null = null;
 
 beforeEach(async () => {
-  if (!PIN_HASH) PIN_HASH = await bcrypt.hash(PIN, 4);
   vi.clearAllMocks();
   failOn = null;
   h.auditLogAction.mockResolvedValue(undefined);
@@ -260,9 +278,6 @@ describe('POST /docs/:id/freeze — snapshot + status flip + audit are atomic', 
 describe('POST /docs/:id/sign — signature + workflow approval + audit are atomic', () => {
   beforeEach(() => {
     h.poolQuery.mockImplementation(async (sql: string) => {
-      if (/FROM user_pins/i.test(sql)) {
-        return { rowCount: 1, rows: [{ pin_hash: PIN_HASH, failed_attempts: 0, locked_until: null }] };
-      }
       if (/SELECT code, content FROM authoring_sections/i.test(sql)) {
         return { rowCount: 1, rows: [{ code: '2.5', content: 'body' }] };
       }
@@ -284,7 +299,7 @@ describe('POST /docs/:id/sign — signature + workflow approval + audit are atom
     const res = await request(makeApp())
       .post('/api/authoring/docs/D1/sign')
       .set('Authorization', await bearer(['REVIEWER']))
-      .send({ pin: PIN, meaning: 'REVIEWER', reason: 'reviewed and approved' });
+      .send({ password: PASSWORD, meaning: 'REVIEWER', reason: 'reviewed and approved' });
 
     expect(res.status).toBe(200);
     const begin = sawBegin();
@@ -323,7 +338,7 @@ describe('POST /docs/:id/sign — signature + workflow approval + audit are atom
     const res = await request(makeApp())
       .post('/api/authoring/docs/D1/sign')
       .set('Authorization', await bearer(['REVIEWER']))
-      .send({ pin: PIN, meaning: 'REVIEWER', reason: 'reviewed and approved' });
+      .send({ password: PASSWORD, meaning: 'REVIEWER', reason: 'reviewed and approved' });
 
     expect(res.status).toBe(500);
     expect(sawRollback()).toBe(true);
