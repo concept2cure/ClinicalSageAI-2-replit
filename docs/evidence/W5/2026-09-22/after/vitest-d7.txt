@@ -1,0 +1,12 @@
+Merged tree c84368ec6 (D7 commits e4a3f8981..ddac6c9b4 + upstream merge), 2026-09-23.
+npx vitest run server/services/{submission-gateways,submission-service,ana-ri,ectd,market-specs,ind-lifecycle,shadow-review,part11,ind-forms} client/src/concept2cure/mdx/hooks tests/mdx-submission-gateway-transmit-bundle-guard.test.ts
+
+ Test Files  2 failed | 270 passed (272)
+      Tests  2 failed | 2806 passed (2808)
+
+Failures (both pre-existing and environmental; identical on the base commit):
+ FAIL  server/services/ectd/__tests__/sign-payload-kms-seam.test.ts [ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts ]
+ FAIL  server/services/ectd/__tests__/pdfa-pipeline-ghostscript.test.ts > finalizePdfA — a successful Ghostscript exit is not a conversion > does not report a conversion when the output carries no PDF/A identifier
+ FAIL  server/services/ectd/__tests__/pdfa-pipeline-ghostscript.test.ts > finalizePdfA — a successful Ghostscript exit is not a conversion > reports the conversion when the output really does declare PDF/A
+Error: Cannot find package '@aws-sdk/client-kms' imported from /home/user/ClinicalSageAI-2-replit/server/services/signature/__tests__/fake-kms.ts
+"Ghostscript PDF/A conversion failed (PDF/A-1b conversion needs an sRGB ICC profile for the OutputIntent and none was found (set PDFA_SRGB_ICC, or install Ghostscript, which ships one). Refusing to produce a file that wo
