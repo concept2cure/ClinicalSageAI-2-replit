@@ -37,8 +37,24 @@ publishable:
 
 1. Expand `gold-tasks.json` to 10+ tasks per `docType` with real `input`
    documents and curated `expectedFields` / `requiredSections`.
-2. Wire `--live` mode in `run-eval.ts` to run each `input` through the live
-   extraction/generation services (behind the AI gateway) and score the output.
+2. ~~Wire `--live` mode in `run-eval.ts`~~ — **do not. This step is done, and
+   not here.** `--live` existed in this runner until 2026-09-22 and was removed
+   deliberately: it scored a task's captured candidate in preference to the live
+   generation, went through the gateway without pinning a model (so a fallback
+   could answer unrecorded), and a run that scored nothing still exited 0.
+   Scoring a model live is performance qualification, and it now lives in
+   `server/eval/pq/run-pq.ts` — `npm run pq:run -- --model <id>` — which pins one
+   model, checks the model the provider reports actually serving, and never
+   scores a captured candidate. See the header of `run-eval.ts` and commit
+   `282c66887`.
+
+   Left struck through rather than deleted because this instruction outlived the
+   code it described, and a session reading it would rebuild something that was
+   removed on purpose — the failure the `CLAUDE.md` working agreement describes,
+   where five editor generations were built and deleted because each session did
+   not know the last one existed. `ga-readiness-report.mjs` has since been
+   corrected and no longer points here; this line was the last copy still saying
+   "wire `--live`".
 3. Record the resulting per-document-type accuracy in the model cards
    (`docs/ai-governance/MODEL_CARDS.md`) and re-run on every model swap (the
    approved-models drift gate flags when that is required).
