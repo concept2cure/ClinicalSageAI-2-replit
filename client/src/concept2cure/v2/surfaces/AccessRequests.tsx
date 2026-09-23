@@ -12,8 +12,16 @@
  * the platform owner's cross-workspace view, rendered inside the licensing
  * console by ./licensing/AccessRequestsPanel. They are the same queue with the
  * same governed answer, so they are the same component; the scope changes the
- * read, one column, and nothing else. Two copies would be two places for the
- * approval flow to drift apart.
+ * endpoint, one column, and nothing else. Two copies would be two places for
+ * the approval flow to drift apart.
+ *
+ * The scope picks the ENDPOINT, not a query parameter (2026-09-22). The
+ * workspace endpoint runs under the caller's own workspace, where the database
+ * shows nothing else — asked for every workspace it answered with one, and this
+ * screen rendered that as "no requests waiting" for all the others. The
+ * owner's view is read from, and answered through, the platform console's
+ * endpoint, which the server serves with cross-workspace reach. Both endpoints
+ * run the same server handlers.
  *
  * ── EVERY ANSWER IS GOVERNED ─────────────────────────────────────────────────
  * Approve and decline both go through `<GovernedConfirmDialog minReason={3}>` —
@@ -77,7 +85,12 @@ interface QueuePayload {
   truncated: boolean;
 }
 
-const QUEUE_PATH = '/api/module-access-requests';
+/** Where each scope's queue is read and answered. Chosen by scope, never by a
+ *  parameter the workspace endpoint would have to honour. */
+const QUEUE_PATHS = {
+  organization: '/api/module-access-requests',
+  all: '/api/admin/master/access-requests',
+} as const;
 
 /** Absolute, never relative. "3 days ago" is a claim about a clock the reader
  *  cannot see, and it becomes wrong on a page left open. */
@@ -121,7 +134,8 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
   const [busyId, setBusyId] = React.useState<number | null>(null);
   const [toast, fireToast] = useToast();
 
-  const path = `${QUEUE_PATH}?scope=${scope}&status=${showAnswered ? 'all' : 'open'}`;
+  const queuePath = QUEUE_PATHS[scope];
+  const path = `${queuePath}?status=${showAnswered ? 'all' : 'open'}`;
   const live = useLiveData<QueuePayload>(
     path,
     [path, reload],
@@ -241,7 +255,7 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
     if (!action) return;
     setPending(null);
     setBusyId(action.id);
-    const res = await apiCall('POST', `${QUEUE_PATH}/${action.id}/decision`, {
+    const res = await apiCall('POST', `${queuePath}/${action.id}/decision`, {
       decision: action.decision,
       reason,
     });

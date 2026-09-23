@@ -21,9 +21,11 @@ import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
 
-const { ORG_A, TARGET_ORG, queries, authState } = vi.hoisted(() => ({
+const { ORG_A, TARGET_ORG, CREATED_ORG, queries, authState, provisionLaunchModules } = vi.hoisted(() => ({
   ORG_A: 7,
   TARGET_ORG: 999,
+  CREATED_ORG: 4242,
+  provisionLaunchModules: vi.fn(async () => ({ granted: [], failed: [] })),
   queries: [] as Array<{ text: string; values: any[] }>,
   authState: { user: null as any },
 }));
@@ -32,7 +34,13 @@ const { ORG_A, TARGET_ORG, queries, authState } = vi.hoisted(() => ({
 vi.mock('postgres', () => ({
   default: () => {
     const sql = (strings: TemplateStringsArray, ...values: any[]) => {
-      queries.push({ text: strings.join(' ? '), values });
+      const text = strings.join(' ? ');
+      queries.push({ text, values });
+      // A created tenant comes back from INSERT ... RETURNING, so the
+      // provisioning step below has an id to act on.
+      if (/INSERT INTO organizations/i.test(text)) {
+        return Promise.resolve([{ id: CREATED_ORG, name: values[0], slug: values[1] }] as any[]);
+      }
       return Promise.resolve([] as any[]);
     };
     return sql;
@@ -47,6 +55,14 @@ vi.mock('../../auth', () => ({
     next();
   },
 }));
+
+// The launch catalog is provisioned for every new tenant (D2). Its real SQL runs
+// under this route's system scope in tests/db/signup-launch-catalog.dbtest.ts;
+// here the contract is only that the route asks for it, for the right tenant.
+vi.mock('../../services/entitlements/launch-scope.js', () => ({ provisionLaunchModules }));
+// Admission refuses multi-tenancy while RLS is not filtering; that posture is
+// its own test's concern, not this one's.
+vi.mock('../../db/tenantAdmission', () => ({ assertCanAdmitNewTenant: async () => undefined }));
 
 let app: express.Express;
 
@@ -128,6 +144,22 @@ describe('Tenant mutations — admin only', () => {
     await request(app).delete('/api/tenants/5').expect(403);
     await request(app).post('/api/tenants/5/api-key').expect(403);
     expect(dataQueries()).toHaveLength(0);
+  });
+});
+
+describe('Tenant creation — the launch catalog comes with it (D2)', () => {
+  it('a platform admin creating a tenant provisions the launch catalog for THAT tenant', async () => {
+    authState.user = { id: 1, organizationId: ORG_A, role: 'super_admin', roles: ['super_admin'] };
+    const res = await request(app).post('/api/tenants').send({ name: 'Acme Corp', slug: 'acme' });
+    expect(res.status).toBe(201);
+    // Until 2026-09-22 this path created a tenant with no launch grants at all.
+    expect(provisionLaunchModules).toHaveBeenCalledTimes(1);
+    expect(provisionLaunchModules).toHaveBeenCalledWith(CREATED_ORG, { actorEmail: null });
+  });
+
+  it('a refused creation provisions nothing', async () => {
+    await request(app).post('/api/tenants').send({ name: 'Acme Corp', slug: 'acme' }).expect(403);
+    expect(provisionLaunchModules).not.toHaveBeenCalled();
   });
 });
 

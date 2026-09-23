@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/sections/873f580d-941b-4a13-9752-a89f5a601e27/ai/draft",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "prompt": "Draft a one-paragraph summary."
+    }
+  },
+  "response": {
+    "status": 503,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 55,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "GATEWAY_UNAVAILABLE",
+        "message": "No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed."
+      }
+    }
+  }
+}

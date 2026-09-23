@@ -1,0 +1,39 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/part11/signatures/by-target?target=ectd-sequence%3A9",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 11,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": 11,
+          "document_id": null,
+          "version_id": null,
+          "signed_target": "ectd-sequence:9",
+          "signature_type": "governed-action",
+          "signature_purpose": "OQ-004 step 08: e-signature to freeze sequence 0000 for validation",
+          "signer_id": 11,
+          "signer_name": "OQ Signer",
+          "signer_title": "Chief Science Officer",
+          "signer_email": "oq-signer@validation.local",
+          "signature_meaning": null,
+          "signature_hash": "cfa9ca6e5afe4b7f54a73b89f39e14aef9be74e2c14af42047f4570430e1a0cc",
+          "binding_basis": "ectd-sequence-leaf-manifest-sha256",
+          "second_factor_verified": true,
+          "is_valid": true,
+          "signed_at": "2026-09-23T02:50:57.813Z",
+          "ip_address": "127.0.0.1"
+        }
+      ]
+    }
+  }
+}

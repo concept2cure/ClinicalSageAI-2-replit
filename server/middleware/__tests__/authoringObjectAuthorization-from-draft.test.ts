@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 vi.mock('/home/user/ClinicalSageAI-2-replit/server/db', () => ({ getPool: () => ({ query: async () => ({ rows: [] }) }), pool: { query: async () => ({ rows: [] }) } }));
-import { authoringObjectAuthorization } from '/home/user/ClinicalSageAI-2-replit/server/middleware/authoringObjectAuthorization';
+import { authoringObjectAuthorization } from '../authoringObjectAuthorization';
 describe('POST /api/authoring/docs/from-draft passes the object-authorization gate', () => {
   it('reaches the router (the gate treats it like POST /docs — no object exists yet)', async () => {
     const app = express();
