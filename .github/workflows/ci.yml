@@ -1596,6 +1596,15 @@ jobs:
           AUDIT_HMAC_KEY: ci-boot-smoke-audit-hmac-key-min-32-chars-eee
           MFA_ENCRYPTION_KEY: ci-boot-smoke-mfa-encryption-key-min-32-chars-fff
           CONNECTOR_ENCRYPTION_KEY: ci-boot-smoke-connector-encryption-key-32-ggg
+          # server/services/signature/signer-mode.ts refuses to boot production
+          # without a signer posture (unset and `dev` are both refused). This
+          # throwaway container has no KMS key, so it takes the one other
+          # production-legal posture: the HMAC seal keyed by AUDIT_HMAC_KEY
+          # above, with the symmetric-seal risk accepted explicitly. It proves
+          # boot, not signer non-repudiation — a real deployment chooses kms or
+          # records the same acceptance (docs/SOP_KEY_MANAGEMENT.md).
+          CONCEPT2CURE_SIGNER_MODE: hmac
+          CONCEPT2CURE_SIGNER_ACCEPT_HMAC: 'true'
           # This job has no AI provider, and since /readyz gained its `ana`
           # dependency (startup/ana-readiness-state.ts) that is no longer a
           # silent condition: a process where AnA cannot answer refuses to
