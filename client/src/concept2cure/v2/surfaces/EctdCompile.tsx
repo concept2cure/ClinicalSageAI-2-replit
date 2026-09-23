@@ -119,7 +119,14 @@ interface CompiledPackage {
   files: string[];
   regionalBackbone: { path: string; xml: string } | null;
   indexMd5: string | null;
-  pdfa: { pdfLeaves: number; pdfaConverted: number; allPdfA: boolean; notConverted: string[] } | null;
+  pdfa: {
+    pdfLeaves: number;
+    pdfaConverted: number;
+    allPdfA: boolean;
+    notConverted: string[];
+    /** FDA forms shipped with FDA's own security settings — never converted, by rule. */
+    agencyFormsAsIssued?: string[];
+  } | null;
 }
 interface CompilationRow {
   id: number | string;
@@ -414,6 +421,10 @@ function BackboneView({ label, xml }: { label: string; xml: string }) {
 function PackageFacts({ result }: { result: CompileResult }) {
   const pkg = result.package;
   const pdfa = pkg?.pdfa;
+  const asIssued = pdfa?.agencyFormsAsIssued ?? [];
+  // An FDA form shipped as issued is neither converted nor a conversion failure,
+  // so it is out of the count and named on its own line.
+  const convertible = pdfa ? pdfa.pdfLeaves - asIssued.length : 0;
   return (
     <ul style={{ margin: '0 0 10px', paddingLeft: 18, fontSize: 12.5 }}>
       <li>
@@ -423,9 +434,15 @@ function PackageFacts({ result }: { result: CompileResult }) {
       </li>
       {result.recorded === true && <li>Recorded — its leaf manifest is what the next sequence is diffed against.</li>}
       {result.recorded === false && <li className="sp-tone-err">Not recorded — the next sequence has nothing to be diffed against.</li>}
-      {pdfa && (
+      {pdfa && convertible > 0 && (
         <li className={pdfa.allPdfA ? undefined : 'sp-tone-warn'}>
-          {pdfa.pdfaConverted} of {pdfa.pdfLeaves} PDF leaves converted to PDF/A.
+          {pdfa.pdfaConverted} of {convertible} PDF leaves converted to PDF/A.
+        </li>
+      )}
+      {asIssued.length > 0 && (
+        <li>
+          {asIssued.length === 1 ? 'One FDA form' : `${asIssued.length} FDA forms`} shipped as FDA issued, with
+          FDA&apos;s security settings intact, and not converted: <span className="mono">{asIssued.join(', ')}</span>
         </li>
       )}
     </ul>

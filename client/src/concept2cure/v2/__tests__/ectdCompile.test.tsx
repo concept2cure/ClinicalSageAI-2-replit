@@ -259,6 +259,24 @@ describe('EctdCompile — the compiled package', () => {
     expect(screen.getByText(/Recorded — its leaf manifest is what the next sequence is diffed against/)).toBeTruthy();
   });
 
+  it('names an FDA form shipped as FDA issued apart from the PDF/A count', async () => {
+    mockSpineCompile({
+      ...SPINE_COMPILE,
+      package: {
+        ...PACKAGE,
+        pdfa: { pdfLeaves: 2, pdfaConverted: 1, allPdfA: true, notConverted: [], agencyFormsAsIssued: ['m1/us/1-1/form-fda-1571.pdf'] },
+      },
+    });
+    render(<EctdCompile {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Compile eCTD/ }));
+    // The form is not counted as a PDF leaf that failed conversion, and it is not
+    // silently folded into the converted count either: it is named on its own.
+    expect(await screen.findByText(/1 of 1 PDF leaves converted to PDF\/A/)).toBeTruthy();
+    const asIssued = screen.getByText(/shipped as FDA issued/);
+    expect(asIssued.textContent).toContain('m1/us/1-1/form-fda-1571.pdf');
+    expect(asIssued.textContent).toMatch(/security settings intact/);
+  });
+
   it('an unrecorded compilation says it can anchor no lifecycle', async () => {
     mockSpineCompile({ ...SPINE_COMPILE, recorded: false });
     render(<EctdCompile {...props()} />);

@@ -454,7 +454,33 @@ describe('POST /:projectIdent/compile — the package, not just its backbone', (
     expect(blockers).toMatch(/2 of 2 PDF leaf file\(s\) were not converted to PDF\/A/);
     expect(blockers).toMatch(/form-fda-1571\.pdf/);
     expect(payload.package.pdfa).toEqual({ pdfLeaves: 2, pdfaConverted: 0, allPdfA: false,
-      notConverted: ['m1/us/1-1/form-fda-1571.pdf', 'm3/3-2-s-4-2/control-of-drug-substance.pdf'] });
+      notConverted: ['m1/us/1-1/form-fda-1571.pdf', 'm3/3-2-s-4-2/control-of-drug-substance.pdf'],
+      agencyFormsAsIssued: [] });
+  });
+
+  it('an FDA form shipped as FDA issued is named as such — neither converted nor a PDF/A failure', async () => {
+    mockSpine();
+    const { zipPath } = await makeFdaPackageZip();
+    const base = assembledResult(zipPath);
+    assembleSequenceMock.mockResolvedValue({
+      ...base,
+      bundle: {
+        ...base.bundle,
+        dtdStatus: selfContained,
+        submissionGrade: {
+          total: 2, pdfLeaves: 2, pdfaConverted: 1, allPdfA: true, notConverted: [],
+          agencyFormsAsIssued: ['m1/us/1-1/form-fda-1571.pdf'],
+        },
+      },
+    });
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+    const payload = res.json.mock.calls[0][0];
+
+    expect(payload.package.pdfa).toEqual({ pdfLeaves: 2, pdfaConverted: 1, allPdfA: true, notConverted: [],
+      agencyFormsAsIssued: ['m1/us/1-1/form-fda-1571.pdf'] });
+    expect(payload.submissionBlockers.join(' ')).not.toMatch(/PDF\/A/);
   });
 
   it('a compilation that could not be recorded says so — its manifest is what the next sequence is diffed against', async () => {

@@ -404,8 +404,16 @@ interface CompiledPackage {
   /** index-md5.txt: the MD5 of index.xml, verbatim. */
   indexMd5: string | null;
   /** PDF/A conversion outcome over the package's PDF leaves; null when the
-   *  packager reported no grade. */
-  pdfa: { pdfLeaves: number; pdfaConverted: number; allPdfA: boolean; notConverted: string[] } | null;
+   *  packager reported no grade. agencyFormsAsIssued are FDA forms shipped with
+   *  FDA's own security (leaf-pdf-security.ts): never converted, by rule, and
+   *  counted in neither pdfaConverted nor notConverted. */
+  pdfa: {
+    pdfLeaves: number;
+    pdfaConverted: number;
+    allPdfA: boolean;
+    notConverted: string[];
+    agencyFormsAsIssued: string[];
+  } | null;
 }
 
 interface ModuleCompilationStatus {
@@ -936,6 +944,7 @@ async function compileFromSpine(
               pdfaConverted: grade.pdfaConverted,
               allPdfA: grade.allPdfA,
               notConverted: [...grade.notConverted],
+              agencyFormsAsIssued: [...(grade.agencyFormsAsIssued ?? [])],
             }
           : null,
       };
