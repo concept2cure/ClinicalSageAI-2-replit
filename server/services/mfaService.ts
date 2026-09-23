@@ -345,9 +345,31 @@ export interface MfaSetupResult {
 }
 
 /**
+ * Refused: the account already has a second factor enrolled. Replacing it is
+ * the owner's act, with a current code: /mfa/disable, then enrol again.
+ */
+export class MfaAlreadyEnabledError extends Error {
+  constructor() {
+    super('Two-step verification is already on for this account');
+    this.name = 'MfaAlreadyEnabledError';
+  }
+}
+
+/**
  * Generate a new TOTP secret for a user. Does NOT enable MFA yet.
  * The secret is stored encrypted but mfaEnabled remains false until
  * the user verifies a token via enableMfa().
+ *
+ * Only while no second factor is enrolled (VSR-001 F-26). This wrote over the
+ * stored secret for any signed-in session and left MFA on, so a session holder
+ * who called /mfa/setup held the account's second factor from then on: the
+ * owner's authenticator stopped verifying, and the new secret's codes passed
+ * the sign-in and every signature (tests/db/second-factor-binding.dbtest.ts).
+ * The check and the write are one conditional UPDATE, so a concurrent
+ * enableMfa cannot slip between them. An enrolment not yet confirmed can be
+ * restarted: nothing is on until a code confirms it.
+ *
+ * @throws MfaAlreadyEnabledError when the account has MFA enabled.
  */
 export async function generateSecret(userId: number, userEmail: string): Promise<MfaSetupResult> {
   // Generate random secret
@@ -361,14 +383,20 @@ export async function generateSecret(userId: number, userEmail: string): Promise
   // Encrypt and store the secret (not yet enabled)
   const encryptedSecret = encrypt(secretBase32);
 
-  await db
+  const stored = await db
     .update(users)
     .set({
       mfaSecret: encryptedSecret,
       mfaMethod: 'totp',
       // Do NOT set mfaEnabled = true yet; that happens on verify
     })
-    .where(eq(users.id, userId));
+    .where(and(eq(users.id, userId), or(isNull(users.mfaEnabled), eq(users.mfaEnabled, false))))
+    .returning({ id: users.id });
+  if (stored.length === 0) {
+    const [account] = await db.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1);
+    if (!account) throw new Error(`No account ${userId} to enrol`);
+    throw new MfaAlreadyEnabledError();
+  }
 
   // The QR code is drawn HERE, as a data: URL. Until 2026-09-23 this returned
   // an https://api.qrserver.com/... address whose query string carried the
