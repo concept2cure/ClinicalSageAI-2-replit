@@ -49,7 +49,7 @@ CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, pr
 CREATE TABLE protocol_capa_actions (id serial PRIMARY KEY, deviation_id int, action text, status text);
 CREATE TABLE protocol_budget_items (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, unit_cost numeric, quantity_per_subject numeric, deleted_at timestamptz);
 CREATE TABLE protocol_budget_params (id serial PRIMARY KEY, organization_id int, protocol_document_id int, target_enrollment int, sponsor_payment_per_subject numeric, indirect_rate_pct numeric);
-CREATE TABLE protocol_review_assignments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, reviewer_name text, role text, status text, deleted_at timestamptz, disposition text, due_date date);
+CREATE TABLE protocol_review_assignments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, reviewer_name text, reviewer_user_id int, role text, status text, deleted_at timestamptz, disposition text, due_date date);
 CREATE TABLE protocol_review_comments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, section_ref text, comment text, severity text, resolved boolean, deleted_at timestamptz);
 CREATE TABLE protocol_soa_assessments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, category text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_soa_cells (id serial PRIMARY KEY, organization_id int, protocol_document_id int, assessment_id int, visit_id int, required boolean);

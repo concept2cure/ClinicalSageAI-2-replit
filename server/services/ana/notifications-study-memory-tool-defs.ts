@@ -431,7 +431,7 @@ export const REVIEW_PROTOCOL_COMPLETENESS: AnaTool = {
 export const FINALIZE_PROTOCOL_DOCUMENT: AnaTool = {
   name: 'finalize_protocol_document',
   description:
-    "Finalize a protocol document. Gated on the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB); rejected with the gaps otherwise. On success it snapshots a major version. Governed + audited (signature).",
+    "Check whether a protocol document can be finalized, against the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB), and return the gaps. This tool does not finalize: finalizing is an electronic signature and AnA cannot sign. Tell the user to finalize from the protocol workspace, where they enter their password.",
   input_schema: { type: 'object', properties: { document_id: { type: 'number' }, reason: { type: 'string' } }, required: ['document_id'] },
 };
 

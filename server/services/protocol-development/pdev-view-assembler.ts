@@ -61,6 +61,9 @@ function mapReviews(
   }));
   return rows.map((rv) => ({
     id: str(rv.id), reviewer: str(rv.reviewer_name), role: str(rv.role), status: str(rv.status),
+    // Who may sign the disposition: that user, or (null) anyone taking
+    // responsibility for recording a reviewer who has no account.
+    reviewerUserId: rv.reviewer_user_id == null ? null : Number(rv.reviewer_user_id),
     disposition: str(rv.disposition), dueDate: rv.due_date ? String(rv.due_date).slice(0, 10) : '',
     comments: mapped,
   }));
@@ -410,7 +413,7 @@ export async function assembleOrgPdevDocs(orgId: number): Promise<Record<string,
     q(`SELECT id, protocol_document_id, deviation_number, description, is_reportable, severity, category, status FROM protocol_deviations WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     q(`SELECT id, protocol_document_id, category, description, unit_cost, quantity_per_subject FROM protocol_budget_items WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     q(`SELECT protocol_document_id, target_enrollment, sponsor_payment_per_subject, indirect_rate_pct FROM protocol_budget_params WHERE protocol_document_id = ANY($1) AND organization_id = $2`),
-    q(`SELECT id, protocol_document_id, reviewer_name, role, status, disposition, due_date FROM protocol_review_assignments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
+    q(`SELECT id, protocol_document_id, reviewer_name, reviewer_user_id, role, status, disposition, due_date FROM protocol_review_assignments WHERE protocol_document_id = ANY($1) AND organization_id = $2 AND deleted_at IS NULL ORDER BY id`),
     /* Same shape: `severity` exists (blocking/major/minor/info) and was blanked,
        so the Review header was structurally incapable of reporting anything but
        "0 blocking open" and every per-comment badge rendered empty. */

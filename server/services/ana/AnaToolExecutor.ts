@@ -11463,26 +11463,30 @@ registerToolHandler('review_protocol_completeness', async (input, ctx) => {
   }
 });
 
+// Finalizing a protocol is an electronic signature (21 CFR 11.50/11.200). A chat
+// turn cannot collect the signer's password, so AnA never finalizes: this tool
+// used to, and wrote a `sign` ledger row nobody had signed. It now answers
+// whether the protocol can be finalized and who has to do it. It writes nothing.
 registerToolHandler('finalize_protocol_document', async (input, ctx) => {
-  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant + user context.' });
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant context.' });
   const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
   if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
-  const { getPool } = await import('../../db.js');
-  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
-  const { finalizeProtocolTx } = await import('../protocol-development/protocol-development-service.js');
-  const client = await getPool().connect();
+  const { getCompleteness } = await import('../protocol-development/protocol-development-service.js');
   try {
-    await client.query('BEGIN');
-    await setTenantContextTx(client, ctx.organizationId);
-    const result = await finalizeProtocolTx(client, ctx.organizationId, ctx.userId, documentId);
-    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'sign', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol finalized via AnA'), payload: { version: result.version }, domain: 'protocol_development', surface: 'ana' });
-    await client.query('COMMIT');
-    return JSON.stringify({ ok: true, documentId, version: result.version, message: `Finalized protocol ${documentId} as version ${result.version}.` });
+    const c = await getCompleteness(ctx.organizationId, documentId);
+    return JSON.stringify({
+      ok: false,
+      signatureRequired: true,
+      documentId,
+      readyToFinalize: c.readyToFinalize,
+      requiredCompletionPct: c.requiredCompletionPct,
+      findings: c.findings,
+      message: c.readyToFinalize
+        ? `Protocol ${documentId} passes the completeness check but was not finalized. Finalizing is an electronic signature: the user finalizes it from the protocol workspace and enters their password.`
+        : `Protocol ${documentId} cannot be finalized yet and was not finalized. Resolve the findings, then the user finalizes it from the protocol workspace with their password.`,
+    });
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `finalize_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
-  } finally {
-    client.release();
   }
 });
 

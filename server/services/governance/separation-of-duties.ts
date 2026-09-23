@@ -174,6 +174,38 @@ async function documentAuthors(documentId: string, orgId: number, sectionKey: st
   return set.result();
 }
 
+/**
+ * A protocol's authors: its creator, and everyone who changed its content
+ * through a governed edit. protocol_sections records no editor, so the ledger
+ * is the edit history. Review activity is not authorship and is not counted:
+ * assigning a reviewer and commenting are `create` actions, resolving a comment
+ * targets the comment, and a disposition is `sign`.
+ */
+async function protocolDocumentAuthors(documentId: string, orgId: number): Promise<TargetAuthorship> {
+  if (!/^\d+$/.test(documentId)) return new AuthorSet().result();
+  const set = new AuthorSet();
+  const doc = await pool.query(
+    `SELECT created_by FROM protocol_documents WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+    [documentId, orgId],
+  );
+  set.add(doc.rows, 'created_by', 'protocol creator');
+  const edits = await pool.query(
+    `SELECT DISTINCT a.proposed_by
+       FROM c2c_ana_actions a
+      WHERE a.org_id = $2
+        AND a.domain = 'protocol_development'
+        AND a.command = 'update'
+        AND (a.target = $3
+             OR a.payload->>'documentId' = $1
+             OR a.target IN (SELECT 'protocol-section:' || s.id
+                               FROM protocol_sections s
+                              WHERE s.protocol_document_id = $4 AND s.organization_id = $2))`,
+    [documentId, orgId, `protocol-document:${documentId}`, Number(documentId)],
+  );
+  set.add(edits.rows, 'proposed_by', 'protocol edit ledger');
+  return set.result();
+}
+
 async function single(sql: string, params: unknown[], column: string, source: string): Promise<TargetAuthorship> {
   const set = new AuthorSet();
   const r = await pool.query(sql, params);
@@ -209,6 +241,18 @@ export async function resolveTargetAuthors(target: string, orgId: number): Promi
       return single(`SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'sequence creator');
     case 'program':
       return single(`SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'program creator');
+    case 'protocol-document':
+      return protocolDocumentAuthors(rest, orgId);
+    case 'protocol-review-assignment': {
+      // A reviewer signs over the protocol, so independence is from its authors.
+      if (!/^\d+$/.test(rest)) return new AuthorSet().result();
+      const a = await pool.query(
+        `SELECT protocol_document_id FROM protocol_review_assignments WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+        [rest, orgId],
+      );
+      if (a.rows.length === 0) return new AuthorSet().result();
+      return protocolDocumentAuthors(String(a.rows[0].protocol_document_id), orgId);
+    }
     default:
       // submission (pma_submissions records no creator), specification, batch,
       // correspondence-issue and pointer-only targets: no authorship source.
