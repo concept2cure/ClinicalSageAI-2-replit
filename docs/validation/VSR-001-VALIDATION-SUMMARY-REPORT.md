@@ -853,3 +853,35 @@ Evidence: `docs/evidence/W3/2026-09-23/OQ-001-v0.4/`. TM-001 was regenerated
 from the 2026-09-23 set: 68 requirements, 66 pass, 1 partial, 1 uncovered
 (URS-PROJ-010). The uncovered row is true of that set, which was executed
 before the step existed. The next full execution, on staging, covers it.
+
+### 13.9 Postscript: three more sign-in defects, found by sweeping the pre-auth mounts after F-19
+
+F-19 was a pre-auth mount writing rows for a real organisation, and trunk
+fixed the same class in signup the same day. So every mount that runs
+before the `/api` gate was read for the same class: `/api/auth`,
+`/api/users` and `/api/user`, and `/api/auth/enterprise`. The sweep found
+three defects, each larger than a refused audit row. Each was reproduced on
+real PostgreSQL, as a freshly minted non-superuser `NOBYPASSRLS` role
+behind production's own route registration
+(`tests/db/sign-in-audit-trail.dbtest.ts`), before its fix, then verified
+live on the MFA-posture server.
+
+| Id | What | Shown failing first | State |
+|---|---|---|---|
+| **F-20** (product, §11.10(d), §11.300) | **A way around MFA for every account.** `POST /api/users/login` and `/api/user/login` checked the password alone and issued a 24-hour access token. There was no second factor, no lockout check, no failed-attempt count and no audit record, for users who had enrolled an authenticator. The same router's `/register` created an account with no organisation outside signup and gave it a token. Its `/logout` revoked nothing. Nothing called any of them. | Live, for the TOTP-enrolled run identity: both paths returned a token that read `/api/c2c/projects` (200) and that `/api/auth/session` called signed in. The dbtest reproduces all three (`red/F-20/`). | **Fixed** `a7d5478ca`. All three answer with a 307 to the canonical `/api/auth/login`, `/logout` and `/signup`, as the platform's `/api/login`, `/api/logout` and `/api/register` already did. The parallel handlers are deleted. The replacement is the page's `/api/v1/auth`, exercised by OQ-PROJ-02 and OQ-PROJ-16. |
+| **F-21** (product, §11.10(d); July 2026 audit **AUTH-03**, P1, blocks G2) | **Logout did not end the session.** `/api/auth/logout` revoked the token and answered "Tokens invalidated.", but nothing on the request path read the revocation list; only the refresh route did. Under RLS the revocation lookup itself ran unscoped and was refused silently, so it saw only this instance's memory. | Live, after logout, the same token still read projects and the audit ledger, and `/session` called it signed in. In the dbtest the `/api` gate, `/session`, `/api/users/me` and the enterprise re-mint answered 200 / signed in / 200 / a fresh token. A session revoked by another instance still opened the gate while the lookup was unscoped. On the unfixed Hocuspocus code, a signed-out token opened a collaborative editing session (`red/F-21/`). | **Fixed** `0d99ca0cf`. `verifyLiveToken` (signature, then revocation) runs at every entry point that accepts a session token: the `/api` gate, the route-level middleware, the `/api/auth` and `/api/users` bearer routes, the enterprise routes, and the Socket.IO, Hocuspocus and AnA transports. The revocation lookup runs tenant-less (`revoked_tokens` has no RLS). Enterprise `/logout` is a 307 to the canonical logout. Live after: 401 / signed out / 401. |
+| **F-22** (product, §11.10(e)) | **A second sign-in recorded nothing.** The enterprise router's `verify-password` → `verify-mfa` issues a 24-hour session. No client calls it, and it wrote no audit event in any posture. Its organisation-switch audit named the destination from the pre-auth scope and was refused under RLS. URS-PROJ-010 was false for this path. | The dbtest's enterprise cases: wrong password, challenge, wrong code, session and organisation switch each left no row (`red/F-22/`). | **Fixed** `c62ec4961`. The path records the canonical events through `recordAuthEvent`, and the switch is written in the entered organisation's scope. Whether to delete the router (its organisation switch has no other implementation) is left to the system owner. |
+
+After the three fixes the dbtest is 20 / 20. The organisation's 13 rows,
+from the canonical, enterprise and legacy paths, verify as one chain. 86
+unit test files that import the changed modules pass (825 tests), and the
+typecheck is clean.
+
+**Effect on the records above.** The OQ sets of §12 and §13 signed in
+through `/api/v1/auth/login` and `/mfa/verify`. Their verdicts stand. They
+could not have observed any of these defects, because no step used the
+legacy or enterprise paths or presented a signed-out token. A protocol step
+that signs out and then shows the session refused belongs in the next
+OQ-001 revision beside OQ-PROJ-16.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
