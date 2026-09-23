@@ -884,4 +884,35 @@ legacy or enterprise paths or presented a signed-out token. A protocol step
 that signs out and then shows the session refused belongs in the next
 OQ-001 revision beside OQ-PROJ-16.
 
+### 13.10 Postscript: the protocol set now covers signing out
+
+F-21 was found by reading the logout route, not by a step. Every step signed
+in and none signed out, so a logout that ended nothing passed every protocol.
+
+- **URS-001 v0.3, URS-PROJ-011** (§11.10(d) §11.10(e), high). Signing out
+  ends the session. The API refuses the token with 401, the session check
+  reports the user signed out, and the sign-out is entered in the
+  organisation's hash-chained audit log. RA-001 v0.3 assesses it: high,
+  scripted. URS-001 §3 names what the protocol does not exercise and the
+  automated test that does: the collaboration channels
+  (`collab-governance.pglite.integration.test.ts`) and a second server
+  instance (`tests/db/sign-in-audit-trail.dbtest.ts`).
+- **OQ-001 v0.5, OQ-PROJ-17.** The step opens a session of its own, reads
+  projects, signs it out, then presents the same token again. It signs out
+  its own session, not the run's, so the steps after it keep theirs. Its
+  session calls bypass the recorded API client, so no token reaches a
+  record.
+
+| OQ-001 v0.5, runner at `d3556910a` | Result | OQ-PROJ-17 observed |
+|---|---|---|
+| Server on HEAD with the F-21 fix (`0d99ca0cf`) reverse-applied to its nine server files; F-22 kept | 17 pass / **1 fail** | "after signing out, the same token still reads projects (200) or is reported signed in (true)": both held |
+| Server on HEAD | **18 / 0 / 0 / 0** | projects 200; logout 200; afterwards projects 401, session check signed out; newest new ledger entry "Signed out", chained |
+
+Both records name the runner's commit, `d3556910a`. The first server ran
+that commit's working tree with the fix reversed, which the record cannot
+show; `before-AUTH-03-fix/server-code.txt` gives the exact procedure. The first record's
+`OQ-PROJ-17.at-failure.png` is the harness's capture of the page left open
+by OQ-PROJ-14, since the step itself drives no page. Evidence:
+`docs/evidence/W3/2026-09-23/OQ-001-v0.5/`.
+
 Prepared by the W3 Claude session (drafting and execution only; cannot sign).

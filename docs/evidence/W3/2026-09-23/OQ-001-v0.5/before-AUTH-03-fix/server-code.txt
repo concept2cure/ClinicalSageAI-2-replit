@@ -1,0 +1,22 @@
+Runner: tests/validation/oq/projects/run.mjs at d3556910a.
+
+Server: the working tree at d3556910a with the F-21 fix (0d99ca0cf) removed
+from the nine server files it changed:
+
+  git show --format= 0d99ca0cf -- server/auth.ts server/middleware/auth.ts \
+    server/routes/auth.ts server/routes/authEnterprise.ts server/routes/users.ts \
+    server/services/ana/ana-realtime.ts server/services/hocuspocus-server.ts \
+    server/services/token-revocation.ts server/socketServer.ts \
+    | git apply -R --3way
+
+One conflict: the import block of server/routes/authEnterprise.ts, which
+F-22 (c62ec4961) changed after the fix. It was resolved by keeping F-22's two
+imports (recordAuthEvent, runWithTenantScope) and dropping verifyLiveToken,
+so the server ran every later change except the F-21 fix.
+
+The server was started on that tree (fresh process, so a fresh login rate
+limit), the runner executed, and the tree was restored with
+`git checkout HEAD -- server/` before the second run.
+
+The record's environment.git.commit names the runner's commit; it cannot
+show that the server's tree differed. This file and VSR-001 §13.10 do.
