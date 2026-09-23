@@ -323,96 +323,100 @@ describe('assembleSequence — declared withdrawals', () => {
   }, 60_000);
 });
 
+// Fixtures for the suite below: filed documents whose sources can no longer
+// be read, each withdrawn in a follow-up sequence.
+const VAULT_UUID = '77777777-7777-4777-8777-777777777777';
+const PROGRAM = '88888888-8888-4888-8888-888888888888';
+const sha = (s: string) => createHash('sha256').update(s).digest('hex');
+const vaultFiled = leafFileName('doc.pdf', leafSourceKey('vault_documents', null, VAULT_UUID));
+
+async function seedUnreadableWithdrawals() {
+  await harness.pglite.exec(`
+    CREATE SCHEMA IF NOT EXISTS vault;
+    CREATE TABLE IF NOT EXISTS regulatory_programs (id UUID PRIMARY KEY, organization_id INTEGER, deleted_at TIMESTAMPTZ);
+    CREATE TABLE IF NOT EXISTS vault.documents (
+      id UUID PRIMARY KEY, program_id UUID NOT NULL, storage_version_id TEXT, content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ
+    );
+    CREATE TABLE IF NOT EXISTS shadow_review_runs (
+      id SERIAL PRIMARY KEY, sequence_id INTEGER NOT NULL, region TEXT NOT NULL DEFAULT 'fda', lens TEXT NOT NULL DEFAULT 'fda_filing',
+      model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
+      organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
+    );
+    CREATE TABLE IF NOT EXISTS shadow_review_findings (
+      id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,
+      basis TEXT, recommendation TEXT, leaf_ref TEXT, status TEXT NOT NULL DEFAULT 'open', organization_id INTEGER NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
+    );
+    INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROGRAM}', ${ORG});
+    -- On file in the vault, but its bytes never reached the storage provider.
+    INSERT INTO vault.documents (id, program_id, storage_version_id, content_hash, file_name)
+      VALUES ('${VAULT_UUID}', '${PROGRAM}', NULL, '${sha('vault bytes')}', 'doc.pdf');
+    INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
+      (20, 'row deleted', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
+      (21, 'content emptied', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
+      (22, 'upload rotated', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
+      (23, 'vault bytes missing', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
+      (24, 'filed twice', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
+    -- The follow-ups are amendments: readiness reads a sequence typed
+    -- 'original' (the column default) as an original, where a delete is an error.
+    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, dispatch_status) VALUES
+      (40, 20, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (41, 20, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (42, 21, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (43, 21, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (44, 22, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (45, 22, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (46, 23, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (47, 23, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
+      (48, 24, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (49, 24, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL);
+    -- 600 was filed and its row has since been deleted (no row inserted).
+    -- 601 was filed and its content has since been emptied.
+    INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
+      (601, ${ORG}, 'Emptied', '', '3.2', 'approved'),
+      (602, ${ORG}, 'Filed Twice', '<p>v1</p>', '3.2', 'approved');
+    -- 700 was filed; its upload bytes have since been rotated off disk.
+    INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path) VALUES
+      (700, ${ORG}, 'stab.pdf', 'application/pdf', '/nonexistent/rotated/stab.pdf');
+  `);
+  await harness.pglite.query(
+    `INSERT INTO submission_leaves
+       (sequence_id, section_code, title, lifecycle_op, document_table, document_id, document_uuid, document_content_sha256, organization_id, created_by)
+     VALUES
+       (41, 'm3.2.s.2', 'Gone', 'delete', 'coauthor_documents', 600, NULL, NULL, $1, $2),
+       (41, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
+       -- Pinned when the withdrawal was placed; the content has changed since.
+       (43, 'm3.2.s.2', 'Emptied', 'delete', 'coauthor_documents', 601, NULL, $3, $1, $2),
+       (43, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
+       (45, 'm3.2.s.3', 'Stability upload', 'delete', 'ctd_onboarding_documents', 700, NULL, NULL, $1, $2),
+       (45, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
+       (47, 'm3.2.s.4', 'Vault doc', 'delete', 'vault_documents', NULL, $4::uuid, NULL, $1, $2),
+       (47, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
+       (49, 'm3.2.s.5', 'Filed Twice', 'delete', 'coauthor_documents', 602, NULL, NULL, $1, $2),
+       (49, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2)`,
+    [ORG, USER, sha('<p>the filed text</p>'), VAULT_UUID],
+  );
+  const filed = (section: string, fileName: string, md5: string) => ({
+    ctdSection: section, fileName, href: `m3/${section.slice(1).replace(/\./g, '-')}/${fileName}`, md5, operation: 'new',
+  });
+  await harness.pglite.query(
+    `INSERT INTO ectd_compilations (organization_id, submission_id, sequence_number, leaf_manifest) VALUES
+       ($1, 20, '0000', $2), ($1, 21, '0000', $3), ($1, 22, '0000', $4), ($1, 23, '0000', $5), ($1, 24, '0000', $6)`,
+    [
+      ORG,
+      JSON.stringify([filed('m3.2.s.2', '3-2-coauthor-documents-600.pdf', '7'.repeat(32))]),
+      JSON.stringify([filed('m3.2.s.2', '3-2-coauthor-documents-601.pdf', '8'.repeat(32))]),
+      JSON.stringify([filed('m3.2.s.3', 'stab-pdf-ctd-onboarding-documents-700.pdf', '9'.repeat(32))]),
+      JSON.stringify([filed('m3.2.s.4', vaultFiled, 'a'.repeat(32))]),
+      // The same document filed twice in one section, under two labels.
+      JSON.stringify([
+        filed('m3.2.s.5', 'old-label-coauthor-documents-602.pdf', 'b'.repeat(32)),
+        filed('m3.2.s.5', '3-2-coauthor-documents-602.pdf', 'c'.repeat(32)),
+      ]),
+    ],
+  );
+}
+
 // 2026-09-23 (W5/D7, residual repair): a withdrawal ships no bytes, so its
 // target's source is never read — and an unreadable one neither blocks
 // transmit nor disagrees with dispatch readiness.
 describe('a withdrawal of a filed document whose source can no longer be read', () => {
-  const VAULT_UUID = '77777777-7777-4777-8777-777777777777';
-  const PROGRAM = '88888888-8888-4888-8888-888888888888';
-  const sha = (s: string) => createHash('sha256').update(s).digest('hex');
-  const vaultFiled = leafFileName('doc.pdf', leafSourceKey('vault_documents', null, VAULT_UUID));
-
-  beforeAll(async () => {
-    await harness.pglite.exec(`
-      CREATE SCHEMA IF NOT EXISTS vault;
-      CREATE TABLE IF NOT EXISTS regulatory_programs (id UUID PRIMARY KEY, organization_id INTEGER, deleted_at TIMESTAMPTZ);
-      CREATE TABLE IF NOT EXISTS vault.documents (
-        id UUID PRIMARY KEY, program_id UUID NOT NULL, storage_version_id TEXT, content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ
-      );
-      CREATE TABLE IF NOT EXISTS shadow_review_runs (
-        id SERIAL PRIMARY KEY, sequence_id INTEGER NOT NULL, region TEXT NOT NULL DEFAULT 'fda', lens TEXT NOT NULL DEFAULT 'fda_filing',
-        model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
-        organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-      );
-      CREATE TABLE IF NOT EXISTS shadow_review_findings (
-        id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,
-        basis TEXT, recommendation TEXT, leaf_ref TEXT, status TEXT NOT NULL DEFAULT 'open', organization_id INTEGER NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ
-      );
-      INSERT INTO regulatory_programs (id, organization_id) VALUES ('${PROGRAM}', ${ORG});
-      -- On file in the vault, but its bytes never reached the storage provider.
-      INSERT INTO vault.documents (id, program_id, storage_version_id, content_hash, file_name)
-        VALUES ('${VAULT_UUID}', '${PROGRAM}', NULL, '${sha('vault bytes')}', 'doc.pdf');
-      INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
-        (20, 'row deleted', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
-        (21, 'content emptied', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
-        (22, 'upload rotated', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
-        (23, 'vault bytes missing', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
-        (24, 'filed twice', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
-      -- The follow-ups are amendments: readiness reads a sequence typed
-      -- 'original' (the column default) as an original, where a delete is an error.
-      INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, type, organization_id, created_by, dispatch_status) VALUES
-        (40, 20, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (41, 20, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
-        (42, 21, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (43, 21, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
-        (44, 22, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (45, 22, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
-        (46, 23, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (47, 23, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL),
-        (48, 24, 'fda', '0000', 'original', ${ORG}, ${USER}, 'sent'), (49, 24, 'fda', '0001', 'amendment', ${ORG}, ${USER}, NULL);
-      -- 600 was filed and its row has since been deleted (no row inserted).
-      -- 601 was filed and its content has since been emptied.
-      INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
-        (601, ${ORG}, 'Emptied', '', '3.2', 'approved'),
-        (602, ${ORG}, 'Filed Twice', '<p>v1</p>', '3.2', 'approved');
-      -- 700 was filed; its upload bytes have since been rotated off disk.
-      INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path) VALUES
-        (700, ${ORG}, 'stab.pdf', 'application/pdf', '/nonexistent/rotated/stab.pdf');
-    `);
-    await harness.pglite.query(
-      `INSERT INTO submission_leaves
-         (sequence_id, section_code, title, lifecycle_op, document_table, document_id, document_uuid, document_content_sha256, organization_id, created_by)
-       VALUES
-         (41, 'm3.2.s.2', 'Gone', 'delete', 'coauthor_documents', 600, NULL, NULL, $1, $2),
-         (41, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
-         -- Pinned when the withdrawal was placed; the content has changed since.
-         (43, 'm3.2.s.2', 'Emptied', 'delete', 'coauthor_documents', 601, NULL, $3, $1, $2),
-         (43, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
-         (45, 'm3.2.s.3', 'Stability upload', 'delete', 'ctd_onboarding_documents', 700, NULL, NULL, $1, $2),
-         (45, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
-         (47, 'm3.2.s.4', 'Vault doc', 'delete', 'vault_documents', NULL, $4::uuid, NULL, $1, $2),
-         (47, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2),
-         (49, 'm3.2.s.5', 'Filed Twice', 'delete', 'coauthor_documents', 602, NULL, NULL, $1, $2),
-         (49, 'm3.2.p.1', 'Other', 'new', 'coauthor_documents', 301, NULL, NULL, $1, $2)`,
-      [ORG, USER, sha('<p>the filed text</p>'), VAULT_UUID],
-    );
-    const filed = (section: string, fileName: string, md5: string) => ({
-      ctdSection: section, fileName, href: `m3/${section.slice(1).replace(/\./g, '-')}/${fileName}`, md5, operation: 'new',
-    });
-    await harness.pglite.query(
-      `INSERT INTO ectd_compilations (organization_id, submission_id, sequence_number, leaf_manifest) VALUES
-         ($1, 20, '0000', $2), ($1, 21, '0000', $3), ($1, 22, '0000', $4), ($1, 23, '0000', $5), ($1, 24, '0000', $6)`,
-      [
-        ORG,
-        JSON.stringify([filed('m3.2.s.2', '3-2-coauthor-documents-600.pdf', '7'.repeat(32))]),
-        JSON.stringify([filed('m3.2.s.2', '3-2-coauthor-documents-601.pdf', '8'.repeat(32))]),
-        JSON.stringify([filed('m3.2.s.3', 'stab-pdf-ctd-onboarding-documents-700.pdf', '9'.repeat(32))]),
-        JSON.stringify([filed('m3.2.s.4', vaultFiled, 'a'.repeat(32))]),
-        // The same document filed twice in one section, under two labels.
-        JSON.stringify([
-          filed('m3.2.s.5', 'old-label-coauthor-documents-602.pdf', 'b'.repeat(32)),
-          filed('m3.2.s.5', '3-2-coauthor-documents-602.pdf', 'c'.repeat(32)),
-        ]),
-      ],
-    );
-  });
+  beforeAll(seedUnreadableWithdrawals);
 
   it('neither stages nor reports as unresolved a document referenced only by a delete', async () => {
     const stageDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wd-mat-'));
