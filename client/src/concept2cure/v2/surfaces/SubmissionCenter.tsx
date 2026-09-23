@@ -257,6 +257,41 @@ function reviewClock(f: DeviceFilingRow): string {
 
 // (Chip is imported from SubmissionSeqWorkspaces — one implementation.)
 
+/** Follow-up sequence types: the server's createSequence enum, less 'original' (that is 0000). */
+const FOLLOW_UP_SEQ_TYPES = ['amendment', 'response', 'annual', 'variation', 'withdrawal'] as const;
+
+/** The next sequence number in the submission's own region — numbering restarts per region. */
+function nextSequenceNumber(sub: SubRow, rows: SeqRow[]): string {
+  const taken = rows
+    .filter((r) => r.region === sub.primaryRegion)
+    .map((r) => Number.parseInt(r.sequenceNumber, 10))
+    .filter((n) => Number.isFinite(n));
+  return String((taken.length ? Math.max(...taken) : -1) + 1).padStart(4, '0');
+}
+
+/** Start a follow-up sequence: its number is derived, its type is the author's to state. */
+function NextSequenceControl({ sub, rows, type, onType, busy, onStart }: {
+  sub: SubRow;
+  rows: SeqRow[];
+  type: string;
+  onType: (t: string) => void;
+  busy: boolean;
+  onStart: (sequenceNumber: string) => void;
+}) {
+  const next = nextSequenceNumber(sub, rows);
+  return (
+    <div className="cm-pushbar sc-mt">
+      <select className="sc-subpick" aria-label={`Type of sequence ${next}`} value={type} disabled={busy}
+        onChange={(e) => onType(e.target.value)}>
+        {FOLLOW_UP_SEQ_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+      </select>
+      <button type="button" className="sp-primary sc-btn" disabled={busy} onClick={() => onStart(next)}>
+        {I.sparkles} {busy ? 'Creating…' : `Start sequence ${next}`}
+      </button>
+    </div>
+  );
+}
+
 /** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
 const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'cross-region', 'dispatch']);
 
@@ -480,23 +515,28 @@ export function SubmissionCenter({
    * ask the user for. The verdict is the server's, verbatim.
    */
   const [creatingSeq, setCreatingSeq] = React.useState(false);
-  const startFirstSequence = async (target: SubRow) => {
+  const startSequence = async (target: SubRow, sequenceNumber: string, type: string) => {
     if (creatingSeq) return;
     setCreatingSeq(true);
     setNotice(null);
     const r = await mutateVerbatim<SeqRow>('POST', `/api/submissions/${target.id}/sequences`, {
       region: target.primaryRegion,
-      sequenceNumber: '0000',
-      type: 'original',
+      sequenceNumber,
+      type,
     });
     setCreatingSeq(false);
     if (r.data && (r.data as { id?: unknown }).id != null) {
       setSeqBump((b) => b + 1);
-      setNotice({ tone: 'ok', text: `Sequence 0000 created for ${target.title} — server-confirmed.` });
+      setNotice({ tone: 'ok', text: `Sequence ${sequenceNumber} created for ${target.title} — server-confirmed.` });
     } else {
-      setNotice({ tone: 'err', text: `Sequence 0000 not created — ${r.error ?? 'the request failed'}.` });
+      setNotice({ tone: 'err', text: `Sequence ${sequenceNumber} not created — ${r.error ?? 'the request failed'}.` });
     }
   };
+
+  /* A follow-up sequence (WO-9 Click 6). Its number follows the highest in the
+     submission's own region — numbering restarts per region — and its type is
+     the author's to state; the server's enum, less 'original', which is 0000. */
+  const [nextSeqType, setNextSeqType] = React.useState<string>('amendment');
 
   /** Non-governed lifecycle transition — the REAL endpoint, verdict verbatim.
    *  The server refuses frozen/dispatched here (GOVERNED_REQUIRED); those two
@@ -1383,7 +1423,7 @@ export function SubmissionCenter({
                   <button
                     type="button"
                     className="sp-primary sc-btn"
-                    onClick={() => void startFirstSequence(sub)}
+                    onClick={() => void startSequence(sub, '0000', 'original')}
                     disabled={creatingSeq}
                   >
                     {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
@@ -1463,6 +1503,14 @@ export function SubmissionCenter({
                     </div>
                   ))}
                 </div>
+                <NextSequenceControl
+                  sub={sub}
+                  rows={seqs.rows}
+                  type={nextSeqType}
+                  onType={setNextSeqType}
+                  busy={creatingSeq}
+                  onStart={(n) => void startSequence(sub, n, nextSeqType)}
+                />
               </>
             )}
           </div>
