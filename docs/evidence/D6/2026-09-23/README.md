@@ -23,7 +23,7 @@ says which files that was.
 |---|---|---|---|---|
 | 1 | **A TOTP code was accepted more than once** (§13.3 item 1). It was accepted again until its ±1-step window closed, on every path that verifies one: password sign-in, enterprise sign-in, and every signature (`reverifySigner`). RFC 6238 §5.2. | 15 of 16 cases fail. The same code opened two sessions (200/200). Two concurrent sign-ins with one code both opened. A code used on one sign-in path opened a session on the other. `red/dbtest-one-time-credentials-before-fix.txt` | 17 of 17 pass. `users.mfa_totp_last_step`; a code is accepted only for a later step, compared and set in one `UPDATE … WHERE … RETURNING`. `green/dbtest-one-time-credentials-after-fix.txt` | `a689ad680` |
 | 1a | The e-sign modal's pre-check (`/api/esignature/verify-mfa`) would have spent the code the signature then needs. | (new behaviour) | The pre-check uses the non-consuming `isTokenCurrentlyAcceptable`. Checking twice leaves the code unused; the signature uses it; after that it neither checks nor signs. | `a689ad680` |
-| 1b | The e-sign pre-checks (`/verify-password` and `/verify-mfa`) were guessing oracles, limited only by the 600-a-minute session budget. | The limiter case fails (no 429). | Each is limited per signer: 10 per 5 minutes, on separate budgets. | `a689ad680` |
+| 1b | The e-sign pre-checks (`/verify-password` and `/verify-mfa`) were guessing oracles, limited only by the 600-a-minute session budget. | The limiter case fails (no 429). | Each is limited per signer: 10 per 5 minutes, on separate budgets. **Not closed:** the signing endpoints (`/api/esignature/sign`, the `verifyReauth` routes) answer the same credential question and are still unlimited per signer (§4 item 3). | `a689ad680` |
 | 1c | **The emailed sign-in code** was read, compared and cleared in separate statements. | 3 of 8 concurrent requests with one code were accepted. 12 concurrent wrong guesses left the right code usable. | Counting and consuming are conditional UPDATEs: exactly 1 of 8 is accepted, and the 5-attempt limit holds under concurrency. | `a689ad680` |
 | 1d | **The password-reset token** was read, then written by account id alone, with a bcrypt hash in between. | Two resets with one token both reported success (200/200); the later password won silently. | The password is written only while the token is still this account's and unexpired: 200/400, and the reported password is the stored one. | `a689ad680` |
 | 1e | **The TOTP secret was sent to a third party.** The enrolment QR code was an `https://api.qrserver.com/…?data=otpauth://…secret=…` address, so any client that displayed it disclosed the seed. | (unit) | Drawn on the server as a `data:image/png` URL, which never contains the secret. | `a689ad680` |
@@ -34,12 +34,15 @@ says which files that was.
 | 2a | An audit route took the IP from the request body (`body.ipAddress \|\| req.ip`). | (by reading) | It takes the request's own address. | item-2 commit |
 | 2b | **Password-reset poisoning.** Without `APP_URL`, reset and invitation links were built on the request's Host header. The load balancer accepts direct connections, so `POST /forgot-password` naming a victim with `Host: attacker.example` emailed the victim a live token on the attacker's domain. | The emailed link carries the attacker's Host (`red/unit-reset-link-origin-before-fix.txt`). | In production the link origin is an https `APP_URL` or nothing. Without one, reset refuses every address alike (503) and stores no token. The deploy preflight requires `APP_URL`. | item-2 commit |
 | 2c | SCIM `meta.location`, `security.txt` and `enforceHttps` read raw `X-Forwarded-Proto` / `X-Forwarded-Host`. | (gate) | They use `req.protocol` and `req.get('host')`. | item-2 commit |
+| 2d | **The gate's comment stripper was blind after a `/*` inside a string.** A CSP source such as `'https://*.neon.tech'` opened a "comment" that hid everything up to the next `*/`: 859 lines across 10 server files, the security middleware among them. Found by the adversarial review. | A read inserted into `enterprise-security.ts` at line 260 was not reported (`red/gate-comment-stripper-before-fix.txt`). | `scripts/ci/lib/strip-comments.mjs` is string-, template- and escape-aware and is used by this gate and `ci:unapproved-model-pins`; the self-test gained three cases. 23 other gate scripts still use the old regex (§4 item 8). | review commit |
+| 1f | **A new authenticator's first code was refused because of the old one's last step.** `mfa_totp_last_step` survived disable and re-setup, so a code the new secret had never presented, in the same 30 s as the disable, read as used. Found by the adversarial review. | Mutant M10 (the reset removed) fails the re-enrolment case. | `generateSecret` clears the last step together with storing a new secret; the enable refusals say a code works once. | review commit |
+| 1g | The emailed code's concurrency test bounded the attempts below 12, not at 5. Found by the adversarial review. | Mutant M11 (six attempts) passed the old test. | Boundary cases: the right code is accepted after 4 wrong guesses and refused after 5. M11 is killed. | review commit |
 
 ## 2. Mutation checks
 
 `green/mutations-one-time-credentials.txt`: every fix of item 1 was mutated
 one at a time and the real-database suite run.
-- 10 of 11 mutants are killed. Among them: accepting the same step, a
+- 12 of 13 mutants are killed (M10 and M11 were added after the review). Among them: accepting the same step, a
   read-then-write instead of compare-and-set, a consuming pre-check, email
   consumption not conditional on the stored code, an unbounded attempt count,
   both pre-check limiters removed, and the pre-fix reset write.
@@ -52,7 +55,7 @@ one at a time and the real-database suite run.
 
 ## 3. Tests added or changed
 
-- `tests/db/one-time-credentials.dbtest.ts`: new, 17 cases.
+- `tests/db/one-time-credentials.dbtest.ts`: new, 20 cases.
 - `tests/db/sign-in-posture.dbtest.ts`: new, 8 cases.
 - `tests/db/sign-in-audit-trail.dbtest.ts`: its enterprise block moved to a
   second member. It had presented step N-1 after N+1 was accepted, and passed
@@ -86,9 +89,18 @@ These were found while mapping, and each needs a decision rather than a patch:
      (consumed atomically, like the TOTP step), then refuse the emailed code
      for accounts with an authenticator.
 2. **The load balancer accepts traffic from the internet**, not only from
-   CloudFront.
+   CloudFront. This is a launch blocker for D1, not only an attribution gap.
    - With one trusted hop (F-24), CloudFront-routed requests record the
      CloudFront edge, not the user.
+   - Every limiter keyed by `req.ip` counts CloudFront-routed users per edge
+     address: F-24's sign-in and MFA limits (10 per 15 minutes), and now the
+     enterprise `/api/auth` limit (5 per 15 minutes in production). Its old key,
+     the left-most entry, was per user but written by the client, so anyone
+     could escape it. The forgeable key is not a safe interim answer, and a
+     shared per-edge budget can be used up by one person for everyone at that
+     edge. SAML SSO makes two `/api/auth` requests per sign-in. The adversarial
+     review reproduced six viewers behind one edge: the sixth was refused for
+     15 minutes.
    - Recording the user needs the ALB security group restricted to CloudFront's
      origin-facing prefix list, and `TRUST_PROXY_HOPS=2`.
    - SCIM, MCP and the deploy smoke test reach the ALB directly today, and
@@ -98,7 +110,11 @@ These were found while mapping, and each needs a decision rather than a patch:
        CloudFront cannot validate against the app certificate.
      - The `/api/*` behaviour uses legacy `forwarded_values`, so CloudFront
        replaces `User-Agent` in every audit row and drops headers not listed.
-3. **Rate limits are per task.** Every `express-rate-limit` instance uses the
+3. **The signing endpoints are not limited per signer**: `/api/esignature/sign` and the
+   `verifyReauth` routes answer the same credential question as the limited
+   pre-checks. They need the same budget, counted on failed checks only, in a
+   shared store.
+   **Rate limits are per task.** Every `express-rate-limit` instance uses the
    in-process store, and production runs two tasks. A per-user attempt budget
    needs the shared (Redis) store. The sign-in code limit is also per IP only;
    a per-challenge or per-account budget is stronger.
@@ -113,6 +129,12 @@ These were found while mapping, and each needs a decision rather than a patch:
 7. **Evidence timing on deploy.** The rolling update keeps old tasks serving
    until they drain. A live replay probe filed as post-fix evidence must run
    after the rollout completes.
+8. **23 other CI gate scripts strip comments with the string-unaware regex**,
+   so they may have the blind spot 2d fixed, where they scan JS/TS. Among them: `check-action-overclaim`,
+   `check-fabricated-identity`, `check-migration-drop-safety`,
+   `check-pq-evaluation-callers`. Each should move to
+   `scripts/ci/lib/strip-comments.mjs`, and each owner should check what the
+   move newly reports.
 
 ## 5. Reproduce
 

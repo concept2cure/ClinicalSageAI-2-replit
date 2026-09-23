@@ -1699,7 +1699,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
         success: false,
         error: {
           code: 'AUTH_004',
-          message: 'Invalid verification code. Ensure your authenticator app is synced.',
+          message: 'Invalid verification code. Ensure your authenticator app is synced; each code works once, so if you just used it, wait for the next.',
         },
       });
     }

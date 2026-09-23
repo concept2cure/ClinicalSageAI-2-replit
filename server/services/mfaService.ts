@@ -388,6 +388,11 @@ export async function generateSecret(userId: number, userEmail: string): Promise
     .set({
       mfaSecret: encryptedSecret,
       mfaMethod: 'totp',
+      // The last accepted step belongs to the secret it was accepted for. A
+      // new secret starts with none: otherwise a code from the new
+      // authenticator in the same 30 s as the old one's last (the disable)
+      // is refused as used, although it never was.
+      mfaTotpLastStep: null,
       // Do NOT set mfaEnabled = true yet; that happens on verify
     })
     .where(and(eq(users.id, userId), or(isNull(users.mfaEnabled), eq(users.mfaEnabled, false))))
