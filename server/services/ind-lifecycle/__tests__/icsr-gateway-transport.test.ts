@@ -56,7 +56,9 @@ vi.mock('node:https', () => {
         };
         globalThis.setImmediate(() => {
           cb(res);
-          handlers.data?.(Buffer.from(wire.body, 'utf8'));
+          // {{MESSAGE_ID}} echoes the request's own Message-ID, as a real MDN's
+          // Original-Message-ID does.
+          handlers.data?.(Buffer.from(wire.body.replace('{{MESSAGE_ID}}', String(options?.headers?.['Message-ID'] ?? '')), 'utf8'));
           handlers.end?.();
         });
       },
@@ -241,7 +243,8 @@ function as2Config() {
 
 const ACCEPTING_MDN =
   'Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256\r\n' +
-  '\r\nDisposition: automatic-action/MDN-sent-automatically; processed\r\n';
+  '\r\nOriginal-Message-ID: {{MESSAGE_ID}}\r\n' +
+  'Disposition: automatic-action/MDN-sent-automatically; processed\r\n';
 
 describe('ICSR gateway transport — AS2 (configured gateway attempts the real transport)', () => {
   beforeEach(() => {
@@ -262,7 +265,9 @@ describe('ICSR gateway transport — AS2 (configured gateway attempts the real t
     expect(receipt.protocol).toBe('as2');
     expect(receipt.receiptId).toBe('<mdn-1@esg.fda.example>');
     expect(receipt.timestamp).toBe('2026-06-15T00:00:00.000Z');
-    expect(receipt.agencyResponseRaw).toBe(ACCEPTING_MDN);
+    expect(receipt.agencyResponseRaw).toBe(
+      ACCEPTING_MDN.replace('{{MESSAGE_ID}}', String(httpsRequests[0].options.headers['Message-ID'])),
+    );
     expect(receipt.message).toMatch(/not the E2B acknowledgement/i);
 
     expect(httpsRequests).toHaveLength(1);
@@ -319,6 +324,13 @@ describe('ICSR gateway transport — AS2 (configured gateway attempts the real t
     const err = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() }).catch((e) => e);
     expect(err).toBeInstanceOf(IcsrGatewayTransmitError);
     expect(err.message).toMatch(/different message/);
+  });
+
+  it('refuses an accepting MDN that names no message — it cannot be tied to what was sent (2026-09-22 W5/D7)', async () => {
+    wire.body = 'Disposition: automatic-action/MDN-sent-automatically; processed\r\n';
+    const err = await transmitIcsr(readyMessage(), { now: fixedClock, config: as2Config() }).catch((e) => e);
+    expect(err).toBeInstanceOf(IcsrGatewayTransmitError);
+    expect(err.message).toMatch(/names no Original-Message-ID/);
   });
 
   it('refuses a 2xx with no MDN disposition at all', async () => {

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-22T23:36:57.596Z",
+  "generatedAt": "2026-09-23T03:29:52.433Z",
   "git": {
-    "sha": "f7b982ef9acffe01be80caaa7687da15727b1df9",
+    "sha": "d849863dc079d6ff662ed73c43b5bda451bef97e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 100
+    "largeFilesByLines": 101
   },
   "findings": {
     "duplicateBasenames": [
@@ -2056,7 +2056,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 141141
+        "bytes": 143475
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2108,7 +2108,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 119330
+        "bytes": 119631
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2213,12 +2213,12 @@
         "lines": 3549
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3398
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 3424
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 3376
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 3398
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2282,7 +2282,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2457
+        "lines": 2462
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2325,12 +2325,12 @@
         "lines": 2197
       },
       {
-        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
-        "lines": 2175
+        "file": "server/routes/auth.ts",
+        "lines": 2187
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2163
+        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
+        "lines": 2175
       },
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
@@ -2345,16 +2345,16 @@
         "lines": 2082
       },
       {
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 2079
+      },
+      {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
         "lines": 2076
       },
       {
         "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
         "lines": 2068
-      },
-      {
-        "file": "server/routes/510k-estar-routes.ts",
-        "lines": 2063
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
@@ -2489,24 +2489,24 @@
         "lines": 1753
       },
       {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 1726
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 1748
       },
       {
-        "file": "server/services/submission-service/submission-service.ts",
-        "lines": 1714
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 1726
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1706
       },
       {
-        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
-        "lines": 1698
+        "file": "server/routes/submissions.ts",
+        "lines": 1706
       },
       {
-        "file": "server/routes/submissions.ts",
-        "lines": 1696
+        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "lines": 1698
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
@@ -2531,6 +2531,10 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
+      },
+      {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 1574
       },
       {
         "file": "server/services/advancedRAGPipeline.ts",
@@ -2568,7 +2572,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 409,
       "largeByBytes": 33,
-      "largeByLines": 81
+      "largeByLines": 82
     },
     {
       "owner": "Unassigned (TBD)",

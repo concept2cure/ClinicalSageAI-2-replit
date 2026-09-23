@@ -5,7 +5,8 @@
  * Run:  node tests/validation/oq/projects/run.mjs   (server on VALIDATION_BASE_URL, default http://localhost:5200)
  * Writes docs/evidence/W3/<date>/OQ-PROJECTS/{result.json, OQ-001-execution-record.md, steps/*}.
  */
-import { createRun, helpers } from '../../lib/harness.mjs';
+import { createRun, helpers, runCredential } from '../../lib/harness.mjs';
+import { freshTotp } from '../../lib/totp.mjs';
 
 const run = await createRun({
   app: 'PROJECTS',
@@ -35,16 +36,39 @@ await step(
   {
     id: 'OQ-PROJ-02',
     urs: ['URS-PROJ-001', 'URS-PROJ-005'],
-    title: 'Login page and Demo Access (dev-login) in the browser',
-    action: 'Open /concept2cure/login unauthenticated; click "Demo Access"; observe redirect into the shell',
-    expected: 'Login page renders; after Demo Access the URL leaves /concept2cure/login and the shell renders',
-    note: 'Demo Access calls POST /api/auth/dev-login, which is only mounted when NODE_ENV=development and ALLOW_DEV_AUTH=1 (server/auth/dev-auth-policy.ts). It skips the password/MFA factor by design; every later step authenticates through the same dev-login token.',
+    title: 'The sign-in page takes the user into the shell',
+    action: 'Open /concept2cure/login unauthenticated. Credentialed run (VALIDATION_USER_PASSWORD set): enter email and password, then the current authenticator code when the server asks for it. Development run: click "Demo Access". Observe the redirect into the shell',
+    expected: 'Login page renders; after sign-in the URL leaves /concept2cure/login and the shell renders',
+    note: 'On a server that is not a development one, every password login is answered with an MFA challenge and there is no dev-login; the credentialed branch signs in the way a person does. Demo Access calls POST /api/auth/dev-login, which only a development server with ALLOW_DEV_AUTH=1 answers (server/auth/dev-auth-policy.ts); it skips the password and MFA factors by design.',
   },
   async (ctx) => {
     const page = await ctx.newPage(null, { anonymous: true });
     await page.goto(`${ctx.baseUrl}/concept2cure/login`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
     await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {});
     await ctx.screenshot('login-page');
+    const credential = runCredential();
+    if (credential) {
+      await page.locator('#login-email').fill(credential.email);
+      await page.locator('#login-password').fill(credential.password);
+      await page.getByRole('button', { name: /^sign in$/i }).click();
+      const digits = page.locator('input[autocomplete="one-time-code"]');
+      const leftLogin = page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30_000 }).then(() => 'shell');
+      const challenged = digits.first().waitFor({ timeout: 30_000 }).then(() => 'challenge');
+      let factors = 'password';
+      if ((await Promise.race([leftLogin, challenged])) === 'challenge') {
+        ctx.expect(Boolean(credential.totpSecret), 'the server asked for an authenticator code and VALIDATION_USER_TOTP_SECRET is not set');
+        ctx.expect((await digits.count()) === 6, `the code step shows ${await digits.count()} inputs, not 6`);
+        await ctx.screenshot('code-step');
+        const code = await freshTotp(credential.email, credential.totpSecret);
+        for (let i = 0; i < 6; i += 1) await digits.nth(i).fill(code[i]);
+        await page.getByRole('button', { name: /^verify$/i }).click();
+        await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 30_000 });
+        factors = 'password + authenticator code';
+      }
+      await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {});
+      await ctx.screenshot('after-sign-in');
+      return `signed in with ${factors}; landed on ${new URL(page.url()).pathname}`;
+    }
     const btn = page.getByRole('button', { name: /demo access/i });
     ctx.expect((await btn.count()) > 0, 'Demo Access button not present on login page');
     await btn.first().click();

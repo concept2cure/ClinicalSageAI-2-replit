@@ -134,17 +134,22 @@ function asOrg(orgId: number) {
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: PREREQ,
+    // The baseline table is a prerequisite, so the REAL migrations that alter
+    // it run over it below. It used to be created last, as test-only DDL, which
+    // meant none of them could run: the journey hand-copied two of their
+    // statements and silently lacked the rest, and GET /history — which selects
+    // sequence_number and leaf_manifest — answered from a swallowed error.
+    prereqSql: PREREQ + ECTD_COMPILATIONS_DDL,
     migrations: [
       // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
       'db/migrations/20260220_ind_section_tracking.sql',
       'db/migrations/20260725_project_sections_content_columns.sql',
+      'db/migrations/20260725_ectd_compilations_project_level.sql',
+      'db/migrations/20260730_ectd_compilations_sequence_columns.sql',
+      'db/migrations/20260730_ectd_compilations_leaf_manifest.sql',
+      'db/migrations/20260828_ectd_compilations_submission_id.sql',
     ],
-    testOnlySql: ECTD_COMPILATIONS_DDL + `
-      ALTER TABLE ectd_compilations ALTER COLUMN module_id DROP NOT NULL;
-      ALTER TABLE ectd_compilations ALTER COLUMN compiled_by DROP NOT NULL;
-    `,
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
@@ -373,9 +378,8 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
       'The catch around the compilation INSERT blamed a missing table ("table not available, skipping record") for what were really a parameter-count error and two NOT NULL violations. It now reports the actual driver message — a swallowed write that misattributes its own cause is how this survived.',
     );
     R.limitations.push(
-      'ectd_compilations is created here from the drizzle baseline shape (migrations/0000_sweet_joseph.sql) as test-only DDL, with the two NOT NULLs dropped exactly as db/migrations/20260725_ectd_compilations_project_level.sql does — that migration is an ALTER, so it cannot run against a table the journey has not first created.',
+      'ectd_compilations is created from the drizzle baseline shape (migrations/0000_sweet_joseph.sql) as prerequisite DDL, and the four real migrations that alter it — project-level nullability, the sequence columns, the leaf manifest and submission_id — then run over it.',
       'Both routers take the organization from request context rather than verifying a JWT themselves, so this journey installs a tenant middleware. Journey A covers the JWT-verifying path; the token-issuance flow is outside both.',
-      'server/services/ectd/ectd-validator-hardening.ts queries ectd_compilations.sequence_number and .application_number — neither column exists in any definition of that table. NOT fixed here and NOT exercised by this journey: it needs a schema decision about where submission sequence history lives (recorded in ledger C-16).',
       'The eCTD ZIP/export path (the canonical assembleSubmissionEctd over the submission spine) and gateway submission are not in this journey; it ends at a persisted compilation with an XML backbone.',
     );
 

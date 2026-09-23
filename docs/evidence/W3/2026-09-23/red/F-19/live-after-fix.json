@@ -1,0 +1,84 @@
+{
+ "server": "MFA-posture server restarted with the fix at 2026-09-23T03:20:48Z (RLS_ENFORCE=on, app_service, ALLOW_DEV_AUTH=0)",
+ "actions": "user 17 (org 1), in order: one sign-in with password + TOTP (294-295); one sign-in answered with a wrong code (296-297); one wrong password (298); one sign-in with password + TOTP to call the chain verifier (299-300)",
+ "verifyChain": {
+  "ok": true,
+  "rowsChecked": 265,
+  "tenants": 2,
+  "legacyRows": 6,
+  "sequencedRows": 259
+ },
+ "rows": [
+  {
+   "chain_seq": 294,
+   "action": "user_login_mfa_challenge",
+   "tenant_id": 1,
+   "record_id": "17",
+   "outcome": "success",
+   "reason": "mfa_challenge_totp",
+   "chained": true,
+   "occurred_at": "2026-09-23T03:21:03.119Z"
+  },
+  {
+   "chain_seq": 295,
+   "action": "user_login",
+   "tenant_id": 1,
+   "record_id": "17",
+   "outcome": "success",
+   "reason": "mfa_verified",
+   "chained": true,
+   "occurred_at": "2026-09-23T03:21:03.166Z"
+  },
+  {
+   "chain_seq": 296,
+   "action": "user_login_mfa_challenge",
+   "tenant_id": 1,
+   "record_id": "17",
+   "outcome": "success",
+   "reason": "mfa_challenge_totp",
+   "chained": true,
+   "occurred_at": "2026-09-23T03:21:03.633Z"
+  },
+  {
+   "chain_seq": 297,
+   "action": "user_login_mfa_failed",
+   "tenant_id": 1,
+   "record_id": "17",
+   "outcome": "failure",
+   "reason": "invalid_code",
+   "chained": true,
+   "occurred_at": "2026-09-23T03:21:03.647Z"
+  },
+  {
+   "chain_seq": 298,
+   "action": "user_login",
+   "tenant_id": 1,
+   "record_id": "17",
+   "outcome": "failure",
+   "reason": "wrong_password",
+   "chained": true,
+   "occurred_at": "2026-09-23T03:21:04.008Z"
+  },
+  {
+   "chain_seq": 299,
+   "action": "user_login_mfa_challenge",
+   "tenant_id": 1,
+   "record_id": "17",
+   "outcome": "success",
+   "reason": "mfa_challenge_totp",
+   "chained": true,
+   "occurred_at": "2026-09-23T03:21:15.728Z"
+  },
+  {
+   "chain_seq": 300,
+   "action": "user_login",
+   "tenant_id": 1,
+   "record_id": "17",
+   "outcome": "success",
+   "reason": "mfa_verified",
+   "chained": true,
+   "occurred_at": "2026-09-23T03:21:30.076Z"
+  }
+ ],
+ "policyRefusalsInServerLog": 0
+}

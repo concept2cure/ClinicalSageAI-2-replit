@@ -1,8 +1,8 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-09-22T22:40:54.286Z",
+  "generatedAt": "2026-09-23T02:56:23.987Z",
   "generator": "scripts/validation/build-traceability.mjs",
-  "runDate": "2026-09-22",
+  "runDate": "2026-09-23",
   "summary": {
     "requirements": 67,
     "pass": 66,
@@ -72,82 +72,82 @@
     {
       "protocolId": "OQ-003",
       "app": "Authoring",
-      "executedAt": "2026-09-22T22:36:01.384Z",
+      "executedAt": "2026-09-23T02:50:23.033Z",
       "counts": {
         "pass": 23,
         "fail": 0,
         "deviation": 1,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-22/OQ-AUTHORING/"
+      "evidence": "docs/evidence/W3/2026-09-23/OQ-AUTHORING/"
     },
     {
       "protocolId": "OQ-001",
       "app": "Projects",
-      "executedAt": "2026-09-22T22:35:06.814Z",
+      "executedAt": "2026-09-23T02:49:00.539Z",
       "counts": {
         "pass": 16,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-22/OQ-PROJECTS/"
+      "evidence": "docs/evidence/W3/2026-09-23/OQ-PROJECTS/"
     },
     {
       "protocolId": "OQ-006",
       "app": "QMS controlled documents",
-      "executedAt": "2026-09-22T22:37:19.817Z",
+      "executedAt": "2026-09-23T02:51:43.906Z",
       "counts": {
         "pass": 20,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-22/OQ-QMS/"
+      "evidence": "docs/evidence/W3/2026-09-23/OQ-QMS/"
     },
     {
       "protocolId": "OQ-004",
       "app": "Submission Center",
-      "executedAt": "2026-09-22T22:36:28.564Z",
+      "executedAt": "2026-09-23T02:50:50.623Z",
       "counts": {
         "pass": 15,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-22/OQ-SUBMISSION-CENTER/"
+      "evidence": "docs/evidence/W3/2026-09-23/OQ-SUBMISSION-CENTER/"
     },
     {
       "protocolId": "OQ-005",
       "app": "Submission Readiness",
-      "executedAt": "2026-09-22T22:36:55.403Z",
+      "executedAt": "2026-09-23T02:51:18.954Z",
       "counts": {
         "pass": 9,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-22/OQ-SUBMISSION-READINESS/"
+      "evidence": "docs/evidence/W3/2026-09-23/OQ-SUBMISSION-READINESS/"
     },
     {
       "protocolId": "OQ-002",
       "app": "Vault",
-      "executedAt": "2026-09-22T22:35:48.986Z",
+      "executedAt": "2026-09-23T02:50:08.251Z",
       "counts": {
         "pass": 12,
         "fail": 0,
         "deviation": 0,
         "not-executed": 0
       },
-      "evidence": "docs/evidence/W3/2026-09-22/OQ-VAULT/"
+      "evidence": "docs/evidence/W3/2026-09-23/OQ-VAULT/"
     }
   ],
   "iq": {
-    "executedAt": "2026-09-22T22:40:22.650Z",
+    "executedAt": "2026-09-23T02:48:41.548Z",
     "counts": {
-      "pass": 11,
+      "pass": 12,
       "fail": 0,
-      "deviation": 4,
+      "deviation": 3,
       "not-executed": 0
     }
   },
@@ -172,7 +172,7 @@
           "step": "OQ-PROJ-02",
           "status": "pass",
           "evidenceDir": "OQ-PROJECTS",
-          "title": "Login page and Demo Access (dev-login) in the browser"
+          "title": "The sign-in page takes the user into the shell"
         }
       ],
       "ra": {
@@ -289,7 +289,7 @@
           "step": "OQ-PROJ-02",
           "status": "pass",
           "evidenceDir": "OQ-PROJECTS",
-          "title": "Login page and Demo Access (dev-login) in the browser"
+          "title": "The sign-in page takes the user into the shell"
         },
         {
           "protocol": "OQ-001",

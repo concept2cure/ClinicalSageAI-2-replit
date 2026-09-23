@@ -23,6 +23,13 @@
  * deployment uses — so the code path exercised is the one that runs in
  * production, and no Ghostscript install is required to run it.
  *
+ * Since 1454068f9 the conversion also needs a readable sRGB ICC profile for
+ * the OutputIntent, which it finds through PDFA_SRGB_ICC or a Ghostscript
+ * install. Without one it refuses BEFORE running Ghostscript, so on a host
+ * with no Ghostscript these tests stopped reaching the branch they exist for.
+ * The stub never reads the profile, so the suite supplies its own through the
+ * same override the deployment uses.
+ *
  * @compliance ICH eCTD; FDA Portable Document Format Specifications (PDF/A).
  */
 
@@ -81,17 +88,8 @@ describe('finalizePdfA — a successful Ghostscript exit is not a conversion', (
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdfa-gs-stub-'));
     // veraPDF must not be picked up: this file is about the Ghostscript branch.
     process.env.VERAPDF_BINARY = path.join(dir, 'definitely-not-verapdf');
-    /* The conversion now refuses before invoking Ghostscript at all when no
-       sRGB ICC profile is readable for the PDF/A OutputIntent (W2, 2026-09-20:
-       without one Ghostscript emits a file carrying pdfaid:part that veraPDF
-       rejects). On a host with no Ghostscript install that refusal fired first
-       and these cases never reached the branch they pin. Point PDFA_SRGB_ICC —
-       the same override the deployment uses — at a readable file so the stub
-       is actually invoked; the stub ignores the prelude, so its contents are
-       immaterial here. The no-profile refusal is its own behaviour and is not
-       what this file tests. */
     const icc = path.join(dir, 'srgb.icc');
-    fs.writeFileSync(icc, 'stub icc profile');
+    fs.writeFileSync(icc, Buffer.from('stub ICC profile — read by nothing but fs.access'));
     process.env.PDFA_SRGB_ICC = icc;
   });
 
