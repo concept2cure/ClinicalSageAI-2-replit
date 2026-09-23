@@ -1,0 +1,20 @@
+Runner: tests/validation/oq/projects/run.mjs at ee7d94adf (OQ-001 v0.7).
+
+Server: the working tree at ee7d94adf with the seven server files that F-29
+(171e02dfc) changed as they were at its parent:
+
+  for f in server/auth.ts server/middleware/auth.ts server/routes/auth.ts \
+           server/services/account-standing.ts \
+           server/services/audit/auth-event-audit.ts \
+           server/services/hocuspocus-server.ts \
+           server/services/token-revocation.ts; do
+    git show 171e02dfc^:$f > $f
+  done
+
+No commit after 171e02dfc touches those seven files, so this is ee7d94adf
+without F-29 and nothing else. F-28 (the signing ceremony) and F-31 (the
+/api/admin gate) are present. The server was started on that tree (a fresh
+process), the runner executed, and the tree was restored with
+`git checkout HEAD -- <the seven files>` before the second run. The record's
+environment.git.commit names the runner's commit; this file states the
+server's tree.

@@ -1,5 +1,6 @@
 /**
- * An account that is not active cannot sign (VSR-001 F-28).
+ * An account that is not active cannot sign, cannot sign in, and a session it
+ * already holds ends (VSR-001 F-28, F-29).
  *
  * ── The defect this pins (reproduced 2026-09-23, before the fix) ─────────────
  * `users.status` is how an account is taken out of use. An administrator
@@ -40,6 +41,7 @@
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import express from 'express';
+import request from 'supertest';
 import bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
@@ -99,6 +101,37 @@ const deprovision = (m: Member) =>
 
 const failedAttempts = async (m: Member) =>
   Number((await owner.query('SELECT failed_login_attempts FROM users WHERE id = $1', [m.id])).rows[0].failed_login_attempts ?? 0);
+
+/** A response body for an assertion message, every token in it redacted: evidence carries none. */
+const shown = (body: unknown) => JSON.stringify(body).replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g, '<token>');
+
+/** The sign-in refusals the audit trail holds for the member, by reason, oldest first. */
+const refusalsRecorded = async (m: Member) =>
+  (
+    await owner.query(
+      `SELECT new_values->>'reason' AS reason FROM audit_logs
+        WHERE tenant_id = $1 AND action = 'user_login' AND record_id = $2
+          AND new_values->>'outcome' = 'failure'
+        ORDER BY chain_seq`,
+      [ORG, String(m.id)],
+    )
+  ).rows.map((r) => r.reason as string);
+
+const passwordStep = (m: Member) => request(app).post('/api/auth/login').send({ email: m.email, password: PASSWORD });
+
+/** Sign in the way the browser does: the password, then the authenticator's code for step `n`. */
+async function signIn(m: Member, n: number) {
+  const login = await passwordStep(m);
+  expect(login.status, shown(login.body)).toBe(200);
+  const verify = await request(app)
+    .post('/api/auth/mfa/verify')
+    .send({ challengeId: login.body.challengeId, code: codeFor(m, n), method: 'totp' });
+  expect(verify.status, shown(verify.body)).toBe(200);
+  return {
+    bearer: { Authorization: `Bearer ${verify.body.accessToken}` },
+    refreshToken: verify.body.refreshToken as string,
+  };
+}
 
 async function cleanup(): Promise<void> {
   const client = await owner.connect();
@@ -199,6 +232,14 @@ beforeAll(async () => {
       return authMiddleware(req, res, next);
     },
   });
+  // Any route behind the gate: it answers who the gate let through.
+  const whoami = (req: express.Request, res: express.Response) =>
+    res.json({ userId: (req as { user?: { id?: number } }).user?.id ?? null });
+  app.get('/api/dbsas/whoami', whoami);
+  // The per-router gate (authenticateToken), which routers mount themselves.
+  // Outside /api, so the global gate above cannot answer for it.
+  const { authenticateToken } = await import('../../server/middleware/auth');
+  app.get('/dbsas/router-gate', authenticateToken, whoami);
 
   await owner.query(
     `INSERT INTO organizations (id, name, slug, tier, industry_mode, status)
@@ -293,5 +334,100 @@ describe('signing (F-28)', () => {
       status: 401,
       code: 'ACCOUNT_INACTIVE',
     });
+  });
+});
+
+describe('sign-in (F-29)', () => {
+  it('an active account signs in', async () => {
+    at(3);
+    const s = await signIn(members.active, 3);
+    const me = await request(app).get('/api/dbsas/whoami').set(s.bearer);
+    expect(me.status, shown(me.body)).toBe(200);
+    expect(me.body.userId).toBe(members.active.id);
+  });
+
+  it('a suspended account is refused at the password, and no challenge is issued', async () => {
+    at(3);
+    const res = await passwordStep(members.suspended);
+    expect(res.status, `a suspended account was issued a sign-in challenge: ${shown(res.body)}`).toBe(403);
+    expect(res.body.error?.code).toBe('AUTH_ACCOUNT_INACTIVE');
+    expect(res.body.challengeId).toBeUndefined();
+    expect(await refusalsRecorded(members.suspended), 'the refusal is not in the audit trail').toEqual(['account_inactive']);
+  });
+
+  it('a deprovisioned account is refused at the password, and no challenge is issued', async () => {
+    at(3);
+    const res = await passwordStep(members.deprovisioned);
+    expect(res.status, `a deprovisioned account was issued a sign-in challenge: ${shown(res.body)}`).toBe(403);
+    expect(res.body.error?.code).toBe('AUTH_ACCOUNT_INACTIVE');
+    expect(res.body.challengeId).toBeUndefined();
+  });
+
+  it('a challenge issued before the suspension does not become a session after it', async () => {
+    at(4);
+    const m = members.held;
+    const login = await passwordStep(m);
+    expect(login.status, shown(login.body)).toBe(200);
+    await suspend(m);
+    try {
+      const verify = await request(app)
+        .post('/api/auth/mfa/verify')
+        .send({ challengeId: login.body.challengeId, code: codeFor(m, 4), method: 'totp' });
+      expect(verify.status, `the second factor issued a session to a suspended account: ${shown(verify.body)}`).toBe(403);
+      expect(verify.body.accessToken).toBeUndefined();
+    } finally {
+      await owner.query(`UPDATE users SET status = 'active' WHERE id = $1`, [m.id]);
+    }
+  });
+});
+
+describe('a session the account already holds (F-29)', () => {
+  it('ends at the gate once the account is suspended, and says why', async () => {
+    at(5);
+    const m = members.held;
+    const s = await signIn(m, 5);
+    expect((await request(app).get('/api/dbsas/whoami').set(s.bearer)).status).toBe(200);
+    expect((await request(app).get('/dbsas/router-gate').set(s.bearer)).status).toBe(200);
+
+    await suspend(m);
+    try {
+      const after = await request(app).get('/api/dbsas/whoami').set(s.bearer);
+      expect(after.status, `a suspended account's session still opened the API: ${shown(after.body)}`).toBe(401);
+      expect(after.body.code).toBe('ACCOUNT_INACTIVE');
+
+      const routed = await request(app).get('/dbsas/router-gate').set(s.bearer);
+      expect(routed.status, `a suspended account's session still passed a router's own gate: ${shown(routed.body)}`).toBe(401);
+      expect(routed.body.error?.code).toBe('ACCOUNT_INACTIVE');
+
+      const probe = await request(app).get('/api/auth/session').set(s.bearer);
+      expect(probe.status, `the session probe still reported a suspended account signed in: ${shown(probe.body)}`).toBe(401);
+
+      const refreshed = await request(app).post('/api/auth/refresh').send({ refreshToken: s.refreshToken });
+      expect(refreshed.status, `a suspended account's refresh token minted a session: ${shown(refreshed.body)}`).toBe(403);
+      expect(refreshed.body.accessToken).toBeUndefined();
+    } finally {
+      await owner.query(`UPDATE users SET status = 'active' WHERE id = $1`, [m.id]);
+    }
+  });
+
+  it('ends once the identity provider deprovisions the account', async () => {
+    at(6);
+    const m = members.held;
+    const s = await signIn(m, 6);
+    await deprovision(m);
+    try {
+      const after = await request(app).get('/api/dbsas/whoami').set(s.bearer);
+      expect(after.status, `a deprovisioned account's session still opened the API: ${shown(after.body)}`).toBe(401);
+      expect(after.body.code).toBe('ACCOUNT_INACTIVE');
+    } finally {
+      await owner.query(`UPDATE users SET status = 'active' WHERE id = $1`, [m.id]);
+    }
+  });
+
+  it('works again when the account is reactivated', async () => {
+    at(7);
+    const s = await signIn(members.held, 7);
+    const me = await request(app).get('/api/dbsas/whoami').set(s.bearer);
+    expect(me.status, shown(me.body)).toBe(200);
   });
 });

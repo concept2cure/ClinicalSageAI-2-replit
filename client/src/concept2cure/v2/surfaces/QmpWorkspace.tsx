@@ -134,38 +134,17 @@ const TRANSITION = {
 type PlanTransition = keyof typeof TRANSITION;
 
 type PlanDialog = { kind: 'create' } | { kind: 'status'; plan: Plan; to: PlanTransition } | { kind: 'delete'; plan: Plan };
+type ListState = 'loading' | 'ready' | 'error';
+type DashState = 'idle' | 'loading' | 'ready' | 'error';
+type FireToast = ReturnType<typeof useToast>[1];
 
-/** The open governed-change drawer. Each write it submits is the caller's, already one-at-a-time. */
-function PlanDialogForm({ dialog, onCancel, onCreate, onTransition, onRemove }: {
-  dialog: PlanDialog;
-  onCancel: () => void;
-  onCreate: (v: Record<string, string>) => Promise<void>;
-  onTransition: (plan: Plan, to: PlanTransition, v: Record<string, string>) => Promise<void>;
-  onRemove: (plan: Plan, v: Record<string, string>) => Promise<void>;
-}) {
-  switch (dialog.kind) {
-    case 'create':
-      return <C2CForm key="create" config={CREATE_FORM} onCancel={onCancel} onSubmit={onCreate} />;
-    case 'status':
-      return <C2CForm key={`${dialog.to}-${dialog.plan.id}`} config={TRANSITION[dialog.to].form(dialog.plan)} onCancel={onCancel} onSubmit={(v) => onTransition(dialog.plan, dialog.to, v)} />;
-    case 'delete':
-      return <C2CForm key={`delete-${dialog.plan.id}`} config={DELETE_FORM(dialog.plan)} onCancel={onCancel} onSubmit={(v) => onRemove(dialog.plan, v)} />;
-  }
-}
-
-export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
-  /* AnA on this surface. It took SurfaceViewProps and discarded the whole
-     object as `_props`, so a quality lead looking at a gate-level breakdown and
-     a risk profile had no way to ask what any of it meant — on the screen that
-     decides what every other document is validated against. */
-  const ask = onAsk;
+/** The org's plan register and the selected plan's dashboard, read live. */
+function useQmpRegister() {
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [listState, setListState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [listState, setListState] = useState<ListState>('loading');
   const [active, setActive] = useState<number | null>(null);
   const [dash, setDash] = useState<Dashboard | null>(null);
-  const [dashState, setDashState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const [dialog, setDialog] = useState<PlanDialog | null>(null);
-  const [toast, fireToast] = useToast();
+  const [dashState, setDashState] = useState<DashState>('idle');
 
   const loadPlans = useCallback(async () => {
     setListState('loading');
@@ -188,6 +167,22 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
     setDash(body); setDashState('ready');
   }, []);
   useEffect(() => { if (active != null) void loadDashboard(active); else { setDash(null); setDashState('idle'); } }, [active, loadDashboard]);
+
+  return { plans, setPlans, listState, active, setActive, dash, dashState, loadPlans, loadDashboard };
+}
+type QmpRegister = ReturnType<typeof useQmpRegister>;
+
+/** The dialogs' submit handlers, each already behind the one-at-a-time guard. */
+interface PlanSubmit {
+  create: (v: Record<string, string>) => Promise<void>;
+  transition: (plan: Plan, to: PlanTransition, v: Record<string, string>) => Promise<void>;
+  remove: (plan: Plan, v: Record<string, string>) => Promise<void>;
+}
+
+/** Create, activate/archive and delete: each checks the reason, sends one
+ *  awaited request, and adopts the server's row or shows its refusal. */
+function useGovernedPlanWrites(register: QmpRegister, fireToast: FireToast, setDialog: (d: PlanDialog | null) => void): PlanSubmit {
+  const { plans, setPlans, active, setActive, loadPlans, loadDashboard } = register;
 
   /* The server's floor, checked first so a request it would refuse is never
      sent. The drawer stays open on any refusal so the reason can be fixed. */
@@ -222,7 +217,7 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
     fireToast('Quality-management plan created · ' + body.name);
     setPlans((ps) => [body, ...ps.filter((p) => p.id !== body.id)]);
     setActive(body.id);
-  }, [reasonOf, loadPlans, fireToast]);
+  }, [reasonOf, loadPlans, fireToast, setDialog, setPlans, setActive]);
 
   const transition = useCallback(async (plan: Plan, to: PlanTransition, v: Record<string, string>) => {
     const reason = reasonOf(v);
@@ -236,7 +231,7 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
     fireToast(`${words.done} · ` + (body.name ?? plan.name));
     setPlans((ps) => ps.map((p) => (p.id === plan.id ? { ...p, ...body } : p)));
     if (active === plan.id) void loadDashboard(plan.id);
-  }, [active, reasonOf, loadPlans, loadDashboard, fireToast]);
+  }, [active, reasonOf, loadPlans, loadDashboard, fireToast, setDialog, setPlans]);
 
   const remove = useCallback(async (plan: Plan, v: Record<string, string>) => {
     const reason = reasonOf(v);
@@ -248,144 +243,179 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
     const rest = plans.filter((p) => p.id !== plan.id);
     setPlans(rest);
     setActive((cur) => (cur === plan.id ? rest[0]?.id ?? null : cur));
-  }, [plans, reasonOf, loadPlans, fireToast]);
+  }, [plans, reasonOf, loadPlans, fireToast, setDialog, setPlans, setActive]);
 
-  /* WHAT ANA SEES HERE. A QMP defines the gates every other document is
-     validated against, so the payload carries the gate-level split and the risk
-     profile rather than just a plan name — "why did my document fail a hard
-     gate" is answered from this screen's numbers, not from the document's.
+  return { create: once(create), transition: once(transition), remove: once(remove) };
+}
 
-     dashState travels separately from the plan list because the dashboard has
-     its own failure: a freshly created plan with no sections yet lands in
-     `error` by design (the loader requires the full shape before rendering).
-     Publishing that as "no sections" would state a fact the surface itself
-     refuses to state. */
+/* WHAT ANA SEES HERE. A QMP defines the gates every other document is
+   validated against, so the payload carries the gate-level split and the risk
+   profile rather than just a plan name — "why did my document fail a hard
+   gate" is answered from this screen's numbers, not from the document's.
+
+   dashState travels separately from the plan list because the dashboard has
+   its own failure: a freshly created plan with no sections yet lands in
+   `error` by design (the loader requires the full shape before rendering).
+   Publishing that as "no sections" would state a fact the surface itself
+   refuses to state. */
+function qmpAnaContext({ listState, plans, activePlan, dashState, dash }: {
+  listState: ListState; plans: Plan[]; activePlan: Plan | null; dashState: DashState; dash: Dashboard | null;
+}) {
+  return {
+    summary: listState === 'loading'
+      ? 'Quality management plans, still loading.'
+      : listState === 'error'
+        ? 'Quality management plans could not be loaded — unavailable, not empty.'
+        : plans.length === 0
+          ? 'Quality management: no quality plans defined yet for this organization.'
+          : `Quality management: ${plans.length} plan(s)` +
+            (activePlan ? `, "${activePlan.name}" (v${activePlan.version ?? '—'}, ${activePlan.status ?? 'no status'}) selected` : '') +
+            (dash ? `; ${dash.overallCompleteness}% complete across ${dash.sections.totalSections} section(s).` : '.'),
+    facts: {
+      plansState: listState,
+      planCount: plans.length,
+      activePlanCount: plans.filter((p) => String(p.status ?? '').toLowerCase() === 'active').length,
+      ...(activePlan
+        ? { selectedPlanId: activePlan.id, selectedPlanName: activePlan.name, selectedPlanVersion: activePlan.version, selectedPlanStatus: activePlan.status }
+        : {}),
+      dashboardState: dashState,
+      ...(dash
+        ? {
+            overallCompletenessPct: dash.overallCompleteness,
+            totalSections: dash.sections.totalSections,
+            sectionsByGateLevel: dash.sections.sectionsByGateLevel,
+            sectionsAllowingOverride: dash.sections.sectionsAllowingOverride,
+            totalFactors: dash.factors.totalFactors,
+            factorsByRiskLevel: dash.factors.factorsByRiskLevel,
+            requiredFactors: dash.factors.requiredFactors,
+            riskProfile: dash.riskProfile,
+          }
+        : {}),
+    },
+    availableActions: [
+      'Explain what a hard, soft and info gate each enforce',
+      'Explain this plan\'s risk profile and which factors drive it',
+      'Explain what activating this plan changes for documents in flight',
+      'Create a quality-management plan',
+    ],
+  };
+}
+
+/** The plan register: one row per plan, with the governed moves its status allows. */
+function PlanRegisterCard({ plans, listState, active, ask, onSelect, onOpen }: {
+  plans: Plan[]; listState: ListState; active: number | null; ask: SurfaceViewProps['onAsk'];
+  onSelect: (id: number) => void; onOpen: (d: PlanDialog) => void;
+}) {
+  return (
+    <div className="pj-card">
+      <div className="pj-card-h">
+        <span className="t">Quality management plans</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {ask && <button className="reg-cta" onClick={() => ask('Explain what this quality-management plan enforces: what a hard, soft and info gate each block, which risk factors are required, and what changes for documents already in flight if I activate it. Say which figures are unavailable rather than assuming zero.')}>{I.sparkles} Explain this plan</button>}
+          <button className="nda-open" onClick={() => onOpen({ kind: 'create' })}>{I.plus} New plan</button>
+        </span>
+      </div>
+      <div className="pj-card-b" style={{ padding: 0 }}>
+        {listState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading quality plans…" /></div>
+          : listState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load quality plans" hint="The quality-plan register didn’t respond. Sign in to your tenant and retry." /></div>
+          : plans.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No quality plans yet" hint="Create a quality-management plan to define the gate levels and risk factors your documents are validated against." /></div>
+          : <table className="reg-tbl"><thead><tr><th>Plan</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
+            <tbody>{plans.map((p) => (
+              <tr key={p.id} data-active={active === p.id || undefined}>
+                {/* The plan name opened the row from a <td onClick> with a pointer
+                    cursor — a control no keyboard could reach, offering by mouse
+                    exactly what the row's own View button already does. Clicking
+                    the name is the convention here, so it stays; as a button it
+                    keeps the click target and gains the tab stop. */}
+                <td>
+                  <button type="button" className="tbl-name-btn" onClick={() => onSelect(p.id)}>{p.name}</button>
+                </td>
+                <td className="mono">{p.version ?? '—'}</td>
+                <td><span className={'rd-chip tone-' + statusTone(p.status)}>{p.status ?? '—'}</span></td>
+                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <button className="nda-open" onClick={() => onSelect(p.id)}>{I.eye} View</button>
+                  {p.status === 'active'
+                    ? <button className="nda-open" style={{ marginLeft: 6 }} aria-label={`Archive ${p.name}`} onClick={() => onOpen({ kind: 'status', plan: p, to: 'archived' })}>{I.lock} Archive</button>
+                    : <>
+                        <button className="nda-open" style={{ marginLeft: 6 }} aria-label={`Activate ${p.name}`} onClick={() => onOpen({ kind: 'status', plan: p, to: 'active' })}>{I.check} Activate</button>
+                        <button className="nda-open" style={{ marginLeft: 6 }} aria-label={`Delete ${p.name}`} onClick={() => onOpen({ kind: 'delete', plan: p })}>{I.close} Delete</button>
+                      </>}
+                </td>
+              </tr>))}</tbody></table>}
+      </div>
+    </div>
+  );
+}
+
+/** The selected plan's completeness, section gate levels and factor risk profile. */
+function PlanDashboardCard({ dash, dashState }: { dash: Dashboard | null; dashState: DashState }) {
+  return (
+    <div className="pj-card">
+      <div className="pj-card-h"><span className="t">Plan dashboard</span>{dash && <span className={'rd-chip tone-' + (dash.overallCompleteness >= 80 ? 'ok' : 'warn')}>{dash.overallCompleteness}% complete</span>}</div>
+      <div className="pj-card-b">
+        {dashState === 'loading' ? <EmptyState icon={I.layers} title="Loading dashboard…" />
+          : dashState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the plan dashboard" hint="The plan dashboard didn’t respond." />
+          : !dash ? <EmptyState icon={I.layers} title="No dashboard" hint="Select a plan to see its completeness, section gate levels, and factor risk profile." />
+          : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Sections ({dash.sections.totalSections})</div>
+                <div style={{ fontSize: 13 }}>Hard gate: <b>{dash.sections.sectionsByGateLevel.hard}</b> · Soft: <b>{dash.sections.sectionsByGateLevel.soft}</b> · Info: <b>{dash.sections.sectionsByGateLevel.info}</b></div>
+                <div style={{ fontSize: 13 }}>Active {dash.sections.activeSections} · allow override {dash.sections.sectionsAllowingOverride}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Risk factors ({dash.factors.totalFactors})</div>
+                <div style={{ fontSize: 13 }}>
+                  <span className="rd-chip tone-err">high {dash.factors.factorsByRiskLevel.high}</span>{' '}
+                  <span className="rd-chip tone-warn">medium {dash.factors.factorsByRiskLevel.medium}</span>{' '}
+                  <span className="rd-chip tone-ok">low {dash.factors.factorsByRiskLevel.low}</span>
+                </div>
+                <div style={{ fontSize: 13, marginTop: 4 }}>Required {dash.factors.requiredFactors} · active {dash.factors.activeFactors}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Risk profile</div>
+                <div style={{ fontSize: 13 }}>High {dash.riskProfile.highRiskPercentage}% · Medium {dash.riskProfile.mediumRiskPercentage}% · Low {dash.riskProfile.lowRiskPercentage}%</div>
+              </div>
+            </div>
+          )}
+      </div>
+    </div>
+  );
+}
+
+/** The open governed dialog, if any. Keyed per plan and move so reopening
+ *  for another plan starts with an empty reason. */
+function PlanDialogForm({ dialog, onCancel, submit }: { dialog: PlanDialog | null; onCancel: () => void; submit: PlanSubmit }) {
+  if (dialog?.kind === 'create') return <C2CForm config={CREATE_FORM} onCancel={onCancel} onSubmit={submit.create} />;
+  if (dialog?.kind === 'status') return <C2CForm key={`${dialog.to}-${dialog.plan.id}`} config={TRANSITION[dialog.to].form(dialog.plan)} onCancel={onCancel} onSubmit={(v: Record<string, string>) => submit.transition(dialog.plan, dialog.to, v)} />;
+  if (dialog?.kind === 'delete') return <C2CForm key={`delete-${dialog.plan.id}`} config={DELETE_FORM(dialog.plan)} onCancel={onCancel} onSubmit={(v: Record<string, string>) => submit.remove(dialog.plan, v)} />;
+  return null;
+}
+
+export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
+  /* AnA on this surface. It took SurfaceViewProps and discarded the whole
+     object as `_props`, so a quality lead looking at a gate-level breakdown and
+     a risk profile had no way to ask what any of it meant — on the screen that
+     decides what every other document is validated against. */
+  const ask = onAsk;
+  const register = useQmpRegister();
+  const { plans, listState, active, setActive, dash, dashState } = register;
+  const [dialog, setDialog] = useState<PlanDialog | null>(null);
+  const [toast, fireToast] = useToast();
+  const submit = useGovernedPlanWrites(register, fireToast, setDialog);
+
   const activePlan = plans.find((p) => p.id === active) ?? null;
   const anaContext = useMemo(
-    () => ({
-      summary: listState === 'loading'
-        ? 'Quality management plans, still loading.'
-        : listState === 'error'
-          ? 'Quality management plans could not be loaded — unavailable, not empty.'
-          : plans.length === 0
-            ? 'Quality management: no quality plans defined yet for this organization.'
-            : `Quality management: ${plans.length} plan(s)` +
-              (activePlan ? `, "${activePlan.name}" (v${activePlan.version ?? '—'}, ${activePlan.status ?? 'no status'}) selected` : '') +
-              (dash ? `; ${dash.overallCompleteness}% complete across ${dash.sections.totalSections} section(s).` : '.'),
-      facts: {
-        plansState: listState,
-        planCount: plans.length,
-        activePlanCount: plans.filter((p) => String(p.status ?? '').toLowerCase() === 'active').length,
-        ...(activePlan
-          ? { selectedPlanId: activePlan.id, selectedPlanName: activePlan.name, selectedPlanVersion: activePlan.version, selectedPlanStatus: activePlan.status }
-          : {}),
-        dashboardState: dashState,
-        ...(dash
-          ? {
-              overallCompletenessPct: dash.overallCompleteness,
-              totalSections: dash.sections.totalSections,
-              sectionsByGateLevel: dash.sections.sectionsByGateLevel,
-              sectionsAllowingOverride: dash.sections.sectionsAllowingOverride,
-              totalFactors: dash.factors.totalFactors,
-              factorsByRiskLevel: dash.factors.factorsByRiskLevel,
-              requiredFactors: dash.factors.requiredFactors,
-              riskProfile: dash.riskProfile,
-            }
-          : {}),
-      },
-      availableActions: [
-        'Explain what a hard, soft and info gate each enforce',
-        'Explain this plan\'s risk profile and which factors drive it',
-        'Explain what activating this plan changes for documents in flight',
-        'Create a quality-management plan',
-      ],
-    }),
+    () => qmpAnaContext({ listState, plans, activePlan, dashState, dash }),
     [listState, plans, activePlan, dashState, dash],
   );
   usePublishSurfaceContext('qmp', anaContext);
 
   return (
     <div className="cm-body">
-      <div className="pj-card">
-        <div className="pj-card-h">
-          <span className="t">Quality management plans</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {ask && <button className="reg-cta" onClick={() => ask('Explain what this quality-management plan enforces: what a hard, soft and info gate each block, which risk factors are required, and what changes for documents already in flight if I activate it. Say which figures are unavailable rather than assuming zero.')}>{I.sparkles} Explain this plan</button>}
-            <button className="nda-open" onClick={() => setDialog({ kind: 'create' })}>{I.plus} New plan</button>
-          </span>
-        </div>
-        <div className="pj-card-b" style={{ padding: 0 }}>
-          {listState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading quality plans…" /></div>
-            : listState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load quality plans" hint="The quality-plan register didn’t respond. Sign in to your tenant and retry." /></div>
-            : plans.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No quality plans yet" hint="Create a quality-management plan to define the gate levels and risk factors your documents are validated against." /></div>
-            : <table className="reg-tbl"><thead><tr><th>Plan</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
-              <tbody>{plans.map((p) => (
-                <tr key={p.id} data-active={active === p.id || undefined}>
-                  {/* The plan name opened the row from a <td onClick> with a pointer
-                      cursor — a control no keyboard could reach, offering by mouse
-                      exactly what the row's own View button already does. Clicking
-                      the name is the convention here, so it stays; as a button it
-                      keeps the click target and gains the tab stop. */}
-                  <td>
-                    <button type="button" className="tbl-name-btn" onClick={() => setActive(p.id)}>{p.name}</button>
-                  </td>
-                  <td className="mono">{p.version ?? '—'}</td>
-                  <td><span className={'rd-chip tone-' + statusTone(p.status)}>{p.status ?? '—'}</span></td>
-                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <button className="nda-open" onClick={() => setActive(p.id)}>{I.eye} View</button>
-                    {p.status === 'active'
-                      ? <button className="nda-open" style={{ marginLeft: 6 }} aria-label={`Archive ${p.name}`} onClick={() => setDialog({ kind: 'status', plan: p, to: 'archived' })}>{I.lock} Archive</button>
-                      : <>
-                          <button className="nda-open" style={{ marginLeft: 6 }} aria-label={`Activate ${p.name}`} onClick={() => setDialog({ kind: 'status', plan: p, to: 'active' })}>{I.check} Activate</button>
-                          <button className="nda-open" style={{ marginLeft: 6 }} aria-label={`Delete ${p.name}`} onClick={() => setDialog({ kind: 'delete', plan: p })}>{I.close} Delete</button>
-                        </>}
-                  </td>
-                </tr>))}</tbody></table>}
-        </div>
-      </div>
-
-      {active != null && (
-        <div className="pj-card">
-          <div className="pj-card-h"><span className="t">Plan dashboard</span>{dash && <span className={'rd-chip tone-' + (dash.overallCompleteness >= 80 ? 'ok' : 'warn')}>{dash.overallCompleteness}% complete</span>}</div>
-          <div className="pj-card-b">
-            {dashState === 'loading' ? <EmptyState icon={I.layers} title="Loading dashboard…" />
-              : dashState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the plan dashboard" hint="The plan dashboard didn’t respond." />
-              : !dash ? <EmptyState icon={I.layers} title="No dashboard" hint="Select a plan to see its completeness, section gate levels, and factor risk profile." />
-              : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Sections ({dash.sections.totalSections})</div>
-                    <div style={{ fontSize: 13 }}>Hard gate: <b>{dash.sections.sectionsByGateLevel.hard}</b> · Soft: <b>{dash.sections.sectionsByGateLevel.soft}</b> · Info: <b>{dash.sections.sectionsByGateLevel.info}</b></div>
-                    <div style={{ fontSize: 13 }}>Active {dash.sections.activeSections} · allow override {dash.sections.sectionsAllowingOverride}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Risk factors ({dash.factors.totalFactors})</div>
-                    <div style={{ fontSize: 13 }}>
-                      <span className="rd-chip tone-err">high {dash.factors.factorsByRiskLevel.high}</span>{' '}
-                      <span className="rd-chip tone-warn">medium {dash.factors.factorsByRiskLevel.medium}</span>{' '}
-                      <span className="rd-chip tone-ok">low {dash.factors.factorsByRiskLevel.low}</span>
-                    </div>
-                    <div style={{ fontSize: 13, marginTop: 4 }}>Required {dash.factors.requiredFactors} · active {dash.factors.activeFactors}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Risk profile</div>
-                    <div style={{ fontSize: 13 }}>High {dash.riskProfile.highRiskPercentage}% · Medium {dash.riskProfile.mediumRiskPercentage}% · Low {dash.riskProfile.lowRiskPercentage}%</div>
-                  </div>
-                </div>
-              )}
-          </div>
-        </div>
-      )}
-
-      {dialog && (
-        <PlanDialogForm
-          dialog={dialog}
-          onCancel={() => setDialog(null)}
-          onCreate={once(create)}
-          onTransition={once(transition)}
-          onRemove={once(remove)}
-        />
-      )}
+      <PlanRegisterCard plans={plans} listState={listState} active={active} ask={ask} onSelect={setActive} onOpen={setDialog} />
+      {active != null && <PlanDashboardCard dash={dash} dashState={dashState} />}
+      <PlanDialogForm dialog={dialog} onCancel={() => setDialog(null)} submit={submit} />
       <C2CToast msg={toast} />
     </div>
   );

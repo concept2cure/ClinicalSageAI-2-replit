@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T15:43:17.107Z",
+  "generatedAt": "2026-09-23T15:59:08.911Z",
   "git": {
-    "sha": "41b5b43e344cb4081a0d5bd2e5deec55f63cd47c",
+    "sha": "5b3a240a4d75120f616ae936627a942c2ce2d18d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2007,7 +2007,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 180133
+        "bytes": 181450
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2169,7 +2169,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5425
+        "lines": 5450
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2284,6 +2284,10 @@
         "lines": 2379
       },
       {
+        "file": "server/routes/auth.ts",
+        "lines": 2376
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "lines": 2348
       },
@@ -2298,10 +2302,6 @@
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2320
-      },
-      {
-        "file": "server/routes/auth.ts",
-        "lines": 2315
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
