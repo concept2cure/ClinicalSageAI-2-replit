@@ -350,10 +350,73 @@ that version. Before signature, through change control:
 factors, section gating, quality validation, batch validate) have no authority
 gate and no ledger row. They are the same gap, and they are outside this item.
 
-## T1–T4, P3
+## P3: resolving a contradiction
 
-*In progress, not yet verified. These fixes are being written test-first and
-adversarially reviewed; this section is filled in when they land.*
+**The defect.** Resolving a contradiction finding takes it off the submission
+gate. The surface flipped the row locally and stamped it `resolvedBy: 'AnA +
+you'`, a resolver nobody recorded. It then sent a bare POST whose answer it
+never read. The server wrote the state with no reason and no ledger row.
+
+**The fix** (`contradiction-engine-service.ts`,
+`assumption-decision-contradiction.ts`, `Inconsistency.tsx`), written
+test-first, then read by three independent reviewers and repaired:
+
+- **The governed path.** `transitionReviewState` is a governed write. It checks
+  the state, the reason (at least 8 characters) and a numeric actor before
+  anything is opened; it never records against `system`. Then, in one
+  transaction: lock the row, update it, write `recordGovernedAction` on the same
+  client, COMMIT. The ledger command is `resolve`, `reopen` or `transition`, in
+  domain `governed_intelligence`, with payload `{from, to}`. The orchestrator
+  calls the same function, so its transitions are audited too.
+- **The resolver fields.** `resolved_by` and `resolved_at` are set only by a
+  resolution and cleared on re-open. A re-opened finding used to keep its old
+  `resolved_at`, and the pdev bridge counted it as resolved.
+- **The route.** `requireEditorAccess` (a viewer gets 403) and the canonical
+  `governedActorId` (401 without one). The state and reason checks live in the
+  service only; the route used to repeat them.
+- **Repeated decisions.** A decision already on the record is refused (409
+  `REVIEW_STATE_UNCHANGED`), so no second ledger row is written and the
+  recorded resolver is not re-stamped.
+- **Honest outcomes.**
+  - The row is mapped before COMMIT, so anything that throws still rolls back.
+  - A failed COMMIT is `OUTCOME_UNKNOWN`, never "left unchanged".
+  - On the surface, a gateway error (502/503/504), a COMMIT the server could not
+    confirm, no answer at all, and a 2xx it cannot read are all "cannot confirm,
+    re-reading", not a refusal and not a claimed audit write. The form closes,
+    so the decision cannot be sent twice.
+- **The surface.** It shows the server's persisted resolver ("user 7", or the
+  stored value), never a composed one. It says "recorded on the audit trail"
+  only for a decision this screen saw committed.
+
+**The golden journey.** The HAQ correction journey (`test:proof-tier`, a
+blocking CI step) resolves a finding through this function. It now builds its
+database with the real `audit_logs` and `c2c_ana_actions`. It reads the ledger
+row back (`resolve`, `governed_intelligence`, `decided_by` 2, a hash chain), so
+it is the test that exercises the real ledger insert on this path. It also
+asserts the persisted state; before, it fell back to a literal.
+
+**Proof.** The new route, client and journey suites were run against the
+unfixed files from HEAD: red 30/31 (`p3-red.txt`). Green 31/31
+(`p3-green.txt`). 144/144 across the 14 suites that touch this service or
+surface. Each reviewer fix, mutated, fails a named test:
+
+- the commit-failure distinction;
+- a gateway error treated as a refusal;
+- an unreadable 2xx claiming the audit write.
+
+Gates: `ci:discarded-audit-write`, `ci:dead-audit-catch`,
+`ci:server-error-leaks`, `ci:audit-logs-fixture`, `check:microcopy`. Scoped
+typecheck: no errors in the changed files.
+
+**Open.** `contradiction-consequence-service.ts:680` still sets `review_state =
+'under_review'` with a bare pool query and no ledger row. `under_review` does
+not clear the gate, so this is not a bypass, but it is an unaudited state
+change. Findings resolved before this change have no ledger row, and the
+surface does not claim one for them.
+
+## T1–T4
+
+*In progress, not yet verified. This section is filled in when it lands.*
 
 ## Known limits
 

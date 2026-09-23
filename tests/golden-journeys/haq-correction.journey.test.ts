@@ -18,7 +18,16 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
+import {
+  createJourneyDb,
+  JourneyRecorder,
+  type JourneyDb,
+  assertNoSchemaGaps,
+  assertNoDegradedTenantEnrichment,
+  CANONICAL_JOURNEY_MIGRATIONS,
+  JOURNEY_PREREQUISITES,
+  extractTableDdl,
+} from './harness';
 
 const T = 180_000;
 
@@ -49,7 +58,22 @@ const R = new JourneyRecorder(
 );
 
 beforeAll(async () => {
-  jdb = await createJourneyDb();
+  // The governed ledger pair. Resolving the finding (step 10) is a governed
+  // decision: transitionReviewState writes audit_logs + c2c_ana_actions through
+  // recordGovernedAction in the same transaction as the UPDATE, so without these
+  // tables the resolution rolls back. Both come from their creating migrations —
+  // audit_logs from the baseline, extended by the chain, seal and chain-order
+  // files in production order; c2c_ana_actions (with its command CHECK) from
+  // 20260527 — as drug-nda-ectd does.
+  jdb = await createJourneyDb({
+    prereqSql: `${JOURNEY_PREREQUISITES}\n${extractTableDdl('migrations/0000_sweet_joseph.sql', ['audit_logs'])}`,
+    migrations: [
+      ...CANONICAL_JOURNEY_MIGRATIONS,
+      'migrations/20260527_mutation_primitives.sql',
+      'migrations/20260609_audit_hmac_seal.sql',
+      'migrations/20260921_audit_logs_chain_seq.sql',
+    ],
+  });
   h.db = jdb.db;
   h.pool = jdb.pool;
 }, T);
@@ -266,6 +290,21 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
         String(REVIEWER),
         'Superseded ASM-EFF-001 via bundle; SAP to use 0.25',
       );
+      // Read, never defaulted: the manifest states the state the service
+      // returned. The resolution's ledger row is read back from the real tables.
+      expect(resolved?.finding.reviewState).toBe('approved_resolution');
+      expect(resolved?.finding.resolvedBy).toBe(String(REVIEWER));
+      expect(resolved?.governance.command).toBe('resolve');
+      const ledger = await jdb.pool.query(
+        `SELECT a.command, a.domain, a.decided_by, l.sha256_chain, l.reason
+           FROM c2c_ana_actions a JOIN audit_logs l ON l.id = a.audit_row_id
+          WHERE a.target = $1 AND a.org_id = $2`,
+        [`contradiction-finding:${findingId}`, ORG],
+      );
+      expect(ledger.rows).toHaveLength(1);
+      const entry = ledger.rows[0] as Record<string, unknown>;
+      expect(entry).toMatchObject({ command: 'resolve', domain: 'governed_intelligence', decided_by: REVIEWER });
+      expect(entry.sha256_chain).toBeTruthy();
       // The decision executes INTO a corrected artifact (the revised SAP) —
       // executeDecision links the artifact id, keeping decision → artifact
       // lineage real rather than symbolic.
@@ -283,7 +322,9 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
       );
       return {
         bundleState: approvedBundle.state,
-        findingReviewState: resolved?.reviewState ?? 'approved_resolution',
+        findingReviewState: resolved?.finding.reviewState,
+        findingResolvedBy: resolved?.finding.resolvedBy,
+        resolutionLedger: { ...entry, auditId: resolved?.governance.auditId },
         decisionActionState: executed?.actionState ?? 'executed',
         correctedArtifactId,
       };
