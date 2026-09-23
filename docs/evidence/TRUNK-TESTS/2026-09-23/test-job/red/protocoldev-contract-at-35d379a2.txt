@@ -1,0 +1,9 @@
+ × tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > its governed acts reach the server — the no-op dialog and its disclosure are gone together 30ms
+   → expected '' to contain 'onDone='
+ ✓ tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > the write path fails closed: reason floor, no success without the server 2ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > builds no signature ceremony of its own — its two signed acts use the shared EsignModal, verified by the server 20ms
+ ✓ tests/ui/surface-honesty.contract.test.ts > ProtocolDev does not present unpersisted actions as filed > does not claim the document body autosaves 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '' to contain 'onDone='
+ ❯ tests/ui/surface-honesty.contract.test.ts:175:19
+      Tests  1 failed | 3 passed | 8 skipped (12)

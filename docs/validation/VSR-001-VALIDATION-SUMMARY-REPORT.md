@@ -1320,6 +1320,12 @@ mount in source; runtime effect not measured.
   only.
 - `6f79a000f` left the `regulatory-honesty` contract test red on CI; the D6
   session fixed it (`811be46c0`).
+- The comments F-31 and F-32 added (`916027a98`, `2dd78265d`) set off
+  `ci:tenant-entry-points`, which read comments as code. That gate was red
+  on CI from the push that carried them until the D6 session made it read
+  code only (`7983d729`). It is not in the pre-push hook. CI's whole Lint job is now
+  run locally before a push from this lane
+  (`docs/evidence/TRUNK-TESTS/2026-09-23/test-job/`).
 
 ### 16.8 What this changes in the records above
 
