@@ -497,13 +497,7 @@ describe('the organisation\'s own workspace, under each creator\'s scope', () =>
    * scope their transaction arrives in, so the writer is driven in each.
    */
   const workspacesOf = async (orgId: number) =>
-    (
-      await owner.query(
-        `SELECT metadata->>'defaultForOrganization' AS marker, created_by_id
-           FROM client_workspaces WHERE organization_id = $1`,
-        [orgId],
-      )
-    ).rows;
+    (await owner.query(`SELECT metadata->>'defaultForOrganization' AS marker, created_by_id FROM client_workspaces WHERE organization_id = $1`, [orgId])).rows;
 
   it('first-run setup: the system scope its mount applies', async () => {
     const probe = express();
@@ -557,9 +551,7 @@ describe('the organisation\'s own workspace, under each creator\'s scope', () =>
     const client = await rt.connect();
     try {
       await client.query('BEGIN');
-      const posture = (
-        await client.query(`SELECT current_user AS role, current_setting('app.rls_enforce', true) AS enforcement`)
-      ).rows[0];
+      const posture = (await client.query(`SELECT current_user AS role, current_setting('app.rls_enforce', true) AS enforcement`)).rows[0];
       expect(posture).toEqual({ role: runtimeRole, enforcement: 'on' });
       await seedOrganizations(client);
       await seedOrganizations(client);
@@ -606,13 +598,10 @@ describe('a refused workspace write takes the whole organisation with it', () =>
 
   async function acl(sqlText: string) {
     for (let attempt = 1; ; attempt++) {
-      try {
-        await owner.query(sqlText);
-        return;
-      } catch (err) {
-        if (attempt >= 5 || !/tuple concurrently updated/.test((err as Error).message)) throw err;
-        await new Promise((r) => setTimeout(r, 250 * attempt));
-      }
+      const err = await owner.query(sqlText).then(() => null, (e: Error) => e);
+      if (!err) return;
+      if (attempt >= 5 || !/tuple concurrently updated/.test(err.message)) throw err;
+      await new Promise((r) => setTimeout(r, 250 * attempt));
     }
   }
 

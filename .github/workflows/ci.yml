@@ -693,7 +693,9 @@ jobs:
       # mocked config. This fails the PR that would undo that separation.
       - name: Guardrails — real-database tests never inherit the pg mock
         if: "!cancelled() && steps.install.conclusion == 'success'"
-        run: npm run ci:db-test-isolation
+        run: |
+          npm run ci:db-test-isolation:selftest
+          npm run ci:db-test-isolation
 
       - name: Guardrails — embedding runtime canonicality (corpus policy)
         if: "!cancelled() && steps.install.conclusion == 'success'"

@@ -42,6 +42,38 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const TAG = '[ci:db-test-isolation]';
+
+/**
+ * A MODULE SPECIFIER ending in `/setup`: `from '../setup'`, the bare
+ * side-effect `import '../setup'`, `import('../setup')` and `require('../setup')`.
+ * Only a specifier: this matched any quoted string ending in `/setup`, so a
+ * database test that exercised a route such as '/api/auth/mfa/setup' was
+ * reported as importing the pg mock (2026-09-23; two real-database files
+ * failed CI on the URL alone). `../setup.db` does not match either: the
+ * specifier must END at `setup`.
+ */
+const IMPORTS_MOCKING_SETUP = /(?:\bfrom|\bimport|\brequire\s*\(|\bimport\s*\()\s*['"][^'"]*\/setup['"]/;
+
+if (process.argv.includes('--self-test')) {
+  const cases = [
+    ["import { x } from '../setup';", true],
+    ["import '../setup';", true],
+    ["await import('../setup');", true],
+    ["const s = require('../setup');", true],
+    ["export * from '../setup';", true],
+    ["import { databaseUrl } from '../setup.db';", false],
+    ["await request(app).post('/api/auth/mfa/setup').send({});", false],
+    ["const path = '/api/setup';", false],
+  ];
+  let wrong = 0;
+  for (const [text, expect] of cases) {
+    const got = IMPORTS_MOCKING_SETUP.test(text);
+    if (got !== expect) wrong += 1;
+    console.log(`  ${got === expect ? '✓' : '✗'} ${expect ? 'flags' : 'passes'}: ${text}`);
+  }
+  console.log(wrong ? `\n✗ self-test: ${wrong} case(s) wrong` : `\n✓ self-test: ${cases.length} cases`);
+  process.exit(wrong ? 1 : 0);
+}
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const asJson = process.argv.includes('--json');
 
@@ -193,13 +225,10 @@ for (const config of CONFIGS) {
 const dbTests = findDbTests();
 for (const file of dbTests) {
   const source = stripComments(read(file));
-  // Any quoted specifier ending in `/setup` — which covers `from '../setup'`,
-  // the bare side-effect form `import '../setup'`, and `require('../setup')`
-  // alike. Matching only the `from` spelling would miss the side-effect import,
-  // and that is the form someone reaches for when they want the mock: it exists
-  // to run the module, not to name anything from it. `../setup.db` does not
-  // match, because the specifier must END at `setup`.
-  if (/['"][^'"]*\/setup['"]/.test(source)) {
+  // Every spelling of an import of the mocking setup (IMPORTS_MOCKING_SETUP):
+  // matching only `from` would miss the side-effect import, the form someone
+  // reaches for when they want the mock, since it exists to run the module.
+  if (IMPORTS_MOCKING_SETUP.test(source)) {
     failures.push({
       check: 'db-test-imports-mocking-setup',
       where: file,
