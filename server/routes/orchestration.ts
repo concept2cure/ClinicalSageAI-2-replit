@@ -38,6 +38,7 @@ import type {
   RecommendationRequest,
   ContinuityRequest,
 } from '../../shared/types/orchestration';
+import { clientIpKey } from '../utils/client-ip';
 
 const router = Router();
 
@@ -668,7 +669,7 @@ async function recordGateAudit(req: Request, response: {
   const { db } = await import('../db.js');
   const { regulatoryAuditLogs } = await import('../../shared/schema.js');
   const auditId = `gate-${response.projectId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const ipAddress = (req.ip || req.headers['x-forwarded-for'] || 'unknown').toString();
+  const ipAddress = clientIpKey(req);
   const userAgent = (req.headers['user-agent'] || 'unknown').toString();
 
   await db.insert(regulatoryAuditLogs).values({

@@ -1053,3 +1053,41 @@ Product change in this section: `79217254f` (F-23). Validation changes:
 `d3556910a` (OQ-PROJ-17), `af798a862` (run date), `ec76f693c` (P-11,
 OQ-SRDY-05 v0.4). No result was edited after execution. The runners wrote
 every record, and the matrix builder regenerated TM-001.
+
+## 15. Addendum 2026-09-23 — §13.3 items 1, 2 and 4 closed for D6 (D6 session)
+
+§13.3 raised three sign-in observations for D6 and did not disposition them.
+The D6 session fixed them, together with defects of the same kind found while
+mapping them. Each was reproduced on real PostgreSQL first, as a NOBYPASSRLS
+runtime role with production's route registration, and then shown fixed.
+Evidence: `docs/evidence/D6/2026-09-23/` (README, `red/`, `green/`).
+
+| §13.3 item | Disposition |
+|---|---|
+| 1. A TOTP code is accepted more than once | **Fixed** `a689ad680`. `users.mfa_totp_last_step`; a code is accepted once, and only for a step later than the last one accepted, compared and set in one statement. Concurrent verifications of one code: exactly one succeeds. The same pattern also closed the emailed sign-in code and the password-reset token. |
+| 2. The server trusts no proxy | **Collapse half: fixed by F-24**, `eefac757b`, in the W3 session (one trusted hop in production). **Forgery half: fixed** in the D6 session's item-2 commit. About 20 sites took the client-written left-most X-Forwarded-For entry into e-signature, QMS approval, financial-disclosure and §11.10(e) rows, and into a sign-in limit's key. They now read `req.ip` through one helper, and `ci:client-ip-single-source` forbids the header. Owed for D1: closing the ALB to CloudFront, so that two hops can reach the user rather than the edge. |
+| 4. The session misstates enrolment | **Fixed** `75d3069a2`. The session, `/mfa/verify` and `/api/users/me` report the account's real factor, from the rule the sign-in challenge uses. |
+
+Found while mapping, and fixed:
+- the enrolment QR code sent the TOTP secret to `api.qrserver.com`;
+- a session alone could replace an enrolled authenticator (found in
+  parallel and fixed as F-26, `0c912e67e`; this session mapped the enterprise
+  router's refusal from 500 to 409);
+- a pre-auth route distinguished enrolled accounts;
+- reset and invitation links were built on the request's Host header in
+  production;
+- an audit route took its IP from the request body.
+
+**Effect on the records.** The OQ harness never presents a code twice
+(`tests/validation/lib/totp.mjs` waits for a fresh step), so no filed record
+depended on the replay. From this change on:
+- an enrolment uses the step it presents;
+- two signatures by one signer inside 30 seconds need two steps;
+- a harness sign-in in the same step as its enrolment waits for the next.
+
+**Still open, for the owner** (README §4):
+- recovery codes are issued but never redeemable, and a TOTP account can
+  finish sign-in with an emailed code;
+- per-task rate-limit stores;
+- the ALB ingress;
+- item 3, with the reviewer.

@@ -45,6 +45,7 @@ import {
   isDatabaseAvailable,
   extractRequestContext,
 } from './shared.js';
+import { clientIpOf } from '../../utils/client-ip';
 
 const log = createScopedLogger('ana-ri/utility');
 
@@ -477,7 +478,7 @@ export function mountUtilityRoutes(router: Router): void {
       action: eSignRequired ? 'ana.governed_action.esign' : 'ana.governed_action.reason',
       resourceType: 'ana_command',
       resourceId: command,
-      ipAddress: (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() || req.socket?.remoteAddress || undefined,
+      ipAddress: clientIpOf(req) ?? undefined,
       userAgent: req.headers['user-agent'] as string | undefined,
       details: { command, reasonForChange, eSignRequired, secondFactorVerified },
     });

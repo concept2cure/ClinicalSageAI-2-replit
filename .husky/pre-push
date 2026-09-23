@@ -319,6 +319,23 @@ if ! npm run --silent ci:discarded-audit-write 2>&1; then
 fi
 echo "   ✅ No discarded audit-write outcome."
 
+# ── One source for a request's client address (D6) ───────────────────────────
+#
+# Until 23 Sep 2026 about twenty sites read X-Forwarded-For by hand and took its
+# left-most entry -- the one every client writes -- into electronic_signatures,
+# QMS approvals and the 11.10(e) trail. The client address is req.ip, resolved
+# by the trust-proxy hop count (server/config/trust-proxy.ts) and read through
+# server/utils/client-ip.ts.
+echo "   Checking that the client address has one source..."
+if ! npm run --silent ci:client-ip-single-source 2>&1; then
+  echo ""
+  echo "🚫 ERROR: A forwarding header is read, or trust proxy is set, outside its one place."
+  echo "   Use clientIpOf(req) / req.ip / req.protocol (server/utils/client-ip.ts)."
+  echo ""
+  exit 1
+fi
+echo "   ✅ One source for the client address."
+
 # ── The commit has to build for somebody other than you ──────────────────────
 #
 # On 19 Sep 2026 an unanchored `uploads/` in .gitignore -- meant for the runtime

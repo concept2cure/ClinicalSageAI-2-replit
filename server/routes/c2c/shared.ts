@@ -18,6 +18,7 @@ import * as crypto from 'crypto';
 import { db } from '../../db';
 import { regulatoryAuditLogs } from '../../../shared/schema';
 import { resolveOrgId } from '../../types/auth-request';
+import { clientIpKey } from '../../utils/client-ip';
 
 /** The one DOMPurify instance the Concept2Cure routers sanitise with. */
 export const DOMPurify = (DOMPurifyImport as any).default || DOMPurifyImport;
@@ -70,17 +71,10 @@ export const concept2cureRateLimiter = createRedisRateLimiter({
   keyPrefix: 'c2c:',
 });
 
-/**
- * Extract client IP address from request, handling proxies.
- */
-export function getClientIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    const ips = Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0];
-    return ips.trim();
-  }
-  return req.ip || req.socket?.remoteAddress || 'unknown';
-}
+// getClientIp was removed on 2026-09-23 (D6): it returned the left-most
+// X-Forwarded-For entry, which every client writes, into 27 audit rows. The one
+// client-address reader is server/utils/client-ip.ts (clientIpKey here, which
+// keeps this module's string contract).
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INPUT SANITIZATION (PRODUCTION-GRADE)
@@ -379,7 +373,7 @@ export async function logAuditEntry(
       userId: Number.isFinite(userIdNum) ? userIdNum : 0,
       userName: req.userEmail || 'unknown',
       userRole: req.userRole || 'user',
-      ipAddress: getClientIp(req),
+      ipAddress: clientIpKey(req),
       userAgent: req.headers['user-agent'] || null,
       sessionId: (req as any).session?.id || null,
       isGxpRelevant: true, // Concept2Cure creates GxP-relevant documents

@@ -34,7 +34,6 @@ import {
   type Message,
   type UploadedDocument,
   concept2cureRateLimiter,
-  getClientIp,
   getOrganizationId,
   getUserId,
   logAuditEntry,
@@ -126,6 +125,7 @@ const SubmissionTypeEnum = z
 // Registry-driven instruction builder replaces hardcoded templates.
 // Works for every application type in the Global Document Registry.
 import { buildInstructionsFromLegacyType } from '../services/regulatory/defaultInstructionBuilder.js';
+import { clientIpKey } from '../utils/client-ip';
 
 function generateDefaultCustomInstructions(
   submissionType: string,
@@ -2398,7 +2398,7 @@ router.post('/errors', async (req: Request, res: Response) => {
       userId,
       userName: req.userEmail || 'unknown',
       userRole: req.userRole || 'user',
-      ipAddress: getClientIp(req),
+      ipAddress: clientIpKey(req),
       userAgent: req.headers['user-agent'] || null,
       sessionId: (req as any).session?.id || null,
       isGxpRelevant: true,

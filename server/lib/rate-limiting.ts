@@ -256,6 +256,7 @@ export function getRateLimiters(): RateLimiters {
 // =============================================================================
 
 import { Request, Response, NextFunction } from 'express';
+import { clientIpKey } from '../utils/client-ip';
 
 export interface RateLimitMiddlewareOptions {
   /** Which limiter to use */
@@ -306,24 +307,12 @@ export function rateLimitMiddleware(
 }
 
 /**
- * Get client identifier from request (IP + forwarded headers)
+ * Client identifier: the address trust proxy resolves (server/utils/client-ip.ts).
+ * It read the left-most X-Forwarded-For entry, then X-Real-IP — both written by
+ * the client (D6).
  */
 function getClientIdentifier(req: Request): string {
-  // Check for forwarded IP (behind proxy/load balancer)
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    const ips = (Array.isArray(forwarded) ? forwarded[0] : forwarded).split(',');
-    return ips[0].trim();
-  }
-
-  // Check for real IP header (nginx)
-  const realIp = req.headers['x-real-ip'];
-  if (realIp) {
-    return Array.isArray(realIp) ? realIp[0] : realIp;
-  }
-
-  // Fall back to socket address
-  return req.socket.remoteAddress || 'unknown';
+  return clientIpKey(req);
 }
 
 // =============================================================================
