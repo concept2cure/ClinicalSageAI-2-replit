@@ -40,7 +40,7 @@ const SKIP_DIRS = new Set(['node_modules', '_archive', '_deprecated', 'dist', 'c
 
 // Format: repo-relative .js path. Add only with a documented reason.
 const ALLOWED_SHADOWS = new Set([
-  // -- Pure re-export shims (`export * from './x.ts'`): zero divergence; kept
+  // -- Pure re-export shims (one `export *` of the same-named .ts): zero divergence; kept
   //    because vite/vitest resolves explicit '.js' specifiers from .js
   //    importers to the literal .js file and will not fall back to .ts.
   'server/config/environment.js', // why: shim for auth.js + monitoring.js '.js' imports under vitest.
