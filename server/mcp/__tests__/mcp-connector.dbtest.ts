@@ -44,6 +44,7 @@ async function seedTenant(tag: string): Promise<Tenant> {
        ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
     [`${PREFIX} org ${tag}`, `${PREFIX}-org-${tag}`],
   );
+  // tenant-isolation-safe: fixture user in a throw-away test database; `users` is global and tenancy is the organization_users row below
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, 'not-a-real-hash')
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
@@ -80,6 +81,7 @@ async function cleanup(): Promise<void> {
   await owner.query(`DELETE FROM vault.documents WHERE program_id IN (SELECT id FROM regulatory_programs WHERE organization_id = ANY($1))`, [ids]);
   await owner.query(`DELETE FROM regulatory_programs WHERE organization_id = ANY($1)`, [ids]);
   await owner.query(`DELETE FROM organization_users WHERE organization_id = ANY($1)`, [ids]);
+  // tenant-isolation-safe: removes only this suite's fixture users, matched by the suite-unique PREFIX
   await owner.query(`DELETE FROM users WHERE email LIKE $1`, [`${PREFIX}-%@example.test`]);
   await owner.query(`DELETE FROM organizations WHERE id = ANY($1)`, [ids]);
 }

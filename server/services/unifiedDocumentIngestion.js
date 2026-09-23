@@ -23,7 +23,6 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import { TextProcessor } from '../utils/textProcessing.js';
-import { pool as dbPool } from '../utils/database.js';
 import { db } from '../db.ts';
 import { ModuleIntegrationService } from './ModuleIntegrationService.ts';
 // import PDFParser from 'pdf-parse';
@@ -358,7 +357,6 @@ Object.values(STORAGE_PATHS).forEach(dir => {
  */
 export class UnifiedDocumentIngestion {
   constructor() {
-    this.processingQueue = new Map();
     this.knowledgeBase = new Map();
     this.moduleIntegration = new ModuleIntegrationService(db);
   }
@@ -1416,50 +1414,6 @@ export class UnifiedDocumentIngestion {
     if (lowerText.includes('report')) return 'Clinical Report';
     if (lowerText.includes('submission')) return 'Regulatory Submission';
     return 'General Document';
-  }
-
-  /**
-   * Search across all ingested documents
-   */
-  async searchDocuments(query, filters = {}) {
-    try {
-      let searchQuery = `
-        SELECT * FROM unified_documents
-        WHERE text_content ILIKE $1
-      `;
-
-      const queryParams = [`%${query}%`];
-
-      if (filters.module) {
-        searchQuery += ` AND module = $${queryParams.length + 1}`;
-        queryParams.push(filters.module);
-      }
-
-      if (filters.documentType) {
-        searchQuery += ` AND ai_analysis::text ILIKE $${queryParams.length + 1}`;
-        queryParams.push(`%${filters.documentType}%`);
-      }
-
-      searchQuery += ` ORDER BY created_at DESC LIMIT 50`;
-
-      const result = await dbPool.query(searchQuery, queryParams);
-      return result.rows;
-    } catch (error) {
-      console.error('Document search failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get processing statistics
-   */
-  getProcessingStats() {
-    return {
-      totalDocuments: this.knowledgeBase.size,
-      processingQueue: this.processingQueue.size,
-      lastProcessed: new Date(),
-      supportedFormats: ['PDF', 'DOCX', 'Excel', 'PowerPoint', 'TXT', 'CSV', 'XML', 'JSON'],
-    };
   }
 }
 

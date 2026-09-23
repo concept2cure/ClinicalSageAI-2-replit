@@ -14,6 +14,10 @@
  *   POST /licensing/trials/convert  make it perpetual — the trial converted
  *   POST /licensing/trials/end      end it now
  *
+ * /convert and /end act only on a grant that carries an end date (live or
+ * lapsed). On a revocation, a perpetual grant or no grant at all they answer
+ * 409 and write nothing — see `notATrial`.
+ *
  * ── WHAT ENDING A TRIAL DOES, AND WHAT IT DOES NOT ──────────────────────────
  *
  * "End now" sets the expiry to this instant. It does NOT write a revocation.
@@ -104,6 +108,62 @@ function readTarget(body: unknown): { organizationId: number; moduleId: string }
   return { organizationId, moduleId };
 }
 
+/**
+ * What the grant row for (organization, module) is right now, as far as the
+ * trial actions are concerned. Only `timed` — enabled, carrying an end date,
+ * live or already lapsed — is something /convert and /end may act on.
+ */
+type TrialTarget =
+  | { state: 'timed'; expiresAt: string | null }
+  | { state: 'none' | 'revoked' | 'perpetual' };
+
+async function readTrialTarget(organizationId: number, moduleId: string): Promise<TrialTarget> {
+  const result = await query(
+    `SELECT enabled, expires_at FROM module_subscriptions
+      WHERE organization_id = $1 AND module_id = $2`,
+    [organizationId, moduleId],
+  );
+  const row = result.rows[0];
+  if (!row) return { state: 'none' };
+  if (row.enabled !== true) return { state: 'revoked' };
+  if (row.expires_at == null) return { state: 'perpetual' };
+  return { state: 'timed', expiresAt: toIsoOrNull(row.expires_at) };
+}
+
+/**
+ * Why /convert or /end refuses a grant that is not time-limited.
+ *
+ * Added 2026-09-22 (tests/db/licensing-trials.dbtest.ts, reproduced on real
+ * PostgreSQL). Both actions are ONE upsert with `enabled = true`, and neither
+ * looked at the row first. So on a REVOCATION — the console listed a trial, a
+ * second administrator revoked the module through the toggle, the first then
+ * pressed End or Convert on the row still on their screen — the revocation was
+ * overwritten: `enabled` went back to true, the catalog's subscriptionState
+ * went from 'disabled' to 'none' (End) or 'enabled' (Convert, perpetually), the
+ * customer had the module again, and the audit trail recorded it as a trial
+ * ending or converting. Where no row existed at all, Convert minted a perpetual
+ * grant recorded as a "conversion", and End minted a lapsed one. And End on a
+ * perpetual grant (a trial another operator had just converted) took away what
+ * had been sold. None of those is a trial action; each is now a 409 that
+ * writes nothing.
+ *
+ * The check is a read before the write, so a change landing in the
+ * milliseconds between the two is not caught; the stale-screen window it
+ * closes is minutes long.
+ */
+function notATrial(target: TrialTarget, verb: 'end' | 'convert'): string | null {
+  switch (target.state) {
+    case 'timed':
+      return null;
+    case 'none':
+      return `There is no time-limited grant of this module for this tenant, so there is nothing to ${verb}.`;
+    case 'revoked':
+      return 'This module is revoked for this tenant. A revocation is not a trial, so it was left as it is.';
+    case 'perpetual':
+      return `This grant has no end date, so there is no trial to ${verb}. It was left as it is.`;
+  }
+}
+
 /** Both the tenant and the module must exist before anything is written. */
 async function assertTargetExists(
   organizationId: number,
@@ -154,6 +214,7 @@ router.get('/licensing/trials', async (_req: Request, res: Response) => {
       `SELECT ms.organization_id, ms.module_id, ms.enabled, ms.expires_at,
               ms.expiry_set_by, ms.expiry_set_at,
               o.name AS organization_name, o.slug AS organization_slug, o.tier,
+              o.industry_mode,
               am.name AS module_name, am.metadata
          FROM module_subscriptions ms
          JOIN organizations o ON o.id = ms.organization_id
@@ -180,7 +241,7 @@ router.get('/licensing/trials', async (_req: Request, res: Response) => {
        * nothing — and an operator chasing a renewal should not be chasing that
        * one. Read from the same packaging metadata the catalog uses.
        */
-      coveredByPlan: coveredByTier(r.metadata, r.tier),
+      coveredByPlan: coveredByTier(r.metadata, r.tier, r.industry_mode),
     }));
 
     return res.json({
@@ -203,13 +264,37 @@ const TIER_LEVEL: Record<string, number> = {
 
 /**
  * PURE: would this organization's plan still include the module once the grant
- * lapses? Mirrors the tier comparison in license-manager (inclusive upward).
+ * lapses? Mirrors `isAvailable` in license-manager's getModuleCatalog — tier
+ * (inclusive upward) AND industry — rule for rule, spelling for spelling.
+ *
+ * Amended 2026-09-22 (tests/db/licensing-trials.dbtest.ts, reproduced on real
+ * PostgreSQL against the real resolution). This compared TIER ONLY, and it
+ * lower-cased both sides where resolution does not. So:
+ *   - a module offered only to medtech, trialled by a biotech organization,
+ *     was reported covered ("the workspace still has it") while
+ *     canAccessModule refused it — "not offered for the biotech industry";
+ *   - an organization whose tier is stored as 'Professional' (the billing
+ *     webhook writes it verbatim; organizations.tier has no CHECK) was reported
+ *     covered for a professional module while resolution, which reads an
+ *     unrecognised spelling as standard, refused it.
+ * In both, the console told the operator a lapse cost the customer nothing
+ * while the customer had lost the module — the one case this flag exists to
+ * surface. The rule is the customer's resolution, not a tidier copy of it; the
+ * dbtest compares the two row by row, so any drift between them fails there.
  */
-export function coveredByTier(metadata: unknown, tier: string | null): boolean {
-  const tiers = ((metadata as { tiers?: unknown } | null)?.tiers ?? []) as string[];
-  if (!Array.isArray(tiers) || tiers.length === 0) return true; // unrestricted
-  const level = TIER_LEVEL[String(tier ?? '').toLowerCase()] ?? 1;
-  return tiers.some((t) => level >= (TIER_LEVEL[String(t).toLowerCase()] ?? 99));
+export function coveredByTier(
+  metadata: unknown,
+  tier: string | null,
+  industryMode: string | null = null,
+): boolean {
+  const meta = (metadata ?? {}) as { tiers?: unknown; industries?: unknown };
+  const tiers = Array.isArray(meta.tiers) ? (meta.tiers as string[]) : [];
+  const industries = Array.isArray(meta.industries) ? (meta.industries as string[]) : [];
+  // license-manager getLicenseInfo: `org.tier || 'standard'`, `org.industry_mode || 'biotech'`.
+  const level = TIER_LEVEL[tier || 'standard'] ?? 1;
+  const tierMatch = tiers.length === 0 || tiers.some((t) => level >= (TIER_LEVEL[t] ?? 99));
+  const industryMatch = industries.length === 0 || industries.includes(industryMode || 'biotech');
+  return tierMatch && industryMatch;
 }
 
 // ─── POST /licensing/trials — open a trial, or move its end date ─────────────
@@ -281,12 +366,10 @@ router.post('/licensing/trials/convert', async (req: Request, res: Response) => 
     const missing = await assertTargetExists(target.organizationId, target.moduleId);
     if (missing) return res.status(404).json({ error: missing });
 
-    const previous = await query(
-      `SELECT expires_at FROM module_subscriptions
-        WHERE organization_id = $1 AND module_id = $2`,
-      [target.organizationId, target.moduleId],
-    );
-    const previousExpiry = toIsoOrNull(previous.rows[0]?.expires_at);
+    const current = await readTrialTarget(target.organizationId, target.moduleId);
+    const refusal = notATrial(current, 'convert');
+    if (refusal) return res.status(409).json({ error: refusal });
+    const previousExpiry = current.state === 'timed' ? current.expiresAt : null;
 
     /* Deliberately allowed on an ALREADY-LAPSED grant: converting one is how a
        customer who renewed late gets their module back, and refusing it would
@@ -333,6 +416,9 @@ router.post('/licensing/trials/end', async (req: Request, res: Response) => {
 
     const missing = await assertTargetExists(target.organizationId, target.moduleId);
     if (missing) return res.status(404).json({ error: missing });
+
+    const refusal = notATrial(await readTrialTarget(target.organizationId, target.moduleId), 'end');
+    if (refusal) return res.status(409).json({ error: refusal });
 
     const at = new Date();
     /* enabled STAYS true and the expiry moves to now — see the module header.

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-22T23:08:37.002Z",
+  "generatedAt": "2026-09-23T02:59:46.715Z",
   "git": {
-    "sha": "d5a11b101fc79c89fb53a4a748240dbe376c4df9",
+    "sha": "0eb2538089f583d5a1f9d6f8069307e5cecafec6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 101
+    "largeFilesByLines": 100
   },
   "findings": {
     "duplicateBasenames": [
@@ -2325,12 +2325,12 @@
         "lines": 2197
       },
       {
-        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
-        "lines": 2175
+        "file": "server/routes/auth.ts",
+        "lines": 2192
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2163
+        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
+        "lines": 2175
       },
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
@@ -2553,10 +2553,6 @@
         "lines": 1522
       },
       {
-        "file": "server/services/unifiedDocumentIngestion.js",
-        "lines": 1509
-      },
-      {
         "file": "server/routes/c2c/project-vault.ts",
         "lines": 1503
       },
@@ -2572,7 +2568,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 409,
       "largeByBytes": 33,
-      "largeByLines": 82
+      "largeByLines": 81
     },
     {
       "owner": "Unassigned (TBD)",

@@ -213,7 +213,11 @@ router.put('/:moduleId/toggle', async (req: Request, res: Response) => {
     }
 
     // Check if module is available for this org's tier
-    const access = await canAccessModule(Number(orgId), moduleId);
+    // The plan question, not the use question: an administrator must be able to
+    // turn back on a module they turned off, so an existing revocation is not a
+    // reason to refuse the toggle. canAccessModule's default (revocation denies)
+    // is what the gate and /check want.
+    const access = await canAccessModule(Number(orgId), moduleId, { ignoreRevocation: true });
     if (!access.allowed) {
       return res.status(403).json({
         error: access.reason,
