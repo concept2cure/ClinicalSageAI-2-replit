@@ -38,7 +38,11 @@ import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { pool } from '../db';
+import { writeChainedAuditRow } from '../services/auditService';
+import { parseEvalidatorJsonReport } from '../services/ectd/external-validator/lorenz-adapter';
+import { tallyFindings, type ExternalValidationFinding } from '../services/ectd/external-validator/types';
 import { resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { sectionMatches } from '../services/ectd/section-code-match';
 import { formRequirementForDocumentType } from '../services/ectd/section-to-ctd';
@@ -1301,7 +1305,8 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
       const result = await pool.query(
         `SELECT id, compilation_name, compilation_type, status, version,
                 compiled_at, created_at, sequence_number,
-                leaf_manifest IS NOT NULL AS has_manifest
+                leaf_manifest IS NOT NULL AS has_manifest,
+                external_validation
          FROM ectd_compilations
          WHERE organization_id = $1 AND compilation_name ~ $2
          ORDER BY created_at DESC
@@ -1333,6 +1338,14 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
+
+  // An agency-validator report run outside the product, imported against the
+  // compilation whose package it covered (WO-9 Click 6). Same route: it is a
+  // validation of this program's package, recorded, never re-run here.
+  if (req.body && typeof req.body === 'object' && 'evalidatorReport' in req.body) {
+    await importEvalidatorReport(req, res, { orgId, anchor });
+    return;
+  }
 
   try {
     const { region = 'FDA' } = req.body;
@@ -1389,6 +1402,224 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Validation failed', message: error.message });
   }
 });
+
+/**
+ * An agency-validator report run OUTSIDE the product (LORENZ eValidator, on the
+ * operator's machine, over the exported package), as kept with the compilation
+ * whose package it covered — ectd_compilations.external_validation.
+ */
+interface ImportedExternalValidation {
+  validator: 'lorenz-evalidator';
+  /** Run outside the product and imported; this product did not run it. */
+  source: 'imported';
+  importedAt: string;
+  importedBy: number;
+  /** The importing account (the verified token's email); null when absent. */
+  importedByEmail: string | null;
+  fileName: string | null;
+  /** sha256 of the report text as imported — identifies the original file. */
+  reportSha256: string;
+  findings: ExternalValidationFinding[];
+  errorCount: number;
+  warningCount: number;
+  infoCount: number;
+  /** Every report this one replaced, oldest first — a replace is never silent. */
+  supersedes: SupersededReport[];
+}
+
+/** What stays on record, in the product, of a report that was replaced. */
+type SupersededReport = Pick<
+  ImportedExternalValidation,
+  'importedAt' | 'importedBy' | 'importedByEmail' | 'fileName' | 'reportSha256' | 'errorCount' | 'warningCount' | 'infoCount'
+>;
+
+/** The replaced report's trail: its own supersedes, then itself. */
+function supersededTrail(prev: unknown): SupersededReport[] {
+  if (!prev || typeof prev !== 'object') return [];
+  const p = prev as Partial<ImportedExternalValidation>;
+  const own: SupersededReport = {
+    importedAt: String(p.importedAt ?? ''),
+    importedBy: Number(p.importedBy ?? 0),
+    importedByEmail: p.importedByEmail ?? null,
+    fileName: p.fileName ?? null,
+    reportSha256: String(p.reportSha256 ?? ''),
+    errorCount: Number(p.errorCount ?? 0),
+    warningCount: Number(p.warningCount ?? 0),
+    infoCount: Number(p.infoCount ?? 0),
+  };
+  return [...(Array.isArray(p.supersedes) ? p.supersedes : []), own];
+}
+
+const evalidatorImportSchema = z.object({
+  compilationId: z.number().int().positive(),
+  fileName: z.string().max(255).optional(),
+  text: z.string().min(1).max(2 * 1024 * 1024),
+});
+
+/** Read the report fail-closed: JSON only, in a shape the parser knows. */
+function readEvalidatorReport(text: string): ExternalValidationFinding[] {
+  if (text.trimStart().startsWith('<')) {
+    throw new Error('This report is XML. Import the JSON report eValidator writes; an XML report is not read on import.');
+  }
+  try {
+    return parseEvalidatorJsonReport(text);
+  } catch (err) {
+    if (err instanceof SyntaxError) throw new Error(`This report is not JSON (${err.message}).`, { cause: err });
+    throw err;
+  }
+}
+
+/** The report as it will be kept, before any report it replaces is known. */
+function importDraft(
+  req: Request,
+  upload: { fileName?: string; text: string },
+  findings: ExternalValidationFinding[],
+): Omit<ImportedExternalValidation, 'supersedes'> {
+  const { errorCount, warningCount } = tallyFindings(findings);
+  const email = (req as any).user?.email;
+  return {
+    validator: 'lorenz-evalidator',
+    source: 'imported',
+    importedAt: new Date().toISOString(),
+    importedBy: resolveUserId(req),
+    importedByEmail: typeof email === 'string' && email ? email : null,
+    fileName: upload.fileName ?? null,
+    reportSha256: sha256(upload.text),
+    findings,
+    errorCount,
+    warningCount,
+    infoCount: findings.length - errorCount - warningCount,
+  };
+}
+
+type TxClient = { query: (sql: string, params?: unknown[]) => Promise<{ rowCount?: number | null; rows: any[] }> };
+
+/** The import's audit row could not be written; nothing of the import stands. */
+class ImportNotRecordedError extends Error {}
+
+/**
+ * Inside the caller's transaction: read the compilation under lock (it must be
+ * this program's submission's), carry any report already on it forward as
+ * replaced, store the new one, and write the §11.10(e) row of the import.
+ * null = no such compilation of this submission. Throws on any write failure,
+ * so the caller rolls the whole import back.
+ */
+async function storeImportedReport(
+  client: TxClient,
+  target: { compilationId: number; orgId: number; submissionId: number },
+  draft: Omit<ImportedExternalValidation, 'supersedes'>,
+): Promise<{ record: ImportedExternalValidation; sequenceNumber: string | null } | null> {
+  const where = [target.compilationId, target.orgId, target.submissionId];
+  const current = await client.query(
+    `SELECT external_validation FROM ectd_compilations
+      WHERE id = $1 AND organization_id = $2 AND submission_id = $3
+      FOR UPDATE`,
+    where,
+  );
+  if (!current.rowCount) return null;
+  const prev = current.rows[0]?.external_validation ?? null;
+  const record: ImportedExternalValidation = { ...draft, supersedes: supersededTrail(prev) };
+  const updated = await client.query(
+    `UPDATE ectd_compilations
+        SET external_validation = $4::jsonb, updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND submission_id = $3
+      RETURNING sequence_number`,
+    [...where, JSON.stringify(record)],
+  );
+  const sequenceNumber = updated.rows[0]?.sequence_number ?? null;
+  try {
+    await writeChainedAuditRow(client, {
+      organizationId: target.orgId,
+      userId: record.importedBy,
+      action: 'EVALIDATOR_REPORT_IMPORTED',
+      resourceType: 'ectd_compilation',
+      resourceId: target.compilationId,
+      details: {
+        sequenceNumber,
+        validator: record.validator,
+        source: record.source,
+        fileName: record.fileName,
+        reportSha256: record.reportSha256,
+        errorCount: record.errorCount,
+        warningCount: record.warningCount,
+        infoCount: record.infoCount,
+        replacesReportSha256: record.supersedes[record.supersedes.length - 1]?.reportSha256 ?? null,
+      },
+    });
+  } catch (err) {
+    throw new ImportNotRecordedError((err as Error).message);
+  }
+  return { record, sequenceNumber };
+}
+
+/**
+ * Import a LORENZ eValidator JSON report against a compilation of this
+ * program's submission. The report and the §11.10(e) record of its import
+ * commit in one transaction, or neither does. A report the parser cannot read
+ * is refused in the parser's words (422) — never stored as a clean one.
+ */
+async function importEvalidatorReport(
+  req: Request,
+  res: Response,
+  resolved: { orgId: number; anchor: Parameters<typeof resolveSubmissionSpine>[0] },
+): Promise<void> {
+  const parsed = evalidatorImportSchema.safeParse(req.body.evalidatorReport);
+  if (!parsed.success) {
+    res.status(400).json({
+      error: {
+        code: 'VALIDATION',
+        message: 'An import names the compilation it belongs to (compilationId) and carries the report text.',
+        details: parsed.error.flatten(),
+      },
+    });
+    return;
+  }
+  let findings: ExternalValidationFinding[];
+  try {
+    findings = readEvalidatorReport(parsed.data.text);
+  } catch (err) {
+    res.status(422).json({ error: { code: 'REPORT_UNREADABLE', message: (err as Error).message } });
+    return;
+  }
+  const spine = await resolveSubmissionSpine(resolved.anchor, resolved.orgId);
+  if (!spine) {
+    res.status(409).json({
+      error: { code: 'NO_SUBMISSION', message: 'This program has no submission, so it has no compiled package a report could cover.' },
+    });
+    return;
+  }
+
+  const { compilationId } = parsed.data;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const stored = await storeImportedReport(
+      client,
+      { compilationId, orgId: resolved.orgId, submissionId: spine.submissionId },
+      importDraft(req, parsed.data, findings),
+    );
+    if (!stored) {
+      await client.query('ROLLBACK');
+      res.status(404).json({
+        error: { code: 'COMPILATION_NOT_FOUND', message: `Compilation ${compilationId} is not a compiled package of this program's submission.` },
+      });
+      return;
+    }
+    await client.query('COMMIT');
+    res.json({ imported: true, compilationId, sequenceNumber: stored.sequenceNumber, externalValidation: stored.record });
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch { /* the failure below is the one to report */ }
+    const unrecorded = err instanceof ImportNotRecordedError;
+    console.error(`[eCTD Validate] eValidator import ${unrecorded ? 'not recorded' : 'failed'}:`, (err as Error).message);
+    res.status(500).json({
+      error: unrecorded
+        ? { code: 'IMPORT_NOT_RECORDED', message: 'The report was not imported: the record of its import could not be written.' }
+        : { code: 'IMPORT_FAILED', message: 'The report could not be imported.' },
+    });
+  } finally {
+    client.release();
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS

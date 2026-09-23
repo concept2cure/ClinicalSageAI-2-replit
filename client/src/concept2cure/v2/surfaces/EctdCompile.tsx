@@ -30,7 +30,7 @@
  * resolves it; a program with no linked section store gets the server's own
  * blocker text, not a silent 0%.)
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
@@ -150,7 +150,32 @@ interface CompilationRow {
   created_at: string | null;
   sequence_number?: string | null;
   has_manifest?: boolean;
+  /** An agency-validator report run outside the product, imported against this compilation. */
+  external_validation?: ImportedReport | null;
 }
+
+/** A LORENZ eValidator report as the server keeps it (ectd_compilations.external_validation). */
+interface ImportedReport {
+  validator: string;
+  source: 'imported';
+  importedAt: string;
+  importedBy: number;
+  importedByEmail?: string | null;
+  fileName: string | null;
+  reportSha256: string;
+  findings: Array<{ ruleId: string; severity: 'error' | 'warning' | 'info'; message: string; leafHref?: string }>;
+  errorCount: number;
+  warningCount: number;
+  infoCount: number;
+  /** Every report this one replaced, oldest first. */
+  supersedes?: ReportSummary[];
+}
+
+/** What stays on record of a report — kept for one that was replaced. */
+type ReportSummary = Pick<
+  ImportedReport,
+  'importedAt' | 'importedBy' | 'importedByEmail' | 'fileName' | 'reportSha256' | 'errorCount' | 'warningCount' | 'infoCount'
+>;
 
 async function readJson<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
@@ -468,6 +493,155 @@ function PackageFacts({ result }: { result: CompileResult }) {
       {result.recorded === false && <li className="sp-tone-err">Not recorded — the next sequence has nothing to be diffed against.</li>}
       {pdfa && <PdfaFacts pdfa={pdfa} />}
     </ul>
+  );
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/** Who imported a report: the account, else the user id. */
+const importer = (r: ReportSummary) => r.importedByEmail || `user ${r.importedBy}`;
+
+/** One line naming a report: when, by whom, its counts, its file and hash. */
+function reportLine(r: ReportSummary): string {
+  const file = r.fileName ? `${r.fileName}, ` : '';
+  return `${new Date(r.importedAt).toLocaleString()} by ${importer(r)} — ${reportCounts(r)} (${file}SHA-256 ${r.reportSha256.slice(0, 16)}…)`;
+}
+
+/** "1 error · 1 warning" — the counts the report itself gives. */
+function reportCounts(r: Pick<ImportedReport, 'errorCount' | 'warningCount' | 'infoCount'>): string {
+  const parts = [plural(r.errorCount, 'error'), plural(r.warningCount, 'warning')];
+  if (r.infoCount > 0) parts.push(`${r.infoCount} info`);
+  return parts.join(' · ');
+}
+
+/**
+ * Import a LORENZ eValidator JSON report against one compilation — the one
+ * whose exported package it was run over. The file input is driven by a named,
+ * focusable button (the input itself is not in the tab order). A refused report
+ * is shown in the server's words.
+ */
+function EvalidatorImport({ identPath, row, onImported }: { identPath: string; row: CompilationRow; onImported: () => void }) {
+  const picker = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const seq = row.sequence_number ?? String(row.id);
+  const current = row.external_validation ?? null;
+  const verb = current ? 'Replace eValidator report' : 'Import eValidator report';
+
+  const onFile = async (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { setError('This report is larger than 2 MB, the most one import carries.'); return; }
+    setBusy(true); setError(null);
+    let text: string;
+    try {
+      text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ''));
+        reader.onerror = () => reject(reader.error ?? new Error('unreadable'));
+        reader.readAsText(file);
+      });
+    } catch {
+      setBusy(false); setError('The file could not be read.');
+      return;
+    }
+    const { ok, body } = await readJson<{ error?: { message?: string } }>('POST', `/api/ectd-compile/${identPath}/validate`, {
+      evalidatorReport: { compilationId: Number(row.id), fileName: file.name, text },
+    });
+    setBusy(false);
+    if (!ok) { setError(body?.error?.message ?? 'The report was not imported.'); return; }
+    onImported();
+  };
+
+  return (
+    <span>
+      <input type="file" accept=".json,application/json" ref={picker} disabled={busy} style={{ display: 'none' }}
+        aria-label={`eValidator report file for sequence ${seq}`}
+        onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; void onFile(file); }} />
+      <button className="nda-open" disabled={busy || confirming} aria-label={`${verb}: sequence ${seq}`}
+        onClick={() => (current ? setConfirming(true) : picker.current?.click())}
+        title="Import the JSON report LORENZ eValidator wrote for this compilation's exported package">
+        {I.fileCheck} {busy ? 'Importing…' : verb}
+      </button>
+      {current && confirming && (
+        <div role="group" aria-label={`Replace the eValidator report for sequence ${seq}`} style={{ fontSize: 12, marginTop: 4, whiteSpace: 'normal' }}>
+          This replaces the report imported {reportLine(current)}. It stays listed with the new report as replaced, and in the audit trail.
+          <div style={{ marginTop: 4 }}>
+            <button className="nda-open" onClick={() => { setConfirming(false); picker.current?.click(); }}>Choose the replacement report</button>
+            <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setConfirming(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {error && <div role="alert" className="sp-tone-err" style={{ fontSize: 12, marginTop: 4, whiteSpace: 'normal' }}>{error}</div>}
+    </span>
+  );
+}
+
+/** An imported report: what it is, where it came from, and every finding it lists. */
+function EvalidatorReportView({ row }: { row: CompilationRow }) {
+  const r = row.external_validation;
+  if (!r) return null;
+  const seq = row.sequence_number ?? String(row.id);
+  return (
+    <section aria-label={`eValidator report — sequence ${seq}`} style={{ borderTop: '1px solid var(--border)', padding: '10px 12px' }}>
+      <div style={{ fontSize: 12.5, fontWeight: 600 }}>
+        LORENZ eValidator — sequence <span className="mono">{seq}</span>:{' '}
+        <span className={r.errorCount > 0 ? 'sp-tone-err' : undefined}>{reportCounts(r)}</span>
+      </div>
+      <p style={{ fontSize: 12, margin: '4px 0 6px' }}>
+        Run outside this product, over the exported package, and imported {new Date(r.importedAt).toLocaleString()} by {importer(r)}.
+        This product did not run the validator; it keeps the report as imported
+        {r.fileName ? <> (<span className="mono">{r.fileName}</span>, SHA-256 <span className="mono">{r.reportSha256.slice(0, 16)}…</span>)</> : null}.
+      </p>
+      {(r.supersedes?.length ?? 0) > 0 && (
+        <div style={{ fontSize: 12, margin: '0 0 6px' }}>
+          Replaces {r.supersedes!.length === 1 ? 'an earlier import' : `${r.supersedes!.length} earlier imports`}:
+          <ul aria-label="Reports this one replaced" style={{ margin: '2px 0 0', paddingLeft: 18 }}>
+            {r.supersedes!.map((p) => <li key={`${p.reportSha256}:${p.importedAt}`}>{reportLine(p)}</li>)}
+          </ul>
+        </div>
+      )}
+      {r.findings.length === 0 ? (
+        <p style={{ fontSize: 12, margin: 0 }}>The report lists no findings.</p>
+      ) : (
+        <table className="reg-tbl">
+          <thead><tr><th>Rule</th><th>Severity</th><th>Message</th><th>File</th></tr></thead>
+          <tbody>
+            {r.findings.map((f, i) => (
+              <tr key={`${f.ruleId}:${i}`}>
+                <td className="mono">{f.ruleId}</td>
+                <td className={f.severity === 'error' ? 'sp-tone-err' : f.severity === 'warning' ? 'sp-tone-warn' : undefined}>{f.severity}</td>
+                <td>{f.message}</td>
+                <td className="mono">{f.leafHref ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  );
+}
+
+/** The compilation history, with each packaged compilation's imported agency-validator report. */
+function CompilationHistoryTable({ history, identPath, onImported }: { history: CompilationRow[]; identPath: string | null; onImported: () => void }) {
+  return (
+    <>
+      <table className="reg-tbl"><thead><tr><th>Name</th><th>Sequence</th><th>Leaf manifest</th><th>Type</th><th>Version</th><th>Status</th><th>Agency validator</th><th style={{ textAlign: 'right' }}>Compiled</th></tr></thead>
+        <tbody>{history.map((h) => (
+          <tr key={String(h.id)}>
+            <td>{h.compilation_name}</td>
+            <td className="mono">{h.sequence_number ?? '—'}</td>
+            <td>{h.has_manifest ? 'manifest recorded' : 'no manifest — cannot anchor a lifecycle'}</td>
+            <td>{h.compilation_type}</td><td className="mono">{h.version}</td>
+            <td><span className={'rd-chip tone-' + (h.status === 'completed' ? 'ok' : h.status === 'failed' ? 'err' : 'dim')}>{h.status}</span></td>
+            <td>
+              {h.external_validation && <div>{reportCounts(h.external_validation)}</div>}
+              {h.has_manifest && identPath != null ? <EvalidatorImport identPath={identPath} row={h} onImported={onImported} /> : (!h.external_validation && '—')}
+            </td>
+            <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{h.compiled_at ? new Date(h.compiled_at).toLocaleString() : '—'}</td>
+          </tr>))}</tbody></table>
+      {history.map((h) => <EvalidatorReportView key={`report-${String(h.id)}`} row={h} />)}
+    </>
   );
 }
 
@@ -1116,16 +1290,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           ) : history.length === 0 ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="No compilations yet" hint="Each Compile run is recorded here with its status and version." /></div>
           ) : (
-            <table className="reg-tbl"><thead><tr><th>Name</th><th>Sequence</th><th>Leaf manifest</th><th>Type</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Compiled</th></tr></thead>
-              <tbody>{history.map((h) => (
-                <tr key={String(h.id)}>
-                  <td>{h.compilation_name}</td>
-                  <td className="mono">{h.sequence_number ?? '—'}</td>
-                  <td>{h.has_manifest ? 'manifest recorded' : 'no manifest — cannot anchor a lifecycle'}</td>
-                  <td>{h.compilation_type}</td><td className="mono">{h.version}</td>
-                  <td><span className={'rd-chip tone-' + (h.status === 'completed' ? 'ok' : h.status === 'failed' ? 'err' : 'dim')}>{h.status}</span></td>
-                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{h.compiled_at ? new Date(h.compiled_at).toLocaleString() : '—'}</td>
-                </tr>))}</tbody></table>
+            <CompilationHistoryTable history={history} identPath={identPath} onImported={() => { void loadHistory(); }} />
           )}
         </div>
       </div>

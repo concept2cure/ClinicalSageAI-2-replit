@@ -466,6 +466,11 @@ export const C2C_MIGRATION_FILES = [
   // database: drop the column, run this applier, the column stays absent; with
   // this entry, it returns. ADD COLUMN IF NOT EXISTS: idempotent, RULE 1 safe.
   'db/migrations/20260730_ectd_compilations_leaf_manifest.sql',
+  // An imported agency-validator (LORENZ eValidator) report, kept with the
+  // compilation whose package it covered (2026-09-23, W5/D7, WO-9 Click 6).
+  // ADD COLUMN IF NOT EXISTS on a table already under the tenant sweep:
+  // idempotent, additive, RULE 1 safe.
+  'db/migrations/20260923_ectd_compilations_external_validation.sql',
   // ── Part 11 DB-level immutability (added 2026-07-30, auth/e-sig audit) ────
   // electronic_signatures: DELETE always refused; UPDATE refused except the
   // write-once supersession transition (superseded_by NULL → id).
