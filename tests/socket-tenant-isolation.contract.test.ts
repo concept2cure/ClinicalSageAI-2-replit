@@ -73,6 +73,11 @@ const PREREQ = `
     organization_id INTEGER NOT NULL,
     title TEXT
   );
+  -- The accounts, with the one column a connection reads of them: whether each
+  -- is in use (services/account-standing.ts, VSR-001 F-29), as
+  -- migrations/0000_sweet_joseph.sql defines it.
+  CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active');
+  INSERT INTO users (id) VALUES (10), (11), (20);
   -- status/payment_status are set explicitly. The socket namespace gates on the
   -- tenant access posture (shouldProcessTenantInBackground → organizations
   -- .status/.payment_status), and it fails CLOSED: an org row that leaves them

@@ -105,6 +105,87 @@ function resolvedWhen(iso: string | null | undefined): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+/* What a review POST's answer means for this screen, classified without side
+   effects so the transition handler only orchestrates. Only 'recorded' changes
+   the row, and only with what the server returned; 'stale', 'unreadable' and
+   'unknown' mean this screen's view may be wrong, so the confirmation closes
+   and the board is re-read. */
+type ReviewOutcome =
+  | { kind: 'recorded'; reviewState: string; resolvedBy: string | null; resolvedAt: string | null; auditId: string | null }
+  | { kind: 'refused'; status: number; detail: string }
+  | { kind: 'stale'; detail: string }
+  | { kind: 'unreadable' }
+  | { kind: 'unknown'; status: number };
+
+function refusedFallback(status: number): string {
+  return 'the service refused the update (HTTP ' + status + ')';
+}
+
+/* One wording for a refusal, whichever way it arrives — the reply and the
+   thrown error both route through here. A 409 means the finding is already in
+   that state — this form was opened from a stale board — so it closes and the
+   board is re-read rather than left open to be submitted again. */
+function refusal(status: number, detail: string): ReviewOutcome {
+  return status === 409 ? { kind: 'stale', detail } : { kind: 'refused', status, detail };
+}
+
+function reviewOutcomeFromReply(status: number, ok: boolean, json: ReviewResponse | null): ReviewOutcome {
+  if (!ok) {
+    // serverMessage takes the sentence and returns null for enum tokens and
+    // infrastructure text; a bare "HTTP 500" is not copy, so the fallback is
+    // a sentence that carries the status.
+    return refusal(status, serverMessage(json) ?? refusedFallback(status));
+  }
+  const recorded = json?.finding;
+  if (!recorded || typeof recorded.reviewState !== 'string') {
+    // A 2xx whose body cannot be read says nothing about what was recorded
+    // (it may not even be this route's). Claim nothing; re-read.
+    return { kind: 'unreadable' };
+  }
+  return {
+    kind: 'recorded',
+    reviewState: recorded.reviewState,
+    resolvedBy: recorded.resolvedBy ?? null,
+    resolvedAt: recorded.resolvedAt ?? null,
+    auditId: json?.governance?.auditId ?? null,
+  };
+}
+
+function reviewOutcomeFromError(e: unknown): ReviewOutcome {
+  // ApiRequestError carries a status: the server answered and refused, and
+  // its message has been through the envelope reduction. Anything else is
+  // the browser's own failure, where the outcome is unknown — so re-read.
+  const status = (e as { name?: unknown; status?: unknown })?.name === 'ApiRequestError'
+    ? Number((e as { status?: unknown }).status)
+    : 0;
+  // A gateway error (502/503/504, often a proxy's page, not this route's)
+  // or a COMMIT the server could not confirm is not a refusal: the change
+  // may have landed. Treated like no answer at all.
+  const unknown = status === 0 || status === 502 || status === 503 || status === 504
+    || (e as { code?: unknown })?.code === 'OUTCOME_UNKNOWN';
+  if (unknown) return { kind: 'unknown', status };
+  return refusal(status, (e as Error).message || refusedFallback(status));
+}
+
+/* The governed POST; every way it can end comes back as a classified outcome. */
+async function postReview(
+  id: string,
+  reviewState: 'approved_resolution' | 'unresolved',
+  reason: string,
+): Promise<ReviewOutcome> {
+  try {
+    const res = await apiRequest(
+      'POST',
+      '/api/governed-intelligence/contradictions/' + encodeURIComponent(id) + '/review',
+      { reviewState, reason },
+    );
+    const json = (await res.json().catch(() => null)) as ReviewResponse | null;
+    return reviewOutcomeFromReply(res.status, res.ok, json);
+  } catch (e) {
+    return reviewOutcomeFromError(e);
+  }
+}
+
 /* ── Inline shared helpers (same pattern as Nonclinical.tsx) ── */
 
 /* Current project id — the runtime channel set by Projects.tsx when a project is
@@ -201,88 +282,53 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const [pendingId, setPendingId] = useState<string>('');
   const [reviewing, setReviewing] = useState<{ f: ReviewedFinding; to: 'approved_resolution' | 'unresolved' } | null>(null);
 
-  const transition = async (f: ReviewedFinding, reviewState: 'approved_resolution' | 'unresolved', reason: string) => {
-    if (pendingId) return;
+  // Applies a classified outcome (reviewOutcomeFromReply / reviewOutcomeFromError).
+  const settleReview = (f: ReviewedFinding, reviewState: 'approved_resolution' | 'unresolved', o: ReviewOutcome) => {
     const verb = reviewState === 'approved_resolution' ? 'resolved' : 're-opened';
-    // One wording for a refusal, whichever way it arrives. A 409 means the
-    // finding is already in that state — this form was opened from a stale
-    // board — so it closes and the board is re-read rather than left open to be
-    // submitted again.
-    const refused = (status: number, detail: string) => {
-      if (status === 409) {
-        setReviewing(null);
-        setRefresh(n => n + 1);
-        fireToast('"' + f.title + '" was not ' + verb + ' — ' + asSentence(detail) + ' Re-reading the board to show what is recorded.', 'error');
-        return;
-      }
-      fireToast(
-        status === 404
-          ? 'That finding is no longer on the board — refresh to see the current state.'
-          : '"' + f.title + '" was not ' + verb + ' — ' + asSentence(detail) + ' Nothing was changed.',
-        'error',
-      );
-    };
-    setPendingId(f.id);
-    try {
-      const res = await apiRequest(
-        'POST',
-        '/api/governed-intelligence/contradictions/' + encodeURIComponent(f.id) + '/review',
-        { reviewState, reason },
-      );
-      const json = (await res.json().catch(() => null)) as ReviewResponse | null;
-      if (!res.ok) {
-        // serverMessage takes the sentence and returns null for enum tokens and
-        // infrastructure text; a bare "HTTP 500" is not copy, so the fallback is
-        // a sentence that carries the status.
-        refused(res.status, serverMessage(json) ?? 'the service refused the update (HTTP ' + res.status + ')');
-        return;
-      }
-      const recorded = json?.finding;
-      if (!recorded || typeof recorded.reviewState !== 'string') {
-        // A 2xx whose body cannot be read says nothing about what was recorded
-        // (it may not even be this route's). Claim nothing; re-read.
-        setReviewing(null);
-        setRefresh(n => n + 1);
-        fireToast('The service answered, but its reply could not be read, so this screen cannot confirm whether "' + f.title + '" was ' + verb + '. Re-reading the board to show what is recorded.');
-        return;
-      }
-      setFindings(fs => fs.map(x => (x.id === f.id
-        ? {
-            ...x,
-            reviewState: recorded.reviewState as string,
-            resolvedBy: recorded.resolvedBy ?? null,
-            resolvedAt: recorded.resolvedAt ?? null,
-            auditId: json?.governance?.auditId ?? null,
-          }
-        : x)));
+    const closeAndReread = (msg: string, tone?: 'error') => {
       setReviewing(null);
-      fireToast('"' + f.title + '" was ' + verb + ' — recorded on the audit trail with your reason.');
-    } catch (e) {
-      // ApiRequestError carries a status: the server answered and refused, and
-      // its message has been through the envelope reduction. Anything else is
-      // the browser's own failure, where the outcome is unknown — so re-read.
-      const status = (e as { name?: unknown; status?: unknown })?.name === 'ApiRequestError'
-        ? Number((e as { status?: unknown }).status)
-        : 0;
-      // A gateway error (502/503/504, often a proxy's page, not this route's)
-      // or a COMMIT the server could not confirm is not a refusal: the change
-      // may have landed. Treated like no answer at all.
-      const unknown = status === 0 || status === 502 || status === 503 || status === 504
-        || (e as { code?: unknown })?.code === 'OUTCOME_UNKNOWN';
-      if (!unknown) {
-        refused(status, (e as Error).message || 'the service refused the update (HTTP ' + status + ')');
-      } else {
+      setRefresh(n => n + 1);
+      fireToast(msg, tone);
+    };
+    switch (o.kind) {
+      case 'recorded':
+        setFindings(fs => fs.map(x => (x.id === f.id
+          ? { ...x, reviewState: o.reviewState, resolvedBy: o.resolvedBy, resolvedAt: o.resolvedAt, auditId: o.auditId }
+          : x)));
+        setReviewing(null);
+        fireToast('"' + f.title + '" was ' + verb + ' — recorded on the audit trail with your reason.');
+        return;
+      case 'refused':
+        fireToast(
+          o.status === 404
+            ? 'That finding is no longer on the board — refresh to see the current state.'
+            : '"' + f.title + '" was not ' + verb + ' — ' + asSentence(o.detail) + ' Nothing was changed.',
+          'error',
+        );
+        return;
+      case 'stale':
+        closeAndReread('"' + f.title + '" was not ' + verb + ' — ' + asSentence(o.detail) + ' Re-reading the board to show what is recorded.', 'error');
+        return;
+      case 'unreadable':
+        closeAndReread('The service answered, but its reply could not be read, so this screen cannot confirm whether "' + f.title + '" was ' + verb + '. Re-reading the board to show what is recorded.');
+        return;
+      case 'unknown':
         // The form closes too: the re-read may show the decision committed, and
         // a form still open over it would record it a second time.
-        setReviewing(null);
-        setRefresh(n => n + 1);
-        fireToast(
-          (status ? 'The contradiction service could not confirm the outcome' : 'Couldn’t reach the contradiction service') +
+        closeAndReread(
+          (o.status ? 'The contradiction service could not confirm the outcome' : 'Couldn’t reach the contradiction service') +
             ', so this screen cannot confirm whether "' + f.title +
             '" was ' + verb + '. Re-reading the board to show what is recorded.',
           'error',
         );
-      }
+    }
+  };
+
+  const transition = async (f: ReviewedFinding, reviewState: 'approved_resolution' | 'unresolved', reason: string) => {
+    if (pendingId) return;
+    setPendingId(f.id);
+    try {
+      settleReview(f, reviewState, await postReview(f.id, reviewState, reason));
     } finally {
       setPendingId('');
     }

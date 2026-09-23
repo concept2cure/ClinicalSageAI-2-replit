@@ -31,7 +31,8 @@
 
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
-import { writeMutation, recordGovernedAction } from './actions.js';
+import { writeMutation, recordGovernedAction, verifyReauth, separationOfDutiesRefusal } from './actions.js';
+import { assertSignerIsNotAuthor } from '../../services/governance/separation-of-duties.js';
 import { detectSpans } from '../../services/sentenceTraceabilityService.js';
 import { sectionHasContentSql, sectionPlainText } from '../../services/c2c/section-content.js';
 import {
@@ -819,9 +820,22 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
   const orgId  = resolveOrgId(req);
   if (!userId || !orgId) return send403(res);
 
-  const { reason, reauth } = req.body as { reason?: string; reauth?: unknown };
+  const { reason, reauth } = req.body as { reason?: string; reauth?: Parameters<typeof verifyReauth>[1] };
   if (!reason || typeof reason !== 'string' || reason.trim() === '') {
     return send400(res, 'reason required');
+  }
+
+  // Locking is the governed `lock` command, and passes the gate every
+  // high-risk command passes on POST /api/c2c/actions/lock: the signer
+  // re-verified (§11.200), then not the document's author (separation of
+  // duties). Until 2026-09-23 this route wrote the same ledger row through
+  // writeMutation, which runs neither: the session alone locked a document,
+  // its author could lock it, and the `reauth` it accepted was never read.
+  // Re-verified first, so an unverified caller learns nothing of the document.
+  const verified = await verifyReauth(userId, reauth);
+  if (!verified.ok) {
+    res.setHeader('WWW-Authenticate', 'ReAuth required');
+    return res.status(401).json({ error: verified.error ?? 'REAUTH_REQUIRED' });
   }
 
   try {
@@ -833,6 +847,7 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
     if ((docCheck.rows[0] as any).status === 'locked') {
       return res.status(409).json({ error: 'ALREADY_LOCKED' });
     }
+    await assertSignerIsNotAuthor(`document:${req.params.id}`, orgId, userId, { command: 'lock' });
 
     // Atomic: the governed-action audit and the lock UPDATE commit or roll back
     // together, so the ledger can never record a lock the document didn't take.
@@ -862,10 +877,8 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
       client.release();
     }
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'INTERNAL_ERROR';
-    if (msg === 'REAUTH_PASSWORD_REQUIRED' || msg.startsWith('REAUTH_')) {
-      return res.status(401).json({ error: msg });
-    }
+    const sod = separationOfDutiesRefusal(err, 'c2c/documents/lock');
+    if (sod) return res.status(sod.status).json(sod.body);
     console.error('[c2c/documents] POST /:id/lock', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }

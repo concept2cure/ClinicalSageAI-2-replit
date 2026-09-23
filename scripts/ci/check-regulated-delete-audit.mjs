@@ -37,6 +37,13 @@ const REGULATED = [
   ['c2cDocumentSectionEvidence', 'c2c_document_section_evidence'],
   ['authoringDocuments', 'authoring_documents'],
   ['indApplications', 'ind_applications'], // IND = regulated FDA submission record
+  // 2026-09-23 (D5): the quality-management plan and the CTQ factors and gating
+  // rules it holds set the gates governed documents are validated against. A
+  // CTQ factor could be hard-deleted by any member, with no reason and no
+  // ledger row, and this gate did not list the table, so it reported green.
+  ['qualityManagementPlans', 'quality_management_plans'],
+  ['ctqFactors', 'ctq_factors'],
+  ['qmpSectionGating', 'qmp_section_gating'],
 ];
 
 // Require an actual call/statement, not a bare word in a comment, so a comment
@@ -56,6 +63,45 @@ const AUDIT_RE =
 const ALLOWLIST = {};
 
 const WINDOW = 25; // lines around a delete to search for an audit call
+
+/* A delete written inside the callback of a governed-write helper is audited
+   by construction: the helper writes the ledger row on the delete's own
+   transaction (server/services/qms/governed-qms-write.ts governedQmsWrite runs
+   recordGovernedAction before COMMIT). The ledger call can sit well outside the
+   25-line window, so the delete's position is checked against the helper
+   call's argument span instead. */
+const GOVERNED_WRITER_RE = /\bgovernedQmsWrite\s*\(/g;
+
+/** Index just past the ')' that closes the call opening at `open`; string- and comment-aware. */
+function callEnd(src, open) {
+  let depth = 0;
+  for (let j = open; j < src.length; j++) {
+    const ch = src[j];
+    if (ch === '/' && src[j + 1] === '/') { const nl = src.indexOf('\n', j); j = nl === -1 ? src.length : nl; continue; }
+    if (ch === '/' && src[j + 1] === '*') { const end = src.indexOf('*/', j + 2); j = end === -1 ? src.length : end + 1; continue; }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      let k = j + 1;
+      while (k < src.length && src[k] !== ch) k += src[k] === '\\' ? 2 : 1;
+      j = k;
+      continue;
+    }
+    if (ch === '(') depth++;
+    else if (ch === ')' && --depth === 0) return j + 1;
+  }
+  return src.length;
+}
+
+/** [start, end) offsets of every governed-writer call in `src`. */
+function governedSpans(src) {
+  const spans = [];
+  let m;
+  GOVERNED_WRITER_RE.lastIndex = 0;
+  while ((m = GOVERNED_WRITER_RE.exec(src))) spans.push([m.index, callEnd(src, m.index + m[0].length - 1)]);
+  return spans;
+}
+
+/** A comment line names a table without deleting from it. */
+const isCommentLine = (line) => /^\s*(\/\/|\/\*|\*)/.test(line);
 
 function listTsFiles(dir, acc = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -80,13 +126,18 @@ const violations = [];
 
 for (const file of listTsFiles(ROUTES)) {
   const rel = path.relative(ROOT, file);
-  const lines = fs.readFileSync(file, 'utf-8').split('\n');
+  const src = fs.readFileSync(file, 'utf-8');
+  const lines = src.split('\n');
+  const spans = governedSpans(src);
+  let offset = 0;
+  const lineStart = lines.map((l) => { const at = offset; offset += l.length + 1; return at; });
   lines.forEach((line, i) => {
-    if (!siteRe.test(line)) return;
+    if (!siteRe.test(line) || isCommentLine(line)) return;
     const from = Math.max(0, i - WINDOW);
     const to = Math.min(lines.length, i + WINDOW + 1);
     const hasAudit = lines.slice(from, to).some(l => AUDIT_RE.test(l));
     if (hasAudit) return;
+    if (spans.some(([a, b]) => lineStart[i] > a && lineStart[i] < b)) return; // inside a governed write
     if (ALLOWLIST[rel]) return; // operator-tracked
     violations.push({ file: rel, line: i + 1, excerpt: line.trim().slice(0, 120) });
   });

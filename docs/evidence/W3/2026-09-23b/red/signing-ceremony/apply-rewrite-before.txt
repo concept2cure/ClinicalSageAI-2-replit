@@ -1,0 +1,155 @@
+# git: 923d1491b + working tree (test added; the apply-rewrite route and service as committed)
+# npx vitest run tests/routes/ana-apply-rewrite-signature.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+stdout | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+{
+  "timestamp": "2026-09-23T14:49:18.551Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-23T14:49:18.552Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+{
+  "timestamp": "2026-09-23T14:49:18.552Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+[database] Database connection successful
+
+ × tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied 2070ms
+   → a rewrite was signed on the session alone: expected 200 to be 400 // Object.is equality
+ × tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a second factor the caller asserts is not a second factor 7ms
+   → a client-asserted second factor was accepted: expected 200 to be 400 // Object.is equality
+ × tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a wrong password is refused and counted against the account 5ms
+   → expected 200 to be 401 // Object.is equality
+ × tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > an account taken out of use cannot sign it (F-28) 5ms
+   → expected 200 to be 401 // Object.is equality
+ × tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a verified signer: the service is handed what the ceremony verified, never the credentials 7ms
+   → expected { …(2) } to deeply equal { …(2) }
+ ✓ tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a rewrite applied without a signature asks for no credential 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a signature without the password is refused, and nothing is applied
+AssertionError: a rewrite was signed on the session alone: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/routes/ana-apply-rewrite-signature.test.ts:94:69
+     92|   it('a signature without the password is refused, and nothing is appl…
+     93|     const res = await applyWith({ signature: { meaning: MEANING } });
+     94|     expect(res.status, 'a rewrite was signed on the session alone').to…
+       |                                                                     ^
+     95|     expect(res.body.code).toBe('PASSWORD_REQUIRED');
+     96|     expect(h.applyRewrite).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a second factor the caller asserts is not a second factor
+AssertionError: a client-asserted second factor was accepted: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/routes/ana-apply-rewrite-signature.test.ts:104:72
+    102|       signature: { meaning: MEANING, password: '<fixture password>', authe…
+    103|     });
+    104|     expect(res.status, 'a client-asserted second factor was accepted')…
+       |                                                                        ^
+    105|     expect(res.body.code).toBe('MFA_TOKEN_REQUIRED');
+    106|     expect(h.applyRewrite).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a wrong password is refused and counted against the account
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ tests/routes/ana-apply-rewrite-signature.test.ts:111:24
+    109|   it('a wrong password is refused and counted against the account', as…
+    110|     const res = await applyWith({ signature: { meaning: MEANING, passw…
+    111|     expect(res.status).toBe(401);
+       |                        ^
+    112|     expect(res.body.code).toBe('PASSWORD_VERIFICATION_FAILED');
+    113|     expect(h.failures).toHaveBeenCalledWith(7);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > an account taken out of use cannot sign it (F-28)
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ tests/routes/ana-apply-rewrite-signature.test.ts:120:24
+    118|     h.account.active = false;
+    119|     const res = await applyWith({ signature: { meaning: MEANING, passw…
+    120|     expect(res.status).toBe(401);
+       |                        ^
+    121|     expect(res.body.code).toBe('ACCOUNT_INACTIVE');
+    122|     expect(h.applyRewrite).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/routes/ana-apply-rewrite-signature.test.ts > apply-rewrite: a signature is a re-verified signer, not a claim > a verified signer: the service is handed what the ceremony verified, never the credentials
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+    "meaning": "I have reviewed and approve this rewrite for filing.",
+-   "reverified": {
+-     "authenticationMethod": "password+mfa",
+-     "ok": true,
+-     "secondFactorVerified": true,
+-   },
++   "secondFactorVerified": false,
+  }
+
+ ❯ tests/routes/ana-apply-rewrite-signature.test.ts:132:29
+    130|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    131|     const input = h.applyRewrite.mock.calls[0][0] as { signature: unkn…
+    132|     expect(input.signature).toEqual({
+       |                             ^
+    133|       meaning: MEANING,
+    134|       reverified: { ok: true, authenticationMethod: 'password+mfa', se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  14:49:16
+   Duration  2.63s (transform 1.27s, setup 144ms, import 146ms, tests 2.10s, environment 0ms)
+

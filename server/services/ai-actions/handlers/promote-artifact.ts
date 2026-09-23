@@ -21,6 +21,8 @@ import {
 import { unifiedDocuments, workflowDocumentVersions } from '../../../../shared/schema/unified_workflow';
 import { resolveGovernedContext } from '../../concept2cure/governedDocumentContractService.js';
 import { fetchArtifact } from '../shared-utils';
+import { artifactApproval } from '../../ectd/package-content-fingerprint';
+import { approvalRecordedOnlyByGovernedAct } from '../../artifact-approval-act';
 import { registerActionHandler } from '../action-registry';
 import auditService from '../../auditService';
 import type {
@@ -212,7 +214,7 @@ const promoteArtifactHandler: AIActionHandler = {
     }
 
     // 4. Execute promotion in a transaction (atomic: create doc + version + update artifact)
-    const { newDoc } = await db.transaction(async (tx: any) => {
+    const { newDoc, promoted } = await db.transaction(async (tx: any) => {
       // 4a. Create unified document with content in metadata
       const [doc] = await tx
         .insert(unifiedDocuments)
@@ -259,7 +261,17 @@ const promoteArtifactHandler: AIActionHandler = {
       });
 
       // 4c. Update artifact status
-      await tx
+      // 2026-09-23 (W5/D7, final pass): promotion is not the approval act, so
+      // it records no approved version (HEAD behaviour; the residual-repair
+      // rounds' recording here was reverted — it made an artifact filable
+      // through APPROVAL_ROLES without the status route's role table or the P12
+      // review quorum). Only the governed act (the status route's review →
+      // approved, authoring-actions approve-artifact) records one. An approval
+      // revoked earlier was cleared when the status left approved/locked (the
+      // trigger in migrations/20260923b_artifact_approval_follows_status.sql),
+      // so it is not resurrected here. RETURNING reads what was written, so the
+      // warning below is judged on it.
+      const [promotedRow] = await tx
         .update(concept2cureArtifacts)
         .set({
           status: 'approved',
@@ -293,9 +305,15 @@ const promoteArtifactHandler: AIActionHandler = {
           },
           updatedAt: new Date(),
         })
-        .where(eq(concept2cureArtifacts.id, artifact.id));
+        .where(eq(concept2cureArtifacts.id, artifact.id))
+        .returning({
+          status: concept2cureArtifacts.status,
+          version: concept2cureArtifacts.version,
+          approvedVersionId: concept2cureArtifacts.approvedVersionId,
+          publishedVersionId: concept2cureArtifacts.publishedVersionId,
+        });
 
-      return { newDoc: doc };
+      return { newDoc: doc, promoted: promotedRow };
     });
 
     // 5. Emit audit log for this governed approval/promotion. Awaited (not
@@ -366,7 +384,7 @@ const promoteArtifactHandler: AIActionHandler = {
       },
       createdObjects,
       updatedObjects,
-      warnings: buildWarnings(artifact),
+      warnings: [...buildWarnings(artifact), ...filingWarnings(promoted)],
       errors: [],
       provenance,
       nextSuggestedActions: [
@@ -511,6 +529,25 @@ function inferModuleFromContext(
     'ectd': 'ectd',
   };
   return mapping[normalized] || request.module;
+}
+
+/**
+ * Says, truthfully, whether the promoted artifact can be filed: nothing when
+ * the filing rule (artifactApproval) accepts the row as written — an artifact
+ * the governed act approved at its current version stays filable — otherwise
+ * why not and which governed act files it. A row that could not be read back is not
+ * reported as filable. 2026-09-23 (W5/D7, final pass).
+ */
+function filingWarnings(
+  row: { status: string | null; version: number | null; approvedVersionId: number | null; publishedVersionId: number | null } | undefined
+): string[] {
+  if (!row) return ['The promoted artifact could not be read back, so it cannot be shown to be filable.'];
+  const approval = artifactApproval(row);
+  if (approval.filable) return [];
+  // 2026-09-23 (W5/D7, final pass, repair): names the governed act that
+  // records the version and says this action records none (it said "approval
+  // through review", which a user could take to mean this action).
+  return [`It cannot be filed yet: ${approval.problem}. ${approvalRecordedOnlyByGovernedAct('action')}`];
 }
 
 function buildWarnings(artifact: any): string[] {

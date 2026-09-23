@@ -16,7 +16,13 @@ vi.hoisted(() => {
 // under test runs BEFORE any of these are reached for a partial token, so no-op
 // mocks are sufficient — we only need the imports to resolve.
 vi.mock('../../db', () => {
-  const pool = { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }) };
+  // The live-token check reads the account's standing (F-29); the accounts the
+  // valid tokens name are in use. Every other read answers empty.
+  const pool = {
+    query: vi.fn(async (sql: string) =>
+      /SELECT status FROM users/.test(sql) ? { rows: [{ status: 'active' }], rowCount: 1 } : { rows: [], rowCount: 0 },
+    ),
+  };
   return { db: {}, pool, getPool: () => pool, getDb: () => ({}) };
 });
 vi.mock('../../auth', () => ({

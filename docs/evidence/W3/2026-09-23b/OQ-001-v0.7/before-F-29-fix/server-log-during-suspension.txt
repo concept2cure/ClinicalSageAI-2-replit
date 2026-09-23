@@ -1,0 +1,9 @@
+The subject's requests between the suspension and the restore, from the pre-fix server's
+request log (one line per request: time, method, path, status). Excerpt of the server log;
+the request bodies are not logged.
+
+2026-09-23T15:51:31.619Z PATCH /api/admin/master/users/299/status 200
+2026-09-23T15:51:31.641Z GET /api/c2c/projects 200
+2026-09-23T15:51:31.649Z GET /api/auth/session 200
+2026-09-23T15:51:32.057Z POST /api/auth/login 200
+2026-09-23T15:51:32.091Z PATCH /api/admin/master/users/299/status 200

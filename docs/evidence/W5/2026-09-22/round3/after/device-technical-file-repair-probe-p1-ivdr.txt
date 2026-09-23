@@ -1,0 +1,40 @@
+[ivdr] code="1.11" "Performance Evaluation Report" HEAD=["performance-evaluation"] CUR=["performance-evaluation"]
+[ivdr] code="1.11" "Performance_Evaluation_Report_v2" HEAD=[] CUR=["performance-evaluation"]  <<DIFF
+[ivdr] code="1.11" "Analytical performance report" HEAD=["analytical-performance"] CUR=["analytical-performance"]
+[ivdr] code="1.11" "Analytical_Performance_Study" HEAD=[] CUR=["analytical-performance"]  <<DIFF
+[ivdr] code="1.11" "Clinical performance study report" HEAD=["clinical-performance"] CUR=["clinical-performance"]
+[ivdr] code="1.11" "Analytical and clinical performance evaluation report" HEAD=["clinical-performance","performance-evaluation"] CUR=["clinical-performance"]  <<DIFF
+[ivdr] code="1.11" "Scientific validity report" HEAD=["performance-evaluation"] CUR=["performance-evaluation"]
+[ivdr] code="1.11" "Performance evaluation plan" HEAD=["performance-evaluation"] CUR=[]  <<DIFF
+[ivdr] code="1.11" "Performance evaluation plan and report" HEAD=["performance-evaluation"] CUR=["performance-evaluation"]
+[ivdr] code="1.11" "Post-market performance follow-up plan" HEAD=["pms-plan"] CUR=["pms-plan"]
+[ivdr] code="1.11" "PMS plan" HEAD=["pms-plan"] CUR=["pms-plan"]
+[ivdr] code="1.11" "GSPRs" HEAD=["gspr"] CUR=["gspr"]
+[ivdr] code="1.11" "IFUs" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[ivdr] code="1.11" "Performance evaluations" HEAD=["performance-evaluation"] CUR=["performance-evaluation"]
+[ivdr] code="1.11" "Performance evaluationplan" HEAD=["performance-evaluation"] CUR=[]  <<DIFF
+[ivdr] code="1.11" "Performance Evaluation Report - clinical performance" HEAD=["clinical-performance","performance-evaluation"] CUR=["clinical-performance","performance-evaluation"]
+[ivdr] code="1.11" "IVD Performance Evaluation" HEAD=["performance-evaluation"] CUR=["performance-evaluation"]
+[ivdr] code="1.11" "Analytical performances" HEAD=["analytical-performance"] CUR=["analytical-performance"]
+[ivdr] code="1.11" "Clinical performances" HEAD=["clinical-performance"] CUR=["clinical-performance"]
+[ivdr] code="1.11" "Scientific validities" HEAD=[] CUR=[]
+[ivdr] code="" "Performance Evaluation Report" HEAD=["performance-evaluation"] CUR=["performance-evaluation"]
+[ivdr] code="" "Performance_Evaluation_Report_v2" HEAD=[] CUR=["performance-evaluation"]  <<DIFF
+[ivdr] code="" "Analytical performance report" HEAD=["analytical-performance"] CUR=["analytical-performance"]
+[ivdr] code="" "Analytical_Performance_Study" HEAD=[] CUR=["analytical-performance"]  <<DIFF
+[ivdr] code="" "Clinical performance study report" HEAD=["clinical-performance"] CUR=["clinical-performance"]
+[ivdr] code="" "Analytical and clinical performance evaluation report" HEAD=["clinical-performance","performance-evaluation"] CUR=["clinical-performance"]  <<DIFF
+[ivdr] code="" "Scientific validity report" HEAD=["performance-evaluation"] CUR=["performance-evaluation"]
+[ivdr] code="" "Performance evaluation plan" HEAD=["performance-evaluation"] CUR=[]  <<DIFF
+[ivdr] code="" "Performance evaluation plan and report" HEAD=["performance-evaluation"] CUR=["performance-evaluation"]
+[ivdr] code="" "Post-market performance follow-up plan" HEAD=["pms-plan"] CUR=["pms-plan"]
+[ivdr] code="" "PMS plan" HEAD=["pms-plan"] CUR=["pms-plan"]
+[ivdr] code="" "GSPRs" HEAD=["gspr"] CUR=["gspr"]
+[ivdr] code="" "IFUs" HEAD=["manufacturer-information"] CUR=["manufacturer-information"]
+[ivdr] code="" "Performance evaluations" HEAD=["performance-evaluation"] CUR=["performance-evaluation"]
+[ivdr] code="" "Performance evaluationplan" HEAD=["performance-evaluation"] CUR=[]  <<DIFF
+[ivdr] code="" "Performance Evaluation Report - clinical performance" HEAD=["clinical-performance","performance-evaluation"] CUR=["clinical-performance","performance-evaluation"]
+[ivdr] code="" "IVD Performance Evaluation" HEAD=["performance-evaluation"] CUR=["performance-evaluation"]
+[ivdr] code="" "Analytical performances" HEAD=["analytical-performance"] CUR=["analytical-performance"]
+[ivdr] code="" "Clinical performances" HEAD=["clinical-performance"] CUR=["clinical-performance"]
+[ivdr] code="" "Scientific validities" HEAD=[] CUR=[]
