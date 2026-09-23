@@ -97,6 +97,7 @@
     "ci:unapproved-model-pins": "node scripts/ci/check-unapproved-model-pins.mjs",
     "ci:unapproved-model-pins:selftest": "node scripts/ci/check-unapproved-model-pins.mjs --self-test",
     "ci:client-ip-single-source": "node scripts/ci/check-client-ip-single-source.mjs",
+    "ci:db-test-isolation:selftest": "node --test scripts/ci/__tests__/db-test-isolation.test.mjs",
     "ci:client-ip-single-source:selftest": "node scripts/ci/check-client-ip-single-source.mjs --self-test",
     "oq:localai": "tsx server/eval/localai/oq-live-check.ts",
     "benchmark:rtf": "tsx server/services/shadow-review/benchmark/cli.ts",

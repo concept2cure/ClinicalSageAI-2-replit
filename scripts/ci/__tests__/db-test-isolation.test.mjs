@@ -25,7 +25,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { checkDbTestIsolation, mockingSetupImports } from '../check-db-test-isolation.mjs';
+import { checkDbTestIsolation, mockingSetupImports as scanSource } from '../check-db-test-isolation.mjs';
+
+// Fixture specifiers are written with typographic quotes (‘../setup’) and
+// turned back into ASCII here, at the one place fixture text reaches the gate.
+// ci:untracked-imports reads this file as source, and an ASCII-quoted relative
+// specifier after `from` in a fixture is, to it, an import of a file that does
+// not exist — so every fixture the gate must judge would fail the pre-push check.
+const fixture = (s) => s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
+const mockingSetupImports = (source, ...rest) => scanSource(fixture(source), ...rest);
 
 const specifiersFlagged = (source, importer = 'tests/db/example.dbtest.ts') =>
   mockingSetupImports(source, importer).map(ref => ref.specifier);
@@ -40,8 +48,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { databaseUrl } from '../setup.db';
-import { runWithTenantScope } from '../../server/db/tenantStore';
+import { databaseUrl } from ‘../setup.db’;
+import { runWithTenantScope } from ‘../../server/db/tenantStore’;
 
 // Through the functions /api/auth/mfa/setup, /enable and /disable call.
 describe('a signed-in session cannot take over an enrolled second factor', () => {
@@ -73,25 +81,25 @@ test('string literals that merely LOOK like the specifier are not flagged outsid
 test('mentions in comments are not flagged', () => {
   const source = [
     "// import '../setup';",
-    "/* require('../setup') */",
+    "/* require(‘../setup’) */",
     '/**',
     " * vi.mock('../setup')",
     ' */',
-    "import { databaseUrl } from '../setup.db'; // not '../setup'",
+    "import { databaseUrl } from ‘../setup.db’; // not '../setup'",
   ].join('\n');
   assert.deepEqual(specifiersFlagged(source), []);
 });
 
 test('the real-database setup, and modules that are not tests/setup, are not flagged', () => {
   const source = [
-    "import { databaseUrl } from '../setup.db';",
-    "import { databaseUrl as u2 } from '../setup.db.ts';",
-    "import { a } from '../../server/routes/setup';", // server/routes/setup — a different module
-    "import { b } from './setup';", // tests/db/setup — not tests/setup
+    "import { databaseUrl } from ‘../setup.db’;",
+    "import { databaseUrl as u2 } from ‘../setup.db.ts’;",
+    "import { a } from ‘../../server/routes/setup’;", // server/routes/setup — a different module
+    "import { b } from ‘./setup’;", // tests/db/setup — not tests/setup
     "import c from 'setup';", // a package, not a path
     "import { d } from '@/setup';", // client/src/setup via the @ alias
-    "import { e } from '../setup-helpers';",
-    "import { f } from '../fixtures/setup';",
+    "import { e } from ‘../setup-helpers’;",
+    "import { f } from ‘../fixtures/setup’;",
   ].join('\n');
   assert.deepEqual(specifiersFlagged(source), []);
 });
@@ -105,20 +113,20 @@ const LOADS_MOCKING_SETUP = [
   ['tests/db/a.dbtest.ts', "import '../setup.ts';", '../setup.ts'],
   ['tests/db/a.dbtest.ts', "import '../setup.js';", '../setup.js'],
   ['tests/db/a.dbtest.ts', "import '../setup.mjs';", '../setup.mjs'],
-  ['tests/db/a.dbtest.ts', "import { x } from '../setup';", '../setup'],
-  ['tests/db/a.dbtest.ts', "import * as setup from '../setup';", '../setup'],
-  ['tests/db/a.dbtest.ts', "import setup, { y } from '../setup.ts';", '../setup.ts'],
-  ['tests/db/a.dbtest.ts', "import type { T } from '../setup';", '../setup'],
-  ['tests/db/a.dbtest.ts', "import {\n  a,\n  b,\n} from '../setup';", '../setup'],
-  ['tests/db/a.dbtest.ts', "import setup = require('../setup');", '../setup'],
+  ['tests/db/a.dbtest.ts', "import { x } from ‘../setup’;", '../setup'],
+  ['tests/db/a.dbtest.ts', "import * as setup from ‘../setup’;", '../setup'],
+  ['tests/db/a.dbtest.ts', "import setup, { y } from ‘../setup.ts’;", '../setup.ts'],
+  ['tests/db/a.dbtest.ts', "import type { T } from ‘../setup’;", '../setup'],
+  ['tests/db/a.dbtest.ts', "import {\n  a,\n  b,\n} from ‘../setup’;", '../setup'],
+  ['tests/db/a.dbtest.ts', "import setup = require(‘../setup’);", '../setup'],
   // re-exports
-  ['tests/db/a.dbtest.ts', "export * from '../setup';", '../setup'],
-  ['tests/db/a.dbtest.ts', "export { z } from '../setup.js';", '../setup.js'],
+  ['tests/db/a.dbtest.ts', "export * from ‘../setup’;", '../setup'],
+  ['tests/db/a.dbtest.ts', "export { z } from ‘../setup.js’;", '../setup.js'],
   // runtime loads
-  ['tests/db/a.dbtest.ts', "const s = require('../setup');", '../setup'],
-  ['tests/db/a.dbtest.ts', "beforeAll(async () => { await import('../setup'); });", '../setup'],
+  ['tests/db/a.dbtest.ts', "const s = require(‘../setup’);", '../setup'],
+  ['tests/db/a.dbtest.ts', "beforeAll(async () => { await import(‘../setup’); });", '../setup'],
   ['tests/db/a.dbtest.ts', 'await import(`../setup.ts`);', '../setup.ts'],
-  ['tests/db/a.dbtest.ts', "type S = typeof import('../setup');", '../setup'],
+  ['tests/db/a.dbtest.ts', "type S = typeof import(‘../setup’);", '../setup'],
   // vitest's module APIs — an automock or importActual evaluates the module
   ['tests/db/a.dbtest.ts', "vi.mock('../setup');", '../setup'],
   ['tests/db/a.dbtest.ts', "vi.doMock('../setup', () => ({}));", '../setup'],
@@ -148,14 +156,14 @@ test('an absolute path into the repo names tests/setup; one outside it does not'
 });
 
 test('a flagged reference carries its line and how it was loaded', () => {
-  const source = "import express from 'express';\n\nimport { x } from '../setup';\n";
+  const source = "import express from 'express';\n\nimport { x } from ‘../setup’;\n";
   const [ref] = mockingSetupImports(source, 'tests/db/a.dbtest.ts');
   assert.equal(ref.line, 3);
   assert.equal(ref.kind, 'import');
 });
 
 test('every load in a file is reported, not only the first', () => {
-  const source = "import '../setup';\nconst s = require('../setup.js');\nvi.mock('../setup.ts');\n";
+  const source = "import '../setup';\nconst s = require(‘../setup.js’);\nvi.mock('../setup.ts');\n";
   assert.deepEqual(specifiersFlagged(source), ['../setup', '../setup.js', '../setup.ts']);
 });
 
@@ -193,7 +201,7 @@ function fixtureTree(files) {
   };
   for (const [rel, content] of Object.entries(all)) {
     fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
-    fs.writeFileSync(path.join(root, rel), content);
+    fs.writeFileSync(path.join(root, rel), fixture(content));
   }
   return root;
 }

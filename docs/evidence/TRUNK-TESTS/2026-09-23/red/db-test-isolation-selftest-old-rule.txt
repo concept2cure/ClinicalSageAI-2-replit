@@ -1,0 +1,19 @@
+The ci:db-test-isolation self-test, run with the gate's original rule restored
+(IMPORTS_MOCKING_SETUP = /['"][^'"]*\/setup['"]/, any quoted string ending
+in /setup), to show the self-test catches the false positive that failed CI:
+
+$ npm run -s ci:db-test-isolation:selftest
+  ✓ flags: import { x } from '../setup';
+  ✓ flags: import '../setup';
+  ✓ flags: await import('../setup');
+  ✓ flags: const s = require('../setup');
+  ✓ flags: export * from '../setup';
+  ✓ passes: import { databaseUrl } from '../setup.db';
+  ✗ passes: await request(app).post('/api/auth/mfa/setup').send({});
+  ✗ passes: const path = '/api/setup';
+
+✗ self-test: 2 case(s) wrong
+exit=1
+
+With the specifier-only rule (committed):
+✓ self-test: 8 cases

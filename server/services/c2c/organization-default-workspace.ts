@@ -66,11 +66,26 @@
  *
  * Every caller owns its transaction. This module never opens or commits one,
  * exactly as `ensureProgramProjectAnchor` and `ensureSubmissionSpine` do.
+ *
+ * ── Under the organisation's own tenant ──────────────────────────────────────
+ * client_workspaces is RLS-enabled and FORCED. Signup runs in the pre-auth
+ * scope (tenant '0'), so its insert failed WITH CHECK (42501) and every
+ * self-serve signup answered 500 under RLS_ENFORCE=on, the only posture
+ * production accepts. The count before it was silently filtered to zero. The
+ * boot seed passed only because its owner connection carries no
+ * app.rls_enforce. So the writer enters the new organisation's tenant itself,
+ * transaction-locally (setTenantContextTx), before the read and the write. No
+ * creator repeats the switch, and none needs app_super_admin. The tenant stays
+ * set for the rest of the caller's transaction, which ends there for signup
+ * and setup, and for the boot seed writes only RLS-free tables and DDL after
+ * it (D2 regression found 2026-09-23; docs/evidence/W1/2026-09-23-workspace/).
  */
 import type { PoolClient } from 'pg';
 import { eq } from 'drizzle-orm';
 import { clientWorkspaces } from '../../../shared/schema';
 import type { RequestDb } from '../../db/requestDb';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable';
+import { setTenantContextTx } from '../tenant/governed-tenant-context';
 
 /** Why the organisation's own workspace was not written. Never a failure to try. */
 export type DefaultWorkspaceSkip =
@@ -92,6 +107,11 @@ export interface DefaultWorkspaceIdentity {
 }
 
 export interface EnsureDefaultWorkspaceInput {
+  /**
+   * The organisation the caller has just created or seeded, from its own
+   * INSERT … RETURNING. Never an id from a request: the writer enters whatever
+   * tenant it is given (the reverse-caller test pins who calls it).
+   */
   orgId: number;
   /** `organizations.name`, verbatim — the workspace is the organisation. */
   orgName: string;
@@ -109,6 +129,12 @@ export interface EnsureDefaultWorkspaceInput {
  * workspace gets that id back rather than a bare "skipped".
  */
 export interface WorkspaceStore {
+  /**
+   * Make `orgId` the RLS tenant of the caller's in-flight transaction
+   * (`set_config(..., true)` — it ends at COMMIT/ROLLBACK). Called FIRST, so
+   * both the count and the insert are judged as that organisation.
+   */
+  enterOrganizationScope(orgId: number): Promise<void>;
   readWorkspaces(orgId: number): Promise<{ count: number; firstWorkspaceId: number | null }>;
   insertWorkspace(
     orgId: number,
@@ -178,6 +204,13 @@ export async function ensureOrganizationDefaultWorkspace(
   store: WorkspaceStore,
   input: EnsureDefaultWorkspaceInput,
 ): Promise<DefaultWorkspaceResult> {
+  if (!Number.isSafeInteger(input.orgId) || input.orgId <= 0) {
+    throw new Error(`ensureOrganizationDefaultWorkspace: orgId must be a positive integer, got ${String(input.orgId)}`);
+  }
+  // The new organisation's own tenant, before the READ as well as the write:
+  // under a caller's pre-auth scope (tenant '0') RLS would filter the count to
+  // zero silently and refuse the insert's WITH CHECK loudly.
+  await store.enterOrganizationScope(input.orgId);
   const { count, firstWorkspaceId } = await store.readWorkspaces(input.orgId);
 
   if (count > 0) {
@@ -201,6 +234,7 @@ export async function ensureOrganizationDefaultWorkspace(
 /** Binding for callers holding a `pg` PoolClient — the boot seed. */
 export function poolClientWorkspaceStore(client: PoolClient): WorkspaceStore {
   return {
+    enterOrganizationScope: (orgId) => setTenantContextTx(client, orgId),
     async readWorkspaces(orgId) {
       const res = await client.query<{ workspace_count: string | number; workspace_id: string | number | null }>(
         `SELECT count(*) AS workspace_count, min(id) AS workspace_id
@@ -242,11 +276,12 @@ export function poolClientWorkspaceStore(client: PoolClient): WorkspaceStore {
  * satisfies this without a cast. Writing the builder chain out structurally
  * does not — the real types carry generics a hand-written shape cannot match.
  */
-export type DrizzleWorkspaceExecutor = Pick<RequestDb, 'select' | 'insert'>;
+export type DrizzleWorkspaceExecutor = Pick<RequestDb, 'select' | 'insert' | 'execute'>;
 
 /** Binding for callers inside a Drizzle transaction — signup and first-run setup. */
 export function drizzleWorkspaceStore(tx: DrizzleWorkspaceExecutor): WorkspaceStore {
   return {
+    enterOrganizationScope: (orgId) => setTenantContextTx(queryableFromDrizzle(tx), orgId),
     async readWorkspaces(orgId) {
       const rows = await tx
         .select({ id: clientWorkspaces.id })

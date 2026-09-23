@@ -35,7 +35,7 @@ CREATE TABLE protocol_risks (id serial PRIMARY KEY, organization_id int, protoco
 CREATE TABLE protocol_milestones (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, milestone_type text, target_date date, actual_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, amendment_number text, title text, affects_consent boolean, submitted_date date, decided_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendment_changes (id serial PRIMARY KEY, amendment_id int, section_ref text, change_description text, previous_text text, proposed_text text);
-CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, protocol_document_id int, deviation_number text, description text, category text NOT NULL DEFAULT 'other' CHECK (category IN ('enrollment','consent','procedure','safety','data','other')), severity text NOT NULL DEFAULT 'minor' CHECK (severity IN ('minor','major','critical')), is_reportable boolean, status text NOT NULL DEFAULT 'open' CHECK (status IN ('open','under_review','capa_pending','closed')), deleted_at timestamptz);
+CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, protocol_document_id int, deviation_number text, description text, category text CHECK (category IN ('enrollment','consent','procedure','safety','data','other')), severity text CHECK (severity IN ('minor','major','critical')), is_reportable boolean, affects_safety boolean, status text NOT NULL DEFAULT 'open' CHECK (status IN ('open','under_review','capa_pending','closed')), deleted_at timestamptz);
 CREATE TABLE protocol_capa_actions (id serial PRIMARY KEY, deviation_id int, action text, status text);
 CREATE TABLE protocol_budget_items (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, unit_cost numeric, quantity_per_subject numeric, deleted_at timestamptz);
 CREATE TABLE protocol_budget_params (id serial PRIMARY KEY, organization_id int, protocol_document_id int, target_enrollment int, sponsor_payment_per_subject numeric, indirect_rate_pct numeric);
@@ -132,6 +132,25 @@ describe('assembleOrgPdevDocs', () => {
     // Completeness: one required section is not_started → a critical finding, <100%.
     expect(doc.completeness).toBe(50);
     expect(doc.completenessFindings.some((f: any) => f.sev === 'critical')).toBe(true);
+  });
+
+  /* A deviation is ASSESSED only when both severity and safety impact are on
+     record. The seeded row has a severity but no safety assessment — the shape
+     every legacy row has (severity defaulted, affects_safety added 2026-09-22) —
+     so it must read as not assessed rather than as a settled "major". */
+  it('carries the assessment state: legacy and unassessed rows read as not assessed; reportability null when undetermined', async () => {
+    const id = await seedFullProtocol(ORG);
+    await pglite.query(
+      `INSERT INTO protocol_deviations (organization_id, protocol_document_id, deviation_number, description, category, severity, is_reportable, affects_safety, status)
+       VALUES ($1,$2,'D2','Unassessed',NULL,NULL,NULL,NULL,'open'),
+              ($1,$2,'D3','Assessed minor','procedure','minor',false,false,'open')`,
+      [ORG, id],
+    );
+    const doc = (await assembleOrgPdevDocs(ORG))[0] as any;
+    const by = (t: string) => doc.deviations.find((d: any) => d.title === t);
+    expect(by('Missed visit')).toMatchObject({ sev: 'major', assessed: false, reportable: true });
+    expect(by('Unassessed')).toMatchObject({ assessed: false, reportable: null });
+    expect(by('Assessed minor')).toMatchObject({ sev: 'minor', assessed: true, reportable: false });
   });
 
   it('returns [] for an org with no protocols, and never crosses tenants', async () => {
