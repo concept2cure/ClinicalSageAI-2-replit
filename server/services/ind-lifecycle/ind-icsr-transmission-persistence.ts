@@ -3,7 +3,8 @@
  *
  * Durable, tenant-scoped, audited storage for E2B(R3) ICSR transmissions to a
  * safety gateway (FDA FAERS / EMA EudraVigilance), tracked through their
- * lifecycle: prepared → transmitted → acknowledged/rejected. Every read/write is
+ * lifecycle: prepared → transmitting → transmitted (or
+ * transmission_unconfirmed) → acknowledged/rejected. Every read/write is
  * scoped to the caller's organizationId (never request input); mutations are
  * audited — mirroring server/services/ind-lifecycle/ind-safety-report-persistence.ts.
  *
@@ -11,6 +12,19 @@
  * hands the PERSISTED message to the gateway transport (icsr-gateway-transport)
  * and records 'transmitted' only on a real, non-simulated receipt — never from
  * a bare state flip. recordAcknowledgment() runs when the agency ACK arrives.
+ *
+ * 2026-09-23 (W5/D7, MDN final pass): a transmit whose delivery is unconfirmed
+ * (the transport's stage 'receipt-unproven': the agency may hold the report)
+ * is recorded 'transmission_unconfirmed' and locked against a second send; it
+ * used to leave the row 'prepared', so the next transmit sent the same safety
+ * report to the agency again.
+ *
+ * 2026-09-23 (W5/D7, MDN final pass, repair): a transmit claims the row
+ * (prepared → transmitting, one conditional UPDATE) before a byte is sent, so a
+ * second transmit while the first awaits the agency is refused instead of
+ * posting the same report again. Only an attempt that cannot have reached the
+ * agency (nothing delivered, refused, not ready, not configured) returns the
+ * row to 'prepared'.
  *
  * @module server/services/ind-lifecycle/ind-icsr-transmission-persistence
  */
@@ -26,6 +40,7 @@ import {
   transmitIcsr,
   IcsrNotReadyError,
   IcsrGatewayNotConfiguredError,
+  IcsrGatewayTransmitError,
   type IcsrTransmitReceipt,
   type TransmitIcsrOptions,
 } from './icsr-gateway-transport';
@@ -38,13 +53,20 @@ export type IcsrTxCtx = { organizationId: number; userId: number };
 /**
  * NOT_FOUND / NOT_READY are caller errors. GATEWAY_NOT_CONFIGURED and
  * GATEWAY_TRANSMIT_FAILED both mean the report was NOT transmitted and the row
- * stays 'prepared' — never rendered as success.
+ * is 'prepared' again — never rendered as success (if returning it to
+ * 'prepared' fails, the message says it is held 'transmitting'
+ * — 2026-09-23, repair). TRANSMISSION_UNCONFIRMED means
+ * the agency may hold the report: the row is 'transmission_unconfirmed' and
+ * refuses another transmit until the agency's acknowledgement is recorded
+ * (2026-09-23, W5/D7, MDN final pass).
  */
 export type IcsrTransmissionErrorCode =
   | 'NOT_FOUND'
   | 'NOT_READY'
   | 'GATEWAY_NOT_CONFIGURED'
   | 'GATEWAY_TRANSMIT_FAILED'
+  /** Delivery unconfirmed: the agency may hold the report; the row is locked. */
+  | 'TRANSMISSION_UNCONFIRMED'
   /** The ACK carries no readable ICH code; nothing was recorded. */
   | 'ACK_UNREADABLE'
   /** The transmission is not in the state the operation requires. */
@@ -84,6 +106,8 @@ export class IcsrTransmissionError extends Error {
  *   `prepareIcsrTransmission`  → IND_ICSR_TRANSMISSION_PREPARED
  *   `markIcsrTransmitted`      → IND_ICSR_TRANSMITTED
  *   `recordIcsrAcknowledgment` → IND_ICSR_ACKNOWLEDGED
+ * (`transmitIcsrTransmission` also writes IND_ICSR_TRANSMISSION_UNCONFIRMED
+ * when delivery is unconfirmed, reported in its error's details.)
  * (This used to say the action "is stated on each function that returns this
  * shape". A reviewer counted: two of the three said so, and `prepare` named its
  * action only in the argument. Listing them here is the version that stays true
@@ -197,11 +221,13 @@ export async function getIcsrTransmission(id: string, ctx: { organizationId: num
 }
 
 /**
- * Record a prepared transmission as transmitted — ONLY on the strength of a
+ * Record a claimed transmission as transmitted — ONLY on the strength of a
  * real, non-simulated gateway receipt. A simulated (non-production) receipt, or
- * any receipt whose transport status is not 'transmitted', is refused and the
- * row stays 'prepared': nothing reached the agency. Refuses (NOT_READY) when
- * the composed ICSR had mandatory-element gaps. Audited, org-scoped.
+ * any receipt whose transport status is not 'transmitted', is refused: nothing
+ * reached the agency, and transmitIcsrTransmission returns the row to
+ * 'prepared'. Refuses (NOT_READY) when the composed ICSR had mandatory-element
+ * gaps. Audited, org-scoped. Its only caller is transmitIcsrTransmission, which
+ * holds the row 'transmitting' (2026-09-23, repair).
  */
 export async function markIcsrTransmitted(
   id: string,
@@ -221,7 +247,7 @@ export async function markIcsrTransmitted(
       'GATEWAY_NOT_CONFIGURED',
       `ICSR gateway transport is not configured: the transport returned a ${receipt.status} receipt ` +
         `(${receipt.receiptId}), not an agency acknowledgement. The report was NOT transmitted to ` +
-        `${current.gateway}; the transmission remains 'prepared'.`,
+        `${current.gateway}.`,
       { transmitted: false },
     );
   }
@@ -229,7 +255,7 @@ export async function markIcsrTransmitted(
   if (Number.isNaN(transmittedAt.getTime())) {
     throw new IcsrTransmissionError(
       'GATEWAY_TRANSMIT_FAILED',
-      `Gateway receipt ${receipt.receiptId} carried no valid timestamp; the transmission was NOT recorded and remains 'prepared'.`,
+      `Gateway receipt ${receipt.receiptId} carried no valid timestamp; the transmission was NOT recorded as transmitted.`,
       { transmitted: false },
     );
   }
@@ -261,11 +287,24 @@ export async function markIcsrTransmitted(
  * PERSISTED row (message, gateway, receiver, readiness, gaps) — never from
  * request input — so what is sent is exactly what was prepared and audited.
  *
- * Fail-closed outcomes, every one leaving the row 'prepared':
+ * The row is claimed first — `UPDATE … SET status = 'transmitting' WHERE … AND
+ * status = 'prepared'` — so exactly one transmit sends it; a transmit that
+ * loses the claim, or finds the row 'transmitting', is refused INVALID_STATE
+ * and sends nothing (2026-09-23, W5/D7, MDN final pass, repair).
+ *
+ * Fail-closed outcomes returning the row to 'prepared' (nothing reached the
+ * agency, or it refused):
  *   - NOT_READY: the transport refuses a message with mandatory gaps (returned).
  *   - GATEWAY_NOT_CONFIGURED: no gateway — production throws; non-production
  *     hands back a simulated receipt, which markIcsrTransmitted refuses.
- *   - GATEWAY_TRANSMIT_FAILED: a configured gateway failed or rejected the send.
+ *   - GATEWAY_TRANSMIT_FAILED: nothing was delivered (stage 'transport') or the
+ *     agency refused it (stage 'gateway-rejected').
+ * And one that locks the row:
+ *   - TRANSMISSION_UNCONFIRMED: the transport's stage 'receipt-unproven' — the
+ *     agency may hold the report. The row becomes 'transmission_unconfirmed'
+ *     (recordTransmissionUnconfirmed) and this function refuses to send it again.
+ * Any other failure after the claim (a receipt that cannot be recorded, an
+ * unexpected error) leaves the row 'transmitting': locked, never re-sent.
  * Every attempt (success or refusal) is audited via the transport's audit sink.
  */
 export async function transmitIcsrTransmission(
@@ -274,17 +313,9 @@ export async function transmitIcsrTransmission(
   opts: Pick<TransmitIcsrOptions, 'now' | 'config'> = {},
 ): Promise<TransmittedIcsrTransmission> {
   const current = await getIcsrTransmission(id, ctx);
-  // Only a prepared row is transmitted. A second call on a transmitted,
-  // acknowledged or rejected row used to send the same message number to the
-  // agency again and overwrite the receipt, as governed-transmit's
-  // ACTIVE_TRANSMITTAL refusal exists to prevent on the eCTD side.
-  if (current.status !== 'prepared') {
-    throw new IcsrTransmissionError(
-      'INVALID_STATE',
-      `ICSR transmission ${id} is '${current.status}'; only a prepared transmission is sent. Prepare a follow-up or nullification as a new transmission.`,
-      { status: current.status },
-    );
-  }
+  assertTransmittable(id, current);
+  await claimForTransmit(id, ctx, current);
+
   const built: IcsrTransmissionResult = {
     message: current.message,
     transmitReady: current.transmitReady,
@@ -320,38 +351,266 @@ export async function transmitIcsrTransmission(
       },
     });
   } catch (err) {
-    if (err instanceof IcsrNotReadyError) {
-      throw new IcsrTransmissionError('NOT_READY', err.message, { gaps: err.gaps, transmitAttemptAudit });
-    }
-    if (err instanceof IcsrGatewayNotConfiguredError) {
-      throw new IcsrTransmissionError('GATEWAY_NOT_CONFIGURED', err.message, { transmitted: false, transmitAttemptAudit });
-    }
-    const reason = err instanceof Error ? err.message : String(err);
-    logger.error('ICSR gateway transmit failed', { id, gateway: current.gateway, organizationId: ctx.organizationId, reason });
-    throw new IcsrTransmissionError(
-      'GATEWAY_TRANSMIT_FAILED',
-      `ICSR was NOT transmitted to ${current.gateway}; the transmission remains 'prepared'. Gateway transport failed: ${reason}`,
-      { transmitted: false, transmitAttemptAudit },
-    );
+    throw await transmitFailure({ id, ctx, current, transmitAttemptAudit }, err);
   }
 
   try {
     return { ...(await markIcsrTransmitted(id, ctx, receipt)), transmitAttemptAudit };
   } catch (err) {
-    // markIcsrTransmitted refuses a simulated or statusless receipt. Its code and
-    // sentence are kept exactly as it framed them; only what happened to the
-    // attempt row is added, which the caller would otherwise lose (WO-16C #133).
-    if (err instanceof IcsrTransmissionError) {
-      throw new IcsrTransmissionError(err.code, err.message, { ...err.details, transmitAttemptAudit });
-    }
-    throw err;
+    throw await receiptNotRecorded({ id, ctx, current, transmitAttemptAudit }, receipt, err);
   }
+}
+
+/**
+ * Refuse a transmit unless the row is 'prepared'. A second call on a
+ * transmitted, acknowledged or rejected row used to send the same message
+ * number to the agency again and overwrite the receipt, as governed-transmit's
+ * ACTIVE_TRANSMITTAL refusal exists to prevent on the eCTD side.
+ */
+function assertTransmittable(id: string, current: IndIcsrTransmissionRow): void {
+  if (current.status === 'transmission_unconfirmed') {
+    // 2026-09-23 (W5/D7, MDN final pass): the agency may already hold this
+    // report; a second send would file it twice.
+    throw new IcsrTransmissionError(
+      'INVALID_STATE',
+      `ICSR transmission ${id} was sent to ${current.gateway} but delivery is unconfirmed ` +
+        `(transport message ${current.transportReceiptId ?? 'unknown'}); it is not sent again. Confirm at the agency: ` +
+        'if the agency has it, record its acknowledgement against this transmission; if it does not, release it ' +
+        'before transmitting again.',
+      { status: current.status, transportMessageId: current.transportReceiptId },
+    );
+  }
+  if (current.status === 'transmitting') throw transmitInProgress(id, current);
+  if (current.status !== 'prepared') {
+    throw new IcsrTransmissionError(
+      'INVALID_STATE',
+      `ICSR transmission ${id} is '${current.status}'; only a prepared transmission is sent. Prepare a follow-up or nullification as a new transmission.`,
+      { status: current.status },
+    );
+  }
+}
+
+/**
+ * Claim the row (prepared → transmitting) before a byte is sent. The status
+ * check in assertTransmittable is a read; two transmits could both pass it and
+ * both post the report. Only one conditional UPDATE can match; the other is
+ * refused INVALID_STATE. A failed UPDATE throws, and nothing is sent.
+ * 2026-09-23 (W5/D7, MDN final pass, repair): new.
+ */
+async function claimForTransmit(id: string, ctx: IcsrTxCtx, current: IndIcsrTransmissionRow): Promise<void> {
+  const [claimed] = await db
+    .update(indIcsrTransmissions)
+    .set({ status: 'transmitting', updatedAt: new Date() })
+    .where(and(
+      eq(indIcsrTransmissions.id, id),
+      eq(indIcsrTransmissions.organizationId, ctx.organizationId),
+      eq(indIcsrTransmissions.status, 'prepared'),
+    ))
+    .returning();
+  if (!claimed) throw transmitInProgress(id, current);
+}
+
+/** A transmit attempt on a claimed ('transmitting') row. */
+interface ClaimedAttempt {
+  id: string;
+  ctx: IcsrTxCtx;
+  current: IndIcsrTransmissionRow;
+  transmitAttemptAudit: AuditRowOutcome[];
+}
+
+/**
+ * The error transmitIcsrTransmission throws when the transport threw. A
+ * 'receipt-unproven' outcome locks the row (recordTransmissionUnconfirmed).
+ * Every other transport error is thrown before a byte could reach the agency
+ * (not ready, not configured, a credential file unreadable) or classed
+ * NOT_DELIVERED / REFUSED_BY_AGENCY by the shared classifier: the agency cannot
+ * hold the report, so the claim is released (2026-09-23, repair).
+ */
+async function transmitFailure(attempt: ClaimedAttempt, err: unknown): Promise<IcsrTransmissionError> {
+  const { id, ctx, current, transmitAttemptAudit } = attempt;
+  if (err instanceof IcsrGatewayTransmitError && err.stage === 'receipt-unproven') {
+    return recordTransmissionUnconfirmed(id, ctx, current, err, transmitAttemptAudit);
+  }
+  const released = await releaseClaim(id, ctx);
+  if (err instanceof IcsrNotReadyError) {
+    return new IcsrTransmissionError('NOT_READY', `${err.message}${released.note}`, { gaps: err.gaps, transmitAttemptAudit, status: released.status });
+  }
+  if (err instanceof IcsrGatewayNotConfiguredError) {
+    return new IcsrTransmissionError('GATEWAY_NOT_CONFIGURED', `${err.message}${released.note}`, { transmitted: false, transmitAttemptAudit, status: released.status });
+  }
+  const reason = err instanceof Error ? err.message : String(err);
+  logger.error('ICSR gateway transmit failed', { id, gateway: current.gateway, organizationId: ctx.organizationId, reason, status: released.status });
+  const state = released.status === 'prepared'
+    ? "the transmission remains 'prepared'"
+    : `the transmission is held 'transmitting'${released.note}`;
+  return new IcsrTransmissionError(
+    'GATEWAY_TRANSMIT_FAILED',
+    `ICSR was NOT transmitted to ${current.gateway}; ${state}. Gateway transport failed: ${reason}`,
+    { transmitted: false, transmitAttemptAudit, status: released.status },
+  );
+}
+
+/**
+ * What transmitIcsrTransmission throws when markIcsrTransmitted refused or
+ * failed. Its refusal's code and sentence are kept exactly as it framed them;
+ * only what happened to the attempt row is added, which the caller would
+ * otherwise lose (WO-16C #133).
+ * 2026-09-23 (W5/D7, MDN final pass, repair): a simulated / statusless receipt
+ * reached no agency, so the claim is released. A REAL receipt that could not be
+ * recorded (no valid timestamp, a failed UPDATE) leaves the row 'transmitting':
+ * the agency has the report, and the row must not be sent again.
+ */
+async function receiptNotRecorded(attempt: ClaimedAttempt, receipt: IcsrTransmitReceipt, err: unknown): Promise<unknown> {
+  const { id, ctx, current, transmitAttemptAudit } = attempt;
+  const simulated = receipt.simulated || receipt.status !== 'transmitted';
+  const released = simulated ? await releaseClaim(id, ctx) : { status: 'transmitting' as const, note: '' };
+  if (err instanceof IcsrTransmissionError) {
+    const held = !simulated
+      ? ` The agency accepted it (receipt ${receipt.receiptId}); the row is held 'transmitting' and will not be sent again.`
+      : released.status === 'prepared' ? " The transmission remains 'prepared'." : released.note;
+    return new IcsrTransmissionError(err.code, `${err.message}${held}`, { ...err.details, transmitAttemptAudit, status: released.status });
+  }
+  logger.error('ICSR receipt could not be recorded; row held transmitting', {
+    id, gateway: current.gateway, organizationId: ctx.organizationId, receiptId: receipt.receiptId, simulated,
+    reason: err instanceof Error ? err.message : String(err),
+  });
+  return err;
+}
+
+/** INVALID_STATE for a row another transmit holds (or held when it was interrupted). */
+function transmitInProgress(id: string, current: IndIcsrTransmissionRow): IcsrTransmissionError {
+  return new IcsrTransmissionError(
+    'INVALID_STATE',
+    `ICSR transmission ${id} is already being transmitted to ${current.gateway} (a transmit is in progress, or was ` +
+      'interrupted); it is not sent again. If no transmit is running, confirm at the agency whether it has the ' +
+      'report before it is released.',
+    { status: 'transmitting' },
+  );
+}
+
+/**
+ * Return a claimed row ('transmitting') to 'prepared' after an attempt that
+ * cannot have reached the agency. If the UPDATE fails the row stays
+ * 'transmitting' — locked, the safe side — and `note` says so for the caller.
+ * 2026-09-23 (W5/D7, MDN final pass, repair): new.
+ */
+async function releaseClaim(id: string, ctx: IcsrTxCtx): Promise<{ status: 'prepared' | 'transmitting'; note: string }> {
+  try {
+    await db
+      .update(indIcsrTransmissions)
+      .set({ status: 'prepared', updatedAt: new Date() })
+      .where(and(
+        eq(indIcsrTransmissions.id, id),
+        eq(indIcsrTransmissions.organizationId, ctx.organizationId),
+        eq(indIcsrTransmissions.status, 'transmitting'),
+      ))
+      .returning();
+    return { status: 'prepared', note: '' };
+  } catch (err: unknown) {
+    const reason = err instanceof Error ? err.message : String(err);
+    logger.error('ICSR claim could not be released; row held transmitting', { id, organizationId: ctx.organizationId, reason });
+    return {
+      status: 'transmitting',
+      note: ` Returning it to 'prepared' failed (${reason}); it stays 'transmitting' and will not be sent until released.`,
+    };
+  }
+}
+
+/**
+ * Record a transmit whose delivery is unconfirmed — the transport's stage
+ * 'receipt-unproven': a 2xx not tied to this message, a 5xx, or a failure
+ * after the message was released to an authenticated gateway — and return the
+ * error transmitIcsrTransmission throws.
+ *
+ * The row becomes 'transmission_unconfirmed' (a status only this function
+ * writes; the column is TEXT with no CHECK) with the AS2 / transport message id
+ * this platform sent in transport_receipt_id — what the agency files it under
+ * — and one `errors` entry holding the agency's response verbatim, the HTTP
+ * status and the reason. It is audited IND_ICSR_TRANSMISSION_UNCONFIRMED. The
+ * error is never framed as "NOT transmitted" or `transmitted: false`: the
+ * agency may hold the report.
+ *
+ * transmitIcsrTransmission refuses to send from this status;
+ * recordIcsrAcknowledgment accepts the agency ACK from it (the ACK proves
+ * receipt). No operator release path exists yet (residual): the row stays
+ * locked, which is the safe side.
+ *
+ * If the UPDATE fails, the row stays 'transmitting' (claimed before the send),
+ * which is locked too; the error says so, and the attempt row
+ * (transmitAttemptAudit) and the audit row below still record that the agency
+ * may hold the report. (2026-09-23, repair: before the claim it stayed
+ * 'prepared' and could be sent again.)
+ *
+ * 2026-09-23 (W5/D7, MDN final pass): new. A 'receipt-unproven' outcome was
+ * reported "ICSR was NOT transmitted … the transmission remains 'prepared'",
+ * and the next transmit sent the same report again.
+ */
+async function recordTransmissionUnconfirmed(
+  id: string,
+  ctx: IcsrTxCtx,
+  current: IndIcsrTransmissionRow,
+  err: IcsrGatewayTransmitError,
+  transmitAttemptAudit: AuditRowOutcome[],
+): Promise<IcsrTransmissionError> {
+  const entry = {
+    kind: 'transmission_unconfirmed',
+    stage: err.stage,
+    reason: err.message,
+    httpStatus: err.httpStatus,
+    agencyResponseRaw: err.agencyResponseRaw,
+    transportMessageId: err.transportMessageId,
+    recordedAt: new Date().toISOString(),
+  };
+  let recordFailure: string | null = null;
+  try {
+    await db
+      .update(indIcsrTransmissions)
+      .set({
+        status: 'transmission_unconfirmed',
+        transportReceiptId: err.transportMessageId,
+        errors: [entry] as unknown as Record<string, unknown>[],
+        updatedAt: new Date(),
+      })
+      .where(and(eq(indIcsrTransmissions.id, id), eq(indIcsrTransmissions.organizationId, ctx.organizationId)))
+      .returning();
+  } catch (writeErr: unknown) {
+    recordFailure = writeErr instanceof Error ? writeErr.message : String(writeErr);
+  }
+  const audit = await recordAuditRow({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    action: 'IND_ICSR_TRANSMISSION_UNCONFIRMED',
+    resourceType: 'ind_icsr_transmission',
+    resourceId: id,
+    details: { gateway: current.gateway, ...entry, statusRecorded: recordFailure === null, recordFailure },
+  });
+  logger.warn('ICSR delivery unconfirmed', {
+    id, gateway: current.gateway, organizationId: ctx.organizationId,
+    transportMessageId: err.transportMessageId, httpStatus: err.httpStatus, recordFailure,
+  });
+  const lock = recordFailure === null
+    ? `Transmission ${id} is recorded 'transmission_unconfirmed' and will not be sent again.`
+    : `Recording that failed (${recordFailure}); the row stays 'transmitting' and will not be sent again.`;
+  return new IcsrTransmissionError(
+    'TRANSMISSION_UNCONFIRMED',
+    `${err.message} ${lock} Confirm at the agency: if it has the report, record its acknowledgement against ` +
+      'this transmission; if it does not, release the transmission before sending again.',
+    {
+      deliveryUnconfirmed: true,
+      status: recordFailure === null ? 'transmission_unconfirmed' : 'transmitting',
+      transportMessageId: err.transportMessageId,
+      httpStatus: err.httpStatus,
+      audit,
+      transmitAttemptAudit,
+    },
+  );
 }
 
 /**
  * Record an agency acknowledgment (ACK) against a transmission: parse it and set
  * the status to 'acknowledged' (AA/AE) or 'rejected' (AR), storing the ack code
- * and any errors. Audited, org-scoped.
+ * and any errors. Accepted from 'transmitted' and 'transmission_unconfirmed'.
+ * Audited, org-scoped.
  */
 export async function recordIcsrAcknowledgment(
   id: string,
@@ -374,10 +633,14 @@ export async function recordIcsrAcknowledgment(
       'The acknowledgement carries no readable ICH ACK code (AA/AE/AR); nothing was recorded.',
     );
   }
-  if (current.status !== 'transmitted') {
+  // 2026-09-23 (W5/D7, MDN final pass): 'transmission_unconfirmed' is
+  // accepted too — the agency's own ACK for this message number is the proof
+  // of receipt the transport could not give.
+  if (current.status !== 'transmitted' && current.status !== 'transmission_unconfirmed') {
     throw new IcsrTransmissionError(
       'INVALID_STATE',
-      `An acknowledgement can only be recorded against a transmitted report (current: ${current.status}).`,
+      `An acknowledgement can only be recorded against a transmitted report, or one whose delivery is ` +
+        `unconfirmed (current: ${current.status}).`,
     );
   }
   if (ack.acknowledgedMessageNumber && ack.acknowledgedMessageNumber !== current.messageNumber) {
@@ -411,7 +674,7 @@ export async function recordIcsrAcknowledgment(
     action: 'IND_ICSR_ACKNOWLEDGED',
     resourceType: 'ind_icsr_transmission',
     resourceId: id,
-    details: { ackCode: ack.ackCode, status },
+    details: { ackCode: ack.ackCode, status, previousStatus: current.status },
   });
   return { ...(row as IndIcsrTransmissionRow), audit };
 }
