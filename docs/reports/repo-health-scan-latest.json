@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T03:18:01.642Z",
+  "generatedAt": "2026-09-23T03:26:49.157Z",
   "git": {
-    "sha": "15914bdee6f3eb80ad620c909ab1075cf97b0442",
+    "sha": "987def437acb0c6205d2cb13ae0c3a58ac9248ec",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2056,7 +2056,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 143353
+        "bytes": 143475
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2108,7 +2108,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 119330
+        "bytes": 119631
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2214,7 +2214,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 3423
+        "lines": 3424
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2282,7 +2282,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 2457
+        "lines": 2462
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
