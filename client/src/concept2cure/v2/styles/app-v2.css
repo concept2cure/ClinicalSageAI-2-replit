@@ -488,8 +488,17 @@
 .c2c-v2 .reg-tbl th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);font-weight:600;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--bg-050);white-space:nowrap;}
 .c2c-v2 .reg-tbl td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text-200);vertical-align:middle;}
 .c2c-v2 .reg-tbl tr:last-child td{border-bottom:0;}
+/* A table cell whose own text opens the row. Reset to the cell's type so the
+   button is invisible as a button, and underline on hover so it reads as the
+   affordance it already was. */
+.c2c-v2 .tbl-name-btn{border:0;background:none;padding:0;font:inherit;font-weight:600;color:inherit;text-align:left;cursor:pointer;}
+.c2c-v2 .tbl-name-btn:hover{text-decoration:underline;}
 .c2c-v2 .reg-group td{background:var(--bg-050);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);font-weight:700;padding:6px 12px;}
 .c2c-v2 .reg-mkt{display:flex;align-items:center;gap:10px;}
+/* The market cell is the control that expands the dossier row. Reset to the
+   cell so it is invisible as a button, and full width so the click target is
+   the whole cell it replaced. */
+.c2c-v2 .reg-mkt-btn{border:0;background:none;padding:0;margin:0;font:inherit;color:inherit;text-align:left;width:100%;cursor:pointer;}
 .c2c-v2 .reg-flag{width:26px;height:18px;border-radius:3px;background:var(--bg-200);color:var(--text-300);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .c2c-v2 .reg-mkt-n{font-weight:500;color:var(--text-100);}
 .c2c-v2 .reg-mkt-a{font-size:10.5px;color:var(--text-400);}
@@ -1107,6 +1116,27 @@
 .c2c-v2 .pj-act-n{color:var(--text-500);font-size:10.5px;}
 .c2c-v2 .pj-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;}
 .c2c-v2 .pj-card-h{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+/* CmcModule renders three lines through .pj-dim — the loading note, the
+   compiled-completeness line and the lineage line — and no sheet has ever
+   defined it, so all three have been drawing at full body emphasis in a
+   surface where they are meant to be subordinate. --text-400 is the ramp
+   the rest of the .pj-* family uses for exactly this. */
+.c2c-v2 .pj-dim{font-size:11.5px;color:var(--text-400);}
+
+/* IND Module 1 forms — the block stating what was read from the program record.
+   It was styled entirely inline, so .indf-record and .indf-fact were class
+   names no sheet defined. The one substantive change is the border: it was
+   drawn in --text-400, a body-TEXT colour, which put a hairline at full text
+   weight around what is meant to be a quiet restatement of record values.
+   --border is the token for a hairline. --radius-md is 6px, the literal it
+   replaces. */
+.c2c-v2 .indf-record{border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 12px;margin-bottom:12px;}
+.c2c-v2 .indf-record-lead{font-size:12px;color:var(--text-400);margin-bottom:6px;}
+.c2c-v2 .indf-record-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,max-content));gap:6px 24px;}
+.c2c-v2 .indf-fact{margin:0;}
+.c2c-v2 .indf-fact dt{font-size:11px;color:var(--text-400);text-transform:uppercase;letter-spacing:.04em;}
+.c2c-v2 .indf-fact dd{margin:0;font-size:13px;font-weight:600;}
+.c2c-v2 .indf-fact dd .indf-missing{font-weight:400;color:var(--text-400);}
 .c2c-v2 .pj-card-h h3{font-size:12.5px;font-weight:600;color:var(--text-100);margin:0;}
 .c2c-v2 .pj-card-h-go{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;color:var(--accent-200);white-space:nowrap;}
 .c2c-v2 .pj-card-h-go:hover{color:var(--accent-100);}.c2c-v2 .pj-card-h-go svg{width:12px;height:12px;}
@@ -1763,6 +1793,11 @@
 .c2c-v2 .ana-drive-title{font-size:12px;font-weight:600;color:var(--text-100);white-space:nowrap;}
 .c2c-v2 .ana-drive-step{font-size:12px;color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 .c2c-v2 .ana-drive-step-ic{display:inline-flex;vertical-align:-.12em;margin-right:5px;color:var(--text-400);}
+.c2c-v2 .ana-drive-step.is-failed{color:var(--error);}
+.c2c-v2 .ana-drive-ctl{position:relative;display:inline-flex;align-items:center;gap:6px;}
+.c2c-v2 .ana-drive-ctl .ana-drive-dot{animation:none;}
+.c2c-v2 .ana-drive-ctl .ana-drive-dot[data-on="false"]{background:var(--text-400);}
+.c2c-v2 .ana-drive-ctl-menu{left:0;right:auto;min-width:240px;}
 .c2c-v2 .ana-drive-actions{display:flex;align-items:center;gap:6px;margin-left:4px;flex:none;}
 .c2c-v2 .ana-drive-btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:11.5px;color:var(--text-100);background:var(--bg-100);border:1px solid var(--border);border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:color 200ms ease-out,border-color 200ms ease-out;}
 .c2c-v2 .ana-drive-btn:hover{border-color:var(--text-300);}

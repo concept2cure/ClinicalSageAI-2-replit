@@ -1,0 +1,15 @@
+ × client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > shows the filed document by title once the read settles, with the spine still the open folder 160ms
+   → Unable to find an element by: [data-testid="vault-uploads-lane"]
+ × client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it 5025ms
+   → Unable to find an element by: [data-testid="vault-uploads-lane"]
+ × client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > a vault with no uploads says so in the lane rather than rendering nothing 5027ms
+   → Unable to find an element by: [data-testid="vault-uploads-lane"]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > shows the filed document by title once the read settles, with the spine still the open folder
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-uploads-lane"]
+ FAIL  client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-uploads-lane"]
+ FAIL  client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > a vault with no uploads says so in the lane rather than rendering nothing
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-uploads-lane"]
+ Test Files  1 failed (1)
+      Tests  3 failed (3)

@@ -42,6 +42,7 @@ import { authenticateToken } from '../middleware/auth.js';
 import { pool } from '../db.js';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { launchScopeEnforced } from '../services/entitlements/launch-scope.js';
 
 const logger = createScopedLogger('module-subscriptions');
 
@@ -59,7 +60,10 @@ router.get('/catalog', async (req: Request, res: Response) => {
     }
 
     const catalog = await getModuleCatalog(Number(orgId));
-    return res.json({ modules: catalog });
+    // `launchScope.enforced` is the deployment's answer, sent with the rows it
+    // applies to, so the catalog can label a 'later' module "in a later
+    // release" only when that is actually what locks it.
+    return res.json({ modules: catalog, launchScope: { enforced: launchScopeEnforced() } });
   } catch (error) {
     logger.error('catalog error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load module catalog' });

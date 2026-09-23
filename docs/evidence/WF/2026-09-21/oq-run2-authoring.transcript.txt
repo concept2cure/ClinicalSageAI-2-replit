@@ -1,0 +1,32 @@
+
+> concept2cure-riai@1.0.0 validation:oq
+> node tests/validation/run-all.mjs authoring
+
+
+=== authoring ===
+  OQ-AUTH-00  pass
+  OQ-AUTH-01  pass
+  OQ-AUTH-02  pass
+  OQ-AUTH-03  pass
+  OQ-AUTH-04  pass
+  OQ-AUTH-05  pass
+  OQ-AUTH-06  pass
+  OQ-AUTH-07  pass
+  OQ-AUTH-08  pass
+  OQ-AUTH-09  pass
+  OQ-AUTH-10  pass
+  OQ-AUTH-17  pass
+  OQ-AUTH-17b  FAIL  (authoring review request is not on the Review board queue)
+  OQ-AUTH-15  FAIL  (a draft was returned without a provider)
+  OQ-AUTH-16  deviation  (AnA unavailable: no provider configured; unexpected non-5xx answer recorded for review.)
+  OQ-AUTH-11a  pass
+  OQ-AUTH-11b  pass
+  OQ-AUTH-11  pass
+  OQ-AUTH-12  pass
+  OQ-AUTH-13  FAIL  (wrong pin expected 401, got 409)
+  OQ-AUTH-14  not-executed  (prerequisite step OQ-AUTH-13 did not pass)
+  OQ-AUTH-18  pass
+  OQ-AUTH-19  pass
+  OQ-AUTH-20  pass
+
+OQ-003 Authoring: 19 pass, 3 fail, 1 deviation, 1 not-executed → docs/evidence/W3/2026-09-20/OQ-AUTHORING

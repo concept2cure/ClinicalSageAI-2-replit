@@ -4,6 +4,7 @@ import { EmptyState, connected, liveGetOrNull, unwrapList, useLiveData } from '.
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { assessmentState } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { useDialog } from '../useDialog';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import '../styles/project-home-v2.css';
@@ -329,6 +330,62 @@ interface RunCtrl {
 }
 
 /* ════ Orchestration -- workflow runs & readiness ════ */
+
+/* Its own component so `useDialog` mounts with the panel.
+   Called from Orchestration itself the hook would run on the surface's mount:
+   the Escape listener would be live while the dialog was closed, and the
+   focus-on-open effect would fire against a ref that was still null. The
+   dialog previously declared role/aria-modal but had no Escape path and never
+   moved focus into the panel or returned it to the opener. */
+function NewRunDialog({
+  progLabel, templates, busyRun, onStart, onClose,
+}: {
+  progLabel: string | null;
+  templates: Array<{ templateId: string; name: string; description?: string }>;
+  busyRun: string;
+  onStart: (templateId: string, name: string) => void | Promise<void>;
+  onClose: () => void;
+}) {
+  const dialogRef = useDialog(onClose);
+  return (
+    <div className="orch-newrun-bd" onClick={onClose}>
+      <div
+        className="orch-newrun"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Start a workflow run"
+        tabIndex={-1}
+        ref={dialogRef}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="orch-newrun-h">Start a workflow run</div>
+        <p className="orch-newrun-sub">
+          Runs against {progLabel || 'the open program'}. Every step, object touched and output
+          is recorded for Part 11 traceability.
+        </p>
+        <div className="orch-newrun-list">
+          {templates.map((t) => (
+            <button
+              key={t.templateId}
+              className="orch-newrun-t"
+              disabled={Boolean(busyRun)}
+              onClick={() => void onStart(t.templateId, t.name)}
+            >
+              <span className="orch-newrun-tn">{t.name}</span>
+              {t.description && <span className="orch-newrun-td">{t.description}</span>}
+              <span className="orch-newrun-go">
+                {busyRun === 'new:' + t.templateId ? 'Starting…' : I.right}
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="orch-newrun-f">
+          <button className="btn ghost" onClick={onClose}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const [view, setView] = useState('runs');
@@ -892,46 +949,19 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   return (
     <div className="page-inner">
       {newRunOpen && (
-        <div className="orch-newrun-bd" onClick={() => setNewRunOpen(false)}>
-          <div
-            className="orch-newrun"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Start a workflow run"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="orch-newrun-h">Start a workflow run</div>
-            <p className="orch-newrun-sub">
-              Runs against {progLabel || 'the open program'}. Every step, object touched and output
-              is recorded for Part 11 traceability.
-            </p>
-            <div className="orch-newrun-list">
-              {templates.map((t) => (
-                <button
-                  key={t.templateId}
-                  className="orch-newrun-t"
-                  disabled={Boolean(busyRun)}
-                  onClick={() => void startRun(t.templateId, t.name)}
-                >
-                  <span className="orch-newrun-tn">{t.name}</span>
-                  {t.description && <span className="orch-newrun-td">{t.description}</span>}
-                  <span className="orch-newrun-go">
-                    {busyRun === 'new:' + t.templateId ? 'Starting…' : I.right}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <div className="orch-newrun-f">
-              <button className="btn ghost" onClick={() => setNewRunOpen(false)}>Cancel</button>
-            </div>
-          </div>
-        </div>
+        <NewRunDialog
+          progLabel={progLabel}
+          templates={templates}
+          busyRun={busyRun}
+          onStart={startRun}
+          onClose={() => setNewRunOpen(false)}
+        />
       )}
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Orchestration{progLabel ? <> {I.dot} {progLabel}</> : null}</div>
           <h1 className="ph-title">Workflow runs &amp; readiness</h1>
-          <div className="ph-sub">The persisted execution engine -- <code>workflowRuns</code> (versioned, pausable, replayable), human-in-the-loop <code>approvalCheckpoints</code>, and deterministic <code>readinessEvaluations</code>. Every step, object touched and output is recorded for Part-11 traceability.</div>
+          <div className="ph-sub">The persisted execution engine — <code>workflowRuns</code> (versioned, pausable, replayable), human-in-the-loop <code>approvalCheckpoints</code>, and deterministic <code>readinessEvaluations</code>. Every step, object touched and output is recorded for Part-11 traceability.</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn ghost" onClick={() => onAsk && onAsk('Run a pre-dispatch readiness evaluation for ' + (progLabel || 'this program'))}>{I.sparkles} Ask AnA</button>
@@ -1071,7 +1101,16 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             <div className="orch-sec-l">Objects touched</div>
             <div className="orch-chips">
               {sel.touched.map((t, i) => (
-                <span key={i} className="orch-chip" onClick={() => onNav && onNav('document-authoring')} style={{ cursor: 'pointer' }}>{t}</span>
+                /* A real <button>: this navigates to Document Authoring, and as a
+                   <span onClick> it was invisible to the tab order and could not
+                   be activated with Enter or Space. */
+                <button
+                  key={i}
+                  type="button"
+                  className="orch-chip"
+                  onClick={() => onNav && onNav('document-authoring')}
+                  style={{ background: 'none', border: 0, font: 'inherit', cursor: 'pointer' }}
+                >{t}</button>
               ))}
             </div>
             <div className="orch-sec-l">Outputs created</div>
@@ -1137,7 +1176,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                 {c.gateType === 'auto_on_pass' ? (
                   <div className="orch-note">{I.zap}<span>Gate fires automatically when its run reports zero validation errors.{c.run ? <> Linked run: <b>{c.run}</b>.</> : null}</span></div>
                 ) : c.approvers.length === 0 ? (
-                  <div className="orch-note">{I.clock}<span>No decisions recorded yet{c.status ? <> -- gate is <b>{c.status.replace(/_/g, ' ')}</b></> : null}.</span></div>
+                  <div className="orch-note">{I.clock}<span>No decisions recorded yet{c.status ? <> — gate is <b>{c.status.replace(/_/g, ' ')}</b></> : null}.</span></div>
                 ) : c.approvers.map((a, i) => (
                   <div key={i} className="orch-appr">
                     <span className="orch-appr-av">{a.who.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>
@@ -1166,6 +1205,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                       <>
                         <input
                           className="orch-gate-reason"
+                          aria-label={`Why gate "${c.label}" is being rejected`}
                           placeholder="Why is this gate being rejected?"
                           value={rejectReason}
                           onChange={(e) => setRejectReason(e.target.value)}

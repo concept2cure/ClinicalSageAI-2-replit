@@ -34,6 +34,14 @@ export interface CatalogSearchHit {
   documentKind: string | null;
   purpose: string | null;
   summary: string | null;
+  /**
+   * The figures AnA recorded from the document after reading it — study ids,
+   * doses, endpoints, batch numbers, dates, as the text stated them. It was
+   * written, embedded into the very vector this search matches on, and then
+   * left out of the result: a hit said "this file is about X" and made the
+   * reader open the file again for the numbers it had already extracted.
+   */
+  keyData: unknown;
   folderId: string | null;
   ctdSection: string | null;
   placementStatus: string;
@@ -85,7 +93,7 @@ export async function searchCatalog(
     const res = await pool.query(
       `SELECT d.id, d.program_id, rp.name AS program_name, d.file_name, d.document_title,
               d.folder_id, d.ctd_section, d.placement_status,
-              c.document_kind, c.purpose, c.summary,
+              c.document_kind, c.purpose, c.summary, c.key_data,
               1 - (c.embedding <=> $2::vector) AS similarity
          FROM vault.document_catalog c
          JOIN vault.documents d ON d.id = c.document_id AND d.deleted_at IS NULL
@@ -106,6 +114,7 @@ export async function searchCatalog(
         documentKind: r.document_kind,
         purpose: r.purpose,
         summary: r.summary,
+        keyData: r.key_data ?? null,
         folderId: r.folder_id,
         ctdSection: r.ctd_section,
         placementStatus: r.placement_status,

@@ -100,8 +100,20 @@ export const SPAN_USAGES: readonly SpanUsage[] = [
  *                           accepted by a human (asserted_by + asserted_at) —
  *                           both named, so neither is credited with the other's
  *                           part. migrations/20260907 adds it.
+ *   machine_draft           drafted by a machine author and accepted by NOBODY:
+ *                           asserted_by and asserted_at are NULL, and the CHECK
+ *                           requires them to be. Who ASKED for the draft is
+ *                           recorded in created_by, which is a different claim.
+ *                           migrations/20260908 adds it.
  */
-export type SpanProvenanceKind = 'cre_evidence_source' | 'author_assertion' | 'accepted_machine_draft';
+export type SpanProvenanceKind =
+  | 'cre_evidence_source'
+  | 'author_assertion'
+  | 'accepted_machine_draft'
+  | 'machine_draft';
+
+/** The two machine-authored kinds, discriminated by whether anyone accepted. */
+export type MachineSpanKind = 'accepted_machine_draft' | 'machine_draft';
 
 /**
  * Whether a span still stands against its source's current content. Same
@@ -149,24 +161,33 @@ export interface MachineSpanInput extends DocumentRef {
   spanText: string;
   /** The machine author that drafted the words — a MACHINE_AUTHOR_IDS key. */
   machineAuthorId: string;
-  /** The human who accepted them: the source of record for the acceptance. */
-  assertedBy: string;
+  /**
+   * The human who accepted them, when one has. ABSENT means nobody has — the
+   * row is written as `machine_draft` with asserted_by/asserted_at NULL, which
+   * the CHECK requires. The kind is DERIVED from this rather than passed
+   * separately so a caller cannot state one and supply the other.
+   */
+  assertedBy?: string | null;
   assertedAt?: Date;
   signatureId?: string | null;
   usage?: SpanUsage;
   confidence?: number | null;
+  /** Who asked for the draft. A different claim from asserting it. */
   createdBy?: string | null;
 }
 
-/** A live accepted-machine-draft span, as the carry-forward step reads it. */
+/** A live machine-authored span, as the carry-forward step reads it. */
 export interface LiveMachineSpan {
   charStart: number;
   charEnd: number;
   spanTextSha256: string;
+  provenanceKind: MachineSpanKind;
   machineAuthorId: string;
-  assertedBy: string;
-  assertedAt: Date;
+  /** Null exactly when provenanceKind is 'machine_draft'. */
+  assertedBy: string | null;
+  assertedAt: Date | null;
   signatureId: string | null;
+  createdBy: string | null;
 }
 
 export interface SpanLineageRow {
@@ -485,10 +506,25 @@ export async function replaceAuthorSpans(
     written++;
   }
 
-  // Retire author assertions for this document that the new text no longer
-  // contains. Ranges are compared as a set of (start, end) pairs; anything not
-  // in it describes characters that are gone or have moved.
-  const keep = spans.map((s) => `${s.charStart}:${s.charEnd}`);
+  /* Retire author assertions for this document that the new text no longer
+     contains — keyed on (start, end, ASSERTER), because that is what
+     recordAuthorSpan above upserts on (its lookup carries
+     `AND asserted_by = $6`).
+
+     On range alone the two disagreed, and a second author who edited a clause
+     to the SAME LENGTH got a new row for their range while the first author's
+     row — same range, different asserter — stayed live because its range was
+     still in the keep set. Two live author_assertion rows then named different
+     people as having asserted the same characters, over text only one of them
+     wrote, and the Data Origins panel reported whichever the ORDER BY reached
+     first. The source-span replacer below already keys on all three columns of
+     its own identity; this is the same rule.
+
+     COALESCE because a NULL in a SQL concatenation makes the whole expression
+     NULL, and `NULL <> ALL (...)` is NULL rather than true — which would stop
+     retiring instead of starting. author_assertion always carries an asserter,
+     but the machine replacer that shares this shape does not. */
+  const keep = spans.map((s) => `${s.charStart}:${s.charEnd}:${p.assertedBy}`);
   const { rowCount } = await exec.query(
     `UPDATE document_span_lineage
         SET deleted_at = NOW(), updated_at = NOW()
@@ -497,7 +533,7 @@ export async function replaceAuthorSpans(
         AND document_id = $3
         AND provenance_kind = 'author_assertion'
         AND deleted_at IS NULL
-        AND (char_start || ':' || char_end) <> ALL($4::text[])`,
+        AND (char_start || ':' || char_end || ':' || COALESCE(asserted_by, '')) <> ALL($4::text[])`,
     [orgId, ref.documentTable, ref.documentId, keep.length > 0 ? keep : ['']],
   );
 
@@ -530,16 +566,23 @@ export async function replaceAuthorSpans(
  * best-effort-lineage failure the save gate exists to close.
  */
 /**
- * Record one accepted machine-draft span: the machine author that drafted the
- * words and the human who accepted them — both named, so the record credits
- * neither with the other's part. Idempotent per (document, range, acceptor):
- * re-recording refreshes the hash and never duplicates.
+ * Record one machine-authored span.
+ *
+ * The KIND IS DERIVED, never passed: an `assertedBy` makes it an
+ * `accepted_machine_draft` (a human stood behind the machine's words); its
+ * absence makes it a `machine_draft` (nobody has). A caller therefore cannot
+ * state one kind and supply the evidence for the other, and the database's
+ * kind_shape CHECK holds the same line from below — a machine_draft row with
+ * an asserter is refused outright.
+ *
+ * Idempotent per (document, range, kind, acceptor): re-recording refreshes the
+ * hash and never duplicates.
  */
 export async function recordMachineSpan(
   orgId: number,
   p: MachineSpanInput,
   exec: Queryable = defaultExec,
-): Promise<{ id: string; created: boolean }> {
+): Promise<{ id: string; created: boolean; kind: MachineSpanKind }> {
   assertSpan(p.charStart, p.charEnd);
   const usage = p.usage ?? 'asserted';
   assertUsage(usage);
@@ -547,22 +590,23 @@ export async function recordMachineSpan(
     throw new SpanLineageError('documentTable and documentId are required');
   }
   if (!p.machineAuthorId) {
-    throw new SpanLineageError('machineAuthorId is required for an accepted machine draft');
-  }
-  if (!p.assertedBy) {
-    throw new SpanLineageError('assertedBy (the accepting human) is required for an accepted machine draft');
+    throw new SpanLineageError('machineAuthorId is required for a machine-authored span');
   }
 
-  const assertedAt = p.assertedAt ?? new Date();
+  const accepted = typeof p.assertedBy === 'string' && p.assertedBy.length > 0;
+  const kind: MachineSpanKind = accepted ? 'accepted_machine_draft' : 'machine_draft';
+  const assertedBy = accepted ? p.assertedBy! : null;
+  const assertedAt = accepted ? (p.assertedAt ?? new Date()) : null;
 
   const existing = await exec.query<{ id: string }>(
     `SELECT id FROM document_span_lineage
       WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
         AND char_start = $4 AND char_end = $5
-        AND provenance_kind = 'accepted_machine_draft' AND asserted_by = $6
+        AND provenance_kind = $6
+        AND COALESCE(asserted_by, '') = COALESCE($7::text, '')
         AND deleted_at IS NULL
       LIMIT 1`,
-    [orgId, p.documentTable, p.documentId, p.charStart, p.charEnd, p.assertedBy],
+    [orgId, p.documentTable, p.documentId, p.charStart, p.charEnd, kind, assertedBy],
   );
 
   if (existing.rows.length > 0) {
@@ -585,7 +629,7 @@ export async function recordMachineSpan(
         orgId,
       ],
     );
-    return { id: existing.rows[0].id, created: false };
+    return { id: existing.rows[0].id, created: false, kind };
   }
 
   const inserted = await exec.query<{ id: string }>(
@@ -594,7 +638,7 @@ export async function recordMachineSpan(
        char_start, char_end, span_text_sha256,
        provenance_kind, machine_author_id, asserted_by, asserted_at, signature_id,
        usage, confidence, organization_id, created_by
-     ) VALUES ($1,$2,$3,$4,$5,$6,'accepted_machine_draft',$7,$8,$9,$10,$11,$12,$13,$14)
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
      RETURNING id`,
     [
       p.documentTable,
@@ -603,23 +647,33 @@ export async function recordMachineSpan(
       p.charStart,
       p.charEnd,
       hashSpanText(p.spanText),
+      kind,
       p.machineAuthorId,
-      p.assertedBy,
+      assertedBy,
       assertedAt,
       p.signatureId ?? null,
       usage,
       p.confidence ?? null,
       orgId,
-      p.createdBy ?? p.assertedBy,
+      // Who asked, when nobody has accepted. Never a stand-in for an asserter:
+      // the asserted_by column above is NULL and the CHECK requires it to be.
+      p.createdBy ?? assertedBy,
     ],
   );
 
-  return { id: inserted.rows[0].id, created: true };
+  return { id: inserted.rows[0].id, created: true, kind };
 }
 
 /**
- * The document's live accepted-machine-draft spans — what the carry-forward
- * step in machine-attribution.ts matches the new content's clauses against.
+ * The document's live machine-authored spans, BOTH kinds — what the
+ * carry-forward step in machine-attribution.ts matches the new content's
+ * clauses against.
+ *
+ * Both are returned because both survive an unrelated edit: an accepted draft
+ * stays accepted, and an unaccepted one stays unaccepted. A human saving the
+ * document is not a human accepting each clause of it, so carrying a
+ * machine_draft forward as anything else would manufacture the acceptance this
+ * kind exists to withhold.
  */
 export async function listLiveMachineSpans(
   orgId: number,
@@ -630,16 +684,18 @@ export async function listLiveMachineSpans(
     char_start: number;
     char_end: number;
     span_text_sha256: string;
+    provenance_kind: MachineSpanKind;
     machine_author_id: string;
-    asserted_by: string;
-    asserted_at: Date | string;
+    asserted_by: string | null;
+    asserted_at: Date | string | null;
     signature_id: string | null;
+    created_by: string | null;
   }>(
-    `SELECT char_start, char_end, span_text_sha256, machine_author_id,
-            asserted_by, asserted_at, signature_id
+    `SELECT char_start, char_end, span_text_sha256, provenance_kind, machine_author_id,
+            asserted_by, asserted_at, signature_id, created_by
        FROM document_span_lineage
       WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
-        AND provenance_kind = 'accepted_machine_draft'
+        AND provenance_kind IN ('accepted_machine_draft', 'machine_draft')
         AND deleted_at IS NULL
       ORDER BY char_start ASC`,
     [orgId, ref.documentTable, ref.documentId],
@@ -648,10 +704,14 @@ export async function listLiveMachineSpans(
     charStart: Number(r.char_start),
     charEnd: Number(r.char_end),
     spanTextSha256: String(r.span_text_sha256),
+    provenanceKind: r.provenance_kind,
     machineAuthorId: String(r.machine_author_id),
-    assertedBy: String(r.asserted_by),
-    assertedAt: r.asserted_at instanceof Date ? r.asserted_at : new Date(String(r.asserted_at)),
+    assertedBy: r.asserted_by ?? null,
+    assertedAt: r.asserted_at
+      ? (r.asserted_at instanceof Date ? r.asserted_at : new Date(String(r.asserted_at)))
+      : null,
     signatureId: r.signature_id ?? null,
+    createdBy: r.created_by ?? null,
   }));
 }
 
@@ -675,17 +735,20 @@ export async function replaceMachineSpans(
     charEnd: number;
     spanText: string;
     machineAuthorId: string;
-    assertedBy: string;
+    /** Present only when a human accepted; absent means nobody has. */
+    assertedBy?: string | null;
     assertedAt?: Date;
     signatureId?: string | null;
     usage?: SpanUsage;
+    createdBy?: string | null;
   }>,
   p: { createdBy: string },
   exec: Queryable = defaultExec,
 ): Promise<{ written: number; retired: number }> {
   let written = 0;
+  const keep: string[] = [];
   for (const s of spans) {
-    await recordMachineSpan(
+    const { kind } = await recordMachineSpan(
       orgId,
       {
         ...ref,
@@ -693,27 +756,40 @@ export async function replaceMachineSpans(
         charEnd: s.charEnd,
         spanText: s.spanText,
         machineAuthorId: s.machineAuthorId,
-        assertedBy: s.assertedBy,
+        assertedBy: s.assertedBy ?? null,
         assertedAt: s.assertedAt,
         signatureId: s.signatureId ?? null,
         usage: s.usage,
-        createdBy: p.createdBy,
+        // The original requester survives a carry-forward; only a save that
+        // introduces the span falls back to this save's actor.
+        createdBy: s.createdBy ?? p.createdBy,
       },
       exec,
     );
     written++;
+    /* Keyed by KIND and ASSERTER as well as range. Kind, because a clause that
+       has just been accepted is written as accepted_machine_draft and the
+       machine_draft row at the same range must then be retired rather than left
+       answering alongside it. Asserter, because without it two different people
+       who each accepted the clause at that range both stayed live, each row
+       claiming to be the human who accepted it — the Part 11 attribution
+       question answered two contradictory ways for one clause.
+
+       `?? ''` mirrors the COALESCE in the predicate: machine_draft carries a
+       NULL asserter by constraint, and the two have to agree or those rows
+       stop matching the keep set. */
+    keep.push(`${kind}:${s.charStart}:${s.charEnd}:${s.assertedBy ?? ''}`);
   }
 
-  const keep = spans.map((s) => `${s.charStart}:${s.charEnd}`);
   const { rowCount } = await exec.query(
     `UPDATE document_span_lineage
         SET deleted_at = NOW(), updated_at = NOW()
       WHERE organization_id = $1
         AND document_table = $2
         AND document_id = $3
-        AND provenance_kind = 'accepted_machine_draft'
+        AND provenance_kind IN ('accepted_machine_draft', 'machine_draft')
         AND deleted_at IS NULL
-        AND (char_start || ':' || char_end) <> ALL($4::text[])`,
+        AND (provenance_kind || ':' || char_start || ':' || char_end || ':' || COALESCE(asserted_by, '')) <> ALL($4::text[])`,
     [orgId, ref.documentTable, ref.documentId, keep.length > 0 ? keep : ['']],
   );
 
@@ -1042,6 +1118,8 @@ export interface SelectionOrigins {
     authorAsserted: number;
     /** Drafted by a machine author and accepted by a human. */
     machineDrafted: number;
+    /** Drafted by a machine author and accepted by NOBODY yet. */
+    machineDraftedUnaccepted: number;
     stale: number;
   };
   generatedAt: string;
@@ -1133,6 +1211,7 @@ export async function getSelectionOrigins(
       fromSources: origins.filter((o) => o.provenanceKind === 'cre_evidence_source').length,
       authorAsserted: origins.filter((o) => o.provenanceKind === 'author_assertion').length,
       machineDrafted: origins.filter((o) => o.provenanceKind === 'accepted_machine_draft').length,
+      machineDraftedUnaccepted: origins.filter((o) => o.provenanceKind === 'machine_draft').length,
       stale: origins.filter((o) => o.state === 'changed').length,
     },
     generatedAt: new Date().toISOString(),
@@ -1172,4 +1251,219 @@ export async function findUncoveredRanges(
   if (cursor < contentLength) gaps.push({ charStart: cursor, charEnd: contentLength });
 
   return gaps.filter((g) => g.charEnd > g.charStart);
+}
+
+/**
+ * What a whole document's attribution actually looks like, measured in
+ * CHARACTERS rather than in spans.
+ *
+ * ── WHY THIS IS NOT `getSelectionOrigins` OVER [0, length) ───────────────────
+ * That read answers "what backs the text I selected", and its `coveragePercent`
+ * means *characters carrying any lineage at all* — an author assertion counts
+ * toward it exactly as a citation does. That is the right meaning for the
+ * selection panel, and the wrong one for a document-level assurance: a section
+ * written entirely from the author's head is 100% covered by it, and a surface
+ * that rendered that as "traces to a source" would be stating something false
+ * about a regulated document. (The design doc's Phase 6 sketch used that
+ * wording; the numbers here are what make it honest.)
+ *
+ * Its `counts` are also span COUNTS, which cannot carry a percentage: ten short
+ * citations and one long author paragraph is "10 from sources, 1 authored" while
+ * most of the text is the author's.
+ *
+ * So this partitions the document by character and reports each kind's share.
+ *
+ * ── PRECEDENCE, AND WHY IT NEVER FLATTERS ────────────────────────────────────
+ * The gate writes disjoint spans (attributeMachineThenAuthor excludes machine
+ * ranges from author spans, and source-covered clauses are excluded from both),
+ * so in normal operation no character has two kinds. This is a defensive
+ * ordering for the case where one does — after a partial edit, a hand-written
+ * row, or a future writer that overlaps.
+ *
+ * A character claimed by more than one kind is reported as the LEAST favourable
+ * of them, so the summary can never overstate how well attributed the text is:
+ *
+ *   machine_draft (nobody accepted it)  ← never let another span hide this
+ *   accepted_machine_draft (a machine wrote it, a person accepted it)
+ *   author_assertion (a person asserts it, with nothing cited behind it)
+ *   cre_evidence_source (backed by a citation — the strongest claim)
+ *
+ * ── STALE IS REPORTED, NOT SUBTRACTED ────────────────────────────────────────
+ * `staleChars` counts characters whose cited source has changed checksum since
+ * it was cited. Those characters ARE still `fromSources` — the citation exists,
+ * it just no longer matches the source it points at — so stale is reported
+ * alongside the partition rather than carved out of it. Hiding it inside
+ * `unattributed` would misreport what happened, and dropping it would make a
+ * document look cleaner the moment its evidence moved.
+ */
+export interface DocumentAttributionSummary {
+  documentTable: string;
+  documentId: string;
+  /** The length the summary was computed against, from the server's own read. */
+  contentLength: number;
+  /** Characters carrying at least one lineage span. */
+  attributedChars: number;
+  /** Characters with no lineage at all. */
+  unattributedChars: number;
+  /** A partition of `attributedChars` — these four sum to it exactly. */
+  byKind: {
+    fromSources: number;
+    authorAsserted: number;
+    machineDrafted: number;
+    machineDraftedUnaccepted: number;
+  };
+  /** Subset of `byKind.fromSources` whose source has changed since it was cited. */
+  staleChars: number;
+  /**
+   * The spans themselves, clipped to the current text, for a surface that
+   * paints attribution over the words rather than summarising it.
+   *
+   * A projection, not the rows: the client needs where, what kind, and what to
+   * name the source. It does not need `payload_sha256` or `asserted_by`, and a
+   * checksum is not something to hand to a browser merely because it was in the
+   * row the server happened to read.
+   */
+  spans: Array<{
+    charStart: number;
+    charEnd: number;
+    provenanceKind: string;
+    usage: string;
+    sourceTitle: string | null;
+    /** 'changed' when the cited source moved after it was cited. */
+    stale: boolean;
+  }>;
+  generatedAt: string;
+}
+
+type Range = { start: number; end: number };
+
+/** Merge overlapping/adjacent ranges so two sources on one sentence count once. */
+function mergeRanges(ranges: Range[]): Range[] {
+  const sorted = [...ranges].filter((r) => r.end > r.start).sort((a, b) => a.start - b.start);
+  const out: Range[] = [];
+  for (const r of sorted) {
+    const last = out[out.length - 1];
+    if (last && r.start <= last.end) last.end = Math.max(last.end, r.end);
+    else out.push({ ...r });
+  }
+  return out;
+}
+
+/** `from` minus `minus`, both assumed merged and sorted. */
+function subtractRanges(from: Range[], minus: Range[]): Range[] {
+  const out: Range[] = [];
+  for (const r of from) {
+    let cursor = r.start;
+    for (const m of minus) {
+      if (m.end <= cursor) continue;
+      if (m.start >= r.end) break;
+      if (m.start > cursor) out.push({ start: cursor, end: Math.min(m.start, r.end) });
+      cursor = Math.max(cursor, m.end);
+      if (cursor >= r.end) break;
+    }
+    if (cursor < r.end) out.push({ start: cursor, end: r.end });
+  }
+  return out.filter((r) => r.end > r.start);
+}
+
+function totalLength(ranges: Range[]): number {
+  return ranges.reduce((n, r) => n + (r.end - r.start), 0);
+}
+
+/**
+ * Least-favourable-first, so a character claimed by two kinds is reported as the
+ * weaker claim. See the precedence note on DocumentAttributionSummary.
+ */
+const KIND_PRECEDENCE = [
+  'machine_draft',
+  'accepted_machine_draft',
+  'author_assertion',
+  'cre_evidence_source',
+] as const;
+
+export async function summarizeDocumentAttribution(
+  orgId: number,
+  ref: Pick<DocumentRef, 'documentTable' | 'documentId'>,
+  contentLength: number,
+  exec: Queryable = defaultExec,
+): Promise<DocumentAttributionSummary> {
+  const length = Number.isFinite(contentLength) && contentLength > 0 ? Math.floor(contentLength) : 0;
+  const base: DocumentAttributionSummary = {
+    documentTable: ref.documentTable,
+    documentId: ref.documentId,
+    contentLength: length,
+    attributedChars: 0,
+    unattributedChars: length,
+    byKind: { fromSources: 0, authorAsserted: 0, machineDrafted: 0, machineDraftedUnaccepted: 0 },
+    staleChars: 0,
+    spans: [],
+    generatedAt: new Date().toISOString(),
+  };
+  if (length === 0) return base;
+
+  const spans = await listDocumentSpans(orgId, ref, exec);
+  if (spans.length === 0) return base;
+
+  // Clip to the CURRENT content: a span reaching past the end describes text
+  // that is no longer there, and must not inflate any figure.
+  const clip = (s: { charStart: number; charEnd: number }): Range => ({
+    start: Math.max(0, Math.min(s.charStart, length)),
+    end: Math.max(0, Math.min(s.charEnd, length)),
+  });
+
+  let claimed: Range[] = [];
+  const byKind = { ...base.byKind };
+  for (const kind of KIND_PRECEDENCE) {
+    const mine = mergeRanges(spans.filter((s) => s.provenanceKind === kind).map(clip));
+    const unclaimed = subtractRanges(mine, claimed);
+    const chars = totalLength(unclaimed);
+    if (kind === 'cre_evidence_source') byKind.fromSources = chars;
+    else if (kind === 'author_assertion') byKind.authorAsserted = chars;
+    else if (kind === 'accepted_machine_draft') byKind.machineDrafted = chars;
+    else byKind.machineDraftedUnaccepted = chars;
+    claimed = mergeRanges([...claimed, ...unclaimed]);
+  }
+
+  const attributedChars = totalLength(claimed);
+
+  // Stale characters are a subset of what was counted as fromSources, so they
+  // are intersected with exactly that: the ranges this partition credited to
+  // sources, not every stale span (one may sit under a weaker claim).
+  const sourceRanges = subtractRanges(
+    mergeRanges(spans.filter((s) => s.provenanceKind === 'cre_evidence_source').map(clip)),
+    mergeRanges(
+      spans
+        .filter((s) => s.provenanceKind !== 'cre_evidence_source')
+        .map(clip),
+    ),
+  );
+  const staleRanges = mergeRanges(
+    spans.filter((s) => s.provenanceKind === 'cre_evidence_source' && s.state === 'changed').map(clip),
+  );
+  const staleChars = totalLength(
+    subtractRanges(staleRanges, subtractRanges(staleRanges, sourceRanges)),
+  );
+
+  return {
+    ...base,
+    attributedChars,
+    unattributedChars: Math.max(0, length - attributedChars),
+    byKind,
+    staleChars,
+    spans: spans
+      .map((sp) => {
+        const r = clip(sp);
+        return {
+          charStart: r.start,
+          charEnd: r.end,
+          provenanceKind: String(sp.provenanceKind),
+          usage: String(sp.usage),
+          sourceTitle: sp.sourceTitle ?? null,
+          stale: sp.state === 'changed',
+        };
+      })
+      // A span entirely past the end describes text that is no longer there.
+      .filter((sp) => sp.charEnd > sp.charStart)
+      .sort((a, b) => a.charStart - b.charStart),
+  };
 }

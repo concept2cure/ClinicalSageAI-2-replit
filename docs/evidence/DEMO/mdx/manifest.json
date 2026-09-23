@@ -1,0 +1,1267 @@
+{
+  "pack": "mdx",
+  "prefix": "[Demo · MDX]",
+  "startedAt": "2026-09-21T18:03:49.699Z",
+  "records": {
+    "program": {
+      "id": "82d3b729-87a1-4714-9a21-819b538683f3",
+      "title": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+      "code": "DMN5",
+      "created": false,
+      "intake": null,
+      "programType": "510k",
+      "indication": "Differential diagnosis of viral CNS infection (meningitis / encephalitis) from CSF",
+      "intendedUseStored": true,
+      "detailExposesDeviceTaxonomy": [],
+      "sentAtIntake": {
+        "deviceClass": "II",
+        "productCode": "QNX",
+        "regulationNumber": "866.3985",
+        "reviewPanel": "Microbiology",
+        "predicateK": "K223456",
+        "flags": [
+          "softwareAiMl",
+          "cyberDevice",
+          "clinicalData"
+        ]
+      },
+      "whyThisProgramType": "'510k' is the filing type (regulatory_path, k510 scaffold, device class); productType 'ivd' selects the IVD vault view. 'ivd' as a program type has no US path and no 510(k) scaffold."
+    },
+    "vaultBefore": {
+      "standard": "ivd",
+      "spine": "510(k) · 21 CFR 807",
+      "documentCount": 35,
+      "unfiledCount": 0,
+      "folders": [
+        {
+          "id": "cab-unfiled",
+          "label": "Unfiled · needs review",
+          "documents": 0
+        },
+        {
+          "id": "cab-k510",
+          "label": "510(k) submissions",
+          "documents": 2
+        },
+        {
+          "id": "cab-pma",
+          "label": "PMA submissions",
+          "documents": 0
+        },
+        {
+          "id": "cab-cer",
+          "label": "Clinical evaluation",
+          "documents": 1
+        },
+        {
+          "id": "cab-eng",
+          "label": "Engineering (DHF + RMF)",
+          "documents": 2
+        },
+        {
+          "id": "cab-udi",
+          "label": "Labeling and UDI",
+          "documents": 1
+        },
+        {
+          "id": "cab-pv",
+          "label": "Post-market vigilance",
+          "documents": 0
+        },
+        {
+          "id": "cab-qms",
+          "label": "Quality system",
+          "documents": 0
+        },
+        {
+          "id": "cab-corresp",
+          "label": "Agency correspondence",
+          "documents": 0
+        },
+        {
+          "id": "cab-shared",
+          "label": "Shared · Templates",
+          "documents": 0
+        }
+      ]
+    },
+    "vault.deviceDescription": {
+      "id": "0bdf94f7-6f27-4803-8314-57a077744bb6",
+      "title": "[Demo · MDX] Device Description and Principles of Operation",
+      "folderId": "k510",
+      "sha256": "72feae5569a1615a07a6747428d0997dbc53f49f2478b22219eaa19e77a0d11f",
+      "bytes": 6346,
+      "pages": 4,
+      "ingestType": "OTHER",
+      "created": false
+    },
+    "vault.software": {
+      "id": "89d0bfce-3ff3-42d3-a0f9-9fbb827a0637",
+      "title": "[Demo · MDX] Software Description and Level of Concern",
+      "folderId": "eng",
+      "sha256": "3dcc4dd184111956533730e5b0ef999e3f143f4df82ef3bb161a76d597254385",
+      "bytes": 4654,
+      "pages": 3,
+      "ingestType": "OTHER",
+      "created": false
+    },
+    "vault.analytical": {
+      "id": "d0b35c47-b826-41e0-ae8c-b9e37253bd9c",
+      "title": "[Demo · MDX] Analytical Performance Study Report",
+      "folderId": "k510",
+      "sha256": "e648b6abc100efc4220470242a46d021b99f461f227255a6d459f44c0f74d160",
+      "bytes": 6247,
+      "pages": 4,
+      "ingestType": "REPORT",
+      "created": false
+    },
+    "vault.clinical": {
+      "id": "121d2df3-ec99-4afb-9ad1-b0f31a0723d7",
+      "title": "[Demo · MDX] Clinical Performance Study Report",
+      "folderId": "cer",
+      "sha256": "fe2e01372e4326637d4d25a0bc2add5b8a9e2603b56af6f65a2331a5914306f0",
+      "bytes": 5659,
+      "pages": 4,
+      "ingestType": "REPORT",
+      "created": false
+    },
+    "vault.risk": {
+      "id": "8a302d5a-6afa-4af0-89db-c97d663b9fc2",
+      "title": "[Demo · MDX] Risk Management File Summary (ISO 14971)",
+      "folderId": "eng",
+      "sha256": "0f6ee5b9993af289b17ac4b4443909cfaa8555339e6ec8e30e74af2d4afa06d1",
+      "bytes": 4407,
+      "pages": 3,
+      "ingestType": "REPORT",
+      "created": false
+    },
+    "vault.labeling": {
+      "id": "1b80ee68-61d1-46cd-b4b5-c26e25f5035b",
+      "title": "[Demo · MDX] Labeling and Instructions for Use (Draft)",
+      "folderId": "udi",
+      "sha256": "7d49c9f0929a4c9480ea4aecda95e2baf82da05950a85e926a9cc81f7d91d3c7",
+      "bytes": 6254,
+      "pages": 4,
+      "ingestType": "OTHER",
+      "created": false
+    },
+    "vaultAfter": {
+      "standard": "ivd",
+      "spine": "510(k) · 21 CFR 807",
+      "documentCount": 35,
+      "unfiledCount": 0,
+      "folders": [
+        {
+          "id": "cab-unfiled",
+          "label": "Unfiled · needs review",
+          "documents": 0
+        },
+        {
+          "id": "cab-k510",
+          "label": "510(k) submissions",
+          "documents": 2
+        },
+        {
+          "id": "cab-pma",
+          "label": "PMA submissions",
+          "documents": 0
+        },
+        {
+          "id": "cab-cer",
+          "label": "Clinical evaluation",
+          "documents": 1
+        },
+        {
+          "id": "cab-eng",
+          "label": "Engineering (DHF + RMF)",
+          "documents": 2
+        },
+        {
+          "id": "cab-udi",
+          "label": "Labeling and UDI",
+          "documents": 1
+        },
+        {
+          "id": "cab-pv",
+          "label": "Post-market vigilance",
+          "documents": 0
+        },
+        {
+          "id": "cab-qms",
+          "label": "Quality system",
+          "documents": 0
+        },
+        {
+          "id": "cab-corresp",
+          "label": "Agency correspondence",
+          "documents": 0
+        },
+        {
+          "id": "cab-shared",
+          "label": "Shared · Templates",
+          "documents": 0
+        }
+      ]
+    },
+    "signer": {
+      "email": "oq-signer@validation.local",
+      "userId": "42"
+    },
+    "authoring.summary": {
+      "id": "28f95d9a-a9c1-49da-8377-56d847a5d8e5",
+      "title": "[Demo · MDX] 510(k) Summary",
+      "created": false,
+      "boundToProgram": "unknown (existing)",
+      "sections": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ]
+    },
+    "authoring.summaryComment": {
+      "id": "cb315bc0-e15a-44ed-86b8-8df55b7b7340",
+      "sectionId": "16f3b0ea-b9c2-4a36-bcb6-014fd2c497db",
+      "created": false,
+      "resolved": true
+    },
+    "authoring.summaryReview": {
+      "reviewer": "oq-signer@validation.local",
+      "requestedThisRun": false,
+      "workflow": "existing",
+      "step": {
+        "role": "QA",
+        "status": "PENDING"
+      }
+    },
+    "authoring.summaryFrozen": {
+      "version": "approved",
+      "contentHash": "097e7a50b56df29d7b2da1dc8ed6ea8fbb4dde801db91f05c95b475c382dffe2",
+      "frozenAt": "2026-09-21T17:42:54.502Z",
+      "frozenBy": "oq-signer@validation.local"
+    },
+    "authoring.summarySignature": {
+      "executed": true,
+      "existing": true,
+      "id": "f88f8d63-ba10-443c-9fc2-0910576f7ec4",
+      "meaning": "APPROVER",
+      "signer": "oq-signer@validation.local",
+      "coveredContentHash": "0fa2b0c972d508029a978015194f7abd044ae3fa154d6f4ccd4f638519e42f47"
+    },
+    "authoring.se": {
+      "id": "ecee51ea-a427-4870-9abf-1d8f81cb8e1d",
+      "title": "[Demo · MDX] Substantial Equivalence Discussion",
+      "status": "DRAFT",
+      "created": false,
+      "boundToProgram": "unknown (existing)",
+      "sections": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "openCommentId": "301b0174-e51d-4715-97f2-ce7355ba6390"
+    },
+    "authoring.cyber": {
+      "id": "883912ab-6cd2-4301-972b-d3c4f420837a",
+      "title": "[Demo · MDX] Cybersecurity and Interoperability Summary",
+      "status": "DRAFT",
+      "created": false,
+      "boundToProgram": "unknown (existing)",
+      "sections": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ],
+      "reviewRequestedFrom": "oq-signer@validation.local"
+    },
+    "reviewBoard": {
+      "what": "GET /api/review/board after request-review on two documents",
+      "status": 200,
+      "body": {
+        "success": true,
+        "data": {
+          "queue": [],
+          "workflows": {},
+          "thread": [],
+          "meta": {
+            "scope": "all",
+            "total": 0,
+            "threadItemId": null,
+            "threadDocumentId": null,
+            "generatedAt": "2026-09-21T18:03:56.885Z"
+          }
+        }
+      }
+    },
+    "submission": {
+      "id": 68,
+      "title": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+      "applicationType": "510k",
+      "clientType": "ivd",
+      "primaryRegion": "fda",
+      "status": "planning",
+      "created": false
+    },
+    "sequence": {
+      "id": 29,
+      "sequenceNumber": "0000",
+      "status": "assembling",
+      "region": "fda",
+      "created": false
+    },
+    "estarLeafProbe": {
+      "what": "PUT leaves with sectionCode \"estar.device-description\" (an eSTAR slot id) on the 510(k) sequence",
+      "status": 400,
+      "body": {
+        "error": {
+          "code": "VALIDATION",
+          "message": "Section code \"estar.device-description\" does not name a CTD section a document can be filed at. Use a CTD section code — for example 1.2, 2.7.3 or 3.2.S.4.2 — since it decides where the document is filed in the package. A bare module number is a container, not a section."
+        }
+      }
+    },
+    "leaves": {
+      "count": 6,
+      "placedThisRun": 0,
+      "leaves": [
+        {
+          "sectionCode": "3.2.P.1",
+          "estarSlot": "estar.device-description",
+          "documentType": "device_description",
+          "vaultDocumentId": "0bdf94f7-6f27-4803-8314-57a077744bb6"
+        },
+        {
+          "sectionCode": "3.2.R",
+          "estarSlot": "estar.software",
+          "documentType": "software",
+          "vaultDocumentId": "89d0bfce-3ff3-42d3-a0f9-9fbb827a0637"
+        },
+        {
+          "sectionCode": "5.3.1.4",
+          "estarSlot": "estar.ivd-analytical-performance",
+          "documentType": "analytical_performance",
+          "vaultDocumentId": "d0b35c47-b826-41e0-ae8c-b9e37253bd9c"
+        },
+        {
+          "sectionCode": "5.3.5.2",
+          "estarSlot": "estar.ivd-clinical-performance",
+          "documentType": "clinical_performance",
+          "vaultDocumentId": "121d2df3-ec99-4afb-9ad1-b0f31a0723d7"
+        },
+        {
+          "sectionCode": "1.16",
+          "estarSlot": "estar.risk-management",
+          "documentType": "risk_management",
+          "vaultDocumentId": "8a302d5a-6afa-4af0-89db-c97d663b9fc2"
+        },
+        {
+          "sectionCode": "1.14",
+          "estarSlot": "estar.proposed-labeling",
+          "documentType": "labeling",
+          "vaultDocumentId": "1b80ee68-61d1-46cd-b4b5-c26e25f5035b"
+        }
+      ]
+    },
+    "sequenceTransition": {
+      "unchanged": "assembling"
+    },
+    "pathwayReadiness": {
+      "what": "GET pathway-readiness?pathway=estar_510k",
+      "status": 200,
+      "body": {
+        "pathway": "estar_510k",
+        "ready": false,
+        "missingRequired": [
+          "cover-letter",
+          "user-fee-cover-sheet",
+          "indications-for-use",
+          "truthful-accurate-statement",
+          "device-description",
+          "proposed-labeling",
+          "risk-management",
+          "performance-testing",
+          "biocompatibility",
+          "510k-summary-or-statement",
+          "substantial-equivalence",
+          "sterilization",
+          "software",
+          "cybersecurity",
+          "clinical-financial-disclosure",
+          "combination-product",
+          "implant-labeling",
+          "clia-waiver"
+        ],
+        "detail": {
+          "type": "510k",
+          "sections": [
+            {
+              "id": "cover-letter",
+              "label": "Cover letter / submission cover sheet",
+              "authority": "FDA eSTAR administrative section",
+              "necessity": "always",
+              "required": true,
+              "present": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "user-fee-cover-sheet",
+              "label": "MDUFA user-fee cover sheet and payment (FDA 3601)",
+              "authority": "Form FDA 3601; MDUFA. An unpaid submission is not accepted and no substantive review begins.",
+              "necessity": "always",
+              "required": true,
+              "present": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "indications-for-use",
+              "label": "Indications for use (FDA 3881)",
+              "authority": "Form FDA 3881",
+              "necessity": "always",
+              "required": true,
+              "present": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "truthful-accurate-statement",
+              "label": "Truthful and Accurate Statement",
+              "authority": "21 CFR 807.87(k)",
+              "necessity": "always",
+              "required": true,
+              "present": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "device-description",
+              "label": "Device description",
+              "authority": "21 CFR 807.87(f)",
+              "necessity": "always",
+              "required": true,
+              "present": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "proposed-labeling",
+              "label": "Proposed labeling",
+              "authority": "21 CFR 807.87(e)",
+              "necessity": "always",
+              "required": true,
+              "present": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "risk-management",
+              "label": "Risk management file",
+              "authority": "ISO 14971",
+              "necessity": "always",
+              "required": true,
+              "present": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "performance-testing",
+              "label": "Performance testing (bench / animal / clinical)",
+              "authority": "FDA eSTAR performance section",
+              "necessity": "always",
+              "required": true,
+              "present": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "biocompatibility",
+              "label": "Biocompatibility",
+              "authority": "ISO 10993-1 (contact category and duration)",
+              "necessity": "always",
+              "required": true,
+              "present": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "sterilization",
+              "label": "Sterilization, shelf life and packaging validation",
+              "authority": "FDA sterility review guidance; ISO 11135 / 11137 / 17665 as applicable",
+              "flag": "sterile",
+              "necessity": "conditional",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "undetermined"
+            },
+            {
+              "id": "software",
+              "label": "Software / firmware documentation",
+              "authority": "FDA premarket software guidance (June 2023): documentation level, architecture, SRS/SDS, V&V, SBOM",
+              "flag": "softwareAiMl",
+              "necessity": "conditional",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "undetermined"
+            },
+            {
+              "id": "cybersecurity",
+              "label": "Cybersecurity documentation",
+              "authority": "FD&C Act §524B. A cyber device without it is an RTA ground.",
+              "flag": "cyberDevice",
+              "necessity": "conditional",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "undetermined"
+            },
+            {
+              "id": "clinical-financial-disclosure",
+              "label": "Financial certification or disclosure (FDA 3454 / 3455)",
+              "authority": "21 CFR Part 54 — required where clinical data are submitted",
+              "flag": "clinicalData",
+              "necessity": "conditional",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "undetermined"
+            },
+            {
+              "id": "combination-product",
+              "label": "Combination-product constituent information",
+              "authority": "21 CFR Part 4; cross-labelled constituent parts",
+              "flag": "combinationProduct",
+              "necessity": "conditional",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "undetermined"
+            },
+            {
+              "id": "implant-labeling",
+              "label": "Implant-specific labeling and long-term performance",
+              "authority": "Implantable-device labeling and duration-appropriate testing",
+              "flag": "implantable",
+              "necessity": "conditional",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "undetermined"
+            },
+            {
+              "id": "clia-waiver",
+              "label": "CLIA waiver by application / dual submission",
+              "authority": "CLIA — applies to IVDs seeking waived status",
+              "flag": "cliaWaived",
+              "necessity": "conditional",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "undetermined"
+            },
+            {
+              "id": "emc-electrical",
+              "label": "Electrical safety, EMC and wireless coexistence",
+              "authority": "IEC 60601-1, IEC 60601-1-2; AAMI TIR69 for wireless",
+              "appliesWhen": "the device is electrically powered or uses wireless communication",
+              "necessity": "when-applicable",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "human-factors",
+              "label": "Human factors / usability engineering",
+              "authority": "IEC 62366-1; FDA human factors guidance",
+              "appliesWhen": "the device has critical tasks whose use error could cause harm",
+              "necessity": "when-applicable",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "reprocessing",
+              "label": "Reprocessing instructions and validation",
+              "authority": "FDA reprocessing guidance",
+              "appliesWhen": "the device is reusable",
+              "necessity": "when-applicable",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "standards-conformance",
+              "label": "Declarations of Conformity (FDA 3654)",
+              "authority": "Form FDA 3654 — required for each recognised consensus standard relied on",
+              "appliesWhen": "the submission relies on a recognised consensus standard",
+              "necessity": "when-applicable",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "class-iii-certification",
+              "label": "Class III Summary and Certification",
+              "authority": "21 CFR 807.94",
+              "appliesWhen": "the device is class III",
+              "necessity": "when-applicable",
+              "required": false,
+              "present": false,
+              "sources": [],
+              "applicability": "when-applicable"
+            },
+            {
+              "id": "510k-summary-or-statement",
+              "label": "510(k) Summary or 510(k) Statement",
+              "authority": "21 CFR 807.92 (summary) or 807.93 (statement) — one or the other is mandatory",
+              "necessity": "always",
+              "required": true,
+              "present": false,
+              "sources": [],
+              "applicability": "required"
+            },
+            {
+              "id": "substantial-equivalence",
+              "label": "Substantial equivalence comparison (predicate)",
+              "authority": "21 CFR 807.87(f); FD&C Act §513(i)",
+              "necessity": "always",
+              "required": true,
+              "present": false,
+              "sources": [],
+              "applicability": "required"
+            }
+          ],
+          "summary": {
+            "missingRequired": [
+              "cover-letter",
+              "user-fee-cover-sheet",
+              "indications-for-use",
+              "truthful-accurate-statement",
+              "device-description",
+              "proposed-labeling",
+              "risk-management",
+              "performance-testing",
+              "biocompatibility",
+              "510k-summary-or-statement",
+              "substantial-equivalence"
+            ],
+            "undetermined": [
+              "sterilization",
+              "software",
+              "cybersecurity",
+              "clinical-financial-disclosure",
+              "combination-product",
+              "implant-labeling",
+              "clia-waiver"
+            ],
+            "checkApplicability": [
+              "emc-electrical",
+              "human-factors",
+              "reprocessing",
+              "standards-conformance",
+              "class-iii-certification"
+            ],
+            "ready": false
+          }
+        }
+      }
+    },
+    "readiness": {
+      "sequenceStatus": "assembling",
+      "leafCount": 6,
+      "validationErrors": 6,
+      "unacknowledgedShadowCriticals": 0,
+      "shadowReviewRunCount": 0,
+      "externalValidation": {
+        "configured": false,
+        "ran": false,
+        "errorCount": 0,
+        "cleared": true,
+        "blockers": []
+      },
+      "gate": {
+        "cleared": false,
+        "blockers": [
+          "6 open error-severity validation finding(s) must be resolved before dispatch.",
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+        ]
+      },
+      "freezeGate": {
+        "cleared": false,
+        "blockers": [
+          "6 open error-severity validation finding(s) must be resolved before dispatch.",
+          "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+        ]
+      },
+      "releaseSignature": {
+        "required": false,
+        "verdict": "unsigned",
+        "detail": "no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:29",
+        "cleared": true
+      },
+      "structural": {
+        "errors": 6,
+        "warnings": 3,
+        "infos": 0,
+        "findings": [
+          {
+            "severity": "error",
+            "code": "UNRESOLVED_DOCUMENT",
+            "sectionCode": "3.2.P.1",
+            "message": "Leaf \"[Demo · MDX] Device Description and Principles of Operation\" (3.2.P.1) has no resolvable document — it cannot be assembled into the package."
+          },
+          {
+            "severity": "error",
+            "code": "UNRESOLVED_DOCUMENT",
+            "sectionCode": "3.2.R",
+            "message": "Leaf \"[Demo · MDX] Software Description and Level of Concern\" (3.2.R) has no resolvable document — it cannot be assembled into the package."
+          },
+          {
+            "severity": "error",
+            "code": "UNRESOLVED_DOCUMENT",
+            "sectionCode": "5.3.1.4",
+            "message": "Leaf \"[Demo · MDX] Analytical Performance Study Report\" (5.3.1.4) has no resolvable document — it cannot be assembled into the package."
+          },
+          {
+            "severity": "error",
+            "code": "UNRESOLVED_DOCUMENT",
+            "sectionCode": "5.3.5.2",
+            "message": "Leaf \"[Demo · MDX] Clinical Performance Study Report\" (5.3.5.2) has no resolvable document — it cannot be assembled into the package."
+          },
+          {
+            "severity": "error",
+            "code": "UNRESOLVED_DOCUMENT",
+            "sectionCode": "1.16",
+            "message": "Leaf \"[Demo · MDX] Risk Management File Summary (ISO 14971)\" (1.16) has no resolvable document — it cannot be assembled into the package."
+          },
+          {
+            "severity": "error",
+            "code": "UNRESOLVED_DOCUMENT",
+            "sectionCode": "1.14",
+            "message": "Leaf \"[Demo · MDX] Labeling and Instructions for Use (Draft)\" (1.14) has no resolvable document — it cannot be assembled into the package."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.1",
+            "message": "Required section 1.1 has no leaf in this sequence."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.2",
+            "message": "Required section 1.2 has no leaf in this sequence."
+          },
+          {
+            "severity": "warning",
+            "code": "MISSING_REQUIRED_SECTION",
+            "sectionCode": "1.3",
+            "message": "Required section 1.3 has no leaf in this sequence."
+          }
+        ]
+      }
+    },
+    "dispatchQc": {
+      "clearedToDispatch": false,
+      "verdictSource": "assess-dispatch-readiness",
+      "blockers": [
+        "6 open error-severity validation finding(s) must be resolved before dispatch.",
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting."
+      ],
+      "warnings": [
+        "Required section 1.1 has no leaf in this sequence.",
+        "Required section 1.2 has no leaf in this sequence.",
+        "Required section 1.3 has no leaf in this sequence."
+      ],
+      "checklist": [
+        {
+          "item": "No open error-severity validation findings on the stored leaves",
+          "pass": false
+        },
+        {
+          "item": "No unacknowledged Shadow Review criticals",
+          "pass": true
+        },
+        {
+          "item": "At least one completed Shadow Review has run for this sequence",
+          "pass": false
+        },
+        {
+          "item": "External agency-grade validation gate clear",
+          "pass": true
+        },
+        {
+          "item": "Release signature gate clear (21 CFR Part 11 §11.70)",
+          "pass": true
+        },
+        {
+          "item": "Required Module 1 sections present for the region",
+          "pass": false
+        },
+        {
+          "item": "Lifecycle operations coherent (new/replace/append/delete; original sequence carries only new)",
+          "pass": true
+        }
+      ],
+      "narrative": null,
+      "narrativeUnavailable": {
+        "code": "PROVIDER_UNAVAILABLE",
+        "message": "No AI provider is configured; the deterministic verdict stands without a narrative."
+      }
+    },
+    "readinessReview": {
+      "what": "POST /api/orchestration/execute submission_readiness_review for the 510(k) program",
+      "status": 200,
+      "body": {
+        "executionId": "9149cc2b-0a25-4bd2-94e5-a7b25a681ffc",
+        "templateId": "submission_readiness_review",
+        "status": "completed",
+        "projectId": "82d3b729-87a1-4714-9a21-819b538683f3",
+        "organizationId": 2,
+        "module": "510k",
+        "steps": [
+          {
+            "stepId": "inspect_project_state",
+            "name": "Inspect project state",
+            "status": "completed",
+            "startedAt": "2026-09-21T18:03:59.531Z",
+            "result": {
+              "projectName": "Project",
+              "projectStatus": "active",
+              "projectProgress": 0,
+              "documentCount": 0,
+              "artifactCount": 0,
+              "validationCount": 0,
+              "taskCount": 0,
+              "moduleCount": 0
+            },
+            "completedAt": "2026-09-21T18:03:59.532Z",
+            "durationMs": 1
+          },
+          {
+            "stepId": "inventory_documents",
+            "name": "Inventory documents and artifacts",
+            "status": "completed",
+            "startedAt": "2026-09-21T18:03:59.532Z",
+            "result": {
+              "total": 0,
+              "byStatus": {},
+              "unrouted": 0,
+              "unvalidated": 0
+            },
+            "completedAt": "2026-09-21T18:03:59.533Z",
+            "durationMs": 1
+          },
+          {
+            "stepId": "identify_gaps",
+            "name": "Identify gaps and weaknesses",
+            "status": "completed",
+            "startedAt": "2026-09-21T18:03:59.533Z",
+            "result": {
+              "overallScore": 0,
+              "status": "not_started",
+              "scores": {
+                "completeness": 0,
+                "quality": 0,
+                "compliance": null,
+                "routing": 0,
+                "consistency": null
+              },
+              "blockerCount": 0,
+              "blockers": [],
+              "moduleBreakdown": []
+            },
+            "completedAt": "2026-09-21T18:03:59.534Z",
+            "durationMs": 1
+          },
+          {
+            "stepId": "compute_readiness",
+            "name": "Compute readiness assessment",
+            "status": "completed",
+            "startedAt": "2026-09-21T18:03:59.534Z",
+            "result": {
+              "readiness": {
+                "projectId": "82d3b729-87a1-4714-9a21-819b538683f3",
+                "organizationId": 2,
+                "module": "510k",
+                "overallScore": 0,
+                "status": "not_started",
+                "scores": {
+                  "completeness": 0,
+                  "quality": 0,
+                  "compliance": null,
+                  "routing": 0,
+                  "consistency": null
+                },
+                "unassessedDimensions": [
+                  {
+                    "dimension": "compliance",
+                    "reason": "no validation runs and no CMC signals on this project — nothing to score regulatory compliance against"
+                  },
+                  {
+                    "dimension": "consistency",
+                    "reason": "no routed documents and no promoted artifacts — no cross-reference check applied"
+                  }
+                ],
+                "moduleBreakdown": [],
+                "documentInventory": [],
+                "blockers": [],
+                "recommendations": [
+                  {
+                    "id": "d872ed03-652d-42d1-8715-2285807a29b6",
+                    "recommendationType": "next_best_action",
+                    "severity": "info",
+                    "targetObjectType": "project",
+                    "targetObjectId": "82d3b729-87a1-4714-9a21-819b538683f3",
+                    "targetObjectTitle": "Project",
+                    "reason": "No critical issues found. Run a readiness review to confirm submission preparedness.",
+                    "evidence": [
+                      "All analyzers returned no critical or high findings"
+                    ],
+                    "suggestedAction": "Run submission readiness review workflow",
+                    "actionPayload": {
+                      "actionType": "submission_readiness_review",
+                      "payload": {
+                        "projectId": "82d3b729-87a1-4714-9a21-819b538683f3"
+                      }
+                    },
+                    "sourceType": "rules_based",
+                    "confidence": null,
+                    "generatedAt": "2026-09-21T18:03:59.534Z"
+                  }
+                ],
+                "assessedAt": "2026-09-21T18:03:59.534Z"
+              }
+            },
+            "completedAt": "2026-09-21T18:03:59.534Z",
+            "durationMs": 0
+          },
+          {
+            "stepId": "generate_recommendations",
+            "name": "Generate recommendations",
+            "status": "completed",
+            "startedAt": "2026-09-21T18:03:59.534Z",
+            "result": {
+              "recommendations": [
+                {
+                  "id": "5e642269-057c-45d3-9c76-2dc3d9b12678",
+                  "recommendationType": "next_best_action",
+                  "severity": "info",
+                  "targetObjectType": "project",
+                  "targetObjectId": "82d3b729-87a1-4714-9a21-819b538683f3",
+                  "targetObjectTitle": "Project",
+                  "reason": "No critical issues found. Run a readiness review to confirm submission preparedness.",
+                  "evidence": [
+                    "All analyzers returned no critical or high findings"
+                  ],
+                  "suggestedAction": "Run submission readiness review workflow",
+                  "actionPayload": {
+                    "actionType": "submission_readiness_review",
+                    "payload": {
+                      "projectId": "82d3b729-87a1-4714-9a21-819b538683f3"
+                    }
+                  },
+                  "sourceType": "rules_based",
+                  "confidence": null,
+                  "generatedAt": "2026-09-21T18:03:59.535Z"
+                }
+              ],
+              "summary": {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "info": 1,
+                "total": 1
+              }
+            },
+            "completedAt": "2026-09-21T18:03:59.535Z",
+            "durationMs": 1
+          }
+        ],
+        "currentStepIndex": 4,
+        "progressPercent": 100,
+        "startedAt": "2026-09-21T18:03:59.508Z",
+        "requestedBy": {
+          "userId": 1,
+          "userName": "jonmichaelpsmith@gmail.com"
+        },
+        "auditTrail": [
+          {
+            "timestamp": "2026-09-21T18:03:59.508Z",
+            "action": "workflow_started",
+            "detail": "Started workflow: Submission Readiness Review",
+            "userId": 1
+          },
+          {
+            "timestamp": "2026-09-21T18:03:59.531Z",
+            "stepId": "inspect_project_state",
+            "action": "step_started",
+            "detail": "Step 1: Inspect project state",
+            "userId": 1
+          },
+          {
+            "timestamp": "2026-09-21T18:03:59.532Z",
+            "stepId": "inspect_project_state",
+            "action": "step_completed",
+            "detail": "Step completed: Inspect project state",
+            "userId": 1
+          },
+          {
+            "timestamp": "2026-09-21T18:03:59.532Z",
+            "stepId": "inventory_documents",
+            "action": "step_started",
+            "detail": "Step 2: Inventory documents and artifacts",
+            "userId": 1
+          },
+          {
+            "timestamp": "2026-09-21T18:03:59.533Z",
+            "stepId": "inventory_documents",
+            "action": "step_completed",
+            "detail": "Step completed: Inventory documents and artifacts",
+            "userId": 1
+          },
+          {
+            "timestamp": "2026-09-21T18:03:59.533Z",
+            "stepId": "identify_gaps",
+            "action": "step_started",
+            "detail": "Step 3: Identify gaps and weaknesses",
+            "userId": 1
+          },
+          {
+            "timestamp": "2026-09-21T18:03:59.534Z",
+            "stepId": "identify_gaps",
+            "action": "step_completed",
+            "detail": "Step completed: Identify gaps and weaknesses",
+            "userId": 1
+          },
+          {
+            "timestamp": "2026-09-21T18:03:59.534Z",
+            "stepId": "compute_readiness",
+            "action": "step_started",
+            "detail": "Step 4: Compute readiness assessment",
+            "userId": 1
+          },
+          {
+            "timestamp": "2026-09-21T18:03:59.534Z",
+            "stepId": "compute_readiness",
+            "action": "step_completed",
+            "detail": "Step completed: Compute readiness assessment",
+            "userId": 1
+          },
+          {
+            "timestamp": "2026-09-21T18:03:59.534Z",
+            "stepId": "generate_recommendations",
+            "action": "step_started",
+            "detail": "Step 5: Generate recommendations",
+            "userId": 1
+          },
+          {
+            "timestamp": "2026-09-21T18:03:59.535Z",
+            "stepId": "generate_recommendations",
+            "action": "step_completed",
+            "detail": "Step completed: Generate recommendations",
+            "userId": 1
+          },
+          {
+            "timestamp": "2026-09-21T18:03:59.535Z",
+            "action": "workflow_completed",
+            "detail": "Workflow completed: Workflow \"submission_readiness_review\" completed: 5/5 steps succeeded.",
+            "userId": 1
+          }
+        ],
+        "completedAt": "2026-09-21T18:03:59.535Z",
+        "totalDurationMs": 27,
+        "result": {
+          "summary": "Workflow \"submission_readiness_review\" completed: 5/5 steps succeeded.",
+          "blockers": [],
+          "recommendations": [
+            {
+              "id": "d355e865-00bf-4ac5-b1c5-5d76a97ff527",
+              "recommendationType": "next_best_action",
+              "severity": "info",
+              "targetObjectType": "project",
+              "targetObjectId": "82d3b729-87a1-4714-9a21-819b538683f3",
+              "targetObjectTitle": "Project",
+              "reason": "No critical issues found. Run a readiness review to confirm submission preparedness.",
+              "evidence": [
+                "All analyzers returned no critical or high findings"
+              ],
+              "suggestedAction": "Run submission readiness review workflow",
+              "actionPayload": {
+                "actionType": "submission_readiness_review",
+                "payload": {
+                  "projectId": "82d3b729-87a1-4714-9a21-819b538683f3"
+                }
+              },
+              "sourceType": "rules_based",
+              "confidence": null,
+              "generatedAt": "2026-09-21T18:03:59.535Z"
+            }
+          ],
+          "readiness": {
+            "overallScore": 0,
+            "status": "not_started",
+            "scores": {
+              "completeness": 0,
+              "quality": 0,
+              "compliance": null,
+              "routing": 0,
+              "consistency": null
+            },
+            "blockerCount": 0,
+            "blockers": [],
+            "moduleBreakdown": []
+          },
+          "createdObjects": [],
+          "updatedObjects": []
+        }
+      }
+    },
+    "readinessReviewExecution": {
+      "id": "9149cc2b-0a25-4bd2-94e5-a7b25a681ffc",
+      "status": 200,
+      "state": "completed"
+    },
+    "qms.sop101": {
+      "id": 43,
+      "docNumber": "MDX-SOP-101",
+      "title": "[Demo · MDX] SOP-101 Design Controls (21 CFR 820.30)",
+      "status": "effective",
+      "version": "1.0",
+      "created": false,
+      "approverId": 42,
+      "approvedAt": "2026-09-21T17:54:21.435Z",
+      "effectiveDate": "2026-09-21T00:00:00.000Z"
+    },
+    "qms.sop102": {
+      "id": 44,
+      "docNumber": "MDX-SOP-102",
+      "title": "[Demo · MDX] SOP-102 Corrective and Preventive Action",
+      "status": "effective",
+      "version": "1.0",
+      "created": false,
+      "approverId": 42,
+      "approvedAt": "2026-09-21T17:54:22.328Z",
+      "effectiveDate": "2026-09-21T00:00:00.000Z"
+    },
+    "qms.sop103": {
+      "id": 45,
+      "docNumber": "MDX-SOP-103",
+      "title": "[Demo · MDX] SOP-103 Complaint Handling and MDR Reporting",
+      "status": "in_review",
+      "version": "1.0",
+      "created": false
+    },
+    "qms.sop104": {
+      "id": 46,
+      "docNumber": "MDX-SOP-104",
+      "title": "[Demo · MDX] SOP-104 Software Change Control",
+      "status": "draft",
+      "version": "1.0",
+      "created": false
+    },
+    "qms.training": {
+      "existing": true,
+      "id": 9,
+      "documentVersion": "1.0"
+    },
+    "qms.change": {
+      "id": 8,
+      "changeNumber": "MDX-CC-2026-001",
+      "status": "under_assessment",
+      "classification": "major",
+      "created": false,
+      "links": 3
+    },
+    "audit": {
+      "window": 600,
+      "entriesForPackRecords": 50,
+      "entriesSinceRunStart": 1,
+      "unchainedPackEntries": 0,
+      "sources": {
+        "audit_logs": 600,
+        "audit_events": 0
+      },
+      "chain": {
+        "store": "audit_logs",
+        "ok": false,
+        "rowsChecked": 33,
+        "legacyRows": 152,
+        "sequencedRows": 448,
+        "brokenAt": {
+          "id": "6633e4a6-0fbc-400f-b9e1-600acd237b02",
+          "expected": "17695c41673a4cfdbfa7f4a449827b64f7c08d706519f6adc2cb326e62a91302",
+          "stored": "888f94de61c74f00a7a0540d1f54d851fbadb762f18592d855033a06030259f8",
+          "tenantId": 2,
+          "segment": "legacy",
+          "commitsTo": null
+        }
+      },
+      "verifyChain": {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "rowsChecked": 677,
+          "tenants": 18,
+          "legacyRows": 229,
+          "sequencedRows": 448
+        }
+      },
+      "events": [
+        "Authoring Section View Frozen",
+        "Mdx Qms Change Transition",
+        "Mdx Qms Change Link",
+        "Mdx Qms Change Create",
+        "Mdx Qms Training Acknowledge",
+        "Mdx Qms Document Update",
+        "C2c Work Approve",
+        "Mdx Qms Document Create",
+        "Sequence Transitioned",
+        "Sequence Created",
+        "Submission Created",
+        "Authoring Section Comment Added",
+        "Leaf Created",
+        "C2c Work Update",
+        "Authoring Document E Sign",
+        "Authoring Document Freeze",
+        "Authoring Section Submit",
+        "Authoring Section Comment Resolved",
+        "Vault Document File",
+        "Vault Document Ingest",
+        "C2c Project Create"
+      ]
+    }
+  },
+  "notes": [
+    "Provenance: seeded demonstration content authored for the Concept2Cure launch demo (fictional manufacturer, fictional device). Not model-drafted — no AI provider is configured.",
+    "Seed identity: jonmichaelpsmith@gmail.com (user 1, organisation 2).",
+    "FINDING: Projects: GET /api/c2c/projects/:id returns program_type, indication and intended_use but none of the device taxonomy intake stored (device_class, regulatory_path, product_code, predicate_devices, product_type, reviewPanel / regulationNumber / deviceFlags in metadata) — so no launch surface can show the class, product code, regulation or predicate the wizard captured.",
+    "FINDING: Authoring/Review: reviews requested through POST /api/authoring/documents/:id/request-review do not appear on GET /api/review/board (the read model behind /concept2cure/review) — the two stores are separate (VSR-001 F-6).",
+    "FINDING: Submission Center: the sequence/leaf model is the eCTD one. PUT /api/submissions/sequences/:id/leaves refuses a non-CTD-shaped sectionCode — \"estar.device-description\" answered HTTP 400 Section code \"estar.device-description\" does not name a CTD section a document can be filed at. Use a CTD section code — for example 1.2, 2.7.3 or 3.2.S.4.2 — since it decides where the document is filed in the package.  — and the builder presents eCTD modules. There is no eSTAR section vocabulary on the leaf route, so this pack files the device documents at the closest CTD codes (3.2.P.1, 3.2.R, 5.3.1.4, 5.3.5.2, 1.16, 1.14) with eSTAR documentType tokens; an authoring document cannot be placed as a leaf at all (authoring_documents is not a placeable table).",
+    "FINDING: Submission Center: GET /sequences/:id/pathway-readiness?pathway=estar_510k reports every eSTAR section missing although six leaves carry eSTAR documentType tokens — the route maps leaves without the `substantive` flag the mapper requires (server/routes/submissions.ts pathway-readiness → estar-mapper EstarInputLeaf.substantive: undefined ⇒ not substantive, fail-closed), so a vault-backed leaf can never mark a section present here.",
+    "FINDING: Submission Readiness: the structural validation flags every vault-backed leaf UNRESOLVED_DOCUMENT (\"has no resolvable document\") — 6 of 6. The leaf route accepted documentTable vault_documents + documentUuid and pinned documentContentSha256, and vault_documents is in RESOLVABLE_DOCUMENT_TABLES, but documentPointerFindings (server/services/ectd/dispatch-readiness.ts) tests the integer documentId only, which is null for a uuid-keyed vault document. Consequence: a sequence built from uploaded vault documents can never clear the dispatch gate on this build.",
+    "FINDING: QMS: GET /api/mdx/qms/changes returns rows without their cross-references (no \"links\" field) while GET /api/mdx/qms/changes/:id carries 3; the Change control log (client/src/concept2cure/quality/ChangeControl.tsx linkCount = c.links?.length ?? 0) therefore shows 0 links for MDX-CC-2026-001 until the row is expanded.",
+    "FINDING: QMS: the launch QMS API has no CAPA create route — CAPA records are read-only through GET /api/mdx/postmarket (capa_records) and can only be referenced from a change-control link (linkType \"capa\"). No CAPA record was seeded.",
+    "FINDING: Audit trail: the server chain verdict for this tenant is ok=false ({\"id\":\"6633e4a6-0fbc-400f-b9e1-600acd237b02\",\"expected\":\"17695c41673a4cfdbfa7f4a449827b64f7c08d706519f6adc2cb326e62a91302\",\"stored\":\"888f94de61c74f00a7a0540d1f54d851fbadb762f18592d855033a06030259f8\",\"tenantId\":2,\"segment\":\"legacy\",\"commitsTo\":null}) — a pre-existing state of this database's audit_logs, not caused by this pack; every entry this pack wrote carries hash and prevHash (0 unchained).",
+    "FINDING: Projects: intake creates a canonical submission spine for drug application types only (server/routes/c2c/project-intake.ts DRUG_APPLICATION_TYPES); a 510(k) program gets none, so this pack creates the Submission Center entry itself, keyed by the program name.",
+    "FINDING: Authoring: POST /api/authoring/docs with client_program_id binds the new document to the program's ONE governed c2c_document, so a second document for the same program is refused 409 DOCUMENT_ALIAS_CONFLICT (\"c2c_documents doc_… is already recorded as a different document. Nothing was created.\"). The SE Discussion and the Cybersecurity Summary were created without client_program_id (org-wide, unbound); the Authoring surface lists them only when no program is open.",
+    "Purge coverage: QMS documents are retired and the change-control record deleted through the API; the program, vault documents, authoring documents, submission and sequence have no delete/archive endpoint in the launch API (see purge.retained)."
+  ],
+  "finishedAt": "2026-09-21T18:04:04.728Z"
+}

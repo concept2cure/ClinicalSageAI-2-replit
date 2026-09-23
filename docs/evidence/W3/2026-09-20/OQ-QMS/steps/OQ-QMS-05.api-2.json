@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/mdx/qms/documents/35/approve",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "password": "[REDACTED]",
+      "meaning": "APPROVED",
+      "reason": "OQ-006 step 05: second approval must be refused"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 363,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "Document is effective; only a draft or in_review document can be approved.",
+      "details": {
+        "code": "QMS_INVALID_STATE"
+      }
+    }
+  }
+}

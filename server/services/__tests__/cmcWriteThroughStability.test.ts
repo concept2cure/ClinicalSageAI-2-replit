@@ -54,14 +54,20 @@ describe('mapStabilityPayload — the Drizzle row feeds the composer contract', 
     const required = MODULE3_SECTION_RULES.filter(
       (r) => (r.sectionKey === '3.2.S.7' || r.sectionKey === '3.2.P.8') && r.requiredSourceTypes.includes('stability'),
     ).flatMap((r) => r.requiredFields);
-    expect(required).toContain('storageCondition');
-    expect(required).toContain('shelfLifeClaim');
-    for (const field of required) {
-      // comparabilityStatus belongs to the comparability source, not this one.
-      if (field === 'comparabilityStatus') continue;
-      const v = payload[field];
-      expect(v, `payload.${field} must be non-empty for the composer`).toBeTruthy();
-    }
+    /* SIDE-SCOPED since 2026-09-08. The register asks which section a study
+       files under — its control is labelled "Drug substance (§3.2.S.7)" /
+       "Drug product (§3.2.P.8)" — and the mapper dropped that answer, so every
+       study fed both sections. The two rules now read the side-scoped keys, and
+       this fixture is a drug-product study, so it must satisfy §3.2.P.8's and
+       NOT §3.2.S.7's. */
+    expect(required).toContain('drugSubstanceStorageCondition');
+    expect(required).toContain('drugProductShelfLifeClaim');
+    expect(payload.stabilityScope).toBe('drug_product');
+    expect(payload.drugProductShelfLifeClaim, 'the DP study must satisfy §3.2.P.8').toBeTruthy();
+    expect(payload.drugSubstanceStorageCondition, 'a DP study must NOT satisfy §3.2.S.7').toBeNull();
+    // The unscoped keys still carry the recorded data for the renderers.
+    expect(payload.storageCondition).toBeTruthy();
+    expect(payload.shelfLifeClaim).toBeTruthy();
   });
 
   it('carries the recorded data, not blanks: storage, shelf life, batch, results', () => {

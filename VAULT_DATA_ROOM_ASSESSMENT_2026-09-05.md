@@ -95,9 +95,10 @@ this assessment could be written at all.
 
 **Would win an evaluation on:** the AI authoring/agent layer, the packager's integrity
 guarantees, the hash-chained audit.
-**Would lose on day one on:** the data room (there isn't one), per-document security (org
-membership is the entire model), and the fact that a document in the vault cannot become a
-submission.
+**Would lose on day one on:** the data room (there isn't one) and per-document security (org
+membership is the entire model). *(Corrected 2026-09-19: this line also read "and the fact that
+a document in the vault cannot become a submission". That closed on 2026-09-17 — see §4.5 — and
+the summary had not been updated with the section it summarises.)*
 
 ---
 
@@ -201,15 +202,145 @@ make the middleware refuse rather than pass `''`; (b) add the explicit org join 
 `advancedRAGPipeline.ts:895,:935` — unconditional, cheap, no schema change, and the correct fix
 regardless; (c) only then `FORCE`.
 
-### 4.5 A vault document can never become a submission
+> **Progress 2026-09-18. (b) is done; (a) is now PROVEN rather than assumed, and the
+> answer corrects a comment that would have misled whoever did (c).**
+>
+> `server/middleware/__tests__/tenant-scope-org-guc.test.ts` pins what the GUC actually
+> receives, including the two middlewares composed exactly as `middleware/auth.ts:183`
+> composes them:
+>
+> - **The uuid DOES reach `app.current_org_id`.** `enforceOrgMembership` resolves
+>   `organizations.uuid` in its membership LEFT JOIN, `attachOrgUuid` puts it on
+>   `req.user.organizationUuid` immediately before calling `next()`, and that `next()`
+>   IS `establishRequestTenantScope`, whose `resolveOrgUuid` reads exactly that field.
+>
+> - **`orgMembership.ts` said the opposite**, in a note ending "it is NOT wired into
+>   `app.current_org_id`, which the identity-FK family would deny-all against until the
+>   C-48 unification lands." That is false and was not harmless: it describes the GUC the
+>   vault's policies resolve a programme against, so anyone planning (c) — or C-48 — would
+>   have been reasoning from it. Corrected in place, with the test named beside it.
+>
+> - **The residual risk is narrower than §4.4 assumed, and still real.** The empty string
+>   is written only when the membership lookup resolves NO uuid — an organisation row
+>   without one, or an enrichment JOIN that fell back (which `orgMembership` deliberately
+>   declines to cache, so it self-heals). Under `FORCE` those requests read an EMPTY VAULT.
+>   Not a leak: an outage that looks like "this customer has no documents".
+>
+> So (a) is no longer "prove the GUC works". It is the narrower, answerable question: can
+> a member's organisation resolve no uuid on a deployed database?
+>
+> **Answered: no, not in steady state.** `organizations.uuid` is
+> `uuid DEFAULT gen_random_uuid() NOT NULL` at the database level
+> (`migrations/0000_sweet_joseph.sql:4188`) and `.notNull()` in the Drizzle model
+> (`shared/schema.ts:155`). Every organisation row has one, guaranteed by the column.
+> So the membership LEFT JOIN returns null only when
+>
+>   1. the JOIN itself failed at runtime — which `orgMembership` detects, refuses to
+>      cache, and self-heals from on the next request; or
+>   2. `organizations` is absent from the schema module, which is a partial-schema dev
+>      fixture, not a deployed database.
+>
+> **What that means for (c).** The `''` risk is a TRANSIENT window, not a structural
+> gap — so `FORCE` is much closer to the one-line `ALTER` §4.4 took it for than this
+> section feared. The honest remainder: during such a window a FORCEd vault reads EMPTY
+> for the affected requests, which is the worst-shaped failure available ("this customer
+> has no documents"). The mitigation is small and precise — have the middleware REFUSE
+> rather than pass `''` — and it must land **with** `FORCE`, not before: today those
+> requests succeed because ENABLE-only policies never run for the owner role, so
+> refusing now would break working requests to pre-empt a risk that does not yet exist.
+>
+> Deliberately NOT done here for that reason. (c) is now a two-line change with a stated
+> order, rather than an unquantified risk.
 
-`server/services/ectd/leaf-source-resolver.ts:77-88` declares `vault_documents`
-non-materializable, and gives two honest reasons: `submission_leaves.document_id` is `INTEGER`
-while `vault.documents.id` is a `UUID`, and `vault.documents` has no `organization_id`, so there
-is no tenant-safe lookup.
+### 4.5 A vault document can never become a submission — **CLOSED 2026-09-17**
+
+> **This gap is closed.** A vault document can now be filed into a submission and
+> assembled into a package. What it took, in order:
+>
+> 1. **Vault bytes moved onto the canonical storage seam.** Ingest writes through
+>    `getStorageProvider()` and records `storage_version_id`. This was the blocker
+>    nobody had written down, and it was the real one — see correction 3 below.
+> 2. **`submission_leaves.document_uuid`** — one nullable sibling column beside the
+>    integer `document_id`. NOT a widening: that is Option A of the identity
+>    contract and stays rejected. Adjudicated with the product owner 2026-09-17.
+> 3. **`vault_documents` moved from `EXTERNAL_DOCUMENT_TABLES` into
+>    `RESOLVABLE_DOCUMENT_TABLES`**, with a resolver branch and a tenancy verifier
+>    at the write boundary (the repo's own drift guard refused to let the first
+>    land without the second).
+>
+> Four fail-closed gates on the read path, because the eCTD index md5 is computed
+> from whatever is staged and nothing downstream would catch wrong bytes: an
+> org-scoped row read through the programme, the provider's own orgId boundary on
+> the bytes, a hash check against `content_hash`, and a `%PDF-` header verified on
+> the bytes rather than trusted from the mime string. Bytes are staged RAW — the
+> vault copy is the governed record, and re-rendering would file something the
+> vault has never seen.
+>
+> **The control exists too.** "Place into submission…" on an uploaded document in
+> the Vault: choose the submission and sequence (frozen and dispatched ones are
+> excluded, with the reason), give a section code, file. The vault copy is filed
+> as itself — no snapshot, so there is no second artifact to keep in step. The
+> picker and the section-code rule are shared with the authoring dialog rather
+> than copied, which already paid for itself: the copy written separately for the
+> Vault would have accepted a bare module and filed a document at a container.
+>
+> **Still required before a customer sees it:** rows uploaded BEFORE the storage
+> move must be backfilled — `npm run db:backfill-vault-storage -- --org N`, dry-run
+> by default. Until that runs for a tenant, filing one of their older documents
+> produces a leaf that resolves as unresolved and names that script as the fix.
+> Nothing is lost and nothing is silent; it simply will not assemble yet.
+
+The original assessment follows, for the record.
+
+`server/services/ectd/leaf-document-tables.ts` declares `vault_documents` non-materializable.
+The leaf is surfaced as **unresolved**, never dropped, and transmit fails closed on any
+unresolved leaf — so this is a guard-stop, not a silent hole.
 
 This is the single most important parity gap on the list. It means the Vault is not a RIM vault.
 A customer can upload a CSR and then cannot put it in the NDA.
+
+> **Corrected 2026-09-17 — the stated reasons were half wrong, and the real blocker was not
+> written down anywhere.** This section originally gave two reasons, taken from the resolver's
+> own comment. Investigating what it would take to close them produced a different answer:
+>
+> 1. **"`vault.documents` has no `organization_id`" — no longer true.**
+>    `migrations/20260905_vault_documents_organization_id.sql` adds it and is on the deploy
+>    path. It is nullable and carries no RLS policy, so it is attribution rather than
+>    isolation — but it is not what stops a vault leaf. The comment was stale, and a stale
+>    blocker invites the next person to unblock this by fixing something already fixed.
+>    (Corrected in the resolver too, so the two agree.)
+>
+> 2. **The id space is real, but widening the column is the wrong fix — and is already
+>    adjudicated against.** `docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md` (APPROVED 2026-08-13)
+>    weighed exactly that as its Option A and rejected it, because it rewrites the two tables
+>    "where a migration error is least recoverable", for a benefit its Option C delivers
+>    additively. It says in terms: *"`submission_leaves` keeps integer `document_id`."* The
+>    sanctioned bridge is the alias map (`c2c_document_aliases`), which is already built,
+>    already has `submission_leaves` in its store vocabulary, and already resolves lineage for
+>    coauthor leaves.
+>
+> 3. **The blocker nobody had recorded: the bytes.** Even with the identity solved, the
+>    packager could not fetch a vault document. It fetches non-local content through
+>    `getStorageProvider().get(vaultVersionId, organizationId)` — a lookup by a
+>    *provider-minted version uuid* under `storage/vault/{orgId}/{projectId}/versions/`. Vault
+>    ingest writes to `uploads/vault/{programId}/{contentHash}`, stores that relative **path**
+>    in `s3_key` with `s3_bucket='local'`, and mints no provider sidecar. Different root,
+>    different key space. `rendered_leaf_files` resolves only because `storeRenderedLeafFile()`
+>    called the provider's `put()` and kept the version id it returned; `vault.documents` has
+>    no such column.
+>
+> **So the ordering in §6 was wrong.** "Move bytes onto the existing storage seam" was filed
+> under weeks 2–4 as a tidy-up. It is in fact the *precondition* for the leaf bridge, and the
+> alias map — the part that was thought to be the work — is largely already built. The storage
+> migration is the real item, and it is an infrastructure decision (which provider, what
+> happens to bytes already written under the old layout), not a resolver change.
+>
+> Also worth recording, because it changes how urgent this reads: **nothing writes a
+> `vault_documents` leaf today**, in any code path, seed or UI. Both leaf-creating surfaces
+> hard-code `coauthor_documents`. The refusal is the intended state rather than an oversight,
+> and `document_table` *is* whitelisted at both the route and the service
+> (`isPlaceableDocumentTable`) — an earlier draft of this correction claimed it was not, and
+> that claim was wrong.
 
 ---
 
@@ -217,7 +348,30 @@ A customer can upload a CSR and then cannot put it in the NDA.
 
 Condensed from 220 verified findings. Severity as adjudicated after verification.
 
-**Lifecycle & versioning.** No lifecycle state on `vault.documents` at all — the UI renders the
+**Lifecycle & versioning.** **Partly closed 2026-09-19 — the `placed` transition is
+reachable.** The orchestrator refused it outright (`PLACEMENT_BINDING_NOT_WIRED`) because the
+live route built its bindings without an `upsertLeaf` writer; the real writer is injected now.
+That refusal was correct and was not loosened: `lifecycleBindings.ts` records the default it
+replaced, which minted a `leaf:${randomUUID()}` for a `submission_leaves` row that was never
+written and attested it in the hash-chained audit trail.
+
+The binding refuses rather than guesses in three places — no `sequenceId` on the placement
+(`registryId` is an application *type*, and an org can hold several submissions each with a
+sequence 0000), no source the assembler can materialise, and a key-space mismatch where the
+STORE's declared id kind governs rather than the ref's claim. Refusals surface as a 409 in the
+orchestrator's own shape, never a 500.
+
+It works for vault documents specifically because `document_uuid` landed earlier this session:
+`SOURCE_ID_KIND` already declared `vault_documents` uuid-keyed, so the model had anticipated
+this seam before there was a column for it.
+
+**Still open here:** `packaged` remains unwired (`ASSEMBLY_BINDING_NOT_WIRED`). The assembler
+exists, but wiring it makes an HTTP transition build a real eCTD package — an architecture
+decision about where that work runs, not the mechanical injection `placed` needed. And
+`vault.documents` still has no stage column of its own; the lifecycle runs over the canonical
+document store, not over the vault row.
+
+Original finding: no lifecycle state on `vault.documents` at all — the UI renders the
 *filing* status in the status slot because there is nothing else
 (`server/routes/c2c/project-vault.ts:312`). A good, default-deny, unit-tested state machine
 exists (`shared/regulatory/document-lifecycle.ts:146-195`) and is mounted
@@ -230,7 +384,47 @@ users "Create a new version to make further changes"
 (`server/services/authoring/document-lock.ts:68-73`) and **no such route exists** in either
 governed store.
 
-**Security.** Org membership is the whole authorization model in the Vault:
+**Security.** ~~Org membership is the whole authorization model in the Vault~~ —
+**the WRITES are role-gated as of 2026-09-19.** Both governed writes into
+`vault.documents` now carry `requireEditorAccess`, the repo's one governed-write gate,
+which excludes `viewer`: the filing decision (`POST /:id/file`) and the upload
+(`POST /api/vault/ingest`). Each creates or moves a regulatory record AND writes a Part 11
+row attributing it to the caller, so a viewer could previously author an attributable
+governed record. Ingest is gated BEFORE multer — refusing after the upload is buffered is a
+denial-of-service shape rather than a permission one. The upload path was already READING the
+role to stamp into its audit arguments and never deciding anything with it.
+
+The READS are deliberately still open to a viewer: enumerating and downloading their own
+organisation's dossier is the viewer role working as intended, and widening the fix there
+would break the role rather than enforce it.
+
+Nothing covered either route before this, so the tests came with the gate
+(`server/routes/__tests__/vault-file-authorization.test.ts`).
+
+> **Is this systemic? Partly — and NOT in the way it first looks. Recorded so the
+> next person does not raise the alarm I nearly did.**
+>
+> A scan finds 279 router files with write routes and no role-gate reference, and 164
+> of 174 router mounts pass only an auth middleware. Neither number is a finding list.
+>
+> - **They ARE authenticated.** `server/middleware/authBoundary.ts` is a default-deny
+>   boundary mounted once (`server/startup/middleware.ts`) before any route
+>   registration, covering the whole `/api` surface — `enforce` in production, `warn`
+>   otherwise. A router with no auth middleware of its own, and no `req.user`
+>   reference at all, is still behind it. `server/routes/mdx-qms.ts` is exactly that
+>   shape and it is **not** an unauthenticated endpoint.
+> - **What the scan actually measures is ROLE gating**, which this codebase applies
+>   per-route rather than at the mount. Whether an ungated write is a defect depends
+>   on whether that particular write is governed — which no scanner can adjudicate,
+>   and which is why the two vault routes were fixed by reading them rather than by
+>   running a list.
+>
+> So: worth a deliberate review of governed writes route by route, not a sweep, and
+> not a count anyone should quote as a vulnerability total.
+
+The original finding follows:
+
+Org membership is the whole authorization model in the Vault:
 `project-vault.ts:562`, `:823`, `:925` resolve `orgId` and nothing else, so any authenticated
 `viewer` can enumerate every program's dossier, download every byte, and re-file any document —
 after which a chained audit row is written for a move nobody was authorized to make (`:1069`).
@@ -252,20 +446,76 @@ subsystem is inert today — which is the only reason the missing legal hold has
 a record under litigation.
 
 **Taxonomy & metadata.** No subtype/classification hierarchy, no per-type fields, no picklist
-governance — 16 flat document types (`shared/constants/domain/vault-taxonomy.ts:71-76`).
-`readinessEvaluator.ts:176-184` returns `completionPercent: required.length > 0 ? … : 100` — so a
-filing type with no artifact matrix reports **100% complete with zero gaps**, which is exactly
-the honesty failure `CLAUDE.md` names ("nothing-assessed is not assessed-and-clear"). The
-adjacent unknown-id path at `:95-113` gets this right and returns 0 with a critical gap; copy
-that.
+governance — 16 flat document types (`shared/constants/domain/vault-taxonomy.ts`). The
+Type→Subtype→Classification model remains the real gap and the real build.
 
-**The eTMF File button does not work.** `client/src/concept2cure/v2/surfaces/Etmf.tsx:286` posts
-`documentType: 'tmf_essential'` and no `programId`. The server requires a UUID `programId` and one
-of the 16 enum values (`vault-ingest.ts:71-88`). Every eTMF filing attempt is a 400.
-`tmf_essential` appears nowhere else in the codebase. Meanwhile `useVaultUpload.ts` — the
-canonical hook — does it correctly. `Etmf.tsx` hand-rolled a duplicate upload path and broke it;
-the taxonomy file's own comment (`:68`) says the picker "can never offer a type the server will
-refuse." Fix by deletion.
+> **Two narrower things fixed since.**
+>
+> - ~~`readinessEvaluator.ts` returns `completionPercent: required.length > 0 ? … : 100`, so a
+>   filing type with no artifact matrix reports 100% complete with zero gaps.~~ **Fixed
+>   2026-09-05.** It carries `assessed: false` and an `ARTIFACT_REQUIREMENTS_NOT_MODELLED` gap,
+>   and no longer contributes its weight. 225 of 234 registry filing types were reporting 100%.
+> - **The two vocabularies in that file were not reconciled** (fixed 2026-09-19).
+>   `VAULT_INGEST_DOCUMENT_TYPES` are wire tokens; `VaultDocKind` is what the surface classifies
+>   by; nothing mapped between them. So when the classifier had assigned no evidence kind, the
+>   document list rendered the token itself — a reviewer read `MODULE_3` and `CORRESPONDENCE`.
+>   There is a label map beside the enum now, for the reason the enum's own note gives (one
+>   list, shared), with a test that the map covers the enum exactly: a type added to one and not
+>   the other is precisely how the raw token comes back. A value outside the enum returns as
+>   ITSELF rather than as "Other" — the column is TEXT with no CHECK, the token is ugly but
+>   true, and "Other" would be a classification nobody made.
+
+**~~The eTMF File button does not work.~~ FIXED — but only half of it.**
+*(Updated 2026-09-19.)* The button works. `Etmf.tsx` now resolves `programId` from the shell
+channel that already carries the open `regulatory_programs` uuid to every project-scoped
+surface, REFUSES with an honest message when no program is open rather than posting a request
+that cannot succeed, and derives `documentType` through `tmfCodeToIngestType(code)` instead of
+the literal `tmf_essential` the ingest enum rejects. Pinned by 18 tests in
+`client/src/concept2cure/v2/__tests__/etmfFilingPayload.test.ts` — including one asserting
+`tmf_essential` is not an accepted ingest type, and one asserting the literal is not
+re-introduced into the source.
+
+**The duplication half is still open — and "fix by deletion" would have deleted the only
+upload path that worked.** Following that advice is what found this: `useVaultUpload`, the
+canonical hook, sent `credentials: 'include'` and **no `Authorization` header**.
+`/api/vault/ingest` is mounted behind `authMiddleware`
+(`register-inline-routes.ts`), whose header reads "Validates Bearer JWT tokens only" and which
+answers `401 { error: 'Bearer token required' }` — it reads `req.headers.authorization` and has
+no cookie fallback. So **every upload through the canonical hook was refused, on all three of
+its callers**: the v2 Vault, the MDX Document vault and the MDX pathway attach. `Etmf.tsx`'s
+hand-rolled copy sent `getAuthHeaders()` and was the one that worked. Fixed 2026-09-19, with a
+test that fails on the unfixed hook.
+
+This is a class, not an instance, and the mechanism is why it survives: `authBoundary` runs in
+mode `warn` outside production and `enforce` in it, so a call missing its bearer token **works
+in development and 401s in production**. (The vault hook was worse still: `/api/vault/ingest`
+carries `authMiddleware` inline as well, so it failed in every environment.) Work already in
+flight upstream fixes two MDX hooks on the same diagnosis — see
+`client/src/concept2cure/mdx/hooks/__tests__/mdx-hooks-send-auth.test.ts`, whose opening line is
+"`credentials: 'include'` is not authentication in this app."
+
+A repo-wide sweep of `fetch('/api/…')` across `client/src` found **one more real instance**, now
+fixed: `useSubmissions.ts` read a package's readiness gate and milestones with
+`credentials: 'include'` and no headers, against `/api/submission-ops`, which is not on
+PUBLIC_API_ALLOWLIST. The failure mode was the honest-state one rather than a blank screen — a
+401 is not `res.ok`, so both branches left `gate` and `log` null and the surface rendered a
+package with no readiness gate and no milestones, indistinguishable from one that has neither.
+
+**The other 13 hits the sweep reported are false positives, checked individually**, and the
+number is recorded here so nobody re-runs the same crude scan and re-reports them: `ZenLogin`,
+`ZenSignup`, `Concept2CureLogin` and `Onboarding`'s license-request call are `/api/auth/*`,
+public by design and on the allowlist; `portal/logger.ts` posts to `/api/v1`, likewise
+allowlisted; `useEstarFiling` (×5) and `useCerLiterature` (×2) call a local `jsonHeaders()`
+that spreads `buildAuthHeaders()`; and `Onboarding`'s other two build a `headers` object with
+`...getAuthHeaders()` further up the function. No CI gate is proposed for this class for that
+reason: a scanner that cannot resolve a local header helper would need thirteen baselined
+non-defects to go green, and a baseline that large teaches people to add to it.
+
+The remaining duplication is still worth closing, and it is not forty lines: the hook's outcome
+reports file NAMES (`succeeded: string[]`), while eTMF needs the id of the row the vault wrote
+in order to bind the TMF artifact to it, and it sets its own `documentCode`/`documentTitle`
+from the TMF vocabulary rather than the filename. Closing it means widening the hook's contract
+and migrating all four callers onto it.
 
 **Search.** `Vault.tsx` has exactly one `<input>` and it is the file picker at `:774`. There is
 no search box. What filtering exists is a client-side substring match over rows already in
@@ -292,15 +542,80 @@ updated" it). A due-date tile tests `/days/.test(p.due)` against a value formatt
 critical path, no risk/issue/decision log, no portfolio view. Task CRUD exists and works
 (modulo §4.1).
 
-**Data room.** Nothing. No external principal exists in the auth model — an outside party can
-only be given a full internal seat. `client_access` is read but never written. No code path
-sets a document to a client-visible status. No per-folder or per-file permissions, no tiers, no
-watermarking, no expiry, no per-viewer analytics, no Q&A.
+**Data room.** ~~Nothing.~~ **Corrected 2026-09-19 — more exists than this said, and it
+dead-ends at one precise point.** The distinction matters because it changes where the work
+starts.
 
-**API & integrations.** No document or vault objects on the public API; `documents:read` is a
-grantable scope that unlocks nothing. The tenant data export cannot see the `vault` schema —
-and the purge it gates silently skips vault documents, so a GDPR erasure request leaves the
-bytes. `VaultSyncService` (the Veeva-migration story) has no importer outside its own file.
+What exists and is sound:
+
+- `/api/client-portal` is MOUNTED (`register-tenant-routes.ts:54`) and its scoping is
+  fail-closed. An external caller is restricted to their own `client_access` grants; a
+  `?clientWorkspaceId=` they were not granted cannot pivot them, because the parameter only
+  reorders a result set the WHERE has already restricted to their own rows. Staff "preview"
+  is separately restricted to workspaces their own organisation owns.
+- `client_workspaces` rows ARE created, by two writers (`clients-routes.ts:316`,
+  `projects-management.ts:200`).
+
+What does not exist, at all:
+
+- **`client_access` is never written.** No INSERT anywhere in `server/`, `scripts/`,
+  `migrations/` or `db/`. So a workspace can be created and the portal will scope correctly to
+  it, and no human being can ever be granted access to one. The external path is complete on
+  the read side and absent on the grant side — one missing write, not a missing subsystem.
+- The portal serves a single route, `GET /overview`. No document objects reach it.
+
+Still true from the original finding: no code path sets a document to a client-visible status,
+and there are no per-folder or per-file permissions, tiers, watermarking, expiry, per-viewer
+analytics, or Q&A.
+
+**Why this is not just "add the INSERT".** Who may grant, whether the recipient is an existing
+account or an invitation, and whether a grant expires or is revocable are policy decisions with
+regulatory consequence — this is external access to a governed document store. Building them on
+an assumption would be the wrong kind of initiative. Deliberately left for a decision.
+
+**API & integrations.** *(Updated 2026-09-19.)* Three of the four claims here are now closed.
+**The score stays at 1**, deliberately: what closed the first one is a read-only metadata index
+of two endpoints, and Veeva's document API is CRUD over documents, binders, workflows and bulk
+loads. Closing a hole is not parity.
+
+- ~~No document or vault objects on the public API; `documents:read` is a grantable scope that
+  unlocks nothing.~~ **CLOSED.** It was worse than "unlocks nothing". The scope was grantable
+  (`shared/schema/api-keys.ts:66`), offered in the admin key editor
+  (`AdminSurfaces.tsx:2578`), and *advertised* by `/api/v1/docs` — while no route anywhere in
+  the codebase required it. An operator could tick it, hand the key to an integrator, and
+  reasonably believe programmatic document access was on; the integrator had nothing to call,
+  and no error explained why, because there was no endpoint to receive the call. A permission
+  that unlocks nothing is worse than a missing one: it reads as a decision somebody made.
+  `GET /api/v1/documents` and `GET /api/v1/documents/:id` now require it
+  (`server/routes/public-api.ts`; read model in
+  `server/services/vault/vault-document-index.service.ts`).
+  **Metadata only, deliberately** — never bytes, never `extracted_text`, never storage
+  addressing (`s3_key`, `storage_version_id`). Returning document text from an endpoint named
+  "index" would be a content egress wearing a metadata endpoint's name, and would route around
+  the byte-level gates the in-app read path enforces. Whether a bearer API key may pull
+  regulated content at all is a separate egress decision and is **not** made here.
+  Tenancy is enforced by joining through `regulatory_programs`, not by trusting the nullable
+  `vault.documents.organization_id`. A test asserts that **every scope `/docs` advertises is
+  required by some endpoint `/docs` lists**, so this class of defect cannot recur silently.
+- ~~The tenant data export cannot see the `vault` schema.~~ **CLOSED** earlier in this pass:
+  `EXPORT_SCHEMAS` is `['public', 'vault']` (`tenant-full-export.service.ts:70`).
+- ~~The purge it gates silently skips vault documents, so a GDPR erasure request leaves the
+  bytes.~~ **CLOSED TWICE — the second time is the interesting one.** The first fix named the
+  tables where they actually live (`vault.documents`, not `public.vault_documents`, which
+  resolved to nothing and was skipped as "absent from this schema"). Fixing the table names
+  exposed a narrower version of the same bug underneath: both vault entries were keyed on
+  `organization_id = $1`, and that column is **nullable by design** — the schema records
+  "NULL = unattributable — the program is missing or soft-deleted". A document whose programme
+  had been soft-deleted therefore carried NULL, matched nothing, and survived the erasure with
+  its bytes — in precisely the rows old enough for someone to ask about. The purge now scopes
+  through `regulatory_programs` (the authoritative owner, since the column is backfilled from
+  it) unioned with the column: `VAULT_DOCUMENT_TENANCY` in `tenant-offboarding.ts`. Proven
+  against real Postgres, including a test that runs the *old* predicate and asserts it leaves
+  the row behind.
+- **`VaultSyncService` (the Veeva-migration story) has no importer outside its own file.**
+  **STILL OPEN** — re-verified 2026-09-19. The only references anywhere are its own definition
+  (`server/integrations/veeva-vault/vault-sync-service.ts`) and its own test. No route, service
+  or script constructs it, so the migration story remains a class nobody can invoke.
 
 ---
 
@@ -328,9 +643,15 @@ at `shared/regulatory/canonical-document.ts:56,124`).
    (`WHERE content_hash = EXCLUDED.content_hash`), returning `409 VERSION_CONTENT_CONFLICT` on
    a genuine conflict — **plus** an explicit `23505` branch distinguishing the two unique
    constraints (see §4.2), or the refusal story is incomplete in the direction users hit first.
-4. `submission_leaves.document_id` widened `INTEGER → TEXT` plus a `document_version_id`, so
-   the resolver can address a vault document. ~56 files, ~105 call sites; mechanical, and the
-   risk is a surviving `Number()` coercion, not logic.
+4. ~~`submission_leaves.document_id` widened `INTEGER → TEXT` plus a `document_version_id`.~~
+   **Withdrawn 2026-09-17 — do not do this.** It is Option A of
+   `docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md`, which was weighed and rejected on 2026-08-13;
+   that contract states `submission_leaves` keeps its integer `document_id`, and the alias map
+   is how a uuid-native document finds its integer-addressable representation. Widening would
+   also not have worked: the packager still could not fetch the bytes (§4.5, correction 3).
+   Replace with: **move vault ingest onto `getStorageProvider()`** — persist the provider's
+   version id on `vault.documents`, and migrate bytes already written under
+   `uploads/vault/{programId}/`. That is the item this list actually needed.
 5. A lifecycle vocabulary parameterised by document class, so a controlled SOP does not travel
    the submission graph.
 
@@ -488,8 +809,10 @@ ALL SEVEN SHIPPED**, each verified by making the check fail first.
   neither touched it: the purge used `public.vault_documents`, the export swept
   `public` only.
 
-Still open from §4: the leaf id-space (§4.5) — a vault document has a tenant now but
-still cannot become a submission leaf until `submission_leaves.document_id` widens.
+~~Still open from §4: a vault document has a tenant now but still cannot become a submission
+leaf (§4.5).~~ **CLOSED 2026-09-17.** The storage seam (the real blocker) and the leaf id
+space were both closed; a vault document can be filed and assembled. Remaining: backfill
+pre-existing rows onto the provider, and build the UI affordance. See §4.5.
 
 **Weeks 2–4 — make the vault usable**
 Server-side vault search with a GIN index and pagination; a search box in `Vault.tsx`; wire the
@@ -497,7 +820,9 @@ retrieval stack to the chunks table or delete it; move bytes onto the existing s
 
 **Quarter 1 — the spine (§6).** 18–20 engineer-weeks. Ordered: prove the tenant GUC → add
 `organization_id` + backfill + quarantine → dual predicate → `FORCE` → version table →
-non-destructive ingest → canonical binding → leaf id-space → consolidation and deletions.
+non-destructive ingest → canonical binding → **vault bytes onto the storage provider** →
+leaf bridge via the alias map → consolidation and deletions. (Reordered 2026-09-17: the
+storage move is the precondition for the leaf bridge, not a later tidy-up — §4.5.)
 
 **Quarter 2 — the data room (§7).** ~21 engineer-weeks. Phase 0 can ship in week 1 of Q1.
 

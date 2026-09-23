@@ -1,0 +1,85 @@
+{
+  "version": "0.1.0-handwritten",
+  "note": "Hand-written samples for the register linter. None of these is model output; no AI provider was available when they were written (2026-09-21). They pin the linter's behaviour on the shapes the founder reported and on the shapes the register asks for. Live transcripts are scored by run-eval.ts once a provider exists.",
+  "samples": [
+    {
+      "id": "chat-good-short-fact",
+      "register": "chat",
+      "expect": "pass",
+      "text": "0.10% for a maximum daily dose up to 2 g/day, or 1.0 mg/day intake, whichever is lower (ICH Q3A(R2) Attachment 1). Above 2 g/day it drops to 0.05%."
+    },
+    {
+      "id": "chat-good-three-paragraphs-one-bold-one-citation",
+      "register": "chat",
+      "expect": "pass",
+      "text": "Go 505(b)(2). Your formulation change doesn't alter the active moiety, and the innovator's NDA carries the safety database you'd otherwise have to rebuild; a full NDA here buys nothing but time and a larger Module 5.\n\nThe risk to manage is the **bridging PK study** — FDA will want relative bioavailability against the listed drug under fed and fasted conditions, and the fed-state comparison is where modified-release products tend to surprise sponsors [Source: precedent — 505(b)(2) MR reformulations, Day-74 letters].\n\nIf you haven't locked the reference product yet, that's the decision that gates the study design, and I can pull the listed-drug labeling now."
+    },
+    {
+      "id": "chat-good-user-asked-for-list",
+      "register": "chat",
+      "expect": "pass",
+      "options": { "userAskedForList": true },
+      "text": "The four things a Type B pre-IND package needs before you request the meeting:\n\n- the meeting request letter with the questions ranked, not listed\n- the briefing document, with your proposed positions stated as proposals\n- the nonclinical summary that supports the starting dose\n- the CMC section at the depth of a Phase 1 IND, not more"
+    },
+    {
+      "id": "chat-good-first-turn-greeting",
+      "register": "chat",
+      "expect": "pass",
+      "options": { "firstTurn": true },
+      "text": "Good morning, Priya. The Module 3 freeze is Thursday and 3.2.P.5.4 still has no batch analysis attached — that's the one I'd look at first."
+    },
+    {
+      "id": "chat-good-tool-result-as-sentence",
+      "register": "chat",
+      "expect": "pass",
+      "text": "The Q1E poolability test passes — slope p = 0.31, intercept p = 0.44 — so the three batches can be pooled and the engine supports a 24-month shelf life at 25°C/60% RH. Its caveat stands: batch 0042 has only the 9-month point, so the pooled estimate leans on two batches past month 9.\n\n```ana-grounding\nmode: actioned\ncontext_used: [\"assess_recorded_batch_poolability\"]\nconfidence: high\n```"
+    },
+    {
+      "id": "chat-good-consequential-next-move",
+      "register": "chat",
+      "expect": "pass",
+      "text": "No — the dosing rationale in 2.5.4 says 40 mg was chosen on exposure margins, while 2.7.4 still describes it as the MTD from the escalation study. A reviewer cross-checks those two sections first.\n\nWant me to reconcile 2.7.4 to the exposure-margin language?"
+    },
+    {
+      "id": "chat-bad-memo-shape",
+      "register": "chat",
+      "expect": "fail",
+      "expectRules": ["greeting-ritual", "praise-opener", "headers", "bullets", "next-step-ritual", "empty-closer", "exclamation"],
+      "text": "Hi Priya! Great question.\n\n## Overview\n\nThe identification threshold under ICH Q3A(R2) depends on the maximum daily dose.\n\n## Key Points\n\n- For MDD ≤ 2 g/day the threshold is 0.10% or 1.0 mg/day\n- For MDD > 2 g/day the threshold is 0.05%\n\n**Next steps:** Review your specification against the threshold and update 3.2.S.4.1.\n\nLet me know if you need anything else!"
+    },
+    {
+      "id": "chat-bad-bold-table-reintroduction",
+      "register": "chat",
+      "expect": "fail",
+      "expectRules": ["bold", "tables", "reintroduction"],
+      "text": "I'm AnA, your regulatory intelligence co-pilot. The **FDA** and **EMA** differ on **bracketing** under **ICH Q1D**.\n\n| Agency | Position |\n|---|---|\n| FDA | Accepts bracketing per Q1D |\n| PMDA | Expects full testing |\n\nThe **PMDA** position is the stricter one."
+    },
+    {
+      "id": "chat-bad-restates-filler-menu-long-paragraph",
+      "register": "chat",
+      "expect": "fail",
+      "expectRules": ["restates-question", "filler", "capability-menu", "paragraph-length"],
+      "text": "You're asking whether the substantial equivalence argument will hold. It's worth noting that there are several considerations to keep in mind here, because substantial equivalence under section 513(i) of the FD&C Act requires that the subject device have the same intended use as the predicate device and either the same technological characteristics or different technological characteristics that do not raise different questions of safety and effectiveness, and the comparison you have drafted leans heavily on the intended-use match while treating the change in energy source as a minor difference, which a CDRH reviewer is unlikely to accept without bench data demonstrating equivalent tissue effect across the operating range, and the predicate you have selected was cleared in 2011 under a different special controls guidance, so the review division may also ask why a more recent predicate was not selected, all of which means the argument as currently written is vulnerable rather than defensible and will likely generate an additional information request rather than a refuse-to-accept, which is survivable but costs you a review cycle.\n\nHere are a few things I can help with: revising the SE table, finding a newer predicate, or drafting the bench-testing rationale."
+    },
+    {
+      "id": "chat-bad-too-many-paragraphs",
+      "register": "chat",
+      "expect": "fail",
+      "expectRules": ["paragraphs"],
+      "text": "Yes, it applies.\n\nThe rule is in Q1A(R2).\n\nLong-term is 25°C/60% RH.\n\nAccelerated is 40°C/75% RH.\n\nYou need 12 months long-term at filing.\n\nAnd 6 months accelerated.\n\nWith a commitment to continue through expiry."
+    },
+    {
+      "id": "artifact-good-section-draft",
+      "register": "artifact",
+      "expect": "pass",
+      "text": "## 2.5.4 Overview of Efficacy\n\n### 2.5.4.1 Study Populations\n\nEfficacy was evaluated in two pivotal Phase 3 studies (Study 301, N=648; Study 302, N=612) using the pre-specified primary endpoint of change from baseline in HbA1c at Week 26.\n\n### 2.5.4.2 Primary Endpoint Results\n\nTreatment demonstrated a statistically significant reduction versus placebo (LSM difference: -0.82%, 95% CI: -0.94 to -0.70; p<0.001) in Study 301, with consistent results in Study 302 (LSM difference: -0.79%, 95% CI: -0.92 to -0.66; p<0.001)."
+    },
+    {
+      "id": "artifact-bad-chat-interjection",
+      "register": "artifact",
+      "expect": "fail",
+      "expectRules": ["chat-interjection", "empty-closer"],
+      "text": "Here's a strong opener for your 2.5:\n\n## 2.5.1 Product Development Rationale\n\n### 2.5.1.1 Pharmacological Class\n\nThe product is a selective inhibitor of the target enzyme.\n\nLet me know if you'd like me to expand any section."
+    }
+  ]
+}

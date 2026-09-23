@@ -13,6 +13,19 @@
  * the same opt-in pattern as the PDF/A gate. It NEVER throws on a missing
  * directory; absence is reported, not fatal, so dev/staging keep flowing.
  *
+ * SELF-CONTAINMENT IS NOT CONFORMANCE — read `selfContained` for exactly what it
+ * says. It answers "does the package ship the grammar its DOCTYPEs point at",
+ * and NOTHING about whether the XML is written to that grammar. Eleven of the
+ * twelve regional Module 1 backbones are not (see regional-backbone-readiness.ts:
+ * only FDA is built to its agency's Module 1 heading table), so vendoring the
+ * licensed DTDs turns "cannot be validated" into "fails validation" for those
+ * eleven. It is worth saying here because this is where the two get conflated:
+ * `dtdStatus.selfContained` is read as a fitness signal by the compile surface,
+ * and the DTD procurement is described everywhere as the thing that unblocks
+ * eCTD. It unblocks self-containment. Pinned by __tests__/dtd-bundler.test.ts
+ * ("a fully vendored drop-point clears the DTD gate WITHOUT making a region
+ * conformant").
+ *
  * @module server/services/ectd/dtd-bundler
  */
 

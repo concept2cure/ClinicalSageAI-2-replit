@@ -10,7 +10,20 @@
  * that genuinely prevent a valid dispatch (a false-positive block in a hard gate
  * is as harmful as a missed one):
  *   - EMPTY_SEQUENCE      — nothing dispatchable
- *   - UNRESOLVED_DOCUMENT — a non-delete leaf with no document to assemble
+ *   - UNRESOLVED_DOCUMENT — a non-delete leaf with no document to assemble:
+ *     an incomplete pointer (no table, or not the key its table is addressed
+ *     by — integer `documentId` for most stores, `documentUuid` for the
+ *     uuid-keyed vault), or a complete pointer the DB-bound resolver
+ *     (leaf-document-resolver.ts) could not find in the caller's organization.
+ *     Until 2026-09-21 this check read the integer column alone, so every leaf
+ *     filed from the vault (uuid set, integer null) was reported unresolved
+ *     although the write path had accepted the uuid and pinned its content
+ *     hash — no vault-built sequence could ever clear the gate.
+ *   - DOCUMENT_CONTENT_MISMATCH — the source document resolves, but the
+ *     content hash pinned on the leaf when it was filed no longer matches what
+ *     the store holds. The pin exists so "is the document behind this leaf
+ *     still what was filed?" has an answer; a mismatch is that answer and is
+ *     never silently passed.
  *   - UNPLACEABLE_DOCUMENT_TABLE — a leaf pointing at a document table no
  *     resolver can materialize (a typo or an invented table). The write path
  *     now refuses these, but rows placed BEFORE that guard existed are still in
@@ -35,16 +48,65 @@
  * by the pathway engines and the AI dispatch-qc advisory.
  *
  * PURE + DETERMINISTIC: no DB, no network, no LLM (leaf-document-tables holds
- * the table vocabulary and has no imports of its own).
+ * the table vocabulary and has no imports of its own). Document EXISTENCE and
+ * the content-pin comparison need the database, so the DB-bound caller
+ * (assess-dispatch-readiness) resolves each leaf's pointer through
+ * leaf-document-resolver and hands the resolution in on `ReadinessLeaf.document`;
+ * this module only turns that resolution into findings. A caller that supplies
+ * no resolution gets the pointer-shape checks alone.
  *
  * @module server/services/ectd/dispatch-readiness
  */
 
 import {
+  documentTableKeyKind,
   externalDocumentTableReason,
   isPlaceableDocumentTable,
   PLACEABLE_DOCUMENT_TABLE_LIST,
 } from './leaf-document-tables';
+
+/** How the content pin on a leaf compares with what its store holds now. */
+export type LeafDocumentPinVerdict =
+  /** Pinned and the store's digest equals the pin. */
+  | 'match'
+  /** Pinned and the store's digest differs. */
+  | 'mismatch'
+  /** No pin was taken when the leaf was filed — unknown, never "unchanged". */
+  | 'unpinned'
+  /** Pinned, but the store yields no digest now (content emptied, bytes gone). */
+  | 'unverifiable';
+
+/**
+ * What the DB-bound resolver found behind one leaf's document pointer. ONE
+ * shape for the readiness assessment, the Builder's source-document column and
+ * the freeze / dispatch gate (which composes the assessment), so the three
+ * cannot disagree about whether a leaf resolves.
+ */
+export interface LeafDocumentResolution {
+  status:
+    /** A document exists in this organization and its pin, if any, matches. */
+    | 'resolved'
+    /** The pointer is incomplete — no table, or not the key the table uses. */
+    | 'no_pointer'
+    /** The table is outside the placeable set; nothing can look it up. */
+    | 'unplaceable_table'
+    /** A complete pointer, but no such document in this organization. */
+    | 'missing'
+    /** The document exists but its content no longer matches the pin. */
+    | 'content_changed';
+  /** The key space the leaf's table is addressed by; null for an unknown table. */
+  keyKind: 'integer' | 'uuid' | null;
+  documentTable: string | null;
+  documentId: number | null;
+  documentUuid: string | null;
+  /** SHA-256 pinned on the leaf when it was filed (submission_leaves.document_content_sha256). */
+  pinnedSha256: string | null;
+  /** The digest the store reports for the document now, on the same reading the pin was taken over. */
+  storedSha256: string | null;
+  pin: LeafDocumentPinVerdict;
+  /** Human-readable detail for anything but a clean resolution. */
+  reason: string | null;
+}
 
 export interface ReadinessLeaf {
   sectionCode: string;
@@ -52,7 +114,14 @@ export interface ReadinessLeaf {
   /** new | replace | append | delete */
   lifecycleOp: string;
   documentTable: string | null;
+  /** The integer half of the polymorphic reference (integer-keyed stores). */
   documentId: number | null;
+  /** The uuid half (uuid-keyed stores — vault_documents). Absent on callers
+   *  that predate the column; treated as null. */
+  documentUuid?: string | null;
+  /** What the resolver found behind the pointer. Supplied by the DB-bound
+   *  assessor; a pure caller may omit it and gets the shape checks alone. */
+  document?: LeafDocumentResolution | null;
 }
 
 export interface ReadinessFinding {
@@ -120,13 +189,78 @@ function normalizeCode(code: string): string {
  * one. Each finding predicts the same outcome: the assembler cannot produce
  * this leaf's file, and transmitSequence fails closed on any unresolved leaf.
  */
+/**
+ * Is the leaf's pointer complete for the key space its table is addressed by?
+ * A vault leaf is complete with a uuid alone; an integer-keyed store needs the
+ * integer; a table outside the placeable set has no known key space, so either
+ * key counts (the table itself is reported by the UNPLACEABLE finding).
+ */
+export function hasCompleteDocumentPointer(leaf: {
+  documentTable: string | null;
+  documentId: number | null;
+  documentUuid?: string | null;
+}): boolean {
+  if (!leaf.documentTable) return false;
+  const uuid = leaf.documentUuid ?? null;
+  switch (documentTableKeyKind(leaf.documentTable)) {
+    case 'uuid':
+      return !!uuid;
+    case 'integer':
+      return !!leaf.documentId;
+    default:
+      return !!leaf.documentId || !!uuid;
+  }
+}
+
+/** The key the leaf carries, for messages: `vault_documents 1b80ee68-…`. */
+function pointerLabel(leaf: ReadinessLeaf): string {
+  const key = leaf.documentUuid ?? (leaf.documentId != null ? String(leaf.documentId) : null);
+  return key ? `${leaf.documentTable} ${key}` : String(leaf.documentTable);
+}
+
+/**
+ * What the DB-bound resolver found behind a complete pointer. A document the
+ * resolver could not find is exactly as unassemblable as no pointer at all,
+ * and reads under the same code; a document whose content no longer matches
+ * the pin taken at filing is its own finding — it is never silently passed.
+ */
+function resolutionFindings(leaf: ReadinessLeaf, isDelete: boolean): ReadinessFinding[] {
+  const resolution = leaf.document ?? null;
+  if (!resolution) return [];
+  const out: ReadinessFinding[] = [];
+  if (!isDelete && resolution.status === 'missing') {
+    out.push({
+      severity: 'error',
+      code: 'UNRESOLVED_DOCUMENT',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at ${pointerLabel(leaf)}, which does not resolve in this organization` +
+        `${resolution.reason ? ` — ${resolution.reason}` : ''}. It cannot be assembled into the package.`,
+    });
+  }
+  if (resolution.status === 'content_changed') {
+    out.push({
+      severity: 'error',
+      code: 'DOCUMENT_CONTENT_MISMATCH',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) was filed against content with SHA-256 ${resolution.pinnedSha256 ?? 'unknown'}, ` +
+        `but ${pointerLabel(leaf)} now ${resolution.storedSha256 ? `carries ${resolution.storedSha256}` : 'yields no content digest'}` +
+        `${resolution.reason ? ` — ${resolution.reason}` : ''}. Re-file the leaf against the current document, or restore the filed content, before dispatch.`,
+    });
+  }
+  return out;
+}
+
 function documentPointerFindings(leaf: ReadinessLeaf): ReadinessFinding[] {
   const out: ReadinessFinding[] = [];
   const isDelete = leaf.lifecycleOp === 'delete';
 
   // ERROR: an incomplete pointer — there is no document to assemble. Exempt for
-  // a delete, which is backbone-only and correctly carries none.
-  if (!isDelete && (!leaf.documentTable || !leaf.documentId)) {
+  // a delete, which is backbone-only and correctly carries none. Completeness
+  // is judged against the key space the table is addressed by: a vault leaf
+  // is complete with its uuid and needs no integer.
+  if (!isDelete && !hasCompleteDocumentPointer(leaf)) {
     out.push({
       severity: 'error',
       code: 'UNRESOLVED_DOCUMENT',
@@ -137,6 +271,12 @@ function documentPointerFindings(leaf: ReadinessLeaf): ReadinessFinding[] {
 
   const table = leaf.documentTable;
   if (!table) return out;
+
+  // What the DB-bound resolver found behind a complete pointer. A document the
+  // resolver could not find is exactly as unassemblable as no pointer at all,
+  // and reads under the same code; a document whose content no longer matches
+  // the pin taken at filing is its own finding — it is never silently passed.
+  out.push(...resolutionFindings(leaf, isDelete));
 
   // ERROR: a table outside the closed set — a typo or an invented table. The
   // write path refuses these now; rows written before that guard existed are

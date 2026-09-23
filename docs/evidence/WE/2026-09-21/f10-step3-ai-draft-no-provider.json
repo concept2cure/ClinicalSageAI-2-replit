@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5800/api/authoring/sections/98de1665-6e75-49d5-adbd-3062a4a3f687/ai/draft",
+    "body": {
+      "prompt": "Draft a one-paragraph summary.",
+      "region": "FDA"
+    }
+  },
+  "response": {
+    "status": 503,
+    "contentType": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "error": {
+        "code": "GATEWAY_UNAVAILABLE",
+        "message": "No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed."
+      }
+    }
+  }
+}

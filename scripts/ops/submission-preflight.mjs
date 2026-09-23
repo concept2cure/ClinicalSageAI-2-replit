@@ -6,7 +6,7 @@
  * can file for real?" — the licensed agency artifacts and agency credentials
  * that gate live submission. None of them is code:
  *
- *   1. eCTD DTDs            → assets/ectd-dtd/        (or ECTD_DTD_DIR)
+ *   1. eCTD DTDs + stylesheets → assets/ectd-dtd/     (or ECTD_DTD_DIR)
  *   2. FDA eSTAR templates  → assets/estar-templates/ (or ESTAR_TEMPLATE_DIR)
  *   3. Agency validators    → *_VALIDATOR_URL env vars
  *
@@ -37,6 +37,16 @@ const REGIONAL_DTDS = [
   'jp-regional.dtd',
   'ca-regional.dtd',
 ];
+// The SAME drop-point also holds the agency stylesheets, and they are as
+// load-bearing as the DTDs: every index.xml carries
+// <?xml-stylesheet href="util/style/ectd-2-0.xsl"?> and the FDA Module 1
+// backbone carries ../../util/style/us-regional.xsl. assessDtdReadiness counts
+// a missing stylesheet as not-self-contained, so a preflight that checked
+// *.dtd only exited 0 — "ready to file" — for a package the packager refuses
+// to build under ECTD_REQUIRE_DTD. Mirrors ICH_BACKBONE_STYLESHEET +
+// REGIONAL_STYLESHEET in dtd-bundler.ts (pinned by the drift-guard test).
+const ICH_BACKBONE_STYLESHEET = 'ectd-2-0.xsl';
+const REGIONAL_STYLESHEETS = ['us-regional.xsl'];
 // FDA ships ONE nIVD PDF and ONE IVD PDF, and each carries 510(k), De Novo and
 // PMA (assets/estar-templates/README.md, family table). So the six marketing
 // descriptors resolve to two files, not six: this list is the DISTINCT set of
@@ -81,6 +91,15 @@ async function main() {
       satisfied: dtdPresent.has(f.toLowerCase()),
       location: path.join(dtdDir, f),
       unblocks: 'DTD-self-contained eCTD packages',
+    });
+  }
+  for (const f of [ICH_BACKBONE_STYLESHEET, ...REGIONAL_STYLESHEETS]) {
+    items.push({
+      category: 'ectd_dtd',
+      label: f,
+      satisfied: dtdPresent.has(f.toLowerCase()),
+      location: path.join(dtdDir, f),
+      unblocks: 'backbone stylesheet rendering + self-contained eCTD packages',
     });
   }
   for (const f of ESTAR_TEMPLATES) {

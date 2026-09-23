@@ -60,7 +60,14 @@ import {
   type SignedPackageSnapshot,
   type StepRecord,
 } from '../submission-package-orchestrator.js';
-import { verifySignPayloadSeal, type SealVerdict } from './sign-payload-seal.js';
+import { isVerificationUnavailable } from '../../lib/verification-outcome.js';
+import {
+  isKmsSignerConfigured,
+  verifySignPayloadSeal,
+  verifySignPayloadSignature,
+  type PayloadSignatureVerdict,
+  type SealVerdict,
+} from './sign-payload-seal.js';
 import type { ECTDLeaf } from './ectd4-validator.js';
 import crypto from 'crypto';
 
@@ -81,12 +88,24 @@ export type SignedExportRefusal =
   | 'awaiting-signature'
   /** Run predates snapshot persistence (2026-07). Re-sign to export. */
   | 'snapshot-missing'
-  /** Stored HMAC seal does not verify — the snapshot or digest was altered. */
+  /**
+   * Stored HMAC seal does not verify — the snapshot or digest was altered.
+   * Also raised when the KMS signature envelope (CONCEPT2CURE_SIGNER_MODE=kms)
+   * fails or is missing under a kms posture: same operator action (the signed
+   * record is not trustworthy; do not export), so the same refusal.
+   */
   | 'seal-failed'
   /** Digest recomputed from the snapshot ≠ the stored digest — content drift. */
   | 'digest-drift'
   /** The signature was superseded or rolled back; no active row remains. */
-  | 'signature-revoked';
+  | 'signature-revoked'
+  /**
+   * The signature lookup could not run (WO-16B finding 14). NOT a statement
+   * about the signature: it may well still stand. Distinct from
+   * 'signature-revoked' because the operator action differs — retry or fix the
+   * store, not re-sign.
+   */
+  | 'signature-unverifiable';
 
 export interface SignedExportRefusalResult {
   ok: false;
@@ -119,6 +138,8 @@ export interface SignedExportDescriptor {
   signatureId: number;
   /** Seal posture: 'ok' when a seal verified, 'unsealed' in an unsealed (dev) posture. */
   sealVerdict: Extract<SealVerdict, 'ok' | 'unsealed'>;
+  /** KMS envelope posture: 'ok' when the KMS signature verified, 'unsigned' under dev/hmac. */
+  signatureVerdict: Extract<PayloadSignatureVerdict, 'ok' | 'unsigned'>;
   /** Validator outcome frozen at signing time. */
   gatewayReady: boolean;
   hardenedScore: number;
@@ -141,6 +162,8 @@ export type SignedExportResult = SignedExportSuccessResult | SignedExportRefusal
 interface ParsedSignPayload {
   payloadDigest: string;
   payloadSeal?: string;
+  /** Read structurally; verified by payload-signer, never trusted as-is. */
+  payloadSignature?: unknown;
   signatureId?: number;
   awaitingSince?: string;
   signedSnapshot?: SignedPackageSnapshot;
@@ -168,6 +191,92 @@ function refuse(refusal: SignedExportRefusal, detail: string): SignedExportRefus
   return { ok: false, refusal, detail };
 }
 
+/**
+ * Steps 2–3 of the resolver: the package.sign step exists, completed, and
+ * carries a parseable payload with a frozen snapshot. Extracted so
+ * resolveSignedPackageForExport stays under the complexity ceiling.
+ */
+function resolveSignedStep(
+  run: { steps?: StepRecord[] },
+  runId: string,
+):
+  | { ok: true; payload: ParsedSignPayload; snapshot: SignedPackageSnapshot }
+  | { ok: false; refusal: SignedExportRefusalResult } {
+  const signStep: StepRecord | undefined = run.steps?.find(s => s.key === 'package.sign');
+  if (!signStep) {
+    return { ok: false, refusal: refuse('not-signed', `Run ${runId} has no package.sign step; it predates the e-signature gate.`) };
+  }
+  if (signStep.status === 'awaiting-signature') {
+    return {
+      ok: false,
+      refusal: refuse('awaiting-signature', `Run ${runId} is awaiting an e-signature. Sign the release before exporting.`),
+    };
+  }
+  if (signStep.status !== 'complete') {
+    return {
+      ok: false,
+      refusal: refuse(
+        'not-signed',
+        `Run ${runId} package.sign is '${signStep.status}', not 'complete'. ` +
+          `A skipped gate means this submission type does not require a release signature — ` +
+          `use the standard export path for it.`,
+      ),
+    };
+  }
+  const payload = parseSignPayload(signStep.outputRef);
+  if (!payload) {
+    return { ok: false, refusal: refuse('not-signed', `Run ${runId} package.sign carries no signature payload.`) };
+  }
+  const snapshot = payload.signedSnapshot;
+  if (!snapshot) {
+    return {
+      ok: false,
+      refusal: refuse(
+        'snapshot-missing',
+        `Run ${runId} was signed before snapshot persistence landed (2026-07). ` +
+          `Re-run and re-sign to produce an exportable signed record.`,
+      ),
+    };
+  }
+  return { ok: true, payload, snapshot };
+}
+
+/**
+ * The KMS signature envelope stored beside the seal, judged the way the seal
+ * is: 'failed' is a bad or unverifiable signature; 'unsigned' under a kms
+ * posture is a stripped signature. Either way the record is not the one the
+ * key custodian signed, so the caller refuses. Extracted from
+ * resolveSignedPackageForExport so that function stays under the complexity
+ * ceiling — and so the rule reads on its own.
+ */
+async function resolveKmsEnvelopeVerdict(
+  runId: string,
+  organizationId: number,
+  payload: ParsedSignPayload,
+  env: NodeJS.ProcessEnv,
+): Promise<
+  | { ok: true; signatureVerdict: Extract<PayloadSignatureVerdict, 'ok' | 'unsigned'> }
+  | { ok: false; refusal: SignedExportRefusalResult }
+> {
+  const signatureVerdict = await verifySignPayloadSignature(
+    payload.payloadDigest,
+    organizationId,
+    payload.payloadSignature,
+    env,
+  );
+  if (signatureVerdict === 'failed' || (signatureVerdict === 'unsigned' && isKmsSignerConfigured(env))) {
+    return {
+      ok: false,
+      refusal: refuse(
+        'seal-failed',
+        `Run ${runId} KMS signature envelope did not verify (${signatureVerdict}). The stored envelope was altered, ` +
+          `stripped, or the signing key is no longer available under CONCEPT2CURE_SIGNER_MODE=kms. Refusing to export.`,
+      ),
+    };
+  }
+  return { ok: true, signatureVerdict };
+}
+
 // ── Resolver ────────────────────────────────────────────────────────────────
 
 /**
@@ -192,39 +301,10 @@ export async function resolveSignedPackageForExport(params: {
     return refuse('run-not-found', `No orchestrator run ${runId} visible to this organization.`);
   }
 
-  // 2 — the signing gate completed.
-  const signStep: StepRecord | undefined = run.steps?.find(s => s.key === 'package.sign');
-  if (!signStep) {
-    return refuse('not-signed', `Run ${runId} has no package.sign step; it predates the e-signature gate.`);
-  }
-  if (signStep.status === 'awaiting-signature') {
-    return refuse(
-      'awaiting-signature',
-      `Run ${runId} is awaiting an e-signature. Sign the release before exporting.`,
-    );
-  }
-  if (signStep.status !== 'complete') {
-    return refuse(
-      'not-signed',
-      `Run ${runId} package.sign is '${signStep.status}', not 'complete'. ` +
-        `A skipped gate means this submission type does not require a release signature — ` +
-        `use the standard export path for it.`,
-    );
-  }
-
-  // 3 — the step carries a parseable payload with a frozen snapshot.
-  const payload = parseSignPayload(signStep.outputRef);
-  if (!payload) {
-    return refuse('not-signed', `Run ${runId} package.sign carries no signature payload.`);
-  }
-  const snapshot = payload.signedSnapshot;
-  if (!snapshot) {
-    return refuse(
-      'snapshot-missing',
-      `Run ${runId} was signed before snapshot persistence landed (2026-07). ` +
-        `Re-run and re-sign to produce an exportable signed record.`,
-    );
-  }
+  // 2 + 3 — the signing gate completed and carries a frozen snapshot.
+  const signed = resolveSignedStep(run, runId);
+  if (!signed.ok) return signed.refusal;
+  const { payload, snapshot } = signed;
 
   // 4 — the server-keyed seal still verifies. 'failed' covers both a mismatched
   //     HMAC and a seal that exists but cannot be verified (key gone) — both
@@ -237,6 +317,11 @@ export async function resolveSignedPackageForExport(params: {
         `or the signing key is no longer available. Refusing to export.`,
     );
   }
+
+  // 4b — the KMS envelope (CONCEPT2CURE_SIGNER_MODE=kms), same rule as the seal.
+  const kmsCheck = await resolveKmsEnvelopeVerdict(runId, organizationId, payload, env);
+  if (!kmsCheck.ok) return kmsCheck.refusal;
+  const { signatureVerdict } = kmsCheck;
 
   // 5 — THE integrity check. Recompute the bound digest from the frozen
   //     snapshot through the same function the signing path used. Any edit to
@@ -266,10 +351,20 @@ export async function resolveSignedPackageForExport(params: {
   // 6 — an active, non-superseded signature still stands for this digest.
   //     Checked LAST because it is the only DB round-trip beyond getRun; the
   //     cheap in-memory checks above short-circuit the common refusals first.
-  const active = await findActiveReleaseSignature({
-    organizationId,
-    boundPayloadDigest: payload.payloadDigest,
-  });
+  let active: { id: number } | null;
+  try {
+    active = await findActiveReleaseSignature({
+      organizationId,
+      boundPayloadDigest: payload.payloadDigest,
+    });
+  } catch (err) {
+    if (!isVerificationUnavailable(err)) throw err;
+    return refuse(
+      'signature-unverifiable',
+      `Run ${runId}: the release-signature lookup could not run; the failure is in the server log. ` +
+        `Nothing is known about the signature's standing — it has NOT been found revoked. Refusing to export until the check can run.`,
+    );
+  }
   if (!active) {
     return refuse(
       'signature-revoked',
@@ -294,6 +389,7 @@ export async function resolveSignedPackageForExport(params: {
       payloadDigest: payload.payloadDigest,
       signatureId: active.id,
       sealVerdict,
+      signatureVerdict,
       gatewayReady: snapshot.validatorOutcome.gatewayReady,
       hardenedScore: snapshot.validatorOutcome.hardenedScore,
     },
@@ -369,6 +465,11 @@ export function refusalHttpStatus(refusal: SignedExportRefusal): number {
       // Integrity failure. Not a client mistake — surface it distinctly so it
       // can be alerted on separately from ordinary workflow-state refusals.
       return 422;
+    case 'signature-unverifiable':
+      // The check did not run. Same status innovation-routes gives an
+      // ownership check that could not run: not a precondition (409), not an
+      // integrity finding (422), not a crash (500).
+      return 503;
   }
 }
 

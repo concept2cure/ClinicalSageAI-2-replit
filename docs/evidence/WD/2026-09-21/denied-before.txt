@@ -1,0 +1,21 @@
+# IQ-07 inventory BEFORE the fix — 2026-09-21T00:58:22Z
+# database clinicalsage on 127.0.0.1:5432, queried as postgres; runtime role c2c (DATABASE_URL in .env)
+# query (identical to scripts/validation/run-iq.mjs IQ-07):
+#   select schemaname||'.'||tablename as t from pg_tables where schemaname not in ('pg_catalog','information_schema') and (case when not has_schema_privilege('c2c', schemaname, 'USAGE') then true else not has_table_privilege('c2c', quote_ident(schemaname)||'.'||quote_ident(tablename), 'SELECT') end) order by 1
+denied total: 264
+denied in public: 183
+public tables by owner: c2c=791, postgres=183
+audit.tamper_proof_log privileges for c2c: SELECT=false INSERT=false UPDATE=false DELETE=false
+# denied relations by schema:
+ai: 1
+audit: 1
+clinical_ops: 7
+evidence: 7
+intelligence: 14
+intelligent_docs: 7
+manufacturing: 1
+precedent: 3
+predicate: 14
+public: 183
+regulatory_harmonization: 15
+regulatory_intel: 11

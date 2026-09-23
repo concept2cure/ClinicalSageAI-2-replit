@@ -21,8 +21,29 @@ import {
 } from '../lib/api-response';
 import { pool } from '../db';
 import { detectArchive } from '../services/legacy-importer/detector';
-import auditService from '../services/auditService';
+/* WO-16C #133. The two audit writes in this router — import approve and finding
+   resolve — were `void auditService.logAction({…})`, which discards the
+   `AuditWriteResult` that call resolves, so the response was byte-identical
+   whether the §11.10(e) row existed or not. Both now go through the shared
+   `recordAuditRow` and carry their outcome out in `meta.auditTrail`. Neither is
+   the action itself: the approve transaction has COMMITted and the finding
+   UPDATE has returned its row before the audit row is attempted, so neither
+   mutation is reverted over a lost log row. `recordAuditRow` never returns the
+   store's own text — that goes to its log line, keyed on the action and resource
+   id — and `auditService` is reached through it, so it is no longer imported
+   here directly. */
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { recordArtifactProvenanceBestEffort } from '../services/provenance/artifact-provenance';
+
+/*
+ * Every governed write below was guarded by nothing but the caller's org
+ * context, which is tenant scoping, not authorization: a read-only `viewer`
+ * could create and amend UDI records, IVDR classifications and performance
+ * evaluations, CDx pairings and concordance, and approve an import into the
+ * artifact registry. These are the device and IVD records a submission is
+ * assembled from.
+ */
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const router = Router();
 const log = createScopedLogger('mdx-imports');
@@ -51,7 +72,7 @@ const createBody = z.object({
   programId:        z.string().regex(UUID_RE).optional().nullable(),
 });
 
-router.post('/imports', async (req: Request, res: Response) => {
+router.post('/imports', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = createBody.safeParse(req.body ?? {});
@@ -208,7 +229,7 @@ const patchFileBody = z.object({
   status:              z.enum(['pending', 'mapped', 'skipped']).optional(),
 });
 
-router.patch('/imports/:id/files/:fileId', async (req: Request, res: Response) => {
+router.patch('/imports/:id/files/:fileId', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const jobId = Number(req.params.id);
@@ -246,7 +267,7 @@ router.patch('/imports/:id/files/:fileId', async (req: Request, res: Response) =
 
 /* ─── POST /imports/:id/approve — materialize artifacts ───── */
 
-router.post('/imports/:id/approve', async (req: Request, res: Response) => {
+router.post('/imports/:id/approve', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
@@ -273,6 +294,26 @@ router.post('/imports/:id/approve', async (req: Request, res: Response) => {
     if (own.rows[0].status !== 'ready_for_review') {
       await client.query('ROLLBACK');
       return clientError(res, 409, `Import is not in ready_for_review state (current: ${own.rows[0].status})`);
+    }
+
+    /* The IMPORT JOB was proved to be this tenant's above; `projectId` was not,
+       and it comes straight from the request body. A caller could approve their
+       own import into ANOTHER TENANT'S project lineage — the artifacts, and the
+       provenance and audit rows that follow them, land under a project the
+       caller does not own.
+ 
+       `projects` is the right table: concept2cure_artifacts.project_id carries a
+       FOREIGN KEY to projects.id, so this is the tenant guard and the guarantee
+       that placement cannot fail at the constraint. Same check, same reasoning
+       and same 404 shape as cerv2-export-routes.ts, which closed this for
+       itself — "not yours" must not be distinguishable from "does not exist". */
+    const ownedProject = await client.query(
+      `SELECT 1 FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+      [projectId, orgId],
+    );
+    if (ownedProject.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return notFoundInTenant(res, 'Project');
     }
     await client.query(
       `UPDATE import_jobs SET status = 'approving', updated_at = NOW() WHERE id = $1`,
@@ -348,14 +389,22 @@ router.post('/imports/:id/approve', async (req: Request, res: Response) => {
       [id, userId, created],
     );
     await client.query('COMMIT');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The COMMIT on the line
+       above has already landed the whole approval — the job at 'completed' with
+       its approver and `artifacts_created`, the `concept2cure_artifacts` rows and
+       the imported file statuses — so this is a log beside a completed action and
+       is never reverted here. What the caller can now read is `meta.auditTrail`:
+       whether the §11.10(e) record of who approved this import, and of how many
+       artifacts it materialized, was written. This handler writes one audit row,
+       so the unqualified key names it unambiguously. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: userId ?? undefined, action: 'mdx.onboarding.import.approve',
       resourceType: 'import_job', resourceId: id, details: { artifactsCreated: created },
     });
     const { rows } = await pool.query(
       `SELECT * FROM import_jobs WHERE id = $1`, [id],
     );
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { auditTrail });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return serverError(res, log, 'approve', err);
@@ -366,7 +415,7 @@ router.post('/imports/:id/approve', async (req: Request, res: Response) => {
 
 /* ─── POST /imports/:id/cancel ───────────────────────────── */
 
-router.post('/imports/:id/cancel', async (req: Request, res: Response) => {
+router.post('/imports/:id/cancel', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -389,7 +438,7 @@ router.post('/imports/:id/cancel', async (req: Request, res: Response) => {
 
 /* ─── POST /imports/:id/findings/:findingId/resolve ──────── */
 
-router.post('/imports/:id/findings/:findingId/resolve', async (req: Request, res: Response) => {
+router.post('/imports/:id/findings/:findingId/resolve', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const findingId = Number(req.params.findingId);
@@ -404,11 +453,17 @@ router.post('/imports/:id/findings/:findingId/resolve', async (req: Request, res
       [findingId, orgId, note],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Finding');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The UPDATE above has
+       already committed `resolved = true` and the resolution note, and returned
+       the row, so this is a log beside a completed action, not the resolution
+       itself — it is never undone here. `meta.auditTrail` now tells the caller
+       whether the §11.10(e) record of who closed this import finding exists. One
+       audit row per request, so the unqualified key is unambiguous. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'mdx.onboarding.finding.resolve',
       resourceType: 'import_finding', resourceId: findingId,
     });
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'resolve-finding', err); }
 });
 

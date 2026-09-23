@@ -26,7 +26,7 @@
  * With no program open the panel still works standalone: every field is entered
  * here and nothing is claimed to come from a record.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, apiUpload, serverMessage } from '@/lib/queryClient';
@@ -139,6 +139,10 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
   const [meta, setMeta] = useState({ sponsorName: '', drugName: '', indNumber: '', studyPhase: 'Phase 1', indication: '', serialNumber: '' });
   const [checks, setChecks] = useState<Record<string, BuildResult>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  // One hidden file picker per form, opened by that row's button. The picker
+  // cannot be the visible control: a display:none input is outside the tab
+  // order, and the <label> that used to wrap it is not focusable either.
+  const attachPickers = useRef(new Map<string, HTMLInputElement>());
 
   const programIdent = programIdentOf(readProjectIdent());
 
@@ -221,17 +225,36 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
           ? 'faithful reconstruction — NOT the official Adobe-rendered form'
           : 'labeled draft — official template not installed';
       const coverage = hdr('X-Form-Field-Coverage');
-      const missingHdr = hdr('X-Form-Missing-Required');
-      const missingCount = missingHdr ? missingHdr.split(',').filter(Boolean).length : 0;
-      // Boxes the platform did not write. On an official form these are boxes
-      // the sponsor completes in Acrobat before signing, so naming the count is
-      // the difference between "here is your form" and "here is your form, and
-      // here is what is still blank on it".
-      const unmappedHdr = hdr('X-Form-Unmapped');
-      const unmappedCount = unmappedHdr ? unmappedHdr.split(',').filter(Boolean).length : 0;
-      const detail = `${coverage ? ' · coverage ' + coverage : ''}`
-        + `${missingCount ? ' · ' + missingCount + ' required field(s) still missing' : ''}`
-        + `${unmappedCount ? ' · ' + unmappedCount + ' box(es) left for you to complete on the form' : ''}`;
+      const headerCount = (k: string): number | null => {
+        const v = hdr(k);
+        return v === null ? null : v.split(',').filter(Boolean).length;
+      };
+      /* WHICH REQUIRED BOXES ARE BLANK ON THE BYTES THAT JUST ARRIVED.
+         This counted `X-Form-Unmapped` — every box no reviewed mapping writes,
+         required OR OPTIONAL — and called it "left for you to complete". That is
+         wrong in both directions: it bills the sponsor for optional boxes they
+         need not touch, and it MISSES a required box that a mapping does write
+         but the project record has no value for, which goes out empty and is
+         absent from `unmapped`. That case reported nothing at all over a form
+         with a blank required box on it.
+
+         `X-Form-Required-Blank` is the renderer's own documented answer to this
+         one question (required-and-empty, whatever the cause) and is set on
+         every path INCLUDING when the list is empty — so an absent header is an
+         older server, not a clean form, and is said as such rather than counted
+         as zero. `X-Form-Missing-Required` is the subset with no value in the
+         record; it is reported as a subset because the two causes need
+         different actions — enter it in the project, or complete it in
+         Acrobat. */
+      const requiredBlank = headerCount('X-Form-Required-Blank');
+      const missingCount = headerCount('X-Form-Missing-Required') ?? 0;
+      const blankClause = requiredBlank === null
+        ? ' · this server did not report which required boxes are still blank'
+        : requiredBlank > 0
+          ? ` · ${requiredBlank} required box(es) blank on the form for you to complete`
+            + (missingCount ? ` (${missingCount} because the project record has no value)` : '')
+          : '';
+      const detail = `${coverage ? ' · coverage ' + coverage : ''}${blankClause}`;
       if (!delivered) {
         note(`FDA ${shortFormId(formId)} rendered (${kind})${detail}, but the browser blocked the download.`, 'error');
         return;
@@ -260,7 +283,24 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       if (res.status === 401 || res.status === 403) { note('Saving a governed artifact requires the regulatory-author role.', 'error'); return; }
       if (res.status === 404) { note('Couldn’t save — the open project isn’t in your organization.', 'error'); return; }
       const missing = Array.isArray(json?.missingRequired) ? json.missingRequired.length : 0;
-      const readiness = json?.ready ? ' (ready)' : missing ? ` (draft · ${missing} required field(s) missing)` : ' (draft)';
+      /* TWO FACTS, NOT ONE. `ready` answers "is the project DATA complete" —
+         this artifact stores a field map, not a PDF — and `sponsorMustComplete`
+         answers "which required boxes does an official render leave for the
+         sponsor whatever the data". FDA 1571's ind_type and phase_of_study are
+         deliberately unmapped, so a fully populated 1571 artifact is
+         data-complete AND still arrives with two boxes to tick in Acrobat.
+         Printing "(ready)" off `ready` alone announced that artifact as a
+         finished form. The route returns `sponsorMustComplete` on every 201, so
+         its ABSENCE is an older server rather than a form with nothing left —
+         reading it as [] would reintroduce the same fail-open one level up. */
+      const sponsorBoxes = Array.isArray(json?.sponsorMustComplete) ? json.sponsorMustComplete.length : null;
+      const readiness = !json?.ready
+        ? (missing ? ` (draft · ${missing} required field(s) missing)` : ' (draft)')
+        : sponsorBoxes === null
+          ? ' (project data complete — this server did not report which boxes are left on the form)'
+          : sponsorBoxes > 0
+            ? ` (project data complete · ${sponsorBoxes} required box(es) for you to complete and sign in Acrobat)`
+            : ' (ready)';
       if (res.ok && json?.artifactId) {
         note(`FDA ${shortFormId(formId)} saved to the dossier as a governed artifact${readiness}.`);
         return;
@@ -337,18 +377,15 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
   return (
     <div>
       {recordFacts && (
-        <section className="indf-record" aria-label="Values read from the program record"
-          style={{ border: '1px solid var(--text-400)', borderRadius: 6, padding: '10px 12px', marginBottom: 12 }}>
-          <div style={{ fontSize: 12, color: 'var(--text-400)', marginBottom: 6 }}>
+        <section className="indf-record" aria-label="Values read from the program record">
+          <div className="indf-record-lead">
             Read from the program record — every form below is filled with these values.
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,max-content))', gap: '6px 24px' }}>
+          <div className="indf-record-grid">
             {recordFacts.map((f) => (
-              <dl key={f.label} className="indf-fact" style={{ margin: 0 }}>
-                <dt style={{ fontSize: 11, color: 'var(--text-400)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{f.label}</dt>
-                <dd style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>
-                  {f.value ?? <span style={{ fontWeight: 400, color: 'var(--text-400)' }}>{f.missing}</span>}
-                </dd>
+              <dl key={f.label} className="indf-fact">
+                <dt>{f.label}</dt>
+                <dd>{f.value ?? <span className="indf-missing">{f.missing}</span>}</dd>
               </dl>
             ))}
           </div>
@@ -375,6 +412,7 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
           const plan = plans[f];
           const placed = placements[f];
           const sponsorBoxes = plan?.sponsorCompletes ?? [];
+          const attachText = busy === 'attach-' + f ? 'Filing…' : placed ? 'Replace completed form' : 'Attach completed form';
           return (
             <tr key={f}>
               <td style={{ fontWeight: 600, verticalAlign: 'top' }}>
@@ -419,15 +457,21 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
                 <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => download(f)} disabled={busy != null}>{I.download} {busy === 'pdf-' + f ? 'Rendering…' : 'PDF'}</button>
                 <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => save(f)} disabled={busy != null} title="Persist as a governed artifact in the project dossier">{I.database} {busy === 'save-' + f ? 'Saving…' : 'Save to dossier'}</button>
                 {programIdent && (
-                  <label className="nda-open" style={{ marginLeft: 6, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: busy != null ? 'default' : 'pointer' }}
-                    title="File the completed, signed form into this program's eCTD sequence">
-                    {I.paperclip}
-                    {busy === 'attach-' + f ? 'Filing…' : placed ? 'Replace completed form' : 'Attach completed form'}
+                  <>
                     <input type="file" accept="application/pdf,.pdf" disabled={busy != null}
+                      ref={(el) => { if (el) attachPickers.current.set(f, el); else attachPickers.current.delete(f); }}
                       aria-label={`Attach the completed ${FORM_LABELS[f] ?? f}`}
                       style={{ display: 'none' }}
                       onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; void attach(f, file); }} />
-                  </label>
+                    {/* Named for its form, visible text first (WCAG 2.5.3), so
+                        a table of five rows is not five identical buttons. */}
+                    <button className="nda-open" style={{ marginLeft: 6 }} disabled={busy != null}
+                      onClick={() => attachPickers.current.get(f)?.click()}
+                      aria-label={`${attachText}: ${FORM_LABELS[f] ?? shortFormId(f)}`}
+                      title="File the completed, signed form into this program's eCTD sequence">
+                      {I.paperclip} {attachText}
+                    </button>
+                  </>
                 )}
               </td>
             </tr>

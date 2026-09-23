@@ -9,12 +9,12 @@ import util from 'util';
 import { db } from '../db';
 import { csrReports } from '../../shared/schema';
 import { eq, and, like, count, sql, desc } from 'drizzle-orm';
-import { protocolAnalyzerService } from '../protocol-analyzer-service';
 import { protocolOptimizerService } from '../protocol-optimizer-service';
-import { analyzeText } from '../openai-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { powerTwoSampleMeans } from '../services/stats/assurance';
 import { csvRow } from '../utils/csv';
+import { serverError } from '../lib/api-response';
+import demoAnalysisRouter from './analytics-demo-analysis';
 
 const log = createScopedLogger('analytics-routes');
 
@@ -144,11 +144,7 @@ router.post('/upload-protocol', upload.single('file'), async (req, res) => {
         }
       } catch (error) {
         log.error('PDF extraction error:', error);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to extract text from PDF',
-          error: (error as Error).message,
-        });
+        return serverError(res, log, 'uploading protocol', error);
       }
     } else if (
       [
@@ -186,11 +182,7 @@ For best results, please use PDF format.`;
       analysisOutput = result.stdout;
     } catch (error) {
       log.error('Analysis execution error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to analyze protocol content',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'uploading protocol', error);
     }
 
     // Score the protocol confidence
@@ -285,11 +277,7 @@ For best results, please use PDF format.`;
     res.json(result);
   } catch (error) {
     log.error('Error processing protocol:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error processing protocol',
-      error: (error as Error).message,
-    });
+    return serverError(res, log, 'uploading protocol', error);
   }
 });
 
@@ -334,11 +322,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       fs.writeFileSync(tempFilePath, text);
     } catch (error) {
       log.error('Error saving temporary file:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error processing protocol text',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'analysing protocol text', error);
     }
 
     // Call the deep CSR analyzer
@@ -363,11 +347,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       }
 
       log.error('Analysis execution error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to analyze protocol text',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'analysing protocol text', error);
     }
 
     // Score the protocol confidence
@@ -454,11 +434,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
     res.json(result);
   } catch (error) {
     log.error('Error analyzing protocol text:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error analyzing protocol text',
-      error: (error as Error).message,
-    });
+    return serverError(res, log, 'analysing protocol text', error);
   }
 });
 
@@ -710,291 +686,11 @@ function generateStatisticalInsights(analysis: ProtocolAnalysisResult): string {
   return insights;
 }
 
-// Add the critical demo-analysis endpoint with global regulatory knowledge and citations
-router.post('/demo-analysis', async (req, res) => {
-  try {
-    const { content, session_id } = req.body;
-
-    if (!content || typeof content !== 'string') {
-      return res.status(400).json({
-        error: 'Protocol content is required',
-      });
-    }
-
-    log.debug(`Analyzing protocol with session ID: ${session_id}`);
-
-    // Create session directory if it doesn't exist
-    // basename: session_id arrives from the request and is a path segment here.
-      // Express decodes %2F, so `..%2F..%2F` reaches this as real traversal.
-      const sessionDir = path.join(process.cwd(), 'exports', path.basename(String(session_id)));
-    if (!fs.existsSync(sessionDir)) {
-      fs.mkdirSync(sessionDir, { recursive: true });
-    }
-
-    // Save protocol content to the session directory
-    const protocolPath = path.join(sessionDir, 'protocol.txt');
-    fs.writeFileSync(protocolPath, content);
-
-    // First use the base protocol analyzer service
-    const protocolData = await protocolAnalyzerService.analyzeProtocol(content);
-
-    // Get similar protocols based on the analyzed data
-    const similarProtocols = await protocolAnalyzerService.findSimilarProtocols(protocolData, 5);
-
-    // Enhancing analysis with knowledge-based recommendations
-    const systemPrompt = `You are an expert clinical trial protocol analyzer with comprehensive knowledge of global regulatory agencies (FDA, EMA, PMDA, NMPA, TGA, ANVISA, Health Canada, MHRA) and academic literature. 
-
-Analyze the provided protocol and generate detailed, evidence-based recommendations with proper citations to regulatory guidelines and academic publications. Your analysis should cover:
-
-1. Study design optimization
-2. Statistical methodology assessment
-3. Regulatory compliance across major jurisdictions
-4. Operational feasibility
-5. Risk mitigation strategies
-6. Patient-centric considerations
-
-For each recommendation, include specific citations to relevant regulatory guidelines (with section/page numbers when applicable) and recent academic literature (author, year, journal). Make your recommendations actionable and specific.`;
-
-    let detailedAnalysis;
-    try {
-      detailedAnalysis = await analyzeText(content, systemPrompt);
-    } catch (error) {
-      log.error('Error generating detailed analysis:', error);
-      detailedAnalysis =
-        'Unable to generate detailed AI analysis - falling back to standard analysis.';
-    }
-
-    // Generate comprehensive recommendations with regulatory knowledge
-    const globalRegulationsData = {
-      FDA: {
-        guidelines: [
-          '21 CFR Part 312 - Investigational New Drug Application',
-          '21 CFR Part 50 - Protection of Human Subjects',
-          '21 CFR Part 56 - Institutional Review Boards',
-          'FDA Guidance for Industry: E6(R2) Good Clinical Practice',
-          'FDA Guidance for Industry: Adaptive Designs for Clinical Trials of Drugs and Biologics (2019)',
-          'FDORA 2022: Diversity Requirements for Clinical Trials',
-        ],
-        citations: [
-          'U.S. Food and Drug Administration. (2018). Clinical Trial Endpoints for the Approval of Cancer Drugs and Biologics: Guidance for Industry. https://www.fda.gov/regulatory-information/search-fda-guidance-documents',
-          'FDA. (2020). Enhancing the Diversity of Clinical Trial Populations: Guidance for Industry. https://www.fda.gov/regulatory-information/search-fda-guidance-documents',
-        ],
-      },
-      EMA: {
-        guidelines: [
-          'ICH E9: Statistical Principles for Clinical Trials',
-          'ICH E6(R2): Good Clinical Practice',
-          'EMA Guideline on the evaluation of anticancer medicinal products in man (EMA/CHMP/205/95 Rev.6)',
-          'EMA Guideline on Data Monitoring Committees (EMEA/CHMP/EWP/5872/03)',
-        ],
-        citations: [
-          'European Medicines Agency. (2022). Guideline on the clinical evaluation of anticancer medicinal products. EMA/CHMP/205/95 Rev.6. https://www.ema.europa.eu/en/documents/scientific-guideline',
-          'EMA. (2021). Guideline on the investigation of subgroups in confirmatory clinical trials. EMA/CHMP/539146/2013. https://www.ema.europa.eu/en/documents/scientific-guideline',
-        ],
-      },
-      PMDA: {
-        guidelines: [
-          'PMDA: Basic Principles on Global Clinical Trials',
-          'PMDA: Points to Consider for Ethnic Factors',
-          'Japanese GCP Ordinance (MHLW Ordinance No. 28)',
-        ],
-        citations: [
-          'Pharmaceuticals and Medical Devices Agency. (2021). Basic Principles on Global Clinical Trials Reference Guide. https://www.pmda.go.jp/english/',
-          'PMDA. (2019). Points to Consider for Multi-Regional Clinical Trials. https://www.pmda.go.jp/english/',
-        ],
-      },
-      'Health Canada': {
-        guidelines: [
-          'Health Canada Food and Drug Regulations (C.05.010)',
-          'Good Clinical Practices: Consolidated Guideline ICH Topic E6',
-          'Health Canada Guidance Document: Clinical Trial Applications',
-        ],
-        citations: [
-          'Health Canada. (2022). Clinical Trials - Applications and Amendments. https://www.canada.ca/en/health-canada/services/drugs-health-products/drug-products/applications-submissions/guidance-documents',
-          'Health Canada. (2019). Good Clinical Practice: Integrated Addendum to E6(R1). https://www.canada.ca/en/health-canada',
-        ],
-      },
-    };
-
-    // Generate a wisdom trace for the analysis process
-    const wisdomTrace = [
-      {
-        section: 'Protocol Structure',
-        insights: [
-          `Identified ${protocolData.phase} protocol for ${protocolData.indication}`,
-          `Sample size of ${protocolData.sample_size} participants analyzed against benchmarks`,
-          `Primary endpoint "${protocolData.primary_endpoint}" evaluated for statistical robustness`,
-          `Study duration of ${protocolData.duration_weeks} weeks compared with similar trials`,
-        ],
-      },
-      {
-        // A wisdom trace states what was DONE, so each line here must name a
-        // step this handler actually performs. The previous version claimed
-        // four, of which one was true. `Statistical power calculations
-        // validated against historical data` and `Inclusion/exclusion criteria
-        // evaluated for population representativeness` describe work no code
-        // in this handler does. The comparison line reported a count without
-        // saying that the count is routinely zero: findSimilarProtocols reads
-        // the `protocols` table, which has no INSERT anywhere in this
-        // repository (ledger L167), so on any real deployment it is empty and
-        // the sentence read "Compared against database of 0 similar protocols"
-        // — an assertion of comparison, with nothing compared.
-        section: 'Evidence Base',
-        insights: [
-          similarProtocols.length > 0
-            ? `Compared against ${similarProtocols.length} stored protocol(s) matching indication "${protocolData.indication}"`
-            : `No stored protocol matched indication "${protocolData.indication}", so no comparison against prior protocols was performed`,
-          'Regulatory guideline references for FDA, EMA, PMDA and Health Canada are listed under global_regulations. They are a fixed reference set, not a per-protocol assessment.',
-        ],
-        citations: [
-          'ICH E9: Statistical Principles for Clinical Trials',
-          'FDA Guidance for Industry: E6(R2) Good Clinical Practice',
-        ],
-      },
-      {
-        // `based on similar trials` asserted the same absent comparison set.
-        // What this handler genuinely produces is the narrative analysis in
-        // detailed_analysis; the qualitative points below are guidance, and are
-        // labelled as such rather than as findings about THIS protocol.
-        section: 'Risk Assessment',
-        insights: [
-          'Narrative assessment of design, endpoints, statistics and operational risk is returned in detailed_analysis.',
-          'The points below are standing regulatory guidance, not findings derived from this protocol.',
-        ],
-        citations: [
-          'FDA. (2023). Considerations for the Development of Rare Disease Drugs. Guidance for Industry. https://www.fda.gov/regulatory-information/search-fda-guidance-documents',
-        ],
-      },
-    ];
-
-    // ACADEMIC CITATIONS REMOVED — they were manufactured, per request.
-    //
-    // This block built three "references" by interpolating the caller's own
-    // indication and phase into title templates ('Endpoint selection for
-    // regulatory approval in ' + protocolData.indication), then attached fixed
-    // authors, journal, year, volume, pages and a DOI. A DOI is a resolvable
-    // identifier for one specific published work; minting one is not citation
-    // formatting, it is manufacturing evidence, and this product exists to
-    // assemble filings for regulators.
-    //
-    // Nothing replaces it. A literature search is a capability this handler
-    // does not have, and an empty, honest response is the correct output of a
-    // search that was never run. `academic_citations` is therefore gone from
-    // the response rather than emitted empty, so no consumer can read absence
-    // as "we looked and found nothing".
-    //
-    // scripts/ci/check-no-mock-in-prod-routes.mjs now refuses any hardcoded DOI
-    // in server/routes/**, which is what would have caught this.
-
-    // Create comprehensive IND assessment
-    const indAnalysis = {
-      title: 'IND Readiness Assessment',
-      // No deterministic IND-readiness scorer is wired. The score was
-      // previously `Math.floor(Math.random()*15)+75` — a fabricated value.
-      // The qualitative strengths / improvement areas / citations below are
-      // static regulatory guidance and remain. Score is null until a real
-      // scorer is connected.
-      score: null as number | null,
-      strengths: [
-        'Well-defined primary and secondary endpoints',
-        'Clear inclusion/exclusion criteria',
-        'Appropriate statistical analysis plan',
-        'Adequate safety monitoring provisions',
-      ],
-      improvement_areas: [
-        'Additional details needed on concomitant medication management (FDA 21 CFR 312.23(a)(6))',
-        'Consider adding interim analysis points (ICH E9, Section 4.5)',
-        'Strengthen data management plan section (ICH E6(R2), Section 5.5)',
-        'Expand on randomization implementation details (EMA Guideline on multiplicity issues)',
-      ],
-      regulatory_guidance: [
-        'Aligns with FDA guidance for Phase 2 trials in this indication',
-        'Consistent with ICH E6(R2) requirements for Good Clinical Practice',
-        'Meets basic requirements for EMA Scientific Advice submissions',
-        'May require additional ethnic considerations for PMDA submission (PMDA: Points to Consider for Ethnic Factors)',
-      ],
-      citations: [
-        'U.S. Food and Drug Administration. (2023). IND Application Procedures: Clinical Hold. 21 CFR 312.42',
-        'European Medicines Agency. (2022). Guideline on the clinical evaluation of anticancer medicinal products. EMA/CHMP/205/95 Rev.6',
-        'ICH. (2016). Integrated Addendum to ICH E6(R1): Guideline for Good Clinical Practice E6(R2)',
-        'Health Canada. (2022). Clinical Trial Applications for pharmaceuticals: Sections 5.14 (Statistical Methods)',
-      ],
-    };
-
-    // Qualitative dropout-risk factors with references. There is no
-    // dropout-prediction model wired, so we do NOT emit a numeric
-    // predicted_rate / confidence_interval — those were previously
-    // fabricated with Math.random() yet dressed with academic citations,
-    // which is the dangerous case. The qualitative factors and mitigation
-    // strategies below are real guidance and remain.
-    //
-    // The per-factor `citation` fields are gone with them. This handler runs no
-    // literature search, so it did not consult those papers — whether or not
-    // they exist is beside the point, and verifying them is not the remedy: a
-    // reference the code never looked up must not be presented as the basis of
-    // its advice. Two of the three carried a DOI. The qualitative factors
-    // themselves are standing guidance and are kept, now labelled as guidance
-    // rather than as evidence about THIS protocol.
-    const dropoutPrediction = {
-      predicted_rate: null as string | null,
-      confidence_interval: null as [string, string] | null,
-      basis: 'Standing guidance on dropout risk. Not derived from this protocol, and not a prediction for it.',
-      factors: [
-        {
-          name: 'Treatment duration',
-          impact: 'High',
-          guidance: 'Longer trials (>20 weeks) are generally associated with higher dropout.',
-        },
-        {
-          name: 'Visit frequency',
-          impact: 'Medium',
-          guidance: 'Visit cadence trades participant burden against engagement.',
-        },
-        {
-          name: 'Procedures per visit',
-          impact: 'Medium',
-          guidance: 'Assessment burden per visit is a known driver of withdrawal.',
-        },
-      ],
-      // Regulatory guidance documents are named (they are identifiable
-      // published standards a reader can pull); the journal reference that
-      // stood beside them is removed on the same ground as the others.
-      mitigation_strategies: [
-        'Implement a patient retention programme with reminders',
-        'Consider reducing visit burden where scientifically valid (FDA Patient-Focused Drug Development Guidance, 2023)',
-        'Plan for higher dropout in site selection and enrolment targets (EMA Guideline on Missing Data, EMA/CPMP/EWP/1776/99 Rev. 1)',
-        'Maintain contact between visits through patient-engagement tooling',
-      ],
-    };
-
-    // Generate response
-    const response = {
-      success: true,
-      session_id: session_id,
-      protocol_data: protocolData,
-      similar_protocols: similarProtocols,
-      detailed_analysis: detailedAnalysis,
-      wisdom_trace: wisdomTrace,
-      ind_analysis: indAnalysis,
-      dropout_prediction: dropoutPrediction,
-      global_regulations: globalRegulationsData,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Save the analysis results for later retrieval
-    const resultsPath = path.join(sessionDir, 'analysis_results.json');
-    fs.writeFileSync(resultsPath, JSON.stringify(response, null, 2));
-
-    // Return the response
-    res.json(response);
-  } catch (error) {
-    log.error('Error in demo analysis:', error);
-    res.status(500).json({
-      error: 'Failed to analyze protocol',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+// The protocol-analysis demo endpoint lives in its own module: it is
+// development-only (gated to non-production, ledger L167) and does not belong
+// beside the analytics this file serves to production. Mounted here so the
+// path it answers on is unchanged: POST /api/analytics/demo-analysis.
+router.use(demoAnalysisRouter);
 
 // Analytics dashboard endpoint
 router.get('/dashboard', async (req, res) => {
@@ -1163,10 +859,7 @@ router.get('/dashboard', async (req, res) => {
     });
   } catch (error) {
     log.error('Error generating analytics dashboard:', error);
-    res.status(500).json({
-      error: 'Failed to generate analytics dashboard',
-      message: (error as Error).message,
-    });
+    return serverError(res, log, 'loading dashboard', error);
   }
 });
 
@@ -1442,10 +1135,7 @@ router.get('/export', async (req, res) => {
     }
   } catch (error) {
     log.error('Error exporting analytics report:', error);
-    res.status(500).json({
-      error: 'Failed to export analytics report',
-      message: (error as Error).message,
-    });
+    return serverError(res, log, 'exporting', error);
   }
 });
 export default router;

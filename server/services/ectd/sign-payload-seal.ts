@@ -33,6 +33,15 @@
  */
 
 import { createHmac, timingSafeEqual } from 'crypto';
+import { resolveSignerPosture, type SignerPosture } from '../signature/signer-mode.js';
+import { loadDefaultKmsOps, type KmsOps } from '../signature/kms-signer.js';
+import {
+  signPayloadDigest,
+  verifyPayloadSignature,
+  type PayloadSignatureEnvelope,
+  type PayloadSignatureVerdict,
+  type PayloadSignerDeps,
+} from '../signature/payload-signer.js';
 
 /** Domain-separation tag: prevents this seal from ever colliding with another
  *  HMAC that reuses AUDIT_HMAC_KEY (e.g. the audit-chain seal). Versioned so the
@@ -113,4 +122,84 @@ export function verifySignPayloadSeal(
   return timingSafeEqual(expectedBuf, actualBuf) ? 'ok' : 'failed';
 }
 
-export default { isSignSealConfigured, sealSignPayloadDigest, verifySignPayloadSeal };
+// ── CONCEPT2CURE_SIGNER_MODE=kms: an asymmetric signature BESIDE the seal ────
+//
+// The seal above is the `dev`/`hmac` signer and is ALWAYS written when a key is
+// configured. In `kms` mode (server/services/signature/signer-mode.ts) the
+// release digest is additionally signed by an AWS KMS RSA key and the envelope
+// — algorithm, key id, signature, the exact signed input — is stored next to
+// `payloadSeal`. Verification of the envelope follows the seal's verdict
+// vocabulary so resume and export treat the two identically: a stored
+// envelope that fails, or an absent one under a kms posture, fails closed.
+
+let kmsOpsLoader: (() => Promise<KmsOps>) | null = null;
+let kmsOpsCache: { region: string; ops: Promise<KmsOps> } | null = null;
+
+/**
+ * Test seam: substitute the KMS operations (an in-memory KMS built on
+ * node:crypto). Pass null to restore the SDK-backed default. Never called by
+ * production code.
+ */
+export function __setKmsOpsLoaderForTests(loader: (() => Promise<KmsOps>) | null): void {
+  kmsOpsLoader = loader;
+  kmsOpsCache = null;
+}
+
+function signerDeps(env: NodeJS.ProcessEnv): PayloadSignerDeps {
+  const posture: SignerPosture = resolveSignerPosture(env);
+  return {
+    posture,
+    kms: () => {
+      if (kmsOpsLoader) return kmsOpsLoader();
+      const region = posture.kms?.region ?? '';
+      if (!kmsOpsCache || kmsOpsCache.region !== region) {
+        kmsOpsCache = { region, ops: loadDefaultKmsOps(region) };
+      }
+      return kmsOpsCache.ops;
+    },
+  };
+}
+
+/** True when the resolved posture signs with KMS (an absent envelope is then a failure, not a dev posture). */
+export function isKmsSignerConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  return resolveSignerPosture(env).mode === 'kms';
+}
+
+/**
+ * Sign a payload digest under the configured posture. Null unless the posture
+ * is `kms`; in kms mode a KMS failure THROWS so the release cannot proceed
+ * sealed-but-unsigned.
+ */
+export function signSignPayloadDigest(
+  payloadDigest: string,
+  organizationId: number,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<PayloadSignatureEnvelope | null> {
+  return signPayloadDigest(payloadDigest, organizationId, signerDeps(env));
+}
+
+/**
+ * Verify a stored envelope. 'unsigned' when none is stored (the caller checks
+ * isKmsSignerConfigured to decide whether that is allowed), 'ok' when the KMS
+ * Verify API accepts it, 'failed' otherwise — including when this process has
+ * no kms posture to verify with.
+ */
+export function verifySignPayloadSignature(
+  payloadDigest: string,
+  organizationId: number,
+  envelope: unknown,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<PayloadSignatureVerdict> {
+  return verifyPayloadSignature(payloadDigest, organizationId, envelope, signerDeps(env));
+}
+
+export type { PayloadSignatureEnvelope, PayloadSignatureVerdict };
+
+export default {
+  isSignSealConfigured,
+  sealSignPayloadDigest,
+  verifySignPayloadSeal,
+  isKmsSignerConfigured,
+  signSignPayloadDigest,
+  verifySignPayloadSignature,
+};

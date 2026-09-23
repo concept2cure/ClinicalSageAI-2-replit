@@ -462,7 +462,7 @@ function RaiseTasksForm({ assessment: a, onCancel, onDone, onError }: {
     }
   };
   return (
-    <div className="pj-card-b" style={{ borderTop: '1px solid var(--line-100,#e5e2dc)', padding: 12, display: 'grid', gap: 8 }} role="group" aria-label="Raise tasks">
+    <div className="pj-card-b" style={{ borderTop: '1px solid var(--border)', padding: 12, display: 'grid', gap: 8 }} role="group" aria-label="Raise tasks">
       <div style={{ fontSize: 12, fontWeight: 600 }}>Tasks proposed by the assessment</div>
       {open.length === 0 ? (
         <div style={muted}>Every proposed task is already on the board.</div>
@@ -508,53 +508,98 @@ export function FilingPlacementNote({ placement }: { placement: BridgePlacement 
 
 // ─── Statistics tab (protocol workspace) ─────────────────────────────────────
 
-export function StudyDesignStatisticsTab({ onNav }: { onNav: (id: string) => void }) {
-  const designs = useBridgeDesigns();
+/**
+ * Statistics for THIS protocol's bound study design.
+ *
+ * ── Two wrong answers, in order ──────────────────────────────────────────────
+ *
+ * First this pane rendered `useBridgeDesigns()` unfiltered, which narrows to
+ * the open PROGRAM — or, with no program open, the whole organization. Opening
+ * protocol A showed protocol B's sample size and power: every number correct,
+ * answering a question nobody asked.
+ *
+ * Then it filtered that same program-narrowed list by the bound study id, which
+ * was the wrong repair. Binding is ORG-scoped on both sides (the picker calls
+ * `GET /api/study-design` with no program filter; `bindStudyDesignTx` checks
+ * only the tenant), `cdisc_prm_studies.program_id` is NULLABLE, protocols are
+ * not program-scoped at all, and the list is capped at 50 rows. So a correctly
+ * bound design whose program_id was null, or which belonged to another program,
+ * or which fell outside the newest 50, produced `rows.length === 0` and the
+ * author was told "the bound study design could not be read". A false error on
+ * the default path is worse than the wrong-scope list it replaced: it denies
+ * the author something they are entitled to, and blames the data for it.
+ *
+ * It resolves the design BY ID now — `useDesignAssessment` over
+ * `GET /api/biostat-bridge/designs/:studyId/assessment`, which is tenant-scoped,
+ * takes no program filter, has no row cap, and already existed. The scope of
+ * the read finally matches the scope of the binding.
+ *
+ * Three absences stay distinct: nothing bound (point at the Study design tab —
+ * never a fallback list, which is the original defect wearing a label), the
+ * read failed (the server's own message), and bound-but-absent, which now means
+ * the design genuinely is not readable for this tenant rather than "not in the
+ * program you happen to have open".
+ */
+export function StudyDesignStatisticsTab({ onNav, boundStudyId }: { onNav: (id: string) => void; boundStudyId?: string | null }) {
+  const bound = (boundStudyId ?? '').trim();
+  const { assessment, loading, error } = useDesignAssessment(bound || null);
+  const readiness = assessment?.readiness;
   return (
     <div className="pd-pane">
       <div className="pd-pane-h">
-        <div><h2 className="pd-pane-t">Statistics</h2><div className="pd-pane-s">Statistical readiness of the {scopeLabel() === 'org-scoped' ? "organization's" : "program's"} persisted study designs — sample size, power, estimand and analysis plan, as the design record holds them.</div></div>
+        <div><h2 className="pd-pane-t">Statistics</h2><div className="pd-pane-s">Statistical readiness of the study design bound to this protocol — sample size, power, estimand and analysis plan, as the design record holds them.</div></div>
       </div>
-      {designs.loading ? (
-        <div role="status" className="scaf-note" style={{ margin: 12 }}>Loading study designs…</div>
-      ) : designs.error ? (
-        <div style={{ padding: 12 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load study designs" hint="The design store didn't respond. Sign in and retry, or check that the study-design service is reachable." /></div>
-      ) : designs.empty ? (
-        <div style={{ padding: 12 }}><EmptyState icon={I.fileText} title="No persisted study design for this scope" hint="A protocol's statistics live on its study design (CDISC PRM). Persist a design and its readiness appears here with a link into the Biostatistics designer." /></div>
+      {!bound ? (
+        <div style={{ padding: 12 }}><EmptyState icon={I.fileText} title="No study design is bound to this protocol" hint="A protocol's statistics live on its study design (CDISC PRM). Bind one on the Study design tab and its readiness appears here. Other designs in this program are not shown, because they are not this protocol's." /></div>
+      ) : loading ? (
+        <div role="status" className="scaf-note" style={{ margin: 12 }}>Loading the bound study design…</div>
+      ) : error ? (
+        <div style={{ padding: 12 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the bound study design" hint={error} /></div>
+      ) : !assessment || !readiness ? (
+        <div style={{ padding: 12 }}><EmptyState tone="error" icon={I.alertTriangle} title="The bound study design could not be read" hint={`This protocol names study design ${bound}, but no design with that id is readable for this organization. The link is unresolved — this is not a protocol without a design, and no statistics are shown for it.`} /></div>
       ) : (
         <div style={{ display: 'grid', gap: 10, padding: 12 }}>
-          {designs.rows.map((d) => {
-            const failed = d.readiness.checks.filter((c) => !c.ok);
-            return (
-              <div key={d.studyId} className="pj-card">
-                <div className="pj-card-h">
-                  <span className="t">{d.title}</span>
-                  <span className="s">{[d.phase && 'Phase ' + d.phase, d.indication, d.status].filter(Boolean).join(' · ')}</span>
-                </div>
-                <div className="pj-card-b" style={{ padding: 12, display: 'grid', gap: 8 }}>
-                  <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', fontSize: 12 }}>
-                    <span className={'rd-chip tone-' + readinessTone(d.readiness.percent)}>{d.readiness.percent}% ready</span>
-                    <span><b>{d.readiness.plannedSampleSize ?? '—'}</b> planned subjects</span>
-                    <span><b>{pct(d.readiness.power)}</b> power</span>
-                    <span><b>{d.readiness.alpha ?? '—'}</b> alpha</span>
-                    <span style={muted}>{d.readiness.primaryEndpoint ? 'Primary: ' + d.readiness.primaryEndpoint : 'No primary endpoint'}</span>
-                  </div>
-                  {failed.length > 0 && (
-                    <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, display: 'grid', gap: 2 }} aria-label={`Open statistical checks for ${d.title}`}>
-                      {failed.map((c) => <li key={c.key}>{c.label}{c.hint ? <span style={muted}> — {c.hint}</span> : null}</li>)}
-                    </ul>
-                  )}
-                  <div>
-                    <button className="btn primary" style={{ height: 28, fontSize: 12 }} onClick={() => openDesignInBiostatistics(d.studyId, onNav)}>
-                      {I.sigma} Open in Biostatistics
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          <BoundDesignCard studyId={bound} title={assessment.title || bound} readiness={readiness} onNav={onNav} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** The bound design's readiness card. Extracted to keep the pane's branch
+ *  count under the repo's complexity budget rather than suppressing it. */
+function BoundDesignCard({ studyId, title, readiness, onNav }: {
+  studyId: string;
+  title: string;
+  readiness: StatisticalReadiness;
+  onNav: (id: string) => void;
+}) {
+  const failed = (readiness.checks ?? []).filter((c) => !c.ok);
+  return (
+    <div className="pj-card">
+      <div className="pj-card-h">
+        <span className="t">{title}</span>
+        <span className="s">{studyId}</span>
+      </div>
+      <div className="pj-card-b" style={{ padding: 12, display: 'grid', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', fontSize: 12 }}>
+          <span className={'rd-chip tone-' + readinessTone(readiness.percent)}>{readiness.percent}% ready</span>
+          <span><b>{readiness.plannedSampleSize ?? '—'}</b> planned subjects</span>
+          <span><b>{pct(readiness.power)}</b> power</span>
+          <span><b>{readiness.alpha ?? '—'}</b> alpha</span>
+          <span style={muted}>{readiness.primaryEndpoint ? 'Primary: ' + readiness.primaryEndpoint : 'No primary endpoint'}</span>
+        </div>
+        {failed.length > 0 && (
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, display: 'grid', gap: 2 }} aria-label={`Open statistical checks for ${title}`}>
+            {failed.map((c) => <li key={c.key}>{c.label}{c.hint ? <span style={muted}> — {c.hint}</span> : null}</li>)}
+          </ul>
+        )}
+        <div>
+          <button className="btn primary" style={{ height: 28, fontSize: 12 }} onClick={() => openDesignInBiostatistics(studyId, onNav)}>
+            {I.sigma} Open in Biostatistics
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

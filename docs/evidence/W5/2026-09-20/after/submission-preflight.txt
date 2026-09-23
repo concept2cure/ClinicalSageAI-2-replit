@@ -1,0 +1,45 @@
+
+Submission procurement preflight
+============================================================
+
+ectd_dtd:
+  [ ] ich-ectd-3-2.dtd
+        → place at: /home/user/ClinicalSageAI-2-replit/assets/ectd-dtd/ich-ectd-3-2.dtd
+  [ ] us-regional-v3-3.dtd
+        → place at: /home/user/ClinicalSageAI-2-replit/assets/ectd-dtd/us-regional-v3-3.dtd
+  [ ] eu-regional.dtd
+        → place at: /home/user/ClinicalSageAI-2-replit/assets/ectd-dtd/eu-regional.dtd
+  [ ] jp-regional.dtd
+        → place at: /home/user/ClinicalSageAI-2-replit/assets/ectd-dtd/jp-regional.dtd
+  [ ] ca-regional.dtd
+        → place at: /home/user/ClinicalSageAI-2-replit/assets/ectd-dtd/ca-regional.dtd
+  [ ] ectd-2-0.xsl
+        → place at: /home/user/ClinicalSageAI-2-replit/assets/ectd-dtd/ectd-2-0.xsl
+  [ ] us-regional.xsl
+        → place at: /home/user/ClinicalSageAI-2-replit/assets/ectd-dtd/us-regional.xsl
+
+estar_template:
+  [x] eSTAR-510k-non-ivd.pdf
+  [x] eSTAR-510k-ivd.pdf
+  [ ] PreSTAR-q-sub.pdf
+        → place at: /home/user/ClinicalSageAI-2-replit/assets/estar-templates/PreSTAR-q-sub.pdf
+  [ ] PreSTAR-ide.pdf
+        → place at: /home/user/ClinicalSageAI-2-replit/assets/estar-templates/PreSTAR-ide.pdf
+  [ ] PreSTAR-513g.pdf
+        → place at: /home/user/ClinicalSageAI-2-replit/assets/estar-templates/PreSTAR-513g.pdf
+
+agency_validator:
+  [ ] FDA eValidator
+        → place at: FDA_VALIDATOR_URL env var
+  [ ] EMA technical validation
+        → place at: EMA_VALIDATOR_URL env var
+  [ ] PMDA pre-check
+        → place at: PMDA_VALIDATOR_URL env var
+
+============================================================
+2/15 present. 13 still to obtain.
+
+These are licensed agency artifacts / credentials — obtain them from the
+agency and drop them at the paths above. No code change is needed: each
+gate flips automatically once the artifact is present.
+exit=1

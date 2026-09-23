@@ -234,14 +234,17 @@ export async function assembleTechnicalFileFromCore(
   try {
     const { byKey, unresolved: unresolvedLeaves, materialized, unfinalized, unfinalizedSections } =
       await materializeLeafSources({
-        leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId })),
+        leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId, documentUuid: l.documentUuid ?? null })),
         organizationId,
         stageDir,
       });
 
     const resolveFile: LeafFileResolver = (leaf) => {
-      if (!leaf.documentTable || !leaf.documentId) return null;
-      return byKey.get(leafSourceKey(leaf.documentTable, leaf.documentId)) ?? null;
+      // Either key space identifies a source: integer-keyed stores carry
+      // documentId, uuid-keyed ones (vault.documents) carry documentUuid.
+      // Requiring the integer here would silently drop every vault leaf.
+      if (!leaf.documentTable || (!leaf.documentId && !leaf.documentUuid)) return null;
+      return byKey.get(leafSourceKey(leaf.documentTable, leaf.documentId, leaf.documentUuid)) ?? null;
     };
 
     const coreLeaves: CoreLeaf[] = leaves.map((l) => ({
@@ -402,8 +405,11 @@ export async function assembleTechnicalFileFromProgram(
         stageDir,
       });
     const resolveFile: LeafFileResolver = (leaf) => {
-      if (!leaf.documentTable || !leaf.documentId) return null;
-      return byKey.get(leafSourceKey(leaf.documentTable, leaf.documentId)) ?? null;
+      // Either key space identifies a source: integer-keyed stores carry
+      // documentId, uuid-keyed ones (vault.documents) carry documentUuid.
+      // Requiring the integer here would silently drop every vault leaf.
+      if (!leaf.documentTable || (!leaf.documentId && !leaf.documentUuid)) return null;
+      return byKey.get(leafSourceKey(leaf.documentTable, leaf.documentId, leaf.documentUuid)) ?? null;
     };
 
     // 3-4. Project → plan → materialize → audit (shared spine).

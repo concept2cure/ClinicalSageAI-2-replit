@@ -20,6 +20,8 @@
 import { db } from '../../db';
 import { eq, and, sql } from 'drizzle-orm';
 import { createHash } from 'crypto';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable';
+import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
 import {
   resolutionBundles,
   resolutionBundleItems,
@@ -697,7 +699,15 @@ async function markObjectSuperseded(
   }
 }
 
-async function stageRewrite(
+/**
+ * Stage a bundle's prepared rewrite as a new artifact version, with its span
+ * lineage, in one transaction. Exported for direct testing (ledger L177): the
+ * resolution suite's mocks answer any statement, so the two defects this
+ * function had — no lineage, and `true` returned for a write that matched no
+ * row — were invisible there and are pinned against a real schema in
+ * __tests__/stage-rewrite-lineage.pglite.integration.test.ts.
+ */
+export async function stageRewrite(
   organizationId: number,
   userId: number,
   objectType: string,
@@ -715,28 +725,64 @@ async function stageRewrite(
     const contentHash = createHash('sha256').update(content).digest('hex');
     const changeDescription = `Resolution rewrite via bundle ${bundleId}${planId ? ` (plan ${planId})` : ''}`;
 
-    // Use INSERT...SELECT with subquery for version to avoid read-then-write race.
-    // If a concurrent insert creates a duplicate version, the UNIQUE(artifact_id, version)
-    // constraint will reject it and we return false.
-    await db.execute(sql`
-      INSERT INTO concept2cure_artifact_versions (
-        artifact_id, organization_id, version, content, content_hash,
-        change_description, created_by_id, created_at
-      )
-      SELECT
-        a.id,
-        ${organizationId},
-        COALESCE((SELECT MAX(v.version) FROM concept2cure_artifact_versions v WHERE v.artifact_id = a.id), 0) + 1,
-        ${content},
-        ${contentHash},
-        ${changeDescription},
-        ${userId},
-        now()
-      FROM concept2cure_artifacts a
-      WHERE a.id::text = ${objectId}
-        AND a.organization_id = ${organizationId}
-    `);
-    return true;
+    /* One transaction for the version AND its lineage (ledger L177). This ran
+       as a bare db.execute, so even once lineage was recorded the two would
+       commit separately and a failure between them would leave a governed
+       version with no record of where its sentences came from. */
+    return await db.transaction(async (tx) => {
+      // Use INSERT...SELECT with subquery for version to avoid read-then-write race.
+      // If a concurrent insert creates a duplicate version, the UNIQUE(artifact_id, version)
+      // constraint will reject it and we return false.
+      //
+      // RETURNING id is what makes the zero-row case visible: the SELECT matches
+      // nothing when the artifact does not exist IN THIS TENANT, and this
+      // function used to `return true` regardless — so the caller recorded
+      // `outcome: 'executed', newState: 'rewrite_staged'` for a rewrite the
+      // database never took. Same shape as ledger L173.
+      const result: any = await tx.execute(sql`
+        INSERT INTO concept2cure_artifact_versions (
+          artifact_id, organization_id, version, content, content_hash,
+          change_description, created_by_id, created_at
+        )
+        SELECT
+          a.id,
+          ${organizationId},
+          COALESCE((SELECT MAX(v.version) FROM concept2cure_artifact_versions v WHERE v.artifact_id = a.id), 0) + 1,
+          ${content},
+          ${contentHash},
+          ${changeDescription},
+          ${userId},
+          now()
+        FROM concept2cure_artifacts a
+        WHERE a.id::text = ${objectId}
+          AND a.organization_id = ${organizationId}
+        RETURNING id
+      `);
+      const rows: unknown[] = Array.isArray(result) ? result : (result?.rows ?? []);
+      if (rows.length === 0) {
+        console.warn(
+          `[bundle-executor] stageRewrite wrote no version for artifact ${objectId} in org ${organizationId} — no such artifact in this tenant`,
+        );
+        return false;
+      }
+
+      /* The rewritten text, attributed in the same transaction that stages it.
+         Author, not machine: preparedContent arrives on the bundle item from
+         the create-bundle request (CreateBundleItemRequest) — nothing in the
+         resolution pipeline generates it — so calling it an unaccepted machine
+         draft would be a claim about an author the platform never had. The
+         person executing the bundle is who causes this text to become a version
+         of a governed document, so it is recorded as their assertion. */
+      const client = queryableFromDrizzle(tx);
+      await enforceAuthorLineage(
+        client,
+        organizationId,
+        { documentTable: 'concept2cure_artifacts', documentId: String(objectId) },
+        content,
+        String(userId),
+      );
+      return true;
+    });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
     // Unique constraint violation = race condition — surface it, don't swallow

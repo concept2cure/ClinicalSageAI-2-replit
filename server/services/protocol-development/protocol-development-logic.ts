@@ -29,6 +29,14 @@ export const SECTION_TEMPLATES: Record<ProtocolKind, SectionTemplate[]> = {
     { sectionKey: 'design', title: 'Study Design', required: true, basis: ICH_M11 },
     { sectionKey: 'population', title: 'Study Population & Eligibility', required: true, basis: ICH_M11 },
     { sectionKey: 'intervention', title: 'Treatments / Interventions', required: true, basis: ICH_M11 },
+    /* Added 2026-09-22. ICH M11 carries a discontinuation and withdrawal
+       section and this template did not, so a clinical protocol seeded from
+       here could have every required section complete and still say nothing
+       about when trial intervention stops or how a participant withdraws.
+       `protocol-rule-pack.ts` reports it (ich-m11-discontinuation-withdrawal)
+       and pins the gap with a test; existing rows are backfilled by
+       migrations/20260922b_protocol_discontinuation_section.sql. */
+    { sectionKey: 'discontinuation', title: 'Discontinuation of Intervention & Participant Withdrawal', required: true, basis: ICH_M11 },
     { sectionKey: 'assessments', title: 'Schedule of Assessments', required: true, basis: ICH_M11 },
     { sectionKey: 'safety', title: 'Safety Reporting & Pharmacovigilance', required: true, basis: ICH_M11 },
     { sectionKey: 'statistics', title: 'Statistical Considerations', required: true, basis: ICH_M11 },

@@ -152,4 +152,63 @@ describe('nextFreeObjectNumber', () => {
     const size = Number(/\/Size\s+(\d+)/.exec(original.toString('latin1'))![1]);
     expect(nextFreeObjectNumber(original)).toBe(size);
   });
+
+  /*
+   * THE CHAINED CASE, which nothing above reached. Every test in this file
+   * until now started from a PRISTINE PDF, and so could not tell a reader of
+   * the NEWEST trailer from a reader of the FIRST one — on a pristine file they
+   * are the same trailer.
+   *
+   * The official eSTAR is never pristine by the time an attachment is written:
+   * `attachPlannedFiles` (estar-fill.ts) numbers its `/EmbeddedFile` and
+   * `/Filespec` objects from a document that has ALREADY had the XFA `datasets`
+   * fill appended to it. A stale read hands back a number the previous revision
+   * already used — and the object it collides with is that revision's own
+   * cross-reference stream, so the attachment silently destroys the form fill it
+   * was supposed to travel with. The file still opens.
+   *
+   * This is the same defect class as the `startxrefOffset` first-match bug found
+   * on 2026-09-07, one primitive along, and it was reachable again because the
+   * property "a second update numbers past the first" was pinned nowhere.
+   */
+  it('numbers past the previous revision, its cross-reference stream included', async () => {
+    const original = await basePdf();
+    const firstFree = nextFreeObjectNumber(original);
+
+    const once = appendIncrementalUpdate(original, [
+      { num: firstFree, gen: 0, dict: '<</Type/Filespec/F(a)>>' },
+    ]);
+    const secondFree = nextFreeObjectNumber(once);
+
+    // One object written, plus the xref stream that describes the revision.
+    expect(secondFree).toBe(firstFree + 2);
+
+    /* And the number it hands back is genuinely unoccupied: writing there must
+       leave BOTH revisions' objects readable to an independent parser. */
+    const twice = appendIncrementalUpdate(once, [
+      { num: secondFree, gen: 0, dict: '<</Type/Filespec/F(b)>>' },
+    ]);
+    const nums = [...(await reload(twice)).enumerateIndirectObjects()].map(([r]) => r.objectNumber);
+    expect(nums).toContain(firstFree);
+    expect(nums).toContain(secondFree);
+    expect(nextFreeObjectNumber(twice)).toBe(secondFree + 2);
+  });
+
+  it('a REPLACEMENT-only revision still consumes a number for its xref stream', async () => {
+    /* The XFA datasets fill replaces one existing object and allocates nothing,
+       so a reader could be forgiven for expecting /Size not to move. It moves:
+       the cross-reference stream is itself an object. An attachment numbered
+       from the un-moved /Size would land on top of it. */
+    const original = await basePdf();
+    const firstFree = nextFreeObjectNumber(original);
+    const ctx = await reload(original);
+    const catalogRef = [...ctx.enumerateIndirectObjects()].find(
+      ([, obj]) => obj instanceof PDFDict && obj.get(PDFName.of('Type')) === PDFName.of('Catalog'),
+    )![0];
+
+    const out = appendIncrementalUpdate(original, [
+      { num: catalogRef.objectNumber, gen: 0, dict: ctx.lookup(catalogRef)!.toString() },
+    ]);
+    expect(nextFreeObjectNumber(out)).toBe(firstFree + 1);
+  });
 });

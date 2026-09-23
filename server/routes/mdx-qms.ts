@@ -7,7 +7,7 @@
  *   POST   /api/mdx/qms/documents                       create
  *   GET    /api/mdx/qms/documents/:id                   single
  *   PATCH  /api/mdx/qms/documents/:id                   partial update
- *   POST   /api/mdx/qms/documents/:id/approve           approve + flip effective
+ *   POST   /api/mdx/qms/documents/:id/approve           approve = Part 11 e-signature (password re-auth + meaning + reason) → effective
  *   POST   /api/mdx/qms/documents/:id/training-ack      user acknowledges training
  *   GET    /api/mdx/qms/training                        list training records
  *   GET    /api/mdx/qms/training/expiring               periodic refresh due
@@ -46,7 +46,55 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
-import auditService from '../services/auditService';
+/*
+ * WO-16C #133. The thirteen writes in this router that RECORD a 21 CFR Part 11
+ * §11.10(e) row each did so with `void auditService.logAction({…})`, which
+ * throws away the `AuditWriteResult` that call resolves. `logAction` never
+ * rejects when persistence fails — deliberately, an audit-trail outage must not
+ * break the user action it records — so the discarded value was the ONLY place
+ * a lost row was visible: the returned record, the envelope and the QMS surface
+ * came back byte-identical whether the §11.10(e) record existed or not.
+ *
+ * (Thirteen is the number of AUDITED writes, not of governed ones. The review of
+ * this conversion counted nineteen governed writes in this file and found six
+ * that record no §11.10(e) row at all — see the note above each of them. Those
+ * are a separate gap from #133: nothing is discarded there because nothing is
+ * written. The original wording here said "the thirteen governed writes", which
+ * a reader would take as "every governed write in this router is audited", and
+ * that sentence would have hidden the gap it sat above.)
+ *
+ * They now go through the shared `recordAuditRow`, and each route carries its
+ * outcome out in the response envelope's `meta.auditTrail`. Every one of the
+ * thirteen is a log BESIDE an already-committed write — the UPDATE/INSERT, or
+ * the changeControl.service call, has returned before the audit row is
+ * attempted — so none of them reverts its mutation over a lost log row: the
+ * action stands and the caller is told. Each handler writes exactly one audit
+ * row, so one unqualified `auditTrail` key per envelope names it unambiguously.
+ *
+ * `recordAuditRow` returns `{persisted, chained}` or `{persisted: false, code,
+ * message}` and never the store's own text; that text goes to its log line,
+ * keyed on the action and the resource id. `auditService` is reached through
+ * that module, so it is no longer imported here directly.
+ */
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
+/*
+ * VSR-001 F-3 (OQ-QMS-06). Approving a controlled document makes it effective,
+ * which is a signed act (21 CFR Part 11 §11.50), so the approve route is the one
+ * handler here that does NOT log beside a committed write: it re-authenticates
+ * the signer (§11.200), checks signing authority (§11.10(g)), and then runs the
+ * UPDATE, the chained ledger pair and the electronic_signatures row on one
+ * transaction (services/qms/document-approval-signature). The §11.10(e) row is
+ * inside that transaction, so `meta.auditTrail` on a 200 is always
+ * {persisted: true, chained: true} — a lost row rolls the approval back instead.
+ */
+import { verifySignerCredentials, defaultSignoffDeps } from '../services/ana-ri/governed-action-signoff';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
+import {
+  approveQmsDocumentSigned,
+  QmsApprovalRefusedError,
+  QMS_DOCUMENT_APPROVAL_MEANING,
+} from '../services/qms/document-approval-signature';
 import { SOP_TEMPLATES, getSopTemplate, type SopSection } from '../services/qms/sopTemplates';
 import {
   createChange, listChanges, getChange, updateChange, transitionChange, deleteChange,
@@ -317,7 +365,19 @@ router.post('/qms/documents', async (req: Request, res: Response) => {
         (() => { const m = buildCreateMetadata(p); return m ? JSON.stringify(m) : null; })(),
       ],
     );
-    return created(res, rows[0]);
+    /* A controlled QMS document is the object this whole subsystem exists to
+       govern, and its creation recorded no §11.10(e) row at all — found by the
+       review of the #133 conversion of this file, which had nothing to convert
+       here because nothing was written. Approve / revise / retire on the same
+       document each record one. The INSERT is already committed, so this is a log
+       beside it; `meta.auditTrail` says whether the log exists. */
+    const auditTrail = await recordAuditRow({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.document.create',
+      resourceType: 'qms_document', resourceId: String(rows[0].id),
+      details: { docNumber: p.docNumber, docType: p.docType, version: rows[0].version, status: rows[0].status },
+    });
+    return created(res, rows[0], { auditTrail });
   } catch (err: unknown) {
     const code = (err as { code?: string }).code;
     if (code === '23505') return clientError(res, 409, 'A document with that number already exists in this org');
@@ -402,9 +462,91 @@ router.patch('/qms/documents/:id', async (req: Request, res: Response) => {
       args,
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Document');
-    return ok(res, rows[0]);
+    /* Editing a controlled document — including its status, effective date and
+       next review date — recorded no §11.10(e) row, while approve / revise /
+       retire on the same document each record one. Found by the review of the
+       #133 conversion of this file, which had nothing to convert here because
+       nothing was written. The UPDATE is already committed, so this is a log
+       beside it; `meta.auditTrail` says whether the log exists. */
+    const auditTrail = await recordAuditRow({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.document.update',
+      resourceType: 'qms_document', resourceId: String(id),
+      details: { changedFields: Object.keys(parsed.data) },
+    });
+    return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'doc-patch', err); }
 });
+
+/* Approval = electronic signature. Body: { password, mfaToken?, meaning:
+   'APPROVED', reason, effectiveDate? }. Refusals, in the order they are
+   checked: 400 (a signature component is missing — named), 403 (the signer's
+   org role carries no signing authority; checked BEFORE the credential so the
+   route is not a password oracle for unauthorized callers), 401 (password /
+   MFA did not verify), 404 (not in tenant), 409 (not draft/in_review),
+   403 QMS_SELF_APPROVAL (author signing their own document, §11.10(d)). */
+const approveBody = z.object({
+  password: z.string().min(1, 'Password re-authentication is required (21 CFR Part 11 §11.200)'),
+  mfaToken: z.string().optional(),
+  meaning: z.literal(QMS_DOCUMENT_APPROVAL_MEANING, {
+    errorMap: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_APPROVAL_MEANING}' (21 CFR Part 11 §11.50)` }),
+  }),
+  reason: z.string().trim().min(3, 'A reason for change of at least 3 characters is required').max(2000),
+  effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'effectiveDate must be YYYY-MM-DD').optional(),
+});
+
+function resolveIpAddress(req: Request): string | null {
+  return (
+    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+    req.socket?.remoteAddress ||
+    null
+  );
+}
+
+/**
+ * The two pre-transaction checks of an approval, in the order that keeps the
+ * route from being a password oracle: §11.10(g) authority first, then the
+ * §11.200 credential. Returns the verified factor set, or the refusal already
+ * written to `res`.
+ */
+async function verifyApprovalSigner(
+  req: Request,
+  res: Response,
+  userId: number,
+  orgId: number,
+  body: z.infer<typeof approveBody>,
+): Promise<{ secondFactorVerified: boolean } | null> {
+  const signerRole = await resolveSignerOrgRole(userId, orgId);
+  if (!isSigningAuthorized(signerRole)) {
+    clientError(
+      res,
+      403,
+      'Your role does not permit approving a controlled document (21 CFR Part 11 §11.10(g)).',
+      { code: 'QMS_NO_SIGNING_AUTHORITY' },
+    );
+    return null;
+  }
+  const signoff = await verifySignerCredentials(defaultSignoffDeps, {
+    userId, password: body.password, mfaToken: body.mfaToken,
+  });
+  if (!signoff.verified) {
+    clientError(
+      res,
+      401,
+      signoff.error ?? 'Signer verification failed (21 CFR Part 11 §11.200).',
+      { code: signoff.code ?? 'REAUTH_FAILED' },
+    );
+    return null;
+  }
+  // Attribution honesty: only the factors the verifier actually checked.
+  return { secondFactorVerified: signoff.secondFactorVerified };
+}
+
+function approvalRefusal(res: Response, err: QmsApprovalRefusedError): Response {
+  if (err.code === 'NOT_FOUND') return notFoundInTenant(res, 'Document');
+  if (err.code === 'SELF_APPROVAL') return clientError(res, 403, err.message, { code: 'QMS_SELF_APPROVAL' });
+  return clientError(res, 409, err.message, { code: 'QMS_INVALID_STATE' });
+}
 
 router.post('/qms/documents/:id/approve', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -413,28 +555,49 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
   if (userId === null) return clientError(res, 401, 'User context required');
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
-  const effectiveDate = typeof req.body?.effectiveDate === 'string' ? req.body.effectiveDate : null;
-  try {
-    const { rows } = await pool.query(
-      `UPDATE qms_documents
-          SET status = 'effective',
-              approver_id = $3,
-              approved_at = NOW(),
-              effective_date = COALESCE($4::date, effective_date, NOW()::date),
-              updated_at = NOW()
-        WHERE id = $1 AND organization_id = $2
-          AND status IN ('draft','in_review')
-          AND deleted_at IS NULL
-        RETURNING *`,
-      [id, orgId, userId, effectiveDate],
+
+  const parsed = approveBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    return clientError(
+      res,
+      400,
+      `Approval is an electronic signature and requires a password, the signature meaning '${QMS_DOCUMENT_APPROVAL_MEANING}' and a reason for change; missing or invalid: ${Object.keys(fieldErrors).join(', ')}`,
+      { code: 'ESIGNATURE_COMPONENT_MISSING', fieldErrors },
     );
-    if (rows.length === 0) return clientError(res, 409, 'Document not found, or not in draft/in_review state');
-    void auditService.logAction({
-      tenantId: orgId, userId: userId ?? undefined, action: 'mdx.qms.document.approve',
-      resourceType: 'qms_document', resourceId: id,
+  }
+  const body = parsed.data;
+
+  let verified: { secondFactorVerified: boolean } | null;
+  try {
+    verified = await verifyApprovalSigner(req, res, userId, orgId, body);
+  } catch (err) { return serverError(res, log, 'doc-approve-verify', err); }
+  if (!verified) return res;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await approveQmsDocumentSigned(client, {
+      orgId, userId, documentId: id,
+      reason: body.reason,
+      meaning: body.meaning,
+      effectiveDate: body.effectiveDate ?? null,
+      authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
+      secondFactorVerified: verified.secondFactorVerified,
+      ipAddress: resolveIpAddress(req),
     });
-    return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'doc-approve', err); }
+    await client.query('COMMIT');
+    return ok(res, result.document, {
+      auditTrail: { persisted: true, chained: true },
+      signature: result.signature,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof QmsApprovalRefusedError) return approvalRefusal(res, err);
+    return serverError(res, log, 'doc-approve', err);
+  } finally {
+    client.release();
+  }
 });
 
 /* Change control — open a controlled revision. Bumps to the next major
@@ -476,12 +639,18 @@ router.post('/qms/documents/:id/revise', async (req: Request, res: Response) => 
       [id, orgId, newVersion, reason, fromVersion, userId],
     );
     if (rows.length === 0) return clientError(res, 409, 'Document cannot be revised from its current state');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The revision is
+       committed by the UPDATE above — new version, approval cleared, and the
+       reason-for-change written into `metadata.lastRevision` — so the document
+       row keeps the reason either way. What was unobservable is whether the
+       audit-trail copy of it landed; that is now `meta.auditTrail`. The
+       revision is not rolled back over a lost row. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: userId ?? undefined, action: 'mdx.qms.document.revise',
       resourceType: 'qms_document', resourceId: id,
       details: { reason, from: fromVersion, to: newVersion },
     });
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'doc-revise', err); }
 });
 
@@ -507,11 +676,15 @@ router.post('/qms/documents/:id/retire', async (req: Request, res: Response) => 
       [id, orgId, reason, userId],
     );
     if (rows.length === 0) return clientError(res, 409, 'Document not found, or already retired');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. Retirement is a
+       terminal lifecycle state and the UPDATE above has already set it, so the
+       row stands; `meta.auditTrail` says whether the §11.10(e) record of who
+       retired it, and why, exists. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: userId ?? undefined, action: 'mdx.qms.document.retire',
       resourceType: 'qms_document', resourceId: id, details: { reason },
     });
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'doc-retire', err); }
 });
 
@@ -539,11 +712,16 @@ router.post('/qms/documents/:id/training-ack', async (req: Request, res: Respons
        RETURNING *`,
       [orgId, userId, id, doc.rows[0].version, method, quizScore],
     );
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The acknowledgment
+       itself is the `qms_training_records` row the INSERT above returns, so the
+       training evidence survives a lost audit row; the audit row is the
+       §11.10(e) log beside it. `meta.auditTrail` reports which of the two
+       outcomes this request had. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: userId ?? undefined, action: 'mdx.qms.training.acknowledge',
       resourceType: 'qms_document', resourceId: id, details: { method, quizScore },
     });
-    return created(res, rows[0]);
+    return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'training-ack', err); }
 });
 
@@ -671,13 +849,17 @@ router.post('/qms/suppliers', async (req: Request, res: Response) => {
         p.isoCertifications ?? null,
       ],
     );
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The supplier row is
+       inserted by the query above, so the qualification record stands; what the
+       caller could not tell is whether the §11.10(e) entry naming who qualified
+       a critical supplier landed with it. Now in `meta.auditTrail`. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.supplier.qualify',
       resourceType: 'qms_supplier', resourceId: rows[0]?.id,
       details: { supplierName: p.supplierName, criticality: p.criticality },
     });
-    return created(res, rows[0]);
+    return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'supp-create', err); }
 });
 
@@ -712,7 +894,18 @@ router.patch('/qms/suppliers/:id', async (req: Request, res: Response) => {
       args,
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Supplier');
-    return ok(res, rows[0]);
+    /* A supplier's approval standing is a controlled QMS record, and changing it
+       recorded no §11.10(e) row — while CREATING the same supplier, sixty lines
+       above, has always recorded one. Found by the review of the #133 conversion
+       of this file. The row is already committed, so this is a log beside it;
+       `meta.auditTrail` says whether the log exists. */
+    const auditTrail = await recordAuditRow({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.supplier.update',
+      resourceType: 'qms_supplier', resourceId: String(id),
+      details: { changedFields: Object.keys(parsed.data) },
+    });
+    return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'supp-patch', err); }
 });
 
@@ -766,7 +959,17 @@ router.post('/qms/internal-audits', async (req: Request, res: Response) => {
         getUserId(req), p.auditorTeam ?? null, p.plannedDate ?? null, p.status ?? null,
       ],
     );
-    return created(res, rows[0]);
+    /* An internal audit is ISO 13485 §8.2.4 evidence and its creation recorded no
+       §11.10(e) row. Found by the review of the #133 conversion of this file. The
+       audit row is already committed, so this is a log beside it;
+       `meta.auditTrail` says whether the log exists. */
+    const auditTrail = await recordAuditRow({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.internal_audit.create',
+      resourceType: 'qms_internal_audit', resourceId: String(rows[0].id),
+      details: { auditNumber: p.auditNumber, auditStandard: p.auditStandard ?? null, scope: p.scope },
+    });
+    return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'audit-create', err); }
 });
 
@@ -801,7 +1004,17 @@ router.patch('/qms/internal-audits/:id', async (req: Request, res: Response) => 
       args,
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Audit');
-    return ok(res, rows[0]);
+    /* Changing an internal audit's findings or closure recorded no §11.10(e) row.
+       Found by the review of the #133 conversion of this file. The row is already
+       committed, so this is a log beside it; `meta.auditTrail` says whether it
+       exists. */
+    const auditTrail = await recordAuditRow({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.internal_audit.update',
+      resourceType: 'qms_internal_audit', resourceId: String(id),
+      details: { changedFields: Object.keys(parsed.data) },
+    });
+    return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'audit-patch', err); }
 });
 
@@ -850,13 +1063,17 @@ router.post('/qms/management-reviews', async (req: Request, res: Response) => {
         p.minutesArtifactId ?? null,
       ],
     );
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The management
+       review row is committed by the INSERT above; the sign-off's §11.10(e)
+       record is the log beside it, and `meta.auditTrail` now says whether that
+       log exists. The review is not withdrawn over a lost row. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.management_review.signoff',
       resourceType: 'qms_management_review', resourceId: rows[0]?.id,
       details: { period: p.period },
     });
-    return created(res, rows[0]);
+    return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'mr-create', err); }
 });
 
@@ -905,7 +1122,19 @@ router.post('/qms/nonconforming', async (req: Request, res: Response) => {
         p.source ?? null, p.description, getUserId(req),
       ],
     );
-    return created(res, rows[0]);
+    /* Recording a nonconforming product is §8.3 / 21 CFR 820.90 evidence, and it
+       recorded no 21 CFR Part 11 §11.10(e) row at all — while the DISPOSITION of
+       the same NCR, forty lines below, has always recorded one. Found by the
+       review of the #133 conversion of this file, which had nothing to convert
+       here because nothing was written. The NCR row is already committed, so this
+       is a log beside it; `meta.auditTrail` says whether the log exists. */
+    const auditTrail = await recordAuditRow({
+      tenantId: orgId, userId: getUserId(req) ?? undefined,
+      action: 'mdx.qms.nonconforming.create',
+      resourceType: 'qms_nonconforming_product', resourceId: String(rows[0].id),
+      details: { ncNumber: p.ncNumber, lotOrSerial: p.lotOrSerial ?? null, source: p.source ?? null },
+    });
+    return created(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'nc-create', err); }
 });
 
@@ -928,13 +1157,17 @@ router.patch('/qms/nonconforming/:id/disposition', async (req: Request, res: Res
       [id, orgId, parsed.data.disposition, parsed.data.dispositionRationale ?? null],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'NC record');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The disposition —
+       scrap, rework, use-as-is — is already stamped on the NC row by the UPDATE
+       above, so it is not reverted; `meta.auditTrail` reports whether the
+       §11.10(e) record of who dispositioned the product exists. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.nonconforming.disposition',
       resourceType: 'qms_nonconforming_product', resourceId: id,
       details: { disposition: parsed.data.disposition },
     });
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { auditTrail });
   } catch (err) { return serverError(res, log, 'nc-disposition', err); }
 });
 
@@ -1037,13 +1270,17 @@ router.post('/qms/changes', async (req: Request, res: Response) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   try {
     const row = await createChange(orgId, { ...parsed.data, proposedBy: getUserId(req) });
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. `createChange` has
+       already inserted the change request and returned it, so the register entry
+       stands; `meta.auditTrail` now says whether the §11.10(e) record of who
+       raised it exists. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.change.create',
       resourceType: 'qms_change_control', resourceId: row.id,
       details: { changeNumber: row.change_number, classification: row.classification },
     });
-    return created(res, row);
+    return created(res, row, { auditTrail });
   } catch (err: unknown) {
     if ((err as { code?: string }).code === '23505') {
       return clientError(res, 409, 'A change with that number already exists in this org');
@@ -1077,12 +1314,15 @@ router.patch('/qms/changes/:id', async (req: Request, res: Response) => {
   try {
     const row = await updateChange(orgId, id, { ...parsed.data, assessedBy: getUserId(req) });
     if (!row) return notFoundInTenant(res, 'Change');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. `updateChange` has
+       committed the edit and returned the row, so the edit is not undone here;
+       `meta.auditTrail` reports whether the §11.10(e) record of it exists. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.change.update',
       resourceType: 'qms_change_control', resourceId: id,
     });
-    return ok(res, row);
+    return ok(res, row, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-update', err); }
 });
 
@@ -1100,13 +1340,32 @@ router.post('/qms/changes/:id/transition', async (req: Request, res: Response) =
       userId, effectivenessReview: parsed.data.effectivenessReview,
     });
     if (!row) return notFoundInTenant(res, 'Change');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`, on the change-control
+       register's own lifecycle route — including the segregation-of-duties-checked
+       step into `approved`. `transitionChange` has already stamped the new status
+       (and the approver, on that step), so the move stands and is not rolled
+       back; `meta.auditTrail` now says whether the record of it was written.
+
+       `transitionChange` throws both refusals before this point, so the 409 and
+       422 arms below have no audit outcome to carry and none is claimed — which
+       also means no refused transition is recorded anywhere in this file.
+
+       (Two corrections to an earlier version of this comment, both from the
+       review of this conversion. It called this "the one route in this file whose
+       §11.10(e) row is the record of a controlled lifecycle move": the document
+       approve / revise / retire routes above are lifecycle moves too, and the
+       retire route's own comment says so. And "is the record of the move" would
+       make this rule-2's exception, owing a 503 — it is not, as this comment's
+       own next clause says, because transitionChange has already stamped the
+       status. Both were false, and a false sentence inside a fabrication fix is
+       the same defect in prose.) */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: userId ?? undefined,
       action: 'mdx.qms.change.transition',
       resourceType: 'qms_change_control', resourceId: id,
       details: { to: parsed.data.to },
     });
-    return ok(res, row);
+    return ok(res, row, { auditTrail });
   } catch (err) {
     if (err instanceof InvalidChangeTransitionError) return clientError(res, 409, err.message);
     if (err instanceof SegregationOfDutiesError) return clientError(res, 422, err.message);
@@ -1123,12 +1382,16 @@ router.delete('/qms/changes/:id', async (req: Request, res: Response) => {
   try {
     const removed = await deleteChange(orgId, id);
     if (!removed) return notFoundInTenant(res, 'Change');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. `deleteChange` has
+       already stamped `deleted_at`, and it reported that it matched a row, so
+       the soft-delete stands; `meta.auditTrail` now says whether the §11.10(e)
+       record of who retired the change request exists. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.change.delete',
       resourceType: 'qms_change_control', resourceId: id,
     });
-    return ok(res, { id, deleted: true });
+    return ok(res, { id, deleted: true }, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-delete', err); }
 });
 
@@ -1159,13 +1422,16 @@ router.post('/qms/changes/:id/links', async (req: Request, res: Response) => {
     const change = await getChange(orgId, id);
     if (!change) return notFoundInTenant(res, 'Change');
     const row = await addLink(orgId, id, { ...parsed.data, createdBy: getUserId(req) });
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. `addLink` has
+       inserted the cross-reference and returned it, so the link stands;
+       `meta.auditTrail` reports whether the §11.10(e) record of it exists. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.change.link',
       resourceType: 'qms_change_control', resourceId: id,
       details: { linkType: parsed.data.linkType, linkedRef: parsed.data.linkedRef },
     });
-    return created(res, row);
+    return created(res, row, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-link-add', err); }
 });
 
@@ -1179,13 +1445,17 @@ router.delete('/qms/changes/:id/links/:linkId', async (req: Request, res: Respon
   try {
     const removed = await removeLink(orgId, id, linkId);
     if (!removed) return notFoundInTenant(res, 'Link');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The link row is
+       already deleted by `removeLink`, which reported that it matched one, so
+       the removal stands and the §11.10(e) record beside it is the only thing
+       left to report — `meta.auditTrail`. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: 'mdx.qms.change.unlink',
       resourceType: 'qms_change_control', resourceId: id,
       details: { linkId },
     });
-    return ok(res, { id: linkId, deleted: true });
+    return ok(res, { id: linkId, deleted: true }, { auditTrail });
   } catch (err) { return serverError(res, log, 'change-link-remove', err); }
 });
 

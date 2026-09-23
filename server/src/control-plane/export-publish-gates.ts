@@ -38,10 +38,18 @@ export interface ExportGateInput {
   hasApproval: boolean;
   approvalDate?: string;
   humanReviewApproved: boolean;
-  aiGenerated: boolean;
+  /**
+   * Whether a model wrote this content. `null` = NOT RECORDED, which fails the
+   * human-review check rather than skipping it. It used to be `boolean`, and
+   * callers with no record passed `false` — "not AI-generated" — so the
+   * human-review check was never pushed and the export read as eligible with
+   * no entry for that control at all (2026-09-22).
+   */
+  aiGenerated: boolean | null;
   provenanceComplete: boolean;
   unresolvedContradictionCount: number;
-  isStale: boolean;
+  /** `null` = staleness NOT COMPUTED, which fails the freshness check. */
+  isStale: boolean | null;
 }
 
 /**
@@ -143,21 +151,50 @@ export function evaluateExportGate(input: ExportGateInput): ExportGateDecision {
     remediationSteps.push('Resolve all contradictions before exporting');
   }
 
-  // Check 6: Not stale
+  // Check 6: Not stale. Three answers, not two: an uncomputed staleness is
+  // not "current".
+  const staleUnknown = input.isStale === null || input.isStale === undefined;
   checks.push({
     checkId: 'export_not_stale',
     checkName: 'Not Stale',
-    passed: !input.isStale,
-    detail: input.isStale ? 'Document is stale — source data has changed' : 'Document is current',
+    passed: input.isStale === false,
+    detail: staleUnknown
+      ? 'Freshness not evaluated — staleness was never computed for this document'
+      : input.isStale
+        ? 'Document is stale — source data has changed'
+        : 'Document is current',
     required: true,
   });
-  if (input.isStale) {
+  if (staleUnknown) {
+    blockingReasons.push(makeBlocker('export_gate_failed', 'major', 'Document freshness has not been evaluated — compute staleness before export'));
+    remediationSteps.push('Evaluate whether source data has changed since this document was compiled');
+  } else if (input.isStale) {
     blockingReasons.push(makeBlocker('export_gate_failed', 'major', 'Document is stale — refresh before export'));
     remediationSteps.push('Refresh or recompile the document to incorporate source changes');
   }
 
-  // Check 7: Human review for AI-generated content
-  if (input.aiGenerated) {
+  // Check 7: Human review for AI-generated content. Always recorded, so the
+  // decision record distinguishes "recorded as not AI-generated" from "nobody
+  // recorded whether a model wrote this" — the second fails.
+  if (input.aiGenerated === null || input.aiGenerated === undefined) {
+    checks.push({
+      checkId: 'export_human_review',
+      checkName: 'Human Review (AI Content)',
+      passed: false,
+      detail: 'Whether this content was AI-generated is not recorded, so human review of AI content cannot be confirmed',
+      required: true,
+    });
+    blockingReasons.push(makeBlocker('missing_review', 'critical', 'AI provenance of this content is not recorded — record it, and complete human review if a model wrote it'));
+    remediationSteps.push('Record whether this content was AI-generated');
+  } else if (!input.aiGenerated) {
+    checks.push({
+      checkId: 'export_human_review',
+      checkName: 'Human Review (AI Content)',
+      passed: true,
+      detail: 'Recorded as not AI-generated — human review of AI content does not apply',
+      required: true,
+    });
+  } else {
     checks.push({
       checkId: 'export_human_review',
       checkName: 'Human Review (AI Content)',

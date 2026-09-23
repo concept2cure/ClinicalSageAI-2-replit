@@ -3,7 +3,7 @@ import {
   documentComponents,
   coauthorDocuments
 } from '../../shared/schema.js';
-import { eq, and, sql, isNull, or } from 'drizzle-orm';
+import { eq, and, sql, isNull } from 'drizzle-orm';
 
 /**
  * Document Locking Service for Component-Based Editing

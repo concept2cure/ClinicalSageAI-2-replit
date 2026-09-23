@@ -33,6 +33,13 @@ export interface CoverLetterInput {
   /** IND number if assigned; absent/null for an original IND. */
   indNumber?: string | null;
   submissionType: IndSubmissionType;
+  /**
+   * For a protocol amendment: the 21 CFR 312.30(d) title(s) the submission
+   * must be prominently identified with ("Protocol Amendment: New Protocol",
+   * "…: Change in Protocol", "…: New Investigator"). `planIndAmendment`
+   * returns them as `protocolAmendmentTitles`. Absent → a gap, not a guess.
+   */
+  protocolAmendmentTitles?: string[];
   /** Submission serial number (e.g. "0000"). */
   serialNumber?: string;
   /** FDA review division (e.g. "Division of Oncology 1"). */
@@ -105,6 +112,31 @@ function fmtDate(iso?: string): string {
  * Assemble the IND cover letter. Deterministic; `gaps` lists missing required
  * fields (the letter still renders, using bracketed placeholders).
  */
+/**
+ * 21 CFR 312.30(d): a protocol amendment "is required to be prominently
+ * identified as such (i.e., 'Protocol Amendment: New Protocol', 'Protocol
+ * Amendment: Change in Protocol', or 'Protocol Amendment: New Investigator')".
+ * The letter used a bare "Protocol Amendment". When the subtype is not
+ * supplied it is reported as a gap rather than guessed (2026-09-22).
+ */
+const PROTOCOL_AMENDMENT_TITLES = new Set([
+  'Protocol Amendment: New Protocol',
+  'Protocol Amendment: Change in Protocol',
+  'Protocol Amendment: New Investigator',
+]);
+
+function submissionLabel(input: CoverLetterInput, gaps: string[]): string {
+  if (input.submissionType !== 'protocol_amendment') return SUBMISSION_LABEL[input.submissionType];
+  const titles = (input.protocolAmendmentTitles ?? []).filter((t) => PROTOCOL_AMENDMENT_TITLES.has(t));
+  if (titles.length === 0) {
+    gaps.push(
+      'Protocol amendment type — 21 CFR 312.30(d) requires it to be prominently identified as "Protocol Amendment: New Protocol", "Protocol Amendment: Change in Protocol" or "Protocol Amendment: New Investigator"',
+    );
+    return SUBMISSION_LABEL.protocol_amendment;
+  }
+  return titles.join('; ');
+}
+
 export function assembleCoverLetter(input: CoverLetterInput): CoverLetterModel {
   const gaps: string[] = [];
   const req = (val: string | undefined | null, label: string, placeholder: string): string => {
@@ -117,7 +149,7 @@ export function assembleCoverLetter(input: CoverLetterInput): CoverLetterModel {
   const drugName = req(input.drugName, 'drugName', '[Drug Name]');
   const signatoryName = req(input.signatoryName, 'signatoryName', '[Authorized Representative]');
 
-  const label = SUBMISSION_LABEL[input.submissionType];
+  const label = submissionLabel(input, gaps);
   const indLine = input.indNumber
     ? `IND ${input.indNumber} — ${drugName}`
     : `${label} — ${drugName}`;

@@ -155,6 +155,22 @@ if ! npm run --silent ci:migration-drop-safety 2>&1; then
 fi
 echo "   ✅ Replay-safe DROPs passed."
 
+# One level below table reachability: a column the server queries must be added
+# by a migration an applier runs. A file that only ALTERs creates no table, so
+# the table guard never sees it — six columns shipped that way, each a 42703 on
+# every execution. Reads files only, no database (~1.5s).
+echo "   Validating queried columns are reachable..."
+if ! npm run --silent ci:column-reachability 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Column reachability check FAILED."
+  echo "   A column the server queries is added only by a migration nothing runs."
+  echo "   Wire the migration after the file that creates its table (CLAUDE.md"
+  echo "   RULE 1), or delete the dead reference. Never wire db/migrations/_consolidated/."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Column reachability passed."
+
 # The third migration invariant, and the only one nothing was enforcing: every
 # .sql file in db/migrations must appear in migrations_manifest.json, which is
 # what orders them for the appliers that read it. `db:sync-manifest:check`
@@ -188,6 +204,23 @@ if ! npm run --silent ci:drizzle-tenant-scope 2>&1; then
   exit 1
 fi
 echo "   ✅ Drizzle tenant scope passed."
+
+# A className that no stylesheet defines styles NOTHING, and nothing else in the
+# pipeline says so: a test that drives a form never asks whether the form was
+# visible, and `className` takes any string so the typechecker is silent too. A
+# filing dialog shipped with six invented names and rendered with no backdrop,
+# no dialog box, no header and no footer, with a green suite. Baselined against
+# the two known-harmless semantic hooks: this fails only on a NEW one.
+echo "   Validating every v2 className is defined in a stylesheet..."
+if ! npm run --silent ci:undefined-css-classes 2>&1; then
+  echo ""
+  echo "🚫 ERROR: undefined CSS class check FAILED."
+  echo "   The element renders unstyled and no test will tell you. Use the existing"
+  echo "   vocabulary, or baseline the name WITH A REASON if it is a deliberate hook."
+  echo ""
+  exit 1
+fi
+echo "   ✅ v2 class names passed."
 
 # Cheap, no database, and guards a privilege-escalation footgun: `SET
 # app.bypass_rls` is SESSION-scoped, so it survives client.release() and the
@@ -257,5 +290,79 @@ if ! npm run --silent ci:fabricated-identity 2>&1; then
   exit 1
 fi
 echo "   ✅ Fabricated-identity check passed."
+
+# ── A Part 11 audit row written and its outcome discarded (unconditional) ──
+#
+# `auditService.logAction` does not reject when persistence fails. That is
+# deliberate -- an audit-trail outage must not break the action it records -- so
+# it RESOLVES an AuditWriteResult and says what happened in `persisted`.
+# Two syntaxes throw that away: `void auditService.logAction(...)` and a
+# statement-position `await auditService.logAction(...)`. Either way the call has
+# two possible outcomes and one observable result: the caller, the HTTP envelope
+# and the surface are byte-identical whether the §11.10(e) record exists or does
+# not. Awaiting and ignoring reports no more than not awaiting at all -- the gate
+# caught only the `void` form until 19 Sep 2026, when the awaited form turned out
+# to be 134 sites against 0 remaining void ones.
+#
+# WO-16C finding 133 converted the PDEV approval and IND-clearance path. The
+# baseline caps the rest per file WITH ITS COUNT, so a baselined file cannot
+# quietly grow and a clean file cannot become dirty. Shrink it; never grow it.
+echo "   Checking for a discarded Part 11 audit-write outcome..."
+if ! npm run --silent ci:discarded-audit-write 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Discarded audit-write outcome FAILED."
+  echo "   Await the write and report it: if (!audit.persisted) log.error(...)."
+  echo "   Where a client is answered, carry the outcome to it -- see"
+  echo "   recordAuditRow in server/services/pdev/pdev-audit-record.ts."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No discarded audit-write outcome."
+
+# ── The commit has to build for somebody other than you ──────────────────────
+#
+# On 19 Sep 2026 an unanchored `uploads/` in .gitignore -- meant for the runtime
+# directory at the repo root -- silently excluded `server/services/uploads/`,
+# source added that minute. `git add -A` skipped it without a word, `git status`
+# showed nothing, and the commit shipped a route importing a module that was not
+# in the repository. Typecheck, 6,117 unit tests and the dbtests all passed,
+# because every one of them reads the WORKING TREE. Only the index disagreed,
+# and nothing consulted the index.
+#
+# This asks git, not the filesystem, whether each relative import in the pushed
+# files resolves. It is scoped to what the push changes, so a lane answers for
+# its own code and not the repo's backlog.
+echo "   Checking that pushed imports resolve to tracked files..."
+if ! npm run --silent ci:untracked-imports 2>&1; then
+  echo ""
+  echo "🚫 ERROR: An import resolves to a file git does not have."
+  echo "   Usually a .gitignore pattern matching a source directory:"
+  echo "     git check-ignore -v <path>"
+  echo "   Anchor a root-directory pattern with a leading slash (/uploads/)."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Pushed imports all resolve to tracked files."
+
+# ── ESLint ERRORS, before the push rather than after ─────────────────────────
+#
+# ci:eslint-warning-ratchet gates the WARNING total across 1,790 files; it counts
+# errors, prints them and passes, on the grounds that the Run ESLint step fails on
+# those. True -- and that step runs in CI only, and the ratchet is too slow to be
+# a pre-push gate, so nothing ran ESLint before a push at all. Two lanes shipped
+# the same `no-regex-spaces` error to trunk within an hour on 19 Sep 2026, and
+# each time the next person to push had to bisect somebody else's commit.
+#
+# Errors only -- warnings are the ratchet's job -- and only in the files this push
+# changes, which is ~1.4s rather than minutes.
+echo "   Checking for ESLint errors in the pushed files..."
+if ! npm run --silent ci:pushed-lint-errors 2>&1; then
+  echo ""
+  echo "🚫 ERROR: ESLint errors in the files this push changes."
+  echo "   These fail the Run ESLint step in CI; fix them here instead."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No ESLint errors in the pushed files."
 
 echo "✅ Pre-push checks complete — all gates passed."

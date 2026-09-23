@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/quality/plans",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "name": "OQ-006 QMP 20260921162811",
+      "description": "Validation exercise"
+    }
+  },
+  "response": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 22,
+    "rateLimitRetries": 0,
+    "body": {
+      "id": 11,
+      "organizationId": 2,
+      "clientWorkspaceId": null,
+      "name": "OQ-006 QMP 20260921162811",
+      "description": "Validation exercise",
+      "version": "1.0",
+      "status": "draft",
+      "approvedById": null,
+      "approvedAt": null,
+      "effectiveDate": null,
+      "expiryDate": null,
+      "reviewFrequencyDays": 365,
+      "lastReviewDate": null,
+      "nextReviewDate": null,
+      "reviewReminderDays": 30,
+      "createdById": 1,
+      "settings": null,
+      "metadata": {
+        "allowWaivers": false
+      },
+      "createdAt": "2026-09-21T16:28:21.336Z",
+      "updatedAt": "2026-09-21T16:28:21.336Z"
+    }
+  }
+}

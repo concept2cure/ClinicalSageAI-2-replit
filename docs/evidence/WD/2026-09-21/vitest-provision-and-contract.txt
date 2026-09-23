@@ -1,0 +1,40 @@
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/db/__tests__/readiness-contract.test.ts
+{
+  "timestamp": "2026-09-21T01:00:33.976Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/db/__tests__/readiness-contract.test.ts
+[database] Database connection successful
+
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > CRITICAL_TABLES agree with ensureCoreTables.ts 2ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > REQUIRED_SCHEMAS agree with ensureCoreTables.ts 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > SECURITY_CRITICAL_TABLES agree with startup/services.ts 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > demands the vector extension and the Part 11 audit store 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > readiness-contract.mjs mirrors the server-side readiness lists > base sentinels are a superset of the critical tables 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > passes on a complete contract 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names the missing security-critical table (the licenses case) 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names the missing Part 11 audit store 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > names a missing schema and a missing extension 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > as the runtime role: refuses a superuser and an unreadable table 1ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > as the owner: does not check SELECT reach 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > named runtime role (owner connection) and the grant audit > passes when the named role reaches everything with the recipe privileges 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > named runtime role (owner connection) and the grant audit > fails on an application table outside the contract that the role cannot reach (the 183-table case) 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > named runtime role (owner connection) and the grant audit > fails when the audit store is widened beyond append-only (UPDATE via a PUBLIC or hand grant) 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > named runtime role (owner connection) and the grant audit > fails when the runtime role owns the audit store 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > named runtime role (owner connection) and the grant audit > fails when the named role does not exist 0ms
+ ✓ server/db/__tests__/readiness-contract.test.ts > verifyReadinessContract > named runtime role (owner connection) and the grant audit > refuses a named superuser 0ms
+
+ Test Files  2 passed (2)
+      Tests  44 passed (44)
+   Start at  01:00:32
+   Duration  1.90s (transform 1.02s, setup 161ms, import 1.72s, tests 35ms, environment 0ms)
+

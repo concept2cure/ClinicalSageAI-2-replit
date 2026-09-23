@@ -1,0 +1,122 @@
+{
+  "_note": "GET /api/protocol-dev after the live run, reduced to the registers this change made writable. Read back from the server; nothing here is computed by the client.",
+  "id": "2",
+  "shortTitle": "C2C-101-201",
+  "version": "0.2",
+  "status": "in_development",
+  "sponsor": "Concept2Cure Therapeutics (fictional)",
+  "pi": "Dr. Ana Reyes-Whitfield (fictional)",
+  "principalInvestigator": "Dr. Ana Reyes-Whitfield (fictional)",
+  "sectionsWithTheLiveEdit": [
+    {
+      "id": "13",
+      "tail": " editor on 2026-09-21. Live proof of the section editor on 2026-09-21."
+    }
+  ],
+  "soa": {
+    "visits": [
+      "Screening",
+      "Baseline (Week 0)",
+      "Week 2",
+      "Week 4",
+      "Week 8",
+      "Week 12",
+      "Week 16 (primary endpoint)",
+      "End of Treatment",
+      "Safety Follow-up",
+      "Week 20 (WO2 proof)"
+    ],
+    "assessments": [
+      "Informed consent and eligibility",
+      "Serum cytokine panel (WO2 proof)",
+      "PASI, sPGA and BSA (blinded assessor)",
+      "DLQI questionnaire",
+      "Study drug administration",
+      "PK trough sample",
+      "Anti-drug antibody sample",
+      "Safety laboratory (haematology, chemistry, urinalysis)",
+      "12-lead ECG",
+      "Vital signs and weight",
+      "Adverse event review"
+    ],
+    "issues": [
+      {
+        "sev": "warning",
+        "text": "Visit \"Week 20 (WO2 proof)\" has no scheduled assessments."
+      },
+      {
+        "sev": "warning",
+        "text": "Assessment \"Serum cytokine panel (WO2 proof)\" is not scheduled at any visit."
+      }
+    ]
+  },
+  "risksWithAResidualRating": [
+    {
+      "hazard": "Serious or opportunistic infection secondary to IL-23 inhibition",
+      "inherent": [
+        3,
+        4
+      ],
+      "residual": [
+        2,
+        2
+      ],
+      "owner": "Clinical operations lead"
+    }
+  ],
+  "budget": {
+    "items": [
+      {
+        "id": "1",
+        "cat": "procedure",
+        "label": "Screening 12-lead ECG, central over-read",
+        "perSubject": 240
+      },
+      {
+        "id": "2",
+        "cat": "personnel",
+        "label": "Study coordinator time per visit",
+        "perSubject": 180
+      }
+    ],
+    "params": {
+      "enrollment": 240,
+      "sponsorPerSubject": 9000,
+      "faRate": 28
+    },
+    "summary": {
+      "categories": [
+        {
+          "category": "procedure",
+          "perSubject": 240
+        },
+        {
+          "category": "personnel",
+          "perSubject": 180
+        }
+      ],
+      "directPerSubject": 420,
+      "indirectPerSubject": 117.6,
+      "totalPerSubject": 537.6,
+      "targetEnrollment": 240,
+      "totalStudyCost": 129024,
+      "sponsorRevenue": 2160000,
+      "margin": 2030976,
+      "feasibility": "funded",
+      "basis": "2 CFR 200.414 \u2014 indirect (F&A) cost rate on the direct cost base"
+    }
+  },
+  "reviews": [
+    {
+      "id": "1",
+      "reviewer": "Dr Priya Okafor (fictional)",
+      "role": "scientific",
+      "status": "completed",
+      "disposition": "approve_with_changes",
+      "dueDate": "Thu Oct 15",
+      "comments": []
+    }
+  ],
+  "consent": [],
+  "consentForm": null
+}

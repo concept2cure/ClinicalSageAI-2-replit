@@ -132,3 +132,71 @@ describe('the version id cannot escape the org subtree', () => {
     }
   });
 });
+
+/**
+ * The sidecar is data read back off disk, so it is not trusted.
+ *
+ * Directory scoping (findVersionDir roots the search at the caller's org)
+ * handles the ordinary case. These cover what it CANNOT see:
+ *
+ *   - a version directory RELOCATED under the wrong org — moved by hand,
+ *     restored from the wrong backup, synced badly. The path then says one
+ *     tenant and the record says another, and the scoping believes the path.
+ *   - a `filename` that is not a plain name, which resolves outside the version
+ *     directory and serves an arbitrary file.
+ *   - a sidecar that will not parse, which used to throw out of the read.
+ *
+ * Ported here when server/services/vaultService.ts was deleted. That module was
+ * a byte-compatible duplicate of this provider — same VAULT_ROOT, same
+ * versions/{id}/ layout, same _meta.json shape — and these checks had been
+ * added to the copy. Consolidating onto the canonical provider without bringing
+ * them would have been a net loss of safety, so they moved with the coverage.
+ * The S3 provider already enforces the owner check the same way.
+ */
+describe('a tampered or misplaced sidecar cannot widen a read', () => {
+  const verDirOf = (org: number, version: string) =>
+    path.join(VAULT_ROOT, String(org), 'proj-1', 'versions', version);
+
+  it('refuses a version directory whose recorded owner is a different org', async () => {
+    const a = await put(ORG_A, 'org A regulatory content');
+    // Relocate ORG_A's version under ORG_B, so the PATH says B and the RECORD
+    // says A. Directory scoping alone would serve it to B.
+    const dst = verDirOf(ORG_B, a.vaultVersionId);
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    fs.renameSync(verDirOf(ORG_A, a.vaultVersionId), dst);
+
+    expect(await provider.get(a.vaultVersionId, ORG_B)).toBeNull();
+  });
+
+  it('refuses to DELETE a relocated directory it does not own', async () => {
+    // Strictly worse than the read: this destroys the record rather than
+    // leaking it, so it must refuse and leave the bytes intact.
+    const a = await put(ORG_A, 'org A regulatory content');
+    const dst = verDirOf(ORG_B, a.vaultVersionId);
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    fs.renameSync(verDirOf(ORG_A, a.vaultVersionId), dst);
+
+    expect(await provider.delete(a.vaultVersionId, ORG_B)).toBe(false);
+    expect(fs.existsSync(path.join(dst, '_meta.json'))).toBe(true);
+  });
+
+  it('refuses a filename that is not its own basename', async () => {
+    const a = await put(ORG_A, 'org A regulatory content');
+    const metaPath = path.join(verDirOf(ORG_A, a.vaultVersionId), '_meta.json');
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    meta.filename = '../../../../../../etc/passwd';
+    fs.writeFileSync(metaPath, JSON.stringify(meta));
+
+    expect(await provider.get(a.vaultVersionId, ORG_A)).toBeNull();
+  });
+
+  it('returns null on a corrupt sidecar rather than throwing', async () => {
+    // Previously this crashed the read: JSON.parse ran unguarded on file
+    // contents. A corrupt record is not an empty result, but there is nothing
+    // to serve either, and the caller's contract here is "missing".
+    const a = await put(ORG_A, 'org A regulatory content');
+    fs.writeFileSync(path.join(verDirOf(ORG_A, a.vaultVersionId), '_meta.json'), '{ not json');
+
+    await expect(provider.get(a.vaultVersionId, ORG_A)).resolves.toBeNull();
+  });
+});

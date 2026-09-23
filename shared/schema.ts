@@ -3816,6 +3816,19 @@ export const drugSubstances = pgTable(
     impuritiesProfile: json('impurities_profile'),
     stability: json('stability'),
     controlOfMaterials: json('control_of_materials'),
+    /* §3.2.A.2's inputs (ICH Q5A(R2)). The section asks whether an adventitious
+       agents safety evaluation applies and what controls exist, and no register
+       could record any of it — so for a biologic the section had nothing to
+       read and, once it stopped asserting a control strategy it had not been
+       given, nothing it could ever establish. A biologics programme could not
+       file its Module 3. `modality` also settles the small-molecule/biologic
+       question the composer otherwise has to infer from a name. */
+    modality: text('modality'), // small_molecule | biologic
+    biologicalOrigin: text('biological_origin'), // e.g. 'CHO cell culture', 'E. coli fermentation'
+    sourceOrganism: text('source_organism'),
+    cellLine: text('cell_line'), // e.g. 'CHO-K1, MCB lot MCB-01'
+    viralSafetyEvaluation: text('viral_safety_evaluation'), // the ICH Q5A(R2) clearance record
+    tseStatus: text('tse_status'), // the EMA EMEA/410/01 risk assessment
     status: text('status').default('development').notNull(),
     developmentPhase: text('development_phase'), // preclinical, phase1, phase2, phase3, commercial
     createdAt: timestamp('created_at').defaultNow().notNull(),

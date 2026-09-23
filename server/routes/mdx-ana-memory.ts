@@ -15,6 +15,25 @@
  * Tenant-scoped. Returns canonical envelope. The tables backing this
  * (client_memory_entries, project_memory_entries, chat_threads,
  * chat_messages) are existing — no migration needed.
+ *
+ * WO-16C #133. This router performs three writes — memory verify, memory
+ * supersede, thread pin/unpin — and each records a 21 CFR Part 11 §11.10(e)
+ * row. Each did so with `void auditService.logAction({…})`, which discards the
+ * `AuditWriteResult` that call resolves. `logAction` never rejects when
+ * persistence fails — deliberately, an audit-trail outage must not break the
+ * user action it records — so the discarded value was the only place a lost row
+ * was visible: the returned row and the envelope came back byte-identical
+ * whether the §11.10(e) record existed or not. All three now go through the
+ * shared `recordAuditRow` and carry its outcome out in the envelope's
+ * `meta.auditTrail`. Every one of them is a log BESIDE an already-committed
+ * UPDATE, so none reverts its mutation over a lost log row: the action stands
+ * and the caller is told. Each handler writes exactly one audit row, so one
+ * unqualified `auditTrail` key per envelope names it unambiguously.
+ *
+ * `recordAuditRow` returns `{persisted, chained}` or `{persisted: false, code,
+ * message}` and never the store's own text; that text goes to its own log line,
+ * keyed on the action and the resource id. `auditService` is reached through
+ * that module, so it is no longer imported here directly.
  */
 
 import { Router, Request, Response } from 'express';
@@ -25,7 +44,7 @@ import {
   ok, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
-import auditService from '../services/auditService';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 
 const router = Router();
 const log = createScopedLogger('mdx-ana-memory');
@@ -161,12 +180,18 @@ router.post('/ana/memory/:id/verify', async (req: Request, res: Response) => {
       [id, orgId, userId, bumpToHigh, 'low', 'medium', 'high'],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Memory atom');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The UPDATE above has
+       already stamped `is_verified_by_user`, the verifier and `verified_at` —
+       and applied the importance bump when asked for — so this is a log beside a
+       completed verification, not the verification itself: it is never reverted
+       here. What the caller can now see is whether the Part 11 record of who
+       verified this atom exists — `meta.auditTrail`. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId, action: 'mdx.memory.verify',
       resourceType: 'memory_atom', resourceId: id,
       details: { bumpImportance: bumpToHigh },
     });
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { auditTrail });
   } catch (err) {
     return serverError(res, log, 'verify-memory', err);
   }
@@ -192,12 +217,18 @@ router.post('/ana/memory/:id/supersede', async (req: Request, res: Response) => 
       [id, orgId, supersededBy, 'superseded'],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Memory atom (or not active)');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The UPDATE above has
+       already moved the atom to `superseded` and pointed `superseded_by_id` at
+       its replacement, so this is a log beside a completed supersession, not the
+       supersession itself: it is never reverted here. What the caller can now
+       see is whether the Part 11 record of that status change exists —
+       `meta.auditTrail`. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'mdx.memory.supersede',
       resourceType: 'memory_atom', resourceId: id,
       details: { supersededById: supersededBy },
     });
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { auditTrail });
   } catch (err) {
     return serverError(res, log, 'supersede-memory', err);
   }
@@ -287,12 +318,17 @@ router.post('/ana/threads/:threadId/pin', async (req: Request, res: Response) =>
       [threadId, orgId, pinned],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Thread');
-    void auditService.logAction({
+    /* WO-16C #133. Was `void auditService.logAction({…})`. The UPDATE above has
+       already written `metadata.pinned`, so this is a log beside a completed
+       pin/unpin, not the state change itself: it is never reverted here. What
+       the caller can now see is whether the Part 11 record of the change exists
+       — `meta.auditTrail`. */
+    const auditTrail = await recordAuditRow({
       tenantId: orgId, userId: getUserId(req) ?? undefined,
       action: pinned ? 'mdx.conversation.pin' : 'mdx.conversation.unpin',
       resourceType: 'chat_thread', resourceId: threadId,
     });
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { auditTrail });
   } catch (err) {
     return serverError(res, log, 'pin-thread', err);
   }

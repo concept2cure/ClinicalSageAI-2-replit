@@ -1,77 +1,24 @@
 /**
- * Run control — registry state machine + agentic-loop checkpoint integration.
+ * The agentic loop honours a checkpoint.
  *
- * Guards the pause/interject/cancel primitives the streaming route relies on:
- * the registry's transitions and interjection queue, and that the loop honors a
- * checkpoint 'abort' (cancel) while a checkpoint side-effect (interjection) can
- * steer subsequent rounds.
+ * This file used to also test `run-control-registry.ts`'s in-memory state
+ * machine. That registry is gone: control is now a row, so its rules are tested
+ * where they live — the pure transitions in `run-status.test.ts`, and the
+ * writes, the ownership rules and the atomic steer drain against a real
+ * PostgreSQL in `run-control.pglite.integration.test.ts`.
+ *
+ * What stays here is the part that never depended on where control was stored:
+ * the loop honours a checkpoint 'abort', a checkpoint side-effect can steer the
+ * rounds that follow, and a loop given no checkpoint behaves exactly as before.
+ * The loop core is pure orchestration and was not touched by the move to a
+ * durable record — these three cases are the assertion that it was not.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import { runControlRegistry, MAX_INTERJECTION_CHARS } from '../run-control-registry.js';
+import { describe, it, expect } from 'vitest';
 import {
   runAgenticToolLoop,
   type ToolCall,
   type ModelTurn,
 } from '../agentic-loop.js';
-
-describe('runControlRegistry', () => {
-  beforeEach(() => runControlRegistry._resetForTest());
-
-  it('registers a run as running and reports status', () => {
-    runControlRegistry.register('run_1');
-    expect(runControlRegistry.getStatus('run_1')).toBe('running');
-    expect(runControlRegistry.has('run_1')).toBe(true);
-    expect(runControlRegistry.getStatus('missing')).toBeNull();
-  });
-
-  it('pauses and resumes', () => {
-    runControlRegistry.register('run_1');
-    expect(runControlRegistry.requestPause('run_1')).toBe(true);
-    expect(runControlRegistry.getStatus('run_1')).toBe('paused');
-    expect(runControlRegistry.requestResume('run_1')).toBe(true);
-    expect(runControlRegistry.getStatus('run_1')).toBe('running');
-  });
-
-  it('cancel is terminal — pause/resume/interject are refused afterward', () => {
-    runControlRegistry.register('run_1');
-    expect(runControlRegistry.requestCancel('run_1')).toBe(true);
-    expect(runControlRegistry.isCancelled('run_1')).toBe(true);
-    expect(runControlRegistry.requestPause('run_1')).toBe(false);
-    expect(runControlRegistry.requestResume('run_1')).toBe(false);
-    expect(runControlRegistry.requestInterject('run_1', 'steer')).toBe(false);
-  });
-
-  it('queues and drains interjections, and resumes a paused run', () => {
-    runControlRegistry.register('run_1');
-    runControlRegistry.requestPause('run_1');
-    expect(runControlRegistry.requestInterject('run_1', '  focus on safety  ')).toBe(true);
-    // Interjecting resumes the paused run so the loop consumes the steer.
-    expect(runControlRegistry.getStatus('run_1')).toBe('running');
-    expect(runControlRegistry.snapshot('run_1')).toEqual({
-      status: 'running',
-      pendingInterjections: 1,
-    });
-    expect(runControlRegistry.consumeInterjections('run_1')).toEqual(['focus on safety']);
-    expect(runControlRegistry.consumeInterjections('run_1')).toEqual([]);
-  });
-
-  it('rejects empty interjections and caps long ones', () => {
-    runControlRegistry.register('run_1');
-    expect(runControlRegistry.requestInterject('run_1', '   ')).toBe(false);
-    const long = 'x'.repeat(MAX_INTERJECTION_CHARS + 500);
-    expect(runControlRegistry.requestInterject('run_1', long)).toBe(true);
-    expect(runControlRegistry.consumeInterjections('run_1')[0].length).toBe(
-      MAX_INTERJECTION_CHARS,
-    );
-  });
-
-  it('unknown runs return false / null across the API', () => {
-    expect(runControlRegistry.requestPause('nope')).toBe(false);
-    expect(runControlRegistry.requestCancel('nope')).toBe(false);
-    expect(runControlRegistry.snapshot('nope')).toBeNull();
-    expect(runControlRegistry.consumeInterjections('nope')).toEqual([]);
-  });
-});
 
 function tool(name: string, input: Record<string, unknown> = {}): ToolCall {
   return { id: `${name}-${Math.random()}`, name, input };

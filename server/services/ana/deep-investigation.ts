@@ -29,10 +29,10 @@ import {
   resolveTierModel,
 } from '../ai-gateway/reasoning.js';
 import { buildAnaRISystemPrompt } from '../ana-ri/persona.js';
-import { loadAnaToolPolicy, filterToolsByPolicy } from '../ana-ri/mdx-tool-policy.js';
+import { governedToolsetFor } from './governed-toolset.js';
 import { resolveMaxRounds, resolveRoundExtension } from './agentic-loop.js';
-import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import { selectToolsForTurn } from './tool-selection.js';
+import { STALE_AFTER_MS } from './run-status.js';
 
 /** The two investigation tools — excluded from a run's own tool surface so a
  * background investigation can never recursively spawn more investigations. */
@@ -44,8 +44,14 @@ export const DEEP_INVESTIGATION_TOOL_NAMES: ReadonlySet<string> = new Set([
 /** Max queued+running investigations per tenant (runaway-cost guard). */
 export const MAX_CONCURRENT_INVESTIGATIONS = 2;
 
-/** A running/queued row with no heartbeat inside this window is stalled. */
-export const STALE_AFTER_MS = 5 * 60_000;
+/**
+ * A running/queued row with no heartbeat inside this window is stalled.
+ *
+ * Re-exported, not re-declared: `run-status.ts` owns the number so the run
+ * reaper and this status reporter can never answer the same question
+ * differently. Every existing importer of this name is unaffected.
+ */
+export { STALE_AFTER_MS };
 
 /** Progress events kept per row (append-only, oldest retained). */
 const PROGRESS_EVENT_CAP = 60;
@@ -122,11 +128,17 @@ export async function startDeepInvestigation(
   const pool = getPool();
   try {
     const active = await pool.query(
+      // The window is STALE_AFTER_MS, not a literal restatement of it. A cap
+      // that counted a different set of rows than `isInvestigationStale` calls
+      // alive is precisely the disagreement run-status.ts owns this number to
+      // prevent, and this file re-exports it to say so. Same shape
+      // `reapOrphanedRuns` already uses for the same constant: make_interval
+      // over the milliseconds divided down.
       `SELECT count(*)::int AS n FROM ana_deep_investigations
        WHERE status IN ('queued','running')
          AND (organization_id IS NOT DISTINCT FROM $1)
-         AND heartbeat_at > NOW() - INTERVAL '5 minutes'`,
-      [input.organizationId ?? null],
+         AND heartbeat_at > NOW() - make_interval(secs => $2)`,
+      [input.organizationId ?? null, Math.round(STALE_AFTER_MS / 1000)],
     );
     const running = active.rows[0]?.n ?? 0;
     if (running >= MAX_CONCURRENT_INVESTIGATIONS) {
@@ -208,9 +220,8 @@ async function runInvestigation(id: string): Promise<void> {
 
   // Governed tool surface: tenant deny-list first, then relevance selection for
   // the question — minus the investigation tools themselves (no recursion).
-  const policy = orgId != null ? await loadAnaToolPolicy(pool, orgId) : {};
   const tools = selectToolsForTurn(
-    filterToolsByPolicy(getAllEnabledTools(), policy).filter(
+    (await governedToolsetFor(pool, orgId)).filter(
       t => !DEEP_INVESTIGATION_TOOL_NAMES.has(t.name),
     ),
     String(row.question),
@@ -272,11 +283,19 @@ async function runInvestigation(id: string): Promise<void> {
     },
   });
 
+  // The status guard is not optional, and it is the one this statement was
+  // missing while both of its siblings had it: the failure path writes
+  // `WHERE id = $1 AND status IN ('queued','running')` and the pickup writes
+  // `WHERE id = $1 AND status = 'queued'`. Unguarded, a run that reached a
+  // terminal state while the loop was still working — failed by the error
+  // handler, or cancelled once that lands — is silently rewritten to
+  // 'completed' by whichever writer finishes last. A cancelled investigation
+  // reporting a result is worse than one reporting nothing.
   await pool.query(
     `UPDATE ana_deep_investigations
      SET status = 'completed', result_text = $2, model = $3, provider = $4,
          heartbeat_at = NOW(), completed_at = NOW()
-     WHERE id = $1`,
+     WHERE id = $1 AND status = 'running'`,
     [id, response.content || '', response.model ?? null, response.provider ?? null],
   );
 }

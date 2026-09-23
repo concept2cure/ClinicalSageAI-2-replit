@@ -209,6 +209,38 @@ describe('ingest with the catalog on — the extraction tier is recorded', () =>
     expect(tenant.rows[0].organization_id).toBe(orgId);
   });
 
+  it('a real PDF records its actual page count, not null', async () => {
+    /* page_count was declared at ingest and never assigned, so every document
+       reported NULL — a column reading "unknown" for a number that was one
+       call away. A text file legitimately has no pages; a PDF does, and says
+       so. */
+    const { PDFDocument } = await import('pdf-lib');
+    const pdf = await PDFDocument.create();
+    pdf.addPage();
+    pdf.addPage();
+    pdf.addPage();
+    const bytes = Buffer.from(await pdf.save());
+
+    const res = await request(app)
+      .post('/api/vault/ingest')
+      .field('programId', programId)
+      .field('documentCode', `${PROBE_CODE}-PAGES`)
+      .field('documentTitle', 'Three page report')
+      .field('documentType', 'REPORT')
+      .attach('file', bytes, 'three-pages.pdf');
+    expect(res.status).toBe(201);
+
+    const { rows } = await owner.query(
+      `SELECT d.page_count AS doc_pages, c.page_count AS catalog_pages
+         FROM vault.documents d
+         LEFT JOIN vault.document_catalog c ON c.document_id = d.id
+        WHERE d.id = $1`,
+      [res.body.document.id],
+    );
+    expect(rows[0].doc_pages).toBe(3);
+    expect(rows[0].catalog_pages).toBe(3);
+  }, 60_000);
+
   it('an upload extraction cannot read is recorded as a FAILURE with a reason', async () => {
     const res = await request(app)
       .post('/api/vault/ingest')
@@ -248,6 +280,88 @@ describe('ingest with the catalog on — the extraction tier is recorded', () =>
     expect(byCode[`${PROBE_CODE}-PDF`].extractionError).toBeTruthy();
   });
 
+});
+
+describe('a listing reports the scope, not the page it happened to return', () => {
+  /* ── A page is not an inventory ─────────────────────────────────────────
+     The listing has always applied a LIMIT (100 by default, 200 at most) and
+     returned a bare array, so the only number a caller could report was
+     `rows.length` — and the tool reported exactly that, as `count`. An
+     organization with more documents than the limit was told it had precisely
+     as many files as the query returned, and the ones it was NOT told about
+     were the oldest, because the listing is ORDER BY created_at DESC. Session
+     recall, which samples twelve, inherited the same lie under a heading that
+     reads as the complete set.
+
+     These cases drive the real SQL: the totals must describe the scope, and a
+     page must say what it left out. Reverting the window aggregates to
+     `documents.length` turns them red. */
+  it('reports the scope total while the page stays at the limit', async () => {
+    const truth = await owner.query(
+      `SELECT COUNT(*)::int AS n FROM vault.documents
+        WHERE program_id = $1 AND deleted_at IS NULL`,
+      [programId],
+    );
+    const scopeTotal: number = truth.rows[0].n;
+    expect(scopeTotal).toBeGreaterThan(1);
+
+    const page = await callTool('list_project_documents', { program_id: programId, limit: 1 });
+    expect(page.returned).toBe(1);
+    expect(page.documents).toHaveLength(1);
+    expect(page.total).toBe(scopeTotal);
+    expect(page.withheld).toBe(scopeTotal - 1);
+    expect(page.message).toContain(`${scopeTotal} document(s)`);
+    expect(page.message).toContain(`${scopeTotal - 1} not returned`);
+    expect(page.message).toContain('Do not answer "no such document" from this page');
+  });
+
+  it('counts what needs attention across the scope, not across the page', async () => {
+    const truth = await owner.query(
+      `SELECT COUNT(*) FILTER (
+                WHERE c.catalog_status IS NULL OR c.catalog_status = 'extracted'
+              )::int AS unstudied,
+              COUNT(*) FILTER (WHERE c.catalog_status = 'extraction_failed')::int AS failed,
+              COUNT(*) FILTER (WHERE d.placement_status = 'unfiled')::int AS unfiled
+         FROM vault.documents d
+         LEFT JOIN vault.document_catalog c ON c.document_id = d.id
+        WHERE d.program_id = $1 AND d.deleted_at IS NULL`,
+      [programId],
+    );
+    const { unstudied, failed, unfiled } = truth.rows[0];
+    // Limit 1: the page holds one document, so any count above 1 is reachable
+    // only from the scope aggregate.
+    const page = await callTool('list_project_documents', { program_id: programId, limit: 1 });
+    expect(page.notYetStudied).toBe(unstudied);
+    expect(page.extractionFailed).toBe(failed);
+    expect(page.unfiled).toBe(unfiled);
+    expect(failed).toBeGreaterThan(0);
+    expect(page.message).toContain(`${failed} with failed extraction`);
+  });
+
+  it('claims completeness only when the page really is the whole scope', async () => {
+    const page = await callTool('list_project_documents', { program_id: programId, limit: 200 });
+    expect(page.withheld).toBe(0);
+    expect(page.returned).toBe(page.total);
+    expect(page.message).toContain('all of them are listed here');
+    expect(page.message).not.toContain('not returned');
+  });
+
+  it('the session-start digest carries the scope it sampled from', async () => {
+    const svc = await import('../../server/services/vault/document-catalog.service');
+    const digest = await inTenantScope({ id: orgId, uuid: orgUuid }, () =>
+      svc.getCatalogBootstrapDigest(orgId, 1),
+    );
+    expect(digest.files).toHaveLength(1);
+    expect(digest.total).toBeGreaterThan(1);
+    expect(digest.withheld).toBe(digest.total - 1);
+
+    const { formatVaultScopeLine } = await import(
+      '../../server/services/ana-session-bootstrap-format'
+    );
+    const line = formatVaultScopeLine(digest);
+    expect(line).toContain(`Showing 1 of ${digest.total} files on record`);
+    expect(line).toContain('no such document');
+  });
 });
 
 describe('the read-coverage gate, end to end through the tool handlers', () => {
@@ -322,6 +436,21 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
     });
   });
 
+  it('hands the comprehension record BACK on the next read, instead of starting from zero', async () => {
+    /* key_data — the batch, the assay figure, the retest period AnA extracted
+       after reading the whole document — was written, embedded into the vector
+       the catalog search matches on, and then returned by nothing. Every
+       re-read began from raw text, re-deriving numbers the record already held:
+       the client re-explaining their own file, which is the thing this whole
+       workstream exists to stop. */
+    const read = await callTool('read_project_document', { document_id: txtDocId });
+    expect(read.ok).toBe(true);
+    expect(read.comprehension, 'a cataloged document must return what was learned').toBeTruthy();
+    expect(read.comprehension.documentKind).toBe('Stability study report');
+    expect(read.comprehension.keyData).toMatchObject({ batch: '23-104', retestMonths: 24 });
+    expect(read.comprehension.catalogedAt).toBeTruthy();
+  });
+
   it('another tenant cannot list or read the document', async () => {
     const listed = await callTool(
       'list_project_documents',
@@ -342,5 +471,79 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
     expect(read.ok).toBe(false);
     expect(read.error).toMatch(/No vault document with id/);
     expect(read.error).not.toMatch(/another organization|belongs to|exists/i);
+  });
+});
+
+/**
+ * The retrieval atom records what it holds, in a real column.
+ *
+ * Both chat-upload paths wrote ONE `lumen_data_atoms` row per file carrying
+ * `extractedText.substring(0, 16000)`, and nothing recorded that the row was a
+ * prefix. A retrieval hit returned those characters as the document's content.
+ * The bound is unchanged — one atom is one embedding — but it is now written
+ * into `structured_data`, which only a real database can prove accepts it.
+ */
+describe('a chat upload knows it is indexed by its opening only', () => {
+  const ATOM_SOURCE = 'dbtest-catalog:upload-atom';
+
+  afterAll(async () => {
+    await owner
+      .query('DELETE FROM lumen_data_atoms WHERE source_id = $1', [ATOM_SOURCE])
+      .catch(() => {});
+  });
+
+  it('writes the file length and the embedded length onto the row', async () => {
+    const { writeUploadRetrievalAtom, ATOM_CONTENT_LIMIT } = await import(
+      '../../server/services/chat-uploads/upload-retrieval-atom'
+    );
+    const text = Array.from(
+      { length: 200 },
+      (_, i) => `Paragraph ${i}. ${'Protocol body filler sentence. '.repeat(20)}`,
+    ).join('\n\n');
+    expect(text.length).toBeGreaterThan(ATOM_CONTENT_LIMIT);
+
+    const res = await writeUploadRetrievalAtom(owner as any, {
+      organizationId: orgId,
+      sourceId: ATOM_SOURCE,
+      fileName: 'protocol-v3.pdf',
+      text,
+      tags: ['source', 'chat_upload'],
+    });
+    expect(res.atomId).not.toBeNull();
+    expect(res.truncated).toBe(true);
+
+    const { rows } = await owner.query(
+      `SELECT content, structured_data FROM lumen_data_atoms WHERE source_id = $1`,
+      [ATOM_SOURCE],
+    );
+    expect(rows).toHaveLength(1);
+    // The row holds the bounded content…
+    expect(rows[0].content.length).toBe(res.embeddedChars);
+    expect(rows[0].content.length).toBeLessThan(text.length);
+    // …and says so, with the number that was previously unavailable anywhere.
+    const rec = rows[0].structured_data;
+    expect(rec.retrieval.truncated).toBe(true);
+    expect(rec.retrieval.extractedChars).toBe(text.length);
+    expect(rec.retrieval.embeddedChars).toBe(res.embeddedChars);
+    expect(rec.retrieval.note).toContain('opening of the file only');
+  });
+
+  it('a second write for the same source is a no-op, not a duplicate', async () => {
+    const { writeUploadRetrievalAtom } = await import(
+      '../../server/services/chat-uploads/upload-retrieval-atom'
+    );
+    const again = await writeUploadRetrievalAtom(owner as any, {
+      organizationId: orgId,
+      sourceId: ATOM_SOURCE,
+      fileName: 'protocol-v3.pdf',
+      text: 'anything',
+      tags: ['source', 'chat_upload'],
+    });
+    expect(again.atomId).toBeNull();
+    const { rows } = await owner.query(
+      `SELECT COUNT(*)::int AS n FROM lumen_data_atoms WHERE source_id = $1`,
+      [ATOM_SOURCE],
+    );
+    expect(rows[0].n).toBe(1);
   });
 });

@@ -5,7 +5,7 @@
  * ── What was missing ─────────────────────────────────────────────────────────
  * Both endpoints are built, tenant-scoped and tested
  * (server/routes/__tests__/authoringAiDraftAccept.test.ts,
- * …/authoringAiDraftFallback.test.ts). Neither had a caller anywhere in the
+ * …/authoringAiDraftNoProvider.test.ts). Neither had a caller anywhere in the
  * client. The one path in the product that records SPAN-LEVEL SOURCE LINEAGE
  * for generated text — the draft's retrieved chunks and the accepted words
  * committed in a single transaction by `enforceSourceAndAuthorLineage` — could
@@ -19,13 +19,13 @@
  *
  * ── The four things this panel must not get wrong ────────────────────────────
  *
- * 1. THE TEMPLATE FALLBACK IS NOT A DRAFT. When no provider yields content the
- *    endpoint answers `success:false, degraded:true, source:'template'` with a
- *    static skeleton full of bracketed placeholders. It deliberately refuses to
- *    call that a generated draft. Rendering it as one — or as an error, which
- *    would discard a scaffold the author may legitimately want — are both
- *    wrong. It is offered, labelled as what it is, and it CANNOT be accepted:
- *    there is no draft candidate behind it and therefore no lineage to record.
+ * 1. NO PROVIDER IS A REFUSAL, NOT A DRAFT. A deployment with no AI provider
+ *    answers 503 GATEWAY_UNAVAILABLE and no body (VSR-001 §8 F-10). The
+ *    endpoint used to answer 200 with a hardcoded section skeleton flagged
+ *    `degraded`, and this panel offered it as a scaffold; that path is gone
+ *    from the server and from here. The refusal is said in the persistent
+ *    alert, in the words AnA uses for the same code, and nothing that looks
+ *    like a draft is rendered.
  *
  * 2. "RETRIEVAL FAILED" AND "NOTHING RETRIEVED" ARE OPPOSITE FACTS. Both leave
  *    `sourcesRetrieved: 0`. One says the Data Room holds nothing relevant — a
@@ -57,8 +57,9 @@ import { I } from '../icons';
 import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import type { FireToast } from '../toast';
 
-/** `draft.metadata` as POST …/ai/draft returns it. Every field is optional
- *  because the degraded path returns a deliberately smaller object. */
+/** `draft.metadata` as POST …/ai/draft returns it. Every field is optional:
+ *  the metadata is a report, and a fact the server did not send is rendered
+ *  as missing, never guessed. */
 export interface AiDraftMetadata {
   tone?: string;
   region?: string;
@@ -74,8 +75,8 @@ export interface AiDraftMetadata {
   attributableSources?: number;
   retrievalStatus?: 'ok' | 'empty' | 'failed';
   retrievalError?: string | null;
+  /** The only value the server sends is 'model'; there is no other source. */
   source?: string;
-  degraded?: boolean;
 }
 
 /** A generated draft held client-side, pending the author's decision. Nothing
@@ -92,8 +93,6 @@ export interface PendingAiDraft {
    *  accept endpoint is unreachable for this draft and citations cannot be
    *  recorded for it. */
   draftId: string | null;
-  /** True for the hardcoded-template fallback: a scaffold, not model output. */
-  degraded: boolean;
   metadata: AiDraftMetadata;
 }
 
@@ -139,14 +138,6 @@ const REGIONS = ['FDA', 'EMA', 'PMDA', 'MHRA', 'Health Canada'] as const;
 export function describeGrounding(
   d: PendingAiDraft,
 ): { tone: 'ok' | 'warn' | 'error'; text: string } {
-  if (d.degraded) {
-    return {
-      tone: 'warn',
-      text:
-        'AI generation was unavailable, so this is a static section template — not model-generated content. ' +
-        'The bracketed placeholders are literal text that you must replace. It cannot be accepted with citations.',
-    };
-  }
   const m = d.metadata;
   const retrieved = typeof m.sourcesRetrieved === 'number' ? m.sourcesRetrieved : 0;
   const attributable = typeof m.attributableSources === 'number' ? m.attributableSources : 0;
@@ -335,17 +326,15 @@ export function AuthoringAiDraft({
       const json = (await res.json().catch(() => null)) as
         | {
             success?: boolean;
-            degraded?: boolean;
             draft?: { content?: string; draftId?: string; metadata?: AiDraftMetadata };
             error?: unknown;
             message?: string;
           }
         | null;
 
-      /* The degraded path answers 200 with success:false and a usable body.
-         Only a transport/HTTP failure, or a response with no draft in it, is
-         an error — treating success:false as one would throw away the
-         scaffold the server deliberately chose to return. */
+      /* Only a 2xx with a draft in it is a draft. The 401 that apiRequest
+         returns rather than throws, and any affirmative answer with no body,
+         both land here. */
       const content = json?.draft?.content;
       if (!res.ok || typeof content !== 'string' || content.length === 0) {
         fireToast(
@@ -357,10 +346,8 @@ export function AuthoringAiDraft({
         return;
       }
 
-      /* A draftId is honoured only on an affirmative `success: true`. The
-         template fallback answers 200/success:false and parks no candidate, so
-         today the two always agree — but if they ever disagreed, offering an
-         accept for a response the server declined to affirm would write
+      /* A draftId is honoured only on an affirmative `success: true`. Offering
+         an accept for a response the server declined to affirm would write
          content and citations off the back of it. Fail closed: no affirmation,
          no accept, and the panel says the draft cannot carry lineage. */
       const vouched = json?.success === true;
@@ -369,17 +356,24 @@ export function AuthoringAiDraft({
         generated: content,
         draftId:
           vouched && typeof json?.draft?.draftId === 'string' ? json.draft.draftId : null,
-        degraded: json?.degraded === true || json?.draft?.metadata?.degraded === true,
         metadata: json?.draft?.metadata ?? {},
       };
       setDraft(next);
       setBody(content);
     } catch (e) {
       /* Non-ok statuses arrive here, not at the `if` above — apiRequest throws
-         them. The degraded template is the one "failure-shaped" answer that
-         does NOT come this way: it is HTTP 200, so it reaches the parse and is
-         offered as the scaffold it is. */
+         them. A deployment with no AI provider is a fact about the server, not
+         about this request or the author's connection, and it will still be
+         true after a toast has faded: it goes in the persistent alert, in the
+         words AnA uses for the same code (useAnaChat, GATEWAY_UNAVAILABLE). */
       const f = failureOf(e);
+      if (f.code === 'GATEWAY_UNAVAILABLE') {
+        setRefusal(
+          'No AI provider is configured for this deployment, so this section cannot be drafted. ' +
+            'This is a server setting, not your connection. Nothing was changed.',
+        );
+        return;
+      }
       fireToast(
         'Couldn’t draft this section — ' +
           (f.message ?? (f.status > 0 ? `HTTP ${f.status}` : 'the request failed')) +
@@ -605,17 +599,13 @@ export function AuthoringAiDraft({
           </div>
 
           <div style={{ fontSize: 11, opacity: 0.75 }}>
-            {draft.degraded
-              ? 'Source: hardcoded section template'
-              : generator
-                ? `Generated by ${generator}`
-                : 'The generating model was not reported'}
+            {generator ? `Generated by ${generator}` : 'The generating model was not reported'}
             {' · not saved'}
           </div>
 
           {/* A model draft the server could not park cannot reach the accept
               endpoint at all. Say what adopting it would actually record. */}
-          {!draft.degraded && !draft.draftId && (
+          {!draft.draftId && (
             <div
               className="scaf-note"
               role="status"

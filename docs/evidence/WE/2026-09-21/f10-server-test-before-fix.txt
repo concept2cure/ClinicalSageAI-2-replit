@@ -1,0 +1,25 @@
+AI Gateway error: GatewayAllProvidersFailedError: anthropic: 429 rate limit exceeded
+AI Gateway error: TypeError: boom
+ × server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > no enabled provider → 503 GATEWAY_UNAVAILABLE and no draft body at all 41ms
+   → expected 200 to be 503 // Object.is equality
+ × server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider failure refuses with its classified code — never a template 16ms
+   → expected 200 to be 429 // Object.is equality
+ × server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that answers with no content is INVALID_AI_RESPONSE, not a template 6ms
+   → expected 200 to be 502 // Object.is equality
+ × server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a fault of ours (not the gateway) is a 500, still with no draft body 14ms
+   → expected 200 to be 500 // Object.is equality
+ × server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that drafts → 200 with the model draft, source "model" 19ms
+   → expected undefined to be 'model' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > no enabled provider → 503 GATEWAY_UNAVAILABLE and no draft body at all
+AssertionError: expected 200 to be 503 // Object.is equality
+ FAIL  server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider failure refuses with its classified code — never a template
+AssertionError: expected 200 to be 429 // Object.is equality
+ FAIL  server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that answers with no content is INVALID_AI_RESPONSE, not a template
+AssertionError: expected 200 to be 502 // Object.is equality
+ FAIL  server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a fault of ours (not the gateway) is a 500, still with no draft body
+AssertionError: expected 200 to be 500 // Object.is equality
+ FAIL  server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that drafts → 200 with the model draft, source "model"
+AssertionError: expected undefined to be 'model' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  5 failed (5)

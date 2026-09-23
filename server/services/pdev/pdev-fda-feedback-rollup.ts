@@ -14,7 +14,9 @@
  *   2. Moves the activity into `agency_feedback_received` (unless it
  *      is already in a more advanced state).
  *   3. Marks the commitment row `rolled_in = true` and stamps actor.
- *   4. Emits an audit event per applied rollup.
+ *   4. Emits an audit event per applied rollup, whose OUTCOME is
+ *      returned on that rollup's `applied[]` entry (WO-16C #133 —
+ *      see `PdevFdaFeedbackApplyResult.applied[].audit`).
  *
  * The proposal step is read-only and idempotent; the apply step
  * mutates and audit-logs.
@@ -38,7 +40,7 @@ import {
   type PdevActivity,
   type PdevActivityState,
 } from './pdev-activity-registry';
-import auditService from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 
 const logger = createScopedLogger('pdev-fda-feedback-rollup');
 
@@ -89,6 +91,29 @@ export interface PdevFdaFeedbackApplyResult {
     activityStateId: string;
     newState: PdevActivityState;
     previousState: PdevActivityState;
+    /**
+     * What happened to the 21 CFR Part 11 §11.10(e) audit row for THIS rollup.
+     * One row is attempted per applied commitment, so the outcome belongs on
+     * the entry and not on the report: a run of five mappings can lose the
+     * record for the third one alone, and a single report-level flag would
+     * either hide that or condemn the other four.
+     *
+     * WO-16C finding 133, follow-up review 2026-09-18. The write below was
+     * `void auditService.logAction({…})`. `logAction` never rejects on a
+     * persistence failure — by deliberate policy, an audit-trail outage must
+     * not break the action it records — it RESOLVES an AuditWriteResult and
+     * says so in `persisted`. Discarding that meant the activity had already
+     * been moved to `agency_feedback_received`, the FDA commitment text had
+     * already been appended to its notes and `q_sub_commitments.rolled_in` had
+     * already been stamped with an actor, while the record of who rolled which
+     * commitment into which activity existed nowhere — and `applied[]` said
+     * exactly the same thing either way, all the way out through
+     * `POST /api/pdev/programs/:programId/fda-feedback/apply`.
+     *
+     * The outcome shape is the one pdev-clearance and pdev-workflow-bridge
+     * already carry, from the shared ../audit/audit-write-outcome — not a third copy.
+     */
+    audit: AuditRowOutcome;
   }>;
   skipped: Array<{
     commitmentId: string;
@@ -408,7 +433,18 @@ export class PdevFdaFeedbackRollupService {
         })
         .where(eq(qSubCommitments.id, mapping.commitmentId));
 
-      void auditService.logAction({
+      /*
+       * WO-16C #133. The audit row for this rollup is awaited and its outcome
+       * is carried out on the `applied[]` entry below, because the three
+       * mutations above are already committed: the activity state, the merged
+       * notes and the `rolled_in` stamp. Reverting a real rollup because its
+       * log row was lost would be the worse lie, so the rollup stands and the
+       * caller is told what happened to the record. recordAuditRow has already
+       * logged the store's own reason against this action and `stateRowId`;
+       * that text deliberately does not come back here, because this result
+       * travels to a tenant client through `created(res, result)`.
+       */
+      const audit = await recordAuditRow({
         tenantId: input.organizationId,
         userId: input.userId,
         action: 'pdev_fda_feedback_rolled_up',
@@ -431,6 +467,7 @@ export class PdevFdaFeedbackRollupService {
         activityStateId: stateRowId,
         newState,
         previousState,
+        audit,
       });
     }
 
@@ -438,6 +475,9 @@ export class PdevFdaFeedbackRollupService {
       programId: input.programId,
       applied: applied.length,
       skipped: skipped.length,
+      // WO-16C #133: a rollup that applied but was never recorded is now
+      // countable here as well as readable by the caller.
+      auditRowsNotPersisted: applied.filter(a => !a.audit.persisted).length,
     });
 
     return { applied, skipped };

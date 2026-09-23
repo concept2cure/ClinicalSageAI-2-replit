@@ -1,0 +1,35 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5800/api/c2c/project-vault/02ed9f66-2ef6-4a21-a164-eab03a2dcdf6"
+  },
+  "response": {
+    "status": 200,
+    "documentCount": 73,
+    "unfiledCount": 0,
+    "uploadsWindow": {
+      "shown": 1,
+      "total": 1,
+      "truncated": false
+    },
+    "topLevel": [
+      {
+        "id": "vaultdoc-doc_0747ee0b1c4a4be0a6e1df6cd18d1fc7",
+        "label": "WE F-11 Vault program 20260921015253 — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5"
+      },
+      {
+        "id": "cabinet",
+        "label": "Source files · filing cabinet"
+      }
+    ],
+    "filedLeaf": {
+      "trail": [
+        "cabinet",
+        "cab-module-5"
+      ],
+      "id": "up-4c7aa54f-0801-4d66-bcc1-a2183cc243a4",
+      "title": "WE F-11 Protocol 20260921015253",
+      "status": "confirmed"
+    }
+  }
+}

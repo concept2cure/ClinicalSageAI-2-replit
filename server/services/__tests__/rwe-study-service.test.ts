@@ -7,7 +7,7 @@
  * insufficient-data path. No real network calls are made.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import {
   comparativeStatistics,
   logisticRegression,

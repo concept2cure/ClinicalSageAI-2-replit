@@ -1,0 +1,5 @@
+### MUTATION 2: server-side sanitizer bypassed in createDocumentFromDraft
+ × server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 129ms
+   → expected '<p>Safe text</p><script>alert(1)</scr…' not to contain '<script'
+ ↓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+      Tests  1 failed | 7 skipped (8)

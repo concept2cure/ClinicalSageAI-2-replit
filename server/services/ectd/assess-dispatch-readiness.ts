@@ -20,13 +20,18 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
 import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
-import { getSubmissionRegionProfile } from '../region-profiles/region-profile-service';
+import {
+  getSubmissionRegionProfile,
+  requiredModule1CodesForRegion,
+} from '../region-profiles/region-profile-service';
 import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
+import { resolveLeafDocuments } from './leaf-document-resolver';
 import {
   evaluateDispatchGate,
   mergeDispatchGates,
   evaluateReleaseSignatureGate,
   type DispatchGateResult,
+  type ReleaseSignatureGateInput,
   type ReleaseSignatureVerdict,
 } from './dispatch-gate';
 import {
@@ -89,8 +94,15 @@ export interface DispatchReadinessAssessment {
     /** This gate adds no blocker. */
     cleared: boolean;
   };
-  /** Hard gate verdict — structural + shadow + external + release-signature, composed. */
+  /** Hard gate verdict for DISPATCH — structural + shadow + external +
+   *  release-signature, composed. This is the transmit verdict and the one the
+   *  readiness surface reports. */
   gate: DispatchGateResult;
+  /** Hard gate verdict for FREEZE — the same gates, except that a release
+   *  signature is not REQUIRED to freeze (a tampered one still blocks). Freeze
+   *  is not transmit and carries its own Part 11 signature; see
+   *  composeDispatchGatesForStep. */
+  freezeGate: DispatchGateResult;
   /** Full structural breakdown (errors + non-blocking warnings/infos). */
   readiness: DispatchReadinessReport;
   leafCount: number;
@@ -154,6 +166,56 @@ export function composeDispatchGates(gates: {
   );
 }
 
+/** The two governed sequence transitions this composition can be asked about. */
+export type GovernedDispatchStep = 'freeze' | 'dispatch';
+
+/**
+ * The gate verdict for a specific governed step.
+ *
+ * ── Why the step matters ─────────────────────────────────────────────────────
+ * `transitionSequenceGoverned` applies a composed gate to BOTH governed
+ * transitions. Composing the release-signature gate into that one verdict
+ * therefore made a TRANSMIT control block the FREEZE — and a release signature
+ * comes from a signed package orchestrator run, so freezing any IND / NDA / BLA
+ * / MAA sequence required signing a release first. That inverts the order the
+ * product works in, for a control whose own module calls itself "the
+ * transmit-time re-check" and "the provable pre-transmit rule".
+ *
+ * Freeze is not transmit: nothing leaves the building, and the step already
+ * carries its own Part 11 signature — bound to this sequence, this step, this
+ * actor and this leaf manifest (transitionSequenceGoverned Gate 1). So the
+ * REQUIREMENT for a release signature governs `dispatch` only.
+ *
+ * What does NOT change is integrity. `evaluateReleaseSignatureGate` blocks an
+ * `invalid` verdict unconditionally, including when a signature is not
+ * required, because requiredness governs whether a signature must be PRESENT
+ * and never whether a broken one may be ignored. Expressing the freeze case as
+ * "not required" rather than "gate omitted" is what keeps that rule intact: a
+ * tampered signature still blocks a freeze.
+ *
+ * Every other gate governs both steps, and the membership is pinned by test —
+ * a gate added later cannot be dropped from the freeze verdict by omission.
+ */
+export function composeDispatchGatesForStep(
+  parts: {
+    structural: DispatchGateResult;
+    external: DispatchGateResult;
+    shadowPresence: DispatchGateResult;
+    releaseSignature: ReleaseSignatureGateInput;
+  },
+  step: GovernedDispatchStep,
+): DispatchGateResult {
+  return composeDispatchGates({
+    structural: parts.structural,
+    external: parts.external,
+    shadowPresence: parts.shadowPresence,
+    releaseSignature: evaluateReleaseSignatureGate({
+      ...parts.releaseSignature,
+      required: step === 'dispatch' && parts.releaseSignature.required,
+    }),
+  });
+}
+
 /**
  * Completed Shadow Review runs for a sequence.
  *
@@ -185,26 +247,17 @@ async function countCompletedShadowRuns(
 
 /**
  * Flatten a region profile's Module-1 tree to the section codes marked required
- * for this application type. A section that declares `requiredFor` is required
- * only for those application types (a debarment certification for a marketing
- * application, the general investigational plan for an IND); when the
- * application type is unknown every required section is kept — conservative,
- * as before.
+ * for this application type.
+ *
+ * The walk now lives beside the profile it reads
+ * (`region-profile-service.requiredModule1CodesForRegion`) because a second
+ * copy of "what Module 1 does this application need" had grown in
+ * `ectd4-validator`, as a hand-written literal set that disagreed with this one
+ * on four codes. This name is kept as the export the dispatch path already
+ * uses; it is now a thin delegation rather than a parallel implementation.
  */
 export function requiredModule1Codes(region: string, applicationType?: string | null): string[] {
-  const profile = getSubmissionRegionProfile(region);
-  if (!profile) return [];
-  const app = applicationType ? String(applicationType).toLowerCase() : null;
-  const out: string[] = [];
-  const walk = (sections: typeof profile.module1Sections): void => {
-    for (const s of sections) {
-      const applies = !s.requiredFor || !app || s.requiredFor.includes(app);
-      if (s.required && applies) out.push(s.number);
-      if (s.childSections?.length) walk(s.childSections);
-    }
-  };
-  walk(profile.module1Sections);
-  return out;
+  return requiredModule1CodesForRegion(region, applicationType);
 }
 
 /**
@@ -254,14 +307,26 @@ export async function assessSequenceDispatchReadiness(
       )
     );
 
+  // 2b. Resolve every leaf's document pointer — by whichever key its table is
+  //     addressed by (integer document_id, or document_uuid for the vault) —
+  //     in this organization, and compare the content hash pinned at filing
+  //     with what the store holds now. ONE resolver, shared with the Builder's
+  //     read model; the freeze / dispatch / transmit gates compose this
+  //     assessment, so they cannot disagree with it. Until 2026-09-21 the
+  //     validator was handed the integer column alone and every vault-backed
+  //     leaf read UNRESOLVED_DOCUMENT (MDX demo pack, finding F5).
+  const documents = await resolveLeafDocuments(leaves, organizationId);
+
   // 3. Deterministic structural validation over the canonical core.
   const readiness = computeDispatchReadiness(
-    leaves.map(l => ({
+    leaves.map((l, i) => ({
       sectionCode: l.sectionCode,
       title: l.title,
       lifecycleOp: l.lifecycleOp,
       documentTable: l.documentTable,
       documentId: l.documentId,
+      documentUuid: l.documentUuid,
+      document: documents[i],
     })),
     {
       requiredSections: requiredModule1Codes(sequence.region, submissionApplicationType),
@@ -349,20 +414,45 @@ export async function assessSequenceDispatchReadiness(
   const releaseSignature = await resolveReleaseSignatureStatus({
     submissionId: sequence.submissionId,
     organizationId,
+    // Sequence-grained, like every other input this assessor composes. Without
+    // it a release signed over sequence 0000's package cleared this gate for
+    // 0001 and every later sequence under the same submission — see the header
+    // of resolveReleaseSignatureStatus.
+    sequenceNumber: sequence.sequenceNumber,
+    // And the sequence's own id, so the resolver can also see a release signed
+    // on the SUBMISSIONS spine (governed sign on 'ectd-sequence:<id>', bound to
+    // this sequence's leaf manifest). Without it that spine cannot be addressed
+    // at all, and a sequence authored and signed entirely through the product's
+    // own governed path reads as unsigned — which made dispatch and transmit
+    // unreachable for every submission type the gate applies to.
+    sequenceId,
+    // And its REGION. Sequence numbers restart per region, so '0000' is the FDA
+    // original and the EU original both; without this a release over one clears
+    // the dispatch gate for the other. Resolved through the region registry on
+    // the far side, because the two spines spell one jurisdiction differently.
+    region: sequence.region,
   });
   const signatureRequired = isReleaseSignatureRequired(submissionApplicationType);
-  const releaseSignatureGate = evaluateReleaseSignatureGate({
+  const signatureInput = {
     required: signatureRequired,
     verdict: releaseSignature.verdict,
     detail: releaseSignature.detail,
-  });
+  };
+  const releaseSignatureGate = evaluateReleaseSignatureGate(signatureInput);
 
-  const gate = composeDispatchGates({
+  // One set of parts, composed for each governed step. Dispatch is the transmit
+  // verdict (every gate). Freeze drops only the REQUIREMENT for a release
+  // signature — a control the §11.70 design reserves for transmit — and keeps
+  // every other gate, including an integrity failure on a signature that does
+  // exist. See composeDispatchGatesForStep.
+  const gateParts = {
     structural: structuralGate,
     external: { cleared: externalGate.cleared, blockers: externalGate.blockers },
     shadowPresence: shadowPresenceGate,
-    releaseSignature: releaseSignatureGate,
-  });
+    releaseSignature: signatureInput,
+  };
+  const gate = composeDispatchGatesForStep(gateParts, 'dispatch');
+  const freezeGate = composeDispatchGatesForStep(gateParts, 'freeze');
 
   return {
     sequenceId,
@@ -394,6 +484,7 @@ export async function assessSequenceDispatchReadiness(
       cleared: releaseSignatureGate.cleared,
     },
     gate,
+    freezeGate,
     readiness,
     leafCount: leaves.length,
   };

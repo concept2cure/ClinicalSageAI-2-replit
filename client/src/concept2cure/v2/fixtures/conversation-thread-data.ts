@@ -75,6 +75,13 @@ export interface CtTurn {
    * or decorated record.
    */
   activity?: AnaActivityProps;
+  /**
+   * The authoring document this turn drafted (the `draft_authoring_document`
+   * tool; docs/design/ANA_DOCUMENT_CANVAS.md), by id. ConversationThread
+   * renders the document canvas beneath the turn from this — the document is
+   * read from the authoring store, never from inline draft content.
+   */
+  authoringDoc?: { docId: string; programId: string | null; title: string | null };
 }
 
 export interface CtArtRow {

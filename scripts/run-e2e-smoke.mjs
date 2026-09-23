@@ -22,8 +22,9 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
 
-const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:5000';
+export const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:5000';
 
 function run(cmd, args, options = {}) {
   return new Promise((resolve, reject) => {
@@ -35,7 +36,7 @@ function run(cmd, args, options = {}) {
   });
 }
 
-async function waitForServer(baseUrl, timeoutMs = 120_000) {
+export async function waitForServer(baseUrl, timeoutMs = 120_000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
@@ -50,13 +51,13 @@ async function waitForServer(baseUrl, timeoutMs = 120_000) {
 }
 
 /** Resolve a runnable playwright: local bin first, else `npx playwright`. */
-function resolvePlaywright() {
+export function resolvePlaywright() {
   const localBin = 'node_modules/.bin/playwright';
   if (existsSync(localBin)) return { cmd: localBin, prefix: [] };
   return { cmd: 'npx', prefix: ['playwright'] };
 }
 
-function startDevServer() {
+export function startDevServer() {
   const env = {
     ...process.env,
     // The governed-export gate must be ON for the golden journey's
@@ -85,7 +86,7 @@ function startDevServer() {
 }
 
 /** SIGTERM the server's entire process group (see startDevServer). */
-function stopDevServer(server) {
+export function stopDevServer(server) {
   if (!server.pid) return;
   try {
     process.kill(-server.pid, 'SIGTERM');
@@ -99,12 +100,20 @@ function stopDevServer(server) {
   }
 }
 
-async function main() {
+/**
+ * Seed the identities every browser proof authenticates as. Both upserts are
+ * idempotent, so a caller that has already seeded pays only the process start.
+ */
+export async function seedIdentities() {
   // Seed the login user the smoke authenticates as (idempotent upsert).
   await run('node', ['scripts/seed-admin.mjs']);
   // Seed the governed-workflow identities (author/reviewer/admin) the golden
   // journey authenticates as (idempotent upsert; same database).
   await run('node', ['tests/e2e/seed-governed-workflow.cjs']);
+}
+
+async function main() {
+  await seedIdentities();
 
   const server = startDevServer();
   let closed = false;
@@ -139,7 +148,11 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error(error.message);
-  process.exit(1);
-});
+/* Only when invoked directly. scripts/ops/generate-validation-package.mjs
+   imports the boot helpers above; importing must not also run the smoke. */
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(error => {
+    console.error(error.message);
+    process.exit(1);
+  });
+}

@@ -9,7 +9,18 @@
  * emit policies). Replaying the 162-file migrations/ tree is not idempotent and
  * fails. This script is the one supported path for the application schema.
  *
- * What it does (idempotent — safe to re-run):
+ * ── What "re-run" does and does not do (2026-09-19) ──────────────────────────
+ * Every STEP here is written to be idempotent, and a re-run over an already
+ * complete database is safe. A re-run does NOT repair a database where step 2
+ * left tables uncreated, and no amount of re-running will: `drizzle-kit push`
+ * introspects before it emits, and drizzle-kit cannot represent an EXPRESSION
+ * index — `lower(email)`, `COALESCE(project_id, 0)` — so it dies in "Pulling
+ * schema from database" with a Zod error, emits nothing, and exits 0. The
+ * step-3 overlay below creates four such indexes, so push reads a database this
+ * script has already touched exactly once: the first time. Repair means an
+ * empty database, and step 2 says so when it detects that shape.
+ *
+ * What it does:
  *   1. Create the named schemas + extensions the Drizzle schema references.
  *   2. `drizzle-kit push` to lay down every table from the schema entrypoints
  *      declared in drizzle.config.ts.
@@ -27,7 +38,9 @@
  *      schema and Part-11 tamper-proof audit tables — then re-run the canonical
  *      tenant-isolation sweep, because that tree creates tenant-keyed tables
  *      AFTER 0021 swept in step 5 and they would otherwise carry no policy.
- *   7. Provision the non-superuser runtime role (opt-in, APP_SERVICE_DB_PASSWORD).
+ *   7. The runtime role: mint app_service (APP_SERVICE_DB_PASSWORD) or refresh
+ *      grants for an existing runtime role identified from RUNTIME_DB_ROLE /
+ *      APP_DATABASE_URL (2026-09-21, IQ-DEV-001); single-role installs skip it.
  *   8. Verify: table count, pg_policies count, the core route tables and the
  *      authoring subsystem, the required-object contract (columns, primary keys,
  *      foreign keys, indexes and RLS posture per capability, each reported with
@@ -76,7 +89,8 @@ import {
   AUTHORING_SUBSYSTEM_TABLES,
 } from './authoring-subsystem.mjs';
 import { resolveDatabaseUrl, sslFor, INSTALL_URL_VARS } from './connection.mjs';
-import { provisionAppServiceRole, resolveAppServiceRole } from './provision-app-role.mjs';
+import { ensureRuntimeRole } from './provision-app-role.mjs';
+import { declaredTableEntries, unresolvedSchemaReceivers } from './lib/declared-tables.mjs';
 
 dotenv.config();
 
@@ -105,6 +119,9 @@ const url = CHECK_SCHEMA_ENTRYPOINTS
   ? 'postgresql://schema-check:unused@127.0.0.1:1/schema-check'
   : resolveDatabaseUrl(INSTALL_URL_VARS);
 const pool = new Pool({ connectionString: url, ssl: sslFor(url) });
+
+/** Step 7's verdict on the runtime role, read by step 8's posture check. */
+let runtimeRoleResult = null;
 
 /**
  * `--allow-incomplete` — finish and exit 0 even when part of the install did
@@ -652,56 +669,26 @@ async function step(label, fn) {
 }
 
 /**
- * Every table name drizzle-kit will create from `shared/schema.ts`.
+ * Every table the configured schema graph declares, as `{ schema, name }`.
  *
- * Scoped exactly the way drizzle scopes it: use every entrypoint named in
- * `drizzle.config.ts`, plus whatever each entrypoint recursively re-exports
- * (`export * from './schema/…'`) — and nothing else under `shared/`. Modules
- * outside that reachable graph are not push inputs. Counting them here would
- * make this gate fail an install that is in fact complete, which is worse than
- * the silence it replaces.
+ * The implementation moved to ./lib/declared-tables.mjs on 2026-09-11 (WO-15
+ * finding 8) so it could be tested: this file runs `main()` at module load, so
+ * no test could import the function while it lived here — and a verification
+ * routine no test can reach is one nobody has checked.
  *
- * Read from source text rather than by importing: this runs against a database
- * that may not exist yet, and importing pulls in the whole Drizzle graph. The
- * declaration form is uniform — `pgTable('name', …)` — so a regex over the
- * reachable files is sufficient and cannot be broken by the module failing to
- * load. Views are excluded (`pgView`/`pgMaterializedView`): push does not
- * create them.
+ * It also stopped being public-only. The old regex matched `pgTable('name')`
+ * and nothing else, while `shared/schema/vault.ts` — reachable, because
+ * `shared/schema.ts` re-exports it — declares six tables as
+ * `vault.table('name')`. The installer verified 465 tables, called the push
+ * surface verified, and had never looked at an entire schema.
  */
+function declaredTables(entrypoints) {
+  return declaredTableEntries(entrypoints, path.resolve(__dirname, '..', '..'));
+}
+
+/** Bare names, public schema only — for the reporting path that says "public". */
 function declaredTableNames(entrypoints) {
-  const repoRoot = path.resolve(__dirname, '..', '..');
-  const files = [];
-  const queued = entrypoints.map((entry) => path.resolve(repoRoot, entry));
-  const seen = new Set();
-
-  // Follow literal re-exports from every configured entrypoint. A queue keeps
-  // this correct if an entrypoint gains a second level of barrel files later;
-  // `seen` prevents cycles from turning installer verification into a hang.
-  while (queued.length > 0) {
-    const file = queued.shift();
-    if (!file || seen.has(file)) continue;
-    seen.add(file);
-    files.push(file);
-    const src = fs.readFileSync(file, 'utf8');
-    for (const m of src.matchAll(/export\s+\*\s+from\s+['"](\.[^'"]+)['"]/g)) {
-      for (const suffix of ['.ts', '/index.ts']) {
-        const candidate = path.resolve(path.dirname(file), `${m[1]}${suffix}`);
-        if (fs.existsSync(candidate)) {
-          queued.push(candidate);
-          break;
-        }
-      }
-    }
-  }
-
-  const names = new Set();
-  for (const f of files) {
-    const src = fs.readFileSync(f, 'utf8');
-    for (const m of src.matchAll(/\bpgTable\(\s*['"`]([a-zA-Z0-9_]+)['"`]/g)) {
-      names.add(m[1]);
-    }
-  }
-  return [...names].sort();
+  return declaredTables(entrypoints).filter((t) => t.schema === 'public').map((t) => t.name);
 }
 
 
@@ -735,7 +722,9 @@ async function main() {
     } catch (err) {
       pgvectorAvailable = false;
       console.log(`  ⚠ pgvector NOT available: ${(err.message || '').split('\n')[0]}`);
-      console.log('    Install it and re-run (this script is idempotent) to get the skipped objects:');
+      console.log('    To get the skipped objects, install it and provision again into an');
+      console.log('    EMPTY database — re-running over a partly-installed one cannot repair');
+      console.log('    step 2 (see the header note on what a re-run does):');
       console.log('      apt-get install -y postgresql-16-pgvector    # Debian/Ubuntu');
       console.log('    Continuing WITHOUT it. Every object whose definition needs the `vector`');
       console.log('    type is SKIPPED and named below — nothing is faked, and no stub type is');
@@ -803,16 +792,112 @@ async function main() {
          So the push is verified against the thing it claims to have done:
          every table the configured schema graph declares must now exist. That cannot be
          satisfied by an exit code. */
-      const declared = declaredTableNames(entrypoint.paths);
+      /* Schema-QUALIFIED on both sides (2026-09-11, WO-15 finding 8).
+         Both halves of this check used to be public-only: the declaration
+         regex matched `pgTable('name')` and never `vault.table('name')`, and
+         the existence query filtered `table_schema = 'public'`. Either alone
+         would have hidden the vault schema; together they made the installer
+         print "declared tables verified present" having never looked at it.
+         Comparing qualified names on both sides is what makes the count
+         mean what the message says it means. */
+      const declared = declaredTables(entrypoint.paths);
       const { rows: existing } = await pool.query(
-        `SELECT table_name FROM information_schema.tables
-          WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
+        `SELECT table_schema, table_name FROM information_schema.tables
+          WHERE table_type = 'BASE TABLE'
+            AND table_schema NOT IN ('pg_catalog', 'information_schema')`,
       );
-      const have = new Set(existing.map((r) => r.table_name));
-      const missing = declared.filter((t) => !have.has(t));
+      const have = new Set(existing.map((r) => `${r.table_schema}.${r.table_name}`));
+      const absent = declared.filter((t) => !have.has(`${t.schema}.${t.name}`));
+
+      /* Split by schema, because push is not responsible for both halves
+         (2026-09-18). Making this check schema-qualified was right and it found
+         a real missing creator; asserting the NAMED-schema half HERE was not.
+         `drizzle-kit push` creates nothing outside `public` — the commit that
+         taught this check to see `vault.*` says so itself ("push creates no
+         vault tables") — and all six vault tables are created one step later,
+         by root migrations in the step-3 overlay (20260608_vault_retention,
+         20260905b, 20260906b, 20260911_vault_evidence_citations). So the check
+         demanded push do work push never does, and from-scratch provisioning
+         died at step 2 naming six tables that step 3 would have created. Every
+         install-fresh run failed for 26 hours.
+         The assertion is not dropped — dropping it is what hid the vault schema
+         in the first place. It MOVES to 8/8, alongside CORE_TABLES, which exists
+         for exactly this reason: "these come from the raw overlay, not push". */
+      const missing = absent
+        .filter((t) => t.schema === 'public')
+        .map((t) => `${t.schema}.${t.name}`);
+      const deferredToOverlay = absent
+        .filter((t) => t.schema !== 'public')
+        .map((t) => `${t.schema}.${t.name}`);
+
+      /* A `<ident>.table('…')` whose pgSchema binding cannot be resolved is a
+         declaration form this extractor does not know. Reported rather than
+         skipped: a silent skip is exactly how the vault schema went unchecked
+         for as long as it did. */
+      const unresolved = unresolvedSchemaReceivers(
+        entrypoint.paths,
+        path.resolve(__dirname, '..', '..'),
+      );
+      if (unresolved.length > 0) {
+        throw new Error(
+          `${unresolved.length} schema-qualified table declaration(s) could not be ` +
+            `attributed to a pgSchema() binding, so this install cannot verify them: ` +
+            unresolved.map((u) => `${u.receiver}.table('${u.table}')`).join(', ') +
+            `. Teach scripts/db/lib/declared-tables.mjs the new form rather than ` +
+            `letting it under-report.`,
+        );
+      }
+
       if (missing.length > 0) {
         console.error(res.stdout || '');
         console.error(res.stderr || '');
+
+        /* ── Two different failures wear the same result ───────────────────
+           "push exited 0 and the tables are not there" has a second cause, and
+           the message below used to assert the first one either way.
+
+           (a) push RAN and a statement failed. It applies its statements in one
+               sequential loop, stops at the first error and still exits 0, so
+               the tables after that point are missing. That is the story the
+               message told.
+           (b) push never ran at all. It introspects the database first, and
+               drizzle-kit validates what it pulled with Zod. An EXPRESSION
+               index — `lower(email)`, `COALESCE(project_id, 0)` — comes back
+               with a null expression, which its own schema rejects, so it dies
+               in "Pulling schema from database", emits no statement, and exits
+               0. Nothing failed to apply because nothing was attempted.
+
+           (b) is not hypothetical and it is not rare: this installer's own
+           step-3 overlay creates four such indexes
+           (organization_invitations_pending_uniq, ana_relational_profiles_scope_idx,
+           doc_permissions_email_lookup_idx, document_span_lineage_unique_link),
+           so EVERY run after the first hits it. A first run is unaffected
+           because push runs at step 2, before the overlay exists.
+
+           Telling an operator to look for a failing statement that was never
+           attempted costs them the whole diagnosis, so the two are reported
+           apart. */
+        const introspectionFailed =
+          /Pulling schema from database/.test(`${res.stdout || ''}${res.stderr || ''}`) &&
+          /ZodError/.test(`${res.stdout || ''}${res.stderr || ''}`);
+
+        if (introspectionFailed) {
+          throw new Error(
+            `drizzle-kit push could not READ this database, so it created nothing — it exited 0 ` +
+              `from "Pulling schema from database" with a Zod validation error, having attempted ` +
+              `no statement. drizzle-kit cannot represent an EXPRESSION index (its introspection ` +
+              `returns a null expression and its own schema rejects that), and this database ` +
+              `carries several that the step-3 raw-migration overlay creates. So push works on an ` +
+              `EMPTY database and stops working once the overlay has run. ` +
+              `${missing.length} of ${declared.length} declared table(s) are absent: ` +
+              `${missing.slice(0, 25).join(', ')}` +
+              `${missing.length > 25 ? `, …and ${missing.length - 25} more` : ''}. ` +
+              `Re-running this script will NOT repair that — push has to run before the overlay. ` +
+              `Provision into an empty database (createdb, then run this script once), or create ` +
+              `the missing tables from their declarations by hand.`,
+          );
+        }
+
         throw new Error(
           `drizzle-kit push exited 0 but did NOT create ${missing.length} of ` +
             `${declared.length} table(s) declared by the configured schema entrypoints. push stops at ` +
@@ -821,9 +906,21 @@ async function main() {
             `${missing.length > 25 ? `, …and ${missing.length - 25} more` : ''}`,
         );
       }
+      if (deferredToOverlay.length > 0) {
+        console.log(
+          `  • ${deferredToOverlay.length} declared table(s) live in a named schema, which push ` +
+            `does not create; the overlay does. Asserted in 8/8, not here: ` +
+            `${deferredToOverlay.slice(0, 10).join(', ')}` +
+            `${deferredToOverlay.length > 10 ? `, …and ${deferredToOverlay.length - 10} more` : ''}`,
+        );
+      }
+      const bySchema = new Map();
+      for (const t of declared) bySchema.set(t.schema, (bySchema.get(t.schema) ?? 0) + 1);
       console.log(
         `  ✓ schema pushed from ${entrypoint.paths.join(', ')} ` +
-          `(${declared.length} declared tables verified present)`,
+          `(${declared.length - deferredToOverlay.length} of ${declared.length} declared tables ` +
+          `verified present here: ` +
+          `${[...bySchema].map(([sch, n]) => `${n} in ${sch}`).join(', ')})`,
       );
       return;
     }
@@ -977,6 +1074,7 @@ async function main() {
     //   0006      FKs to cmc_projects(id)   → code-derived reconstruction
     // Apply those creators FIRST (each idempotent), the same documented
     // exception pattern as the authoring subsystem in step 4.
+
     const PRE_OVERLAY_CREATORS = [
       'db/migrations/20260401_cmc_convergence_os.sql',
       'db/migrations/20260224_ai_trace_chain.sql',
@@ -1038,8 +1136,17 @@ async function main() {
       // consolidation (2026-08-13) made that decision: the rival definition is
       // deleted, shape-2 names are canonical, and the file now applies cleanly
       // — so it is no longer classified as an expected skip.
-      ['20260609_design_risk.sql',
-        'risk_items/risk_management_files shapes collide with shared/schema.ts — ledger C-29; both consumers live, needs a rename decision'],
+      // 20260609_design_risk.sql was classified-skipped here ("needs a rename
+      // decision") for the C-29 collision: its uuid-keyed risk_items/risk_controls
+      // are a rival definition of the serial-keyed pair shared/schema.ts declares
+      // and push creates. The decision is made (2026-09-11), the same way D11d
+      // made it for IVDR: the rival is deleted, the Drizzle shapes are canonical.
+      // The file is gone, so there is nothing left to classify — and with it the
+      // eight tables that had no creator on any applier (design_inputs,
+      // design_outputs, design_verifications, design_validations, design_reviews,
+      // design_changes, design_plans, risk_management_files) and the 20
+      // /api/design-risk endpoints that read them. The live DHF surface binds to
+      // /api/design-controls (c2c_design_controls), which fails closed on 42P01.
     ]);
 
     const rlsSet = new Set(RLS_MIGRATIONS);
@@ -1380,6 +1487,57 @@ async function main() {
       );
     }
 
+    /* ── Second chance for files guarded on a named-schema object ──────────
+       A root overlay file that opens with
+
+         IF to_regclass('vault.documents') IS NULL THEN RETURN; END IF;
+
+       turns "my dependency does not exist YET" into SUCCESS. Three of them —
+       20260905b_vault_document_chunks, 20260906b_vault_legal_holds and
+       20260911_vault_evidence_citations — guard on vault.documents, whose only
+       creator is 044c_gcc_vault_schema.sql in THIS step, three steps after the
+       overlay ran. So the overlay recorded all three as applied, the multi-pass
+       retry that exists for exactly this ordering never reconsidered them
+       (a no-op is indistinguishable from real work), nothing was recorded
+       incomplete, and the three tables simply never existed on any fresh
+       install. 8/8's named-schema assertion is what makes that visible; this is
+       what makes it not happen.
+       Re-applied here rather than moved earlier because 044c itself needs the
+       `core` schema and its can_access_program function, which this tree
+       bootstraps — pulling it before the overlay inverts a deeper dependency
+       (tried: "schema \"core\" does not exist"). Selected mechanically by the
+       guard they share, not by filename, so a fourth such file is covered the
+       day it is written. Before the tenant sweep below, so anything created
+       here is still policied by it. */
+    const namedSchemaGuard = /to_regclass\(\s*'(?!public\.)[a-z_][a-z0-9_]*\.[a-z0-9_]+'\s*\)/i;
+    const rlsNames = new Set(RLS_MIGRATIONS);
+    const guardedRoots = fs
+      .readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.endsWith('.sql') && !rlsNames.has(f))
+      .filter((f) => namedSchemaGuard.test(fs.readFileSync(path.join(MIGRATIONS_DIR, f), 'utf8')))
+      .sort();
+    let reSwept = 0;
+    for (const file of guardedRoots) {
+      const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
+      try {
+        await pool.query('BEGIN');
+        await pool.query(sql);
+        await pool.query('COMMIT');
+        reSwept++;
+      } catch (err) {
+        await pool.query('ROLLBACK').catch(() => {});
+        /* Not fatal on its own: 8/8 decides whether the objects exist. Named
+           here so a re-sweep failure is never silent. */
+        console.log(`  ⚠ re-sweep ${file}: ${(err.message || '').split('\n')[0]}`);
+      }
+    }
+    if (guardedRoots.length > 0) {
+      console.log(
+        `  ✓ re-applied ${reSwept}/${guardedRoots.length} root file(s) guarded on a named schema ` +
+          `(their dependency exists only after this tree)`,
+      );
+    }
+
     // ── Close the sweep over what this tree just created ────────────────────
     // 0021 (step 5) policies every integer tenant-keyed table that exists WHEN
     // IT RUNS. This tree runs after it and adds more — 063_gcc_cognitive_agent_runtime.sql
@@ -1419,7 +1577,7 @@ async function main() {
 
   recordSchemaSource('governed content (db/migrations/*_gcc_*)', await snapshotPublicTables());
 
-  await step('7/8 Runtime role — non-superuser app_service grants', async () => {
+  await step('7/8 Runtime role — non-superuser grants', async () => {
     // The RLS unlock. Everything above ran as the owner/admin (DATABASE_URL),
     // which is a superuser on most managed providers — a connection RLS never
     // filters. Mint a dedicated NOSUPERUSER / NOBYPASSRLS LOGIN role and grant
@@ -1428,15 +1586,17 @@ async function main() {
     //
     // This runs LAST among the schema steps so `GRANT ... ON ALL TABLES` reaches
     // every table the prior steps created; ALTER DEFAULT PRIVILEGES (inside the
-    // helper) covers tables future migrations add. It is a NO-OP unless
-    // APP_SERVICE_DB_PASSWORD is set, so an install that has not opted into the
-    // split role behaves exactly as before.
-    const result = await provisionAppServiceRole(pool, {
+    // helper) covers tables future migrations add. ensureRuntimeRole mints when
+    // APP_SERVICE_DB_PASSWORD is set, refreshes grants for any other runtime
+    // role identifiable from RUNTIME_DB_ROLE / APP_DATABASE_URL (a role this
+    // script did not mint still needs the grants — IQ-DEV-001), and is a NO-OP
+    // on a single-role install (runtime = owner), which behaves exactly as before.
+    runtimeRoleResult = await ensureRuntimeRole(pool, {
       log: (m) => console.log(m),
     });
-    if (result.skipped) {
+    if (runtimeRoleResult.mode === 'single-role') {
       console.log(
-        `  • ${result.role} not provisioned (APP_SERVICE_DB_PASSWORD unset). Production boot ` +
+        `  • no runtime role distinct from the owner (${runtimeRoleResult.owner}). Production boot ` +
           'will FAIL CLOSED if it connects as a superuser under RLS_ENFORCE=on — set ' +
           'APP_SERVICE_DB_PASSWORD here and APP_DATABASE_URL for the runtime before going live.',
       );
@@ -1477,6 +1637,42 @@ async function main() {
     }
     if (policyCount < 1) {
       verifyFail('row-level security', 'no RLS policies created — tenant isolation would be absent');
+    }
+
+    /* Every table the schema graph declares OUTSIDE `public` must exist by now.
+       push creates none of them (2/8 defers them here saying so), the step-3
+       overlay does, and nothing verified that it had until this check existed:
+       `vault.evidence_citations` was declared, written to by
+       advancedRAGPipeline, created by a file on no applier, and absent on every
+       provisioned database — for as long as both halves of the 2/8 count were
+       public-only. Asserting it HERE rather than at 2/8 keeps that closed
+       without demanding push do the overlay's work. */
+    const declaredNonPublic = declaredTables(resolveDrizzleEntrypoints().paths).filter(
+      (t) => t.schema !== 'public',
+    );
+    if (declaredNonPublic.length > 0) {
+      const { rows: nonPublicRows } = await pool.query(
+        `SELECT table_schema, table_name FROM information_schema.tables
+          WHERE table_type = 'BASE TABLE' AND table_schema <> 'public'`,
+      );
+      const haveNonPublic = new Set(
+        nonPublicRows.map((r) => `${r.table_schema}.${r.table_name}`),
+      );
+      const absentNonPublic = declaredNonPublic
+        .map((t) => `${t.schema}.${t.name}`)
+        .filter((q) => !haveNonPublic.has(q));
+      if (absentNonPublic.length > 0) {
+        verifyFail(
+          'named-schema tables',
+          `${absentNonPublic.length} of ${declaredNonPublic.length} declared table(s) outside ` +
+            `public do not exist after the overlay: ${absentNonPublic.join(', ')}. push does not ` +
+            `create these; a file in migrations/ must, and every creator must be on an applier.`,
+        );
+      } else {
+        console.log(
+          `  named-schema tables: ${declaredNonPublic.length}/${declaredNonPublic.length} present`,
+        );
+      }
     }
 
     // Assert the core product tables the shipping routes read actually exist —
@@ -1573,14 +1769,14 @@ async function main() {
       );
     }
 
-    // Runtime role posture — only asserted when the split role was requested
-    // (APP_SERVICE_DB_PASSWORD set). Confirms the role exists and is genuinely
-    // least-privilege (not a superuser, no BYPASSRLS) and can actually read a
-    // core tenant table — so a green install can never hand over a role that
-    // would fail the production boot posture check or be locked out of its
-    // tables. Mirrors server/db/rlsEnforcement.ts → assertRlsCatalogPosture.
-    if (process.env.APP_SERVICE_DB_PASSWORD) {
-      const role = resolveAppServiceRole();
+    // Runtime role posture — asserted whenever step 7 minted or granted a
+    // runtime role. Confirms the role exists and is genuinely least-privilege
+    // (not a superuser, no BYPASSRLS) and can actually read a core tenant
+    // table — so a green install can never hand over a role that would fail
+    // the production boot posture check or be locked out of its tables.
+    // Mirrors server/db/rlsEnforcement.ts → assertRlsCatalogPosture.
+    if (runtimeRoleResult && !runtimeRoleResult.skipped) {
+      const role = runtimeRoleResult.role;
       const roleRow = (
         await pool.query(
           'SELECT rolsuper, rolbypassrls, rolcanlogin FROM pg_roles WHERE rolname = $1',
@@ -1655,8 +1851,11 @@ function report() {
     console.error('   this database. The rest of the schema was installed and the app can');
     console.error('   boot and serve from it.');
     console.error('   To get them: install the pgvector package for your PostgreSQL major');
-    console.error('   version (e.g. `apt-get install -y postgresql-16-pgvector`) and re-run');
-    console.error('   this script — it is idempotent and will fill in what it skipped.');
+    console.error('   version (e.g. `apt-get install -y postgresql-16-pgvector`), then');
+    console.error('   provision again INTO AN EMPTY DATABASE.');
+    console.error('   Re-running over this one will not fill them in: drizzle-kit push has to');
+    console.error('   read the schema before it writes, and it cannot read the expression');
+    console.error('   indexes the overlay has now created — so it emits nothing and exits 0.');
   }
 
   if (!incomplete.length) {
@@ -1691,8 +1890,10 @@ function report() {
   }
 
   console.error('\n❌ Install INCOMPLETE — not reporting success.');
-  console.error('   Resolve the areas above and re-run (the script is idempotent), or pass');
-  console.error('   --allow-incomplete to accept a partial install deliberately.');
+  console.error('   Resolve the areas above and provision again, or pass --allow-incomplete');
+  console.error('   to accept a partial install deliberately. If any area above is a table');
+  console.error('   step 2 did not create, provisioning again means an EMPTY database — see');
+  console.error('   the header note on what a re-run does.');
   return 1;
 }
 

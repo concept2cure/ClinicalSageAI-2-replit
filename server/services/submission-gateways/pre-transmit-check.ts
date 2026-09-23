@@ -40,11 +40,25 @@ import {
   evaluateRegionalBackboneGate,
   regionalBackboneRequiredFromEnv,
 } from '../ectd/regional-backbone-readiness';
+import {
+  evaluateModule3RegionalGate,
+  module3RegionalRequiredFromEnv,
+} from '../module3-regional-readiness.js';
 
 /** Gateway region (lowercase) → regulatory region (uppercase) for the size limit. */
 const REGION_TO_REGULATORY: Record<Region, RegulatoryRegion> = {
-  fda: 'US', ema: 'EU', pmda: 'JP', ca: 'CA',
-  uk: 'UK', ch: 'CH', au: 'AU', cn: 'CN', br: 'BR', in: 'IN', kr: 'KR', sg: 'SG',
+  fda: 'US',
+  ema: 'EU',
+  pmda: 'JP',
+  ca: 'CA',
+  uk: 'UK',
+  ch: 'CH',
+  au: 'AU',
+  cn: 'CN',
+  br: 'BR',
+  in: 'IN',
+  kr: 'KR',
+  sg: 'SG',
 };
 
 export interface PreTransmitCheck {
@@ -80,6 +94,72 @@ export interface PreTransmitResult {
   warnings: string[];
 }
 
+/**
+ * Self-containment of the package's supportive files. The gate judges BOTH
+ * kinds — util/dtd/*.dtd and util/style/*.xsl — because assessDtdReadiness
+ * clears `selfContained` only when both are complete. This printed
+ * `dtd.missing` alone, so a package with every DTD bundled and neither
+ * stylesheet was refused with "…(missing )": a blocker that named nothing for
+ * the operator to act on. The set printed must be the set that was judged.
+ *
+ * Extracted from evaluatePreTransmit (same shape as evaluateRegionalBackboneGate)
+ * so the two-source absent set is one readable unit.
+ */
+function evaluateDtdSelfContainment(
+  dtd: SubmissionBundle['dtdStatus'],
+  isProd: boolean,
+  dtdRequired: boolean
+): { check: PreTransmitCheck | null; blockers: string[]; warnings: string[] } {
+  if (!dtd) {
+    return {
+      check: null,
+      blockers: [],
+      warnings:
+        isProd && dtdRequired
+          ? [
+              'ECTD_REQUIRE_DTD is set but the bundle carries no DTD status — cannot prove self-containment at transmit time.',
+            ]
+          : [],
+    };
+  }
+  // `dtdStatus` reaches this gate off a persisted bundle record, so its fields
+  // are whatever was stored — not whatever the TypeScript type promises. Both
+  // reads below are therefore explicit rather than truthy:
+  //
+  //   • selfContained must be EXACTLY `true` to clear. The string "false" (a
+  //     JSON round-trip through a text column) is truthy, and a truthiness test
+  //     read it as "self-contained: passed" with no blocker raised — the gate
+  //     clearing a package on evidence that says the opposite.
+  //   • a non-array `missing` is not "nothing missing"; spreading it threw, so
+  //     the gate crashed instead of refusing. It is an un-itemised gap.
+  const asList = (v: unknown): string[] => (Array.isArray(v) ? (v as string[]) : []);
+  const absent = [...asList(dtd.missing), ...asList(dtd.missingStylesheets)];
+  const itemised = Array.isArray(dtd.missing) && absent.length > 0;
+  // Fail closed on an un-itemised gap: a bundle assembled before the stylesheet
+  // half was carried can be not-self-contained with nothing listed at all. That
+  // must read as "not itemised", never as an empty (clean) list.
+  const absentText = itemised
+    ? absent.join(', ')
+    : 'the absent file(s) were not itemised by the packager that built this bundle — re-assemble it to identify them';
+  const selfContained = dtd.selfContained === true;
+  return {
+    check: {
+      name: 'dtd-self-contained',
+      passed: selfContained,
+      detail: selfContained
+        ? 'all required DTDs and stylesheets bundled'
+        : `missing: ${absentText}`,
+    },
+    blockers:
+      isProd && dtdRequired && !selfContained
+        ? [
+            `Package is not DTD self-contained (missing ${absentText}); ECTD_REQUIRE_DTD blocks this production transmit.`,
+          ]
+        : [],
+    warnings: [],
+  };
+}
+
 /** Evaluate the pre-transmit preconditions for a package. Pure + deterministic. */
 export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult {
   const env = input.env ?? process.env;
@@ -94,13 +174,19 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   checks.push({
     name: 'gateway-size-limit',
     passed: sizeOk,
-    detail: `${input.bundle.sizeBytes} bytes vs ${limit} byte limit for ${input.region.toUpperCase()}`,
+    detail: `${
+      input.bundle.sizeBytes
+    } bytes vs ${limit} byte limit for ${input.region.toUpperCase()}`,
   });
   if (!sizeOk) {
     const gb = (n: number) => (n / 1024 ** 3).toFixed(2);
     blockers.push(
-      `Package is ${gb(input.bundle.sizeBytes)} GB, over the ${input.region.toUpperCase()} gateway limit of ` +
-        `${gb(limit)} GB. Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway.`,
+      `Package is ${gb(
+        input.bundle.sizeBytes
+      )} GB, over the ${input.region.toUpperCase()} gateway limit of ` +
+        `${gb(
+          limit
+        )} GB. Submit via the agency's large-submission channel (e.g. physical media) instead of the gateway.`
     );
   }
 
@@ -112,25 +198,35 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   if (grade && Array.isArray(grade.notConverted)) {
     const notConverted = grade.notConverted?.length ?? 0;
     const pdfaOk = notConverted === 0;
-    checks.push({ name: 'pdfa-submission-grade', passed: pdfaOk, detail: `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} not converted` });
+    checks.push({
+      name: 'pdfa-submission-grade',
+      passed: pdfaOk,
+      detail: `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} not converted`,
+    });
     if (isProd && pdfaRequired && !pdfaOk) {
-      blockers.push(`${notConverted} PDF leaf/leaves are not PDF/A (${grade.notConverted.slice(0, 3).join(', ')}${notConverted > 3 ? ', …' : ''}); ECTD_REQUIRE_PDFA blocks this production transmit.`);
+      blockers.push(
+        `${notConverted} PDF leaf/leaves are not PDF/A (${grade.notConverted
+          .slice(0, 3)
+          .join(', ')}${
+          notConverted > 3 ? ', …' : ''
+        }); ECTD_REQUIRE_PDFA blocks this production transmit.`
+      );
     }
   } else if (isProd && pdfaRequired) {
-    warnings.push('ECTD_REQUIRE_PDFA is set but the bundle carries no PDF/A grade — cannot prove PDF/A compliance at transmit time.');
+    warnings.push(
+      'ECTD_REQUIRE_PDFA is set but the bundle carries no PDF/A grade — cannot prove PDF/A compliance at transmit time.'
+    );
   }
 
-  // 3. DTD self-containment.
-  const dtd = input.bundle.dtdStatus;
-  const dtdRequired = dtdRequiredFromEnv(env);
-  if (dtd) {
-    checks.push({ name: 'dtd-self-contained', passed: dtd.selfContained, detail: dtd.selfContained ? 'all required DTDs bundled' : `missing: ${dtd.missing.join(', ')}` });
-    if (isProd && dtdRequired && !dtd.selfContained) {
-      blockers.push(`Package is not DTD self-contained (missing ${dtd.missing.join(', ')}); ECTD_REQUIRE_DTD blocks this production transmit.`);
-    }
-  } else if (isProd && dtdRequired) {
-    warnings.push('ECTD_REQUIRE_DTD is set but the bundle carries no DTD status — cannot prove self-containment at transmit time.');
-  }
+  // 3. DTD + stylesheet self-containment.
+  const dtdGate = evaluateDtdSelfContainment(
+    input.bundle.dtdStatus,
+    isProd,
+    dtdRequiredFromEnv(env)
+  );
+  if (dtdGate.check) checks.push(dtdGate.check);
+  blockers.push(...dtdGate.blockers);
+  warnings.push(...dtdGate.warnings);
 
   // 3a. Region identity — HARD, always. A bundle carries the region it was
   // BUILT for (the regional backbone it contains, and its format tag). Sending
@@ -144,7 +240,11 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   // that carries neither is reported as unprovable, never treated as matching.
   const built = input.bundle.regionalBackbone;
   const declared = input.bundle.builtRegion;
-  const evidence = built ? { region: built.region, source: built.file } : declared ? { region: declared, source: 'descriptor' } : null;
+  const evidence = built
+    ? { region: built.region, source: built.file }
+    : declared
+    ? { region: declared, source: 'descriptor' }
+    : null;
   if (evidence) {
     const same = evidence.region === input.region;
     checks.push({
@@ -152,32 +252,50 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
       passed: same,
       detail: same
         ? `built for ${evidence.region.toUpperCase()} (${evidence.source})`
-        : `built for ${evidence.region.toUpperCase()} (${evidence.source}); transmit target is ${input.region.toUpperCase()}`,
+        : `built for ${evidence.region.toUpperCase()} (${
+            evidence.source
+          }); transmit target is ${input.region.toUpperCase()}`,
     });
     if (!same) {
       blockers.push(
-        `Package was assembled for ${evidence.region.toUpperCase()} (${evidence.source}); it cannot be transmitted to ` +
-          `${input.region.toUpperCase()}. Re-assemble the package for ${input.region.toUpperCase()}.`,
+        `Package was assembled for ${evidence.region.toUpperCase()} (${
+          evidence.source
+        }); it cannot be transmitted to ` +
+          `${input.region.toUpperCase()}. Re-assemble the package for ${input.region.toUpperCase()}.`
       );
     }
   } else {
     warnings.push(
       `The bundle carries no record of the region it was built for (assembled before region identity was recorded); ` +
-        `cannot prove it matches the ${input.region.toUpperCase()} gateway.`,
+        `cannot prove it matches the ${input.region.toUpperCase()} gateway.`
     );
   }
   // Every format pins a region. The check used to cover only the two eCTD
   // formats, so an eSTAR (an FDA CDRH form) cleared the PMDA gate.
   const fmt = input.bundle.format;
-  const REQUIRED_REGION: Partial<Record<string, Region>> = { pmda_ectd: 'pmda', estar: 'fda', eudamed_register: 'ema' };
+  const REQUIRED_REGION: Partial<Record<string, Region>> = {
+    pmda_ectd: 'pmda',
+    estar: 'fda',
+    eudamed_register: 'ema',
+  };
   const required = REQUIRED_REGION[fmt];
-  const formatRegionOk = required ? input.region === required : fmt === 'ectd' ? input.region !== 'pmda' : true;
+  const formatRegionOk = required
+    ? input.region === required
+    : fmt === 'ectd'
+    ? input.region !== 'pmda'
+    : true;
   if (!formatRegionOk) {
-    checks.push({ name: 'bundle-format-region', passed: false, detail: `format ${fmt} vs ${input.region.toUpperCase()} gateway` });
+    checks.push({
+      name: 'bundle-format-region',
+      passed: false,
+      detail: `format ${fmt} vs ${input.region.toUpperCase()} gateway`,
+    });
     blockers.push(
       `Bundle format '${fmt}' does not match the ${input.region.toUpperCase()} gateway (` +
-        (required ? `${fmt} is the ${required.toUpperCase()} format` : 'pmda_ectd is the PMDA format; ectd is the format for the other regions') +
-        `). Re-assemble the package for ${input.region.toUpperCase()}.`,
+        (required
+          ? `${fmt} is the ${required.toUpperCase()} format`
+          : 'pmda_ectd is the PMDA format; ectd is the format for the other regions') +
+        `). Re-assemble the package for ${input.region.toUpperCase()}.`
     );
   }
 
@@ -194,6 +312,25 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   blockers.push(...regionalGate.blockers);
   warnings.push(...regionalGate.warnings);
 
+  // 3c. Module 3 regional information (3.2.R). Module 3 has an authored 3.2.R
+  // template for four regions; a run may target twelve plus GLOBAL. For the eight
+  // jurisdictions with no template the section cannot be composed at all, and a
+  // dossier reaching an agency without its regional information is not a detail —
+  // so it is always surfaced and blocks a production transmit only when
+  // M3_REQUIRE_REGIONAL_SECTION=true (the same opt-in posture as 3b, the DTD and
+  // PDF/A gates). GLOBAL passes: 3.2.R does not apply to a region-agnostic
+  // dossier. A package that ships a 3.2.R leaf anyway passes too — the content
+  // came from somewhere else and the missing template cost it nothing.
+  const m3RegionalGate = evaluateModule3RegionalGate({
+    region: input.region,
+    shippedCtdSections: input.bundle.leafManifest?.map(l => l.ctdSection),
+    environment: input.environment,
+    required: module3RegionalRequiredFromEnv(env),
+  });
+  if (m3RegionalGate.check) checks.push(m3RegionalGate.check);
+  blockers.push(...m3RegionalGate.blockers);
+  warnings.push(...m3RegionalGate.warnings);
+
   // 4. External agency-grade validation gate (route layer only — see enforceExternal).
   if (input.enforceExternal !== false) {
     const extGate = evaluateExternalValidationGate({
@@ -202,7 +339,11 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
       requireEvalidator: evalidatorRequiredFromEnv(env),
       environment: input.environment,
     });
-    checks.push({ name: 'external-evalidator', passed: extGate.cleared, detail: extGate.ran ? `${extGate.externalErrorCount} agency error(s)` : 'did not run' });
+    checks.push({
+      name: 'external-evalidator',
+      passed: extGate.cleared,
+      detail: extGate.ran ? `${extGate.externalErrorCount} agency error(s)` : 'did not run',
+    });
     blockers.push(...extGate.blockers);
   }
 

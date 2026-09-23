@@ -7,7 +7,7 @@
  * @module server/services/ivdrPackHtml
  */
 
-import type { IvdrPackContent } from './ivdrPackContent';
+import { sectionEmptyText, type IvdrPackContent } from './ivdrPackContent';
 
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -105,7 +105,9 @@ export function renderIvdrPackHtml(content: IvdrPackContent): string {
     }
     parts.push(`</tbody></table>`);
   } else {
-    parts.push(`<p class="muted">No analytical validation records.</p>`);
+    parts.push(
+      `<p class="muted">${esc(sectionEmptyText(content, 'analyticalValidations', 'analytical validation'))}</p>`
+    );
   }
 
   // ── § 3 Clinical evidence ──────────────────────────────────────────────
@@ -123,7 +125,9 @@ export function renderIvdrPackHtml(content: IvdrPackContent): string {
     }
     parts.push(`</tbody></table>`);
   } else {
-    parts.push(`<p class="muted">No clinical evidence records.</p>`);
+    parts.push(
+      `<p class="muted">${esc(sectionEmptyText(content, 'clinicalEvidence', 'clinical evidence'))}</p>`
+    );
   }
 
   // ── § 4 CDx ────────────────────────────────────────────────────────────

@@ -30,7 +30,18 @@ export interface GovernedExportInput {
 
 const DEFAULT_MAX_GOVERNED_EXPORT_BYTES = 25 * 1024 * 1024; // 25 MiB
 
-function getMaxGovernedExportBytes(): number {
+/**
+ * The largest file either delivery path will hand back.
+ *
+ * Exported because a producer that can EXCEED it needs to know the number
+ * before it does the work. The official eSTAR was ~5.3 MB and fixed until
+ * attachments landed; now it carries whatever documents a filer maps into its
+ * 113/145 slots, and discovering the ceiling by throwing at delivery — after
+ * the renders, the vault reads, the encryption and the retention write — turns
+ * a stateable limit into a 500. One function, so the producer's refusal and the
+ * deliverer's refusal cannot drift apart.
+ */
+export function getMaxGovernedExportBytes(): number {
   const raw = process.env.GOVERNED_EXPORT_MAX_BYTES;
   if (!raw) return DEFAULT_MAX_GOVERNED_EXPORT_BYTES;
   const parsed = Number(raw);
@@ -241,6 +252,19 @@ export async function createAuditedUnplacedExport(
 ): Promise<AuditedUnplacedExport> {
   if (!Buffer.isBuffer(input.buffer) || input.buffer.length === 0) {
     throw new Error('INVALID_GOVERNED_EXPORT_INPUT: buffer must be a non-empty Buffer');
+  }
+  /* THE SAME CEILING AS THE REGISTRY PATH. This one had none — only a
+     non-empty check — while its sibling refused at 25 MiB, and the difference
+     was invisible for as long as every export through here was a fixed ~5.3 MB
+     eSTAR or a small ZIP. Attachments removed that: a 60 MiB export becomes
+     ~80 MiB of base64 in a single JSON response body, on a route any editor can
+     call. Two delivery paths, one contract; a program without a registry anchor
+     is not a program without limits. */
+  const maxBytes = getMaxGovernedExportBytes();
+  if (input.buffer.length > maxBytes) {
+    throw new Error(
+      `INVALID_GOVERNED_EXPORT_INPUT: buffer exceeds max size (${maxBytes} bytes)`,
+    );
   }
   const sha256 = crypto.createHash('sha256').update(input.buffer).digest('hex');
   const audit = await auditService.logAction({

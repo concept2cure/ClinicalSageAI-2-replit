@@ -16,7 +16,10 @@ import {
   ICH_BACKBONE_STYLESHEET,
   requiredStylesheetsForRegion,
   listVendoredStylesheets,
+  type DtdRegion,
 } from '../dtd-bundler';
+import { classifyRegionalBackbone } from '../regional-backbone-readiness';
+import type { Region } from '../../submission-gateways/types';
 
 describe('requiredDtdsForRegion', () => {
   it('always includes the ICH backbone plus the regional DTD', () => {
@@ -197,5 +200,45 @@ describe('stylesheet self-containment — the second hole the DTD gate did not c
     expect(r.selfContained).toBe(false);
     expect(r.requiredStylesheets).toEqual([ICH_BACKBONE_STYLESHEET]);
     expect(r.missingStylesheets).toEqual([ICH_BACKBONE_STYLESHEET]);
+  });
+});
+
+/**
+ * SELF-CONTAINMENT IS NOT CONFORMANCE.
+ *
+ * This assertion lives here, on the DTD gate, because this is where the two get
+ * conflated. `dtdStatus.selfContained` is the readiness signal a compile surface
+ * reads to decide whether a package is fit to file, and the whole DTD
+ * procurement is described as the thing that unblocks eCTD. Both are true and
+ * neither means the package will VALIDATE: vendoring the DTDs makes a package
+ * carry the grammar it points at, and eleven of the twelve regional Module 1
+ * backbones are not written to that grammar (regional-backbone-readiness.ts).
+ * Dropping the licensed files in therefore turns "cannot be validated" into
+ * "fails validation" for those eleven — an improvement in honesty, not in
+ * conformance.
+ *
+ * Pinned so that a later change cannot quietly let a cleared DTD gate stand in
+ * for a conformance claim, and so the region conformance work is not treated as
+ * finished by the procurement that does not do it.
+ */
+describe('a fully vendored drop-point clears the DTD gate WITHOUT making a region conformant', () => {
+  const ALL: DtdRegion[] = ['fda', 'ema', 'pmda', 'ca', 'uk', 'ch', 'au', 'cn', 'br', 'in', 'kr', 'sg'];
+
+  it.each(ALL)('%s: DTD gate cleared with every required file present', (region) => {
+    const r = assessDtdReadiness({
+      region,
+      present: requiredDtdsForRegion(region),
+      presentStylesheets: requiredStylesheetsForRegion(region),
+      environment: 'production',
+      requireDtd: true, // the strictest posture available
+    });
+    expect(r.selfContained).toBe(true);
+    expect(r.cleared).toBe(true);
+    expect(r.blockers).toEqual([]);
+  });
+
+  it('yet only FDA is region-conformant — the DTDs do not close the other eleven', () => {
+    const conformant = ALL.filter((r) => classifyRegionalBackbone(r as Region, `m1/x/${r}-regional.xml`).regionConformant);
+    expect(conformant).toEqual(['fda']);
   });
 });

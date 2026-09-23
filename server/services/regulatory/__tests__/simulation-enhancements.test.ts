@@ -101,9 +101,13 @@ describe('ivdr-classification enhancements', () => {
     expect(r.conformityRoute.length).toBeGreaterThan(0);
   });
 
-  it('low confidence + ambiguity note when defaulting to Class A with no inputs', () => {
+  /* Was "defaults to Class A". Annex VIII Rule 6 puts a device matching no rule
+     in class B, not class A — Class A is reachable only through Rule 5, which
+     these inputs cannot establish. The low confidence and the ambiguity note are
+     the part that was always right, and they still hold. */
+  it('low confidence + ambiguity note when falling through to the Rule 6 catch-all', () => {
     const r = classifyIvdrAnnexVIII({ intendedPurpose: 'general laboratory buffer' });
-    expect(r.classification).toBe('A');
+    expect(r.classification).toBe('B');
     expect(r.confidence).toBe('low');
     expect(r.ambiguityNotes.length).toBeGreaterThan(0);
   });

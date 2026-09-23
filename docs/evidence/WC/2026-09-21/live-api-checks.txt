@@ -1,0 +1,41 @@
+dev-login token length: 341
+{
+ "id": "ad5690c1-f432-4b64-b096-365ec790ae83",
+ "title": "WC F-4/F-7 live check 20260921",
+ "meta": {
+  "created": true,
+  "documentId": "doc_aba6426874644f578097feb5fd23da5c",
+  "scaffoldedSections": 92,
+  "submissionId": 43,
+  "submissionCreated": true,
+  "projectAnchorId": null,
+  "projectAnchorSkipped": "NO_CLIENT_WORKSPACE",
+  "projectAnchorDetail": "This organization has no client workspace, and projects.client_workspace_id is NOT NULL. The program was created; it carries no PM-spine anchor until a workspace exists."
+ }
+}
+== F-4: POST /api/vault/ingest payload.exe (400 FILE_TYPE_NOT_ALLOWED expected; was 500 SERVER_ERROR)
+HTTP 400
+{"error":{"code":"FILE_TYPE_NOT_ALLOWED","message":"File type .exe is not allowed. Accepted: .pdf, .docx, .doc, .txt, .rtf, .xlsx, .xls, .csv, .md."}}
+== F-4: wrong field name (400 UPLOAD_INVALID expected)
+HTTP 400
+{"error":{"code":"UPLOAD_INVALID","message":"Unexpected file field. Send one file as multipart/form-data under the field name \"file\"."}}
+== F-7: GET /api/dossier-map?projectId=<program uuid> (200 expected; was 500/400)
+HTTP 200
+{"data":[],"meta":{"count":0,"source":"project_sections","programId":"ad5690c1-f432-4b64-b096-365ec790ae83","projectId":null,"anchored":false,"reason":"PROGRAM_UNANCHORED"}}
+== F-7: the W3 id 6191805f-e83d-4327-af00-aa2c6f4d43b0 (leading digits; not in this org → 404 expected, never project 6191805)
+HTTP 200
+{"data":[],"meta":{"count":0,"source":"project_sections","programId":"6191805f-e83d-4327-af00-aa2c6f4d43b0","projectId":null,"anchored":false,"reason":"PROGRAM_UNANCHORED"}}
+== F-7: projectId=12abc (400 expected)
+HTTP 400
+{"error":{"code":"PROJECT_REQUIRED","message":"A projectId query parameter is required: the program UUID, or a legacy integer project id."}}
+== F-7: legacy integer projectId=1 still accepted (200 expected)
+HTTP 200
+{"data":[],"meta":{"count":0,"source":"project_sections","projectId":1}}
+== F-7: note — 6191805f-… is the W3 run's program and still exists in this local org (same DB), so anchored:false is the honest answer for it. A UUID that exists in NO org:
+HTTP 404
+{"error":{"code":"PROGRAM_NOT_FOUND","message":"Program not found in your organization."}}
+== F-7: the program-anchor module's own log lines during these reads (a privilege failure would say 'Program anchor lookup failed'; 42703 would say 'absent'):
+(end of anchor log lines)
+== F-7: does the W3 program exist in org 2? (regulatory_programs, direct SQL as postgres)
+6191805f-e83d-4327-af00-aa2c6f4d43b0|2|OQ-004 Submission program 20260921002317|
+anchored projects rows for both program ids: 0

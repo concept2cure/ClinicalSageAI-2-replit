@@ -14,7 +14,7 @@ import type { Response } from 'express';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import type { UserRole } from '../../services/ana-ri/persona.js';
 import { buildAssistantMetadata, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
-import type { HumanControlEvent } from '../../services/ana/run-control-registry.js';
+import type { HumanControlEvent } from '../../services/ana/run-status.js';
 import {
   checkEvidenceDiscipline,
   validateResponseStructure,
@@ -38,6 +38,8 @@ import { upsertDocumentArtifactVersion } from '../../services/ana/artifactVersio
 import {
   toNavigationActions,
   toSurfaceActionChips,
+  toDemoStartChips,
+  type DemoStartDirective,
 } from '../../services/ana-ri/navigation-actions.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
@@ -82,8 +84,14 @@ export interface StreamPostProcessingContext {
    * performed client-side through the one surface-action bus when activated.
    */
   collectedSurfaceActions?: SurfaceActionDirective[];
+  /**
+   * Demonstrations `start_product_demo` fetched WITHOUT Live Drive this turn.
+   * Surfaced on `post_done` as `actionType: 'start_demo'` chips — the client
+   * runs the rail's own one-click start when the person activates one.
+   */
+  collectedDemoStarts?: DemoStartDirective[];
   /** Document drafts emitted this turn — persisted to the governed artifact version history. */
-  collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
+  collectedDrafts: CollectedDraft[];
   /** Gateway message history built for the turn (for working-memory write-back). */
   messages: GatewayMessage[];
   model: string | undefined;
@@ -104,15 +112,36 @@ export interface StreamPostProcessingContext {
    version history — no project context, an unchanged content hash, and a
    database failure — are indistinguishable to the client, so what this function
    does and does NOT announce is the whole contract. */
+export interface CollectedDraft {
+  title: string;
+  content: string;
+  documentType?: string;
+  reasonForChange?: string;
+  /**
+   * Set when the draft is ALREADY an authoring document (the
+   * draft_authoring_document tool wrote authoring_documents/authoring_sections
+   * with provenance in the same transaction). The authoring store is the one
+   * document store for the launch catalog (docs/design/ANA_DOCUMENT_CANVAS.md),
+   * so such a draft is never written into concept2cure_artifacts as well —
+   * report canvases and the legacy generate_document path are unchanged.
+   */
+  authoringDocId?: string;
+  programId?: string;
+}
+
 export async function persistCollectedDrafts(args: {
   res: Response;
   orgId: string | number | null | undefined;
   streamProjectId: string | number | null | undefined;
   userId: number | undefined;
   threadId: string | undefined;
-  collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
+  collectedDrafts: CollectedDraft[];
 }): Promise<void> {
-  const { res, orgId, streamProjectId, userId, threadId, collectedDrafts } = args;
+  const { res, orgId, streamProjectId, userId, threadId } = args;
+  /* A draft that already IS an authoring document needs no artifact version
+     and must not draw the "could not be saved" caveat either: it was saved,
+     durably, by the tool that produced it. Filtered before any project logic. */
+  const collectedDrafts = args.collectedDrafts.filter((d) => !d.authoringDocId);
   if (!orgId || !threadId || collectedDrafts.length === 0) {
     return;
   }
@@ -245,6 +274,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     collectedProvenance,
     collectedNavigation,
     collectedSurfaceActions,
+    collectedDemoStarts,
     collectedDrafts,
     messages,
     model,
@@ -293,6 +323,12 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // transcript record and the re-run affordance.)
     if (collectedSurfaceActions && collectedSurfaceActions.length > 0) {
       executedActions = [...executedActions, ...toSurfaceActionChips(collectedSurfaceActions)];
+    }
+
+    // Demonstration starts — a script fetched without Live Drive becomes the
+    // "Start demonstration" chip; the same offered-not-performed contract.
+    if (collectedDemoStarts && collectedDemoStarts.length > 0) {
+      executedActions = [...executedActions, ...toDemoStartChips(collectedDemoStarts)];
     }
 
     // Command executor — execute operational commands (create project, artifact, task, etc.)

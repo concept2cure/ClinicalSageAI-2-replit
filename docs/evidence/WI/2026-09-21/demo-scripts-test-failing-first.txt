@@ -1,0 +1,60 @@
+
+- Expected
++ Received
+
+- []
++ [
++   "training-orientation stop 10: act 'cmc.open-tab' → cmc",
++   "training-orientation stop 14: act 'intelligence.open-group' → global-ri",
++   "training-submission-day stop 12: act 'nda-cockpit.open-tab' → nda-cockpit",
++   "sales-flagship stop 10: act 'deep-research.open-tab' → deep-research",
++   "sales-flagship stop 14: act 'nda-cockpit.open-tab' → nda-cockpit",
++ ]
+
+ ❯ shared/navigation/__tests__/demo-scripts.test.ts:173:41
+    171|       });
+    172|     }
+    173|     expect(outside, outside.join('\n')).toEqual([]);
+       |                                         ^
+    174|   });
+    175|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > the orientation walks all six launch apps and ends at the audit trail
+AssertionError: training-orientation never reaches the Submission Readiness app: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ shared/navigation/__tests__/demo-scripts.test.ts:183:9
+    181|         surfaces.some((s) => s !== null && app.surfaces.includes(s)),
+    182|         `training-orientation never reaches the ${app.label} app`,
+    183|       ).toBe(true);
+       |         ^
+    184|     }
+    185|     expect(surfaces.includes('audit-trail')).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  shared/navigation/__tests__/demo-scripts.test.ts > the Live Drive scripts stay inside the launch catalog > submission day runs Vault → Authoring → Submission Center → Readiness → Part 11
+AssertionError: expected -1 to be greater than or equal to 0
+ ❯ shared/navigation/__tests__/demo-scripts.test.ts:199:26
+    197|     const order = surfaces.map(appOf).filter((v, i, arr) => arr.indexO…
+    198|     const idx = (app: string) => order.indexOf(app);
+    199|     expect(idx('vault')).toBeGreaterThanOrEqual(0);
+       |                          ^
+    200|     expect(idx('authoring')).toBeGreaterThan(idx('vault'));
+    201|     expect(idx('submission-center')).toBeGreaterThan(idx('authoring'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 11 passed (15)
+   Start at  17:36:01
+   Duration  560ms (transform 284ms, setup 82ms, import 250ms, tests 31ms, environment 0ms)
+

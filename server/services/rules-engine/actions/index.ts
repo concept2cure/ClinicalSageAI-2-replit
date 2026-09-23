@@ -46,10 +46,28 @@ export class CreateTaskHandler implements ActionHandler {
         // every task the user had EVER been assigned: whoever had the longest
         // history looked busiest, and finishing work never made you eligible
         // again. Archived tasks were counted too.
+        // 2026-09-18: this joined `user_roles` and filtered `u.organization_id`.
+        // NEITHER EXISTS. user_roles has no Drizzle model and no CREATE in
+        // either migration lineage — executed against a provisioned database it
+        // returns `relation "user_roles" does not exist` — and `users` carries
+        // only default_organization_id. PostgreSQL rejects both at plan time, so
+        // every create_task action with assignToRole failed, 100% of the time.
+        // Reachable: server/routes/project-rules.ts:531 ships a template using
+        // assignToRole: 'qa_reviewer'.
+        //
+        // The note at the escalation statement below already said where the real
+        // data is — "Org membership lives in `organization_users` … which is
+        // also where the role actually is" — and that statement was fixed. This
+        // one, with the same two faults, was not. It is now.
+        //
+        // NOT provisioning user_roles: server/db/ensureCoreTables.ts:51-56
+        // records it and its cohort as deliberately absent. Creating it would
+        // contradict that decision; querying the table that holds the data is
+        // the fix.
         const assignee = await this.pool.query(
           `SELECT u.id FROM users u
-           JOIN user_roles ur ON u.id = ur.user_id
-           WHERE ur.role = $1 AND u.organization_id = $2
+           JOIN organization_users ou ON u.id = ou.user_id
+           WHERE ou.role = $1 AND ou.organization_id = $2
            ORDER BY (SELECT COUNT(*) FROM unified_tasks
                       WHERE assignee_id = u.id
                         AND deleted_at IS NULL

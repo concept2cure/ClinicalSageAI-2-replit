@@ -557,8 +557,46 @@ describe.skipIf(!fsSync.existsSync(path.resolve(TEMPLATE_DIR, t.file)))(
       else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
     });
 
-    it('writes every mapped governed value at its path, and names any governed fact this form has no box for', async () => {
+    /*
+     * SPLIT FROM THE ORIGINAL SINGLE CASE. It asserted two claims through one
+     * fixture: (1) all 20 mapped governed values reach their SOM paths, and
+     * (2) this fixture produces a form. `fullInputs()` names a DECLARING ENTITY
+     * different from the applicant, and claim (2) is now false for it — the FDA
+     * form derives the Declaration of Conformity company from the applicant
+     * block, so a filing that declares a second entity cannot be produced
+     * honestly and `fillEstarSubmission` refuses it (the case immediately
+     * below, and estar-declaration-entity.test.ts). Claim (1) is unchanged and
+     * still covers all 20 keys; it is simply made on the configuration of the
+     * same fixture that the FDA form can actually carry.
+     */
+    const filable = () => {
+      const inputs = fullInputs();
+      inputs.registration!.declarationCompanyName = FULL_PROJECTION.applicantCompanyName[0];
+      return inputs;
+    };
+    /** FULL_PROJECTION with the one value that had to change, and its home unchanged. */
+    const FILABLE_PROJECTION: Record<string, [string, string]> = {
+      ...FULL_PROJECTION,
+      declarationCompanyName: [
+        FULL_PROJECTION.applicantCompanyName[0],
+        FULL_PROJECTION.declarationCompanyName[1],
+      ],
+    };
+
+    it('refuses the fill when the registration declares an entity that is not the applicant', async () => {
+      // The DoC cell is rebuilt from the applicant block, so this filing would
+      // attest in Acme Devices' name however carefully we wrote the other one.
       const governed = projectEstarAdministrativeData(fullInputs());
+      const resolved = resolveOfficialEstarFields({ fieldMap: MAP, governed, honourRequestOverGoverned: false });
+      const r = await fillEstarSubmission({ type: '510k', variant: t.variant, data: resolved.data });
+      expect(r.filled).toBe(false);
+      expect(r.pdfBytes).toBeUndefined();
+      expect(r.blockers.join(' ')).toContain('Declaring Entity GmbH');
+      expect(r.blockers.join(' ')).toContain('Acme Devices');
+    });
+
+    it('writes every mapped governed value at its path, and names any governed fact this form has no box for', async () => {
+      const governed = projectEstarAdministrativeData(filable());
       // The projection is per PROGRAM, not per template: it carries every fact on file.
       for (const key of t.unmappedGoverned) expect(governed.values[key], `${key} is on file`).toBeTruthy();
       const resolved = resolveOfficialEstarFields({
@@ -574,10 +612,15 @@ describe.skipIf(!fsSync.existsSync(path.resolve(TEMPLATE_DIR, t.file)))(
 
       const paths = Object.values(MAP).map((s) => s.xfaSomPath!);
       const back = await readXfaDatasetsValues(r.pdfBytes!, paths);
-      for (const [key, [value]] of Object.entries(FULL_PROJECTION)) {
+      for (const [key, [value]] of Object.entries(FILABLE_PROJECTION)) {
         if (!(key in MAP)) continue; // this form has no box for it — asserted below, not skipped silently
         expect(back[MAP[key].xfaSomPath!], `${key} @ ${MAP[key].xfaSomPath}`).toBe(value);
       }
+      // The DoC name still comes off the registration row, not the workspace —
+      // the claim the differing string used to stand in for, asserted directly.
+      expect(resolved.fields.find((f) => f.key === 'declarationCompanyName')!.source).toBe(
+        'estar_registrations.declaration_company_name',
+      );
       // The governed values, not the colliding request values, are in the form.
       expect(back[MAP.deviceTradeName.xfaSomPath!]).toBe('AcuSense CGM System');
       expect(back[MAP.deviceCommonName.xfaSomPath!]).toBe('Continuous glucose monitor');
@@ -592,7 +635,7 @@ describe.skipIf(!fsSync.existsSync(path.resolve(TEMPLATE_DIR, t.file)))(
       // one advisory per such key, naming the key, its value and its home.
       expect(fieldReport.advisories).toHaveLength(t.unmappedGoverned.length);
       for (const key of t.unmappedGoverned) {
-        const [value, home] = FULL_PROJECTION[key];
+        const [value, home] = FILABLE_PROJECTION[key];
         const advisory = fieldReport.advisories.find((a) => a.includes(key));
         expect(advisory, `an advisory names ${key}`).toBeTruthy();
         expect(advisory).toContain(value);

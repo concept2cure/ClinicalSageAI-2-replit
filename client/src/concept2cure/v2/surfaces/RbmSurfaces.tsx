@@ -3,6 +3,7 @@
  * the AnA resolver + dock, and the cross-surface action store.
  * Sub-surfaces are in RbmSurfacesA (1-5) and RbmSurfacesB (6-10).
  */
+import { AnaActionChip } from '../AnaActionChips';
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { SignoffList } from '../SignoffList';
@@ -13,6 +14,7 @@ import { useAgentActivity } from '../useAgentActivity';
 import { useWorkDockVisible } from '../workDock';
 import { shellProgramName } from '../shellProject';
 import { RBM_VOCAB, rbmBand, kriStatusOf, type RbmNavItem } from '../fixtures/rbm-data';
+import { useDialog } from '../useDialog';
 import '../styles/rbm-v2.css';
 
 /* Re-export surfaces so Rbm.tsx imports from one place */
@@ -59,7 +61,7 @@ export function RiskMatrix({ items, sel, onSel }: { items: { l: number; i: numbe
           const on = sel && sel.l === c.l && sel.i === c.i;
           return (
             <button key={`${c.l}-${c.i}`} className="rbm-mx-cell" data-band={c.band} data-on={on || undefined} data-empty={c.n === 0 || undefined}
-              title={`Likelihood ${c.l} x impact ${c.i} = ${c.l * c.i} (${c.band}) -- ${c.n} item${c.n === 1 ? '' : 's'}`}
+              title={`Likelihood ${c.l} x impact ${c.i} = ${c.l * c.i} (${c.band}) — ${c.n} item${c.n === 1 ? '' : 's'}`}
               onClick={() => onSel(on ? null : { l: c.l, i: c.i })}>
               <span className="rbm-mx-n">{c.n || ''}</span><span className="rbm-mx-s">{c.l * c.i}</span>
             </button>
@@ -104,7 +106,7 @@ export function ThresholdGauge({ current, secondary, threshold, unit }: { curren
         <div className="rbm-gauge-tick" style={{ left: `${pc(secondary)}%` }} title={`Secondary (early warning) ${secondary}${unit}`} />
         <div className="rbm-gauge-tick hard" style={{ left: `${pc(threshold)}%` }} title={`Primary threshold ${threshold}${unit}`} />
       </div>
-      <div className="rbm-gauge-lbl"><span>{current}{unit}</span><span className="mut">warn {secondary}{unit} -- limit {threshold}{unit}</span></div>
+      <div className="rbm-gauge-lbl"><span>{current}{unit}</span><span className="mut">warn {secondary}{unit} — limit {threshold}{unit}</span></div>
     </div>
   );
 }
@@ -176,9 +178,20 @@ export function RbmFormModal({ title, intro, fields, initial, submitLabel, busy,
   const set = (k: string, val: string) => setV(s => ({ ...s, [k]: val }));
   const missing = fields.some(f => !f.optional && (v[f.key] === '' || v[f.key] == null));
   const inputType = (t: string) => (t === 'number' ? 'number' : t === 'date' ? 'date' : 'text');
+  /* Escape + focus-on-open + focus-return, and the dialog semantics moved from
+     the scrim onto the panel they describe. */
+  const dialogRef = useDialog(onCancel);
+
   return (
-    <div className="rbm-modal-scrim" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="rbm-modal">
+    <div className="rbm-modal-scrim">
+      <div
+        className="rbm-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
+        ref={dialogRef}
+      >
         <div className="rbm-modal-h">{I.penLine}<span>{title}</span></div>
         {intro && <div className="rbm-modal-what">{intro}</div>}
         {fields.map(f => (
@@ -223,11 +236,22 @@ export function GovernedApprovalDialog({ what, meaning, onCancel, onSigned }: {
     const e = await onSigned({ reason: reason.trim(), password: pw, mfaToken: otp });
     if (e) { setErr(e); setBusy(false); }
   };
+  /* The e-signature panel: it had the role but no Escape and no focus hand-off,
+     so a keyboard user could reach the approval ceremony and not leave it. */
+  const dialogRef = useDialog(onCancel);
+
   return (
-    <div className="rbm-modal-scrim" role="dialog" aria-modal="true" aria-label={`Approve ${what}`}>
-      <div className="rbm-modal">
+    <div className="rbm-modal-scrim">
+      <div
+        className="rbm-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Approve ${what}`}
+        tabIndex={-1}
+        ref={dialogRef}
+      >
         <div className="rbm-modal-h">{I.lock}<span>Approval requires e-signature</span></div>
-        <div className="rbm-modal-what"><b>{what}</b> -- status will move to <b>active</b>. {meaning}</div>
+        <div className="rbm-modal-what"><b>{what}</b> — status will move to <b>active</b>. {meaning}</div>
         <label className="rbm-field"><span>Reason for change</span>
           <textarea rows={2} value={reason} onChange={e => setReason(e.target.value)} placeholder="State why this version is being approved" /></label>
         <div className="rbm-field-row">
@@ -272,7 +296,15 @@ function RbmSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
   );
 }
 
-function RbmAnaMsg({ m }: { m: RbmAnaMessage }) {
+function RbmAnaMsg({
+  m,
+  onNav,
+  onStartDemo,
+}: {
+  m: RbmAnaMessage;
+  onNav?: (id: string) => void;
+  onStartDemo?: (demoId: string, title: string) => void;
+}) {
   if (m.role === 'user') return <div className="rbm-ana-user">{m.text}</div>;
   return (
     <div className="rbm-ana-ai">
@@ -280,17 +312,24 @@ function RbmAnaMsg({ m }: { m: RbmAnaMessage }) {
       {m.text && <div className="rbm-ana-text">{m.text}</div>}
       {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
         <div className="rbm-ana-chips">
-          {m.executedActions.map((a, i) => (
-            <span
-              key={i}
-              className="rbm-chip"
-              data-tone={a.error ? 'err' : a.executed ? 'ok' : 'ai'}
-              title={a.error || a.label}
-            >
-              {(I as Record<string, React.ReactNode>)[a.error ? 'shieldAlert' : a.executed ? 'check' : 'zap']}
-              {a.label}
-            </span>
-          ))}
+          {m.executedActions.map((a, i) =>
+            onNav &&
+            ((a.actionType === 'navigate' && a.targetId) ||
+              (a.actionType === 'surface_action' && a.actionId) ||
+              (a.actionType === 'start_demo' && a.demoId && onStartDemo)) ? (
+              <AnaActionChip key={i} action={a} onNav={onNav} onStartDemo={onStartDemo} />
+            ) : (
+              <span
+                key={i}
+                className="rbm-chip"
+                data-tone={a.error ? 'err' : a.executed ? 'ok' : 'ai'}
+                title={a.error || a.label}
+              >
+                {(I as Record<string, React.ReactNode>)[a.error ? 'shieldAlert' : a.executed ? 'check' : 'zap']}
+                {a.label}
+              </span>
+            ),
+          )}
         </div>
       )}
       {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (
@@ -309,10 +348,13 @@ export interface RbmAnaWork {
   pendingSteers: string[];
 }
 
-export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
+export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work, onNav, onStartDemo }: {
   nav: RbmNavItem; study: string; msgs: RbmAnaMessage[];
   onAsk: (t: string) => void; onClose: () => void;
   work?: RbmAnaWork;
+  /** The shell's navigation, so AnA's navigation and screen-action chips work. */
+  onNav?: (id: string) => void;
+  onStartDemo?: (demoId: string, title: string) => void;
 }) {
   const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
@@ -340,7 +382,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
               {I.activity} AnA at work
             </button>
           )}
-          <button className="tb-btn" onClick={onClose} title="Collapse">{I.panelRight}</button>
+          <button className="tb-btn" onClick={onClose} title="Collapse" aria-label="Collapse">{I.panelRight}</button>
         </span>
       </div>
       {showWork && work && (
@@ -357,7 +399,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
       )}
       <div className="rbm-ana-ctx">
         <div className="rbm-ana-ctx-k">On this surface</div>
-        <div className="rbm-ana-ctx-v">{nav.label} -- tool <code>{nav.tool}</code></div>
+        <div className="rbm-ana-ctx-v">{nav.label} — tool <code>{nav.tool}</code></div>
         <div className="rbm-ana-ctx-note">{I.info}AnA runs the same 9 RBM tools the buttons run — ask, and results deep-link into the surface. Advisory outputs (plans, reports) are drafts until approved.</div>
       </div>
       <div className="rbm-ana-scroll" ref={endRef}>
@@ -365,7 +407,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
           <div className="rbm-ana-starters-l">Starters for {nav.label.toLowerCase()}</div>
           {nav.starters.map((s, i) => <button key={i} className="rbm-starter" onClick={() => ask(s)}>{s}</button>)}
         </div>
-        {msgs.map((m, i) => <RbmAnaMsg key={i} m={m} />)}
+        {msgs.map((m, i) => <RbmAnaMsg key={i} m={m} onNav={onNav} onStartDemo={onStartDemo} />)}
       </div>
       <div className="rbm-ana-composer">
         <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') ask(draft.trim()); }} aria-label="Ask AnA about this study" placeholder={`Ask AnA about ${study}...`} />

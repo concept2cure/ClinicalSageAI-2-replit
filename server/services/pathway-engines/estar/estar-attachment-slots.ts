@@ -19,13 +19,17 @@
  * a transcription error waiting for a deploy, and the template ships in the
  * image anyway, so a vendored copy could only ever drift from it.
  *
- * Measured 2026-09-07 on the vendored templates: 112 slots over 65 distinct
- * chapters (nIVD) and 140 over 77 (IVD) — the same counts
- * `docs/reports/device-market-readiness-2026-09-07.md` reached by counting the
- * `*AddAttachment*` controls, arrived at from the opposite direction. Fewer
- * chapters than slots because several controls file into one chapter: five
- * `ADAddAttachment0xx` all route to `/CHAPTER 1/CH1.04/`. The counts are pinned
- * in the tests so a template swap has to be noticed rather than absorbed.
+ * Measured 2026-09-07 on the vendored templates: 113 slots over 67 distinct
+ * chapters (nIVD) and 145 over 78 (IVD). Fewer chapters than slots because
+ * several controls file into one chapter: five `ADAddAttachment0xx` all route
+ * to `/CHAPTER 1/CH1.04/`. The counts are pinned in the tests so a template
+ * swap has to be noticed rather than absorbed.
+ *
+ * (This docblock read 112/65 and 140/77 until 2026-09-08 — the pre-correction
+ * numbers from `docs/reports/device-market-readiness-2026-09-07.md`, which the
+ * report itself later withdrew. The tests in this directory have pinned
+ * 113/67 and 145/78 since they were written; a comment disagreeing with the
+ * assertion beside it is how a withdrawn number survives.)
  *
  * @module server/services/pathway-engines/estar/estar-attachment-slots
  */
@@ -59,6 +63,30 @@ export interface EstarAttachmentSlot {
   chapters: string[];
   /** FDA's own description of what belongs here, or null when it sets none. */
   description: string | null;
+  /**
+   * FDA's own words when this control refuses a SECOND attachment, else null.
+   *
+   * Five controls per template — the same five on both — open their handler
+   * with
+   *
+   *     if (this.resolveNode(<the attachment row>).presence == "visible") {
+   *       xfa.host.messageBox("Only a single cover letter is needed.","",2,0);
+   *     } else { … the add path … }
+   *
+   * so the add path never runs and the second file is simply not attached.
+   * That is a real cardinality rule, and a machine-built eSTAR is the only
+   * thing that can violate it silently: an applicant gets the message box, a
+   * planner that never asks gets two tokens in the manifest for a slot the
+   * form holds one row for.
+   *
+   * READ, not transcribed — same rule as the chapters and the description
+   * beside it. `docs/reports/wo8-estar-attachments-2026-09-07.md` §4 recorded
+   * this as "exactly two controls per template (`CLAddAttachment110` and
+   * `ADAddAttachment803`)", which is wrong: it is five, identical on both
+   * templates, and the two named are just the two an eye lands on first. A
+   * transcribed table would have shipped that number.
+   */
+  singleAttachment: string | null;
 }
 
 /** `<<path|/CHAPTER n/CHn.nn/>>` — byte-for-byte what the template builds. */
@@ -71,16 +99,63 @@ export function attachmentManifestToken(attachmentPath: string, chapter: string)
 
 export type ResolvedAttachmentSlot =
   | { ok: true; chapter: string; description: string | null }
-  | { ok: false; reason: 'no_chapter' | 'ambiguous_chapter'; message: string };
+  | { ok: false; reason: 'no_chapter' | 'ambiguous_chapter' | 'undecided_condition'; message: string };
+
+/**
+ * A slot whose chapter the template chooses from a value IN THE DOCUMENT.
+ *
+ * Exactly one control per template, measured on both: the User Fee Form. Its
+ * handler, verbatim (comments stripped, XML escapes as they appear):
+ *
+ *     d[AttachmentIndex].description = "Administrative Documentation | User Fee Form";
+ *     if (ApplicationType.ATRadioButton100.rawValue == 2) {
+ *       Verification.AttachmentManifest.rawValue = … + "|/CHAPTER 1/CH1.04/" + "&gt;&gt;";
+ *     }
+ *     else {
+ *       Verification.AttachmentManifest.rawValue = … + "|/CHAPTER 1/CH1.09/" + "&gt;&gt;";
+ *     }
+ *
+ * so `2` is Health Canada and anything else is FDA. Both templates ship
+ * `root.ApplicationType.ATRadioButton100 = "1"`, which means the chapter is not
+ * a guess at all — it is the same computation FDA's own script performs on the
+ * same input, and reading it is how you get the answer the applicant's Acrobat
+ * would.
+ *
+ * TRANSCRIBED, AND ASSERTED against the templates: a test requires that every
+ * slot with more than one chapter has an entry here and that the entry's
+ * chapters are exactly the slot's. A future template that makes another control
+ * conditional therefore fails the test rather than silently resolving to
+ * whichever branch happens to appear first — which is precisely the defect this
+ * replaces.
+ */
+export const CONDITIONAL_ATTACHMENT_SLOTS: Record<
+  string,
+  { decidedBy: string; chapterWhen: Record<string, string>; otherwise: string; note: string }
+> = {
+  'root.AdministrativeDocumentation.ADAddAttachment910': {
+    decidedBy: 'root.ApplicationType.ATRadioButton100',
+    chapterWhen: { '2': '/CHAPTER 1/CH1.04/' },
+    otherwise: '/CHAPTER 1/CH1.09/',
+    note:
+      'if (ApplicationType.ATRadioButton100.rawValue == 2) → /CHAPTER 1/CH1.04/ (Health Canada), ' +
+      'else → /CHAPTER 1/CH1.09/ (FDA). Both templates ship the value "1".',
+  },
+};
 
 /**
  * The one chapter a slot routes to, or a refusal that says why there isn't one.
  *
- * A caller must never pick from `chapters` itself: the whole point of carrying
- * more than one is that choosing between them needs a fact this platform does
- * not hold.
+ * A caller must never pick from `chapters` itself. When a slot has more than
+ * one, the template decides between them from a value in the document, and
+ * `values` is how that value is supplied — read it with `readXfaDatasetsValues`
+ * from the same bytes being filled. Without it, the answer is refused rather
+ * than assumed: writing the wrong branch files a US MDUFA cover sheet under
+ * Health Canada's chapter, which is worse than not filing it.
  */
-export function resolveAttachmentSlot(slot: EstarAttachmentSlot): ResolvedAttachmentSlot {
+export function resolveAttachmentSlot(
+  slot: EstarAttachmentSlot,
+  values?: Record<string, string | null>,
+): ResolvedAttachmentSlot {
   if (slot.chapters.length === 1) {
     return { ok: true, chapter: slot.chapters[0], description: slot.description };
   }
@@ -91,14 +166,30 @@ export function resolveAttachmentSlot(slot: EstarAttachmentSlot): ResolvedAttach
       message: `${slot.somPath} writes no chapter, so nothing attached there would be routed.`,
     };
   }
-  return {
-    ok: false,
-    reason: 'ambiguous_chapter',
-    message:
-      `${slot.somPath} writes ${slot.chapters.join(' or ')} depending on ` +
-      'ApplicationType.ATRadioButton100 (2 = Health Canada, otherwise FDA), which this ' +
-      'platform does not write. Choosing one would file the document under the wrong agency.',
-  };
+
+  const conditional = CONDITIONAL_ATTACHMENT_SLOTS[slot.somPath];
+  if (!conditional) {
+    return {
+      ok: false,
+      reason: 'ambiguous_chapter',
+      message:
+        `${slot.somPath} writes ${slot.chapters.join(' or ')} and nothing here records what ` +
+        'chooses between them. Read the template and add it rather than picking a branch.',
+    };
+  }
+
+  const decided = values ? values[conditional.decidedBy] : undefined;
+  if (decided === undefined || decided === null || decided === '') {
+    return {
+      ok: false,
+      reason: 'undecided_condition',
+      message:
+        `${slot.somPath} routes by ${conditional.decidedBy}, which was not supplied. ` +
+        conditional.note,
+    };
+  }
+  const chapter = conditional.chapterWhen[decided] ?? conditional.otherwise;
+  return { ok: true, chapter, description: slot.description };
 }
 
 /**
@@ -127,6 +218,19 @@ const MANIFEST_APPEND =
 
 /** `d[…].description = "Administrative Documentation | Cover Letter"` */
 const DESCRIPTION = /\.description\s*=\s*"([^"]*)"/g;
+
+/**
+ * The one-attachment refusal: a `presence == "visible"` test on the control's
+ * own attachment row, whose THEN branch is a message box.
+ *
+ * Anchored on the presence test rather than on the message text, which differs
+ * per control ("Only a single cover letter is needed.", "Only one NSE'd 510(k)
+ * is required.", …) and would be a five-string transcription. Not anchored on
+ * `messageBox` alone either: every one of the 113/145 handlers opens with the
+ * signed-PDF message box, and matching that would call every slot single.
+ */
+const SINGLE_ATTACHMENT_REFUSAL =
+  /\.presence\s*==\s*"visible"\s*\)\s*\{\s*xfa\.host\.messageBox\(\s*"([^"]*)"/;
 
 /**
  * Remove JavaScript comments before reading a handler.
@@ -215,7 +319,14 @@ export async function listEstarAttachmentSlots(
       description = d[1] || null;
     }
 
-    slots.push({ somPath: region.somPath, field: region.field, chapters, description });
+    const single = SINGLE_ATTACHMENT_REFUSAL.exec(body);
+    slots.push({
+      somPath: region.somPath,
+      field: region.field,
+      chapters,
+      description,
+      singleAttachment: single ? single[1] : null,
+    });
   }
   return slots;
 }

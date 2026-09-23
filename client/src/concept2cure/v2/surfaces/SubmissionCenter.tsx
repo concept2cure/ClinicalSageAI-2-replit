@@ -667,7 +667,7 @@ export function SubmissionCenter({
         'Select a different submission from the portfolio picker',
         'Select the working sequence the build and validation workspaces act on',
         'Move a sequence through its non-governed lifecycle transitions',
-        'Freeze or dispatch a sequence (each requires a Part 11 e-signature and passes the dispatch gate)',
+        'Freeze or dispatch a sequence (each requires a Part 11 e-signature and a clear gate; a missing release signature never blocks a freeze)',
         'Open a tracked eSTAR device filing in the 510(k) surface',
       ],
     };
@@ -691,6 +691,7 @@ export function SubmissionCenter({
         {list.length > 0 && (
           <select
             className="sc-subpick"
+            aria-label="Submission to work on"
             value={sub?.id ?? ''}
             onChange={(e) => setSelSub(Number(e.target.value))}
           >
@@ -1170,7 +1171,9 @@ export function SubmissionCenter({
                               disabled={acting != null}
                               title={
                                 governed
-                                  ? 'Governed — Part 11 e-signature and a clear dispatch gate required'
+                                  ? to === 'frozen'
+                                    ? 'Governed — Part 11 e-signature and a clear freeze gate required. A missing release signature does not block a freeze.'
+                                    : 'Governed — Part 11 e-signature and a clear dispatch gate required'
                                   : 'Lifecycle transition — the server enforces which transitions are legal'
                               }
                               onClick={(e) => {

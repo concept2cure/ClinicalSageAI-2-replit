@@ -17,7 +17,6 @@ import express from 'express';
 import { CMC_SOURCE_TYPES } from '../../services/module3Composer';
 import { z } from 'zod';
 import { autoDraftModule3 } from '../../services/cmc/auto-draft-composer';
-import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 
 const router = express.Router();
 
@@ -34,9 +33,23 @@ const extractedDocumentSchema = z.object({
 const autoDraftSchema = z.object({
   documents: z.array(extractedDocumentSchema).min(1),
   /**
-   * When true, each drafted section that has source coverage is written through
-   * to a governed artifact via the existing convergence bridge (audited).
-   * Defaults to false so the endpoint is safe to call as a dry-run/preview.
+   * REMOVED 2026-09-08 — accepted, and refused.
+   *
+   * `persist: true` walked caller-supplied JSON through the convergence bridge,
+   * which UPDATEs the section's governed artifact with `content = $1,
+   * version = version + 1` and metadata stamped `compiledFrom: 'module3-os'`
+   * with `sourceObjectIds` taken from that same request body. No canonical
+   * source object, no section row, no lineage, no compile. So any authenticated
+   * caller in the org could overwrite an approved section's governed artifact
+   * with typed prose that claims to have been compiled from records that do not
+   * exist — through the endpoint whose own docstring calls the dry-run "safe".
+   *
+   * A governed artifact comes from the canonical spine or it does not exist:
+   * services/cmc/module3-compile.ts composes from cmc_source_objects, writes
+   * the section row, its lineage and its provenance event, and only then
+   * bridges. This endpoint is a PREVIEW of what uploads would draft — useful,
+   * and never a writer. The field is still accepted so an old caller gets a
+   * stated refusal rather than a silent no-op.
    */
   persist: z.boolean().optional().default(false),
 });
@@ -62,42 +75,20 @@ router.post('/auto-draft/:projectId', async (req, res) => {
     // 1. Bridge: extracted documents → CanonicalSource[] → composed Module 3.
     const { sections, coverage } = autoDraftModule3(data.documents);
 
-    // 2. Optionally write through to governed artifacts (reuses existing,
-    //    audited bridge — no new persistence logic here).
-    const persistedArtifacts: Array<{ sectionKey: string; artifactId: string; isNew: boolean }> = [];
-    const persistErrors: Array<{ sectionKey: string; error: string }> = [];
-
+    /* No write path. See the note on `persist` above: this endpoint composes a
+       PREVIEW from documents in the request body, and a preview may not become
+       a governed artifact — that is what the compile route is for, from
+       canonical sources with lineage and provenance. A caller that asks to
+       persist is told plainly, rather than being handed a success it did not
+       get. */
     if (data.persist) {
-      for (const section of sections) {
-        // Only persist sections that actually have source coverage.
-        if (section.lineage.length === 0) continue;
-        try {
-          const bridged = await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
-            narrativeDraft: section.narrativeDraft,
-            tables: section.tables,
-            completeness: section.completeness,
-            missingInputs: section.missingInputs,
-            lineage: section.lineage,
-          }, { createdById: Number((req as any).user?.id) || null });
-          if (bridged.bridged) {
-            persistedArtifacts.push({
-              sectionKey: section.sectionKey,
-              artifactId: bridged.artifactId,
-              isNew: bridged.isNew,
-            });
-          } else {
-            persistErrors.push({
-              sectionKey: section.sectionKey,
-              error: `${bridged.reason}: ${bridged.detail}`,
-            });
-          }
-        } catch (bridgeErr) {
-          persistErrors.push({
-            sectionKey: section.sectionKey,
-            error: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
-          });
-        }
-      }
+      return res.status(400).json({
+        success: false,
+        error:
+          'This endpoint drafts a PREVIEW from the documents you sent; it cannot write a governed artifact. ' +
+          'Record the documents as canonical sources, then compile the project ' +
+          '(POST /api/cmc/module3-os/compile/:projectId), which writes each section with its lineage and provenance.',
+      });
     }
 
     return res.json({
@@ -114,9 +105,11 @@ router.post('/auto-draft/:projectId', async (req, res) => {
           tables: s.tables,
           sourceCount: s.lineage.length,
         })),
-        persisted: data.persist,
-        persistedArtifacts,
-        persistErrors,
+        /* Always false: this endpoint does not persist. Kept in the shape so an
+           existing reader sees the answer rather than an absent field. */
+        persisted: false,
+        persistedArtifacts: [] as Array<{ sectionKey: string; artifactId: string; isNew: boolean }>,
+        persistErrors: [] as Array<{ sectionKey: string; error: string }>,
       },
     });
   } catch (error) {

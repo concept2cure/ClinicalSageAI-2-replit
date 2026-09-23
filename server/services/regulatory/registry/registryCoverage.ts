@@ -42,6 +42,7 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join as joinPath } from 'node:path';
 import { getOfficialXfaFieldMap } from '../../ind-forms/official-field-maps.js';
+import { indFormTemplatesDir } from '../../ind-forms/template-locations.js';
 import type {
   RegulatoryApplicationType,
   Region,
@@ -179,9 +180,17 @@ function taskTier(entry: RegulatoryApplicationType): BlueprintTier {
 /**
  * Whether the official FDA edition of a form is installed and reviewed for
  * filling. Reads the sidecar manifest the fill service gates on
- * (`templates/forms/acroforms/<formId>.pdf.manifest.json`, or
- * IND_FORM_TEMPLATES_DIR) — the same file, so this report and the renderer
- * cannot disagree. Absent or unreviewed ⇒ false. Never throws.
+ * (`<templates dir>/<formId>.pdf.manifest.json`) through the fill service's OWN
+ * resolver, `indFormTemplatesDir()` — literally the same file, so this report
+ * and the renderer cannot disagree. Absent or unreviewed ⇒ false. Never throws.
+ *
+ * That resolver is imported, not reproduced. This module used to compute
+ * `process.cwd() + templates/forms/acroforms` itself. While the renderer did the
+ * same, the duplication was invisible: off-root both missed and both said "not
+ * installed". When the renderer was fixed to resolve from its own module
+ * location and this copy was not, the two disagreed in exactly the way the
+ * sentence above says they cannot — off-root this report denied the official
+ * 1571/356h while the renderer was filling them.
  *
  * ── Why the coverage report has to read it ───────────────────────────────────
  * `implementationStatus: 'full'` describes the BUILDER (field builders, QC,
@@ -213,7 +222,7 @@ type FormManifest = {
 
 /** Read a form's installed-asset manifest, or null when none is installed. */
 function readFormManifest(formId: string): { dir: string; manifest: FormManifest } | null {
-  const dir = process.env.IND_FORM_TEMPLATES_DIR || joinPath(process.cwd(), 'templates', 'forms', 'acroforms');
+  const dir = indFormTemplatesDir();
   try {
     const raw = readFileSync(joinPath(dir, `${formId}.pdf.manifest.json`), 'utf8');
     return { dir, manifest: JSON.parse(raw) as FormManifest };

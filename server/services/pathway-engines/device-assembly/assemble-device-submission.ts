@@ -117,7 +117,10 @@ export function assembleDeviceSubmission(
   const estar: DeviceSectionReadiness =
     input.pathway === 'pma'
       ? mapToPma({ leaves: input.leaves, submissionType: input.pmaSubmissionType })
-      : mapToEstar({ leaves: input.leaves, type: input.pathway, flags: input.deviceFlags });
+      /* The variant reaches the slot registry, not only the template check
+         below. Without it an IVD 510(k) was scored against the nIVD slot set
+         and never asked for analytical performance. */
+      : mapToEstar({ leaves: input.leaves, type: input.pathway, flags: input.deviceFlags, variant: input.variant === 'ivd' ? 'ivd' : 'device' });
 
   const template = assessEstarTemplateReadiness({
     type: input.pathway,

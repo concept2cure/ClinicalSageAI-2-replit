@@ -1,0 +1,30 @@
+orphan files (on no applier): 254 of 552
+  → create a table the provisioned schema DOES NOT have: 44
+  → add a column to an EXISTING table that is absent:     8
+
+== columns missing from tables that exist (highest signal) ==
+  db/migrations/102_load_all_templates.sql
+      organizations.template_count
+  db/migrations/20260224_ai_claims_verifier_flags.sql
+      ai_claims.verifier_flags
+  db/migrations/20260224_binder_evidence_source_types.sql
+      ivdr_binder_evidence.source_atom_id, ivdr_binder_evidence.source_retrieval_chunk_id, ivdr_binder_evidence.source_type
+  db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql
+      ivdr_packs.docx_sha256, ivdr_packs.docx_size_bytes, ivdr_packs.has_warnings, ivdr_packs.manifest_sha256, ivdr_packs.manifest_size_bytes, ivdr_packs.pdf_sha256, ivdr_packs.pdf_size_bytes, ivdr_packs.warnings_jsonb, ivdr_packs.zip_sha256, ivdr_packs.zip_size_bytes
+  db/migrations/20260325_ana_kernel_log_immutability_hashchain.sql
+      ana_kernel_decision_log.prev_hash
+  db/migrations/20260617_audit_events_hmac_seal.sql
+      audit_events.hmac_seal
+  db/migrations/20260905_gdpr_dsar_execution_evidence.sql
+      gdpr_data_subject_requests.execution_evidence
+  db/migrations/emergency_security_migration.sql
+      document_audit_trail.document_version_id, document_audit_trail.tenant_id, document_chunks.document_version_id, document_chunks.tenant_id
+
+== tables absent entirely (first 20) ==
+  db/migrations/020_new_process_wizard.sql: cmc_assignments, cmc_lineage, cmc_process_drafts
+  db/migrations/028_strategy_core.sql: strategy_audit, strategy_controls, strategy_cqas, strategy_p34
+  db/migrations/029_strategy_step2.sql: strategy_changes, strategy_pat, strategy_signoffs
+  db/migrations/047_quality_step6.sql: qc_digest_subscriptions, qc_import_jobs
+  db/migrations/048_quality_step7.sql: qc_auto_release_rules, qc_auto_release_status, qc_compliance_history, qc_predictions
+  db/migrations/049_quality_step8.sql: qc_gatekeeper_runs
+  db/migrations/068_regulatory_schema_alignment.sql: regulatory

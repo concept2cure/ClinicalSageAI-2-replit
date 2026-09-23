@@ -12,9 +12,11 @@
  * tamper-evident audit trail for every create / read / update / delete.
  */
 
+import { didNotRun, type VerificationOutcome } from '../lib/verification-outcome';
 import {
   TamperProofAuditLog,
   getTamperProofAuditLog,
+  AuditConfigurationError,
   AuditEventType,
 } from '../lib/tamper-proof-audit';
 import { createScopedLogger } from '../utils/logger';
@@ -167,6 +169,20 @@ async function ensureInitialized(): Promise<TamperProofAuditLog | null> {
     await initPromise;
     return tamperProofLog;
   } catch (error) {
+    /* A configuration REFUSAL is not a transient failure, and this catch used
+       to treat them the same. The constructor throws when AUDIT_HMAC_SECRET is
+       absent in production, with a message ending "Refusing to start." — and
+       then this line caught it, logged one warning, and returned null, so the
+       process started anyway and wrote its 21 CFR Part 11 records to the
+       console. A reader of that throw would have believed production was
+       protected by it.
+
+       Everything else still falls back, deliberately: the database can be
+       briefly unreachable and that must not take the process down. Only the
+       error that cannot improve on retry is allowed through. */
+    if (error instanceof AuditConfigurationError && process.env.NODE_ENV === 'production') {
+      throw error;
+    }
     logger.warn('Tamper-proof audit unavailable — fallback to console', error);
     return null;
   }
@@ -190,6 +206,19 @@ async function ensureInitialized(): Promise<TamperProofAuditLog | null> {
  * here by design and must use `writeChainedAuditRow` on their own transaction —
  * see its note below.
  */
+/**
+ * The outcome of `verifyChain`: it ran — and the chain is valid or not — or it
+ * did not run. Callers must branch on `ran`; none may read `valid` off the
+ * `ran: false` arm, because it is not there.
+ */
+export type ChainVerification = VerificationOutcome<{
+  valid: boolean;
+  entriesVerified: number;
+  firstInvalidEntry?: number;
+  invalidReason?: string;
+  verifiedAt: string;
+}>;
+
 export interface AuditWriteResult {
   /** True when at least one durable store accepted the row. */
   persisted: boolean;
@@ -244,12 +273,16 @@ export async function writeChainedAuditRow(
   const newValues = entry.details ?? entry.metadata ?? null;
   const target = `${entry.resourceType ?? entry.tableName ?? 'unknown'}:${recordId}`;
   const payloadHash = hashPayload(newValues ?? { action: entry.action, target });
+  // The chain is per tenant (services/audit/chain.ts): the position is taken
+  // for the tenant_id this INSERT writes, and the audit_logs trigger refuses
+  // the row if the two ever differ.
   const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
     action: entry.action,
     actor_id: actorId,
     target,
     payload_hash: payloadHash,
     occurred_at: occurredAt,
+    tenant_id: tenantId,
   });
   await client.query(
     `INSERT INTO audit_logs
@@ -459,6 +492,36 @@ class AuditService {
    *
    * Reads from the Drizzle `audit_logs` table first (fast, indexed).
    * Falls back to TamperProofAuditLog search if Drizzle is unavailable.
+   *
+   * ── THE FALLBACK CANNOT BE TENANT-SCOPED, SO IT REFUSES ─────────────────────
+   * `audit.tamper_proof_log` has no tenant or organization column
+   * (db/migrations/20260813_audit_tamper_proof_log.sql:64 — id, sequence_number,
+   * event_type, actor, resource, action, details, the hash chain, client
+   * context, and nothing else). `TamperProofAuditLog.search` therefore has no
+   * tenant parameter to accept, and its query is
+   * `SELECT * FROM audit.tamper_proof_log WHERE 1=1` plus whatever optional
+   * filters it was given. The table is in schema `audit`, and both tenant
+   * sweeps filter `WHERE c.table_schema = 'public'`, so no RLS policy covers it
+   * either.
+   *
+   * Before 2026-09-10 this method passed userId/resourceType/fromDate/toDate to
+   * that fallback and dropped `tenantId` on the floor. The shape of the bug
+   * matters more than its reachability: a caller asked for one tenant's Part 11
+   * audit trail, the primary path threw, and the `catch` below fell through to a
+   * path that answered the question for EVERY tenant — and returned an array, so
+   * the caller could not tell. An error widening a result set is worse than an
+   * error surfacing, and it is the exact inverse of this repo's "an error is
+   * never rendered as an empty result" rule.
+   *
+   * Nothing reaches this today: `queryAuditEvents` in
+   * server/services/audit/auditLogger.ts is this method's only caller, and
+   * nothing imports `queryAuditEvents`. That is why this is a refusal and not an
+   * incident. The first route that wires it up inherits the behaviour, so the
+   * refusal is here rather than in a comment.
+   *
+   * Giving `audit.tamper_proof_log` a tenant column and a policy is WO-13.
+   * Until then a tenant-scoped read has no correct answer from the fallback,
+   * and the honest response to "no correct answer" is to say so.
    */
   async getAuditLog(filters?: {
     userId?: string | number;
@@ -518,6 +581,19 @@ class AuditService {
     }
 
     // --- Fallback: TamperProofAuditLog ---
+    // Refuse rather than answer a tenant-scoped question with every tenant's
+    // rows. See the header: this store has no tenant column to filter on.
+    const scopeRequested = filters?.tenantId ?? filters?.organizationId;
+    if (scopeRequested != null) {
+      logger.error(
+        'getAuditLog: durable audit_logs query unavailable and the tamper-proof ' +
+          'fallback cannot be tenant-scoped; refusing rather than returning ' +
+          'cross-tenant audit rows',
+        { tenantId: scopeRequested },
+      );
+      throw new Error('AUDIT_LOG_TENANT_SCOPE_UNAVAILABLE');
+    }
+
     try {
       const tpLog = await ensureInitialized();
       if (tpLog) {
@@ -538,18 +614,40 @@ class AuditService {
 
   /**
    * Verify the integrity of the tamper-proof audit chain.
-   * Returns verification result with pass/fail and detail.
+   *
+   * Three outcomes, not two (WO-16B finding 12). This used to return
+   * `{ valid: false, entriesVerified: 0 }` when the store had not initialised
+   * or the query threw — the same value as a chain that had genuinely broken —
+   * and /api/decision-lineage/verify-chain rendered that as INTEGRITY_FAILURE /
+   * NON_COMPLIANT against four named regulations. A verifier that could not
+   * run has no verdict to give; it says so with `ran: false` and a reason the
+   * operator can act on.
    */
-  async verifyChain(): Promise<{ valid: boolean; entriesVerified: number }> {
+  async verifyChain(): Promise<ChainVerification> {
+    let tpLog: TamperProofAuditLog | null;
     try {
-      const tpLog = await ensureInitialized();
-      if (tpLog) {
-        return await tpLog.verifyChain();
-      }
+      tpLog = await ensureInitialized();
     } catch (error) {
-      logger.error('Audit chain verification failed', error);
+      logger.error('Audit chain verification could not run: store initialisation failed', error);
+      return didNotRun(error);
     }
-    return { valid: false, entriesVerified: 0 };
+    if (!tpLog) {
+      return { ran: false, reason: 'audit store not initialised: no database pool available' };
+    }
+    try {
+      const result = await tpLog.verifyChain();
+      return {
+        ran: true,
+        valid: result.valid,
+        entriesVerified: result.entriesVerified,
+        firstInvalidEntry: result.firstInvalidEntry,
+        invalidReason: result.invalidReason,
+        verifiedAt: result.verifiedAt.toISOString(),
+      };
+    } catch (error) {
+      logger.error('Audit chain verification could not run', error);
+      return didNotRun(error);
+    }
   }
 }
 

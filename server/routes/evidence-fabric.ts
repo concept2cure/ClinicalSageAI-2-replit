@@ -100,7 +100,6 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     console.error('[evidence-fabric] program access check failed:', err.message);
     return res.status(500).json({
       error: 'Program access check failed',
-      detail: err.message,
     });
   }
 }
@@ -173,7 +172,6 @@ router.get(
       console.error('[evidence-fabric] health-summary proxy error:', err.message);
       res.status(502).json({
         error: 'Shadow service unreachable',
-        detail: err.message,
       });
     }
   }
@@ -206,7 +204,6 @@ router.post(
       console.error('[evidence-fabric] contradiction-scans proxy error:', err.message);
       res.status(502).json({
         error: 'Shadow service unreachable',
-        detail: err.message,
       });
     }
   }
@@ -235,7 +232,6 @@ router.get(
       console.error('[evidence-fabric] list contradiction-scans proxy error:', err.message);
       res.status(502).json({
         error: 'Shadow service unreachable',
-        detail: err.message,
       });
     }
   }
@@ -263,7 +259,6 @@ router.get(
       console.error('[evidence-fabric] get scan proxy error:', err.message);
       res.status(502).json({
         error: 'Shadow service unreachable',
-        detail: err.message,
       });
     }
   }
@@ -315,7 +310,6 @@ router.get(
       console.error('[evidence-fabric] defense-packet proxy error:', err.message);
       res.status(502).json({
         error: 'Shadow service unreachable',
-        detail: err.message,
       });
     }
   }

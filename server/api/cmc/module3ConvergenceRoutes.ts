@@ -16,7 +16,7 @@ import {
   classifyAndMapArtifactToSource,
   bridgeCompileToArtifact,
 } from '../../services/module3-convergence-service';
-import { impactedSectionsForSourceType, CmcSourceType } from '../../services/module3Composer';
+import { CmcSourceType } from '../../services/module3Composer';
 /* The canonical Module 3 composition and persistence. Core sections + emittable
    3.2.A appendices + 3.2.R for the recorded region; one row, one lineage
    rewrite and one provenance event per section. */

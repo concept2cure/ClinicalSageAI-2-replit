@@ -1251,7 +1251,11 @@ describe('AnA RI Context Enrichment', () => {
   // The Claude Design bundle does not surface a slash-command menu in the
   // chat composer, so there is no frontend list to parse. The backend-side
   // test below still guarantees each registered command has a handler.
-  it.skip('frontend/backend slash-command parity — removed with AnaPersistentPanel', () => {});
+  // REMOVED 2026-09-10 (WO-8): an `it.skip` with an EMPTY BODY, named
+  // 'frontend/backend slash-command parity — removed with AnaPersistentPanel'.
+  // It asserted nothing, so un-skipping it would have passed while testing
+  // nothing, and AnaPersistentPanel no longer exists. It counted toward the
+  // skipped-test backlog while being neither a test nor a skip of one.
 
   it('ensures every backend slash command has a handler (no slash_unhandled)', async () => {
     for (const command of SUPPORTED_SLASH_COMMANDS) {
@@ -1279,9 +1283,14 @@ describe('AnA RI Persona — character & dissent', () => {
   it('gives AnA a distinct character (Who You Are)', () => {
     expect(prompt).toContain('## Who You Are');
     expect(prompt).toMatch(/Seasoned and unhurried/);
-    expect(prompt).toMatch(/Kind by default, never performative/);
-    expect(prompt).toMatch(/Warmer still when it is needed/);
     expect(prompt).toMatch(/Sharper when the stakes are real/);
+    // Kindness and warmth are defined ONCE, in ANA_PERSONALITY_CORE, which the
+    // assembled prompt composes right behind the core (WJ 2026-09-21: the
+    // duplicate "Kind by default" / "Warmer still" bullets were removed here).
+    expect(prompt).not.toMatch(/Kind by default, never performative/);
+    const assembled = buildAnaRISystemPrompt();
+    expect(assembled).toMatch(/\*\*Kind, always\.\*\*/);
+    expect(assembled).toMatch(/\*\*Warm, never performative\.\*\*/);
   });
 
   it('licenses polite, grounded pushback (Constructive Dissent)', () => {
@@ -1309,7 +1318,7 @@ describe('AnA RI Persona — character & dissent', () => {
     expect(prompt).toMatch(/When bad news has just landed/);
     expect(prompt).toMatch(/Empathy here is not warmth for its own sake/);
     // Empathy must not breach the voice floor.
-    const section = prompt.slice(prompt.indexOf('## Meet the human'), prompt.indexOf('## How to Communicate'));
+    const section = prompt.slice(prompt.indexOf('## Meet the human'), prompt.indexOf('## Register — chat, by default'));
     expect(section).not.toContain('!');
   });
 
@@ -1320,7 +1329,7 @@ describe('AnA RI Persona — character & dissent', () => {
   });
 
   it('stays inside the design-system voice (no emoji, no exclamation) in the new copy', () => {
-    const whoYouAre = prompt.slice(prompt.indexOf('## Who You Are'), prompt.indexOf('## How to Communicate'));
+    const whoYouAre = prompt.slice(prompt.indexOf('## Who You Are'), prompt.indexOf('## Register — chat, by default'));
     const dissent = prompt.slice(prompt.indexOf('## Constructive Dissent'), prompt.indexOf('## Your Expertise'));
     const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/u;
     for (const chunk of [whoYouAre, dissent]) {

@@ -239,3 +239,47 @@ describe('§3.2.A.2 — adventitious agents are not cleared over unexamined data
     expect(section.completeness).toBe(0);
   });
 });
+
+describe('§3.2.A.2 — the BIOLOGIC branch claims only what the register holds', () => {
+  it('does not assert viral clearance and cell-bank characterisation from a name alone', () => {
+    /* The two non-biologic branches were given fail-closed wording; this one
+       was not, and composeAppendices scores a section 100 unless the marker
+       appears. A drug substance row holding nothing but "Trastuzumab" produced
+       a 100%-complete section asserting a three-part control strategy,
+       in-process adventitious-agent testing, viral clearance steps and
+       cell-bank characterisation — approvable, exportable, filed. */
+    const section = a1Sibling([src('drug_substance', { name: 'Trastuzumab' })]);
+    expect(section.narrativeDraft).not.toMatch(/The control strategy combines/);
+    expect(section.narrativeDraft).not.toMatch(/Cell bank characterization, end-of-production/);
+    expect(section.narrativeDraft).toMatch(/NOT ESTABLISHED by this section/);
+    expect(section.completeness).toBe(0);
+    expect(section.missingInputs.length).toBeGreaterThan(0);
+  });
+
+  it('names each thing the register does not hold', () => {
+    const section = a1Sibling([
+      src('drug_substance', { name: 'BX-mab', biologicalOrigin: 'CHO cell culture', cellLine: 'CHO-K1' }),
+    ]);
+    expect(section.narrativeDraft).toContain('CHO cell culture');
+    expect(section.narrativeDraft).toMatch(/viral safety evaluation/i);
+    expect(section.narrativeDraft).toMatch(/TSE\/BSE risk assessment/i);
+    expect(section.narrativeDraft).toMatch(/NOT ESTABLISHED/);
+    expect(section.completeness).toBe(0);
+  });
+
+  it('is a complete section when the register holds the whole record', () => {
+    const section = a1Sibling([
+      src('drug_substance', {
+        name: 'BX-mab',
+        biologicalOrigin: 'CHO cell culture',
+        cellLine: 'CHO-K1 MCB lot MCB-01',
+        viralSafetyEvaluation: 'Two orthogonal clearance steps (low-pH hold, 20 nm filtration) validated to > 4 log10 per ICH Q5A(R2)',
+        tseStatus: 'No animal-derived raw materials in the process; media are chemically defined',
+      }),
+    ]);
+    expect(section.narrativeDraft).toContain('low-pH hold');
+    expect(section.narrativeDraft).not.toMatch(/NOT ESTABLISHED/);
+    expect(section.completeness).toBe(100);
+    expect(section.missingInputs).toEqual([]);
+  });
+});

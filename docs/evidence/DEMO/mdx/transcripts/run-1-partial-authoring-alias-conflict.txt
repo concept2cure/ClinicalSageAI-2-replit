@@ -1,0 +1,19 @@
+Signed in as jonmichaelpsmith@gmail.com (user 1, organisation 2) at http://localhost:5400
+
+=== seed: mdx ===
+  • Projects: program NeuroPanel-Dx 510(k) … ok — 82d3b729-87a1-4714-9a21-819b538683f3 (created, scaffold 36 sections)
+  • Vault: read the program data room (folders offered) … ok — 0 folders: (none exposed)
+  • Vault: Device Description and Principles of Operation … ok — 0bdf94f7-6f27-4803-8314-57a077744bb6 → k510 (ingested, 7824 bytes)
+  • Vault: Software Description and Level of Concern … ok — 89d0bfce-3ff3-42d3-a0f9-9fbb827a0637 → eng (ingested, 5970 bytes)
+  • Vault: Analytical Performance Study Report … ok — d0b35c47-b826-41e0-ae8c-b9e37253bd9c → k510 (ingested, 7682 bytes)
+  • Vault: Clinical Performance Study Report … ok — 121d2df3-ec99-4afb-9ad1-b0f31a0723d7 → cer (ingested, 7056 bytes)
+  • Vault: Risk Management File Summary (ISO 14971) … ok — 8a302d5a-6afa-4af0-89db-c97d663b9fc2 → eng (ingested, 5726 bytes)
+  • Vault: Labeling and Instructions for Use (Draft) … ok — 1b80ee68-61d1-46cd-b4b5-c26e25f5035b → udi (ingested, 7722 bytes)
+  • Vault: data room after filing … ok — documentCount=35
+  • Authoring: 510(k) Summary (sections per 21 CFR 807.92) … ok — 28f95d9a-a9c1-49da-8377-56d847a5d8e5 (created, 9 sections, 9 added)
+  • Authoring: comment on the 510(k) Summary, resolve it … ok — comment cb315bc0-e15a-44ed-86b8-8df55b7b7340 created and resolved
+  • Authoring: request review and submit the 510(k) Summary into its workflow … ok — review → oq-signer@validation.local; workflow submitted
+  • Authoring: freeze the 510(k) Summary (v1.0) … ok — frozen v1.0 (0fa2b0c972d5…)
+  • Authoring: e-sign the frozen 510(k) Summary as the second signer (APPROVER) … ok — signed by oq-signer@validation.local as APPROVER over freeze v1.0
+  • Authoring: Substantial Equivalence Discussion (draft, open reviewer comment) … FAILED
+✗ mdx: create authoring document Substantial Equivalence Discussion: HTTP 409 {"error":"DOCUMENT_ALIAS_CONFLICT","message":"c2c_documents doc_72de18631dd94ef49dfa9e4d73c5a224 is already recorded as a different document. Nothing was created."}

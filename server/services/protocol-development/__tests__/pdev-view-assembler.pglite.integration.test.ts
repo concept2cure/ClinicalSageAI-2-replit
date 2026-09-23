@@ -19,19 +19,19 @@ const pool = {
 };
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
 
-import { assembleOrgPdevDocs } from '../pdev-view-assembler';
+import { assembleOrgPdevDocs, assembleOnePdevDocFacets } from '../pdev-view-assembler';
 
 const ORG = 7;
 const OTHER = 9;
 
 // Minimal DDL — only the columns the assembler reads (mirrors the migrations/protocol_* set).
 const DDL = `
-CREATE TABLE protocol_documents (id serial PRIMARY KEY, organization_id int, protocol_kind text, protocol_number text, title text, design_type text, phase text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
-CREATE TABLE protocol_sections (id serial PRIMARY KEY, organization_id int, protocol_document_id int, section_key text, title text, content text, required boolean, status text, order_index int, deleted_at timestamptz);
+CREATE TABLE protocol_documents (id serial PRIMARY KEY, organization_id int, protocol_kind text, protocol_number text, title text, design_type text, phase text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz, sponsor text, principal_investigator text, study_design_id text, study_design_linked_at timestamptz, study_design_linked_by int);
+CREATE TABLE protocol_sections (id serial PRIMARY KEY, organization_id int, protocol_document_id int, section_key text, title text, content text, required boolean, status text, order_index int, deleted_at timestamptz, updated_at timestamptz DEFAULT now());
 CREATE TABLE protocol_objectives (id serial PRIMARY KEY, organization_id int, protocol_document_id int, objective_type text, objective text, endpoint text, timepoint text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_eligibility_criteria (id serial PRIMARY KEY, organization_id int, protocol_document_id int, kind text, criterion text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_schedule_visits (id serial PRIMARY KEY, organization_id int, protocol_document_id int, visit_name text, timepoint text, order_index int, deleted_at timestamptz);
-CREATE TABLE protocol_risks (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, likelihood text, impact text, mitigation text, residual_likelihood text, residual_impact text, status text, deleted_at timestamptz);
+CREATE TABLE protocol_risks (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, likelihood text, impact text, mitigation text, residual_likelihood text, residual_impact text, status text, deleted_at timestamptz, owner text);
 CREATE TABLE protocol_milestones (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, milestone_type text, target_date date, actual_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, amendment_number text, title text, affects_consent boolean, submitted_date date, decided_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendment_changes (id serial PRIMARY KEY, amendment_id int, section_ref text, change_description text, previous_text text, proposed_text text);
@@ -39,10 +39,13 @@ CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, pr
 CREATE TABLE protocol_capa_actions (id serial PRIMARY KEY, deviation_id int, action text, status text);
 CREATE TABLE protocol_budget_items (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, unit_cost numeric, quantity_per_subject numeric, deleted_at timestamptz);
 CREATE TABLE protocol_budget_params (id serial PRIMARY KEY, organization_id int, protocol_document_id int, target_enrollment int, sponsor_payment_per_subject numeric, indirect_rate_pct numeric);
-CREATE TABLE protocol_review_assignments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, reviewer_name text, role text, status text, deleted_at timestamptz);
+CREATE TABLE protocol_review_assignments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, reviewer_name text, role text, status text, deleted_at timestamptz, disposition text, due_date date);
 CREATE TABLE protocol_review_comments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, section_ref text, comment text, severity text CHECK (severity IN ('blocking','major','minor','info')), resolved boolean, deleted_at timestamptz);
 CREATE TABLE protocol_soa_assessments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, category text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_soa_cells (id serial PRIMARY KEY, organization_id int, protocol_document_id int, assessment_id int, visit_id int, required boolean);
+CREATE TABLE protocol_team_members (id serial PRIMARY KEY, organization_id int, protocol_document_id int, member_name text, role text, responsibilities text, deleted_at timestamptz);
+CREATE TABLE consent_forms (id serial PRIMARY KEY, organization_id int, protocol_document_id int, title text, version text, status text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
+CREATE TABLE consent_form_elements (id serial PRIMARY KEY, organization_id int, consent_form_id int, element_key text, title text, required boolean, present boolean, order_index int);
 `;
 
 beforeAll(async () => {
@@ -138,5 +141,71 @@ describe('assembleOrgPdevDocs', () => {
     const id = await seedFullProtocol(ORG);
     await pglite.query(`UPDATE protocol_documents SET deleted_at = now() WHERE id = $1`, [id]);
     expect(await assembleOrgPdevDocs(ORG)).toEqual([]);
+  });
+
+  /* The 53-rule regulatory evaluation, carried on the same read the surface
+     already makes. The counts are the point: not-assessed is its own number
+     and is never folded into assessed, because a protocol that has not been
+     checked against a clause is not a protocol that passes it. */
+  it('carries the regulatory rule findings, with not-assessed counted separately', async () => {
+    await seedFullProtocol(ORG);
+
+    const [doc] = await assembleOrgPdevDocs(ORG);
+    const rf = doc.ruleFindings as {
+      findings: Array<{ ruleId: string; standard: string; clause: string; status: string }>;
+      assessed: number; unmet: number; notAssessed: number;
+    };
+
+    expect(rf.findings.length).toBeGreaterThan(0);
+    expect(rf.assessed + rf.notAssessed).toBe(rf.findings.length);
+    expect(rf.notAssessed).toBeGreaterThan(0);
+    for (const f of rf.findings) {
+      expect(f.standard).toBeTruthy();
+      expect(f.clause).toBeTruthy();
+    }
+  });
+
+  /* The narrow reader exists so AnA can answer about ONE protocol without
+     reading every protocol the tenant has. Its whole value depends on it
+     agreeing with the page assembly exactly -- two readers of the same engine
+     that disagree is how a surface and an assistant start quoting different
+     numbers at the same person. So the test is equality, not plausibility. */
+  it('the one-document reader returns byte-identical rule findings to the page assembly', async () => {
+    const id = await seedFullProtocol(ORG);
+
+    const [doc] = await assembleOrgPdevDocs(ORG);
+    const one = await assembleOnePdevDocFacets(ORG, id);
+
+    expect(one).not.toBeNull();
+    expect(JSON.stringify(one!.ruleFindings)).toBe(JSON.stringify(doc.ruleFindings));
+    expect(JSON.stringify(one!.studyDesign)).toBe(JSON.stringify(doc.studyDesign));
+    expect(one!.kind).toBe(doc.kind);
+  });
+
+  it('the one-document reader returns null for a protocol this organization does not have', async () => {
+    const id = await seedFullProtocol(ORG);
+
+    expect(await assembleOnePdevDocFacets(OTHER, id)).toBeNull();
+    expect(await assembleOnePdevDocFacets(ORG, id + 9999)).toBeNull();
+  });
+
+  it('leaves the vulnerable-population rules not-assessed, because no register records them', async () => {
+    await seedFullProtocol(ORG);
+
+    const [doc] = await assembleOrgPdevDocs(ORG);
+    const rf = doc.ruleFindings as { findings: Array<{ ruleId: string; clause: string; status: string; message: string }> };
+    // `standard` is '45 CFR 46'; the subpart lives in the clause, so the rule
+    // ids are what identifies them.
+    const subparts = rf.findings.filter((f) => f.ruleId.startsWith('hhs-subpart-'));
+
+    expect(subparts.map((f) => f.ruleId).sort()).toEqual([
+      'hhs-subpart-b-pregnant-women',
+      'hhs-subpart-c-prisoners',
+      'hhs-subpart-d-children-assent-permission',
+      'hhs-subpart-d-children-risk-category',
+    ]);
+    // Not 'met'. Nobody recorded that this study excludes children; passing
+    // `false` for an unrecorded flag would manufacture that claim.
+    for (const f of subparts) expect(f.status).toBe('not-assessed');
   });
 });

@@ -53,44 +53,36 @@ describe('module3AutoDraftRoutes', () => {
     expect(s1.completeness).toBe(100);
   });
 
-  it('persists drafted sections via the existing bridge when persist=true', async () => {
-    bridgeCompileToArtifact.mockResolvedValue({ bridged: true, artifactId: 'm3-x', isNew: true });
+  it('REFUSES to persist — a preview may not become a governed artifact', async () => {
+    /* `persist: true` used to walk caller-supplied JSON through the convergence
+       bridge, which UPDATEs the section's governed artifact with the content
+       and stamps its metadata `compiledFrom: 'module3-os'` with sourceObjectIds
+       taken from that same request body: no canonical source, no section row,
+       no lineage, no compile. Any authenticated caller in the org could
+       overwrite an approved section's artifact with typed prose claiming to
+       have been compiled from records that do not exist. */
     const app = makeApp();
-
     const res = await request(app)
       .post('/api/cmc/module3/auto-draft/proj-1')
-      .send({
-        persist: true,
-        documents: [
-          { id: '1', sourceType: 'drug_substance', payload: { name: 'API-1', manufacturer: 'Acme' } },
-        ],
-      });
+      .send({ documents: [{ id: 'd1', sourceType: 'drug_substance', payload: { name: 'Invented' } }], persist: true });
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.persisted).toBe(true);
-    // Only sections with source coverage are bridged; 3.2.S.1 must be one.
-    expect(bridgeCompileToArtifact).toHaveBeenCalled();
-    expect(bridgeCompileToArtifact.mock.calls[0][0]).toBe(101); // orgId
-    expect(bridgeCompileToArtifact.mock.calls[0][1]).toBe('proj-1'); // projectId
-    expect(res.body.data.persistedArtifacts.length).toBeGreaterThan(0);
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toMatch(/cannot write a governed artifact/i);
+    // It names the path that CAN: the compile route, from canonical sources.
+    expect(res.body.error).toMatch(/module3-os\/compile/);
   });
 
-  it('records bridge failures without failing the whole request', async () => {
-    bridgeCompileToArtifact.mockRejectedValue(new Error('db down'));
+  it('still drafts the preview when persist is not asked for, and says it persisted nothing', async () => {
     const app = makeApp();
-
     const res = await request(app)
       .post('/api/cmc/module3/auto-draft/proj-1')
-      .send({
-        persist: true,
-        documents: [
-          { id: '1', sourceType: 'drug_substance', payload: { name: 'API-1', manufacturer: 'Acme' } },
-        ],
-      });
+      .send({ documents: [{ id: 'd1', sourceType: 'drug_substance', payload: { name: 'BX-204', manufacturer: 'Acme' } }] });
 
     expect(res.status).toBe(200);
-    expect(res.body.data.persistErrors.length).toBeGreaterThan(0);
-    expect(res.body.data.persistErrors[0].error).toContain('db down');
+    expect(res.body.data.sections.length).toBeGreaterThan(0);
+    expect(res.body.data.persisted).toBe(false);
+    expect(res.body.data.persistedArtifacts).toEqual([]);
   });
 
   it('rejects an empty document list', async () => {

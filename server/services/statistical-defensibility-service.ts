@@ -12,6 +12,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import type { VerificationOutcome } from '../lib/verification-outcome';
 
 // ============================================================
 // Types
@@ -55,18 +56,32 @@ interface DefensibilityIssue {
   suggestedMitigation: string;
 }
 
+/** The seven dimensions of a defensibility assessment, in report order. */
+const DIMENSION_KEYS = [
+  'endpointQuality',
+  'sampleSizeAdequacy',
+  'multiplicityControl',
+  'missingDataHandling',
+  'statisticalMethodChoice',
+  'designAppropriateness',
+  'estimandClarity',
+] as const;
+
+type DimensionKey = (typeof DIMENSION_KEYS)[number];
+
 interface DefensibilityReport {
-  overallScore: number;
-  overallRating: 'strong' | 'adequate' | 'weak' | 'deficient';
-  dimensionScores: {
-    endpointQuality: number;
-    sampleSizeAdequacy: number;
-    multiplicityControl: number;
-    missingDataHandling: number;
-    statisticalMethodChoice: number;
-    designAppropriateness: number;
-    estimandClarity: number;
-  };
+  /** The mean of all seven dimensions, or null when any went unscored. */
+  overallScore: number | null;
+  overallRating: 'strong' | 'adequate' | 'weak' | 'deficient' | null;
+  /** A dimension the model did not score is null — never a substituted midpoint. */
+  dimensionScores: Record<DimensionKey, number | null>;
+  /**
+   * WO-16C finding 45 — the third state, in the vocabulary of
+   * server/lib/verification-outcome.ts. The overall score was either computed
+   * from all seven dimensions or it was not; when it was not, this carries the
+   * reason in place of a number. "Could not score" is not a low score.
+   */
+  scoreBasis: VerificationOutcome<{ assessedDimensions: DimensionKey[] }>;
   criticalIssues: DefensibilityIssue[];
   majorIssues: DefensibilityIssue[];
   minorIssues: DefensibilityIssue[];
@@ -167,11 +182,15 @@ For each of these 7 dimensions, provide a score (0-100) and identify issues:
 6. Design Appropriateness: Is the study design suitable for the indication and phase?
 7. Estimand Clarity: Are estimands defined per ICH E9(R1)? Are intercurrent events addressed?
 
+If a dimension cannot be assessed from the inputs below, return null for that dimension and say why in minorIssues. Do not estimate a score to fill the gap: an unscored dimension is reported as unscored, and a study whose sample size, statistical methods, multiplicity, missing-data or estimand strategy were not supplied has not told you enough to score the dimensions that depend on them.
+
+You are given only the study description below. No precedent corpus, literature index or database lookup is available to you, so "regulatoryPrecedent" must be null unless the precedent is stated verbatim in that description.
+
 For each issue found, classify as critical/major/minor and suggest mitigation.
 
 Return JSON:
 {
-  "dimensionScores": { "endpointQuality": 0-100, "sampleSizeAdequacy": 0-100, "multiplicityControl": 0-100, "missingDataHandling": 0-100, "statisticalMethodChoice": 0-100, "designAppropriateness": 0-100, "estimandClarity": 0-100 },
+  "dimensionScores": { "endpointQuality": 0-100 or null, "sampleSizeAdequacy": 0-100 or null, "multiplicityControl": 0-100 or null, "missingDataHandling": 0-100 or null, "statisticalMethodChoice": 0-100 or null, "designAppropriateness": 0-100 or null, "estimandClarity": 0-100 or null },
   "criticalIssues": [{ "category": "string", "description": "string", "severity": "critical", "affectedSection": "string", "regulatoryPrecedent": "string or null", "suggestedMitigation": "string" }],
   "majorIssues": [...],
   "minorIssues": [...],
@@ -202,25 +221,52 @@ Estimand Strategy: ${request.estimandStrategy || 'Not specified'}`,
 
     const content = aiResult.content;
     if (!content) {
-      return this.defaultReport();
+      return this.defaultReport('The model returned no content, so no dimension was scored.');
     }
 
     const parsed = JSON.parse(content);
-    const scores = parsed.dimensionScores || {};
+    const scores = (parsed.dimensionScores || {}) as Record<string, unknown>;
 
-    const overallScore = Math.round(
-      (
-        (scores.endpointQuality || 50) +
-        (scores.sampleSizeAdequacy || 50) +
-        (scores.multiplicityControl || 50) +
-        (scores.missingDataHandling || 50) +
-        (scores.statisticalMethodChoice || 50) +
-        (scores.designAppropriateness || 50) +
-        (scores.estimandClarity || 50)
-      ) / 7
-    );
+    // WO-16C finding 45. Every dimension used to be read as `scores.X || 50`,
+    // which turned BOTH a dimension the model omitted and a worst score of 0 it
+    // actually reported into the same hardcoded midpoint. A reported 0 is a
+    // finding; a 50 nothing computed is an invention, and it moved the rendered
+    // rating across the 40/60/80 thresholds with no indicator. Read each score
+    // as a number in range or as "not assessed" — those are different states.
+    const dimensionScores = {} as Record<DimensionKey, number | null>;
+    const assessedDimensions: DimensionKey[] = [];
+    const unassessedDimensions: DimensionKey[] = [];
+    for (const key of DIMENSION_KEYS) {
+      const raw = scores[key];
+      const value =
+        typeof raw === 'number' && Number.isFinite(raw) && raw >= 0 && raw <= 100 ? raw : null;
+      dimensionScores[key] = value;
+      (value === null ? unassessedDimensions : assessedDimensions).push(key);
+    }
+
+    // `overallScore` is the mean of all seven dimensions and is labelled as one
+    // wherever it is rendered. The mean of whichever subset came back is a
+    // different quantity, so it is withheld with a reason rather than relabelled.
+    const scoreBasis: DefensibilityReport['scoreBasis'] =
+      unassessedDimensions.length === 0
+        ? { ran: true, assessedDimensions }
+        : {
+            ran: false,
+            reason:
+              `No usable 0-100 score was returned for: ${unassessedDimensions.join(', ')}. ` +
+              'An overall score is the mean of all seven dimensions, so none was computed. ' +
+              'This is not a verdict on the study: those dimensions were not assessed.',
+          };
+
+    const overallScore = scoreBasis.ran
+      ? Math.round(
+          assessedDimensions.reduce((sum, key) => sum + (dimensionScores[key] as number), 0) /
+            DIMENSION_KEYS.length,
+        )
+      : null;
 
     const overallRating: DefensibilityReport['overallRating'] =
+      overallScore === null ? null :
       overallScore >= 80 ? 'strong' :
       overallScore >= 60 ? 'adequate' :
       overallScore >= 40 ? 'weak' : 'deficient';
@@ -235,15 +281,8 @@ Estimand Strategy: ${request.estimandStrategy || 'Not specified'}`,
     return {
       overallScore,
       overallRating,
-      dimensionScores: {
-        endpointQuality: scores.endpointQuality || 50,
-        sampleSizeAdequacy: scores.sampleSizeAdequacy || 50,
-        multiplicityControl: scores.multiplicityControl || 50,
-        missingDataHandling: scores.missingDataHandling || 50,
-        statisticalMethodChoice: scores.statisticalMethodChoice || 50,
-        designAppropriateness: scores.designAppropriateness || 50,
-        estimandClarity: scores.estimandClarity || 50,
-      },
+      dimensionScores,
+      scoreBasis,
       criticalIssues: parsed.criticalIssues || [],
       majorIssues: parsed.majorIssues || [],
       minorIssues: parsed.minorIssues || [],
@@ -546,15 +585,21 @@ Return JSON: { "annotations": [{ "concern": "string", "severity": "high|medium|l
     return parsed.annotations || [];
   }
 
-  private defaultReport(): DefensibilityReport {
+  /**
+   * The assessment did not run. WO-16C finding 45: it used to say 0/100 and
+   * "deficient", which is a verdict on the study — the opposite of what
+   * happened. Scores are null and `scoreBasis` carries the reason.
+   */
+  private defaultReport(reason: string): DefensibilityReport {
     return {
-      overallScore: 0,
-      overallRating: 'deficient',
+      overallScore: null,
+      overallRating: null,
       dimensionScores: {
-        endpointQuality: 0, sampleSizeAdequacy: 0, multiplicityControl: 0,
-        missingDataHandling: 0, statisticalMethodChoice: 0, designAppropriateness: 0,
-        estimandClarity: 0,
+        endpointQuality: null, sampleSizeAdequacy: null, multiplicityControl: null,
+        missingDataHandling: null, statisticalMethodChoice: null, designAppropriateness: null,
+        estimandClarity: null,
       },
+      scoreBasis: { ran: false, reason },
       criticalIssues: [{ category: 'System', description: 'Assessment could not be completed', severity: 'critical', affectedSection: 'All', suggestedMitigation: 'Retry with complete study data' }],
       majorIssues: [],
       minorIssues: [],

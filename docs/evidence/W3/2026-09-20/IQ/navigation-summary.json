@@ -1,0 +1,31 @@
+{
+  "status": 200,
+  "launchScope": {
+    "enforced": true
+  },
+  "verdicts": 101,
+  "launchScopeLocked": 80,
+  "entitled": [
+    "authoring-engine",
+    "document-authoring",
+    "ectd-coauthor",
+    "ectd-compile",
+    "inconsistency",
+    "template-library",
+    "artifacts-center",
+    "vault",
+    "dossier-map",
+    "gateway-transmittals",
+    "submission-center",
+    "dispatch-readiness",
+    "identity-console",
+    "orchestration",
+    "qmp",
+    "quality",
+    "review",
+    "tasks",
+    "program-journey",
+    "filings-catalog",
+    "projects"
+  ]
+}

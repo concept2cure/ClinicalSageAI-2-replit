@@ -42,6 +42,41 @@
 -- 'program' or 'document'. Custodian- and matter-level scoping is a real
 -- requirement for a mature e-discovery flow and is NOT modelled here. A
 -- program-wide hold is the honest blunt instrument until it is.
+--
+-- AMENDED IN PLACE 2026-09-08 — tenant isolation was missing
+--
+-- As first written this file created the table and three indexes and stopped.
+-- The table is in the `vault` schema with `organization_id INTEGER NOT NULL`,
+-- and that combination is exactly the corollary CLAUDE.md RULE 1 names: the two
+-- tenant sweeps are public+integer (0021) or a hand-maintained non-public list
+-- keyed on a UUID org GUC (20260801_uuid_tenant_isolation_nonpublic), so a
+-- non-public table with an INTEGER org column falls between them and ships with
+-- NO POLICY AT ALL. Every organization's holds were readable by every other.
+--
+-- The installer catches it and fails closed — scripts/db/rls-coverage-check.sql
+-- via install-fresh's verify step — so a FRESH INSTALL OF THE BRANCH COULD NOT
+-- COMPLETE:
+--
+--   Install failed: 1 tenant-keyed table(s) carry no RLS policy — rows are
+--   readable across tenants once anything reads them:
+--   vault.legal_holds (organization_id)
+--
+-- Amended rather than appended because RULE 1 replays this file on every deploy;
+-- the policy belongs with the table that needs it, which is also how its sibling
+-- 20260905b_vault_document_chunks.sql carries its own.
+--
+-- The predicate is 0021's INTEGER branch verbatim, so there is one definition of
+-- "this row belongs to my tenant" and not a second, drifting one. The policy
+-- NAME matters as much as the predicate: rls-coverage-check.sql recognises
+-- coverage by the name `tenant_isolation_policy` (or a parent-scoped
+-- can_access_program delegate, which a hold cannot use — a hold is scoped to a
+-- program OR a document, and the document branch has no program to delegate to).
+--
+-- ENABLE, deliberately not FORCE. 20260905_vault_documents_organization_id's
+-- header sets that out: core.can_access_program is live on a provisioned
+-- database and establishRequestTenantScope writes `orgUuid ?? ''`, so FORCE
+-- before that is proven takes the vault OFFLINE. This table takes the same
+-- posture as vault.documents beside it.
 
 DO $mig$
 BEGIN
@@ -89,6 +124,29 @@ BEGIN
   CREATE INDEX IF NOT EXISTS vault_legal_holds_org_idx
     ON vault.legal_holds (organization_id);
 
-  RAISE NOTICE 'vault.legal_holds ready';
+  -- ── Tenant isolation ────────────────────────────────────────────────────
+  -- Neither sweep reaches a non-public schema with an INTEGER org column, so
+  -- the policy is attached here. Idempotent: RULE 1 replays this file on every
+  -- deploy, and DROP-then-CREATE leaves exactly one policy however often it runs.
+  EXECUTE 'ALTER TABLE vault.legal_holds ENABLE ROW LEVEL SECURITY';
+  EXECUTE 'DROP POLICY IF EXISTS tenant_isolation_policy ON vault.legal_holds';
+  EXECUTE $pol$
+    CREATE POLICY tenant_isolation_policy ON vault.legal_holds
+      FOR ALL
+      USING (
+        NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+        OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
+        OR organization_id = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
+        OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+      )
+      WITH CHECK (
+        NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+        OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
+        OR organization_id = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
+        OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+      )
+  $pol$;
+
+  RAISE NOTICE 'vault.legal_holds ready (RLS: tenant_isolation_policy)';
 END
 $mig$;

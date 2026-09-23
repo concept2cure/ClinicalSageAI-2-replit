@@ -1,0 +1,70 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/mdx/qms/training/compliance",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 12,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": 3,
+          "doc_number": "SOP-OQ-B-20260921000339",
+          "title": "OQ-006 Second SOP 20260921000339",
+          "current": 0,
+          "of": 3,
+          "last_cycle": null
+        },
+        {
+          "id": 6,
+          "doc_number": "SOP-OQ-B-20260921001430",
+          "title": "OQ-006 Second SOP 20260921001430",
+          "current": 0,
+          "of": 3,
+          "last_cycle": null
+        },
+        {
+          "id": 9,
+          "doc_number": "SOP-OQ-B-20260921002559",
+          "title": "OQ-006 Second SOP 20260921002559",
+          "current": 0,
+          "of": 3,
+          "last_cycle": null
+        },
+        {
+          "id": 12,
+          "doc_number": "SOP-OQ-B-20260921003037",
+          "title": "OQ-006 Second SOP 20260921003037",
+          "current": 0,
+          "of": 3,
+          "last_cycle": null
+        },
+        {
+          "id": 37,
+          "doc_number": "SOP-OQ-B-20260921162811",
+          "title": "OQ-006 Second SOP 20260921162811",
+          "current": 1,
+          "of": 3,
+          "last_cycle": "2026-09-21T16:28:19.741Z"
+        },
+        {
+          "id": 16,
+          "doc_number": "SOP-WB-20260921010026",
+          "title": "WB F-3 evidence SOP",
+          "current": 0,
+          "of": 3,
+          "last_cycle": null
+        }
+      ],
+      "meta": {
+        "count": 6
+      }
+    }
+  }
+}

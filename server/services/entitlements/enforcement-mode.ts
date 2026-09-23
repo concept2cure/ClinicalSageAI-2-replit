@@ -87,6 +87,7 @@
  */
 
 import { pool } from '../../db.js';
+import { runWithPreAuthScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
 const logger = createScopedLogger('enforcement-mode');
@@ -230,14 +231,26 @@ export function resolveMode(
  * Read the stored row. Returns null when nothing is stored — INCLUDING on a
  * database that has not applied the migration, which is the pre-migration
  * behaviour and not a fault. Throws on any other failure.
+ *
+ * The read is platform-wide, and it runs from the background refresh and the
+ * gate's first call, outside any request's tenant scope. With RLS_ENFORCE=on,
+ * the only posture production accepts, the pool refuses a query that carries no
+ * scope. So until this was scoped, every read failed there, and the mode set on
+ * the console never took effect. `runWithPreAuthScope` marks the query as
+ * intentionally tenant-less and grants no role, so no policy is bypassed.
+ * platform_settings has no row-level security, so the read succeeds on its own
+ * merits; if the table is ever brought under a tenant policy, the read fails
+ * loudly rather than reading across tenants.
  */
 export async function readStoredMode(): Promise<StoredModeRow | null> {
   try {
-    const res = await pool.query(
-      `SELECT setting_value, updated_at, updated_by, reason
-         FROM platform_settings
-        WHERE setting_key = $1`,
-      [ENFORCEMENT_MODE_KEY],
+    const res = await runWithPreAuthScope('entitlements:enforcement-mode-read', () =>
+      pool.query(
+        `SELECT setting_value, updated_at, updated_by, reason
+           FROM platform_settings
+          WHERE setting_key = $1`,
+        [ENFORCEMENT_MODE_KEY],
+      ),
     );
     return (res?.rows?.[0] as StoredModeRow | undefined) ?? null;
   } catch (err) {

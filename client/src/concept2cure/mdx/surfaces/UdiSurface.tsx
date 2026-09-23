@@ -16,6 +16,18 @@
  * saw five example devices carrying published GUDID states and real-
  * looking device identifiers. Registration status is exactly the kind of
  * claim a user acts on, so it must never be simulated.
+ *
+ * The inverse of that defect also shipped here, on the primary zone: the
+ * "documents in flight" gate rendered `{() => <DocumentsPanel docs={documents}
+ * …>}` — ignoring the rows the gate handed down and reading `documents`, which
+ * is derived from `readyRows(live.labels)` and is therefore empty in every
+ * non-`ready` state. So the one panel this doc-first surface exists for could
+ * not be populated by the supported sample path at all, and had the gate been
+ * given a `sample` it would have drawn the standing "example content" banner
+ * over an empty panel. The mapping is now a pure function of the rows passed
+ * in (`toLabelDocuments`), and the kit's `UDI_LABELS` is wired as the gate's
+ * sample like its three sibling panels. The metric tiles above the gate are
+ * deliberately NOT part of that: they are ungated, so they stay on real rows.
  */
 
 import * as React from 'react';
@@ -24,11 +36,12 @@ import { DocumentsPanel } from '../components/DocumentsPanel';
 import { DataGate } from '../components/DataGate';
 import {
   UDI_DEVICES,
+  UDI_LABELS,
   UDI_MRI,
   UDI_SYMBOLS,
 } from '../data/udi';
-import { UDI_DOC_FRAMEWORKS, UDI_DOCUMENTS } from '../data/udi-docs';
-import { useUdi } from '../hooks/useUdi';
+import { UDI_DOC_FRAMEWORKS } from '../data/udi-docs';
+import { useUdi, type LabelRow } from '../hooks/useUdi';
 import { readyRows } from '../lib/dataState';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 
@@ -49,6 +62,41 @@ interface UdiBlocker {
 
 const SEV_ORDER: Record<UdiBlocker['severity'], number> = { err: 0, warn: 1, low: 2 };
 
+/**
+ * Map `labeling_documents` rows into the DocumentsPanel shape.
+ *
+ * Pure and taken as an argument, because the panel below the gate has to render
+ * *the rows the gate handed it*. It did not: the render prop ignored its
+ * parameter and reached back around the gate for `documents`, which is derived
+ * from `readyRows(live.labels)` and is therefore `[]` in every non-`ready`
+ * state. With sample mode on that produced the worst of both — the gate's
+ * standing "example content" banner over an empty panel — on the one zone this
+ * doc-first surface exists for. Taking the rows as a parameter is what makes
+ * the gate's `sample` reach the panel at all.
+ */
+function toLabelDocuments(rows: readonly LabelRow[]): KitDocument[] {
+  return rows.map((l) => {
+    const status = String(l.status).toLowerCase();
+    const approved = status === 'approved';
+    return {
+      id: l.id,
+      framework: 'iso15223',
+      type: l.kind,
+      title: `${l.device} — ${l.kind} (${l.lang})`,
+      ver: l.ver,
+      status: approved ? 'ready' : status === 'in-review' ? 'review' : 'draft',
+      /* No percentage is invented for states the table cannot evidence:
+         approved is complete, everything else reports nothing. */
+      completion: approved ? 100 : 0,
+      owner: '—',
+      lastEdit: l.updated,
+      sections: 0,
+      sectionsComplete: 0,
+      editor: 'label',
+    } as KitDocument;
+  });
+}
+
 export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
 
@@ -56,30 +104,14 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
   const issues = readyRows(live.issues);
   const frameworks = UDI_DOC_FRAMEWORKS as unknown as KitDocFramework[];
 
-  /* The "documents in flight" zone is the tenant's real labeling
-     documents (labeling_documents), mapped into the DocumentsPanel
-     shape. Approved labels count as complete; everything else is in
-     progress. No percentage is invented for states the table cannot
-     evidence. */
+  /* The metric cards, the blocker feed and the counts below read from THIS
+     list, which is the tenant's real labeling documents and nothing else —
+     `readyRows` is [] for idle / loading / error / empty. Sample mode never
+     reaches these numbers: a figure in an ungated metric tile is read as the
+     tenant's own, so it stays real (or zero) whatever the panel beneath is
+     showing under its banner. */
   const documents = React.useMemo<KitDocument[]>(
-    () =>
-      readyRows(live.labels).map((l) => {
-        const approved = String(l.status).toLowerCase() === 'approved';
-        return {
-          id: l.id,
-          framework: 'iso15223',
-          type: l.kind,
-          title: `${l.device} — ${l.kind} (${l.lang})`,
-          ver: l.ver,
-          status: approved ? 'ready' : String(l.status).toLowerCase() === 'in-review' ? 'review' : 'draft',
-          completion: approved ? 100 : 0,
-          owner: '—',
-          lastEdit: l.updated,
-          sections: 0,
-          sectionsComplete: 0,
-          editor: 'label',
-        } as KitDocument;
-      }),
+    () => toLabelDocuments(readyRows(live.labels)),
     [live.labels],
   );
 
@@ -183,14 +215,14 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
         state={live.labels}
         label="labeling documents"
         onRetry={live.refresh}
-        sample={UDI_DOCUMENTS as never}
+        sample={UDI_LABELS}
         emptyHint="IFUs, package and on-device labels appear here once labeling documents are created."
       >
-        {() => (
+        {(rows) => (
           <DocumentsPanel
             title="Documents in flight"
             subtitle="Tap any row to open in the label editor · sparkle to draft a translation or symbol revision with AnA"
-            docs={documents}
+            docs={toLabelDocuments(rows)}
             frameworks={frameworks}
             onOpenEditor={onOpenEditor}
             onAskAna={(text) => onAskAna(text)}

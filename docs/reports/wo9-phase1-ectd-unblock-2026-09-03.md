@@ -1122,8 +1122,388 @@ Two ways to resolve it, and the choice is a regulatory one:
    `transitionSequenceGoverned` composing the freeze verdict without the
    release-signature gate.
 
-This report does not pick one. Altering the reach of a Part 11 control, or
-hand-rolling a signed orchestrator run inside a golden journey — the only other
-way to make it green — are both decisions to take deliberately rather than to
-make a red test pass. The journey is left exactly as upstream left it, failing
-and telling the truth, which is what it is for.
+**JM chose (1): scope the gate to dispatch.** Done, and the journey is green.
+
+`composeDispatchGatesForStep` states the membership in the one place gate
+membership is asserted. The freeze case is expressed as "a release signature is
+not REQUIRED" rather than "the gate is omitted", which is what keeps the gate's
+second rule intact: an `invalid` verdict blocks unconditionally, so a TAMPERED
+signature still blocks a freeze. Requiredness governs whether a signature must
+be present, never whether a broken one may be ignored. Every other gate governs
+both steps, pinned by a test that iterates them, so a gate added later cannot be
+dropped from the freeze verdict by omission.
+
+Freeze keeps the Part 11 signature it always had — `transitionSequenceGoverned`
+Gate 1, bound to this sequence, this step, this actor and this leaf manifest —
+so nothing about the freeze is less governed than before; only the *transmit*
+re-check moved to transmit.
+
+The readiness endpoint still reports the DISPATCH verdict, so the journey now
+asserts what is true of it: exactly one blocker and it is the release signature
+— which also proves no other gate objects — while the freeze that follows
+succeeds. Those two facts together are the scoping. A journey that drives the
+package orchestrator to a signed release, and so reaches a cleared dispatch
+verdict, is recorded as the follow-on.
+
+### Also fixed — a test that had gone blind
+
+`chat-threads-read-honesty.test.ts` was failing on the branch for its own,
+unrelated reason. `listThreadMessages` gained a step resolving WHICH store holds
+a thread; the test's ownership mock still answered a shape from before that step
+existed, so the handler 404'd and the transcript read whose failure the test
+asserts was never reached. A read failure reported as "no such thread" is the
+same fabrication the file was written against — an infrastructure error stated
+as a fact about the user's data. The mock now matches the resolver, and the test
+asserts the transcript read was actually called, which is the assertion that
+would have caught the rot.
+
+---
+
+## 16. Phase 2, Click 3 — document selection and CTD section placement (2026-09-08)
+
+**Session prompt:** wire document selection and CTD section placement; placement
+persists to the database at precise section granularity — 3.2.S.4.2 must survive
+as 3.2.S.4.2, not collapse to the heading level; report which surface owns this;
+stop when JM can click it.
+
+**Status: JM can click it.** Screenshots in `docs/reports/wo9-click3/`.
+
+### Which surface owns it
+
+`client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx`, the
+"Place into filing" dialog inside the document editor
+(`DocumentAuthoring.tsx`). It writes through `PUT /api/submissions/sequences/
+:seqId/leaves` → `upsertLeaf` — the same write the Submission Center Builder
+makes, and the choke point every other placement path funnels through (AnA's
+`place_into_sequence`, the IND lifecycle filing routes, CMC placement, the
+Module 1 forms panel).
+
+### The precision question, answered
+
+Precise codes DO survive the database: `section_code` is stored verbatim, and a
+leaf placed at `3.2.S.4.2` reads back as `3.2.S.4.2`. The collapse to
+`m3-2-s-drug-substance` at the backbone ELEMENT is correct and required — the
+eCTD DTD defines no `m3-2-s-4` element, so subsections attach as leaves under
+their nearest defined heading, which `ich-headings.ts` already documents.
+
+What was not true is everything around it.
+
+### The defect this uncovered
+
+The packager derived a leaf's MODULE and FOLDER from the raw `section_code`
+string:
+
+```ts
+if (leaf.ctdSection.startsWith('1')) { …Module 1 regional folder… }
+else relPath = `m${leaf.ctdSection.charAt(0)}/${sectionDashed}/…`;
+```
+
+`section_code` carries two spellings in this codebase. Module 2–5 callers write
+`3.2.S.4.2`. **Every Module 1 filing path writes the `m`-prefixed form** —
+`withTransmittalPair` emits `m1.1` and `m1.2` for the transmittal pair on every
+lifecycle sequence, the IND filing routes write `m1.12.4` and `m1.13`, and the
+forms panel (§14) places a sponsor's signed FDA form at `m1.1`.
+
+`'m1.1'.startsWith('1')` is **false**. So each of those took the Module 2–5
+branch and landed at `mm/m1-1/…` — a top-level folder no eCTD layout defines —
+with the backbone href pointing there. Six more sites made the same
+determination the same way, including the two filters that decide which leaves
+are written into the regional backbone and which into `index.xml`: an `m1.1`
+leaf was **left out of the regional backbone and swept into `index.xml`** as
+though it were a Module 2–5 document.
+
+The most-filed documents in the product — the Module 1 transmittal form and
+cover letter of every IND sequence — were the ones going to the wrong place.
+
+### What changed
+
+1. **One rule, `leafPackagePath`.** A pure exported function returning
+   `{ relPath, href, backboneDir }`, canonicalising the section first, used by
+   both the normal and the lifecycle-delete branch (which had its own copy of
+   the same broken logic). `isModule1Section` replaces the six raw
+   `startsWith('1')` checks.
+2. **`normalizeCtdCode` moved to `shared/regulatory/section-code.ts`,** with a
+   new `ctdFolderSlug`. Its docstring already called it "the one normalisation
+   point on the transmit path" — nothing on that path had ever called it. Now
+   the packager's layout, the write boundary and the placement dialog's preview
+   all apply the same rule, because three copies is how they disagree.
+   `section-to-ctd.ts` re-exports it, so every existing importer is untouched.
+3. **The write boundary refuses a section code that cannot be filed at.**
+   `upsertLeaf` already refused an unplaceable `document_table`; the section
+   code — which decides where the document lands — was `z.string().min(1).max(64)`
+   and stored verbatim. Now a value that is not code-shaped, or is a bare module
+   (`3` is a container, never a leaf home), is refused with a sentence naming it.
+   The value is still stored EXACTLY as given: readers match on the spelling
+   that was written (the IND checklist looks for `m1.1.1`), so canonicalising
+   the stored value would silently detach them from their own rows.
+4. **The dialog says where a document will file, before anything is written.**
+   The section code was a free text input with no feedback and a placeholder
+   suggesting `m1/us/1.2` — a value that used to become a folder name. It now
+   shows "Files as 3.2.S.4.2 at m3/3-2-s-4-2/", canonicalises what was typed,
+   and refuses an unusable code with the Place button disabled — so no filing
+   snapshot is created for a code the server will reject.
+
+### Deliberately NOT done — the gate is narrow, and here is why
+
+`isPlaceableCtdCode` would have been the stricter gate. It refuses four codes
+**this product itself writes**: `m1.5`, `m1.7`, `m1.9` and `m1.13` — the last
+being where `persistAnnualReport` files the 312.33 IND annual report. Adding
+that gate would refuse the product's own filings, so the write boundary checks
+code SHAPE only. The mismatch is real and is reported below.
+
+### Verified
+
+```
+leafPackagePath / isModule1Section     14 unit cases, seen failing first
+package layout, real ZIP              m1/us/1-1/form-fda-1571.pdf present,
+                                      no mm/ anywhere, m3/3-2-s-4-2/ at full
+                                      depth, the form in us-regional.xml and
+                                      NOT in index.xml — failed before the fix
+upsertLeaf section gate               refuses 6 shapes, accepts all 15 codes
+                                      the product writes, stores them verbatim
+placement dialog                      6 cases, all seen failing against the
+                                      previous dialog
+whole server + routes + journeys      1372 files / 14051 tests   pass
+typecheck (both configs)              0 errors
+```
+
+Browser, against the real database (`/concept2cure/document-authoring` → Place
+into filing):
+
+```
+3.2.S.4.2   → Files as 3.2.S.4.2 at m3/3-2-s-4-2/.
+3.2.s.4.2   → Files as 3.2.S.4.2 at m3/3-2-s-4-2/.      (one section, one folder)
+m1.2        → Files as 1.2 in the regional Module 1 folder (1-2/).
+m1/us/1.2   → "m1/us/1.2" is not a CTD section code…     Place disabled
+3           → Module 3 on its own is a container…        Place disabled
+```
+
+And through the real API, against the real database:
+
+```
+PUT …/sequences/3/leaves {"sectionCode":"3.2.S.4.2"} → leaf 3, section_code = '3.2.S.4.2'
+PUT … "m1/us/1.2" | "3" | "cover letter"             → 400, each naming the value
+
+submission_leaves for the demo IND sequence 0000:
+  2 | m1.1      | Form FDA 1571 (sponsor-completed)   ← Click 2
+  3 | 3.2.S.4.2 | Impurities specification            ← this click
+```
+
+Both spellings, side by side, and both now package correctly.
+
+### Found on the way, not changed — for JM
+
+Two are regulatory decisions, not code ones, so this session did not guess:
+
+- **The IND annual report files at `m1.13`, which is a CONTAINER in FDA's
+  published Module 1 table.** The published leaves are `1.13.1`…`1.13.15`
+  ("summary for nonclinical studies", "summary of safety information", …).
+  *(Corrected 2026-09-22: this first said `1.13.8`. The vendored table,
+  `controlled-vocab/cv-v4-data.ts`, publishes `us_1.13.1` through `us_1.13.15`
+  and no bare `us_1.13`.)* A
+  leaf at bare `1.13` has no published home. Which of those an annual report
+  belongs at is JM's call. Same shape for `m1.5`, `m1.7`, `m1.9`.
+- **`IND_SAFETY_REPORT_SECTION = 'm1.12.4'`** (`ind-sequence-validation.ts:58`),
+  but the vendored FDA context-of-use list says `us_1.12.4` is **"request for
+  comments and advice"**. A 21 CFR 312.32 fifteen-day safety report filed there
+  would reach FDA labelled as a request for advice. Worth confirming against
+  FDA's current M1 table before anything is filed.
+
+*(Withdrawn 2026-09-22 — the paragraph below was wrong when written. The journey
+had already been fixed by `85c7adac7`, 2026-09-08 07:20, nine hours before this
+section's own commit and an ancestor of it; it passes at the tip. The red result
+came from a stale local run under `tests/golden-journeys/__reports__/`, which git
+ignores, so nothing in the tree contradicted it. Kept as written, below.)*
+
+One more, arriving from upstream while this click was being verified and left
+for its author: **the device 510(k) eSTAR golden journey is red.** A new control
+refuses to produce an eSTAR when `declarationCompanyName` differs from
+`applicantCompanyName`, because the FDA form derives the declaration cell from
+the applicant and clears it — so the signed Declaration of Conformity would
+attest in the applicant's name, not the declaring entity's. The reasoning is
+sound. The journey deliberately sets a different declaring entity and asserts
+the produced PDF carries it, so it now asserts a capability the product has
+correctly decided it does not have. The refusal names both valid remedies (file
+with the declaring entity as the applicant, or clear the declaring entity), and
+choosing between them decides what the journey proves about a signed
+declaration — a regulatory call, and the same shape as §15's. Verified not to
+be from this session: the journey passed with every change here in place, and
+broke only on the merges that followed.
+
+Environment, not a defect: the snapshot step of the dialog (`POST
+/api/coauthor/documents`) fails on this sandbox because `coauthor_documents`
+carries an `embedding` column and there is no pgvector here — the same gap §13
+recorded. The dialog reported it exactly right: "The filing snapshot could not
+be created … Nothing was placed." No placement was claimed. On a database with
+pgvector the chain completes; the leaf write itself is proven above through the
+same route the dialog calls.
+
+### For JM
+
+Open a document in **Document authoring**, click **Place into filing**, choose
+**Vorelinib · KIT-mutant GIST (IND)** and sequence **0000**, and type a section
+code. The line under the box is the click: it tells you the canonical code and
+the exact folder the document will ship in, before you commit — and refuses
+anything that has no home.
+
+---
+
+## 17. Made ready for human testing — 2026-09-08
+
+Nothing outstanding was found outside `concept2cure-v2`. Every remote branch
+was compared against it: nine agent branches are fully contained, and the tenth
+(`claude/ui-design-kit-review-tpsb71`) carries one accessibility commit whose
+13 `aria-label`s are already present in the tree — a cherry-pick found nothing
+to apply. The stale local `claude/new-session-tovmao` was fully contained and
+has been deleted, per RULE 0.
+
+One gap did block testing, and it was in the demo data rather than the code.
+The document editor scopes its list to the OPEN program
+(`authoring_documents.client_program_id`), and the GA demo's only authored
+document belongs to BX-204, the BLA. So with the IND program open the editor
+had nothing to show, and "Place into filing" — which lives on an open document
+— was unreachable for the very program Clicks 1 and 2 use. Landing on an IND,
+opening its Module 1 forms, and placing a document into its sequence were three
+journeys across two programs.
+
+`scripts/seed/ga-demo.d/112-ind-authoring-doc.mjs` gives BX-512 (Vorelinib) a
+real authored document in the store the editor writes: CTD 3.2.S.4, Control of
+Drug Substance, with its published subsections. 3.2.S.4.2 is deliberately among
+them — the precision case the placement path has to carry — so the demo
+exercises it without anyone typing a code from memory. Idempotent, verified by
+running the seed twice.
+
+Two migrations this sandbox's `--allow-incomplete` install had skipped were
+applied locally (`20260813_audit_tamper_proof_log.sql`,
+`20260813_ai_gateway_audit_log.sql`), so the server now boots with no error
+lines. Both are ordinary parts of a full `npm run up`.
+
+Verified at the tip, in one browser session on one program:
+
+```
+Click 1  landing        Sponsor / Product / Indication / IND number, all from the row
+Click 2  forms panel    the same four facts; 1571 states its plan and its 8 open boxes;
+                        Build & check → "Form 1571 built — 2 required field(s) missing."
+Click 3  placement      opens 3.2.S.4.1, prefilled; 3.2.S.4.2 → m3/3-2-s-4-2/;
+                        m1.2 → the regional Module 1 folder; m1/us/1.2 and 3 refused
+```
+
+Console: no application errors — only `fonts.googleapis.com`, reset by this
+sandbox's egress policy, the runtime dependency §13 and §14 both note.
+
+Gates at the tip: typecheck clean on both configurations,
+`ci:migration-set-order` OK (261 migrations), `ci:migration-drop-safety` OK,
+`db:sync-manifest:check` in sync.
+
+---
+
+## 18. After the pause — what 678 commits did to this path, and three defects they surfaced (2026-09-22)
+
+Between `d2e61aebc` (2026-09-08, the end of §17) and `0d45e1fc3` (2026-09-22),
+678 commits landed from other sessions. This section records what they mean for
+Clicks 1–3 and what the catch-up found. Nothing below is a new click.
+
+### What changed around this path
+
+- **Every Click 1–3 construct survived and is still wired.** Twelve of the fifteen
+  files this work owns are byte-identical to `d2e61aebc`.
+- **`d0da50de0` made the `upsertLeaf` vocabulary a property of the submission
+  type.** eSTAR and IRB packages no longer hit the CTD gate §16 added. The CTD
+  branch is that gate byte for byte, and an unknown type resolves to CTD.
+- **`0e47244ec` moved the section judgement into `filingTarget.tsx`**, shared by
+  this surface and a new Vault filing dialog.
+- **Nobody built Clicks 4–6.** `ectd-compile.ts` has no commit in the range.
+- **Work beside Click 5, by session `…015weqdG`:** `50e78caa4` stopped requiring 28
+  sections an initial IND does not need — the dispatch gate would have hard-blocked
+  this demo's IND on them. `3c101fc96` corrected the validator's IND Module 1 set,
+  whose codes named headings that mean other things.
+
+### Defects found and fixed — each test failed first on unmodified code
+
+1. **The "Attach completed form" control could not be reached from the keyboard.**
+   It was a `<label>` around a `display:none` file input. A label is not focusable,
+   and `display:none` removes the input from both the tab order and the
+   accessibility tree. It is now a `<button>` that opens that row's picker (the
+   Vault's pattern), named for its form. The test tabs to the control and presses
+   Enter. Side effect worth knowing: the existing "no program, no attach control"
+   assertion had always passed vacuously, because the control was never a button.
+   It now fails if the control appears without a program (shown by mutation).
+2. **The IND checklist matched section codes by their stored spelling.**
+   `upsertLeaf` stores a code exactly as written, and writers disagree: the Vault
+   dialog stores `1.1.1`, server writers store `m1.12.4`, a person types `M1.2`.
+   Meanwhile the blueprint and `FORM_SECTIONS` are keyed `m` + canonical. So a
+   Form 1571 leaf at `1.1.1` read as not done and also appeared as a stray section,
+   and a section placed the way this dialog's own placeholder suggests
+   (`3.2.S.4.2`) lost its blueprint title and CFR reference. Placements are now
+   keyed by `m` + `normalizeCtdCode`. This was checked, not assumed: for all 107
+   blueprint codes, `m` + canonical reproduces the blueprint's spelling exactly,
+   with no collisions. The dispatch gate and the packager already normalised, so
+   Clicks 4–5 were not affected.
+3. **This dialog said "Files as 3.2.S.4.2" and stored whatever was typed**
+   (`m3.2.s.4.2`), while the Vault dialog, sharing the same judgement, sends the
+   canonical code. It now files at the code it announces.
+4. **The Freeze tooltip said freeze needs "a clear dispatch gate".** That became
+   false when §15 scoped the release signature to dispatch. Corrected at both copy
+   sites.
+
+### A survey claim refuted on verification — recorded so nobody acts on it
+
+"`authoring_documents` has no durable apply path." It has one:
+`scripts/db/authoring-subsystem.mjs` is applied by `deploy-migrate.mjs:345`,
+install-fresh and apply-c2c, and the deploy fails closed if any of its tables is
+missing.
+
+### Corrections to §16
+
+The `1.13.x` range was wrong: it runs to `1.13.15`, not `1.13.8`. The eSTAR
+paragraph is withdrawn: that journey was already green. Both are marked where
+they stand.
+
+### Still open — JM's calls
+
+- **`m1.13`** is still a container the product files leaves at directly.
+- **`m1.12.4` now has three meanings in this repository:**
+  - FDA's, "request for comments and advice";
+  - `IND_SAFETY_REPORT_SECTION`;
+  - "Financial Disclosure" in the BX-204 dossier-map seed (FDA files that at 1.3.4).
+
+  That seed mislabels two more Module 1 rows. All three are in the work-order index.
+- **Clinical hold: two go/no-go gates disagree.** The index records why copying the
+  check from one gate into the other is not the fix: a complete response to a hold
+  (21 CFR 312.42(e)) must still be sendable. This is Click 5.
+- **Sequence numbering for Click 4.** The work order titles it "Compile sequence
+  0001". eCTD numbers an original submission `0000`, which is what the seed
+  creates. Which number is meant is a decision for when Click 4 is named.
+- **§15's follow-on** — a journey that drives a sequence to a signed release and
+  asserts dispatch clears — is still unwritten.
+
+**Numbering:** `docs/work-orders/WO-9-pilot-surface-lock.md` is a different work
+order. This lane is claimed in that index's §0 under its own description.
+
+### RULE 2 now governs the next click
+
+`CLAUDE.md` RULE 2, binding since 2026-09-20, allows no new capability outside the
+launch catalog (`shared/constants/launch-scope.ts`) until rows D1–D10 of
+`docs/LAUNCH_DEFINITION_OF_DONE.md` are green. It also requires each session to
+name the row it moves and the evidence it will file under `docs/evidence/`.
+
+For this path, the catalog splits it:
+
+- **Inside:** the placement dialog (Authoring), `ectd-compile` (Click 4, Submission
+  Center) and `dispatch-readiness` (Click 5, Submission Readiness). Clicks 4–6 lead
+  to D7 ("one real sequence"). Click 3 is the act D10 names: a regulatory user
+  filing a governed document into a sequence.
+- **Outside:** the IND forms panel (Click 2) and the IND checklist. Both render only
+  inside the `ind-lifecycle` surfaces, which are behind a flag that is off in
+  production.
+
+The fixes in this section repair existing surfaces and add no capability. Whether
+Clicks 4–6 proceed under RULE 2, and against which row, is JM's decision.
+
+Checks run on `4cc0df494`, the merged tree this section was pushed on:
+
+- `ci:typecheck:no-regression`: 0 errors, baseline 0.
+- `ci:eslint-ratchet`: the warning count did not grow.
+- Every pre-push gate passed.
+- Golden journeys: 9 of 9 green.
+- This path's suites: 577 server tests and 234 client tests.

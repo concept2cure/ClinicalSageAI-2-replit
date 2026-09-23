@@ -25,6 +25,7 @@
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { FeatureToggleService } from '../featureToggleService.js';
+import { pageForOffset, type PageSpan } from '../ocr/page-offsets.js';
 
 const logger = createScopedLogger('document-chunking');
 
@@ -135,6 +136,16 @@ export async function chunkAndEmbedDocument(args: {
   /** The caller's organization; the document must belong to one of its programs. */
   organizationId: number;
   text: string;
+  /**
+   * Verified page boundaries in `text`, from the extractor (ocr/page-offsets.ts).
+   * Each chunk is stamped with the page its first character falls on, so a
+   * retrieved passage can cite "p.41" — something a reviewer can turn to —
+   * instead of a character range nobody can check against the file.
+   * Absent for a format with no pages, and for a PDF whose pages could not be
+   * located in the combined text: then `page_number` stays NULL, which reads
+   * as "unknown", which is true. A guessed page would read as checked.
+   */
+  pageSpans?: PageSpan[];
 }): Promise<ChunkWriteResult> {
   const chunks = chunkExtractedText(args.text);
   if (chunks.length === 0) {
@@ -201,17 +212,18 @@ export async function chunkAndEmbedDocument(args: {
       const inserted = await client.query(
         `INSERT INTO vault.document_chunks
            (document_id, chunk_index, chunk_text, char_start, char_end,
-            embedding, embedding_model, token_count, vectorized_at)
-         SELECT d.id, $2, $3, $4, $5, $6::vector, $7, $8, NOW()
+            page_number, embedding, embedding_model, token_count, vectorized_at)
+         SELECT d.id, $2, $3, $4, $5, $6, $7::vector, $8, $9, NOW()
            FROM vault.documents d
            JOIN regulatory_programs p ON p.id = d.program_id
-          WHERE d.id = $1 AND p.organization_id = $9`,
+          WHERE d.id = $1 AND p.organization_id = $10`,
         [
           args.documentId,
           c.index,
           c.text,
           c.charStart,
           c.charEnd,
+          pageForOffset(args.pageSpans, c.charStart),
           vectors[i],
           CHUNK_EMBEDDING_MODEL,
           Math.ceil(c.text.length / 4),
@@ -277,9 +289,10 @@ export async function chunkDocumentForIngest(
   documentId: string,
   organizationId: number,
   text: string,
+  pageSpans?: PageSpan[],
 ): Promise<void> {
   try {
-    const result = await chunkAndEmbedDocument({ documentId, organizationId, text });
+    const result = await chunkAndEmbedDocument({ documentId, organizationId, text, pageSpans });
     await recordChunkOutcome({ documentId, organizationId, result });
     if (!result.ok) {
       logger.warn('Vault chunking failed — recorded on the catalog ledger', {

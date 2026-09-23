@@ -40,6 +40,18 @@ const REASON_FIELD = {
   placeholder: 'Why this entry is being recorded — at least 8 characters; written to the audit trail.',
 };
 
+/** Three answers, not two: '' (not assessed) is sent as absent. */
+const DECLARATION_OPTIONS = [
+  { value: '', label: 'Not assessed' },
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' },
+];
+
+/** 'yes' → true, 'no' → false, anything else → absent (not declared). */
+function declared(v: string | undefined): boolean | undefined {
+  return v === 'yes' ? true : v === 'no' ? false : undefined;
+}
+
 const FORMS: Record<RegisterKind, C2CFormConfig> = {
   risk: {
     eyebrow: 'Protocol · risk register', title: 'Add protocol risk',
@@ -69,11 +81,17 @@ const FORMS: Record<RegisterKind, C2CFormConfig> = {
   },
   amendment: {
     eyebrow: 'Protocol · amendments', title: 'Create amendment',
-    sub: '45 CFR 46.116 / ICH E6(R2) — substantive change review. Recorded as a governed action.',
+    sub: 'Every change to approved research needs IRB review before it is implemented (45 CFR 46.108(a)(3)(iii); 21 CFR 56.108(a)(4)). Recorded as a governed action.',
     governed: true, submitLabel: 'Open amendment',
     fields: [
       { key: 'title', label: 'Amendment title', type: 'text', required: true, placeholder: 'e.g. Amendment 2 — revised eligibility criteria' },
       { key: 'amendmentType', label: 'Type', type: 'seg', options: ['major', 'minor', 'administrative'], default: 'minor', half: true },
+      /* These two were never asked, and the server stored every amendment as
+         "affects neither". "Not assessed" is sent as absent and stored as not
+         declared, which is different from answering No. */
+      { key: 'affectsConsent', label: 'Affects informed consent?', type: 'seg', options: DECLARATION_OPTIONS, half: true },
+      { key: 'affectsRisk', label: 'Increases risk to subjects?', type: 'seg', options: DECLARATION_OPTIONS, half: true,
+        desc: 'Yes if it increases risk or worsens the risk/benefit balance. A change that reduces risk is No.' },
       { key: 'rationale', label: 'Rationale', type: 'textarea', placeholder: 'Why the protocol is being amended' },
       REASON_FIELD,
     ],
@@ -149,7 +167,12 @@ export async function submitProtocolRegister(
       break;
     case 'amendment':
       path = '/api/protocol-amendments/amendments';
-      body = { ...compact({ title: v.title, amendmentType: v.amendmentType, rationale: v.rationale, reason }), protocolDocumentId };
+      body = {
+        ...compact({ title: v.title, amendmentType: v.amendmentType, rationale: v.rationale, reason }),
+        protocolDocumentId,
+        ...(declared(v.affectsConsent) === undefined ? {} : { affectsConsent: declared(v.affectsConsent) }),
+        ...(declared(v.affectsRisk) === undefined ? {} : { affectsRisk: declared(v.affectsRisk) }),
+      };
       break;
     case 'deviation':
       path = '/api/protocol-deviations/deviations';

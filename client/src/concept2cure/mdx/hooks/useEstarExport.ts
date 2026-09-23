@@ -61,6 +61,32 @@ export interface EstarExportOutcome {
   /** What the official fill wrote and left blank — null on the draft path,
    *  on failure, or when the server sent no report. */
   fieldReport: EstarFieldReport | null;
+  /**
+   * The keys the template's own scripts CLEAR once the applicant works the
+   * form — named by the server on every POST /official 200, on both paths.
+   *
+   * It has its own slot because `fieldReport` does not exist on the verbatim
+   * path: `describeOfficialFill` returns `fieldReport: null` whenever no
+   * governed resolution ran, which is every export that does not set
+   * `useProgramData`. The fill had named these keys since 2026-09-07 and this
+   * hook read only the report, so the whole verbatim path said nothing about
+   * values the form is about to take back.
+   *
+   * `[]` is "assessed, nothing erased". `null` is "not reported". The status
+   * line only complains about `null` on the OFFICIAL path — the draft package
+   * is a content ZIP, not the FDA form, so no template script clears anything
+   * and there is nothing for the server to have reported. Collapsing assessed
+   * and unreported on the official path would rebuild the fail-open at the last
+   * hop; complaining about it on the draft path would be noise on every export.
+   */
+  erasedFields: string[] | null;
+  /**
+   * This outcome came from POST /official — the submittable FDA eSTAR — rather
+   * than from the draft content ZIP. It exists so the line can tell "the
+   * official server did not report the erasure" (a real gap the filer should
+   * know about) from "this was never an official fill" (nothing to report).
+   */
+  official: boolean;
   error: string | null;
 }
 
@@ -138,6 +164,28 @@ export function fieldReportClause(report: EstarFieldReport | null): string {
   return ` · ${report.filledCount} of ${report.mappedCount} administrative fields filled${blank}${caveat}${advisories}`;
 }
 
+/**
+ * The erasure clause for a success with no field report — the verbatim path.
+ *
+ * Names the keys rather than only counting them: "2 values will be cleared" is
+ * not actionable, and the whole point of the field is that the filer has to
+ * re-enter these on the form. Pure, so the wording is pinned by a test.
+ */
+export function erasedFieldsClause(keys: string[] | null | undefined): string {
+  // Anything that is not an array is "not reported" — null from a non-official
+  // or older response, undefined from an outcome literal that predates the
+  // field. Never `[]`, which would assert an assessment nobody made.
+  if (!Array.isArray(keys)) return ' · this server did not report which values the form clears';
+  if (keys.length === 0) return '';
+  return ` · ${keys.length} value(s) the form clears when you complete it: ${keys.join(', ')}`;
+}
+
+/** The server's `erasedFields`, or null when it did not send the field. */
+function parseErasedFields(raw: unknown): string[] | null {
+  if (!Array.isArray(raw)) return null;
+  return raw.filter((x): x is string => typeof x === 'string');
+}
+
 function parseFieldReport(raw: unknown): EstarFieldReport | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
@@ -188,7 +236,15 @@ export function exportStatusLine(busy: boolean, outcome: EstarExportOutcome | nu
       : outcome.filename
         ? `${outcome.filename} was produced but the browser blocked the download`
         : 'Export accepted, but the server returned no file to download';
-    return `${verb}${fieldReportClause(outcome.fieldReport)}${formatting}${registry}`;
+    /* Only on the official path, and only when there is no report to carry it.
+       On the governed path `clearedByTemplateKeys` is the same finding under
+       another name and `fieldReportClause` already states it, so saying it
+       twice in one line reads as two separate problems; on the draft path
+       there is no FDA form and nothing to clear. */
+    const erasure = outcome.official && !outcome.fieldReport
+      ? erasedFieldsClause(outcome.erasedFields)
+      : '';
+    return `${verb}${fieldReportClause(outcome.fieldReport)}${erasure}${formatting}${registry}`;
   }
   if (outcome.blockedByEntitlement) return entitlementRequiredLine(outcome.requiredTier);
   return `Export failed — ${
@@ -292,7 +348,7 @@ export interface UseEstarExportResult {
   reset: () => void;
 }
 
-async function postExport(url: string, body: unknown): Promise<EstarExportOutcome> {
+async function postExport(url: string, body: unknown, official: boolean): Promise<EstarExportOutcome> {
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -326,6 +382,8 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
         requiredTier:
           blockedByEntitlement && typeof json?.requiredTier === 'string' ? json.requiredTier : null,
         fieldReport: null,
+        erasedFields: null,
+        official,
         error: message,
       };
     }
@@ -347,6 +405,8 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
       blockedByEntitlement: false,
       requiredTier: null,
       fieldReport: parseFieldReport(json?.fieldReport),
+      erasedFields: parseErasedFields(json?.erasedFields),
+      official,
       error: null,
     };
   } catch {
@@ -364,6 +424,8 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
       blockedByEntitlement: false,
       requiredTier: null,
       fieldReport: null,
+      erasedFields: null,
+      official,
       error: 'Export request failed',
     };
   }
@@ -373,10 +435,10 @@ export function useEstarExport(): UseEstarExportResult {
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<EstarExportOutcome | null>(IDLE);
 
-  const run = useCallback(async (url: string, body: unknown) => {
+  const run = useCallback(async (url: string, body: unknown, official: boolean) => {
     setBusy(true);
     try {
-      const result = await postExport(url, body);
+      const result = await postExport(url, body, official);
       setOutcome(result);
       return result;
     } finally {
@@ -393,7 +455,7 @@ export function useEstarExport(): UseEstarExportResult {
           title: program.title || undefined,
         },
         useProjectContent: true,
-      }),
+      }, false),
     [run],
   );
 
@@ -411,7 +473,7 @@ export function useEstarExport(): UseEstarExportResult {
            Without useProgramData the route fills `data` verbatim, as before. */
         useProgramData: opts.useProgramData === true,
         data: cleanRequestData(opts.data),
-      }),
+      }, true),
     [run],
   );
 

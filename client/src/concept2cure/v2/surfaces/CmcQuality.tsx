@@ -270,6 +270,18 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
             <button className="reg-cta" onClick={() => void runStrategy()} disabled={Boolean(busy)}>
               {I.workflow} {busy === 'strategy' ? 'Generating…' : 'Generate control strategy'}
             </button>
+            {/* Both buttons report their work by swapping their own label — and
+                disable themselves at the same moment. A disabled control is
+                removed from the tab order and its label change is not reliably
+                announced, so pressing either one went quiet exactly while it
+                ran. The status is stated outside the control that is busy. */}
+            <span className="sr-only" role="status" aria-live="polite">
+              {busy === 'ich'
+                ? 'Running the ICH compliance check…'
+                : busy === 'strategy'
+                  ? 'Generating the control strategy…'
+                  : ''}
+            </span>
           </>
         }
       />
@@ -663,7 +675,7 @@ function Kpi({ l, v, s, tone }: { l: string; v: React.ReactNode; s?: string; ton
   return (
     <div className="reg-kpi" data-tone={tone}>
       <div className="reg-kpi-v">{v}</div>
-      <div className="reg-kpi-l">{l}{s ? ' -- ' + s : ''}</div>
+      <div className="reg-kpi-l">{l}{s ? ' — ' + s : ''}</div>
     </div>
   );
 }

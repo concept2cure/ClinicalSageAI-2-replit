@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5800/api/c2c/project-vault/02ed9f66-2ef6-4a21-a164-eab03a2dcdf6/file",
+    "body": {
+      "documentId": "4c7aa54f-0801-4d66-bcc1-a2183cc243a4",
+      "folderId": "module-5",
+      "note": "WE F-11 proof — filed into Module 5"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": {
+      "success": true,
+      "filing": {
+        "folderId": "module-5",
+        "folderLabel": "Module 5 · Clinical",
+        "evidenceKind": null,
+        "ctdSection": null,
+        "placementStatus": "confirmed",
+        "confidence": null,
+        "rationale": "WE F-11 proof — filed into Module 5",
+        "needsReview": false
+      }
+    }
+  }
+}

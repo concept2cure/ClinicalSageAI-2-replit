@@ -9,7 +9,7 @@
  * ⚠️ DRAFT - REQUIRES VALIDATION REVIEW BEFORE PRODUCTION USE
  */
 
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import { getPool } from '../db';
 import crypto from 'crypto';
 

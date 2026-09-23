@@ -1,3 +1,36 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: add timestamp columns that one provisioning path declares and the
+--          other never created, so both paths converge on the same shape.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Module 1 (submission orchestration + governed artifact
+--     registry), Module 2/5 via cerv2_section_versions.
+--   - Integrity Risk Addressed: a column present on one provisioning path and
+--     absent on the other. PostgreSQL rejects an unknown column at PLAN time
+--     (42703), so the affected statements failed 100% of the time on one kind of
+--     database and passed on the other — governed export placement, CERv2
+--     section creation, and (added 2026-09-10) advancing a submission
+--     orchestrator run past its first write.
+--
+-- Determinism Contract:
+--   - Additive only. No column is dropped, retyped or renamed, so existing
+--     evidence pointers keep resolving.
+--   - ADD COLUMN IF NOT EXISTS with a non-volatile DEFAULT: idempotent under
+--     CLAUDE.md RULE 1 replay, and on PG11+ a catalog-only change rather than a
+--     table rewrite.
+--
+-- Notes:
+--   - Each table is guarded on its own existence: deploy-migrate runs with
+--     stopOnFirstFailure, so an environment provisioned without one of these
+--     bundles must no-op rather than abort the whole run.
+--   - Header added 2026-09-10. This file predates require-migration-headers.sh
+--     covering the root migrations/ tree, so it was never in that gate's
+--     changed-files scope until it was next edited.
+-- =============================================================================
+
 -- Reconcile two `updated_at` columns the declared schema has and the SQL
 -- lineage never created.
 --
@@ -72,6 +105,57 @@ BEGIN
       ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now();
   ELSE
     RAISE NOTICE 'cerv2_section_versions absent — skipping updated_at reconciliation';
+  END IF;
+
+  -- ── 2026-09-10: A THIRD DIRECTION, and it is the reverse of the two above ──
+  -- The header lists two cases: the SQL lineage behind the drizzle declaration
+  -- (this file's original subject), and code naming a column declared nowhere
+  -- (fixed in the code). `submission_orchestrator_runs` is neither.
+  --
+  -- Here BOTH SQL definitions declare the columns —
+  -- db/migrations/20260725_submission_orchestrator_store_port.sql:74 and
+  -- migrations/0018_submission_orchestrator.sql — and `shared/schema/submissions.ts`
+  -- omitted them. So DRIZZLE PUSH was behind, and push runs at install-fresh
+  -- step 2, BEFORE the overlay. Push therefore created the table without the
+  -- columns and both `CREATE TABLE IF NOT EXISTS` statements became no-ops,
+  -- which is why every freshly provisioned database has a 13-column table while
+  -- the files that describe it declare 15.
+  --
+  -- WHAT THAT BROKE, reproduced on a database built from empty by
+  -- scripts/db/provision-test-db.sh:
+  --
+  --     INSERT INTO submission_orchestrator_runs (...) VALUES (...);   -- INSERT 0 1
+  --     UPDATE submission_orchestrator_runs SET status='complete' ...;
+  --     ERROR:  record "new" has no field "updated_at"
+  --     CONTEXT: PL/pgSQL assignment "NEW.updated_at = NOW()"
+  --              PL/pgSQL function submission_orchestrator_runs_set_updated_at()
+  --
+  -- 0018 installs `trg_orchestrator_runs_updated_at` on a table push created
+  -- without the column the trigger writes. The trigger is BEFORE UPDATE only, so
+  -- the first INSERT succeeds — but persistRun
+  -- (server/services/submission-package-orchestrator.ts:1014) uses
+  -- ON CONFLICT (run_id) DO UPDATE, which every step-write and every resume
+  -- takes, and 42703 is in its own SCHEMA_SHAPE_ERROR_CODES so it re-throws.
+  -- A submission orchestrator run could be STARTED and never advanced or
+  -- completed. The C-19 contract test could not see it: it applies the port to a
+  -- bare PGlite and never applies push, so it only ever exercises the shape that
+  -- works.
+  --
+  -- shared/schema/submissions.ts now declares both columns, which fixes future
+  -- fresh installs at the push step. This ALTER is what converges the databases
+  -- that already exist — per CLAUDE.md's convergence rule, editing a
+  -- CREATE TABLE repairs nothing that is already there.
+  --
+  -- TIMESTAMPTZ NOT NULL DEFAULT now() to match the two SQL definitions exactly
+  -- rather than the nullable TIMESTAMP used above; on PG11+ ADD COLUMN with a
+  -- non-volatile default is a catalog-only change, so this does not rewrite the
+  -- table.
+  IF to_regclass('public.submission_orchestrator_runs') IS NOT NULL THEN
+    ALTER TABLE submission_orchestrator_runs
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+  ELSE
+    RAISE NOTICE 'submission_orchestrator_runs absent — skipping timestamp reconciliation';
   END IF;
 END
 $do$;

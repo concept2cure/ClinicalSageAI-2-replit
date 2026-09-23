@@ -74,6 +74,11 @@ declare global {
         role?: string;
         roles?: string[];
         organizationId?: number | string;
+        /** organizations.uuid — the tenant key for every non-public schema.
+         *  Set from a verified membership row (middleware/orgMembership.ts).
+         *  Declared in all five copies of this block because TypeScript
+         *  requires merged Request declarations to be identical. */
+        organizationUuid?: string | null;
         permissions?: string[];
         tenantId?: number | string;
         industryMode?: string | null;
@@ -358,14 +363,32 @@ export const requireOrgAccess = (req: Request, res: Response, next: NextFunction
   // requested organization" waved through any customer admin for ANY
   // organization id, including one they had no membership in.
   //
-  // Scope of the live exposure, stated honestly: the only consumer is
-  // server/routes/cortexRoutes.ts, which is not mounted by any bootstrap
-  // registrar and never reads an organization id from request input — so this
-  // was latent, not exploitable, and it is not the cross-tenant deletion that
-  // an audit reproduced (that was requireRole + tenants-simple.ts, closed by
-  // routing those routes through requirePlatformAdmin). It is fixed here
-  // because the next router to reach for a middleware named
-  // `requireOrgAccess` would inherit the bypass without ever reading it.
+  // Scope of the live exposure, stated honestly. This paragraph has been
+  // corrected twice on 2026-09-10 and the history matters.
+  //
+  // It first said the only consumer, server/routes/cortexRoutes.ts, "is not
+  // mounted by any bootstrap registrar and never reads an organization id from
+  // request input". The first half was FALSE — cortexRoutes was mounted, via
+  // startup/routes.ts -> bootstrap/register-document-routes.ts
+  // (`app.use('/api/cortex', …)`) -> routes/cortex-unified.ts mountSubRouters(),
+  // and its endpoints answered. The second half held: its handlers took the org
+  // from `req.user.organizationId`, so this guard's request-input comparison
+  // had nothing to bypass. "Latent, not exploitable" rested on that one reason.
+  //
+  // Later the same day cortexRoutes was RETIRED (WO-14, Route B): unmounted and
+  // deleted, with the test server/__tests__/routes/cortex-prime-unmounted.test.ts
+  // pinning the paths as 404. As of that change this middleware has NO
+  // consumer at all. That is not a reason to leave the bypass in — it is the
+  // reason to fix it here, because the next router to reach for a middleware
+  // named `requireOrgAccess` would inherit the bypass without ever reading it.
+  // The margin was always a property of how callers happened to read their org
+  // id, never of this guard.
+  //
+  // It is still not the cross-tenant deletion an audit reproduced (that was
+  // requireRole + tenants-simple.ts, closed by routing those routes through
+  // requirePlatformAdmin). It is fixed here because the next router to reach for
+  // a middleware named `requireOrgAccess` would inherit the bypass without ever
+  // reading it.
   const callerRoles = [req.user.role, ...(req.user.roles || [])].filter(Boolean) as string[];
   if (callerRoles.some(role => PLATFORM_SCOPED_ROLES.has(role))) {
     return next();

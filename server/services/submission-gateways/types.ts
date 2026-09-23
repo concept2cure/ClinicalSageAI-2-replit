@@ -142,6 +142,16 @@ export interface SubmissionBundle {
     required: string[];
     present: string[];
     missing: string[];
+    /**
+     * The util/style/*.xsl stylesheets the region's backbones reference and the
+     * package does NOT contain. `selfContained` has always accounted for these
+     * (assessDtdReadiness ORs both gaps), but only the DTD half was carried
+     * here — so the pre-transmit gate refused a stylesheet-only gap with an
+     * empty file list, naming nothing the operator could act on. Optional
+     * because bundles assembled before this field existed carry no value; the
+     * gate must read its absence as "not itemised", never as "none missing".
+     */
+    missingStylesheets?: string[];
     selfContained: boolean;
   };
   /**
@@ -366,6 +376,39 @@ export class TransportError extends Error {
   constructor(message: string, readonly cause?: unknown) {
     super(message);
     this.name = 'TransportError';
+  }
+}
+
+/**
+ * Thrown by a transport whose credentials resolved but whose wire contract has
+ * NOT been verified against the agency's published specification, so the
+ * platform refuses to put bytes on it. Distinct from CredentialError (you are
+ * not provisioned) and TransportError (the network call failed): this is "the
+ * platform will not guess the agency's API". Nothing is transmitted, no
+ * transmittal row is created, no identifier is minted. `transmitted` is a
+ * literal false so a caller reading the error as data cannot mistake it for an
+ * acknowledgement.
+ *
+ * Today: the FDA ESG NextGen REST transport (`FDA_ESG_TRANSPORT=rest`). FDA
+ * retired WebTrader in April 2025 and offers a REST API beside AS2; the request
+ * and response shapes must be taken from FDA's ESG NextGen API documentation
+ * and exercised in FDA's pre-production environment before the refusal below is
+ * replaced by a real call.
+ */
+export class UnverifiedTransportError extends Error {
+  readonly errorClass = 'transport' as const;
+  readonly transmitted = false as const;
+  constructor(
+    readonly region: Region,
+    readonly gateway: GatewayName,
+    readonly transport: Transport,
+    detail: string,
+  ) {
+    super(
+      `${region.toUpperCase()} ${gateway} ${transport} transport is configured but its wire contract has not been ` +
+      `verified against the agency specification; nothing was transmitted. ${detail}`,
+    );
+    this.name = 'UnverifiedTransportError';
   }
 }
 

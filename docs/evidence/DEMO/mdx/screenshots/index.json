@@ -1,0 +1,160 @@
+{
+  "baseUrl": "http://localhost:5400",
+  "takenAt": "2026-09-21T18:02:05.215Z",
+  "program": {
+    "id": "82d3b729-87a1-4714-9a21-819b538683f3",
+    "name": "[Demo · MDX] NeuroPanel-Dx 510(k)"
+  },
+  "shots": [
+    {
+      "file": "01-login.png",
+      "url": "/concept2cure/login"
+    },
+    {
+      "file": "02-after-demo-access.png",
+      "url": "/concept2cure",
+      "demoAccessButton": true
+    },
+    {
+      "file": "03-projects.png",
+      "url": "/concept2cure/projects",
+      "expects": {
+        "[Demo · MDX] NeuroPanel-Dx 510(k)": true
+      },
+      "rateLimited429": 0
+    },
+    {
+      "file": "04-project-home.png",
+      "url": "/concept2cure/project-home",
+      "expects": {
+        "[Demo · MDX] NeuroPanel-Dx 510(k)": true
+      },
+      "rateLimited429": 0
+    },
+    {
+      "file": "05-vault.png",
+      "url": "/concept2cure/vault",
+      "expects": {
+        "[Demo · MDX] Analytical Performance Study Report": true,
+        "[Demo · MDX] Labeling and Instructions for Use (Draft)": true,
+        "Engineering (DHF + RMF)": true
+      },
+      "rateLimited429": 0
+    },
+    {
+      "file": "06-authoring-program-open.png",
+      "url": "/concept2cure/document-authoring",
+      "expects": {
+        "[Demo · MDX] 510(k) Summary": true
+      },
+      "rateLimited429": 0
+    },
+    {
+      "file": "07-authoring-510k-summary-open.png",
+      "url": "/concept2cure/document-authoring",
+      "expects": {
+        "APPROVED or FROZEN": true,
+        "Submitter (807.92)": true
+      }
+    },
+    {
+      "file": "08-authoring-org-wide.png",
+      "url": "/concept2cure/document-authoring",
+      "expects": {
+        "[Demo · MDX] Substantial Equivalence Discussion": true,
+        "[Demo · MDX] Cybersecurity and Interoperability Summary": true
+      },
+      "rateLimited429": 0
+    },
+    {
+      "file": "09-authoring-se-draft-open.png",
+      "url": "/concept2cure/document-authoring",
+      "expects": {
+        "open comment text": false,
+        "comment count/marker": true
+      }
+    },
+    {
+      "file": "10-review.png",
+      "url": "/concept2cure/review",
+      "expects": {},
+      "rateLimited429": 0
+    },
+    {
+      "file": "11-submission-center.png",
+      "url": "/concept2cure/submission-center",
+      "expects": {
+        "[Demo · MDX] NeuroPanel-Dx 510(k)": true,
+        "/0000/": true
+      },
+      "rateLimited429": 0
+    },
+    {
+      "file": "12-submission-center-selected.png",
+      "url": "/concept2cure/submission-center",
+      "expects": {
+        "0000": true,
+        "assembling": false,
+        "leaf 3.2.P.1": false,
+        "leaf 5.3.5.2": false
+      }
+    },
+    {
+      "file": "13-submission-center-builder.png",
+      "url": "/concept2cure/submission-center",
+      "expects": {
+        "leaf 3.2.P.1": true,
+        "leaf 1.14": true,
+        "six leaves listed": true
+      }
+    },
+    {
+      "file": "14-dispatch-readiness.png",
+      "url": "/concept2cure/dispatch-readiness",
+      "expects": {
+        "/0000/": true,
+        "/not cleared|blocked|Blocked|cleared: false|blocker/i": true
+      },
+      "rateLimited429": 0
+    },
+    {
+      "file": "15-orchestration.png",
+      "url": "/concept2cure/orchestration",
+      "expects": {
+        "/readiness/i": true
+      },
+      "rateLimited429": 0
+    },
+    {
+      "file": "16-quality-sop-register.png",
+      "url": "/concept2cure/quality",
+      "expects": {
+        "MDX-SOP-101": true,
+        "MDX-SOP-102": true,
+        "MDX-SOP-103": true,
+        "MDX-SOP-104": true,
+        "/effective/i": true
+      },
+      "rateLimited429": 0
+    },
+    {
+      "file": "17-quality-change-control.png",
+      "url": "/concept2cure/quality",
+      "expects": {
+        "MDX-CC-2026-001": true,
+        "under assessment": true
+      }
+    },
+    {
+      "file": "18-audit-trail.png",
+      "url": "/concept2cure/audit-trail",
+      "expects": {
+        "pack targets (qms_document / vault_document / MDX-SOP)": true,
+        "chain verdict shown": true,
+        "still loading": false
+      },
+      "rateLimited429": 0,
+      "retaken": "2026-09-21T18:03:13.242Z"
+    }
+  ]
+}

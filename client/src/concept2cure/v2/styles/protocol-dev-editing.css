@@ -1,0 +1,143 @@
+/* ════════════════════════════════════════════════════════════════════
+   Protocol development — the editing affordances added on 2026-09-21.
+
+   The read-only hub is dressed by research-v2.css (.pd-*). This sheet
+   holds ONLY what editing needed and that vocabulary did not have: the
+   section canvas frame, the per-row controls on the schedule of
+   assessments, the inline verdict/entry panels on the risk, budget and
+   review registers, and the two-action empty state.
+
+   Namespace .pde-* so nothing here can collide with .pd-* or .pg-*.
+   Tokens only (app.css); scoped under .c2c-v2 like its sibling sheets;
+   motion is 200ms ease-out and is removed under prefers-reduced-motion.
+   ════════════════════════════════════════════════════════════════════ */
+
+.c2c-v2 {
+
+  /* ── shared ─────────────────────────────────────────────────────── */
+
+  /* The workspace-level stale notice sits between the cover page and the tab
+     strip, so it takes the same side gutter the head and the grid do. */
+  .pd-wrap > .pde-refusal{margin:0 24px 8px;}
+
+  /* A pane head can now carry more than one action (add a visit AND an
+     assessment), so the actions sit in their own row rather than the
+     single slot .pd-pane-h reserved. */
+  .pde-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+
+  /* An honest note: what the screen cannot show, and why. Never styled
+     as a warning — most of these are simply "nothing is recorded yet". */
+  .pde-note{font-size:12.5px;color:var(--text-400);line-height:1.55;
+    background:var(--bg-050);border:1px solid var(--border);
+    border-radius:var(--radius-lg);padding:11px 13px;margin:0 0 12px;}
+  .pde-note strong{color:var(--text-200);font-weight:600;}
+
+  /* The refusal a write came back with. Assertive, and never an empty
+     result standing in for an error. */
+  .pde-refusal{font-size:12.5px;line-height:1.55;color:var(--error);
+    background:var(--error-muted);border:1px solid var(--error);
+    border-radius:var(--radius-lg);padding:11px 13px;margin:0 0 10px;}
+
+  /* The governed reason a save is gated on. Same contract as
+     .pd-soa-reason, which gates the SoA grid. */
+  .pde-reason{display:flex;flex-direction:column;gap:5px;
+    font-size:11.5px;color:var(--text-400);margin:0 0 10px;}
+  .pde-reason textarea{border:1px solid var(--border);border-radius:7px;
+    padding:8px 10px;font-size:13px;line-height:1.5;resize:vertical;
+    background:var(--bg-000);color:var(--text-100);font-family:inherit;min-height:56px;}
+  .pde-reason textarea:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+
+  /* A small control attached to a row of a register (rename / remove).
+     Text, not an icon alone, so its accessible name is its label. */
+  .pde-rowbtn{display:inline-flex;align-items:center;gap:4px;
+    font-size:10.5px;font-weight:600;color:var(--text-400);
+    background:transparent;border:1px solid transparent;
+    border-radius:var(--radius-sm);padding:2px 6px;cursor:pointer;
+    transition:background 200ms ease-out,color 200ms ease-out,border-color 200ms ease-out;}
+  .pde-rowbtn:hover{background:var(--bg-100);color:var(--text-200);border-color:var(--border);}
+  .pde-rowbtn:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+
+  /* ── section canvas ─────────────────────────────────────────────── */
+
+  .pde-sec{display:flex;flex-direction:column;gap:0;max-width:920px;}
+  .pde-sec-head{display:flex;align-items:flex-start;justify-content:space-between;
+    gap:16px;margin-bottom:12px;}
+  .pde-sec-eyebrow{font-size:10.5px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--accent-200);}
+  .pde-sec-title{font-size:17px;font-weight:600;color:var(--text-100);margin:3px 0 0;line-height:1.3;}
+  .pde-sec-meta{display:flex;align-items:center;gap:9px;flex-shrink:0;}
+  .pde-sec-canvas{border:1px solid var(--border);border-radius:var(--radius-lg);
+    overflow:hidden;display:flex;flex-direction:column;min-height:340px;background:var(--bg-000);}
+  .pde-sec-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;}
+  .pde-sec-foot label{font-size:11.5px;color:var(--text-400);display:inline-flex;align-items:center;gap:6px;}
+  .pde-sec-foot select{border:1px solid var(--border);border-radius:7px;padding:6px 9px;
+    font-size:12.5px;background:var(--bg-000);color:var(--text-100);}
+  .pde-sec-foot select:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+  .pde-sec-state{font-size:11.5px;color:var(--text-400);margin-left:auto;}
+
+  /* ── layout: the surface must not be wider than its track ───────── */
+
+  /* `.pd-work` is the `1fr` track of `.pd-grid`, and a grid item's automatic
+     minimum size is its min-content — so the cover page's long title and the
+     schedule of assessments both pushed the whole surface past the shell's
+     content column, and clicking a tab at the far right scrolled the rail off
+     screen. Each container that owns a scroller is allowed to shrink; the
+     scroller inside it does the scrolling, which is what it is for. */
+  .pd-wrap,.pd-head,.pd-head-l,.pd-grid,.pd-grid > .pd-work{min-width:0;}
+  .pd-grid > .pd-work > .pd-pane{max-width:920px;}
+
+  /* ── cover page ─────────────────────────────────────────────────── */
+
+  /* The sub-row carries the sponsor, the PI, the status and now an edit
+     control; without wrapping they compress into two-word columns. Each item
+     stays on one line and the row breaks between them instead. */
+  .pd-head-l .pd-subrow{flex-wrap:wrap;row-gap:5px;}
+  .pd-head-l .pd-subrow > span{white-space:nowrap;}
+  .pd-head-l .pd-subrow > .pde-rowbtn{white-space:nowrap;}
+
+  /* ── schedule of assessments ────────────────────────────────────── */
+
+  /* Icon controls on the column and row headers. They must not widen the
+     grid: a schedule of assessments is read across, and a header as wide as
+     its own button label is a grid nobody can read. */
+  .pde-soa-vh{display:flex;justify-content:center;gap:1px;margin-top:5px;}
+  .pde-soa-vh .pde-rowbtn,.pde-soa-rh .pde-rowbtn{padding:2px 4px;line-height:0;}
+  /* The row header is label + category stacked (research-v2 sets both to
+     block); the remove control sits beside that stack rather than under it,
+     so the row keeps the height of its label. */
+  .pd-soa .pd-soa-rh{display:flex;align-items:center;gap:8px;}
+  .pd-soa .pd-soa-rh > .pde-soa-rh{margin-left:auto;flex-shrink:0;}
+  .pde-soa-label{min-width:0;}
+  .pde-soa-rh{display:inline-flex;align-items:center;gap:1px;}
+
+  /* ── risk register ──────────────────────────────────────────────── */
+
+  .pde-risk-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px;}
+  .pde-risk-owner{font-size:11.5px;color:var(--text-400);}
+
+  /* ── budget ─────────────────────────────────────────────────────── */
+
+  .pde-budget-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .pde-basis{font-size:11px;color:var(--text-400);margin-top:10px;line-height:1.5;}
+
+  /* ── reviews ────────────────────────────────────────────────────── */
+
+  .pde-review-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    border:1px solid var(--border);border-radius:var(--radius-lg);
+    background:var(--bg-000);padding:10px 13px;margin-bottom:8px;}
+  .pde-review-name{font-size:13px;font-weight:600;color:var(--text-100);}
+  .pde-review-meta{font-size:11.5px;color:var(--text-400);}
+  .pde-review-act{margin-left:auto;}
+
+  /* ── empty state ────────────────────────────────────────────────── */
+
+  /* Left-aligned like every other surface's empty state in this product —
+     the panel centres its own text; the two affordances sit under it. */
+  .pde-empty{display:flex;flex-direction:column;align-items:stretch;gap:14px;max-width:560px;}
+  .pde-empty .c2c-empty-state{width:100%;}
+  .pde-empty-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:center;}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c2c-v2 .pde-rowbtn{transition:none;}
+}

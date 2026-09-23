@@ -13,6 +13,7 @@ import { authMiddleware } from '../auth';
 import {
   createGovernedExportConsequence,
   createAuditedUnplacedExport,
+  getMaxGovernedExportBytes,
 } from '../services/export/governedExportConsequence';
 import {
   EstarRetentionError,
@@ -22,7 +23,11 @@ import {
 } from '../services/pathway-engines/estar/estar-artifact-retention';
 import { governedSignatureSchema } from '../api/cmc/governance';
 import { verifyReauth } from './c2c/actions';
-import { fillEstarSubmission } from '../services/pathway-engines/estar/estar-fill';
+import {
+  fillEstarSubmission,
+  type EstarAttachmentReport,
+} from '../services/pathway-engines/estar/estar-fill';
+import { createDeviceAttachmentResolver } from '../services/pathway-engines/estar/estar-attachment-plan';
 import { getEstarFieldMap, isFieldMapPopulated } from '../services/pathway-engines/estar/estar-field-map';
 import {
   loadEstarAdministrativeInputs,
@@ -703,6 +708,29 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
 // and exposed via GET /catalog; the official-fill/scaffold endpoints here cover
 // the nIVD/IVD marketing family.
 const ESTAR_TYPES = ['510k', 'de_novo', 'pma', 'q_sub', 'ide', '513g'] as const;
+
+/**
+ * The governed document class an eSTAR of each type files its sections FROM.
+ *
+ * `loadAuthoredDeviceSections` otherwise takes the most recently created
+ * document of ANY device class — k510, denovo, pma AND cer — and the rule-pack
+ * keys an attachment is filed by are per-pathway and collide. `D5` is "Shelf
+ * life and packaging" in the k510 pack and "Cybersecurity" in the denovo pack;
+ * `E1` is "Biocompatibility" in one and "Proposed labeling and instructions for
+ * use" in the other (migrations/20260901b_estar_510k_denovo_outlines.sql). So a
+ * program that has a 510(k) document and then gets a CER, or a De Novo
+ * scaffold, would file a DIFFERENT document's section into a named CDRH slot,
+ * with a clean 200.
+ *
+ * The three PreSTAR types have no vendored template and no device rule pack, so
+ * they have no class here; the fill refuses them before a resolver is ever
+ * called, and an unmapped type reads nothing rather than reading anything.
+ */
+const ESTAR_TYPE_DOC_CLASS: Partial<Record<(typeof ESTAR_TYPES)[number], string>> = {
+  '510k': 'k510',
+  de_novo: 'denovo',
+  pma: 'pma',
+};
 const ESTAR_VARIANTS = ['device', 'ivd'] as const;
 
 // PreSTAR (Q-Sub/IDE/513(g)) share one template family regardless of device/ivd;
@@ -865,6 +893,14 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
   }
 });
 
+/**
+ * A ceiling on one request, not on the form: the nIVD template declares 113
+ * slots and the IVD 145, so 150 admits every slot either template has while
+ * refusing a request that is not a submission but a load test. Each attachment
+ * costs a render or a vault read plus an encrypt pass over its bytes.
+ */
+const ESTAR_MAX_ATTACHMENTS_PER_EXPORT = 150;
+
 const officialSchema = z.object({
   meta: exportMetaSchema,
   type: z.enum(ESTAR_TYPES),
@@ -878,6 +914,33 @@ const officialSchema = z.object({
    * carries a per-field report. Absent/false ⇒ `data` is written verbatim.
    */
   useProgramData: z.boolean().optional(),
+  /**
+   * Documents to file into named eSTAR attachment slots.
+   *
+   * WHICH document belongs in WHICH slot is a regulatory judgement, so it is an
+   * input here rather than something the server derives. What the server DOES
+   * own is every mechanical way that judgement can be executed wrongly — a slot
+   * this template does not declare, a chapter that cannot be resolved, a second
+   * file into a slot the form holds one row for, a name the form would delete,
+   * a section still marked draft — and each of those refuses the whole export
+   * (422 with the reasons), never a quiet omission from a 200.
+   *
+   * `slot` is the control's FULL SOM path (`root.CoverLetter.CLAddAttachment110`)
+   * because the short name is not unique across a template.
+   */
+  attachments: z
+    .array(
+      z.object({
+        slot: z.string().min(1),
+        fileName: z.string().min(1).max(200).optional(),
+        source: z.discriminatedUnion('kind', [
+          z.object({ kind: z.literal('authored_section'), sectionCode: z.string().min(1) }),
+          z.object({ kind: z.literal('vault_document'), documentId: z.string().uuid() }),
+        ]),
+      }),
+    )
+    .max(ESTAR_MAX_ATTACHMENTS_PER_EXPORT)
+    .optional(),
 });
 
 /**
@@ -945,16 +1008,38 @@ function describeOfficialFill(
 
 /**
  * The consequence body plus what this route adds BESIDE it: the per-field fill
- * report, and the retention record for the delivered artifact. Both are added,
- * never substituted — every key the export-governance plane produced reaches
- * the client unchanged (pinned by ci:governed-export-consequence-shape).
+ * report, the values the template's own scripts erase, the attachment report,
+ * and the retention record for the delivered artifact. All are added, never
+ * substituted — every key the export-governance plane produced reaches the
+ * client unchanged (pinned by ci:governed-export-consequence-shape).
+ *
+ * WHY `erasedFields` IS HERE AND NOT ONLY IN THE FIELD REPORT. The report exists
+ * only when a governed resolution ran; on the verbatim `data` path
+ * `resolveRequestedOfficialFields` returns `resolved: null`,
+ * `describeOfficialFill` returns `fieldReport: null`, and the 200 body said
+ * NOTHING about erasure — the fill had named the keys on `result.erasedFields`
+ * since 2026-09-07 and no production caller read it. It is emitted on both paths
+ * and ALWAYS present: an empty array is "assessed, nothing erased", and an
+ * absent key would be indistinguishable from "not assessed".
+ *
+ * `attachmentReport` stays OPTIONAL, unlike erasedFields: it describes a step
+ * that genuinely does not run on every path, so its absence is meaningful
+ * rather than ambiguous.
  */
 function withOfficialExtras<T extends object>(
   body: T,
   fieldReport: OfficialEstarFieldReport | null,
   retention: EstarRetentionReport,
+  erasedFields: ReadonlyArray<string>,
+  attachmentReport?: EstarAttachmentReport,
 ): T {
-  return { ...body, ...(fieldReport ? { fieldReport } : {}), retention };
+  return {
+    ...body,
+    ...(fieldReport ? { fieldReport } : {}),
+    erasedFields: [...erasedFields],
+    ...(attachmentReport ? { attachmentReport } : {}),
+    retention,
+  };
 }
 
 /**
@@ -972,6 +1057,14 @@ function withOfficialExtras<T extends object>(
  * (governed wins; `data` fills the gaps) and the 200 body carries a
  * `fieldReport` saying which mapped fields were written, from where, and which
  * were left blank — the user is never handed a blank official form unannounced.
+ *
+ * On EITHER path the 200 body carries `erasedFields`: the values that were
+ * written and that the template's own scripts will erase. And the 422 covers
+ * three more refusals the fill makes on the values themselves — a Declaration of
+ * Conformity the form would rebuild under a different legal entity (now or on
+ * the applicant's first entry of their company name), and a fill whose every
+ * written value the form erases, which would deliver a blank form registered as
+ * submittable.
  */
 router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEntitlement, async (req, res) => {
   const validation = officialSchema.safeParse(req.body);
@@ -982,7 +1075,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
     });
   }
 
-  const { meta, type, variant, data, flatten, useProgramData } = validation.data;
+  const { meta, type, variant, data, flatten, useProgramData, attachments } = validation.data;
 
   try {
     const anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
@@ -1002,10 +1095,42 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       variant: templateVariant,
       data: fillData,
       flatten,
+      /* The producer is told the ceiling the deliverer enforces, so an
+         oversized submission is a sentence naming the documents rather than a
+         500 after the work is done. One function answers for both. */
+      maxOutputBytes: getMaxGovernedExportBytes(),
+      ...(attachments?.length
+        ? {
+            attachments,
+            /* The resolver is built per request and used once. It carries the
+               organization and the program, and both branches re-assert them in
+               their own query — a document is never reached by id alone. */
+            /* No `client`: the resolver's governed-section reads default to
+               the shared pool, which is what every other caller of
+               loadAuthoredDeviceSections in this file does (/build at :533,
+               /assemble, /filing-readiness). `requestDb(req)` is a DRIZZLE
+               instance for `.select().from(...)` — its `.query` is the
+               relational-query namespace, not the `(text, params)` function
+               DeviceContentClient wants — so passing it here threw at runtime
+               and typechecked only until the next tsc run. If the shared pool
+               becomes wrong under RLS enforcement it becomes wrong for all four
+               callers at once, and the fix belongs to all four rather than to a
+               fifth, divergent path here. */
+            attachmentResolver: createDeviceAttachmentResolver({
+              organizationId: getOrganizationId(req),
+              programUuid: anchor.programUuid,
+              /* THIS export's own document class, never "the newest device
+                 document" — see ESTAR_TYPE_DOC_CLASS. */
+              docTypes: ESTAR_TYPE_DOC_CLASS[type] ? [ESTAR_TYPE_DOC_CLASS[type]!] : [],
+            }),
+          }
+        : {}),
     });
 
     if (!result.filled || !result.pdfBytes) {
-      // Honest fail-closed: we cannot produce a submittable eSTAR yet.
+      // Honest fail-closed: we cannot produce a submittable eSTAR yet. The
+      // attachment report travels on the REFUSAL too — an operator whose export
+      // was refused because a section is still a draft needs to see which one.
       return res.status(422).json({
         error: 'ESTAR_NOT_PRODUCIBLE',
         officialEstarPdf: false,
@@ -1013,6 +1138,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         templateAvailable: result.templateAvailable,
         fieldMapPopulated: result.fieldMapPopulated,
         blockers: result.blockers,
+        ...(result.attachmentReport ? { attachmentReport: result.attachmentReport } : {}),
       });
     }
 
@@ -1028,9 +1154,20 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       descriptorId: result.descriptorId,
       filledFields: result.filledFields,
       skippedFields: result.skippedFields,
+      /* Written, and gone as soon as the applicant works that section: the
+         template clears these cells and rebuilds them from a field the map does
+         not write. The registry row carried filledFields alone, so the governed
+         record of what was filed over-stated it by exactly these keys. */
+      erasedFields: result.erasedFields,
       programId: anchor.programUuid ?? undefined,
       // Governed provenance (fieldSources) travels into the artifact registry / audit row.
       ...fieldMetadata,
+      /* WHAT WENT WITH IT. The delivered-bytes hash proves the FORM was not
+         altered; it says nothing about which documents the form routes. A
+         reviewer asking "what did we file into section 5" needs the slot, the
+         chapter and the per-file hash in the governed record, not only in a
+         response body nobody keeps. Bytes are deliberately not here. */
+      ...(result.attachmentReport ? { attachments: result.attachmentReport.attached } : {}),
     };
 
     /* RETAIN BEFORE DELIVERING. The bytes CDRH ingests used to be hashed,
@@ -1072,7 +1209,9 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         metadata: officialMetadata,
       });
 
-      return res.status(200).json(withOfficialExtras(consequence, fieldReport, retention));
+      return res.status(200).json(
+        withOfficialExtras(consequence, fieldReport, retention, result.erasedFields, result.attachmentReport),
+      );
     }
 
     // Program-spine project without a registry anchor — same audited-delivery
@@ -1092,7 +1231,9 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       metadata: officialMetadata,
     });
 
-    return res.status(200).json(withOfficialExtras(unplaced, fieldReport, retention));
+    return res.status(200).json(
+      withOfficialExtras(unplaced, fieldReport, retention, result.erasedFields, result.attachmentReport),
+    );
   } catch (error: any) {
     logger.error('official eSTAR export failure', {
       err: error instanceof Error ? error.message : String(error),
@@ -1108,9 +1249,12 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
           'so it was not delivered. The problem has been logged.',
       });
     }
+    /* NOT "before consequence persistence" unconditionally — that sentence was
+       written when the only failures here happened before retention, and it is
+       false for anything thrown after it. Say what is actually known. */
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
-      message: 'Official eSTAR export failed before consequence persistence. The problem has been logged.',
+      message: 'Official eSTAR export failed and was not delivered. The problem has been logged.',
     });
   }
 });

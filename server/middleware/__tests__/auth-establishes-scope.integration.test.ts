@@ -114,6 +114,10 @@ interface DriveResult {
   scoped: boolean;
   /** tenantId the downstream handler observed, or null when unscoped. */
   tenantId: string | null;
+  /** orgUuid the downstream handler's scope carried — what app.current_org_id is set to. */
+  orgUuid: string | null;
+  /** req.tenantContext.organizationUuid as published to the handler. */
+  ctxOrgUuid: string | null;
   /** True when next() (the downstream handler) was reached at all. */
   reachedHandler: boolean;
   /** The JSON body the middleware answered with, if it answered. */
@@ -140,12 +144,14 @@ function drive(
     let reachedHandler = false;
     let scoped = false;
     let tenantId: string | null = null;
+    let orgUuid: string | null = null;
+    let ctxOrgUuid: string | null = null;
     let body: any;
 
     const settle = () => {
       if (settled) return;
       settled = true;
-      resolve({ status, scoped, tenantId, reachedHandler, body });
+      resolve({ status, scoped, tenantId, orgUuid, ctxOrgUuid, reachedHandler, body });
     };
 
     const res = {
@@ -179,6 +185,8 @@ function drive(
       const scope = getTenantScope();
       scoped = !!scope;
       tenantId = scope?.tenantId ?? null;
+      orgUuid = scope?.orgUuid ?? null;
+      ctxOrgUuid = (req as { tenantContext?: { organizationUuid?: string | null } }).tenantContext?.organizationUuid ?? null;
       settle();
     };
 
@@ -245,6 +253,56 @@ describe('authenticateToken opens a tenant scope on the member path', () => {
     expect(r.status).toBe(403);
     expect(r.reachedHandler).toBe(false);
     expect(r.scoped).toBe(false);
+  });
+});
+
+// The vault.* write and read policies (core.can_write_program → identity.
+// current_org_id()) key on the organization's UUID in app.current_org_id, which
+// the pool sets from the scope's orgUuid. authenticateToken resolved it through
+// enforceOrgMembership; the global gate did not, so under the non-owner runtime
+// role every vault ingest behind /api was refused by RLS ("new row violates
+// row-level security policy for table documents") and every vault read came
+// back empty.
+describe('both gates carry the organization uuid into the scope', () => {
+  const ORG_UUID = 'cec579dd-c9c5-44d7-b96f-be0cb408fd34';
+
+  it('authenticateToken', async () => {
+    membershipRows = [{ role: 'editor', orgUuid: ORG_UUID }];
+    const { authenticateToken } = await importRealMiddlewareAuth();
+
+    const r = await drive(authenticateToken, 'Bearer x');
+
+    expect(r.status).toBe(200);
+    expect(r.orgUuid).toBe(ORG_UUID);
+  });
+
+  it('authMiddleware (global /api gate)', async () => {
+    membershipRows = [{ role: 'editor', orgUuid: ORG_UUID }];
+    const { authMiddleware } = await import('../../auth');
+
+    const r = await drive(authMiddleware as unknown as Middleware, 'Bearer x');
+
+    expect(r.status).toBe(200);
+    expect(r.orgUuid).toBe(ORG_UUID);
+    expect(r.ctxOrgUuid).toBe(ORG_UUID);
+  });
+
+  // The live path of /api/vault/ingest: the global authenticateToken gate opens
+  // the scope with the uuid, then the route-level authMiddleware rebuilds
+  // req.tenantContext. The route re-opens its scope from req.tenantContext after
+  // multer, so a rebuilt context without the uuid re-opened a scope without it.
+  it('authMiddleware behind authenticateToken leaves the published context carrying it', async () => {
+    membershipRows = [{ role: 'editor', orgUuid: ORG_UUID }];
+    const { authenticateToken } = await importRealMiddlewareAuth();
+    const { authMiddleware } = await import('../../auth');
+    const chained: Middleware = (req, res, next) =>
+      authenticateToken(req, res, () => (authMiddleware as unknown as Middleware)(req, res, next));
+
+    const r = await drive(chained, 'Bearer x');
+
+    expect(r.status).toBe(200);
+    expect(r.orgUuid).toBe(ORG_UUID);
+    expect(r.ctxOrgUuid).toBe(ORG_UUID);
   });
 });
 

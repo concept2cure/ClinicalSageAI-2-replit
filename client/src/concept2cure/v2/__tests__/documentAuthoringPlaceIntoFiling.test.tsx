@@ -165,6 +165,34 @@ describe('the dialog states the identity fact and picks real targets', () => {
 });
 
 describe('the placement chain — snapshot then leaf, verdict verbatim', () => {
+  it('files at the code the note announces, not at the keystrokes', async () => {
+    // upsertLeaf stores a section code exactly as sent. This dialog used to send
+    // the raw input while its note said "Files as 3.2.S.4.2", and the Vault
+    // filing dialog — sharing the same judgement — sends the canonical code, so
+    // one section reached the database under two spellings depending on which
+    // dialog filed it.
+    const calls: Array<{ method: string; url: string; body?: unknown }> = [];
+    mockApi((method, url, body) => {
+      if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
+        calls.push({ method, url, body });
+        return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 502 } }) };
+      }
+      if (method === 'PUT' && url === '/api/submissions/sequences/31/leaves') {
+        calls.push({ method, url, body });
+        return { ok: true, status: 200, json: async () => ({ id: 78, sectionCode: '3.2.S.4.2', title: 'M2.7 Clinical Summary', lifecycleOp: 'new' }) };
+      }
+      return undefined;
+    });
+    renderSeam();
+    await openAndTarget();
+    fireEvent.change(screen.getByLabelText(/Section code/), { target: { value: ' m3.2.s.4.2 ' } });
+    expect(document.body.textContent).toContain('Files as 3.2.S.4.2');
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf/ }));
+    await waitFor(() => expect(calls).toHaveLength(2));
+    expect(calls[0].body).toMatchObject({ moduleNumber: '3.2.S.4.2' });
+    expect(calls[1].body).toMatchObject({ sectionCode: '3.2.S.4.2' });
+  });
+
   it('places via GET saved sections → POST snapshot → PUT leaves with the snapshot id', async () => {
     const calls: Array<{ method: string; url: string; body?: unknown }> = [];
     mockApi((method, url, body) => {
@@ -324,5 +352,74 @@ describe('assembleSnapshot mirrors the canonical bridge format', () => {
   });
   it('keeps bare headings for content-free sections — which is why the component refuses on section content, not on the assembled string', () => {
     expect(assembleSnapshot([{ code: '1.1', title: 'Cover', content: '' }])).toBe('## 1.1 — Cover');
+  });
+});
+
+/* ── The section code decides where the document is filed ───────────────────
+   This input was free text with no feedback and a placeholder that suggested
+   `m1/us/1.2`. The packager derives a leaf's MODULE and FOLDER from the value,
+   so an unusable one used to become a folder name — and the author only found
+   out after a filing snapshot had already been created for it. The dialog now
+   applies the same rule the write boundary and the packager do
+   (shared/regulatory/section-code) and says what the code resolves to BEFORE
+   anything is written. */
+describe('the section code says where the document will be filed, before it is', () => {
+  const setSection = (value: string) =>
+    fireEvent.change(screen.getByLabelText(/Section code/), { target: { value } });
+
+  it('names the module folder a precise Module 3 section files into — full depth', async () => {
+    mockApi();
+    renderSeam();
+    await openAndTarget();
+    setSection('3.2.S.4.2');
+    expect(await screen.findByText(/Files as 3\.2\.S\.4\.2 at m3\/3-2-s-4-2\//)).toBeTruthy();
+    // Not collapsed to its heading.
+    expect(document.body.textContent).not.toContain('m3/3-2-s/');
+  });
+
+  it('canonicalises what the author typed — one CTD section, one folder', async () => {
+    mockApi();
+    renderSeam();
+    await openAndTarget();
+    setSection('3.2.s.4.2');
+    expect(await screen.findByText(/Files as 3\.2\.S\.4\.2 at m3\/3-2-s-4-2\//)).toBeTruthy();
+  });
+
+  it('says a Module 1 section goes to the regional folder, whichever spelling is used', async () => {
+    mockApi();
+    renderSeam();
+    await openAndTarget();
+    setSection('m1.2');
+    expect(await screen.findByText(/Files as 1\.2 in the regional Module 1 folder \(1-2\/\)/)).toBeTruthy();
+  });
+
+  it('refuses a value that is not a CTD code, and will not place it', async () => {
+    mockApi();
+    renderSeam();
+    await openAndTarget();
+    setSection('m1/us/1.2'); // what the placeholder used to suggest
+    expect(await screen.findByText(/is not a CTD section code/)).toBeTruthy();
+    const place = screen.getByRole('button', { name: /Place leaf in the sequence/ });
+    expect((place as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('refuses a bare module — a container is not a section a document can be filed at', async () => {
+    mockApi();
+    renderSeam();
+    await openAndTarget();
+    setSection('3');
+    expect(await screen.findByText(/container, not a section/)).toBeTruthy();
+    expect((screen.getByRole('button', { name: /Place leaf in the sequence/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('writes nothing at all for an unplaceable code — no snapshot, no leaf', async () => {
+    mockApi();
+    renderSeam();
+    await openAndTarget();
+    setSection('not a section');
+    fireEvent.click(screen.getByRole('button', { name: /Place leaf in the sequence/ }));
+    await waitFor(() => expect(document.body.textContent).toMatch(/is not a CTD section code/));
+    expect(apiRequest.mock.calls.some((c) => c[0] === 'POST' && String(c[1]).includes('/api/coauthor/documents'))).toBe(false);
+    expect(apiRequest.mock.calls.some((c) => c[0] === 'PUT')).toBe(false);
   });
 });

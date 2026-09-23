@@ -1,0 +1,63 @@
+{
+    "step": "08-signed-approval-200",
+    "method": "POST",
+    "path": "/api/mdx/qms/documents/16/approve",
+    "request": {
+        "password": "<redacted: local evidence credential>",
+        "meaning": "APPROVED",
+        "reason": "Reviewed against 21 CFR 820.40; approved for release as v1.0.",
+        "effectiveDate": "2026-09-21"
+    },
+    "status": 200,
+    "response": {
+        "data": {
+            "id": 16,
+            "organization_id": 2,
+            "doc_number": "SOP-WB-20260921010026",
+            "title": "WB F-3 evidence SOP",
+            "doc_type": "sop",
+            "category": null,
+            "version": "1.0",
+            "status": "effective",
+            "effective_date": "2026-09-21T00:00:00.000Z",
+            "next_review_date": "2027-09-21T00:00:00.000Z",
+            "author_id": 1,
+            "approver_id": 4,
+            "approved_at": "2026-09-21T01:00:27.853Z",
+            "superseded_by_id": null,
+            "artifact_id": null,
+            "metadata": {
+                "approval": {
+                    "at": "2026-09-21T01:00:27.853+00:00",
+                    "by": 4,
+                    "reason": "Reviewed against 21 CFR 820.40; approved for release as v1.0.",
+                    "meaning": "APPROVED",
+                    "bindingBasis": "qms-document-version-content-sha256",
+                    "contentDigest": "2510bf27e9c3f69e4e4e5e04887dd36f170820c31fd60c4e3a928961aaf8068b",
+                    "twoPersonRule": "enforced"
+                }
+            },
+            "created_at": "2026-09-21T01:00:27.028Z",
+            "updated_at": "2026-09-21T01:00:27.852Z",
+            "deleted_at": null
+        },
+        "meta": {
+            "auditTrail": {
+                "persisted": true,
+                "chained": true
+            },
+            "signature": {
+                "id": 1,
+                "signedAt": "2026-09-21T01:00:27.853Z",
+                "actionId": "act_11673f1aa8964beb847feb834e70cb3a",
+                "auditId": "50d1df4a-3366-4317-b844-13ad03a23ae6",
+                "sha256Chain": "102eee27e5146388b9cefc43c297bfa3bc1f947c29f183dfc7546818594c56eb",
+                "meaning": "APPROVED",
+                "boundPayloadDigest": "2510bf27e9c3f69e4e4e5e04887dd36f170820c31fd60c4e3a928961aaf8068b",
+                "bindingBasis": "qms-document-version-content-sha256",
+                "authenticationMethod": "password",
+                "secondFactorVerified": false
+            }
+        }
+    }
+}

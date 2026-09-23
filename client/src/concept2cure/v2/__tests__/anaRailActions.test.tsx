@@ -146,3 +146,82 @@ describe('AnaRail — real ANA action rendering', () => {
     expect(onNav).not.toHaveBeenCalled();
   });
 });
+
+/* "Show me the system" in chat, without Live Drive switched on. The server
+   fetches the script with start_product_demo and, because the moves can only
+   be offered, sends a `start_demo` chip. The chip must call the SAME startDemo
+   the Control menu's Demonstrations list calls — never a second path. */
+describe('AnaRail — the "Start demonstration" chip', () => {
+  const demoChip = {
+    label: 'Start demonstration: Sales demonstration',
+    actionType: 'start_demo',
+    demoId: 'sales-flagship',
+    demoTitle: 'Sales demonstration',
+    executed: true,
+  };
+  const message: AnaMessage = { role: 'ana', body: 'Here is the demonstration.', executedActions: [demoChip] };
+
+  function renderWithDrive(locked: { reason: string; requiredTier?: string | null } | null) {
+    const onStartDemo = vi.fn();
+    const onNav = vi.fn();
+    const onAct = vi.fn();
+    render(
+      <AnaRail
+        open
+        setOpen={() => {}}
+        surface={surface}
+        segment="biotech"
+        mode="standard"
+        setMode={() => {}}
+        messages={[message]}
+        onSend={vi.fn()}
+        onAct={onAct}
+        onNav={onNav}
+        liveDrive={{ on: false, locked, setOn: () => {}, onStartDemo }}
+      />,
+    );
+    return { onStartDemo, onNav, onAct };
+  }
+
+  it('invokes the rail\'s own startDemo with the script id and title', () => {
+    const { onStartDemo, onNav, onAct } = renderWithDrive(null);
+    fireEvent.click(screen.getByRole('button', { name: /Start demonstration: Sales demonstration/ }));
+    expect(onStartDemo).toHaveBeenCalledWith('sales-flagship', 'Sales demonstration');
+    expect(onNav).not.toHaveBeenCalled();
+    expect(onAct).not.toHaveBeenCalled();
+  });
+
+  it('is inert when Live Drive is locked for the workspace — same rule as the Control menu', () => {
+    const { onStartDemo } = renderWithDrive({ reason: 'not_entitled', requiredTier: 'professional' });
+    expect(screen.getByText('Start demonstration: Sales demonstration')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Start demonstration/ })).toBeNull();
+    expect(onStartDemo).not.toHaveBeenCalled();
+  });
+
+  it('is inert when the rail has no demo starter at all', () => {
+    renderRail([message]);
+    expect(screen.getByText('Start demonstration: Sales demonstration')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Start demonstration/ })).toBeNull();
+  });
+
+  it('a chip that cannot name its script is never a button', () => {
+    const onStartDemo = vi.fn();
+    render(
+      <AnaRail
+        open
+        setOpen={() => {}}
+        surface={surface}
+        segment="biotech"
+        mode="standard"
+        setMode={() => {}}
+        messages={[{ role: 'ana', body: 'x', executedActions: [{ label: 'Start demonstration', actionType: 'start_demo', executed: true }] }]}
+        onSend={vi.fn()}
+        onAct={vi.fn()}
+        onNav={vi.fn()}
+        liveDrive={{ on: false, locked: null, setOn: () => {}, onStartDemo }}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: /Start demonstration/ })).toBeNull();
+    expect(onStartDemo).not.toHaveBeenCalled();
+  });
+});

@@ -102,7 +102,7 @@ beforeAll(async () => {
   );
   const [foreignSection] = await q<{ id: number | string }>(
     `INSERT INTO c2c_document_sections (document_id, section_key, label, path_order, content)
-     VALUES ('doc-org2', 'A.1', 'Device description', 1, $1) RETURNING id`,
+     VALUES ('doc-org2', '2.7.3', 'Device description', 1, $1) RETURNING id`,
     [JSON.stringify({ text: 'Org 2 governed section body.' })],
   );
   FOREIGN_SECTION_ID = Number(foreignSection.id);
@@ -125,7 +125,7 @@ beforeAll(async () => {
   );
   const [ownSection] = await q<{ id: number | string }>(
     `INSERT INTO c2c_document_sections (document_id, section_key, label, path_order, content)
-     VALUES ('doc-org1', 'A.1', 'Device description', 1, $1) RETURNING id`,
+     VALUES ('doc-org1', '2.7.3', 'Device description', 1, $1) RETURNING id`,
     [JSON.stringify(OWN_SECTION_CONTENT)],
   );
   OWN_SECTION_ID = Number(ownSection.id);
@@ -139,7 +139,7 @@ function place(documentTable: string, documentId: number) {
   return upsertLeaf(
     {
       sequenceId: SEQUENCE_ID,
-      sectionCode: 'A.1',
+      sectionCode: '2.7.3',
       title: 'Device description',
       documentTable,
       documentId,

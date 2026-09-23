@@ -115,6 +115,31 @@ describe.skipIf(!HAVE_TEMPLATE)('buildEmbeddedFileObjects (real encrypted eSTAR 
     expect(built.sha256).toBe(createHash('sha256').update(payload).digest('hex'));
   });
 
+  it('carries the attachment description, enciphered like every other string', () => {
+    /* FDA's own handler sets one on every attach:
+         d[AttachmentIndex].description = "Administrative Documentation | Cover Letter";
+       and Acrobat's `dataObject.description` is the /Filespec's /Desc. That
+       mapping is from the Acrobat JavaScript API, not measured here — nothing
+       in this container runs Acrobat — so it is optional and stated rather than
+       assumed. A wrong description is cosmetic; an absent one loses what FDA's
+       own flow shows the applicant in the attachment pane. */
+    const built = buildEmbeddedFileObjects(sec, first, {
+      name: 'a.pdf',
+      bytes: payload,
+      mimeType: 'application/pdf',
+      description: 'Administrative Documentation | Cover Letter',
+    });
+    const spec = built.objects[1];
+    expect(spec.dict).not.toContain('Cover Letter');
+    const desc = decryptObjectData(sec, spec.num, spec.gen, hexString(spec.dict, '/Desc'));
+    expect(desc.toString('latin1')).toBe('Administrative Documentation | Cover Letter');
+  });
+
+  it('omits /Desc entirely when there is nothing to say', () => {
+    const built = buildEmbeddedFileObjects(sec, first, { name: 'a.pdf', bytes: payload });
+    expect(built.objects[1].dict).not.toContain('/Desc');
+  });
+
   it('escapes a MIME type into a valid PDF name', () => {
     const built = buildEmbeddedFileObjects(sec, first, {
       name: 'a.pdf',

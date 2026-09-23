@@ -138,3 +138,114 @@ blanket "every file must be applied" gate would need a 254-entry baseline and
 would be noise rather than enforcement. The narrower lesson stands: a migration
 that alters a constraint rather than creating a table is invisible to every
 current reachability guard.
+
+### The surface, against the same live data
+
+The API section above exercised the route. The Biostatistics surface itself was
+then rendered in a browser against the same database — its first run on real
+rows. Walks: `biostat-surface-walk-2026-09-08.mjs`,
+`biostat-surface-writes-walk-2026-09-08.mjs`; measurements and screenshots in
+the same evidence directory.
+
+| Step | Measured |
+|---|---|
+| Open `/concept2cure/biostatistics` with a program open | the program's three designs listed with live readiness chips (100% / 90% / 60%) and the engine's verdict chip; the list read is program-scoped |
+| Select a design | the assessment loads (200), the statistical-review table renders, and the two governed actions appear: "Apply sample size to design" and "Raise tasks (6)" |
+| "Raise tasks (6)" → reason → confirm | `POST /tasks` 200; six tasks created; toast: *"6 tasks raised on the board — each carries the design as its source."*; the button relabels to "Raise tasks", because the panel reloaded and none is open any more |
+| "Apply sample size to design" → reason → confirm | `POST /apply-sample-size` 200; toast names the number and the audit record: *"Sample size 302 written to … — the write and its audit record committed to…"* |
+| Page errors | none across both walks |
+
+Both governed actions open a reason form before anything is written — nothing
+fires on the click itself — and the surface's own state is refreshed from the
+server after each write rather than being assumed.
+
+---
+
+## The audit this opened — 2026-09-08
+
+The command-vocabulary defect above was found by accident. It was then looked
+for deliberately, which needed a schema worth comparing against: pgvector was
+installed, `scripts/db/install-fresh.mjs` provisioned a database from scratch
+(794 tables, 806 RLS policies, every required-object capability complete), and
+the whole migration set applied on top — **259 of 259, zero failures**. Every
+earlier failure in this container came from a hand-built fixture, not the set.
+
+Against that reference schema, every `.sql` under `migrations/` and
+`db/migrations/` that is on **no applier** — not `C2C_MIGRATION_FILES`, not the
+Drizzle journal, not `install-fresh` — was checked for whether the objects it
+describes are actually present. Raw output:
+`docs/reports/evidence/ana-ui-2026-09-06/migration-orphan-audit-2026-09-08.txt`.
+
+| | Count |
+|---|---|
+| `.sql` files under the two migration trees | 552 |
+| on no applier | 254 |
+| …creating a table the provisioned schema does not have | 44 |
+| …**adding a column to a table that exists but lacks it** | **8** |
+
+The last row is the dangerous one: the table is there, so nothing looks broken,
+but the column the server reads is not. Two were confirmed against the schema
+and their consumers, and are now on the applier:
+
+| Column | Consumer | Was |
+|---|---|---|
+| `audit_events.hmac_seal` | `audit/chain.ts` — `verifyAuditEventsChainSeals`, the 21 CFR Part 11 §11.70 seal check over the SIEM/export audit table | `SELECT … hmac_seal FROM audit_events` → 42703. `audit_logs` got the same column from a migration that IS on the applier; this one was not, so no `audit_events` row could ever carry a seal |
+| `gdpr_data_subject_requests.execution_evidence` | `compliance/gdprComplianceService.ts` | `UPDATE … SET execution_evidence = $2` → 42703 on **every** DSAR completion |
+
+Both were verified failing against the reference schema and passing after the
+fix, are additive, `to_regclass`-guarded and idempotent, and are pinned in
+`tests/schema-contract/governed-command-vocabulary.contract.test.ts` (shown
+failing with the entries removed).
+
+**Not fixed, ranked for follow-up.** Six of the eight remain, each needing the
+same per-file verification before being wired: `ivdr_packs` artifact hashes and
+warnings (ten columns, three consumers), `ivdr_binder_evidence` source types,
+`ai_claims.verifier_flags`, `ana_kernel_decision_log.prev_hash`,
+`document_audit_trail`/`document_chunks` tenant keys, and
+`organizations.template_count` (no server reference — likely dead). The 44
+absent tables were not triaged.
+
+**The gap in the guards.** `ci:migration-reachability` asks whether a *table* the
+server queries is created by something an applier runs. None of these creates a
+table — they add columns and replace constraints — so all three defects were
+invisible to it, and to every other gate. A guard for "column the server reads,
+added only by a file on no applier" is the missing one; it is not built here
+because it needs the reference schema this session had to construct by hand.
+
+---
+
+## Second pass of the same audit — 2026-09-20
+
+The audit above was re-run after ten days and 517 commits from other sessions,
+against a reference schema brought current (install-fresh plus the whole set:
+**290 of 290 applied, zero failures**, 974 tables). The six ranked follow-ups
+were still on no applier, and the 27 migrations other sessions added in that
+window introduced no new ones — they were wired correctly.
+
+Three of the six were confirmed against the schema AND their consumers, and are
+now on the applier. All three raised `42703` on every deployed database:
+
+| Column(s) | Consumer | What failed |
+|---|---|---|
+| `ai_claims.verifier_flags` | `routes/chat/send-message.ts` INSERT; `ivdrPackManifest.ts` flagged-claim counts | claim persistence in the chat path, and the manifest's flag counts |
+| `ivdr_binder_evidence.source_type`, `source_atom_id`, `source_retrieval_chunk_id` | `ivdrPackManifest.ts` SELECT; `ai-claims-routes.ts` INSERT | attaching evidence to an IVDR claim, and the pack manifest's evidence fetch |
+| `ivdr_packs` — ten columns: four artifact hashes, four sizes, `has_warnings`, `warnings_jsonb` | `ivdr-pack-worker.ts` promotion step | every IVDR pack build did its whole job and then failed on the last statement |
+
+The two 2026-02-24/25 IVDR files fell off the applier together, which is why the
+pack and its evidence broke as a pair. Each is additive, now `to_regclass`-guarded
+(the binder file keeps its own transaction, with the guard inside it), and
+idempotent — re-applied with zero errors, and the set still applies 290/290.
+Pinned in `tests/schema-contract/governed-command-vocabulary.contract.test.ts`,
+shown failing with the entries removed.
+
+### The remaining three, and why they are not wired here
+
+- `ana_kernel_decision_log.prev_hash` — the reader **fails soft by design**:
+  `persistent-queries.ts` enumerates `'unavailable' // the table or its
+  entry_hash/prev_hash columns are absent`. Nothing crashes; the kernel
+  hash-chain verification simply can never report `verified`. Wiring it turns an
+  inert verifier live, which is a product decision rather than a defect fix.
+- `document_audit_trail` / `document_chunks` tenant keys — `tenant-offboarding.ts`
+  already documents that the `public` versions of these tables do not exist and
+  resolves tenancy another way. Needs its own reading before anything is wired.
+- `organizations.template_count` — no server reference, twice checked. Dead.

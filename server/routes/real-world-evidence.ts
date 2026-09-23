@@ -14,12 +14,20 @@
  *   - Claims databases (Optum/Truven connector — catalogued, status 'pending';
  *     no claims data is served until a real connector is configured)
  *
- * Analytics:
+ * Analytics IMPLEMENTED here:
+ *   - Signal detection — PRR / ROR / EBGM disproportionality over a FAERS 2x2
+ *     table, computed by stats/signal-disproportionality.ts::screenSignalPanel
+ *   - Descriptive FAERS counts: reactions, indications, seriousness, age band,
+ *     sex, report year — all over the page retrieved, never extrapolated
+ *
+ * Analytics NOT implemented (2026-09-10). These were listed above as though
+ * they were features, and /health reported each as `true`. They exist in this
+ * file only as optional REQUEST fields, so a caller could ask for them and be
+ * answered as if they had run:
  *   - Propensity score matching for observational comparisons
  *   - Kaplan-Meier survival analysis
- *   - Incidence/prevalence rate calculations
- *   - Signal detection (disproportionality analysis for safety)
  *   - External control arms (vs. historical comparators)
+ *   - Incidence/prevalence rate calculations
  *
  * Compliance:
  *   - HIPAA de-identification verification
@@ -31,6 +39,14 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { runRWEStudy, RWESourceNotConfiguredError } from '../services/rwe-study-service';
+import {
+  screenSignalPanel,
+  type SignalPanelResult,
+} from '../services/stats/signal-disproportionality';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
+
+const log = createScopedLogger('rwe');
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -143,6 +159,11 @@ export interface RWEQuery {
     primaryEndpoint: string;
     secondaryEndpoints?: string[];
     covariates?: string[];
+    // NOT IMPLEMENTED (verified 2026-09-10). Nothing reads either field. They
+    // are safe only because `rweStudySchema` — the Zod schema POST /query
+    // actually validates against — does not accept them, so a caller asking for
+    // propensity matching is rejected at the boundary rather than answered as
+    // though it ran. Do not add them to that schema without implementing them.
     propensityScoreMethod?: 'matching' | 'stratification' | 'weighting' | 'none';
     survivalAnalysis?: boolean;
     subgroupAnalyses?: string[];
@@ -198,14 +219,65 @@ export interface EndpointResult {
   statistical_significance: boolean;
 }
 
+/**
+ * A disproportionality result for ONE drug-event pair, carrying the 2x2 table
+ * it was computed from.
+ *
+ * ── 2026-09-10: this type replaces an invented one ───────────────────────────
+ * It previously declared `reportingOddsRatio`, `proportionalReportingRatio`,
+ * `ic025` and `confidence`, and queryFAERS filled them in with
+ *   reportingOddsRatio:        1.0 + percentage / 10
+ *   proportionalReportingRatio: 1.0 + percentage / 15
+ *   ic025:                      percentage > 5 ? 0.5 : -0.5
+ *   confidence:                 0.7
+ * where `percentage` was the term's share of the <=100 reports just retrieved.
+ * Those are linear rescalings of a within-sample frequency. A ROR, a PRR and an
+ * IC025 are all computed from a 2x2 contingency table against the whole FAERS
+ * background, and none of the three background cells was ever fetched — so the
+ * numbers could not have been those statistics under any input. The
+ * /signal-detection route then labelled them 'Multi-item Gamma Poisson Shrinker
+ * (MGPS)', which is the FDA's Bayesian data-mining algorithm and was not
+ * implemented anywhere in this file.
+ *
+ * The measures now come from screenSignalPanel() in
+ * server/services/stats/signal-disproportionality.ts — the repository's
+ * canonical disproportionality engine, with its own test suite
+ * (stats/__tests__/signal-disproportionality.test.ts) and five existing
+ * consumers (ana/statisticalDesignTools, ana/ivdLifecycleTools,
+ * AnaToolExecutor, routes/ivd-lifecycle, routes/pharmacovigilance-routes).
+ * This route had grown a SECOND, fabricated implementation of a capability the
+ * platform already owned.
+ *
+ * 2026-09-10, second pass: an earlier version of this fix wired the route to
+ * pharmacovigilance-knowledge.ts::detectSafetySignal instead. That is a real
+ * implementation too, but it is the weaker of the two and it is not the
+ * canonical one — its own docstring says its EBGM is "a deterministic
+ * approximation of the MGPS shrinkage, not the full Gamma-Poisson fit", and it
+ * computes no Information Component at all. screenSignalPanel runs the
+ * frequentist PRR/ROR, a real BCPNN IC025 and a real Gamma-Poisson EBGM over the
+ * same table and reports their concordance. Choosing it removes the duplication
+ * rather than picking a side of it.
+ */
 export interface SafetySignal {
   adverseEvent: string;
-  meddraCode: string;
-  reportingOddsRatio: number;
-  proportionalReportingRatio: number;
-  ic025: number; // Information Component lower bound
-  signalDetected: boolean;
-  confidence: number;
+  /** The 2x2 table the measures were computed from, so a reviewer can re-derive them. */
+  contingencyTable: { a: number; b: number; c: number; d: number };
+  /**
+   * The full panel: frequentist PRR/ROR with 95% CIs and a Yates-corrected
+   * chi-squared, BCPNN IC025, and Gamma-Poisson EBGM — each carrying its own
+   * signalling threshold, so a reviewer sees which criterion fired.
+   */
+  panel: SignalPanelResult;
+  /** How many of the three methods flag a signal (0-3). */
+  concordance: number;
+  tier: SignalPanelResult['tier'];
+  /**
+   * Where the three methods disagree, and why. Never suppressed: a frequentist
+   * flag that Bayesian shrinkage does not survive is usually a small-count
+   * coincidence, and collapsing that into one boolean is how a weak association
+   * gets reported as a signal.
+   */
+  divergenceNotes: string[];
   caseCount: number;
 }
 
@@ -219,7 +291,15 @@ export interface FAERSQuery {
 }
 
 export interface FAERSResult {
+  /** Reports matching the search across all of FAERS, from openFDA's meta.results.total. */
   totalReports: number;
+  /**
+   * How many reports this response actually read. Every count below is over
+   * THIS many reports, not over `totalReports` — openFDA returns at most a page
+   * and the two differ by orders of magnitude on a common drug. The field
+   * exists so a consumer cannot mistake a page for a census.
+   */
+  reportsAnalyzed: number;
   seriousReports: number;
   fatalReports: number;
   topReactions: Array<{ term: string; count: number; percentage: number }>;
@@ -228,8 +308,25 @@ export interface FAERSResult {
     ageGroups: Record<string, number>;
     genderDistribution: Record<string, number>;
   };
-  signalDetection: SafetySignal[];
   reportsByYear: Record<string, number>;
+}
+
+/**
+ * Raised when FAERS could not be consulted — transport failure, a non-OK
+ * response from openFDA, or an unparseable body.
+ *
+ * It exists so that "openFDA was queried and matched nothing" and "openFDA was
+ * not reached" stop being the same value. queryFAERS used to answer both with
+ * `{ totalReports: 0, topReactions: [], signalDetection: [] }`, and
+ * /signal-detection turned that into the sentence "No significant safety
+ * signals detected" — an all-clear on a pharmacovigilance surface, produced by
+ * an outage. Routes translate this to 503; they must never absorb it.
+ */
+export class FAERSUnavailableError extends Error {
+  constructor(readonly detail: string) {
+    super(`FAERS could not be consulted: ${detail}`);
+    this.name = 'FAERSUnavailableError';
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -405,30 +502,89 @@ async function queryFHIR(resourceType: string, params: Record<string, string>): 
 // FAERS CLIENT
 // ---------------------------------------------------------------------------
 
-async function queryFAERS(query: FAERSQuery): Promise<FAERSResult> {
+const FAERS_ENDPOINT = 'https://api.fda.gov/drug/event.json';
+
+/** openFDA rejects these inside a quoted term; strip rather than escape. */
+function faersQuote(value: string): string {
+  return value.replace(/["\\+&]/g, '');
+}
+
+/**
+ * Fetch one openFDA page, distinguishing the three outcomes that matter.
+ *
+ * openFDA answers a search with no matches as **HTTP 404 with
+ * `error.code === 'NOT_FOUND'`**, which is a legitimate zero, not a failure.
+ * Any other non-OK status, and any unparseable body, is an outage: it becomes a
+ * FAERSUnavailableError rather than an empty result set. The previous code
+ * checked neither `response.ok` nor the error envelope, so a 404, a 429 rate
+ * limit and a 500 all landed on `data.results || []` and were reported as
+ * "0 reports" on the SUCCESS path — without even reaching the catch.
+ */
+async function faersFetch(search: string, limit: number): Promise<any> {
+  const url = `${FAERS_ENDPOINT}?search=${encodeURIComponent(search)}&limit=${limit}`;
+  // NB: `Response` in this module is express's, not the fetch one — the import
+  // at the top shadows the global. Derive the fetch type instead of naming it.
+  let response: Awaited<ReturnType<typeof fetch>>;
   try {
+    response = await fetch(url);
+  } catch (err) {
+    throw new FAERSUnavailableError(
+      `openFDA request failed: ${err instanceof Error ? err.message : 'unknown transport error'}`
+    );
+  }
+
+  let data: any;
+  try {
+    data = await response.json();
+  } catch {
+    throw new FAERSUnavailableError(
+      `openFDA returned a body that is not JSON (HTTP ${response.status})`
+    );
+  }
+
+  if (!response.ok) {
+    if (response.status === 404 && data?.error?.code === 'NOT_FOUND') {
+      return { results: [], meta: { results: { total: 0 } } };
+    }
+    throw new FAERSUnavailableError(
+      `openFDA returned HTTP ${response.status}${data?.error?.code ? ` (${data.error.code})` : ''}`
+    );
+  }
+  return data;
+}
+
+/** Total reports matching a search, across all of FAERS. Used for the 2x2 table. */
+async function faersTotal(search: string): Promise<number> {
+  const data = await faersFetch(search, 1);
+  return data.meta?.results?.total ?? 0;
+}
+
+async function queryFAERS(query: FAERSQuery): Promise<FAERSResult> {
+  {
     const searchTerms: string[] = [];
     if (query.drugName) {
-      const safeDrug = query.drugName.replace(/["\\+&]/g, '');
-      searchTerms.push(`patient.drug.medicinalproduct:"${safeDrug}"`);
+      searchTerms.push(`patient.drug.medicinalproduct:"${faersQuote(query.drugName)}"`);
     }
     if (query.reactionTerm) {
-      const safeReaction = query.reactionTerm.replace(/["\\+&]/g, '');
-      searchTerms.push(`patient.reaction.reactionmeddrapt:"${safeReaction}"`);
+      searchTerms.push(`patient.reaction.reactionmeddrapt:"${faersQuote(query.reactionTerm)}"`);
     }
     if (query.seriousOnly) searchTerms.push('serious:1');
 
     const search = searchTerms.join('+AND+');
     const limit = query.limit || 100;
 
-    const response = await fetch(
-      `https://api.fda.gov/drug/event.json?search=${encodeURIComponent(search)}&limit=${limit}`
-    );
-    const data = (await response.json()) as any;
+    const data = await faersFetch(search, limit);
 
     const results = data.results || [];
     const reactions = new Map<string, number>();
     const indications = new Map<string, number>();
+    // Demographics and year are DERIVED from the same reports below. They used
+    // to be returned as `{}` and `{}` on the success path — never computed at
+    // all — which reads to a consumer as "we looked and the reports carry no
+    // age, sex or date", rather than "we did not look".
+    const ageGroups: Record<string, number> = {};
+    const genderDistribution: Record<string, number> = {};
+    const reportsByYear: Record<string, number> = {};
     let seriousCount = 0;
     let fatalCount = 0;
 
@@ -446,6 +602,28 @@ async function queryFAERS(query: FAERSQuery): Promise<FAERSResult> {
           indications.set(drug.drugindication, (indications.get(drug.drugindication) || 0) + 1);
         }
       }
+
+      // patientonsetageunit 801 = years (openFDA E2B code list). Any other unit
+      // (decade, month, week, day, hour) is counted as 'not reported' rather
+      // than silently treated as years.
+      const ageBand = faersAgeBand(
+        report.patient?.patientonsetage,
+        report.patient?.patientonsetageunit
+      );
+      ageGroups[ageBand] = (ageGroups[ageBand] || 0) + 1;
+
+      // patientsex: 1 = male, 2 = female. Anything else is genuinely unknown.
+      const sex =
+        report.patient?.patientsex === '1' || report.patient?.patientsex === 1
+          ? 'male'
+          : report.patient?.patientsex === '2' || report.patient?.patientsex === 2
+            ? 'female'
+            : 'not reported';
+      genderDistribution[sex] = (genderDistribution[sex] || 0) + 1;
+
+      const year = String(report.receiptdate || '').slice(0, 4);
+      const yearKey = /^\d{4}$/.test(year) ? year : 'not reported';
+      reportsByYear[yearKey] = (reportsByYear[yearKey] || 0) + 1;
     }
 
     const topReactions = Array.from(reactions.entries())
@@ -463,37 +641,102 @@ async function queryFAERS(query: FAERSQuery): Promise<FAERSResult> {
       .map(([term, count]) => ({ term, count }));
 
     return {
-      totalReports: data.meta?.results?.total || results.length,
+      totalReports: data.meta?.results?.total ?? results.length,
+      reportsAnalyzed: results.length,
       seriousReports: seriousCount,
       fatalReports: fatalCount,
       topReactions,
       topIndications,
-      demographicDistribution: { ageGroups: {}, genderDistribution: {} },
-      signalDetection: topReactions.slice(0, 5).map(r => ({
-        adverseEvent: r.term,
-        meddraCode: '',
-        reportingOddsRatio: 1.0 + r.percentage / 10,
-        proportionalReportingRatio: 1.0 + r.percentage / 15,
-        ic025: r.percentage > 5 ? 0.5 : -0.5,
-        signalDetected: r.percentage > 5,
-        confidence: 0.7,
-        caseCount: r.count,
-      })),
-      reportsByYear: {},
-    };
-  } catch (err) {
-    console.error('[RWE] FAERS query failed:', err);
-    return {
-      totalReports: 0,
-      seriousReports: 0,
-      fatalReports: 0,
-      topReactions: [],
-      topIndications: [],
-      demographicDistribution: { ageGroups: {}, genderDistribution: {} },
-      signalDetection: [],
-      reportsByYear: {},
+      demographicDistribution: { ageGroups, genderDistribution },
+      reportsByYear,
     };
   }
+}
+
+/**
+ * The one honest translation of "FAERS could not be consulted": 503, naming the
+ * source and stating explicitly that no analysis was performed.
+ *
+ * A pharmacovigilance surface must never answer an outage with an all-clear, so
+ * this deliberately carries no `signals` array — not even an empty one. An empty
+ * array here is what the previous code produced, and a caller counting
+ * `signals.length === 0` cannot tell it from a real negative result.
+ */
+function respondFaersUnavailable(res: Response, err: FAERSUnavailableError) {
+  console.error('[RWE] FAERS unavailable:', err.detail);
+  return res.status(503).json({
+    success: false,
+    error: {
+      code: 'FAERS_UNAVAILABLE',
+      source: 'FDA openFDA drug/event',
+      detail: err.detail,
+      message:
+        'FDA FAERS could not be consulted, so no adverse-event analysis was performed. ' +
+        'This is not a finding of no signal.',
+    },
+  });
+}
+
+/** openFDA E2B age-unit code 801 is years; other units are not converted. */
+function faersAgeBand(age: unknown, unit: unknown): string {
+  const years = Number(age);
+  const isYears = unit === '801' || unit === 801;
+  if (!isYears || !Number.isFinite(years) || years < 0) return 'not reported';
+  if (years < 2) return '0-1';
+  if (years < 12) return '2-11';
+  if (years < 18) return '12-17';
+  if (years < 45) return '18-44';
+  if (years < 65) return '45-64';
+  if (years < 75) return '65-74';
+  return '75+';
+}
+
+/**
+ * Build the 2x2 contingency table for one drug-event pair and hand it to the
+ * platform's disproportionality engine.
+ *
+ *   a = reports with the drug AND the event
+ *   b = reports with the drug, without the event      = N(drug)  - a
+ *   c = reports with the event, without the drug      = N(event) - a
+ *   d = everything else                               = N(all) - a - b - c
+ *
+ * Four openFDA count queries supply N(drug), N(event), a and N(all). This is
+ * the part the old code never did, and the reason its ROR and PRR could not
+ * have been ROR and PRR: three of the four cells were never fetched.
+ */
+async function faersDisproportionality(
+  drugName: string,
+  reactionTerm: string,
+  caseCountInPage: number
+): Promise<SafetySignal> {
+  const drugClause = `patient.drug.medicinalproduct:"${faersQuote(drugName)}"`;
+  const eventClause = `patient.reaction.reactionmeddrapt:"${faersQuote(reactionTerm)}"`;
+
+  const [nDrug, nEvent, a, nAll] = await Promise.all([
+    faersTotal(drugClause),
+    faersTotal(eventClause),
+    faersTotal(`${drugClause}+AND+${eventClause}`),
+    faersTotal('_exists_:patient.reaction.reactionmeddrapt'),
+  ]);
+
+  // Clamp at zero: openFDA's totals are independent queries and can disagree at
+  // the margin. A negative cell would be arithmetic on inconsistent snapshots,
+  // not a count, and must not be passed off as one.
+  const b = Math.max(0, nDrug - a);
+  const c = Math.max(0, nEvent - a);
+  const d = Math.max(0, nAll - a - b - c);
+
+  const panel = screenSignalPanel({ a, b, c, d });
+
+  return {
+    adverseEvent: reactionTerm,
+    contingencyTable: { a, b, c, d },
+    panel,
+    concordance: panel.concordance,
+    tier: panel.tier,
+    divergenceNotes: panel.divergenceNotes,
+    caseCount: caseCountInPage,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -597,14 +840,13 @@ router.post('/query', async (req: Request, res: Response) => {
         error: { code: 'source_not_configured', message: err.message, dataSource: err.dataSource },
       });
     }
-    console.error('[RWE] study execution failed:', err);
-    res.status(502).json({
-      success: false,
-      error: {
-        code: 'execution_failed',
-        message: `Study execution failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
-      },
-    });
+    /* `runRWEStudy` reaches EHR/FHIR endpoints, registries and this service's
+       own stores, so whatever it throws is internal shape — a driver message, a
+       connection string, a query. It was being interpolated straight into the
+       response body, where the reader is a regulatory director. The canonical
+       helper logs the detail against the request id and answers with a code, a
+       sentence and that id, so the operator can still find the real error. */
+    return serverError(res, log, 'executing the RWE study', err);
   }
 });
 
@@ -616,8 +858,13 @@ router.post('/faers', async (req: Request, res: Response) => {
   const query: FAERSQuery = req.body;
   if (!query.drugName) return res.status(400).json({ error: 'drugName required' });
 
-  const result = await queryFAERS(query);
-  res.json({ success: true, data: result });
+  try {
+    const result = await queryFAERS(query);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    if (err instanceof FAERSUnavailableError) return respondFaersUnavailable(res, err);
+    throw err;
+  }
 });
 
 /**
@@ -710,29 +957,58 @@ router.post('/clinical-trials', async (req: Request, res: Response) => {
 
 /**
  * POST /signal-detection
- * Run disproportionality analysis for safety signal detection
+ * Disproportionality analysis (PRR / ROR / EBGM) over FAERS.
+ *
+ * The candidate events are the most frequently reported reactions in a page of
+ * serious reports for the drug; each is then scored against the WHOLE FAERS
+ * background via its own 2x2 table. Frequency within the page selects what to
+ * test — it is not itself the test, which is the confusion the previous
+ * implementation was built on.
  */
 router.post('/signal-detection', async (req: Request, res: Response) => {
   const { drugName } = req.body;
   if (!drugName) return res.status(400).json({ error: 'drugName required' });
 
-  // Query FAERS for signal detection
-  const faersResult = await queryFAERS({ drugName, seriousOnly: true, limit: 100 });
+  try {
+    const faersResult = await queryFAERS({ drugName, seriousOnly: true, limit: 100 });
+    const candidates = faersResult.topReactions.slice(0, 5);
 
-  res.json({
-    success: true,
-    data: {
-      drugName,
-      signalDetectionMethod: 'Multi-item Gamma Poisson Shrinker (MGPS)',
-      signals: faersResult.signalDetection,
-      totalReportsAnalyzed: faersResult.totalReports,
-      analysisDate: new Date(),
-      regulatoryImplication:
-        faersResult.signalDetection.filter(s => s.signalDetected).length > 0
-          ? 'Safety signals detected — consider REMS evaluation or label update'
-          : 'No significant safety signals detected',
-    },
-  });
+    const signals = await Promise.all(
+      candidates.map(r => faersDisproportionality(drugName, r.term, r.count))
+    );
+    const flagged = signals.filter(s => s.concordance > 0);
+
+    res.json({
+      success: true,
+      data: {
+        drugName,
+        method: {
+          // What was actually run, named after the function that ran it. The
+          // previous value was the literal string 'Multi-item Gamma Poisson
+          // Shrinker (MGPS)' over arithmetic that computed no such thing.
+          computed: ['PRR/ROR + chi-squared (Yates)', 'BCPNN IC025', 'Gamma-Poisson EBGM'],
+          implementation:
+            'server/services/stats/signal-disproportionality.ts::screenSignalPanel',
+          note:
+            'All three methods run over the same 2x2 table and their agreement is ' +
+            'reported as `concordance` (0-3). Disagreement is surfaced in ' +
+            'divergenceNotes rather than collapsed into one number.',
+        },
+        candidateSelection: {
+          basis: 'most frequently reported reactions among the serious reports retrieved',
+          reportsAnalyzed: faersResult.reportsAnalyzed,
+          totalReportsMatchingDrug: faersResult.totalReports,
+          candidatesTested: candidates.length,
+        },
+        signals,
+        signalsOfDisproportionateReporting: flagged.length,
+        analysisDate: new Date(),
+      },
+    });
+  } catch (err) {
+    if (err instanceof FAERSUnavailableError) return respondFaersUnavailable(res, err);
+    throw err;
+  }
 });
 
 /**
@@ -749,24 +1025,43 @@ router.get('/health', (_req: Request, res: Response) => {
       active: activeSources,
       types: [...new Set(DATA_SOURCES.map(s => s.sourceType))],
     },
+    // ── 2026-09-10: these were eight hardcoded `true`s ────────────────────────
+    // A /health capability map is what an integrator and a procurement
+    // questionnaire read, so an unearned `true` here travels further than one
+    // in a response body. Three of them named analytics that exist in this file
+    // only as a header comment and an optional REQUEST field —
+    // propensityScoreMatching, survivalAnalysis and externalControlArm have no
+    // implementation anywhere in the RWE path. `hipaaCompliant: true` asserted
+    // a regulatory status about the deployment; nothing computes it, and it is
+    // not a property a route can know about itself. `signalDetection: true` was
+    // true only of a function that invented its statistics.
+    //
+    // Each entry below is now either derived from configuration or 'not_implemented'.
     capabilities: {
-      fhirIntegration: !!process.env.FHIR_BASE_URL,
-      faersQuery: true,
-      clinicalTrialsGov: true,
-      propensityScoreMatching: true,
-      signalDetection: true,
-      survivalAnalysis: true,
-      externalControlArm: true,
-      hipaaCompliant: true,
+      fhirIntegration: process.env.FHIR_BASE_URL ? 'configured' : 'not_configured',
+      faersQuery: 'available',
+      clinicalTrialsGov: 'available',
+      // Real as of 2026-09-10: PRR/ROR + BCPNN IC025 + Gamma-Poisson EBGM over a
+      // FAERS 2x2 table via stats/signal-disproportionality.ts::screenSignalPanel.
+      signalDetection: 'available',
+      propensityScoreMatching: 'not_implemented',
+      survivalAnalysis: 'not_implemented',
+      externalControlArm: 'not_implemented',
     },
-    fdaRweFramework: {
-      aligned: true,
-      guidanceDocuments: [
-        'FDA Framework for Real-World Evidence (2018)',
-        'FDA Guidance: Real-World Data - Assessing Electronic Health Records (2021)',
-        'FDA Guidance: Real-World Data - Assessing Registries (2021)',
-      ],
+    // The de-identification this service performs is the FHIR projection in
+    // POST /fhir/patients (id, gender, birth YEAR only). That is a described
+    // behaviour, not a compliance attestation, and it is stated as such.
+    deidentification: {
+      fhirPatientProjection: 'id, gender, birth year only — no names, addresses or exact dates',
     },
+    // Documents this service was written against. Whether a given STUDY is
+    // aligned with them is a reviewer's determination about that study, not a
+    // boolean a health check can assert, so the previous `aligned: true` is gone.
+    fdaRweGuidanceReferences: [
+      'FDA Framework for Real-World Evidence (2018)',
+      'FDA Guidance: Real-World Data - Assessing Electronic Health Records (2021)',
+      'FDA Guidance: Real-World Data - Assessing Registries (2021)',
+    ],
   });
 });
 

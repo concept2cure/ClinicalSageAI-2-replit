@@ -1,0 +1,27 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/study-design/__tests__/burden-model.test.ts [ server/services/study-design/__tests__/burden-model.test.ts ]
+Error: Cannot find module '../burden-model' imported from /home/user/ClinicalSageAI-2-replit/server/services/study-design/__tests__/burden-model.test.ts
+ ❯ server/services/study-design/__tests__/burden-model.test.ts:16:1
+     14|
+     15| import { describe, it, expect } from 'vitest';
+     16| import {
+       | ^
+     17|   computeBurdenProfile,
+     18|   type BurdenMatrix,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  03:39:15
+   Duration  372ms (transform 132ms, setup 109ms, import 0ms, tests 0ms, environment 0ms)
+

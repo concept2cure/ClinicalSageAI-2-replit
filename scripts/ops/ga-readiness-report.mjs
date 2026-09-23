@@ -37,6 +37,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
@@ -63,6 +64,25 @@ function listDir(dir) {
 function readFile(rel) {
   try {
     return fs.readFileSync(path.join(repoRoot, rel), 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+/** File contents at an ABSOLUTE path, or null when unreadable. Never throws. */
+function readFileAbs(abs) {
+  try {
+    return fs.readFileSync(abs, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+/** SHA-256 of the file at an ABSOLUTE path, or null when unreadable. Never
+ *  throws — and null is never treated as a match. */
+function sha256Abs(abs) {
+  try {
+    return createHash('sha256').update(fs.readFileSync(abs)).digest('hex');
   } catch {
     return null;
   }
@@ -97,6 +117,17 @@ const REQUIRED_DTDS = [
   'jp-regional.dtd',
   'ca-regional.dtd',
 ];
+// server/services/ectd/dtd-bundler.ts — ICH_BACKBONE_STYLESHEET +
+// REGIONAL_STYLESHEET. The drop-point holds SEVEN agency artifacts, not five.
+// The stylesheets are as load-bearing as the DTDs: every index.xml emits
+// <?xml-stylesheet href="util/style/ectd-2-0.xsl"?> and the FDA Module 1
+// backbone emits ../../util/style/us-regional.xsl, and assessDtdReadiness —
+// the gate this row speaks for — counts a missing stylesheet as
+// not-self-contained. Counting the DTDs alone reported this GA blocker READY
+// with both stylesheets still unobtained, for packages the packager then
+// refuses to build under ECTD_REQUIRE_DTD.
+const REQUIRED_STYLESHEETS = ['ectd-2-0.xsl', 'us-regional.xsl'];
+const REQUIRED_ECTD_SUPPORTIVE = [...REQUIRED_DTDS, ...REQUIRED_STYLESHEETS];
 
 // server/services/pathway-engines/estar/estar-template-registry.ts — ESTAR_TEMPLATE_MANIFEST
 const ESTAR_DESCRIPTORS = [
@@ -218,36 +249,87 @@ function record(r) {
 {
   const dir = env.ECTD_DTD_DIR || path.join(repoRoot, 'assets/ectd-dtd');
   const present = new Set(listDir(dir).map((f) => f.toLowerCase()));
-  const missing = REQUIRED_DTDS.filter((f) => !present.has(f.toLowerCase()));
+  const missing = REQUIRED_ECTD_SUPPORTIVE.filter((f) => !present.has(f.toLowerCase()));
   record({
     id: 'ectd-dtds',
     group: 'Licensed agency artifacts',
-    label: 'eCTD v3.2.2 DTDs (ICH backbone + 4 regional)',
+    label: 'eCTD v3.2.2 supportive files (ICH backbone + 4 regional DTDs, ICH + FDA stylesheets)',
     status: missing.length === 0 ? 'ready' : 'blocked',
     severity: 'blocker',
-    observed: `${REQUIRED_DTDS.length - missing.length}/${REQUIRED_DTDS.length} vendored in ${dir}` +
+    observed: `${REQUIRED_ECTD_SUPPORTIVE.length - missing.length}/${REQUIRED_ECTD_SUPPORTIVE.length} vendored in ${dir}` +
       (missing.length ? ` — missing: ${missing.join(', ')}` : ''),
-    gate: 'server/services/ectd/dtd-bundler.ts assessDtdReadiness (ECTD_REQUIRE_DTD); DOCTYPEs emitted by regional-packager.ts',
+    gate: 'server/services/ectd/dtd-bundler.ts assessDtdReadiness (ECTD_REQUIRE_DTD); DOCTYPEs + <?xml-stylesheet?> PIs emitted by regional-packager.ts',
     owner: 'Procurement / Regulatory Ops (acquire) + Engineering (commit + checksums)',
-    unblock: 'Acquire from ICH/FDA/EMA/PMDA/HC, commit verbatim, record SHA-256 in assets/ectd-dtd/checksums.txt.',
+    unblock: 'Acquire from ICH/FDA/EMA/PMDA/HC, commit verbatim, record SHA-256 in the drop-point checksums.txt.',
   });
 
-  // The checksum manifest is only comment lines until a real acquisition lands.
-  const manifest = readFile('assets/ectd-dtd/checksums.txt') ?? '';
-  const entries = manifest
+  /* The checksum manifest. This row speaks for verifyChecksumManifest
+     (server/services/ectd/checksum-manifest.ts), which the qualification
+     harness runs over the SAME drop-point with ['.dtd', '.xsl'] — so it does
+     what that verifier does, on the file that verifier reads.
+
+     It used to be a bare count of non-comment lines. Seven arbitrary lines —
+     seven "TODO: obtain from FDA" notes, seven correct-looking hashes that
+     match nothing, seven entries for files nobody requires — all read "ready",
+     while the label promised a hash verification. That is "nothing assessed"
+     rendered as "assessed and clear", against the one GA blocker whose entire
+     purpose is to prove the vendored bytes are the agency's bytes.
+
+     Read from the drop-point ACTUALLY in use: reading the repo copy
+     unconditionally reported on a manifest the verifier would never look at
+     whenever ECTD_DTD_DIR pointed elsewhere. The label therefore names no path
+     at all — `observed` names the file that was read. */
+  const manifestPath = path.join(dir, 'checksums.txt');
+  const manifestText = readFileAbs(manifestPath);
+  const rawLines = (manifestText ?? '')
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => l && !l.startsWith('#'));
+  // Same line grammar as parseManifest(): `<64 hex>  <filename>`.
+  const parsed = rawLines
+    .map((l) => /^([0-9a-fA-F]{64})\s{1,2}(.+)$/.exec(l))
+    .filter((m) => m !== null)
+    .map((m) => ({ sha256: m[1].toLowerCase(), fileName: m[2].trim() }));
+  const malformed = rawLines.length - parsed.length;
+  const recordedHash = new Map(parsed.map((e) => [e.fileName, e.sha256]));
+
+  // Vendored artifacts actually on disk (the extensions the verifier checks).
+  const vendored = listDir(dir).filter((f) => /\.(dtd|xsl)$/i.test(f));
+  const vendoredSet = new Set(vendored);
+
+  const unrecorded = vendored.filter((f) => !recordedHash.has(f));
+  const recordedButAbsent = parsed.map((e) => e.fileName).filter((f) => !vendoredSet.has(f));
+  const mismatched = vendored
+    .filter((f) => recordedHash.has(f))
+    .filter((f) => sha256Abs(path.join(dir, f)) !== recordedHash.get(f));
+  const notRecorded = REQUIRED_ECTD_SUPPORTIVE.filter((f) => !recordedHash.has(f));
+  const verified = REQUIRED_ECTD_SUPPORTIVE.filter(
+    (f) => vendoredSet.has(f) && recordedHash.has(f) && !mismatched.includes(f),
+  );
+
+  // Every one of these is a refusal in verifyChecksumManifest (or, for
+  // `notRecorded`, a required artifact this manifest says nothing about).
+  const faults = [];
+  if (manifestText === null) faults.push(`no readable checksums.txt at ${manifestPath}`);
+  if (malformed > 0) faults.push(`${malformed} line(s) are not \`<sha256>  <file>\` entries`);
+  if (notRecorded.length) faults.push(`required but not recorded: ${notRecorded.join(', ')}`);
+  if (unrecorded.length) faults.push(`vendored but unrecorded: ${unrecorded.join(', ')}`);
+  if (mismatched.length) faults.push(`hash mismatch (tampered/stale): ${mismatched.join(', ')}`);
+  if (recordedButAbsent.length) faults.push(`recorded but absent: ${recordedButAbsent.join(', ')}`);
+
   record({
     id: 'ectd-dtd-checksums',
     group: 'Licensed agency artifacts',
-    label: 'eCTD DTD SHA-256 manifest (assets/ectd-dtd/checksums.txt)',
-    status: entries.length >= REQUIRED_DTDS.length ? 'ready' : 'blocked',
+    label: 'eCTD supportive-file SHA-256 manifest (checksums.txt in the drop-point)',
+    status: faults.length === 0 ? 'ready' : 'blocked',
     severity: 'blocker',
-    observed: `${entries.length} non-comment manifest entr${entries.length === 1 ? 'y' : 'ies'} (expected ${REQUIRED_DTDS.length})`,
+    observed:
+      `${verified.length}/${REQUIRED_ECTD_SUPPORTIVE.length} required supportive files recorded ` +
+      `with a SHA-256 matching their bytes, per ${manifestPath}` +
+      (faults.length ? ` — ${faults.join('; ')}` : ''),
     gate: 'server/services/ectd/checksum-manifest.ts verifyChecksumManifest — the qualification harness (qualify.ts) fails on an unrecorded or tampered vendored file',
     owner: 'Engineering (same commit as the DTD drop)',
-    unblock: 'cd assets/ectd-dtd && sha256sum *.dtd >> checksums.txt (replacing the placeholder block).',
+    unblock: 'cd assets/ectd-dtd && sha256sum *.dtd *.xsl >> checksums.txt (replacing the placeholder block).',
   });
 }
 
@@ -371,36 +453,66 @@ for (const [id, label, varName, module] of [
 // ── 3. Agency credentials ───────────────────────────────────────────────────
 
 for (const gw of GATEWAY_CREDENTIALS) {
-  const missing = missingVars(gw.vars);
+  // W5 2026-09-20 (B16): FDA ESG has a second transport option. With
+  // FDA_ESG_TRANSPORT=rest the gateway reads the REST (NextGen) variables, and
+  // even fully provisioned it REFUSES to transmit (UnverifiedTransportError)
+  // until the NextGen wire contract is verified in FDA's UAT — so that
+  // configuration is reported blocked, with the reason, never ready.
+  const esgTransport = gw.key === 'fda:esg' ? (process.env.FDA_ESG_TRANSPORT ?? 'as2').trim().toLowerCase() : null;
+  const restSelected = esgTransport === 'rest';
+  const vars = restSelected
+    ? ['FDA_ESG_REST_URL', 'FDA_ESG_REST_CLIENT_ID', 'FDA_ESG_REST_CLIENT_SECRET', 'FDA_ESG_REST_SUBMITTER_ID']
+    : gw.vars;
+  const missing = missingVars(vars);
+  const badTransport = esgTransport !== null && esgTransport !== 'as2' && esgTransport !== 'rest';
   record({
     id: `gateway:${gw.key}`,
     group: 'Agency gateway credentials (production)',
-    label: gw.label,
-    status: missing.length === 0 ? 'ready' : 'blocked',
+    label: restSelected ? `${gw.label} — transport: rest (NextGen)` : gw.label,
+    status: missing.length === 0 && !restSelected && !badTransport ? 'ready' : 'blocked',
     // Only FDA ESG is on a GA critical path; the rest are per-market expansion.
     severity: gw.key === 'fda:esg' ? 'blocker' : 'advisory',
-    observed: missing.length === 0 ? `all ${gw.vars.length} credential vars set` : `missing: ${missing.join(', ')}`,
+    observed: badTransport
+      ? `FDA_ESG_TRANSPORT='${esgTransport}' is not 'as2' or 'rest'; the gateway refuses every transmit as a configuration error`
+      : missing.length === 0
+        ? (restSelected
+            ? `all ${vars.length} REST credential vars set — but the ESG NextGen wire contract is unverified; transmit raises UnverifiedTransportError (transmitted:false) until FDA UAT completes`
+            : `all ${vars.length} credential vars set`)
+        : `missing: ${missing.join(', ')}`,
     gate: 'server/services/submission-gateways/*.ts credential preflight → CredentialError; surfaced by gatewayConfigurationStatus()',
     owner: 'Regulatory Ops (agency account) + Ops (secrets manager)',
-    unblock: 'Register with the agency, obtain the credentials, load them into the production secrets manager.',
+    unblock: restSelected
+      ? 'Set FDA_ESG_TRANSPORT=as2 with the AS2 credentials for the verified path, or complete the ESG NextGen REST UAT and replace transmitViaNextGenRest in fda-esg.ts.'
+      : 'Register with the agency, obtain the credentials, load them into the production secrets manager.',
   });
 }
 
 {
+  // W5 2026-09-20 (runbook B7): the transport client IS implemented now —
+  // transmitIcsr attempts the real AS2 (shared as2-transport) or HTTPS Basic
+  // call whenever a gateway is configured, and refuses (typed) otherwise. This
+  // row therefore reads like the other credential rows: present ⇒ ready.
   const url = isSet('ICSR_GATEWAY_URL');
-  const creds = isSet('ICSR_GATEWAY_PASSWORD') || isSet('ICSR_GATEWAY_CERT_PATH');
+  const cert = isSet('ICSR_GATEWAY_CERT_PATH');
+  const password = isSet('ICSR_GATEWAY_PASSWORD');
+  const protocol = (process.env.ICSR_GATEWAY_PROTOCOL ?? '').trim().toLowerCase() || (cert ? 'as2' : 'https');
+  const needed = protocol === 'as2'
+    ? ['ICSR_GATEWAY_URL', 'ICSR_GATEWAY_USERNAME', 'ICSR_GATEWAY_CERT_PATH', 'ICSR_GATEWAY_KEY_PATH', 'ICSR_GATEWAY_AS2_TO']
+    : ['ICSR_GATEWAY_URL', 'ICSR_GATEWAY_USERNAME', 'ICSR_GATEWAY_PASSWORD'];
+  const missing = missingVars(needed);
   record({
     id: 'icsr-gateway',
     group: 'Agency gateway credentials (production)',
     label: 'E2B(R3) ICSR gateway',
-    status: 'blocked',
+    status: missing.length === 0 ? 'ready' : 'blocked',
     severity: 'advisory',
     observed:
-      `ICSR_GATEWAY_URL ${url ? 'set' : 'not set'}, credentials ${creds ? 'set' : 'not set'} — ` +
-      'NOTE: credentials alone do not unblock this; the transport client itself is not implemented',
-    gate: 'server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — throws "transport client is not implemented" whenever a gateway IS configured',
-    owner: 'Engineering (build the AS2/SFTP client) + Regulatory Ops (credentials)',
-    unblock: 'Implement the ICSR transport client, THEN provision ICSR_GATEWAY_URL + password/cert.',
+      `ICSR_GATEWAY_URL ${url ? 'set' : 'not set'}, credentials ${cert || password ? 'set' : 'not set'} ` +
+      `(protocol ${protocol}) — ` +
+      (missing.length === 0 ? `all ${needed.length} vars set` : `missing: ${missing.join(', ')}`),
+    gate: 'server/services/ind-lifecycle/icsr-gateway-transport.ts transmitIcsr — configured ⇒ real AS2/HTTPS call (transmitted only on an accepting 2xx); unconfigured ⇒ IcsrGatewayNotConfiguredError in production',
+    owner: 'Regulatory Ops (agency gateway account + AS2 identity/certs) + Ops (secrets manager)',
+    unblock: 'Provision ICSR_GATEWAY_URL + (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_CERT_PATH, ICSR_GATEWAY_KEY_PATH, ICSR_GATEWAY_AS2_TO) for AS2, or (ICSR_GATEWAY_USERNAME, ICSR_GATEWAY_PASSWORD) for an HTTPS upload endpoint; then round-trip one ICSR in the agency test environment.',
   });
 }
 
@@ -562,6 +674,53 @@ for (const f of ENFORCEMENT_FLAGS) {
   });
 }
 
+// ── 5b. AI governance ───────────────────────────────────────────────────────
+
+/*
+ * Performance qualification for the models that may serve high-risk regulatory
+ * drafting. `docs/LAUNCH_DEFINITION_OF_DONE.md`: "Only models with a passed PQ
+ * … are approved for high-risk regulatory drafting. For launch that is Claude
+ * Opus 5 (primary) and one validated fallback." D4 lists it as owed.
+ *
+ * Read from the registry source as text, the same way the eSTAR rows read
+ * estar-field-map.ts: this probe runs under plain node and must not need a TS
+ * loader. If the source cannot be parsed the row says so and is NOT ready — an
+ * unreadable registry is not a qualified one.
+ */
+{
+  const src = readFile('server/services/ai-governance/approved-models.ts');
+  const entries = [];
+  if (src) {
+    for (const chunk of src.split(/\n\s+id: '/).slice(1)) {
+      const id = chunk.slice(0, chunk.indexOf("'"));
+      const approved = /\n\s+approvedForHighRisk: true,/.test(chunk);
+      const pq = (chunk.match(/\n\s+pq: \{ status: '([a-z]+)'/) ?? [])[1] ?? null;
+      if (/\n\s+approvedForHighRisk: (true|false),/.test(chunk)) entries.push({ id, approved, pq });
+    }
+  }
+  const approved = entries.filter((e) => e.approved);
+  const passed = approved.filter((e) => e.pq === 'passed');
+  const primaryPassed = passed.some((e) => e.id === 'claude-opus-4');
+  const ok = primaryPassed && passed.length >= 2;
+  record({
+    id: 'high-risk-model-pq',
+    group: 'AI governance',
+    label: 'PQ executed for the models approved for high-risk drafting (Opus 5 + one fallback)',
+    status: ok ? 'ready' : 'blocked',
+    severity: 'blocker',
+    observed:
+      approved.length === 0
+        ? 'could not read approvedForHighRisk from server/services/ai-governance/approved-models.ts — treated as not qualified'
+        : `${passed.length} of ${approved.length} approved model(s) have a passed PQ: ` +
+          approved.map((e) => `${e.id}=${e.pq ?? 'unknown'}`).join(', '),
+    gate:
+      'server/services/ai-gateway/gateway.ts approvedForTask — only approvedForHighRisk models serve document_drafting / regulatory_review, at primary, fallback and explicit selection; PQ status in approved-models.ts',
+    owner: 'Engineering (execute the PQ) + Ops (a product provider key)',
+    unblock:
+      'Provision a product ANTHROPIC_API_KEY; add the live mode the eval harnesses do not yet have (server/eval/doc-quality/README.md, "how to make the numbers real"); execute against server/eval/rag/ and server/eval/doc-quality/; record pq: { status: \'passed\', reference } on each entry it covers.',
+  });
+}
+
 // ── 6. Observability & operational posture ──────────────────────────────────
 
 record({
@@ -597,19 +756,34 @@ record({
 }
 
 {
-  const pii = flag('AI_PII_ENFORCEMENT') || 'audit (default)';
-  const grounded = flag('AI_GROUNDEDNESS_ENFORCE');
-  const ok = pii === 'block' && (grounded === '1' || grounded === 'true');
+  // Resolved the way the PRODUCTION boot resolves it (2026-09-20): unset is
+  // strict for both gates; an explicit permissive value refuses to boot unless
+  // AI_GOVERNANCE_ACCEPT_PERMISSIVE=true records the accepted risk. This row
+  // therefore reads the configured values through that rule, not the raw text.
+  const piiRaw = (flag('AI_PII_ENFORCEMENT') || '').toLowerCase();
+  const piiConfigured = ['off', 'audit', 'block'].includes(piiRaw) ? piiRaw : undefined;
+  const groundedRaw = flag('AI_GROUNDEDNESS_ENFORCE') || '';
+  const groundedOff = ['0', 'false', 'off'].includes(groundedRaw.toLowerCase());
+  const accepted = (flag('AI_GOVERNANCE_ACCEPT_PERMISSIVE') || '').toLowerCase() === 'true';
+  const piiPermissive = piiConfigured !== undefined && piiConfigured !== 'block';
+  const permissive = piiPermissive || groundedOff;
   record({
     id: 'ai-governance-posture',
     group: 'Observability & operational posture',
-    label: 'AI content-safety gates (AI_PII_ENFORCEMENT=block, AI_GROUNDEDNESS_ENFORCE=1)',
-    status: ok ? 'ready' : 'blocked',
+    label: 'AI content-safety gates strict in production (AI_PII_ENFORCEMENT=block, AI_GROUNDEDNESS_ENFORCE=1)',
+    status: permissive ? 'blocked' : 'ready',
     severity: 'advisory',
-    observed: `AI_PII_ENFORCEMENT="${pii}", AI_GROUNDEDNESS_ENFORCE="${grounded || '(unset)'}"`,
-    gate: 'server/startup/ai-governance-posture.ts assertAiGovernancePostureForProduction (fails closed only under AI_GOVERNANCE_REQUIRE_ENFORCE=true)',
+    observed:
+      `AI_PII_ENFORCEMENT="${piiConfigured ?? `${piiRaw || '(unset)'} → block (production default)`}", ` +
+      `AI_GROUNDEDNESS_ENFORCE="${groundedRaw || '(unset → enforced, production default)'}"` +
+      (permissive
+        ? accepted
+          ? ' — permissive, accepted via AI_GOVERNANCE_ACCEPT_PERMISSIVE=true (boots with a warning)'
+          : ' — permissive and NOT accepted: production REFUSES TO BOOT on this configuration'
+        : ''),
+    gate: 'server/startup/ai-governance-posture.ts assertAiGovernancePostureForProduction (production default strict; explicit permissive refuses to boot without AI_GOVERNANCE_ACCEPT_PERMISSIVE=true; AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses regardless)',
     owner: 'Ops + AI governance owner',
-    unblock: 'Set both gates to enforcing before any real-PHI tenant; then set AI_GOVERNANCE_REQUIRE_ENFORCE=true so the posture is boot-checked.',
+    unblock: 'Unset or set strict both gates and clear AI_GOVERNANCE_ACCEPT_PERMISSIVE; then set AI_GOVERNANCE_REQUIRE_ENFORCE=true so the posture cannot regress.',
   });
 }
 

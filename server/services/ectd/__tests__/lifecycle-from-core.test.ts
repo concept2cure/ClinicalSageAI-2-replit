@@ -55,9 +55,14 @@ beforeAll(async () => {
     VALUES (1, 'C2C Lifecycle', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
 
     -- Sequence 0000 (the prior) and 0001 (the follow-up).
-    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by)
-    VALUES (1, 1, 'fda', '0000', ${ORG}, ${USER}),
-           (2, 1, 'fda', '0001', ${ORG}, ${USER});
+    -- 0000 carries dispatch_status 'sent' because this suite's whole premise is
+    -- that it is ON FILE AT THE AGENCY: the prior-state read now folds in only
+    -- sequences that were actually transmitted, so a compilation whose sequence
+    -- was never dispatched is a local draft and contributes nothing. 0001 is the
+    -- sequence being built, so it is deliberately left undispatched.
+    INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, dispatch_status)
+    VALUES (1, 1, 'fda', '0000', ${ORG}, ${USER}, 'sent'),
+           (2, 1, 'fda', '0001', ${ORG}, ${USER}, NULL);
 
     INSERT INTO coauthor_documents (id, organization_id, title, content, module_number)
     VALUES (100, ${ORG}, 'Drug Substance General', '<p>DS general v1</p>', '3.2'),

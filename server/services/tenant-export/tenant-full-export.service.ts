@@ -294,6 +294,27 @@ export interface ExportReceipt {
  * ordering fails safe in both directions — a lost receipt blocks a destruction,
  * it never permits one.
  */
+/**
+ * Whether a receipt for this digest exists after the call.
+ *
+ * Found by the adversarial review of the WO-16C #133 conversion in
+ * routes/tenant-export.ts. This function returned `Promise<void>` and swallowed
+ * its own INSERT failure, and its own warning says what that costs: "a later
+ * purge will refuse this digest". So the caller handed a customer an export
+ * whose digest looked receipt-backed and was not, and could not have known.
+ *
+ * `ON CONFLICT DO NOTHING` means a re-export of byte-identical data writes no
+ * row, which is NOT a failure — the receipt is already there. `recorded` is
+ * therefore "a receipt exists", not "an INSERT happened"; `inserted` says which,
+ * for a caller that wants to distinguish a fresh export from a repeat.
+ */
+export interface ExportReceiptOutcome {
+  /** True when a receipt for (organizationId, digest) exists after this call. */
+  recorded: boolean;
+  /** True only when THIS call wrote the row (false on an ON CONFLICT no-op). */
+  inserted: boolean;
+}
+
 export async function recordExportReceipt(
   client: Pool | PoolClient,
   params: {
@@ -303,9 +324,9 @@ export async function recordExportReceipt(
     rowCount: number;
     createdBy: number | null;
   }
-): Promise<void> {
+): Promise<ExportReceiptOutcome> {
   try {
-    await client.query(
+    const res = await client.query(
       `INSERT INTO tenant_export_receipts
          (organization_id, digest, table_count, row_count, created_by)
        VALUES ($1, $2, $3, $4, $5)
@@ -318,12 +339,19 @@ export async function recordExportReceipt(
         params.createdBy,
       ]
     );
+    // A conflict wrote nothing and is still a receipt-backed digest.
+    return { recorded: true, inserted: (res.rowCount ?? 0) > 0 };
   } catch (error) {
+    // Still swallowed — a failed receipt must not deny the customer an export of
+    // their own data, which is real and already assembled. What changes is that
+    // the caller is told, so it can stop implying the digest is purge-usable.
+    // The store's own text stays here.
     logger.warn('Failed to record tenant export receipt — a later purge will refuse this digest', {
       organizationId: params.organizationId,
       digest: params.digest,
       error: error instanceof Error ? error.message : String(error),
     });
+    return { recorded: false, inserted: false };
   }
 }
 

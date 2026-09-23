@@ -41,11 +41,18 @@
  *      tables. See scripts/db/authoring-subsystem.mjs.
  *   4. The out-of-band migration set — scripts/db/migration-set.mjs, one
  *      transaction per file, STOPPING at the first failure.
- *   5. Refresh the non-superuser runtime role's grants (app_service) so tables
- *      this deploy created are reachable by the request-serving pool. No-op
- *      unless APP_SERVICE_DB_PASSWORD is set. See scripts/db/provision-app-role.mjs.
- *   6. Verify the readiness contract /readyz enforces at boot, so a deploy can
- *      never report success while leaving the state that fails readiness.
+ *   5. Refresh the runtime role's grants so tables this deploy created are
+ *      reachable by the request-serving pool. Mints/aligns app_service when
+ *      APP_SERVICE_DB_PASSWORD is set; otherwise refreshes grants for any
+ *      runtime role identifiable from RUNTIME_DB_ROLE, APP_DATABASE_URL, or
+ *      DATABASE_URL when DATABASE_OWNER_URL made a different role the owner
+ *      (2026-09-21, IQ-DEV-001: the password-only gate left every unminted
+ *      split-role estate with 183 unreadable public tables). Single-role
+ *      estates (runtime = owner) are untouched. See scripts/db/provision-app-role.mjs.
+ *   6. Verify the readiness contract /readyz enforces at boot — including, for
+ *      an identified runtime role, the grant audit: every application relation
+ *      reachable, nothing beyond append-only on the audit store — so a deploy
+ *      can never report success while leaving the state that fails readiness.
  *
  * Every step is idempotent; re-running a successful migration is a no-op.
  *
@@ -55,6 +62,8 @@
  * than disabling verification.
  *
  * Usage:  DATABASE_URL='postgres://…' node scripts/db/deploy-migrate.mjs
+ *         DATABASE_OWNER_URL='postgres://owner@…' DATABASE_URL='postgres://runtime@…' \
+ *           node scripts/db/deploy-migrate.mjs      # split roles: migrate as owner, grant runtime
  * Exit:   0 success · 1 migration/verification failure · 3 not provisioned
  */
 
@@ -68,7 +77,8 @@ import {
 } from './authoring-subsystem.mjs';
 import { C2C_MIGRATION_FILES, applyMigrationFiles } from './migration-set.mjs';
 import { resolveDatabaseUrl, sslFor, APPLY_URL_VARS } from './connection.mjs';
-import { provisionAppServiceRole } from './provision-app-role.mjs';
+import { ensureRuntimeRole } from './provision-app-role.mjs';
+import { verifyReadinessContract as verifyCoreReadinessContract } from './readiness-contract.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -85,6 +95,61 @@ const EXIT_NOT_PROVISIONED = 3;
  * instead of looking provisioned because push happened to succeed.
  */
 const BASE_SCHEMA_SENTINELS = ['organizations', 'users', 'c2c_documents', 'regulatory_programs'];
+
+/**
+ * Objects that exist ONLY if install-fresh's governed-content step completed.
+ *
+ * ── WHY THIS CHECK EXISTS (2026-09-10, WO-15 finding 1) ──────────────────────
+ * install-fresh applies the `db/migrations/*_gcc_*.sql` tree — 43 files, ~167
+ * tables — at STEP 6, by shelling out to psql. Step 6 is the ONLY non-fatal
+ * step in that script: if `psql --version` fails it records the shortfall and
+ * RETURNS. install-fresh is honest about it and exits 1 with
+ * "❌ Install INCOMPLETE — not reporting success."
+ *
+ * But steps 2-3 have already created every one of BASE_SCHEMA_SENTINELS. So
+ * `deploy-migrate` ran next, preflight passed, all 262 migrations applied, and
+ * this script printed "✅ Schema migration complete — safe to roll services."
+ * on a database install-fresh had just refused to bless. Reproduced end to end
+ * by hiding psql behind a PATH shim.
+ *
+ * What that database actually holds, measured:
+ *   - `core.programs` created by 044b (C2C index 11) with 7 columns instead of
+ *     10, permanently: CREATE TABLE IF NOT EXISTS can never repair it.
+ *   - `core.programs` with **RLS DISABLED and zero policies**, because
+ *     20260801_uuid_tenant_isolation_nonpublic.sql SKIPS a declared table whose
+ *     tenant column is missing — one uncounted NOTICE in a 500-line log.
+ *     A cross-tenant readable table.
+ *   - `core.get_program_org_id`, the resolver every `vault.documents` RLS
+ *     policy authorizes through, raising 42703 at first execution. It applies
+ *     green because 20260828_program_org_resolution_canonical.sql:41 chose
+ *     plpgsql precisely so relations resolve at call time, not CREATE time.
+ *
+ * A per-table convergence migration was designed for this and REFUSED on
+ * review: with `org_id` present but unbackfilled (069's backfill is gcc-only
+ * too), the isolation sweep attaches a policy whose third arm is
+ * `OR org_id IS NULL` — it would have admitted 100% of rows while the deploy
+ * log read as fixed. And it would have addressed 1 table of ~167.
+ *
+ * So the check belongs HERE, at the boundary where the lie is told. Three
+ * sentinels, each with exactly one creator and all of them gcc-only (both
+ * files are `indexOf === -1` in C2C_MIGRATION_FILES), covering schema, table
+ * and column granularity:
+ *
+ *   identity.organizations    051_gcc_multi_tenant_identity.sql   (schema+table)
+ *   core.program_ownerships   069_gcc_multitenant_rls_expansion.sql (table)
+ *   core.programs.org_id      069_gcc_multitenant_rls_expansion.sql (column)
+ *
+ * Queried through pg_class/pg_namespace/pg_attribute rather than
+ * information_schema, which is privilege-filtered and would fail OPEN — the
+ * review demonstrated the same role reading `false` from information_schema and
+ * `true` from pg_class for the same table. `to_regclass` is not a substitute
+ * either: it throws when schema permission is denied.
+ */
+const GOVERNED_CONTENT_SENTINELS = [
+  { kind: 'table', schema: 'identity', name: 'organizations' },
+  { kind: 'table', schema: 'core', name: 'program_ownerships' },
+  { kind: 'column', schema: 'core', name: 'programs', column: 'org_id' },
+];
 
 /**
  * Advisory-lock key. Two ECS deploy tasks racing (a redeploy issued while the
@@ -136,7 +201,23 @@ async function preflight(client) {
  * probe — the failure surfaces in the migration job, where it is diagnosable,
  * rather than as an opaque rollback.
  */
-async function verifyReadinessContract(client) {
+async function verifyReadinessContract(client, { runtimeRole = null } = {}) {
+  // The core of the contract — required schemas, the `vector` extension,
+  // CRITICAL_TABLES, SECURITY_CRITICAL_TABLES and audit.tamper_proof_log —
+  // shared with scripts/db/provision.mjs through readiness-contract.mjs. Until
+  // 2026-09-20 this step verified only the authoring half below, so a run
+  // could print "safe to roll services" on a database whose boot would record
+  // `security-critical tables missing: licenses` — the file that creates
+  // public.licenses (20260730_licensing_ip_tables.sql) is in THIS set, so the
+  // gap was invisible from install-fresh and only ever surfaced at /readyz.
+  // `runtimeRole` (step 4's identified role, if any) adds the grant audit: the
+  // role the server will connect as must reach every relation this deploy left
+  // behind, and hold nothing beyond append-only on the audit store.
+  const core = await verifyCoreReadinessContract(client, { log, runtimeRole });
+  if (!core.ok) {
+    throw new Error(`readiness contract not met — /readyz would report schema: down.\n    ${core.failures.join('\n    ')}`);
+  }
+
   const missing = await missingTables(client, AUTHORING_SUBSYSTEM_TABLES);
   log(
     `  authoring subsystem: ${AUTHORING_SUBSYSTEM_TABLES.length - missing.length}/${AUTHORING_SUBSYSTEM_TABLES.length} tables present`,
@@ -183,6 +264,61 @@ async function verifyReadinessContract(client) {
   if (unpolicied.length) {
     throw new Error(
       `authoring tables without tenant_isolation_policy — cross-tenant readable under RLS_ENFORCE=on: ${unpolicied.join(', ')}`,
+    );
+  }
+
+  await verifyGovernedContentApplied(client);
+}
+
+/**
+ * The governed-content tree ran. See GOVERNED_CONTENT_SENTINELS for why this is
+ * checked at deploy time rather than trusted from the installer.
+ */
+async function verifyGovernedContentApplied(client) {
+  const absent = [];
+  for (const s of GOVERNED_CONTENT_SENTINELS) {
+    const q =
+      s.kind === 'table'
+        ? {
+            text: `SELECT 1 FROM pg_class c
+                     JOIN pg_namespace n ON n.oid = c.relnamespace
+                    WHERE n.nspname = $1 AND c.relname = $2 AND c.relkind IN ('r','p')`,
+            values: [s.schema, s.name],
+          }
+        : {
+            text: `SELECT 1 FROM pg_attribute a
+                     JOIN pg_class c ON c.oid = a.attrelid
+                     JOIN pg_namespace n ON n.oid = c.relnamespace
+                    WHERE n.nspname = $1 AND c.relname = $2
+                      AND a.attname = $3 AND a.attnum > 0 AND NOT a.attisdropped`,
+            values: [s.schema, s.name, s.column],
+          };
+    const res = await client.query(q.text, q.values);
+    if (res.rowCount === 0) {
+      absent.push(s.kind === 'table' ? `${s.schema}.${s.name}` : `${s.schema}.${s.name}.${s.column}`);
+    }
+  }
+
+  log(
+    `  governed-content tree: ${GOVERNED_CONTENT_SENTINELS.length - absent.length}/${GOVERNED_CONTENT_SENTINELS.length} sentinel(s) present`,
+  );
+
+  if (absent.length) {
+    throw new Error(
+      `the governed-content tree (db/migrations/*_gcc_*.sql) did not run on this database — ` +
+        `missing: ${absent.join(', ')}.\n` +
+        `  install-fresh applies those 43 files at step 6 by shelling out to psql, and step 6 is its\n` +
+        `  ONLY non-fatal step: with psql absent it records the shortfall and returns, exiting 1 with\n` +
+        `  "Install INCOMPLETE". Every base-schema sentinel this script preflights on is created\n` +
+        `  earlier, so without this check the deploy would report success on that database.\n` +
+        `  What it would be reporting success about: core.programs stuck at 7 columns forever\n` +
+        `  (CREATE TABLE IF NOT EXISTS cannot repair it), with RLS DISABLED and no policy because\n` +
+        `  the isolation sweep skips a declared table whose tenant column is absent, and\n` +
+        `  core.get_program_org_id — the resolver every vault.documents RLS policy authorizes\n` +
+        `  through — raising 42703 at first call.\n` +
+        `  FIX: install the postgresql client and re-run install-fresh, or apply the tree by hand:\n` +
+        `    for f in $(ls db/migrations/*_gcc_*.sql | sort); do \\\n` +
+        `      psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done`,
     );
   }
 }
@@ -235,19 +371,23 @@ async function main() {
     // one pass sufficient. Reproduced and verified against PostgreSQL 16.
     log('\n▶ 4/5 Runtime role — required schemas + refresh non-superuser grants');
     await client.query('CREATE SCHEMA IF NOT EXISTS extensions');
-    // Re-apply the app_service grants so any table this deploy just created is
-    // reachable by the request-serving pool. GRANT ... ON ALL TABLES only
+    // Re-apply the runtime role's grants so any table this deploy just created
+    // is reachable by the request-serving pool. GRANT ... ON ALL TABLES only
     // covers tables that existed when it ran, so a role provisioned by a prior
     // install would otherwise be locked out of every new table until the next
-    // full provisioning. No-op unless APP_SERVICE_DB_PASSWORD is set. Runs as
-    // the owner (this connection), which is what GRANT requires.
-    const roleResult = await provisionAppServiceRole(client, { log });
-    if (roleResult.skipped) {
-      log(`  • ${roleResult.role} grants not refreshed (APP_SERVICE_DB_PASSWORD unset)`);
+    // full provisioning. Runs as the owner (this connection), which is what
+    // GRANT requires. ensureRuntimeRole mints app_service when
+    // APP_SERVICE_DB_PASSWORD is set, refreshes grants for any other
+    // identifiable runtime role, and does nothing on a single-role estate.
+    const roleResult = await ensureRuntimeRole(client, { log });
+    if (roleResult.mode === 'single-role') {
+      log(`  • grants not refreshed: the runtime is the owner (${roleResult.owner}); single-role posture`);
+    } else {
+      log(`  ✓ runtime role ${roleResult.role} ${roleResult.mode} (identified from ${roleResult.source})`);
     }
 
-    log('\n▶ 5/5 Verify readiness contract');
-    await verifyReadinessContract(client);
+    log('\n▶ 5/5 Verify readiness contract' + (roleResult.role ? ` (incl. grant audit for ${roleResult.role})` : ''));
+    await verifyReadinessContract(client, { runtimeRole: roleResult.role });
 
     log('\n✅ Schema migration complete — safe to roll services.');
   } catch (err) {

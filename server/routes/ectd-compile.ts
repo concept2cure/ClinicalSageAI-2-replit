@@ -40,6 +40,7 @@ import { promises as fs } from 'node:fs';
 import { Router, Request, Response } from 'express';
 import { pool } from '../db';
 import { resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
+import { sectionMatches } from '../services/ectd/section-code-match';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 import {
   resolveRequiredSections,
@@ -637,19 +638,18 @@ function resolveUserId(req: Request): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** Case-insensitive CTD-section prefix match (leaf '3.2.s' covers '3.2.S').
- *  A leading module prefix is normalized away first: the Module 3 placement
- *  writes leaf codes as 'm3.2.S.1' (toLeafSectionCode = 'm' + key), and the
- *  raw startsWith made every one of those invisible to this gate — a fully
- *  placed Module 3 was reported REQUIRED_SECTION_UNPLACED on 3.2.S/3.2.P/3.2.R
- *  while the sections sat in the sequence. */
-function sectionMatches(sectionCode: unknown, requiredCode: string): boolean {
-  const code = String(sectionCode ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/^m(?=\d)/, '');
-  return code.startsWith(requiredCode.toLowerCase().replace(/^m(?=\d)/, ''));
-}
+/* The CTD-section prefix rule moved to services/ectd/section-code-match, where
+   the package validator uses it too. It lived here alone, with the comment
+   below, while ectd4-validator kept an exact `Set.has` — so the product
+   answered a fully placed Module 3 two different ways depending on which
+   endpoint asked.
+
+   (Kept verbatim, because it is the account of the bug: a leading module prefix
+   is normalized away first, since the Module 3 placement writes leaf codes as
+   'm3.2.S.1' (toLeafSectionCode = 'm' + key), and the raw startsWith made every
+   one of those invisible to this gate — a fully placed Module 3 was reported
+   REQUIRED_SECTION_UNPLACED on 3.2.S/3.2.P/3.2.R while the sections sat in the
+   sequence.) */
 
 interface SpineLeafRow {
   section_code: string | null;

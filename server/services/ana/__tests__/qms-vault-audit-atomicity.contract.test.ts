@@ -145,7 +145,7 @@ beforeAll(async () => {
   // organizations row for the FK, the evidence spine and the span-lineage store.
   await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (1, 'org-1'), (9, 'org-9') ON CONFLICT DO NOTHING;`);
-  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql']) {
+  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql', 'migrations/20260908_span_lineage_machine_draft.sql']) {
     await pglite.exec(fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8'));
   }
 });
@@ -334,15 +334,26 @@ describe('save_document_to_vault — vault artifact + version + audit are one tr
     expect(audits[0].target).toBe(`vault-document:${res.artifact_id}`);
     expect(audits[0].actor_id).toBe(10);
 
-    // Ledger L160 (extended to the create path): the vault document's text is
-    // attributed in the same transaction. save_document_to_vault previously
-    // recorded NO span lineage at all — a regulated INSERT the content-write
-    // guard could not even see.
+    /* Ledger L160 (extended to the create path): the vault document's text is
+       attributed in the same transaction. save_document_to_vault previously
+       recorded NO span lineage at all — a regulated INSERT the content-write
+       guard could not even see.
+       It is recorded as AnA's UNACCEPTED draft, not the caller's assertion:
+       this tool writes model-generated prose (the provenance row beside it says
+       eventAction 'ai_generate') and nobody has accepted it. asserted_by must
+       be NULL — the requester is named in created_by instead. */
     const spans = await q(
       `SELECT count(*)::int AS n FROM document_span_lineage
-        WHERE document_table = 'concept2cure_artifacts' AND provenance_kind = 'author_assertion' AND deleted_at IS NULL`,
+        WHERE document_table = 'concept2cure_artifacts' AND provenance_kind = 'machine_draft'
+          AND machine_author_id = 'ana' AND asserted_by IS NULL AND deleted_at IS NULL`,
     );
     expect(Number(spans.rows[0].n)).toBeGreaterThanOrEqual(1);
+    const claimed = await q(
+      `SELECT count(*)::int AS n FROM document_span_lineage
+        WHERE document_table = 'concept2cure_artifacts' AND provenance_kind = 'author_assertion'
+          AND deleted_at IS NULL`,
+    );
+    expect(Number(claimed.rows[0].n), 'nobody asserted AnA-generated prose').toBe(0);
   });
 
   it('REFUSES without a project — a vault document belonging to no project is an orphaned capture', async () => {
@@ -385,10 +396,13 @@ describe('update_vault_document — new regulated version is audited atomically'
     expect((await pglite.query(`SELECT * FROM concept2cure_artifact_versions`)).rows).toHaveLength(2);
     expect(await auditRows()).toHaveLength(1);
     expect((await ledgerRows())[0].payload).toMatchObject({ kind: 'version', from: 1, to: 2 });
-    // Ledger L160: the new version's text is attributed, in the same transaction.
+    /* Ledger L160: the new version's text is attributed in the same
+       transaction — as AnA's unaccepted draft, for the same reason as the
+       create path above. */
     const spans = await q(
       `SELECT count(*)::int AS n FROM document_span_lineage
-        WHERE document_table = 'concept2cure_artifacts' AND provenance_kind = 'author_assertion' AND deleted_at IS NULL`,
+        WHERE document_table = 'concept2cure_artifacts' AND provenance_kind = 'machine_draft'
+          AND machine_author_id = 'ana' AND asserted_by IS NULL AND deleted_at IS NULL`,
     );
     expect(Number(spans.rows[0].n)).toBeGreaterThanOrEqual(1);
   });

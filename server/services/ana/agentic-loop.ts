@@ -28,12 +28,104 @@ export interface ToolCall {
   id: string;
   name: string;
   input: Record<string, unknown>;
+  /**
+   * Set when the model's arguments for this call could not be reconstructed
+   * from the stream (see AnaToolUse.inputParseError). `input` is `{}`, which
+   * is indistinguishable from a zero-argument call, so an executor MUST check
+   * this before dispatching: running the handler on `{}` would execute the
+   * tool as though the model had asked for nothing.
+   */
+  inputParseError?: string;
 }
 
 export interface ToolResultEntry {
   tool_use_id: string;
   name: string;
   content: string;
+}
+
+/**
+ * The result body for a call whose arguments never reached us, or `null` when
+ * the call is fine to dispatch.
+ *
+ * An executor calls this before handing anything to a handler. The distinction
+ * it preserves: a call with `input: {}` and no `inputParseError` is a
+ * zero-argument tool and runs normally; a call with `input: {}` AND an
+ * `inputParseError` is a call whose arguments we lost in transport. Running
+ * the handler on the second one executes the tool as though the model had
+ * asked for nothing, and returns a "missing parameters" error that reads as
+ * the model's mistake — so the model stops trusting a tool that was never
+ * given a chance.
+ *
+ * The message says whose fault it is and asks for the same call again,
+ * because the model's only other reading of a bare failure is that the tool
+ * cannot answer the question.
+ */
+/**
+ * Thrown by {@link abortRace} when the run's cancel signal fires while a tool
+ * handler is still working. Not an error condition — a control outcome — so
+ * callers turn it into a cancelled result rather than an error one.
+ */
+export class ToolRunCancelled extends Error {
+  constructor() {
+    super('Tool run cancelled by the user');
+    this.name = 'ToolRunCancelled';
+  }
+}
+
+/**
+ * A promise that rejects with {@link ToolRunCancelled} when `signal` aborts,
+ * and otherwise never settles. Raced against a tool handler so the ROUND stops
+ * waiting.
+ *
+ * It does not, and cannot, stop the handler: a promise already in flight has no
+ * cancel. A handler that takes a signal can bail early; one that does not keeps
+ * running and settles into a void. That is a real limit and the reason the
+ * cancelled result says the step was stopped rather than claiming it was
+ * undone — some of them will have finished their work, and the honest record is
+ * that we stopped waiting for the answer, not that nothing happened.
+ *
+ * Returns a never-settling promise when there is no signal, so an uncontrolled
+ * run behaves exactly as it did before.
+ */
+export function abortRace(signal?: AbortSignal): Promise<never> {
+  return new Promise<never>((_resolve, reject) => {
+    if (!signal) return;
+    if (signal.aborted) {
+      reject(new ToolRunCancelled());
+      return;
+    }
+    signal.addEventListener('abort', () => reject(new ToolRunCancelled()), { once: true });
+  });
+}
+
+/**
+ * The result body for a step the user stopped.
+ *
+ * Says it was stopped, and says it plainly to the model too: an empty or
+ * missing result for a step the model asked for reads as a tool that had
+ * nothing to say, and the model will draw a conclusion from that. It must also
+ * never imply the work was undone — see {@link abortRace}.
+ */
+export function CANCELLED_TOOL_RESULT(toolName: string): { cancelled: true; tool: string; note: string } {
+  return {
+    cancelled: true,
+    tool: toolName,
+    note:
+      'The person stopped this run before this step finished. Nothing it would ' +
+      'have produced was used. Do not treat this as the tool having no answer.',
+  };
+}
+
+export function lostToolInputResult(call: ToolCall): { error: string; tool: string } | null {
+  if (!call.inputParseError) return null;
+  return {
+    error:
+      `The arguments for this call did not reach the tool (${call.inputParseError}). ` +
+      `This is a transport failure on our side, not a problem with the request. ` +
+      `Call the tool again with the same arguments.`,
+    tool: call.name,
+  };
 }
 
 export interface ModelTurn {
@@ -94,6 +186,14 @@ export interface AgenticLoopOptions {
    * circling gets cut exactly as before. Default 0 (behavior unchanged).
    */
   progressExtension?: number;
+  /**
+   * A ceiling that may RISE mid-turn, read at every round boundary. The turn's
+   * character can change after it starts — a request typed in plain words
+   * becomes a product demonstration once `start_product_demo` answers — and a
+   * ceiling fixed at the first round cut such a tour off partway. Never lowers
+   * `maxRounds`.
+   */
+  maxRoundsFloor?: () => number;
 }
 
 /**
@@ -220,8 +320,9 @@ export async function runAgenticToolLoop(
     // Progress-earned extension: at the ceiling, a round that tried novel work
     // (and isn't thrashing) earns one more round, up to progressExtension. A
     // repeating or thrashing loop never extends — it is cut exactly as before.
+    const ceiling = Math.max(maxRounds, options.maxRoundsFloor?.() ?? 0);
     if (
-      round >= maxRounds + extendedRounds &&
+      round >= ceiling + extendedRounds &&
       novelInRound &&
       !thrashing &&
       extendedRounds < progressExtension
@@ -229,7 +330,7 @@ export async function runAgenticToolLoop(
       extendedRounds++;
     }
 
-    const finalRound = round >= maxRounds + extendedRounds;
+    const finalRound = round >= ceiling + extendedRounds;
     const includeTools = !finalRound && !thrashing;
 
     turn = await deps.callModel(results, turn.text, round, includeTools);
@@ -501,4 +602,25 @@ export function describeToolPlan(calls: ToolCall[]): PlanStep[] {
     const label = labeler ? labeler(c.input ?? {}) : humanizeToolName(c.name);
     return { tool: c.name, label };
   });
+}
+
+/**
+ * The assistant turn staged before a round's tool results.
+ *
+ * It carried only the round's narration, and a round in which the model called
+ * tools without writing any text first — the common case, and every demo stop
+ * after the first — staged `{ role: 'assistant', content: '' }`. The Messages
+ * API rejects an empty non-final message with a 400, so the follow-up call
+ * failed on every model the gateway tried and the turn ended on a generic
+ * error after its first move: AnA navigated once and then "An error occurred".
+ * A turn with no narration says which steps it took instead, so the transcript
+ * the model reads next stays true and is never empty.
+ */
+export function assistantTurnContent(
+  priorText: string,
+  results: ReadonlyArray<{ name: string }>
+): string {
+  if (priorText && priorText.trim()) return priorText;
+  const names = [...new Set(results.map(r => r.name).filter(Boolean))];
+  return names.length > 0 ? `(Ran: ${names.join(', ')}.)` : '(Continuing.)';
 }

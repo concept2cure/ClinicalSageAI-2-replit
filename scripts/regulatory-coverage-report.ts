@@ -105,9 +105,14 @@ line();
 line('══════════════════════════════════════════════════════════════════');
 line('  SUBMITTABILITY — can an authored filing actually reach an agency?');
 line('══════════════════════════════════════════════════════════════════');
+/* EVERY tier, or the numbers do not account for the filings. This line printed
+   four of the five — `portal_only` was omitted — so it summed to one less than
+   the total it sits under, and the filing in that tier appeared nowhere in the
+   report at all. */
 line(
   `  submittable ${submittability.byTier.submittable}   ` +
     `components (not filed on their own) ${submittability.byTier.not_a_filing}   ` +
+    `portal-only ${submittability.byTier.portal_only}   ` +
     `no-identity ${submittability.byTier.no_identity}   ` +
     `no-gateway ${submittability.byTier.no_gateway}`
 );
@@ -122,7 +127,33 @@ if (unsubmittable.length) {
   line();
   line(`  ⚠ ${unsubmittable.length} filing type(s) selectable at initiation but NOT submittable:`);
   for (const u of unsubmittable) line(`      ${u.id} (${u.region}) — ${u.tier}`);
-} else {
+}
+
+/* PORTAL-ONLY IS NOT A GAP, AND IT IS NOT FINISHABLE HERE EITHER.
+   `getUnsubmittableFilings()` returns the INTEGRATION backlog by contract —
+   no_identity and no_gateway — and deliberately excludes portal_only, because
+   no integration will ever make a portal filing transmittable.
+   `buildSubmittabilityReport().portalOnly` exists for exactly this, and this
+   script never read it: the closing line was driven by `unsubmittable` alone
+   and printed "Every startable filing type is finishable" over an EU CTA whose
+   own channel is CTIS. It is worse than a silent omission, because the
+   platform's gateway selection routes any EU non-device sequence to the
+   medicines gateway (CESP) instead — so the one filing the report called
+   finishable is the one that would go out the wrong door. */
+if (submittability.portalOnly.length) {
+  line();
+  line(`  ◆ ${submittability.portalOnly.length} filing type(s) whose channel is a PORTAL, not a gateway.`);
+  line('    Authored here, submitted by hand there. No integration changes this.');
+  for (const p of submittability.portalOnly) {
+    line(`      ${p.id} (${p.region}) — ${p.portalChannel ?? 'portal channel not named'}`);
+  }
+}
+
+if (!unsubmittable.length && !submittability.portalOnly.length) {
   line();
   line('  ✅ Every startable filing type is finishable.');
+} else if (!unsubmittable.length) {
+  line();
+  line('  ✅ Every startable filing type reaches a gateway, except the portal-only');
+  line('     type(s) named above, which leave the platform by hand.');
 }

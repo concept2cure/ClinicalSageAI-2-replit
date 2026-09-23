@@ -51,18 +51,34 @@ vi.mock('../../server/services/provenance/artifact-provenance', () => ({
   recordArtifactProvenanceDrizzle: vi.fn(async () => {}),
 }));
 
-/* The program lookup reads the sponsor from the program's ORGANISATION, so the
-   chain now carries a leftJoin between from() and where(). The fake mirrors the
-   drizzle builder, so it has to offer the same links — with or without the join,
-   the same terminal rows come back. */
-const whereLink = () => ({ where: vi.fn(() => ({ limit: vi.fn(async () => mockSelectRows()) })) });
-fakeDb.select = vi.fn(() => ({
-  from: vi.fn(() => ({
-    ...whereLink(),
-    leftJoin: vi.fn(() => whereLink()),
-    innerJoin: vi.fn(() => ({ ...whereLink(), orderBy: vi.fn(async () => mockSelectRows()) })),
-  })),
-}));
+/*
+ * A self-referential chain, so every drizzle builder shape this router uses
+ * lands on the same `limit`.
+ *
+ * The program lookup reads the sponsor from the program's ORGANISATION, so the
+ * chain carries a leftJoin between from() and where(). The previous literal
+ * offered only `.from().where().limit()`, so `.leftJoin` was undefined, the
+ * TypeError was swallowed by `resolveProgramIdent`'s own `catch`, and EVERY
+ * program-ident case below resolved to null and 404'd — five assertions,
+ * including the fail-closed audit one, were failing against a mock defect
+ * rather than against the route.
+ *
+ * Self-referential rather than a shape-by-shape literal (the other half of this
+ * merge) because the failure being repaired is a mock that did not offer a link
+ * the builder uses. Enumerating the shapes reproduces that risk every time the
+ * query grows a clause; returning the same chain from every link cannot.
+ */
+fakeDb.select = vi.fn(() => {
+  const chain: any = {
+    from: vi.fn(() => chain),
+    leftJoin: vi.fn(() => chain),
+    innerJoin: vi.fn(() => chain),
+    where: vi.fn(() => chain),
+    orderBy: vi.fn(() => chain),
+    limit: vi.fn(async () => mockSelectRows()),
+  };
+  return chain;
+});
 fakeDb.insert = vi.fn(() => ({
   values: vi.fn(() => ({ returning: mockInsertReturning })),
 }));

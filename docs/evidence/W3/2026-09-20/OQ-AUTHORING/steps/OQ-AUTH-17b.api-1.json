@@ -1,0 +1,669 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5102/api/review/board",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 26,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "queue": [
+          {
+            "id": "76adad64-ded1-4cae-9181-463e744d46f3",
+            "doc": "OQ-003 Clinical Overview 20260922000859",
+            "prog": "OQ-003 Authoring program 20260922000859",
+            "programId": "ad36558c-8719-4200-9d65-90b526894b3b",
+            "pid": "76adad64-ded1-4cae-9181-463e744d46f3",
+            "module": "M2",
+            "docStatus": "IN_REVIEW",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "bf9c7e66-7d99-4d98-bf2d-469a6d611227",
+                "reviewerId": "1",
+                "reviewer": "JM Smith",
+                "reviewerEmail": "jonmichaelpsmith@gmail.com",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-22T00:09:05.905Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "bf9c7e66-7d99-4d98-bf2d-469a6d611227",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "JM Smith",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 1,
+            "esig": "pending",
+            "conf": null,
+            "prov": "in review · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "eb2512c6-2ca3-4460-afea-1b90b1134109",
+            "requestedAt": "2026-09-22T00:09:05.905Z"
+          },
+          {
+            "id": "883912ab-6cd2-4301-972b-d3c4f420837a",
+            "doc": "[Demo · MDX] Cybersecurity and Interoperability Summary",
+            "prog": null,
+            "programId": null,
+            "pid": "883912ab-6cd2-4301-972b-d3c4f420837a",
+            "module": "510k",
+            "docStatus": "draft",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "28e9414d-a078-42c9-ade3-0b4860875e71",
+                "reviewerId": "42",
+                "reviewer": "OQ Signer (validation)",
+                "reviewerEmail": "oq-signer@validation.local",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-21T17:50:51.430Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": null,
+            "myReviewStatus": null,
+            "awaitingMyReview": false,
+            "requestedByMe": false,
+            "atMySignOff": false,
+            "mine": false,
+            "reviewer": "OQ Signer (validation)",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "none",
+            "conf": null,
+            "prov": "draft · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "The NP-100 Analyzer includes software, connects to the laboratory network (Ethernet, HL7 over TLS) and could be vulnerable to cybersecurity threats; it is therefore a cyber device under section 524B, and this summary provides the information required by section 524B(b) and FDA's premarket cybersecurity guidance (September 2023). Provenance: seeded demonstration content authored for the Concept2Cure launch demo (fictional manufacturer, fictional device). Not model-drafted — no AI provider is configured.",
+            "firstSectionId": "f851a5f2-3cd2-4bc0-9316-d32d4db02424",
+            "requestedAt": "2026-09-21T17:50:51.430Z"
+          },
+          {
+            "id": "0363ad11-01f1-490f-a248-4674eeb74a51",
+            "doc": "[Demo · Biotech] Module 2.5 Clinical Overview — C2C-101",
+            "prog": null,
+            "programId": null,
+            "pid": "0363ad11-01f1-490f-a248-4674eeb74a51",
+            "module": "M2",
+            "docStatus": "IN_REVIEW",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "1ac2723b-86ec-48ef-956c-f343a0807f58",
+                "reviewerId": "42",
+                "reviewer": "OQ Signer (validation)",
+                "reviewerEmail": "oq-signer@validation.local",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-21T17:46:58.479Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": null,
+            "myReviewStatus": null,
+            "awaitingMyReview": false,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": false,
+            "reviewer": "OQ Signer (validation)",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "in review · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "C2C-101 is a humanized IgG1 monoclonal antibody that selectively neutralises the p19 subunit of interleukin-23, the cytokine that sustains pathogenic Th17 cells in psoriatic plaques. Selective p19 inhibition has demonstrated high rates of skin clearance with a favourable safety profile in this indication. C2C-101 is being developed to offer every-8-week maintenance dosing from a self-administered pre-filled syringe, supported by a terminal half-life of approximately 21 days observed in Phase 1. The initial indication is moderate-to-severe plaque psoriasis in adults; psoriatic arthritis and Cro…",
+            "firstSectionId": "2e059990-0b24-43c2-8d98-36703d5d35be",
+            "requestedAt": "2026-09-21T17:46:58.479Z"
+          },
+          {
+            "id": "b10152d8-b474-4661-aa3d-b699ae216c7d",
+            "doc": "[Demo · Biotech] Protocol Synopsis C2C-101-201",
+            "prog": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+            "programId": "5ac45b38-a1d8-4a41-9488-fac39a57b852",
+            "pid": "b10152d8-b474-4661-aa3d-b699ae216c7d",
+            "module": "M5",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "d3221426-56f1-4153-8cfd-6029e66aacf5",
+                "reviewerId": "42",
+                "reviewer": "OQ Signer (validation)",
+                "reviewerEmail": "oq-signer@validation.local",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-21T17:46:06.280Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": null,
+            "myReviewStatus": null,
+            "awaitingMyReview": false,
+            "requestedByMe": false,
+            "atMySignOff": false,
+            "mine": false,
+            "reviewer": "OQ Signer (validation)",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "none",
+            "conf": null,
+            "prov": "frozen · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "Primary objective. To evaluate the efficacy of two subcutaneous dose regimens of C2C-101 compared with placebo in adults with moderate-to-severe plaque psoriasis, measured as PASI 75 response at Week 16. Secondary objectives. To evaluate sPGA 0/1, PASI 90, PASI 100 and change in DLQI at Week 16; to characterise the safety, tolerability, pharmacokinetics and immunogenicity of C2C-101 over 16 weeks; and to explore the exposure–response relationship supporting Phase 3 dose selection.",
+            "firstSectionId": "44455316-b767-498a-adcd-2206e9a0477c",
+            "requestedAt": "2026-09-21T17:46:06.280Z"
+          },
+          {
+            "id": "28f95d9a-a9c1-49da-8377-56d847a5d8e5",
+            "doc": "[Demo · MDX] 510(k) Summary",
+            "prog": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+            "programId": "82d3b729-87a1-4714-9a21-819b538683f3",
+            "pid": "28f95d9a-a9c1-49da-8377-56d847a5d8e5",
+            "module": "510k",
+            "docStatus": "APPROVED",
+            "state": "approved",
+            "reviews": [
+              {
+                "id": "068ce5eb-c78d-4bc4-a635-5bb33a51859a",
+                "reviewerId": "42",
+                "reviewer": "OQ Signer (validation)",
+                "reviewerEmail": "oq-signer@validation.local",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-21T17:42:51.897Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": null,
+            "myReviewStatus": null,
+            "awaitingMyReview": false,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": false,
+            "reviewer": "OQ Signer (validation)",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "signed",
+            "conf": null,
+            "prov": "approved · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "Submitter: Concept2Cure Diagnostics, 1 Demonstration Way, Anytown (fictional address). Contact: Regulatory Affairs, Concept2Cure Diagnostics. Date prepared: 2026-09-21. Provenance: seeded demonstration content authored for the Concept2Cure launch demo (fictional manufacturer, fictional device). Not model-drafted — no AI provider is configured.",
+            "firstSectionId": "1ccd2367-be3f-40eb-9448-ca1e5fbd68e5",
+            "requestedAt": "2026-09-21T17:42:51.897Z"
+          },
+          {
+            "id": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
+            "doc": "OQ-003 Clinical Overview 20260921162653",
+            "prog": "OQ-003 Authoring program 20260921162653",
+            "programId": "71aef2b9-4b03-4a9e-b097-b2278f59b7d4",
+            "pid": "ed4a88ef-5227-49e6-b5af-a1155f3ba9af",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "da29c25d-c749-4cc3-a046-c2501ad1a025",
+                "reviewerId": "1",
+                "reviewer": "JM Smith",
+                "reviewerEmail": "jonmichaelpsmith@gmail.com",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-21T16:26:58.598Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "da29c25d-c749-4cc3-a046-c2501ad1a025",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "JM Smith",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "12d601ed-b37e-40ed-afde-ade6e34795a7",
+            "requestedAt": "2026-09-21T16:26:58.598Z"
+          },
+          {
+            "id": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
+            "doc": "OQ-003 Clinical Overview 20260921014427",
+            "prog": "OQ-003 Authoring program 20260921014427",
+            "programId": "623828eb-0c14-49f0-8723-8b5b2b7b9c61",
+            "pid": "7aa154e6-07ca-4469-a1e4-c8e6952a32ab",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "21aedd0c-0a44-4f1b-a86e-8ed8b8b1143f",
+                "reviewerId": "1",
+                "reviewer": "JM Smith",
+                "reviewerEmail": "jonmichaelpsmith@gmail.com",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-21T01:44:33.246Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "21aedd0c-0a44-4f1b-a86e-8ed8b8b1143f",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "JM Smith",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "b9cb188a-a468-4956-b8d8-5b931fed9062",
+            "requestedAt": "2026-09-21T01:44:33.246Z"
+          },
+          {
+            "id": "a9409a8d-f1dc-47de-8a90-27f8a8909bf8",
+            "doc": "OQ-003 Clinical Overview 20260921014147",
+            "prog": "OQ-003 Authoring program 20260921014147",
+            "programId": "97a59ee6-9f17-47eb-be90-e144c2f6bf4a",
+            "pid": "a9409a8d-f1dc-47de-8a90-27f8a8909bf8",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "2ca2ae17-5416-42de-8511-3ef4d74519a5",
+                "reviewerId": "1",
+                "reviewer": "JM Smith",
+                "reviewerEmail": "jonmichaelpsmith@gmail.com",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-21T01:41:53.260Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "2ca2ae17-5416-42de-8511-3ef4d74519a5",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "JM Smith",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "1f173983-8f3a-4092-9093-884d96bda307",
+            "requestedAt": "2026-09-21T01:41:53.260Z"
+          },
+          {
+            "id": "2d2a545d-aca6-474e-bfcb-fa3cc1080fc7",
+            "doc": "OQ-003 Clinical Overview 20260921010520",
+            "prog": "OQ-003 Authoring program 20260921010520",
+            "programId": "94ca3949-304b-4a6a-88ae-23db761d50ba",
+            "pid": "2d2a545d-aca6-474e-bfcb-fa3cc1080fc7",
+            "module": "M2",
+            "docStatus": "IN_REVIEW",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "a72965c7-7bbf-4741-97d0-e0e30115cd18",
+                "reviewerId": "1",
+                "reviewer": "JM Smith",
+                "reviewerEmail": "jonmichaelpsmith@gmail.com",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-21T01:05:25.724Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "a72965c7-7bbf-4741-97d0-e0e30115cd18",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "JM Smith",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 1,
+            "esig": "pending",
+            "conf": null,
+            "prov": "in review · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "be0137e6-f86d-481c-8039-d3b35a422d40",
+            "requestedAt": "2026-09-21T01:05:25.724Z"
+          },
+          {
+            "id": "1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9",
+            "doc": "OQ-003 Clinical Overview 20260921002257",
+            "prog": "OQ-003 Authoring program 20260921002257",
+            "programId": "f8750a35-e81e-4dbd-bbeb-c51d1de60808",
+            "pid": "1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9",
+            "module": "M2",
+            "docStatus": "IN_REVIEW",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "457b126d-0993-42da-b093-5d23ebe58d2e",
+                "reviewerId": "1",
+                "reviewer": "JM Smith",
+                "reviewerEmail": "jonmichaelpsmith@gmail.com",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-21T00:22:59.809Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "457b126d-0993-42da-b093-5d23ebe58d2e",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": true,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "JM Smith",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "in review · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "",
+            "firstSectionId": null,
+            "requestedAt": "2026-09-21T00:22:59.809Z"
+          },
+          {
+            "id": "b4a2c3cf-91e7-4ba2-8770-fb2962b0edab",
+            "doc": "OQ-003 Clinical Overview 20260921001224",
+            "prog": "OQ-003 Authoring program 20260921001224",
+            "programId": "9db0c3f6-a0fd-4b28-b62f-ac290ffc321d",
+            "pid": "b4a2c3cf-91e7-4ba2-8770-fb2962b0edab",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "03d17f75-a0f4-45ef-b676-2ca558896984",
+                "reviewerId": "1",
+                "reviewer": "JM Smith",
+                "reviewerEmail": "jonmichaelpsmith@gmail.com",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-21T00:12:28.028Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "03d17f75-a0f4-45ef-b676-2ca558896984",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": false,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "JM Smith",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "none",
+            "conf": null,
+            "prov": "frozen · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "",
+            "firstSectionId": null,
+            "requestedAt": "2026-09-21T00:12:28.028Z"
+          },
+          {
+            "id": "2a1013a2-9803-4997-b490-b8a8693929c8",
+            "doc": "OQ-003 Clinical Overview 20260921000212",
+            "prog": "OQ-003 Authoring program 20260921000212",
+            "programId": "4b92e28e-8283-4cb1-96b4-e92ffcf87044",
+            "pid": "2a1013a2-9803-4997-b490-b8a8693929c8",
+            "module": "M2",
+            "docStatus": "draft",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "46a3102d-3db8-41dc-9930-30ab8de03c9e",
+                "reviewerId": "1",
+                "reviewer": "JM Smith",
+                "reviewerEmail": "jonmichaelpsmith@gmail.com",
+                "status": "pending",
+                "comments": null,
+                "requestedBy": "jonmichaelpsmith@gmail.com",
+                "requestedAt": "2026-09-21T00:02:12.727Z",
+                "reviewedAt": null
+              }
+            ],
+            "myReviewId": "46a3102d-3db8-41dc-9930-30ab8de03c9e",
+            "myReviewStatus": "pending",
+            "awaitingMyReview": true,
+            "requestedByMe": false,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "JM Smith",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "none",
+            "conf": null,
+            "prov": "draft · review requested by jonmichaelpsmith@gmail.com",
+            "passage": "",
+            "firstSectionId": null,
+            "requestedAt": "2026-09-21T00:02:12.727Z"
+          }
+        ],
+        "workflows": {
+          "76adad64-ded1-4cae-9181-463e744d46f3": {
+            "templateId": "710107d3-4604-465a-b8d5-abcb9296ba20",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "10261db6-873a-471f-a3a7-b15568914587",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "jonmichaelpsmith@gmail.com",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "0363ad11-01f1-490f-a248-4674eeb74a51": {
+            "templateId": "c9004b66-e9d7-47ff-adaa-33657f5d91de",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "c334bdd7-3294-4adc-a12a-e11c1fe3dae4",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-signer@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "28f95d9a-a9c1-49da-8377-56d847a5d8e5": {
+            "templateId": "8b3ca59d-e83f-4b72-9f08-63ddbdb26d45",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "66fa8267-c1d7-4093-9f3d-5c7d65200aa5",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-signer@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "ed4a88ef-5227-49e6-b5af-a1155f3ba9af": {
+            "templateId": "ae0b4a57-de93-40d5-b448-8bc63ef0d6eb",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "c7839c8f-89d6-406a-b82c-d990d138b7c9",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "jonmichaelpsmith@gmail.com",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "7aa154e6-07ca-4469-a1e4-c8e6952a32ab": {
+            "templateId": "1135e7b7-1988-44fe-8661-5b57aab35468",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "315bc7fe-983c-4daa-b5a2-b450b40d742a",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "jonmichaelpsmith@gmail.com",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "a9409a8d-f1dc-47de-8a90-27f8a8909bf8": {
+            "templateId": "85607319-663b-4b21-9526-a8dfd57c5898",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "3e4d9d73-b448-4d98-91a1-0efc5cee07b2",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "jonmichaelpsmith@gmail.com",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "2d2a545d-aca6-474e-bfcb-fa3cc1080fc7": {
+            "templateId": "d78c129d-c2bc-4397-8a9b-c36acf65e5cd",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "3506d4c3-37da-4b63-aa8c-3f1c9525472a",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "jonmichaelpsmith@gmail.com",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "1c7cb5ac-dcd6-442a-ad7a-fdd0cc7ca4c9": {
+            "templateId": "d74b1e4d-ea61-4323-a2b2-5720955da39e",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "5ab89709-4ad4-4740-8ab8-a598ce6513f6",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "jonmichaelpsmith@gmail.com",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          }
+        },
+        "thread": [
+          {
+            "id": "4324abb4-e29e-4107-96e7-bdaa580c7780",
+            "author": "jonmichaelpsmith@gmail.com",
+            "role": "§2.5",
+            "when": "1m ago",
+            "state": "open",
+            "body": "OQ-003 step 09 review comment",
+            "ai": false,
+            "sectionId": "eb2512c6-2ca3-4460-afea-1b90b1134109",
+            "parentId": null
+          }
+        ],
+        "meta": {
+          "scope": "all",
+          "programId": null,
+          "total": 12,
+          "threadItemId": "76adad64-ded1-4cae-9181-463e744d46f3",
+          "threadDocumentId": "76adad64-ded1-4cae-9181-463e744d46f3",
+          "generatedAt": "2026-09-22T00:09:06.973Z"
+        }
+      }
+    }
+  }
+}

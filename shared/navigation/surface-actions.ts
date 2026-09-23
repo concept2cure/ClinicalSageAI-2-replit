@@ -1385,6 +1385,18 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
       { name: 'section', required: true, description: 'The CTD section number (e.g. "3.2.P.8") or a distinctive phrase from its label, case-insensitive.' },
     ],
   },
+
+  // ── Shadow review (simulated-reviewer lenses) ──
+  {
+    id: 'shadow-review.select-lens',
+    surfaceId: 'shadow-review',
+    label: 'Switch reviewer lens',
+    description:
+      'On the shadow-review surface, switch to a simulated-reviewer lens (e.g. FDA filing reviewer, EMA D120 assessor, PMDA reviewer, MDR/IVDR notified body) by its id or label — the same click a person makes. Switching to a lens that has not yet been run is honest and expected: it shows the "not assessed" state rather than a fabricated clean pass. Running the lens itself stays a deliberate act elsewhere on the screen.',
+    params: [
+      { name: 'lens', required: true, description: 'The lens id (e.g. "fda_filing") or its label (e.g. "FDA filing reviewer"), case-insensitive.' },
+    ],
+  },
 ] as const;
 
 const ACTIONS_BY_ID: ReadonlyMap<string, SurfaceActionTarget> = new Map(

@@ -28,8 +28,19 @@ const isCliMode = process.argv[1]?.includes('ensureCoreTables');
 /**
  * Tables required for absolute minimum application functionality.
  * If these are missing, the app cannot start properly.
+ *
+ * Exported (with REQUIRED_SCHEMAS below and SECURITY_CRITICAL_TABLES in
+ * startup/services.ts) so scripts/db/readiness-contract.mjs — the copy the
+ * deploy-time appliers and `node scripts/db/provision.mjs` verify against —
+ * can be pinned to this list by server/db/__tests__/readiness-contract.test.ts.
+ * The .mjs cannot import TypeScript (it runs as plain node in the production
+ * image), so the pin test is what keeps "what the deploy verified" and "what
+ * /readyz will demand" the same list.
  */
-const CRITICAL_TABLES = ['organizations', 'users'];
+export const CRITICAL_TABLES = ['organizations', 'users'];
+
+/** Schemas the readiness verification requires to exist (see ensureCoreTables). */
+export const REQUIRED_SCHEMAS = ['public', 'vault', 'extensions'];
 
 /**
  * Tables needed for full functionality but app can start without them.
@@ -54,6 +65,15 @@ const IMPORTANT_TABLES = [
   // queries them. Keeping them meant every correctly provisioned database
   // logged five permanent "important tables missing" warnings, which is how a
   // diagnostic stops being read.
+  //
+  // 2026-09-18: "nothing queries them" was NOT true when it was written.
+  // server/services/rules-engine/actions/index.ts resolved a task assignee with
+  // `JOIN user_roles ur` — reachable from the assignToRole: 'qa_reviewer'
+  // template at server/routes/project-rules.ts:531 — so every create_task rule
+  // action that assigned by role failed on `relation "user_roles" does not
+  // exist`. That JOIN now queries organization_users, which is where the role
+  // actually lives. The claim above is true as of this date; it became true,
+  // rather than having been. Re-check it before relying on it again.
   'workflow_runs',
   // step_runs / organization_settings / assembly_docs / assembly_audit_logs were
   // listed here and are deliberately gone (evidence-based reachability audit,
@@ -354,7 +374,7 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
     console.log(`[ensureCoreTables] Pool mode: ${shouldEndPool ? 'standalone' : 'shared'}`);
 
     // Ensure baseline schemas exist for GA readiness
-    const requiredSchemas = ['public', 'vault', 'extensions'];
+    const requiredSchemas = REQUIRED_SCHEMAS;
     const schemaResult = await pool.query(`
       SELECT nspname
       FROM pg_namespace

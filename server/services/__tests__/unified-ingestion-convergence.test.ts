@@ -26,8 +26,8 @@ const input = (options: Record<string, unknown> = {}) => ({
     mimetype: 'application/pdf',
     buffer: Buffer.from('pdf'),
   },
-  extractedContent: { text: 'Clinical overview', hash: 'sha256', tables: [] },
-  processedText: { chunks: [] },
+  extractedContent: { text: 'Clinical overview', hash: 'sha256' },
+  processedText: {},
   aiAnalysis: { classification: 'overview' },
   moduleSpecificData: { ctdModule: 'Module 2' },
   options: { tenantId: 7, projectId: 91, userId: 42, module: 'ectd', ...options },
@@ -51,8 +51,6 @@ describe('unified ingestion convergence', () => {
 
   it('enrolls a new upload through the existing ModuleIntegrationService', async () => {
     const service = new UnifiedDocumentIngestion() as any;
-    service.storeDocumentChunks = vi.fn();
-    service.storeDocumentTables = vi.fn();
 
     const result = await service.storeUnifiedDocument(input());
 
@@ -69,8 +67,6 @@ describe('unified ingestion convergence', () => {
 
   it('creates a tenant-scoped workflow version instead of a second document', async () => {
     const service = new UnifiedDocumentIngestion() as any;
-    service.storeDocumentChunks = vi.fn();
-    service.storeDocumentTables = vi.fn();
 
     await service.storeUnifiedDocument(input({ previousVersionId: 100 }));
 

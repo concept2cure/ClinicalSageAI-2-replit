@@ -67,7 +67,7 @@ escape can be added silently.
 | `server/services/deep-research-orchestrator.ts` | 1 | `getJobStatus`; its comment states org is "optional only for internal callers that just created the job" and that "Route handlers MUST pass the authenticated org". | Frozen. The MUST is a convention, not enforcement — a required parameter would make it one. Research stream. |
 | `server/services/kernel-adaptive-policy.ts` | 1 | Policy read with the same optional-org shape. | Frozen. Kernel stream. |
 | `server/routes/admin/licensing-history.ts` | 1 | Platform-admin licensing history; mounted inside the router guarded by `requirePlatformAdmin`, and the null is an explicit cross-tenant display filter. | Frozen — genuinely authorized. `admin/master-admin.ts`, the same pattern, is already in `ALLOWLIST_FILES`; this file arguably belongs there too rather than in the baseline. |
-| `server/routes/c2c/project-vault.ts` | 2 | Vault document search, scoped `d.program_id = $1`. It names no tenant column, which is what the gate's keyword test sees — `vault.documents` is isolated by the parent-scoped `core.can_access_program(program_id)` RLS predicate instead, the mechanism `bf6bc5479` documents and taught `rls-coverage-check.sql` to recognise. This gate reads SQL text and cannot see a policy. | Frozen. Arrived with the vault stream's search work; **not re-argued here**. Its soundness depends on `rls-parent-scope-delegates-check.sql` continuing to pass, which is the assertion that same commit added. Vault stream. |
+| `server/routes/module-access-requests.ts` | 1 | The administrator's access-request queue. The null `$1` appears **only** when `scope=all`, and `denyQueueRead(actor, scope)` refuses that scope for anybody but the platform owner — a console whose heading says every workspace while it shows one is worse than one that refuses. | Frozen — genuinely authorized, and the narrowest form of it: the escape is reachable only behind an explicit scope refusal. It became visible to the gate only once `expandLocalInterpolations` landed, because the literal begins with `${SELECT_REQUEST}` and so matched no SQL keyword before. |
 | `server/services/advancedRAGPipeline.ts` | 1 | Pre-existing entry, unrelated to this rule (a raw `rag_chunks` join with no tenant column mentioned at all). | Frozen, pre-dates this change. |
 
 Every previously-justified entry from before this date is dispositioned inline
@@ -75,6 +75,25 @@ Every previously-justified entry from before this date is dispositioned inline
 Resolved subsection for the per-file mapping.
 
 ## Resolved (no longer in baseline)
+
+### 2026-09-19 — `c2c/project-vault.ts` (2): the predicate moved into the statement
+
+Its row above rested on a policy the gate cannot see: `vault.documents`
+isolated by the parent-scoped `core.can_access_program(program_id)` RLS
+predicate, with the route's own `SELECT … WHERE id = $1 AND organization_id =
+$2` 404-ing first, twenty lines away. Sound, and never exploitable, but a query
+correct only by its surroundings loses the boundary the first time someone
+moves or copies it.
+
+`f0bdf3c76` put the boundary in the statement — both reads now carry
+`EXISTS (SELECT 1 FROM regulatory_programs rp WHERE rp.id = d.program_id AND
+rp.organization_id = $2 …)` through one shared `searchWhere`, so the count can
+never be taken over a different set than the rows. Proven on a real Postgres
+16: org 1 passing org 2's program id returns 0 and 0, and with the EXISTS
+removed that same probe counts the other org's document. Candidates 11 → 9;
+this file is off the baseline entirely, so its row is retired here rather than
+carried as debt it no longer is.
+
 
 ### 2026-09-06 — `ana-ri/context-enrichment.ts` (4): no organization, no memory
 

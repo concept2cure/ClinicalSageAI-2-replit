@@ -459,6 +459,30 @@ describe('eSTAR field maps — the pathway declaration stays the applicant’s',
     );
   });
 
+  it('leaves NO key of ANY populated map unmeasured', () => {
+    /* THE PIN THAT ACTUALLY CLOSES THE HOLE. The two tests either side of this
+       one cover `510k-device` and `510k-ivd`; `de_novo-device`, `de_novo-ivd`,
+       `pma-device` and `pma-ivd` were unpinned. A key added to one of those maps
+       with no entry in ESTAR_TEMPLATE_RECOMPUTED_FIELDS produces no finding in
+       `assessOneKey` (`if (!record ...) return null`), so `erasedFields` comes
+       back `[]` — which `fillEstarSubmission` documents as "assessed, none,
+       never 'not assessed'" — and the substitution refusal never fires for it.
+       Unmeasured would have been reported as measured-and-clean.
+
+       Enumerated from ESTAR_FIELD_MAPS itself rather than from a written list,
+       so a NEW descriptor is covered the day it is added. */
+    const unmeasured: string[] = [];
+    for (const [descriptor, map] of Object.entries(ESTAR_FIELD_MAPS)) {
+      for (const key of Object.keys(map)) {
+        if (!(key in ESTAR_TEMPLATE_RECOMPUTED_FIELDS)) unmeasured.push(`${descriptor}.${key}`);
+      }
+    }
+    expect(
+      unmeasured,
+      'every mapped key needs a measured rebuild outcome, or its erasure is silently reported as none',
+    ).toEqual([]);
+  });
+
   it('covers every 510(k) IVD key too, lacking only the citation the IVD form does not ask', () => {
     const ivdKeys = Object.keys(ESTAR_FIELD_MAPS['510k-ivd']);
     for (const key of ivdKeys) expect(ESTAR_TEMPLATE_RECOMPUTED_FIELDS).toHaveProperty(key);

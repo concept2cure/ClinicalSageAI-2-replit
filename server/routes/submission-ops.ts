@@ -39,6 +39,7 @@ import {
   concept2cureArtifacts,
   concept2cureReviewTasks,
   concept2cureReviewAssignments,
+  users,
 } from '../../shared/schema';
 import { eq, and, desc, sql, count, inArray, isNull, asc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
@@ -849,6 +850,30 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
       .where(eq(c2cMilestones.packageDbId, pkg.id))
       .orderBy(asc(c2cMilestones.sortOrder));
 
+    /* Resolve the actor. `c2c_milestones` stores only created_by_id, so the
+       Submission center's Activity strip had no name to show and its client
+       substituted the literal "System" for every row (WO-16C finding 109).
+       One batched lookup gives it the real actor; a milestone with no creator,
+       or whose user record is gone, comes back `createdByName: null` and the
+       client renders an empty actor rather than inventing one. */
+    const creatorIds = Array.from(
+      new Set(
+        milestones
+          .map((m: any) => m.createdById)
+          .filter((id: unknown): id is number => typeof id === 'number')
+      )
+    );
+    const creatorNames = new Map<number, string>();
+    if (creatorIds.length > 0) {
+      const creators = await db
+        .select({ id: users.id, name: users.name })
+        .from(users)
+        .where(inArray(users.id, creatorIds));
+      for (const u of creators) {
+        if (u.name) creatorNames.set(u.id, u.name);
+      }
+    }
+
     // Attach sections for each milestone
     const result = await Promise.all(
       milestones.map(async (m: any) => {
@@ -866,7 +891,12 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
           )
           .where(eq(c2cMilestoneSections.milestoneDbId, m.id));
 
-        return { ...m, sections };
+        return {
+          ...m,
+          sections,
+          createdByName:
+            typeof m.createdById === 'number' ? creatorNames.get(m.createdById) ?? null : null,
+        };
       })
     );
 
@@ -1333,16 +1363,19 @@ router.get('/workload', async (req: Request, res: Response) => {
 /**
  * GET /api/submission-ops/unified-work[?projectId=]
  *
- * The portfolio view across ALL THREE systems that track work independently —
+ * The portfolio view across ALL FOUR systems that track work independently —
  * schedule-of-events tasks (project_tasks), review + correspondence work items
- * (c2c_project_work_items), and tracked filings with their FDA review clock
- * (estar_submissions). /workload above returns only the second of those, which
- * is why a milestone slip or an agency hold never appeared beside a review
- * blocker.
+ * (c2c_project_work_items), tracked filings with their FDA review clock
+ * (estar_submissions), and the canonical org board (unified_tasks). /workload
+ * above returns only the second of those, which is why a milestone slip or an
+ * agency hold never appeared beside a review blocker.
  *
  * Read-only and additive: /workload is unchanged, so existing consumers keep
  * their exact shape. Blockers sort first, then soonest due; `summary` carries
- * the roll-up by status and by source.
+ * the roll-up by status and by source, and `sources` says per table whether its
+ * query actually ran — this used to be a hard-coded list of three table names,
+ * which asserted a completeness nothing had checked and had been stale since
+ * unified_tasks became the fourth source.
  */
 router.get('/unified-work', async (req: Request, res: Response) => {
   try {
@@ -1350,7 +1383,7 @@ router.get('/unified-work', async (req: Request, res: Response) => {
     const raw = req.query.projectId ? Number(req.query.projectId) : undefined;
     const projectId = Number.isInteger(raw) && (raw as number) > 0 ? raw : undefined;
     const view = await loadUnifiedWork({ organizationId: orgId, projectId });
-    res.json({ ...view, sources: ['project_tasks', 'c2c_project_work_items', 'estar_submissions'] });
+    res.json(view);
   } catch (e) {
     return serverError(res, logger, 'loading unified work', e);
   }

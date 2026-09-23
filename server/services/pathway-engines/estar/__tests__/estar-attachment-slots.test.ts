@@ -28,9 +28,11 @@ import {
   attachmentManifestToken,
   listEstarAttachmentSlots,
   resolveAttachmentSlot,
+  CONDITIONAL_ATTACHMENT_SLOTS,
   ESTAR_CHAPTER_PATH,
   type EstarAttachmentSlot,
 } from '../estar-attachment-slots';
+import { readXfaDatasetsValues } from '../../../forms/fill-official-pdf';
 
 const DIR = process.env.ESTAR_TEMPLATE_DIR ?? 'assets/estar-templates';
 const TEMPLATES = [
@@ -154,12 +156,43 @@ for (const t of TEMPLATES) {
         description: 'Administrative Documentation | Cover Letter',
       });
 
+      /* The conditional slot is refused when nothing says which branch, and
+         RESOLVED when the document's own value does — which is not a guess: it
+         is the same computation FDA's script performs on the same input. */
       const userFee = slots.find((s) => s.field === 'ADAddAttachment910')!;
-      const refused = resolveAttachmentSlot(userFee);
-      expect(refused.ok).toBe(false);
-      expect(refused).toMatchObject({ reason: 'ambiguous_chapter' });
-      expect((refused as { message: string }).message).toContain('ATRadioButton100');
+      const undecided = resolveAttachmentSlot(userFee);
+      expect(undecided).toMatchObject({ ok: false, reason: 'undecided_condition' });
+      expect((undecided as { message: string }).message).toContain('ATRadioButton100');
+
+      expect(
+        resolveAttachmentSlot(userFee, { 'root.ApplicationType.ATRadioButton100': '1' }),
+      ).toMatchObject({ ok: true, chapter: '/CHAPTER 1/CH1.09/' });
+      expect(
+        resolveAttachmentSlot(userFee, { 'root.ApplicationType.ATRadioButton100': '2' }),
+      ).toMatchObject({ ok: true, chapter: '/CHAPTER 1/CH1.04/' });
+      /* Anything that is not 2 is the else branch, as the template writes it. */
+      expect(
+        resolveAttachmentSlot(userFee, { 'root.ApplicationType.ATRadioButton100': '3' }),
+      ).toMatchObject({ ok: true, chapter: '/CHAPTER 1/CH1.09/' });
     });
+
+    it('every conditional slot is recorded, and its record matches the template', async () => {
+      /* Transcribed AND asserted, like the forbidden-extension list. A future
+         template that makes another control conditional fails here instead of
+         silently resolving to whichever branch appears first. */
+      for (const slot of slots.filter((s) => s.chapters.length > 1)) {
+        const entry = CONDITIONAL_ATTACHMENT_SLOTS[slot.somPath];
+        expect(entry, `${slot.somPath} has two chapters and no recorded condition`).toBeTruthy();
+        expect([...Object.values(entry.chapterWhen), entry.otherwise].sort()).toEqual(
+          [...slot.chapters].sort(),
+        );
+      }
+      /* And the deciding field is really in the document, with a real value. */
+      const values = await readXfaDatasetsValues(await fs.readFile(t.path), [
+        'root.ApplicationType.ATRadioButton100',
+      ]);
+      expect(values['root.ApplicationType.ATRadioButton100']).toBe('1');
+    }, 120_000);
 
     it('reads the cover letter slot exactly as the template writes it', () => {
       const cover = slots.find((s) => s.field === 'CLAddAttachment110');
@@ -168,7 +201,39 @@ for (const t of TEMPLATES) {
         field: 'CLAddAttachment110',
         chapters: ['/CHAPTER 1/CH1.01/'],
         description: 'Administrative Documentation | Cover Letter',
+        singleAttachment: 'Only a single cover letter is needed.',
       });
+    });
+
+    /*
+     * FIVE controls per template, identically on both, open their handler with
+     *
+     *     if (this.resolveNode(<the attachment row>).presence == "visible") {
+     *       xfa.host.messageBox("Only a single cover letter is needed.","",2,0);
+     *     } else { … the add path … }
+     *
+     * so the second file is simply never attached. The list is asserted whole
+     * rather than counted, because a reader that started matching the
+     * signed-PDF message box every handler opens with would report 113 and a
+     * count of "more than zero" would call that correct.
+     *
+     * `docs/reports/wo8-estar-attachments-2026-09-07.md` §4 recorded this as
+     * "exactly two controls per template (CLAddAttachment110 and
+     * ADAddAttachment803)". That is wrong; it is these five. Corrected
+     * 2026-09-08 when the planner needed the rule and read it rather than
+     * copying the sentence.
+     */
+    it('names every control that refuses a second attachment, in FDA\'s words', () => {
+      const single = slots.filter((s) => s.singleAttachment !== null);
+      expect(single.map((s) => s.somPath)).toEqual([
+        'root.CoverLetter.CLAddAttachment110',
+        'root.AdministrativeInformation.RelatedSubmissions.NSE510k.ADAddAttachment660',
+        'root.RiskManagement.RiskMitigationTable.RMAddAttachment100',
+        'root.RiskManagement.BenefitRisk.BRAddAttachment110',
+        'root.AdministrativeDocumentation.ADAddAttachment803',
+      ]);
+      // Never the signed-PDF guard, which every one of the 113/145 carries.
+      for (const s of single) expect(s.singleAttachment).not.toMatch(/once this PDF is signed/);
     });
 
     it('describes most slots — the description is FDA\'s, or null, never invented', () => {

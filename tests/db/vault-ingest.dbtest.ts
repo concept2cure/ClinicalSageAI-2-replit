@@ -35,8 +35,6 @@ import express from 'express';
 import request from 'supertest';
 import { Pool } from 'pg';
 import { createHash } from 'node:crypto';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
 import { databaseUrl } from '../setup.db';
 
 /** Marks every row this suite creates, so cleanup never touches anything else. */
@@ -233,17 +231,29 @@ describe('POST /api/vault/ingest — the document actually lands', () => {
     expect(Number(rows[0].created_by)).toBe(userId);
   });
 
-  it('the bytes are on disk at the key the row records', async () => {
+  it('the bytes are retrievable at the address the row records', async () => {
     /* The route used to catch a failed write, log it at warn, and INSERT
        anyway — committing a real SHA-256 for bytes that are not anywhere. The
-       row and the file have to agree, so read the file the row points at and
-       hash it back. */
+       row and the stored object have to agree, so fetch what the row points at
+       and hash it back.
+
+       Read through the provider, not off the filesystem. The vault moved onto
+       the canonical storage seam: `s3_key` now carries the provider's own
+       handle (`vault:/...`), not a path, and `storage_version_id` is the
+       authoritative address — which is why resolving s3_key with path.resolve
+       started reading a directory that does not exist. Going through
+       getStorageProvider().get is also what proves the claim that matters: the
+       bytes are reachable BY THE WAY THE PRODUCT REACHES THEM, including the
+       orgId the provider requires because object storage sits outside RLS. */
     const { rows } = await owner.query(
-      `SELECT s3_key FROM vault.documents WHERE document_code = $1`,
+      `SELECT storage_version_id FROM vault.documents WHERE document_code = $1`,
       [PROBE_CODE],
     );
-    const onDisk = await fs.readFile(path.resolve(process.cwd(), rows[0].s3_key));
-    expect(createHash('sha256').update(onDisk).digest('hex')).toBe(PDF_SHA256);
+    expect(rows[0].storage_version_id, 'ingest must record a provider address').toBeTruthy();
+    const { getStorageProvider } = await import('../../server/services/storage/index');
+    const got = await getStorageProvider().get(String(rows[0].storage_version_id), orgId);
+    expect(got, 'the stored version must be readable for the owning organization').toBeTruthy();
+    expect(createHash('sha256').update(got!.bytes).digest('hex')).toBe(PDF_SHA256);
   });
 });
 

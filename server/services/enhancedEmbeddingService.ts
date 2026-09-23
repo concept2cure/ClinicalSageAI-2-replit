@@ -51,7 +51,7 @@ export interface EmbeddingResult {
 }
 
 export interface AtomEmbeddingJob {
-  atomId: string;
+  atomId: number;
   content: string;
   priority: 'high' | 'normal' | 'low';
 }
@@ -220,9 +220,15 @@ export class EnhancedEmbeddingService {
   }
 
   /**
-   * Embed and store an atom in the database
+   * Embed and store an atom in the database.
+   *
+   * `atomId` is the row's primary key, and `lumen_data_atoms.id` is `serial`,
+   * so it is a number. It was typed `string` here, which is what
+   * `upload-retrieval-atom` cited when it converted the id it had just parsed
+   * with `Number()` straight back to a string before calling this. Nothing in
+   * here wants a string: every use below is a bound `$n` parameter.
    */
-  async embedAtom(atomId: string, forceRegenerate = false): Promise<void> {
+  async embedAtom(atomId: number, forceRegenerate = false): Promise<void> {
     // Get atom content
     const { rows } = await this.pool.query(
       `
@@ -579,7 +585,7 @@ export class EnhancedEmbeddingService {
    * Queue an atom for embedding (async processing)
    */
   queueAtomForEmbedding(
-    atomId: string,
+    atomId: number,
     content: string,
     priority: 'high' | 'normal' | 'low' = 'normal'
   ): void {
@@ -682,7 +688,7 @@ export class EnhancedEmbeddingService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  private async logEmbeddingAudit(atomId: string, result: EmbeddingResult): Promise<void> {
+  private async logEmbeddingAudit(atomId: number, result: EmbeddingResult): Promise<void> {
     try {
       await this.pool.query(
         `

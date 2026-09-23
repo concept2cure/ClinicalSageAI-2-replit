@@ -55,6 +55,22 @@ describe('persona — the client files discipline', () => {
     expect(typeof getToolHandler(name)).toBe('function');
   });
 
+  /* The section used to describe list_project_documents as returning "every
+     document in the project vault". It never did — it returns a page, and the
+     recall block returns the twelve newest — so the persona was asserting a
+     completeness the tools could not deliver, which is the premise a model
+     needs in order to answer "there is no such document" from a partial list.
+     The tools now report what they withheld; the persona has to say that the
+     numbers exist and must be read, or nothing consults them. */
+  it('tells her a listing is a page, and that absence is a claim about the whole vault', () => {
+    const s = clientFilesSection();
+    expect(s).toMatch(/withheld/i);
+    expect(s).toContain('There is no such document');
+    expect(s).toMatch(/oldest/i);
+    // And it must not promise completeness it cannot keep.
+    expect(s).not.toContain('It returns every document in the project vault');
+  });
+
   it('tells her to LOOK before reporting a file absent', () => {
     const s = clientFilesSection();
     expect(s).toContain('list_project_documents');
@@ -80,6 +96,26 @@ describe('persona — the client files discipline', () => {
     const s = clientFilesSection();
     expect(s).toContain('catalog_project_document');
     expect(s).toMatch(/a number you inferred is not a number it carries/i);
+  });
+
+  it('points at the passage index for a question the text settles, without licensing a sample', () => {
+    // The corpus of passages existed for months with no tool able to read it;
+    // naming the tool here is what turns "she can" into "she does". The second
+    // half matters as much: a passage answers a question, it does not replace
+    // the full read the catalog gate requires.
+    const s = clientFilesSection();
+    expect(s).toContain('search_document_passages');
+    expect(s).toMatch(/not a shortcut|do not comprehend a file/);
+  });
+
+  it('requires the file to be PUT somewhere, and unfiling to be the honest fallback', () => {
+    // A comprehension record that leaves the document in the Unfiled queue is
+    // half the job: the client asked for it to be put in the right place, and
+    // the ingest classifier's guess is not that.
+    const s = clientFilesSection();
+    expect(s).toContain('place_project_document');
+    expect(s).toMatch(/Unfiled queue/);
+    expect(s).toMatch(/unfile:true/);
   });
 
   it('requires an unreadable file to be reported as such', () => {

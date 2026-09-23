@@ -52,6 +52,23 @@ export interface M5QcFinding {
 
 export interface M5QcResult {
   ready: boolean;
+  /**
+   * Whether anything was actually assessed — false when the program held no
+   * study report at all.
+   *
+   * `ready` alone could not carry this: with an empty program the loop never
+   * runs, no finding is raised, the error count is zero and `ready` came back
+   * TRUE. The aggregator then reported the module ready and the renderer printed
+   * "READY — no blocking findings" over a module with nothing in it. Silence
+   * from a check that never ran is not the same as a clean result, and this is
+   * the field that tells the two apart.
+   *
+   * A caller with genuinely no such module should supply NO verdict: the
+   * aggregator reports that as MODULE_ABSENT, a warning, which is the honest
+   * shape for "not applicable at this stage".
+   */
+  assessed: boolean;
+
   checked: string[];
   phasesPresent: string[];
   missingPhases: string[];
@@ -141,8 +158,11 @@ export function runM5ClinicalQc(input: M5QcInput): M5QcResult {
   const errors = findings.filter((f) => f.severity === 'error').length;
   const warnings = findings.length - errors;
 
+  const assessed = (input.csrs ?? []).length > 0;
+
   return {
-    ready: errors === 0,
+    ready: assessed && errors === 0,
+    assessed,
     checked: [...seen].sort(),
     phasesPresent: [...phases].sort(),
     missingPhases,

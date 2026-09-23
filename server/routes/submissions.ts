@@ -194,6 +194,14 @@ const upsertLeafSchema = z.object({
     .refine(isPlaceableDocumentTable, (v) => ({ message: unplaceableDocumentTableMessage(v) }))
     .optional(),
   documentId: z.coerce.number().int().positive().optional(),
+  /* The uuid half of the polymorphic reference, for uuid-keyed stores
+     (vault.documents). Validated as a uuid HERE so a malformed value is a 400
+     naming the field, rather than reaching the ::uuid cast in the verifier and
+     surfacing as a generic refusal. Which of the two a given table requires —
+     and that a leaf carries one, not both — is enforced once, in upsertLeaf,
+     against the table vocabulary; duplicating that rule here is how the two
+     would drift. */
+  documentUuid: z.string().uuid().optional(),
   documentType: z.string().max(64).optional(),
   parentLeafId: z.coerce.number().int().positive().optional(),
 });
@@ -896,13 +904,24 @@ router.post('/sequences/:seqId/transition', limiter, requireRole(AUTHOR), async 
 });
 
 // ── Builder leaves ──────────────────────────────────────────────────────────
+// Each leaf carries `sourceDocument`: what the leaf's document pointer resolves
+// to in this organization, from the SAME resolver the dispatch-readiness
+// assessment (and so the freeze / dispatch gate) uses. The Builder used to
+// decide "linked" on the client from `documentId != null`, which is null for
+// every vault leaf (uuid-keyed) — six leaves the platform had just filed read
+// "Source document: unlinked" (MDX demo pack, 2026-09-21, finding F5). The
+// resolution is computed here, once, so the column and the gate cannot
+// disagree.
 router.get('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   const seqId = idParam(req.params.seqId);
   if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
   try {
-    res.json(await listLeaves(seqId, ctx));
+    const leaves = await listLeaves(seqId, ctx);
+    const { resolveLeafDocuments } = await import('../services/ectd/leaf-document-resolver');
+    const sourceDocuments = await resolveLeafDocuments(leaves, ctx.organizationId);
+    res.json(leaves.map((leaf, i) => ({ ...leaf, sourceDocument: sourceDocuments[i] })));
   } catch (err) {
     fail(res, err);
   }
@@ -934,7 +953,23 @@ router.delete('/sequences/:seqId/leaves/:leafId', limiter, requireRole(AUTHOR), 
     return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence or leaf id.' } });
   }
   try {
-    await removeLeaf(leafId, seqId, ctx);
+    /* WO-16C #133. `removeLeaf` now reports what became of its §11.10(e) row,
+       and this route answered 204 No Content — which has no body to put it in, so
+       the service's outcome was arriving here and being dropped. That is the
+       vacuous conversion this work order keeps finding: a value produced,
+       returned, and discarded one layer up.
+
+       A 204 can carry headers, so it does. The status is deliberately unchanged:
+       the leaf really was soft-deleted, and turning a successful removal into a
+       200-with-body to make room for an audit field would change a contract for
+       reporting's sake. Same reason and same shape as the predicate-intelligence
+       proxy, which forwards an upstream body verbatim and therefore also reports
+       through headers. */
+    const removal = await removeLeaf(leafId, seqId, ctx);
+    res.set('X-Audit-Row-Persisted', String(removal.auditTrail.persisted));
+    if (!removal.auditTrail.persisted) {
+      res.set('X-Audit-Row-Code', removal.auditTrail.code);
+    }
     res.status(204).end();
   } catch (err) {
     fail(res, err);
@@ -1007,11 +1042,14 @@ router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) 
   }
 });
 
-// ── Dispatch QC gate (AI; does NOT transmit) ─────────────────────────────────
-// When `sequenceId` is supplied the gate inputs are computed SERVER-SIDE from the
-// canonical core (never the client numbers) — the AI advisory then floors on real
-// values. Without a sequenceId it falls back to the supplied numbers (advisory
-// only); prefer GET /sequences/:seqId/dispatch-readiness for the tamper-proof gate.
+// ── Dispatch QC (deterministic verdict + optional model narrative; does NOT transmit)
+// VSR-001 F-9: the verdict is computed by the platform's deterministic gates and
+// the model, when configured, only narrates under `narrative` (null without a
+// provider — never a 502). When `sequenceId` is supplied the full server-side
+// assessment (assessSequenceDispatchReadiness — the gate freeze/dispatch enforce)
+// IS the verdict and the client numbers are ignored. Without one the verdict is
+// the hard gate over the supplied counts, with a warning naming what was not
+// checked; prefer GET /sequences/:seqId/dispatch-readiness for the full gate.
 const dispatchQcSchema = z.object({
   region: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
   sequenceId: z.number().int().positive().optional(),
@@ -1029,13 +1067,14 @@ router.post('/:id/dispatch-qc', limiter, requireRole(AUTHOR), async (req, res) =
   try {
     await getSubmission(id, ctx);
     let input = parsed.data;
+    let assessment = null;
     if (parsed.data.sequenceId) {
       // Authoritative, tamper-proof gate inputs from server state.
       const { assessSequenceDispatchReadiness } = await import('../services/ectd/assess-dispatch-readiness');
-      const a = await assessSequenceDispatchReadiness({ sequenceId: parsed.data.sequenceId, organizationId: ctx.organizationId });
-      input = { ...parsed.data, validationErrors: a.validationErrors, unresolvedShadowCriticals: a.unacknowledgedShadowCriticals };
+      assessment = await assessSequenceDispatchReadiness({ sequenceId: parsed.data.sequenceId, organizationId: ctx.organizationId });
+      input = { ...parsed.data, validationErrors: assessment.validationErrors, unresolvedShadowCriticals: assessment.unacknowledgedShadowCriticals };
     }
-    res.json(await runDispatchQc(input, { ...ctx, submissionId: id }));
+    res.json(await runDispatchQc(input, { ...ctx, submissionId: id }, { assessment }));
   } catch (err) {
     fail(res, err);
   }

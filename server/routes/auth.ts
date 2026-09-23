@@ -7,7 +7,7 @@
  * @version 2.0.0
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
@@ -95,6 +95,7 @@ import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 
 import { config } from '../config/environment';
 import { isDevAuthAllowed, devAuthDenialReason } from '../auth/dev-auth-policy';
+import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
 
 const router = Router();
 
@@ -904,6 +905,13 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
 
       return { org, user };
     });
+
+    // Launch catalog on by default (docs/LAUNCH_DEFINITION_OF_DONE.md, D2).
+    // Outside the transaction on purpose: the grant writer holds its own
+    // connection, and an organisation that fails to provision must still
+    // exist so an administrator can provision it by hand. Failures are
+    // logged by the service and returned; they do not fail the signup.
+    await provisionLaunchModules(result.org.id, { actorEmail: null });
 
     // Seed the governed org industry profile from the signup signals so the
     // effective-context resolver has a real organization layer from day one.

@@ -1,0 +1,27 @@
+# ci:column-reachability AS COMMITTED IN 0d45e1fc3 (co-occurrence matcher, first-ADD-only parser) — before hardening
+$ git show 0d45e1fc3:scripts/ci/check-column-reachability.mjs > /tmp/old.mjs && node /tmp/old.mjs
+[ci:column-reachability] ❌ 7 column(s) the server queries are added only by a migration nothing runs:
+  document_audit_trail.document_version_id
+      added only by : db/migrations/emergency_security_migration.sql
+      queried in    : server/services/unifiedDocumentIngestion.js
+  document_audit_trail.tenant_id
+      added only by : db/migrations/emergency_security_migration.sql
+      queried in    : server/services/unifiedDocumentIngestion.js
+  document_chunks.document_version_id
+      added only by : db/migrations/emergency_security_migration.sql
+      queried in    : server/services/unifiedDocumentIngestion.js
+  document_chunks.tenant_id
+      added only by : db/migrations/emergency_security_migration.sql
+      queried in    : server/services/unifiedDocumentIngestion.js
+  documents.summary
+      added only by : db/migrations/_consolidated/003_versioning.sql
+      queried in    : server/services/vault/document-catalog-search.ts
+  documents.tags
+      added only by : db/migrations/_consolidated/003_versioning.sql
+      queried in    : server/routes/biopharma/programs.ts
+  stab_studies.tenant_id
+      added only by : db/migrations/023_stability_step2.sql
+      queried in    : server/src/routes/stability.router.ts
+
+  Put the migration on an applier (C2C_MIGRATION_FILES, positioned after the file that
+  creates the table — CLAUDE.md RULE 1), or delete the reference if the feature is dead.

@@ -32,11 +32,11 @@ import { AnaActivity, type AnaActivityProps } from './AnaActivity';
 import { AnaWorkPanel } from './AnaWorkPanel';
 import { useAgentActivity } from './useAgentActivity';
 import { useWorkDockVisible } from './workDock';
-import { shellProgramName } from './shellProject';
-import { stashNavParamsForTarget } from './navParams';
-import { listDemoScripts } from '@shared/navigation/demo-scripts';
-import { applySurfaceAction, validateDriveAction } from './surfaceActions';
+import { segmentForShellProject, shellProgramName, useShellProject } from './shellProject';
+import { availableDemoScripts } from '../components/ana/anaLockedScreens';
+import { AnaActionChips } from './AnaActionChips';
 import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
+import { MAX_INTERJECTION_CHARS } from '@shared/ana/run-control-limits';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
@@ -60,6 +60,7 @@ import {
 } from './registryModel';
 import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
 import {
+  isLaunchScopeLocked,
   isLocked,
   lockShortReason,
   useNavEntitlements,
@@ -67,6 +68,7 @@ import {
 } from './navEntitlements';
 import { NavUnlockPanel } from './NavUnlockPanel';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
+import { renderSafeMarkdown } from '../components/ana/renderSafeMarkdown';
 
 export interface ShellSurfaceRef {
   id: string;
@@ -205,8 +207,13 @@ export function Rail({
    * rendered at all — not greyed out, not present-but-empty. A visible entry for
    * a capability the deployment does not have is worse than no entry.
    */
-  const railVisible = (s: { id: string }) =>
-    s.id === 'crl-library' ? isClinicalRegulatoryGraphEnabled() : true;
+  const railVisible = (s: { id: string; target?: string }) => {
+    if (s.id === 'crl-library' && !isClinicalRegulatoryGraphEnabled()) return false;
+    /* Launch scope is a release boundary, not a licence: a greyed rail entry
+       for an app nobody can enable is a dead affordance. The entry is not
+       rendered; the Apps catalog still lists the app with the reason. */
+    return !isLaunchScopeLocked(verdictFor(s.target ?? s.id));
+  };
   const navItem = (s: { id: string; label: string; icon: string; badge?: string; count?: number; target?: string }) => {
     const target = s.target ?? s.id;
     /* Entitlement is keyed on the DESTINATION, not the rail entry: "Recent
@@ -271,7 +278,7 @@ export function Rail({
           type="button"
           className="rail-collapse"
           onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? 'Expand' : 'Collapse'}
+          title={collapsed ? 'Expand' : 'Collapse'} aria-label={collapsed ? 'Expand' : 'Collapse'}
         >
           {I.panelLeft}
         </button>
@@ -295,15 +302,15 @@ export function Rail({
           ))}
         </div>
         <div className="rail-section">Workspace</div>
-        <div className="rail-nav">{RAIL_CORE.map(navItem)}</div>
+        <div className="rail-nav">{RAIL_CORE.filter(railVisible).map(navItem)}</div>
         <div className="rail-section">Science &amp; intelligence</div>
         {/* `crl-library` is gated by ENABLE_CLINICAL_REGULATORY_GRAPH — flag off
             and the rail entry is absent entirely, not disabled or empty. */}
         <div className="rail-nav">{RAIL_SPECIALIST.filter(railVisible).map(navItem)}</div>
         <div className="rail-section">Explore</div>
-        <div className="rail-nav">{RAIL_EXPLORE.map(navItem)}</div>
+        <div className="rail-nav">{RAIL_EXPLORE.filter(railVisible).map(navItem)}</div>
         <div className="rail-section">Quick access</div>
-        <div className="rail-nav">{RAIL_QUICK.map(navItem)}</div>
+        <div className="rail-nav">{RAIL_QUICK.filter(railVisible).map(navItem)}</div>
       </div>
       <div className="rail-foot">
         <button
@@ -396,14 +403,21 @@ export function TopBar({
     .toUpperCase();
   const tier = NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[surface.id] ?? 'biopharma'));
   const [segOpen, setSegOpen] = React.useState(false);
-  const seg = getSegment(segment) ?? SEGMENTS[0];
+  /* The segment the label shows follows the OPEN PROGRAM's product type (or
+     the workstream it was opened from) and falls back to the stored preference
+     when no program is open. A 510(k) IVD program used to sit under a
+     "Biotech & Pharma" label because the preference was the only input
+     (MDX demo pack, 2026-09-21, finding F9). */
+  const openProject = useShellProject();
+  const effectiveSegment = segmentForShellProject(openProject) ?? segment;
+  const seg = getSegment(effectiveSegment) ?? SEGMENTS[0];
   const secondary = SEGMENTS.filter((s) => !s.primary);
   const segOpt = (s: (typeof SEGMENTS)[number]) => (
     <button
       key={s.id}
       type="button"
       className="tb-dom-opt"
-      data-on={s.id === segment}
+      data-on={s.id === seg.id}
       onClick={() => {
         onSegment(s.id);
         setSegOpen(false);
@@ -414,7 +428,7 @@ export function TopBar({
         <span className="tdo-l">{s.label}</span>
         <span className="tdo-p">{s.pathways.join(' · ')}</span>
       </span>
-      {s.id === segment && <span className="ico tdo-chk">{I.check}</span>}
+      {s.id === seg.id && <span className="ico tdo-chk">{I.check}</span>}
     </button>
   );
   return (
@@ -519,6 +533,26 @@ function projectLabel(): string | null {
     return null;
   }
 }
+/**
+ * AnA Live Drive bridge as the rail receives it (V2App owns the state
+ * machine). `locked` carries the server's honest entitlement deny from the last
+ * attempted turn — the control stays enabled with the real required tier
+ * named, never a disabled, reasonless button (the Locked-never-dead rule).
+ */
+export interface AnaRailLiveDrive {
+  on: boolean;
+  locked: { reason: string; requiredTier?: string | null } | null;
+  setOn: (v: boolean) => void;
+  /** One-click guided tour: enables Live Drive and (once the toggle has
+   *  actually committed) sends the tour ask. Owned by the shell — see the
+   *  race note at the menu button. */
+  onStartTour?: () => void;
+  /** One-click demonstration (training/sales, from the shared script
+   *  registry): enables Live Drive in demo mode and sends the demo ask —
+   *  same commit-then-send sequencing as the tour. */
+  onStartDemo?: (demoId: string, title: string) => void;
+}
+
 export function AnaRail({
   open,
   setOpen,
@@ -541,6 +575,7 @@ export function AnaRail({
   onSteer,
   liveDrive,
   work,
+  onNewThread,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -555,6 +590,12 @@ export function AnaRail({
    *  a conversation or dismissed it — the rail only renders it when present. */
   welcome?: OnboardingWelcome | null;
   onDismissWelcome?: () => void;
+  /** Starts a fresh AnA thread — aborts any in-flight run, clears the rail
+   *  transcript, and drops the thread id so the next send opens a new server
+   *  thread. Prior threads persist and are reachable from the
+   *  conversation-thread surface, so this is non-destructive. An absent handler
+   *  disables the button rather than leaving it inert. */
+  onNewThread?: () => void;
   /**
    * Mid-run control. The server has supported pause / resume / cancel /
    * interject at the agentic loop's round boundaries since run control
@@ -584,19 +625,7 @@ export function AnaRail({
    * control stays enabled with the real required tier named, never a
    * disabled, reasonless button (the platform's Locked-never-dead rule).
    */
-  liveDrive?: {
-    on: boolean;
-    locked: { reason: string; requiredTier?: string | null } | null;
-    setOn: (v: boolean) => void;
-    /** One-click guided tour: enables Live Drive and (once the toggle has
-     *  actually committed) sends the tour ask. Owned by the shell — see the
-     *  race note at the menu button. */
-    onStartTour?: () => void;
-    /** One-click demonstration (training/sales, from the shared script
-     *  registry): enables Live Drive in demo mode and sends the demo ask —
-     *  same commit-then-send sequencing as the tour. */
-    onStartDemo?: (demoId: string, title: string) => void;
-  };
+  liveDrive?: AnaRailLiveDrive;
   /**
    * The live work dock (AnaWorkPanel): the raw chat turns, not the adapted
    * `messages` above, because the panel reads the progress record, tool
@@ -609,6 +638,7 @@ export function AnaRail({
   };
 }) {
   const [draft, setDraft] = React.useState('');
+
   /* The steer field is separate from `draft` on purpose: a steer joins the
      RUNNING turn, a draft starts the next one, and sharing one buffer would
      make it ambiguous which a half-typed sentence was about to do. */
@@ -744,7 +774,14 @@ export function AnaRail({
               {I.activity}
             </button>
           )}
-          <button type="button" className="tb-btn" title="New thread">
+          <button
+            type="button"
+            className="tb-btn"
+            title="New thread"
+            aria-label="New thread"
+            onClick={onNewThread}
+            disabled={!onNewThread}
+          >
             {I.plus}
           </button>
           <button type="button" className="tb-btn" onClick={() => setOpen(false)} title="Collapse · ⌘\">
@@ -918,7 +955,17 @@ export function AnaRail({
                   {m.sample ? ' · sample' : ''}
                 </div>
               )}
-              <div className="bd">{m.body}</div>
+              {/* AnA's text is markdown (the response register allows headers
+                  only in artifacts, bold for a term, lists when enumerable).
+                  Rendered through the codebase's one audited markdown path —
+                  renderSafeMarkdown (marked → DOMPurify) — so a header is a
+                  heading and not a literal "##". The person's own text stays
+                  plain: it is never parsed as markup. */}
+              {m.role === 'ana' ? (
+                <div className="bd ana-md" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(m.body ?? '') }} />
+              ) : (
+                <div className="bd">{m.body}</div>
+              )}
               {/* Caveats sit directly under the answer they qualify, above the
                   work record and never inside it. `useAnaChat` records a
                   server degraded-mode signal, and a timeout, on the message —
@@ -987,60 +1034,18 @@ export function AnaRail({
                 Array.isArray(m.executedActions) &&
                 m.executedActions.length > 0 && (
                   <div className="ana-msg-executed">
-                    {m.executedActions.map((a, i) =>
-                      /* A navigation target AnA resolved is the one executed
-                         action you can act on: it is an offer, not a report, so
-                         it renders as a button. Everything else is a record of
-                         what already happened and stays inert. Guarded on
-                         `targetId` as well as the type, because a chip that
-                         cannot say where it goes must not look like it can. */
-                      a.actionType === 'navigate' && a.targetId && onNav ? (
-                        <button
-                          key={i}
-                          type="button"
-                          className="ana-exec-chip is-nav"
-                          onClick={() => {
-                            /* The directive's registry-validated params ride
-                               the navParams channel so the destination opens
-                               on the named tab/section; a param-less chip
-                               clears any stale entry instead of inheriting. */
-                            stashNavParamsForTarget(a.targetId as string, a.params);
-                            onNav(a.targetId as string);
-                          }}
-                        >
-                          {I.arrowRight} {a.label}
-                        </button>
-                      ) : a.actionType === 'surface_action' && a.actionId && onNav ? (
-                        <button
-                          key={i}
-                          type="button"
-                          className="ana-exec-chip is-nav"
-                          onClick={() => {
-                            /* Performed through the ONE surface-action bus,
-                               re-validated against the shared registry first —
-                               the chip's payload never executes as-is. If the
-                               action's screen is not mounted the bus stashes
-                               one-shot and navigates there (the tap is the
-                               consent), performing on the surface's mount. */
-                            const d = validateDriveAction({
-                              actionType: 'surface_action',
-                              actionId: a.actionId,
-                              params: a.params,
-                            });
-                            if (d) applySurfaceAction(d, onNav);
-                          }}
-                        >
-                          {I.zap} {a.label}
-                        </button>
-                      ) : (
-                      <span
-                        key={i}
-                        className={`ana-exec-chip${a.executed ? ' is-done' : ''}${a.error ? ' is-err' : ''}`}
-                        title={a.error || a.label}
-                      >
-                        {a.error ? I.alertTriangle : a.executed ? I.check : I.zap} {a.label}
-                      </span>
-                    ))}
+                    {/* Navigation, screen actions and demonstration starts are
+                        controls; everything else is a record. One renderer,
+                        shared with every other chat (AnaActionChips). A locked
+                        workspace gets no demo button: the menu hides its
+                        demonstrations there too. */}
+                    <AnaActionChips
+                      actions={m.executedActions}
+                      onNav={onNav}
+                      onStartDemo={
+                        liveDrive && !liveDrive.locked ? liveDrive.onStartDemo : undefined
+                      }
+                    />
                   </div>
                 )}
               {m.role === 'ana' &&
@@ -1069,23 +1074,44 @@ export function AnaRail({
           </div>
         )}
         {/* Mid-run control.
-            Every action here lands at a ROUND BOUNDARY, not instantly — the
-            loop checks between rounds — so the copy says "after this step"
-            rather than implying the tool in flight stops dead. Steering is the
-            reason this exists: a reviewer watching AnA work a question the
-            wrong way could previously only wait for her to finish, while the
-            server has spliced steers into the next round, and recorded them in
-            the decision lineage, all along. */}
+            The three actions have three different scopes, and the copy below
+            says which is which rather than one blanket promise:
+              Stop   cuts the step in flight — the model call and the tools are
+                     aborted, so it is "Stopping…", acknowledged by the server.
+              Pause  holds at the next ROUND BOUNDARY, deliberately: killing a
+                     tool to pause throws the work away and then redoes it, so
+                     "after this step" is the honest label and stays.
+              Steer  applies at the next round.
+            Steering is the reason this exists: a reviewer watching AnA work a
+            question the wrong way could previously only wait for her to finish,
+            while the server has spliced steers into the next round, and
+            recorded them in the decision lineage, all along.
+            Pause and Steer are offered only when the run is durably
+            controllable; Stop is always offered because aborting the request
+            needs no run record. */}
         {streaming && (onPause || onStop || onSteer) && (
           <div className="ana-runctl" role="group" aria-label="Control this run">
             <span className="ana-runctl-state">
               <span
-                className={runStatus === 'paused' ? 'ana-runctl-dot is-paused' : 'ana-runctl-dot'}
+                className={
+                  runStatus === 'paused' || runStatus === 'cancelled'
+                    ? 'ana-runctl-dot is-paused'
+                    : 'ana-runctl-dot'
+                }
                 aria-hidden="true"
               >
                 {runStatus === 'paused' ? I.pause : I.dot}
               </span>
-              {runStatus === 'paused' ? 'Paused after this step' : 'Working'}
+              {/* Pause still lands at a round boundary — deliberately: killing a
+                  tool to pause throws the work away and then redoes it. Stop
+                  now cuts the step in flight, so the copy must stop saying
+                  "after this step" for BOTH, and must not claim stopped before
+                  the server says so. */}
+              {runStatus === 'paused'
+                ? 'Paused after this step'
+                : runStatus === 'cancelled'
+                  ? 'Stopping…'
+                  : 'Working'}
             </span>
 
             {/* ── The box used to empty whether or not the steer was accepted ──
@@ -1129,7 +1155,7 @@ export function AnaRail({
                   type="text"
                   className="ana-runctl-input"
                   value={steer}
-                  maxLength={2000}
+                  maxLength={MAX_INTERJECTION_CHARS}
                   onChange={(e) => {
                     setSteer(e.target.value);
                     if (steerRefused) setSteerRefused(false);
@@ -1490,7 +1516,7 @@ export function AnaRail({
               {liveDrive && !liveDrive.locked && liveDrive.onStartDemo && (
                 <>
                   <div className="ana-menu-sec">Demonstrations</div>
-                  {listDemoScripts().map((d) => (
+                  {availableDemoScripts().map((d) => (
                     <button
                       key={d.id}
                       type="button"

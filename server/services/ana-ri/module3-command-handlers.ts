@@ -9,7 +9,7 @@
  */
 
 import { getPool } from '../../db';
-import { impactedSectionsForSourceType, type ComposedSection } from '../module3Composer';
+import { type ComposedSection } from '../module3Composer';
 import { composeProjectModule3, persistComposedSection } from '../cmc/module3-compile';
 import { bridgeCompileToArtifact, classifyAndMapArtifactToSource, getModule3BuildStatus } from '../module3-convergence-service';
 import { detectContradictions, deriveImpactTasks } from '../cmc-impact-contradiction-engine';

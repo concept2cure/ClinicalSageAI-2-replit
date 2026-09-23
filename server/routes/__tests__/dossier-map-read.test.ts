@@ -16,7 +16,23 @@ vi.mock('../../services/dossier/dossier-map-view-assembler', () => ({
   assembleProjectDossierMap: (...a: unknown[]) => assembleProjectDossierMap(...a),
 }));
 
+/* The program → PM-spine bridge (`projects.regulatory_program_id`), the ONE
+   reader of that anchor; mocked so each case states whether the program is
+   anchored. The route must resolve a UUID through it and never through parseInt. */
+const resolveProgramProjectAnchor = vi.fn();
+vi.mock('../../services/c2c/program-project-anchor', () => ({
+  resolveProgramProjectAnchor: (...a: unknown[]) => resolveProgramProjectAnchor(...a),
+}));
+vi.mock('../../db/requestDb', () => ({ requestDb: () => ({}) }));
+/* Org-scoped program existence read (regulatory_programs). */
+const poolQuery = vi.fn();
+vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => poolQuery(...a) } }));
+
 import dossierMapRouter from '../dossier-map.routes';
+
+/* A program UUID whose LEADING characters are digits — the OQ-SUBC-10 id.
+   parseInt('6191805f-…', 10) === 6191805: an integer that belongs to nobody. */
+const PROGRAM_UUID = '6191805f-e83d-4327-af00-aa2c6f4d43b0';
 
 function appWith(org: number | null) {
   const app = express();
@@ -30,6 +46,8 @@ function appWith(org: number | null) {
 
 beforeEach(() => {
   assembleProjectDossierMap.mockReset();
+  resolveProgramProjectAnchor.mockReset();
+  poolQuery.mockReset();
 });
 
 describe('GET /api/dossier-map', () => {
@@ -73,6 +91,50 @@ describe('GET /api/dossier-map', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual([]);
     expect(res.body.meta.count).toBe(0);
+  });
+
+  /* ── F-7: the shell supplies the program UUID; the route must never parseInt it ── */
+
+  it('resolves a program UUID through the anchor lookup — never parseInt — and reads the anchored project (F-7)', async () => {
+    poolQuery.mockResolvedValueOnce({ rows: [{ id: PROGRAM_UUID }] });
+    resolveProgramProjectAnchor.mockResolvedValueOnce(42);
+    assembleProjectDossierMap.mockResolvedValueOnce([
+      { m: '3', label: 'Quality', pct: 25, tone: 'warn', sections: ['3.2.P'] },
+    ]);
+    const res = await request(appWith(7)).get(`/api/dossier-map?projectId=${PROGRAM_UUID}`);
+    expect(res.status).toBe(200);
+    // Pre-fix: assembleProjectDossierMap(7, 6191805) — an unrelated integer id.
+    expect(assembleProjectDossierMap).not.toHaveBeenCalledWith(7, 6191805);
+    expect(assembleProjectDossierMap).toHaveBeenCalledWith(7, 42);
+    expect(resolveProgramProjectAnchor).toHaveBeenCalledTimes(1);
+    expect(resolveProgramProjectAnchor.mock.calls[0][1]).toMatchObject({ programId: PROGRAM_UUID, orgId: 7 });
+    expect(res.body.meta).toMatchObject({ programId: PROGRAM_UUID, projectId: 42, anchored: true, source: 'project_sections' });
+    expect(res.body.data).toHaveLength(1);
+  });
+
+  it('a program in the org with no PM-spine anchor answers an honest empty map that SAYS it is unanchored (F-7)', async () => {
+    poolQuery.mockResolvedValueOnce({ rows: [{ id: PROGRAM_UUID }] });
+    resolveProgramProjectAnchor.mockResolvedValueOnce(null);
+    const res = await request(appWith(7)).get(`/api/dossier-map?projectId=${PROGRAM_UUID}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+    expect(res.body.meta).toMatchObject({ count: 0, programId: PROGRAM_UUID, projectId: null, anchored: false, reason: 'PROGRAM_UNANCHORED' });
+    expect(assembleProjectDossierMap).not.toHaveBeenCalled();
+  });
+
+  it('a program UUID that is not in the acting org answers 404, and nothing is read for it (F-7)', async () => {
+    poolQuery.mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(7)).get(`/api/dossier-map?projectId=${PROGRAM_UUID}`);
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('PROGRAM_NOT_FOUND');
+    expect(resolveProgramProjectAnchor).not.toHaveBeenCalled();
+    expect(assembleProjectDossierMap).not.toHaveBeenCalled();
+  });
+
+  it('an id that parseInt would truncate ("12abc") is 400, never project 12 (F-7)', async () => {
+    const res = await request(appWith(7)).get('/api/dossier-map?projectId=12abc');
+    expect(res.status).toBe(400);
+    expect(assembleProjectDossierMap).not.toHaveBeenCalled();
   });
 
   it('fails closed to an honest empty list when the store is not provisioned (42P01)', async () => {

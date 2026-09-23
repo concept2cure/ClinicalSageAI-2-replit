@@ -48,6 +48,30 @@ export function resolveEffortStrategy(effort: EffortLevel): RoutingStrategy {
 }
 
 /**
+ * Effort → the API's own `output_config.effort`.
+ *
+ * Distinct from {@link EFFORT_TO_STRATEGY}, which answers "which model": this
+ * answers "how hard should that model work". The Composer's control has always
+ * meant both, and only the first half was ever sent — so a user asking for
+ * Thorough got a better model that then reasoned at the same depth as Fast.
+ *
+ * `thorough` maps to `high` rather than `xhigh` deliberately: the pinned SDK
+ * (@anthropic-ai/sdk 0.82.0) types effort as low|medium|high|max with no xhigh,
+ * and sending a value the pinned client does not know is a guess. Revisit on an
+ * SDK bump — `xhigh` is the better setting for long agentic work.
+ */
+export const EFFORT_TO_API_EFFORT = {
+  fast: 'low',
+  balanced: 'medium',
+  thorough: 'high',
+} as const satisfies Record<EffortLevel, 'low' | 'medium' | 'high' | 'max'>;
+
+/** Map a (validated) effort level to the API effort parameter. Pure. */
+export function resolveApiEffort(effort: EffortLevel): 'low' | 'medium' | 'high' | 'max' {
+  return EFFORT_TO_API_EFFORT[effort];
+}
+
+/**
  * Resolve the effective routing strategy with governance-safe precedence:
  *
  *   policyHintStrategy  →  effortStrategy  →  routingPlanStrategy
@@ -109,22 +133,37 @@ export interface PickerModel {
 }
 
 /**
- * Hand-mapped display labels for the well-known registry ids, so the picker
- * shows "Claude Opus 4" rather than the raw wire id. Unknown ids fall back to a
- * humanized form of the registry id (see {@link humanizeModelId}).
+ * Hand-mapped display labels for non-Claude registry ids.
+ *
+ * The Claude entries are deliberately NOT here. They were — 'claude-opus-4' →
+ * "Claude Opus 4" — keyed on the stable ALIAS id, which meant the label stopped
+ * being true the moment the alias pointed somewhere new: the picker offered
+ * "Claude Opus 4" for a request that ran on Opus 5. A label is a claim about
+ * what will run, so it is derived from the wire model instead (see
+ * {@link deriveModelLabel}) and cannot go stale on a model bump.
  */
 const MODEL_LABELS: Record<string, string> = {
-  'claude-opus-4': 'Claude Opus 4',
-  'claude-opus-4-legacy': 'Claude Opus 4 (legacy)',
-  'claude-sonnet-4': 'Claude Sonnet 4',
-  'claude-sonnet-4-legacy': 'Claude Sonnet 4 (legacy)',
-  'claude-haiku-4': 'Claude Haiku 4',
   'gpt-4o': 'GPT-4o',
   'gpt-4o-mini': 'GPT-4o mini',
   'kimi-k2-0711': 'Kimi K2',
   'moonshot-v1-128k': 'Kimi (Moonshot v1 128k)',
   'moonshot-v1-32k': 'Kimi (Moonshot v1 32k)',
 };
+
+/**
+ * Human label for a Claude wire model id, or null for anything else.
+ *
+ * `claude-opus-5` → "Claude Opus 5"; `claude-haiku-4-5` → "Claude Haiku 4.5";
+ * a provider prefix (`anthropic.claude-opus-4-7` on Bedrock) is stripped first.
+ */
+export function claudeModelLabel(model: string): string | null {
+  const bare = model.replace(/^[a-z]+\./, '');
+  const m = /^claude-(opus|sonnet|haiku|fable)-(\d+)(?:-(\d+))?/.exec(bare);
+  if (!m) return null;
+  const family = m[1].charAt(0).toUpperCase() + m[1].slice(1);
+  const version = m[3] ? `${m[2]}.${m[3]}` : m[2];
+  return `Claude ${family} ${version}`;
+}
 
 /** Best-effort human label for a registry id with no hand-mapped entry. */
 export function humanizeModelId(id: string): string {
@@ -139,6 +178,11 @@ export function humanizeModelId(id: string): string {
 
 /** Resolve the display label for a model config. */
 export function deriveModelLabel(m: ModelConfig): string {
+  // Wire model first: the label describes what will actually run, and a stable
+  // alias id does not. A '(legacy)' entry keeps that marker, since which rung
+  // of the ladder a model sits on is not visible from its version alone.
+  const claude = claudeModelLabel(m.model);
+  if (claude) return m.id.endsWith('-legacy') ? `${claude} (fallback)` : claude;
   return MODEL_LABELS[m.id] ?? humanizeModelId(m.id);
 }
 
@@ -174,4 +218,37 @@ export function projectModelsForPicker(models: ModelConfig[]): PickerModel[] {
       qualityScore: m.qualityScore,
     }))
     .sort((a, b) => b.qualityScore - a.qualityScore);
+}
+
+/**
+ * The `output_config.effort` a given wire model will accept, or undefined when
+ * it accepts none — so the gateway never sends a parameter the model rejects.
+ *
+ * Effort was attached to every Anthropic request regardless of model, and
+ * Haiku 4.5 rejects it with a 400. Short asks ("take me to CMC") and every
+ * Fast turn route to the economy tier, which is Haiku 4.5, so each of those
+ * turns failed its first call and was re-served up the fallback ladder —
+ * slower, dearer, and on a turn that had tools, sometimes on a model path that
+ * carries none.
+ *
+ *   Haiku 4.5, Sonnet 4.5 and older   → no effort (400 if sent)
+ *   Opus 4.5                          → low | medium | high
+ *   Opus 4.6, Sonnet 4.6              → low | medium | high | max
+ *   Opus 4.7+, Sonnet 5, Claude 5 / Fable / Mythos → all levels
+ *
+ * A level the model does not take is lowered to the nearest it does, never
+ * raised: the person asked for at most that much work.
+ */
+export function apiEffortForModel(
+  wireModel: string,
+  effort: 'low' | 'medium' | 'high' | 'max' | undefined
+): 'low' | 'medium' | 'high' | 'max' | undefined {
+  if (!effort) return undefined;
+  const m = (wireModel || '').toLowerCase();
+  if (!m.startsWith('claude-')) return effort;
+  if (/^claude-(haiku|3|instant|2)/.test(m)) return undefined;
+  if (/^claude-sonnet-4(-5|-2|$|-\d{8})/.test(m) || /^claude-sonnet-4-0/.test(m)) return undefined;
+  if (/^claude-opus-4(-1|-0|$|-\d{8})/.test(m)) return undefined;
+  if (/^claude-opus-4-5/.test(m)) return effort === 'max' ? 'high' : effort;
+  return effort;
 }

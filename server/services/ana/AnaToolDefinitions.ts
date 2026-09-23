@@ -10,6 +10,7 @@
  */
 
 import type { AnaTool, AnthropicServerTool, AnyAnaTool } from '../ai-gateway/types';
+import { createScopedLogger } from '../../utils/logger';
 // Agentic-workflow tool definitions extracted to their own module (first tranche
 // of decomposing this file). Imported so the enabled-tools array can reference
 // them exactly as before.
@@ -35,7 +36,9 @@ import {
   LIST_PROJECT_DOCUMENTS,
   READ_PROJECT_DOCUMENT,
   CATALOG_PROJECT_DOCUMENT,
+  PLACE_PROJECT_DOCUMENT,
   SEARCH_PROJECT_DOCUMENTS,
+  SEARCH_DOCUMENT_PASSAGES,
 } from './document-catalog-tool-defs.js';
 // BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
 // own module (decomposition tranche 2). Imported so the enabled-tools array can
@@ -77,6 +80,7 @@ import {
   READ_GOVERNED_DOCUMENT,
   GET_TMF_VIEW,
   SAVE_DOCUMENT_TO_VAULT,
+  DRAFT_AUTHORING_DOCUMENT,
   UPDATE_VAULT_DOCUMENT,
   COMPARE_VAULT_VERSIONS,
   SEED_TMF,
@@ -462,6 +466,11 @@ import {
   RESET_PROJECT_GOALS,
   RECONCILE_DOSSIER_NUMBERS,
 } from './discovery-cheminformatics-tool-defs.js';
+// Protocol ⇄ study-design loop (docs/design/PROTOCOL_INTELLIGENCE.md §"AnA's
+// part"): bind, read the derivation diff, apply accepted paths, read the two
+// deterministic verdict engines. Handlers live in AnaToolExecutor.ts beside the
+// other protocol-development handlers.
+import { PROTOCOL_DESIGN_TOOLS } from './protocol-design-tool-defs.js';
 import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
@@ -528,6 +537,8 @@ import {
   ALL_REGIONS,
   agencyList,
 } from '../submission-gateways/region-constants.js';
+
+const log = createScopedLogger('ana-tools');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & literature tool definitions moved to
@@ -1828,6 +1839,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   SAVE_REPORT_DEFINITION,
   LIST_REPORT_DEFINITIONS,
   SAVE_DOCUMENT_TO_VAULT,
+  DRAFT_AUTHORING_DOCUMENT,
   UPDATE_VAULT_DOCUMENT,
   COMPARE_VAULT_VERSIONS,
   SEED_TMF,
@@ -2205,7 +2217,9 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_PROJECT_DOCUMENTS,
   READ_PROJECT_DOCUMENT,
   CATALOG_PROJECT_DOCUMENT,
+  PLACE_PROJECT_DOCUMENT,
   SEARCH_PROJECT_DOCUMENTS,
+  SEARCH_DOCUMENT_PASSAGES,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,
@@ -2677,6 +2691,9 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   START_WAR_GAME,
   // Onboarding — read-only look at what a document could contribute to setup.
   SUMMARIZE_ONBOARDING_READINESS,
+  // Protocol ⇄ study-design loop: bind, review the derivation, apply accepted
+  // paths, read the rule pack and the design gates. See protocol-design-tool-defs.ts.
+  ...PROTOCOL_DESIGN_TOOLS,
 ];
 
 // Defensive registry guard: v2's cdiscTools.ts currently re-registers
@@ -2710,7 +2727,12 @@ export const ALL_ANA_TOOLS: AnaTool[] = ALL_ANA_TOOLS_RAW.filter(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const WEB_SEARCH_TOOL: AnthropicServerTool = {
-  type: 'web_search_20250305',
+  // The current variant, with dynamic filtering. It was pinned to the 2025
+  // `web_search_20250305` — the basic one — long after the models in the
+  // registry gained this. `_20260209` runs code execution internally to filter
+  // results, which is why declaring `code_execution` alongside it is refused
+  // below rather than left as a deployment note.
+  type: 'web_search_20260209',
   name: 'web_search',
   max_uses: 5,
   // Keep the search surface tight to sources AnA actually cites. The allowlist
@@ -2757,12 +2779,41 @@ export const CODE_EXECUTION_TOOL: AnthropicServerTool = {
  * Returns the subset of Anthropic server tools that are enabled for this
  * environment. Empty array when none are enabled — safe to spread into the
  * tools array unconditionally.
+ *
+ * ── Why this refuses a combination ───────────────────────────────────────────
+ * The `_20260209` web tools run code execution internally to filter results.
+ * Declaring `code_execution` alongside them hands the model two execution
+ * environments and it does not reliably pick the right one. Three independent
+ * env flags made that combination one typo away, and the failure would be a
+ * quiet degradation rather than an error — so the conflict is resolved here, in
+ * code, with the reason stated to whoever set the flags.
+ *
+ * Web search wins: it is the regulatory-currency path (the allowlist above is
+ * the agency set), and its internal execution is not optional. A deployment
+ * that genuinely needs the standalone sandbox turns web search off.
  */
 export function getEnabledServerTools(): AnthropicServerTool[] {
+  const wantsWebSearch = process.env.ANA_ENABLE_WEB_SEARCH === 'true';
+  const wantsWebFetch = process.env.ANA_ENABLE_WEB_FETCH === 'true';
+  const wantsCodeExecution = process.env.ANA_ENABLE_CODE_EXECUTION === 'true';
+
   const enabled: AnthropicServerTool[] = [];
-  if (process.env.ANA_ENABLE_WEB_SEARCH === 'true') enabled.push(WEB_SEARCH_TOOL);
-  if (process.env.ANA_ENABLE_WEB_FETCH === 'true') enabled.push(WEB_FETCH_TOOL);
-  if (process.env.ANA_ENABLE_CODE_EXECUTION === 'true') enabled.push(CODE_EXECUTION_TOOL);
+  if (wantsWebSearch) enabled.push(WEB_SEARCH_TOOL);
+  if (wantsWebFetch) enabled.push(WEB_FETCH_TOOL);
+
+  const webToolCarriesItsOwnSandbox = wantsWebSearch || wantsWebFetch;
+  if (wantsCodeExecution && webToolCarriesItsOwnSandbox) {
+    log.warn(
+      '[ana-tools] ANA_ENABLE_CODE_EXECUTION is set alongside a web tool. The ' +
+        'current web search/fetch tools run code execution internally, and ' +
+        'declaring a second execution environment confuses the model — so the ' +
+        'standalone code_execution tool is NOT offered this turn. Turn the web ' +
+        'tools off if the sandbox is what you need.',
+    );
+  } else if (wantsCodeExecution) {
+    enabled.push(CODE_EXECUTION_TOOL);
+  }
+
   return enabled;
 }
 

@@ -56,7 +56,11 @@ import { estarRegistrations } from '../../../../shared/schema/estar-registration
 import type { RequestDb } from '../../../db/requestDb';
 import { isMissingAnchorColumn } from '../../c2c/program-project-anchor';
 import type { OfficialPdfFieldMap } from '../../forms/fill-official-pdf';
-import { ESTAR_TEMPLATE_RECOMPUTED_FIELDS } from './estar-field-map';
+import {
+  ESTAR_TEMPLATE_RECOMPUTED_FIELDS,
+  assessEstarTemplateRebuild,
+  isEstarSubstitution,
+} from './estar-field-map';
 
 // ── The governed-sources table ────────────────────────────────────────────────
 
@@ -430,6 +434,12 @@ export interface ResolveOfficialEstarFieldsInput {
 export interface ResolvedOfficialEstarFields {
   /** Exactly the canonical values handed to the fill — nothing else. */
   data: Record<string, unknown>;
+  /**
+   * The map these values were resolved against. Carried so the field report can
+   * ask the SAME question the fill asks — what the template's own scripts do to
+   * these values — instead of re-deriving it from a second copy of the rule.
+   */
+  fieldMap: OfficialPdfFieldMap;
   /** One entry per mapped key, in field-map order. */
   fields: ResolvedOfficialField[];
   /** Request keys that were NOT written: unknown to the map, colliding with a governed value, or unusable. */
@@ -500,6 +510,7 @@ export function resolveOfficialEstarFields(
 
   return {
     data,
+    fieldMap: input.fieldMap,
     fields,
     ignoredRequestKeys,
     advisories: [...(input.governed.advisories ?? []), ...unboxed],
@@ -567,12 +578,31 @@ export function reportOfficialEstarFill(
   const blank = fields.filter((f) => !f.filled);
   /* Only FILLED keys can be cleared or substituted — a blank cell has nothing
      for the template to take away, and saying otherwise would double-count the
-     same gap under two headings. */
-  const outcomeOf = (key: string) => resolved.fields.find((r) => r.key === key)?.rebuildOutcome ?? null;
-  const clearedByTemplateKeys = fields.filter((f) => f.filled && outcomeOf(f.key) === 'blanks').map((f) => f.key);
-  const substitutedByTemplateKeys = fields
-    .filter((f) => f.filled && outcomeOf(f.key) === 'substitutes')
-    .map((f) => f.key);
+     same gap under two headings.
+
+     THIS USED TO READ `rebuildOutcome` STRAIGHT OFF THE TABLE, and got two
+     things wrong because that column is a claim about the TEMPLATE, not about a
+     filing. It listed `declarationCompanyName` as substituted on EVERY filing,
+     including the ordinary one where the declaring entity and the applicant are
+     the same string and the rebuild changes nothing — a warning shown to every
+     filer is a warning none of them read. And it listed the two predicate
+     fields as cleared by the template, though nothing recomputes them: their
+     `rebuiltFrom` is null and their only writer is the applicant clicking
+     Delete Predicate. Both are now answered by the one assessor the fill's own
+     refusal uses, so the report and the artifact can never disagree. */
+  const findings = assessEstarTemplateRebuild(
+    resolved.fieldMap,
+    resolved.data,
+    fields.filter((f) => f.filled).map((f) => f.key),
+  );
+  const clearedByTemplateKeys = findings.filter((f) => f.effect === 'erased').map((f) => f.key);
+  /* BOTH substitution effects. `'substituted-on-entry'` — the rebuild's source
+     is mapped but this filing left it blank — is not a cleared cell: the
+     delivered form still shows our value, and the applicant's own first entry
+     into the source replaces it. Reporting that under `clearedByTemplateKeys`,
+     or not at all, would tell the operator the cell is empty when it is about to
+     name someone else. */
+  const substitutedByTemplateKeys = findings.filter(isEstarSubstitution).map((f) => f.key);
   const fieldSources: Record<string, string> = {};
   for (const f of fields) if (f.filled && f.source) fieldSources[f.key] = f.source;
   const ignoredRequestKeys = [...resolved.ignoredRequestKeys];

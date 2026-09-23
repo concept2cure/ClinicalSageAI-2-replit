@@ -16,7 +16,7 @@ import type {
   SubmissionLogEntry,
   SubmissionStage,
 } from '../data/workbench';
-import { useFetchJson } from './useFetchJson';
+import { useFetchJson, buildAuthHeaders } from './useFetchJson';
 import { firstArray, shapeMismatch } from '../lib/payloadShape';
 import { FAMILY_TO_SUBMISSION_PATHWAY } from '../../../../../shared/constants/mdx';
 
@@ -170,9 +170,32 @@ interface ReadinessPayload {
   errors?: number; warnings?: number; passed?: number;
 }
 
+/* A milestone row as the route actually emits it. `c2c_milestones` carries no
+   owner_name — only created_by_id — so `ownerName` is absent on every live row
+   and `createdByName` is the name the route resolves that id to (null when the
+   milestone has no creator, or the user record is gone). Both stay optional:
+   an unresolved actor is an empty actor, never an invented one. */
+interface MilestoneRow {
+  id: number;
+  title: string;
+  status?: string;
+  createdAt: string;
+  ownerName?: string | null;
+  createdByName?: string | null;
+}
+
 interface MilestonePayload {
-  data?: Array<{ id: number; title: string; status: string; createdAt: string; ownerName: string | null }>;
-  milestones?: Array<{ id: number; title: string; status: string; createdAt: string; ownerName: string | null }>;
+  data?: MilestoneRow[];
+  milestones?: MilestoneRow[];
+}
+
+/* The actor of a milestone, or '' when the server resolved none. Returning ''
+   rather than a stand-in name is the point: the Activity strip renders '—' for
+   an empty actor (Workbench.tsx), which reads as "not recorded" — where the
+   previous 'System' read as a fact about who acted. */
+export function milestoneActor(r: Pick<MilestoneRow, 'ownerName' | 'createdByName'>): string {
+  const named = r.createdByName ?? r.ownerName ?? '';
+  return typeof named === 'string' ? named.trim() : '';
 }
 
 export interface UseSubmissionDetailResult {
@@ -217,12 +240,26 @@ export function useSubmissionDetail(packageId: string | null): UseSubmissionDeta
     let cancelled = false;
     setState({ gate: null, log: null, loading: true, error: null });
 
+    /* `credentials: 'include'` is not authentication in this app. The global
+       /api gate reads `req.headers.authorization` and has no cookie fallback
+       (server/middleware/auth.ts, `extractBearerToken`), and
+       `/api/submission-ops` is not on PUBLIC_API_ALLOWLIST — so these two
+       reads sent no token and 401'd. The boundary runs in mode 'warn' outside
+       production and 'enforce' in it, which is why this worked on a laptop and
+       failed for every user.
+
+       The failure was silent and worse than a blank screen: a 401 is not
+       `res.ok`, so both branches below left `gate` and `log` as null, and the
+       surface rendered a package with no readiness gate and no milestones —
+       indistinguishable from a package that genuinely has neither. */
     Promise.allSettled([
       fetch(`/api/submission-ops/packages/${encodeURIComponent(packageId)}/readiness`, {
         credentials: 'include',
+        headers: buildAuthHeaders(),
       }),
       fetch(`/api/submission-ops/packages/${encodeURIComponent(packageId)}/milestones`, {
         credentials: 'include',
+        headers: buildAuthHeaders(),
       }),
     ])
       .then(async ([readinessRes, milestonesRes]) => {
@@ -242,7 +279,7 @@ export function useSubmissionDetail(packageId: string | null): UseSubmissionDeta
           /* `j.data ?? j.milestones ?? []` stepped past null and undefined but
              not past a `data` field holding an object, which then failed at
              `.slice`. Only a real list becomes an activity log. */
-          const rows = firstArray<{ id: number; title: string; status: string; createdAt: string; ownerName: string | null }>(
+          const rows = firstArray<MilestoneRow>(
             j.data,
             j.milestones,
           ) ?? [];
@@ -250,7 +287,7 @@ export function useSubmissionDetail(packageId: string | null): UseSubmissionDeta
             .slice(0, 10)
             .map((r) => ({
               when: formatRelative(r.createdAt),
-              who:  r.ownerName ?? 'System',
+              who:  milestoneActor(r),
               what: r.title + (r.status ? ` · ${r.status}` : ''),
             }));
         }

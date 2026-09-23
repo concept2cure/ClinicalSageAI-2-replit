@@ -133,6 +133,118 @@ export interface VerificationResult {
   verifiedAt: Date;
 }
 
+
+/** One audit.tamper_proof_log row as SELECT * returns it (snake_case). */
+export interface TamperProofLogRow {
+  sequence_number: number | string;
+  event_type: string;
+  event_timestamp: Date | string;
+  user_id?: string | null;
+  user_name?: string | null;
+  session_id?: string | null;
+  correlation_id?: string | null;
+  resource_type?: string | null;
+  resource_id?: string | null;
+  action: string;
+  details: unknown;
+  previous_hash: string;
+  content_hash: string;
+  chain_hash: string;
+  signature?: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+}
+
+export interface TamperProofRowsVerification {
+  valid: boolean;
+  entriesVerified: number;
+  /** Sequence number of the first row that failed, when !valid. */
+  firstInvalidEntry?: number;
+  invalidReason?: string;
+  /** chain_hash of the last row walked (the next row's expected previous_hash). */
+  lastChainHash: string;
+  /** Rows carrying a signature that was verified against the secret. */
+  signedEntries: number;
+}
+
+/**
+ * Walk rows of audit.tamper_proof_log in sequence order and verify every link:
+ * previous_hash continuity, content_hash re-derivation (canonical and the
+ * pre-canonicalization legacy form), chain_hash, and the HMAC signature when
+ * present. Pure — no I/O — so the class's verifyChain and the ops verifier
+ * (scripts/ops/verify-audit-chain.mjs) share one implementation.
+ *
+ * Fails closed on the first bad row: everything after a break is untrustworthy.
+ */
+export function verifyTamperProofLogRows(
+  rows: TamperProofLogRow[],
+  opts: { hmacSecret: string; expectedPreviousHash?: string },
+): TamperProofRowsVerification {
+  const genesis = '0'.repeat(64);
+  let expectedPreviousHash = opts.expectedPreviousHash ?? genesis;
+  let entriesVerified = 0;
+  let signedEntries = 0;
+  const sha256 = (data: string) => createHash('sha256').update(data).digest('hex');
+  const chainHashOf = (contentHash: string, previousHash: string) => sha256(contentHash + previousHash);
+  const signatureOf = (chainHash: string) => createHmac('sha256', opts.hmacSecret).update(chainHash).digest('hex');
+  const fail = (row: TamperProofLogRow, reason: string): TamperProofRowsVerification => ({
+    valid: false,
+    entriesVerified,
+    firstInvalidEntry: Number(row.sequence_number),
+    invalidReason: reason,
+    lastChainHash: expectedPreviousHash,
+    signedEntries,
+  });
+
+  for (const row of rows) {
+    entriesVerified++;
+    const seq = Number(row.sequence_number);
+
+    if (row.previous_hash !== expectedPreviousHash) {
+      return fail(row, `Chain broken: previous_hash mismatch at sequence ${seq}`);
+    }
+
+    const contentData = TamperProofAuditLog.buildContentData({
+      eventType: row.event_type,
+      action: row.action,
+      details: row.details,
+      timestamp: row.event_timestamp,
+      userId: row.user_id,
+      userName: row.user_name,
+      sessionId: row.session_id,
+      correlationId: row.correlation_id,
+      resourceType: row.resource_type,
+      resourceId: row.resource_id,
+      ipAddress: row.ip_address,
+      userAgent: row.user_agent,
+    });
+    const matchesContentHash =
+      row.content_hash === sha256(TamperProofAuditLog.stringifyForHash(contentData)) ||
+      row.content_hash === sha256(TamperProofAuditLog.legacyStringifyForVerify(contentData));
+    if (!matchesContentHash) {
+      return fail(row, `Content tampered: content_hash mismatch at sequence ${seq}`);
+    }
+
+    if (row.chain_hash !== chainHashOf(row.content_hash, row.previous_hash)) {
+      return fail(row, `Chain hash invalid at sequence ${seq}`);
+    }
+
+    if (row.signature) {
+      const expected = signatureOf(row.chain_hash);
+      const a = Buffer.from(String(row.signature));
+      const b = Buffer.from(expected);
+      if (a.length !== b.length || !timingSafeEqual(a, b)) {
+        return fail(row, `Signature invalid at sequence ${seq}`);
+      }
+      signedEntries++;
+    }
+
+    expectedPreviousHash = row.chain_hash;
+  }
+
+  return { valid: true, entriesVerified, lastChainHash: expectedPreviousHash, signedEntries };
+}
+
 // =============================================================================
 // Tamper-Proof Audit Log Service
 // =============================================================================
@@ -154,6 +266,27 @@ export interface VerificationResult {
  */
 const AUDIT_CHAIN_LOCK_KEY = '8213001100000001';
 
+/**
+ * A REFUSAL, not a failure.
+ *
+ * The audit subsystem's one caller wraps initialization in a try/catch that
+ * falls back to console logging, because initialize() touches the database and
+ * a transient database problem should not take the process down. A missing
+ * signing secret is not that: it is a configuration decision that cannot
+ * improve on retry, and degrading past it means a production process writing
+ * its 21 CFR Part 11 records to stdout with one warning line — the exact hole
+ * server/services/audit/auditSealPosture.ts was written to close for the
+ * SEALING key, while the CHAINING key still had it.
+ *
+ * Its own type so that caller can tell the two apart and let this one through.
+ */
+export class AuditConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuditConfigurationError';
+  }
+}
+
 export class TamperProofAuditLog {
   private pool: Pool;
   private readonly hmacSecret: string;
@@ -169,7 +302,7 @@ export class TamperProofAuditLog {
     const secret = process.env.AUDIT_HMAC_SECRET || '';
     if (!secret) {
       if (process.env.NODE_ENV === 'production') {
-        throw new Error(
+        throw new AuditConfigurationError(
           '[FATAL] AUDIT_HMAC_SECRET is required in production. ' +
             'The tamper-proof audit chain cannot sign records without a ' +
             'cryptographically random secret. Refusing to start.'
@@ -395,7 +528,6 @@ export class TamperProofAuditLog {
     const result = await this.pool.query(query, params);
 
     let expectedPreviousHash = this.GENESIS_HASH;
-    let entriesVerified = 0;
 
     // If starting from a non-genesis entry, get the previous hash
     if (startSequence && startSequence > 1) {
@@ -409,93 +541,23 @@ export class TamperProofAuditLog {
       }
     }
 
-    for (const row of result.rows) {
-      entriesVerified++;
-
-      // Verify previous hash matches
-      if (row.previous_hash !== expectedPreviousHash) {
-        return {
-          valid: false,
-          entriesVerified,
-          firstInvalidEntry: row.sequence_number,
-          invalidReason: `Chain broken: previous_hash mismatch at sequence ${row.sequence_number}`,
-          verifiedAt,
-        };
-      }
-
-      // Recompute content hash. MUST mirror the write path byte-for-byte —
-      // including ip_address / user_agent — or an untampered entry written with
-      // client context would falsely fail (and, conversely, those fields would
-      // not actually be covered by the integrity check). Shared via
-      // buildContentData so the writer and verifier can never drift.
-      //
-      // The row's `details` arrives here re-keyed by Postgres (jsonb canonical
-      // order), which is why the bytes are produced by stringifyForHash rather
-      // than JSON.stringify — see canonicalize() for the failure it fixes.
-      const contentData = TamperProofAuditLog.buildContentData({
-        eventType: row.event_type,
-        action: row.action,
-        details: row.details,
-        timestamp: row.event_timestamp,
-        userId: row.user_id,
-        userName: row.user_name,
-        sessionId: row.session_id,
-        correlationId: row.correlation_id,
-        resourceType: row.resource_type,
-        resourceId: row.resource_id,
-        ipAddress: row.ip_address,
-        userAgent: row.user_agent,
-      });
-
-      const expectedContentHash = this.computeHash(
-        TamperProofAuditLog.stringifyForHash(contentData),
-      );
-
-      // Rows written before the canonicalization fix carry a hash over the
-      // non-canonical bytes. Accept those too, so this fix does not itself
-      // report every historical entry as tampered.
-      const matchesContentHash =
-        row.content_hash === expectedContentHash ||
-        row.content_hash ===
-          this.computeHash(TamperProofAuditLog.legacyStringifyForVerify(contentData));
-
-      if (!matchesContentHash) {
-        return {
-          valid: false,
-          entriesVerified,
-          firstInvalidEntry: row.sequence_number,
-          invalidReason: `Content tampered: content_hash mismatch at sequence ${row.sequence_number}`,
-          verifiedAt,
-        };
-      }
-
-      // Verify chain hash
-      const expectedChainHash = this.computeChainHash(row.content_hash, row.previous_hash);
-      if (row.chain_hash !== expectedChainHash) {
-        return {
-          valid: false,
-          entriesVerified,
-          firstInvalidEntry: row.sequence_number,
-          invalidReason: `Chain hash invalid at sequence ${row.sequence_number}`,
-          verifiedAt,
-        };
-      }
-
-      // Verify signature if present
-      if (row.signature) {
-        const expectedSignature = this.computeSignature(row.chain_hash);
-        if (!this.timingSafeCompare(row.signature, expectedSignature)) {
-          return {
-            valid: false,
-            entriesVerified,
-            firstInvalidEntry: row.sequence_number,
-            invalidReason: `Signature invalid at sequence ${row.sequence_number}`,
-            verifiedAt,
-          };
-        }
-      }
-
-      expectedPreviousHash = row.chain_hash;
+    // The per-row checks live in verifyTamperProofLogRows — exported and pure —
+    // so the ops verifier (scripts/ops/verify-audit-chain.mjs) walks rows with
+    // the SAME code this service uses, rather than a second transcription of
+    // the recipe that could drift from the writer.
+    const walked = verifyTamperProofLogRows(result.rows as TamperProofLogRow[], {
+      hmacSecret: this.hmacSecret,
+      expectedPreviousHash,
+    });
+    const entriesVerified = walked.entriesVerified;
+    if (!walked.valid) {
+      return {
+        valid: false,
+        entriesVerified,
+        firstInvalidEntry: walked.firstInvalidEntry,
+        invalidReason: walked.invalidReason,
+        verifiedAt,
+      };
     }
 
     // Log successful verification
@@ -714,7 +776,7 @@ export class TamperProofAuditLog {
    * This weakens nothing: both forms are deterministic functions of the same
    * content, so an attacker who edits a persisted field still fails both.
    */
-  private static legacyStringifyForVerify(contentData: Record<string, unknown>): string {
+  static legacyStringifyForVerify(contentData: Record<string, unknown>): string {
     return JSON.stringify(contentData);
   }
 
@@ -730,11 +792,6 @@ export class TamperProofAuditLog {
 
   private computeSignature(chainHash: string): string {
     return createHmac('sha256', this.hmacSecret).update(chainHash).digest('hex');
-  }
-
-  private timingSafeCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) return false;
-    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
   }
 
   private rowToEntry(row: Record<string, unknown>): AuditEntry {

@@ -57,120 +57,50 @@ CREATE INDEX IF NOT EXISTS proj_charter_type_idx ON project_charters(submission_
 CREATE INDEX IF NOT EXISTS proj_charter_status_idx ON project_charters(approval_status);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- CHARTER SECTIONS
+-- CHARTER SECTIONS, TIMELINE PHASES, PROJECT COMMITMENTS — REMOVED 2026-09-10
 -- ═══════════════════════════════════════════════════════════════════════════════
-
-CREATE TABLE IF NOT EXISTS charter_sections (
-  id SERIAL PRIMARY KEY,
-  charter_id INTEGER NOT NULL REFERENCES project_charters(id) ON DELETE CASCADE,
-  parent_section_id INTEGER,
-  section_key TEXT NOT NULL,
-  section_label TEXT NOT NULL,
-  content TEXT,
-  status TEXT DEFAULT 'empty',
-  sort_order INTEGER DEFAULT 0,
-  owner_role TEXT,
-  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS charter_sections_charter_idx ON charter_sections(charter_id);
-CREATE INDEX IF NOT EXISTS charter_sections_parent_idx ON charter_sections(parent_section_id);
-
+-- WO-1 (ADR-0006). This file used to create those three tables here, with nine
+-- indexes. It no longer does, and nothing is lost, because on the one applier
+-- that runs this file the tables were created and then destroyed before
+-- anything could use them.
+--
+-- THE CHAIN, by install-fresh overlay sort position:
+--   #18   this file                                    CREATE the three
+--   #93   migrations/20260611_drop_charter_staging_tables.sql   DROP the three
+--   #118  migrations/20260629_charter_tables_rebuild.sql        CREATE them again,
+--         with a larger shape (22 / 26 / 45 columns against 11 / 19 / 27) plus
+--         charter_audit_events
+--
+-- 20260611 dropped them deliberately — decision register #727 item 10, recorded
+-- in its header as "nowhere in the build backlog (#619); owner approved
+-- resolution as a formal drop" — and deliberately without CASCADE: "if a drop
+-- fails on a dependency, that dependency is evidence the table is not dead;
+-- investigate rather than cascade."
+--
+-- NOTHING IN BETWEEN DEPENDED ON THEM. 99 overlay files sort between #18 and
+-- #118; a grep of the whole migrations/ and db/migrations/ trees for a
+-- REFERENCES, INSERT, ALTER, view, trigger or function touching
+-- charter_sections, timeline_phases or project_commitments returns hits only
+-- inside the three files above. The one FK — project_commitments.phase_id ->
+-- timeline_phases(id) — is self-contained within whichever file declares it.
+--
+-- NOTHING IS LOST IN SHAPE OR INDEXES EITHER. 20260629 declares every column
+-- this file declared and 18 more, and its index set is a strict SUPERSET of the
+-- nine removed here (it adds charter_sections_status_idx,
+-- proj_commitments_category_idx, proj_commitments_critical_idx,
+-- timeline_phases_team_idx). A database built from empty by
+-- scripts/db/provision-test-db.sh matches 20260629 exactly for all three tables
+-- — zero columns declared-but-absent, zero live-but-undeclared — and carries
+-- 20260629's timestamptz/json types rather than this file's timestamp/jsonb.
+--
+-- CLAUDE.md RULE 1 is satisfied by amending in place rather than appending a
+-- DROP: this file is not in C2C_MIGRATION_FILES, so it never replays against a
+-- populated database, and the removal simply stops a create-then-drop cycle
+-- that produced nothing on a fresh one.
+--
+-- `project_charters` above STAYS. This file is its only creator anywhere in the
+-- repository, 20260611 kept it on purpose, and 20260629 declares foreign keys
+-- into it. See WO-15: it is frozen at 27 columns while
+-- shared/schema/project-charter.ts declares 48, and
+-- server/routes/charters.ts:401 selects all of them.
 -- ═══════════════════════════════════════════════════════════════════════════════
--- TIMELINE PHASES
--- ═══════════════════════════════════════════════════════════════════════════════
-
-CREATE TABLE IF NOT EXISTS timeline_phases (
-  id SERIAL PRIMARY KEY,
-  charter_id INTEGER NOT NULL REFERENCES project_charters(id) ON DELETE CASCADE,
-  phase_name TEXT NOT NULL,
-  phase_number INTEGER NOT NULL,
-  description TEXT,
-
-  -- Dates
-  start_date TIMESTAMP,
-  target_end_date TIMESTAMP,
-  actual_end_date TIMESTAMP,
-
-  -- Progress
-  status TEXT DEFAULT 'not_started',
-  progress INTEGER DEFAULT 0,
-
-  -- Dependencies
-  predecessors JSONB,
-  is_critical_path BOOLEAN DEFAULT FALSE,
-
-  -- Deliverables
-  deliverables JSONB,
-  owner_role TEXT,
-
-  -- Duration
-  estimated_weeks INTEGER,
-  actual_weeks INTEGER,
-
-  -- Rendering
-  color TEXT,
-
-  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS timeline_phases_charter_idx ON timeline_phases(charter_id);
-CREATE INDEX IF NOT EXISTS timeline_phases_status_idx ON timeline_phases(status);
-
--- ═══════════════════════════════════════════════════════════════════════════════
--- PROJECT COMMITMENTS
--- ═══════════════════════════════════════════════════════════════════════════════
-
-CREATE TABLE IF NOT EXISTS project_commitments (
-  id SERIAL PRIMARY KEY,
-  organization_id INTEGER NOT NULL,
-  project_id INTEGER NOT NULL,
-  charter_id INTEGER REFERENCES project_charters(id),
-  phase_id INTEGER REFERENCES timeline_phases(id),
-
-  -- Commitment details
-  title TEXT NOT NULL,
-  description TEXT,
-  category TEXT NOT NULL,
-
-  -- Source
-  source TEXT NOT NULL,
-  source_document_id INTEGER,
-  extraction_confidence REAL,
-
-  -- Timeline
-  due_date TIMESTAMP,
-  completed_at TIMESTAMP,
-
-  -- Status
-  status TEXT DEFAULT 'pending',
-  priority TEXT DEFAULT 'medium',
-  urgency TEXT,
-
-  -- Assignment
-  owner_user_id INTEGER,
-  owner_role TEXT,
-
-  -- Fulfillment
-  fulfillment_proof TEXT,
-  fulfillment_artifact_id INTEGER,
-
-  -- Signature (21 CFR Part 11)
-  requires_signature BOOLEAN DEFAULT FALSE,
-  signed_by INTEGER,
-  signed_at TIMESTAMP,
-  signature_meaning TEXT,
-
-  -- Audit
-  created_by INTEGER,
-  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS proj_commitments_org_idx ON project_commitments(organization_id);
-CREATE INDEX IF NOT EXISTS proj_commitments_project_idx ON project_commitments(project_id);
-CREATE INDEX IF NOT EXISTS proj_commitments_charter_idx ON project_commitments(charter_id);
-CREATE INDEX IF NOT EXISTS proj_commitments_status_idx ON project_commitments(status);
-CREATE INDEX IF NOT EXISTS proj_commitments_due_idx ON project_commitments(due_date);

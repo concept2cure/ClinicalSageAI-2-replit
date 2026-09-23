@@ -39,7 +39,11 @@ export interface User {
 export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  // getUserByUsername was deleted on 2026-09-22 for the same reason as createUser
+  // below: it read `users.username`, which exists only in the refused
+  // db/migrations/_consolidated/ legacy shape, so it raised 42703 on every call —
+  // and its catch returned `undefined`, rendering that error as "no such user".
+  // It had no callers. Found by ci:column-reachability.
   // createUser is deliberately absent. Its implementation INSERTed username /
   // password / role / subscribed into `users`, which declares none of them
   // (email, name, password_hash, status), so it 42703'd at PLAN time on every
@@ -697,10 +701,6 @@ export class MemStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     return this.users.find(u => u.id === id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return this.users.find(u => u.username === username);
   }
 
   async createUser(userData: Omit<User, 'id'>): Promise<User> {
@@ -2164,19 +2164,6 @@ export class DatabaseStorage {
       return result.rows[0];
     } catch (error) {
       logger.error('Failed to get user', { id, error });
-      return undefined;
-    }
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    if (!pool) return undefined;
-
-    try {
-      // tenant-isolation-safe: login/auth path — pre-tenant-resolution lookup by unique username; users is a global identity, not org-scoped.
-      const result = await query('SELECT * FROM users WHERE username = $1', [username]);
-      return result.rows[0];
-    } catch (error) {
-      logger.error('Failed to get user by username', { username, error });
       return undefined;
     }
   }

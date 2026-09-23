@@ -1,0 +1,19 @@
+# grep proof — every INSERT into a signature-bearing table in server/ (2026-09-20)
+
+$ grep -rn -i -E "INSERT INTO [a-z_.]*signature[a-z_]*|\.insert\([a-zA-Z]*[sS]ignature[a-zA-Z]*\)" server --include=*.ts | grep -v __tests__ | grep -v "\.test\."
+server/services/part11ComplianceService.ts:204:      // `.insert(electronicSignatures)` builder living here beside the one in
+server/services/part11/signature-persistence.ts:38: * `.insert(electronicSignatures)`. It was conforming (it bound content and set
+server/services/part11/signature-persistence.ts:308:    `INSERT INTO electronic_signatures (
+server/routes/authoring.router.ts:4727:        `INSERT INTO authoring_signatures
+server/routes/authoring.router.ts:6661:        `INSERT INTO authoring_signatures
+
+$ grep -rn "artifacts/:artifactId/signatures" server client --include=*.ts --include=*.tsx | grep -v __tests__
+server/services/part11/reverify-signer.ts:14: * /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures took
+server/routes/c2c/artifacts.ts:1496:/* POST /projects/:projectId/artifacts/:artifactId/signatures — REMOVED 2026-09-20.
+server/routes/c2c/artifacts.ts:1512: * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/signatures
+server/routes/c2c/artifacts.ts:1516:  '/projects/:projectId/artifacts/:artifactId/signatures',
+
+$ grep -rn -E "artifactId\}/signatures|/signatures`" client/src --include=*.ts --include=*.tsx
+client/src/concept2cure/v2/surfaces/AuthoringSignatures.tsx:8: * stored all three since it was created, and `GET /docs/:docId/signatures` has
+client/src/concept2cure/v2/surfaces/AuthoringSignatures.tsx:232:      const res = await apiRequest('GET', `/api/authoring/docs/${id}/signatures`);
+(no client caller of the removed POST)

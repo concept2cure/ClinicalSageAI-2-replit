@@ -82,7 +82,14 @@ async function boot(withMachineKind: boolean): Promise<PGlite> {
   await db.exec(`INSERT INTO organizations (id, name) VALUES (${ORG},'a');`);
   await db.exec(migration(SPINE));
   await db.exec(migration(LINEAGE));
-  if (withMachineKind) await db.exec(migration(MACHINE_KIND));
+  if (withMachineKind) {
+    await db.exec(migration(MACHINE_KIND));
+    // The 20260908 widening ships after it, so the passing cases run against
+    // the CHECK a deployed database really has. Deliberately inside this
+    // branch: applied in the `false` case it would re-add the constraint the
+    // falsifiability test below depends on being absent.
+    await db.exec(migration('migrations/20260908_span_lineage_machine_draft.sql'));
+  }
   return db;
 }
 

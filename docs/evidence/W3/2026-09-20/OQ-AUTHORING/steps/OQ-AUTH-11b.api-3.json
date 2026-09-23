@@ -1,0 +1,148 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5102/api/authoring/docs/76adad64-ded1-4cae-9181-463e744d46f3/audit",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 10,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "events": [
+        {
+          "id": "2e121729-90c4-4f1c-8d39-d08fdfa5ff48",
+          "doc_id": "76adad64-ded1-4cae-9181-463e744d46f3",
+          "section_id": null,
+          "event_type": "comment_resolved",
+          "actor": "jonmichaelpsmith@gmail.com",
+          "actor_role": "unknown",
+          "change_reason": "Legacy audit event",
+          "content_hash_before": null,
+          "content_hash_after": null,
+          "metadata": {
+            "status": "resolved",
+            "comment_id": "4324abb4-e29e-4107-96e7-bdaa580c7780",
+            "section_id": "eb2512c6-2ca3-4460-afea-1b90b1134109",
+            "previous_status": "open",
+            "resolution_note": "OQ-003 step 11b: reviewer query answered; resolved before freeze",
+            "previous_resolution_note": null
+          },
+          "created_at": "2026-09-22T00:09:08.446Z",
+          "tenant_id": 2
+        },
+        {
+          "id": "10121118-30fe-4acb-9c1e-e25db122fe4f",
+          "doc_id": "76adad64-ded1-4cae-9181-463e744d46f3",
+          "section_id": null,
+          "event_type": "SUBMIT",
+          "actor": "jonmichaelpsmith@gmail.com",
+          "actor_role": "unknown",
+          "change_reason": "Legacy audit event",
+          "content_hash_before": null,
+          "content_hash_after": null,
+          "metadata": {
+            "steps": [
+              {
+                "role": "QA",
+                "approver_email": "jonmichaelpsmith@gmail.com"
+              }
+            ],
+            "workflowId": "710107d3-4604-465a-b8d5-abcb9296ba20"
+          },
+          "created_at": "2026-09-22T00:09:06.436Z",
+          "tenant_id": 2
+        },
+        {
+          "id": "1a519941-138d-4ecf-9998-15acd9a16006",
+          "doc_id": "76adad64-ded1-4cae-9181-463e744d46f3",
+          "section_id": null,
+          "event_type": "comment_added",
+          "actor": "jonmichaelpsmith@gmail.com",
+          "actor_role": "unknown",
+          "change_reason": "Legacy audit event",
+          "content_hash_before": null,
+          "content_hash_after": null,
+          "metadata": {
+            "comment_id": "4324abb4-e29e-4107-96e7-bdaa580c7780",
+            "section_id": "eb2512c6-2ca3-4460-afea-1b90b1134109"
+          },
+          "created_at": "2026-09-22T00:09:05.108Z",
+          "tenant_id": 2
+        },
+        {
+          "id": "84c6a5b9-7222-4fbf-ad15-d88a1081abf4",
+          "doc_id": "76adad64-ded1-4cae-9181-463e744d46f3",
+          "section_id": "eb2512c6-2ca3-4460-afea-1b90b1134109",
+          "event_type": "REVERT",
+          "actor": "jonmichaelpsmith@gmail.com",
+          "actor_role": "unknown",
+          "change_reason": "Reverted to revision b873dba2-8193-4002-963e-3a7e6248e932",
+          "content_hash_before": "5f2aa1c0c7f6ce423a26acc9c5219b729b5f6601b73128f399231ff7fd36b1c4",
+          "content_hash_after": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "metadata": {
+            "revisionId": "b873dba2-8193-4002-963e-3a7e6248e932",
+            "revisionCreatedAt": "2026-09-22T00:09:02.167Z"
+          },
+          "created_at": "2026-09-22T00:09:04.315Z",
+          "tenant_id": 2
+        },
+        {
+          "id": "5463550e-0bf3-4a14-be3b-3a828067adbf",
+          "doc_id": "76adad64-ded1-4cae-9181-463e744d46f3",
+          "section_id": "eb2512c6-2ca3-4460-afea-1b90b1134109",
+          "event_type": "UPDATE",
+          "actor": "jonmichaelpsmith@gmail.com",
+          "actor_role": "unknown",
+          "change_reason": "OQ-003 step 05: controlled edit",
+          "content_hash_before": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "content_hash_after": "5f2aa1c0c7f6ce423a26acc9c5219b729b5f6601b73128f399231ff7fd36b1c4",
+          "metadata": {
+            "titleChanged": false
+          },
+          "created_at": "2026-09-22T00:09:02.707Z",
+          "tenant_id": 2
+        },
+        {
+          "id": "e457bbaf-52be-4661-9cb9-ef2e4d4c88ca",
+          "doc_id": "76adad64-ded1-4cae-9181-463e744d46f3",
+          "section_id": "eb2512c6-2ca3-4460-afea-1b90b1134109",
+          "event_type": "CREATE",
+          "actor": "jonmichaelpsmith@gmail.com",
+          "actor_role": "unknown",
+          "change_reason": null,
+          "content_hash_before": null,
+          "content_hash_after": "14e0d22ffeef37b81a1ecbc4069cd1e46e5b62fcaadeb0466687dfddf275d7b4",
+          "metadata": {
+            "code": "2.5",
+            "title": "Clinical Overview"
+          },
+          "created_at": "2026-09-22T00:09:02.169Z",
+          "tenant_id": 2
+        },
+        {
+          "id": "fde23ebd-7453-41fa-8f0f-92751ed94912",
+          "doc_id": "76adad64-ded1-4cae-9181-463e744d46f3",
+          "section_id": "ad9d2fa4-e0cb-4af4-9bd5-c2853a2d6a4e",
+          "event_type": "CREATE",
+          "actor": "jonmichaelpsmith@gmail.com",
+          "actor_role": "unknown",
+          "change_reason": null,
+          "content_hash_before": null,
+          "content_hash_after": "795ce1726eb546f0745c8eb2e6318d0dd1f3ad5b534dcc55eadd63b518add96d",
+          "metadata": {
+            "code": "2.7",
+            "title": "Clinical Summary"
+          },
+          "created_at": "2026-09-22T00:09:01.878Z",
+          "tenant_id": 2
+        }
+      ],
+      "count": 7
+    }
+  }
+}

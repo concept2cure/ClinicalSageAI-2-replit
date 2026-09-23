@@ -45,7 +45,7 @@ vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async (..._a:
 import { upsertLeaf } from '../submission-service';
 
 const CTX = { organizationId: 7, userId: 3 };
-const SEQ = { id: 1, status: 'draft' };
+const SEQ = { id: 1, status: 'draft', submissionId: 21 };
 
 beforeEach(() => {
   selectChain.mockReset();
@@ -58,6 +58,9 @@ beforeEach(() => {
 /** getSequence runs first, then the document lookup when a pointer is given. */
 function seedSelects(docRow?: Record<string, unknown> | null) {
   selectChain.mockResolvedValueOnce([SEQ]);
+  // The submission lookup that decides the section-code vocabulary. An IND
+  // files on CTD headings, so the CTD gate these tests exercise is unchanged.
+  selectChain.mockResolvedValueOnce([{ applicationType: 'ind' }]);
   if (docRow !== undefined) selectChain.mockResolvedValueOnce(docRow === null ? [] : [docRow]);
 }
 

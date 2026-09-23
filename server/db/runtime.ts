@@ -12,14 +12,14 @@
  * Bootstrap/install behavior (schema repair, org seeding, module catalog
  * creation) lives in server/db/bootstrap/*.
  *
- * IMPORTANT: dotenv is loaded at the top of this module because ESM hoists
- * imports above runtime code — if db.ts / this file initializes before
- * server/index.ts has a chance to call dotenvConfig(), we would miss .env
- * values. `override: false` so shell-exported DATABASE_URL still wins.
+ * IMPORTANT: the env files are loaded by the first import below, because this
+ * module builds the pool at import time and ESM evaluates it before
+ * server/index.ts's body runs. It used to load `.env` alone here, which made
+ * `.env` beat `.env.local` for every entrypoint that did not go through
+ * scripts/startup.sh; see server/config/load-env-files.ts.
  */
 
-import { config as dotenvConfig } from 'dotenv';
-dotenvConfig({ override: false, quiet: true });
+import '../config/load-env-files';
 
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';

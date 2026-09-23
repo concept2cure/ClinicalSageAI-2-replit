@@ -1,0 +1,54 @@
+# AnA prompt measurement — AFTER
+
+## Stream-path parts (server/routes/ana-ri/stream.ts -> orchestrate())
+persona.ts ANA_RI_CORE_PROMPT                                40615 B  ~ 10154 tok
+personality-core.ts ANA_PERSONALITY_CORE                      4679 B  ~  1170 tok
+buildAnaRISystemPrompt({general}) (core+personality+role)    45437 B  ~ 11360 tok
+orchestrate() plain chat turn, no project context            85114 B  ~ 21279 tok
+  of which orchestrator.ts static additions                  39677 B  ~  9920 tok
+orchestrate() first-turn greeting "hi"                       85065 B  ~ 21267 tok
+
+## orchestrator.ts static additions, by block
+  ACTIVE WORKSTREAM                                            251 B  ~    63 tok
+  AVAILABLE DOCUMENT ACTIONS                                  1260 B  ~   315 tok
+  INTELLIGENCE QUESTIONING FLOWS                               978 B  ~   245 tok
+  WAR GAME SIMULATION                                         1166 B  ~   292 tok
+  USING INJECTED INTELLIGENCE                                  582 B  ~   146 tok
+  EVIDENCE CITATION PROTOCOL                                  1855 B  ~   464 tok
+  PROACTIVE INTELLIGENCE PROTOCOL                             1746 B  ~   437 tok
+  buildCommandContextForPrompt() (command catalog)           31831 B  ~  7958 tok
+
+## Other AnA prompt stacks (not on the stream path)
+base-system-prompt.ts BASE_SYSTEM_PROMPT (cortex-unified)    45083 B  ~ 11271 tok
+ana-personality.ts ANA_SYSTEM_PROMPT                         14131 B  ~  3533 tok
+ana-personality.ts ANA_COMPACT_PROMPT (ana-cortex)           12096 B  ~  3024 tok
+
+## persona.ts core sections (## headers)
+  You are AnA, a regulatory intelligence expert and the us      93 B  ~    24 tok
+  Who You Are                                                 1120 B  ~   280 tok
+  Meet the human, not just the question                       1678 B  ~   420 tok
+  Register — chat, by default                                 2427 B  ~   607 tok
+  Register — artifact, when you are producing one             1296 B  ~   324 tok
+  Which register a turn is in                                 1046 B  ~   262 tok
+  Constructive Dissent (NON-NEGOTIABLE)                       2704 B  ~   676 tok
+  Proactive Foresight                                         1117 B  ~   280 tok
+  Your Expertise                                              2171 B  ~   543 tok
+  Evidence Discipline (NON-NEGOTIABLE)                         452 B  ~   113 tok
+  Context Clarity Protocol (NON-NEGOTIABLE)                   1232 B  ~   308 tok
+  THE CLIENT'S FILES (NON-NEGOTIABLE)                         4841 B  ~  1211 tok
+  DOCUMENT CONSEQUENCE (NON-NEGOTIABLE)                        209 B  ~    53 tok
+  Biostatistics Capabilities                                  3118 B  ~   780 tok
+  Safety Narrative Capabilities                                541 B  ~   136 tok
+  CMC Capabilities                                            2119 B  ~   530 tok
+  CMS & Reimbursement Capabilities                             537 B  ~   135 tok
+  Diagnostics & IVD Capabilities                               523 B  ~   131 tok
+  CSR & Clinical Intelligence                                  242 B  ~    61 tok
+  Medical Device & IVD                                         247 B  ~    62 tok
+  eCTD Structure                                               301 B  ~    76 tok
+  Biotech Program Arc                                         1145 B  ~   287 tok
+  Document Authoring — Your Primary Job                       2844 B  ~   711 tok
+  Creating Artifacts                                           786 B  ~   197 tok
+  When the User Says "Help" or Asks What You Can Do            474 B  ~   119 tok
+  Wayfinding, Wisdom, and Challenge                           5063 B  ~  1266 tok
+  Response Grounding Mode (NON-NEGOTIABLE)                    1926 B  ~   482 tok
+  Action Receipt Format                                        336 B  ~    84 tok

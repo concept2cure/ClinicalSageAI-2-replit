@@ -27,7 +27,9 @@ const executeChain = vi.fn();
 const insertValues = vi.fn();
 const updateSet = vi.fn();
 
+const poolQuery = vi.fn();
 vi.mock('../../../db', () => ({
+  pool: { query: (...a: unknown[]) => poolQuery(...a) },
   db: {
     select: () => {
       const tail = { limit: () => selectChain() };
@@ -48,22 +50,29 @@ vi.mock('../../auditService', () => ({
 import { upsertLeaf } from '../submission-service';
 
 const CTX = { organizationId: 7, userId: 3 };
-const SEQ = { id: 1, status: 'draft' };
+const SEQ = { id: 1, status: 'draft', submissionId: 21 };
 
 const BOGUS_TABLE = 'coauthor_doccuments';
 
 beforeEach(() => {
   selectChain.mockReset();
   executeChain.mockReset();
+  poolQuery.mockReset();
   insertValues.mockReset();
   updateSet.mockReset();
   insertValues.mockResolvedValue([{ id: 99 }]);
   updateSet.mockResolvedValue([{ id: 99 }]);
 });
 
-/** getSequence always runs first. */
+/**
+ * getSequence runs first, then the submission lookup that decides which
+ * section-code vocabulary the leaf is judged against. An IND is a CTD
+ * submission, so these tests keep exercising the CTD gate they were written
+ * for.
+ */
 function seedSequence() {
   selectChain.mockResolvedValueOnce([SEQ]);
+  selectChain.mockResolvedValueOnce([{ applicationType: 'ind' }]);
 }
 
 /** Run upsertLeaf and report the OUTCOME rather than throwing, so a failure
@@ -87,7 +96,12 @@ async function outcomeOf(input: Record<string, unknown>) {
    polymorphic target it answers with an explained guard-stop). Narrowing the
    allowlist to a subset would make ind-lifecycle filing (rendered_leaf_files)
    and device uploads (ctd_onboarding_documents) throw on every placement. */
-const PLACEABLE: Array<{ table: string; seed: () => void }> = [
+const VAULT_UUID = '9f2c1d40-0000-4000-8000-0000000000aa';
+
+/** `ref` is the key space this table is addressed by — integer for most stores,
+ *  uuid for the vault. Defaults to the integer so the existing entries are
+ *  unchanged. */
+const PLACEABLE: Array<{ table: string; ref?: Record<string, unknown>; seed: () => void }> = [
   {
     table: 'coauthor_documents',
     seed: () => selectChain.mockResolvedValueOnce([{ id: 55, content: 'x' }]),
@@ -112,9 +126,16 @@ const PLACEABLE: Array<{ table: string; seed: () => void }> = [
     table: 'c2c_document_sections',
     seed: () => executeChain.mockResolvedValueOnce({ rows: [{ content: { text: 'x' } }] }),
   },
-  // No tenancy verifier (UUID-keyed, program-scoped) — the resolver reports it
-  // unresolved with an explanation. Placement itself stays legal.
-  { table: 'vault_documents', seed: () => {} },
+  // UUID-KEYED. The vault names its documents by uuid, so this leaf carries
+  // document_uuid and NOT document_id — upsertLeaf refuses the other shape, in
+  // either direction, because a leaf that names no document resolves to
+  // nothing while looking placed. Its verifier reads through the programme
+  // (the authoritative owner of a vault document) and pins content_hash.
+  {
+    table: 'vault_documents',
+    ref: { documentUuid: VAULT_UUID },
+    seed: () => poolQuery.mockResolvedValueOnce({ rows: [{ content_hash: 'abc123' }] }),
+  },
 ];
 
 describe('upsertLeaf — placeable document_table allowlist', () => {
@@ -167,7 +188,7 @@ describe('upsertLeaf — placeable document_table allowlist', () => {
     ).rejects.toThrow(/coauthor_documents/);
   });
 
-  for (const { table, seed } of PLACEABLE) {
+  for (const { table, ref, seed } of PLACEABLE) {
     it(`accepts ${table} — a table the resolver branches on`, async () => {
       seedSequence();
       seed();
@@ -177,7 +198,7 @@ describe('upsertLeaf — placeable document_table allowlist', () => {
           sectionCode: '2.5',
           title: 'Clinical Overview',
           documentTable: table,
-          documentId: 55,
+          ...(ref ?? { documentId: 55 }),
         } as any,
         CTX,
       );
@@ -185,6 +206,94 @@ describe('upsertLeaf — placeable document_table allowlist', () => {
       expect((insertValues.mock.calls[0][0] as Record<string, unknown>).documentTable).toBe(table);
     });
   }
+
+  /*
+   * THE KEY SPACE MUST MATCH THE TABLE.
+   *
+   * `submission_leaves` addresses two of them: integer `document_id` for most
+   * stores, uuid `document_uuid` for the vault
+   * (migrations/20260917b_submission_leaf_document_uuid.sql). Both mismatches
+   * produce the same bad outcome — a leaf that LOOKS placed, is audited as
+   * placed, and resolves to nothing — so both are refused at this one choke
+   * point rather than by a CHECK constraint, which would have to name tables
+   * and would drift from leaf-document-tables.ts.
+   */
+  it('refuses a vault leaf addressed by an integer — a uuid-keyed store has no integer to name', async () => {
+    seedSequence();
+    const outcome = await outcomeOf({
+      sequenceId: 1,
+      sectionCode: '2.5',
+      title: 'Clinical Overview',
+      documentTable: 'vault_documents',
+      documentId: 55,
+    });
+    expect(outcome).toMatchObject({ rejected: true, code: 'VALIDATION' });
+    expect(insertValues).not.toHaveBeenCalled();
+  });
+
+  it('refuses a vault leaf with no uuid at all — it would name no document', async () => {
+    seedSequence();
+    const outcome = await outcomeOf({
+      sequenceId: 1,
+      sectionCode: '2.5',
+      title: 'Clinical Overview',
+      documentTable: 'vault_documents',
+    });
+    expect(outcome).toMatchObject({ rejected: true, code: 'VALIDATION' });
+    expect(insertValues).not.toHaveBeenCalled();
+  });
+
+  it('refuses a uuid on an integer-keyed table — that store has no uuids', async () => {
+    seedSequence();
+    const outcome = await outcomeOf({
+      sequenceId: 1,
+      sectionCode: '2.5',
+      title: 'Clinical Overview',
+      documentTable: 'coauthor_documents',
+      documentUuid: VAULT_UUID,
+    });
+    expect(outcome).toMatchObject({ rejected: true, code: 'VALIDATION' });
+    expect(insertValues).not.toHaveBeenCalled();
+  });
+
+  it('refuses a vault document belonging to another organization, and pins nothing', async () => {
+    // The verifier reads through the programme with the caller's org. No row
+    // means the document is not theirs — refused as FORBIDDEN, and no leaf is
+    // written pointing at a document they cannot see.
+    seedSequence();
+    poolQuery.mockResolvedValueOnce({ rows: [] });
+    const outcome = await outcomeOf({
+      sequenceId: 1,
+      sectionCode: '2.5',
+      title: 'Clinical Overview',
+      documentTable: 'vault_documents',
+      documentUuid: VAULT_UUID,
+    });
+    expect(outcome).toMatchObject({ rejected: true, code: 'FORBIDDEN' });
+    expect(insertValues).not.toHaveBeenCalled();
+  });
+
+  it('pins the vault document content hash onto the leaf it writes', async () => {
+    // The pin is what makes "is the document behind this filing still what went
+    // to the agency?" answerable, and content_hash is exactly what the resolver
+    // re-verifies before staging the bytes.
+    seedSequence();
+    poolQuery.mockResolvedValueOnce({ rows: [{ content_hash: 'abc123' }] });
+    await upsertLeaf(
+      {
+        sequenceId: 1,
+        sectionCode: '2.5',
+        title: 'Clinical Overview',
+        documentTable: 'vault_documents',
+        documentUuid: VAULT_UUID,
+      } as any,
+      CTX,
+    );
+    const written = insertValues.mock.calls[0][0] as Record<string, unknown>;
+    expect(written.documentUuid).toBe(VAULT_UUID);
+    expect(written.documentId).toBeNull();
+    expect(written.documentContentSha256).toBe('abc123');
+  });
 
   it('still accepts a leaf with no document pointer at all', async () => {
     seedSequence();

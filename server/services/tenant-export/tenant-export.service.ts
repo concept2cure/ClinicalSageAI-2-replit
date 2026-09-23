@@ -17,8 +17,29 @@
 import type { Pool, PoolClient } from 'pg';
 
 export interface TenantExportManifest {
-  schemaVersion: '1.0';
+  schemaVersion: '1.1';
   exportedAt: string;
+  /**
+   * Reads that FAILED, so a consumer can tell an empty resource from an unread
+   * one.
+   *
+   * ── 2026-09-10 ───────────────────────────────────────────────────────────
+   * Six queries here carried `.catch(() => ({ rows: [] }))` (and, for the audit
+   * count, `.catch(() => ({ rows: [{ count: '0' }] }))`). A failure therefore
+   * fed BOTH `counts.<resource>` and `resources.<resource>`: the manifest did
+   * not merely misreport a number, it presented an empty collection as the
+   * tenant's data. For the audit log that meant an export stating the tenant
+   * has zero audit-log entries — which, in the document a customer receives
+   * when they ask for their data, is a claim about their compliance record.
+   *
+   * The shape is copied from the sibling that already solved this:
+   * tenant-full-export.service.ts records `coverage.tablesFailed` rather than
+   * folding a failure into a count. Empty here means empty.
+   *
+   * schemaVersion moves 1.0 -> 1.1 because a consumer that ignores this field
+   * is reading the old contract, in which a zero could not be a failure.
+   */
+  readFailures: Array<{ resource: string; error: string }>;
   organization: {
     id: number;
     slug: string;
@@ -34,7 +55,8 @@ export interface TenantExportManifest {
     postMarketDocuments: number;
     gsprMappings: number;
     sections: number;
-    auditLogs: number;
+    /** Null when the audit-log count could not be read — see readFailures. */
+    auditLogs: number | null;
   };
   resources: {
     programs: Array<Record<string, unknown>>;
@@ -57,6 +79,29 @@ export class TenantNotFoundError extends Error {
   }
 }
 
+
+/**
+ * Run one org-scoped read, recording a failure instead of swallowing it.
+ *
+ * The previous `.catch(() => ({ rows: [] }))` made "the query threw" and "there
+ * are none" the same value, in both the count and the resource list. This keeps
+ * the export resilient — one unreadable table must not abort a tenant's whole
+ * data export — while making the gap visible in `readFailures`.
+ */
+async function readOrRecord(
+  failures: Array<{ resource: string; error: string }>,
+  resource: string,
+  run: () => Promise<{ rows: Array<Record<string, unknown>> }>
+): Promise<Array<Record<string, unknown>>> {
+  try {
+    return (await run()).rows;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    failures.push({ resource, error: message.slice(0, 200) });
+    return [];
+  }
+}
+
 export async function exportTenantData(
   client: Pool | PoolClient,
   organizationId: number,
@@ -74,6 +119,10 @@ export async function exportTenantData(
     throw new TenantNotFoundError(`Organization ${organizationId} not found`);
   }
   const org = orgResult.rows[0];
+
+  // Populated by readOrRecord below; surfaced on the manifest so an empty
+  // resource can be told from an unread one.
+  const readFailures: Array<{ resource: string; error: string }> = [];
 
   // Programs are the entity all Q-Sub / evidence resources hang off.
   const programs = (
@@ -145,62 +194,69 @@ export async function exportTenantData(
     : [];
 
   // Evidence-sufficiency assessments (org-scoped directly).
-  const evidenceSufficiency = (
-    await client.query(
-      `SELECT * FROM evidence_sufficiency_assessments WHERE organization_id = $1
-       ORDER BY created_at ASC`,
-      [organizationId],
-    ).catch(() => ({ rows: [] }))
-  ).rows;
-
-  // Post-market documents.
-  const postMarketDocuments = (
-    await client
-      .query(
-        `SELECT * FROM post_market_documents WHERE organization_id = $1
+  const evidenceSufficiency = await readOrRecord(
+    readFailures,
+    'evidenceSufficiencyAssessments',
+    () =>
+      client.query(
+        `SELECT * FROM evidence_sufficiency_assessments WHERE organization_id = $1
          ORDER BY created_at ASC`,
         [organizationId],
-      )
-      .catch(() => ({ rows: [] }))
-  ).rows;
+      ),
+  );
+
+  // Post-market documents.
+  const postMarketDocuments = await readOrRecord(readFailures, 'postMarketDocuments', () =>
+    client.query(
+      `SELECT * FROM post_market_documents WHERE organization_id = $1
+       ORDER BY created_at ASC`,
+      [organizationId],
+    ),
+  );
 
   // GSPR mappings (org-scoped).
-  const gsprMappings = (
-    await client
-      .query(
-        `SELECT * FROM gspr_program_mappings WHERE organization_id = $1
-         ORDER BY decided_at ASC`,
-        [organizationId],
-      )
-      .catch(() => ({ rows: [] }))
-  ).rows;
+  const gsprMappings = await readOrRecord(readFailures, 'gsprMappings', () =>
+    client.query(
+      `SELECT * FROM gspr_program_mappings WHERE organization_id = $1
+       ORDER BY decided_at ASC`,
+      [organizationId],
+    ),
+  );
 
   // Sections — manifest only (number, title, status, completion).
-  const sections = (
-    await client
-      .query(
-        `SELECT id, document_id, section_number, section_title, section_key,
-                category, status, completion_percentage, updated_at
-         FROM cerv2_510k_sections WHERE organization_id = $1
-         ORDER BY display_order ASC`,
-        [organizationId],
-      )
-      .catch(() => ({ rows: [] }))
-  ).rows;
+  const sections = await readOrRecord(readFailures, 'sections', () =>
+    client.query(
+      `SELECT id, document_id, section_number, section_title, section_key,
+              category, status, completion_percentage, updated_at
+       FROM cerv2_510k_sections WHERE organization_id = $1
+       ORDER BY display_order ASC`,
+      [organizationId],
+    ),
+  );
 
   // Audit-log row count only (full export goes via signedAuditExport).
-  const auditLogCount = (
-    await client
-      .query<{ count: string }>(
-        `SELECT count(*)::text AS count FROM audit_logs WHERE tenant_id = $1`,
-        [organizationId],
-      )
-      .catch(() => ({ rows: [{ count: '0' }] }))
-  ).rows[0].count;
+  // A failed audit-log count used to become the string '0'. In a tenant data
+  // export that is a statement that the tenant has no audit trail, so the count
+  // is null on failure and the reason is in readFailures.
+  let auditLogCount: number | null = null;
+  try {
+    const r = await client.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM audit_logs WHERE tenant_id = $1`,
+      [organizationId],
+    );
+    auditLogCount = parseInt(r.rows[0].count, 10);
+    if (!Number.isFinite(auditLogCount)) auditLogCount = null;
+  } catch (error) {
+    readFailures.push({
+      resource: 'auditLogs',
+      error: (error instanceof Error ? error.message : String(error)).slice(0, 200),
+    });
+  }
 
   return {
-    schemaVersion: '1.0',
+    schemaVersion: '1.1',
     exportedAt: new Date().toISOString(),
+    readFailures,
     organization: org,
     counts: {
       programs: programs.length,
@@ -211,7 +267,7 @@ export async function exportTenantData(
       postMarketDocuments: postMarketDocuments.length,
       gsprMappings: gsprMappings.length,
       sections: sections.length,
-      auditLogs: parseInt(auditLogCount, 10) || 0,
+      auditLogs: auditLogCount,
     },
     resources: {
       programs,

@@ -50,11 +50,17 @@ export interface NavigationAction {
   path: string;
   scope: NavigationDirective['scope'];
   params?: Record<string, string>;
+  /** The program a project-scope destination opens (navigate_to's `program`). */
+  program?: { id: string; name?: string; code?: string };
   executed: true;
 }
 
-/** Chips beyond this are dropped: a turn offering more is not offering. */
-export const MAX_NAVIGATION_ACTIONS = 3;
+/**
+ * Chips beyond this are dropped: a turn offering more is not offering. Equal
+ * to the assist drive budget (shared/navigation/drive-policy), so driving
+ * never moves a person more times than offering would have offered.
+ */
+export const MAX_NAVIGATION_ACTIONS = 6;
 
 /**
  * Read a `navigate_to` tool result and return its directive, or null.
@@ -104,7 +110,8 @@ export function toNavigationActions(
   const out: NavigationAction[] = [];
   for (const d of directives) {
     if (out.length >= MAX_NAVIGATION_ACTIONS) break;
-    const key = `${d.targetId}:${JSON.stringify(d.params ?? {})}`;
+    const program = (d as NavigationDirective & { program?: NavigationAction['program'] }).program;
+    const key = `${d.targetId}:${JSON.stringify(d.params ?? {})}:${program?.id ?? ''}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push({
@@ -114,6 +121,7 @@ export function toNavigationActions(
       path: d.path,
       scope: d.scope,
       ...(d.params && Object.keys(d.params).length > 0 ? { params: d.params } : {}),
+      ...(program && typeof program.id === 'string' ? { program } : {}),
       executed: true,
     });
   }
@@ -194,6 +202,93 @@ export function toSurfaceActionChips(
       actionId: d.actionId,
       surfaceId: d.surfaceId,
       ...(d.params && Object.keys(d.params).length > 0 ? { params: d.params } : {}),
+      executed: true,
+    });
+  }
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Demonstration starts — "show me the system" typed in chat with Live Drive OFF.
+//
+// `start_product_demo` fetches a validated script. Under Live Drive the turn
+// drives it stop by stop. Without Live Drive nothing can move the screen, so
+// the tool result says the moves are OFFERED — and until this carrier existed
+// the person got a paragraph telling them where the menu was. The honest path
+// is one click: the start itself is offered as a chip, and the client runs it
+// through the SAME `startDemo` the rail's Control menu calls (consent shown by
+// the toggle turning on, demo mode committed, budgets and take-over unchanged).
+// Same offered-not-performed contract, same carrier module, no second path.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** What a demo-ready result says about the script it fetched. */
+export interface DemoStartDirective {
+  demoId: string;
+  title: string;
+}
+
+/** The chip: the client resolves `demoId` against the shared script registry. */
+export interface DemoStartChip {
+  actionType: 'start_demo';
+  label: string;
+  demoId: string;
+  demoTitle: string;
+  executed: true;
+}
+
+/**
+ * Read a `start_product_demo` result and return the script to offer, or null.
+ *
+ * Only an OFFERED demonstration becomes a chip: the result must say
+ * `driven: false`. A driven turn is already running the script live and a
+ * "start" chip there would restart what is playing. A refusal
+ * (`unknown_demo`, `invalid_demo`, `needs_parameters`), an older result with
+ * no `driven` field, or unparseable output returns null — a refusal upstream
+ * must not become a start downstream.
+ */
+export function demoStartFromToolResult(
+  toolName: string,
+  resultStr: string,
+): DemoStartDirective | null {
+  if (toolName !== 'start_product_demo') return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(resultStr);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object') return null;
+  const o = parsed as Record<string, unknown>;
+  if (o.status !== 'demo_ready' || o.driven !== false) return null;
+  const script = o.script as Record<string, unknown> | undefined;
+  if (!script || typeof script !== 'object') return null;
+  if (typeof script.id !== 'string' || !script.id || typeof script.title !== 'string' || !script.title) {
+    return null;
+  }
+  return { demoId: script.id, title: script.title };
+}
+
+/** The chip label — one wording, shared by the server test and the rail test. */
+export function demoStartLabel(title: string): string {
+  return `Start demonstration: ${title}`;
+}
+
+/**
+ * Collapse a turn's demo starts into chips — same dedup, cap and
+ * first-occurrence-wins contract as the navigation chips.
+ */
+export function toDemoStartChips(directives: readonly DemoStartDirective[]): DemoStartChip[] {
+  const seen = new Set<string>();
+  const out: DemoStartChip[] = [];
+  for (const d of directives) {
+    if (out.length >= MAX_NAVIGATION_ACTIONS) break;
+    if (seen.has(d.demoId)) continue;
+    seen.add(d.demoId);
+    out.push({
+      actionType: 'start_demo',
+      label: demoStartLabel(d.title),
+      demoId: d.demoId,
+      demoTitle: d.title,
       executed: true,
     });
   }

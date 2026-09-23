@@ -39,9 +39,15 @@ import type {
   EctdSequence,
   SubmissionLeaf,
 } from '../../../shared/types/database';
-import auditService, { writeChainedAuditRow } from '../auditService';
-import { deriveGovernedTargetBinding, BINDING_BASIS } from '../part11/signature-persistence';
+import { writeChainedAuditRow } from '../auditService';
+import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
+import { deriveGovernedTargetBinding, BINDING_BASIS, isSignatureWithdrawn } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
+import {
+  validateSectionCode,
+  vocabularyForApplicationType,
+  type PlacementVocabulary,
+} from '../../../shared/regulatory/placement-vocabulary';
 
 const logger = createScopedLogger('submission-service');
 
@@ -135,12 +141,40 @@ async function insertSubmissionRow(
   return row as Submission;
 }
 
+/**
+ * A created submission, with what happened to the 21 CFR Part 11 §11.10(e)
+ * record of its creation carried on it.
+ *
+ * WO-16C #133. The audit write below was `await auditService.logAction({…})` at
+ * statement position, which discards the `AuditWriteResult` that call resolves.
+ * `logAction` never rejects when persistence fails — by deliberate policy, an
+ * audit-trail outage must not break the action it records — so awaiting it and
+ * throwing the value away reported exactly as much as not awaiting it: the
+ * `submissions` row was committed and the caller (POST /api/submissions, which
+ * returns this object as its 201 body) was handed a byte-identical success
+ * whether the §11.10(e) record for creating this application existed or not.
+ *
+ * The inserted row is returned intact with `auditTrail` added, so callers that
+ * read `id` / `title` / `applicationType` off it are unaffected and the outcome
+ * travels with it. `auditTrail` is the key this repository already uses for a
+ * service's own row (`CreatedQSubmission.auditTrail` in
+ * server/services/q-sub/q-sub.service.ts).
+ */
+export type CreatedSubmission = Submission & { auditTrail: AuditRowOutcome };
+
 export async function createSubmission(
   input: CreateSubmissionInput,
   ctx: { organizationId: number; userId: number }
-): Promise<Submission> {
+): Promise<CreatedSubmission> {
   const row = await insertSubmissionRow(db, input, ctx);
-  await auditService.logAction({
+  // Part 11 §11.10(e). `recordAuditRow` neither throws nor rejects, and the
+  // INSERT above is already committed when it runs, so the submission stands
+  // either way and is never un-created over a lost log row — this is a record
+  // beside a committed change, not the change itself. What changes is that the
+  // caller is told, in `auditTrail`. The store's own reason for a failure stays
+  // in the log line recordAuditRow wrote against this action and resource id;
+  // `message` on the failure arm is the only text fit to show a user.
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'SUBMISSION_CREATED',
@@ -149,7 +183,7 @@ export async function createSubmission(
     details: { applicationType: input.applicationType, primaryRegion: input.primaryRegion, clientType: input.clientType },
   });
   logger.info('Created submission', { submissionId: row.id, organizationId: ctx.organizationId });
-  return row;
+  return { ...row, auditTrail };
 }
 
 /**
@@ -207,10 +241,22 @@ export interface CreateSequenceInput {
   type?: string;
 }
 
+/**
+ * A created eCTD sequence, with what happened to the §11.10(e) record of its
+ * creation carried on it.
+ *
+ * WO-16C #133, same defect and same reasoning as `CreatedSubmission`: the audit
+ * write below was awaited at statement position and its `AuditWriteResult`
+ * discarded, so a sequence created for a filing — an original, an amendment, an
+ * annual report — could not be told apart from one whose creation record was
+ * lost. The inserted row is returned intact with `auditTrail` added.
+ */
+export type CreatedSequence = EctdSequence & { auditTrail: AuditRowOutcome };
+
 export async function createSequence(
   input: CreateSequenceInput,
   ctx: { organizationId: number; userId: number }
-): Promise<EctdSequence> {
+): Promise<CreatedSequence> {
   // Tenant ownership of the parent submission.
   await getSubmission(input.submissionId, ctx);
   const [row] = await db
@@ -225,7 +271,11 @@ export async function createSequence(
       createdBy: ctx.userId,
     })
     .returning();
-  await auditService.logAction({
+  // Part 11 §11.10(e). The INSERT above is committed before this runs; a failed
+  // audit write never deletes the sequence (a filing's sequence numbering is
+  // regulatory state — removing a created sequence to make its log row's absence
+  // tidy would be the worse lie). The caller is handed the outcome instead.
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'SEQUENCE_CREATED',
@@ -233,7 +283,7 @@ export async function createSequence(
     resourceId: row.id,
     details: { submissionId: input.submissionId, region: input.region, sequenceNumber: input.sequenceNumber },
   });
-  return row as EctdSequence;
+  return { ...(row as EctdSequence), auditTrail };
 }
 
 export async function listSequences(
@@ -265,12 +315,31 @@ export async function getSequence(id: number, ctx: { organizationId: number }): 
   return row as EctdSequence;
 }
 
+/**
+ * A sequence whose status was moved by the generic (non-governed) transition,
+ * with what happened to the §11.10(e) record of that move carried on it.
+ *
+ * WO-16C #133. The audit write below was awaited at statement position and its
+ * `AuditWriteResult` discarded, so POST
+ * /api/submissions/sequences/:seqId/transition answered 200 with the moved
+ * sequence whether or not the row recording who moved it — and from what — was
+ * written. Note the contrast one section down: the
+ * governed transitions (`frozen`, `dispatched`, and transmit) do not use this
+ * path at all; their audit row is written by `applySequenceChangeWithAudit` in
+ * the same transaction as the state change and a failure rolls the state change
+ * back. That guarantee is deliberately NOT extended here — this transition is
+ * reversible (`assembling` ⇄ `draft`, `validated` ⇄ `assembling`) and internal,
+ * so its rule is the repository's default: the action stands and the caller is
+ * told.
+ */
+export type TransitionedSequence = EctdSequence & { auditTrail: AuditRowOutcome };
+
 /** Transition a sequence's status, enforcing the pure transition rules + audit. */
 export async function transitionSequence(
   id: number,
   toStatus: string,
   ctx: { organizationId: number; userId: number }
-): Promise<EctdSequence> {
+): Promise<TransitionedSequence> {
   const seq = await getSequence(id, ctx);
   if (GOVERNED_TRANSITIONS.has(toStatus)) {
     throw new SubmissionError(
@@ -282,12 +351,34 @@ export async function transitionSequence(
     throw new SubmissionError('INVALID_STATE', `Cannot transition sequence from ${seq.status} to ${toStatus}.`);
   }
   const frozenAt = toStatus === 'frozen' ? new Date() : undefined;
+  /* Same compare-and-set as the governed twin: `seq.status` was read above and
+     canTransitionSequence was evaluated against it, so the write must apply only
+     while the row still holds that value. Without the predicate two concurrent
+     callers both passed the check and both wrote, and the second overwrote a
+     transition it never saw. */
   const [row] = await db
     .update(ectdSequences)
     .set({ status: toStatus, updatedAt: new Date(), ...(frozenAt ? { frozenAt } : {}) })
-    .where(and(eq(ectdSequences.id, id), eq(ectdSequences.organizationId, ctx.organizationId)))
+    .where(
+      and(
+        eq(ectdSequences.id, id),
+        eq(ectdSequences.organizationId, ctx.organizationId),
+        eq(ectdSequences.status, seq.status),
+      ),
+    )
     .returning();
-  await auditService.logAction({
+  if (!row) {
+    throw new SubmissionError(
+      'INVALID_STATE',
+      `Sequence ${id} is no longer in state '${seq.status}' — it changed while this transition was being applied. Re-read the sequence and retry if the transition still applies.`,
+    );
+  }
+  // Part 11 §11.10(e). The UPDATE above is committed; the status is not moved
+  // back when this write fails. `SEQUENCE_FROZEN` appears in the action below
+  // only because it is the action name for a `frozen` target — `frozen` is in
+  // GOVERNED_TRANSITIONS and was already refused at the top of this function, so
+  // the branch this reaches in practice is `SEQUENCE_TRANSITIONED`.
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: toStatus === 'frozen' ? 'SEQUENCE_FROZEN' : 'SEQUENCE_TRANSITIONED',
@@ -295,7 +386,7 @@ export async function transitionSequence(
     resourceId: id,
     details: { from: seq.status, to: toStatus },
   });
-  return row as EctdSequence;
+  return { ...(row as EctdSequence), auditTrail };
 }
 
 // ── Governed freeze / dispatch (the SUBMIT step of assemble→submit→transmit) ──
@@ -372,15 +463,44 @@ async function governedSignatureRefusal(
     return 'this sign action already authorized a governed transition; each step needs its own signature';
   }
 
+  /* The withdrawal columns are selected, not just the binding ones. A governed
+     revocation (persistGovernedSignatureRevocation) marks a signature out of
+     force by setting superseded_by / is_valid=false / verification_status, and
+     deliberately leaves bound_payload_digest, binding_basis and
+     signature_manifest byte-identical — §11.70 requires the superseded
+     signature be retained unaltered. It also writes a NEW c2c_ana_actions row
+     rather than touching the original `sign` row, so every earlier check in this
+     function still matches a revoked signature: the sign action is still
+     'executed' by the same actor, the declared intent is unchanged, the
+     spent-check filters different actions, and the leaf-manifest digest still
+     agrees because revocation does not alter content.
+
+     Reading only the binding columns therefore could not distinguish a live
+     signature from a withdrawn one, and revocation — the product's own §11.70
+     mechanism for taking an authorization back — had no effect on freeze or
+     transmit. (Dispatch was covered, because its Gate 2 release-signature check
+     does apply this predicate.) */
   const esig = await db.execute(sql`
-    SELECT bound_payload_digest, binding_basis FROM electronic_signatures
+    SELECT bound_payload_digest, binding_basis, superseded_by, is_valid, verification_status
+      FROM electronic_signatures
     WHERE organization_id = ${ctx.organizationId}
       AND signed_target = ${target}
       AND (signature_manifest::jsonb ->> 'actionId') = ${signatureActionId}
     LIMIT 1
   `);
-  const sig = ((esig as unknown as { rows?: Array<{ bound_payload_digest: string | null; binding_basis: string | null }> }).rows ?? [])[0];
+  const sig = ((esig as unknown as {
+    rows?: Array<{
+      bound_payload_digest: string | null;
+      binding_basis: string | null;
+      superseded_by: unknown;
+      is_valid: unknown;
+      verification_status: unknown;
+    }>;
+  }).rows ?? [])[0];
   if (!sig) return 'no electronic signature record is bound to this sign action';
+  if (isSignatureWithdrawn(sig)) {
+    return 'the electronic signature authorizing this step has been revoked; obtain a new signature';
+  }
   if (sig.binding_basis !== BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST || !sig.bound_payload_digest) {
     return 'the signature is not bound to this sequence\'s leaf manifest; re-sign the sequence';
   }
@@ -410,14 +530,28 @@ function safeJson(text: string): Record<string, unknown> | null {
  * change back.
  */
 async function applySequenceChangeWithAudit(
-  update: { text: string; params: unknown[] },
+  update: {
+    text: string;
+    params: unknown[];
+    /**
+     * What zero affected rows MEANS for this caller. When the UPDATE carries a
+     * compare-and-set predicate, zero rows is a LOST RACE (the state moved after
+     * it was read), not a missing sequence, and reporting "not found" for it
+     * would send the operator looking for the wrong problem.
+     */
+    noRowsRefusal?: string;
+  },
   audit: { organizationId: number; userId: number; action: string; resourceId: number; details: Record<string, unknown> },
 ): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     const res = (await client.query(update.text, update.params)) as { rowCount?: number | null };
-    if (!res.rowCount) throw new SubmissionError('NOT_FOUND', 'Sequence not found for this organization.');
+    if (!res.rowCount) {
+      throw update.noRowsRefusal
+        ? new SubmissionError('INVALID_STATE', update.noRowsRefusal)
+        : new SubmissionError('NOT_FOUND', 'Sequence not found for this organization.');
+    }
     await writeChainedAuditRow(client, {
       organizationId: audit.organizationId,
       userId: audit.userId,
@@ -458,13 +592,20 @@ async function applyGovernedSequenceTransition(
     );
   }
 
-  // Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof).
+  // Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof),
+  // composed for THIS step. Freeze takes every gate except the REQUIREMENT for a
+  // §11.70 release signature: that control is the transmit re-check, a release
+  // signature comes from a signed package orchestrator run, and requiring one to
+  // freeze inverted the order the product works in — freeze, then build and sign
+  // the release. A tampered signature still blocks a freeze, and dispatch is
+  // unchanged. See assess-dispatch-readiness → composeDispatchGatesForStep.
   const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
   const assessment = await assessSequenceDispatchReadiness({ sequenceId: id, organizationId: ctx.organizationId });
-  if (!assessment.gate.cleared) {
+  const stepGate = toStatus === 'frozen' ? assessment.freezeGate : assessment.gate;
+  if (!stepGate.cleared) {
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
-      `Dispatch gate blocks ${toStatus}: ${assessment.gate.blockers.join(' ')}`
+      `Dispatch gate blocks ${toStatus}: ${stepGate.blockers.join(' ')}`
     );
   }
 
@@ -473,10 +614,22 @@ async function applyGovernedSequenceTransition(
   // it is not yet sent.
   await applySequenceChangeWithAudit(
     {
+      /* COMPARE-AND-SET on the status this transition was authorized against.
+         `seq.status` was read at the top of this function, and everything since —
+         three queries in governedSignatureRefusal, deriveGovernedTargetBinding,
+         and the whole dispatch readiness assessment including an external
+         validator call — is a window in which another author can move the same
+         sequence. Without the predicate both callers' UPDATEs applied, each
+         spending its own signature and each writing a §11.10(e) row, so the
+         ledger recorded two irreversible transitions from a state only one of
+         them actually observed. */
       text: toStatus === 'frozen'
-        ? `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), frozen_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL`
-        : `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), dispatch_status = 'pending' WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL`,
-      params: [toStatus, id, ctx.organizationId],
+        ? `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), frozen_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND status = $4`
+        : `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), dispatch_status = 'pending' WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL AND status = $4`,
+      params: [toStatus, id, ctx.organizationId, seq.status],
+      noRowsRefusal:
+        `Sequence ${id} is no longer in state '${seq.status}' — it changed while this ${step} was being authorized. ` +
+        `Re-check the sequence and sign again if the transition still applies.`,
     },
     {
       organizationId: ctx.organizationId,
@@ -576,7 +729,12 @@ export function selectGateway(
  * call — same signature — produced a second real transmittal at the agency.
  * A rejected transmission may be retried; a sent or acknowledged one may not.
  */
+export const TRANSMITTING_STATUS = 'transmitting';
+
 export function resendRefusal(dispatchStatus: string | null | undefined): string | null {
+  if (dispatchStatus === TRANSMITTING_STATUS) {
+    return `A transmit of this sequence is already in flight (dispatch status '${dispatchStatus}'). It is not sent again while that attempt is unresolved — confirm at the agency whether the package arrived before retrying.`;
+  }
   if (dispatchStatus === 'sent' || dispatchStatus === 'acknowledged') {
     return `Sequence was already transmitted (dispatch status '${dispatchStatus}'); it is not sent again. A correction is a new sequence.`;
   }
@@ -615,12 +773,75 @@ export interface TransmitSequenceResult {
   transmitted: boolean;
   /** Set when not transmitted (e.g. 'gateway_not_configured'). */
   reason?: string;
+  /**
+   * What happened to the §11.10(e) row for a transmit that was NOT performed.
+   *
+   * WO-16C #133. Set ONLY on the `gateway_not_configured` return below, which is
+   * the one audit write in this function that goes through `recordAuditRow`; it
+   * was `await auditService.logAction({…})` at statement position, so the
+   * `transmitted: false` answer was identical whether or not the attempt was
+   * recorded anywhere. Deliberately a key of its own: the successful path's
+   * `ECTD_TRANSMITTED` row is written by `applySequenceChangeWithAudit` inside
+   * the same transaction as the dispatch_status update and rolls that update
+   * back if it cannot be written, so it needs no field here — and because this
+   * key is never set on that path, it can never be read as that row's outcome.
+   */
+  skipAudit?: AuditRowOutcome;
   region: string;
   gateway: string;
   transmittalId?: number;
   transmissionId?: string | null;
   status?: string;
   dispatchStatus: string;
+}
+
+/**
+ * Claim the transmit slot with a COMPARE-AND-SET, before any bytes leave.
+ *
+ * `dispatch_status` is the only thing preventing a second real transmission to
+ * an agency, and it used to be read at the top of transmitSequence and written
+ * only AFTER the wire. Everything in between — both gates, the readiness
+ * assessment, package assembly, and the AS2/SFTP transfer itself — was a window
+ * in which a second caller read the same 'pending', passed the same guard, and
+ * transmitted the same sequence again. The single-use signature check could not
+ * catch it either: it looks for an audit row that is written after the transfer.
+ *
+ * Taking the claim here narrows that to a single atomic UPDATE. The predicate is
+ * the value that was read, so exactly one concurrent caller wins and the loser
+ * is refused with the ordinary INVALID_STATE wording.
+ *
+ * It is deliberately NOT inside applySequenceChangeWithAudit: that helper rolls
+ * its state change back when the §11.10(e) row cannot be written, which is right
+ * for freeze but wrong once a package is already at the agency — it left
+ * dispatch_status at 'pending' with the bytes delivered, so the operator's retry
+ * sent them a second time. The claim commits on its own and therefore survives
+ * that rollback.
+ */
+async function claimTransmitSlot(sequenceId: number, organizationId: number): Promise<boolean> {
+  const res = await pool.query(
+    `UPDATE ectd_sequences
+        SET dispatch_status = $3, updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+        AND status = 'dispatched'
+        AND (dispatch_status IS NULL OR dispatch_status IN ('pending', 'rejected'))
+      RETURNING id`,
+    [sequenceId, organizationId, TRANSMITTING_STATUS],
+  );
+  return (res.rowCount ?? res.rows?.length ?? 0) > 0;
+}
+
+/**
+ * Release a claim taken for an attempt that failed BEFORE the wire, so a
+ * packaging error does not wedge the sequence. Only ever called on the pre-wire
+ * path: once gw.transmit has been entered, delivery is ambiguous and the claim
+ * is deliberately left standing for a human to resolve.
+ */
+async function releaseTransmitSlot(sequenceId: number, organizationId: number): Promise<void> {
+  await pool.query(
+    `UPDATE ectd_sequences SET dispatch_status = 'pending', updated_at = NOW()
+      WHERE id = $1 AND organization_id = $2 AND dispatch_status = $3`,
+    [sequenceId, organizationId, TRANSMITTING_STATUS],
+  );
 }
 
 /**
@@ -680,7 +901,14 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
 
   // Honest: only transmit when the org has credentials for this gateway+env.
   if (!(await gw.isConfigured(ctx.organizationId, environment))) {
-    await auditService.logAction({
+    // Part 11 §11.10(e) for an attempt that changed nothing: no package was
+    // assembled, no bytes left the server, and no row was updated, so there is
+    // nothing here to revert and the refusal itself is already reported to the
+    // caller in `reason`. This audit row is nonetheless the only place the
+    // attempt is persisted at all, so its loss is reported too, in `skipAudit`,
+    // rather than leaving "we never tried" and "we tried and could not record
+    // it" as the same response (WO-16C #133).
+    const skipAudit = await recordAuditRow({
       organizationId: ctx.organizationId,
       userId: ctx.userId,
       action: 'ECTD_TRANSMIT_SKIPPED',
@@ -691,15 +919,32 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     return {
       transmitted: false,
       reason: 'gateway_not_configured',
+      skipAudit,
       region: seq.region,
       gateway: route.gwName,
       dispatchStatus: seq.dispatchStatus ?? 'pending',
     };
   }
 
-  // Assemble the package bytes, then hand them to the gateway.
+  /* Claim the send before a single byte is assembled or transmitted. Past this
+     point a concurrent caller is refused by the compare-and-set rather than by a
+     status it read minutes ago. */
+  if (!(await claimTransmitSlot(sequenceId, ctx.organizationId))) {
+    const fresh = await getSequence(sequenceId, ctx);
+    throw new SubmissionError(
+      'INVALID_STATE',
+      resendRefusal(fresh.dispatchStatus) ??
+        `Sequence ${sequenceId} is no longer in a transmittable state (dispatch status '${fresh.dispatchStatus ?? 'unknown'}').`,
+    );
+  }
+
+  // Assemble the package bytes, then hand them to the gateway. A failure
+  // anywhere below and BEFORE gw.transmit released nothing to the agency, so the
+  // claim taken above is released and the sequence stays transmittable.
   const { assembleSequence } = await import('../ectd/assemble-from-core');
-  const assembled = await assembleSequence({
+  let assembled;
+  try {
+    assembled = await assembleSequence({
     sequenceId,
     organizationId: ctx.organizationId,
     userId: ctx.userId,
@@ -709,9 +954,13 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     // also a package filename component. An unassigned value SAYS it is
     // unassigned, in the wording the transmit path already uses.
     applicationId,
-    sponsorId: params.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
-    sponsorName: params.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
-  });
+      sponsorId: params.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
+      sponsorName: params.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
+    });
+  } catch (err) {
+    await releaseTransmitSlot(sequenceId, ctx.organizationId);
+    throw err;
+  }
 
   // A dossier transmitted to an agency must physically contain every leaf's
   // file. `assemble` surfaces every leaf whose source could not be materialized
@@ -744,6 +993,7 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
           `(${external.map((d) => `${d.documentTable}:${d.documentId}`).join(', ')})`,
       );
     }
+    await releaseTransmitSlot(sequenceId, ctx.organizationId);
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
       `Transmit blocked — the transmitted sequence would be missing ${unresolved.length} leaf file(s): ${parts.join('; ')}. ` +
@@ -780,8 +1030,17 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   const dispatchStatus = toDispatchStatus(result.status);
   await applySequenceChangeWithAudit(
     {
-      text: `UPDATE ectd_sequences SET dispatch_status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3`,
-      params: [dispatchStatus, sequenceId, ctx.organizationId],
+      // Predicated on the claim taken before the wire: this row is the one that
+      // resolves THIS attempt. If the §11.10(e) write fails, applySequenceChange-
+      // WithAudit rolls this back and the sequence stays 'transmitting' — bytes
+      // are already at the agency, so the correct posture is a state a human must
+      // resolve, not 'pending', which silently invited a second send.
+      text: `UPDATE ectd_sequences SET dispatch_status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3 AND dispatch_status = $4`,
+      params: [dispatchStatus, sequenceId, ctx.organizationId, TRANSMITTING_STATUS],
+      noRowsRefusal:
+        `Sequence ${sequenceId} was no longer the in-flight transmit when the result came back; ` +
+        `its dispatch status was resolved by something else. The package WAS handed to the gateway — ` +
+        `confirm at the agency before any further action.`,
     },
     {
       organizationId: ctx.organizationId,
@@ -842,6 +1101,9 @@ export interface UpsertLeafInput {
   lifecycleOp?: string;
   documentTable?: string | null;
   documentId?: number | null;
+  /** The uuid half of the polymorphic reference, for uuid-keyed stores
+   *  (vault.documents). A leaf carries this OR documentId, never both. */
+  documentUuid?: string | null;
   documentType?: string | null;
   parentLeafId?: number | null;
   /** MD5 (or other) checksum of the leaf's rendered bytes, for the eCTD index-md5. */
@@ -998,7 +1260,60 @@ const LEAF_SOURCE_VERIFIERS: Record<string, LeafSourceVerifier> = {
  * branches on — a new resolver source with no verifier here would be storable
  * unchecked and unpinned, which is the defect this dispatch closes.
  */
-export const LEAF_SOURCE_TENANCY_TABLES: ReadonlySet<string> = new Set(Object.keys(LEAF_SOURCE_VERIFIERS));
+/**
+ * Verifiers for UUID-KEYED stores. Same contract as LEAF_SOURCE_VERIFIERS —
+ * prove the document resolves in the caller's organization, return the digest
+ * to pin, take both from one org-scoped read — but keyed by uuid rather than by
+ * integer, because `submission_leaves` addresses two key spaces
+ * (migrations/20260917b_submission_leaf_document_uuid.sql).
+ *
+ * Kept as a SECOND map rather than widening every existing verifier's
+ * signature: the integer verifiers are correct and their predicates mirror the
+ * resolver's branch for their table exactly, and rewriting five of them to
+ * carry a parameter four will never use is churn on the code path that decides
+ * what reaches a regulator.
+ */
+type LeafSourceUuidVerifier = (documentUuid: string, organizationId: number) => Promise<string | null>;
+
+/** Guards the ::uuid cast; a malformed value would raise 22P02 rather than a refusal. */
+const LEAF_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const LEAF_SOURCE_UUID_VERIFIERS: Record<string, LeafSourceUuidVerifier> = {
+  /* The vault. Scoped THROUGH THE PROGRAMME, which is the authoritative owner
+     of a vault document — vault.documents carries organization_id too, but it
+     is nullable by design (unattributable rows are quarantined) and so is
+     attribution rather than a scope to filter on. Pin = content_hash, which is
+     exactly what the resolver re-verifies before staging the bytes, so a source
+     altered after filing is detectable at assembly. */
+  vault_documents: async (documentUuid, organizationId) => {
+    if (!LEAF_UUID_RE.test(documentUuid)) throw forbidRef();
+    const res = await pool.query(
+      `SELECT d.content_hash
+         FROM vault.documents d
+        WHERE d.id = $1::uuid
+          AND d.deleted_at IS NULL
+          AND EXISTS (
+            SELECT 1 FROM regulatory_programs rp
+             WHERE rp.id = d.program_id
+               AND rp.organization_id = $2
+               AND rp.deleted_at IS NULL
+          )
+        LIMIT 1`,
+      [documentUuid, organizationId],
+    );
+    const row = res.rows[0] as { content_hash: string | null } | undefined;
+    if (!row) throw forbidRef();
+    return row.content_hash ?? null;
+  },
+};
+
+/** The document tables that name their document by UUID rather than by integer. */
+export const LEAF_UUID_KEYED_TABLES: ReadonlySet<string> = new Set(Object.keys(LEAF_SOURCE_UUID_VERIFIERS));
+
+export const LEAF_SOURCE_TENANCY_TABLES: ReadonlySet<string> = new Set([
+  ...Object.keys(LEAF_SOURCE_VERIFIERS),
+  ...Object.keys(LEAF_SOURCE_UUID_VERIFIERS),
+]);
 
 /**
  * Prove the referenced document belongs to `organizationId` and return the
@@ -1012,21 +1327,114 @@ export const LEAF_SOURCE_TENANCY_TABLES: ReadonlySet<string> = new Set(Object.ke
  */
 async function verifyLeafSource(
   documentTable: string,
-  documentId: number,
+  ref: { documentId: number | null; documentUuid: string | null },
   organizationId: number,
 ): Promise<string | null> {
-  const verify = LEAF_SOURCE_VERIFIERS[documentTable];
-  return verify ? verify(documentId, organizationId) : null;
+  if (ref.documentUuid) {
+    const verifyUuid = LEAF_SOURCE_UUID_VERIFIERS[documentTable];
+    return verifyUuid ? verifyUuid(ref.documentUuid, organizationId) : null;
+  }
+  if (ref.documentId) {
+    const verify = LEAF_SOURCE_VERIFIERS[documentTable];
+    return verify ? verify(ref.documentId, organizationId) : null;
+  }
+  return null;
 }
 
+/**
+ * A created or updated leaf placement, with what happened to the §11.10(e)
+ * record of that placement carried on it.
+ *
+ * WO-16C #133. Both audit writes in `upsertLeaf` — `LEAF_CREATED` on the insert
+ * branch, `LEAF_UPDATED` on the update branch — were awaited at statement
+ * position with their `AuditWriteResult` discarded. A placement decides where a
+ * document is filed in a package that goes to an agency, and every write path
+ * funnels through here: the REST route (PUT
+ * /api/submissions/sequences/:seqId/leaves), AnA's `place_into_sequence`, the
+ * IND lifecycle persistence, the IND forms route and CMC Module 3 placement.
+ * Each got a leaf row back and no way to tell a recorded placement from an
+ * unrecorded one.
+ *
+ * Exactly ONE of the two rows is written per call — the branches are mutually
+ * exclusive on `input.leafId` — so `auditTrail` is always that one row's
+ * outcome and is never another row's under a borrowed name; which action it was
+ * is the same distinction as which branch ran.
+ */
+export type UpsertedLeaf = SubmissionLeaf & { auditTrail: AuditRowOutcome };
+
 /** Create or update a leaf placement. Refuses if the parent sequence is locked. */
+/**
+ * The section-code vocabulary this sequence's leaves are judged against, read
+ * from its submission's `applicationType`.
+ *
+ * Fails SAFE, not open: a submission row that cannot be read gives `ctd`, the
+ * strictest vocabulary and the one every submission in this product uses
+ * today. A lookup failure must never widen what may be written into a package.
+ */
+async function placementVocabularyForSequence(
+  seq: EctdSequence,
+  ctx: { organizationId: number },
+): Promise<PlacementVocabulary> {
+  const rows = await db
+    .select({ applicationType: submissions.applicationType })
+    .from(submissions)
+    .where(and(eq(submissions.id, seq.submissionId), eq(submissions.organizationId, ctx.organizationId)))
+    .limit(1);
+  // Defensive destructure rather than `const [row] =`: this read only decides
+  // how STRICT the code gate is, and a shape it did not expect must narrow to
+  // `ctd`, never throw a placement away.
+  const applicationType = Array.isArray(rows) ? rows[0]?.applicationType : undefined;
+  return vocabularyForApplicationType(applicationType ?? null);
+}
+
 export async function upsertLeaf(
   input: UpsertLeafInput,
   ctx: { organizationId: number; userId: number }
-): Promise<SubmissionLeaf> {
+): Promise<UpsertedLeaf> {
   const seq = await getSequence(input.sequenceId, ctx);
   if (isSequenceLocked(seq.status)) {
     throw new SubmissionError('INVALID_STATE', `Sequence is ${seq.status}; its leaves are immutable.`);
+  }
+
+  /* The leaf's SECTION CODE decides where the document lands in the package:
+     the packager derives the leaf's module, its folder and which backbone
+     carries it from this string (regional-packager `leafPackagePath`). Nothing
+     on the write path constrained it — the route schema takes any 64-character
+     string and the placement dialog is a free text input whose own placeholder
+     suggested `m1/us/1.2` — so a value that is not a CTD code became a FOLDER
+     NAME, and a package shipped with a top-level `mm/m1-us-1-2/` directory and
+     a backbone pointing into it.
+
+     The gate is deliberately code-SHAPE, not published-heading membership: four
+     of the codes this product itself writes (m1.5, m1.7, m1.9, m1.13 — the IND
+     annual report among them) are absent from FDA's published Module 1 table,
+     so a placeability gate here would refuse the product's own filings. That
+     mismatch is real and reported separately; it is not a reason to reject a
+     well-formed code.
+
+     The value is stored EXACTLY as given. Readers match on the spelling that
+     was written (the IND checklist looks for `m1.1.1`), so canonicalising here
+     would silently detach them from their own rows; the packager canonicalises
+     when it derives the layout. */
+  /* WHICH vocabulary the code is judged against is a property of the
+     SUBMISSION TYPE, not of this function.
+
+     This gate ran `normalizeCtdCode` on every code, which is right for an eCTD
+     sequence and refused two whole submission types that do not file on CTD
+     headings: a 510(k) files on eSTAR sections, and an IRB package files on
+     artifact slots that are not numbered at all. The refusal read as a
+     validation error about a malformed code, so it looked like a caller bug
+     rather than a missing capability.
+
+     Each type is now judged against its own vocabulary, strictly — the CTD
+     branch is byte-for-byte the rule that was here, and an unknown or absent
+     application type resolves to `ctd`, so every existing caller behaves
+     exactly as before. A bare module ('3') is still a CONTAINER, never a
+     place a document can go. */
+  const vocabulary = await placementVocabularyForSequence(seq, ctx);
+  const verdict = validateSectionCode(input.sectionCode, vocabulary);
+  if (!verdict.ok) {
+    throw new SubmissionError('VALIDATION', verdict.message ?? `Section code "${input.sectionCode}" is not valid for this submission.`);
   }
 
   /* The leaf's document pointer is POLYMORPHIC — `document_table` is a plain
@@ -1041,6 +1449,40 @@ export async function upsertLeaf(
     throw new SubmissionError('VALIDATION', unplaceableDocumentTableMessage(input.documentTable));
   }
 
+  /* THE KEY SPACE MUST MATCH THE TABLE. `submission_leaves` addresses two of
+     them — integer `document_id` for most stores, uuid `document_uuid` for
+     vault.documents — and this is the one place that rule is enforced.
+     Deliberately here and not as a CHECK constraint: the constraint would have
+     to name tables, which is exactly the vocabulary leaf-document-tables.ts
+     owns and keeps in step with the resolver's real branches, and splitting one
+     rule across a migration and a module is how the two drift.
+
+     Both directions are refused, because both produce a leaf that looks placed
+     and resolves to nothing: a vault leaf with only an integer cannot address
+     its document, and an integer-keyed leaf carrying a uuid names a document in
+     a store that has no uuids. */
+  if (input.documentTable != null) {
+    const uuidKeyed = LEAF_UUID_KEYED_TABLES.has(input.documentTable);
+    if (uuidKeyed && input.documentId != null) {
+      throw new SubmissionError(
+        'VALIDATION',
+        `"${input.documentTable}" is addressed by document_uuid, not document_id. Its documents are uuid-keyed; an integer cannot name one.`,
+      );
+    }
+    if (!uuidKeyed && input.documentUuid != null) {
+      throw new SubmissionError(
+        'VALIDATION',
+        `"${input.documentTable}" is addressed by document_id, not document_uuid. Only ${[...LEAF_UUID_KEYED_TABLES].sort().join(', ')} name a document by uuid.`,
+      );
+    }
+    if (uuidKeyed && input.documentUuid == null) {
+      throw new SubmissionError(
+        'VALIDATION',
+        `A leaf on "${input.documentTable}" must carry document_uuid — without it the leaf names no document and would be filed as unresolvable.`,
+      );
+    }
+  }
+
   /* Tenancy + source pin for the document this leaf points at. One table-keyed
      step (LEAF_SOURCE_VERIFIERS above) covers every source the resolver can
      materialize: it proves the target belongs to the caller's org — no dangling
@@ -1052,8 +1494,12 @@ export async function upsertLeaf(
      what went?" had no answer: `document_id` resolves to the document as it is
      now, and editing it after filing changes nothing on the leaf. */
   const documentContentSha256: string | null =
-    input.documentTable && input.documentId
-      ? await verifyLeafSource(input.documentTable, input.documentId, ctx.organizationId)
+    input.documentTable && (input.documentId || input.documentUuid)
+      ? await verifyLeafSource(
+          input.documentTable,
+          { documentId: input.documentId ?? null, documentUuid: input.documentUuid ?? null },
+          ctx.organizationId,
+        )
       : null;
 
   // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
@@ -1093,6 +1539,7 @@ export async function upsertLeaf(
         ...(input.lifecycleOp ? { lifecycleOp: input.lifecycleOp } : {}),
         documentTable: input.documentTable ?? null,
         documentId: input.documentId ?? null,
+        documentUuid: input.documentUuid ?? null,
         documentType: input.documentType ?? null,
         parentLeafId: input.parentLeafId ?? null,
         ...(input.checksum !== undefined ? { checksum: input.checksum } : {}),
@@ -1113,7 +1560,11 @@ export async function upsertLeaf(
       )
       .returning();
     if (!row) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
-    await auditService.logAction({
+    // Part 11 §11.10(e). The UPDATE above is committed (and NOT_FOUND has already
+    // been thrown if it matched nothing), so the re-placement is never undone
+    // over a lost log row — reverting the pointer would leave the leaf attesting
+    // to a document it no longer references. The caller is told instead.
+    const auditTrail = await recordAuditRow({
       organizationId: ctx.organizationId,
       userId: ctx.userId,
       action: 'LEAF_UPDATED',
@@ -1121,7 +1572,7 @@ export async function upsertLeaf(
       resourceId: input.leafId,
       details: { sectionCode: input.sectionCode, lifecycleOp: input.lifecycleOp },
     });
-    return row as SubmissionLeaf;
+    return { ...(row as SubmissionLeaf), auditTrail };
   }
 
   const [row] = await db
@@ -1134,6 +1585,7 @@ export async function upsertLeaf(
       lifecycleOp: input.lifecycleOp ?? 'new',
       documentTable: input.documentTable ?? null,
       documentId: input.documentId ?? null,
+      documentUuid: input.documentUuid ?? null,
       documentType: input.documentType ?? null,
       parentLeafId: input.parentLeafId ?? null,
       checksum: input.checksum ?? null,
@@ -1143,7 +1595,9 @@ export async function upsertLeaf(
       createdBy: ctx.userId,
     })
     .returning();
-  await auditService.logAction({
+  // Part 11 §11.10(e), on the same terms as the update branch: the INSERT above
+  // is committed, the placement stands, and the outcome rides out on the row.
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'LEAF_CREATED',
@@ -1151,7 +1605,7 @@ export async function upsertLeaf(
     resourceId: row.id,
     details: { sequenceId: input.sequenceId, sectionCode: input.sectionCode },
   });
-  return row as SubmissionLeaf;
+  return { ...(row as SubmissionLeaf), auditTrail };
 }
 
 /**
@@ -1166,11 +1620,30 @@ export async function upsertLeaf(
  * frozen/dispatched, and a leaf that another leaf's `parentLeafId` points at
  * cannot be removed — that would orphan the lifecycle chain.
  */
+/**
+ * What a removal did: which leaf was soft-deleted, and what happened to the
+ * §11.10(e) record of the removal.
+ *
+ * WO-16C #133. This function returned `void`, and its audit write was awaited at
+ * statement position with the `AuditWriteResult` discarded — so a caller had
+ * nothing at all to distinguish a recorded removal from an unrecorded one. It
+ * now returns the outcome. The removal is a SOFT delete, so the fact that the
+ * leaf was withdrawn survives in `submission_leaves.deleted_at` independently of
+ * this row; what the audit row adds is who withdrew it, when, and from which
+ * section — which is why it is reported rather than being allowed to fail
+ * silently, and why its loss is still not a reason to put the leaf back.
+ *
+ * DELETE /api/submissions/sequences/:seqId/leaves/:leafId answers 204 with an
+ * empty body today and therefore does not yet forward this; carrying it into the
+ * response is a change to that route, not to this service.
+ */
+export type RemovedLeaf = { leafId: number; auditTrail: AuditRowOutcome };
+
 export async function removeLeaf(
   leafId: number,
   sequenceId: number,
   ctx: { organizationId: number; userId: number }
-): Promise<void> {
+): Promise<RemovedLeaf> {
   const seq = await getSequence(sequenceId, ctx);
   if (isSequenceLocked(seq.status)) {
     throw new SubmissionError('INVALID_STATE', `Sequence is ${seq.status}; its leaves are immutable.`);
@@ -1208,7 +1681,11 @@ export async function removeLeaf(
     .returning();
   if (!row) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
 
-  await auditService.logAction({
+  // Part 11 §11.10(e). The soft delete above is committed and is not reinstated
+  // when this write fails: un-deleting the leaf would put a document back into a
+  // sequence the operator removed it from, which is a worse answer than a lost
+  // log row. The action stands and the caller is told.
+  const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
     action: 'LEAF_REMOVED',
@@ -1216,6 +1693,7 @@ export async function removeLeaf(
     resourceId: leafId,
     details: { sequenceId, sectionCode: row.sectionCode },
   });
+  return { leafId, auditTrail };
 }
 
 export default {

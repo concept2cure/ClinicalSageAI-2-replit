@@ -28,7 +28,7 @@ import {
   recordKernelPolicyOutcome,
 } from '../../services/kernel-adaptive-policy.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
-import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
+import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
 import { resolveMaxRounds } from '../../services/ana/agentic-loop.js';
@@ -56,6 +56,10 @@ import {
   toSurfaceActionChips,
   type NavigationAction,
   type SurfaceActionChip,
+  type DemoStartChip,
+  demoStartFromToolResult,
+  toDemoStartChips,
+  type DemoStartDirective,
 } from '../../services/ana-ri/navigation-actions.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
@@ -427,6 +431,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // Surface actions ride the same carrier: act_on_screen results become
     // offer-chips here too (this route never applies anything live).
     const collectedSurfaceActions: SurfaceActionDirective[] = [];
+    const collectedDemoStarts: DemoStartDirective[] = [];
 
     // ── STEP 6: GENERATE (no silent demo fallback) ─────────────────────
     const gw = ensureGateway();
@@ -542,37 +547,29 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       memoryDiagnostics = diagnostics;
 
       // Session bootstrap — so a conversation never starts cold. At session
-      // start (no prior messages in this thread) rehydrate query-independently:
-      // the latest working summary, the most important project/client atoms,
-      // and AnA's own past lessons (which the query-driven memory assembler
-      // never loads). Gated to session start to avoid re-injecting every turn,
-      // fault-tolerant, and disableable via ANA_SESSION_BOOTSTRAP_AUTO=false.
+      // start rehydrate query-independently: the latest working summary, the
+      // most important project/client atoms, AnA's own past lessons, and what
+      // files the client has (none of which the query-driven assembler above
+      // loads). The gate, the kill-switch and the failure path live in
+      // sessionBootstrapBlockFor, because the streaming endpoint needs the same
+      // three and a second copy is how the two paths came to differ.
       let sessionBootstrapBlock = '';
-      try {
-        const { shouldAutoBootstrap, buildSessionBootstrapContext } = await import(
+      {
+        const { sessionBootstrapBlockFor } = await import(
           '../../services/ana-session-bootstrap.js'
         );
-        if (
-          shouldAutoBootstrap({
-            priorMessageCount: previousMessages.length,
-            organizationId: numericOrgId ?? null,
-            disabled: process.env.ANA_SESSION_BOOTSTRAP_AUTO === 'false',
-          })
-        ) {
-          const pid =
-            typeof project_id === 'string'
-              ? parseInt(project_id.replace(/^proj_/, ''), 10)
-              : project_id;
-          const block = await buildSessionBootstrapContext({
-            organizationId: numericOrgId as number,
-            projectId: Number.isFinite(pid) && (pid as number) > 0 ? (pid as number) : undefined,
-            threadId,
-            atomLimit: 6,
-          });
-          if (block) sessionBootstrapBlock = `\n\n${block}\n`;
-        }
-      } catch (err) {
-        console.warn('[AnA] session bootstrap failed (continuing without):', (err as any)?.message);
+        const pid =
+          typeof project_id === 'string'
+            ? parseInt(project_id.replace(/^proj_/, ''), 10)
+            : project_id;
+        const block = await sessionBootstrapBlockFor({
+          priorMessageCount: previousMessages.length,
+          organizationId: numericOrgId ?? null,
+          projectId: Number.isFinite(pid) && (pid as number) > 0 ? (pid as number) : undefined,
+          threadId,
+          atomLimit: 6,
+        });
+        if (block) sessionBootstrapBlock = `\n\n${block}\n`;
       }
 
       // ── IND Context Injection ──────────────────────────────────────────────────
@@ -755,6 +752,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       })();
 
       // ── Agentic tool-use loop: AnA can search, check compliance, generate docs ──
+      /* The tenant's permitted tool surface, resolved once for the turn. */
+      const governedTools = await governedToolsetFor(pool, numericOrgId);
       const baseRequest = {
         taskType: routingPlan.taskType,
         messages: gwMessages,
@@ -767,7 +766,12 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         // Offer the tools relevant to this turn's intent + context (the platform
         // command bridge is always included, so nothing is ever truly out of
         // reach), honouring any tools the user pinned in the tool picker.
-        tools: selectToolsForTurn(getAllEnabledTools(), typeof message === 'string' ? message : '', {
+        /* Tenant deny-list FIRST, then relevance. This call assembled the tool
+           surface straight from getAllEnabledTools(), so a tool an organization
+           had switched off in anaToolPolicy.deny was still offered here while
+           the streaming endpoint honoured the setting — a governance control
+           holding on one of two doors. */
+        tools: selectToolsForTurn(governedTools, typeof message === 'string' ? message : '', {
           pinned: Array.isArray(selected_tools) ? selected_tools.filter((t: unknown): t is string => typeof t === 'string') : undefined,
           context: tool_context && typeof tool_context === 'object' ? tool_context : undefined,
         }),
@@ -811,6 +815,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           // becomes an offer-chip the same way (refusals yield null).
           const actionDirective = surfaceActionFromToolResult(toolName, result);
           if (actionDirective) collectedSurfaceActions.push(actionDirective);
+          // A demonstration fetched without Live Drive becomes a start chip.
+          const demoStart = demoStartFromToolResult(toolName, result);
+          if (demoStart) collectedDemoStarts.push(demoStart);
           // Persist the invocation for usage analytics. Latency is 0 here
           // because the agentic-loop hook fires post-success without a
           // start timestamp; the streaming path captures real latency.
@@ -910,6 +917,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         }
       | NavigationAction
       | SurfaceActionChip
+      | DemoStartChip
     > = [];
 
     if (numericOrgId && project_id) {
@@ -950,6 +958,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // Surface-action chips under the identical offered-not-performed contract.
     if (collectedSurfaceActions.length > 0) {
       executedActions = [...executedActions, ...toSurfaceActionChips(collectedSurfaceActions)];
+    }
+    if (collectedDemoStarts.length > 0) {
+      executedActions = [...executedActions, ...toDemoStartChips(collectedDemoStarts)];
     }
 
     // Save to legacy chat_messages for backward compat

@@ -214,6 +214,12 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
         region: 'fda', applicationId: 'IND000009', sequence: '0000', submissionType: 'IND',
         sponsorId: 'IND000009', sponsorName: 'Sponsor', productName: 'Product',
         outputDir: path.join(work, 'out'), environment: 'staging',
+        // The manifest md5 is of the SHIPPED bytes. With Ghostscript on the
+        // host the PDF/A pass rewrites them and md5(pdf('general')) no longer
+        // matches — the packager is right and this assertion would be wrong.
+        // Skip conversion so raw == shipped; the checksum-of-shipped-bytes
+        // behaviour under conversion is the "stale leaf.md5" case below.
+        skipPdfaConversion: true,
         leaves: [{
           ctdSection: '3.2.S.1', operation: 'new', sourcePath: docPath, fileName: 'general.pdf',
           title: 'Drug Substance — General Information', md5: md5(pdf('general')),
@@ -321,6 +327,75 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       expect(index).toMatch(/<leaf operation="delete" modified-file="\.\.\/0000\/m3\/3-2-s-2\/old\.pdf"/);
       // No bytes shipped for a backbone-only delete.
       expect(Object.keys(zip.files).some((n) => n.endsWith('old.pdf'))).toBe(false);
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  });
+});
+
+/* ── The layout an m-prefixed Module 1 leaf actually ships in ────────────────
+   End-to-end proof for the unit rules in regional-packager.test.ts: a real ZIP,
+   through the real publisher. Every Module 1 filing path in this product writes
+   the `m`-prefixed spelling — `withTransmittalPair` emits m1.1 and m1.2 on every
+   lifecycle sequence, the IND filing routes write m1.12.4 and m1.13, the forms
+   panel places a sponsor's signed FDA form at m1.1 — and the packager decided
+   the module with `ctdSection.startsWith('1')`, which is false for all of them.
+   They shipped under a top-level `mm/` folder, absent from the regional
+   backbone and swept into index.xml as if they were Module 2-5 documents. */
+describe('package layout — Module 1 leaves reach the regional backbone', () => {
+  it('ships an m1.1 leaf under m1/us and a precise 3.2.S.4.2 leaf at full depth', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-m1-layout-'));
+    try {
+      const formBytes = pdf('FDA 1571, signed');
+      const specBytes = pdf('impurities specification');
+      const formPath = path.join(work, 'form-fda-1571.pdf');
+      const specPath = path.join(work, 'impurities.pdf');
+      await fs.writeFile(formPath, formBytes);
+      await fs.writeFile(specPath, specBytes);
+
+      const bundle = await packageEctdSubmission({
+        region: 'fda', applicationId: '000512', sequence: '0000', submissionType: 'original',
+        fda: { applicationType: 'ind' },
+        sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
+        environment: 'staging',
+        // Same reason as the manifest case: this test asserts the input md5
+        // appears in the backbone, which only holds when shipped == raw.
+        skipPdfaConversion: true,
+        leaves: [
+          // Exactly what the forms panel writes for a sponsor-completed form.
+          { ctdSection: 'm1.1', fileName: 'form-fda-1571.pdf', title: 'Form FDA 1571', operation: 'new', sourcePath: formPath, md5: md5(formBytes) },
+          // A precise Module 3 subsection, in the spelling authors type.
+          { ctdSection: '3.2.S.4.2', fileName: 'impurities.pdf', title: 'Impurities', operation: 'new', sourcePath: specPath, md5: md5(specBytes) },
+        ] as EctdLeaf[],
+      });
+
+      const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
+      const names = Object.keys(zip.files);
+
+      // The Module 1 form is in the US regional folder — not in a folder no
+      // eCTD layout defines.
+      expect(names).toContain('m1/us/1-1/form-fda-1571.pdf');
+      expect(names.filter((n) => n.startsWith('mm/'))).toEqual([]);
+
+      // The Module 3 leaf keeps its full section depth.
+      expect(names).toContain('m3/3-2-s-4-2/impurities.pdf');
+      expect(names.some((n) => n.startsWith('m3/3-2-s/'))).toBe(false);
+
+      // The regional backbone carries the form, and index.xml does not: a
+      // Module 1 document belongs to the regional backbone alone.
+      const regional = await zip.file('m1/us/us-regional.xml')!.async('string');
+      expect(regional).toContain('form-fda-1571.pdf');
+      const index = await zip.file('index.xml')!.async('string');
+      expect(index).not.toContain('form-fda-1571.pdf');
+      expect(index).toContain('impurities.pdf');
+
+      // Its href resolves from the regional backbone that carries it.
+      expect(regional).toMatch(/xlink:href="1-1\/form-fda-1571\.pdf"/);
+
+      // The backbone carries each leaf's checksum inline over the bytes that
+      // actually shipped at that path (the eCTD checksum contract).
+      expect(regional).toContain(md5(formBytes));
+      expect(index).toContain(md5(specBytes));
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }

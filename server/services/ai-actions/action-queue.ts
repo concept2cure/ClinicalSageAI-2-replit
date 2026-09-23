@@ -14,7 +14,7 @@
  */
 
 import Queue from 'bull';
-import { getRedisClient, isRedisAvailable } from './redis-manager';
+import { isRedisAvailable } from './redis-manager';
 import { dispatchAction } from './action-registry';
 import type { AIActionRequest, AIActionResponse } from '../../../shared/types/ai-actions';
 import type { DispatchOptions } from './action-registry';

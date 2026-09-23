@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { pool, query } from '../db';
+import { query } from '../db';
 import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler';
 import {

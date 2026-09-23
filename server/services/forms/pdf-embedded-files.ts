@@ -45,6 +45,18 @@ export interface EmbeddedFileSpec {
   bytes: Buffer;
   /** The file's media type, e.g. 'application/pdf'. Omitted ⇒ no /Subtype. */
   mimeType?: string;
+  /**
+   * What the viewer shows beside the file in its attachment pane.
+   *
+   * The eSTAR sets one on every attach —
+   * `d[AttachmentIndex].description = "Administrative Documentation | Cover Letter"`
+   * — and Acrobat's `dataObject.description` is the `/Filespec`'s `/Desc`. That
+   * mapping comes from the Acrobat JavaScript API and is NOT measured here;
+   * nothing in this environment runs Acrobat. It is optional for that reason,
+   * and stated rather than assumed. Omitted ⇒ no `/Desc` key at all, rather
+   * than an empty string, which a viewer would render as a blank description.
+   */
+  description?: string;
 }
 
 export interface BuiltEmbeddedFile {
@@ -120,6 +132,11 @@ export function buildEmbeddedFileObjects(
     data: encrypted,
   };
 
+  const description = spec.description?.trim();
+  const descriptionEntry = description
+    ? `/Desc ${pdfString(sec, filespecNum, 0, Buffer.from(description, 'latin1'))}`
+    : '';
+
   const filespecObject: PdfObjectWrite = {
     num: filespecNum,
     gen: 0,
@@ -127,6 +144,7 @@ export function buildEmbeddedFileObjects(
       `<</Type/Filespec` +
       `/F ${pdfString(sec, filespecNum, 0, Buffer.from(name, 'latin1'))}` +
       `/UF ${pdfString(sec, filespecNum, 0, utf16be(name))}` +
+      descriptionEntry +
       `/EF<</F ${streamNum} 0 R>>>>`,
   };
 

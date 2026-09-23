@@ -1,0 +1,12 @@
+DROP INDEX
+CREATE INDEX
+ALTER TABLE
+ERROR:  new row for relation "audit_logs" violates check constraint "audit_logs_chained_rows_have_chain_seq"
+ALTER TABLE
+trg_audit_logs_chain_position|O
+trg_audit_logs_no_delete|O
+trg_audit_logs_no_truncate|O
+trg_audit_logs_no_update|O
+ALTER TABLE
+audit_logs_pkey
+

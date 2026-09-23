@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
+import { useDialog } from '../useDialog';
 import { EmptyState, useLiveData, type DataState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -121,14 +122,32 @@ interface Rec {
   evidence: string[];
   suggestedAction: string;
   actionPayload?: { actionType: string; payload?: Record<string, unknown> };
-  confidence: number;
+  /* null whenever nothing computed a score — which is EVERY recommendation the
+     orchestration engine emits, because every one of its rules is a
+     deterministic filter (sourceType 'rules_based'). It used to send a per-rule
+     literal (0.95 / 0.9 / 0.7) that this surface painted as a confidence chip;
+     WO-16C finding 124. Read it null-safely: `confidence || 0` renders "0%",
+     which is a fabricated score rather than an absent one. */
+  sourceType?: 'rules_based' | 'ai_inferred';
+  confidence: number | null;
 }
 interface RecommendationSet { recommendations: Rec[] }
 
 /* POST /api/orchestration/pre-submission-gate response. `ich` is null whenever
    no cmcProjectId is supplied — this surface supplies none, so it is always
    null here (rendered honestly as "not evaluated"). */
-interface GateReadiness { overallScore: number; status: string; scores: Record<string, number> }
+/* `scores.compliance` and `scores.consistency` are `number | null` — null when
+   the readiness engine had no input to measure that dimension from (no
+   validations and no CMC signals; no routed or promoted object to cross-check).
+   `unassessedDimensions` carries the reason for each null. A null is rendered
+   as "not assessed", never as a number and never as a blank chip. */
+interface GateUnassessed { dimension: string; reason: string }
+interface GateReadiness {
+  overallScore: number;
+  status: string;
+  scores: Record<string, number | null>;
+  unassessedDimensions?: GateUnassessed[];
+}
 interface GateRisk { overallRisk: string; riskScore: number }
 interface GateIch { overallStatus: string; counts: Record<string, number> }
 interface Gate {
@@ -183,6 +202,31 @@ interface ActionResp {
   updatedObjects?: { type: string; id: string | number; title?: string }[];
   warnings?: string[];
   errors?: { code: string; message: string }[];
+}
+
+/* Both overlays on this surface — the pre-submission go/no-go and the action
+   runner — shipped as a bare `.ac-gate-bd` / `.ac-gate` pair: no role, no
+   accessible name, no way out but the mouse, and focus abandoned behind the
+   backdrop. Both announce that what they do is audited to 21 CFR Part 11, which
+   is precisely the kind of decision a keyboard or screen-reader user must be
+   able to read and dismiss unaided.
+
+   One wrapper rather than two conversions: the markup was already identical, and
+   a second copy of it is the duplication the working agreement forbids. */
+function GateDialog({ onClose, labelledBy, children }: {
+  onClose: () => void;
+  labelledBy: string;
+  children: React.ReactNode;
+}) {
+  const panel = useDialog(onClose);
+  return (
+    <div className="ac-gate-bd" onClick={onClose}>
+      <div className="ac-gate" role="dialog" aria-modal="true" aria-labelledby={labelledBy}
+        tabIndex={-1} ref={panel} onClick={e => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 /* Normalized display shape both executors fold into, so one modal renders
@@ -451,7 +495,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
   const topNeed = cont?.needsAttention?.[0];
   const leadHead = cont
     ? (urgent
-        ? `${progLabel} is trending ${traj.t} -- ${topNeed ? topNeed.title : 'act now'}`
+        ? `${progLabel} is trending ${traj.t} — ${topNeed ? topNeed.title : 'act now'}`
         : `${progLabel} is ${traj.t}: ${(cont.newlyReady || []).length} newly ready · ${(cont.needsAttention || []).length} need attention`)
     : progLabel;
 
@@ -530,7 +574,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   : 'No continuity briefing yet for this program.'}
               </p>
               <div className="ac-lead-actions">
-                <button className="ac-lead-go" onClick={() => ask('Walk me through ' + progLabel + ' -- the critical path to filing and what to do first.')}>{I.sparkles} Ask AnA to plan the path</button>
+                <button className="ac-lead-go" onClick={() => ask('Walk me through ' + progLabel + ' — the critical path to filing and what to do first.')}>{I.sparkles} Ask AnA to plan the path</button>
                 <button className="ac-lead-gate" onClick={() => setGateOpen(true)}>{Ico.shieldCheck || Ico.shield || I.check} Run pre-submission gate</button>
               </div>
             </div>
@@ -625,7 +669,13 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                         <span className={'ac-chip ' + (SEV_MAP[r.severity] || 'idle')}>{r.severity}</span>
                         <span className="ac-rec-tt">{r.targetObjectTitle || r.targetObjectType}</span>
                         <span className="ac-rec-mod">{r.module}</span>
-                        <span className="ac-rec-conf">{Math.round((r.confidence || 0) * 100)}%</span>
+                        {/* Only a recommendation that carries a real computed score shows
+                            one. A rules-based recommendation has none, so the row ends
+                            after the module — no chip, rather than a "0%" nothing
+                            measured. */}
+                        {typeof r.confidence === 'number' ? (
+                          <span className="ac-rec-conf" title="Model confidence">{Math.round(r.confidence * 100)}%</span>
+                        ) : null}
                       </div>
                       <div className="ac-rec-reason">{r.reason}</div>
                       <div className="ac-rec-ev">{(r.evidence || []).map((e, i) => (<span key={i} className="ac-rec-evi">{I.dot || null} {e}</span>))}</div>
@@ -680,17 +730,16 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
 
       {/* Pre-submission gate -- the unified go/no-go */}
       {gateOpen && prog && (
-        <div className="ac-gate-bd" onClick={() => setGateOpen(false)}>
-          <div className="ac-gate" onClick={e => e.stopPropagation()}>
+        <GateDialog onClose={() => setGateOpen(false)} labelledBy="ac-gate-title">
             <div className="ac-gate-top">
               <div>
-                <div className="ac-gate-crumb">{progLabel}{gate ? ' · ' + gate.submissionType : ''} · pre-submission quality gate</div>
+                <div className="ac-gate-crumb" id="ac-gate-title">{progLabel}{gate ? ' · ' + gate.submissionType : ''} · pre-submission quality gate</div>
                 <div className="ac-gate-sub">readiness + CMC contradictions + CRL + RTF + ICH — one verdict, audited to Part 11</div>
               </div>
               <button className="ac-gate-x" aria-label="Close" onClick={() => setGateOpen(false)}>{I.close}</button>
             </div>
             {gateRes.loading ? (
-              <div className="scaf-note" style={{ padding: '28px 16px' }}>Running the pre-submission gate…</div>
+              <div role="status" className="scaf-note" style={{ padding: '28px 16px' }}>Running the pre-submission gate…</div>
             ) : gateRes.error ? (
               <EmptyState
                 tone="error"
@@ -710,7 +759,12 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   <div className="ac-gate-cell">
                     <div className="ac-gate-ck">Readiness</div>
                     <div className="ac-gate-cv">{gate.readiness?.overallScore ?? '--'}<span>/100 · {gate.readiness?.status ?? '--'}</span></div>
-                    <div className="ac-gate-sub2">{gate.readiness?.scores && Object.entries(gate.readiness.scores).map(([k, v]) => (<span key={k} className="ac-gate-ss">{k} {v}</span>))}</div>
+                    <div className="ac-gate-sub2">{gate.readiness?.scores && Object.entries(gate.readiness.scores).map(([k, v]) => {
+                      const why = (gate.readiness?.unassessedDimensions || []).find((u) => u.dimension === k)?.reason;
+                      return v === null || v === undefined
+                        ? (<span key={k} className="ac-gate-ss" title={why || 'This dimension was not assessed.'}>{k} not assessed</span>)
+                        : (<span key={k} className="ac-gate-ss">{k} {v}</span>);
+                    })}</div>
                   </div>
                   <div className="ac-gate-cell">
                     <div className="ac-gate-ck">CMC contradictions</div>
@@ -735,18 +789,16 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 </div>
               </>
             )}
-          </div>
-        </div>
+        </GateDialog>
       )}
 
       {/* Action runner — confirm → run → honest result, for both a workflow Run
           and a recommendation Dispatch. Renders only real executor output. */}
       {runOpen && (
-        <div className="ac-gate-bd" onClick={closeRun}>
-          <div className="ac-gate" onClick={e => e.stopPropagation()}>
+        <GateDialog onClose={closeRun} labelledBy="ac-run-title">
             <div className="ac-gate-top">
               <div>
-                <div className="ac-gate-crumb">{outcome ? outcome.title : pending ? pending.title : 'Running…'}</div>
+                <div className="ac-gate-crumb" id="ac-run-title">{outcome ? outcome.title : pending ? pending.title : 'Running…'}</div>
                 <div className="ac-gate-sub">
                   {running ? 'Executing against the real orchestration backend — every step runs server-side.'
                     : outcome ? (outcome.kind === 'workflow' ? 'Workflow execution · recorded to the audit trail' : 'AI action dispatch · recorded to the audit trail')
@@ -832,8 +884,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 </div>
               </>
             ) : null}
-          </div>
-        </div>
+        </GateDialog>
       )}
     </div>
   );

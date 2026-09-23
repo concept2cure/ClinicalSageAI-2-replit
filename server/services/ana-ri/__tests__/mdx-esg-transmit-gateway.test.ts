@@ -166,6 +166,8 @@ const TRANSMIT_PARAMS = {
 const ESG_ENV_KEYS = [
   'FDA_ESG_URL', 'FDA_ESG_AS2_FROM', 'FDA_ESG_AS2_TO',
   'FDA_ESG_CERT_PATH', 'FDA_ESG_KEY_PATH', 'FDA_ESG_FDA_CERT_PATH',
+  'FDA_ESG_TRANSPORT',
+  'FDA_ESG_REST_URL', 'FDA_ESG_REST_CLIENT_ID', 'FDA_ESG_REST_CLIENT_SECRET', 'FDA_ESG_REST_SUBMITTER_ID',
 ];
 
 let savedEnv: Record<string, string | undefined> = {};
@@ -374,6 +376,36 @@ describe('with no ESG credentials the result is a structured refusal naming the 
     expect(r.success).toBe(false);
     expect(r.error).toBe('GATEWAY_NOT_CONFIGURED');
     expect(r.message).toContain('FDA_ESG_STAGING_URL');
+    expect(httpsRequests).toHaveLength(0);
+  });
+});
+
+describe('the ESG NextGen REST transport is selectable behind the same path and refuses honestly', () => {
+  it('FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier', async () => {
+    process.env.FDA_ESG_TRANSPORT = 'rest';
+    process.env.FDA_ESG_REST_URL = 'https://esg-nextgen.fda.example/api';
+    process.env.FDA_ESG_REST_CLIENT_ID = 'client-1';
+    process.env.FDA_ESG_REST_CLIENT_SECRET = 'secret-1';
+    process.env.FDA_ESG_REST_SUBMITTER_ID = 'ESG-SUBMITTER-1';
+
+    const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+
+    expect(r.success).toBe(false);
+    expect(r.error).toBe('TRANSPORT_NOT_VERIFIED');
+    expect(r.message).toMatch(/Nothing was transmitted/);
+    expect(r.message).toMatch(/has not been verified/);
+    expect(r.data).toBeUndefined();
+    expect(httpsRequests).toHaveLength(0);
+    expect(poolQueries.filter((q) => q.sql.includes('INSERT INTO submission_transmittals'))).toHaveLength(0);
+  });
+
+  it('FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables', async () => {
+    process.env.FDA_ESG_TRANSPORT = 'rest';
+    const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    expect(r.success).toBe(false);
+    expect(r.error).toBe('GATEWAY_NOT_CONFIGURED');
+    expect(r.message).toContain('FDA_ESG_REST_URL');
+    expect(r.message).not.toContain('FDA_ESG_AS2_FROM');
     expect(httpsRequests).toHaveLength(0);
   });
 });

@@ -61,6 +61,8 @@ describe('upsertLeaf parentLeafId scoping', () => {
   it('rejects a parentLeafId that is not a leaf in this sequence for this org', async () => {
     // 1) getSequence -> an unlocked sequence the org owns.
     selectResults.push([{ id: 10, status: 'assembling', organizationId: 1 }]);
+    // The submission lookup that picks the section-code vocabulary (IND -> CTD).
+    selectResults.push([{ applicationType: 'ind' }]);
     // 2) parent-leaf lookup -> not found (wrong sequence / wrong tenant).
     selectResults.push([]);
 
@@ -79,6 +81,8 @@ describe('upsertLeaf parentLeafId scoping', () => {
   it('allows a parentLeafId that resolves to a leaf in this sequence for this org', async () => {
     // 1) getSequence
     selectResults.push([{ id: 10, status: 'assembling', organizationId: 1 }]);
+    // The submission lookup that picks the section-code vocabulary (IND -> CTD).
+    selectResults.push([{ applicationType: 'ind' }]);
     // 2) parent-leaf lookup -> found, in-sequence, same org.
     selectResults.push([{ id: 5 }]);
     // 3) insert .returning() -> the new leaf row.
@@ -93,7 +97,9 @@ describe('upsertLeaf parentLeafId scoping', () => {
   });
 
   it('does not run a parent lookup when no parentLeafId is given (new leaf)', async () => {
-    selectResults.push([{ id: 10, status: 'assembling', organizationId: 1 }]); // getSequence
+    selectResults.push([{ id: 10, status: 'assembling', organizationId: 1 }]);
+    // The submission lookup that picks the section-code vocabulary (IND -> CTD).
+    selectResults.push([{ applicationType: 'ind' }]); // getSequence
     selectResults.push([{ id: 12, sequenceId: 10, lifecycleOp: 'new' }]); // insert returning
 
     const row = await upsertLeaf({ sequenceId: 10, sectionCode: '1.1', title: 'Cover' }, ctx);

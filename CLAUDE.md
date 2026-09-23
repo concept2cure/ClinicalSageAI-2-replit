@@ -118,7 +118,41 @@ Two corollaries, same cause:
 
 ---
 
+## RULE 2 — no new capability until the launch rows are green.
+
+`docs/LAUNCH_DEFINITION_OF_DONE.md` defines "commercially deployed" as ten
+rows, D1–D10, each with named evidence. Until every row is green:
+
+- A session works on exactly one launch workstream (W1–W7 in the launch
+  playbook) and names, in its first message, the row it moves and the evidence
+  it will file under `docs/evidence/`.
+- A session that cannot produce that evidence reports **blocked**, not done.
+- No session adds a surface, module, tool, model or integration outside the
+  launch catalog (Projects, Vault, Authoring, Submission Center, Submission
+  Readiness, QMS controlled documents) or the gateway/connector scope named in
+  that file. The regulatory digital twin, epistemic / causal / self-evolving
+  engines, federated learning and the manufacturing digital twin get no sessions.
+- Numbers, verdicts and governed content come from deterministic engines; the
+  model narrates. A tool that asks a model for a figure is a defect.
+- Multi-model is governance, not marketing: a model is selectable only as an
+  approved-models entry with a pinned version, rationale and eval reference, and
+  only PQ-passed models serve high-risk regulatory drafting.
+
+---
+
 ## Working agreement
+
+- **Deleting a user-facing capability requires the reachable replacement, by path.**
+  Five editor generations were built and deleted in this repository between
+  2026-06 and 2026-08 (`git log --all --diff-filter=D -- 'client/**/*Editor*'
+  'client/**/*Canvas*'`), each removed as "unreachable" by a session that did not
+  know the previous one existed, each rebuilt by the next. Before removing a
+  surface, component, tool or route: run that history search; name, in the
+  commit message, the file that now delivers the same user outcome and the test
+  or CI gate that proves it is reachable; if no such file exists, the deletion
+  is a product decision for the founder, not a cleanup. The AnA-draft → canvas →
+  editor → vault path is pinned by `docs/design/ANA_DOCUMENT_CANVAS.md` and its
+  gate; a change that breaks that gate is not a refactor.
 
 - **Zero duplication.** One canonical implementation per capability. A parallel
   path is migrated onto the canonical one and deleted in the same change.

@@ -1,0 +1,23 @@
+Signed in as jonmichaelpsmith@gmail.com (user 1, organisation 2) at http://localhost:5400
+
+=== seed: mdx ===
+  • Projects: program NeuroPanel-Dx 510(k) … ok — 82d3b729-87a1-4714-9a21-819b538683f3 (existing)
+  • Vault: read the program data room (folders offered) … ok — standard=ivd; 10 cabinet folders: cab-unfiled, cab-k510, cab-pma, cab-cer, cab-eng, cab-udi, cab-pv, cab-qms, cab-corresp, cab-shared
+  • Vault: Device Description and Principles of Operation … ok — 0bdf94f7-6f27-4803-8314-57a077744bb6 → k510 (existing, already filed, 6346 bytes)
+  • Vault: Software Description and Level of Concern … ok — 89d0bfce-3ff3-42d3-a0f9-9fbb827a0637 → eng (existing, already filed, 4654 bytes)
+  • Vault: Analytical Performance Study Report … ok — d0b35c47-b826-41e0-ae8c-b9e37253bd9c → k510 (existing, already filed, 6247 bytes)
+  • Vault: Clinical Performance Study Report … ok — 121d2df3-ec99-4afb-9ad1-b0f31a0723d7 → cer (existing, already filed, 5659 bytes)
+  • Vault: Risk Management File Summary (ISO 14971) … ok — 8a302d5a-6afa-4af0-89db-c97d663b9fc2 → eng (existing, already filed, 4407 bytes)
+  • Vault: Labeling and Instructions for Use (Draft) … ok — 1b80ee68-61d1-46cd-b4b5-c26e25f5035b → udi (existing, already filed, 6254 bytes)
+  • Vault: data room after filing … ok — documentCount=35; cab-k510:2 cab-cer:1 cab-eng:2 cab-udi:1
+  • Authoring: 510(k) Summary (sections per 21 CFR 807.92) … ok — 28f95d9a-a9c1-49da-8377-56d847a5d8e5 (existing, 9 sections)
+  • Authoring: reviewer comment on the 510(k) Summary, resolved … ok — comment cb315bc0-e15a-44ed-86b8-8df55b7b7340 resolved
+  • Authoring: request review, submit to workflow, freeze v1.0 … ok — review → oq-signer@validation.local (existing); already frozen (097e7a50b56d…)
+  • Authoring: e-sign the frozen 510(k) Summary as the second signer (APPROVER) … ok — already signed by oq-signer@validation.local (APPROVER)
+  • Authoring: Substantial Equivalence Discussion (draft with an open comment) … ok — ecee51ea-a427-4870-9abf-1d8f81cb8e1d draft, open comment 301b0174-e51d-4715-97f2-ce7355ba6390
+  • Authoring: Cybersecurity and Interoperability Summary (review requested) … ok — 883912ab-6cd2-4301-972b-d3c4f420837a (6 sections), review → oq-signer@validation.local
+  • Authoring: does the Review board list the requested reviews? (probe) … ok — queue 0, 0 for the pack
+  • Submission Center: 510(k) submission for the program … ok — 68 (created, 510k/ivd)
+  • Submission Center: original sequence 0000 … ok — 29 status draft (created)
+  • Submission Center: file the six vault documents as leaves … FAILED
+✗ mdx: place leaf estar.device-description: HTTP 400 {"error":{"code":"VALIDATION","message":"Section code \"estar.device-description\" does not name a CTD section a document can be filed at. Use a CTD section code — for example 1.2, 2.7.3 or 3.2.S.4.2 — since it decides where the document is filed in the package. A bare module number is a container, not a section."}}

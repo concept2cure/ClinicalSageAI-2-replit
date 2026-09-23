@@ -1,0 +1,12 @@
+{
+  "_comment": "Columns the server queries whose ONLY creator is a migration on no durable apply path — they exist on no real database, so the statements naming them raise 42703. Every entry needs a written reason; an empty one fails the guard. Resolve an entry (put its migration on an applier after the file that creates the table, or delete the dead reference), then remove it here. Goal: empty.",
+  "columns": {
+    "analytical_methods.method_type": {
+      "reason": "Decided 2026-09-22 after adversarial triage, not pending. The ICH Q2 check (server/services/cmc/ich-compliance-checker.ts, and the same inline SELECT in qbd-analyzer.ts and control-strategy-generator.ts) reads method_name, method_type, purpose, validation_status and the *_data columns from public.analytical_methods, whose deployed shape (shared/schema.ts: an organization method library, no project key) has none of them; 42703 by PREPARE on the reference DB. It fails HONESTLY today: safe() records unavailable.methods, checkQ2 returns Q2_NOT_EVALUATED, the overall status is 'incomplete' and CmcQuality.tsx says some checks could not run. The obvious rewrite onto cmc_source_objects(source_type='method') was REFUTED by two skeptics because it would fabricate verdicts: artifact-classified 'method' rows carry no validation status and would read as Q2_UNVALIDATED_METHODS 'fail', and the AnA ich_compliance path passes a numeric project id where rows are keyed by CMC project UUID, turning 'not evaluated' into 'no methods recorded'. A correct fix needs a generic source-object reader with a UUID guard and a status discriminator, and checkQ2 changes. CMC is outside the launch catalog, so under CLAUDE.md RULE 2 it belongs to the CMC workstream.",
+      "addedOnlyBy": [
+        "db/migrations/_consolidated/001_analytical_methods_schema.sql"
+      ],
+      "referencedIn": "server/services/cmc/ich-compliance-checker.ts"
+    }
+  }
+}

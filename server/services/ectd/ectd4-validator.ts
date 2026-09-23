@@ -25,6 +25,9 @@
  * @compliance ICH eCTD, FDA ESG Technical Conformance Guide, 21 CFR Part 11
  */
 
+import { anyLeafSatisfies } from './section-code-match';
+import { requiredModule1CodesForRegion } from '../region-profiles/region-profile-service';
+
 import crypto from 'crypto';
 import {
   validateRegionalPackage,
@@ -61,7 +64,9 @@ export interface ValidationResult {
     warnings: number;
     infos: number;
     sectionsPresent: number;
-    sectionsRequired: number;
+    /** Null when this module has no required-section profile for the submission
+     *  type — distinct from 0, which would mean "assessed, nothing required". */
+    sectionsRequired: number | null;
     sectionsMissing: string[];
   };
   timestamp: string;
@@ -141,14 +146,39 @@ export function validateFilename(filename: string): { valid: boolean; message?: 
 // REQUIRED SECTIONS REGISTRY
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/** Sections required for an initial IND filing per 21 CFR 312.23(a) */
-const IND_REQUIRED_SECTIONS = new Set([
-  'm1.1', // FDA Forms
-  'm1.2', // Cover Letter
-  'm1.5', // Table of Contents
-  'm1.6', // Introductory Statement & General Investigational Plan
-  'm1.7', // Investigator's Brochure
-  'm1.9', // Environmental Assessment
+/**
+ * MODULE 1 COMES FROM THE REGION PROFILE, NOT FROM A LITERAL HERE.
+ *
+ * These sets used to spell Module 1 out by hand, and their comments described
+ * the EU/legacy CTD layout while the codes were read as FDA ones. Against this
+ * repository's own FDA Module 1 model four IND entries named a different
+ * heading than the comment beside them claimed:
+ *
+ *   demanded  comment said                        FDA v2.3 is            real home
+ *   m1.5      Table of Contents                   Application Status     —
+ *   m1.6      Introductory Statement & Gen. Plan  Meetings               1.20
+ *   m1.7      Investigator's Brochure             (absent from FDA M1)   1.14.4.1
+ *   m1.9      Environmental Assessment            Pediatric Admin Info   1.12.14
+ *
+ * NDA and BLA carried the same m1.5, and NDA added m1.15 "Annotated Labeling"
+ * where FDA 1.15 is Promotional Material. So a correctly assembled IND was told
+ * it was missing four sections, under codes that would have sent its
+ * Investigator's Brochure and general investigational plan to headings meant
+ * for something else — while the sections it genuinely must carry (1.12.14,
+ * 1.14.4.1, 1.20) were never asked for at all.
+ *
+ * `requiredModule1CodesForRegion` is the one walk over the profile, shared with
+ * `assess-dispatch-readiness.requiredModule1Codes` — the gate that blocks
+ * freeze and transmit — so the two cannot disagree about Module 1 again.
+ * Modules 2-5 stay declared here: the region profile models Module 1 only, and
+ * these are the ICH M4 bodies each application type must carry.
+ */
+function module1Required(applicationType: 'ind' | 'nda' | 'bla'): string[] {
+  return requiredModule1CodesForRegion('fda', applicationType).map((c) => `m${c}`);
+}
+
+/** Modules 2-5 for an initial IND per 21 CFR 312.23(a). */
+const IND_M2_M5 = [
   'm2.3', // Quality Overall Summary
   'm2.4', // Nonclinical Overview
   'm2.6', // Nonclinical Summaries
@@ -157,69 +187,41 @@ const IND_REQUIRED_SECTIONS = new Set([
   'm4.2.1', // Pharmacology
   'm4.2.2', // Pharmacokinetics
   'm4.2.3', // Toxicology
-  'm5.3.5', // Phase 1 Protocol
-]);
+  'm5.3.5', // Phase 1 protocol (21 CFR 312.23(a)(6))
+];
 
-/** Sections required for an NDA filing per 21 CFR 314.50 / ICH M4 */
-const NDA_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([
-  'm1.1', // FDA Forms (356h)
-  'm1.2', // Cover Letter
-  'm1.3', // Administrative Information
-  'm1.5', // Table of Contents
-  'm1.14', // Labeling
-  'm1.15', // Annotated Labeling
-  'm2.2', // Introduction
-  'm2.3', // Quality Overall Summary
-  'm2.4', // Nonclinical Overview
-  'm2.5', // Clinical Overview
-  'm2.6', // Nonclinical Written & Tabulated Summaries
-  'm2.7', // Clinical Summary
-  'm3.2.S', // Drug Substance
-  'm3.2.P', // Drug Product
-  'm3.2.A', // Appendices (facilities, adventitious agents, excipients)
-  'm3.2.R', // Regional Information
-  'm4.2.1', // Pharmacology
-  'm4.2.2', // Pharmacokinetics
-  'm4.2.3', // Toxicology
-  'm5.2', // Tabular Listing of Clinical Studies
-  'm5.3.5', // Reports of Efficacy and Safety Studies (CSRs)
-]);
+/** Modules 2-5 for an NDA per 21 CFR 314.50 / ICH M4. */
+const NDA_M2_M5 = [
+  'm2.2', 'm2.3', 'm2.4', 'm2.5', 'm2.6', 'm2.7',
+  'm3.2.S', 'm3.2.P', 'm3.2.A', 'm3.2.R',
+  'm4.2.1', 'm4.2.2', 'm4.2.3',
+  'm5.2', 'm5.3.5',
+];
 
-/** Sections required for a BLA filing per 21 CFR 601 / ICH M4 */
-const BLA_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([
-  'm1.1', // FDA Forms (356h)
-  'm1.2', // Cover Letter
-  'm1.3', // Administrative Information
-  'm1.5', // Table of Contents
-  'm1.14', // Labeling
-  'm2.2', // Introduction
-  'm2.3', // Quality Overall Summary (incl. characterization for biologics)
-  'm2.4', // Nonclinical Overview
-  'm2.5', // Clinical Overview
-  'm2.6', // Nonclinical Written & Tabulated Summaries
-  'm2.7', // Clinical Summary (incl. immunogenicity)
-  'm3.2.S', // Drug Substance
-  'm3.2.P', // Drug Product
-  'm3.2.A', // Appendices (adventitious agents required for biologics)
-  'm3.2.R', // Regional Information
-  'm4.2.1', // Pharmacology
-  'm4.2.3', // Toxicology
-  'm5.2', // Tabular Listing of Clinical Studies
-  'm5.3.5', // Reports of Efficacy and Safety Studies (CSRs)
-]);
+/** Modules 2-5 for a BLA per 21 CFR 601 / ICH M4. */
+const BLA_M2_M5 = [
+  'm2.2', 'm2.3', 'm2.4', 'm2.5', 'm2.6', 'm2.7',
+  'm3.2.S', 'm3.2.P', 'm3.2.A', 'm3.2.R',
+  'm4.2.1', 'm4.2.3',
+  'm5.2', 'm5.3.5',
+];
 
-const EMPTY_REQUIRED_SECTIONS: ReadonlySet<string> = new Set();
+const IND_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([...module1Required('ind'), ...IND_M2_M5]);
+const NDA_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([...module1Required('nda'), ...NDA_M2_M5]);
+const BLA_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([...module1Required('bla'), ...BLA_M2_M5]);
 
 /**
- * The required-section profile for a submission type. Unrecognized submission
- * types return an empty set so the completeness check does not falsely flag
- * IND-specific sections as "missing" on a non-IND submission. (Previously both
- * ternary branches were IND_REQUIRED_SECTIONS, so every type — including NDA
- * and BLA — was validated against IND's sections.)
+ * The required-section profile for a submission type, or NULL when this module
+ * has none for it.
+ *
+ * Null, not an empty set. An empty set produced no MISSING_REQUIRED_SECTION
+ * findings and no missing codes, so an ANDA — or any type not listed — came
+ * back from `validatePackage` looking structurally complete, and from
+ * `quickValidate` at 100%, with the required-section check never having run.
+ * Callers now have to say which of the two happened.
  */
-function requiredSectionsFor(submissionType: string): ReadonlySet<string> {
-  const normalized = submissionType?.toUpperCase?.() ?? 'IND';
-  switch (normalized) {
+function requiredSectionsFor(submissionType: string): ReadonlySet<string> | null {
+  switch (submissionType?.toUpperCase?.() ?? 'IND') {
     case 'IND':
       return IND_REQUIRED_SECTIONS;
     case 'NDA':
@@ -227,7 +229,7 @@ function requiredSectionsFor(submissionType: string): ReadonlySet<string> {
     case 'BLA':
       return BLA_REQUIRED_SECTIONS;
     default:
-      return EMPTY_REQUIRED_SECTIONS;
+      return null;
   }
 }
 
@@ -274,9 +276,31 @@ export function validatePackage(
   const requiredSections = requiredSectionsFor(submissionType);
   const missingSections: string[] = [];
 
-  // 1. Check required sections
-  for (const required of requiredSections) {
-    if (!presentSections.has(required)) {
+  /* 1. Check required sections.
+     A required section is a NODE ('m3.2.S'); a placed leaf is a document under
+     it ('m3.2.S.1'). This was `presentSections.has(required)` — an exact
+     match — and nothing ever writes a leaf at the parent code, so a sequence
+     carrying all seventeen placed Module 3 leaves was reported missing drug
+     substance and drug product, while the compile path reported the same
+     sequence complete. The prefix rule now lives in one module both use. */
+  /* No profile for this submission type: the check did not run, and that has to
+     be visible. Silence here read as a clean structural result. */
+  if (requiredSections === null) {
+    findings.push({
+      id: `V${++findingId}`,
+      severity: 'warning',
+      code: 'REQUIRED_SECTIONS_NOT_ASSESSED',
+      sectionCode: '',
+      message:
+        `No required-section profile for submission type "${submissionType}" — completeness was NOT assessed. ` +
+        'This package may be missing required sections that nothing here checked for.',
+      fix: 'Add a required-section profile for this submission type, or validate it against the region rule pack.',
+      rule: 'ICH M4 / regional Module 1 specification',
+    });
+  }
+
+  for (const required of requiredSections ?? []) {
+    if (!anyLeafSatisfies(presentSections, required)) {
       missingSections.push(required);
       findings.push({
         id: `V${++findingId}`,
@@ -563,7 +587,7 @@ export function validatePackage(
       warnings: warningCount,
       infos: infoCount,
       sectionsPresent: presentSections.size,
-      sectionsRequired: requiredSections.size,
+      sectionsRequired: requiredSections?.size ?? null,
       sectionsMissing: missingSections,
     },
     timestamp: new Date().toISOString(),
@@ -627,19 +651,28 @@ export function computeChecksum(buffer: Buffer): string {
 export function quickValidate(
   presentSectionCodes: string[],
   submissionType: string = 'IND'
-): { completeness: number; missing: string[] } {
+): { completeness: number | null; missing: string[]; assessed: boolean } {
   const required = requiredSectionsFor(submissionType);
+  /* NOT ASSESSED IS NOT COMPLETE. This computed
+     `required.size > 0 ? … : 100`, so every submission type without a profile
+     came back 100% complete having checked nothing — and this function exists
+     to drive real-time UI. `null` makes the caller decide what to show. */
+  if (required === null) return { completeness: null, missing: [], assessed: false };
+
   const present = new Set(presentSectionCodes);
   const missing: string[] = [];
 
+  /* The same prefix rule validatePackage uses. A required section is a NODE
+     ('m3.2.S') and a placed leaf is a document beneath it ('m3.2.S.1'); this
+     was an exact `present.has(req)`, so the two functions gave different
+     answers for the same package — the prefix fix reached one and not the
+     other. */
   for (const req of required) {
-    if (!present.has(req)) missing.push(req);
+    if (!anyLeafSatisfies(present, req)) missing.push(req);
   }
 
-  const completeness =
-    required.size > 0 ? Math.round(((required.size - missing.length) / required.size) * 100) : 100;
-
-  return { completeness, missing };
+  const completeness = Math.round(((required.size - missing.length) / required.size) * 100);
+  return { completeness, missing, assessed: true };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

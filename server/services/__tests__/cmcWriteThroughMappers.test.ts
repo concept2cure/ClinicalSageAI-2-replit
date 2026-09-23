@@ -34,6 +34,7 @@ import {
   mapFormulationRecordPayload,
   mapManufacturingProcessPayload,
   mapCharacterizationStudyPayload,
+  mapStabilityPayload,
 } from '../cmc-write-through';
 import { MODULE3_SECTION_RULES, composeModule3FromCanonicalSources, tablesToMarkdown } from '../module3Composer';
 import { composeAppendices, emittableAppendices } from '../module3-extensions';
@@ -2318,5 +2319,67 @@ describe('§3.2.A.3 joins a formulation component to the excipient register row 
     expect(table.rows.filter((r) => /gelatin/i.test(String(r[0])))).toHaveLength(1);
     expect(table.rows.filter((r) => /lanolin/i.test(String(r[0])))).toHaveLength(1);
     expect(a3.narrativeDraft).toContain('A TSE/BSE certificate is recorded for 1 of 2');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Stability is side-scoped: §3.2.S.7 is the drug substance's stability and
+   §3.2.P.8 the drug product's, and the register already asks which.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe('mapStabilityPayload — the scope the register captures reaches the composer', () => {
+  const study = (over: Record<string, unknown> = {}) => ({
+    studyTitle: 'BX-701 long term',
+    storageConditions: ['25C/60%RH'],
+    timePoints: ['0', '3', '6', '12'],
+    shelfLife: '24 months at 25C/60%RH',
+    ...over,
+  });
+
+  it('emits the scope and the side-scoped keys', () => {
+    const ds = mapStabilityPayload(study({ scope: 'DS' }));
+    expect(ds.stabilityScope).toBe('drug_substance');
+    expect(ds.drugSubstanceTimePoints).toBeTruthy();
+    expect(ds.drugSubstanceStorageCondition).toBe('25C/60%RH');
+    expect(ds.drugProductShelfLifeClaim).toBeNull();
+
+    const dp = mapStabilityPayload(study({ scope: 'DP' }));
+    expect(dp.stabilityScope).toBe('drug_product');
+    expect(dp.drugProductShelfLifeClaim).toBe('24 months at 25C/60%RH');
+    expect(dp.drugSubstanceTimePoints).toBeNull();
+
+    const both = mapStabilityPayload(study({ scope: 'both' }));
+    expect(both.drugSubstanceTimePoints).toBeTruthy();
+    expect(both.drugProductShelfLifeClaim).toBeTruthy();
+  });
+
+  it('a DRUG SUBSTANCE study does not complete §3.2.P.8, and vice versa', () => {
+    /* The mapper emitted sixteen keys and not `scope`, and the composer filters
+       by source TYPE — so every stability study fed both sections: a
+       drug-substance study set the drug product's shelf life, and a
+       drug-product study set the substance's storage condition and pull
+       points. The register form's own control is labelled with the section
+       each choice files under. */
+    const dsOnly = composeModule3FromCanonicalSources([src('stability', mapStabilityPayload(study({ scope: 'DS' })))]);
+    const p8 = dsOnly.find((s) => s.sectionKey === '3.2.P.8')!;
+    expect(p8.missingInputs).toContain('drugProductShelfLifeClaim');
+    expect(p8.completeness).toBeLessThan(100);
+    const s7 = dsOnly.find((s) => s.sectionKey === '3.2.S.7')!;
+    expect(s7.missingInputs).toEqual([]);
+
+    const dpOnly = composeModule3FromCanonicalSources([src('stability', mapStabilityPayload(study({ scope: 'DP' })))]);
+    const s7b = dpOnly.find((s) => s.sectionKey === '3.2.S.7')!;
+    expect(s7b.missingInputs).toContain('drugSubstanceTimePoints');
+    expect(dpOnly.find((s) => s.sectionKey === '3.2.P.8')!.missingInputs).toEqual([]);
+  });
+
+  it('the drug product study does not set the drug substance section’s condition', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('stability', mapStabilityPayload(study({ scope: 'DP', storageConditions: ['40C/75%RH'], studyTitle: 'DP accelerated' }))),
+      src('stability', mapStabilityPayload(study({ scope: 'DS', storageConditions: ['5C ± 3C'], studyTitle: 'DS long term' }))),
+    ]);
+    const s7 = composed.find((s) => s.sectionKey === '3.2.S.7')!;
+    expect(tablesToMarkdown(s7.tables)).toContain('5C ± 3C');
+    expect(tablesToMarkdown(s7.tables)).not.toContain('40C/75%RH');
   });
 });

@@ -8,6 +8,16 @@
     "files install-fresh.mjs names explicitly",
     "the drizzle push surface (pgTable/pgView in shared/)"
   ],
-  "count": 0,
-  "tables": {}
+  "count": 1,
+  "tables": {
+    "roles": {
+      "createdOnlyBy": [
+        "db/migrations/_consolidated/006_roles.sql"
+      ],
+      "referencedBy": [
+        "server/api/enterprise/rbac-routes.js"
+      ],
+      "reason": "Pre-existing, newly visible on 2026-09-22 when the reference scan (serverSqlFiles in check-migration-reachability.mjs) widened from .ts to .ts/.js/.mjs. Each entry was confirmed absent on a reference database built by install-fresh + the full migration set + the gcc tree. Resolutions are being verified adversarially (2026-09-22 triage) and each entry is removed when its fix lands. Not accepted debt. roles is created only under the refused _consolidated tree; the mounted .js router reads it (and user_roles)."
+    }
+  }
 }

@@ -7,7 +7,6 @@
     "server/routes/manufacturing-routes.ts",
     "server/services/ai-actions/handlers/refine-with-validation.ts",
     "server/services/ana/intelligence-questions/engine.ts",
-    "server/services/csr-extractor-service.ts",
     "server/services/export-service.ts",
     "server/services/regulatory-intelligence-service.ts",
     "server/services/regulatory/registry/registryValidation.ts",

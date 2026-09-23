@@ -290,7 +290,7 @@ export interface SafetyDesign {
   };
 }
 
-// ─── Schedule of Activities (ICH M11 §7 / USDM ScheduleOfActivities / CDISC) ───
+// ─── Schedule of Activities (ICH M11 §1.3 / USDM ScheduleOfActivities / CDISC) ───
 
 /** Trial epoch a visit belongs to (ICH M11 / CDISC SDTM epoch). */
 export type SoaEpochKind = 'screening' | 'run_in' | 'treatment' | 'follow_up' | 'unscheduled';
@@ -388,6 +388,60 @@ export interface ScheduleOfActivities {
  * may legitimately be a work-in-progress; the gates decide whether a partial design
  * is allowed to advance.
  */
+/**
+ * Regulatory-strategy attributes that the regional rule engine
+ * (`server/services/region-design-rules.ts`) reads and that no other node on
+ * this object carries.
+ *
+ * Added 2026-09-22. `region-rules-adapter.ts` measured the cost of their
+ * absence: for a design without these fields, ELEVEN OF ELEVEN region rules
+ * come back not-assessed — ICH E5 bridging, ICH E14 thorough QT, post-Brexit
+ * UK separation, Swiss and Brazilian local submission, Project Orbis and the
+ * FDA diversity action plan could not be decided at all. Its unmapped ledger
+ * named each missing field and this node is that list, made recordable.
+ *
+ * Every field is OPTIONAL and absence is load-bearing: absent means "not
+ * recorded", which the adapter reports as not-assessed. A recorded `false` is
+ * a statement the sponsor made; an absent field is not, and the two must never
+ * collapse into one another.
+ *
+ * These are strategy attributes, not design structure. They live here because
+ * the rules that read them are evaluated against the design, and because a
+ * design that cannot state whether an ethnic-sensitivity assessment exists
+ * cannot be assessed against ICH E5.
+ */
+export interface RegulatoryStrategy {
+  /** An ICH E5 intrinsic/extrinsic ethnic-factor assessment has been performed. */
+  ethnicSensitivityAssessed?: boolean;
+  /** A thorough QT/QTc study is part of the programme (ICH E14). */
+  thoroughQt?: boolean;
+  /** That QT assessment includes the regional population. */
+  qtInRegionalPopulation?: boolean;
+  /**
+   * An FDA diversity action plan with enrollment goals by demographic subgroup
+   * exists for this trial (FDORA 2022 §3601).
+   */
+  diversityPlan?: boolean;
+  /**
+   * A local legal representative is appointed, keyed by agency code
+   * ('FDA', 'EMA', 'PMDA', 'MHRA', 'NMPA', 'Swissmedic', 'ANVISA'). Keyed by
+   * string rather than by the engine's `Agency` union so this module stays
+   * free of a dependency on the rule engine.
+   */
+  localSponsorRepresentative?: Record<string, boolean>;
+  /**
+   * A reliance pathway is planned (Access Consortium, Project Orbis, or
+   * another recognition route).
+   */
+  usesReliancePathway?: boolean;
+  /**
+   * The trial is in oncology. Recorded rather than inferred: `indication` is
+   * free text with no coded therapeutic area, and keyword-matching it to
+   * decide Project Orbis eligibility would be a guess.
+   */
+  oncology?: boolean;
+}
+
 export interface StudyDesign {
   /** Stable id (set once persisted; optional for an in-memory/proposed design). */
   id?: string;
@@ -414,6 +468,12 @@ export interface StudyDesign {
   scheduleOfActivities?: ScheduleOfActivities;
   statisticalPlan: StatisticalPlan;
   safety?: SafetyDesign;
+
+  /**
+   * Regulatory-strategy attributes the regional rules read. Absent fields are
+   * reported as not-assessed by `region-rules-adapter.ts`, never as `false`.
+   */
+  regulatoryStrategy?: RegulatoryStrategy;
 
   /** Lifecycle status; advancing past `draft` is gated by §17/§20. */
   status?: 'draft' | 'in_review' | 'qc' | 'approved';

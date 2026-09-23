@@ -40,6 +40,20 @@ export const CANONICAL_JOURNEY_MIGRATIONS = [
   'db/migrations/20260725_governance_boundary_tables.sql',
   'db/migrations/20260725_resolution_orchestration_tables.sql',
   'db/migrations/20260725_bundle_execution_receipts.sql',
+  // Span lineage — where a governed document records which clauses came from a
+  // cited source and which the author asserted. Cross-cutting for the same
+  // reason the tamper-proof log above is: `registerArtifactWithGovernance` is
+  // the shared writer behind compute output, accepted proposals, generated
+  // drafts AND governed export, and it now enlists the lineage gate (L177), so
+  // any journey that reaches one of those needs the table.
+  //
+  // Unlike the cases above, a missing table here does NOT pass quietly: the
+  // gate fails closed, so the journey's export returns 500 rather than
+  // reporting success over a swallowed write. Applied in the same order the
+  // production set uses — base table, then the two CHECK wideners.
+  'db/migrations/20260803_document_span_lineage.sql',
+  'migrations/20260907_span_lineage_accepted_machine_draft.sql',
+  'migrations/20260908_span_lineage_machine_draft.sql',
 ] as const;
 
 /** FK prerequisites + two tenants for isolation assertions. */

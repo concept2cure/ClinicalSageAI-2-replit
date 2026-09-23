@@ -35,6 +35,7 @@
 
 import crypto from 'node:crypto';
 import { resolveSignerIdentity } from '../part11/resolve-signer-identity.js';
+import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate.js';
 
 import { getPool } from '../../db';
 import {
@@ -264,6 +265,33 @@ export async function sealVerifiedVersion(
       versionNumber = versionInsert.rows[0].version;
     }
 
+    /* ── Span lineage, before the seal is applied (ledger L177) ──────────────
+       A §11.50 manifestation is a person putting their name to this text, so
+       the text had better be able to say where it came from. It could not:
+       neither the fallback artifact insert above nor the sealed version
+       recorded any span lineage, so a signed, sealed regulatory document could
+       carry a full signature manifest over sentences with no recorded origin.
+
+       Enlisted on BOTH paths, not just the fallback. On the Build-1 path the
+       artifact already exists and may already carry source spans from a draft
+       accept — enforceAuthorLineage keeps every one of those whose quoted text
+       is still exactly where it was (retireStaleSourceSpans) and attributes
+       only the remainder, so this strengthens the seal rather than flattening
+       real citations into a blanket author claim.
+
+       Author for the remainder: the content arrives already composed and the
+       retrieved chunks that backed it do not travel here, so the honest record
+       is that the signer asserted those clauses. A lineage gap rolls the seal
+       back, which is the right direction — an unattributable document should
+       fail to seal rather than seal unattributed. */
+    await enforceAuthorLineage(
+      client,
+      input.organizationId,
+      { documentTable: 'concept2cure_artifacts', documentId: String(artifactPk) },
+      input.content,
+      String(input.userId),
+    );
+
     // ── The SealedRecord, recorded as an append-only signature row ──
     // §11.50 printed name — resolved from the membership record on THIS
     // transaction, not taken from the caller. `manifestation.printedName` is
@@ -291,14 +319,20 @@ export async function sealVerifiedVersion(
       .update(`${signatureId}:${sealedRecord.contentHash}:${signer.name}:${sealedAt}`)
       .digest('hex');
     await client.query(
+      // No created_at/updated_at — the table has neither (0000_sweet_joseph.sql;
+      // nothing since adds them, and the 20260817 reconcile migration covers
+      // other tables). `signed_at` is this table's only time column. Postgres
+      // rejects an unknown column at PLAN time, so naming them failed EVERY seal
+      // — the same defect already fixed at the matching inserts in
+      // compute/artifactWriteback.ts and compute/exportGovernance.ts.
       `INSERT INTO concept2cure_signatures (
         signature_id, artifact_id, artifact_version_id, organization_id,
         signature_type, signature_purpose, signature_meaning,
         signer_id, signer_name, signer_email, signer_role,
         authentication_method, authentication_timestamp, second_factor_verified,
-        signature_hash, signature_manifest, ip_address, status, signed_at, created_at, updated_at
+        signature_hash, signature_manifest, ip_address, status, signed_at
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'active',$18,$18,$18
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'active',$18
       )`,
       [
         signatureId,
@@ -370,11 +404,13 @@ export async function sealVerifiedVersion(
     // ── §11.10(e) audit log ──
     const auditId = `audit_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
+      // No created_at/updated_at — same as the signature insert above, and for
+      // the same reason: `timestamp` is this table's only time column.
       `INSERT INTO regulatory_audit_logs (
         audit_id, organization_id, entity_type, entity_id, action, action_category,
         previous_value, new_value, user_id, user_name, user_role, ip_address,
-        is_gxp_relevant, timestamp, metadata, created_at, updated_at
-      ) VALUES ($1,$2,'artifact_version',$3,'SEAL_VERIFIED','signature',NULL,$4,$5,$6,$7,$8,TRUE,$9,$10,$9,$9)`,
+        is_gxp_relevant, timestamp, metadata
+      ) VALUES ($1,$2,'artifact_version',$3,'SEAL_VERIFIED','signature',NULL,$4,$5,$6,$7,$8,TRUE,$9,$10)`,
       [
         auditId,
         input.organizationId,

@@ -13,15 +13,10 @@
  * modules or in a bootstrap manifest under server/bootstrap/.
  */
 
-// dotenv MUST load before any env var read. `override: false` so
-// shell-exported values still win over the files, and so the FIRST file to
-// define a key wins. .env.local is therefore loaded first: it is the
-// git-ignored, machine-local file `npm run up` writes, and a developer's local
-// database URL must beat the committed default — which pointed at a role with
-// no grants and made every query fail on an otherwise correct install.
-import { config as dotenvConfig } from 'dotenv';
-dotenvConfig({ path: '.env.local', override: false, quiet: true });
-dotenvConfig({ override: false, quiet: true });
+// Env files MUST load before any env var read, and only an import runs early
+// enough: ESM evaluates every static import before this module's body. So this
+// is the first import, and .env.local beats .env — see the module.
+import './config/load-env-files';
 
 // Initialize OpenTelemetry + Sentry + IPv4 DNS ordering early, before
 // anything that opens a DB connection or HTTP client.
@@ -75,6 +70,7 @@ import {
   mountApiCatchAll,
 } from './startup/services';
 import { setupFrontendServing } from './startup/frontend';
+import { createMcpRouter } from './mcp';
 
 // ── Early validation (may process.exit on missing required vars) ───────────
 validateEnvironment();
@@ -109,6 +105,13 @@ applyTelemetryMiddleware(app);
 // Fast-path health endpoints BEFORE security/rate-limit — they need to
 // short-circuit without any middleware cost.
 mountFastPathHealthEndpoints(app, pool);
+
+// Concept2Cure connector for Claude (remote MCP server, D8). Mounted at the
+// root, ahead of the core stack, because its OAuth token/registration
+// endpoints are server-to-server calls that the production CSRF guard would
+// refuse (no Origin, no Bearer); the router carries its own parsing, CORS,
+// headers and rate limits, and /mcp itself is Bearer-only. See server/mcp/index.ts.
+if (process.env.MCP_ENABLED === 'true') app.use(createMcpRouter());
 
 applyCoreMiddleware(app, debugLog);
 

@@ -25,7 +25,11 @@ import {
   type GeneratedTable,
   type CmcSourceType,
 } from './module3Composer.js';
-import { HUMAN_OR_ANIMAL_ORIGINS, isHumanOrAnimalOrigin, isReviewRequiredOrigin } from '../../shared/cmc/material-scope';
+import {
+  HUMAN_OR_ANIMAL_ORIGINS,
+  isHumanOrAnimalOrigin,
+  isReviewRequiredOrigin,
+} from '../../shared/cmc/material-scope';
 
 export type RegionCode = 'US' | 'EU' | 'JP' | 'CA';
 
@@ -71,9 +75,14 @@ const APPENDIX_RULES: AppendixRule[] = [
   {
     sectionKey: '3.2.A.1',
     title: 'Facilities and Equipment',
-    requiredSourceTypes: ['manufacturing_process', 'drug_substance', 'drug_product', 'container_closure'],
+    requiredSourceTypes: [
+      'manufacturing_process',
+      'drug_substance',
+      'drug_product',
+      'container_closure',
+    ],
     optional: false,
-    generator: (m) => {
+    generator: m => {
       const mfgSite = val(m, 'manufacturingSite');
       const route = val(m, 'manufacturingRoute');
       const processDesc = val(m, 'processDescription');
@@ -82,17 +91,21 @@ const APPENDIX_RULES: AppendixRule[] = [
       const justification = val(m, 'suitabilityJustification');
       const processSteps = valArr(m, 'processSteps');
       const tables: GeneratedTable[] = [];
-      tables.push(kvTable('Facilities Summary', {
-        'Manufacturing Site': mfgSite,
-        'Synthetic/Manufacturing Route': route,
-        // One recorded process text must not fill two rows.
-        'Process Description': processDesc !== route ? processDesc : '',
-      }));
-      tables.push(kvTable('Primary Equipment / Container Closure', {
-        'Primary Container': container,
-        'Closure': closure,
-        'Suitability Justification': justification,
-      }));
+      tables.push(
+        kvTable('Facilities Summary', {
+          'Manufacturing Site': mfgSite,
+          'Synthetic/Manufacturing Route': route,
+          // One recorded process text must not fill two rows.
+          'Process Description': processDesc !== route ? processDesc : '',
+        })
+      );
+      tables.push(
+        kvTable('Primary Equipment / Container Closure', {
+          'Primary Container': container,
+          Closure: closure,
+          'Suitability Justification': justification,
+        })
+      );
       if (processSteps.length > 0) {
         tables.push({
           title: 'Unit Operations and Associated Equipment',
@@ -110,16 +123,23 @@ const APPENDIX_RULES: AppendixRule[] = [
         });
       }
       return {
-        narrative: `Per ICH M4Q, Section 3.2.A.1 (Facilities and Equipment) describes the facilities, equipment, and ` +
+        narrative:
+          `Per ICH M4Q, Section 3.2.A.1 (Facilities and Equipment) describes the facilities, equipment, and ` +
           `related controls used in the manufacture of the drug substance and drug product. ` +
-          (mfgSite ? `Manufacturing operations are performed at ${mfgSite}. ` : 'Manufacturing site not yet recorded. ') +
+          (mfgSite
+            ? `Manufacturing operations are performed at ${mfgSite}. `
+            : 'Manufacturing site not yet recorded. ') +
           (route ? `The manufacturing route is: ${route}. ` : '') +
           // The register records ONE process text, so route and description
           // are often the same sentence — never printed twice.
           (processDesc && processDesc !== route ? `Process overview: ${processDesc}. ` : '') +
           `\n\nPrimary container closure equipment and packaging components used during manufacture and storage are ` +
-          (container ? `${container}` + (closure ? ` with ${closure}` : '') + `. ` : `not yet specified. `) +
-          (justification ? `Suitability of the equipment and packaging is supported by: ${justification}. ` : '') +
+          (container
+            ? `${container}` + (closure ? ` with ${closure}` : '') + `. `
+            : `not yet specified. `) +
+          (justification
+            ? `Suitability of the equipment and packaging is supported by: ${justification}. `
+            : '') +
           /* This paragraph used to ASSERT, unconditionally and over nothing:
              that cleaning, equipment qualification and changeover procedures
              follow site SOPs and current GMP, and that cross-contamination
@@ -149,7 +169,7 @@ const APPENDIX_RULES: AppendixRule[] = [
     title: 'Adventitious Agents Safety Evaluation',
     requiredSourceTypes: ['drug_substance', 'characterization', 'manufacturing_process'],
     optional: true,
-    generator: (m) => {
+    generator: m => {
       const name = val(m, 'name');
       const route = val(m, 'manufacturingRoute');
       const processDesc = val(m, 'processDescription');
@@ -180,14 +200,27 @@ const APPENDIX_RULES: AppendixRule[] = [
          product. The INN stems are added for the same reason — a substance
          named "belantezumab" is a monoclonal antibody by its name alone. */
       const biologicHeuristic =
-        /\b(biologic|recombinant|monoclonal|vaccine|fermentation|mammalian|hybridoma|bioreactor|transgenic|plasmid|viral\s*vector)\b/i.test(`${route} ${processDesc} ${name}`) ||
-        /\bmAb\b|\bcell[\s-]*(line|culture|bank)\b|\b(human|animal)\s*tissue\b|\bplasma[-\s]derived\b/i.test(`${route} ${processDesc} ${name}`) ||
-        /\b(cho|hek\s*293|sf9|vero|per\.?c6|e\.?\s?coli|pichia|saccharomyces|baculovirus)\b/i.test(`${route} ${processDesc}`) ||
+        /\b(biologic|recombinant|monoclonal|vaccine|fermentation|mammalian|hybridoma|bioreactor|transgenic|plasmid|viral\s*vector)\b/i.test(
+          `${route} ${processDesc} ${name}`
+        ) ||
+        /\bmAb\b|\bcell[\s-]*(line|culture|bank)\b|\b(human|animal)\s*tissue\b|\bplasma[-\s]derived\b/i.test(
+          `${route} ${processDesc} ${name}`
+        ) ||
+        /\b(cho|hek\s*293|sf9|vero|per\.?c6|e\.?\s?coli|pichia|saccharomyces|baculovirus)\b/i.test(
+          `${route} ${processDesc}`
+        ) ||
         /(mab|cept|kinra|ase|tide|parin)\b/i.test(String(name).trim().split(/\s+/).pop() || '');
       const isBiologic =
         explicitBiologic ||
         (!explicitSmallMolecule &&
-          !!(biologicalOrigin || cellLine || sourceOrganism || viralSafety || tseStatus || biologicHeuristic));
+          !!(
+            biologicalOrigin ||
+            cellLine ||
+            sourceOrganism ||
+            viralSafety ||
+            tseStatus ||
+            biologicHeuristic
+          ));
 
       if (!isBiologic) {
         /* "Not applicable — no animal- or human-derived raw materials, no
@@ -199,22 +232,28 @@ const APPENDIX_RULES: AppendixRule[] = [
            fail-closed branch for exactly this hazard; this section needs the
            same one, and the distinction is between "recorded as a chemical
            synthesis" and "nothing recorded either way". */
-        const statedChemical = explicitSmallMolecule || Boolean(String(route || processDesc || '').trim());
+        const statedChemical =
+          explicitSmallMolecule || Boolean(String(route || processDesc || '').trim());
         if (!statedChemical) {
           return {
-            narrative: `Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, ` +
+            narrative:
+              `Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, ` +
               `bacterial, fungal, mycoplasma, and TSE/BSE safety for biologically-derived materials. ` +
               `\n\nThe record states neither a manufacturing route nor a biological origin for ` +
-              (name ? `${name}` : 'the drug substance') + `, so whether this section applies is NOT ESTABLISHED. ` +
+              (name ? `${name}` : 'the drug substance') +
+              `, so whether this section applies is NOT ESTABLISHED. ` +
               `This is not a statement that the substance is chemically synthesised: it is a statement that the ` +
               `question has not been answered. Record the manufacturing route, and the source organism or cell ` +
               `line where one is used, before this section is relied upon.`,
-            tables: [kvTable('Adventitious Agents Safety Evaluation', {
-              'Applicability': 'Not established — no manufacturing route or biological origin is recorded',
-              'Drug Substance': name || '—',
-              'Manufacturing Route': route || 'not recorded',
-              'Biological Origin': 'not recorded',
-            })],
+            tables: [
+              kvTable('Adventitious Agents Safety Evaluation', {
+                Applicability:
+                  'Not established — no manufacturing route or biological origin is recorded',
+                'Drug Substance': name || '—',
+                'Manufacturing Route': route || 'not recorded',
+                'Biological Origin': 'not recorded',
+              }),
+            ],
           };
         }
         return {
@@ -230,55 +269,99 @@ const APPENDIX_RULES: AppendixRule[] = [
              propagation". What the record actually supports is narrower: no
              biological origin is RECORDED, and the origin of the raw materials
              is stated where it is captured, not here. */
-          narrative: `Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, ` +
+          narrative:
+            `Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, ` +
             `bacterial, fungal, mycoplasma, and TSE/BSE safety for biologically-derived materials. ` +
             `\n\nNo biological origin, source organism, cell line or fermentation step is recorded against ` +
-            (name ? `${name}` : 'the drug substance') + `, whose recorded manufacturing route is: ${route || processDesc}. ` +
+            (name ? `${name}` : 'the drug substance') +
+            `, ${recordedBasis(route || processDesc, explicitSmallMolecule)}. ` +
             `On that record this section does not apply to the drug substance itself. ` +
             `\n\nThis is a statement about the SUBSTANCE, not about every material used to make it: the origin of ` +
             `the raw and starting materials is recorded in §3.2.S.2.3 and that of the excipients in §3.2.P.4 and ` +
             `§3.2.A.3, and this section neither reads nor certifies them. ` +
             `Any future change to a biologically-derived starting material would trigger re-assessment of this section.`,
-          tables: [kvTable('Adventitious Agents Safety Evaluation', {
-            'Applicability': 'Does not apply to the drug substance — no biological origin is recorded',
-            'Drug Substance': name || '—',
-            'Manufacturing Route': route || '—',
-            'Biological Origin': 'None recorded',
-            'Raw Material Origin': 'Recorded in §3.2.S.2.3 — not assessed by this section',
-            'Excipient Origin': 'Recorded in §3.2.A.3 — not assessed by this section',
-          })],
+          tables: [
+            kvTable('Adventitious Agents Safety Evaluation', {
+              Applicability:
+                'Does not apply to the drug substance — no biological origin is recorded',
+              'Drug Substance': name || '—',
+              'Manufacturing Route': route || 'not recorded',
+              'Biological Origin': 'None recorded',
+              'Raw Material Origin': 'Recorded in §3.2.S.2.3 — not assessed by this section',
+              'Excipient Origin': 'Recorded in §3.2.A.3 — not assessed by this section',
+            }),
+          ],
         };
       }
 
       const tables: GeneratedTable[] = [];
-      tables.push(kvTable('Adventitious Agents Safety — Source Materials', {
-        'Drug Substance': name,
-        'Biological Origin': biologicalOrigin,
-        'Source Organism / Cell Line': sourceOrganism || cellLine,
-        'Manufacturing Route': route,
-        'TSE/BSE Status': tseStatus,
-      }));
+      tables.push(
+        kvTable('Adventitious Agents Safety — Source Materials', {
+          'Drug Substance': name,
+          'Biological Origin': biologicalOrigin,
+          'Source Organism / Cell Line': sourceOrganism || cellLine,
+          'Manufacturing Route': route,
+          'TSE/BSE Status': tseStatus,
+        })
+      );
       if (viralSafety) {
-        tables.push(kvTable('Viral Safety Evaluation Summary', {
-          'Evaluation': viralSafety,
-          'Reference': 'ICH Q5A(R2) — Viral Safety Evaluation of Biotechnology Products',
-        }));
+        tables.push(
+          kvTable('Viral Safety Evaluation Summary', {
+            Evaluation: viralSafety,
+            Reference: 'ICH Q5A(R2) — Viral Safety Evaluation of Biotechnology Products',
+          })
+        );
       }
+      /* THE BIOLOGIC BRANCH, FAIL-CLOSED (2026-09-08).
+         Its two sibling branches were each given a "NOT ESTABLISHED" marker,
+         with long comments explaining why; this one was not, and
+         composeAppendices scores a section 100 unless that marker appears. So a
+         drug substance row holding nothing but the name "Trastuzumab" — which
+         fires the INN-stem heuristic — produced a 100%-complete section
+         asserting a three-part control strategy, in-process adventitious-agent
+         testing, viral clearance steps, cell-bank characterisation and
+         EMEA/410/01 control of animal-origin raw materials. None of it read
+         from any field, in the appendix whose entire subject is adventitious
+         agents, approvable and exportable as a filed leaf.
+         What the section may state is what the register holds. The control
+         strategy is now conditioned on a recorded viral safety evaluation, the
+         TSE risk on a recorded status, and whatever is absent is named as not
+         established rather than asserted. */
+      const establishedFacts = [
+        biologicalOrigin ? null : 'the biological origin',
+        sourceOrganism || cellLine ? null : 'the source organism or cell line',
+        viralSafety ? null : 'the viral safety evaluation (ICH Q5A(R2))',
+        tseStatus ? null : 'the TSE/BSE risk assessment',
+      ].filter(Boolean) as string[];
+
       return {
-        narrative: `Per ICH M4Q and ICH Q5A(R2), Section 3.2.A.2 (Adventitious Agents Safety Evaluation) summarizes ` +
+        narrative:
+          `Per ICH M4Q and ICH Q5A(R2), Section 3.2.A.2 (Adventitious Agents Safety Evaluation) summarizes ` +
           `the controls implemented to assure freedom from adventitious viral, bacterial, fungal, mycoplasma, and ` +
           `TSE/BSE agents in the drug substance and drug product. ` +
           (name ? `The drug substance ${name} ` : 'The drug substance ') +
-          (biologicalOrigin ? `is derived from ${biologicalOrigin}. ` : 'is biologically derived. ') +
+          (biologicalOrigin
+            ? `is derived from ${biologicalOrigin}. `
+            : 'is recorded, or read by its name, as biologically derived. ') +
           (sourceOrganism || cellLine ? `Source material: ${sourceOrganism || cellLine}. ` : '') +
-          `\n\nThe control strategy combines (i) qualification and testing of source materials, ` +
-          `(ii) in-process testing for adventitious agents, and (iii) viral clearance / inactivation steps ` +
-          `incorporated into the manufacturing process. ` +
-          (viralSafety ? `Viral safety evaluation: ${viralSafety}. ` : '') +
-          (tseStatus ? `TSE/BSE risk assessment: ${tseStatus}. ` : '') +
-          `\n\nCell bank characterization, end-of-production cell testing, and downstream clearance data ` +
-          `are referenced in 3.2.S.2.3. Raw materials of animal or human origin (where applicable) are ` +
-          `controlled per EMA EMEA/410/01 and 9 CFR.`,
+          (viralSafety
+            ? `\n\nThe recorded control strategy is: ${viralSafety}. ` +
+              `Cell bank characterization, end-of-production cell testing and downstream clearance data are ` +
+              `referenced in 3.2.S.2.3.`
+            : '') +
+          (tseStatus ? `\n\nTSE/BSE risk assessment: ${tseStatus}. ` : '') +
+          (establishedFacts.length > 0
+            ? `\n\nThis register records ${
+                establishedFacts.length === 4 ? 'none of' : 'neither'
+              } ` +
+              `${establishedFacts.join(', ')}${
+                establishedFacts.length === 4 ? '' : ''
+              }, so the adventitious-agents ` +
+              `safety of this substance is NOT ESTABLISHED by this section. This is not a statement that the ` +
+              `substance is unsafe or that no controls exist: it is a statement that this section has not been ` +
+              `given them. Record them, per ICH Q5A(R2) and EMA EMEA/410/01, before this section is relied upon.`
+            : `\n\nRaw materials of animal or human origin, where used, are controlled per EMA EMEA/410/01 and 9 CFR; ` +
+              `their origin is recorded in §3.2.S.2.3 and §3.2.A.3 and is not assessed here.`),
         tables,
       };
     },
@@ -288,7 +371,7 @@ const APPENDIX_RULES: AppendixRule[] = [
     title: 'Excipients',
     requiredSourceTypes: ['excipient', 'drug_product', 'formulation_record'],
     optional: true,
-    generator: (m) => {
+    generator: m => {
       const comp = val(m, 'composition');
       const formulationName = val(m, 'formulationName');
       /* Every recorded formulation's components, plus the excipient register
@@ -298,18 +381,26 @@ const APPENDIX_RULES: AppendixRule[] = [
          through one of them. */
       const componentRows = (sourceType: 'formulation_record' | 'drug_product') =>
         m
-          .filter((s) => s.sourceType === sourceType)
-          .flatMap((s) => {
+          .filter(s => s.sourceType === sourceType)
+          .flatMap(s => {
             const rows = (s.sourcePayload as Record<string, any> | undefined)?.components;
-            return Array.isArray(rows) ? rows.filter((c) => c && typeof c === 'object') : [];
+            return Array.isArray(rows) ? rows.filter(c => c && typeof c === 'object') : [];
           });
-      const nameKey = (c: any) => String(c?.component || c?.name || c?.materialName || '').trim().toLowerCase();
-      const textOfField = (...vals: unknown[]) => vals.map((v) => String(v ?? '').trim()).find(Boolean) || '';
+      const nameKey = (c: any) =>
+        String(c?.component || c?.name || c?.materialName || '')
+          .trim()
+          .toLowerCase();
+      const textOfField = (...vals: unknown[]) =>
+        vals.map(v => String(v ?? '').trim()).find(Boolean) || '';
       const excipientRegisterRows = m
-        .filter((s) => s.sourceType === 'excipient')
-        .map((s) => (s.sourcePayload || {}) as Record<string, any>)
-        .filter((p) => String(p.materialName || '').trim() && String(p.status || '').toLowerCase() !== 'retired')
-        .map((p) => ({
+        .filter(s => s.sourceType === 'excipient')
+        .map(s => (s.sourcePayload || {}) as Record<string, any>)
+        .filter(
+          p =>
+            String(p.materialName || '').trim() &&
+            String(p.status || '').toLowerCase() !== 'retired'
+        )
+        .map(p => ({
           component: p.materialName,
           role: p.functionInFormulation,
           origin: p.origin,
@@ -366,15 +457,23 @@ const APPENDIX_RULES: AppendixRule[] = [
         /* A second row for the same material adds what it knows and never
            overwrites what is already recorded — except that a human/animal
            origin always wins over one that is not. */
-        for (const [field, aliases] of [['component', ['component', 'name', 'materialName']], ['role', ['role', 'function']], ['tseCertification', ['tseCertification', 'certification']]] as const) {
-          if (!textOfField(...aliases.map((a) => existing[a])) ) {
-            const v = textOfField(...aliases.map((a) => c[a]));
+        for (const [field, aliases] of [
+          ['component', ['component', 'name', 'materialName']],
+          ['role', ['role', 'function']],
+          ['tseCertification', ['tseCertification', 'certification']],
+        ] as const) {
+          if (!textOfField(...aliases.map(a => existing[a]))) {
+            const v = textOfField(...aliases.map(a => c[a]));
             if (v) existing[field] = v;
           }
         }
         const existingOrigin = textOfField(existing.origin, existing.source);
         const incomingOrigin = textOfField(c.origin, c.source);
-        if (incomingOrigin && (!existingOrigin || (isHumanOrAnimalOrigin(incomingOrigin) && !isHumanOrAnimalOrigin(existingOrigin)))) {
+        if (
+          incomingOrigin &&
+          (!existingOrigin ||
+            (isHumanOrAnimalOrigin(incomingOrigin) && !isHumanOrAnimalOrigin(existingOrigin)))
+        ) {
           existing.origin = incomingOrigin;
         }
       };
@@ -383,23 +482,28 @@ const APPENDIX_RULES: AppendixRule[] = [
          that re-read the formulation record's own array — formulation_record is
          one of this section's source types — and every excipient count the
          section printed was doubled. */
-      for (const c of [...componentRows('formulation_record'), ...componentRows('drug_product')]) addComponent(c);
+      for (const c of [...componentRows('formulation_record'), ...componentRows('drug_product')])
+        addComponent(c);
 
       for (const [key, entry] of byMaterial) {
         const rows = registerRowsByName.get(key);
         if (!rows || rows.length === 0) continue;
         if (!textOfField(entry.role, entry.function)) {
-          const role = textOfField(...rows.map((r) => r.role));
+          const role = textOfField(...rows.map(r => r.role));
           if (role) entry.role = role;
         }
         /* The register's own origin, kept BESIDE the component's rather than
            behind it — see the note above. */
-        const registerOrigin = rows.map((r) => textOfField(r.origin)).find((o) => o && isHumanOrAnimalOrigin(o))
-          || textOfField(...rows.map((r) => r.origin));
+        const registerOrigin =
+          rows.map(r => textOfField(r.origin)).find(o => o && isHumanOrAnimalOrigin(o)) ||
+          textOfField(...rows.map(r => r.origin));
         if (registerOrigin) entry.registerOrigin = registerOrigin;
-        const certificates = rows.map((r) => textOfField(r.tseCertification));
-        entry.uncertifiedRegisterRows = certificates.filter((c) => !c).length;
-        if (!textOfField(entry.tseCertification, entry.certification) && entry.uncertifiedRegisterRows === 0) {
+        const certificates = rows.map(r => textOfField(r.tseCertification));
+        entry.uncertifiedRegisterRows = certificates.filter(c => !c).length;
+        if (
+          !textOfField(entry.tseCertification, entry.certification) &&
+          entry.uncertifiedRegisterRows === 0
+        ) {
           entry.tseCertification = certificates[0];
         }
       }
@@ -407,14 +511,15 @@ const APPENDIX_RULES: AppendixRule[] = [
          product's record, and is reported on its own — under the same rules. */
       for (const [key, rows] of registerRowsByName) {
         if (byMaterial.has(key)) continue;
-        const certificates = rows.map((r) => textOfField(r.tseCertification));
+        const certificates = rows.map(r => textOfField(r.tseCertification));
         byMaterial.set(key, {
-          component: textOfField(...rows.map((r) => r.component)),
-          role: textOfField(...rows.map((r) => r.role)),
-          origin: rows.map((r) => textOfField(r.origin)).find((o) => o && isHumanOrAnimalOrigin(o))
-            || textOfField(...rows.map((r) => r.origin)),
-          uncertifiedRegisterRows: certificates.filter((c) => !c).length,
-          tseCertification: certificates.filter((c) => !c).length === 0 ? certificates[0] : '',
+          component: textOfField(...rows.map(r => r.component)),
+          role: textOfField(...rows.map(r => r.role)),
+          origin:
+            rows.map(r => textOfField(r.origin)).find(o => o && isHumanOrAnimalOrigin(o)) ||
+            textOfField(...rows.map(r => r.origin)),
+          uncertifiedRegisterRows: certificates.filter(c => !c).length,
+          tseCertification: certificates.filter(c => !c).length === 0 ? certificates[0] : '',
         });
       }
       const components = [...byMaterial.values()];
@@ -424,7 +529,7 @@ const APPENDIX_RULES: AppendixRule[] = [
          project with no formulation and no excipient register got a TSE/BSE
          all-clear over zero data. */
       const excipientRecordCount = m.filter(
-        (s) => s.sourceType === 'excipient' || s.sourceType === 'formulation_record',
+        s => s.sourceType === 'excipient' || s.sourceType === 'formulation_record'
       ).length;
       /* The guard above counts SOURCES, and the claim rests on COMPONENTS. A
          project whose only excipient row is retired, or whose formulation
@@ -434,29 +539,35 @@ const APPENDIX_RULES: AppendixRule[] = [
          sides zero, issued the animal-free all-clear over no data at all. What
          the claim needs is at least one component to have been examined. */
       const hasComponentsToScan = components.length > 0;
-      const originRecorded = components.filter((c: any) => String(c?.origin || c?.source || c?.registerOrigin || '').trim()).length;
-      const excipientSources = m.filter((s) => s.sourceType === 'excipient');
-      const novelExcipients = excipientSources.filter((e) => e.sourcePayload?.novel === true);
+      const originRecorded = components.filter((c: any) =>
+        String(c?.origin || c?.source || c?.registerOrigin || '').trim()
+      ).length;
+      const excipientSources = m.filter(s => s.sourceType === 'excipient');
+      const novelExcipients = excipientSources.filter(e => e.sourcePayload?.novel === true);
 
       // ── Novel excipients (ICH Q3C / FDA novel-excipient qualification) ──
       // Detected via dedicated `excipient` sources flagged novel:true.
       if (novelExcipients.length > 0) {
         return {
-          narrative: `Per ICH M4Q, Section 3.2.A.3 (Excipients) addresses excipients requiring additional safety ` +
+          narrative:
+            `Per ICH M4Q, Section 3.2.A.3 (Excipients) addresses excipients requiring additional safety ` +
             `qualification. ${novelExcipients.length} novel excipient(s) are used in the drug product formulation` +
-            (formulationName ? ` (${formulationName})` : '') + `. ` +
+            (formulationName ? ` (${formulationName})` : '') +
+            `. ` +
             `Safety qualification data per ICH Q3C / FDA Guidance for Industry — Nonclinical Studies for the Safety ` +
             `Evaluation of Pharmaceutical Excipients is provided below.`,
-          tables: [{
-            title: 'Novel Excipients — Safety Qualification',
-            headers: ['Excipient', 'Function', 'Concentration', 'Safety Studies'],
-            rows: novelExcipients.map((e) => [
-              String(e.sourcePayload?.materialName || 'Unknown'),
-              String(e.sourcePayload?.function || '—'),
-              String(e.sourcePayload?.concentration || '—'),
-              String(e.sourcePayload?.safetyStudies || 'See M4'),
-            ]),
-          }],
+          tables: [
+            {
+              title: 'Novel Excipients — Safety Qualification',
+              headers: ['Excipient', 'Function', 'Concentration', 'Safety Studies'],
+              rows: novelExcipients.map(e => [
+                String(e.sourcePayload?.materialName || 'Unknown'),
+                String(e.sourcePayload?.function || '—'),
+                String(e.sourcePayload?.concentration || '—'),
+                String(e.sourcePayload?.safetyStudies || 'See M4'),
+              ]),
+            },
+          ],
         };
       }
 
@@ -482,7 +593,8 @@ const APPENDIX_RULES: AppendixRule[] = [
       /* The same list the mapper and the register surface use — three copies of
          a twelve-token regex is three places for it to drift. */
       const explicitAnimalOriginRe = new RegExp(`^(${HUMAN_OR_ANIMAL_ORIGINS.join('|')})$`, 'i');
-      const animalNameRe = /\b(gelatin|tallow|albumin|serum|collagen|chondroitin|heparin|insulin|bovine|porcine|ovine|equine|murine|hamster|lanolin|shellac)\b/i;
+      const animalNameRe =
+        /\b(gelatin|tallow|albumin|serum|collagen|chondroitin|heparin|insulin|bovine|porcine|ovine|equine|murine|hamster|lanolin|shellac)\b/i;
       const humanNameRe = /\bhuman[\s-]*(serum|albumin|plasma|tissue|cell|derived)\b/i;
 
       /* The material register offers `fermentation` as an origin, and it is
@@ -492,7 +604,6 @@ const APPENDIX_RULES: AppendixRule[] = [
          'none' let the section state that every recorded origin was plant,
          mineral or synthetic — a category the register never recorded. */
 
-
       /* Both recorded origins are read — the component's own and the excipient
          register's. Reading only the component's let a formulation row typed
          "plant" over a material the register records as bovine produce the
@@ -500,9 +611,12 @@ const APPENDIX_RULES: AppendixRule[] = [
          material is in this section. */
       function classifyComponent(c: any): 'explicit' | 'name-fallback' | 'review' | 'none' {
         if (typeof c !== 'object' || c === null) return 'none';
-        const originFields = [String(c.origin || c.source || '').trim(), String(c.registerOrigin || '').trim()].filter(Boolean);
-        if (originFields.some((o) => explicitAnimalOriginRe.test(o))) return 'explicit';
-        if (originFields.some((o) => isReviewRequiredOrigin(o))) return 'review';
+        const originFields = [
+          String(c.origin || c.source || '').trim(),
+          String(c.registerOrigin || '').trim(),
+        ].filter(Boolean);
+        if (originFields.some(o => explicitAnimalOriginRe.test(o))) return 'explicit';
+        if (originFields.some(o => isReviewRequiredOrigin(o))) return 'review';
         const text = `${c.component || ''} ${c.name || ''}`;
         if (animalNameRe.test(text) || humanNameRe.test(text)) return 'name-fallback';
         return 'none';
@@ -518,9 +632,11 @@ const APPENDIX_RULES: AppendixRule[] = [
         return own || reg;
       }
 
-      const explicitOriginComponents = components.filter((c) => classifyComponent(c) === 'explicit');
-      const nameFallbackComponents = components.filter((c) => classifyComponent(c) === 'name-fallback');
-      const reviewOriginComponents = components.filter((c) => classifyComponent(c) === 'review');
+      const explicitOriginComponents = components.filter(c => classifyComponent(c) === 'explicit');
+      const nameFallbackComponents = components.filter(
+        c => classifyComponent(c) === 'name-fallback'
+      );
+      const reviewOriginComponents = components.filter(c => classifyComponent(c) === 'review');
       const humanAnimalComponents = [...explicitOriginComponents, ...nameFallbackComponents];
 
       const compPotentiallyAnimal = !!comp && (animalNameRe.test(comp) || humanNameRe.test(comp));
@@ -529,8 +645,8 @@ const APPENDIX_RULES: AppendixRule[] = [
         explicitOriginComponents.length > 0
           ? 'explicit'
           : nameFallbackComponents.length > 0 || compPotentiallyAnimal
-            ? 'potential'
-            : 'none';
+          ? 'potential'
+          : 'none';
 
       const tables: GeneratedTable[] = [];
 
@@ -545,14 +661,17 @@ const APPENDIX_RULES: AppendixRule[] = [
          all-clear over nothing at all. */
       if (!hasComponentsToScan && !comp) {
         const rowsButNothingToScan = excipientRecordCount > 0;
-        tables.push(kvTable('Excipients of Human or Animal Origin', {
-          Applicability: rowsButNothingToScan
-            ? 'Not established — the records on file name no components'
-            : 'Not established — no excipient or formulation record is on file',
-          'Drug Product Formulation': formulationName || '—',
-        }));
+        tables.push(
+          kvTable('Excipients of Human or Animal Origin', {
+            Applicability: rowsButNothingToScan
+              ? 'Not established — the records on file name no components'
+              : 'Not established — no excipient or formulation record is on file',
+            'Drug Product Formulation': formulationName || '—',
+          })
+        );
         return {
-          narrative: `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) addresses TSE/BSE, ` +
+          narrative:
+            `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) addresses TSE/BSE, ` +
             `viral, and other adventitious-agent risks associated with excipients of human or animal origin. ` +
             (rowsButNothingToScan
               ? `\n\n${excipientRecordCount} excipient or formulation record(s) are on file and none of them names a ` +
@@ -568,20 +687,23 @@ const APPENDIX_RULES: AppendixRule[] = [
       }
 
       if (confidence === 'none') {
-        tables.push(kvTable('Excipients of Human or Animal Origin', {
-          'Applicability':
-            reviewOriginComponents.length > 0
-              ? `Review required — ${reviewOriginComponents.length} excipient(s) of fermentation or cell-culture origin`
-              : originRecorded === components.length && components.length > 0
+        tables.push(
+          kvTable('Excipients of Human or Animal Origin', {
+            Applicability:
+              reviewOriginComponents.length > 0
+                ? `Review required — ${reviewOriginComponents.length} excipient(s) of fermentation or cell-culture origin`
+                : originRecorded === components.length && components.length > 0
                 ? 'Not applicable — no excipients of human or animal origin'
                 : 'No human or animal origin found among the recorded excipients; origin is not recorded for all of them',
-          'Excipients Recorded': String(components.length),
-          'Origin Recorded For': `${originRecorded} of ${components.length}`,
-          'Drug Product Formulation': formulationName || '—',
-          'Composition': comp || '—',
-        }));
+            'Excipients Recorded': String(components.length),
+            'Origin Recorded For': `${originRecorded} of ${components.length}`,
+            'Drug Product Formulation': formulationName || '—',
+            Composition: comp || '—',
+          })
+        );
         return {
-          narrative: `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) addresses TSE/BSE, ` +
+          narrative:
+            `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) addresses TSE/BSE, ` +
             `viral, and other adventitious-agent risks associated with excipients of human or animal origin. ` +
             (reviewOriginComponents.length > 0
               ? `\n\n${reviewOriginComponents.length} excipient(s) are recorded with a fermentation or cell-culture origin. ` +
@@ -590,16 +712,22 @@ const APPENDIX_RULES: AppendixRule[] = [
                 `free of human or animal material is NOT ESTABLISHED by this section. ` +
                 `Record the media components, or a supplier statement that none is of animal origin. `
               : '') +
-            (originRecorded === components.length && components.length > 0 && reviewOriginComponents.length === 0
+            (originRecorded === components.length &&
+            components.length > 0 &&
+            reviewOriginComponents.length === 0
               ? `\n\nNo excipients of human or animal origin are used in the drug product formulation` +
-                (formulationName ? ` (${formulationName})` : '') + `. ` +
+                (formulationName ? ` (${formulationName})` : '') +
+                `. ` +
                 `All ${components.length} recorded excipients declare an origin that is plant, mineral or synthetic, and comply with the relevant compendial ` +
                 `monographs (USP/NF, Ph. Eur., JP) as detailed in 3.2.P.4. `
               : /* Origin is recorded for only some of them. The claim is scoped
                    to what was actually declared, and the gap is named. */
                 `\n\nNo excipient of human or animal origin is identified among the ${components.length} recorded for the drug product formulation` +
-                (formulationName ? ` (${formulationName})` : '') + `. ` +
-                `Origin is recorded for ${originRecorded} of them; for the remaining ${components.length - originRecorded} it is not recorded, and their origin is NOT established by this section. `) +
+                (formulationName ? ` (${formulationName})` : '') +
+                `. ` +
+                `Origin is recorded for ${originRecorded} of them; for the remaining ${
+                  components.length - originRecorded
+                } it is not recorded, and their origin is NOT established by this section. `) +
             /* The safety CONCLUSION may only be drawn where the origins it rests
                on were actually recorded. It sat outside this conditional and was
                emitted by both arms, so the section stated that no TSE/BSE
@@ -608,12 +736,16 @@ const APPENDIX_RULES: AppendixRule[] = [
                safety claim over the absence of a signal in unscanned data. A
                gelatin capsule shell recorded without its origin field produced a
                written all-clear. */
-            (originRecorded === components.length && components.length > 0 && reviewOriginComponents.length === 0
+            (originRecorded === components.length &&
+            components.length > 0 &&
+            reviewOriginComponents.length === 0
               ? `\n\nAccordingly, no additional TSE/BSE or viral safety documentation is required for this section. ` +
                 `Any future formulation change introducing a human- or animal-derived excipient would trigger ` +
                 `re-evaluation and supplementary safety documentation per EMA EMEA/410/01 rev. 3.`
               : `\n\nWhether additional TSE/BSE or viral safety documentation is required is therefore NOT established ` +
-                `by this section: that conclusion rests on the origin of every excipient, and ${components.length - originRecorded} ` +
+                `by this section: that conclusion rests on the origin of every excipient, and ${
+                  components.length - originRecorded
+                } ` +
                 `of ${components.length} have none recorded. Record the origin of each, per EMA EMEA/410/01 rev. 3, ` +
                 `before this section is relied on.`),
           tables,
@@ -621,77 +753,91 @@ const APPENDIX_RULES: AppendixRule[] = [
       }
 
       tables.push({
-        title: confidence === 'potential'
-          ? 'Excipients of Human or Animal Origin — POTENTIAL (Review Required)'
-          : 'Excipients of Human or Animal Origin',
+        title:
+          confidence === 'potential'
+            ? 'Excipients of Human or Animal Origin — POTENTIAL (Review Required)'
+            : 'Excipients of Human or Animal Origin',
         headers: ['Excipient', 'Function / Role', 'Origin', 'TSE/BSE Certification'],
-        rows: humanAnimalComponents.length > 0
-          ? humanAnimalComponents.map((c: any) => [
-              c.component || c.name || 'Unknown',
-              c.role || c.function || '—',
-              originCell(c) || (confidence === 'potential'
-                ? 'Potential animal/human origin (name-based fallback — review required)'
-                : 'Animal/human origin (per composition)'),
-              /* The recorded certificate, or the fact that none is recorded.
+        rows:
+          humanAnimalComponents.length > 0
+            ? humanAnimalComponents.map((c: any) => [
+                c.component || c.name || 'Unknown',
+                c.role || c.function || '—',
+                originCell(c) ||
+                  (confidence === 'potential'
+                    ? 'Potential animal/human origin (name-based fallback — review required)'
+                    : 'Animal/human origin (per composition)'),
+                /* The recorded certificate, or the fact that none is recorded.
                  This fell back to the literal 'Certificate on file
                  (CEP/TSE-compliant)' whenever the field was empty — and the
                  excipient register emits '' for a blank one — so a gelatin
                  capsule shell whose CEP has not been obtained was declared
                  certified, in the one CTD section whose purpose is to declare
                  animal-origin risk. */
-              String(c.tseCertification || c.certification || '').trim() ||
-                (Number(c.uncertifiedRegisterRows || 0) > 0
-                  ? `NOT RECORDED — ${c.uncertifiedRegisterRows} register row(s) for this material carry no TSE/BSE certificate`
-                  : 'NOT RECORDED — no TSE/BSE certificate is on file for this excipient'),
-            ])
-          : [['(Per composition statement)', '—',
-              confidence === 'potential'
-                ? 'Potential human/animal-origin material — review required'
-                : 'Human/animal-origin material detected',
-              confidence === 'potential' ? 'Confirm CEP/TSE certification with supplier' : 'CEP/TSE certification required']],
+                String(c.tseCertification || c.certification || '').trim() ||
+                  (Number(c.uncertifiedRegisterRows || 0) > 0
+                    ? `NOT RECORDED — ${c.uncertifiedRegisterRows} register row(s) for this material carry no TSE/BSE certificate`
+                    : 'NOT RECORDED — no TSE/BSE certificate is on file for this excipient'),
+              ])
+            : [
+                [
+                  '(Per composition statement)',
+                  '—',
+                  confidence === 'potential'
+                    ? 'Potential human/animal-origin material — review required'
+                    : 'Human/animal-origin material detected',
+                  confidence === 'potential'
+                    ? 'Confirm CEP/TSE certification with supplier'
+                    : 'CEP/TSE certification required',
+                ],
+              ],
       });
 
       /* How many of the identified excipients actually carry a certificate.
          The paragraph below used to assert that EACH was qualified through a
          country-of-origin statement, a CEP and a viral safety evaluation —
          none of which was read from any field. */
-      const certified = humanAnimalComponents.filter(
-        (c: any) => String(c.tseCertification || c.certification || '').trim(),
+      const certified = humanAnimalComponents.filter((c: any) =>
+        String(c.tseCertification || c.certification || '').trim()
       );
       const uncertified = humanAnimalComponents.length - certified.length;
 
-      const leadParagraph = confidence === 'explicit'
-        ? `${explicitOriginComponents.length > 0 ? explicitOriginComponents.length : 'One or more'} excipient(s) ` +
-          `of human or animal origin have been identified. ` +
-          (humanAnimalComponents.length === 0
-            ? `Their qualification is not established by this section. `
-            : uncertified === 0
+      const leadParagraph =
+        confidence === 'explicit'
+          ? `${
+              explicitOriginComponents.length > 0 ? explicitOriginComponents.length : 'One or more'
+            } excipient(s) ` +
+            `of human or animal origin have been identified. ` +
+            (humanAnimalComponents.length === 0
+              ? `Their qualification is not established by this section. `
+              : uncertified === 0
               ? `A TSE/BSE certificate is recorded for each, reported above; the country-of-origin statement and the ` +
                 `viral safety evaluation required by EMA EMEA/410/01 rev. 3 are not held by this register and are ` +
                 `not established by this section. `
               : certified.length === 0
-                ? `NO TSE/BSE certificate is recorded for any of them, so their qualification under EMA EMEA/410/01 ` +
-                  `rev. 3 is NOT established by this section. `
-                : `A TSE/BSE certificate is recorded for ${certified.length} of ${humanAnimalComponents.length}; for the ` +
-                  `remaining ${uncertified} no certificate is on file and their qualification under EMA EMEA/410/01 ` +
-                  `rev. 3 is NOT established by this section. `)
-        : `Potential human- or animal-origin excipient(s) have been flagged by a name-based heuristic and require ` +
-          `confirmation. Where confirmed, each component must be qualified through (i) a documented origin / ` +
-          `country-of-origin statement, (ii) TSE/BSE compliance per EMA EMEA/410/01 rev. 3 (Certificate of ` +
-          `Suitability — CEP), and (iii) viral safety evaluation where applicable. ` +
-          /* A NAME is not an origin determination, and this branch is reached
+              ? `NO TSE/BSE certificate is recorded for any of them, so their qualification under EMA EMEA/410/01 ` +
+                `rev. 3 is NOT established by this section. `
+              : `A TSE/BSE certificate is recorded for ${certified.length} of ${humanAnimalComponents.length}; for the ` +
+                `remaining ${uncertified} no certificate is on file and their qualification under EMA EMEA/410/01 ` +
+                `rev. 3 is NOT established by this section. `)
+          : `Potential human- or animal-origin excipient(s) have been flagged by a name-based heuristic and require ` +
+            `confirmation. Where confirmed, each component must be qualified through (i) a documented origin / ` +
+            `country-of-origin statement, (ii) TSE/BSE compliance per EMA EMEA/410/01 rev. 3 (Certificate of ` +
+            `Suitability — CEP), and (iii) viral safety evaluation where applicable. ` +
+            /* A NAME is not an origin determination, and this branch is reached
              precisely because no origin was recorded for the flagged material.
              It carried no marker, so a section that had identified a possible
              gelatin and qualified nothing scored 100% complete with no missing
              inputs — the reviewer's dashboard called the TSE/BSE appendix
              finished on the strength of a regex. */
-          `Whether these components are of human or animal origin is NOT established by this section: the flag ` +
-          `rests on their names, and no origin is recorded for them. ` +
-          `Components identified as plant, mineral, or synthetic in origin should be re-tagged via the structured ` +
-          `origin field to suppress this flag.`;
+            `Whether these components are of human or animal origin is NOT established by this section: the flag ` +
+            `rests on their names, and no origin is recorded for them. ` +
+            `Components identified as plant, mineral, or synthetic in origin should be re-tagged via the structured ` +
+            `origin field to suppress this flag.`;
 
       return {
-        narrative: `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) summarizes the controls ` +
+        narrative:
+          `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) summarizes the controls ` +
           `applied to excipients derived from human or animal sources used in the drug product formulation. ` +
           (formulationName ? `Formulation: ${formulationName}. ` : '') +
           `\n\n${leadParagraph} ` +
@@ -724,8 +870,15 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
     sectionKey: '3.2.R.1.US',
     title: 'Regional Information — United States (FDA)',
     region: 'US',
-    requiredFields: ['dosageFormDescription', 'strength', 'composition', 'manufacturingSite', 'batchNumber', 'batchSize'],
-    generator: (m) => {
+    requiredFields: [
+      'dosageFormDescription',
+      'strength',
+      'composition',
+      'manufacturingSite',
+      'batchNumber',
+      'batchSize',
+    ],
+    generator: m => {
       const form = val(m, 'dosageFormDescription');
       const strength = val(m, 'strength');
       const comp = val(m, 'composition');
@@ -733,35 +886,55 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
       const batchNum = val(m, 'batchNumber');
       const batchSize = val(m, 'batchSize');
       const tables: GeneratedTable[] = [];
-      tables.push(kvTable('US Regional Information — Submission Summary', {
-        'Region': 'United States — FDA',
-        'Submission Type': 'NDA / ANDA / BLA (as applicable)',
-        'Dosage Form': form,
-        'Strength': strength,
-        'Manufacturing Site': mfgSite,
-        'Representative Batch': batchNum,
-        'Batch Size': batchSize,
-      }));
+      tables.push(
+        kvTable('US Regional Information — Submission Summary', {
+          Region: 'United States — FDA',
+          'Submission Type': 'NDA / ANDA / BLA (as applicable)',
+          'Dosage Form': form,
+          Strength: strength,
+          'Manufacturing Site': mfgSite,
+          'Representative Batch': batchNum,
+          'Batch Size': batchSize,
+        })
+      );
       tables.push({
         title: 'US-Specific Documentation Pointers',
         headers: ['Item', 'Reference / Location'],
         rows: [
           // NDA / ANDA — governed by 21 CFR Part 314
-          ['Executed Batch Records (NDA / ANDA)', 'Provided per 21 CFR 314.50(d)(1)(ii) — see 3.2.P.3.4'],
-          ['Comparability Protocols (NDA / ANDA)', 'Per 21 CFR 314.70 — referenced in 3.2.P.2 / 3.2.P.3'],
+          [
+            'Executed Batch Records (NDA / ANDA)',
+            'Provided per 21 CFR 314.50(d)(1)(ii) — see 3.2.P.3.4',
+          ],
+          [
+            'Comparability Protocols (NDA / ANDA)',
+            'Per 21 CFR 314.70 — referenced in 3.2.P.2 / 3.2.P.3',
+          ],
           // BLA — governed by 21 CFR Parts 600–680
-          ['Executed Batch Records (BLA)', 'Provided per 21 CFR 601.2 (content & format of BLA) — see 3.2.P.3.4'],
+          [
+            'Executed Batch Records (BLA)',
+            'Provided per 21 CFR 601.2 (content & format of BLA) — see 3.2.P.3.4',
+          ],
           ['Post-Approval Changes (BLA)', 'Per 21 CFR 601.12 — referenced in 3.2.P.2 / 3.2.P.3'],
           // Cross-application items
-          ['Method Validation Package', 'Per FDA Guidance for Industry (Analytical Procedures and Methods Validation)'],
+          [
+            'Method Validation Package',
+            'Per FDA Guidance for Industry (Analytical Procedures and Methods Validation)',
+          ],
           ['Container Closure (Type III DMF)', 'Letter of Authorization on file — see 3.2.P.7'],
-          ['Establishment Information', `FEI / DUNS for ${mfgSite || '[site]'} — see Form FDA 356h`],
+          [
+            'Establishment Information',
+            `FEI / DUNS for ${mfgSite || '[site]'} — see Form FDA 356h`,
+          ],
         ],
       });
       return {
-        narrative: `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — United States contains FDA-specific ` +
+        narrative:
+          `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — United States contains FDA-specific ` +
           `information required to support a US marketing application (NDA, ANDA, or BLA, as applicable). ` +
-          (form ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. ` : '') +
+          (form
+            ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. `
+            : '') +
           (mfgSite ? `Primary US-listed manufacturing site: ${mfgSite}. ` : '') +
           `\n\nThis section provides pointers to the regulations applicable by submission type. For NDA / ANDA: ` +
           `(i) executed batch records per 21 CFR 314.50(d)(1)(ii), (ii) the method validation package per ` +
@@ -782,34 +955,48 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
     requiredFields: ['dosageFormDescription', 'strength', 'composition'],
     title: 'Regional Information — European Union (EMA)',
     region: 'EU',
-    generator: (m) => {
+    generator: m => {
       const form = val(m, 'dosageFormDescription');
       const strength = val(m, 'strength');
       const comp = val(m, 'composition');
       const tables: GeneratedTable[] = [];
-      tables.push(kvTable('EU Regional Information — Submission Summary', {
-        'Region': 'European Union — EMA',
-        'Submission Type': 'MAA (Centralised / Decentralised / National)',
-        'Dosage Form': form,
-        'Strength': strength,
-      }));
+      tables.push(
+        kvTable('EU Regional Information — Submission Summary', {
+          Region: 'European Union — EMA',
+          'Submission Type': 'MAA (Centralised / Decentralised / National)',
+          'Dosage Form': form,
+          Strength: strength,
+        })
+      );
       tables.push({
         title: 'EU-Specific Documentation Pointers',
         headers: ['Item', 'Reference / Location'],
         rows: [
-          ['QP Declaration on GMP Compliance', 'Per Annex 16 of EU GMP Guide — included in Module 1.5.2'],
+          [
+            'QP Declaration on GMP Compliance',
+            'Per Annex 16 of EU GMP Guide — included in Module 1.5.2',
+          ],
           ['Manufacturing Authorisation', 'Copy of MIA for each EU-based site — Module 1.2'],
-          ['Process Validation Scheme', 'Per Annex 15 (Qualification & Validation) — cross-ref 3.2.P.3.5'],
-          ['Certificate of Suitability (CEP)', 'Where applicable, for drug substance and excipients — Module 1'],
+          [
+            'Process Validation Scheme',
+            'Per Annex 15 (Qualification & Validation) — cross-ref 3.2.P.3.5',
+          ],
+          [
+            'Certificate of Suitability (CEP)',
+            'Where applicable, for drug substance and excipients — Module 1',
+          ],
           ['Environmental Risk Assessment', 'Per EMA/CHMP/SWP/4447/00 Rev. 1 — Module 1.6'],
           ['TSE/BSE Compliance', 'Per EMA EMEA/410/01 rev. 3 — cross-ref 3.2.A.2 and 3.2.A.3'],
         ],
       });
       return {
-        narrative: `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — European Union contains EMA-specific ` +
+        narrative:
+          `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — European Union contains EMA-specific ` +
           `information required to support a Marketing Authorisation Application (MAA) under the centralised, ` +
           `decentralised, mutual recognition, or national procedure. ` +
-          (form ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. ` : '') +
+          (form
+            ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. `
+            : '') +
           `\n\nThis section provides pointers to the Qualified Person (QP) declaration on GMP compliance ` +
           `(per Annex 16 of the EU GMP Guide), Manufacturing Authorisations (MIA) for each EU-based ` +
           `manufacturing site, the process validation scheme aligned with Annex 15 (Qualification & ` +
@@ -827,34 +1014,48 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
     requiredFields: ['dosageFormDescription', 'strength', 'composition'],
     title: 'Regional Information — Japan (PMDA / MHLW)',
     region: 'JP',
-    generator: (m) => {
+    generator: m => {
       const form = val(m, 'dosageFormDescription');
       const strength = val(m, 'strength');
       const comp = val(m, 'composition');
       const tables: GeneratedTable[] = [];
-      tables.push(kvTable('Japan Regional Information — Submission Summary', {
-        'Region': 'Japan — PMDA / MHLW',
-        'Submission Type': 'J-NDA (Shinyaku Shinsei)',
-        'Dosage Form': form,
-        'Strength': strength,
-      }));
+      tables.push(
+        kvTable('Japan Regional Information — Submission Summary', {
+          Region: 'Japan — PMDA / MHLW',
+          'Submission Type': 'J-NDA (Shinyaku Shinsei)',
+          'Dosage Form': form,
+          Strength: strength,
+        })
+      );
       tables.push({
         title: 'Japan-Specific Documentation Pointers',
         headers: ['Item', 'Reference / Location'],
         rows: [
-          ['Foreign Manufacturer Accreditation', 'Per Article 13-3, PMD Act — Module 1 (J-administrative)'],
+          [
+            'Foreign Manufacturer Accreditation',
+            'Per Article 13-3, PMD Act — Module 1 (J-administrative)',
+          ],
           ['Marketing Authorization Holder (MAH)', 'Designated MAH details — Module 1'],
           ['JP Compendial Compliance', 'JP 18th Edition — referenced in 3.2.P.4 and 3.2.P.5'],
           ['GMP Compliance Certificate', 'Per MHLW Ordinance No. 179 — Module 1'],
-          ['Japanese-Specific Specifications', 'Where JP monograph differs from USP/Ph. Eur. — see 3.2.P.5'],
-          ['Stability Data — Japanese Climate Zone', 'Zone II data per ICH Q1A(R2) (long-term 25 °C / 60% RH; intermediate 30 °C / 65% RH) per PMDA expectations — cross-ref 3.2.P.8'],
+          [
+            'Japanese-Specific Specifications',
+            'Where JP monograph differs from USP/Ph. Eur. — see 3.2.P.5',
+          ],
+          [
+            'Stability Data — Japanese Climate Zone',
+            'Zone II data per ICH Q1A(R2) (long-term 25 °C / 60% RH; intermediate 30 °C / 65% RH) per PMDA expectations — cross-ref 3.2.P.8',
+          ],
         ],
       });
       return {
-        narrative: `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — Japan contains PMDA / MHLW-specific ` +
+        narrative:
+          `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — Japan contains PMDA / MHLW-specific ` +
           `information required to support a Japanese New Drug Application (J-NDA, Shinyaku Shinsei) ` +
           `under the Pharmaceuticals and Medical Devices (PMD) Act. ` +
-          (form ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. ` : '') +
+          (form
+            ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. `
+            : '') +
           `\n\nThis section provides pointers to Foreign Manufacturer Accreditation under Article 13-3 of ` +
           `the PMD Act, designation of the Japanese Marketing Authorization Holder (MAH), and GMP ` +
           `compliance certification per MHLW Ordinance No. 179. ` +
@@ -873,29 +1074,40 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
     requiredFields: ['dosageFormDescription', 'strength'],
     title: 'Regional Information — Canada (Health Canada)',
     region: 'CA',
-    generator: (m) => {
+    generator: m => {
       const form = val(m, 'dosageFormDescription');
       const strength = val(m, 'strength');
       const tables: GeneratedTable[] = [];
-      tables.push(kvTable('Canada Regional Information — Submission Summary', {
-        'Region': 'Canada — Health Canada',
-        'Submission Type': 'NDS / ANDS',
-        'Dosage Form': form,
-        'Strength': strength,
-      }));
+      tables.push(
+        kvTable('Canada Regional Information — Submission Summary', {
+          Region: 'Canada — Health Canada',
+          'Submission Type': 'NDS / ANDS',
+          'Dosage Form': form,
+          Strength: strength,
+        })
+      );
       tables.push({
         title: 'Canada-Specific Documentation Pointers',
         headers: ['Item', 'Reference / Location'],
         rows: [
-          ['Yearly Biologic Product Report (YBPR)', 'Per Health Canada Guidance — Submission of Biologic Drug Substance and Product Information'],
+          [
+            'Yearly Biologic Product Report (YBPR)',
+            'Per Health Canada Guidance — Submission of Biologic Drug Substance and Product Information',
+          ],
           ['Certified Product Information Document (CPID)', 'Module 1 (Canadian administrative)'],
-          ['Drug Master File (Type I — Drug Substance)', 'Letter of Access on file — cross-ref 3.2.S'],
+          [
+            'Drug Master File (Type I — Drug Substance)',
+            'Letter of Access on file — cross-ref 3.2.S',
+          ],
         ],
       });
       return {
-        narrative: `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — Canada contains Health Canada-specific ` +
+        narrative:
+          `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — Canada contains Health Canada-specific ` +
           `information required to support a New Drug Submission (NDS / ANDS). ` +
-          (form ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. ` : '') +
+          (form
+            ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. `
+            : '') +
           `\n\nThis section provides pointers to the Certified Product Information Document (CPID), the Yearly ` +
           `Biologic Product Report (YBPR) commitment where applicable, and Drug Master File letters of access for ` +
           `the drug substance and packaging components.`,
@@ -982,9 +1194,9 @@ export function injectAllCrossReferences(sections: ComposedSection[]): ComposedS
  */
 export function emittableAppendices(sections: ComposedSection[]): ComposedSection[] {
   return sections.filter(
-    (section) =>
+    section =>
       section.lineage.length > 0 ||
-      (section.structuredPayload as { optional?: boolean } | undefined)?.optional === false,
+      (section.structuredPayload as { optional?: boolean } | undefined)?.optional === false
   );
 }
 
@@ -1000,8 +1212,8 @@ function notEstablishedStatements(narrative: string): string[] {
      A fragment is not an instruction. */
   const sentences = narrative
     .split(/(?<=\.)\s+(?=[A-Z(\u2022])/)
-    .map((x) => x.replace(/\s+/g, ' ').trim())
-    .filter((x) => NOT_ESTABLISHED_RE.test(x) && x.split(' ').length > 3);
+    .map(x => x.replace(/\s+/g, ' ').trim())
+    .filter(x => NOT_ESTABLISHED_RE.test(x) && x.split(' ').length > 3);
   return sentences.length > 0 ? sentences : ['not established by the recorded sources'];
 }
 
@@ -1015,6 +1227,27 @@ function notEstablishedStatements(narrative: string): string[] {
  */
 const NOT_ESTABLISHED_RE = /\bNOT (?:ESTABLISHED|established)\b/;
 
+/**
+ * How this section came to conclude the substance is not biologically derived,
+ * in the record's own terms.
+ *
+ * The sentence used to read `whose recorded manufacturing route is: ${route ||
+ * processDesc}` — and the branch above is reached with NEITHER recorded
+ * whenever `modality` is the explicit signal, which is the ordinary case for a
+ * small molecule. It then rendered "whose recorded manufacturing route is: ."
+ * — a sentence asserting a recorded route, with nothing in it. In the one
+ * appendix whose subject is adventitious agents, a claim to have read a field
+ * that is empty is the same failure the surrounding branch was written to
+ * remove; it must say which fact it actually has.
+ */
+function recordedBasis(route: string, explicitSmallMolecule: boolean): string {
+  const stated = String(route ?? '').trim();
+  if (stated) return `whose recorded manufacturing route is: ${stated}`;
+  return explicitSmallMolecule
+    ? 'whose modality is recorded as a chemical synthesis, with no manufacturing route recorded'
+    : 'with no manufacturing route recorded';
+}
+
 export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSection[] {
   return APPENDIX_RULES.map(rule => {
     /* A RETIRED source feeds nothing here either. The core composer was given
@@ -1025,7 +1258,10 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
        generators. One rule, both composers. */
     const inScope = sourceObjects.filter(s => rule.requiredSourceTypes.includes(s.sourceType));
     const matched = inScope.filter(
-      (s) => String((s.sourcePayload as Record<string, unknown> | undefined)?.status ?? '').trim().toLowerCase() !== 'retired',
+      s =>
+        String((s.sourcePayload as Record<string, unknown> | undefined)?.status ?? '')
+          .trim()
+          .toLowerCase() !== 'retired'
     );
     const generated = rule.generator(matched);
     /* Completeness is what the generator could actually SAY, not whether a row
@@ -1035,11 +1271,8 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
        that exist precisely to report that nothing is established. A section
        whose own narrative says NOT ESTABLISHED is not a complete section. */
     const establishesNothing = NOT_ESTABLISHED_RE.test(generated.narrative);
-    const completeness = matched.length === 0
-      ? (rule.optional ? 100 : 0)
-      : establishesNothing
-        ? 0
-        : 100;
+    const completeness =
+      matched.length === 0 ? (rule.optional ? 100 : 0) : establishesNothing ? 0 : 100;
     return {
       sectionKey: rule.sectionKey,
       sectionPath: rule.sectionKey,
@@ -1059,10 +1292,12 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
          formulation that was already on file. */
       missingInputs:
         matched.length === 0
-          ? (rule.optional ? [] : rule.requiredSourceTypes)
+          ? rule.optional
+            ? []
+            : rule.requiredSourceTypes
           : establishesNothing
-            ? notEstablishedStatements(generated.narrative)
-            : [],
+          ? notEstablishedStatements(generated.narrative)
+          : [],
       lineage: matched.map(m => ({
         sourceObjectId: m.id,
         sourceHashAtCompile: m.sourceHash || '',
@@ -1080,15 +1315,45 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
  * APPENDIX_RULES from the composer would run before this file has evaluated.
  */
 export function appendixSectionsRequiringSourceType(sourceType: CmcSourceType): string[] {
-  return APPENDIX_RULES
-    .filter((rule) => rule.requiredSourceTypes.includes(sourceType))
-    .map((rule) => rule.sectionKey);
+  return APPENDIX_RULES.filter(rule => rule.requiredSourceTypes.includes(sourceType)).map(
+    rule => rule.sectionKey
+  );
 }
 
 /**
  * Compose regional (3.2.R.*) subsections for a target region.
  */
-export function composeRegional(sourceObjects: CanonicalSource[], region: RegionCode): ComposedSection[] {
+/**
+ * The regions this module actually has a 3.2.R template for, derived from
+ * REGIONAL_SUBSECTIONS so it cannot drift from the templates themselves.
+ *
+ * The route accepts thirteen regions (RegionSchema in
+ * server/routes/submission-orchestrator.ts — the Move-7 widening) and this set
+ * holds four. For the other nine composeRegional legitimately returns no
+ * sections. That is a real answer, not a failure — the packaging layer makes the
+ * same distinction with isPackagerBuildableRegion and falls back to a derived
+ * manifest — but it has to be REPORTED as that answer rather than as an absence
+ * of input, which is what {@link hasRegionalTemplate} is for.
+ */
+export const REGIONS_WITH_REGIONAL_TEMPLATE: ReadonlySet<string> = new Set(
+  REGIONAL_SUBSECTIONS.map(rs => rs.region)
+);
+
+/**
+ * Whether Module 3 has any 3.2.R template for this region.
+ *
+ * Callers use it to tell "the caller supplied nothing" apart from "this region
+ * has no regional section here". Both produce zero sections and only one of them
+ * is the caller's doing.
+ */
+export function hasRegionalTemplate(region: string): boolean {
+  return REGIONS_WITH_REGIONAL_TEMPLATE.has(region.toUpperCase());
+}
+
+export function composeRegional(
+  sourceObjects: CanonicalSource[],
+  region: RegionCode
+): ComposedSection[] {
   const applicable = REGIONAL_SUBSECTIONS.filter(rs => rs.region === region);
   return applicable.map(rs => {
     const generated = rs.generator(sourceObjects);
@@ -1107,17 +1372,20 @@ export function composeRegional(sourceObjects: CanonicalSource[], region: Region
       // `100` with no missing inputs, so a regional pointer section rendering
       // "[site]" still read as complete — and a section that reads complete is
       // the one that gets signed and placed without a second look.
-      completeness: present.length === 0 && rs.requiredFields.length > 0
-        ? 0
-        : Math.round((present.length / Math.max(rs.requiredFields.length, 1)) * 100),
+      completeness:
+        present.length === 0 && rs.requiredFields.length > 0
+          ? 0
+          : Math.round((present.length / Math.max(rs.requiredFields.length, 1)) * 100),
       missingInputs: rs.requiredFields.filter(f => !val(sourceObjects, f)),
       // Only the sources that supplied one of those fields. Citing every object
       // in the project claimed a provenance the compile did not have.
       lineage: sourceObjects
-        .filter(s => rs.requiredFields.some(f => {
-          const v = s.sourcePayload?.[f];
-          return v !== undefined && v !== null && v !== '';
-        }))
+        .filter(s =>
+          rs.requiredFields.some(f => {
+            const v = s.sourcePayload?.[f];
+            return v !== undefined && v !== null && v !== '';
+          })
+        )
         .map(s => ({
           sourceObjectId: s.id,
           sourceHashAtCompile: s.sourceHash || '',

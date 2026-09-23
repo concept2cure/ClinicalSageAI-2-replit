@@ -1,0 +1,12 @@
+10c10
+< - Greet them as "${u.greetingName}" on first message
+---
+> - They go by "${u.greetingName}"; use it the way a colleague would, not as a ritual
+20c20
+<         ? 'Keep responses focused and brief. Use bullet points heavily. Skip unnecessary preambles.'
+---
+>         ? 'Keep responses focused and brief. Skip preambles.'
+23c23
+<         : 'Use a professional yet approachable tone. Structured responses with clear headings.'
+---
+>         : 'Use a professional yet approachable tone.'

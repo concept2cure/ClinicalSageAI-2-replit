@@ -1,0 +1,7 @@
+### MUTATION 5: the POST /docs/from-draft exemption removed from authoringObjectAuthorization
+ × server/middleware/__tests__/authoringObjectAuthorization-from-draft.test.ts > POST /api/authoring/docs/from-draft passes the object-authorization gate > reaches the router (the gate treats it like POST /docs — no object exists yet) 91ms
+   → {"error":{"code":"AUTHORING_OBJECT_NOT_FOUND","message":"Authoring object not found."}}: expected 404 to be 201 // Object.is equality
+      Tests  1 failed (1)
+### RESTORED: the same test with the exemption in place
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-from-draft.test.ts > POST /api/authoring/docs/from-draft passes the object-authorization gate > reaches the router (the gate treats it like POST /docs — no object exists yet) 28ms
+      Tests  1 passed (1)

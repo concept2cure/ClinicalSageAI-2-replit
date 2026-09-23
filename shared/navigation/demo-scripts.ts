@@ -60,6 +60,20 @@ export interface DemoScript {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const DEMO_SCRIPTS: readonly DemoScript[] = [
+  /* ── The three Live Drive scripts are cut to the LAUNCH CATALOG ────────────
+     docs/LAUNCH_DEFINITION_OF_DONE.md row D2 — Projects, Vault, Authoring
+     (incl. protocol development), Submission Center, Submission Readiness,
+     QMS controlled documents — plus the shell surfaces (audit trail, Part 11
+     console). Under LAUNCH_SCOPE_ENFORCE=on any other stop renders "Not in
+     this release", and a demonstration that lands there fails in front of the
+     person it was written for. __tests__/demo-scripts.test.ts holds every
+     stop below to the catalog through the shell's own resolution.
+
+     The talking points name the seeded demo programs — "[Demo · Biotech]
+     C2C-101", an anti-IL-23 antibody IND, and "[Demo · MDX] NeuroPanel-Dx",
+     an IVD 510(k) — without pinning ids: a stop with no params is filled from
+     the on-screen context at run time, so the same script runs on a real
+     tenant's own programs. */
   {
     id: 'training-orientation',
     kind: 'training',
@@ -67,89 +81,65 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
     audience: 'A new subscriber team learning to run their regulatory work here.',
     minutes: 8,
     description:
-      'The complete working tour: the portfolio, a real program, the vault, drafting, CMC, intelligence, review, the submission gateway, and tasking — each stop showing what the team actually does there.',
+      'The complete working tour of the launch catalog: the Projects portfolio and a real program, the Vault, Authoring and the protocol workspace, the Submission Center, Submission Readiness, QMS controlled documents, and the audit trail — each stop showing what the team actually does there.',
     steps: [
       {
-        say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, and they can interrupt with a question at any moment.',
+        say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the six apps of this release, and they can interrupt with a question at any moment.',
       },
       {
-        say: 'Open on the whole picture: mission control is the command board — every program and its cross-program readiness at a glance, the view a head of regulatory opens each morning.',
-        navigate: { target: 'mission-control' },
-      },
-      {
-        say: 'The Projects portfolio is the front door to a single program: every regulatory program with its workstream, stage, readiness, and blockers, and where you enter one to work.',
+        say: 'Projects is the front door: every regulatory program with its workstream, stage, readiness and blockers. In the demo workspace that is "[Demo · Biotech] C2C-101", an anti-IL-23 antibody IND, beside "[Demo · MDX] NeuroPanel-Dx", an IVD 510(k) — the same portfolio holds both.',
         navigate: { target: 'projects' },
       },
       {
-        say: 'The portfolio works the way they do — show the list presentation for scanning many programs at once.',
-        act: { actionId: 'projects.set-view', params: { view: 'list' } },
-      },
-      {
-        say: 'Open one of their real programs (pick from the portfolio on screen) — opening a program scopes every project surface to it.',
+        say: 'Open one of their real programs (pick it from the portfolio on screen — C2C-101 in the demo workspace). Opening a program scopes every project surface to it.',
         act: { actionId: 'projects.open-program' },
       },
       {
-        say: 'Project home is the program cockpit: workstreams, recent drafts, the team, and the conversation thread with AnA all live here.',
+        say: 'Project home is the program cockpit: lifecycle stage, workstreams, recent drafts, the team, and the conversation thread with AnA all live here.',
         navigate: { target: 'project-home' },
       },
       {
-        say: 'The Vault is the governed document store: the filing cabinet auto-classifies uploads into the dossier structure, and the data room tracks every source from captured to filed.',
+        say: 'The Vault is the governed document store: uploads are checksummed and virus-scanned, auto-classified into the dossier structure, and every source is tracked from captured to filed — for C2C-101 that is the CTD tree; for NeuroPanel-Dx the device submission folders.',
         navigate: { target: 'vault' },
       },
       {
-        say: 'Authoring is where documents get written: one editor for every document type, with AnA drafting sections, citing evidence, and keeping the version history governed.',
+        say: 'Authoring is where documents get written: one editor for every document type, with AnA drafting sections from the linked evidence, tracked changes, a governed version history and Part 11 e-signature on approval.',
         navigate: { target: 'authoring' },
       },
       {
-        say: 'The CMC workstream runs Module 3: build state, specifications, stability, and change control against the quality data.',
-        navigate: { target: 'cmc' },
+        say: 'Protocol development is the second Authoring workspace: the protocol as structured data — sections, objectives and endpoints, eligibility, the schedule of assessments, the risk register and milestones — with a deterministic completeness gate before anyone can finalize.',
+        navigate: { target: 'protocol-dev' },
       },
       {
-        say: 'Show them a register directly — open the specifications tab so they see the real Module 3 controls, not a slide of them.',
-        act: { actionId: 'cmc.open-tab', params: { tab: 'specs' } },
+        say: 'The Submission Center is the operations cockpit: from planning a submission through its sequences, build and validation, up to dispatch — everything from one place, and freezing or dispatching stays a person’s signature.',
+        navigate: { target: 'submissions' },
       },
       {
-        say: 'Quality is the controlled-document spine: the SOP register and change control, where approvals, revisions and read-and-understood training are all Part 11 ceremonies a person signs.',
+        say: 'Open the validation workspace so they see the pre-flight findings the team clears before anyone is asked to sign — real findings on the program’s real sequence, not a slide of them.',
+        act: { actionId: 'submissions.set-workspace', params: { workspace: 'validation' } },
+      },
+      {
+        say: 'Submission Readiness is the judgment layer: workflow runs, the human-in-the-loop approval gates, and the readiness verdict that says whether this program would survive review before an agency sees it.',
+        navigate: { target: 'orchestration' },
+      },
+      {
+        say: 'Open the readiness view — the deterministic verdict and what still blocks it.',
+        act: { actionId: 'orchestration.set-view', params: { view: 'readiness' } },
+      },
+      {
+        say: 'QMS controlled documents is the quality spine: the SOP register and change control, where approvals, revisions and read-and-understood training are Part 11 ceremonies a person signs.',
         navigate: { target: 'quality' },
       },
       {
-        say: 'Filter the change log to what is approved and waiting to be implemented — the live change-control pipeline, not a slide of it.',
+        say: 'Filter the change log to what is approved and waiting to be implemented — the live change-control pipeline.',
         act: { actionId: 'quality.filter-changes', params: { stage: 'approved' } },
       },
       {
-        say: 'Intelligence is the analytical layer — open the clinical group of the capability catalog and show how design, biostatistics, and evidence insight sit beside the work.',
-        navigate: { target: 'intelligence', params: { intelligenceTab: 'clinical' } },
+        say: 'End where an inspector would start: the audit trail. Every governed act on this tour — the register writes, the approvals, the signatures — is a hash-chained entry here, verified by the server, and it can never be switched off.',
+        navigate: { target: 'audit-trail' },
       },
       {
-        say: 'The catalog spans the whole operation — switch to the quality & CMC group to show its breadth without leaving the screen.',
-        act: { actionId: 'intelligence.open-group', params: { group: 'quality_cmc' } },
-      },
-      {
-        say: 'And the analytical engines are hands-on, not slideware — the biostatistics workbench runs assurance, group-sequential design, sample size and multiplicity as deterministic calculators AnA can open and drive with the team.',
-        navigate: { target: 'biostat-workbench' },
-      },
-      {
-        say: 'Review is where governed judgments happen: readiness, approvals, and the Part 11 e-signature gates — AnA prepares everything, and a person always signs.',
-        navigate: { target: 'review' },
-      },
-      {
-        say: 'Jump straight to the next document awaiting a decision — the click a reviewer starts every morning with.',
-        act: { actionId: 'review.open-queue' },
-      },
-      {
-        say: 'The Submission Gateway is the final mile: pre-flight validation and the transmittal chain to the agency.',
-        navigate: { target: 'submission-gateway' },
-      },
-      {
-        say: 'Tasking keeps the team coordinated: the cross-program board with every open item and owner.',
-        navigate: { target: 'tasking' },
-      },
-      {
-        say: 'And it works the way each person does — filter the board to just their own tasks to show the personal view.',
-        act: { actionId: 'tasking.filter', params: { mine: 'true' } },
-      },
-      {
-        say: 'Close the loop: recap the route just driven, name the one or two screens most relevant to what this team does daily, and invite them to try the next task with you in Live Drive.',
+        say: 'Close the loop: recap the route just driven, name the one or two apps most relevant to what this team does daily, and invite them to try the next task with you in Live Drive.',
       },
     ],
   },
@@ -160,10 +150,10 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
     audience: 'A regulatory operations team rehearsing how a sequence actually goes out.',
     minutes: 5,
     description:
-      'The dispatch-day route: open the program, work the Submission Center — select the submission, its working sequence, and the validation workspace — clear the review queue, and end at the gateway. Freezing and dispatching stay with a person; this tour shows everything up to their signature.',
+      'The dispatch-day route: the Vault sources, the documents in Authoring, the review queue, the Submission Center’s sequence and validation workspaces, the readiness verdict, and the Part 11 record of it all. Freezing and dispatching stay with a person; this tour shows everything up to their signature.',
     steps: [
       {
-        say: 'Frame the day: a sequence goes out today, and this is the exact route the team will drive — on their real program, with every governed gate left in human hands.',
+        say: 'Frame the day: a sequence goes out today, and this is the exact route the team will drive — on their real program (C2C-101 in the demo workspace), with every governed gate left in human hands.',
       },
       {
         say: 'Start at the portfolio and open the program that is submitting (pick it from the list on screen).',
@@ -174,24 +164,12 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         act: { actionId: 'projects.open-program' },
       },
       {
-        say: 'The Submission Center is the operations cockpit — everything from planning to dispatch lives in one place.',
-        navigate: { target: 'submissions' },
+        say: 'The Vault first: every source the sequence cites is filed, checksummed and classified into the dossier — the data room shows anything still captured but not yet filed.',
+        navigate: { target: 'vault' },
       },
       {
-        say: 'Select the submission that is going out (pick it from the portfolio on screen).',
-        act: { actionId: 'submissions.select-submission' },
-      },
-      {
-        say: 'Open the sequences workspace to see the lifecycle of every sequence in this submission.',
-        act: { actionId: 'submissions.set-workspace', params: { workspace: 'sequences' } },
-      },
-      {
-        say: 'Pick the working sequence (from the list on screen) — the one the build and validation workspaces will act on.',
-        act: { actionId: 'submissions.select-sequence' },
-      },
-      {
-        say: 'Open validation: the pre-flight findings the team clears before anyone is asked to sign.',
-        act: { actionId: 'submissions.set-workspace', params: { workspace: 'validation' } },
+        say: 'Authoring next: the documents going out, each with its governed version history and the approval signatures already manifest on the record.',
+        navigate: { target: 'authoring' },
       },
       {
         say: 'Review is the judgment gate — jump to the next document still awaiting a decision so nothing rides along unapproved.',
@@ -202,19 +180,32 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         act: { actionId: 'review.open-queue' },
       },
       {
-        say: 'Before dispatch, read filing risk on a marketing application: the NDA/BLA cockpit scores CTD readiness, the PDUFA review clock, and Refuse-to-File risk against the program’s real state.',
-        navigate: { target: 'nda-cockpit' },
+        say: 'The Submission Center: select the submission that is going out (pick it from the portfolio on screen), then its working sequence.',
+        navigate: { target: 'submissions' },
       },
       {
-        say: 'Open the Refuse-to-File view — the specific deficiencies that bounce a submission on receipt, so the team clears them before anyone signs.',
-        act: { actionId: 'nda-cockpit.open-tab', params: { tab: 'rtf' } },
+        say: 'Select the submission that ships today.',
+        act: { actionId: 'submissions.select-submission' },
       },
       {
-        say: 'And the gateway: the transmittal chain and acknowledgments once a person has frozen and dispatched — the two acts that stay theirs, under a Part 11 signature.',
-        navigate: { target: 'submission-gateway' },
+        say: 'Open validation: the pre-flight findings the team clears before anyone is asked to sign.',
+        act: { actionId: 'submissions.set-workspace', params: { workspace: 'validation' } },
       },
       {
-        say: 'Close: recap the route, name where their sequence stands today, and offer to walk the validation findings together next.',
+        say: 'Submission Readiness gives the verdict: the approval gates that are still open and the deterministic readiness call — the go / no-go a person signs against.',
+        navigate: { target: 'orchestration' },
+      },
+      {
+        say: 'Open the readiness view.',
+        act: { actionId: 'orchestration.set-view', params: { view: 'readiness' } },
+      },
+      {
+        say: 'The Part 11 console shows how compliance is evidenced: the signer mode in force, the signature manifestations, and the audit-chain verifier — the record a reviewer will ask for.',
+        navigate: { target: 'part11-console' },
+      },
+      {
+        say: 'And the audit trail itself: the freeze and the dispatch will appear here under the person’s signature — the two acts that stay theirs. Close: recap the route, name where their sequence stands today, and offer to walk the validation findings together next.',
+        navigate: { target: 'audit-trail' },
       },
     ],
   },
@@ -225,29 +216,21 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
     audience: 'A prospect or stakeholder deciding whether this platform runs their regulatory operation.',
     minutes: 6,
     description:
-      'The value story end to end: portfolio command, a live program, AI drafting, the governed vault, review readiness, and the submission gateway — what gets faster, what stays compliant, and why.',
+      'The value story end to end, in the founder’s pitch order: a real program, AI drafting in Authoring, the protocol as data, the governed Vault, the Submission Center, the readiness verdict, controlled documents, and the audit trail — what gets faster, what stays compliant, and why.',
     steps: [
       {
-        say: 'Open with the thesis: one platform where the regulatory work is done, not tracked — AnA works the screens with the team, and everything governed stays governed.',
+        say: 'Open with the thesis: one platform where the regulatory work is done, not tracked — AnA works the screens with the team, numbers and verdicts come from deterministic engines, and everything governed stays governed under a person’s signature.',
       },
       {
-        say: 'Start at mission control: the entire portfolio and its cross-program readiness and blockers on one board — the view a head of regulatory opens instead of a status spreadsheet.',
-        navigate: { target: 'mission-control' },
-      },
-      {
-        say: 'From the portfolio, drop into one program — the project list, where picking a program scopes everything downstream to it automatically.',
+        say: 'Start at Projects: the whole portfolio, biotech and device side by side — "[Demo · Biotech] C2C-101", an anti-IL-23 antibody IND, and "[Demo · MDX] NeuroPanel-Dx", an IVD 510(k) — each with stage, readiness and blockers.',
         navigate: { target: 'projects' },
       },
       {
-        say: 'Enter a real program (pick one from the portfolio on screen) — everything from here on is scoped to it automatically.',
+        say: 'Enter a real program (pick one from the portfolio on screen — C2C-101 for the biotech story). Everything from here on is scoped to it automatically.',
         act: { actionId: 'projects.open-program' },
       },
       {
-        say: 'The program home: the cockpit a director opens every morning — workstreams, drafts, team, and AnA in one view.',
-        navigate: { target: 'project-home' },
-      },
-      {
-        say: 'The headline capability: authoring. AnA drafts regulatory documents grounded in the program evidence, with provenance and a governed version history — this is where weeks become days.',
+        say: 'The headline capability: Authoring. AnA drafts regulatory documents grounded in the program evidence, with provenance on every claim and a governed version history — this is where weeks become days.',
         navigate: { target: 'authoring' },
       },
       {
@@ -255,39 +238,32 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         act: { actionId: 'authoring.open-document' },
       },
       {
-        say: 'The Vault: uploads are captured with checksums and audit chains, auto-classified into the dossier, and every source is tracked from captured to filed — the data room diligence teams wish they had.',
+        say: 'The protocol as data, not a Word file: objectives and endpoints, eligibility, the schedule of assessments, risks and milestones as governed registers, and a completeness gate that refuses to finalize an incomplete protocol.',
+        navigate: { target: 'protocol-dev' },
+      },
+      {
+        say: 'The Vault: uploads captured with checksums and audit chains, auto-classified into the dossier, every source tracked from captured to filed — the data room diligence teams wish they had.',
         navigate: { target: 'vault' },
       },
       {
-        say: 'Beyond their own vault: Deep Research runs multi-source regulatory research over live connectors, metered and governed — launching stays their click, never yours.',
-        navigate: { target: 'deep-research' },
+        say: 'The Submission Center: planning, sequences, the build and pre-flight validation — the last mile lives here too, not in a vendor hand-off.',
+        navigate: { target: 'submissions' },
       },
       {
-        say: 'Show the connector inventory — the org’s own sources with live configured status, credentials encrypted per-organization.',
-        act: { actionId: 'deep-research.open-tab', params: { tab: 'connectors' } },
+        say: 'Submission Readiness: the platform says whether the submission would survive review before the agency sees it — a deterministic verdict with the open gates named, never a model’s opinion.',
+        navigate: { target: 'orchestration' },
       },
       {
-        say: 'For pharma programs the PDEV → IND engine tracks the whole pre-IND arc: four workstreams, readiness against threshold, and IND assembly with human-gated compilation.',
-        navigate: { target: 'pdev' },
+        say: 'Open the readiness view.',
+        act: { actionId: 'orchestration.set-view', params: { view: 'readiness' } },
       },
       {
-        say: 'Review readiness: the platform scores whether the submission would survive review, before the agency sees it.',
-        navigate: { target: 'review-readiness' },
+        say: 'QMS controlled documents: the SOP register and change control under Part 11 ceremonies — the quality system and the regulatory work in one place, one audit trail.',
+        navigate: { target: 'quality' },
       },
       {
-        say: 'For a marketing application, the NDA/BLA cockpit reads filing risk before you file: CTD readiness, the PDUFA review clock, and Refuse-to-File risk — the deficiencies that bounce a submission at the door, caught while they are still fixable.',
-        navigate: { target: 'nda-cockpit' },
-      },
-      {
-        say: 'Open the Refuse-to-File view — the specific gaps that get a submission rejected on receipt, scored against this program’s real state.',
-        act: { actionId: 'nda-cockpit.open-tab', params: { tab: 'rtf' } },
-      },
-      {
-        say: 'The Submission Gateway: pre-flight validation and the transmittal chain — the last mile lives here too, not in a vendor hand-off.',
-        navigate: { target: 'submission-gateway' },
-      },
-      {
-        say: 'Close on governance: 21 CFR Part 11 signatures, hash-chained audit, and the rule that AnA prepares while a person approves — then invite their questions and the next step.',
+        say: 'Close on governance, on the screen that proves it: the hash-chained audit trail, 21 CFR Part 11 signatures, and the rule that AnA prepares while a person approves — then invite their questions and the next step.',
+        navigate: { target: 'audit-trail' },
       },
     ],
   },

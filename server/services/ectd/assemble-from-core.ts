@@ -173,7 +173,7 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     unfinalized,
     unfinalizedSections,
   } = await materializeLeafSources({
-    leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId })),
+    leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId, documentUuid: l.documentUuid ?? null })),
     organizationId,
     stageDir,
   });
@@ -191,8 +191,11 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
 
   // 3. Sync resolver over the materialized map (package-from-core needs sync).
   const resolveFile: LeafFileResolver = (leaf) => {
-    if (!leaf.documentTable || !leaf.documentId) return null;
-    return byKey.get(leafSourceKey(leaf.documentTable, leaf.documentId)) ?? null;
+    // Either key space identifies a source: integer-keyed stores carry
+    // documentId, uuid-keyed ones (vault.documents) carry documentUuid.
+    // Requiring the integer here would silently drop every vault leaf.
+    if (!leaf.documentTable || (!leaf.documentId && !leaf.documentUuid)) return null;
+    return byKey.get(leafSourceKey(leaf.documentTable, leaf.documentId, leaf.documentUuid)) ?? null;
   };
 
   // 4. Drive the real publisher off the canonical core.
@@ -370,7 +373,16 @@ export interface AssembleSubmissionResult {
   unresolvedLeaves: UnresolvedLeaf[];
   skipped: Array<{ sectionCode: string; reason: string }>;
   /** DTD self-containment status from the packager. */
-  dtdStatus?: { required: string[]; present: string[]; missing: string[]; selfContained: boolean };
+  // `missingStylesheets` travels with `missing`: selfContained is false when
+  // EITHER is non-empty, so a consumer that reads only `missing` cannot say
+  // which files are absent (see SubmissionBundle['dtdStatus']).
+  dtdStatus?: {
+    required: string[];
+    present: string[];
+    missing: string[];
+    missingStylesheets?: string[];
+    selfContained: boolean;
+  };
   stats: {
     totalModules: number;
     totalGranules: number;

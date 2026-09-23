@@ -1,0 +1,2 @@
+old -> 42703 column u.username does not exist
+new -> PREPARE + EXECUTE ok

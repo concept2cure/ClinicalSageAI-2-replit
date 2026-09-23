@@ -151,7 +151,7 @@ const ENFORCED_APPROVAL_RULES: Array<{
     title: 'Machine-only segments are never approvable',
     detail:
       'Machine translation is a draft accelerator. A segment still carrying method "machine" cannot reach approved — only human and mt_postedited can.',
-    evidence: "approvableMethods: ['human', 'mt_postedited'] -- rejects with method_not_approvable.",
+    evidence: "approvableMethods: ['human', 'mt_postedited'] — rejects with method_not_approvable.",
   },
   {
     id: 'back-translation',
@@ -371,7 +371,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
         `${orgPath}/profile`,
         { name: name.trim(), reason: why },
       );
-      if (r.error) failures.push(`Organization name -- ${saveFailure(r.error, r.status)}`);
+      if (r.error) failures.push(`Organization name — ${saveFailure(r.error, r.status)}`);
       else setSavedName(r.data?.organization?.name ?? name.trim());
     }
 
@@ -387,7 +387,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
         settings: { translation: payload },
         reason: why,
       });
-      if (r.error) failures.push(`Translation workspace -- ${saveFailure(r.error, r.status)}`);
+      if (r.error) failures.push(`Translation workspace — ${saveFailure(r.error, r.status)}`);
       else setSavedTxw(payload);
     }
 
@@ -568,14 +568,29 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load your organization record"
-          hint={`${loadError} -- nothing below is editable until the organization record loads, so no change can be lost.`}
+          hint={`${loadError} — nothing below is editable until the organization record loads, so no change can be lost.`}
         />
       )}
-      {saveNote && (
-        <div className="txw-help" data-tone={saveNote.tone === 'warn' ? 'warn' : undefined}>
-          {saveNote.tone === 'warn' ? I.alertTriangle : I.checkCircle} {saveNote.text}
-        </div>
-      )}
+      {/* The result of a governed, audited PATCH. It was a plain div that
+          appeared after the write, so the only report that "Save to
+          organization" had landed — or been refused with "Not saved: …" — was
+          an icon swap and a tint. The region is rendered unconditionally and
+          filled conditionally, because a live region has to exist before its
+          content changes for the change to be announced reliably; empty, it has
+          no class and so no box. */}
+      <div
+        className={saveNote ? 'txw-help' : undefined}
+        data-tone={saveNote?.tone === 'warn' ? 'warn' : undefined}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {saveNote ? (
+          <>
+            {saveNote.tone === 'warn' ? I.alertTriangle : I.checkCircle} {saveNote.text}
+          </>
+        ) : null}
+      </div>
 
       <div className="txw-settings">
         {/* -- Org profile -- */}
@@ -646,7 +661,13 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                   ))}
                 </div>
                 {clientTypeStatus && (
+                  /* Cycles through "Saving to governed org profile…" and its
+                     outcome. Choosing a client-type chip fires a governed write
+                     and the chips merely disable and re-enable, so without this
+                     the write was silent from start to finish. */
                   <span
+                    role="status"
+                    aria-live="polite"
                     className="txw-help"
                     data-tone={
                       saveState.status === 'error' || profile.status === 'error'
@@ -723,7 +744,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                   translation service does not read them yet (project creation
                   takes its own target language, and draft generation routes
                   through the AnA gateway's model policy). Stating that once,
-                  here, is better than three hedged row captions -- and better
+                  here, is better than three hedged row captions — and better
                   than letting an administrator assume enforcement. */}
               <div className="txw-help" data-tone="warn">
                 {I.info} Declared org defaults. These three persist on the organization record and
@@ -757,7 +778,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                             fontSize: 10,
                           }}
                         >
-                          -- {l.agency}
+                          — {l.agency}
                         </span>
                       </button>
                     ))}
@@ -825,7 +846,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
               </div>
 
-              {/* Enforced, not configurable -- see the card comment above Setup.
+              {/* Enforced, not configurable — see the card comment above Setup.
                   These render as locked facts because approvalGuard() applies
                   DEFAULT_GUARDRAILS to every approval and reads no org setting;
                   a switch here would have let an administrator believe they had
@@ -871,7 +892,59 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
   );
 }
 
-/* ════════════ Audit trail -- immutable hash-chain viewer (ss11.10(e)) ════════════
+/** The ledger route's `meta.chain` (server/routes/audit-trail-ledger.routes.ts
+ *  AuditLedgerChainVerdict), reduced to what the banner and AnA state. */
+type ChainVerdictView = {
+  verdict: 'intact' | 'broken' | 'unverified';
+  rowsChecked: number;
+  legacyRows: number;
+  sequencedRows: number;
+  brokenAt: { id: string; segment: string; commitsTo: string | null } | null;
+};
+
+function readChainVerdict(meta: Record<string, unknown> | undefined): ChainVerdictView {
+  const c = meta?.chain as
+    | {
+        ok?: unknown;
+        rowsChecked?: unknown;
+        legacyRows?: unknown;
+        sequencedRows?: unknown;
+        brokenAt?: { id?: unknown; segment?: unknown; commitsTo?: unknown } | null;
+      }
+    | undefined;
+  const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+  if (!c || typeof c.ok !== 'boolean') {
+    return { verdict: 'unverified', rowsChecked: 0, legacyRows: 0, sequencedRows: 0, brokenAt: null };
+  }
+  const b = c.brokenAt;
+  return {
+    verdict: c.ok ? 'intact' : 'broken',
+    rowsChecked: n(c.rowsChecked),
+    legacyRows: n(c.legacyRows),
+    sequencedRows: n(c.sequencedRows),
+    brokenAt:
+      b && typeof b.id === 'string'
+        ? { id: b.id, segment: String(b.segment ?? ''), commitsTo: typeof b.commitsTo === 'string' ? b.commitsTo : null }
+        : null,
+  };
+}
+
+function chainTone(v: ChainVerdictView): string {
+  return v.verdict === 'intact' ? 'var(--success)' : v.verdict === 'broken' ? 'var(--error)' : 'var(--warning)';
+}
+
+function chainSummary(v: ChainVerdictView): string {
+  if (v.verdict === 'unverified') {
+    return 'The server returned no chain verdict on this read, so the chain is not verified here';
+  }
+  const span = `${v.rowsChecked} chained entry(ies) verified server-side (${v.sequencedRows} sequenced, ${v.legacyRows} legacy)`;
+  if (v.verdict === 'intact') return `Hash chain verifies intact over ${span}`;
+  return `Hash chain breaks at entry ${v.brokenAt?.id ?? 'unknown'} (${v.brokenAt?.segment ?? 'unknown'} segment, ${
+    v.brokenAt?.commitsTo ? `commits to ${v.brokenAt.commitsTo}` : 'content does not derive from any predecessor'
+  }) over ${span}`;
+}
+
+/* ════════════ Audit trail — immutable hash-chain viewer (ss11.10(e)) ════════════
    Live-anchored to GET /api/audit-trail/ledger (mounted in
    server/bootstrap/register-regulatory-routes.ts, router
    server/routes/audit-trail-ledger.routes.ts). REAL: an org-scoped, newest-first
@@ -931,7 +1004,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
   // Real hash-chained ledger. useLiveRows unwraps the { success, data } envelope,
   // returns a fresh [] while loading / on error (rendered directly, so no seed
   // loop), and sets `error` only on a genuine fetch failure.
-  const { rows: entries, loading, error } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
+  const { rows: entries, loading, error, meta } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
 
   const log = entries.filter(
     (e) =>
@@ -972,19 +1045,14 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
     setExporting(false);
   };
 
-  /* Hash-chain integrity check (visual) */
-  const chainStatus = (() => {
-    const all = entries;
-    let valid = 0;
-    for (let i = 0; i < all.length; i++) {
-      if (i === all.length - 1) {
-        if (all[i].prevHash === 'genesis') valid++;
-        continue;
-      }
-      if (all[i].prevHash === all[i + 1].hash) valid++;
-    }
-    return { total: all.length, valid, intact: valid === all.length };
-  })();
+  /* Hash-chain verdict — the SERVER's (route meta.chain, computed by the one
+     verifier over the tenant's whole audit_logs chain). This surface used to
+     count prevHash === next.hash over the rows on screen; that window merges
+     two stores, is cut by `limit`, and since the chain became per tenant a
+     legacy row may legitimately link to the global head — so the count was
+     not a verdict. No verdict from the server is reported as exactly that,
+     never as "intact". */
+  const chainStatus = readChainVerdict(meta);
 
   /* What AnA can see of this screen.
      A FAILED read publishes the failure, and on this surface that is not a
@@ -1014,8 +1082,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       summary:
         `Audit trail: ${entries.length} hash-chained entry(ies)` +
         (filtered ? `, filtered to ${log.length} by kind "${kind}"${term ? ` and the search "${q}"` : ''}` : '') +
-        `. Hash chain ${chainStatus.intact ? 'verifies intact' : `has ${chainStatus.total - chainStatus.valid} link(s) that do not verify`}` +
-        ` over ${chainStatus.total} entry(ies).` +
+        `. ${chainSummary(chainStatus)}` +
         (entry ? ` Entry ${entry.id} is open.` : ''),
       facts: {
         totalEntries: entries.length,
@@ -1023,7 +1090,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
         kindFilter: kind,
         searchTerm: term || null,
         entriesByKind: Object.fromEntries(kindCounts.map((k) => [k.id, k.n])),
-        hashChain: { total: chainStatus.total, verified: chainStatus.valid, intact: chainStatus.intact },
+        hashChain: chainStatus,
         hashChainViewOpen: chainView,
         // Enough to name an event back to the user, not the whole ledger.
         // `actor` (an individual's name, or an email via the server's
@@ -1116,31 +1183,31 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
           gap: 12,
           padding: '10px 14px',
           borderRadius: 8,
-          background: chainStatus.intact
-            ? 'color-mix(in srgb,var(--success) 10%,transparent)'
-            : 'color-mix(in srgb,var(--error) 10%,transparent)',
-          border:
-            '1px solid ' + (chainStatus.intact ? 'var(--success)' : 'var(--error)'),
+          background: `color-mix(in srgb,${chainTone(chainStatus)} 10%,transparent)`,
+          border: `1px solid ${chainTone(chainStatus)}`,
           marginBottom: 16,
           maxWidth: 680,
         }}
       >
         <span style={{ fontSize: 18 }}>
-          {chainStatus.intact ? I.shieldCheck : I.alertTriangle}
+          {chainStatus.verdict === 'intact' ? I.shieldCheck : I.alertTriangle}
         </span>
         <div style={{ flex: 1 }}>
           <div
             style={{
               fontWeight: 600,
               fontSize: 13,
-              color: chainStatus.intact ? 'var(--success)' : 'var(--error)',
+              color: chainTone(chainStatus),
             }}
           >
-            {chainStatus.intact ? 'Hash chain intact' : 'Chain verification failed'}
+            {chainStatus.verdict === 'intact'
+              ? 'Hash chain intact'
+              : chainStatus.verdict === 'broken'
+                ? 'Chain verification failed'
+                : 'Chain not verified'}
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--text-400)', marginTop: 2 }}>
-            {chainStatus.total} entries -- {chainStatus.valid}/{chainStatus.total} links
-            verified — SHA-256 — append-only ledger
+            {chainSummary(chainStatus)} — SHA-256 — append-only ledger
           </div>
         </div>
         <span className="mono" style={{ fontSize: 10, color: 'var(--text-400)' }}>
@@ -1161,6 +1228,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
         <div className="vault-search" style={{ flex: '1 1 240px', maxWidth: 360 }}>
           <span className="ico">{I.search}</span>
           <input
+            aria-label="Search audit trail entries"
             placeholder="Search entries..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -1352,7 +1420,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
               marginBottom: 12,
             }}
           >
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{entry.id} -- Entry detail</div>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{entry.id} — Entry detail</div>
             <button className="tbtn" aria-label="Close" onClick={() => setSel(null)} style={{ fontSize: 16 }}>
               {I.close}
             </button>
@@ -1504,6 +1572,9 @@ interface LiveModuleEntry {
   subscriptionState?: 'enabled' | 'disabled' | 'none';
   isAvailable: boolean;
   requiredTier: string | null;
+  /** 'later' ⇒ outside the launch catalog; locks only while the payload's
+   *  launchScope.enforced is true. Optional: an older server omits it. */
+  launchScope?: 'launch' | 'later';
   sortOrder: number;
 }
 
@@ -1599,8 +1670,18 @@ function tierBandLabel(m: LiveModuleEntry): string {
  * administrator costs a conversation; being wrongly told to upgrade sells
  * somebody a plan that changes nothing.
  */
-function moduleVerdict(m: LiveModuleEntry, orgTier: string | null): NavSurfaceEntitlement | null {
+function moduleVerdict(
+  m: LiveModuleEntry,
+  orgTier: string | null,
+  launchScopeEnforced: boolean,
+): NavSurfaceEntitlement | null {
   const base = { id: m.moduleId, label: m.name, requiredTier: m.requiredTier };
+  /* The release boundary comes first and ignores the licence: a module the
+     org has bought or been granted is still not in this release. The server
+     applies the same order (applyLaunchScope), so the card and the rail agree. */
+  if (launchScopeEnforced && m.launchScope === 'later') {
+    return { ...base, entitled: false, source: 'launch-scope', requiredTier: null };
+  }
   const state = m.subscriptionState ?? (m.isEnabled ? 'enabled' : 'none');
   if (state === 'enabled') return null; // 'subscribed'
   if (state === 'disabled') return { ...base, entitled: false, source: 'disabled' };
@@ -1627,7 +1708,7 @@ const ROLE_AGNOSTIC = { isOrgAdmin: false } as const;
  * has already rejected anything that is not the contract, so `[]` here means
  * the catalog is genuinely empty — the honest empty state, never a failure.
  */
-function mapLiveCatalog(payload: unknown, orgTier: string | null): AppGroup[] {
+function mapLiveCatalog(payload: unknown, orgTier: string | null, launchScopeEnforced: boolean): AppGroup[] {
   if (!isCatalogPayload(payload)) return [];
   const rows = payload.modules.filter(isLiveModuleEntry);
   const byCat = new Map<string, LiveModuleEntry[]>();
@@ -1644,19 +1725,21 @@ function mapLiveCatalog(payload: unknown, orgTier: string | null): AppGroup[] {
     const cat = mods[0]?.category || 'other';
     return {
       group: cat.charAt(0).toUpperCase() + cat.slice(1),
-      note: `${mods.length} module${mods.length === 1 ? '' : 's'} -- live subscription state for this organization`,
+      note: `${mods.length} module${mods.length === 1 ? '' : 's'} — live subscription state for this organization`,
       apps: mods.map((m) => ({
         id: m.moduleId,
         name: m.name,
         tier: tierBandLabel(m),
         on: m.isEnabled,
         desc: m.description || m.name,
-        lock: moduleVerdict(m, orgTier),
+        lock: moduleVerdict(m, orgTier, launchScopeEnforced),
         /* canAccessModule() allows the write when the module is already in the
            org's enabled set OR its tier and industry match — so an org that
            downgraded can still switch OFF a module it is currently running,
            and nothing else outside the plan can be switched at all. */
-        toggleable: m.isAvailable || m.isEnabled,
+        /* No switch for a module the release excludes: a toggle that writes a
+           grant nothing honours is a dead control. */
+        toggleable: (m.isAvailable || m.isEnabled) && !(launchScopeEnforced && m.launchScope === 'later'),
       })),
     };
   });
@@ -1694,7 +1777,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   const open = (id: string) => onNav(id);
   // Fixture-free live reads. Both endpoints return a bare (non-enveloped) object,
   // so useLiveData yields the payload directly ({ modules } / the license object).
-  const catState = useLiveData<{ modules: LiveModuleEntry[] }>(
+  const catState = useLiveData<{ modules: LiveModuleEntry[]; launchScope?: { enforced: boolean } }>(
     '/api/module-subscriptions/catalog',
     ['/api/module-subscriptions/catalog'],
     // A 200 that is not the catalog contract belongs in the error branch below,
@@ -1709,7 +1792,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   // object so a re-fetch that returns the same tier does not re-seed below.
   const orgTier = lic?.tier || null;
   const liveGroups = useMemo(
-    () => mapLiveCatalog(catState.data, orgTier),
+    () => mapLiveCatalog(catState.data, orgTier, catState.data?.launchScope?.enforced === true),
     [catState.data, orgTier],
   );
   // Editable copy for optimistic toggles, re-seeded whenever the live mapping
@@ -1790,15 +1873,15 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       );
       if (!res.ok) {
         setOn(groupIdx, appId, !next);
-        fireToast(`Could not ${next ? 'enable' : 'disable'} ${label} -- sign in required`);
+        fireToast(`Could not ${next ? 'enable' : 'disable'} ${label} — sign in required`);
         return;
       }
       fireToast((next ? 'Enabled ' : 'Disabled ') + label);
     } catch (e) {
-      // Revert -- never report a write that did not happen.
+      // Revert — never report a write that did not happen.
       setOn(groupIdx, appId, !next);
       fireToast(
-        `Could not ${next ? 'enable' : 'disable'} ${label} -- ` +
+        `Could not ${next ? 'enable' : 'disable'} ${label} — ` +
           // Only apiRequest's own error has been through the envelope reader;
           // a bare rejection is the fetch failing ("Failed to fetch").
           (e instanceof ApiRequestError && e.message ? e.message : 'request failed')
@@ -1886,7 +1969,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   return (
     <div className="page-inner">
       <AdminHeader
-        eyebrow="Workspace -- /api/module-subscriptions"
+        eyebrow="Workspace — /api/module-subscriptions"
         title="Apps catalog"
         sub="Every application — the destinations you open and work in — entitlement-aware. Active apps launch; anything you cannot open states which of the reasons applies and the step that resolves it, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
@@ -1913,7 +1996,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
             <div className="lic-tier-v">
               {String(tierLabel).charAt(0).toUpperCase() + String(tierLabel).slice(1)}
               {lic.industryMode ? (
-                <span className="lic-ind"> -- {lic.industryMode}</span>
+                <span className="lic-ind"> — {lic.industryMode}</span>
               ) : null}
             </div>
           </div>
@@ -1972,7 +2055,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
           {I.info}
           <span>
             License &amp; entitlement details are unavailable right now
-            {licState.error ? " -- the billing service didn't respond" : ''}.
+            {licState.error ? " — the billing service didn't respond" : ''}.
           </span>
           <button
             className="btn ghost"
@@ -2729,7 +2812,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       fireToast(
         // Only apiRequest's own error has been through the envelope reader; a
         // bare rejection is the fetch failing ("Failed to fetch").
-        'Could not grant -- ' +
+        'Could not grant — ' +
           (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
         'error',
       );
@@ -2780,7 +2863,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       fireToast(
         // Only apiRequest's own error has been through the envelope reader; a
         // bare rejection is the fetch failing ("Failed to fetch").
-        'Could not revoke -- ' +
+        'Could not revoke — ' +
           (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
         'error',
       );
@@ -2811,7 +2894,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         // `json.error` was rendered raw, so an envelope of { error: '<CODE>',
         // message: '<a real sentence>' } toasted the token.
         fireToast(
-          'Could not create the key -- ' + (serverMessage(json) ?? 'sign in as an admin'),
+          'Could not create the key — ' + (serverMessage(json) ?? 'sign in as an admin'),
           'error',
         );
         return;
@@ -2826,7 +2909,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       fireToast(
         // Only apiRequest's own error has been through the envelope reader; a
         // bare rejection is the fetch failing ("Failed to fetch").
-        'Could not create the key -- ' +
+        'Could not create the key — ' +
           (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
         'error',
       );
@@ -2998,7 +3081,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     </div>
                     {vkitDocs.length > 0 ? (
                       <span className="ac-val-st ok">
-                        {I.check} Self-serve -- {vkitDocs.length} document{vkitDocs.length === 1 ? '' : 's'}
+                        {I.check} Self-serve — {vkitDocs.length} document{vkitDocs.length === 1 ? '' : 's'}
                       </span>
                     ) : (
                       <span className="ac-val-st soon">
@@ -3021,7 +3104,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="ac-val-note">
                   {I.shieldCheck} Every governed mutation carries a reason-for-change and lands
                   in the audit trail. Any row marked "provided at contract" is not yet self-serve
-                  -- tracked openly, never claimed early. Validation protocols download as drafts;
+                  — tracked openly, never claimed early. Validation protocols download as drafts;
                   executed and approved records are provided through QA at contract.
                 </div>
               </div>
@@ -3050,7 +3133,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     {LIC_ROLES.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.label}
-                        {r.business ? ' -- finance' : ''}
+                        {r.business ? ' — finance' : ''}
                       </option>
                     ))}
                   </select>
@@ -3105,7 +3188,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                         <span className="sp-row-b">
                           <span className="sp-row-t">{g.name || g.email}</span>
                           <span className="sp-row-s">
-                            {g.email} -- granted by {g.granted_by} -- {g.granted_at}
+                            {g.email} — granted by {g.granted_by} — {g.granted_at}
                           </span>
                         </span>
                         <span className={'rd-chip tone-' + (rm.business ? 'warn' : 'ai')}>
@@ -3114,7 +3197,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                         <button
                           className="ac-revoke"
                           onClick={() => revoke(g.id)}
-                          title="Revoke (records a reason)"
+                          title="Revoke (records a reason)" aria-label="Revoke (records a reason)"
                         >
                           {I.close}
                         </button>
@@ -3336,15 +3419,15 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                           <span className="sp-row-s" style={{ fontFamily: 'var(--font-mono)' }}>
                             {k.keyPrefix ? k.keyPrefix + '…' : '—'}
                             {k.lastUsedAt
-                              ? ' -- used ' + String(k.lastUsedAt).slice(0, 10)
-                              : ' -- never used'}
-                            {k.status && k.status !== 'active' ? ' -- ' + k.status : ''}
+                              ? ' — used ' + String(k.lastUsedAt).slice(0, 10)
+                              : ' — never used'}
+                            {k.status && k.status !== 'active' ? ' — ' + k.status : ''}
                           </span>
                         </span>
                         {(!k.status || k.status === 'active') && (
                           <button
                             className="ac-revoke"
-                            title="Revoke this API key (audited)"
+                            title="Revoke this API key (audited)" aria-label="Revoke this API key (audited)"
                             onClick={() => revokeKey(k.id, k.name)}
                           >
                             {I.close}

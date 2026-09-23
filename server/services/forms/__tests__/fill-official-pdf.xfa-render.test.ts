@@ -140,6 +140,18 @@ function inputsFor(descriptor: RenderTemplate['descriptor']): RenderInputs {
   const values: Record<string, string> = Object.fromEntries(
     Object.keys(map).map((key, i) => [key, `ZZTOP-${key.toUpperCase()}-${7391 + i}`]),
   );
+  /*
+   * ONE SENTINEL FOR BOTH COMPANY NAMES — the only pair of keys that cannot
+   * carry different values. FDA's applicant-block `Functions.Validation()`
+   * clears `AdministrativeDocumentation.DoC.DCTextField120` and refills it from
+   * `ApplicantInformation.ADTextField210`, so a filing whose declaring entity
+   * differs from the applicant would be filed under the wrong legal entity, and
+   * `fillEstarSubmission` refuses it — there would be no bytes to render at all.
+   * Nothing in this file's claim is lost: it is about written values BINDING and
+   * RENDERING under an independent XFA engine, and each of the two cells is
+   * still located and asserted by its own SOM path.
+   */
+  values.declarationCompanyName = values.applicantCompanyName;
   const data: Record<string, string> = Object.fromEntries(
     Object.entries(values).filter(([key]) => key !== UNFILLED_KEY),
   );

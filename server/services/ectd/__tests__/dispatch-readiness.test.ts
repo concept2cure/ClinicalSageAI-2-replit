@@ -6,7 +6,18 @@
  * defects — warnings and infos never inflate it.
  */
 import { describe, it, expect } from 'vitest';
-import { computeDispatchReadiness, type ReadinessLeaf } from '../dispatch-readiness';
+import {
+  computeDispatchReadiness,
+  hasCompleteDocumentPointer,
+  type LeafDocumentResolution,
+  type ReadinessLeaf,
+} from '../dispatch-readiness';
+import {
+  PLACEABLE_DOCUMENT_TABLES,
+  RESOLVABLE_DOCUMENT_TABLES,
+} from '../leaf-document-tables';
+
+const VAULT_UUID = '1b80ee68-61d1-46cd-b4b5-c26e25f5035b';
 
 const goodLeaf = (over: Partial<ReadinessLeaf> = {}): ReadinessLeaf => ({
   sectionCode: 'm2.5',
@@ -169,15 +180,33 @@ describe('computeDispatchReadiness — document-pointer rules', () => {
   // included. A dispatch-clear verdict for such a sequence would assert
   // something the system can never deliver, which is the exact defect the
   // readiness gate exists to prevent.
-  it('flags a leaf on a documented-external table the assembler cannot materialize', () => {
-    const r = computeDispatchReadiness([goodLeaf({ documentTable: 'vault_documents' })]);
-    expect(r.errors).toBe(1);
-    const finding = r.findings.find(f => f.code === 'EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE');
-    expect(finding, 'a vault_documents leaf must not read dispatch-clear').toBeTruthy();
-    expect(finding!.severity).toBe('error');
-    // The refusal must carry the resolver's own reason, not a generic message.
-    expect(finding!.message).toContain('vault');
-    // It is not an invented table — the write-side allowlist still accepts it.
+  /*
+   * THE EXTERNAL-TABLE CASE HAS NO MEMBER TO TEST WITH, as of 2026-09-17.
+   *
+   * `vault_documents` was the only entry in EXTERNAL_DOCUMENT_TABLES, and it
+   * became RESOLVABLE once both blockers fell: vault ingest now writes through
+   * getStorageProvider() (so the packager can fetch the bytes) and
+   * submission_leaves carries document_uuid (so a leaf can name a uuid-keyed
+   * document). The map is now empty, so EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE
+   * cannot be produced through the public API — there is no table to pass.
+   *
+   * The two tests that used vault_documents as the external example were
+   * removed rather than rewritten, because a test that asserts behaviour the
+   * system can no longer exhibit is worse than no test: it passes for the wrong
+   * reason or has to be forced. What replaces them is the assertion below —
+   * that the mechanism is intact and currently empty — so whoever adds the next
+   * external store is told, by a failing test, to restore this coverage.
+   */
+  it('has no external table today, and the vault leaf it used to flag now reads clear', () => {
+    // EXTERNAL_DOCUMENT_TABLES is module-local by design (externalDocumentTableReason
+    // is the only reader), so assert it derivatively: placeable is resolvable
+    // PLUS external, so the two sets matching means external is empty.
+    expect(PLACEABLE_DOCUMENT_TABLES.size).toBe(RESOLVABLE_DOCUMENT_TABLES.size);
+    // A vault leaf is keyed by uuid (documentId stays null) — see the block below.
+    const r = computeDispatchReadiness([goodLeaf({ documentTable: 'vault_documents', documentId: null, documentUuid: VAULT_UUID })]);
+    // Placeable AND resolvable now — so neither the external finding nor the
+    // invented-table finding. A vault leaf is a legitimate pointer.
+    expect(r.findings.some(f => f.code === 'EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE')).toBe(false);
     expect(r.findings.some(f => f.code === 'UNPLACEABLE_DOCUMENT_TABLE')).toBe(false);
   });
 
@@ -198,15 +227,6 @@ describe('computeDispatchReadiness — document-pointer rules', () => {
     expect(r.errors).toBe(1);
   });
 
-  it('flags an external document_table on a DELETE leaf', () => {
-    const r = computeDispatchReadiness([
-      goodLeaf(),
-      goodLeaf({ sectionCode: 'm3.2', lifecycleOp: 'delete', documentTable: 'vault_documents', documentId: 7 }),
-    ]);
-    expect(r.findings.some(f => f.code === 'EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE')).toBe(true);
-    expect(r.errors).toBe(1);
-  });
-
   it('still exempts a delete leaf that carries NO pointer — that is the legitimate shape', () => {
     const r = computeDispatchReadiness([
       goodLeaf(),
@@ -222,4 +242,97 @@ describe('computeDispatchReadiness — document-pointer rules', () => {
     ]);
     expect(r.errors).toBe(0);
   });
+
 });
+
+// ── Two key spaces (MDX demo pack, 2026-09-21, finding F5) ────────────────
+// submission_leaves addresses integer-keyed stores by documentId and the
+// uuid-keyed vault by documentUuid. The completeness check read the integer
+// column alone, so every leaf filed from the vault — uuid stored, integer
+// null, content hash pinned — was UNRESOLVED_DOCUMENT, and no vault-built
+// sequence could clear the gate.
+describe('document pointer completeness is judged per key space', () => {
+  it('a uuid-keyed vault leaf (documentId null) is a complete pointer — no UNRESOLVED_DOCUMENT', () => {
+    const r = computeDispatchReadiness([goodLeaf({ documentTable: 'vault_documents', documentId: null, documentUuid: VAULT_UUID })]);
+    expect(r.findings.filter(f => f.code === 'UNRESOLVED_DOCUMENT')).toHaveLength(0);
+    expect(r.errors).toBe(0);
+  });
+
+  it('an integer-keyed leaf still resolves', () => {
+    const r = computeDispatchReadiness([goodLeaf({ documentTable: 'coauthor_documents', documentId: 42 })]);
+    expect(r.errors).toBe(0);
+  });
+
+  it('a vault leaf carrying only an integer names nothing — UNRESOLVED_DOCUMENT', () => {
+    const r = computeDispatchReadiness([goodLeaf({ documentTable: 'vault_documents', documentId: 1, documentUuid: null })]);
+    expect(r.findings.some(f => f.code === 'UNRESOLVED_DOCUMENT')).toBe(true);
+  });
+
+  it('an integer-keyed table carrying only a uuid names nothing — UNRESOLVED_DOCUMENT', () => {
+    const r = computeDispatchReadiness([goodLeaf({ documentTable: 'coauthor_documents', documentId: null, documentUuid: VAULT_UUID })]);
+    expect(r.findings.some(f => f.code === 'UNRESOLVED_DOCUMENT')).toBe(true);
+  });
+
+  it('hasCompleteDocumentPointer: uuid for the vault, integer elsewhere, either for an unknown table', () => {
+    expect(hasCompleteDocumentPointer({ documentTable: 'vault_documents', documentId: null, documentUuid: VAULT_UUID })).toBe(true);
+    expect(hasCompleteDocumentPointer({ documentTable: 'vault_documents', documentId: 9, documentUuid: null })).toBe(false);
+    expect(hasCompleteDocumentPointer({ documentTable: 'coauthor_documents', documentId: 9, documentUuid: null })).toBe(true);
+    expect(hasCompleteDocumentPointer({ documentTable: 'coauthor_documents', documentId: null, documentUuid: VAULT_UUID })).toBe(false);
+    expect(hasCompleteDocumentPointer({ documentTable: 'no_such_table', documentId: null, documentUuid: VAULT_UUID })).toBe(true);
+    expect(hasCompleteDocumentPointer({ documentTable: null, documentId: 9, documentUuid: VAULT_UUID })).toBe(false);
+  });
+});
+
+// The DB-bound resolver's verdict rides in on `document`; the validator turns
+// it into findings. Existence and the pin comparison cannot be judged here.
+describe('resolver verdicts become findings', () => {
+  const resolution = (over: Partial<LeafDocumentResolution>): LeafDocumentResolution => ({
+    status: 'resolved',
+    keyKind: 'uuid',
+    documentTable: 'vault_documents',
+    documentId: null,
+    documentUuid: VAULT_UUID,
+    pinnedSha256: 'a'.repeat(64),
+    storedSha256: 'a'.repeat(64),
+    pin: 'match',
+    reason: null,
+    ...over,
+  });
+  const vaultLeaf = (document: LeafDocumentResolution) =>
+    goodLeaf({ documentTable: 'vault_documents', documentId: null, documentUuid: VAULT_UUID, document });
+
+  it('a resolved leaf whose pin matches carries no error', () => {
+    const r = computeDispatchReadiness([vaultLeaf(resolution({}))]);
+    expect(r.errors).toBe(0);
+  });
+
+  it('a pinned hash that differs from the stored document is DOCUMENT_CONTENT_MISMATCH — its own code, never silently passed', () => {
+    const r = computeDispatchReadiness([vaultLeaf(resolution({ status: 'content_changed', pin: 'mismatch', storedSha256: 'b'.repeat(64) }))]);
+    const f = r.findings.find(x => x.code === 'DOCUMENT_CONTENT_MISMATCH');
+    expect(f?.severity).toBe('error');
+    expect(f?.sectionCode).toBe('m2.5');
+    expect(f?.message).toContain('a'.repeat(64));
+    expect(f?.message).toContain('b'.repeat(64));
+    expect(r.findings.some(x => x.code === 'UNRESOLVED_DOCUMENT')).toBe(false);
+    expect(r.errors).toBe(1);
+  });
+
+  it('a document the resolver could not find stays UNRESOLVED_DOCUMENT, naming the pointer', () => {
+    const r = computeDispatchReadiness([vaultLeaf(resolution({ status: 'missing', pin: 'unpinned', pinnedSha256: null, storedSha256: null, reason: 'vault document not found in this organization' }))]);
+    const f = r.findings.find(x => x.code === 'UNRESOLVED_DOCUMENT');
+    expect(f?.severity).toBe('error');
+    expect(f?.message).toContain(VAULT_UUID);
+    expect(f?.message).toContain('not found in this organization');
+    expect(r.errors).toBe(1);
+  });
+
+  it('a missing document on a DELETE leaf is not a completeness error (a delete ships no file)', () => {
+    const r = computeDispatchReadiness([
+      goodLeaf(),
+      goodLeaf({ sectionCode: 'm3.2', lifecycleOp: 'delete', documentTable: 'coauthor_documents', documentId: 7,
+        document: resolution({ status: 'missing', keyKind: 'integer', documentTable: 'coauthor_documents', documentId: 7, documentUuid: null }) }),
+    ]);
+    expect(r.errors).toBe(0);
+  });
+});
+

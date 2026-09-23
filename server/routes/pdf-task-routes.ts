@@ -18,6 +18,10 @@ import {
   isGhostscriptAvailable,
   recommendCompressionQuality,
 } from '../services/pdf-compression-service.js';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('pdf-task-routes');
 
 const router = Router();
 const qualityEnum = z.enum(['screen', 'ebook', 'printer', 'prepress', 'default']);
@@ -121,9 +125,7 @@ router.post('/render-markdown-pdf', async (req: Request, res: Response) => {
     return res.status(200).end(pdf);
   } catch (err) {
     console.error('Error rendering markdown PDF:', err);
-    return res
-      .status(500)
-      .json({ error: 'PDF render failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, logger, 'rendering markdown PDF', err);
   }
 });
 
@@ -187,10 +189,7 @@ router.post('/cer/:ndcCode/enhanced-pdf-task', async (req: Request, res: Respons
     });
   } catch (error) {
     console.error('Error scheduling PDF generation:', error);
-    res.status(500).json({
-      error: 'Error scheduling PDF generation task',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving enhanced PDF task', error);
   }
 });
 
@@ -308,10 +307,7 @@ router.post('/compress', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error compressing PDF:', error);
-    return res.status(500).json({
-      error: 'PDF compression failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'compressing', error);
   }
 });
 
@@ -336,10 +332,7 @@ router.post('/compress/recommend', async (req: Request, res: Response) => {
     const recommendation = await recommendCompressionQuality(inputPath);
     return res.json({ ok: true, recommendation });
   } catch (error) {
-    return res.status(500).json({
-      error: 'Failed to recommend compression profile',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'recommending compression settings', error);
   }
 });
 
@@ -367,10 +360,7 @@ router.post('/compress/batch', async (req: Request, res: Response) => {
       result,
     });
   } catch (error) {
-    return res.status(500).json({
-      error: 'Batch PDF compression failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, logger, 'saving batch', error);
   }
 });
 

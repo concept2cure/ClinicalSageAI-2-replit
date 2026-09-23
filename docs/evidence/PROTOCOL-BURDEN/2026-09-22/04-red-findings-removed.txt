@@ -1,0 +1,112 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > counts visits and scheduled procedures from the SoA grid 2ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > reports the study-day span when every scheduled visit carries a study day 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > identifies the heaviest single visit and the median load 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > breaks the load down per visit, preserving column order and cell state 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > counts how many visits each assessment is scheduled at 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > reports the complexity indicators with their basis 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > computeBurdenProfile — a realistic multi-visit design > emits no burden findings for a schedule with no outlier and no empty visit 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses participant time when the activities carry no duration 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses the invasive-procedure count and says it will not guess from names 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > lists every refused measure, with a reason, on the profile 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > publishes no composite index 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > refuses the study-day span when any scheduled visit has no study day 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty — a measure the SoA cannot support is absent, never zero > reports the absent profile for a design with no Schedule of Activities 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > computes the participant total when every scheduled activity carries a duration 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > goes absent — not to 30, not to 0 — when one activity loses its duration 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > honesty proof — removing one duration makes the total absent, not smaller > counts invasive procedures only when the activities carry invasiveness 1ms
+ × server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit far heavier than the rest (BRD-010) 9ms
+   → expected undefined to be defined
+ × server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit with nothing scheduled (BRD-011) 5ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > asks about an assessment scheduled at every single visit (BRD-012) 2ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > emits findings in the repo DesignFinding shape 1ms
+   → Cannot convert undefined or null to object
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > counts one visit and its load 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > reports a zero-day span, which is a real zero and says so 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > single-visit design > runs no outlier check with too few visits to have a distribution 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > reports the net change in visits, procedures and span 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > names the visit the amendment added and the assessment it dropped 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > reports which retained visits changed load 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > raises the amendment finding on an increase (BRD-030) 0ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > carries a delta as absent when either side could not compute the measure 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > compareBurden — what an amendment did to the participant > is not comparable when a side has no Schedule of Activities 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > takes the study-design SoA 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > takes the protocol read model SoA matrix through the same engine 1ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > refuses the study-day and arm measures the protocol read model does not carry 7ms
+ ✓ server/services/study-design/__tests__/burden-model.test.ts > adapters — one engine reached from both SoA models > refuses the category count when the activities carry no category 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit far heavier than the rest (BRD-010)
+AssertionError: expected undefined to be defined
+ ❯ server/services/study-design/__tests__/burden-model.test.ts:282:21
+    280|     const p = computeBurdenProfile(matrix({ visits, activities, cells …
+    281|     const outlier = p.findings.find(f => f.code === 'BRD-010');
+    282|     expect(outlier).toBeDefined();
+       |                     ^
+    283|     expect(outlier?.severity).toBe('minor');
+    284|     expect(outlier?.detail).toMatch(/Baseline/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > flags a visit with nothing scheduled (BRD-011)
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/study-design/__tests__/burden-model.test.ts:296:19
+    294|     const p = computeBurdenProfile(matrix({ visits }));
+    295|     const empty = p.findings.filter(f => f.code === 'BRD-011');
+    296|     expect(empty).toHaveLength(1);
+       |                   ^
+    297|     expect(empty[0].severity).toBe('major');
+    298|     expect(empty[0].detail).toMatch(/Empty visit/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > asks about an assessment scheduled at every single visit (BRD-012)
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/study-design/__tests__/burden-model.test.ts:311:19
+    309|     const every = p.findings.filter(f => f.code === 'BRD-012');
+    310|     // Safety review at every visit is expected; PK sampling at every …
+    311|     expect(every).toHaveLength(1);
+       |                   ^
+    312|     expect(every[0].severity).toBe('info');
+    313|     expect(every[0].detail).toMatch(/PK sampling/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/study-design/__tests__/burden-model.test.ts > findings — what a reviewer should see > emits findings in the repo DesignFinding shape
+TypeError: Cannot convert undefined or null to object
+ ❯ server/services/study-design/__tests__/burden-model.test.ts:323:19
+    321|     ];
+    322|     const f = computeBurdenProfile(matrix({ visits })).findings[0];
+    323|     expect(Object.keys(f).sort()).toEqual(['code', 'detail', 'section'…
+       |                   ^
+    324|     expect(f.section).toBe('§7 Participant burden');
+    325|     expect(f.standard).toBe('ICH M11');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 29 passed (33)
+   Start at  03:39:32
+   Duration  555ms (transform 198ms, setup 104ms, import 136ms, tests 47ms, environment 0ms)
+
