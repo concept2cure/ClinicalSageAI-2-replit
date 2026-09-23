@@ -13,13 +13,33 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { runPq } from '../run-pq';
 import goldBank from '../../doc-quality/gold-tasks.json';
 
-type Task = { id: string; taskType: string; input?: string; requiredSections?: string[]; candidateContent?: string };
-const generationTasks = (goldBank as { tasks: Task[] }).tasks.filter((t) => t.taskType === 'generation' && t.input);
+type Task = {
+  id: string;
+  taskType: string;
+  input?: string;
+  requiredSections?: string[];
+  expectedFields?: Record<string, string>;
+  candidateContent?: string;
+};
+const allTasks = (goldBank as { tasks: Task[] }).tasks;
+const generationTasks = allTasks.filter((t) => t.taskType === 'generation' && t.input);
+const extractionTasks = allTasks.filter((t) => t.taskType === 'extraction' && t.input && t.expectedFields);
 
-/** A draft that covers every required section of whichever task it is asked about. */
+/**
+ * A perfect model: it covers every required section of a generation task, and
+ * returns exactly the expected fields of an extraction task.
+ *
+ * Both halves matter. Once the extraction component became executable, a stub
+ * that answered only generation prompts would have made every "perfect model"
+ * case above fail on extraction instead — the tests would still pass their
+ * generation assertions while quietly measuring a model that cannot extract.
+ */
 function coveringDraft(prompt: string): string {
-  const task = generationTasks.find((t) => t.input && prompt.includes(t.input));
-  return (task?.requiredSections ?? []).map((s) => `## ${s}\nContent drawn from the source material.`).join('\n\n');
+  const gen = generationTasks.find((t) => t.input && prompt.includes(t.input));
+  if (gen) return (gen.requiredSections ?? []).map((s) => `## ${s}\nContent drawn from the source material.`).join('\n\n');
+  const ext = extractionTasks.find((t) => t.input && prompt.includes(t.input));
+  if (ext) return JSON.stringify(ext.expectedFields);
+  return '';
 }
 
 function stub(served: string | ((i: number) => string | undefined), content: (prompt: string) => string = coveringDraft) {
@@ -52,7 +72,8 @@ describe('run-pq live path', () => {
   it('sends every task to exactly the model under qualification', async () => {
     const s = stub('claude-opus-5');
     await runPq({ modelId: 'claude-opus-4', gateway: s.gateway });
-    expect(s.calls.length).toBe(generationTasks.length);
+    // Generation AND extraction: both components ask the pinned model directly.
+    expect(s.calls.length).toBe(generationTasks.length + extractionTasks.length);
     expect(new Set(s.calls)).toEqual(new Set(['claude-opus-4']));
   });
 
@@ -87,10 +108,14 @@ describe('run-pq live path', () => {
     const r = await runPq({ modelId: 'claude-opus-4', gateway: stub('claude-opus-5').gateway });
     expect(r.verdict).toBe('INCOMPLETE');
     const why = r.reasons.join(' ');
-    // What still blocks a PASS: two components cannot execute at all, and the
-    // protocol is a draft nobody has approved.
-    expect(why).toMatch(/extraction/);
+    // What still blocks a PASS: rag cannot execute (ragQuery cannot pin a
+    // model), and the protocol is a draft nobody has approved.
     expect(why).toMatch(/rag/);
+    // Extraction used to be named here too, as a component that could not be
+    // executed. It executes now and a perfect model passes it, so its absence
+    // from the reasons is the evidence — the same shape as the sample-floor
+    // check above.
+    expect(why).not.toMatch(/extraction/);
   });
 
   it('the sample floor is no longer one of those reasons — the bank reaches it', async () => {
@@ -103,6 +128,69 @@ describe('run-pq live path', () => {
     // statically; this one proves the runner agrees.
     const r = await runPq({ modelId: 'claude-opus-4', gateway: stub('claude-opus-5').gateway });
     expect(r.reasons.join(' ')).not.toMatch(/floor of/);
+  });
+
+  it('the extraction component runs, and every task goes to the pinned model', async () => {
+    // It could not run at all before: no extraction task carried an input, so
+    // there was nothing to give a model, and the protocol recorded the
+    // component as not executable.
+    expect(extractionTasks.length).toBeGreaterThan(0);
+    const s = stub('claude-opus-5');
+    const r = await runPq({ modelId: 'claude-opus-4', gateway: s.gateway });
+    expect(r.extraction.length).toBe(extractionTasks.length);
+    expect(s.calls.length).toBe(generationTasks.length + extractionTasks.length);
+    expect(new Set(s.calls)).toEqual(new Set(['claude-opus-4']));
+    for (const e of r.extraction) expect(e.f1, e.taskId).toBe(1);
+  });
+
+  it('scores the model\'s extraction — never the captured candidateExtraction', async () => {
+    // Two tasks ship a captured candidateExtraction that would score well. A
+    // model that answers with an empty object must score zero on them.
+    const r = await runPq({
+      modelId: 'claude-opus-4',
+      gateway: stub('claude-opus-5', (p) => (extractionTasks.some((t) => t.input && p.includes(t.input)) ? '{}' : coveringDraft(p))).gateway,
+    });
+    for (const e of r.extraction) expect(e.f1, e.taskId).toBe(0);
+    expect(r.verdict).toBe('FAIL');
+    expect(r.reasons.join(' ')).toMatch(/mean extraction F1/);
+  });
+
+  it('an extraction task answered by a different model is flagged, and the run cannot pass', async () => {
+    // Attribution matters as much here as for generation: a fallback model's
+    // extraction score must not count toward qualifying the pinned one.
+    const genCount = generationTasks.length;
+    const r = await runPq({
+      modelId: 'claude-opus-4',
+      // Every generation call is the pinned model; the first extraction call is not.
+      gateway: stub((i) => (i === genCount ? 'claude-opus-4-8' : 'claude-opus-5')).gateway,
+    });
+    expect(r.extraction[0].servedModelVerified).toBe(false);
+    expect(r.verdict).not.toBe('PASS');
+    expect(r.reasons.join(' ')).toMatch(/extraction task\(s\) were answered by a model that is not the pinned version/);
+  });
+
+  it('a reply with no JSON is NOT EXECUTED, not a score of zero', async () => {
+    // Scoring an unparseable reply as zero would be indistinguishable from a
+    // model that extracted every field wrongly, and the second is a real
+    // failure while the first is a harness problem.
+    const r = await runPq({
+      modelId: 'claude-opus-4',
+      gateway: stub('claude-opus-5', (p) => (extractionTasks.some((t) => t.input && p.includes(t.input)) ? 'I cannot help with that.' : coveringDraft(p))).gateway,
+    });
+    expect(r.extraction.every((e) => e.f1 === null && e.error)).toBe(true);
+    expect(r.verdict).not.toBe('PASS');
+    expect(r.reasons.join(' ')).toMatch(/produced no scorable output|produced no output/);
+  });
+
+  it('reads JSON the model wrapped in a fenced block or prose', async () => {
+    const r = await runPq({
+      modelId: 'claude-opus-4',
+      gateway: stub('claude-opus-5', (p) => {
+        const t = extractionTasks.find((x) => x.input && p.includes(x.input));
+        return t ? `Here are the fields:\n\n\u0060\u0060\u0060json\n${JSON.stringify(t.expectedFields)}\n\u0060\u0060\u0060\n` : coveringDraft(p);
+      }).gateway,
+    });
+    for (const e of r.extraction) expect(e.f1, e.taskId).toBe(1);
   });
 
   it('an overclaim is a FAIL even on the draft protocol', async () => {
