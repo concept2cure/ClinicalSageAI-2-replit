@@ -884,4 +884,172 @@ legacy or enterprise paths or presented a signed-out token. A protocol step
 that signs out and then shows the session refused belongs in the next
 OQ-001 revision beside OQ-PROJ-16.
 
+### 13.10 Postscript: the protocol set now covers signing out
+
+F-21 was found by reading the logout route, not by a step. Every step signed
+in and none signed out, so a logout that ended nothing passed every protocol.
+
+- **URS-001 v0.3, URS-PROJ-011** (§11.10(d) §11.10(e), high). Signing out
+  ends the session. The API refuses the token with 401, the session check
+  reports the user signed out, and the sign-out is entered in the
+  organisation's hash-chained audit log. RA-001 v0.3 assesses it: high,
+  scripted. URS-001 §3 names what the protocol does not exercise and the
+  automated test that does: the collaboration channels
+  (`collab-governance.pglite.integration.test.ts`) and a second server
+  instance (`tests/db/sign-in-audit-trail.dbtest.ts`).
+- **OQ-001 v0.5, OQ-PROJ-17.** The step opens a session of its own, reads
+  projects, signs it out, then presents the same token again. It signs out
+  its own session, not the run's, so the steps after it keep theirs. Its
+  session calls bypass the recorded API client, so no token reaches a
+  record.
+
+| OQ-001 v0.5, runner at `d3556910a` | Result | OQ-PROJ-17 observed |
+|---|---|---|
+| Server on HEAD with the F-21 fix (`0d99ca0cf`) reverse-applied to its nine server files; F-22 kept | 17 pass / **1 fail** | "after signing out, the same token still reads projects (200) or is reported signed in (true)": both held |
+| Server on HEAD | **18 / 0 / 0 / 0** | projects 200; logout 200; afterwards projects 401, session check signed out; newest new ledger entry "Signed out", chained |
+
+Both records name the runner's commit, `d3556910a`. The first server ran
+that commit's working tree with the fix reversed, which the record cannot
+show; `before-AUTH-03-fix/server-code.txt` gives the exact procedure. The first record's
+`OQ-PROJ-17.at-failure.png` is the harness's capture of the page left open
+by OQ-PROJ-14, since the step itself drives no page. Evidence:
+`docs/evidence/W3/2026-09-23/OQ-001-v0.5/`.
+
 Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+
+## 14. Addendum 2026-09-23 — one execution at one commit carrying every fix; the defect it exposed (W3 session)
+
+The 2026-09-23 set (§13) predates the fixes for F-19 to F-22 and the two
+steps that cover them, OQ-PROJ-16 and OQ-PROJ-17, so TM-001 built from it
+left URS-PROJ-010 and URS-PROJ-011 uncovered. This addendum executes IQ-001
+and all six OQ protocols again, at one commit that carries all of them, in
+the same installation, posture and identities. It is the second execution of
+the day, so its records are in `docs/evidence/W3/2026-09-23b/`; the run date
+is only a folder key.
+
+The first attempt, at `af798a862`, recorded no failure. Its server log held
+five failed reads behind a step that had passed: F-23. Reading its records
+against their protocols then showed that 22 steps were recorded with a kind
+their protocol does not give them: P-11. Both were fixed and shown failing
+first. The set filed is the second execution, at `0d7b85e50`. Only the first
+attempt's OQ-SRDY-05 records are kept, as evidence (`red/F-23/first-run-*`).
+
+Before it, trunk was merged and the migration set was re-applied to the
+database the way a deploy does it, `deploy-migrate` as owner with the
+runtime role refreshed: 302 of 302 files, readiness contract verified
+(`transcripts/deploy-migrate.transcript.txt`).
+
+### 14.1 Results
+
+| Record | Pass | Fail | Deviation | Not executed |
+|---|---|---|---|---|
+| IQ-001 (v0.4) | 12 | 0 | 3 | 0 |
+| OQ-001 Projects (v0.6) | 18 | 0 | 0 | 0 |
+| OQ-002 Vault | 12 | 0 | 0 | 0 |
+| OQ-003 Authoring | 23 | 0 | 1 | 0 |
+| OQ-004 Submission Center | 15 | 0 | 0 | 0 |
+| OQ-005 Submission Readiness (v0.4) | 9 | 0 | 1 | 0 |
+| OQ-006 QMS controlled documents | 20 | 0 | 0 | 0 |
+| **OQ total** | **97** | **0** | **2** | **0** |
+
+- Every record is at `0d7b85e50` and names `authentication: password+totp`.
+- The server log shows 8 password attempts and 7 code verifications, and no
+  429: IQ-11, the run identity and the signer once each, OQ-PROJ-02 through
+  the form, OQ-PROJ-16's three attempts and two codes, OQ-PROJ-17's one.
+- The log shows no row-level-security refusal, no permission denial, no 500
+  and no failed read. Its only errors are OQ-AUTH-16's two 503s (no provider).
+- The OQ deviations are OQ-AUTH-16 (no provider) and OQ-SRDY-05b (no project
+  anchor, §14.3). The IQ deviations are the development-install ones,
+  IQ-DEV-002, 004 and 005.
+- Kinds recorded, as the protocols give them: 78 scripted, 9 unscripted,
+  7 ad-hoc, 5 prerequisite.
+
+TM-001 was regenerated from this set (`runDate 2026-09-23b`): 69
+requirements, 67 pass, 2 partial (URS-AUTH-012, no provider; URS-SRDY-005,
+no anchor), 0 fail, 0 open, 0 uncovered. The default run date in the three
+runners moved to `2026-09-23b` (`af798a862`).
+
+### 14.2 Findings
+
+| Id | What | Shown failing first | State |
+|---|---|---|---|
+| **F-23** (product; data integrity, honest state) | **The readiness review reported an all-clear for a project it could not read.** OQ-SRDY-05 executed the submission readiness review for the program OQ-SRDY-00 had built. The review reads the integer project spine and a program's id is a uuid, so the project, document, artifact, placement and last-signal reads all failed. Every reader in `cross-object-resolver.ts` answered its own failure with an empty result. The review completed all five steps for "Project", 0 documents, and recommended "No critical issues found … All analyzers returned no critical or high findings". Two related defects: `POST /execute` accepted any project id, and nine sibling routes parsed ids with `parseInt`, so a request naming program `1d3c…` was answered with the readiness of project 1. The same swallowed failure fed the authoring promotion gates and AnA's readiness context. The five failed reads are in the log of every full run since 2026-09-22. | Unit, resolver: 3 fail / 1 pass (the zero-rows control). Unit, routes: 6 fail / 2 pass; the engine was called with project 1 for program `1d3c…`. `tests/db/cross-object-resolver.dbtest.ts` on real PostgreSQL as a NOBYPASSRLS role: 4 fail / 2 pass. OQ-SRDY-05 v0.4 on the pre-fix server: fail (`OQ-005-v0.4/before-F-23-fix/`). | **Fixed** `79217254f`. A failed read, or a project the organisation does not hold, fails the payload with the reads it names. Every consumer already reported a thrown payload honestly and now gets one. One strict id parser serves all ten routes. After: 4/4, 8/8, 6/6, and OQ-SRDY-05 passes. The dbtest's healthy-project cases prove all ten reads succeed on the migrated schema as the runtime role, so failing closed does not refuse a real review. |
+| **P-11** (protocol) | **The records misstated the assurance activity.** The harness records the kind a runner gives a step and defaults to scripted, and no runner gave one. Every record therefore presented the protocols' 17 unscripted and ad-hoc steps, and 5 prerequisites, as scripted: a pass criterion checked by machine where the protocol says a reviewer judges what was observed. OQ-SRDY-05 was one of them. | `ci:validation-traceability`, extended to compare every runner step with its protocol: 22 findings on the tree before the runners declared their kinds (`red/P-11/`). | **Fixed** `ec76f693c`. The runners declare each kind; the gate (in CI) refuses a mismatch, an undescribed step and an unexecuted one. Its self-test gained six cases, two of them controls. OQ-001 v0.6 §1. |
+| F-23, protocol half | OQ-SRDY-05 passed on any 2xx. | See F-23. | **Fixed** `ec76f693c`, OQ-005 v0.4. OQ-SRDY-05 (scripted) requires a program id the engine cannot read to be refused, or to fail with the reason. OQ-SRDY-05b (scripted, new) requires the review of the program's anchored project to name the program. URS-005 v0.2 (URS-SRDY-005, high); RA-001 v0.4 (high, scripted). |
+
+### 14.3 Observations for other rows (not dispositioned by this package)
+
+1. **The Submission Readiness app cannot see a launch program in any
+   organisation signup creates.** Its readiness review, its Orchestration
+   board and its Inconsistency board read the integer project spine
+   (`projects.id`). A program (`regulatory_programs.id`, a uuid) reaches that
+   spine only through the anchor intake writes, and intake writes one only
+   when the organisation has exactly one client workspace
+   (`server/services/c2c/program-project-anchor.ts`). Signup creates none. In
+   this organisation, which holds dozens of programs:
+   - the Orchestration board says "No lead program is identified for this
+     organization yet", because its portfolio read answers 404, "No programs
+     found";
+   - the Inconsistency board shows "Couldn't load the inconsistency board"
+     and blames reachability, because its read refused the program uuid with
+     400, "A valid numeric projectId is required";
+   - the review has no project to assess (OQ-SRDY-05b, deviation).
+   The surfaces are honest about what they read: none shows an empty result
+   as clear. The gap is what they read. The owner's options are:
+   - (a) signup creates the organisation's one client workspace, so intake
+     anchors every program. This is the smallest change, but a workspace is
+     the access boundary `project-module-bridge` checks.
+   - (b) re-key the review and both boards to the program spine.
+   - (c) take the two boards and the review out of the launch catalog and
+     rely on the dispatch-readiness gate (OQ-SRDY-02, 03, 07), which is
+     program- and sequence-keyed. Deleting a surface is a founder decision
+     under the working agreement.
+2. `GET /api/data-origins/document?documentTable=authoring_sections` answers
+   400 twice during OQ-003. It is the attribution coverage gap already
+   recorded as open (the route omits `authoring_sections`, the table the
+   editor asks about). No step asserts it.
+
+### 14.4 What this changes in the records above
+
+- **OQ-SRDY-05's pass is withdrawn in every earlier execution**: the
+  baseline and its re-executions (§2, §8 to §10; `docs/evidence/W3/2026-09-20/`),
+  2026-09-22 (§12) and 2026-09-23 (§13). Each record's step file shows the
+  program's uuid sent, and a run that completed for "Project" with 0
+  documents. The records are not edited. This report withdraws the verdict;
+  URS-SRDY-005 was never verified by them.
+- In every earlier record, the Kind column of the 22 steps P-11 names is
+  wrong. The protocols' kinds govern. No verdict changes on that account.
+- TM-001 is built from `2026-09-23b`. The `2026-09-23` records stay in the
+  tree, unchanged, as history, with their F-19 to F-22 falsification evidence.
+
+### 14.5 Disposition summary after this section
+
+| Item | State |
+|---|---|
+| F-18, F-19, F-20, F-21, F-22 | Fixed (§13); covered by OQ-SUBC-08, OQ-QMS-05, OQ-PROJ-16 and OQ-PROJ-17, all passing in this set |
+| F-23 | Fixed `79217254f`; covered by OQ-SRDY-05 |
+| P-11 | Fixed `ec76f693c`; enforced by `ci:validation-traceability` |
+| OQ-SRDY-05b / URS-SRDY-005 partial | Open: the anchor decision, §14.3 item 1 |
+| OQ-AUTH-16 / URS-AUTH-012 partial | Open: a PQ-passed provider |
+| IQ-DEV-002, 004, 005 | Open: development install; staging closes them |
+
+### 14.6 What the package still owes before signature
+
+§13.6 stands, with the F-19 fix done. Still owed:
+
+- the production image (`NODE_ENV=production`: the dev-login refusal on
+  that branch, the HMAC-sealed chain, enforcing CSP and HSTS);
+- a real second account created through user administration;
+- a witness;
+- a PQ-passed provider;
+- a live release signature;
+- the contractor's review;
+- the F-15 decision;
+- the Submission Readiness anchor decision (§14.3 item 1);
+- signatures.
+
+Prepared by the W3 Claude session (drafting and execution only; cannot sign).
+Product change in this section: `79217254f` (F-23). Validation changes:
+`d3556910a` (OQ-PROJ-17), `af798a862` (run date), `ec76f693c` (P-11,
+OQ-SRDY-05 v0.4). No result was edited after execution. The runners wrote
+every record, and the matrix builder regenerated TM-001.

@@ -17,6 +17,7 @@ const stamp = helpers.stamp();
 await step(
   {
     id: 'OQ-VAULT-00',
+    kind: 'prerequisite',
     urs: [],
     title: 'Prerequisite: a program to file into; baseline ledger length',
     action: 'POST /api/c2c/projects (IND); GET /api/audit-trail/ledger?limit=200',
@@ -216,6 +217,7 @@ await step(
 await step(
   {
     id: 'OQ-VAULT-09',
+    kind: 'unscripted',
     urs: ['URS-VAULT-009'],
     title: 'Vault surface renders the data room with the document',
     action: 'Open /concept2cure/vault with the program selected',

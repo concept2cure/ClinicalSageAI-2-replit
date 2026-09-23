@@ -23,7 +23,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-23';
+const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-23b';
 const DOCS = path.join(ROOT, 'docs', 'validation');
 const EVIDENCE = path.join(ROOT, 'docs', 'evidence', 'W3', RUN_DATE);
 

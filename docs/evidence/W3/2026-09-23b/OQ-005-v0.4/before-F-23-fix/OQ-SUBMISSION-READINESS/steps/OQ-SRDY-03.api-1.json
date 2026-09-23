@@ -1,0 +1,80 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/submissions/56/dispatch-qc",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "region": "fda",
+      "sequenceId": 13,
+      "validationErrors": 0,
+      "unresolvedShadowCriticals": 0,
+      "leaves": [
+        {
+          "sectionCode": "m5.3.5",
+          "operation": "new"
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 49,
+    "rateLimitRetries": 0,
+    "body": {
+      "clearedToDispatch": false,
+      "blockers": [
+        "No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.",
+        "Dispatch is blocked because this submission type requires a 21 CFR Part 11 release signature and none has been applied (no orchestrator run is linked to this submission; and no dispatch-intent signature is recorded on ectd-sequence:13)."
+      ],
+      "warnings": [
+        "Required section 1.1 has no leaf in this sequence.",
+        "Required section 1.2 has no leaf in this sequence.",
+        "Required section 1.3 has no leaf in this sequence.",
+        "Required section 1.12.14 has no leaf in this sequence.",
+        "Required section 1.14 has no leaf in this sequence.",
+        "Required section 1.14.4 has no leaf in this sequence.",
+        "Required section 1.14.4.1 has no leaf in this sequence.",
+        "Required section 1.14.4.2 has no leaf in this sequence.",
+        "Required section 1.20 has no leaf in this sequence."
+      ],
+      "checklist": [
+        {
+          "item": "No open error-severity validation findings on the stored leaves",
+          "pass": true
+        },
+        {
+          "item": "No unacknowledged Shadow Review criticals",
+          "pass": true
+        },
+        {
+          "item": "At least one completed Shadow Review has run for this sequence",
+          "pass": false
+        },
+        {
+          "item": "External agency-grade validation gate clear",
+          "pass": true
+        },
+        {
+          "item": "Release signature gate clear (21 CFR Part 11 §11.70)",
+          "pass": false
+        },
+        {
+          "item": "Required Module 1 sections present for the region",
+          "pass": false
+        },
+        {
+          "item": "Lifecycle operations coherent (new/replace/append/delete; original sequence carries only new)",
+          "pass": true
+        }
+      ],
+      "verdictSource": "assess-dispatch-readiness",
+      "narrative": null,
+      "narrativeUnavailable": {
+        "code": "PROVIDER_UNAVAILABLE",
+        "message": "No AI provider is configured; the deterministic verdict stands without a narrative."
+      }
+    }
+  }
+}
