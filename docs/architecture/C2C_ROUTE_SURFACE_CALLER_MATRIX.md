@@ -92,10 +92,17 @@ per-prefix caller analysis before any deletion.
 `/api/data-lineage` · `/api/regulatory-graph` · `/api/regulatory-digital-twin` ·
 `/api/regulatory-precedent-intelligence` · `/api/regulatory-assessments` ·
 `/api/regulatory-intelligence` · `/api/regulatory-submissions` · `/api/ctd` ·
-`/api/content-plan` · `/api/protocol-soa` · `/api/protocol-development` ·
+`/api/protocol-soa` · `/api/protocol-development` ·
 `/api/protocol-reviews` · `/api/protocol-templates` · `/api/protocol-export` ·
 `/api/qms` · `/api/qc` · `/api/post-market` · `/api/postmarket-surveillance` ·
-`/api/real-world-evidence` · `/api/inline-annotations` · `/api/smart-blocks`
+`/api/real-world-evidence` · `/api/inline-annotations`
+
+> **2026-09-22 — `/api/content-plan` and `/api/smart-blocks` deleted, not wired.**
+> Per-prefix caller analysis (adversarially verified) found no caller since
+> 7a144fd1e and no store: every data handler queried tables no applier creates.
+> The capability lives in `project_sections` (`/api/project-sections`,
+> `/api/dossier-map`) and `evidence_links` (`/api/evidence/links`); a future
+> content-plan feature extends those and must not revive either router.
 
 ### 3.2 eCTD / submission packaging — *classify in WO-05*
 `/api/ectd-documents` · `/api/ectd-submissions` · `/api/submission-orchestrator` ·

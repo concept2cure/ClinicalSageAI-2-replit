@@ -71,6 +71,12 @@ const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
   'user_password_reset_failed|failure|reset token matched no account': 'Password reset refused: the reset link matched no account',
   'user_password_reset_failed|failure|reset token had expired': 'Password reset refused: the reset link had expired',
   'user_password_changed|success|password reset via emailed token': 'Password changed through an emailed reset link',
+  'user_mfa_setup|success|secret_issued': 'Authenticator enrolment started: a new secret was issued',
+  'user_mfa_setup|failure|already_enrolled': 'Authenticator enrolment refused: two-step verification is already on',
+  'user_mfa_enable|success|': 'Two-step verification turned on',
+  'user_mfa_enable|failure|invalid_code': 'Two-step verification not turned on: wrong code',
+  'user_mfa_disable|success|': 'Two-step verification turned off',
+  'user_mfa_disable|failure|invalid_code': 'Two-step verification not turned off: wrong code',
 };
 
 /** The ledger sentence for an event: its own when listed, otherwise one that still states the outcome. */

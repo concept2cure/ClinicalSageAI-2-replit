@@ -41,6 +41,18 @@ export interface RerankScores {
   tokensUsed: number;
 }
 
+export interface RerankOptions {
+  /**
+   * The scores will decide a governed verdict — a citation run's supported /
+   * gap status, which can block a filing. A model-produced figure there is
+   * high-risk regulatory work: an LLM judge then routes as `regulatory_review`,
+   * so only a model approved for it (approved-models.ts) produces the score, and
+   * an unreadable or incomplete score throws instead of defaulting to a neutral
+   * 0.5 that would quietly lift a weak match over the verdict threshold.
+   */
+  governedVerdict?: boolean;
+}
+
 export interface Reranker {
   /** Stable identifier for logs/metrics, e.g. 'llm_judge' or 'cohere:rerank-v3.5'. */
   readonly name: string;
@@ -49,7 +61,7 @@ export interface Reranker {
    * order. Implementations must return exactly `docs.length` scores; on any
    * internal failure they should throw so the pipeline can fall back.
    */
-  score(query: string, docs: RerankDocument[]): Promise<RerankScores>;
+  score(query: string, docs: RerankDocument[], options?: RerankOptions): Promise<RerankScores>;
 }
 
 /** Inject the pipeline's cached router so LLM-judge reranks stay cached. */
@@ -79,8 +91,9 @@ export class LlmJudgeReranker implements Reranker {
 
   constructor(private readonly route: RouteFn) {}
 
-  async score(query: string, docs: RerankDocument[]): Promise<RerankScores> {
+  async score(query: string, docs: RerankDocument[], options?: RerankOptions): Promise<RerankScores> {
     if (docs.length === 0) return { scores: [], tokensUsed: 0 };
+    const governed = options?.governedVerdict === true;
 
     const docList = docs
       .map(
@@ -92,7 +105,9 @@ export class LlmJudgeReranker implements Reranker {
       .join('\n\n');
 
     const response = await this.route({
-      taskType: 'structured_output',
+      // Until 2026-09-23 always structured_output, which any model may serve —
+      // so gpt-4o produced the figure behind persisted citation verdicts.
+      taskType: governed ? 'regulatory_review' : 'structured_output',
       messages: [
         {
           role: 'system',
@@ -114,8 +129,13 @@ Example: {"1": 95, "2": 72, "3": 45}`,
     try {
       parsed = JSON.parse(response.content);
     } catch {
+      if (governed) throw new Error('LLM judge returned an unreadable score; no verdict is drawn from it');
       // Unparseable judge output: neutral scores keep the embedding order.
       return { scores: docs.map(() => 0.5), tokensUsed: response.usage.totalTokens };
+    }
+
+    if (governed && docs.some((_, idx) => !Number.isFinite(Number(parsed?.[String(idx + 1)])))) {
+      throw new Error('LLM judge did not score every document; no verdict is drawn from a partial score');
     }
 
     // 1-based indices in the prompt; missing entries default to neutral 0.5.

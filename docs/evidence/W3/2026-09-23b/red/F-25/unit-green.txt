@@ -1,0 +1,13 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/services/__tests__/contradiction-scan-project-scope.test.ts > a project the organisation does not hold > is refused, not scanned clean 3ms
+ ✓ server/services/__tests__/contradiction-scan-project-scope.test.ts > a program id, which is not a project id > is refused before anything is read, not scanned across the organisation 1ms
+ ✓ server/services/__tests__/contradiction-scan-project-scope.test.ts > a project the organisation holds > is scanned, and every read is filtered to it 1ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  08:26:24
+   Duration  335ms (transform 150ms, setup 82ms, import 96ms, tests 8ms, environment 0ms)
+

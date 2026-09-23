@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-005 |
-| Version | 0.4 |
+| Version | 0.5 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-005 |
 | Runner (the executable protocol) | `tests/validation/oq/submission-readiness/run.mjs` — `npm run validation:oq -- submission-readiness` |
@@ -17,6 +17,7 @@
 | 0.2 | 2026-09-21 | WF | OQ-SRDY-03 rewritten for the deterministic dispatch-QC contract (VSR-001 F-9, fixed in the product 2026-09-21): the verdict must equal the `GET …/dispatch-readiness` gate; without a provider the step passes and the narrative is recorded as not executed. A gateway error on the route is now a fail, not a deviation. Re-executed locally (§3). |
 | 0.3 | 2026-09-22 | W3 | §3 records the 2026-09-22 execution under the production posture (RLS enforcing, non-owner runtime role, credentialed second signer); earlier results are kept below it as superseded. No step changed. |
 | 0.4 | 2026-09-23 | W3 | OQ-SRDY-05 is scripted and can fail. It had executed the readiness review for the program and passed on any 2xx, and this protocol called it unscripted while the record called it a scripted pass. The review completed for a program none of whose data it could read, with "No critical issues found" (VSR-001 F-23). The step now requires a program id the engine cannot read to be refused or to fail with the reason. OQ-SRDY-05b is new: the review of the program's anchored project must name the program; without an anchor it is a deviation naming the reason intake gave. On the code before F-23's fix OQ-SRDY-05 fails; after it, it passes (`docs/evidence/W3/2026-09-23b/OQ-005-v0.4/`). |
+| 0.5 | 2026-09-23 | W3 | OQ-SRDY-06 requires the scan of the program id (400) and of a project the organisation does not hold (404) to be refused. It had scanned project 1 and passed on 200 with zero findings, in an organisation that holds no project 1 (VSR-001 F-25). OQ-SRDY-06b is new: the scan of the program's anchored project must run; without an anchor it is a deviation. OQ-SRDY-08 is scripted: both boards must be locked by launch scope and their deep links must show the launch-scope gate (launch scope decided, VSR-001 §15). |
 
 ## 1. Method
 
@@ -33,9 +34,10 @@ As OQ-001 §1. OQ-SRDY-00 builds the fixture through the public API: program, va
 | OQ-SRDY-04 | URS-SRDY-004 | scripted | templates; execute without projectId | template with 5 steps; 400 |
 | OQ-SRDY-05 | URS-SRDY-005 | scripted | `POST /api/orchestration/execute {templateId:"submission_readiness_review", projectId:<the program id>}`. The review reads `projects.id`; a program id is a uuid (v0.4) | refused with a 4xx and no run, or a run that ends failed and says why; never a completed review of a project the engine did not read |
 | OQ-SRDY-05b | URS-SRDY-005 | scripted | When intake anchored the program (`meta.projectAnchorId`): execute the review for the anchored project; `GET /executions/:id` (v0.4) | the run completes, its `inspect_project_state` step names the program, and the execution is readable. No anchor: deviation naming the reason intake gave |
-| OQ-SRDY-06 | URS-SRDY-006 | scripted | contradiction scan | 200 |
+| OQ-SRDY-06 | URS-SRDY-006 | scripted | `POST /api/governed-intelligence/contradictions/scan/<the program id>`; the same for a project id the organisation does not hold (v0.5) | 400 and 404 respectively; neither 200 with findings |
+| OQ-SRDY-06b | URS-SRDY-006 | scripted | When intake anchored the program: scan the anchored project (v0.5) | 200 with a deterministic result. No anchor: deviation naming the reason intake gave |
 | OQ-SRDY-07 | URS-SRDY-007 | scripted (browser) | Open `/concept2cure/dispatch-readiness` with the program selected | sequence `0000` and its gate visible |
-| OQ-SRDY-08 | URS-SRDY-008 | ad-hoc (browser) | Open `/concept2cure/orchestration`, `/concept2cure/inconsistency` | Render; screenshots |
+| OQ-SRDY-08 | URS-SRDY-008 | scripted (browser) | `GET /api/module-subscriptions/navigation`; open `/concept2cure/orchestration`, `/concept2cure/inconsistency` (v0.5) | both not entitled, source `launch-scope`; `dispatch-readiness` entitled; each deep link shows "not in this release" |
 
 ## 3. Result of the local execution (2026-09-23b, one commit carrying every fix — VSR-001 §14)
 

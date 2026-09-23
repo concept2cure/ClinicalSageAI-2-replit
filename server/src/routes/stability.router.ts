@@ -49,6 +49,39 @@ const BWIPJS = {
 const logger = createScopedLogger('stability-router');
 
 const router = Router();
+
+/**
+ * The stab_studies status vocabulary is the table's CHECK constraint
+ * (db/migrations/022_stability_v2.sql): ONGOING, ON_HOLD, COMPLETED. Client
+ * words map onto it; an omitted status is ONGOING, the column's own default.
+ * DRAFT and CANCELLED have no state here and are refused — storing a draft as
+ * ONGOING would record a study as executing when the user said it was not.
+ * (The old fallback wrote 'DRAFT', which the constraint rejects: every create
+ * without a status was a 500.)
+ */
+export const STAB_STUDY_STATUS = {
+  ACTIVE: 'ONGOING',
+  ONGOING: 'ONGOING',
+  PAUSED: 'ON_HOLD',
+  ON_HOLD: 'ON_HOLD',
+  COMPLETED: 'COMPLETED',
+} as const;
+
+export function toStabStudyStatus(raw: unknown): 'ONGOING' | 'ON_HOLD' | 'COMPLETED' | null {
+  if (raw === undefined || raw === null || raw === '') return 'ONGOING';
+  return (STAB_STUDY_STATUS as Record<string, 'ONGOING' | 'ON_HOLD' | 'COMPLETED'>)[String(raw).toUpperCase()] ?? null;
+}
+
+/**
+ * The storage conditions this endpoint can plan, with their ICH Q1A(R2)
+ * settings. Any other code (REF, INUSE, STRESS) has no defined temperature
+ * here; it used to be written as an invented '5°C'. Refused instead.
+ */
+export const STAB_PLANNED_CONDITIONS: Record<string, { temp: string; rh: string }> = {
+  LT: { temp: '25°C', rh: '60%' },
+  INT: { temp: '30°C', rh: '65%' },
+  ACC: { temp: '40°C', rh: '75%' },
+};
 const upload = multer({ storage: multer.memoryStorage() });
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -228,7 +261,12 @@ const pool = {
 };
 
 // Helper function for audit trail
-async function audit(studyId: string, action: string, payload: any, req: any) {
+/** The verified principal an audit record is attributed to, or '' — see audit(). */
+function auditActor(req: any): string {
+  return String(req.user?.email ?? req.user?.id ?? req.user?.userId ?? '');
+}
+
+async function audit(studyId: string, action: string, payload: any, req: any, txClient?: any) {
   // 21 CFR Part 11 §11.10(e) / ICH Q1A: the audit actor is the VERIFIED
   // principal. This read `x-user-name || x-user-email || 'user'` — both
   // client-supplied — so any authenticated caller could attribute a stability
@@ -237,9 +275,18 @@ async function audit(studyId: string, action: string, payload: any, req: any) {
   // derived from the JWT (below); attribution was the half left on headers.
   // Same rule as the authoring router's getActorEmail: email, else the token
   // subject. See ledger C-18.
-  const actor = String(req.user?.email ?? req.user?.id ?? req.user?.userId ?? '');
+  const actor = auditActor(req);
   if (!actor) {
     throw new Error('Actor identity required for audit');
+  }
+  // Inside the caller's transaction when one is passed: the audit record and
+  // the change it records commit together or not at all.
+  if (txClient) {
+    await txClient.query(
+      `INSERT INTO stab_audit (study_id, actor, action, payload_json) VALUES ($1,$2,$3,$4)`,
+      [studyId, actor, action, JSON.stringify(payload)]
+    );
+    return;
   }
   const client = await pool.connect();
   try {
@@ -337,6 +384,33 @@ router.get('/studies', async (req, res) => {
 
 // POST /api/stability/studies - Create new study with AI planning
 router.post('/studies', async (req, res) => {
+  // Validate before taking a connection or opening a transaction, so a rejected
+  // request never holds a pooled client.
+  const mappedStatus = toStabStudyStatus(req.body?.status);
+  if (mappedStatus === null) {
+    return res.status(400).json({ error: 'Invalid status', allowed: Object.keys(STAB_STUDY_STATUS) });
+  }
+  const requestedConditions: unknown = req.body?.storageConditions;
+  if (
+    !Array.isArray(requestedConditions) ||
+    requestedConditions.some(c => !(String(c) in STAB_PLANNED_CONDITIONS))
+  ) {
+    return res.status(400).json({
+      error: 'Invalid storageConditions',
+      allowed: Object.keys(STAB_PLANNED_CONDITIONS),
+    });
+  }
+  // Part 11 §11.10(e): a study is not created without an attributable audit
+  // record, so the actor is required before anything is written.
+  if (!auditActor(req)) {
+    return res.status(401).json({ error: 'Actor identity required' });
+  }
+  const tenantIdRaw = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+  const safeTenantIdEarly = tenantIdRaw ? parseInt(tenantIdRaw.toString(), 10) : NaN;
+  if (!tenantIdRaw || !safeTenantIdEarly) {
+    return res.status(401).json({ error: 'Tenant context required' });
+  }
+
   const client = await pool.connect();
 
   try {
@@ -352,23 +426,17 @@ router.post('/studies', async (req, res) => {
       testParameters,
       startDate,
       notes,
-      status,
     } = req.body;
 
-    // Get tenant ID from JWT-validated context, not raw headers
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    if (!tenantId) {
-      return res.status(401).json({ error: 'Tenant context required' });
-    }
+    // Tenant from JWT-validated context, checked above BEFORE the transaction
+    // opens (an early return after BEGIN used to leave it open on a pooled client).
+    const tenantId = tenantIdRaw;
+    const safeTenantId = safeTenantIdEarly;
 
     // Start transaction
     await client.query('BEGIN');
 
     // Set tenant context for RLS policies - use parameterized set_config()
-    const safeTenantId = parseInt(tenantId.toString());
-    if (!safeTenantId) {
-      return res.status(401).json({ error: 'Invalid tenant ID' });
-    }
     await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     // Generate dates
@@ -395,7 +463,7 @@ router.post('/studies', async (req, res) => {
         scope || 'Standard',
         climaticZone || 'IVa',
         startDate,
-        status === 'ACTIVE' ? 'ONGOING' : status || 'DRAFT', // Map ACTIVE to ONGOING
+        mappedStatus,
         tenantId,
       ]
     );
@@ -412,8 +480,8 @@ router.post('/studies', async (req, res) => {
         [
           study.study_id, // Use the generated UUID from the study
           cond,
-          cond === 'LT' ? '25°C' : cond === 'ACC' ? '40°C' : cond === 'INT' ? '30°C' : '5°C',
-          cond === 'LT' ? '60%' : cond === 'ACC' ? '75%' : cond === 'INT' ? '65%' : null,
+          STAB_PLANNED_CONDITIONS[cond].temp,
+          STAB_PLANNED_CONDITIONS[cond].rh,
           `${cond} storage condition`,
         ]
       );
@@ -480,10 +548,9 @@ router.post('/studies', async (req, res) => {
       tests.push(testResult.rows[0]);
     }
 
-    // Commit transaction
-    await client.query('COMMIT');
-
-    // Audit the creation
+    // Audit the creation INSIDE the transaction. It ran after COMMIT on its own
+    // connection, so an audit failure left a committed, unaudited study while
+    // the caller was told the create failed.
     await audit(
       study.study_id,
       'CREATE_STUDY',
@@ -496,8 +563,12 @@ router.post('/studies', async (req, res) => {
         timepointCount: timepoints.length,
         testCount: tests.length,
       },
-      req
+      req,
+      client
     );
+
+    // Commit transaction
+    await client.query('COMMIT');
 
     // Prepare response
     const newStudy = {
@@ -508,7 +579,7 @@ router.post('/studies', async (req, res) => {
       storage_conditions: storageConditions.join(', '),
       test_parameters: testParameters,
       timepoints: timepointLabels,
-      study_status: status === 'ACTIVE' ? 'ONGOING' : status || 'DRAFT', // Map ACTIVE to ONGOING
+      study_status: study.status, // what was stored, not a recomputation
       compliance_status: 'Not Started',
       latest_timepoint: '0M',
       latest_assay_result: null,
@@ -551,53 +622,24 @@ router.post('/studies', async (req, res) => {
   }
 });
 
-// PUT /api/stability/studies/:id - Update study
-router.put('/studies/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updateData = req.body;
-
-    // Return updated study data (in production, would update database)
-    const updatedStudy = {
-      id: id,
-      ...updateData,
-      updated_at: new Date().toISOString(),
-    };
-
-    res.json({
-      message: 'Study updated successfully',
-      study: updatedStudy,
-    });
-  } catch (error: any) {
-    console.error('Error updating study:', error);
-    res.status(500).json({ error: 'Failed to update study' });
-  }
+// PUT /api/stability/studies/:id and PATCH /api/stability/studies/:id/status
+//
+// Both used to answer "updated successfully" and echo the request back while
+// writing NOTHING — a fabricated record of a change to a GxP stability study.
+// No client calls either. Until a real, audited update exists they say so:
+// 501, and the body states that nothing was changed.
+router.put('/studies/:id', (_req, res) => {
+  res.status(501).json({
+    error: 'NOT_IMPLEMENTED',
+    message: 'Updating a stability study is not implemented. Nothing was changed.',
+  });
 });
 
-// PATCH /api/stability/studies/:id/status - Update study status
-router.patch('/studies/:id/status', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    // Valid status transitions
-    const validStatuses = ['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
-    }
-
-    res.json({
-      message: 'Study status updated successfully',
-      study: {
-        id: id,
-        status: status,
-        updated_at: new Date().toISOString(),
-      },
-    });
-  } catch (error: any) {
-    console.error('Error updating study status:', error);
-    res.status(500).json({ error: 'Failed to update study status' });
-  }
+router.patch('/studies/:id/status', (_req, res) => {
+  res.status(501).json({
+    error: 'NOT_IMPLEMENTED',
+    message: 'Changing a stability study status is not implemented. Nothing was changed.',
+  });
 });
 
 // GET /api/stability/studies/:id - Get study details

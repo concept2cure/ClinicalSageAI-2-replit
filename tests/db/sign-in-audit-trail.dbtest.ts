@@ -85,6 +85,12 @@ const RUNTIME_PASSWORD = 'dbtsi-sign-in-audit-runtime-password';
 const runtimeRole = resolveAppServiceRole({ APP_SERVICE_DB_ROLE: `dbtsi_rt_${RUN}` });
 
 const EMAIL = `${TAG}-user-${RUN}@example.invalid`;
+// The enterprise sign-in is a second member's. A code is accepted once, and
+// only for a step later than the last accepted (RFC 6238 §5.2; D6), so one
+// member cannot complete both sign-ins inside the ±1-step window. Until the
+// replay fix this block presented step N-1 after N+1 had been accepted, and
+// passed only because the verifier accepted it.
+const EMAIL2 = `${TAG}-enterprise-${RUN}@example.invalid`;
 const PASSWORD = 'Dbtsi-Sign-In-Audit-2026!';
 const EXTERNAL_KEYS = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'];
 
@@ -93,6 +99,8 @@ let runtime: Runtime;
 let app: express.Express;
 let userId: number;
 let secret: string;
+let userId2: number;
+let secret2: string;
 
 /** The audit rows tenant ORG holds for `action`, oldest first. */
 async function auditRows(action: string) {
@@ -210,6 +218,16 @@ beforeAll(async () => {
     ORG,
     userId,
   ]);
+  const user2 = await owner.query(
+    `INSERT INTO users (email, name, password_hash, default_organization_id)
+     VALUES ($1, 'Lane Enterprise Sign-In', $2, $3) RETURNING id`,
+    [EMAIL2, await bcrypt.hash(PASSWORD, 4), ORG],
+  );
+  userId2 = user2.rows[0].id;
+  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')`, [
+    ORG,
+    userId2,
+  ]);
 
   // 5. TOTP enrolment through the functions /api/auth/mfa/setup and /enable call,
   //    in the member's own scope, as those authenticated routes run.
@@ -218,6 +236,9 @@ beforeAll(async () => {
     secret = (await mfa.generateSecret(userId, EMAIL)).secret;
     const enabled = await mfa.enableMfa(userId, totp(secret));
     if (!enabled.success) throw new Error('[dbtsi] TOTP enrolment was refused');
+    secret2 = (await mfa.generateSecret(userId2, EMAIL2)).secret;
+    const enabled2 = await mfa.enableMfa(userId2, totp(secret2));
+    if (!enabled2.success) throw new Error('[dbtsi] TOTP enrolment of the enterprise member was refused');
   });
 }, 180_000);
 
@@ -389,17 +410,17 @@ describe('the enterprise sign-in reaches the same audit trail', () => {
 
   it('records a wrong password', async () => {
     const before = (await auditRows('user_login')).length;
-    const res = await request(app).post('/api/auth/enterprise/verify-password').send({ email: EMAIL, password: 'not-the-password' });
+    const res = await request(app).post('/api/auth/enterprise/verify-password').send({ email: EMAIL2, password: 'not-the-password' });
     expect(res.status).toBe(401);
 
     const rows = (await auditRows('user_login')).slice(before);
     expect(rows, 'a wrong password on the enterprise path left no record').toHaveLength(1);
-    expect(rows[0]).toMatchObject({ record_id: String(userId), new_values: { outcome: 'failure', reason: 'wrong_password' } });
+    expect(rows[0]).toMatchObject({ record_id: String(userId2), new_values: { outcome: 'failure', reason: 'wrong_password' } });
   });
 
   it('records the challenge a correct password receives', async () => {
     const before = (await auditRows('user_login_mfa_challenge')).length;
-    const res = await request(app).post('/api/auth/enterprise/verify-password').send({ email: EMAIL, password: PASSWORD });
+    const res = await request(app).post('/api/auth/enterprise/verify-password').send({ email: EMAIL2, password: PASSWORD });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     partialToken = res.body.partialToken;
 
@@ -410,7 +431,7 @@ describe('the enterprise sign-in reaches the same audit trail', () => {
 
   it('records a wrong code', async () => {
     const before = (await auditRows('user_login_mfa_failed')).length;
-    const good = totp(secret, Date.now() - 30_000);
+    const good = totp(secret2, Date.now() + 30_000);
     const res = await request(app)
       .post('/api/auth/enterprise/verify-mfa')
       .send({ partialToken, code: good === '000000' ? '111111' : '000000' });
@@ -423,11 +444,11 @@ describe('the enterprise sign-in reaches the same audit trail', () => {
 
   it('records the session it issues', async () => {
     const before = (await auditRows('user_login')).length;
-    // The previous step's code: inside the server's window, and not one the
-    // canonical sign-in above presented.
+    // The next step's code: inside the server's window, and later than the one
+    // this member's enrolment presented.
     const res = await request(app)
       .post('/api/auth/enterprise/verify-mfa')
-      .send({ partialToken, code: totp(secret, Date.now() - 30_000) });
+      .send({ partialToken, code: totp(secret2, Date.now() + 30_000) });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     token = res.body.token;
 

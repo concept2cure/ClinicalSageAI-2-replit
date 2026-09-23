@@ -1,0 +1,27 @@
+# precedent.regulatory_precedents after 20260617 is applied, exercised as the app role (c2c) with app.rls_enforce=on; all in one rolled-back transaction
+-- (1) the engine's own composed read, as tenant 7:
+       device_name       
+-------------------------
+ Org 7 private precedent
+ PUBLIC FDA precedent
+(2 rows)
+
+-- (2) RLS alone, as tenant 7, with NO app filter (the database backstop):
+       device_name       
+-------------------------
+ Org 7 private precedent
+ PUBLIC FDA precedent
+(2 rows)
+
+-- (3) tenant 7 writing a PUBLIC (NULL-org) row — must be refused:
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/775f1443-a7b0-541b-9be8-95d919c4cef5/scratchpad/prec-rls.sql:18: ERROR:  new row violates row-level security policy for table "regulatory_precedents"
+-- (4) tenant 7 writing a row for org 9 — must be refused:
+psql:/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/775f1443-a7b0-541b-9be8-95d919c4cef5/scratchpad/prec-rls.sql:21: ERROR:  new row violates row-level security policy for table "regulatory_precedents"
+-- (5) tenant 7 writing its own row — allowed:
+ organization_id 
+-----------------
+               7
+(1 row)
+
+INSERT 0 1
+searchWithSources(NDA, org 1): ok, records = 0 (corpus read, no 42703)

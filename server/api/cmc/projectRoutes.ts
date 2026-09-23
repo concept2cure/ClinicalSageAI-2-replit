@@ -3,7 +3,6 @@ import { db } from '../../db';
 import {
   cmcProjects,
   drugSubstances,
-  drugProducts,
   analyticalMethods,
   stabilityStudies,
   complianceTracking,
@@ -232,101 +231,6 @@ router.delete('/projects/:id', async (req, res) => {
   }
 });
 
-// Drug Substances endpoints
-router.post('/projects/:projectId/substances', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { projectId } = req.params;
-    const substanceData = { ...req.body, projectId };
-
-    const [newSubstance] = await db
-      .insert(drugSubstances)
-      .values({
-        ...substanceData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-
-    res.json({ success: true, data: newSubstance });
-  } catch (error) {
-    console.error('Error creating drug substance:', error);
-    res.status(500).json({ error: 'Failed to create drug substance' });
-  }
-});
-
-router.get('/projects/:projectId/substances', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { projectId } = req.params;
-
-    const substances = await db
-      .select()
-      .from(drugSubstances)
-      .where(eq(drugSubstances.projectId, projectId))
-      .orderBy(desc(drugSubstances.createdAt));
-
-    res.json({ success: true, data: substances });
-  } catch (error) {
-    console.error('Error fetching drug substances:', error);
-    res.status(500).json({ error: 'Failed to fetch drug substances' });
-  }
-});
-
-// Drug Products endpoints
-router.post('/projects/:projectId/products', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { projectId } = req.params;
-    const productData = { ...req.body, projectId };
-
-    const [newProduct] = await db
-      .insert(drugProducts)
-      .values({
-        ...productData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-
-    res.json({ success: true, data: newProduct });
-  } catch (error) {
-    console.error('Error creating drug product:', error);
-    res.status(500).json({ error: 'Failed to create drug product' });
-  }
-});
-
-router.get('/projects/:projectId/products', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { projectId } = req.params;
-
-    const products = await db
-      .select()
-      .from(drugProducts)
-      .where(eq(drugProducts.projectId, projectId))
-      .orderBy(desc(drugProducts.createdAt));
-
-    res.json({ success: true, data: products });
-  } catch (error) {
-    console.error('Error fetching drug products:', error);
-    res.status(500).json({ error: 'Failed to fetch drug products' });
-  }
-});
-
-// Analytical Methods endpoints
 router.post('/projects/:projectId/analytical-methods', async (req, res) => {
   try {
     if (!db) {
@@ -570,151 +474,6 @@ router.get('/projects/:projectId/documents', async (req, res) => {
   }
 });
 
-// Add endpoints that match frontend expectations
-router.post('/projects/:projectId/drug-substances', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { projectId } = req.params;
-    const substanceData = {
-      ...req.body,
-      projectId,
-      // Map frontend field names to database field names
-      cas: req.body.casNumber, // Map casNumber to cas
-    };
-
-    // Remove the old field name to avoid conflicts
-    delete substanceData.casNumber;
-
-    const [newSubstance] = await db
-      .insert(drugSubstances)
-      .values({
-        ...substanceData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-
-    res.json({ success: true, data: newSubstance });
-  } catch (error) {
-    console.error('Error creating drug substance:', error);
-    res.status(500).json({ error: 'Failed to create drug substance' });
-  }
-});
-
-router.get('/projects/:projectId/drug-substances', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { projectId } = req.params;
-
-    const substances = await db
-      .select()
-      .from(drugSubstances)
-      .where(eq(drugSubstances.projectId, projectId))
-      .orderBy(desc(drugSubstances.createdAt));
-
-    res.json({ success: true, data: substances });
-  } catch (error) {
-    console.error('Error fetching drug substances:', error);
-    res.status(500).json({ error: 'Failed to fetch drug substances' });
-  }
-});
-
-/* The byte-identical second copy of GET /projects/:projectId/analytical-methods
-   that stood here is deleted: Express serves the first declaration, so it never
-   ran. Found by the route-uniqueness contract test in __tests__. */
-
-
-// Drug Products endpoints
-router.get('/projects/:projectId/drug-products', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { projectId } = req.params;
-
-    const products = await db
-      .select()
-      .from(drugProducts)
-      .where(eq(drugProducts.projectId, projectId))
-      .orderBy(desc(drugProducts.createdAt));
-
-    res.json({ success: true, data: products });
-  } catch (error) {
-    console.error('Error fetching drug products:', error);
-    res.status(500).json({ error: 'Failed to fetch drug products' });
-  }
-});
-
-router.post('/projects/:projectId/drug-products', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { projectId } = req.params;
-    const productData = { ...req.body, projectId };
-
-    const [newProduct] = await db
-      .insert(drugProducts)
-      .values({
-        ...productData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-
-    res.json({ success: true, data: newProduct });
-  } catch (error) {
-    console.error('Error creating drug product:', error);
-    res.status(500).json({ error: 'Failed to create drug product' });
-  }
-});
-
-router.put('/projects/:projectId/drug-products/:productId', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { productId } = req.params;
-    const updateData = { ...req.body, updatedAt: new Date() };
-
-    const [updatedProduct] = await db
-      .update(drugProducts)
-      .set(updateData)
-      .where(eq(drugProducts.id, productId))
-      .returning();
-
-    res.json({ success: true, data: updatedProduct });
-  } catch (error) {
-    console.error('Error updating drug product:', error);
-    res.status(500).json({ error: 'Failed to update drug product' });
-  }
-});
-
-router.delete('/projects/:projectId/drug-products/:productId', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { productId } = req.params;
-
-    await db.delete(drugProducts).where(eq(drugProducts.id, productId));
-
-    res.json({ success: true, message: 'Drug product deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting drug product:', error);
-    res.status(500).json({ error: 'Failed to delete drug product' });
-  }
-});
 
 /* ── The two top-level convenience routes that used to live here are gone ──
  *
@@ -728,6 +487,39 @@ router.delete('/projects/:projectId/drug-products/:productId', async (req, res) 
  * thing this codebase does not do. One canonical implementation per capability:
  * the org-scoped handlers in routes.ts are it, and these are deleted rather
  * than left as a trap for the next person who reorders a mount.
+ *
+ * ── And the ten project-nested substance/product handlers, for more ────────
+ *
+ * Same rule, sharper reason. POST/GET /projects/:projectId/substances,
+ * /products and /drug-substances, GET/POST/PUT/DELETE
+ * /projects/:projectId/drug-products all bound drug_substances and
+ * drug_products through shared/cmc-schema.ts, whose model shape (uuid id,
+ * project_id FK, no organization_id) contradicts the provisioned table (serial
+ * id, organization_id NOT NULL, no project_id) — so every one of them threw at
+ * the database on any provisioned environment. No client called them; a
+ * repo-wide scan of /api/cmc/* literals in client/src returns nothing for this
+ * router.
+ *
+ * Broken is not the worst of it. Two of them were dangerous:
+ *
+ *   • The write handlers spread the request body into the insert
+ *     (`{ ...req.body, projectId }` → `.values({ ...substanceData })`), so a
+ *     caller supplying organizationId wrote a governed CMC record attributed
+ *     to another sponsor.
+ *   • PUT and DELETE /drug-products/:productId predicated on the bare
+ *     `eq(drugProducts.id, productId)` — no organization and no project — so
+ *     any authenticated caller could edit or destroy another tenant's drug
+ *     product. A GxP record deleted with no ownership check and no audit of
+ *     whose it was.
+ *
+ * THE REPLACEMENT, by path: server/api/cmc/routes.ts. GET/POST/PUT
+ * /api/cmc/drug-substances (:580/:608/:619) and /api/cmc/drug-products
+ * (:638/:672/:683), each scoped `where(eq(..., organizationId))`, each writing
+ * through to the Module 3 canonical sources. It is the path the product
+ * actually uses and the one scripts/dev/cmc-staff-simulation.sh exercises —
+ * its step 3 registers the drug substance through it, and the run is 118
+ * assertions green — so the capability is proven reachable, not merely
+ * asserted to be.
  */
 
 export default router;

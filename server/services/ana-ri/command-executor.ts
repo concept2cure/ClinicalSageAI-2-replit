@@ -3450,7 +3450,7 @@ export async function recommendStrategy(
       indication: params.indication as string | undefined,
       therapeuticArea: params.therapeuticArea as string | undefined,
       query: params.query as string | undefined,
-    });
+    }, ctx.organizationId);
     return {
       success: true,
       action: 'recommend_strategy',
@@ -3479,7 +3479,7 @@ export async function checkClaim(
       submissionType: String(params.submissionType ?? ''),
       therapeuticArea: params.therapeuticArea as string | undefined,
       indication: params.indication as string | undefined,
-    });
+    }, ctx.organizationId);
     return {
       success: true,
       action: 'check_claim',

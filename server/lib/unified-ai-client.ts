@@ -23,6 +23,7 @@
  */
 
 import { getGateway } from '../services/ai-gateway/gateway';
+import { getEmbeddingProvider } from '../services/ai-gateway/embeddings/embedding-provider';
 import { createScopedLogger } from '../utils/logger';
 import type {
   GatewayRequest,
@@ -82,26 +83,29 @@ type MessageInput = GatewayMessage[] | { role: string; content: string }[] | str
 // ─────────────────────────────────────────────────────────────────────────────
 
 class UnifiedAIClient {
+  /**
+   * An embedding from the gateway's embedding provider — the one seam
+   * enhancedEmbeddingService also uses. Until 2026-09-23 this sent the text to
+   * a CHAT completion with taskType 'embedding', which no chat model serves,
+   * and returned `{ embedding: [] }` when the reply did not parse as a number
+   * array — so it never produced a vector, and said so only by being empty.
+   * A failure now throws.
+   */
   async embeddings(params: {
     model?: string;
     input: string;
     dimensions?: number;
   }): Promise<{ embedding: number[] }> {
-    const response = await this.chat(params.input, {
-      taskType: 'embedding',
+    const result = await getEmbeddingProvider().embed({
+      input: params.input,
       model: params.model,
-      maxTokens: params.dimensions,
-      temperature: 0,
+      dimensions: params.dimensions,
     });
-
-    try {
-      const parsed = JSON.parse(response.content);
-      return {
-        embedding: Array.isArray(parsed) ? parsed.map(value => Number(value) || 0) : [],
-      };
-    } catch {
-      return { embedding: [] };
+    const embedding = result.embeddings[0];
+    if (!Array.isArray(embedding) || embedding.length === 0) {
+      throw new Error('The embedding provider returned no vector');
     }
+    return { embedding };
   }
 
   /**

@@ -115,6 +115,8 @@ export interface CitationRunResult {
   metadata: {
     strategy: string;
     chunksRetrievedTotal: number;
+    /** Sentences whose evidence retrieval failed, so were not checked. */
+    retrievalFailures?: number;
     latencyMs: number;
     timedOut?: boolean;
   };
@@ -388,6 +390,7 @@ export async function runCitationEngine(
 
   const citations: SentenceCitation[] = [];
   let chunksRetrievedTotal = 0;
+  let retrievalFailures = 0;
   let timedOut = false;
 
   for (const s of sentences) {
@@ -417,6 +420,10 @@ export async function runCitationEngine(
           limit: RETRIEVAL_TOP_K,
           threshold: RETRIEVAL_THRESHOLD,
           useReranking: true,
+          // The rerank score decides supported vs gap, so it is a governed
+          // figure: only an approved model produces it, and a failed rerank
+          // fails the sentence rather than scoring it on embeddings alone.
+          governedVerdict: true,
           useMmr: false,
           organizationUuid: validOrgUuid,
           artifactScope,
@@ -490,6 +497,14 @@ export async function runCitationEngine(
           '[citation-engine] retrieval failed for sentence:',
           err?.message || err
         );
+        // Still recorded as a gap (a failure must not read as supported), but
+        // flagged, so it is not taken for a finding about the content.
+        retrievalFailures += 1;
+        flags.push({
+          rule: 'RETRIEVAL_FAILED',
+          severity: 'downgrade',
+          message: 'Evidence retrieval failed for this sentence, so it was not checked. This is not a finding about its content.',
+        });
       }
     }
 
@@ -537,6 +552,7 @@ export async function runCitationEngine(
     metadata: {
       strategy: ragPipeline ? 'basic+rerank (project-scoped)' : 'no-rag (no orgUuid)',
       chunksRetrievedTotal,
+      retrievalFailures: retrievalFailures || undefined,
       latencyMs: Date.now() - startedAt,
       timedOut: timedOut || undefined,
     },

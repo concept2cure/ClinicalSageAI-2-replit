@@ -35,7 +35,7 @@
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
 import { search510kClearances as openFda510k } from './integrations/openfda-device-client';
-import { buildPrecedentOrgIsolation } from './precedent-isolation.js';
+import { buildPrecedentOrgIsolation, precedentOrgId } from './precedent-isolation.js';
 import { resolveToRegistryEntry, getSubmissionTypeContext } from '../../shared/regulatory/submission-type-bridge.js';
 
 const log = createScopedLogger('precedent-engine');
@@ -459,13 +459,13 @@ export class PrecedentEngine {
     `;
     params.push(limit);
 
-    try {
-      const result = await pool.query(query, params);
-      return result.rows.map(this.mapPrecedentRow);
-    } catch (err: any) {
-      log.warn(`Unified precedent search failed: ${err.message}`);
-      return [];
-    }
+    // No catch. The table and its organization_id are created by the migration
+    // set, so a failure here is a real failure — and it used to be swallowed to
+    // [] (42703 on every database until 2026-09-22), which the board then
+    // rendered as "your organization's corpus has none". A search that did not
+    // run must say so; the routes and tools above already surface a rejection.
+    const result = await pool.query(query, params);
+    return result.rows.map(this.mapPrecedentRow);
   }
 
   /**
@@ -642,7 +642,8 @@ export class PrecedentEngine {
       testingApproach?: string;
       predicateDevice?: string;
     },
-    precedentId: string
+    precedentId: string,
+    organizationId?: number
   ): Promise<PrecedentComparison> {
     const bridgeEntry = resolveToRegistryEntry(userContext.submissionType);
     if (bridgeEntry) userContext = { ...userContext, submissionType: bridgeEntry.applicationType };
@@ -650,7 +651,7 @@ export class PrecedentEngine {
     log.info(`Comparing submission against precedent ${precedentId}`);
 
     // Load the precedent record
-    const precedent = await this.getPrecedentById(precedentId);
+    const precedent = await this.getPrecedentById(precedentId, organizationId);
     if (!precedent) {
       throw new Error(`Precedent ${precedentId} not found`);
     }
@@ -887,14 +888,14 @@ export class PrecedentEngine {
 
   // ── 4. STRATEGY: Recommend submission strategy from precedents ─────────
 
-  async recommendStrategy(input: PrecedentSearchInput): Promise<StrategyRecommendation> {
+  async recommendStrategy(input: PrecedentSearchInput, organizationId?: number): Promise<StrategyRecommendation> {
     const bridgeEntry = resolveToRegistryEntry(input.submissionType);
     if (bridgeEntry) input = { ...input, submissionType: bridgeEntry.applicationType };
 
     log.info(`Recommending strategy for ${input.submissionType}`);
 
     // Get successful precedents
-    const precedents = await this.search({ ...input, limit: 20 });
+    const precedents = await this.search({ ...input, limit: 20 }, organizationId);
     const approved = precedents.filter(p => ['CLEARED', 'APPROVED'].includes(p.decisionOutcome));
     const rejected = precedents.filter(p =>
       ['REJECTED', 'CRL', 'REFUSE_TO_FILE'].includes(p.decisionOutcome)
@@ -991,7 +992,8 @@ export class PrecedentEngine {
       indication?: string;
       productCode?: string;
       deviceName?: string;
-    }
+    },
+    organizationId?: number
   ): Promise<ClaimCheckResult> {
     const bridgeEntry = resolveToRegistryEntry(context.submissionType);
     if (bridgeEntry) context = { ...context, submissionType: bridgeEntry.applicationType };
@@ -1012,7 +1014,7 @@ export class PrecedentEngine {
       deviceName: context.deviceName,
       query: claim,
       limit: 5,
-    });
+    }, organizationId);
 
     // Search adversarial precedents for contradictions
     const objections = await this.searchAdversarialPrecedents(
@@ -1128,7 +1130,17 @@ export class PrecedentEngine {
 
   // ── 6. INGEST: Store a new precedent from CSR or manual entry ──────────
 
-  async ingestPrecedent(data: Omit<PrecedentRecord, 'id' | 'similarityScore'>): Promise<string> {
+  async ingestPrecedent(
+    data: Omit<PrecedentRecord, 'id' | 'similarityScore'>,
+    organizationId: number
+  ): Promise<string> {
+    // A precedent a tenant ingests is that tenant's: it is written private to
+    // its organization, never into the shared public corpus. Refused, not
+    // defaulted, when there is no organization to attribute it to.
+    const org = precedentOrgId(organizationId);
+    if (org === undefined) {
+      throw new Error('ingestPrecedent requires the ingesting organization id');
+    }
     log.info(`Ingesting precedent: ${data.clearanceNumber || data.deviceName || 'unknown'}`);
 
     const result = await pool.query(
@@ -1138,11 +1150,11 @@ export class PrecedentEngine {
         clearance_type, predicate_device, predicate_k_number, strategy_summary,
         testing_approach, trial_design, sample_size, primary_endpoint, endpoint_met,
         fda_comments, fda_questions, risk_factors, source_documents, source_type,
-        confidence_score, created_by
+        confidence_score, created_by, organization_id
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
         $11, $12, $13, $14, $15, $16, $17, $18, $19,
-        $20, $21, $22, $23, $24, $25, $26
+        $20, $21, $22, $23, $24, $25, $26, $27
       ) RETURNING id`,
       [
         data.submissionType,
@@ -1171,6 +1183,7 @@ export class PrecedentEngine {
         data.sourceType,
         data.confidenceScore,
         'system',
+        org,
       ]
     );
 
@@ -1179,22 +1192,26 @@ export class PrecedentEngine {
 
   // ── Private helpers ────────────────────────────────────────────────────
 
-  private async getPrecedentById(id: string): Promise<PrecedentRecord | null> {
-    // Try unified table first
-    try {
-      const result = await pool.query(
-        'SELECT * FROM precedent.regulatory_precedents WHERE id = $1',
-        [id]
-      );
-      if (result.rows.length > 0) {
-        return this.mapPrecedentRow(result.rows[0]);
-      }
-    } catch {
-      /* table might not exist */
+  private async getPrecedentById(id: string, organizationId?: number): Promise<PrecedentRecord | null> {
+    // The unified corpus is keyed by uuid; a K-number is not one. Querying it by
+    // id with a K-number raised 22P02, which a catch used to read as "table
+    // might not exist". Route by shape instead, apply tenant isolation to every
+    // corpus read (compare-by-id used to bypass it), and let real errors surface.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const isolation = buildPrecedentOrgIsolation(organizationId, 2);
+    const unified = await pool.query(
+      `SELECT * FROM precedent.regulatory_precedents
+        WHERE ${isUuid ? 'id = $1' : 'clearance_number = $1'} AND ${isolation.condition}
+        LIMIT 1`,
+      [id, ...isolation.params]
+    );
+    if (unified.rows.length > 0) {
+      return this.mapPrecedentRow(unified.rows[0]);
     }
+    if (isUuid) return null;
 
-    // Try 510(k) clearances
-    try {
+    // The public FDA 510(k) clearance universe (created by the set; no tenant key).
+    {
       const result = await pool.query(
         `SELECT c.*, p.device_class, p.review_panel
          FROM predicate.fda_510k_clearances c
@@ -1232,8 +1249,6 @@ export class PrecedentEngine {
           confidenceScore: 1.0,
         };
       }
-    } catch {
-      /* table might not exist */
     }
 
     return null;

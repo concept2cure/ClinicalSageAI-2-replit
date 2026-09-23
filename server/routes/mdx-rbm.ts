@@ -255,7 +255,26 @@ router.get('/rbm-assessments/:id', async (req, res) => {
   } catch (err) { return serverError(res, log, 'get-assessment', err); }
 });
 
-const patchAssessBody = createAssessBody.partial();
+/* ── PATCH cannot activate. ──────────────────────────────────────────────────
+   `/rbm-assessments/:id/approve` is an electronic signature: a reason for
+   change, the signer's password and second factor re-verified at the moment of
+   signing (§11.200), a signing-authority check on their org role (§11.10(g)),
+   and the two-person rule against `created_by` (§11.10(d)).
+
+   All of it was reachable around. `patchAssessBody` was `createAssessBody
+   .partial()`, whose `status` enum includes 'active', and `ASSESS_COL` maps
+   `status` straight into the UPDATE — so `PATCH { status: 'active' }` activated
+   a governing risk assessment with no reason, no credentials, no role check and
+   no independent reviewer, and left `approved_by` and `approved_at` null while
+   the row read as approved.
+
+   The signed route is the only way to 'active'. PATCH keeps 'draft' and
+   'archived', which carry no signature meaning, so ordinary editing and
+   retirement still work. */
+const PATCHABLE_ASSESS_STATUS = ['draft', 'archived'] as const;
+const patchAssessBody = createAssessBody.partial().extend({
+  status: z.enum(PATCHABLE_ASSESS_STATUS).optional(),
+});
 const ASSESS_COL: Record<string, string> = {
   title: 'title', framework: 'framework', overallRisk: 'overall_risk', status: 'status',
 };
@@ -1217,7 +1236,13 @@ router.get('/rbm-monitoring-plans/:id', async (req, res) => {
   } catch (err) { return serverError(res, log, 'get-plan', err); }
 });
 
-const patchPlanBody = createPlanBody.partial();
+/* Same bypass, same close as the assessment PATCH above: approving a monitoring
+   plan is a signature event, so 'active' is reachable only through
+   `/rbm-monitoring-plans/:id/approve`. */
+const PATCHABLE_PLAN_STATUS = ['draft', 'archived'] as const;
+const patchPlanBody = createPlanBody.partial().extend({
+  status: z.enum(PATCHABLE_PLAN_STATUS).optional(),
+});
 const PLAN_COL: Record<string, string> = { title: 'title', strategy: 'strategy', status: 'status' };
 
 router.patch('/rbm-monitoring-plans/:id', async (req, res) => {

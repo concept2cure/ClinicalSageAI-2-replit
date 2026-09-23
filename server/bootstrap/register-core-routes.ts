@@ -7,7 +7,6 @@ import aiRoutes from '../api/ai/routes';
 import phase3Routes from '../api/ai/phase3-routes.js';
 import { testAssemblyRoutes } from '../routes/test-assembly';
 import enterpriseRoutes from '../api/enterprise/routes.js';
-import rbacRoutes from '../api/enterprise/rbac-routes.js';
 import cmcProjectRoutes from '../api/cmc/projectRoutes';
 import cmcBlueprintRoutes from '../api/cmc/blueprintRoutes';
 import cmcAggregatorRoutes from '../api/cmc/index.js';
@@ -19,7 +18,6 @@ import cmcModule3OperatingSystemRoutes from '../api/cmc/module3OperatingSystemRo
 import cmcModule3BuildStateRoutes from '../api/cmc/module3BuildStateRoutes';
 import cmcModule3ConvergenceRoutes from '../api/cmc/module3ConvergenceRoutes';
 import cmcModule3AutoDraftRoutes from '../api/cmc/module3AutoDraftRoutes';
-import cmcCollaborationRoutes from '../api/cmc/collaborationRoutes';
 import cmcDocumentRoutes from '../api/cmc/documentRoutes';
 import cmcModule3BoardRoutes from '../routes/cmc-module3-board.routes';
 import cmcAgencyQuestionRoutes from '../routes/cmc-agency-questions.routes';
@@ -59,7 +57,12 @@ export function registerCoreRoutes({
   // above covers every route phase3Routes defines instead.
   app.use('/api', phase3Routes);
   app.use('/api/enterprise', enterpriseRoutes);
-  app.use('/api/enterprise/rbac', rbacRoutes);
+  // /api/enterprise/rbac removed 2026-09-22: a parallel role store (roles,
+  // user_roles — created only by the refused _consolidated/006_roles.sql) whose
+  // every data handler failed, with no client caller. Roles live on
+  // organization_users.role: listed by GET /api/mdx/admin (mdx-admin.ts,
+  // AdminAccess.tsx), assigned by POST/PATCH /api/tenant-users (tenant-users.ts)
+  // and SCIM (scim.ts). Custom-role creation never worked and has no replacement.
 
   try {
     app.use('/api/cmc', cmcCoreRoutes);
@@ -81,7 +84,33 @@ export function registerCoreRoutes({
     app.use('/api/cmc/module3-os', cmcModule3BuildStateRoutes);
     app.use('/api/cmc/module3-os', cmcModule3ConvergenceRoutes);
     app.use('/api/cmc/module3', cmcModule3AutoDraftRoutes);
-    app.use('/api/cmc/collaboration', cmcCollaborationRoutes);
+    /* `/api/cmc/collaboration` is gone. Its four reads were keyed only by a
+       caller-supplied workflowId or userId, over process-global in-memory Maps
+       that carried no tenant key at all — so any authenticated user of any
+       tenant could read another tenant's workflow discussion by guessing a
+       workflowId, and any user's notification inbox, mention text and
+       commenter identity included, by passing that user's id. GET
+       /team/:workflowId went further: it made a CREDENTIAL-LESS loopback
+       request to /api/users, which under the non-production auth boundary
+       returns the whole instance's user directory — id, name, email, role,
+       last_login — to any caller with any workflowId.
+
+       It could not be scoped where it stood. The Maps have no organization to
+       filter on, nothing is persisted (a restart loses every comment, so it
+       could never be a GxP collaboration record), and no client called any of
+       it — a repo-wide scan of /api/cmc/* literals in client/src returns
+       nothing for this router. Adding a tenant key to a store nobody uses is
+       building the capability, not fixing the leak.
+
+       THE REPLACEMENT, by path, and both are reachable today:
+         · comments and mentions → POST /api/tasks/messages
+           (server/routes/taskManagement.routes.ts:1294), which persists the
+           message as a notification in the recipient's inbox and refuses a
+           recipient outside the caller's org;
+         · the team roster → GET /api/task-management/assignees
+           (server/routes/taskBoard.routes.ts:335), which is the list
+           client/src/concept2cure/v2/editor/AssignReviewDialog.tsx:69 already
+           calls for its recipient picker. */
     app.use('/api/cmc/documents', cmcDocumentRoutes);
     // Module 3 board — portfolio + governed section read-model for the ui-v2 cmc surface.
     app.use('/api/cmc/module3-board', authenticateToken, cmcModule3BoardRoutes());

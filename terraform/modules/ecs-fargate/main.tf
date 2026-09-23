@@ -138,6 +138,7 @@ resource "aws_ecs_task_definition" "api" {
     environment = [
       { name = "NODE_ENV", value = "production" },
       { name = "PORT", value = tostring(var.api_container_port) },
+      { name = "TRUST_PROXY_HOPS", value = tostring(var.trust_proxy_hops) },
     ]
 
     secrets = [for s in var.api_secrets : {

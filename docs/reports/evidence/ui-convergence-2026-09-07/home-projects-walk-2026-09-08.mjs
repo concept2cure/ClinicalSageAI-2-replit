@@ -123,9 +123,18 @@ await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(900);
 await page.locator('.landing-browse').click().catch(() => {});
 await page.waitForTimeout(600);
+/* Reads `columnCount`, not `gridTemplateColumns`.
+   `.capbrowser-groups` became a multi-column container (surfaces-v2.css) to
+   pack groups of very different lengths. The old probe split
+   `gridTemplateColumns` on spaces and compared to 1 — on a non-grid element
+   that computes to the string `none`, and `'none'.split(' ').length === 1` is
+   TRUE. It would have kept reporting single-column correctly while testing
+   nothing at all: a check that can only ever pass. */
 results.overlayNarrowSingleColumn = await page.evaluate(() => {
   const g = document.querySelector('.capbrowser-groups');
-  return g ? getComputedStyle(g).gridTemplateColumns.split(' ').length === 1 : null;
+  if (!g) return null;
+  const n = getComputedStyle(g).columnCount;
+  return n === '1';
 });
 await shot('06-overlay-420');
 await page.keyboard.press('Escape');

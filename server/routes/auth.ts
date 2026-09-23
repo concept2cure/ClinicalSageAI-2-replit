@@ -32,7 +32,7 @@ import {
 const logger = createScopedLogger('auth');
 
 import { sql } from 'drizzle-orm';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, gt } from 'drizzle-orm';
 import {
   users,
   organizations,
@@ -45,6 +45,7 @@ import {
 } from '../services/industry-context/signup-profile';
 import { sendPasswordResetEmail, sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
+import { mfaEnrolmentOf, sessionMfaFields } from '../services/mfa-enrolment';
 import * as emailOtpService from '../services/emailOtpService';
 import {
   validatePasswordPolicy,
@@ -59,6 +60,10 @@ import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 import { config } from '../config/environment';
 import { isDevAuthAllowed, devAuthDenialReason } from '../auth/dev-auth-policy';
 import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
+import {
+  drizzleWorkspaceStore,
+  ensureOrganizationDefaultWorkspace,
+} from '../services/c2c/organization-default-workspace';
 import { runWithTenantScope } from '../db/tenantStore';
 
 const router = Router();
@@ -301,9 +306,10 @@ router.get('/session', async (req: Request, res: Response) => {
         permissions: [],
         organizationId: decoded.organizationId,
         organizationName: orgName,
-        mfaEnabled: false,
-        mfaMethods: [],
-        mustChangePassword: false,
+        // The account as it is. These were the literals false / [] / false for
+        // every account until 2026-09-23 (VSR-001 §13.3 item 4).
+        ...sessionMfaFields(userData),
+        mustChangePassword: userData.mustChangePassword === true,
       },
       session: {
         id: `session-${userData.id}`,
@@ -497,9 +503,10 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     // ── Two-Factor Authentication ──────────────────────────────────────
     // Email OTP is the default 2FA method for all users (zero setup).
-    // Users with TOTP (authenticator app) enabled get that as primary.
-    const mfaMethod = (userData as any).mfaMethod || 'email';
-    const hasTotpSetup = userData.mfaEnabled === true && mfaMethod === 'totp';
+    // Users with TOTP (authenticator app) enabled get that as primary. The
+    // rule lives in mfa-enrolment.ts, which the session reads too.
+    const enrolment = mfaEnrolmentOf(userData);
+    const hasTotpSetup = enrolment.signInFactor === 'totp';
 
     // Dev-only MFA skip — gated behind isDevAuthAllowed() so it cannot be
     // reached in any environment that hasn't explicitly opted in via
@@ -554,9 +561,8 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
           organizationId: organizationId.toString(),
           organizationName: organization?.name || 'Organization',
           organizationUuid: organization?.uuid || null,
-          mfaEnabled: false,
-          mfaMethods: [],
-          mustChangePassword: false,
+          ...sessionMfaFields(userData),
+          mustChangePassword: userData.mustChangePassword === true,
         },
       });
     }
@@ -590,7 +596,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         success: true,
         mfaRequired: true,
         challengeId: challengeToken,
-        mfaMethods: [{ type: 'totp', isEnabled: true, isPrimary: true }],
+        mfaMethods: enrolment.mfaMethods,
       });
     }
 
@@ -608,7 +614,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         success: true,
         mfaRequired: true,
         challengeId: challengeToken,
-        mfaMethods: [{ type: 'email', isEnabled: true, isPrimary: true }],
+        mfaMethods: enrolment.mfaMethods,
         maskedEmail,
       });
     }
@@ -742,9 +748,8 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         organizationId: organizationId.toString(),
         organizationName: organization?.name || 'Organization',
         organizationUuid: organization?.uuid || null,
-        mfaEnabled: false,
-        mfaMethods: [],
-        mustChangePassword: false,
+        ...sessionMfaFields(userData),
+        mustChangePassword: userData.mustChangePassword === true,
       },
     });
   } catch (error: any) {
@@ -872,6 +877,21 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         organizationId: org.id,
         userId: user.id,
         role: 'admin',
+      });
+
+      // The organisation's own client workspace, SAME transaction.
+      // `projects.client_workspace_id` is NOT NULL, so without this row
+      // `ensureProgramProjectAnchor` skips with NO_CLIENT_WORKSPACE for every
+      // program this tenant ever creates, and its governed artifacts can never
+      // reach the registry (services/c2c/organization-default-workspace.ts).
+      // Inside the transaction, unlike provisionLaunchModules below: a module
+      // grant an administrator can re-run is not the same as the PM spine's
+      // NOT NULL parent, which every later write assumes.
+      await ensureOrganizationDefaultWorkspace(drizzleWorkspaceStore(tx), {
+        orgId: org.id,
+        orgName: org.name,
+        orgSlug: org.slug,
+        userId: user.id,
       });
 
       return { org, user };
@@ -1371,7 +1391,10 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
       });
       return res.status(401).json({
         success: false,
-        error: { code: 'AUTH_004', message: 'Invalid or expired verification code' },
+        error: {
+          code: 'AUTH_004',
+          message: 'Invalid or expired verification code. Each code works once; if you just used it, wait for the next.',
+        },
       });
     }
 
@@ -1459,9 +1482,10 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         organizationId: challenge.organizationId,
         organizationName: mfaOrgName,
         organizationUuid: challenge.organizationUuid,
-        mfaEnabled: true,
-        mfaMethods: [{ type: verificationMethod, isEnabled: true, isPrimary: true }],
-        mustChangePassword: false,
+        // The account's enrolment, not the request's claim: this said true for
+        // every account and echoed the `method` the request named.
+        ...sessionMfaFields(userData),
+        mustChangePassword: userData.mustChangePassword === true,
       },
       mfaRequired: false,
     });
@@ -1523,6 +1547,32 @@ router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
 });
 
 /**
+ * A change to the account's second factor, recorded against the account
+ * (§11.10(e), §11.300): an enrolment started or refused, the factor switched on
+ * or off, a wrong code at either. None of the three routes below recorded
+ * anything, so an attempt to replace a factor left no trace (VSR-001 F-26).
+ * The tenant is the organisation in the server-signed access token.
+ */
+function recordSecondFactorChange(
+  req: Request,
+  account: { userId: string; email: string; organizationId?: string | number | null },
+  action: 'user_mfa_setup' | 'user_mfa_enable' | 'user_mfa_disable',
+  outcome: 'success' | 'failure',
+  reason?: string,
+): Promise<void> {
+  return recordAuthEvent({
+    action,
+    userId: Number(account.userId),
+    tenantId: account.organizationId ?? null,
+    email: account.email,
+    outcome,
+    reason,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+}
+
+/**
  * POST /api/auth/mfa/setup
  * Generate a TOTP secret and QR code URL for the authenticated user.
  * Requires a valid JWT (user must be logged in).
@@ -1542,6 +1592,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
     const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
+      organizationId?: string | number | null;
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
@@ -1558,7 +1609,24 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
 
     if (!requireDb(res)) return;
 
-    const result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
+    let result: mfaService.MfaSetupResult;
+    try {
+      result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
+    } catch (err) {
+      if (!(err instanceof mfaService.MfaAlreadyEnabledError)) throw err;
+      // Replacing an enrolled factor is the owner's act, with a current code:
+      // /mfa/disable, then enrol again. A session alone is not the owner.
+      await recordSecondFactorChange(req, decoded, 'user_mfa_setup', 'failure', 'already_enrolled');
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'MFA_ALREADY_ENABLED',
+          message:
+            'Two-step verification is already on for this account. To use a different authenticator, turn it off with a current code first.',
+        },
+      });
+    }
+    await recordSecondFactorChange(req, decoded, 'user_mfa_setup', 'success', 'secret_issued');
 
     res.json({
       success: true,
@@ -1601,6 +1669,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
+      organizationId?: string | number | null;
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
@@ -1628,6 +1697,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     const result = await mfaService.enableMfa(parseInt(decoded.userId), code);
 
     if (!result.success) {
+      await recordSecondFactorChange(req, decoded, 'user_mfa_enable', 'failure', 'invalid_code');
       return res.status(401).json({
         success: false,
         error: {
@@ -1636,6 +1706,8 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
         },
       });
     }
+
+    await recordSecondFactorChange(req, decoded, 'user_mfa_enable', 'success');
 
     res.json({
       success: true,
@@ -1676,6 +1748,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
     const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
+      organizationId?: string | number | null;
       type?: string;
       role?: string | null;
       mfaPending?: boolean;
@@ -1703,11 +1776,14 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
     const disabled = await mfaService.disableMfa(parseInt(decoded.userId), code);
 
     if (!disabled) {
+      await recordSecondFactorChange(req, decoded, 'user_mfa_disable', 'failure', 'invalid_code');
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_004', message: 'Invalid verification code' },
       });
     }
+
+    await recordSecondFactorChange(req, decoded, 'user_mfa_disable', 'success');
 
     res.json({
       success: true,
@@ -1917,7 +1993,13 @@ async function handleResetPassword(req: Request, res: Response) {
     // Hash new password and clear reset token
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
-    await db
+    // Set the password only if the token is STILL this account's and unexpired,
+    // in the same statement that clears it: a reset token is used once. Until
+    // 2026-09-23 the row was read above and then written by id alone, so two
+    // requests carrying one token — both past the read during the bcrypt hash —
+    // both reported success and the later password silently won (D6, the class
+    // of VSR-001 §13.3 item 1).
+    const reset = await db
       .update(users)
       .set({
         passwordHash,
@@ -1926,7 +2008,29 @@ async function handleResetPassword(req: Request, res: Response) {
         passwordChangedAt: new Date(),
         mustChangePassword: false,
       })
-      .where(eq(users.id, userData.id));
+      .where(
+        and(
+          eq(users.id, userData.id),
+          eq(users.resetToken, tokenHash),
+          gt(users.resetTokenExpiresAt, new Date())
+        )
+      )
+      .returning({ id: users.id });
+
+    if (reset.length !== 1) {
+      await recordAuthEvent({
+        action: 'user_password_reset_failed',
+        userId: userData.id,
+        outcome: 'failure',
+        reason: 'reset token was used or expired before this request completed',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
+      });
+    }
 
     /* THE CREDENTIAL CHANGE ITSELF. This was a `logger.info` and nothing more
        — a line in an application log, which is not an audit trail: not

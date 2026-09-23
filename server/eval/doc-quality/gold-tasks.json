@@ -1,6 +1,6 @@
 {
-  "$comment": "Per-document-type extraction/generation eval tasks. `candidateContent`/`candidateExtraction` let the runner score a captured output offline (no DB/LLM); `input` lets --live draft generation tasks through the AI gateway and score the result. Generation pass = section coverage >= min AND zero forbidden hits; extraction pass = field F1 >= min. Expand to 10+ tasks per docType with real source documents before treating the numbers as a quality bar.",
-  "version": "0.2.0-seed",
+  "$comment": "Per-document-type extraction/generation eval tasks. `input` is the source a model is given; `requiredSections` and `forbiddenPatterns` are the ground truth it is scored against (case-insensitive substring, so patterns are multi-word to avoid matching inside other words). `candidateContent`/`candidateExtraction` are CAPTURED model outputs, which let server/eval/doc-quality/run-eval.ts score offline; tasks added to reach the PQ sample floor carry none, because no output had been captured for them and inventing one would fabricate the evidence the bank exists to provide. run-eval.ts skips a generation task with no captured candidate; server/eval/pq/run-pq.ts ignores captured candidates entirely and generates with the pinned model, so the floor in pq-protocol.json (minTasksPerDocType) is measured against these tasks.",
+  "version": "0.3.0",
   "tasks": [
     {
       "id": "510k-se-summary-generate",
@@ -14,9 +14,18 @@
         "performance testing",
         "labeling"
       ],
-      "forbiddenPatterns": ["proven safe", "no risk", "guaranteed", "100% effective"],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective"
+      ],
       "candidateContent": "Device description: the subject device is a benchtop analyzer. Intended use: in vitro quantitation of analyte X. Substantial equivalence: the subject device has the same intended use and technological characteristics as the predicate (K123456). Performance testing: precision, linearity, and method comparison studies were conducted. Labeling: instructions for use and warnings are provided.",
-      "tags": ["fda", "510k", "substantial-equivalence"]
+      "tags": [
+        "fda",
+        "510k",
+        "substantial-equivalence"
+      ]
     },
     {
       "id": "510k-header-extract",
@@ -34,7 +43,11 @@
         "product_code": "JJX",
         "regulation_number": "21 CFR 862.1345"
       },
-      "tags": ["fda", "510k", "metadata"]
+      "tags": [
+        "fda",
+        "510k",
+        "metadata"
+      ]
     },
     {
       "id": "cer-clinical-eval-generate",
@@ -48,9 +61,16 @@
         "benefit-risk",
         "conclusions"
       ],
-      "forbiddenPatterns": ["proven safe", "no adverse events", "guaranteed"],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no adverse events",
+        "guaranteed"
+      ],
       "candidateContent": "Clinical background: the device treats condition Y. State of the art: current standard of care is described. Clinical data appraisal: literature and PMCF data were appraised for relevance and quality. Benefit-risk: the benefit-risk profile is acceptable for the intended population. Conclusions: the clinical evidence supports conformity.",
-      "tags": ["eu-mdr", "cer"]
+      "tags": [
+        "eu-mdr",
+        "cer"
+      ]
     },
     {
       "id": "cer-device-extract",
@@ -68,7 +88,11 @@
         "intended_purpose": "treatment of condition Y",
         "standard_reference": "MEDDEV 2.7/1 rev 4"
       },
-      "tags": ["eu-mdr", "cer", "metadata"]
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "metadata"
+      ]
     },
     {
       "id": "ind-m2-summary-generate",
@@ -81,9 +105,17 @@
         "clinical overview",
         "benefit-risk assessment"
       ],
-      "forbiddenPatterns": ["proven safe", "guaranteed", "no side effects"],
+      "forbiddenPatterns": [
+        "proven safe",
+        "guaranteed",
+        "no side effects"
+      ],
       "candidateContent": "Introduction: this is a Phase 1 program for indication Z. Nonclinical overview: pharmacology and toxicology summarized. Clinical overview: first-in-human design rationale provided. Benefit-risk assessment: the profile supports first-in-human dosing in healthy volunteers.",
-      "tags": ["fda", "ind", "module-2"]
+      "tags": [
+        "fda",
+        "ind",
+        "module-2"
+      ]
     },
     {
       "id": "nonclinical-tox-summary-generate",
@@ -97,9 +129,894 @@
         "safety pharmacology",
         "noael and safety margins"
       ],
-      "forbiddenPatterns": ["proven safe", "no toxicity", "guaranteed"],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no toxicity",
+        "guaranteed"
+      ],
       "candidateContent": "Study designs: GLP studies are described. Repeat-dose toxicity: rat and dog studies were conducted. Genotoxicity: Ames and micronucleus assays were negative. Safety pharmacology: CNS, CV, and respiratory endpoints were assessed. NOAEL and safety margins: the NOAEL supports the proposed clinical starting dose.",
-      "tags": ["fda", "ind", "nonclinical", "module-2.6"]
+      "tags": [
+        "fda",
+        "ind",
+        "nonclinical",
+        "module-2.6"
+      ]
+    },
+    {
+      "id": "510k-indications-for-use-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "input": "Subject device: Acme Glucose Monitor GM-5, a handheld capillary blood glucose meter for self-testing by people with diabetes aged 18 and over, at home and in professional settings. Measuring range 20-600 mg/dL. Not for neonatal use, not for critically ill patients, not for diagnosis of diabetes. Predicate K221187 carries the same population and setting.",
+      "requiredSections": [
+        "indications for use",
+        "intended use population",
+        "measuring range",
+        "prescription or over-the-counter",
+        "limitations"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "fda approved",
+        "approved by fda",
+        "superior to the predicate"
+      ],
+      "tags": [
+        "fda",
+        "510k",
+        "indications-for-use",
+        "21-cfr-807.92"
+      ]
+    },
+    {
+      "id": "510k-device-description-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "input": "Subject device: Acme Infusion Pump IP-300, a volumetric peristaltic pump delivering 0.1-999 mL/h through a dedicated disposable administration set. Components: pump housing, linear peristaltic mechanism, free-flow clamp, colour touchscreen, lithium-ion battery with 8 hours runtime, 802.11 radio for drug-library updates. Single-patient multi-use, mains or battery powered.",
+      "requiredSections": [
+        "device description",
+        "principle of operation",
+        "components",
+        "materials",
+        "power source",
+        "single-use or reusable"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "fda approved",
+        "approved by fda",
+        "superior to the predicate"
+      ],
+      "tags": [
+        "fda",
+        "510k",
+        "device-description"
+      ]
+    },
+    {
+      "id": "510k-predicate-comparison-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "input": "Subject: Acme Analyzer 2000 IVD. Predicate: K123456. Same intended use and measurand. Differences: subject uses a CMOS optical detector where the predicate uses a photodiode; subject sample volume 20 uL vs predicate 35 uL; subject adds an onboard QC lockout the predicate lacks. Bench data: EP05 precision, EP06 linearity, EP09 method comparison against the predicate, n=120 clinical specimens spanning the reportable range.",
+      "requiredSections": [
+        "substantial equivalence",
+        "intended use comparison",
+        "technological characteristics",
+        "differences from the predicate",
+        "performance data supporting equivalence",
+        "conclusion"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "fda approved",
+        "approved by fda",
+        "superior to the predicate"
+      ],
+      "tags": [
+        "fda",
+        "510k",
+        "predicate",
+        "substantial-equivalence"
+      ]
+    },
+    {
+      "id": "510k-biocompatibility-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "input": "Subject device: Acme Guidewire GW-10, a PTFE-coated stainless steel guidewire, external communicating with circulating blood, limited contact under 24 hours. Testing per ISO 10993-1 risk-based evaluation: cytotoxicity (10993-5), sensitisation (10993-10), intracutaneous reactivity (10993-23), acute systemic toxicity (10993-11), material-mediated pyrogenicity, haemolysis and thrombogenicity (10993-4). All endpoints met acceptance criteria. Chemical characterisation per 10993-18 with toxicological risk assessment per 10993-17.",
+      "requiredSections": [
+        "biocompatibility evaluation",
+        "iso 10993",
+        "contact category and duration",
+        "endpoints tested",
+        "chemical characterisation",
+        "toxicological risk assessment",
+        "conclusion"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "fda approved",
+        "approved by fda",
+        "superior to the predicate"
+      ],
+      "tags": [
+        "fda",
+        "510k",
+        "biocompatibility",
+        "iso-10993"
+      ]
+    },
+    {
+      "id": "510k-software-documentation-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "input": "Subject device: Acme Dose Calculator, software in a medical device that computes a weight-based infusion rate. Failure could cause serious injury, so the documentation level is Enhanced per the FDA 2023 software guidance. Lifecycle per IEC 62304 class C. Artefacts available: software requirements specification, architecture, detailed design, unit/integration/system verification, traceability, unresolved anomalies list, revision history, cybersecurity management plan with an SBOM.",
+      "requiredSections": [
+        "software description",
+        "documentation level",
+        "risk management",
+        "software requirements specification",
+        "architecture design",
+        "verification and validation",
+        "traceability",
+        "unresolved anomalies",
+        "cybersecurity",
+        "sbom"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "fda approved",
+        "approved by fda",
+        "superior to the predicate"
+      ],
+      "tags": [
+        "fda",
+        "510k",
+        "software",
+        "iec-62304",
+        "samd"
+      ]
+    },
+    {
+      "id": "510k-sterilization-shelf-life-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "input": "Subject device: Acme Surgical Retractor SR-4, supplied sterile, single use. Sterilisation by ethylene oxide per ISO 11135, overkill half-cycle, SAL 10^-6. EO and ECH residuals per ISO 10993-7 within limits. Packaging: Tyvek pouch validated per ISO 11607-1/-2, seal strength and dye penetration. Shelf life 3 years supported by accelerated ageing per ASTM F1980 with real-time ageing ongoing at 24 months.",
+      "requiredSections": [
+        "sterilisation method",
+        "sterility assurance level",
+        "validation standard",
+        "residuals",
+        "packaging validation",
+        "shelf life",
+        "accelerated ageing",
+        "real-time ageing"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "fda approved",
+        "approved by fda",
+        "superior to the predicate"
+      ],
+      "tags": [
+        "fda",
+        "510k",
+        "sterilization",
+        "iso-11135",
+        "shelf-life"
+      ]
+    },
+    {
+      "id": "510k-electrical-safety-emc-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "input": "Subject device: Acme Patient Monitor PM-7, mains and battery powered, type CF defibrillation-proof applied parts, intended for professional healthcare facility and home healthcare use. Testing: IEC 60601-1 3.2 general safety, IEC 60601-1-2 4.1 EMC including the home-healthcare immunity levels, IEC 60601-1-6 usability with IEC 62366-1, IEC 60601-1-8 alarm systems, IEC 60601-2-49 for multifunction monitors. All tests by an accredited laboratory, no deviations.",
+      "requiredSections": [
+        "electrical safety",
+        "iec 60601-1",
+        "electromagnetic compatibility",
+        "iec 60601-1-2",
+        "applied part classification",
+        "alarm systems",
+        "usability engineering",
+        "test laboratory accreditation",
+        "conclusion"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "fda approved",
+        "approved by fda",
+        "superior to the predicate"
+      ],
+      "tags": [
+        "fda",
+        "510k",
+        "electrical-safety",
+        "emc",
+        "iec-60601"
+      ]
+    },
+    {
+      "id": "510k-clinical-performance-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "input": "Subject device: Acme Rapid Strep Test, a CLIA-waived lateral flow IVD for qualitative detection of Group A Streptococcus antigen from throat swabs. Clinical study at 4 US sites, 512 prospectively enrolled symptomatic patients aged 3-21, untrained operators at point of care, reference method bacterial culture. Results: sensitivity 94.1 percent (95 percent CI 90.2-96.7), specificity 97.8 percent (95 percent CI 95.6-99.0). Reproducibility across 3 sites and 3 lots per CLSI EP12.",
+      "requiredSections": [
+        "clinical study design",
+        "study population",
+        "reference method",
+        "sensitivity",
+        "specificity",
+        "confidence intervals",
+        "reproducibility",
+        "conclusion"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "fda approved",
+        "approved by fda",
+        "superior to the predicate"
+      ],
+      "tags": [
+        "fda",
+        "510k",
+        "clinical-performance",
+        "ivd",
+        "clia-waiver"
+      ]
+    },
+    {
+      "id": "510k-risk-analysis-generate",
+      "docType": "510k",
+      "taskType": "generation",
+      "input": "Subject device: Acme Infusion Pump IP-300. Risk management per ISO 14971:2019 with a risk management plan, hazard analysis covering over-infusion, under-infusion, free flow, air embolism, electrical shock and alarm failure; FMEA at component level; risk controls comprising the free-flow clamp, air-in-line detector, occlusion pressure sensing and a drug library with hard limits; verification of each control; residual risk evaluated individually and overall against the benefit; production and post-production information plan.",
+      "requiredSections": [
+        "risk management plan",
+        "hazard identification",
+        "risk estimation",
+        "risk control measures",
+        "verification of risk controls",
+        "residual risk evaluation",
+        "overall residual risk",
+        "benefit-risk",
+        "production and post-production information"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "fda approved",
+        "approved by fda",
+        "superior to the predicate"
+      ],
+      "tags": [
+        "fda",
+        "510k",
+        "risk",
+        "iso-14971"
+      ]
+    },
+    {
+      "id": "cer-scope-device-description-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "input": "Device: Acme Hip Stem HS-2, a cementless titanium femoral stem with a hydroxyapatite coating, class III under MDR Annex VIII rule 8, intended for primary total hip arthroplasty in skeletally mature patients with degenerative joint disease. Six sizes, two offsets. CE marked since 2014. Evaluation covers all variants and both offsets. Clinical evaluation plan dated 2026-01, evaluators: an orthopaedic surgeon and a biostatistician, CVs and declarations of interest on file.",
+      "requiredSections": [
+        "scope of the clinical evaluation",
+        "device description",
+        "intended purpose",
+        "classification",
+        "device variants covered",
+        "clinical evaluation plan",
+        "evaluator qualifications"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "eliminates all risk",
+        "no residual risk"
+      ],
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "scope",
+        "meddev-2.7.1"
+      ]
+    },
+    {
+      "id": "cer-state-of-the-art-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "input": "Device: Acme Hip Stem HS-2, cementless femoral stem. State of the art established from EFORT and NICE guidance, three national arthroplasty registries (NJR, AOANJRR, SHAR) and current systematic reviews. Benchmarks: 10-year all-cause revision rate at or below 5 percent for cementless stems; periprosthetic fracture 0.4-1.9 percent; aseptic loosening under 2 percent at 10 years. Alternative therapies: cemented stems, resurfacing, non-operative management.",
+      "requiredSections": [
+        "state of the art",
+        "current knowledge",
+        "alternative treatment options",
+        "acceptable performance benchmarks",
+        "clinically relevant outcome measures",
+        "data sources"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "eliminates all risk",
+        "no residual risk"
+      ],
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "state-of-the-art"
+      ]
+    },
+    {
+      "id": "cer-literature-search-protocol-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "input": "Device: Acme Hip Stem HS-2. Literature search protocol: databases Embase, MEDLINE via PubMed and Cochrane CENTRAL; search dates 2014-01-01 to 2026-06-30; PICO framed on adults undergoing primary THA with a cementless stem; search strings with MeSH and free text recorded verbatim; inclusion criteria English or German, human subjects, at least 24 months follow-up, at least 50 hips; exclusion criteria case reports under 10 patients, revision-only cohorts; appraisal per MEDDEV 2.7/1 rev 4 Appendix A5 with two independent reviewers and a documented disagreement procedure.",
+      "requiredSections": [
+        "literature search protocol",
+        "databases searched",
+        "search period",
+        "search strings",
+        "pico",
+        "inclusion criteria",
+        "exclusion criteria",
+        "appraisal method",
+        "reviewer independence"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "eliminates all risk",
+        "no residual risk"
+      ],
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "literature-search",
+        "meddev-2.7.1"
+      ]
+    },
+    {
+      "id": "cer-literature-appraisal-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "input": "Device: Acme Hip Stem HS-2. Search returned 1,284 records, 1,102 after de-duplication, 148 full texts screened, 37 included: 4 randomised trials, 11 prospective cohorts, 14 retrospective cohorts, 8 registry reports. Appraisal by MEDDEV Appendix A6 scoring for data suitability and contribution. Two studies downgraded for indirect device identification. Pooled 10-year survivorship 96.2 percent across 18,430 implants. Weighting rationale recorded for each study; unfavourable outcomes retained and discussed.",
+      "requiredSections": [
+        "search results",
+        "study selection",
+        "included studies",
+        "appraisal criteria",
+        "data suitability",
+        "data contribution",
+        "weighting rationale",
+        "quantitative summary",
+        "unfavourable data"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "eliminates all risk",
+        "no residual risk"
+      ],
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "literature-appraisal"
+      ]
+    },
+    {
+      "id": "cer-equivalence-demonstration-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "input": "Device: Acme Hip Stem HS-2. Equivalence claimed to Acme Hip Stem HS-1 for a subset of the literature. Clinical characteristics: same indication, same population, same site of application, same duration of use. Technical: same design envelope, same cementless fixation principle, same taper geometry; HS-2 adds one size. Biological: identical Ti-6Al-4V substrate and hydroxyapatite coating, identical specification and contact profile. Full technical documentation access under a contract with the manufacturer of the equivalent device, as MDR Article 61(5) requires.",
+      "requiredSections": [
+        "equivalence demonstration",
+        "clinical characteristics",
+        "technical characteristics",
+        "biological characteristics",
+        "differences and their clinical impact",
+        "access to technical documentation",
+        "article 61(5)",
+        "conclusion on equivalence"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "eliminates all risk",
+        "no residual risk"
+      ],
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "equivalence",
+        "article-61"
+      ]
+    },
+    {
+      "id": "cer-gspr-conformity-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "input": "Device: Acme Hip Stem HS-2. Clinical evidence mapped to the general safety and performance requirements of MDR Annex I: GSPR 1 acceptable benefit-risk, GSPR 2 risk reduction as far as possible, GSPR 3 risk management system, GSPR 4 risk control measures, GSPR 5 elimination or reduction of use-related risk, GSPR 6 lifetime, GSPR 8 acceptable residual risk, GSPR 23 information supplied with the device. Each requirement is linked to the specific clinical data that supports it, with gaps and the route to close them identified.",
+      "requiredSections": [
+        "general safety and performance requirements",
+        "annex i",
+        "evidence mapped to each requirement",
+        "clinical performance",
+        "clinical safety",
+        "claims verification",
+        "identified gaps",
+        "conclusion"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "eliminates all risk",
+        "no residual risk"
+      ],
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "gspr",
+        "annex-i"
+      ]
+    },
+    {
+      "id": "cer-benefit-risk-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "input": "Device: Acme Hip Stem HS-2. Benefits: Harris Hip Score improvement mean 42 points at 24 months, pain reduction, restored mobility, 10-year survivorship 96.2 percent. Risks from PMS and literature: aseptic loosening 1.8 percent at 10 years, periprosthetic fracture 0.9 percent, dislocation 1.4 percent, infection 0.7 percent, leg-length discrepancy. Each risk quantified with severity and probability, compared against the state-of-the-art benchmarks and against the alternative therapies.",
+      "requiredSections": [
+        "benefit characterisation",
+        "magnitude of benefit",
+        "probability of benefit",
+        "risk characterisation",
+        "severity and probability of harms",
+        "comparison against the state of the art",
+        "undesirable side effects",
+        "overall benefit-risk determination"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "eliminates all risk",
+        "no residual risk"
+      ],
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "benefit-risk"
+      ]
+    },
+    {
+      "id": "cer-pmcf-evaluation-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "input": "Device: Acme Hip Stem HS-2. PMCF plan per MDR Annex XIV Part B: a prospective multicentre registry cohort of 500 implants with 10-year follow-up, annual national registry interrogation, and a targeted survey on the new size. Specific objectives: confirm 10-year survivorship, characterise the residual risk of periprosthetic fracture, and confirm performance in the newly added size where clinical data are thinnest. Interim PMCF evaluation report at 24 months. Findings feed the risk management file and the next CER update, which is due annually for a class III implantable device.",
+      "requiredSections": [
+        "pmcf plan",
+        "pmcf objectives",
+        "methods and study design",
+        "milestones and reporting",
+        "pmcf evaluation report",
+        "how findings feed risk management",
+        "cer update frequency",
+        "residual gaps"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "eliminates all risk",
+        "no residual risk"
+      ],
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "pmcf",
+        "annex-xiv-part-b"
+      ]
+    },
+    {
+      "id": "cer-pms-data-generate",
+      "docType": "cer",
+      "taskType": "generation",
+      "input": "Device: Acme Hip Stem HS-2. Post-market surveillance inputs for the reporting period: 41,206 units sold; 87 complaints, complaint rate 0.21 percent; 12 serious incidents reported under MDR Article 87, none constituting a field safety corrective action; trend analysis under Article 88 showing no statistically significant increase; 3 registry reports; 1 competent-authority query, closed. Vigilance data reconciled with the complaint database, and the PSUR for the period is on file.",
+      "requiredSections": [
+        "post-market surveillance data",
+        "complaint analysis",
+        "serious incidents",
+        "vigilance reporting",
+        "trend reporting",
+        "field safety corrective actions",
+        "registry data",
+        "psur",
+        "impact on the clinical evaluation"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "eliminates all risk",
+        "no residual risk"
+      ],
+      "tags": [
+        "eu-mdr",
+        "cer",
+        "pms",
+        "vigilance",
+        "psur"
+      ]
+    },
+    {
+      "id": "ind-introductory-statement-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "input": "Drug: ACM-101, a small-molecule selective JAK1 inhibitor. Proposed indication: moderate-to-severe rheumatoid arthritis in adults with inadequate response to methotrexate. This is an initial IND. Dosage form: immediate-release tablet, 5 mg and 10 mg. Route: oral. Not marketed in any country. No prior withdrawal from investigation or marketing for any reason in any country. Broad objectives: establish safety and tolerability, characterise pharmacokinetics, and select a dose for Phase 2.",
+      "requiredSections": [
+        "introductory statement",
+        "name of the drug",
+        "pharmacologic class",
+        "structural formula",
+        "dosage form and route",
+        "objectives and duration of the investigation",
+        "prior marketing or withdrawal history"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "safe and effective",
+        "approved indication",
+        "demonstrated efficacy"
+      ],
+      "tags": [
+        "fda",
+        "ind",
+        "21-cfr-312.23",
+        "introductory-statement"
+      ]
+    },
+    {
+      "id": "ind-general-investigational-plan-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "input": "Drug: ACM-101 for rheumatoid arthritis. Plan for the first year: a Phase 1 single-ascending-dose study in 40 healthy volunteers, then a multiple-ascending-dose study in 32 healthy volunteers, then a 28-day Phase 1b in 24 patients. Rationale: JAK1 selectivity is intended to reduce the haematologic effects seen with less selective inhibitors. Anticipated risks: infection, neutropenia, transaminase elevation, lipid changes, and a class effect of thromboembolism requiring monitoring and stopping rules. Approximately 96 subjects in year one.",
+      "requiredSections": [
+        "general investigational plan",
+        "rationale for the drug",
+        "indication to be studied",
+        "general approach to evaluation",
+        "kinds of clinical trials in the first year",
+        "estimated number of subjects",
+        "anticipated risks and how they are addressed"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "safe and effective",
+        "approved indication",
+        "demonstrated efficacy"
+      ],
+      "tags": [
+        "fda",
+        "ind",
+        "investigational-plan",
+        "21-cfr-312.23"
+      ]
+    },
+    {
+      "id": "ind-investigator-brochure-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "input": "Drug: ACM-101. Brochure inputs: physical/chemical/pharmaceutical properties and formulation; nonclinical pharmacology including JAK1 vs JAK2 selectivity 40-fold; ADME in rat and dog; 28-day GLP toxicology in rat and dog with NOAELs of 30 and 10 mg/kg/day and the target organs identified as bone marrow and liver; no prior human experience; safety and efficacy expectations; and guidance to the investigator on recognising and managing infection, neutropenia and transaminase elevation.",
+      "requiredSections": [
+        "investigator's brochure",
+        "physical chemical and pharmaceutical properties",
+        "nonclinical pharmacology",
+        "nonclinical toxicology",
+        "pharmacokinetics and metabolism",
+        "effects in humans",
+        "summary of data and guidance for the investigator",
+        "possible risks and adverse reactions to be monitored"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "safe and effective",
+        "approved indication",
+        "demonstrated efficacy"
+      ],
+      "tags": [
+        "fda",
+        "ind",
+        "investigators-brochure",
+        "ich-e6"
+      ]
+    },
+    {
+      "id": "ind-clinical-protocol-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "input": "Study ACM-101-101: a randomised, double-blind, placebo-controlled single-ascending-dose study of ACM-101 in healthy adult volunteers. Five cohorts of 8 subjects, 6 active to 2 placebo, doses 1, 3, 10, 30 and 60 mg. Primary objective: safety and tolerability. Secondary: pharmacokinetics. Sentinel dosing of 2 subjects per cohort with a 48-hour observation before the remainder. Dose escalation governed by a safety review committee against predefined stopping rules. Inclusion: healthy adults 18-55, BMI 18-32. Exclusion: any active infection, latent TB, hepatic impairment.",
+      "requiredSections": [
+        "protocol title and objectives",
+        "study design",
+        "selection of subjects",
+        "inclusion and exclusion criteria",
+        "dosing and dose escalation",
+        "safety monitoring and stopping rules",
+        "criteria for measurement of safety",
+        "statistical considerations",
+        "name and qualifications of the investigator"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "safe and effective",
+        "approved indication",
+        "demonstrated efficacy"
+      ],
+      "tags": [
+        "fda",
+        "ind",
+        "clinical-protocol",
+        "phase-1",
+        "21-cfr-312.23"
+      ]
+    },
+    {
+      "id": "ind-cmc-drug-substance-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "input": "Drug substance ACM-101 free base. Manufacturer: Acme Chem, site registered, DMF on file. Structure confirmed by NMR, MS and elemental analysis; single polymorph Form A by XRPD. Five-step synthesis from a commercially available starting material; two isolated intermediates. Specification: assay 98.0-102.0 percent by HPLC, any individual impurity not more than 0.15 percent, total impurities not more than 0.5 percent, residual solvents per ICH Q3C, heavy metals per ICH Q3D. Three 20 kg batches released. Stability: 6 months at 25 C/60 percent RH and 40 C/75 percent RH, no change.",
+      "requiredSections": [
+        "drug substance",
+        "nomenclature and structure",
+        "manufacturer",
+        "method of manufacture",
+        "characterisation",
+        "control of the drug substance",
+        "specification and analytical methods",
+        "batch analyses",
+        "container closure system",
+        "stability"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "safe and effective",
+        "approved indication",
+        "demonstrated efficacy"
+      ],
+      "tags": [
+        "fda",
+        "ind",
+        "cmc",
+        "drug-substance",
+        "ich-q3"
+      ]
+    },
+    {
+      "id": "ind-cmc-drug-product-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "input": "Drug product: ACM-101 immediate-release tablets, 5 mg and 10 mg, film coated. Composition per tablet with the function of each excipient; all excipients compendial. Manufacture by direct compression at Acme Pharma; batch size 50,000 tablets; in-process controls for blend uniformity, tablet weight, hardness and friability. Specification: description, identification, assay 95.0-105.0 percent, uniformity of dosage units per USP <905>, dissolution not less than 80 percent in 30 minutes, degradation products, microbial limits. Placebo tablets matched for appearance. Stability: 6 months accelerated and long term, supporting a 24-month provisional shelf life.",
+      "requiredSections": [
+        "drug product",
+        "composition",
+        "excipients and their function",
+        "manufacturer",
+        "method of manufacture",
+        "in-process controls",
+        "specification and analytical methods",
+        "dissolution",
+        "placebo composition",
+        "stability and proposed shelf life"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "safe and effective",
+        "approved indication",
+        "demonstrated efficacy"
+      ],
+      "tags": [
+        "fda",
+        "ind",
+        "cmc",
+        "drug-product"
+      ]
+    },
+    {
+      "id": "ind-previous-human-experience-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "input": "Drug: ACM-101. No prior human experience with ACM-101 itself. Relevant class experience: three marketed JAK inhibitors, with a boxed warning for serious infections, mortality, malignancy, major adverse cardiovascular events and thrombosis arising from a postmarketing safety trial of one of them. No ACM-101 investigation has been conducted outside the United States, and the drug has not been marketed or withdrawn in any country. Class findings are carried into the protocol as exclusion criteria, monitoring and stopping rules.",
+      "requiredSections": [
+        "previous human experience",
+        "experience with the investigational drug",
+        "relevant experience with the pharmacologic class",
+        "foreign marketing or investigational experience",
+        "withdrawal history",
+        "how prior experience informs the proposed protocol"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "safe and effective",
+        "approved indication",
+        "demonstrated efficacy"
+      ],
+      "tags": [
+        "fda",
+        "ind",
+        "previous-human-experience",
+        "21-cfr-312.23"
+      ]
+    },
+    {
+      "id": "ind-pediatric-study-plan-generate",
+      "docType": "ind",
+      "taskType": "generation",
+      "input": "Drug: ACM-101 for rheumatoid arthritis. The adult indication has a paediatric counterpart, polyarticular juvenile idiopathic arthritis, so an initial paediatric study plan is required under section 505B of the FD&C Act and is submitted no later than 60 days after the end-of-Phase-2 meeting. Plan: an age-appropriate oral suspension; a PK and safety study in 2 to less than 18 years, opened in descending age cohorts after adult data are available; partial waiver requested for birth to under 2 years on the ground that the condition does not occur in that group; deferral requested for the remaining ages until adult efficacy is established.",
+      "requiredSections": [
+        "initial pediatric study plan",
+        "overview of the disease in the pediatric population",
+        "planned age-appropriate formulation",
+        "nonclinical data to support pediatric studies",
+        "planned pediatric studies",
+        "requested waiver and its justification",
+        "requested deferral and its justification",
+        "timeline"
+      ],
+      "forbiddenPatterns": [
+        "proven safe",
+        "no risk",
+        "guaranteed",
+        "100% effective",
+        "completely safe",
+        "no side effects",
+        "clinically proven",
+        "safe and effective",
+        "approved indication",
+        "demonstrated efficacy"
+      ],
+      "tags": [
+        "fda",
+        "ind",
+        "pediatric",
+        "ipsp",
+        "pread"
+      ]
     }
   ]
 }

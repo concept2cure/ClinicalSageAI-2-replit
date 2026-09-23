@@ -25,6 +25,14 @@ const impactSimulationLimiter = rateLimit({
 });
 import { ai } from '../../lib/unified-ai-client';
 
+// Model governance (2026-09-23): both calls pinned `model: 'gpt-4o'` as a
+// 'general' request, which the gateway's high-risk approval check never sees —
+// so gpt-4o decided the filing category (CBE-30, Type II variation) and the
+// bridging studies for a manufacturing change. They are now regulatory_review:
+// only a model approved for high-risk regulatory work serves them. The filing
+// category is still a model's verdict (CLAUDE.md Rule 2); the deterministic
+// classifier is POST /api/cmc/variations/classify (supac-classifier.ts).
+
 // Create router
 const router = express.Router();
 
@@ -105,7 +113,8 @@ router.post('/simulate', checkForOpenAIKey, impactSimulationLimiter, async (req,
     ];
 
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'regulatory_review',
+      callerModule: 'cmc/change-impact-simulator.simulate',
       messages: messages,
       temperature: 0.3,
       max_tokens: 2500,
@@ -197,7 +206,8 @@ router.post('/market-report', checkForOpenAIKey, impactSimulationLimiter, async 
     ];
 
     const aiResult = await ai.chat({
-      model: 'gpt-4o',
+      taskType: 'regulatory_review',
+      callerModule: 'cmc/change-impact-simulator.market-report',
       messages: messages,
       temperature: 0.3,
       max_tokens: 2500,

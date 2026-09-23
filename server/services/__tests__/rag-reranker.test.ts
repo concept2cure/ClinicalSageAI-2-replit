@@ -147,7 +147,8 @@ type WithReranker = {
   reranker: Reranker;
   applyReranker(
     query: string,
-    docs: RetrievedDocument[]
+    docs: RetrievedDocument[],
+    governedVerdict?: boolean
   ): Promise<{ documents: RetrievedDocument[]; tokensUsed: number }>;
 };
 
@@ -211,5 +212,59 @@ describe('AdvancedRAGPipeline.applyReranker', () => {
     const p = pipelineWith(reranker);
     const out = await p.applyReranker('q', [ragDoc('a', 0.8), ragDoc('b', 0.4)]);
     expect(out.documents.map(d => d.id)).toEqual(['a', 'b']); // unchanged
+  });
+});
+
+// A rerank score that decides a governed verdict — a citation run's supported /
+// gap status — is high-risk regulatory work. It is produced only by a model
+// approved for regulatory review, and a missing or unreadable score fails
+// rather than defaulting to 0.5. Until 2026-09-23 the judge always routed as
+// structured_output, which any model may serve, and gpt-4o scored citations.
+describe('governed verdicts: the LLM judge', () => {
+  it('routes as regulatory_review when the score decides a verdict, structured_output otherwise', async () => {
+    const route = vi.fn(async (_req: AIRequest) => aiResponse('{"1": 90, "2": 40, "3": 10}'));
+    const r = new LlmJudgeReranker(route);
+    await r.score('q', docs, { governedVerdict: true });
+    await r.score('q', docs);
+    expect(route.mock.calls.map(([req]) => req.taskType)).toEqual(['regulatory_review', 'structured_output']);
+  });
+
+  it('an unreadable score throws instead of defaulting to 0.5', async () => {
+    const r = new LlmJudgeReranker(vi.fn(async () => aiResponse('not json')));
+    await expect(r.score('q', docs, { governedVerdict: true })).rejects.toThrow(/unreadable/);
+  });
+
+  it('a partial score throws instead of filling the gaps with 0.5', async () => {
+    const r = new LlmJudgeReranker(vi.fn(async () => aiResponse('{"1": 80}')));
+    await expect(r.score('q', docs, { governedVerdict: true })).rejects.toThrow(/every document/);
+  });
+
+  it('a complete score is used as scored', async () => {
+    const r = new LlmJudgeReranker(vi.fn(async () => aiResponse('{"1": 90, "2": 40, "3": 10}')));
+    expect((await r.score('q', docs, { governedVerdict: true })).scores).toEqual([0.9, 0.4, 0.1]);
+  });
+});
+
+describe('governed verdicts: the pipeline', () => {
+  it('tells the reranker the score decides a verdict', async () => {
+    const score = vi.fn(async (_q: string, ds: unknown[], _opts?: unknown) => ({ scores: ds.map(() => 0.5), tokensUsed: 0 }));
+    const p = pipelineWith({ name: 'spy', score });
+    await p.applyReranker('q', [ragDoc('a', 0.8)], true);
+    expect(score.mock.calls[0][2]).toEqual({ governedVerdict: true });
+  });
+
+  it('a failed rerank fails the retrieval instead of keeping embedding order', async () => {
+    const p = pipelineWith({
+      name: 'boom',
+      score: async () => {
+        throw new Error('no approved model');
+      },
+    });
+    await expect(p.applyReranker('q', [ragDoc('a', 0.8), ragDoc('b', 0.4)], true)).rejects.toThrow('no approved model');
+  });
+
+  it('a wrong score count fails the retrieval', async () => {
+    const p = pipelineWith({ name: 'mismatch', score: async () => ({ scores: [0.9], tokensUsed: 3 }) });
+    await expect(p.applyReranker('q', [ragDoc('a', 0.8), ragDoc('b', 0.4)], true)).rejects.toThrow(/1 scores for 2 docs/);
   });
 });

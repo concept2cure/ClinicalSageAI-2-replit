@@ -1,0 +1,24 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > trusts the load balancer, and only it, in production 2ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > trusts no proxy outside production, where nothing sits in front of the server 1ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > takes an explicit hop count from the deployment 0ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "true", which is not a hop count 1ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "yes", which is not a hop count 0ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "-1", which is not a hop count 0ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "1.5", which is not a hop count 0ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "6", which is not a hop count 0ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the hop count > refuses to boot on "loopback", which is not a hop count 0ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > behind the load balancer > gives every client its own sign-in allowance 56ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > behind the load balancer > records the address the load balancer saw, never one the client wrote 3ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > behind the load balancer > cannot be escaped by claiming a new address on every attempt 26ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > behind the load balancer > was one allowance for everyone when no proxy was trusted (the defect) 29ms
+ ✓ server/config/__tests__/trust-proxy.test.ts > the production server > applies the hop count before any middleware reads the client address 1ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  08:15:36
+   Duration  611ms (transform 124ms, setup 123ms, import 193ms, tests 125ms, environment 0ms)
+

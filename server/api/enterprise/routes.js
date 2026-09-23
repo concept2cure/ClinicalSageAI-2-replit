@@ -179,74 +179,10 @@ router.get('/audit/stats', rbacService.requirePermission('audit', 'read'), (_req
   });
 });
 
-// Role management endpoints
-router.post(
-  '/rbac/assign-role',
-  rbacService.requirePermission('users', 'update'),
-  async (req, res) => {
-    try {
-      const { userId, roleName, expiresAt } = req.body;
-
-      if (!userId || !roleName) {
-        return res.status(400).json({ error: 'userId and roleName are required' });
-      }
-
-      const result = await rbacService.assignRole(
-        userId,
-        roleName,
-        req.tenantId,
-        req.userId,
-        expiresAt
-      );
-
-      await auditService.logAction({
-        tenantId: req.tenantId,
-        userId: req.userId,
-        action: 'role.assigned',
-        resourceType: 'user',
-        resourceId: userId.toString(),
-        details: { roleName, expiresAt },
-      });
-
-      res.json({ success: true, result });
-    } catch (error) {
-      console.error('Role assignment error:', error);
-      res.status(500).json({ error: 'Failed to assign role', details: error.message });
-    }
-  }
-);
-
-router.get(
-  '/rbac/user-roles/:userId',
-  rbacService.requirePermission('users', 'read'),
-  async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      const roles = await rbacService.getUserRoles(userId, req.tenantId);
-
-      res.json({ userId, roles });
-    } catch (error) {
-      console.error('Get user roles error:', error);
-      res.status(500).json({ error: 'Failed to get user roles' });
-    }
-  }
-);
-
-router.get(
-  '/rbac/permissions/:userId',
-  rbacService.requirePermission('users', 'read'),
-  async (req, res) => {
-    try {
-      const userId = parseInt(req.params.userId);
-      const permissions = await rbacService.getUserPermissions(userId, req.tenantId);
-
-      res.json({ userId, permissions });
-    } catch (error) {
-      console.error('Get permissions error:', error);
-      res.status(500).json({ error: 'Failed to get permissions' });
-    }
-  }
-);
+// The /rbac/* endpoints (assign-role, user-roles, permissions) were removed
+// 2026-09-22 with /api/enterprise/rbac: they called role-store methods backed by
+// tables no applier creates. Roles are organization_users.role — see
+// server/bootstrap/register-core-routes.ts for the replacements by path.
 
 // System health check with enterprise features status
 router.get('/health', async (_req, res) => {

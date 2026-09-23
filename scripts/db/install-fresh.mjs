@@ -761,12 +761,44 @@ async function main() {
       // `echo ""` answers drizzle-kit's interactive prompt; a fresh DB has no
       // destructive changes so it proceeds. Inherit env so drizzle.config.ts
       // resolves the same DATABASE_URL.
+      //
+      // The single '\n' answers exactly ONE prompt: the final "apply these
+      // statements?" confirmation. That is the only prompt drizzle-kit push
+      // asks against a genuinely empty database — there is nothing pre-existing
+      // to disambiguate a rename against. Point this at a database that already
+      // carries an OLDER version of the schema (a local dev DB re-used after
+      // days of upstream migrations, rather than one this script itself just
+      // created) and push can ask a disambiguation question PER ambiguous
+      // rename before it ever reaches that confirmation. stdin is already
+      // closed after the one '\n', so drizzle-kit is left reading from a
+      // stream that will never produce another byte — and it does not error
+      // on that, it blocks. Observed directly: 11+ minutes of silence, zero
+      // CPU, zero output, indistinguishable from "still working" to whoever
+      // is waiting on it. `timeout` bounds that hang and turns it into a
+      // diagnosis instead of an indefinite freeze.
       const res = spawnSync('npx', ['drizzle-kit', 'push'], {
         cwd: path.resolve(__dirname, '..', '..'),
         input: '\n',
         encoding: 'utf8',
         env: process.env,
+        timeout: 5 * 60 * 1000,
       });
+      if (res.signal) {
+        throw new Error(
+          `drizzle-kit push was killed (${res.signal}) after 5 minutes with no exit. The ` +
+            `single '\\n' this script sends answers one prompt — drizzle-kit push's final ` +
+            `"apply these statements?" confirmation — and nothing else. A database that already ` +
+            `carries an OLDER schema than what shared/schema.ts declares now (a re-used local dev ` +
+            `database, not one this script created fresh) can make push ask a disambiguation ` +
+            `question per ambiguous rename BEFORE that confirmation; stdin is already closed by ` +
+            `then, and push blocks reading from it rather than failing. It leaves no error, no ` +
+            `output, and no CPU use — nothing to distinguish it from still working. If the target ` +
+            `database is disposable, the fix is to drop and recreate it so push runs against a ` +
+            `genuinely empty schema (its only supported starting point); this script is safe to ` +
+            `re-run afterward. If it holds data worth keeping, resolve the drift with drizzle-kit's ` +
+            `own migration path instead of push.`,
+        );
+      }
       if (res.status !== 0) {
         console.error(res.stdout || '');
         console.error(res.stderr || '');
@@ -947,7 +979,21 @@ async function main() {
       encoding: 'utf8',
       env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
       maxBuffer: 64 * 1024 * 1024,
+      // Same one-prompt assumption as the pgvector-present push above, and the
+      // same failure mode against a database with pre-existing drift: push can
+      // ask more than the one question this answers and then block on a closed
+      // stdin forever, silently. Bounded rather than diagnosed in detail here —
+      // the explanation lives on the pgvector-present call above.
+      timeout: 5 * 60 * 1000,
     });
+    if (res.signal) {
+      throw new Error(
+        `drizzle-kit push --verbose --strict was killed (${res.signal}) after 5 minutes with no ` +
+          `exit — see the timeout comment on the pgvector-present push call above for why. If the ` +
+          `target database is disposable, drop and recreate it so push runs against a genuinely ` +
+          `empty schema.`,
+      );
+    }
     const out = `${res.stdout || ''}\n${res.stderr || ''}`.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '');
     if (/No changes detected/.test(out) && !/about to execute current statements/.test(out)) {
       console.log('  • push reports no changes — schema already present');
@@ -1597,8 +1643,14 @@ async function main() {
     if (runtimeRoleResult.mode === 'single-role') {
       console.log(
         `  • no runtime role distinct from the owner (${runtimeRoleResult.owner}). Production boot ` +
-          'will FAIL CLOSED if it connects as a superuser under RLS_ENFORCE=on — set ' +
-          'APP_SERVICE_DB_PASSWORD here and APP_DATABASE_URL for the runtime before going live.',
+          'will FAIL CLOSED under RLS_ENFORCE=on — not only for a superuser, but for ANY role ' +
+          'that owns the tables. Postgres exempts a table owner from its own policies unless ' +
+          'FORCE ROW LEVEL SECURITY is set, so on this database the policies on every ' +
+          'RLS-enabled, non-FORCE table are inert and its rows are readable across tenants. ' +
+          'Set APP_SERVICE_DB_PASSWORD here and APP_DATABASE_URL for the runtime before going ' +
+          'live. (The narrower "superuser" wording this line used to carry was true but ' +
+          'incomplete, and the boot gate it described could not see the owner case at all until ' +
+          'server/db/rlsEnforcement.ts learned to.)',
       );
     }
   });
