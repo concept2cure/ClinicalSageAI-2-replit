@@ -96,6 +96,10 @@ import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 import { config } from '../config/environment';
 import { isDevAuthAllowed, devAuthDenialReason } from '../auth/dev-auth-policy';
 import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
+import {
+  drizzleWorkspaceStore,
+  ensureOrganizationDefaultWorkspace,
+} from '../services/c2c/organization-default-workspace';
 
 const router = Router();
 
@@ -901,6 +905,21 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         organizationId: org.id,
         userId: user.id,
         role: 'admin',
+      });
+
+      // The organisation's own client workspace, SAME transaction.
+      // `projects.client_workspace_id` is NOT NULL, so without this row
+      // `ensureProgramProjectAnchor` skips with NO_CLIENT_WORKSPACE for every
+      // program this tenant ever creates, and its governed artifacts can never
+      // reach the registry (services/c2c/organization-default-workspace.ts).
+      // Inside the transaction, unlike provisionLaunchModules below: a module
+      // grant an administrator can re-run is not the same as the PM spine's
+      // NOT NULL parent, which every later write assumes.
+      await ensureOrganizationDefaultWorkspace(drizzleWorkspaceStore(tx), {
+        orgId: org.id,
+        orgName: org.name,
+        orgSlug: org.slug,
+        userId: user.id,
       });
 
       return { org, user };

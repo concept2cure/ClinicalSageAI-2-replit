@@ -2490,6 +2490,23 @@ export const C2C_MIGRATION_FILES = [
   // to_regclass; above the final pair, which ci:migration-set-order pins last.
   'migrations/20260922e_amendment_declarations_nullable.sql',
 
+  // ── Every organisation gets its own client workspace ─────────────────────
+  // The repair half of the fix for NO_CLIENT_WORKSPACE. The three organisation
+  // creators now write the workspace inside their own transaction
+  // (services/c2c/organization-default-workspace.ts); this sweep covers the
+  // organisations that already exist, including any a seed script wrote
+  // directly. Without it, projects.client_workspace_id — NOT NULL — has no
+  // value to take, ensureProgramProjectAnchor skips for EVERY program in that
+  // tenant, and its governed artifacts never reach concept2cure_artifacts.
+  //
+  // Creates no table, so it needs nothing from the isolation sweep below; it is
+  // placed before the final pair because it is a data repair, not a sweep. It
+  // writes only where an organisation has NO workspace: a second one would turn
+  // the anchor writer's unambiguous case into AMBIGUOUS_CLIENT_WORKSPACE and
+  // stop anchoring programs that anchor today. Its only prerequisites,
+  // organizations and client_workspaces, are far earlier in the set.
+  'migrations/20260923_organization_default_client_workspace.sql',
+
   // ── C-48 Stage 1: unify the two org-uuid identity spaces ─────────────────
   // Backfills identity.organizations from public.organizations.uuid (the
   // canonical per-tenant uuid) + a forward-sync trigger, so a single
