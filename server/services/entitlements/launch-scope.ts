@@ -15,6 +15,7 @@
  */
 import { LAUNCH_MODULE_IDS } from '../../../shared/constants/launch-scope';
 import { writeModuleGrant } from './module-grants.js';
+import { getTenantScope } from '../../db/tenantStore';
 import { createScopedLogger } from '../../utils/logger.js';
 
 const logger = createScopedLogger('launch-scope');
@@ -51,6 +52,23 @@ export function launchScopeEnforced(env: NodeJS.ProcessEnv = process.env): boole
  *
  * `actorEmail` null: the platform, not a person, wrote these rows. The audit
  * trail carries the reason (`launch catalog default`).
+ *
+ * The grants are written under whatever tenant scope the CALLER holds, and
+ * module_subscriptions is RLS-enabled and FORCED, so the caller's scope must be
+ * one that may write this organisation's rows — its own tenant scope, or the
+ * system scope. This function deliberately does not open a scope of its own: a
+ * service that widened its caller's scope would let any caller grant modules to
+ * any organisation, with RLS no longer standing in the way.
+ *
+ * ── A failure is never silent ───────────────────────────────────────────────
+ * Callers keep the organisation when provisioning fails (see above), so the log
+ * is the only place a failure can surface. It surfaces as exactly ONE
+ * error-level line per call, carrying the organisation, how many modules
+ * failed, the database's own words, the scope the writes ran under and the
+ * command that repairs it. Until 2026-09-22 it was one line per module plus an
+ * info-level "provisioned" summary: self-serve signup ran this under the
+ * pre-auth scope, RLS refused all 21 grants, and the only line at the level an
+ * operator watches read "launch catalog provisioned".
  */
 export async function provisionLaunchModules(
   organizationId: number,
@@ -69,15 +87,30 @@ export async function provisionLaunchModules(
       });
       granted.push(moduleId);
     } catch (err) {
-      const error = err instanceof Error ? err.message : String(err);
-      failed.push({ moduleId, error });
-      logger.error('[launch-scope] failed to grant launch module', { organizationId, moduleId, error });
+      failed.push({ moduleId, error: err instanceof Error ? err.message : String(err) });
     }
   }
-  logger.info('[launch-scope] launch catalog provisioned', {
-    organizationId,
-    granted: granted.length,
-    failed: failed.length,
-  });
+
+  if (failed.length > 0) {
+    const scope = getTenantScope();
+    logger.error(
+      `launch catalog NOT provisioned for organisation ${organizationId}: ` +
+        `${failed.length} of ${LAUNCH_MODULE_IDS.length} launch modules were not granted`,
+      {
+        organizationId,
+        attempted: LAUNCH_MODULE_IDS.length,
+        granted: granted.length,
+        failed: failed.length,
+        failedModules: failed.map((f) => f.moduleId),
+        errors: [...new Set(failed.map((f) => f.error))],
+        scope: scope
+          ? { tenantId: scope.tenantId, role: scope.role ?? null, source: scope.source, caller: scope.caller ?? null }
+          : null,
+        remediation: `npm run ops:provision-launch-modules -- --org ${organizationId}`,
+      },
+    );
+  } else {
+    logger.info('launch catalog provisioned', { organizationId, granted: granted.length });
+  }
   return { granted, failed };
 }

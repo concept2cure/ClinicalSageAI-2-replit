@@ -29,6 +29,14 @@
  * connection under RLS_ENFORCE=on carries no tenant and would otherwise see
  * nothing.
  *
+ * Tenant entitlement: this router authenticates with the session JWT, not an
+ * API key or SCIM token. It is mounted behind `authenticateToken`
+ * (server/bootstrap/register-regulatory-routes.ts), which chains
+ * `enforceTenantLifecycle` (server/middleware/auth.ts), so a suspended,
+ * inactive, past-due or pending-deletion tenant is refused before any handler
+ * here runs. (ci:tenant-entry-points classifies this file by content, and the
+ * prose mention of SCIM above made it look like an alternative-auth router.)
+ *
  * HONESTY (regulated product — Part 11 surface):
  *   • hash      = the REAL stored chain hash (audit_logs.sha256_chain or
  *                 audit_events.record_hash, full SHA-256 hex, never truncated

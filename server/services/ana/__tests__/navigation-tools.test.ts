@@ -42,18 +42,23 @@ describe('navigate_to', () => {
     expect(out.status).toBe('needs_parameters');
   });
 
+  // A project screen shows one program: with one open (projectRef), the
+  // directive is produced as before. With none open, see
+  // self-drive-regressions.test.ts (needs_project / program resolution).
+  const PROGRAM_OPEN = { organizationId: 1, userId: null, projectId: null, projectRef: 'prog-open' };
+
   it('produces a directive for a valid target', async () => {
-    const out = JSON.parse(await getToolHandler('navigate_to')!({ target: 'cmc' }));
+    const out = JSON.parse(await getToolHandler('navigate_to')!({ target: 'cmc' }, PROGRAM_OPEN));
     expect(out.status).toBe('navigation_ready');
     expect(out.directive).toMatchObject({ actionType: 'navigate', path: 'cmc', scope: 'project' });
   });
 
   it('validates enum params', async () => {
-    const ok = JSON.parse(await getToolHandler('navigate_to')!({ target: 'intelligence', params: { intelligenceTab: 'clinical' } }));
+    const ok = JSON.parse(await getToolHandler('navigate_to')!({ target: 'intelligence', params: { intelligenceTab: 'clinical' } }, PROGRAM_OPEN));
     expect(ok.status).toBe('navigation_ready');
     expect(ok.directive.params).toEqual({ intelligenceTab: 'clinical' });
 
-    const bad = JSON.parse(await getToolHandler('navigate_to')!({ target: 'intelligence', params: { intelligenceTab: 'nope' } }));
+    const bad = JSON.parse(await getToolHandler('navigate_to')!({ target: 'intelligence', params: { intelligenceTab: 'nope' } }, PROGRAM_OPEN));
     expect(bad.status).toBe('needs_parameters');
   });
 
@@ -150,7 +155,8 @@ describe('demo tools', () => {
     );
     expect(driving.status).toBe('demo_ready');
     expect(driving.driven).toBe(true);
-    expect(driving.instruction).toContain('stop by stop');
+    expect(driving.instruction).toContain('one stop per step');
+    expect(driving.instruction).toContain('all the way through');
   });
 
   it('start_product_demo refuses unknown ids with the catalog', async () => {

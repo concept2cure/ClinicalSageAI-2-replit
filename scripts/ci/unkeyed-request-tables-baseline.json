@@ -88,7 +88,7 @@
     "maud_algorithms": "unreviewed — no one has classified this table yet",
     "pdev_program_activities": "unreviewed — no one has classified this table yet",
     "pdev_readiness_snapshots": "unreviewed — no one has classified this table yet",
-    "platform_settings": "unreviewed — no one has classified this table yet",
+    "platform_settings": "global — one value per DEPLOYMENT, not per customer: governed platform settings (today only module_enforcement_mode, the off/report/enforce ladder for route entitlement enforcement). No customer content; identical for every tenant by construction; a per-organization mode would be a different table (see the SCOPE note in db/migrations/20260824_enforcement_mode_setting.sql). Must stay UNPOLICIED, not merely unkeyed: moduleEntitlementGate -> enforcement-mode.ts readStoredMode() reads it on the shared pool under whatever per-user tenant scope the request carries, so a tenant policy would hide the stored mode from every tenant request and silently fall back to the deployment env value. Written only by PATCH /api/admin/master/licensing/enforcement/mode (authMiddleware + requirePlatformAdmin, SYSTEM scope). Posture pinned on a provisioned DB by tests/db/entitlement-schema-posture.dbtest.ts. Classified 2026-09-22.",
     "predicate.fda_510k_clearances": "unreviewed — no one has classified this table yet",
     "predicate.fda_product_codes": "unreviewed — no one has classified this table yet",
     "predicate.predicate_safety_signals": "unreviewed — no one has classified this table yet",

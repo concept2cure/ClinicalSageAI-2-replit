@@ -307,6 +307,8 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             msgs={anaMsgs}
             onAsk={askAna}
             onClose={() => setAnaOpen(false)}
+            onNav={onNav}
+            onStartDemo={liveDrive?.onStartDemo}
             /* The live work dock reads the raw turns: phases, tool timings,
                pending steers and outputs the pane's message shape does not carry. */
             work={{
