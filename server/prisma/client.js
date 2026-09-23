@@ -13,11 +13,11 @@
  *   returning cross-tenant rows. This converts the worst class of
  *   tenant-bleed bug into a loud error.
  *
- * Active consumers:
- *   server/services/semanticSearch.js → study_document.upsert (no-op stub).
- *   server/pipelines/bulk_import.js   → study_document.upsert (no-op stub).
- *   The non-stub methods (audit_log/document/signature) currently have no
- *   live consumers, but the guards above are in place for when they do.
+ * Active consumers: none in server code today (the tenant-guard tests exercise
+ *   audit_log/document/signature); the guards above are in place for when they
+ *   do. The study_document no-op stub and the $queryRaw passthrough were deleted
+ *   on 2026-09-22 with their last callers (semanticSearch.js, bulk_import.js):
+ *   an upsert that logs and returns null tells its caller a write succeeded.
  */
 
 import { pool } from '../db.js';
@@ -273,60 +273,12 @@ const signature = {
 };
 
 // ---------------------------------------------------------------------------
-// study_document  →  table does NOT exist in schema.
-//   Previously consumed by semanticSearch.js / bulk_import.js (deleted in
-//   Phase 2 retrieval convergence, 2026-04-22). Kept as warning-logging
-//   no-ops so any surviving caller surfaces loudly rather than silently.
-// ---------------------------------------------------------------------------
-const study_document = {
-  async create({ data } = {}) {
-    console.warn('[prisma/client] study_document table not yet in schema — create is a no-op');
-    return null;
-  },
-
-  async findMany() {
-    console.warn('[prisma/client] study_document table not yet in schema — findMany is a no-op');
-    return [];
-  },
-
-  async upsert({ where, update, create } = {}) {
-    console.warn('[prisma/client] study_document table not yet in schema — upsert is a no-op');
-    return null;
-  },
-};
-
-// ---------------------------------------------------------------------------
-// $queryRaw — previously used by semanticSearch.js (deleted in Phase 2).
-//   Kept as a generic tagged-template passthrough in case another Prisma-
-//   style caller appears; has no active consumers today.
-// ---------------------------------------------------------------------------
-async function $queryRaw(strings, ...values) {
-  if (!pool) {
-    throw new Error('[prisma/client] Database pool is not available');
-  }
-  // Tagged template → parameterised SQL
-  let sql = '';
-  const params = [];
-  for (let i = 0; i < strings.length; i++) {
-    sql += strings[i];
-    if (i < values.length) {
-      params.push(values[i]);
-      sql += `$${params.length}`;
-    }
-  }
-  const result = await pool.query(sql, params);
-  return result.rows;
-}
-
-// ---------------------------------------------------------------------------
 // Export as default (matches original `import prisma from '../prisma/client.js'`)
 // ---------------------------------------------------------------------------
 const prisma = {
   audit_log,
   document,
   signature,
-  study_document,
-  $queryRaw,
 };
 
 export default prisma;

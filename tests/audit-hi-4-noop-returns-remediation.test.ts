@@ -6,7 +6,8 @@
  *    into a user's exported archive; the broken relative-fetch protocol path is
  *    replaced with an honest null.
  *  - eventBus: createSubmissionContainer no longer returns success:true with a
- *    fabricated containerId when nothing was created.
+ *    fabricated containerId when nothing was created — both event buses that
+ *    carried it are now deleted.
  *
  * Source-integrity guards (these services import the storage/DB layer at module
  * load, so behavioral import is avoided in favor of durable source assertions —
@@ -46,9 +47,12 @@ describe('HI-4 · eventBus does not claim phantom success', () => {
     expect(fs.existsSync(path.join(SERVER, 'services/eventBus.js'))).toBe(false);
   });
 
-  it('the surviving event bus has no createSubmissionContainer fabrication', () => {
-    const src = read('events/eventBus.js');
-    expect(src).not.toContain('createSubmissionContainer');
-    expect(src).not.toContain('containerId: `ectd_${data.packageId}`');
+  it('the second event bus, which persisted to a table no applier creates, stays deleted', () => {
+    // events/eventBus.js survived the 2026-06-10 deletion above with the
+    // fabrication removed, but it was itself dead: zero importers, absent from
+    // the production bundle, and it wrote an `ind_events` table no migration
+    // creates. Deleted 2026-09-22; the remediation now rests on deletion, as
+    // its sibling above does.
+    expect(fs.existsSync(path.join(SERVER, 'events/eventBus.js'))).toBe(false);
   });
 });

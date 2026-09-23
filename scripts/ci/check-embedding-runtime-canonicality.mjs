@@ -63,8 +63,11 @@ const APPROVED = new Set([
   //     negotiation history was empty. Now throws; the write paths still
   //     degrade to a NULL embedding, deliberately, so the regulated record
   //     survives an outage that its searchability does not.
-  // Search/index helpers that embed queries.
-  'server/services/semanticSearch.js',
+  // server/services/semanticSearch.js — deleted 2026-09-22 with its only two
+  // importers (server/pipelines/indexDocs.js, bulk_import.js), which already
+  // threw ERR_MODULE_NOT_FOUND on a second deleted module; it upserted a
+  // `study_document` table no applier creates. Removed from this list because
+  // assertAllowlistPathsExist below exits 1 on a path that no longer exists.
   // server/workers/entity-extraction-worker.ts — deleted 2026-09-18 with the
   // rest of the unmounted neuro-symbolic subtree (its only importers were
   // server/api/neuro-symbolic/routes.ts and enhanced-ingestion-pipeline.ts,
