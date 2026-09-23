@@ -174,7 +174,7 @@ describe('POST /documents/:id/finalize is a real electronic signature', () => {
     ]);
     expect(verifyReauth).toHaveBeenCalledWith(11, REAUTH);
     expect(assertSignerIsNotAuthor).toHaveBeenCalledWith('protocol-document:5', 2, 11, { command: 'sign', meaning: 'authorship' });
-    const ledger = recordGovernedAction.mock.calls[0][1] as { payload: Record<string, unknown>; reason: string };
+    const ledger = recordGovernedAction.mock.calls[0][1] as unknown as { payload: Record<string, unknown>; reason: string };
     expect(ledger.payload.meaning).toBe('authorship');
     expect(ledger.reason).toBe(REASON);
     const sig = persistGovernedSignSignature.mock.calls[0] as unknown as [unknown, Record<string, unknown>];
