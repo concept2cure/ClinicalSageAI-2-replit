@@ -569,6 +569,50 @@ async function applySequenceChangeWithAudit(
   }
 }
 
+/**
+ * Refuse a governed step when the package this sequence would transmit is not
+ * transmittable — the rule transmitSequence applies (assembledTransmitBlockers),
+ * run on the same assembly before the sequence is locked.
+ */
+async function assertSequencePackageable(
+  id: number,
+  ctx: { organizationId: number; userId: number },
+  step: GovernedSequenceStep,
+): Promise<void> {
+  const { assembleSequence, assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
+  let assembled: Awaited<ReturnType<typeof assembleSequence>>;
+  try {
+    // The agency identifiers only fill backbone text; the blockers do not
+    // depend on them, and nothing assembled here is sent.
+    assembled = await assembleSequence({
+      sequenceId: id,
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      applicationId: `UNASSIGNED-SEQ-${id}`,
+      sponsorId: `UNASSIGNED-ORG-${ctx.organizationId}`,
+      sponsorName: `UNASSIGNED (organization ${ctx.organizationId})`,
+    });
+  } catch (err) {
+    throw new SubmissionError(
+      'DISPATCH_BLOCKED',
+      `Refusing to ${step}: the sequence does not assemble into a package (${err instanceof Error ? err.message : String(err)}). ` +
+        'Fix it while the leaves can still be changed.',
+    );
+  }
+  try {
+    const gaps = assembledTransmitBlockers(assembled);
+    if (gaps.length > 0) {
+      throw new SubmissionError(
+        'DISPATCH_BLOCKED',
+        `Refusing to ${step}: ${gaps.join('; ')}. Transmit would refuse this package, and once the sequence is ` +
+          `${step === 'freeze' ? 'frozen' : 'dispatched'} its leaves can no longer be changed.`,
+      );
+    }
+  } finally {
+    await assembled.cleanup();
+  }
+}
+
 async function applyGovernedSequenceTransition(
   id: number,
   toStatus: 'frozen' | 'dispatched',
@@ -608,6 +652,15 @@ async function applyGovernedSequenceTransition(
       `Dispatch gate blocks ${toStatus}: ${stepGate.blockers.join(' ')}`
     );
   }
+
+  // Gate 3 — the package this sequence would transmit (2026-09-23, W5/D7).
+  // Transmit refuses a package that leaves out a placed leaf, carries an
+  // unapproved document, or cannot materialize a source (assembledTransmit-
+  // Blockers). Readiness does not assemble, so those refusals used to surface
+  // only at transmit — after freeze had made the leaves immutable and dispatch
+  // had removed every way back: a signed sequence that could never be sent.
+  // The same assembly and the same rule run here, while the author can still act.
+  await assertSequencePackageable(id, ctx, step);
 
   // The state change and its chained audit row commit together, or neither.
   // 'dispatched' queues the sequence for transmit (dispatch_status pending);
@@ -1012,8 +1065,10 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   // 2026-09-22 (W5/D7): two more ways a sequence reached the gateway missing
   // what the author placed — a leaf left out of the ZIP (`skipped`) and a draft
   // leaf shipped in it (`unfinalized`) — both computed by assembly and read by
-  // nobody here. See assembledTransmitBlockers. The claim is released so the
-  // sequence stays transmittable once the cause is fixed.
+  // nobody here. See assembledTransmitBlockers. The governed freeze and dispatch
+  // now refuse on the same rule before the leaves lock (assertSequencePackageable),
+  // so this is the re-check at the irreversible step; the claim is released
+  // because nothing was sent.
   const { assembledTransmitBlockers } = await import('../ectd/assemble-from-core');
   const gaps = assembledTransmitBlockers(assembled);
   if (gaps.length > 0) {

@@ -99,12 +99,24 @@ export interface AssembleSequenceResult extends PackageFromCoreResult {
  *    the ZIP — the agency would receive a document no one approved.
  *
  * transmitSequence refuses on any of these; the assemble route reports them,
- * so "assembled" is never read as "ready to send".
+ * so "assembled" is never read as "ready to send"; and the governed freeze and
+ * dispatch refuse on them too (2026-09-23), because once a sequence is frozen
+ * its leaves are immutable and a transmit-time refusal has no remedy. Unresolved
+ * leaves are included when the result carries them.
  */
 export function assembledTransmitBlockers(
-  r: Pick<AssembleSequenceResult, 'skipped' | 'unfinalized' | 'unfinalizedSections'>,
+  r: Pick<AssembleSequenceResult, 'skipped' | 'unfinalized' | 'unfinalizedSections'> &
+    Partial<Pick<AssembleSequenceResult, 'unresolvedLeaves'>>,
 ): string[] {
   const out: string[] = [];
+  const unresolved = r.unresolvedLeaves ?? [];
+  if (unresolved.length > 0) {
+    out.push(
+      `${unresolved.length} leaf source(s) could not be materialized into the package (` +
+        unresolved.map((u) => `${u.documentTable}:${u.documentId ?? u.documentUuid ?? '?'}`).join(', ') +
+        ')',
+    );
+  }
   if (r.skipped.length > 0) {
     out.push(
       `${r.skipped.length} placed leaf/leaves could not be packaged (` +

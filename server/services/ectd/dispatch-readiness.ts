@@ -395,7 +395,7 @@ export function computeDispatchReadiness(
         sectionCode: leaf.sectionCode,
         message:
           `Leaf "${leaf.title}" declares "${leaf.lifecycleOp}". Which filed leaf it acts on is established when the ` +
-          'sequence is assembled, not here — assemble before freezing; an act that cannot be bound blocks transmit.',
+          'sequence is assembled, not here; freeze and dispatch assemble it and refuse an act that cannot be bound.',
       });
     }
   }

@@ -110,8 +110,12 @@ describe('transmit claim — source contract', () => {
   });
 
   it('takes the claim BEFORE the package is assembled', () => {
-    const claim = CODE.indexOf('claimTransmitSlot(sequenceId');
-    const assemble = CODE.indexOf('await assembleSequence(');
+    // Within transmitSequence: the governed freeze/dispatch also assemble
+    // (assertSequencePackageable, 2026-09-23) and hold no transmit claim.
+    const fn = CODE.indexOf('export async function transmitSequence');
+    expect(fn).toBeGreaterThan(-1);
+    const claim = CODE.indexOf('claimTransmitSlot(sequenceId', fn);
+    const assemble = CODE.indexOf('await assembleSequence(', fn);
     expect(claim).toBeGreaterThan(-1);
     expect(assemble).toBeGreaterThan(-1);
     expect(claim).toBeLessThan(assemble);

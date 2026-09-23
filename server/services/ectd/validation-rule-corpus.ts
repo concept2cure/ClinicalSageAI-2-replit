@@ -197,7 +197,8 @@ export const RULE_CORPUS: ValidationRule[] = [
     severity: 'medium',
     rationale:
       'Which filed leaf a declared act supersedes is established against the filed inventory when the sequence is assembled; ' +
-      'an act that cannot be bound is refused at assembly and at transmit. Readiness reports that it did not assess this, rather than reading clean.',
+      'an act that cannot be bound is refused by the governed freeze and dispatch (which assemble the sequence) and at transmit. ' +
+      'Readiness reports that it did not assess this, rather than reading clean.',
     source: ICH_SPEC,
     enforcement: 'dispatch-readiness',
     findingCode: 'LIFECYCLE_BINDING_NOT_ASSESSED',
