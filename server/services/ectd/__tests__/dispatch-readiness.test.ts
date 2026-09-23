@@ -136,6 +136,20 @@ describe('computeDispatchReadiness', () => {
     expect(r.errors).toBe(0);
   });
 
+  it('says a follow-up\'s declared acts were not bound here, rather than reading clean (2026-09-22 W5/D7)', () => {
+    // Binding happens at assembly and an unbindable act blocks transmit; a
+    // readiness verdict silent about it would promise a transmit the system
+    // then refuses.
+    const r = computeDispatchReadiness(
+      [goodLeaf({ lifecycleOp: 'replace' }), goodLeaf({ sectionCode: 'm2.4', documentId: 51 })],
+      { isOriginalSequence: false },
+    );
+    const w = r.findings.filter(f => f.code === 'LIFECYCLE_BINDING_NOT_ASSESSED');
+    expect(w).toHaveLength(1);
+    expect(w[0]).toMatchObject({ severity: 'warning', sectionCode: 'm2.5' });
+    expect(r.errors).toBe(0);
+  });
+
   it('accepts a valid 4-digit sequence number', () => {
     for (const n of ['0000', '0001', '0042', '9999']) {
       const r = computeDispatchReadiness([goodLeaf()], { sequenceNumber: n });
@@ -303,6 +317,15 @@ describe('resolver verdicts become findings', () => {
 
   it('a resolved leaf whose pin matches carries no error', () => {
     const r = computeDispatchReadiness([vaultLeaf(resolution({}))]);
+    expect(r.errors).toBe(0);
+    expect(r.findings.some(f => f.code === 'DOCUMENT_CONTENT_NOT_PINNED')).toBe(false);
+  });
+
+  it('an unpinned leaf says its content was not verified, rather than reading like a match (2026-09-22 W5/D7)', () => {
+    const r = computeDispatchReadiness([vaultLeaf(resolution({ pin: 'unpinned', pinnedSha256: null }))]);
+    const w = r.findings.filter(f => f.code === 'DOCUMENT_CONTENT_NOT_PINNED');
+    expect(w).toHaveLength(1);
+    expect(w[0].severity).toBe('warning');
     expect(r.errors).toBe(0);
   });
 

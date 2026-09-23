@@ -694,8 +694,35 @@ for (const f of ENFORCEMENT_FLAGS) {
     for (const chunk of src.split(/\n\s+id: '/).slice(1)) {
       const id = chunk.slice(0, chunk.indexOf("'"));
       const approved = /\n\s+approvedForHighRisk: true,/.test(chunk);
-      const pq = (chunk.match(/\n\s+pq: \{ status: '([a-z]+)'/) ?? [])[1] ?? null;
-      if (/\n\s+approvedForHighRisk: (true|false),/.test(chunk)) entries.push({ id, approved, pq });
+      const pqMatch = chunk.match(/\n\s+pq: \{ status: '([a-z]+)', reference: (null|'([^']*)') \}/);
+      const pinned = (chunk.match(/\n\s+pinnedVersion: '([^']+)'/) ?? [])[1] ?? null;
+      let pq = pqMatch ? pqMatch[1] : null;
+      let note = '';
+      /* A "passed" claim counts only if the record it cites says so — the same
+         rules as verifyPqClaim in server/eval/pq/pq-verdict.ts, which is the
+         canonical check and runs in CI. Repeated here because this probe runs
+         under plain node, and a green dashboard row on a claim CI would reject
+         is the thing this report exists not to be. */
+      if (pq === 'passed') {
+        const ref = pqMatch[3] ?? null;
+        let rec = null;
+        try {
+          rec = ref ? JSON.parse(readFile(ref) ?? 'null') : null;
+        } catch {
+          rec = null;
+        }
+        const ok =
+          rec?.kind === 'pq-record' &&
+          rec.modelId === id &&
+          rec.pinnedVersion === pinned &&
+          rec.verdict === 'PASS' &&
+          rec.protocolStatus === 'approved';
+        if (!ok) {
+          pq = 'unverified';
+          note = ref ? ` (claims passed; ${ref} does not support it)` : ' (claims passed; cites no record)';
+        }
+      }
+      if (/\n\s+approvedForHighRisk: (true|false),/.test(chunk)) entries.push({ id, approved, pq, note });
     }
   }
   const approved = entries.filter((e) => e.approved);
@@ -712,12 +739,12 @@ for (const f of ENFORCEMENT_FLAGS) {
       approved.length === 0
         ? 'could not read approvedForHighRisk from server/services/ai-governance/approved-models.ts — treated as not qualified'
         : `${passed.length} of ${approved.length} approved model(s) have a passed PQ: ` +
-          approved.map((e) => `${e.id}=${e.pq ?? 'unknown'}`).join(', '),
+          approved.map((e) => `${e.id}=${e.pq ?? 'unknown'}${e.note}`).join(', '),
     gate:
       'server/services/ai-gateway/gateway.ts approvedForTask — only approvedForHighRisk models serve document_drafting / regulatory_review, at primary, fallback and explicit selection; PQ status in approved-models.ts',
     owner: 'Engineering (execute the PQ) + Ops (a product provider key)',
     unblock:
-      'Provision a product ANTHROPIC_API_KEY; add the live mode the eval harnesses do not yet have (server/eval/doc-quality/README.md, "how to make the numbers real"); execute against server/eval/rag/ and server/eval/doc-quality/; record pq: { status: \'passed\', reference } on each entry it covers.',
+      'System owner approves server/eval/pq/pq-protocol.json (it is draft; a PQ against unapproved criteria cannot PASS). Engineering: a gold bank at the protocol floor (10+ generation tasks per document type; the seed has 4), a live extraction path, and a model parameter through ragQuery. Ops: a product ANTHROPIC_API_KEY. Then `npm run pq:run -- --model claude-opus-4 --record` and cite the record as pq.reference — verifyPqClaim refuses anything but a PASS for that exact pinned version.',
   });
 }
 

@@ -455,6 +455,17 @@ export const C2C_MIGRATION_FILES = [
   // get the columns from shared/schema.ts via push. Additive ALTER … ADD COLUMN
   // IF NOT EXISTS, idempotent, safe to re-run.
   'db/migrations/20260730_ectd_compilations_sequence_columns.sql',
+  // The per-sequence leaf manifest (added to the set 2026-09-22, WO-09 Click 6).
+  // package-from-core reads the PRIOR sequence's ectd_compilations.leaf_manifest to
+  // derive every replace/append/delete and its modified-file pointer, and the
+  // compile route writes it. The column reached FRESH installs through drizzle
+  // push, but this file — the existing-database half — was on no applier, and
+  // deploy-migrate runs no push. On a database provisioned before 2026-07-30 the
+  // compile's manifest INSERT failed, was caught as a warning, and every later
+  // sequence was diffed against no prior state at all. Proven on a copy of such a
+  // database: drop the column, run this applier, the column stays absent; with
+  // this entry, it returns. ADD COLUMN IF NOT EXISTS: idempotent, RULE 1 safe.
+  'db/migrations/20260730_ectd_compilations_leaf_manifest.sql',
   // ── Part 11 DB-level immutability (added 2026-07-30, auth/e-sig audit) ────
   // electronic_signatures: DELETE always refused; UPDATE refused except the
   // write-once supersession transition (superseded_by NULL → id).

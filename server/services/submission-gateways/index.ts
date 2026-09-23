@@ -29,6 +29,7 @@ import type {
 } from './types';
 import { TransmitAuthorizationError, ValidationError } from './types';
 import { evaluatePreTransmit } from './pre-transmit-check';
+import { assertBundleLeafSecurity } from './bundle-leaf-security';
 
 export * from './types';
 export { evaluatePreTransmit } from './pre-transmit-check';
@@ -150,7 +151,13 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
           pre.blockers,
         );
       }
-      return impl.transmit(req);
+      // Leaf security, re-established from the signed bundle's own bytes in
+      // every environment (bundle-leaf-security.ts). 2026-09-22 W5/D7.
+      const leafSecurity = await assertBundleLeafSecurity(req.bundle, impl.region);
+      const result = await impl.transmit(req);
+      // What was checked travels with the result — including checks that
+      // failed without blocking, which used to be computed and dropped here.
+      return { ...result, preTransmit: { checks: pre.checks, warnings: pre.warnings, leafSecurity } };
     },
     checkStatus: (transmittalId: number) => impl.checkStatus(transmittalId),
     downloadAcknowledgment: (transmittalId: number) => impl.downloadAcknowledgment(transmittalId),

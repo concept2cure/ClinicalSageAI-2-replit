@@ -23,6 +23,8 @@ import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import { finalizePdfA } from '../pdfa-pipeline';
+import { hasPdfHeader } from '../pdfa-detect';
+import { assessLeafPdfSecurity } from '../leaf-pdf-security';
 import { buildMd5Index } from '../../submission-gateways/regional-packager';
 import { listVendoredSchemas } from '../schema-bundler';
 import { buildRpsMessage, RPS_MESSAGE_PATH } from './rps-message-builder';
@@ -51,9 +53,23 @@ export interface RpsPackageResult {
   validation: RpsValidationResult;
 }
 
-/** Finalize one document's bytes to submission grade (PDF/A) + SHA-256. */
-async function finalizeBytes(buf: Buffer, mediaType: string): Promise<{ bytes: Buffer; sha256: string }> {
+/**
+ * Finalize one document's bytes to submission grade (PDF/A) + SHA-256.
+ *
+ * 2026-09-22 (W5/D7): a secured PDF is refused here, by the same rule as the
+ * v3.2.2 packager (leaf-pdf-security). finalizePdfA returns a secured input
+ * unchanged with a warning, and this function discarded the warning and zipped
+ * the bytes. The v4 message carries no region, so no agency-form exception is
+ * granted: any /Encrypt entry is refused.
+ */
+async function finalizeBytes(buf: Buffer, mediaType: string, href: string): Promise<{ bytes: Buffer; sha256: string }> {
   let bytes = buf;
+  if (mediaType === 'application/pdf' || hasPdfHeader(buf)) {
+    const security = await assessLeafPdfSecurity(buf, null);
+    if (security.verdict === 'secured') {
+      throw new Error(`RPS packager: document ${href} is an encrypted/secured PDF (${security.reason}); refusing to package it.`);
+    }
+  }
   if (mediaType === 'application/pdf') {
     const r = await finalizePdfA(buf);
     if (r.converted) bytes = Buffer.from(r.pdfBytes);
@@ -89,7 +105,7 @@ export async function packageRpsSubmission(input: RpsPackagerInput): Promise<Rps
     if (raw.length === 0) {
       throw new Error(`RPS packager: source bytes for document ${doc.id} (${doc.href}) are empty (0 bytes) — refusing to package a blank leaf.`);
     }
-    const { bytes, sha256 } = await finalizeBytes(raw, doc.mediaType);
+    const { bytes, sha256 } = await finalizeBytes(raw, doc.mediaType, doc.href);
     doc.checksum = sha256; // integrity matches shipped bytes
     zip.file(doc.href, bytes);
     md5Entries.push({ relPath: doc.href, md5: createHash('md5').update(bytes).digest('hex') });

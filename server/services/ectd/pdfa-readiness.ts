@@ -30,6 +30,14 @@ export interface LeafGradeRecord {
    * refuses to ship one rather than folding it into the PDF/A grade.
    */
   encrypted?: boolean;
+  /**
+   * An FDA form shipped exactly as FDA issued it, security settings included
+   * (leaf-pdf-security.ts). It is an XFA form under FDA's own encryption, which
+   * PDF/A forbids, so it can never be PDF/A-converted: rewriting it would
+   * destroy the form FDA asks to receive unaltered. Counted apart from the
+   * not-converted risk set, and listed, never silently dropped. 2026-09-22 W5/D7.
+   */
+  agencyFormAsIssued?: boolean;
 }
 
 /** Roll-up of submission-grade status across every leaf in a package. */
@@ -43,10 +51,13 @@ export interface SubmissionGradeSummary {
   /** PDF leaves that were NOT converted to PDF/A (the risk set). */
   notConverted: string[];
   /**
-   * True when every PDF leaf is PDF/A-converted. False means at least one PDF
-   * shipped as vanilla PDF (the pipeline degraded — typically a missing binary).
+   * True when every PDF leaf is PDF/A-converted, agency forms shipped as issued
+   * excepted (they are listed in agencyFormsAsIssued). False means at least one
+   * PDF shipped as vanilla PDF (the pipeline degraded — typically a missing binary).
    */
   allPdfA: boolean;
+  /** PDF leaves that are agency forms shipped as issued (never converted, by rule). */
+  agencyFormsAsIssued: string[];
 }
 
 export interface SubmissionGradeGateInput {
@@ -71,13 +82,18 @@ export interface SubmissionGradeGateResult {
 /** Summarize the per-leaf finalization outcome. Pure, no policy. */
 export function summarizeSubmissionGrade(leaves: LeafGradeRecord[]): SubmissionGradeSummary {
   const pdf = leaves.filter((l) => l.isPdf);
-  const notConverted = pdf.filter((l) => !l.converted).map((l) => l.fileName).sort();
+  const agencyFormsAsIssued = pdf.filter((l) => l.agencyFormAsIssued === true).map((l) => l.fileName).sort();
+  const notConverted = pdf
+    .filter((l) => !l.converted && l.agencyFormAsIssued !== true)
+    .map((l) => l.fileName)
+    .sort();
   return {
     total: leaves.length,
     pdfLeaves: pdf.length,
-    pdfaConverted: pdf.length - notConverted.length,
+    pdfaConverted: pdf.length - notConverted.length - agencyFormsAsIssued.length,
     notConverted,
     allPdfA: notConverted.length === 0,
+    agencyFormsAsIssued,
   };
 }
 
