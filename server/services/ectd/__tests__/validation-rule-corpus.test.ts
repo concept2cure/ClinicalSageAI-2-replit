@@ -4,6 +4,7 @@
  * cataloged (the corpus and the enforced rules can never drift apart).
  */
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
 import { computeDispatchReadiness, type ReadinessLeaf } from '../dispatch-readiness';
 import {
   RULE_CORPUS,
@@ -13,6 +14,9 @@ import {
   rulesByEnforcement,
   dispatchFindingCodes,
   corpusSummary,
+  enforcementStatement,
+  ruleView,
+  DISPATCH_GATE_RULE_IDS,
 } from '../validation-rule-corpus';
 
 describe('validation rule corpus — internal consistency', () => {
@@ -135,5 +139,58 @@ describe('corpus ↔ gate cross-reference invariant', () => {
     // 9 since 2026-09-21: DOCUMENT_CONTENT_MISMATCH (a resolved document whose
     // pinned content hash no longer matches) joined the battery.
     expect(emitted.size).toBeGreaterThanOrEqual(9);
+  });
+});
+
+/* The battery above proves the codes IT triggers are catalogued. It cannot see
+   a code it has no scenario for: the assessor adds UNKNOWN_REGION_PROFILE
+   itself, outside computeDispatchReadiness, and the surface renders it, yet no
+   rule named it. A new code added without a scenario passes vacuously, because
+   the floor only catches rules that STOP firing. This scan reads the sources. */
+describe('corpus ↔ source invariant — every finding code written in the assessment', () => {
+  it('catalogs every code the dispatch-readiness sources can emit', () => {
+    const sources = ['../dispatch-readiness.ts', '../assess-dispatch-readiness.ts'];
+    const codes = new Set<string>();
+    for (const src of sources) {
+      for (const line of fs.readFileSync(new URL(src, import.meta.url), 'utf8').split('\n')) {
+        if (/\bthrow\b/.test(line)) continue; // an error's code is not a finding
+        const m = /^\s*code:\s*'([A-Z][A-Z0-9_]+)',?\s*$/.exec(line);
+        if (m) codes.add(m[1]);
+      }
+    }
+    // Guards the scanner itself: a pattern that matched nothing would pass everything.
+    expect(codes.size).toBeGreaterThanOrEqual(11);
+    for (const code of codes) {
+      const rule = getRule(code);
+      expect(rule, `the assessment can emit "${code}", which is not in the corpus`).toBeTruthy();
+      expect(rule!.enforcement).toBe('dispatch-readiness');
+    }
+  });
+});
+
+describe('each rule says where it is enforced — the work order\'s three statements', () => {
+  it('maps every enforcement to its statement', () => {
+    expect(enforcementStatement('dispatch-readiness')).toMatch(/^Enforced here/);
+    expect(enforcementStatement('ectd-validator')).toMatch(/^Enforced here/);
+    expect(enforcementStatement('packager')).toMatch(/^Guaranteed by packager construction/);
+    expect(enforcementStatement('external')).toMatch(/^Requires the agency validator/);
+  });
+
+  it('a rule view carries its title, regions, severity and statement; an unknown code has none', () => {
+    const v = ruleView('EMPTY_SEQUENCE');
+    expect(v).toMatchObject({ id: 'EMPTY_SEQUENCE', severity: 'high', enforcement: 'dispatch-readiness' });
+    expect(v!.title).toBeTruthy();
+    expect(v!.regions.length).toBeGreaterThan(0);
+    expect(v!.enforcementStatement).toMatch(/^Enforced here/);
+    expect(ruleView('NOT_A_RULE')).toBeNull();
+  });
+
+  it('names every composed dispatch gate as a corpus rule', () => {
+    expect(Object.keys(DISPATCH_GATE_RULE_IDS).sort()).toEqual(['external', 'releaseSignature', 'shadowPresence', 'structural']);
+    for (const id of Object.values(DISPATCH_GATE_RULE_IDS)) expect(getRule(id), id).toBeTruthy();
+  });
+
+  it('cites FDA\'s criteria for the required-Module-1 rule an FDA IND trips most', () => {
+    expect(getRule('MISSING_REQUIRED_SECTION')!.source).toMatch(/FDA/);
   });
 });

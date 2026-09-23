@@ -58,6 +58,7 @@
  * @module server/services/ectd/dispatch-readiness
  */
 
+import type { RuleView } from './validation-rule-corpus';
 import {
   documentTableKeyKind,
   externalDocumentTableReason,
@@ -129,6 +130,9 @@ export interface ReadinessFinding {
   code: string;
   sectionCode: string | null;
   message: string;
+  /** The corpus rule this finding is an instance of — attached by the
+   *  assessment (withRules); null when the corpus names no such rule. */
+  rule?: RuleView | null;
 }
 
 export interface DispatchReadinessReport {
