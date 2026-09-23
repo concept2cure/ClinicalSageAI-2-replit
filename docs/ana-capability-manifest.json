@@ -8073,9 +8073,9 @@
         "id": "evidence",
         "label": "Evidence & intelligence"
       },
-      "description": "Execute a research agreement behind the deterministic HIPAA readiness gate (PHI properly handled, parties + material described). Records a governed signature. Governed + audited.",
+      "description": "AnA cannot sign. Executing a research agreement is an electronic signature and needs the user's password, so this tool does not execute it and writes nothing. Tell the user to execute it in its workspace.",
       "scope": "global",
-      "governed": true,
+      "governed": false,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -13002,7 +13002,7 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Approve a requested no-cost extension. Gated: grantee authority cannot self-approve an extension that requires sponsor prior approval (a second extension, or one over 12 months). On approval the award's period end moves out. Governed + audited (signature).",
+      "description": "AnA cannot sign. Approving a no-cost extension is an electronic signature and needs the user's password, so this tool does not approve it and writes nothing. Tell the user to approve it in the grant workspace.",
       "scope": "global",
       "governed": true,
       "renderer": "result-card",
@@ -17753,9 +17753,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Certify an NIH Other Support document behind the deterministic readiness gate (every entry complete, foreign components disclosed, no effort overcommitment). Records a governed signature. Governed + audited.",
+      "description": "AnA cannot sign. Certifying NIH Other Support is an electronic signature and needs the user's password, so this tool does not certify and writes nothing. Tell the user to certify it in its workspace.",
       "scope": "project",
-      "governed": true,
+      "governed": false,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -24187,10 +24187,10 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Execute a subaward. Gated: rejected unless the subrecipient was screened CLEAR of SAM.gov exclusions and a risk assessment is recorded (2 CFR 200.214 / 200.332). Governed + audited (signature).",
+      "description": "AnA cannot sign. Executing a subaward is an electronic signature and needs the user's password, so this tool does not execute it and writes nothing. Tell the user to execute it in the grant workspace.",
       "scope": "global",
-      "governed": true,
-      "renderer": "navigation",
+      "governed": false,
+      "renderer": "result-card",
       "example": "",
       "inputs": [
         {
@@ -24423,9 +24423,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Finalize an NIH biosketch behind the deterministic completeness gate (all required sections addressed). Records a governed signature. Governed + audited.",
+      "description": "AnA cannot sign. Finalizing an NIH biosketch is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user to finalize it in its workspace.",
       "scope": "global",
-      "governed": true,
+      "governed": false,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -24453,9 +24453,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Finalize an agenda item by tallying the poll into the deterministic determination (approved / approved_with_modifications / disapproved / tabled). Gated: a convened meeting WITH quorum, the 'approve' privilege, AND current CITI training for the finalizing actor (citi_human_subjects for IRB, citi_animal for IACUC). Governed + audited (signature).",
+      "description": "AnA cannot sign. Finalizing a committee determination is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user a member holding the approve privilege finalizes it in the committee workspace.",
       "scope": "global",
-      "governed": true,
+      "governed": false,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -24483,9 +24483,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Finalize an NIH DMS plan behind the deterministic completeness gate (all six required elements addressed). Records a governed signature. Governed + audited.",
+      "description": "AnA cannot sign. Finalizing an NIH DMS plan is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user to finalize the plan in its workspace.",
       "scope": "global",
-      "governed": true,
+      "governed": false,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -24513,9 +24513,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Finalize an export-control determination behind the deterministic readiness gate; persists the computed license-required outcome and FRE finding. Records a governed signature. Governed + audited.",
+      "description": "AnA cannot sign. Finalizing an export-control determination is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user to finalize it in the export-control workspace.",
       "scope": "global",
-      "governed": true,
+      "governed": false,
       "renderer": "result-card",
       "example": "",
       "inputs": [
@@ -24543,9 +24543,9 @@
         "id": "other",
         "label": "Other"
       },
-      "description": "Finalize a grant closeout. Gated: all four 2 CFR 200.344 items must be complete (final RPPR, final FFR, property inventory, invoice reconciliation); otherwise it is rejected with the outstanding items. On success the award is closed. Governed + audited (signature).",
+      "description": "AnA cannot sign. Finalizing a grant closeout is an electronic signature and needs the user's password, so this tool does not finalize and writes nothing. Tell the user to finalize the closeout in the grant workspace.",
       "scope": "global",
-      "governed": true,
+      "governed": false,
       "renderer": "result-card",
       "example": "",
       "inputs": [
