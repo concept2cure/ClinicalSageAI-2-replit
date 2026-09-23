@@ -725,6 +725,38 @@ for (const f of ENFORCEMENT_FLAGS) {
       if (/\n\s+approvedForHighRisk: (true|false),/.test(chunk)) entries.push({ id, approved, pq, note });
     }
   }
+  /**
+   * The gold bank measured against the protocol's own sample floor, rather
+   * than asserted. This line used to read "the seed has 4", which stopped
+   * being true the moment the bank was expanded and would have sent the next
+   * session to re-do finished work — the failure the CLAUDE.md working
+   * agreement describes. Counted the way run-pq.ts counts: generation tasks
+   * carrying an input, because a task with no input is never given to a model
+   * and so does not raise the floor.
+   */
+  function goldBankState() {
+    const floorLine = 'a gold bank at the protocol floor';
+    try {
+      const protocol = JSON.parse(readFile('server/eval/pq/pq-protocol.json') ?? 'null');
+      const bank = JSON.parse(readFile('server/eval/doc-quality/gold-tasks.json') ?? 'null');
+      const floor = protocol?.components?.generation?.criteria?.minTasksPerDocType;
+      const tasks = Array.isArray(bank?.tasks) ? bank.tasks : null;
+      if (typeof floor !== 'number' || !tasks) return floorLine;
+      const counts = new Map();
+      for (const t of tasks) {
+        if (t?.taskType !== 'generation') continue;
+        if (typeof t.input !== 'string' || !t.input.trim()) continue;
+        counts.set(t.docType, (counts.get(t.docType) ?? 0) + 1);
+      }
+      const short = [...counts].filter(([, n]) => n < floor);
+      return short.length
+        ? `${floorLine} (${floor}+ generation tasks per document type; below it: ${short.map(([d, n]) => `${d}=${n}`).join(', ')})`
+        : `the gold bank reaches the protocol floor of ${floor} per document type (${[...counts].map(([d, n]) => `${d}=${n}`).join(', ')}) — done`;
+    } catch {
+      return floorLine;
+    }
+  }
+
   const approved = entries.filter((e) => e.approved);
   const passed = approved.filter((e) => e.pq === 'passed');
   const primaryPassed = passed.some((e) => e.id === 'claude-opus-4');
@@ -744,7 +776,9 @@ for (const f of ENFORCEMENT_FLAGS) {
       'server/services/ai-gateway/gateway.ts approvedForTask — only approvedForHighRisk models serve document_drafting / regulatory_review, at primary, fallback and explicit selection; PQ status in approved-models.ts',
     owner: 'Engineering (execute the PQ) + Ops (a product provider key)',
     unblock:
-      'System owner approves server/eval/pq/pq-protocol.json (it is draft; a PQ against unapproved criteria cannot PASS). Engineering: a gold bank at the protocol floor (10+ generation tasks per document type; the seed has 4), a live extraction path, and a model parameter through ragQuery. Ops: a product ANTHROPIC_API_KEY. Then `npm run pq:run -- --model claude-opus-4 --record` and cite the record as pq.reference — verifyPqClaim refuses anything but a PASS for that exact pinned version.',
+      'System owner approves server/eval/pq/pq-protocol.json (it is draft; a PQ against unapproved criteria cannot PASS). Engineering: ' +
+      `${goldBankState()}, a live extraction path, and a model parameter through ragQuery. ` +
+      'Ops: a product ANTHROPIC_API_KEY. Then `npm run pq:run -- --model claude-opus-4 --record` and cite the record as pq.reference — verifyPqClaim refuses anything but a PASS for that exact pinned version.',
   });
 }
 
