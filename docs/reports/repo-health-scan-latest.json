@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T10:11:42.434Z",
+  "generatedAt": "2026-09-23T10:43:40.859Z",
   "git": {
-    "sha": "ff1ebcccebe69992aaa36528918404580c88000c",
+    "sha": "39b136c21febdf35631ed6ee5752eb1cb6b91ea6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2428,6 +2428,10 @@
         "lines": 1864
       },
       {
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 1857
+      },
+      {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
         "lines": 1849
       },
@@ -2498,10 +2502,6 @@
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
         "lines": 1698
-      },
-      {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1693
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
