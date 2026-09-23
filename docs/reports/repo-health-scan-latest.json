@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T08:52:52.417Z",
+  "generatedAt": "2026-09-23T08:57:32.205Z",
   "git": {
-    "sha": "b715e76562319aba20996ae966c0e8c08de3de2e",
+    "sha": "712993b0ba5b811b86b5e481de0b9b947b5e97c8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2244,12 +2244,12 @@
         "lines": 2949
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2828
+        "file": "server/src/routes/stability.router.ts",
+        "lines": 2849
       },
       {
-        "file": "server/src/routes/stability.router.ts",
-        "lines": 2807
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2828
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
