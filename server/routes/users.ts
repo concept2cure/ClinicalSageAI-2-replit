@@ -15,10 +15,20 @@ import {
   isReportPersona,
 } from '../../shared/constants/domain/report-personas';
 
-import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { verifyLiveToken } from '../services/token-revocation';
 import { isDevAuthAllowed } from '../auth/dev-auth-policy.js';
 
 const router = Router();
+
+/**
+ * A bearer token that does not verify, has expired, or belongs to a session
+ * that was signed out (verifyLiveToken, AUTH-03): an authentication failure,
+ * answered 401, never a 500.
+ */
+function isSessionError(error: unknown): boolean {
+  const name = (error as { name?: string } | null)?.name;
+  return name === 'JsonWebTokenError' || name === 'TokenExpiredError' || name === 'SessionEndedError';
+}
 
 // SECURITY: the dev-user fallback (synthetic user / faked mutation responses
 // below) is only active when the canonical dev-auth gate allows it — i.e.
@@ -65,7 +75,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = verifyJwtWithRotation(token) as { userId: string; email: string };
+    const decoded = (await verifyLiveToken(token)) as { userId: string; email: string };
     const user = await db
       .select()
       .from(users)
@@ -110,7 +120,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       organizationId: string;
@@ -172,7 +182,7 @@ router.get('/me', async (req: Request, res: Response) => {
       lastLoginAt: userData.lastLogin?.toISOString() || new Date().toISOString(),
     });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (isSessionError(error)) {
       return res.status(401).json({
         error: { code: 'AUTH_005', message: 'Session expired' },
       });
@@ -202,7 +212,7 @@ router.patch('/me', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = verifyJwtWithRotation(token) as { userId: string };
+    const decoded = (await verifyLiveToken(token)) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const { name, title, department, bio, avatar, preferences } = req.body;
@@ -239,6 +249,9 @@ router.patch('/me', async (req: Request, res: Response) => {
       },
     });
   } catch (error: unknown) {
+    if (isSessionError(error)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
     console.error('[users] Update profile error:', error);
     res
       .status(500)
@@ -340,7 +353,7 @@ router.get('/me/preferences', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = verifyJwtWithRotation(token) as { userId: string };
+    const decoded = (await verifyLiveToken(token)) as { userId: string };
     const userId = parseInt(decoded.userId);
     if (!Number.isFinite(userId)) {
       return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
@@ -358,7 +371,7 @@ router.get('/me/preferences', async (req: Request, res: Response) => {
 
     return res.json({ preferences: rows[0].preferences ?? {} });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (isSessionError(error)) {
       return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
     }
     console.error('[users] Get preferences error:', error);
@@ -383,7 +396,7 @@ router.put('/me/preferences', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = verifyJwtWithRotation(token) as { userId: string };
+    const decoded = (await verifyLiveToken(token)) as { userId: string };
     const userId = parseInt(decoded.userId);
     if (!Number.isFinite(userId)) {
       return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
@@ -433,7 +446,7 @@ router.put('/me/preferences', async (req: Request, res: Response) => {
 
     return res.json({ success: true, preferences: updated.preferences ?? {} });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (isSessionError(error)) {
       return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
     }
     console.error('[users] Update preferences error:', error);
@@ -455,7 +468,7 @@ router.get('/me/persona', async (req: Request, res: Response) => {
     if (!token) {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
-    const decoded = verifyJwtWithRotation(token) as { userId: string; organizationId?: string };
+    const decoded = (await verifyLiveToken(token)) as { userId: string; organizationId?: string };
     const userId = parseInt(decoded.userId);
     const organizationId = parseInt(String(decoded.organizationId ?? ''));
     if (!Number.isFinite(userId) || !Number.isFinite(organizationId)) {
@@ -478,7 +491,7 @@ router.get('/me/persona', async (req: Request, res: Response) => {
       availablePersonas: REPORT_PERSONAS,
     });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (isSessionError(error)) {
       return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
     }
     console.error('[users] Get persona error:', error);
@@ -499,7 +512,7 @@ router.put('/me/persona', async (req: Request, res: Response) => {
     if (!token) {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
-    const decoded = verifyJwtWithRotation(token) as { userId: string; organizationId?: string };
+    const decoded = (await verifyLiveToken(token)) as { userId: string; organizationId?: string };
     const userId = parseInt(decoded.userId);
     const organizationId = parseInt(String(decoded.organizationId ?? ''));
     if (!Number.isFinite(userId) || !Number.isFinite(organizationId)) {
@@ -529,7 +542,7 @@ router.put('/me/persona', async (req: Request, res: Response) => {
 
     return res.json({ success: true, persona: updated.persona ?? null, role: updated.role });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (isSessionError(error)) {
       return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
     }
     console.error('[users] Update persona error:', error);
@@ -561,7 +574,7 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = verifyJwtWithRotation(token) as { userId: string };
+    const decoded = (await verifyLiveToken(token)) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const prefs = await db
@@ -590,6 +603,9 @@ router.get('/me/notifications', async (req: Request, res: Response) => {
 
     res.json(prefs[0]);
   } catch (error: unknown) {
+    if (isSessionError(error)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
     console.error('[users] Get notifications error:', error);
     res
       .status(500)
@@ -616,7 +632,7 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
       return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
     }
 
-    const decoded = verifyJwtWithRotation(token) as { userId: string };
+    const decoded = (await verifyLiveToken(token)) as { userId: string };
     const userId = parseInt(decoded.userId);
 
     const updates = req.body;
@@ -640,6 +656,9 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
 
     res.json({ success: true, message: 'Notification preferences updated' });
   } catch (error: unknown) {
+    if (isSessionError(error)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
     console.error('[users] Update notifications error:', error);
     res
       .status(500)
@@ -669,7 +688,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       organizationId?: string;
     };
@@ -712,7 +731,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       organizationId: targetOrgId,
     });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (isSessionError(error)) {
       if (isDev) return res.json(devUserResponse);
       return res.status(401).json({
         error: { code: 'AUTH_005', message: 'Session expired' },

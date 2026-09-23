@@ -28,6 +28,7 @@ import {
 
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { verifyLiveToken } from '../services/token-revocation';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { authMiddleware } from '../auth';
 import * as emailOtpService from '../services/emailOtpService';
@@ -128,15 +129,18 @@ const enterpriseAuthLimiter = rateLimit({
   validate: { xForwardedForHeader: false },
 });
 
-/** Helper: extract and verify JWT from Authorization header */
-function extractJwtUser(
+/**
+ * Helper: extract and verify JWT from Authorization header. A signed-out
+ * session (AUTH-03) is no identity, the same as a bad token.
+ */
+async function extractJwtUser(
   req: Request
-): { userId: string; email: string; organizationId?: string } | null {
+): Promise<{ userId: string; email: string; organizationId?: string } | null> {
   const authHeader = req.headers.authorization;
   const token = authHeader?.replace('Bearer ', '');
   if (!token) return null;
   try {
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       organizationId?: string;
@@ -503,7 +507,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
  */
 router.post('/mfa/setup', async (req: Request, res: Response) => {
   try {
-    const decoded = extractJwtUser(req);
+    const decoded = await extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -529,7 +533,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
  */
 router.post('/mfa/enable', async (req: Request, res: Response) => {
   try {
-    const decoded = extractJwtUser(req);
+    const decoded = await extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -570,7 +574,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
  */
 router.post('/mfa/disable', async (req: Request, res: Response) => {
   try {
-    const decoded = extractJwtUser(req);
+    const decoded = await extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -716,7 +720,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(existingToken) as any;
+    const decoded = (await verifyLiveToken(existingToken)) as any;
     // SECURITY: a pre-MFA (mfaPending / mfa_challenge) or refresh token must not
     // be exchanged for a full 24h access token here — that would let a
     // password-only session skip MFA. Require a genuine access token.
@@ -827,7 +831,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[Enterprise Auth] select-organization error:', error);
 
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         error: 'TOKEN_EXPIRED',
         message: 'Session expired. Please log in again.',
@@ -857,7 +861,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = verifyJwtWithRotation(oldToken) as any;
+    const decoded = (await verifyLiveToken(oldToken)) as any;
 
     // SECURITY: this endpoint re-mints a full 24h access token. A pre-MFA
     // (mfaPending / mfa_challenge) or refresh token presented here would let a
@@ -917,7 +921,7 @@ router.get('/session', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = verifyJwtWithRotation(token) as any;
+    const decoded = (await verifyLiveToken(token)) as any;
     // SECURITY: a pre-MFA / refresh token is not an authenticated session.
     if (requireAccessTokenReason(decoded)) {
       return res.json({ authenticated: false });
@@ -940,11 +944,12 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /logout
  * End user session
  */
-router.post('/logout', (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    message: 'Logged out successfully',
-  });
+router.post('/logout', (_req: Request, res: Response) => {
+  // Answered by the canonical logout, which revokes the presented token (and a
+  // refresh token in the body) and records the event. This handler used to
+  // answer "Logged out successfully" and do neither (July 2026 audit, AUTH-03).
+  // A 307 keeps the method, the body and the Authorization header.
+  res.redirect(307, '/api/auth/logout');
 });
 
 export default router;

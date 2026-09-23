@@ -66,6 +66,7 @@ import express from 'express';
 import request from 'supertest';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { createHash } from 'node:crypto';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 import {
@@ -184,6 +185,13 @@ beforeAll(async () => {
     authMiddleware: (_req, res) => {
       res.status(401).json({ error: 'dbtsi: the global gate was reached; /api/auth must not reach it' });
     },
+  });
+
+  // A route behind the real /api gate (authenticateToken), the gate every
+  // business route sits behind: what a session opens, and whether logout ends it.
+  const { authenticateToken } = await import('../../server/middleware/auth');
+  app.get('/dbtsi/probe', authenticateToken, (req, res) => {
+    res.json({ userId: (req as { user?: { id?: unknown } }).user?.id ?? null });
   });
 
   // 4. One organisation, one member, as a creating transaction would write them.
@@ -314,6 +322,12 @@ describe('a sign-in reaches the audit trail under RLS', () => {
     expect(await auditRows('user_logout'), 'a forged token wrote into the organisation audit chain').toHaveLength(0);
   });
 
+  it('opens the API with the session /mfa/verify issued', async () => {
+    const res = await request(app).get('/dbtsi/probe').set('Authorization', `Bearer ${accessToken}`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(String(res.body.userId)).toBe(String(userId));
+  });
+
   it('records the end of a session the server issued, against its organisation', async () => {
     const res = await request(app).post('/api/auth/logout').set('Authorization', `Bearer ${accessToken}`).send({});
     expect(res.status).toBe(200);
@@ -321,6 +335,51 @@ describe('a sign-in reaches the audit trail under RLS', () => {
     const rows = await auditRows('user_logout');
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ record_id: String(userId), new_values: { outcome: 'success' } });
+  });
+
+  it('opens nothing once it is signed out (AUTH-03)', async () => {
+    // Logout answers "Tokens invalidated." It must be true of every door the
+    // token opened: the /api gate, the session check, the pre-gate routers, and
+    // the enterprise route that would mint a fresh token from it.
+    const bearer = { Authorization: `Bearer ${accessToken}` };
+    const probe = await request(app).get('/dbtsi/probe').set(bearer);
+    const session = await request(app).get('/api/auth/session').set(bearer);
+    const me = await request(app).get('/api/users/me').set(bearer);
+    const remint = await request(app).post('/api/auth/enterprise/select-organization').set(bearer).send({ organizationId: String(ORG) });
+    expect({
+      apiGate: probe.status,
+      sessionCheck: session.body?.authenticated === true ? 'signed in' : 'signed out',
+      usersMe: me.status,
+      reMint: remint.body?.token ? 'fresh token issued' : 'refused',
+    }).toEqual({ apiGate: 401, sessionCheck: 'signed out', usersMe: 401, reMint: 'refused' });
+  });
+
+  it('refuses a session another server signed out, which only the database can know', async () => {
+    // Behind a load balancer the logout lands on one instance and the next
+    // request on another, whose memory has never seen the token. Only the
+    // revoked_tokens lookup can refuse it, and under RLS_ENFORCE=on that lookup
+    // ran unscoped and was refused by the pool guard, silently.
+    const { activeJwtSecret } = await import('../../server/utils/jwtVerify');
+    const token = jwt.sign(
+      { userId: String(userId), email: EMAIL, organizationId: String(ORG), role: 'admin', type: 'access' },
+      activeJwtSecret(),
+      { algorithm: 'HS256', expiresIn: '5m' },
+    );
+    const before = await request(app).get('/dbtsi/probe').set('Authorization', `Bearer ${token}`);
+    expect(before.status, 'a fresh session must open the gate first').toBe(200);
+
+    // The other instance's revocation, as it reaches this one: a row, and nothing in memory.
+    const hash = createHash('sha256').update(token).digest('hex');
+    await owner.query(
+      `INSERT INTO revoked_tokens (token_hash, revoked_at, expires_at, reason) VALUES ($1, NOW(), NOW() + interval '1 hour', 'dbtsi')`,
+      [hash],
+    );
+    try {
+      const after = await request(app).get('/dbtsi/probe').set('Authorization', `Bearer ${token}`);
+      expect(after.status, 'a session signed out on another instance still opened the gate').toBe(401);
+    } finally {
+      await owner.query('DELETE FROM revoked_tokens WHERE token_hash = $1', [hash]);
+    }
   });
 });
 
@@ -412,8 +471,8 @@ describe('the enterprise sign-in reaches the same audit trail', () => {
 describe('no sign-in path skips the second factor', () => {
   it.each(['/api/users/login', '/api/user/login'])('%s asks for the code instead of issuing a session', async (path) => {
     const res = await request(app).post(path).send({ email: EMAIL, password: PASSWORD }).redirects(1);
-    expect(res.body.token, `${path} issued a session on the password alone`).toBeUndefined();
-    expect(res.body.accessToken).toBeUndefined();
+    // Booleans, so a failure never prints the token it caught.
+    expect(Boolean(res.body.token || res.body.accessToken), `${path} issued a session on the password alone`).toBe(false);
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ mfaRequired: true });
   });
@@ -424,7 +483,7 @@ describe('no sign-in path skips the second factor', () => {
       .post('/api/users/register')
       .send({ email, password: 'Dbtsi-Register-2026!', username: 'dbtsi' })
       .redirects(1);
-    expect(res.body.token, 'the legacy register issued a session for an account with no organisation').toBeUndefined();
+    expect(Boolean(res.body.token || res.body.accessToken), 'the legacy register issued a session for an account with no organisation').toBe(false);
     const { rows } = await owner.query(
       `SELECT u.id FROM users u
          LEFT JOIN organization_users m ON m.user_id = u.id

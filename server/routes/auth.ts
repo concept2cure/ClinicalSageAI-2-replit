@@ -15,6 +15,7 @@ import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { verifyLiveToken } from '../services/token-revocation';
 import { requireAccessTokenReason } from '../middleware/tokenType';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import {
@@ -209,7 +210,7 @@ router.get('/session', async (req: Request, res: Response) => {
     }
 
     // Verify JWT token
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       organizationId: string;
@@ -313,6 +314,13 @@ router.get('/session', async (req: Request, res: Response) => {
       tokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });
   } catch (error: any) {
+    if (error.name === 'SessionEndedError') {
+      // Signed out: the token is signed and unexpired, and its session is over (AUTH-03).
+      return res.status(401).json({
+        authenticated: false,
+        error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' },
+      });
+    }
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({
         authenticated: false,
@@ -1199,7 +1207,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       organizationId?: string;
@@ -1283,7 +1291,7 @@ router.get('/me', async (req: Request, res: Response) => {
       organizationName: meOrgName,
     });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         error: { code: 'AUTH_005', message: 'Session expired' },
       });
@@ -1531,7 +1539,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       type?: string;
@@ -1560,7 +1568,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('MFA setup error', { err: error?.message ?? String(error) });
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired token' },
@@ -1590,7 +1598,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       type?: string;
@@ -1636,7 +1644,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('MFA enable error', { err: error?.message ?? String(error) });
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired token' },
@@ -1665,7 +1673,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       type?: string;
@@ -1707,7 +1715,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('MFA disable error', { err: error?.message ?? String(error) });
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired token' },
@@ -1982,7 +1990,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       type?: string;
@@ -2099,7 +2107,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
       message: 'Password changed successfully',
     });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_005', message: 'Session expired' },
