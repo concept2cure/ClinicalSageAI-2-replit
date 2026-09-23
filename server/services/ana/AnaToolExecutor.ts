@@ -1012,6 +1012,7 @@ registerToolHandler('run_submission_premortem', async (input, ctx) => {
     //    an unavailable corpus degrades to n=0 honest output, never an error.
     let precedentCount = 0;
     let precedentCitations: Array<{ id: string; label: string; outcome: string }> = [];
+    let precedentQueryFailed: string | undefined;
     if (submissionType) {
       try {
         const { precedentEngine } = await import('../precedent-engine.js');
@@ -1025,8 +1026,10 @@ registerToolHandler('run_submission_premortem', async (input, ctx) => {
           label: r.clearanceNumber || r.deviceName || r.applicant || r.id,
           outcome: r.decisionOutcome,
         }));
-      } catch {
-        /* corpus unavailable — honest n=0 read */
+      } catch (err) {
+        // The corpus was not read — say so, rather than presenting n=0 as an
+        // empty corpus.
+        precedentQueryFailed = err instanceof Error ? err.message : String(err);
       }
     }
 
@@ -1036,6 +1039,7 @@ registerToolHandler('run_submission_premortem', async (input, ctx) => {
       precedentCitations,
       submissionType,
       agency,
+      precedentQueryFailed,
     });
 
     return JSON.stringify({
@@ -1109,6 +1113,7 @@ registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
     let precedentCount = 0;
     let precedentCitations: Array<{ id: string; label: string; outcome: string }> = [];
     let precedentOutcomes: Array<{ id: string; label: string; outcome: string }> = [];
+    let precedentQueryFailed: string | undefined;
     if (submissionType) {
       try {
         const { precedentEngine } = await import('../precedent-engine.js');
@@ -1125,8 +1130,9 @@ registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
           outcome: r.decisionOutcome,
         }));
         precedentCitations = precedentOutcomes.slice(0, 5);
-      } catch {
-        /* corpus unavailable — honest n=0 read (artifact: not_assessed) */
+      } catch (err) {
+        // Not read, not empty — see run_submission_premortem above.
+        precedentQueryFailed = err instanceof Error ? err.message : String(err);
       }
     }
 
@@ -1136,6 +1142,7 @@ registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
       precedentCitations,
       submissionType,
       agency,
+      precedentQueryFailed,
     });
 
     const artifact = assembleCrlPremortemArtifact({
@@ -6583,7 +6590,7 @@ registerToolHandler('lookup_regulatory_precedents', async (input, ctx) => {
   }
 });
 
-registerToolHandler('compare_submission_against_precedent', async (input) => {
+registerToolHandler('compare_submission_against_precedent', async (input, ctx) => {
   const precedentId = input.precedent_id as string;
   const submissionType = input.submission_type as string;
   if (!precedentId || !submissionType) {
@@ -6605,7 +6612,8 @@ registerToolHandler('compare_submission_against_precedent', async (input) => {
         testingApproach: input.testing_approach as string | undefined,
         predicateDevice: input.predicate_device as string | undefined,
       },
-      precedentId
+      precedentId,
+      ctx?.organizationId ?? undefined
     );
     return JSON.stringify(comparison);
   } catch (err: any) {

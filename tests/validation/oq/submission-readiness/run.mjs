@@ -228,18 +228,41 @@ await step(
   {
     id: 'OQ-SRDY-06',
     urs: ['URS-SRDY-006'],
-    title: 'Contradiction (inconsistency) scan for a project',
-    action: 'POST /api/governed-intelligence/contradictions/scan/1',
-    expected: 'HTTP 200 with a deterministic scan result (possibly zero findings)',
+    title: 'A contradiction scan never reports a project it cannot read as clean',
+    action:
+      'POST /api/governed-intelligence/contradictions/scan/<the program id>; POST /api/governed-intelligence/contradictions/scan/<a project id the organisation does not hold>',
+    expected:
+      'The program id (not a project id) is refused 400 and the id the organisation does not hold 404; neither answers 200 with findings',
+    dependsOn: ['OQ-SRDY-00'],
+    note: 'VSR-001 F-25. Until v0.5 this step scanned project 1 and passed on 200 with zero findings, in an organisation that holds no project 1: a clean result for a project nothing was read from. A program id arrived as NaN, which the registry searches read as "no project filter", so the scan read the whole organisation.',
   },
-  async ({ api, expect, deviation, deniedTables }) => {
-    const r = await api('POST', '/api/governed-intelligence/contradictions/scan/1', {});
-    const needed = ['public.assumption_records', 'public.contradiction_links', 'public.decision_records'].filter((t) => deniedTables().includes(t));
-    if (r.status === 500 && needed.length) {
-      deviation(`IQ-DEV-001: ${needed.join(', ')} are listed as unreadable by the runtime role in IQ-07 (IQ/db-role-denied-tables.json); the scan answers 500. Re-execute after the grant is applied.`, r.json);
+  async ({ api, expect }) => {
+    const program = await api('POST', `/api/governed-intelligence/contradictions/scan/${state.programId}`, {});
+    const unheld = await api('POST', '/api/governed-intelligence/contradictions/scan/2147480000', {});
+    const clean = (r) => r.status === 200 && Array.isArray(r.json?.findings);
+    expect(!clean(program) && program.status === 400, `the scan of program ${state.programId} answered ${program.status}${clean(program) ? ` with ${program.json.findings.length} finding(s)` : ''}`, program.json);
+    expect(!clean(unheld) && unheld.status === 404, `the scan of a project the organisation does not hold answered ${unheld.status}${clean(unheld) ? ` with ${unheld.json.findings.length} finding(s)` : ''}`, unheld.json);
+    return `program id refused ${program.status}: ${program.json?.error}; unheld project refused ${unheld.status}: ${unheld.json?.error}`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-SRDY-06b',
+    urs: ['URS-SRDY-006'],
+    title: 'A contradiction scan of the program\'s project runs',
+    action: 'When intake anchored the program to a project (meta.projectAnchorId): POST /api/governed-intelligence/contradictions/scan/<the anchored project>',
+    expected: 'HTTP 200 with a deterministic result (possibly zero findings). A program intake did not anchor is a deviation naming the reason intake gave',
+    dependsOn: ['OQ-SRDY-00'],
+  },
+  async ({ api, expect, deviation }) => {
+    if (state.projectAnchorId == null) {
+      const reason = [state.projectAnchorSkipped, state.projectAnchorDetail].filter(Boolean).join(': ');
+      deviation(`intake did not anchor program ${state.programId} to a project (${reason || 'no reason given'}). The scan reads projects, so there is no project it can scan for this program`);
     }
-    expect(r.status === 200, `expected 200, got ${r.status}`, r.json);
-    return JSON.stringify(r.json).slice(0, 240);
+    const r = await api('POST', `/api/governed-intelligence/contradictions/scan/${state.projectAnchorId}`, {});
+    expect(r.status === 200 && Array.isArray(r.json?.findings), `expected 200 with findings, got ${r.status}`, r.json);
+    return `project ${state.projectAnchorId}: ${r.json.summary?.total ?? r.json.findings.length} finding(s)`;
   },
 );
 
@@ -265,20 +288,32 @@ await step(
 await step(
   {
     id: 'OQ-SRDY-08',
-    kind: 'ad-hoc',
     urs: ['URS-SRDY-008'],
-    title: 'Orchestration and Inconsistency surfaces render',
-    action: 'Open /concept2cure/orchestration and /concept2cure/inconsistency',
-    expected: 'Both render (screenshots); an unavailable store is shown as an error/empty state, never as data',
-    dependsOn: ['OQ-SRDY-00'],
+    title: 'The Orchestration and Inconsistency boards are not in this release',
+    action: 'GET /api/module-subscriptions/navigation; open /concept2cure/orchestration and /concept2cure/inconsistency',
+    expected:
+      'launchScope.enforced=true; "orchestration" and "inconsistency" are not entitled, source "launch-scope", while "dispatch-readiness" is entitled; each deep link explains the board is not in this release',
+    note: 'OQ-005 v0.5. Until then this ad-hoc step rendered both boards. In every organisation signup creates, the Orchestration board found no program and the Inconsistency board refused the program\'s id: both read the integer project spine, which a program reaches only through an anchor signup never creates (VSR-001 §14.3; decided §15).',
   },
   async (ctx) => {
+    const { api, expect } = ctx;
+    const nav = await api('GET', '/api/module-subscriptions/navigation');
+    expect(nav.status === 200, `expected 200, got ${nav.status}`, nav.json);
+    expect(nav.json?.launchScope?.enforced === true, 'launchScope.enforced is not true', nav.json?.launchScope);
+    const arr = Object.values(nav.json ?? {}).find((v) => Array.isArray(v) && v.some((x) => x && typeof x === 'object' && 'entitled' in x)) ?? [];
+    const byId = Object.fromEntries(arr.map((v) => [v.id, v]));
+    for (const id of ['orchestration', 'inconsistency']) {
+      expect(byId[id]?.entitled === false && byId[id]?.source === 'launch-scope', `${id} is not locked by launch-scope`, byId[id]);
+    }
+    expect(byId['dispatch-readiness']?.entitled === true, 'dispatch-readiness is not entitled', byId['dispatch-readiness']);
     await ctx.newPage({ id: state.programId, name: state.programName });
     await ctx.goto('/concept2cure/orchestration');
+    await ctx.expectText(/not in this release/i);
     await ctx.screenshot('orchestration');
     await ctx.goto('/concept2cure/inconsistency');
+    await ctx.expectText(/not in this release/i);
     await ctx.screenshot('inconsistency');
-    return 'rendered';
+    return 'orchestration and inconsistency locked by launch-scope; dispatch-readiness entitled; both deep links show the launch-scope gate';
   },
 );
 

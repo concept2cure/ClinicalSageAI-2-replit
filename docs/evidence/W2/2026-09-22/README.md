@@ -38,13 +38,11 @@ blocks new instances, and fixes or records every existing one it found.
 | `server/services/csr-extractor-service.ts` read `csr_reports.nctrial_id/drug_name/file_path` and updated `csr_details.processed` (42703 at its first statement) | Deleted with its confidence-scores test and mapping template. Earlier notes called it "not a deletion candidate" because the test guards against fabricated confidence numbers; the guarded code could not run (no caller, absent from the production bundle, 42703 first), so guard and guarded code leave together and no path can emit a confidence figure. Canonical path: `csr-intelligence-library.ts` via `POST /api/corpus/extract` | production build + `ci:check-bundle-reachability` green; typecheck 0 |
 | `unifiedDocumentIngestion.js` `searchDocuments` read `unified_documents.text_content` (42703) | Deleted with `getProcessingStats` and the unused pool import; never user-facing. Canonical document search: `GET /api/c2c/project-vault/:id/search` (`server/routes/c2c/project-vault.ts`) | same |
 
-## Recorded, not yet fixed — each with a written reason in its baseline
+| The 16 tables read only from `.js` files that exist on no provisioned database | All seven files deleted after adversarial triage (investigator + reachability + resolution skeptic each, 27 agents): `routes/content-plan.js` and `routes/smart-blocks.js` (mounted, no caller since 7a144fd1e, 500 or fabricated content), `hooks/refModel.js`, `events/eventBus.js` (+ its only other import `lib/db.js`, the ancestor shadow of the governed pool), `services/enhancedFaersService.js` (+ `drugClassService.js`, `sql/faers_schema.sql`), `services/semanticSearch.js` + `pipelines/{indexDocs,bulk_import}.js`, `api/enterprise/rbac-routes.js` (+ the `/rbac/*` block of `enterprise/routes.js` and the now-unused `auditService.js` shim). Replacements named by path in the commit. Every baseline entry they held removed by hand: live-schema 58 → 42, table-reachability 1 → 0, unkeyed-request-tables −3, unreferenced-modules −6, gateway-bypass −1, server-error-leaks −3, referenced-tables −1 | `table-gate-roles-red-first.txt` (the table guard fails on `roles` with its entry removed, passes after the deletion); `ci:tables-live-schema` on the reference DB: 42 baselined, no stale entries |
+| **Precedent search could only ever answer "none".** `precedent.regulatory_precedents.organization_id` was added only by `db/migrations/20260617_precedent_org_isolation.sql`, on no applier, so every corpus query raised 42703; a catch turned it into `[]`, and the board told users "your organization's corpus has none". (The column guard could not see this: the column lives in a relation-less fragment spliced in as `${whereClause}`.) | The file is wired directly after its creator and amended in place to carry its RLS policy: public rows readable by all; under enforcement a tenant writes only its own rows. The engine lets a failed corpus read surface; compare-by-id, strategy and claim-check now apply tenant isolation (compare bypassed it); ingest stamps and requires the ingesting org; the outcome ingestor stamps the sponsor's org and mints nothing it cannot attribute — a sponsor's outcomes never land in the public corpus by default. Pre-mortems say "corpus could not be read" instead of "populate the corpus" | `precedent-rls-coverage-red-first.txt` (CI's RLS coverage check names the table without the policy, clean with it); `precedent-tenant-isolation-real-db.txt` (as the app role with enforcement on: tenant 7 sees public + its own, not tenant 9's; public and cross-tenant writes refused; the real engine reads the corpus without error); a fixture that rejected every query — and so encoded the swallow — replaced, with a test that fails when the swallow is restored |
 
-Two triage workflows (reachability + resolution-safety skeptic per item) are
-verifying these; each entry is removed when its fix lands.
+## Recorded, not fixed — with a written reason in its baseline
 
-- 16 absent tables read from `.js` files → `tables-live-schema-baseline.json`
-  (`newlyVisible_2026_09_22`), `roles` also in `migration-reachability-baseline.json`.
 - `ich-compliance-checker.ts` → `column-reachability-baseline.json`, decided:
   it fails honestly (Q2 not evaluated, overall "incomplete"). The obvious rewrite
   onto `cmc_source_objects` was refuted by two skeptics — it would fabricate
@@ -60,3 +58,20 @@ two guard contracts, submission-core reachability, unified-ingestion convergence
 and the MDX route contract; `npm run typecheck` 0 errors (after installing the two
 locked packages the local `node_modules` was missing); ESLint 0 errors on changed
 files.
+
+**Pre-existing reds, not from this work and not regenerated around:**
+`ci:unreferenced-modules` (server/eval/register/run-eval.ts,
+server/mcp/client-transcript.ts), `ci:unkeyed-request-tables`
+(mcp_oauth_clients, c2c_document_section_versions), `ci:server-error-leaks`
+(server/routes/c2c/actions.ts), `db/audit-referenced-tables --check` (parser
+phantoms). Each is red identically on the tree without these changes;
+regenerating any of those baselines would have absorbed another session's
+finding.
+
+**Founder decision owed before deploying the precedent change.** Until now the
+ingest route wrote precedents with no organization. Any such rows already in
+production become `organization_id IS NULL` — public to every tenant — once the
+column exists (as they were before 2026-06, when no isolation existed). Their
+owner cannot be recovered (`created_by = 'system'`). Count them first:
+`SELECT source_type, count(*) FROM precedent.regulatory_precedents WHERE source_type IN ('Manual','outcome_ingestor') GROUP BY 1;`
+and decide whether they stay public or are removed.

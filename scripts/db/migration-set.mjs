@@ -831,11 +831,19 @@ export const C2C_MIGRATION_FILES = [
   // which the clearance-universe file creates — which is exactly why it failed
   // the earlier screen in isolation.
   //
-  // These tables carry NO tenant column, verified against the live instance: the
-  // FDA 510(k) clearance universe and regulatory precedents are public reference
-  // data every tenant reads, so the isolation sweep correctly leaves them alone.
+  // The FDA 510(k) clearance universe carries NO tenant column: public reference
+  // data every tenant reads, so the isolation sweep correctly leaves it alone.
+  // precedent.regulatory_precedents carries a NULLABLE organization_id (NULL =
+  // public precedent, else private to that org), added and policied by the
+  // 20260617 file directly below.
   'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
   'db/migrations/20260306_precedent_engine.sql',
+  // Wired 2026-09-22, and it must follow its creator: before 20260306 its
+  // IF EXISTS guard would no-op on a blank database and the column would arrive
+  // only on the SECOND deploy. It was on no applier until then, so every corpus
+  // search raised 42703 (`column "organization_id" does not exist`) on every
+  // database, swallowed to [] — precedent search could only ever answer "none".
+  'db/migrations/20260617_precedent_org_isolation.sql',
   'db/migrations/20260208_phase6_6a_risk_rollups.sql',
 
   // ── C-38: the three identity collisions, reconciled to canonical ─────────

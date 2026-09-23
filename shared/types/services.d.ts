@@ -185,9 +185,3 @@ declare module '*/cmcBlueprintService.js' {
   export default cmcBlueprintService;
 }
 
-declare module '*/enhancedFaersService.js' {
-  export class EnhancedFAERSClient {
-    constructor();
-  }
-  export function fetchFaersAnalysis(...args: any[]): Promise<any>;
-}

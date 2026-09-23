@@ -21,11 +21,11 @@ export * as csr from './csr';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI SERVICES
-// `export * as openaiService from './openai-service'` was here. That module
+// An `openaiService` namespace re-export of services/openai-service was here. That module
 // constructed a provider SDK client of its own, while the root
 // `server/openai-service.ts` routes every completion through getGateway().
 // Both exported `generateStructuredResponse` and `analyzeText`, so which
-// governance a `from './openai-service'` import received was decided by how
+// governance an import of `openai-service` received was decided by how
 // deep in the tree the importing file sat — one character, `./` vs `../`,
 // between an audited call and an unaudited one. The module is deleted.
 //
@@ -68,12 +68,6 @@ export { default as sapGeneratorService } from './sap-generator-service';
 
 export { MonteCarloService as monteCarloService } from './monte-carlo-service';
 export { default as reportGeneratorService } from './report-generator-service';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// DATA SERVICES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export * from './enhancedFaersService.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INFRASTRUCTURE SERVICES
