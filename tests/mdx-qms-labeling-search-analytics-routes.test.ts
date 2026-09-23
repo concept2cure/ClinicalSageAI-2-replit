@@ -32,9 +32,18 @@ vi.mock('../server/db', () => ({
   getPool: () => ({ query: (...args: unknown[]) => queryFn(...args) }),
   db: {},
 }));
-vi.mock('../server/services/ana-ri/governed-action-signoff', () => ({
-  defaultSignoffDeps: {},
-  verifySignerCredentials: (_deps: unknown, input: unknown) => S.verify(input),
+// The signing ceremony runs for real; only its wiring is an account whose
+// password verifies and which has no second factor enrolled.
+vi.mock('../server/services/part11/reverify-signer-deps', () => ({
+  signerReverificationDeps: () => ({
+    loadPasswordHash: async () => 'stored-hash',
+    comparePassword: async () => S.verify(),
+    isMfaEnabled: async () => false,
+    verifyMfaToken: async () => false,
+    isAccountLocked: async () => false,
+    recordFailedAttempt: async () => {},
+    warn: () => {},
+  }),
 }));
 vi.mock('../server/services/part11/resolve-signer-role', () => ({
   resolveSignerOrgRole: (...args: unknown[]) => S.role(...args),
@@ -74,7 +83,7 @@ beforeEach(() => {
   // Unscripted transactions (e.g. the tamper-proof audit writer behind other
   // routes) fail loudly rather than fake-succeed against an empty stub.
   S.txQuery.mockReset().mockRejectedValue(new Error('no transaction scripted for this test'));
-  S.verify.mockReset().mockResolvedValue({ verified: true, secondFactorVerified: false });
+  S.verify.mockReset().mockResolvedValue(true);
   S.role.mockReset().mockResolvedValue('admin');
   S.recordGoverned.mockReset().mockResolvedValue({ actionId: 'act_1', auditId: 'aud-1', sha256Chain: 'chain-1' });
   S.persistSignature.mockReset().mockResolvedValue({ id: 501, signedAt: new Date('2026-05-19T10:00:00.000Z') });
