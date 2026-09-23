@@ -151,6 +151,10 @@ CREATE TABLE IF NOT EXISTS ectd_sequences (
 CREATE TABLE IF NOT EXISTS submission_leaves (
   id serial PRIMARY KEY, sequence_id integer NOT NULL, section_code text NOT NULL,
   lifecycle_op text NOT NULL DEFAULT 'new', document_table text, document_id integer,
+  -- document_uuid (migrations/20260917b_submission_leaf_document_uuid.sql) and
+  -- document_content_sha256 (migrations/20260814e_submission_leaf_source_pin.sql):
+  -- the leaf-manifest digest the sign binds now reads both.
+  document_uuid uuid, document_content_sha256 text,
   checksum text, title text NOT NULL, organization_id integer NOT NULL,
   deleted_at timestamptz
 );`;

@@ -688,7 +688,15 @@ function makeHandler(command: Command) {
       if (err instanceof SeparationOfDutiesUnverifiedError) {
         // The check did not run, which is not the same as the check refusing.
         // 503, not 403: the user is not the problem, and a retry may succeed.
-        return res.status(503).json({ error: err.code, detail: err.message });
+        // The error's own message carries the failed lookup's cause, which is
+        // internal; it goes to the log, and the caller gets an authored
+        // sentence (ci:server-error-leaks, 2026-09-23).
+        console.error(`[c2c/actions/${command}]`, err.message);
+        return res.status(503).json({
+          error: err.code,
+          detail:
+            'Separation of duties could not be verified, so nothing was signed. Try again; if this continues, contact your administrator.',
+        });
       }
       if (err instanceof SignatureRevocationUnresolvedError) {
         // Nothing was written (the transaction rolled back). Say so plainly
@@ -729,8 +737,14 @@ router.get('/verify-chain', async (req: Request, res: Response) => {
     return res.status(result.ok ? 200 : 409).json(result);
   } catch (err: any) {
     if (err instanceof AuditChainPartialViewError || err instanceof AuditChainSchemaMissingError) {
-      // The chain could not be verified — say so; never an empty "ok".
-      return res.status(503).json({ error: err.code, detail: err.message });
+      // The chain could not be verified — say so; never an empty "ok". The
+      // error's message names a migration and a database setting, so it goes
+      // to the log, not the body (ci:server-error-leaks, 2026-09-23).
+      console.error('[c2c/actions/verify-chain]', err.message);
+      return res.status(503).json({
+        error: err.code,
+        detail: 'The audit chain could not be verified, so no result is given.',
+      });
     }
     console.error('[c2c/actions/verify-chain]', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });

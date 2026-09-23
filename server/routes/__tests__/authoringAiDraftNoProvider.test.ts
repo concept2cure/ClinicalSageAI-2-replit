@@ -26,6 +26,11 @@ const { mockQuery, getGateway, getEmbeddingService, gatewayErrors } = vi.hoisted
      classes from that same module — so the classes the route matches with
      `instanceof` are these, and the ones the tests throw must be these too. */
   class GatewayPolicyError extends Error {}
+  /* gateway-error-map.ts tests `instanceof ModelNotApprovedError` (added with
+     the high-risk model-approval gate, 5b0e5be) before its GatewayPolicyError
+     branch. Without it on the mock that check throws, and every classified
+     gateway refusal became a 500 — the mock was stale, not the route. */
+  class ModelNotApprovedError extends GatewayPolicyError {}
   class GatewayAbortedError extends Error {}
   class GatewayNoProviderError extends Error {}
   class GatewayAllProvidersFailedError extends Error {}
@@ -35,6 +40,7 @@ const { mockQuery, getGateway, getEmbeddingService, gatewayErrors } = vi.hoisted
     getEmbeddingService: vi.fn(() => ({ searchHybrid: async () => [] as unknown[] })),
     gatewayErrors: {
       GatewayPolicyError,
+      ModelNotApprovedError,
       GatewayAbortedError,
       GatewayNoProviderError,
       GatewayAllProvidersFailedError,

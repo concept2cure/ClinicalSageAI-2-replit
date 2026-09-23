@@ -550,7 +550,7 @@ export async function consumeInterjections(pool: Pool, runId: string): Promise<s
 }
 
 /** Notify other instances, and drive this one immediately. */
-async function notifyAndDrive(pool: Pool, runId: string, status: RunStatus): Promise<void> {
+async function notifyAndDrive(pool: RunControlQuery, runId: string, status: RunStatus): Promise<void> {
   // Same-instance first: almost all control is local, and waiting for the
   // round-trip would add latency to the common case for no reason.
   driveLocalRun(runId, status);
@@ -765,9 +765,19 @@ export async function requestApproval(
   return true;
 }
 
+/**
+ * The one method the approval helpers below use. A Pool satisfies it, and so
+ * does the request-scoped client (db/requestDb requestPgClient) — which is what
+ * the governed-action route passes, so the read and the release run on the
+ * caller's own tenant-scoped connection.
+ */
+export interface RunControlQuery {
+  query(text: string, params?: unknown[]): Promise<{ rows: any[]; rowCount?: number | null }>;
+}
+
 /** What the run is currently waiting on, if anything. */
 export async function readPendingApproval(
-  pool: Pool,
+  pool: RunControlQuery,
   runId: string,
   organizationId: number,
 ): Promise<PendingToolApproval | null> {
@@ -789,7 +799,7 @@ export async function readPendingApproval(
  * exists to make impossible.
  */
 export async function recordApprovalDecision(
-  pool: Pool,
+  pool: RunControlQuery,
   runId: string,
   decision: ApprovalDecision,
 ): Promise<boolean> {
