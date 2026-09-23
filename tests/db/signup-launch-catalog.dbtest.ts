@@ -61,6 +61,12 @@ import {
   isLaunchSurface,
 } from '../../shared/constants/launch-scope';
 import {
+  drizzleWorkspaceStore,
+  ensureOrganizationDefaultWorkspace,
+  poolClientWorkspaceStore,
+} from '../../server/services/c2c/organization-default-workspace';
+import { seedOrganizations } from '../../server/db/bootstrap/seed-default-org';
+import {
   pathwaysForUseCases,
   primaryIndustryForIndustryMode,
 } from '../../server/services/industry-context/signup-profile';
@@ -77,6 +83,8 @@ const ORG_MAX = 91749;
 const ORG_SETUP_SCOPE = 91701;
 /** Provisioned under the pre-auth scope: the loud-failure proof. */
 const ORG_LOUD = 91702;
+/** Given its workspace under the pre-auth scope: the writer's own tenant step. */
+const ORG_PREAUTH_WS = 91703;
 
 const TAG = 'dbtsu';
 const RUN = `${process.pid}_${Date.now().toString(36)}`;
@@ -160,6 +168,9 @@ async function cleanup(): Promise<void> {
     await owner.query('DELETE FROM module_subscriptions WHERE organization_id = ANY($1::int[])', [ids]);
     await owner.query('DELETE FROM organization_industry_profiles WHERE organization_id = ANY($1::int[])', [ids]);
     await owner.query('DELETE FROM organization_users WHERE organization_id = ANY($1::int[])', [ids]);
+    // Before users: client_workspaces.created_by_id references users(id) with
+    // no ON DELETE, so the signup's workspace pins its user until it is gone.
+    await owner.query('DELETE FROM client_workspaces WHERE organization_id = ANY($1::int[])', [ids]);
   }
   await owner.query(`DELETE FROM users WHERE email LIKE $1`, [`${TAG}-%@example.invalid`]);
   if (ids.length > 0) {
@@ -240,7 +251,7 @@ beforeAll(async () => {
   });
 
   // 5. Orgs this file inserts itself, as the owner (how a creating transaction would).
-  for (const id of [ORG_SETUP_SCOPE, ORG_LOUD]) {
+  for (const id of [ORG_SETUP_SCOPE, ORG_LOUD, ORG_PREAUTH_WS]) {
     await owner.query(
       `INSERT INTO organizations (id, name, slug, tier, industry_mode, status)
        VALUES ($1, $2, $2, 'free', 'biotech', 'active')`,
@@ -288,13 +299,15 @@ describe('posture — the connection and the policies are production\'s', () => 
     expect(rows).toEqual([{ role: runtimeRole, superuser: false, rolbypassrls: false, enforcement: 'on' }]);
   });
 
-  it('module_subscriptions and organization_industry_profiles are RLS-enabled and FORCED', async () => {
+  it('client_workspaces, module_subscriptions and organization_industry_profiles are RLS-enabled and FORCED', async () => {
     const { rows } = await owner.query(
       `SELECT relname, relrowsecurity, relforcerowsecurity FROM pg_class
-        WHERE oid IN ('public.module_subscriptions'::regclass, 'public.organization_industry_profiles'::regclass)
+        WHERE oid IN ('public.module_subscriptions'::regclass, 'public.organization_industry_profiles'::regclass,
+                      'public.client_workspaces'::regclass)
         ORDER BY relname`,
     );
     expect(rows).toEqual([
+      { relname: 'client_workspaces', relrowsecurity: true, relforcerowsecurity: true },
       { relname: 'module_subscriptions', relrowsecurity: true, relforcerowsecurity: true },
       { relname: 'organization_industry_profiles', relrowsecurity: true, relforcerowsecurity: true },
     ]);
@@ -379,6 +392,25 @@ describe('D2 via POST /api/auth/signup — the self-serve path, end to end', () 
     expect(pathwaysForUseCases(SIGNUP.primaryUseCases)).toEqual(['510k', 'ind']);
   });
 
+  it('gives the new organisation exactly one client workspace — its own, created by the signing-up user', async () => {
+    const { rows } = await owner.query(
+      `SELECT organization_id, name, slug, status, created_by_id,
+              metadata->>'defaultForOrganization' AS marker
+         FROM client_workspaces WHERE organization_id = $1`,
+      [orgId],
+    );
+    expect(rows).toEqual([
+      {
+        organization_id: orgId,
+        name: SIGNUP.companyName,
+        slug: `${TAG}-signup-${RUN.replace(/_/g, '-')}`,
+        status: 'active',
+        created_by_id: userId,
+        marker: 'true',
+      },
+    ]);
+  });
+
   it('logs no launch-provisioning error for the new organisation', () => {
     expect(launchErrors).toEqual([]);
   });
@@ -453,6 +485,163 @@ describe('D2 via /api/setup — the first-run path, under the scope its mount ap
     expect(out.body.failed).toEqual([]);
     expect(loggedSince(errorSpy, errMark, '[launch-scope]')).toEqual([]);
     expect(launchGrantGaps(await grantRows(ORG_SETUP_SCOPE))).toEqual(NO_GAPS);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+describe('the organisation\'s own workspace, under each creator\'s scope', () => {
+  /*
+   * setup.ts and the boot seed cannot be driven end to end on a shared
+   * database (setup answers 409 once any user exists; the seed owns the
+   * platform's two organisations). What differs between the creators is the
+   * scope their transaction arrives in, so the writer is driven in each.
+   */
+  const workspacesOf = async (orgId: number) =>
+    (
+      await owner.query(
+        `SELECT metadata->>'defaultForOrganization' AS marker, created_by_id
+           FROM client_workspaces WHERE organization_id = $1`,
+        [orgId],
+      )
+    ).rows;
+
+  it('first-run setup: the system scope its mount applies', async () => {
+    const probe = express();
+    probe.post('/api/setup/__dbtsu_ws_probe', establish.establishRequestSystemScope, async (_req, res, next) => {
+      try {
+        const result = await runtime.getDb().transaction((tx) =>
+          ensureOrganizationDefaultWorkspace(drizzleWorkspaceStore(tx), {
+            orgId: ORG_SETUP_SCOPE,
+            orgName: `${TAG}-${ORG_SETUP_SCOPE}-${RUN}`,
+            userId: null,
+          }),
+        );
+        res.json(result);
+      } catch (err) {
+        next(err);
+      }
+    });
+    const out = await request(probe).post('/api/setup/__dbtsu_ws_probe');
+    expect(out.status, out.text).toBe(200);
+    expect(out.body.created).toBe(true);
+    expect(await workspacesOf(ORG_SETUP_SCOPE)).toEqual([{ marker: 'true', created_by_id: null }]);
+  });
+
+  it('the pre-auth scope (tenant 0, no role): the writer stands on the organisation\'s own tenant, and it does not outlive the transaction', async () => {
+    const outcome = await runWithPreAuthScope('dbtsu:workspace-writer', async () => {
+      const client = await runtime.getPool().connect();
+      try {
+        await client.query('BEGIN');
+        const before = (await client.query(`SELECT current_setting('app.current_tenant_id', true) AS t`)).rows[0].t;
+        const result = await ensureOrganizationDefaultWorkspace(poolClientWorkspaceStore(client), {
+          orgId: ORG_PREAUTH_WS,
+          orgName: `${TAG}-${ORG_PREAUTH_WS}-${RUN}`,
+          userId: null,
+        });
+        const inside = (await client.query(`SELECT current_setting('app.current_tenant_id', true) AS t`)).rows[0].t;
+        await client.query('COMMIT');
+        // Same physical connection, no transaction: the LOCAL setting is gone.
+        const after = (await client.query(`SELECT current_setting('app.current_tenant_id', true) AS t`)).rows[0].t;
+        return { before, created: result.created, inside, after: after ?? '' };
+      } finally {
+        client.release();
+      }
+    });
+    expect(outcome).toEqual({ before: '0', created: true, inside: String(ORG_PREAUTH_WS), after: '' });
+    expect(await workspacesOf(ORG_PREAUTH_WS)).toEqual([{ marker: 'true', created_by_id: null }]);
+  });
+
+  it('the boot seed: its PoolClient under enforcement, run twice, writes one workspace per seeded organisation', async () => {
+    const url = new URL(process.env.APP_DATABASE_URL!);
+    const rt = new Pool({ connectionString: url.toString(), max: 1, options: '-c app.rls_enforce=on' });
+    const client = await rt.connect();
+    try {
+      await client.query('BEGIN');
+      const posture = (
+        await client.query(`SELECT current_user AS role, current_setting('app.rls_enforce', true) AS enforcement`)
+      ).rows[0];
+      expect(posture).toEqual({ role: runtimeRole, enforcement: 'on' });
+      await seedOrganizations(client);
+      await seedOrganizations(client);
+      // Read back as the owner would see it, from inside the same transaction:
+      // enforcement off for the read only, so RLS cannot hide a second row.
+      await client.query(`SELECT set_config('app.rls_enforce', 'off', true)`);
+      const { rows } = await client.query(
+        `SELECT o.slug, count(w.id)::int AS workspaces,
+                count(*) FILTER (WHERE w.metadata->>'defaultForOrganization' = 'true')::int AS marked
+           FROM organizations o LEFT JOIN client_workspaces w ON w.organization_id = o.id
+          WHERE o.slug IN ('default', 'concept2cure') GROUP BY o.slug ORDER BY o.slug`,
+      );
+      expect(rows).toEqual([
+        { slug: 'concept2cure', workspaces: 1, marked: 1 },
+        { slug: 'default', workspaces: 1, marked: 1 },
+      ]);
+    } finally {
+      await client.query('ROLLBACK').catch(() => {});
+      client.release();
+      await rt.end();
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+describe('a refused workspace write takes the whole organisation with it', () => {
+  /*
+   * The workspace is written INSIDE the signup transaction because
+   * projects.client_workspace_id is NOT NULL: an organisation committed without
+   * it is the NO_CLIENT_WORKSPACE state the writer exists to end. So a refusal
+   * of that one statement must cost the organisation, the user and the
+   * membership too, and answer 500 — never 201.
+   *
+   * The refusal is injected on THIS lane's own runtime role only (no other lane
+   * connects as it), at exactly the statement under test: INSERT privilege on
+   * client_workspaces, restored in `finally`.
+   */
+  const REFUSED = {
+    ...SIGNUP,
+    email: `${TAG}-refused-${RUN}@example.invalid`,
+    companyName: `${TAG} refused ${RUN}`,
+  };
+  const refusedSlug = `${TAG}-refused-${RUN.replace(/_/g, '-')}`;
+
+  async function acl(sqlText: string) {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await owner.query(sqlText);
+        return;
+      } catch (err) {
+        if (attempt >= 5 || !/tuple concurrently updated/.test((err as Error).message)) throw err;
+        await new Promise((r) => setTimeout(r, 250 * attempt));
+      }
+    }
+  }
+
+  it('answers 500 AUTH_010 and leaves no organisation, user, membership or workspace behind', async () => {
+    const errMark = errorSpy.mock.calls.length;
+    await acl(`REVOKE INSERT ON client_workspaces FROM ${runtimeRole}`);
+    let res: request.Response;
+    try {
+      res = await request(app).post('/api/auth/signup').send(REFUSED);
+    } finally {
+      await acl(`GRANT INSERT ON client_workspaces TO ${runtimeRole}`);
+    }
+    expect(res.status, JSON.stringify(res.body)).toBe(500);
+    expect(res.body.error?.code).toBe('AUTH_010');
+    // It was the workspace statement that was refused, not something before it.
+    const logged = loggedSince(errorSpy, errMark, 'Signup error').map((e) => JSON.stringify(e.context));
+    expect(logged.length).toBe(1);
+    expect(logged[0]).toContain('client_workspaces');
+
+    const { rows } = await owner.query(
+      `SELECT
+         (SELECT count(*)::int FROM organizations WHERE slug LIKE $1) AS organizations,
+         (SELECT count(*)::int FROM users WHERE email = $2) AS users,
+         (SELECT count(*)::int FROM organization_users ou JOIN organizations o ON o.id = ou.organization_id
+           WHERE o.slug LIKE $1) AS memberships,
+         (SELECT count(*)::int FROM client_workspaces WHERE slug LIKE $1) AS workspaces`,
+      [`${refusedSlug}%`, REFUSED.email],
+    );
+    expect(rows).toEqual([{ organizations: 0, users: 0, memberships: 0, workspaces: 0 }]);
   });
 });
 
