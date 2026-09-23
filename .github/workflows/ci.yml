@@ -317,6 +317,16 @@ jobs:
           npm run ci:pq-evaluation-callers:selftest
           npm run ci:pq-evaluation-callers
 
+      # A pin to a model not approved for high-risk work serves any request that
+      # is not declared high-risk, whatever it drafts. Every such pin in server
+      # code is listed with the reason it is safe; a new one, or one removed
+      # without tightening the list, fails.
+      - name: Guardrails — no new pin to an unapproved model (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: |
+          npm run ci:unapproved-model-pins:selftest
+          npm run ci:unapproved-model-pins
+
       - name: Guardrails — validation traceability resolves (with selftest)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: |

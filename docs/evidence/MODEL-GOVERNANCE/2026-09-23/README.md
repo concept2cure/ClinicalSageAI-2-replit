@@ -239,6 +239,64 @@ caught and one equivalent, with the reason given. The broad suite is in
 that failure (a stale test mock met a new `instanceof`); it was fixed and the
 file re-run.
 
+## 9. The sweep's blind spots, and the gate that closes the list
+
+The section-8 grep searched `.ts` files only, and only literal pins. The CI
+gate built next scans `.js` too. On its first run against the repo it failed on
+43 pins in 9 files that the sweep had never seen (`after/pin-gate-first-run.txt`).
+Extending it to `x || 'model'` defaults found 8 more in 6 files. Both sets were
+classified the same way, one agent each plus a refuter (30 agents), and
+appended to `after/pin-sweep-classification.md`. Governed and fixed:
+
+- **Sentence traceability** (`evidence_links`, and the report sealed into the
+  Part 11 audit chain):
+  - Now `regulatory_review`.
+  - A model "excerpt" is stored only if it is verbatim in the source. The
+    model's composed quotation used to be preferred and persisted.
+  - A missing or unknown link type is `references`. It used to default to
+    `supports`.
+  - A sentence the reply skipped is reported unsupported. It used to be left
+    out, so a partial reply produced a clean report.
+  - Keyword fallback never counts as support.
+- **Claim verification** (`confidenceScoringEngine`): now `regulatory_review`.
+  An unreadable reply is a skipped check, not "partially supported (0%)". A
+  skipped source match can no longer leave a claim "verified".
+- **Auto-extraction:** transcribed tables are `document_drafting` and document
+  classification is `regulatory_review`. A failure fails the job; it used to be
+  recorded as "0 tables" or `documentType: 'Other'`.
+- **Figure generation:** it refuses without source data. It used to ask the
+  model for "a representative template", so it invented Kaplan-Meier curves and
+  CONSORT counts, stored them as artifacts, and export included them. It is
+  `document_drafting`, records the served model, and the placeholder figure
+  stored without an OpenAI key is gone. The route answers a refusal as 422; it
+  used to wrap it in `success: true`.
+- **CMC** (`global-compliance`, `preclinical-translator`,
+  `change-impact-simulator`, `document-generator`): every call declares its
+  task. Several read `.choices[0].message.content`, a shape the unified client
+  does not return, so they threw on every request; they now read `.content`.
+- **IND copilot** (governed, but no path reaches its model calls today): every
+  call declares its task, and the served model is recorded instead of
+  `options.model || 'gpt-4o'`. `checkFDACompliance` read an undefined name, so
+  every check failed with score 0; that is fixed.
+
+**The gate:** `scripts/ci/check-unapproved-model-pins.mjs` runs in CI with its
+self-test (14 cases). A new pin fails. A removed pin also fails until the
+baseline is tightened, so a pin cannot be quietly regained. A baseline entry
+with no written reason fails. The 54 remaining pins are each listed with their
+reason in `scripts/ci/unapproved-model-pins-baseline.json`.
+
+Mutations are in `after/mutations-batch3.txt`: 22, all caught. Three were caught
+only after the tests were strengthened, and that file explains why.
+
+Found on the way, for the owner:
+- In the test harness an auto-extraction job with valid replies was refused at
+  storage by the governed-document contract ("originSurface import_pipeline is
+  not allowed for documentClass evidence_memo"). If production behaves the
+  same, the pipeline can never complete. This needs checking against a real
+  database.
+- `audit-risk-monitor.js` returns 500 on every POST, but only after sending the
+  uploaded document to gpt-4o. It is baselined and listed for retirement.
+
 ## Gates run on the final tree
 
 - `tsc --noEmit -p tsconfig.json`: exit 0.
@@ -259,10 +317,13 @@ file re-run.
    Bedrock and Vertex "same weights" claim is unverified.
 4. **VMP-001 puts model PQ out of scope,** while the DoD owes it. One of the two
    documents has to change.
-5. **Explicit pins to unapproved models**: classified in section 8, and the
-   governed ones fixed. A ratchet on the remaining non-governed pins would stop
-   new ones appearing unreviewed. The GCC drafting module's `available` state
-   and the dead `openai-orchestrator.ts` need a decision.
+5. **Explicit pins to unapproved models**: all classified and the governed ones
+   fixed (sections 8 and 9). The remaining 54 are closed behind a CI gate.
+   These still need a decision:
+   - the GCC drafting module's `available` state;
+   - the dead `openai-orchestrator.ts` and `unifiedDocumentIngestion.js`;
+   - the always-500 `audit-risk-monitor.js`;
+   - the auto-extraction storage refusal noted in section 9.
 6. `pdf_overlay` is a false-success stub. It is gated as a write so it fails
    closed rather than being exempted.
 7. The `run_validation` verdict and the biostat CSR numbers are still partly
