@@ -1045,6 +1045,14 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
         actorUserId: ctx.userId,
       },
     });
+  } catch (err) {
+    // The guard refused before handing anything to the gateway: nothing was
+    // sent, so the claim is released and the sequence stays transmittable.
+    // Any other failure may have reached the agency and is left for a human.
+    // 2026-09-23 (W5/D7).
+    const { refusedBeforeWire } = await import('../submission-gateways/index');
+    if (refusedBeforeWire(err)) await releaseTransmitSlot(sequenceId, ctx.organizationId);
+    throw err;
   } finally {
     // The gateway has consumed the bundle bytes (or failed); either way the
     // staged temp package is no longer needed.
