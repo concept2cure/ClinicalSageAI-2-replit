@@ -1,0 +1,102 @@
+=== server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > review → approved at v1 records approved_version_id = 1, so the artifact is filable 2974ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > after approving v1, an edit to v2 is not filable (edited-after-approval) 3743ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → locked at the approved version records published_version_id and stays filable 3091ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → locked after an unreviewed edit is REFUSED, writes nothing, and asks for re-approval 2898ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → locked when no approved version was ever recorded is refused (fail closed) 1775ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > an edit landing between the read and the lock write is not locked (the WHERE re-checks the approval) 1884ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → approved does not re-stamp the approval over an unreviewed edit 2039ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > re-approval through review after the edit records the new version (the remedy works) 2156ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > archived → approved records no approved version, so it is not filable (no review happened) 3738ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > superseded → approved records no approved version, so it is not filable (no review happened) 2951ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > rejected → approved records no approved version, so it is not filable (no review happened) 3032ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > review → approved with a reviewer still pending is refused and records nothing (P12 quorum) 3209ms
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > review → approved when a reviewer did not approve is refused and records nothing 3490ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > only the latest review round counts, and withdrawn reviewers are excluded 2787ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > review → approved with every assigned reviewer approving records the version 3174ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > archived → approved records no approved version, so it is not filable (no review happened)
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > superseded → approved records no approved version, so it is not filable (no review happened)
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > rejected → approved records no approved version, so it is not filable (no review happened)
+AssertionError: expected 3 to be null
+- Expected:
++ Received:
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > review → approved with a reviewer still pending is refused and records nothing (P12 quorum)
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records an approval only for the review → approved act > review → approved when a reviewer did not approve is refused and records nothing
+AssertionError: expected true to be false // Object.is equality
+- Expected
++ Received
+ Test Files  1 failed (1)
+      Tests  5 failed | 10 passed (15)
+=== server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts
+ ✓ server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records the version it approved > promoting v1 records approved_version_id = 1, so the artifact is filable 3524ms
+ ✓ server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records the version it approved > promoting the CURRENT version records that version, not v1 35ms
+ ✓ server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records the version it approved > after promoting v1, an edit to v2 is not filable 48ms
+ ✓ server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records the version it approved > the human-approval gate is unchanged: no reason/confirmation, no approval and no version recorded 44ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > promoting a DRAFT nobody reviewed records no approved version, so it is not filable 39ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > promoting an artifact approved at v1 and edited to v2 does not re-stamp v2 (stays edited-after-approval) 41ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > a editor (not an approver in the status route role table) promoting from review records no approved version 32ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > a regulatory (not an approver in the status route role table) promoting from review records no approved version 33ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > a super_admin (not an approver in the status route role table) promoting from review records no approved version 36ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > promoting from review with a reviewer still pending records no approved version (P12 quorum) 31ms
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > promoting from review when a reviewer did not approve records no approved version 33ms
+ ✓ server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > promoting from review with every reviewer approving records the version (filable) 35ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > promoting a DRAFT nobody reviewed records no approved version, so it is not filable
+AssertionError: expected 1 to be null
+- Expected:
++ Received:
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > promoting an artifact approved at v1 and edited to v2 does not re-stamp v2 (stays edited-after-approval)
+AssertionError: expected 2 to be 1 // Object.is equality
+- Expected
++ Received
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > a editor (not an approver in the status route role table) promoting from review records no approved version
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > a regulatory (not an approver in the status route role table) promoting from review records no approved version
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > a super_admin (not an approver in the status route role table) promoting from review records no approved version
+AssertionError: expected 1 to be null
+- Expected:
++ Received:
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > promoting from review with a reviewer still pending records no approved version (P12 quorum)
+AssertionError: expected 1 to be null
+- Expected:
++ Received:
+ FAIL  server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records an approval only for the review → approved act > promoting from review when a reviewer did not approve records no approved version
+AssertionError: expected 1 to be null
+- Expected:
++ Received:
+ Test Files  1 failed (1)
+      Tests  7 failed | 5 passed (12)
+=== tests/artifact-status-lock-covers-approval.test.ts
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved v2 (approved at v2) → locked records published_version_id = 2, and the result is filable 42ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved at v2, edited to v3, then locked: REFUSED with 409, nothing written, and the message asks for re-approval 8ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved with no approved version recorded, then locked: REFUSED (fail closed) 4ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > review v3 → approved records approved_version_id = 3; an edit to v4 afterwards is not filable 12ms
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer still pending refuses the approval (400) and records no approved version 21ms
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer who did not approve refuses the approval (400) 8ms
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > POST …/audit-report/export: the locked report records its lock, and no approval nobody gave > inserts status locked with published_version_id = version = 1, approved_version_id unset, so it is not filable 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer still pending refuses the approval (400) and records no approved version
+AssertionError: expected 500 to be 400 // Object.is equality
+- Expected
++ Received
+ FAIL  tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > a reviewer who did not approve refuses the approval (400)
+AssertionError: expected 500 to be 400 // Object.is equality
+- Expected
++ Received
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+=== server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — lawful lifecycle steps are allowed > draft → review 3018ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — lawful lifecycle steps are allowed > review → approved 2120ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — lawful lifecycle steps are allowed > approved → locked 2334ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — lawful lifecycle steps are allowed > locked → draft (explicit unlock) 2177ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — illegal skips are blocked (Part 11) > draft → locked is refused and does not mutate the row 2143ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — illegal skips are blocked (Part 11) > review → locked is refused 2037ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — illegal skips are blocked (Part 11) > draft → approved is refused (must be reviewed first) 2059ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — illegal skips are blocked (Part 11) > locked → approved is refused (unlock to draft only) 2343ms
+ ✓ server/services/ana-ri/__tests__/artifact-status-transitions.contract.test.ts > update_artifact_status — tenant isolation > another org cannot transition this org's artifact 2070ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)

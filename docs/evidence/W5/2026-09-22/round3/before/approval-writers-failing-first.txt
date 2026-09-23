@@ -1,0 +1,48 @@
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > review → approved at v1 records approved_version_id = 1, so the artifact is filable 3956ms
+   → expected null to be 1 // Object.is equality
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > after approving v1, an edit to v2 is not filable (edited-after-approval) 2616ms
+   → expected { filable: false, …(3) } to match object { reason: 'edited-after-approval' }
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → locked at the approved version records published_version_id and stays filable 2832ms
+   → expected null to be 1 // Object.is equality
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → locked after an unreviewed edit is REFUSED, writes nothing, and asks for re-approval 2440ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → locked when no approved version was ever recorded is refused (fail closed) 2566ms
+   → expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → approved does not re-stamp the approval over an unreviewed edit 2520ms
+   → expected null to be 1 // Object.is equality
+ × server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > re-approval through review after the edit records the new version (the remedy works) 2533ms
+   → expected null to be 2 // Object.is equality
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records the version it approved > promoting v1 records approved_version_id = 1, so the artifact is filable 2594ms
+   → expected null to be 1 // Object.is equality
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records the version it approved > promoting the CURRENT version records that version, not v1 29ms
+   → expected null to be 4 // Object.is equality
+ × server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records the version it approved > after promoting v1, an edit to v2 is not filable 28ms
+   → expected { filable: false, …(3) } to match object { reason: 'edited-after-approval' }
+ ✓ server/services/ai-actions/handlers/__tests__/promote-artifact-approved-version.pglite.test.ts > promote_artifact records the version it approved > the human-approval gate is unchanged: no reason/confirmation, no approval and no version recorded 17ms
+ ✓ server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /lock-artifact: the lock must cover the approval > approved at v1, current v1: locks, records published_version_id = 1, and the result is filable 604ms
+ × server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /lock-artifact: the lock must cover the approval > approved at v1, edited to v2: REFUSED with 409, nothing written, and the message asks for re-approval 13ms
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /lock-artifact: the lock must cover the approval > approved with no approved version recorded: REFUSED (fail closed) 5ms
+   → expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/lockArtifactCoversApproval.test.ts > POST /approve-artifact records the version it approved > review v3 → approved records approved_version_id = 3; an edit to v4 is not filable 6ms
+stderr | tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved v2 (approved at v2) → locked records published_version_id = 2, and the result is filable
+stderr | tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > review v3 → approved records approved_version_id = 3; an edit to v4 afterwards is not filable
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved v2 (approved at v2) → locked records published_version_id = 2, and the result is filable 32ms
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved at v2, edited to v3, then locked: REFUSED with 409, nothing written, and the message asks for re-approval 13ms
+   → expected 500 to be 409 // Object.is equality
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > approved with no approved version recorded, then locked: REFUSED (fail closed) 5ms
+   → expected 500 to be 409 // Object.is equality
+ ✓ tests/artifact-status-lock-covers-approval.test.ts > PUT …/status: a lock must cover the approval > review v3 → approved records approved_version_id = 3; an edit to v4 afterwards is not filable 6ms
+ × tests/artifact-status-lock-covers-approval.test.ts > POST …/audit-report/export: the locked report records its lock, and no approval nobody gave > inserts status locked with published_version_id = version = 1, approved_version_id unset, so it is not filable 6ms
+   → expected undefined to be 1 // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > review → approved at v1 records approved_version_id = 1, so the artifact is filable
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → locked at the approved version records published_version_id and stays filable
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → locked after an unreviewed edit is REFUSED, writes nothing, and asks for re-approval
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → locked when no approved version was ever recorded is refused (fail closed)
+ FAIL  server/services/ana-ri/__tests__/artifact-status-approval-version.pglite.test.ts > update_artifact_status records the version it approved and locked > approved → approved does not re-stamp the approval over an unreviewed edit
+ Test Files  4 failed (4)
+      Tests  15 failed | 5 passed (20)
+
+== mutation check (2026-09-23): lock WHERE re-check removed from command-executor updateArtifactStatus ==
+ x an edit landing between the read and the lock write is not locked -> expected true to be false (restored afterwards)

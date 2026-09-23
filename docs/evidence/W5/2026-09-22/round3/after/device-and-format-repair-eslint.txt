@@ -1,0 +1,8 @@
+  204:8  warning  Function 'validateLeavesAgainstMarketSpec' has too many lines (143). Maximum allowed is 100  max-lines-per-function
+  204:8  warning  Function 'validateLeavesAgainstMarketSpec' has a complexity of 48. Maximum allowed is 15     complexity
+
+/home/user/ClinicalSageAI-2-replit/server/services/pathway-engines/mdr-ivdr/technical-file-packager.ts
+  146:8  warning  Function 'buildTechnicalFilePlan' has a complexity of 22. Maximum allowed is 15  complexity
+
+✖ 3 problems (0 errors, 3 warnings)
+

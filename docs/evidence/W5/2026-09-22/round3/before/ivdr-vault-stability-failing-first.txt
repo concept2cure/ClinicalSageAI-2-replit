@@ -1,0 +1,6 @@
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > file-name stability and shelf-life titles fill the stability slot 18ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > specimen or sample stability is not the device stability of Annex II 6.3 1ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > software verification, cybersecurity and usability titles fill their optional slots 3ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > a complete Vault-built IVDR set (CTD codes, no document type) is ready, and without its stability report it is not 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed | 32 skipped (36)
