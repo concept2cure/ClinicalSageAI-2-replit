@@ -235,8 +235,18 @@ export function checkQ2(inp: ProjectInputs): IchCheckFinding[] {
     return findings;
   }
 
-  const unvalidated = inp.methods.filter(m => {
-    const s = String(m.validationStatus ?? '').toLowerCase();
+  /* A method whose validation status was never RECORDED has not been shown to
+     fail validation. Reporting it as unvalidated is a finding against the
+     project for a fact nobody entered — the same class of defect as rendering
+     a failed read as an empty result. The two are separated: a recorded
+     non-validated status is a fail; an absent one is not evaluated. */
+  const statusOf = (m: (typeof inp.methods)[number]) =>
+    String(m.validationStatus ?? '').trim().toLowerCase();
+  const withStatus = inp.methods.filter(m => statusOf(m) !== '');
+  const withoutStatus = inp.methods.filter(m => statusOf(m) === '');
+
+  const unvalidated = withStatus.filter(m => {
+    const s = statusOf(m);
     return s !== 'validated' && s !== 'verified' && s !== 'transferred';
   });
   if (unvalidated.length > 0) {
@@ -247,6 +257,16 @@ export function checkQ2(inp: ProjectInputs): IchCheckFinding[] {
       message: `${unvalidated.length} method(s) lack validated / verified status.`,
       evidence: unvalidated.slice(0, 5).map(m => `${m.methodName}: ${m.validationStatus ?? 'unknown'}`),
       citation: 'ICH Q2(R1) §1 — Methods used for release and stability must be validated.',
+    });
+  }
+  if (withoutStatus.length > 0) {
+    findings.push({
+      guideline: 'Q2(R1)',
+      ruleId: 'Q2_VALIDATION_STATUS_NOT_RECORDED',
+      status: 'not_evaluated',
+      message: `${withoutStatus.length} method(s) record no validation status, so their validation could not be evaluated.`,
+      evidence: withoutStatus.slice(0, 5).map(m => `${m.methodName}: no validation status recorded`),
+      citation: 'ICH Q2(R1) §1 — Validation of analytical procedures.',
     });
   }
 

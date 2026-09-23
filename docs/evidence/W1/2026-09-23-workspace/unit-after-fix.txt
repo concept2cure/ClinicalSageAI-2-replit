@@ -1,0 +1,36 @@
+# GREEN: the same unit tests with the fix. 2026-09-23T14:17:38Z
+
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > names the workspace after the organisation, verbatim 2ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > prefers the organisation slug so the two agree wherever a human reads both 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > falls back to the name when the organisation carries no usable slug 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > always yields a non-empty slug, because the column is NOT NULL 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > writes the organisation its own workspace when it has none 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > is idempotent: a second call links to the first row and writes nothing 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > NEVER adds a second workspace to an organisation that has exactly one 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > leaves a CRO's several client workspaces exactly as they are 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > scopes to the organisation: another tenant having one is not this one having one 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > reports a lost insert race as not-created rather than as a write 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > records the platform, not a person, when no user created the organisation 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the mark on the row is what keeps a CRO anchoring > marks every workspace it writes as the organisation’s own 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the mark on the row is what keeps a CRO anchoring > spells the marker key exactly as the anchor reader queries it 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'self-serve signup' calls ensureOrganizationDefaultWorkspace 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'first-run setup' calls ensureOrganizationDefaultWorkspace 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'boot seed' calls ensureOrganizationDefaultWorkspace 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > is called by the organisation creators and no one else (it enters whatever tenant it is given) 56ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > knows of no organisation creator that does not 88ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > enters the organisation's tenant BEFORE counting and BEFORE writing 1ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > enters it even when the organisation already has a workspace (the count is what it protects) 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > fails closed: a refused scope reads nothing and writes nothing 2ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId 0 before touching the store 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId -1 before touching the store 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId NaN before touching the store 0ms
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId 1.5 before touching the store 0ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > GET /status reports not-initialized on an empty install 21ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > GET /status reports initialized once a user exists 4ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize rejects a missing organization name 20ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize rejects a weak password 4ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize creates the first org + admin on an empty install 384ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize writes the org, its admin, and the org's own workspace under the org's tenant, in one transaction 380ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize fails closed when the workspace write is refused — no 201, no token 371ms
+ ✓ server/routes/__tests__/setup.test.ts > first-run setup — /api/setup > POST /initialize is self-closing once a user exists 4ms
+      Tests  33 passed (33)

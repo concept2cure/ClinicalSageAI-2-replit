@@ -6,7 +6,8 @@
  * (assertSequencePackageable), reproduced here over PGlite with the REAL
  * freezeSequence / dispatchSequence / upsertLeaf / removeLeaf, the REAL
  * assembleSequence and the REAL leaf-manifest digest (deriveGovernedTargetBinding).
- * Only the readiness assessor and the audit writer are stubbed.
+ * Only the readiness assessor is stubbed; the chained audit writer is the real
+ * one, into the canonical audit_logs DDL.
  *
  *  1. TOCTOU. The gate assembles (seconds of PDF rendering) while the sequence
  *     is still 'validated', so upsertLeaf / removeLeaf are allowed; the state
@@ -97,15 +98,6 @@ vi.mock('../../../db', () => {
     });
   }
 });
-vi.mock('../../auditService', () => ({
-  default: { logAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })) },
-  writeChainedAuditRow: vi.fn(async (client: any, row: any) => {
-    await client.query(
-      `INSERT INTO audit_logs (tenant_id, table_name, record_id, action, new_values) VALUES ($1,$2,$3,$4,$5)`,
-      [row.organizationId, row.resourceType, String(row.resourceId), row.action, JSON.stringify(row.details)],
-    );
-  }),
-}));
 vi.mock('../../ectd/assess-dispatch-readiness', () => ({
   assessSequenceDispatchReadiness: async () => ({
     gate: { cleared: true, blockers: [] }, freezeGate: { cleared: true, blockers: [] },
@@ -126,7 +118,7 @@ vi.mock('../../ectd/assemble-from-core', async (orig) => {
   };
 });
 
-import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
+import { createIndPgliteDb, AUDIT_LOGS_PGLITE_DDL, type IndPgliteDb } from '../../../db/pglite-harness';
 import { assembleSequence } from '../../ectd/assemble-from-core';
 import { deriveGovernedTargetBinding } from '../../part11/signature-persistence';
 import { freezeSequence, dispatchSequence, upsertLeaf, removeLeaf } from '../submission-service';
@@ -178,10 +170,10 @@ beforeAll(async () => {
   h = await createIndPgliteDb({ submissionCore: true, leafSources: true });
   holder.db = h.db;
   holder.pglite = h.pglite;
+  await h.pglite.exec(AUDIT_LOGS_PGLITE_DDL);
   await h.pglite.exec(`
     CREATE TABLE c2c_ana_actions (id TEXT PRIMARY KEY, org_id INTEGER, command TEXT, target TEXT, state TEXT, proposed_by INTEGER, payload JSONB);
     CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT, bound_payload_digest TEXT, binding_basis TEXT, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT);
-    CREATE TABLE IF NOT EXISTS audit_logs (id SERIAL PRIMARY KEY, tenant_id INTEGER, table_name TEXT, record_id TEXT, action TEXT, new_values TEXT);
     CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1, 'race', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),

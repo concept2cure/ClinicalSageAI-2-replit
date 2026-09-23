@@ -201,7 +201,11 @@ describe('the review surface does not fabricate an electronic signature', () => 
     // Removing a false claim without saying where the real capability lives
     // just moves the confusion.
     expect(src).toMatch(/authoring workspace/i);
-    expect(src).toMatch(/PIN-verified/i);
+    // The authoring signature re-verifies the signer through the platform's
+    // one ceremony (6f79a000f retired the signing PIN), and the pointer says
+    // so rather than naming the credential that no longer signs.
+    expect(src).toMatch(/signer's password is re-verified/i);
+    expect(src).not.toMatch(/PIN-verified/i);
   });
 
   it('no longer labels the action as signing or sealing', () => {
