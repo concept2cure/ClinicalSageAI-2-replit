@@ -135,6 +135,24 @@ type PlanTransition = keyof typeof TRANSITION;
 
 type PlanDialog = { kind: 'create' } | { kind: 'status'; plan: Plan; to: PlanTransition } | { kind: 'delete'; plan: Plan };
 
+/** The open governed-change drawer. Each write it submits is the caller's, already one-at-a-time. */
+function PlanDialogForm({ dialog, onCancel, onCreate, onTransition, onRemove }: {
+  dialog: PlanDialog;
+  onCancel: () => void;
+  onCreate: (v: Record<string, string>) => Promise<void>;
+  onTransition: (plan: Plan, to: PlanTransition, v: Record<string, string>) => Promise<void>;
+  onRemove: (plan: Plan, v: Record<string, string>) => Promise<void>;
+}) {
+  switch (dialog.kind) {
+    case 'create':
+      return <C2CForm key="create" config={CREATE_FORM} onCancel={onCancel} onSubmit={onCreate} />;
+    case 'status':
+      return <C2CForm key={`${dialog.to}-${dialog.plan.id}`} config={TRANSITION[dialog.to].form(dialog.plan)} onCancel={onCancel} onSubmit={(v) => onTransition(dialog.plan, dialog.to, v)} />;
+    case 'delete':
+      return <C2CForm key={`delete-${dialog.plan.id}`} config={DELETE_FORM(dialog.plan)} onCancel={onCancel} onSubmit={(v) => onRemove(dialog.plan, v)} />;
+  }
+}
+
 export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
   /* AnA on this surface. It took SurfaceViewProps and discarded the whole
      object as `_props`, so a quality lead looking at a gate-level breakdown and
@@ -359,9 +377,15 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
         </div>
       )}
 
-      {dialog?.kind === 'create' && <C2CForm config={CREATE_FORM} onCancel={() => setDialog(null)} onSubmit={once(create)} />}
-      {dialog?.kind === 'status' && <C2CForm key={`${dialog.to}-${dialog.plan.id}`} config={TRANSITION[dialog.to].form(dialog.plan)} onCancel={() => setDialog(null)} onSubmit={once((v: Record<string, string>) => transition(dialog.plan, dialog.to, v))} />}
-      {dialog?.kind === 'delete' && <C2CForm key={`delete-${dialog.plan.id}`} config={DELETE_FORM(dialog.plan)} onCancel={() => setDialog(null)} onSubmit={once((v: Record<string, string>) => remove(dialog.plan, v))} />}
+      {dialog && (
+        <PlanDialogForm
+          dialog={dialog}
+          onCancel={() => setDialog(null)}
+          onCreate={once(create)}
+          onTransition={once(transition)}
+          onRemove={once(remove)}
+        />
+      )}
       <C2CToast msg={toast} />
     </div>
   );

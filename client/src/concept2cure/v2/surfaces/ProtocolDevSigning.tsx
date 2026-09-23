@@ -43,13 +43,20 @@ const DISPOSITION_LABEL: Record<string, string> = {
   abstain: 'Abstain',
 };
 
-export function ProtocolSignModal({ signing, documentId, documentTitle, onClose, onSigned }: ProtocolSignModalProps) {
-  const authUser = useAuthUser();
-  // After a reload the session may carry no display name or first name; never
-  // print "undefined" as the signer. The server records the real printed name.
+/**
+ * The signer the modal shows. After a reload the session may carry no display
+ * name or first name; never print "undefined" as the signer. The server records
+ * the real printed name.
+ */
+function signerOf(authUser: ReturnType<typeof useAuthUser>): { name: string; email?: string } | undefined {
   const printed = [authUser?.displayName, [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' '), authUser?.email]
     .find((v) => typeof v === 'string' && v.trim().length > 0);
-  const signer = printed ? { name: printed.trim(), ...(authUser?.email ? { email: authUser.email } : {}) } : undefined;
+  return printed ? { name: printed.trim(), ...(authUser?.email ? { email: authUser.email } : {}) } : undefined;
+}
+
+export function ProtocolSignModal({ signing, documentId, documentTitle, onClose, onSigned }: ProtocolSignModalProps) {
+  const authUser = useAuthUser();
+  const signer = signerOf(authUser);
   // The server demands the code whenever one is enrolled; ask for it up front.
   const requireMfa = authUser?.mfaEnabled === true;
 

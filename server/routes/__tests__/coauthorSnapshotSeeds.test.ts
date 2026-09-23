@@ -173,14 +173,28 @@ async function expectRouterSeal(docId: string): Promise<void> {
 const place = (docId: string, moduleNumber: string) =>
   request(app).post('/api/coauthor/documents').send({ moduleNumber, sourceAuthoringDocId: docId });
 
+/** Seed 112's IND demo document (undefined until the seed has run). */
+const doc112 = async () =>
+  (
+    await h.pglite.query<{ id: string; status: string }>(
+      "SELECT id, status FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)'",
+    )
+  ).rows[0];
+
+/** How many seed-112 documents exist (d), and how many seals of `docId` (f): 1 and 1 once seeded, however often. */
+const seed112Counts = async (docId: string) =>
+  (
+    await h.pglite.query<{ d: number; f: number }>(
+      `SELECT (SELECT count(*)::int FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)') AS d,
+              (SELECT count(*)::int FROM frozen_documents WHERE document_id = $1) AS f`,
+      [docId],
+    )
+  ).rows[0];
+
 describe('GA demo seeds produce documents "Place into filing" accepts', () => {
   it('112-ind-authoring-doc: the IND demo document is sealed and files as approved (201)', async () => {
     await seed112(client, ctx);
-    const doc = (
-      await h.pglite.query<{ id: string; status: string }>(
-        "SELECT id, status FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)'",
-      )
-    ).rows[0];
+    const doc = await doc112();
     expect(doc, 'seed 112 did not run').toBeTruthy();
     expect(doc.status).toBe('APPROVED');
     await expectRouterSeal(doc.id);
@@ -193,12 +207,7 @@ describe('GA demo seeds produce documents "Place into filing" accepts', () => {
 
     // Idempotent: a second run adds neither a document nor a seal.
     await seed112(client, ctx);
-    const n = await h.pglite.query<{ d: number; f: number }>(
-      `SELECT (SELECT count(*)::int FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)') AS d,
-              (SELECT count(*)::int FROM frozen_documents WHERE document_id = $1) AS f`,
-      [doc.id],
-    );
-    expect(n.rows[0]).toEqual({ d: 1, f: 1 });
+    expect(await seed112Counts(doc.id)).toEqual({ d: 1, f: 1 });
   });
 
   /*
@@ -212,11 +221,7 @@ describe('GA demo seeds produce documents "Place into filing" accepts', () => {
    * probe (verify-r4/coauthor/regression, Q2) runs the literal previous file.
    */
   it('112 on a database the previous seed populated (APPROVED, no seal): a re-run seals it and it files as approved', async () => {
-    const doc = (
-      await h.pglite.query<{ id: string }>(
-        "SELECT id FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)'",
-      )
-    ).rows[0];
+    const doc = await doc112();
     await h.pglite.query('DELETE FROM frozen_documents WHERE document_id = $1', [doc.id]);
     const before = await place(doc.id, '3.2.S.4.2');
     expect(before.status).toBe(409);
@@ -231,20 +236,11 @@ describe('GA demo seeds produce documents "Place into filing" accepts', () => {
 
     // Still idempotent once the seal exists: no second seal, no second document.
     await seed112(client, ctx);
-    const n = await h.pglite.query<{ d: number; f: number }>(
-      `SELECT (SELECT count(*)::int FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)') AS d,
-              (SELECT count(*)::int FROM frozen_documents WHERE document_id = $1) AS f`,
-      [doc.id],
-    );
-    expect(n.rows[0]).toEqual({ d: 1, f: 1 });
+    expect(await seed112Counts(doc.id)).toEqual({ d: 1, f: 1 });
   });
 
   it('112 does not seal an unsealed APPROVED document whose sections are not the text it seeded', async () => {
-    const doc = (
-      await h.pglite.query<{ id: string }>(
-        "SELECT id FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)'",
-      )
-    ).rows[0];
+    const doc = await doc112();
     const sec = (
       await h.pglite.query<{ id: string; content: string }>(
         "SELECT id, content FROM authoring_sections WHERE doc_id = $1 AND code = '3.2.S.4.2'",
@@ -271,11 +267,7 @@ describe('GA demo seeds produce documents "Place into filing" accepts', () => {
   });
 
   it('112 does not seal an unsealed document that is no longer APPROVED', async () => {
-    const doc = (
-      await h.pglite.query<{ id: string }>(
-        "SELECT id FROM authoring_documents WHERE title = 'Control of Drug Substance (CTD 3.2.S.4)'",
-      )
-    ).rows[0];
+    const doc = await doc112();
     await h.pglite.query('DELETE FROM frozen_documents WHERE document_id = $1', [doc.id]);
     await h.pglite.query("UPDATE authoring_documents SET status = 'DRAFT' WHERE id = $1", [doc.id]);
     try {

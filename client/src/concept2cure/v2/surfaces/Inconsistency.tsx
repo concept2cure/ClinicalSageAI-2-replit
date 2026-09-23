@@ -93,6 +93,23 @@ function resolverLabel(f: ReviewedFinding): string | null {
   return /^\d+$/.test(id) ? 'user ' + id : id;
 }
 
+/**
+ * What a thrown review request says about its outcome. ApiRequestError carries
+ * a status: the server answered and refused, and its message has been through
+ * the envelope reduction. Anything else is the browser's own failure, where the
+ * outcome is unknown — so re-read. A gateway error (502/503/504, often a
+ * proxy's page, not this route's) or a COMMIT the server could not confirm is
+ * not a refusal: the change may have landed. Treated like no answer at all.
+ */
+function thrownOutcome(e: unknown): { status: number; unknown: boolean } {
+  const status = (e as { name?: unknown; status?: unknown })?.name === 'ApiRequestError'
+    ? Number((e as { status?: unknown }).status)
+    : 0;
+  const unknown = status === 0 || status === 502 || status === 503 || status === 504
+    || (e as { code?: unknown })?.code === 'OUTCOME_UNKNOWN';
+  return { status, unknown };
+}
+
 /* Server messages arrive with or without a closing stop; join them as one. */
 function asSentence(s: string): string {
   const t = s.trim();
@@ -258,17 +275,8 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       setReviewing(null);
       fireToast('"' + f.title + '" was ' + verb + ' — recorded on the audit trail with your reason.');
     } catch (e) {
-      // ApiRequestError carries a status: the server answered and refused, and
-      // its message has been through the envelope reduction. Anything else is
-      // the browser's own failure, where the outcome is unknown — so re-read.
-      const status = (e as { name?: unknown; status?: unknown })?.name === 'ApiRequestError'
-        ? Number((e as { status?: unknown }).status)
-        : 0;
-      // A gateway error (502/503/504, often a proxy's page, not this route's)
-      // or a COMMIT the server could not confirm is not a refusal: the change
-      // may have landed. Treated like no answer at all.
-      const unknown = status === 0 || status === 502 || status === 503 || status === 504
-        || (e as { code?: unknown })?.code === 'OUTCOME_UNKNOWN';
+      // A refusal is shown as one; an unknown outcome means re-read (thrownOutcome).
+      const { status, unknown } = thrownOutcome(e);
       if (!unknown) {
         refused(status, (e as Error).message || 'the service refused the update (HTTP ' + status + ')');
       } else {

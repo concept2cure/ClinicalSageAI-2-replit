@@ -79,6 +79,45 @@ function dropUnbindableLifecycle(
 }
 
 /**
+ * The filed leaf a declared delete withdraws, or why it cannot be bound (the
+ * binding rules are stated where packageSequenceFromCore calls this).
+ *
+ * `key` is the source key of the document the delete row names (null: it names
+ * none); `inSection` is what is on file in the delete's section. A named row
+ * binds by identity — its current file name, else the one filed leaf whose name
+ * carries its key — or not at all; an unnamed row binds to the section's only
+ * filed leaf, or not at all.
+ */
+function bindWithdrawal(
+  section: string,
+  fileName: string,
+  key: string | null,
+  inSection: readonly { fileName: string }[],
+): { fileName: string } | { refused: string } {
+  if (key) {
+    if (fileName && inSection.some((pl) => pl.fileName === fileName)) return { fileName };
+    const mine = inSection.filter((pl) => leafFileCarriesKey(pl.fileName, key));
+    if (mine.length === 1) return { fileName: mine[0].fileName };
+    // Named by its source key, the one identity it always has.
+    const subject = `withdrawal of ${key}`;
+    return {
+      refused:
+        mine.length === 0
+          ? `${subject}: no filed leaf in ${section} is this document — it was never filed ` +
+            'there, or has already been withdrawn; no other filed document is withdrawn in its place'
+          : `${subject} is ambiguous: ${mine.length} filed leaves in ${section} carry document ${key}`,
+    };
+  }
+  if (inSection.length === 1) return { fileName: inSection[0].fileName };
+  return {
+    refused:
+      inSection.length === 0
+        ? 'withdrawal names a section with no leaf in the prior sequence'
+        : `withdrawal is ambiguous: ${inSection.length} prior leaves share section ${section}`,
+  };
+}
+
+/**
  * Assemble + package a sequence's leaves from the canonical core. Tenant-scoped:
  * the sequence, submission, and leaves must all belong to `organizationId`.
  *
@@ -236,40 +275,17 @@ export async function packageSequenceFromCore(params: PackageFromCoreParams): Pr
               '— refusing to bind a withdrawal to an unknown document.',
           );
         }
-        const inSection = prior.leaves.filter((pl) => pl.ctdSection === leaf.ctdSection);
-        let fileName = leaf.fileName;
-        if (ref.key) {
-          const byName = !!fileName && inSection.some((pl) => pl.fileName === fileName);
-          if (!byName) {
-            const key = ref.key;
-            const mine = inSection.filter((pl) => leafFileCarriesKey(pl.fileName, key));
-            if (mine.length !== 1) {
-              // Named by its source key, the one identity it always has.
-              const subject = `withdrawal of ${key}`;
-              skipped.push({
-                sectionCode: leaf.ctdSection,
-                reason:
-                  mine.length === 0
-                    ? `${subject}: no filed leaf in ${leaf.ctdSection} is this document — it was never filed ` +
-                      'there, or has already been withdrawn; no other filed document is withdrawn in its place'
-                    : `${subject} is ambiguous: ${mine.length} filed leaves in ${leaf.ctdSection} carry document ${key}`,
-              });
-              continue;
-            }
-            fileName = mine[0].fileName;
-          }
-        } else if (inSection.length === 1) {
-          fileName = inSection[0].fileName;
-        } else {
-          skipped.push({
-            sectionCode: leaf.ctdSection,
-            reason:
-              inSection.length === 0
-                ? 'withdrawal names a section with no leaf in the prior sequence'
-                : `withdrawal is ambiguous: ${inSection.length} prior leaves share section ${leaf.ctdSection}`,
-          });
+        const bound = bindWithdrawal(
+          leaf.ctdSection,
+          leaf.fileName,
+          ref.key,
+          prior.leaves.filter((pl) => pl.ctdSection === leaf.ctdSection),
+        );
+        if ('refused' in bound) {
+          skipped.push({ sectionCode: leaf.ctdSection, reason: bound.refused });
           continue;
         }
+        const { fileName } = bound;
         if (desired.some((d) => d.withdraw && d.ctdSection === leaf.ctdSection && d.fileName === fileName)) {
           // Two declared deletes bound to the same filed leaf — the operator
           // would throw on the duplicate identity.

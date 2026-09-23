@@ -81,6 +81,26 @@ export async function assignReviewerTx(
 }
 
 /**
+ * Who may sign a disposition, and with which meaning (see setDispositionTx).
+ * `assignedTo` is the assignment's user account; null when it names someone
+ * with no account.
+ */
+function assertMaySignDisposition(assignedTo: number | null, signerId: number, meaning: string, reviewerName: unknown): void {
+  if (assignedTo !== null && assignedTo !== signerId) {
+    throw new ProtocolReviewError('FORBIDDEN', 'This review is assigned to another user. Only they can sign its disposition. Nothing was recorded.');
+  }
+  if (assignedTo === signerId && meaning !== 'review' && meaning !== 'approval') {
+    throw new ProtocolReviewError('BAD_INPUT', 'Sign your own review as "review" or "approval". Nothing was recorded.');
+  }
+  if (assignedTo === null && meaning !== 'responsibility') {
+    throw new ProtocolReviewError(
+      'BAD_INPUT',
+      `${reviewerName} has no account here, so their decision can only be recorded by someone taking responsibility for the record. Sign as "responsibility". Nothing was recorded.`,
+    );
+  }
+}
+
+/**
  * Record a reviewer's disposition; marks the assignment completed. It is signed
  * (routes/protocol-reviews.ts), so who may sign it, and with which meaning,
  * depends on who the assignment names:
@@ -121,18 +141,7 @@ export async function setDispositionTx(
     throw new ProtocolReviewError('INVALID_STATE', 'A disposition is already signed for this review. Nothing was recorded.');
   }
   const assignedTo = row.reviewer_user_id == null ? null : Number(row.reviewer_user_id);
-  if (assignedTo !== null && assignedTo !== signerId) {
-    throw new ProtocolReviewError('FORBIDDEN', 'This review is assigned to another user. Only they can sign its disposition. Nothing was recorded.');
-  }
-  if (assignedTo === signerId && meaning !== 'review' && meaning !== 'approval') {
-    throw new ProtocolReviewError('BAD_INPUT', 'Sign your own review as "review" or "approval". Nothing was recorded.');
-  }
-  if (assignedTo === null && meaning !== 'responsibility') {
-    throw new ProtocolReviewError(
-      'BAD_INPUT',
-      `${row.reviewer_name} has no account here, so their decision can only be recorded by someone taking responsibility for the record. Sign as "responsibility". Nothing was recorded.`,
-    );
-  }
+  assertMaySignDisposition(assignedTo, signerId, meaning, row.reviewer_name);
   await client.query(
     `UPDATE protocol_review_assignments SET disposition = $3, status = 'completed', updated_at = now() WHERE id = $1 AND organization_id = $2`,
     [assignmentId, orgId, disposition],
