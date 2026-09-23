@@ -1,0 +1,36 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/authoring/docs/5db22e8b-c512-4256-87df-75ce11faf202/signatures",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 8,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "signatures": [
+        {
+          "id": "bf490534-8c3a-4e48-b36e-6d8d02183f14",
+          "doc_id": "5db22e8b-c512-4256-87df-75ce11faf202",
+          "signer_email": "oq-runner@validation.local",
+          "signer_name": "OQ Runner",
+          "meaning": "REVIEWER",
+          "reason": "OQ-003 step 14: reviewed for validation",
+          "method": "PIN",
+          "content_hash": "c2f09ccb3ab88796c1142308f5a9ea4a83015442b4eeb2d6d3542c38424e1ccf",
+          "signature_digest": "dddd60ce3ccfed20bfa43b7db5bbe06472121aac6959d4a38223682b31446b23",
+          "covered_freeze_version": "1.0",
+          "covered_content_hash": "951ecab75b5e28f2cacfdf4092a2123bcf4f5472571f82a785117cccd92a79a0",
+          "pin_verified": true,
+          "signed_at": "2026-09-23T02:50:34.931Z",
+          "tenant_id": 1
+        }
+      ]
+    }
+  }
+}

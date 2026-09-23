@@ -76,7 +76,11 @@ describe('computeLifecycleOperations', () => {
       ctdSection: '5.3.5.1',
       fileName: 'old-study.pdf',
       title: 'Old Study',
-      sourcePath: '/archive/old.pdf',
+      // No bytes, whatever path the prior or desired leaf carries (2026-09-23,
+      // W5/D7): the packager packages a delete that has a sourcePath as an
+      // ordinary file, which shipped the withdrawn document again. This pinned
+      // '/archive/old.pdf'.
+      sourcePath: '',
       md5: 'ccc',
     });
   });

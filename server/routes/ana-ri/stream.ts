@@ -51,7 +51,8 @@ import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
 import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
-import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
+import { getToolHandler, servedModelOf } from '../../services/ana/AnaToolExecutor.js';
+import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import {
   directiveFromToolResult,
@@ -1003,6 +1004,7 @@ export function mountStreamRoute(router: Router): void {
         intentConfidence: orchestration.detectedIntent.confidence,
         submissionType: orchestration.detectedSubmissionType,
         requestedMaxTokens: resolveOutputBudget(effortUsed),
+        requestsGovernedDraft: requestsGovernedDraft(message),
       });
 
       const policyHint = await getKernelPolicyHint({
@@ -1262,6 +1264,10 @@ export function mountStreamRoute(router: Router): void {
 
       const gwResponse = await gw.route({
         taskType: routingPlan.taskType,
+        // The kernel's risk judgment, not its surface label: every turn here is
+        // labelled regulatory_review, and the gateway reads riskTier to decide
+        // whether only an approved model may serve it.
+        riskTier: routingPlan.riskTier,
         messages,
         maxTokens: routingPlan.maxTokens,
         temperature: routingPlan.temperature,
@@ -1317,6 +1323,12 @@ export function mountStreamRoute(router: Router): void {
         },
         callerModule: 'ana-ri-stream',
       });
+      /* Which model produced the tool calls about to run. The governed-write
+         gate (registerToolHandler, server/services/ana/governed-write-tools.ts)
+         refuses to store model-authored text in a governed record unless this
+         model is approved for high-risk work. Updated after every round,
+         because each round's calls come from that round's response. */
+      let lastServedModel = servedModelOf(gwResponse);
       recordCacheUsage(gwResponse);
       streamGatewayMs = Date.now() - streamGatewayStart;
 
@@ -1635,6 +1647,7 @@ export function mountStreamRoute(router: Router): void {
                   // out a forty-second search.
                   resultStr = await Promise.race([
                     handler(toolUse.input, {
+                      servingModel: lastServedModel,
                       organizationId: orgId,
                       userId: userId || null,
                       projectId: streamProjectId ? Number(streamProjectId) || null : null,
@@ -2046,6 +2059,7 @@ export function mountStreamRoute(router: Router): void {
           let roundText = '';
           const roundResponse = await gw.route({
             taskType: routingPlan.taskType,
+            riskTier: routingPlan.riskTier,
             messages: loopMessages,
             maxTokens: routingPlan.maxTokens,
             temperature: routingPlan.temperature,
@@ -2103,6 +2117,7 @@ export function mountStreamRoute(router: Router): void {
             res.write(`data: ${JSON.stringify({ type: 'text', content: roundText })}\n\n`);
           }
           recordCacheUsage(roundResponse);
+          lastServedModel = servedModelOf(roundResponse);
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
           return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
         };
@@ -2167,6 +2182,7 @@ export function mountStreamRoute(router: Router): void {
 
           // Steers: splice each queued redirect into the next model turn. The
           // drain is atomic, so a steer cannot be applied twice.
+          const drainedSteers: string[] = [];
           for (const inj of await consumeInterjections(getPool(), runId)) {
             const framed = buildSteerMessage(inj);
             if (framed) {
@@ -2181,12 +2197,33 @@ export function mountStreamRoute(router: Router): void {
                 content: framed,
               });
             }
-            emitControl({ type: 'interjected', round: upcomingRound, message: inj });
+            drainedSteers.push(inj);
           }
 
           if (runHandle.cancelSignal.aborted || status === 'cancelled') {
             emitControl({ type: 'cancelled', round: upcomingRound });
             return 'abort';
+          }
+
+          /* `interjected` is announced AFTER the cancel check, not beside the
+             drain above.
+
+             The client renders this event as "You steered AnA:" on the turn.
+             Emitted at drain time it could say so and then be immediately
+             followed by an abort on the very next line — the steer drained out
+             of the queue, never reached a model turn, and the transcript
+             claimed it had. Cancel is the one outcome reachable between the two
+             points, so moving the announcement past it removes that window
+             entirely rather than retracting the claim afterwards.
+
+             This is an announcement of delivery-to-the-next-turn, which is what
+             the person is told. The AUDIT record is a different thing and is
+             written elsewhere, at queue time by the control endpoint
+             (services/ana/run-control.ts queueSteer) — where it means "the
+             operator submitted this steer", which is true whether or not the
+             run went on to consume it. The two must not be conflated. */
+          for (const inj of drainedSteers) {
+            emitControl({ type: 'interjected', round: upcomingRound, message: inj });
           }
           return 'continue';
         };

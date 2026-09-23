@@ -114,6 +114,8 @@ export interface SubmissionBundle {
     href: string;
     md5: string;
     operation?: string;
+    /** For replace/append/delete: the filed leaf acted on, from this sequence's root. */
+    modifiedFile?: string;
     title?: string;
   }>;
   /** Optional human-readable display name. */
@@ -131,6 +133,8 @@ export interface SubmissionBundle {
     pdfaConverted: number;
     notConverted: string[];
     allPdfA: boolean;
+    /** Agency forms shipped as issued; absent on bundles built before 2026-09-22. */
+    agencyFormsAsIssued?: string[];
   };
   /**
    * Optional eCTD DTD self-containment status: whether every DTD the backbones
@@ -270,6 +274,21 @@ export interface GatewayTransmitResult {
   httpStatus: number | null;
   ackReceivedAt: Date | null;
   message: string;
+  /**
+   * What the transmit guard (getGateway) checked on the package before sending,
+   * including checks that FAILED without blocking (a flag-gated check not
+   * enforced in this environment) and its warnings. Attached by the guard, not
+   * by a gateway. 2026-09-22 (W5/D7): these were computed and discarded, so a
+   * package that failed DTD self-containment transmitted with no trace of it.
+   * Shape mirrors PreTransmitCheck (pre-transmit-check.ts), kept structural to
+   * avoid an import cycle.
+   */
+  preTransmit?: {
+    checks: Array<{ name: string; passed: boolean; detail: string }>;
+    warnings: string[];
+    /** PDF entries whose security was judged from the signed bundle, and agency forms shipped as issued. */
+    leafSecurity: { pdfEntries: number; agencyFormsAsIssued: string[] } | null;
+  };
 }
 
 export interface GatewayStatusResult {

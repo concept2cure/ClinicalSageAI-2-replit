@@ -1,0 +1,14 @@
+NODE_OPTIONS=--max-old-space-size=11000 npx tsc --noEmit -p .  on merged tree c84368ec6, 2026-09-23
+total: 38 errors; in files changed by e4a3f8981..ddac6c9b4: 0
+All are modules absent from this checkout's node_modules (declared in package.json, not installed here):
+      5 server/mcp/__tests__/mcp-connector.dbtest.ts
+      2 server/mcp/auth/platform-token.ts
+     11 server/mcp/auth/provider.ts
+      1 server/mcp/auth/store.ts
+      3 server/mcp/client-transcript.ts
+      4 server/mcp/index.ts
+      1 server/mcp/server.ts
+      4 server/mcp/tools/runtime.ts
+      3 server/services/signature/__tests__/fake-kms.ts
+      1 server/services/signature/__tests__/kms-signer.test.ts
+      3 server/services/signature/kms-signer.ts

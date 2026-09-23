@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-18T20:45:44.972Z",
   "liveRelationCount": 1282,
   "referencedCount": 752,
-  "count": 63,
+  "count": 42,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -30,26 +30,11 @@
     "compliance.check_access": [
       "server/services/cortexComplianceService.ts"
     ],
-    "content_plan_sections": [
-      "server/routes/content-plan.js"
-    ],
     "correspondences": [
       "server/services/ana-ri/mdx-proactive-signals.ts"
     ],
-    "custom_smart_blocks": [
-      "server/routes/smart-blocks.js"
-    ],
-    "device_data_center_files": [
-      "server/routes/smart-blocks.js"
-    ],
     "document_approvals": [
       "server/services/unifiedTaskService.ts"
-    ],
-    "document_subtypes": [
-      "server/hooks/refModel.js"
-    ],
-    "document_types": [
-      "server/hooks/refModel.js"
     ],
     "ectd_v4.submissions": [
       "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
@@ -75,9 +60,6 @@
     "extraction_jobs": [
       "server/routes/integration-test.ts"
     ],
-    "faers_reports": [
-      "server/services/enhancedFaersService.js"
-    ],
     "federated_horizon_scans": [
       "server/routes/cognitive-ecosystem.ts"
     ],
@@ -93,12 +75,6 @@
     "firecrawl_usage_daily": [
       "server/integrations/firecrawl/usage.ts"
     ],
-    "folders": [
-      "server/hooks/refModel.js"
-    ],
-    "ind_events": [
-      "server/events/eventBus.js"
-    ],
     "license_acceptances": [
       "server/services/licensing/eula-service.ts"
     ],
@@ -108,9 +84,6 @@
     "license_requests": [
       "server/routes/auth.ts"
     ],
-    "lifecycle": [
-      "server/hooks/refModel.js"
-    ],
     "literature_sources": [
       "server/db/setupLiterature.ts"
     ],
@@ -119,9 +92,6 @@
     ],
     "pg_stat_statements": [
       "server/utils/database-optimizer.ts"
-    ],
-    "predicate_devices": [
-      "server/routes/smart-blocks.js"
     ],
     "reg_changes": [
       "server/src/services/reg/rpi.ts"
@@ -145,32 +115,14 @@
     "regulatory_status": [
       "server/sage-plus-service.ts"
     ],
-    "retention_rules": [
-      "server/hooks/refModel.js"
-    ],
-    "roles": [
-      "server/api/enterprise/rbac-routes.js"
-    ],
-    "section_evidence_links": [
-      "server/routes/content-plan.js"
-    ],
     "site_intel.site_scorecard": [
       "server/api/site-intel/routes.ts"
-    ],
-    "smart_block_usage": [
-      "server/routes/smart-blocks.js"
     ],
     "step_runs": [
       "server/services/workflow/WorkflowExecutionEngine.ts"
     ],
-    "study_document": [
-      "server/services/semanticSearch.js"
-    ],
     "trials": [
       "server/storage.ts"
-    ],
-    "user_roles": [
-      "server/api/enterprise/rbac-routes.js"
     ],
     "vault.drafting_sessions": [
       "server/api/drafting/routes.ts"
@@ -189,27 +141,6 @@
     ],
     "workflow_step_definitions": [
       "server/services/workflow/WorkflowExecutionEngine.ts"
-    ]
-  },
-  "newlyVisible_2026_09_22": {
-    "reason": "Pre-existing, newly visible on 2026-09-22 when the shared reference scan (serverSqlFiles in check-migration-reachability.mjs) widened from .ts to .ts/.js/.mjs: these tables are read only from .js files, which no reference-side guard opened before. Each was confirmed absent on a reference database built by install-fresh + the full set + the gcc tree. Resolutions are being verified adversarially (2026-09-22 triage); five of the seven files are dead or caller-less, and each entry is removed when its fix lands. Not accepted debt.",
-    "tables": [
-      "content_plan_sections",
-      "custom_smart_blocks",
-      "device_data_center_files",
-      "document_subtypes",
-      "document_types",
-      "faers_reports",
-      "folders",
-      "ind_events",
-      "lifecycle",
-      "predicate_devices",
-      "retention_rules",
-      "roles",
-      "section_evidence_links",
-      "smart_block_usage",
-      "study_document",
-      "user_roles"
     ]
   }
 }

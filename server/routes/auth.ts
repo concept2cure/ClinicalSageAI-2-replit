@@ -15,8 +15,9 @@ import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { verifyLiveToken } from '../services/token-revocation';
 import { requireAccessTokenReason } from '../middleware/tokenType';
-import auditService from '../services/auditService';
+import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import {
   PASSWORD_RESET_TTL_MS,
   hashPasswordSetupToken,
@@ -30,46 +31,8 @@ import {
 // scrubbed even if they accidentally appear in a context object.
 const logger = createScopedLogger('auth');
 
-/**
- * Best-effort audit-log call for authentication events. 21 CFR Part 11
- * §11.10(e) requires an independent, tamper-evident audit trail for
- * every login attempt, logout, and credential-changing event. We swallow
- * errors here so a transient audit-pipeline failure never breaks the
- * auth path itself; auditService logs its own failures internally.
- */
-async function auditAuthEvent(entry: {
-  action: string;
-  userId?: number | string | null;
-  tenantId?: number | string | null;
-  email?: string;
-  outcome: 'success' | 'failure';
-  reason?: string;
-  ipAddress?: string;
-  userAgent?: string;
-}): Promise<void> {
-  const authAudit = await auditService.logAction({
-    tenantId: entry.tenantId ?? undefined,
-    userId: entry.userId ?? undefined,
-    action: entry.action,
-    resourceType: 'user',
-    resourceId: entry.userId?.toString() ?? entry.email ?? 'unknown',
-    ipAddress: entry.ipAddress,
-    userAgent: entry.userAgent,
-    details: {
-      outcome: entry.outcome,
-      reason: entry.reason,
-      email: entry.email,
-    },
-  });
-  if (!authAudit.persisted) {
-    logger.warn('Audit log write failed (non-fatal)', {
-      err: authAudit.error ?? 'no durable store accepted the row',
-      action: entry.action,
-    });
-  }
-}
 import { sql } from 'drizzle-orm';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, gt } from 'drizzle-orm';
 import {
   users,
   organizations,
@@ -96,6 +59,7 @@ import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
 import { config } from '../config/environment';
 import { isDevAuthAllowed, devAuthDenialReason } from '../auth/dev-auth-policy';
 import { provisionLaunchModules } from '../services/entitlements/launch-scope.js';
+import { runWithTenantScope } from '../db/tenantStore';
 
 const router = Router();
 
@@ -246,7 +210,7 @@ router.get('/session', async (req: Request, res: Response) => {
     }
 
     // Verify JWT token
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       organizationId: string;
@@ -350,6 +314,13 @@ router.get('/session', async (req: Request, res: Response) => {
       tokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });
   } catch (error: any) {
+    if (error.name === 'SessionEndedError') {
+      // Signed out: the token is signed and unexpired, and its session is over (AUTH-03).
+      return res.status(401).json({
+        authenticated: false,
+        error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' },
+      });
+    }
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
       return res.status(401).json({
         authenticated: false,
@@ -394,7 +365,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       // credential-stuffing attempts. We deliberately store the email
       // (not just the hash) on the audit row — regulators want to see
       // the literal attacker-supplied value.
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         email: normalizedEmail,
         outcome: 'failure',
@@ -413,7 +384,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // ── Account Lockout Check ─────────────────────────────────────────────
     const lockStatus = await isAccountLocked(userData.id);
     if (lockStatus.locked) {
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
         tenantId: userData.defaultOrganizationId,
@@ -445,7 +416,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     if (!isPasswordValid) {
       // Record failed attempt and potentially lock
       const failResult = await recordFailedLogin(userData.id);
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
         tenantId: userData.defaultOrganizationId,
@@ -464,10 +435,10 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     // Successful password check — reset lockout counter
     await resetFailedLogins(userData.id);
-    // NOTE: the final "success" audit fires below after JWT issuance,
-    // so that MFA-required logins are recorded as challenge-issued, not
-    // session-created. See the audit call near `res.json({ success:
-    // true, accessToken, ... })`.
+    // NOTE: the "success" audit fires where the session is created: on the
+    // development path below, or on /mfa/verify for every other sign-in. This
+    // route records the MFA challenge it issues, so a sign-in is recorded as
+    // challenge-issued here and session-created there.
 
     const defaultOrganizationId = userData.defaultOrganizationId || null;
     let organizationId = defaultOrganizationId;
@@ -556,7 +527,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       // Audit: successful login (dev path, MFA bypassed). The bypass
       // itself is recorded as part of `reason` so an inspector can
       // distinguish dev-mode sessions from production logins.
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_login',
         userId: userData.id,
         tenantId: organizationId,
@@ -602,7 +573,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     // Audit: password verified, MFA challenge issued. Recorded as a
     // separate event from the eventual session creation (which happens
     // on /mfa/verify). Inspectors can correlate the two via userId.
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_login_mfa_challenge',
       userId: userData.id,
       tenantId: organizationId,
@@ -906,37 +877,65 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       return { org, user };
     });
 
-    // Launch catalog on by default (docs/LAUNCH_DEFINITION_OF_DONE.md, D2).
+    // Launch catalog on by default (docs/LAUNCH_DEFINITION_OF_DONE.md, D2), and
+    // the governed industry profile — both under the NEW organisation's own
+    // tenant scope.
+    //
+    // Until 2026-09-22 both ran under the pre-auth scope every /api/auth request
+    // carries (tenant '0', no role). module_subscriptions and
+    // organization_industry_profiles are RLS-enabled and FORCED, so the policy's
+    // WITH CHECK refused every row: a self-serve organisation started with 0 of
+    // 21 launch modules and no industry profile, the failures were logged per
+    // module and as a warn, and signup answered 201. Proven on a deploy-shaped
+    // database as the non-superuser runtime role by
+    // tests/db/signup-launch-catalog.dbtest.ts, which drives this handler.
+    //
+    // The scope is the one establishRequestTenantScope would build for this
+    // organisation's admin on their next request — least privilege, never the
+    // system scope: nothing here needs to reach any other tenant.
+    //
     // Outside the transaction on purpose: the grant writer holds its own
-    // connection, and an organisation that fails to provision must still
-    // exist so an administrator can provision it by hand. Failures are
-    // logged by the service and returned; they do not fail the signup.
-    await provisionLaunchModules(result.org.id, { actorEmail: null });
+    // connection, and an organisation that fails to provision must still exist
+    // so an administrator can provision it by hand. A failure does not fail the
+    // signup; provisionLaunchModules logs it as one error-level line with the
+    // remediation command.
+    await runWithTenantScope(
+      {
+        tenantId: String(result.org.id),
+        orgUuid: result.org.uuid ?? null,
+        role: 'admin',
+        source: 'request',
+        caller: 'POST /api/auth/signup (new-organisation provisioning)',
+      },
+      async () => {
+        await provisionLaunchModules(result.org.id, { actorEmail: null });
 
-    // Seed the governed org industry profile from the signup signals so the
-    // effective-context resolver has a real organization layer from day one.
-    // Best-effort: a failure here must never fail signup — the resolver
-    // fails open to biopharma defaults when the profile row is absent.
-    try {
-      await db
-        .insert(organizationIndustryProfiles)
-        .values({
-          organizationId: result.org.id,
-          primaryIndustry: primaryIndustryForIndustryMode(industryMode),
-          mdxSpecialization: mdxSpecialization ?? null,
-          defaultMarkets: defaultMarkets ?? [],
-          defaultPathways: pathwaysForUseCases(primaryUseCases),
-          // default_approval_rigor left null — the resolver derives a
-          // per-industry default (see defaultRigorForPrimaryIndustry).
-          updatedBy: result.user.id,
-        })
-        .onConflictDoNothing({ target: organizationIndustryProfiles.organizationId });
-    } catch (err) {
-      logger.warn('Org industry profile seed failed (non-fatal)', {
-        organizationId: result.org.id,
-        err: err instanceof Error ? err.message : String(err),
-      });
-    }
+        // Seed the governed org industry profile from the signup signals so the
+        // effective-context resolver has a real organization layer from day one.
+        // Best-effort: a failure here must never fail signup — the resolver
+        // fails open to biopharma defaults when the profile row is absent.
+        try {
+          await db
+            .insert(organizationIndustryProfiles)
+            .values({
+              organizationId: result.org.id,
+              primaryIndustry: primaryIndustryForIndustryMode(industryMode),
+              mdxSpecialization: mdxSpecialization ?? null,
+              defaultMarkets: defaultMarkets ?? [],
+              defaultPathways: pathwaysForUseCases(primaryUseCases),
+              // default_approval_rigor left null — the resolver derives a
+              // per-industry default (see defaultRigorForPrimaryIndustry).
+              updatedBy: result.user.id,
+            })
+            .onConflictDoNothing({ target: organizationIndustryProfiles.organizationId });
+        } catch (err) {
+          logger.warn('Org industry profile seed failed (non-fatal)', {
+            organizationId: result.org.id,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        }
+      },
+    );
 
     const token = jwt.sign(
       {
@@ -1005,10 +1004,13 @@ router.post('/logout', async (req: Request, res: Response) => {
   try {
     const { revokeToken } = await import('../services/token-revocation.js');
 
-    // Extract token from Authorization header and revoke it. We also
-    // try to decode the token (without verifying — it might be
-    // expired) so we can attribute the logout audit event to the
-    // user/tenant whose session ended.
+    // Extract token from Authorization header and revoke it. The logout audit
+    // event is attributed to the user and tenant whose session ended, read from
+    // the token only when the server signed it. Expiry is ignored, since a logout
+    // from an expired session still means something to an inspector. Claims
+    // from a token that does not verify are not attributed: the audit row is
+    // written in the scope of the tenant it names (recordAuthEvent), so a
+    // forged token would otherwise write into any organisation's audit chain.
     const authHeader = req.headers.authorization;
     let auditUserId: string | number | undefined;
     let auditOrgId: string | number | undefined;
@@ -1017,12 +1019,12 @@ router.post('/logout', async (req: Request, res: Response) => {
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
       try {
-        const decoded = jwt.decode(token) as Record<string, unknown> | null;
-        auditUserId = (decoded?.userId as string) ?? (decoded?.sub as string);
-        auditOrgId = decoded?.organizationId as string | undefined;
-        auditEmail = decoded?.email as string | undefined;
+        const verified = verifyJwtWithRotation<Record<string, unknown>>(token, { ignoreExpiration: true });
+        auditUserId = (verified?.userId as string) ?? (verified?.sub as string);
+        auditOrgId = verified?.organizationId as string | undefined;
+        auditEmail = verified?.email as string | undefined;
       } catch {
-        /* decode failed — log anonymous logout */
+        /* not a token this server signed: record an anonymous logout */
       }
       await revokeToken(token);
     }
@@ -1036,7 +1038,7 @@ router.post('/logout', async (req: Request, res: Response) => {
     // token was valid — a logout request from an expired session is
     // still a meaningful event for inspectors (e.g. shows the user
     // explicitly ended the session vs. just walking away).
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_logout',
       userId: auditUserId,
       tenantId: auditOrgId,
@@ -1205,7 +1207,7 @@ router.get('/me', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       organizationId?: string;
@@ -1289,7 +1291,7 @@ router.get('/me', async (req: Request, res: Response) => {
       organizationName: meOrgName,
     });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         error: { code: 'AUTH_005', message: 'Session expired' },
       });
@@ -1325,6 +1327,13 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     // Verify the challenge token
     const challenge = mfaService.verifyMfaChallengeToken(challengeId);
     if (!challenge) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        outcome: 'failure',
+        reason: 'invalid_or_expired_challenge',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         success: false,
         error: {
@@ -1350,9 +1359,22 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     }
 
     if (!isValid) {
+      await recordAuthEvent({
+        action: 'user_login_mfa_failed',
+        userId,
+        tenantId: challenge.organizationId,
+        email: challenge.email,
+        outcome: 'failure',
+        reason: 'invalid_code',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
       return res.status(401).json({
         success: false,
-        error: { code: 'AUTH_004', message: 'Invalid or expired verification code' },
+        error: {
+          code: 'AUTH_004',
+          message: 'Invalid or expired verification code. Each code works once; if you just used it, wait for the next.',
+        },
       });
     }
 
@@ -1410,6 +1432,19 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         .limit(1);
       mfaOrgName = org?.name || 'Organization';
     }
+
+    // Audit: the session is created here, not at /login, which recorded only the
+    // challenge. Every sign-in outside development ends on this route.
+    await recordAuthEvent({
+      action: 'user_login',
+      userId,
+      tenantId: challenge.organizationId,
+      email: userData.email,
+      outcome: 'success',
+      reason: 'mfa_verified',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     res.json({
       success: true,
@@ -1507,7 +1542,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       type?: string;
@@ -1536,7 +1571,7 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('MFA setup error', { err: error?.message ?? String(error) });
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired token' },
@@ -1566,7 +1601,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       type?: string;
@@ -1612,7 +1647,7 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('MFA enable error', { err: error?.message ?? String(error) });
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired token' },
@@ -1641,7 +1676,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       type?: string;
@@ -1683,7 +1718,7 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('MFA disable error', { err: error?.message ?? String(error) });
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'Invalid or expired token' },
@@ -1738,7 +1773,7 @@ async function handleForgotPassword(req: Request, res: Response) {
          that does not exist if only successes are logged. The RESPONSE is
          unchanged, so this leaks nothing: enumeration protection is a property
          of what we return, not of what we record. */
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_password_reset_requested',
         email: String(email).toLowerCase(),
         outcome: 'failure',
@@ -1772,7 +1807,7 @@ async function handleForgotPassword(req: Request, res: Response) {
        wrote no audit row of any kind, only a logger line on failure. The claim
        is the right one to make about a credential-changing event, so it is made
        true here rather than deleted from the email. */
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_password_reset_requested',
       userId: user[0].id,
       email: user[0].email,
@@ -1845,7 +1880,7 @@ async function handleResetPassword(req: Request, res: Response) {
          else in this flow would preserve that. No email is known here — the
          token is all the caller supplied — so the row is attributed to the
          token attempt rather than to a user we cannot identify. */
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_password_reset_failed',
         outcome: 'failure',
         reason: 'reset token matched no account',
@@ -1868,7 +1903,7 @@ async function handleResetPassword(req: Request, res: Response) {
         .set({ resetToken: null, resetTokenExpiresAt: null })
         .where(eq(users.id, userData.id));
 
-      await auditAuthEvent({
+      await recordAuthEvent({
         action: 'user_password_reset_failed',
         userId: userData.id,
         outcome: 'failure',
@@ -1885,7 +1920,13 @@ async function handleResetPassword(req: Request, res: Response) {
     // Hash new password and clear reset token
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
-    await db
+    // Set the password only if the token is STILL this account's and unexpired,
+    // in the same statement that clears it: a reset token is used once. Until
+    // 2026-09-23 the row was read above and then written by id alone, so two
+    // requests carrying one token — both past the read during the bcrypt hash —
+    // both reported success and the later password silently won (D6, the class
+    // of VSR-001 §13.3 item 1).
+    const reset = await db
       .update(users)
       .set({
         passwordHash,
@@ -1894,7 +1935,29 @@ async function handleResetPassword(req: Request, res: Response) {
         passwordChangedAt: new Date(),
         mustChangePassword: false,
       })
-      .where(eq(users.id, userData.id));
+      .where(
+        and(
+          eq(users.id, userData.id),
+          eq(users.resetToken, tokenHash),
+          gt(users.resetTokenExpiresAt, new Date())
+        )
+      )
+      .returning({ id: users.id });
+
+    if (reset.length !== 1) {
+      await recordAuthEvent({
+        action: 'user_password_reset_failed',
+        userId: userData.id,
+        outcome: 'failure',
+        reason: 'reset token was used or expired before this request completed',
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired reset token' },
+      });
+    }
 
     /* THE CREDENTIAL CHANGE ITSELF. This was a `logger.info` and nothing more
        — a line in an application log, which is not an audit trail: not
@@ -1906,7 +1969,7 @@ async function handleResetPassword(req: Request, res: Response) {
 
        The logger line stays: operators read logs, inspectors read audit
        trails, and they are not substitutes for one another. */
-    await auditAuthEvent({
+    await recordAuthEvent({
       action: 'user_password_changed',
       userId: userData.id,
       outcome: 'success',
@@ -1958,7 +2021,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = verifyJwtWithRotation(token) as {
+    const decoded = (await verifyLiveToken(token)) as {
       userId: string;
       email: string;
       type?: string;
@@ -2075,7 +2138,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
       message: 'Password changed successfully',
     });
   } catch (error: any) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'SessionEndedError') {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_005', message: 'Session expired' },

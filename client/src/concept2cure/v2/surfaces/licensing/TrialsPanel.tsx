@@ -76,11 +76,14 @@ interface MatrixModule {
   moduleId: string;
   name: string;
   minTier: string | null;
+  /** Industries the module is offered for; empty or absent means every one. */
+  industries?: string[] | null;
 }
 interface MatrixOrg {
   id: number | string;
   name: string;
   tier: string | null;
+  industryMode?: string | null;
 }
 interface MatrixPayload {
   modules: MatrixModule[];
@@ -103,10 +106,28 @@ function dateText(iso: string | null): string {
  * before the operator confirms matches the verdict they will get afterwards. A
  * module with no floor is unrestricted.
  */
-export function planAlreadyIncludes(orgTier: string | null, minTier: string | null): boolean {
+export function planAlreadyIncludes(
+  orgTier: string | null,
+  minTier: string | null,
+  industries: readonly string[] | null = null,
+  orgIndustry: string | null = null,
+): boolean {
+  /*
+   * The server's reading, exactly (license-manager getModuleCatalog isAvailable):
+   * a missing tier is 'standard' and an unrecognised one ranks as standard —
+   * with NO case folding, because the server does none; a missing industry is
+   * 'biotech'; a module listing industries is offered only to those. This used
+   * to ignore industry altogether, so the form could tell an operator a medtech-
+   * only module was "already included" for a biotech workspace — the grant
+   * would then have been the only thing giving them access. Pinned against the
+   * server's verdicts on a real database by tests/db/licensing-trials.dbtest.ts
+   * (coveredByPlan) and here by licensingTrials.test.tsx.
+   */
+  const industry = orgIndustry || 'biotech';
+  if (industries && industries.length > 0 && !industries.includes(industry)) return false;
   if (!minTier) return true;
-  const have = LIC_TIER_LEVEL[String(orgTier ?? '').toLowerCase()] ?? 1;
-  const need = LIC_TIER_LEVEL[String(minTier).toLowerCase()] ?? 99;
+  const have = LIC_TIER_LEVEL[orgTier || 'standard'] ?? 1;
+  const need = LIC_TIER_LEVEL[minTier] ?? 99;
   return have >= need;
 }
 
@@ -186,7 +207,12 @@ export function TrialsPanel() {
   const redundant =
     chosenOrg != null &&
     chosenModule != null &&
-    planAlreadyIncludes(chosenOrg.tier, chosenModule.minTier);
+    planAlreadyIncludes(
+      chosenOrg.tier,
+      chosenModule.minTier,
+      chosenModule.industries ?? null,
+      chosenOrg.industryMode ?? null,
+    );
 
   const canOpen = Boolean(orgId && moduleId && until && until >= earliest);
 

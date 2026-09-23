@@ -1,0 +1,16 @@
+$ npx vitest run server/services/__tests__/statistical-continuum-fail-closed.test.ts
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > analysis specifications > is routed as document_drafting with no model pinned
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > analysis specifications > a model failure (including a refusal) stores nothing and keeps its own type
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > analysis specifications > an unreadable reply stores nothing, and the parse failure is the cause
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > analysis specifications > an empty draft stores nothing — empty is not generated
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > TLF shells > is routed as document_drafting with no model pinned
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > TLF shells > a model failure (including a refusal) stores nothing and keeps its own type
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > TLF shells > an unreadable reply stores nothing, and the parse failure is the cause
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > TLF shells > an empty draft stores nothing — empty is not generated
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > CSR sections > is routed as document_drafting with no model pinned
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > CSR sections > a model failure (including a refusal) stores nothing and keeps its own type
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > CSR sections > an unreadable reply stores nothing, and the parse failure is the cause
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > CSR sections > an empty draft stores nothing — empty is not generated
+ ✓ server/services/__tests__/statistical-continuum-fail-closed.test.ts > control — a real draft is stored > CSR sections with content are written
+ Test Files  1 passed (1)
+      Tests  13 passed (13)

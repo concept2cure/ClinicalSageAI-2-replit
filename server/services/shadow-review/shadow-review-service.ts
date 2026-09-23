@@ -41,6 +41,60 @@ export interface ShadowReviewOutput {
   findings: ShadowFinding[];
 }
 
+const SEVERITIES: ReadonlySet<string> = new Set<FindingSeverity>(['critical', 'major', 'minor', 'info']);
+const DIMENSIONS: ReadonlySet<string> = new Set<ShadowFinding['dimension']>(['rtf', 'crl', 'format', 'nb']);
+
+/**
+ * The model's reply as an assessment the dispatch gate can count, or the reason
+ * it is not one. 2026-09-22 (W5/D7).
+ *
+ * Only a JSON syntax error used to fail a run. A reply with no `findings` array
+ * became an empty list and a 'complete' run — no assessment, read by transmit
+ * Gate 2 as a clean one. Severity was stored verbatim while the gate counts
+ * `severity = 'critical'` exactly, so 'Critical' never blocked. Now `findings`
+ * must be an array (an explicit empty list is a real "none found"), and every
+ * finding's dimension and severity must be one the gate knows, compared
+ * case-insensitively and stored in canonical lowercase. Anything else fails
+ * the run: an assessment that cannot be counted is not a completed review.
+ */
+export function parseShadowReviewOutput(
+  raw: unknown,
+): { ok: true; output: ShadowReviewOutput } | { ok: false; reason: string } {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, reason: 'reply is not a JSON object' };
+  const o = raw as Record<string, unknown>;
+  if (!Array.isArray(o.findings)) return { ok: false, reason: 'reply has no findings array' };
+  const findings: ShadowFinding[] = [];
+  for (const [i, f] of o.findings.entries()) {
+    if (!f || typeof f !== 'object') return { ok: false, reason: `finding ${i} is not an object` };
+    const r = f as Record<string, unknown>;
+    const severity = typeof r.severity === 'string' ? r.severity.trim().toLowerCase() : '';
+    const dimension = typeof r.dimension === 'string' ? r.dimension.trim().toLowerCase() : '';
+    const title = typeof r.title === 'string' ? r.title.trim() : '';
+    if (!SEVERITIES.has(severity)) return { ok: false, reason: `finding ${i} has severity ${JSON.stringify(r.severity)}` };
+    if (!DIMENSIONS.has(dimension)) return { ok: false, reason: `finding ${i} has dimension ${JSON.stringify(r.dimension)}` };
+    if (!title) return { ok: false, reason: `finding ${i} has no title` };
+    const text = (v: unknown) => (typeof v === 'string' ? v : null);
+    findings.push({
+      dimension: dimension as ShadowFinding['dimension'],
+      severity: severity as FindingSeverity,
+      title,
+      detail: text(r.detail),
+      basis: text(r.basis),
+      recommendation: text(r.recommendation),
+      leafRef: text(r.leafRef),
+    });
+  }
+  return {
+    ok: true,
+    output: {
+      findings,
+      summary: typeof o.summary === 'string' ? o.summary : '',
+      rtfRiskScore: o.rtfRiskScore as number,
+      crlRiskScore: o.crlRiskScore as number,
+    },
+  };
+}
+
 export class ShadowReviewError extends Error {
   constructor(public code: 'NOT_FOUND' | 'INVALID_AI_RESPONSE' | 'PROVIDER_UNAVAILABLE', message: string) {
     super(message);
@@ -149,14 +203,20 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
     });
     model = response.model;
     const cleaned = response.content.trim().replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
-    output = JSON.parse(cleaned) as ShadowReviewOutput;
+    const parsed = parseShadowReviewOutput(JSON.parse(cleaned));
+    if (!parsed.ok) {
+      await db.update(shadowReviewRuns).set({ status: 'failed', updatedAt: new Date() }).where(eq(shadowReviewRuns.id, run.id));
+      throw new ShadowReviewError('INVALID_AI_RESPONSE', `Shadow review returned no countable assessment (${parsed.reason}).`);
+    }
+    output = parsed.output;
   } catch (err) {
+    if (err instanceof ShadowReviewError) throw err;
     await db.update(shadowReviewRuns).set({ status: 'failed', updatedAt: new Date() }).where(eq(shadowReviewRuns.id, run.id));
     if (err instanceof SyntaxError) throw new ShadowReviewError('INVALID_AI_RESPONSE', 'Shadow review returned invalid JSON.');
     throw new ShadowReviewError('PROVIDER_UNAVAILABLE', 'Shadow review could not be completed.');
   }
 
-  const findings = Array.isArray(output.findings) ? output.findings : [];
+  const findings = output.findings;
   // Bound the model's self-reported risk by the deterministic aggregate (use the higher).
   const agg = aggregateRisk(findings);
   const rtfRiskScore = Math.max(clamp01(output.rtfRiskScore, agg.rtf), agg.rtf);
@@ -197,7 +257,7 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
   return { runId: run.id, rtfRiskScore, crlRiskScore, summary: output.summary ?? '', findingCount: findings.length };
 }
 
-export default { runShadowReview, aggregateRisk, ShadowReviewError };
+export default { runShadowReview, aggregateRisk, parseShadowReviewOutput, ShadowReviewError };
 
 // ── Reads (tenant-scoped) ─────────────────────────────────────────────────
 

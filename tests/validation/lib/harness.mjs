@@ -4,9 +4,14 @@
  * One runner per launch app (tests/validation/oq/<app>/run.mjs) declares its
  * protocol steps against this harness. The harness:
  *
- *   - authenticates the way the client does (POST /api/auth/dev-login, then
- *     GET /api/v1/auth/session, then seeds the four trialsage_* storage keys
- *     before first paint — same approach as tests/e2e/dev-auth-helper.ts);
+ *   - authenticates the way the client does, then GET /api/v1/auth/session,
+ *     then seeds the four trialsage_* storage keys before first paint (same
+ *     approach as tests/e2e/dev-auth-helper.ts). With VALIDATION_USER_PASSWORD
+ *     set it signs in with the password (POST /api/auth/login), completing the
+ *     TOTP challenge from VALIDATION_USER_TOTP_SECRET when the server requires
+ *     MFA, which every server that is not a development one does. Without it,
+ *     it uses POST /api/auth/dev-login, which only development answers. The
+ *     record states which was used (environment.authentication);
  *   - drives the real app in Chromium through playwright-core (no @playwright/test
  *     fixture layer, so the run is a plain `node` process with no test reporter
  *     rewriting the outcome);
@@ -32,12 +37,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { freshTotp } from './totp.mjs';
 
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(HERE, '..', '..', '..');
 
-export const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-22';
+export const RUN_DATE = process.env.VALIDATION_RUN_DATE || '2026-09-23b';
 export const BASE_URL = (process.env.VALIDATION_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
 export const CHROMIUM_PATH =
   process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
@@ -45,7 +51,9 @@ export const TEST_USER_EMAIL = process.env.VALIDATION_USER_EMAIL || 'jonmichaelp
 export const EVIDENCE_ROOT =
   process.env.VALIDATION_EVIDENCE_ROOT || path.join(REPO_ROOT, 'docs', 'evidence', 'W3', RUN_DATE);
 
-const REDACT_KEYS = new Set(['pin', 'old_pin', 'password', 'totp', 'accessToken', 'refreshToken', 'token']);
+// Authentication factors never reach a record. `mfaToken` is the QMS approval's
+// name for the authenticator code (`totp` is the governed actions' name).
+const REDACT_KEYS = new Set(['pin', 'old_pin', 'password', 'totp', 'mfaToken', 'accessToken', 'refreshToken', 'token']);
 
 export class ExpectationFailed extends Error {
   constructor(message, observed) {
@@ -112,16 +120,92 @@ export async function devLogin(baseUrl = BASE_URL, email = TEST_USER_EMAIL) {
   if (!res.ok || !body.accessToken) {
     throw new Error(
       `dev-login failed (${res.status}): ${JSON.stringify(body).slice(0, 300)}. ` +
-        'The server must run with NODE_ENV=development and ALLOW_DEV_AUTH=1 (server/auth/dev-auth-policy.ts).',
+        'The server must run with NODE_ENV=development and ALLOW_DEV_AUTH=1 (server/auth/dev-auth-policy.ts); ' +
+        'against any other server set VALIDATION_USER_PASSWORD (and VALIDATION_USER_TOTP_SECRET).',
     );
   }
+  return validatedSession(baseUrl, body, 'dev-login');
+}
+
+/**
+ * Sign in with a password, the way a person does on any server that is not a
+ * development one: POST /api/auth/login, and when the server answers with an
+ * MFA challenge, POST /api/auth/mfa/verify with the current code of the
+ * identity's enrolled TOTP factor. An emailed one-time code cannot be completed
+ * unattended, so a challenge that offers no TOTP method is an error naming what
+ * the identity needs. Neither the password nor the secret appears in any
+ * message or record.
+ */
+export async function passwordLogin(baseUrl, { email, password, totpSecret = '' }) {
+  const login = await postJson(baseUrl, '/api/auth/login', { email, password });
+  if (!login.ok) {
+    throw new Error(`password login for ${email} failed (${login.status}): ${JSON.stringify(login.body?.error ?? login.body).slice(0, 200)}`);
+  }
+  if (!login.body?.mfaRequired) return validatedSession(baseUrl, login.body, 'password');
+  const verified = await completeTotpChallenge(baseUrl, email, login.body, totpSecret);
+  return validatedSession(baseUrl, verified, 'password+totp');
+}
+
+function postJson(baseUrl, route, payload) {
+  return fetch(`${baseUrl}${route}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: baseUrl },
+    body: JSON.stringify(payload),
+  }).then(async (r) => ({ status: r.status, ok: r.ok, body: await r.json().catch(() => ({})) }));
+}
+
+async function completeTotpChallenge(baseUrl, email, challenge, totpSecret) {
+  const methods = challenge.mfaMethods ?? [];
+  if (!methods.some((m) => m?.type === 'totp')) {
+    throw new Error(
+      `the server requires MFA for ${email} and offers no TOTP factor (${JSON.stringify(methods)}); ` +
+        'an emailed code cannot be completed unattended — enroll a TOTP authenticator for this identity and supply its secret',
+    );
+  }
+  if (!totpSecret) {
+    throw new Error(`the server requires a TOTP code for ${email}; supply the secret of its enrolled authenticator`);
+  }
+  const code = await freshTotp(email, totpSecret);
+  const verified = await postJson(baseUrl, '/api/auth/mfa/verify', { challengeId: challenge.challengeId, code, method: 'totp' });
+  if (!verified.ok || !verified.body?.accessToken) {
+    throw new Error(`TOTP verification for ${email} failed (${verified.status}): ${JSON.stringify(verified.body?.error ?? {}).slice(0, 200)}`);
+  }
+  return verified.body;
+}
+
+/**
+ * A session opened once by run-all.mjs and handed to every protocol process
+ * (VALIDATION_SESSIONS, in the environment only — never on disk or in a record),
+ * so a full run signs each identity in once, as a person does. Signing in once
+ * per protocol took about nine sign-ins per run from one address, and the
+ * server allows ten per fifteen minutes: a re-run inside that window was refused
+ * 429 part-way through the package. Re-validated before use.
+ */
+export async function sharedSession(role, baseUrl = BASE_URL) {
+  let session = null;
+  try {
+    session = JSON.parse(process.env.VALIDATION_SESSIONS || '{}')[role] ?? null;
+  } catch {
+    session = null;
+  }
+  return session?.accessToken ? validatedSession(baseUrl, session, session.method) : null;
+}
+
+/** The run identity's credential when one is supplied, else null (dev-login). */
+export function runCredential() {
+  const password = process.env.VALIDATION_USER_PASSWORD || '';
+  if (!password) return null;
+  return { email: TEST_USER_EMAIL, password, totpSecret: process.env.VALIDATION_USER_TOTP_SECRET || '' };
+}
+
+async function validatedSession(baseUrl, body, method) {
   const sess = await (
     await fetch(`${baseUrl}/api/v1/auth/session`, {
       headers: { Authorization: `Bearer ${body.accessToken}`, Origin: baseUrl },
     })
   ).json();
-  if (!sess.authenticated || !sess.user) throw new Error('session validation failed after dev-login');
-  return { accessToken: body.accessToken, refreshToken: body.refreshToken, user: sess.user };
+  if (!sess.authenticated || !sess.user) throw new Error(`session validation failed after ${method}`);
+  return { accessToken: body.accessToken, refreshToken: body.refreshToken, user: sess.user, method };
 }
 
 /** Server log used to attribute a 500 to an environment defect (IQ-DEV-001). */
@@ -294,7 +378,9 @@ export async function createRun({ app, appLabel, protocolId, protocolTitle, need
   const readyz = await fetch(`${BASE_URL}/readyz`)
     .then(async (r) => ({ status: r.status, body: await r.json().catch(() => null) }))
     .catch((e) => ({ status: 0, body: { error: String(e) } }));
-  const auth = await devLogin();
+  const credential = runCredential();
+  const auth =
+    (await sharedSession('run')) ?? (credential ? await passwordLogin(BASE_URL, credential) : await devLogin());
 
   let browser = null;
   let context = null;
@@ -386,8 +472,8 @@ export async function createRun({ app, appLabel, protocolId, protocolTitle, need
       auth,
       baseUrl: BASE_URL,
       /**
-       * A client for a SECOND authenticated identity (the result of
-       * `devLogin(baseUrl, email)`), recorded on this step exactly like `api`.
+       * A client for a SECOND authenticated identity (a session from
+       * `passwordLogin`, see credentials.mjs), recorded on this step exactly like `api`.
        * Used by the credentialed steps: the two-person rule (§11.10(d)) means the
        * approver/signer can never be the identity that authored the fixture.
        */
@@ -561,6 +647,7 @@ export async function createRun({ app, appLabel, protocolId, protocolTitle, need
         playwrightCore: require('playwright-core/package.json').version,
         git: readGitHead(),
         testUser: auth.user.email,
+        authentication: auth.method,
         organizationId: auth.user.organizationId,
         readyz,
       },

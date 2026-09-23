@@ -27,7 +27,8 @@ import { resolveSignerIdentity } from '../services/part11/resolve-signer-identit
 import bcrypt from 'bcryptjs';
 import { createHash } from 'crypto';
 import { pool } from '../db.js';
-import { verifyToken as verifyMfaToken } from '../services/mfaService.js';
+import { isTokenCurrentlyAcceptable, isMfaEnabled } from '../services/mfaService.js';
+import rateLimit from 'express-rate-limit';
 import { writeChainedAuditRow } from '../services/auditService';
 import { buildVersionBindingDigest } from '../services/part11/version-binding.js';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
@@ -63,6 +64,27 @@ function resolveUserRole(req: Request): string {
 const loadUserPasswordHash = loadPasswordHash;
 
 /**
+ * The two pre-checks answer "is this credential right?" without signing
+ * anything, so each is a guessing oracle for whoever holds the session — which
+ * is exactly the person §11.200 re-authentication exists to stop. Each is
+ * limited per signer (not per IP: behind the load balancer callers share
+ * addresses, and the signer is the thing being guessed for), with its own
+ * budget. 10 checks per 5 minutes is several attempts per signature with room
+ * for typos. Until 2026-09-23 neither was limited beyond the global per-session
+ * API budget (600 a minute).
+ */
+function signerCheckLimiter(check: 'password' | 'mfa') {
+  return rateLimit({
+    windowMs: 5 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req: Request) => `esign-verify-${check}:user:${resolveUserId(req) ?? 'anonymous'}`,
+    message: { valid: false, error: 'TOO_MANY_ATTEMPTS' },
+  });
+}
+
+/**
  * POST /api/esignature/verify-password
  * Body: { password: string }
  * Response: { valid: boolean }
@@ -71,7 +93,7 @@ const loadUserPasswordHash = loadPasswordHash;
  * stored hash. 21 CFR Part 11 §11.200(a)(1)(i) — at least one component of
  * the e-signature must use a password.
  */
-router.post('/verify-password', async (req: Request, res: Response) => {
+router.post('/verify-password', signerCheckLimiter('password'), async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   if (!userId) {
     return res.status(401).json({ valid: false, error: 'AUTH_REQUIRED' });
@@ -85,13 +107,21 @@ router.post('/verify-password', async (req: Request, res: Response) => {
     // Don't differentiate "no user" from "no hash" to outside callers.
     return res.json({ valid: false });
   }
+  let valid: boolean;
   try {
-    const valid = await bcrypt.compare(password, hash);
-    return res.json({ valid });
+    valid = await bcrypt.compare(password, hash);
   } catch (err: any) {
     console.warn('[esignature] bcrypt compare failed:', err?.message);
     return res.json({ valid: false });
   }
+  if (!valid) return res.json({ valid });
+  // Only after the password verified: whether the signer has a second factor
+  // enrolled, which every signing endpoint then requires (§11.200). The e-sign
+  // modal asks for the code on this answer instead of sending a signature the
+  // server will refuse. When the state cannot be read it is left out, and the
+  // signing endpoint refuses the signature on the same uncertainty.
+  const mfaRequired = await isMfaEnabled(userId).catch(() => undefined);
+  return res.json(mfaRequired === undefined ? { valid } : { valid, mfaRequired });
 });
 
 /**
@@ -103,7 +133,7 @@ router.post('/verify-password', async (req: Request, res: Response) => {
  * Reuses the same TOTP verifier as login MFA so seeds and clock skew
  * tolerance are identical.
  */
-router.post('/verify-mfa', async (req: Request, res: Response) => {
+router.post('/verify-mfa', signerCheckLimiter('mfa'), async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   if (!userId) {
     return res.status(401).json({ valid: false, error: 'AUTH_REQUIRED' });
@@ -113,7 +143,11 @@ router.post('/verify-mfa', async (req: Request, res: Response) => {
     return res.status(400).json({ valid: false, error: 'TOKEN_FORMAT_INVALID' });
   }
   try {
-    const valid = await verifyMfaToken(userId, token);
+    // A CHECK, not a use: the modal sends this same code to the signing
+    // endpoint next, which consumes it (reverifySigner -> verifyToken). A code
+    // already used — at sign-in, or for an earlier signature — reads invalid
+    // here, as it would there.
+    const valid = await isTokenCurrentlyAcceptable(userId, token);
     return res.json({ valid });
   } catch (err: any) {
     console.warn('[esignature] MFA verify failed:', err?.message);

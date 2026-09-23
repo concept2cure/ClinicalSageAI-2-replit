@@ -41,7 +41,7 @@ vi.mock('../../services/mfaService', () => ({
   enableMfa: vi.fn(),
   disableMfa: vi.fn(),
   verifyToken: vi.fn(),
-  detectVerificationMethod: vi.fn(),
+  verifySecondFactor: vi.fn(),
 }));
 vi.mock('../../services/emailOtpService', () => ({
   createEmailOtp: vi.fn(),

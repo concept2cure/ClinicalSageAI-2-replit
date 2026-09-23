@@ -96,6 +96,13 @@ export interface ComposePremortemInput {
   precedentCitations: PrecedentCitation[];
   submissionType?: string;
   agency?: string;
+  /**
+   * Set when the precedent corpus could not be READ — distinct from a corpus
+   * that was read and held nothing. Without it a failed query reads as "no
+   * precedent corpus is available … populate it", which tells a sponsor their
+   * corpus is empty when nobody looked.
+   */
+  precedentQueryFailed?: string;
 }
 
 /**
@@ -112,7 +119,9 @@ export function composePremortem(input: ComposePremortemInput): PremortemVerdict
 
   const scope = [input.agency, input.submissionType].filter(Boolean).join(' ');
   let honestyNote: string | null = null;
-  if (denominator === 0) {
+  if (input.precedentQueryFailed) {
+    honestyNote = `The precedent corpus could not be read (${input.precedentQueryFailed}), so this is a PATTERN-ONLY read (deterministic deficiency detection), not a corpus-calibrated probability. Confidence: low. This is NOT a finding that no precedent exists — retry once the corpus is reachable.`;
+  } else if (denominator === 0) {
     honestyNote =
       'No precedent corpus is available for this submission context, so this is a PATTERN-ONLY read (deterministic deficiency detection), not a corpus-calibrated probability. Confidence: low. Populate the precedent corpus for calibrated risk.';
   } else if (confidence === 'low') {

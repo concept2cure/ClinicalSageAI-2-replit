@@ -193,11 +193,14 @@ export interface ResolveModelTierInput {
  * simple questions. Pure; no I/O, no env reads.
  */
 export function resolveModelTier(input: ResolveModelTierInput): ModelTier {
+  /* High risk goes to the flagship tier whatever the effort, Fast included.
+     Only a model approved for high-risk work may serve it (approved-models.ts
+     approvedForHighRisk, enforced in gateway.ts), and neither economy nor
+     standard is. Keeping Fast on economy here would not make the turn cheaper;
+     it would make the gateway refuse it. Fast still governs everything else. */
+  if (input.riskTier === 'high') return 'flagship';
   if (input.effort === 'fast') return 'economy';
   if (input.effort === 'thorough') return 'flagship';
-
-  // Balanced (the default): escalate only when the turn warrants it.
-  if (input.riskTier === 'high') return 'flagship';
 
   const deepLens = !!input.intentLens && DEEP_INTENT_LENSES.has(input.intentLens);
   const heavyTask = !!input.taskType && HEAVY_TASK_TYPES.has(input.taskType);

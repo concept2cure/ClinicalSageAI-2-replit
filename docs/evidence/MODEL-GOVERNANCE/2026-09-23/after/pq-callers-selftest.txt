@@ -1,0 +1,8 @@
+  ✓ control — the PQ runner calls it
+  ✓ control — a test calls it
+  ✓ control — a doc comment names it
+  ✓ a route handler calls it
+  ✓ a service calls it across a line break
+
+✓ self-test: 5 cases, every violation caught and the controls clean
+✓ pq-evaluation-callers: AIGateway.evaluateModel is called only from server/eval/pq/ and tests

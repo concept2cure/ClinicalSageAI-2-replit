@@ -158,7 +158,12 @@ router.post(
       // Build the summarization prompt
       const summaryPrompt = buildWorkingMemoryPrompt(messages, previousSummary);
 
-      // Use OpenAI to generate the structured summary
+      // Generate the structured summary. A summary that was not produced is not
+      // stored: working memory is chained into the next summary and
+      // consolidated into project memory, so until 2026-09-23 the placeholder
+      // written on failure ("Conversation with N messages", or "Unable to parse
+      // summary" with every list empty) became the conversation's remembered
+      // state as though a model had written it.
       let structured: any;
       try {
         const aiResult = await ai.chat({
@@ -175,35 +180,21 @@ router.post(
           temperature: 0.3,
         });
 
-        const responseText = aiResult.content || '{}';
         // Extract JSON from response (handle markdown code blocks)
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        structured = jsonMatch
-          ? JSON.parse(jsonMatch[0])
-          : {
-              objective: 'Unable to parse summary',
-              lockedFacts: [],
-              decisions: [],
-              openQuestions: [],
-              nextActions: [],
-              createdArtifacts: [],
-              exclusions: [],
-            };
+        const jsonMatch = (aiResult.content || '').match(/\{[\s\S]*\}/);
+        structured = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+        if (!structured || typeof structured.objective !== 'string') {
+          throw new Error('the summary reply was unreadable');
+        }
       } catch (aiError: any) {
         logger.error(`AI summarization failed: ${aiError.message}`);
-        // Fallback: generate a basic summary without AI
-        structured = {
-          objective: `Conversation with ${messages.length} messages`,
-          lockedFacts: [],
-          decisions: [],
-          openQuestions: messages
-            .filter((m: any) => m.role === 'user' && m.content?.trim().endsWith('?'))
-            .slice(-5)
-            .map((m: any) => m.content.trim().slice(0, 200)),
-          nextActions: [],
-          createdArtifacts: [],
-          exclusions: [],
-        };
+        return sendError(
+          res,
+          503,
+          'The summary could not be generated, so nothing was saved. The previous summary, if any, is unchanged.',
+          undefined,
+          'NO_SUMMARY_PRODUCED'
+        );
       }
 
       // Format as readable summary
@@ -322,6 +313,8 @@ router.post(
 
       // Generate document content using AI + Intelligence Engine
       let documentContent: string;
+      /** Which model produced documentContent; null when no model did. */
+      let generatedBy: { provider: string | null; model: string | null } | null = null;
       try {
         const conversationText = messages.map((m: any) => `[${m.role}]: ${m.content}`).join('\n\n');
 
@@ -344,8 +337,13 @@ router.post(
             ' '
           )} document. Use proper document structure with headings, and maintain regulatory precision. Output in Markdown format.`;
 
+        // Drafting a governed artifact: routed as document_drafting so only a
+        // model approved for high-risk regulatory drafting serves it, or the
+        // gateway refuses and the honest fallback below runs. It pinned
+        // gpt-4o-mini, which the approved-models registry does not approve.
         const aiResult = await ai.chat({
-          model: 'gpt-4o-mini',
+          taskType: 'document_drafting',
+          callerModule: 'context-intelligence.promote',
           messages: [
             { role: 'system', content: systemPrompt },
             {
@@ -360,6 +358,7 @@ router.post(
           temperature: 0.3,
         });
         documentContent = aiResult.content || '';
+        generatedBy = { provider: aiResult.provider ?? null, model: aiResult.model ?? null };
 
         // Evaluation gate: check output quality
         try {
@@ -368,7 +367,8 @@ router.post(
           if (!evaluation.passed && intelligenceContext) {
             // Regenerate with tighter constraints
             const retryResult = await ai.chat({
-              model: 'gpt-4o-mini',
+              taskType: 'document_drafting',
+              callerModule: 'context-intelligence.promote.retry',
               messages: [
                 {
                   role: 'system',
@@ -387,13 +387,22 @@ router.post(
               max_tokens: 4000,
               temperature: 0.2,
             });
-            documentContent = retryResult.content || documentContent;
+            // An empty retry keeps the first draft, and the model that wrote it.
+            const retried = Boolean(retryResult.content);
+            documentContent = retried ? retryResult.content : documentContent;
+            generatedBy = retried
+              ? { provider: retryResult.provider ?? null, model: retryResult.model ?? null }
+              : generatedBy;
           }
         } catch {
           // Use original if evaluation/retry fails
         }
       } catch {
-        // Fallback: raw conversation export
+        // Fallback: raw conversation export. It is the conversation's own text,
+        // and generatedBy is still null (it is set only after a model returns),
+        // so it is recorded as IMPORTED with no model — never as ai_generated,
+        // which is what it was labelled until 2026-09-23, with a model that had
+        // not produced it.
         documentContent =
           `# ${title}\n\n_Promoted from conversation on ${new Date().toISOString()}_\n\n` +
           messages
@@ -419,14 +428,15 @@ router.post(
         projectId: conversation.project_id,
         artifactId: null,
         documentType: type,
-        generationMode: 'ai_generated',
+        generationMode: generatedBy ? 'ai_generated' : 'imported',
         lifecycleStatus: 'draft',
         originSurface: 'ri_copilot',
         title: DOMPurify.sanitize(title),
         content: documentContent,
         sourceRefs: [`conversation:${conversationId}`],
-        provider: 'openai',
-        model: 'gpt-4o-mini',
+        // What actually served, read from the response — not a literal.
+        provider: generatedBy?.provider ?? undefined,
+        model: generatedBy?.model ?? undefined,
         eventType: 'artifact.created',
       });
       if (!governedPromotion.validation.valid) {
@@ -494,6 +504,13 @@ router.post(
             conversationId,
             messageRange: { start: messageStart ?? 0, end: messageEnd ?? messages.length },
             sourceType: type,
+            // The persisted answer to "which model wrote this?" — null for the
+            // conversation-export fallback, which no model produced.
+            generation: {
+              mode: generatedBy ? 'ai_generated' : 'imported',
+              provider: generatedBy?.provider ?? null,
+              model: generatedBy?.model ?? null,
+            },
           },
           backendService: 'concept2cure',
           backendRoute: `POST /api/concept2cure/conversations/${conversationId}/promote`,

@@ -14,11 +14,34 @@ import '../styles/project-home-v2.css';
    structural findings (EMPTY_SEQUENCE, SEQUENCE_NUMBER_FORMAT) carry no
    section, so the server returns null there — rendered honestly, never
    fabricated. ── */
+/** A corpus rule as the server attaches it (validation-rule-corpus ruleView). */
+interface RuleView {
+  id: string;
+  title: string;
+  category: string;
+  regions: string[];
+  severity: 'high' | 'medium' | 'low';
+  source: string;
+  enforcement: string;
+  /** Enforced here / guaranteed by packager construction / requires the agency validator. */
+  enforcementStatement: string;
+}
+
 interface ReadinessFinding {
   severity: 'error' | 'warning' | 'info';
   code: string;
   sectionCode: string | null;
   message: string;
+  /** The corpus rule this finding is an instance of; null when none names it. */
+  rule?: RuleView | null;
+}
+
+/** One composed dispatch gate, as the server names it. */
+interface GateView {
+  key: 'structural' | 'external' | 'shadowPresence' | 'releaseSignature';
+  rule: RuleView | null;
+  cleared: boolean;
+  blockers: string[];
 }
 
 interface ReadinessSummary {
@@ -51,6 +74,9 @@ interface DispatchReadinessAssessment {
    * parse, is treated as UNANSWERED rather than silently recomputed.
    */
   gate?: DispatchGate;
+  /** The dispatch verdict gate by gate — each the corpus rule it enforces, with
+   *  its own blockers (assess-dispatch-readiness dispatchGateViews). */
+  gates?: GateView[];
   region: string;
   sequenceStatus: string;
   validationErrors: number;
@@ -251,6 +277,48 @@ const SEV_TONE: Record<string, string> = { error: 'error', warning: 'warning', i
    Pedigree: deterministic_registry (the gate is proven, not generated).
    full: true — owns the canvas. */
 
+/** A finding's rule: its title and id, regions, corpus severity and where it is enforced. */
+function RuleLine({ rule, code }: { rule: RuleView | null; code: string }) {
+  if (!rule) {
+    return (
+      <span style={{ display: 'block', fontSize: 12 }}>
+        <span className="mono">{code}</span> — not in the rule corpus, so no rule stands behind this finding.
+      </span>
+    );
+  }
+  return (
+    <span style={{ display: 'block', fontSize: 12 }}>
+      <b>{rule.title}</b> <span className="mono">{rule.id}</span> · {rule.regions.map((r) => r.toUpperCase()).join(' · ')} ·{' '}
+      {rule.severity} · {rule.enforcementStatement}
+    </span>
+  );
+}
+
+/** One composed gate: the rule it enforces, its outcome in words, its own blockers. */
+function GateCard({ gate }: { gate: GateView }) {
+  return (
+    <div data-gate={gate.key} className={'dr2-gate ' + (gate.cleared ? 'ok' : 'block')}>
+      <div className="dr2-gate-top">
+        <span className="dr2-gate-dot">{gate.cleared ? I.check : I.lock}</span>
+        <span className="dr2-gate-label">{gate.rule?.title ?? `The ${gate.key} gate — not in the rule corpus`}</span>
+      </div>
+      <div className="dr2-gate-detail">
+        {gate.cleared ? 'Satisfied.' : 'Blocks dispatch:'}
+        {!gate.cleared && (
+          <ul style={{ margin: '2px 0 0', paddingLeft: 16 }}>
+            {gate.blockers.map((b, i) => <li key={i}>{b}</li>)}
+          </ul>
+        )}
+      </div>
+      {gate.rule && (
+        <div className="dr2-gate-basis">
+          <span className="mono">{gate.rule.id}</span> · {gate.rule.enforcementStatement}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
   // Real deterministic gate for the OPEN PROGRAM's latest sequence, computed
@@ -436,60 +504,21 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
   const ev = a.externalValidation;
   const rd = a.readiness;
 
-  /* three composed sub-gates */
-  const structuralOk = a.validationErrors === 0;
-  const shadowOk = a.unacknowledgedShadowCriticals === 0;
-  const externalOk = ev.cleared !== false;
-
-  const subGates = [
-    {
-      id: 'structural',
-      label: 'Structural validation',
-      ok: structuralOk,
-      detail: structuralOk
-        ? 'No open error-severity findings.'
-        : a.validationErrors + ' open error-severity finding' + (a.validationErrors === 1 ? '' : 's'),
-      basis: 'eCTD technical validation over the canonical core',
-    },
-    {
-      id: 'shadow',
-      label: 'Shadow Review criticals',
-      ok: shadowOk,
-      detail: a.shadowReviewMissing
-        ? 'No Shadow Review has run — dispatch permitted but never adversarially reviewed.'
-        : shadowOk
-          ? a.shadowReviewRunCount + ' review' + (a.shadowReviewRunCount === 1 ? '' : 's') + ' run · 0 unacknowledged criticals'
-          : a.unacknowledgedShadowCriticals + ' unacknowledged critical' + (a.unacknowledgedShadowCriticals === 1 ? '' : 's'),
-      basis: 'Open critical Shadow Review findings for this sequence',
-      warn: a.shadowReviewMissing,
-    },
-    {
-      id: 'external',
-      label: 'Agency-grade validator',
-      ok: externalOk,
-      detail: ev.configured
-        ? ev.ran
-          ? ev.errorCount + ' error' + (ev.errorCount === 1 ? '' : 's')
-          : 'Configured; not yet run for this sequence.'
-        : 'No external eValidator configured (default-off).',
-      basis: 'External (eValidator) gate — fail-closed only under ECTD_REQUIRE_EVALIDATOR',
-      muted: !ev.configured,
-    },
-  ];
+  /* The composed gates, as the SERVER itemized them: each is the corpus rule
+     it enforces, with its own blockers. They used to be recomputed here from
+     raw counts and drawn as a tick or a cross — three of the server's four
+     gates, with the Shadow Review card reading "dispatch permitted" on the very
+     state the server blocks. A response that carries no breakdown shows none,
+     rather than a local reconstruction. */
+  const gateViews: GateView[] = Array.isArray(a.gates) ? a.gates : [];
 
   /* AnA answer-first verdict */
   const lead = gate.cleared
-    ? a.shadowReviewMissing
-      ? {
-          tone: 'calm',
-          h: <>Your sequence is <b>cleared to dispatch</b> — but nothing has adversarially reviewed it yet.</>,
-          b: <>The hard gate is clear (0 validation errors, 0 unacknowledged Shadow criticals). I'd still run a Shadow Review before you transmit — a clean gate on a never-reviewed dossier is a blind spot, not a green light.</>,
-        }
-      : {
+    ? {
           tone: 'good',
           h: <>Your sequence is <b>cleared to dispatch</b>. Every hard gate is proven clear.</>,
           b: <>0 open validation errors, 0 unacknowledged Shadow Review criticals{ev.configured ? ', external validator clean' : ''}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
-        }
+      }
     : {
         tone: 'urgent',
         h: <>{gate.blockers.length} blocker{gate.blockers.length === 1 ? '' : 's'} stand{gate.blockers.length === 1 ? 's' : ''} between you and dispatch.</>,
@@ -514,21 +543,9 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
       </div>
 
       {/* the verdict */}
-      <div className={'dr2-verdict ' + (gate.cleared ? (a.shadowReviewMissing ? 'warn' : 'ok') : 'blocked')}>
-        <span className="dr2-verdict-ic">
-          {gate.cleared
-            ? a.shadowReviewMissing
-              ? I.alertTriangle
-              : I.shieldCheck
-            : I.lock}
-        </span>
-        <span className="dr2-verdict-t">
-          {gate.cleared
-            ? a.shadowReviewMissing
-              ? 'Cleared — but never reviewed'
-              : 'Cleared to dispatch'
-            : 'Dispatch blocked'}
-        </span>
+      <div className={'dr2-verdict ' + (gate.cleared ? 'ok' : 'blocked')}>
+        <span className="dr2-verdict-ic">{gate.cleared ? I.shieldCheck : I.lock}</span>
+        <span className="dr2-verdict-t">{gate.cleared ? 'Cleared to dispatch' : 'Dispatch blocked'}</span>
       </div>
 
       <div className={'dr2-lead tone-' + lead.tone}>
@@ -539,27 +556,16 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
         </div>
       </div>
 
-      {/* the three composed gates */}
-      <div className="dr2-gates">
-        {subGates.map((g) => (
-          <div
-            key={g.id}
-            className={'dr2-gate ' + ((g as any).muted ? 'muted' : (g as any).warn ? 'warn' : g.ok ? 'ok' : 'block')}
-          >
-            <div className="dr2-gate-top">
-              <span className="dr2-gate-dot">
-                {(g as any).muted ? '–' : (g as any).warn ? I.alertTriangle : g.ok ? I.check : I.close}
-              </span>
-              <span className="dr2-gate-label">{g.label}</span>
-            </div>
-            <div className="dr2-gate-detail">{g.detail}</div>
-            <div className="dr2-gate-basis">{g.basis}</div>
-          </div>
-        ))}
-      </div>
+      {/* the composed gates — each the rule it enforces, its outcome in words */}
+      {gateViews.length > 0 && (
+        <div className="dr2-gates">
+          {gateViews.map((g) => <GateCard key={g.key} gate={g} />)}
+        </div>
+      )}
 
-      {/* blockers (if any) — the exact proven strings */}
-      {!gate.cleared && (
+      {/* blockers — shown here only when the server did not itemize its
+          gates; otherwise each blocker is shown inside the gate it belongs to */}
+      {!gate.cleared && gateViews.length === 0 && (
         <div className="dr2-blockers">
           <div className="dr2-blockers-hd">{I.lock} What must close before dispatch</div>
           {gate.blockers.map((b, i) => (
@@ -582,10 +588,13 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
           </span>
         </div>
         {(rd.findings || []).map((f: ReadinessFinding, i: number) => (
-          <div key={i} className={'dr2-find tone-' + (SEV_TONE[f.severity] || 'idle')}>
+          <div key={i} data-finding={f.code} className={'dr2-find tone-' + (SEV_TONE[f.severity] || 'idle')}>
             <span className={'dr2-find-sev tone-' + (SEV_TONE[f.severity] || 'idle')}>{f.severity}</span>
             {f.sectionCode && <span className="mono dr2-find-code">{f.sectionCode}</span>}
-            <span className="dr2-find-msg">{f.message}</span>
+            <span className="dr2-find-msg">
+              <RuleLine rule={f.rule ?? null} code={f.code} />
+              {f.message}
+            </span>
             {f.severity === 'error' && (
               <button
                 className="dr2-find-fix"

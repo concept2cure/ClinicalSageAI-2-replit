@@ -175,7 +175,8 @@ export async function reverifySigner(
       ok: false,
       status: 401,
       code: 'MFA_VERIFICATION_FAILED',
-      error: 'Signature rejected: second-factor verification failed (§11.200).',
+      error:
+        'Signature rejected: second-factor verification failed (§11.200). Each code is accepted once; if this one was just used, wait for the next.',
     };
   }
 

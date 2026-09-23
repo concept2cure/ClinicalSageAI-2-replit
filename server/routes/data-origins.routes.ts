@@ -21,7 +21,7 @@ import { Router, type Request, type Response } from 'express';
 
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
-import { pool } from '../db';
+import { requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import {
   getSelectionOrigins,
   summarizeDocumentAttribution,
@@ -191,13 +191,14 @@ const CONTENT_COLUMNS: Readonly<Record<string, string>> = Object.freeze({
 
 /** null = no such document for this organization (or it holds no text yet). */
 async function resolveContentLength(
+  db: RequestSqlClient,
   orgId: number,
   documentTable: string,
   documentId: string,
 ): Promise<number | null> {
   const column = CONTENT_COLUMNS[documentTable];
   if (!column) return null;
-  const { rows } = await pool.query(
+  const { rows } = await db.query(
     `SELECT COALESCE(char_length(${column}), 0)::int AS len
        FROM ${documentTable}
       WHERE id::text = $1 AND organization_id = $2
@@ -230,7 +231,12 @@ router.get('/document', async (req: Request, res: Response) => {
   }
 
   try {
-    const contentLength = await resolveContentLength(orgId, documentTable, documentId);
+    const contentLength = await resolveContentLength(
+      requestPgClient(req),
+      orgId,
+      documentTable,
+      documentId,
+    );
     if (contentLength === null) {
       return res.status(404).json({
         error: { code: 'NOT_FOUND', message: 'No such document in this organization.' },
