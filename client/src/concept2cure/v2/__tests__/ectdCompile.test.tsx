@@ -7,7 +7,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -364,5 +364,135 @@ describe('EctdCompile — a follow-up sequence\'s lifecycle', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Compile eCTD/ }));
     await screen.findByRole('region', { name: 'Leaf hierarchy' });
     expect(screen.queryByRole('region', { name: 'Lifecycle' })).toBeNull();
+  });
+});
+
+/* ── WO-9 Click 6: an agency-validator report, run outside, imported here ── */
+
+const REPORT_TEXT = JSON.stringify({
+  findings: [
+    { ruleId: '1306', severity: 'High', message: 'modified-file does not resolve', location: '0001/index.xml' },
+    { ruleId: '1734', severity: 'Medium', message: 'Leaf title is long', location: 'm2/25-clin-over/clinical-overview.pdf' },
+  ],
+});
+const IMPORTED = {
+  validator: 'lorenz-evalidator', source: 'imported', importedAt: '2026-09-23T10:00:00.000Z', importedBy: 3,
+  importedByEmail: 'ra.lead@example.com', supersedes: [] as unknown[],
+  fileName: 'evalidator-0001.json', reportSha256: 'e'.repeat(64),
+  findings: [
+    { ruleId: '1306', severity: 'error', message: 'modified-file does not resolve', leafHref: '0001/index.xml' },
+    { ruleId: '1734', severity: 'warning', message: 'Leaf title is long', leafHref: 'm2/25-clin-over/clinical-overview.pdf' },
+  ],
+  errorCount: 1, warningCount: 1, infoCount: 0,
+};
+const ROW_0001 = {
+  id: 31, compilation_name: 'BX-512 FDA sequence 0001', compilation_type: 'sequence', status: 'completed', version: '1.0',
+  compiled_at: '2026-09-23T09:00:00.000Z', created_at: '2026-09-23T09:00:00.000Z', sequence_number: '0001', has_manifest: true,
+};
+
+describe('EctdCompile — an imported agency-validator report', () => {
+  beforeEach(() => { (window as any).C2C_PROJECT = { id: 42 }; });
+
+  it('shows an imported report with its compilation, and says this product did not run it', async () => {
+    mockSpineCompile(SPINE_COMPILE, [{ ...ROW_0001, external_validation: IMPORTED }]);
+    render(<EctdCompile {...props()} />);
+
+    const report = await screen.findByRole('region', { name: 'eValidator report — sequence 0001' });
+    expect(report.textContent).toMatch(/Run outside this product/);
+    expect(report.textContent).toContain('evalidator-0001.json');
+    const rows = Array.from(report.querySelectorAll('tbody tr')).map((r) => Array.from(r.querySelectorAll('td')).map((c) => c.textContent));
+    expect(rows).toEqual([
+      ['1306', 'error', 'modified-file does not resolve', '0001/index.xml'],
+      ['1734', 'warning', 'Leaf title is long', 'm2/25-clin-over/clinical-overview.pdf'],
+    ]);
+    // In the history row, and heading the report.
+    expect(screen.getAllByText('1 error · 1 warning')).toHaveLength(2);
+  });
+
+  it('names who imported it by account, and lists every report it replaced', async () => {
+    const replaced = {
+      importedAt: '2026-09-22T15:00:00.000Z', importedBy: 4, importedByEmail: 'qa.reviewer@example.com',
+      fileName: 'evalidator-first.json', reportSha256: 'a'.repeat(64), errorCount: 2, warningCount: 0, infoCount: 0,
+    };
+    mockSpineCompile(SPINE_COMPILE, [{ ...ROW_0001, external_validation: { ...IMPORTED, supersedes: [replaced] } }]);
+    render(<EctdCompile {...props()} />);
+
+    const report = await screen.findByRole('region', { name: 'eValidator report — sequence 0001' });
+    expect(report.textContent).toContain('ra.lead@example.com');
+    const trail = within(report).getByRole('list', { name: 'Reports this one replaced' });
+    expect(trail.textContent).toContain('qa.reviewer@example.com');
+    expect(trail.textContent).toContain('2 errors · 0 warnings');
+    expect(trail.textContent).toContain('evalidator-first.json');
+  });
+
+  it('replacing a report asks first, naming the report it replaces; cancelling opens nothing', async () => {
+    const pick = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
+    try {
+      mockSpineCompile(SPINE_COMPILE, [{ ...ROW_0001, external_validation: IMPORTED }]);
+      render(<EctdCompile {...props()} />);
+
+      fireEvent.click(await screen.findByRole('button', { name: /Replace eValidator report: sequence 0001/ }));
+      expect(pick).not.toHaveBeenCalled();
+      const ask = screen.getByRole('group', { name: 'Replace the eValidator report for sequence 0001' });
+      expect(ask.textContent).toContain('ra.lead@example.com');
+      expect(ask.textContent).toContain('1 error · 1 warning');
+
+      fireEvent.click(within(ask).getByRole('button', { name: 'Cancel' }));
+      expect(screen.queryByRole('group', { name: 'Replace the eValidator report for sequence 0001' })).toBeNull();
+      expect(pick).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole('button', { name: /Replace eValidator report: sequence 0001/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Choose the replacement report' }));
+      expect(pick).toHaveBeenCalledTimes(1);
+    } finally {
+      pick.mockRestore();
+    }
+  });
+
+  it('imports a report against the compilation whose package it covered', async () => {
+    let imported = false;
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
+      if (method === 'GET' && url === '/api/ectd-compile/42/status') return ok(SPINE_STATUS);
+      if (method === 'GET' && url === '/api/ectd-compile/42/history') {
+        return ok({ compilations: [imported ? { ...ROW_0001, external_validation: IMPORTED } : ROW_0001] });
+      }
+      if (method === 'POST' && url === '/api/ectd-compile/42/validate' && body?.evalidatorReport) {
+        imported = true;
+        return ok({ imported: true, compilationId: 31, sequenceNumber: '0001', externalValidation: IMPORTED });
+      }
+      return ok({});
+    });
+    render(<EctdCompile {...props()} />);
+
+    const trigger = await screen.findByRole('button', { name: /Import eValidator report: sequence 0001/ });
+    expect(trigger).toBeTruthy();
+    const picker = screen.getByLabelText('eValidator report file for sequence 0001') as HTMLInputElement;
+    const file = new File([REPORT_TEXT], 'evalidator-0001.json', { type: 'application/json' });
+    fireEvent.change(picker, { target: { files: [file] } });
+
+    await screen.findByRole('region', { name: 'eValidator report — sequence 0001' });
+    const post = apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/ectd-compile/42/validate');
+    expect(post?.[2]).toEqual({ evalidatorReport: { compilationId: 31, fileName: 'evalidator-0001.json', text: REPORT_TEXT } });
+  });
+
+  it('a refused report is shown in the server\'s words, and nothing is shown as imported', async () => {
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/ectd-compile/42/status') return ok(SPINE_STATUS);
+      if (method === 'GET' && url === '/api/ectd-compile/42/history') return ok({ compilations: [ROW_0001] });
+      if (method === 'POST' && url === '/api/ectd-compile/42/validate') {
+        return ok({ error: { code: 'REPORT_UNREADABLE', message: 'This is not an eValidator report this product reads: got an object with keys [results].' } }, 422);
+      }
+      return ok({});
+    });
+    render(<EctdCompile {...props()} />);
+
+    const picker = await screen.findByLabelText('eValidator report file for sequence 0001');
+    fireEvent.change(picker, { target: { files: [new File(['{"results":[]}'], 'r.json', { type: 'application/json' })] } });
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain('This is not an eValidator report this product reads');
+    expect(screen.queryByRole('region', { name: 'eValidator report — sequence 0001' })).toBeNull();
   });
 });

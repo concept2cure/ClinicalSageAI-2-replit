@@ -148,6 +148,7 @@ beforeAll(async () => {
       'db/migrations/20260725_ectd_compilations_project_level.sql',
       'db/migrations/20260730_ectd_compilations_sequence_columns.sql',
       'db/migrations/20260730_ectd_compilations_leaf_manifest.sql',
+      'db/migrations/20260923_ectd_compilations_external_validation.sql',
       'db/migrations/20260828_ectd_compilations_submission_id.sql',
     ],
   });

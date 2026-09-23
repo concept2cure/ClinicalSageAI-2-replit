@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T04:03:27.404Z",
+  "generatedAt": "2026-09-23T04:32:11.716Z",
   "git": {
-    "sha": "50ecbb6889b43782298e799b8b486a6be0a7d5f3",
+    "sha": "a2cb4d1364540f2029cda453eb95ff055bfbda61",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 43,
-    "largeFilesByLines": 101
+    "largeFilesByLines": 102
   },
   "findings": {
     "duplicateBasenames": [
@@ -1992,7 +1992,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 858583
+        "bytes": 858926
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "lines": 20190
+        "lines": 20195
       },
       {
         "file": "server/statistics-service.ts",
@@ -2326,7 +2326,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2187
+        "lines": 2195
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
@@ -2421,6 +2421,10 @@
         "lines": 1869
       },
       {
+        "file": "server/routes/ectd-compile.ts",
+        "lines": 1867
+      },
+      {
         "file": "server/routes/ivdr-routes.ts",
         "lines": 1866
       },
@@ -2461,6 +2465,10 @@
         "lines": 1813
       },
       {
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 1811
+      },
+      {
         "file": "server/routes/c2c/ai-editing.ts",
         "lines": 1809
       },
@@ -2489,10 +2497,6 @@
         "lines": 1753
       },
       {
-        "file": "server/services/submission-service/submission-service.ts",
-        "lines": 1748
-      },
-      {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
       },
@@ -2502,7 +2506,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1706
+        "lines": 1701
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
@@ -2521,10 +2525,6 @@
         "lines": 1650
       },
       {
-        "file": "server/routes/ectd-compile.ts",
-        "lines": 1636
-      },
-      {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
       },
@@ -2539,6 +2539,10 @@
       {
         "file": "server/services/advancedRAGPipeline.ts",
         "lines": 1569
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "lines": 1544
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
@@ -2590,7 +2594,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 5,
-      "largeByLines": 11
+      "largeByLines": 12
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
