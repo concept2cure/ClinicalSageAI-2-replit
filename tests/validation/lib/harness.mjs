@@ -51,7 +51,9 @@ export const TEST_USER_EMAIL = process.env.VALIDATION_USER_EMAIL || 'jonmichaelp
 export const EVIDENCE_ROOT =
   process.env.VALIDATION_EVIDENCE_ROOT || path.join(REPO_ROOT, 'docs', 'evidence', 'W3', RUN_DATE);
 
-const REDACT_KEYS = new Set(['pin', 'old_pin', 'password', 'totp', 'accessToken', 'refreshToken', 'token']);
+// Authentication factors never reach a record. `mfaToken` is the QMS approval's
+// name for the authenticator code (`totp` is the governed actions' name).
+const REDACT_KEYS = new Set(['pin', 'old_pin', 'password', 'totp', 'mfaToken', 'accessToken', 'refreshToken', 'token']);
 
 export class ExpectationFailed extends Error {
   constructor(message, observed) {
