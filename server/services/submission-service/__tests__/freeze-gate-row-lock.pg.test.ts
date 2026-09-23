@@ -34,15 +34,6 @@ vi.mock('../../../db', () => ({
   get db() { return holder.db; },
   get pool() { return holder.pool; },
 }));
-vi.mock('../../auditService', () => ({
-  default: { logAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })) },
-  writeChainedAuditRow: vi.fn(async (client: any, row: any) => {
-    await client.query(
-      `INSERT INTO audit_logs (tenant_id, table_name, record_id, action, new_values) VALUES ($1,$2,$3,$4,$5)`,
-      [row.organizationId, row.resourceType, String(row.resourceId), row.action, JSON.stringify(row.details)],
-    );
-  }),
-}));
 vi.mock('../../ectd/assess-dispatch-readiness', () => ({
   assessSequenceDispatchReadiness: async () => ({
     gate: { cleared: true, blockers: [] }, freezeGate: { cleared: true, blockers: [] },
@@ -52,7 +43,7 @@ vi.mock('../../ectd/assess-dispatch-readiness', () => ({
 
 import { Pool, type PoolClient } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { IND_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL, LEAF_SOURCE_PGLITE_DDL } from '../../../db/pglite-harness';
+import { IND_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL, LEAF_SOURCE_PGLITE_DDL, AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { deriveGovernedTargetBinding } from '../../part11/signature-persistence';
 import { freezeSequence, upsertLeaf } from '../submission-service';
 
@@ -114,10 +105,10 @@ describeIfDb('the sequence row lock serializes leaf writes with a governed freez
     await q(IND_PGLITE_DDL);
     await q(SUBMISSION_CORE_PGLITE_DDL);
     await q(LEAF_SOURCE_PGLITE_DDL);
+    await q(AUDIT_LOGS_PGLITE_DDL);
     await q(`
       CREATE TABLE c2c_ana_actions (id TEXT PRIMARY KEY, org_id INTEGER, command TEXT, target TEXT, state TEXT, proposed_by INTEGER, payload JSONB);
       CREATE TABLE electronic_signatures (id SERIAL PRIMARY KEY, organization_id INTEGER, signed_target TEXT, signature_manifest TEXT, bound_payload_digest TEXT, binding_basis TEXT, superseded_by INTEGER, is_valid BOOLEAN, verification_status TEXT);
-      CREATE TABLE IF NOT EXISTS audit_logs (id SERIAL PRIMARY KEY, tenant_id INTEGER, table_name TEXT, record_id TEXT, action TEXT, new_values TEXT);
       CREATE TABLE IF NOT EXISTS ectd_compilations (id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW());
       INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
         (1, 'lock A', 'ind', 'biotech', 'fda', ${ORG}, ${USER}), (2, 'lock B', 'ind', 'biotech', 'fda', ${ORG}, ${USER});
